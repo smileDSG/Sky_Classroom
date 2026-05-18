@@ -12,16 +12,26 @@ export type SolverAgentType =
 
 // ── Solve graph state ─────────────────────────────────────────────
 
+/**
+ * High-level solve state used by the UI store and API contracts.
+ *
+ * Mirrored by SolveGraphState (lib/solve/solve-graph-state.ts) which
+ * adds LangGraph-specific fields (`selectedAgentId`, `agentRoute`, `error`)
+ * for graph execution. Keep both types in sync when adding new fields.
+ */
 export interface SolveState {
   problemText: string;
   problemImage: string | null;
   userAnswer: string | null;
   agentId: string;
+  selectedAgentId: string | null;   // agent chosen by routing (null = not yet routed)
+  agentRoute: SolverAgentType | null; // routed agent type
   solution: string | null;
   gradeResult: GradeResult | null;
   votingResults: VotingResult[];
   fourPartOutput: FourPartOutput | null;
   fromQuestionBank: boolean;
+  error: string | null;
 }
 
 // ── Grading ───────────────────────────────────────────────────────

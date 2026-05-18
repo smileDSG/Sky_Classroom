@@ -21,4 +21,16 @@ describe('SolveGraphAnnotation', () => {
     expect(spec).toHaveProperty('agentRoute');
     expect(spec).toHaveProperty('error');
   });
+
+  test('state annotation has exactly 12 fields', () => {
+    const fieldCount = Object.keys(SolveGraphAnnotation.spec).length;
+    expect(fieldCount).toBe(12);
+  });
+
+  test('all fields are valid LangGraph channels', () => {
+    for (const [name, field] of Object.entries(SolveGraphAnnotation.spec)) {
+      expect(field).toHaveProperty('lg_is_channel');
+      expect(field).toHaveProperty('lc_graph_name');
+    }
+  });
 });

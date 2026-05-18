@@ -40,11 +40,14 @@ const getDefaultSolveState = (): SolveState => ({
   problemImage: null,
   userAnswer: null,
   agentId: 'universal',
+  selectedAgentId: null,
+  agentRoute: null,
   solution: null,
   gradeResult: null,
   votingResults: [],
   fourPartOutput: null,
   fromQuestionBank: false,
+  error: null,
 });
 
 type SetFn<T> = (partial: Partial<T> | ((state: T) => Partial<T>)) => void;
