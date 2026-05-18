@@ -26,3 +26,4 @@ export {
   afterCheckBank,
   afterSolve,
 } from './solve-graph';
+export { gradeAnswer, gradeAnswerSync } from './grader';

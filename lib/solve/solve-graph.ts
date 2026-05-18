@@ -90,11 +90,8 @@ async function routeToAgentNode(
 /**
  * gradeAnswer node.
  *
- * If userAnswer is provided, compare with the solution and generate
- * a GradeResult. Otherwise, skip grading.
- *
- * Full grading logic in A-002 (grader.ts).
- * This node provides a placeholder grading.
+ * If userAnswer is provided, compare with the solution using the grader
+ * engine. Otherwise, skip grading.
  */
 async function gradeAnswerNode(
   state: SolveGraphState,
@@ -112,23 +109,12 @@ async function gradeAnswerNode(
     return { error: 'No solution available for grading' };
   }
 
-  // Placeholder: simple string similarity check
-  const normalizedUser = userAnswer.trim().toLowerCase();
-  const normalizedSol = solution.trim().toLowerCase();
-  const isCorrect = normalizedSol.includes(normalizedUser) || normalizedUser.includes(normalizedSol.slice(0, 20));
+  const { gradeAnswer: gradeFn } = await import('./grader');
+  const gradeResult = await gradeFn(state.problemText, solution, userAnswer);
 
-  log.info(`[SolveGraph] gradeAnswer: isCorrect=${isCorrect} (placeholder)`);
+  log.info(`[SolveGraph] gradeAnswer: isCorrect=${gradeResult.isCorrect}, score=${gradeResult.score}`);
 
-  return {
-    gradeResult: {
-      isCorrect,
-      score: isCorrect ? 100 : 50,
-      correctAnswer: solution,
-      userAnswer,
-      errorAnalysis: isCorrect ? '答案正确' : '答案不完全匹配，请人工核对',
-      cause: isCorrect ? 'careless' as const : 'calculation-error' as const,
-    },
-  };
+  return { gradeResult };
 }
 
 /**
