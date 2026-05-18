@@ -20,6 +20,27 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SolveGraph');
 
+// ── Agent → provider/model mapping ───────────────────────────────
+
+const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: string; modelId: string }> = {
+  universal: { providerId: 'deepseek', modelId: 'deepseek-v4-pro' },
+  science: { providerId: 'glm', modelId: 'glm-5.1' },
+  humanities: { providerId: 'qwen', modelId: 'qwen3.6-max-preview' },
+  grading: { providerId: 'deepseek', modelId: 'deepseek-v4-pro' },
+};
+
+const ENV_KEY_MAP: Record<string, string> = {
+  deepseek: 'DEEPSEEK_API_KEY',
+  glm: 'GLM_API_KEY',
+  qwen: 'QWEN_API_KEY',
+};
+
+const ENV_URL_MAP: Record<string, string> = {
+  deepseek: 'DEEPSEEK_BASE_URL',
+  glm: 'GLM_BASE_URL',
+  qwen: 'QWEN_BASE_URL',
+};
+
 /**
  * Parsed solution from LLM response.
  */
@@ -56,52 +77,17 @@ export function parseSolutionResponse(text: string): ParsedSolution | null {
  * API key and base URL come from environment variables.
  */
 function resolveSolverModel(agentType: SolverAgentType): Parameters<typeof getModel>[0] {
-  const envKey = (providerId: string) => {
-    const keyMap: Record<string, string> = {
-      deepseek: 'DEEPSEEK_API_KEY',
-      glm: 'GLM_API_KEY',
-      qwen: 'QWEN_API_KEY',
-    };
-    return process.env[keyMap[providerId] ?? ''] ?? '';
-  };
+  const { providerId, modelId } = AGENT_MODEL_MAP[agentType];
+  const apiKey = process.env[ENV_KEY_MAP[providerId] ?? ''] ?? '';
+  const baseUrl = process.env[ENV_URL_MAP[providerId] ?? ''];
 
-  const envBaseUrl = (providerId: string) => {
-    const urlMap: Record<string, string> = {
-      deepseek: 'DEEPSEEK_BASE_URL',
-      glm: 'GLM_BASE_URL',
-      qwen: 'QWEN_BASE_URL',
-    };
-    const url = process.env[urlMap[providerId] ?? ''];
-    return url || undefined;
+  return {
+    providerId,
+    modelId,
+    apiKey,
+    baseUrl: baseUrl || undefined,
+    providerType: 'openai',
   };
-
-  switch (agentType) {
-    case 'universal':
-    case 'grading':
-      return {
-        providerId: 'deepseek',
-        modelId: 'deepseek-v4-pro',
-        apiKey: envKey('deepseek'),
-        baseUrl: envBaseUrl('deepseek'),
-        providerType: 'openai',
-      };
-    case 'science':
-      return {
-        providerId: 'glm',
-        modelId: 'glm-5.1',
-        apiKey: envKey('glm'),
-        baseUrl: envBaseUrl('glm'),
-        providerType: 'openai',
-      };
-    case 'humanities':
-      return {
-        providerId: 'qwen',
-        modelId: 'qwen3.6-max-preview',
-        apiKey: envKey('qwen'),
-        baseUrl: envBaseUrl('qwen'),
-        providerType: 'openai',
-      };
-  }
 }
 
 /**
@@ -113,7 +99,7 @@ async function solveOnce(
   problemImage: string | null,
 ): Promise<ParsedSolution | null> {
   const modelConfig = resolveSolverModel(agentType);
-  const model = getModel(modelConfig);
+  const modelWithInfo = getModel(modelConfig);
 
   const messages: Array<{ role: string; content: unknown }> = [
     {
@@ -124,7 +110,7 @@ async function solveOnce(
 
   const result = await callLLM(
     {
-      model: model as any,
+      model: modelWithInfo.model,
       messages: messages as any,
       temperature: 0.3,
       maxOutputTokens: 4096,
@@ -142,7 +128,7 @@ async function solveOnce(
  * 1. Call primary agent
  * 2. If confidence >= 0.7, return immediately
  * 3. If confidence < 0.7, call secondary agent
- * 4. If answers differ significantly, call tertiary for voting
+ * 4. If secondary also low, try tertiary as last resort
  */
 async function solveWithHybrid(
   primary: SolverAgentType,
@@ -171,11 +157,15 @@ async function solveWithHybrid(
   if (fallbacks.length > 1) {
     const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
     if (tertiaryResult) {
-      return { solution: tertiaryResult, usedAgents: [primary, ...fallbacks] };
+      return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
     }
   }
 
-  // All failed or low confidence — return whatever we have
+  // All failed or low confidence — return whatever we have, tracking all agents tried
+  const calledAgents: SolverAgentType[] = fallbacks.length > 1
+    ? [primary, fallbacks[0], fallbacks[1]]
+    : [primary, fallbacks[0]];
+
   return {
     solution: primaryResult ?? secondaryResult ?? {
       solution: '',
@@ -185,7 +175,7 @@ async function solveWithHybrid(
       knowledgePoints: [],
       similarQuestions: [],
     },
-    usedAgents: [primary],
+    usedAgents: calledAgents,
   };
 }
 
