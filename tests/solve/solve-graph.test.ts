@@ -29,7 +29,7 @@ vi.mock('@/lib/ai/providers', () => ({
   },
 }));
 
-import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
+import { createSolveGraph, buildSolveInitialState, afterCheckBank, afterSolve } from '@/lib/solve/solve-graph';
 
 describe('buildSolveInitialState', () => {
   test('builds state from problem input', () => {
@@ -55,5 +55,33 @@ describe('createSolveGraph', () => {
     const graph = createSolveGraph();
     expect(graph).toBeDefined();
     expect(typeof graph.invoke).toBe('function');
+  });
+});
+
+describe('conditional edges', () => {
+  describe('afterCheckBank', () => {
+    test('routes to generateOutput when question bank hit', () => {
+      const state = buildSolveInitialState('test');
+      state.fromQuestionBank = true;
+      expect(afterCheckBank(state)).toBe('generateOutput');
+    });
+
+    test('routes to routeToAgent when question bank miss', () => {
+      const state = buildSolveInitialState('test');
+      expect(afterCheckBank(state)).toBe('routeToAgent');
+    });
+  });
+
+  describe('afterSolve', () => {
+    test('routes to generateOutput when error is set', () => {
+      const state = buildSolveInitialState('test');
+      state.error = 'something went wrong';
+      expect(afterSolve(state)).toBe('generateOutput');
+    });
+
+    test('routes to gradeAnswer when no error', () => {
+      const state = buildSolveInitialState('test');
+      expect(afterSolve(state)).toBe('gradeAnswer');
+    });
   });
 });

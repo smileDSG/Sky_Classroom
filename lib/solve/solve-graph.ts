@@ -58,7 +58,6 @@ async function routeToAgentNode(
   _config: LangGraphRunnableConfig,
 ): Promise<Partial<SolveGraphState>> {
   const { problemText } = state;
-  const lower = problemText.toLowerCase();
 
   const scienceKeywords = ['物理', '化学', '数学', '力学', '微积分', '代数', '几何', '方程', '计算', '求解', '证明'];
   const humanitiesKeywords = ['语文', '历史', '政治', '地理', '文学', '作文', '阅读', '分析', '论述', '谈谈'];
@@ -67,10 +66,10 @@ async function routeToAgentNode(
   let humanitiesScore = 0;
 
   for (const kw of scienceKeywords) {
-    if (lower.includes(kw.toLowerCase())) scienceScore++;
+    if (problemText.includes(kw)) scienceScore++;
   }
   for (const kw of humanitiesKeywords) {
-    if (lower.includes(kw.toLowerCase())) humanitiesScore++;
+    if (problemText.includes(kw)) humanitiesScore++;
   }
 
   let route: SolveGraphState['agentRoute'];
@@ -84,7 +83,7 @@ async function routeToAgentNode(
 
   log.info(`[SolveGraph] routeToAgent: ${route} (science=${scienceScore}, humanities=${humanitiesScore})`);
 
-  return { agentRoute: route, selectedAgentId: route };
+  return { agentRoute: route };
 }
 
 /**
@@ -126,7 +125,7 @@ async function gradeAnswerNode(
       correctAnswer: solution,
       userAnswer,
       errorAnalysis: isCorrect ? '答案正确' : '答案不完全匹配，请人工核对',
-      cause: isCorrect ? 'concept-unclear' as const : 'calculation-error' as const,
+      cause: isCorrect ? 'careless' as const : 'calculation-error' as const,
     },
   };
 }
@@ -173,8 +172,15 @@ async function generateOutputNode(
 /**
  * After checkQuestionBank: if hit, skip to generateOutput.
  */
-function afterCheckBank(state: SolveGraphState): 'routeToAgent' | 'generateOutput' {
+export function afterCheckBank(state: SolveGraphState): 'routeToAgent' | 'generateOutput' {
   return state.fromQuestionBank ? 'generateOutput' : 'routeToAgent';
+}
+
+/**
+ * After solveWithAgent: if error, skip grading and go to generateOutput.
+ */
+export function afterSolve(state: SolveGraphState): 'gradeAnswer' | 'generateOutput' {
+  return state.error ? 'generateOutput' : 'gradeAnswer';
 }
 
 // ── Graph factory ──
@@ -195,7 +201,10 @@ export function createSolveGraph() {
       generateOutput: 'generateOutput',
     })
     .addEdge('routeToAgent', 'solveWithAgent')
-    .addEdge('solveWithAgent', 'gradeAnswer')
+    .addConditionalEdges('solveWithAgent', afterSolve, {
+      gradeAnswer: 'gradeAnswer',
+      generateOutput: 'generateOutput',
+    })
     .addEdge('gradeAnswer', 'generateOutput')
     .addEdge('generateOutput', END);
 
