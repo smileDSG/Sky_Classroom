@@ -55,7 +55,7 @@ describe('solve graph integration', () => {
     expect(result.problemText).toBe('解方程: 2x + 3 = 9');
     expect(result.solution).toBe('解：2x = 6, x = 3');
     expect(result.fourPartOutput).not.toBeNull();
-    expect(result.fourPartOutput?.answer).toBe('解：2x = 6, x = 3');
+    expect(result.fourPartOutput?.answer).toBe('**解：2x = 6, x = 3**');
     expect(result.agentRoute).toBe('science'); // 方程 is a science keyword
   });
 

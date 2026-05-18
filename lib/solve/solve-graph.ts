@@ -120,9 +120,9 @@ async function gradeAnswerNode(
 /**
  * generateOutput node.
  *
- * Format the solution into a FourPartOutput structure.
- * Full formatting logic in A-003 (four-part-output.ts).
- * This node constructs the output from available data.
+ * Format the solution into a FourPartOutput structure using the
+ * four-part-output generator. If grading was done, include grade
+ * result and mistake analysis.
  */
 async function generateOutputNode(
   state: SolveGraphState,
@@ -134,7 +134,7 @@ async function generateOutputNode(
     log.error('[SolveGraph] generateOutput: no solution');
     return {
       fourPartOutput: {
-        answer: state.error ?? '解题失败',
+        answer: '解题失败',
         steps: [],
         knowledgePoints: [],
         similarQuestions: [],
@@ -142,13 +142,27 @@ async function generateOutputNode(
     };
   }
 
-  // Placeholder: wrap solution text in minimal four-part structure
-  const fourPartOutput: FourPartOutput = {
+  // Build raw solution object from solver output
+  // NOTE: The solver stores full text in `solution` field. In production,
+  // the solver would also store the parsed JSON in the state. For now,
+  // we reconstruct from the solution text.
+  const raw = {
     answer: solution,
-    steps: [{ label: '解答', content: solution, keyPoints: [] }],
+    steps: [],
     knowledgePoints: [],
     similarQuestions: [],
   };
+
+  let fourPartOutput: FourPartOutput;
+
+  // If grading was done, produce graded output with mistake analysis
+  if (state.gradeResult && !state.gradeResult.isCorrect) {
+    const { generateGradedFourPartOutput } = await import('./four-part-output');
+    fourPartOutput = generateGradedFourPartOutput(raw, state.gradeResult);
+  } else {
+    const { generateFourPartOutput } = await import('./four-part-output');
+    fourPartOutput = generateFourPartOutput(raw);
+  }
 
   log.info('[SolveGraph] generateOutput: done');
   return { fourPartOutput };
