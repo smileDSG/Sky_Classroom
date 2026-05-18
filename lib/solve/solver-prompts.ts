@@ -35,7 +35,9 @@ confidence 表示你对答案的自信程度（0-1）。低于0.7表示不确定
   "steps": [{"label": "步骤1", "content": "...", "keyPoints": ["..."]}],
   "knowledgePoints": [{"name": "...", "description": "...", "difficulty": "easy"}],
   "similarQuestions": [{"problem": "...", "difficulty": 0.6, "knowledgePoint": "..."}]
-}`,
+}
+
+confidence 表示你对答案的自信程度（0-1）。低于0.7表示不确定。`,
 
   humanities: `你是一个文科解题专家（语文、历史、政治、地理人文部分）。请深入分析题目背景，给出有深度的解答。
 
@@ -47,7 +49,9 @@ confidence 表示你对答案的自信程度（0-1）。低于0.7表示不确定
   "steps": [{"label": "步骤1", "content": "...", "keyPoints": ["..."]}],
   "knowledgePoints": [{"name": "...", "description": "...", "difficulty": "easy"}],
   "similarQuestions": [{"problem": "...", "difficulty": 0.6, "knowledgePoint": "..."}]
-}`,
+}
+
+confidence 表示你对答案的自信程度（0-1）。低于0.7表示不确定。`,
 
   grading: `你是一个作业批改专家。请对比标准答案和用户答案，判断对错并分析错因。
 
@@ -72,6 +76,7 @@ export function buildSolverPrompt(
   problemImage?: string,
   userAnswer?: string,
   knowledgePoints?: string[],
+  standardAnswer?: string,
 ): string {
   const basePrompt = AGENT_SYSTEM_PROMPTS[agentType];
 
@@ -90,7 +95,7 @@ export function buildSolverPrompt(
     : '';
 
   if (agentType === 'grading') {
-    return `${basePrompt}${contextBlock}\n\n题目：${problemText}\n标准答案：见题目描述\n用户答案：${userAnswer ?? '未提供'}`;
+    return `${basePrompt}${contextBlock}\n\n题目：${problemText}\n标准答案：${standardAnswer ?? '未提供'}\n用户答案：${userAnswer ?? '未提供'}`;
   }
 
   return `${basePrompt}${contextBlock}\n\n题目：${problemText}`;

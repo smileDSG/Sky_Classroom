@@ -35,9 +35,12 @@ describe('buildSolverPrompt', () => {
       '2+2=?',
       undefined,
       '4',
+      undefined,
+      '2+2=4',
     );
     expect(prompt).toContain('4');
     expect(prompt).toContain('批改');
+    expect(prompt).toContain('2+2=4');
   });
 
   test('includes knowledge points context when provided', () => {
@@ -49,5 +52,46 @@ describe('buildSolverPrompt', () => {
       ['微积分', '导数'],
     );
     expect(prompt).toContain('微积分');
+  });
+
+  test('non-grading agents do not include user answer fields', () => {
+    const prompt = buildSolverPrompt('universal', 'test', 'img.png', 'wrong');
+    expect(prompt).not.toContain('用户答案');
+    expect(prompt).not.toContain('标准答案');
+  });
+
+  test('grading mode uses standardAnswer parameter', () => {
+    const prompt = buildSolverPrompt(
+      'grading',
+      '2+2=?',
+      undefined,
+      '5',
+      undefined,
+      '等于4',
+    );
+    expect(prompt).toContain('等于4');
+    expect(prompt).toContain('5');
+  });
+
+  test('grading without standardAnswer shows 未提供', () => {
+    const prompt = buildSolverPrompt(
+      'grading',
+      '2+2=?',
+      undefined,
+      '5',
+    );
+    expect(prompt).toContain('标准答案：未提供');
+  });
+
+  test('empty knowledge points array does not add context', () => {
+    const prompt = buildSolverPrompt(
+      'universal',
+      'test',
+      undefined,
+      undefined,
+      [],
+    );
+    expect(prompt).not.toContain('附加信息');
+    expect(prompt).not.toContain('相关知识点');
   });
 });
