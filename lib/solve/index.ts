@@ -15,3 +15,5 @@ export type {
   ImageRecognitionResult,
   RecognizedProblem,
 } from './types';
+
+export { buildSolverPrompt } from './solver-prompts';
