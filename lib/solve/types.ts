@@ -109,12 +109,15 @@ export interface QuestionBankEntry {
   id: string;
   problemHash: string;
   problemText: string;
+  problemImage?: string;
   answer: string;
   steps: string[];
   knowledgePoints: string[];
   agentId: SolverAgentType;
   solvedAt: Date;
   verified: boolean;
+  /** Runtime-only similarity score (not persisted) */
+  _similarity?: number;
 }
 
 // ── Recognition ───────────────────────────────────────────────────

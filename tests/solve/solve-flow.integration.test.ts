@@ -35,6 +35,26 @@ vi.mock('@/lib/ai/providers', () => ({
   },
 }));
 
+vi.mock('@/lib/solve/question-bank', () => ({
+  findSimilarQuestions: vi.fn().mockImplementation(async (problemText: string) => {
+    if (problemText === '1+1=?') {
+      return [{
+        id: 'qb_hit',
+        problemHash: 'hash',
+        problemText: '1+1=?',
+        answer: '2',
+        steps: ['直接计算'],
+        knowledgePoints: ['加法'],
+        agentId: 'universal',
+        solvedAt: Date.now(),
+        verified: true,
+        _similarity: 1,
+      }];
+    }
+    return [];
+  }),
+}));
+
 import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
 
 beforeEach(() => {
@@ -62,13 +82,12 @@ describe('solve graph integration', () => {
   test('question bank hit skips solving', async () => {
     const graph = createSolveGraph();
     const state = buildSolveInitialState('1+1=?');
-    state.fromQuestionBank = true;
 
     const result = await graph.invoke(state);
 
     expect(result.problemText).toBe('1+1=?');
     expect(result.fromQuestionBank).toBe(true);
-    expect(result.solution).toBeNull();
+    expect(result.solution).toBe('2');
     expect(result.fourPartOutput).not.toBeNull();
   });
 

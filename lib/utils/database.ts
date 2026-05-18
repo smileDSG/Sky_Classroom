@@ -188,6 +188,23 @@ export interface VoiceProfileRecord {
   updatedAt: number;
 }
 
+/**
+ * QuestionBank table - Solved questions for self-improvement lookup
+ */
+export interface QuestionBankRecord {
+  id: string; // PK: UUID
+  problemHash: string; // Normalized text hash for dedup
+  problemText: string;
+  problemImage?: string; // base64
+  answer: string;
+  steps: string[];
+  knowledgePoints: string[];
+  agentId: string;
+  solvedAt: number;
+  verified: boolean;
+  embedding?: number[]; // Reserved for future semantic similarity
+}
+
 /** Build the compound primary key for mediaFiles: `${stageId}:${elementId}` */
 export function mediaFileKey(stageId: string, elementId: string): string {
   return `${stageId}:${elementId}`;
@@ -214,6 +231,7 @@ class MAICDatabase extends Dexie {
   mediaFiles!: EntityTable<MediaFileRecord, 'id'>;
   generatedAgents!: EntityTable<GeneratedAgentRecord, 'id'>;
   voiceProfiles!: EntityTable<VoiceProfileRecord, 'id'>;
+  questionBank!: EntityTable<QuestionBankRecord, 'id'>;
 
   constructor() {
     super(DATABASE_NAME);
@@ -379,6 +397,22 @@ class MAICDatabase extends Dexie {
       mediaFiles: 'id, stageId, [stageId+type]',
       generatedAgents: 'id, stageId',
       voiceProfiles: 'id, providerId, kind, updatedAt',
+    });
+
+    // Version 11: Add questionBank table for Sky Classroom self-improvement.
+    this.version(11).stores({
+      stages: 'id, updatedAt',
+      scenes: 'id, stageId, order, [stageId+order]',
+      audioFiles: 'id, createdAt',
+      imageFiles: 'id, createdAt',
+      snapshots: '++id',
+      chatSessions: 'id, stageId, [stageId+createdAt]',
+      playbackState: 'stageId',
+      stageOutlines: 'stageId',
+      mediaFiles: 'id, stageId, [stageId+type]',
+      generatedAgents: 'id, stageId',
+      voiceProfiles: 'id, providerId, kind, updatedAt',
+      questionBank: 'id, problemHash, agentId, solvedAt',
     });
   }
 }

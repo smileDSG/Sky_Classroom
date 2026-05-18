@@ -27,3 +27,14 @@ export {
   afterSolve,
 } from './solve-graph';
 export { gradeAnswer, gradeAnswerSync } from './grader';
+export {
+  findSimilarQuestions,
+  saveToQuestionBank,
+  deleteQuestionBankEntry,
+  listQuestionBankEntries,
+  questionBankCount,
+  clearQuestionBank,
+  isProblemInBank,
+  hashProblemText,
+  textSimilarity,
+} from './question-bank';

@@ -30,18 +30,26 @@ const log = createLogger('SolveGraph');
  *
  * Looks up the problem in the question bank. If found, returns
  * the cached solution and skips to generateOutput.
- *
- * NOTE: Full implementation in A-004 (question-bank.ts).
- * This node is a placeholder that always returns "not found"
- * until A-004 is implemented.
  */
 async function checkQuestionBankNode(
   state: SolveGraphState,
   _config: LangGraphRunnableConfig,
 ): Promise<Partial<SolveGraphState>> {
-  log.info('[SolveGraph] checkQuestionBank: not yet implemented (A-004), skipping');
-  // Preserve initial state value until question bank is integrated
-  return { fromQuestionBank: state.fromQuestionBank ?? false };
+  const { findSimilarQuestions } = await import('./question-bank');
+  const matches = await findSimilarQuestions(state.problemText, 0.85);
+
+  if (matches.length > 0) {
+    log.info(`[SolveGraph] checkQuestionBank: hit (similarity=${matches[0]._similarity?.toFixed(2)})`);
+    const hit = matches[0];
+    return {
+      fromQuestionBank: true,
+      solution: hit.answer,
+      agentId: hit.agentId,
+    };
+  }
+
+  log.info('[SolveGraph] checkQuestionBank: miss');
+  return { fromQuestionBank: false };
 }
 
 /**
