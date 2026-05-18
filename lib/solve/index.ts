@@ -18,3 +18,11 @@ export type {
 
 export { buildSolverPrompt } from './solver-prompts';
 export { solveWithAgentNode, parseSolutionResponse } from './solver-agent';
+export { SolveGraphAnnotation } from './solve-graph-state';
+export type { SolveGraphState } from './solve-graph-state';
+export {
+  createSolveGraph,
+  buildSolveInitialState,
+  afterCheckBank,
+  afterSolve,
+} from './solve-graph';

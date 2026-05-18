@@ -22,31 +22,39 @@ import type {
 export const SolveGraphAnnotation = Annotation.Root({
   // Input fields
   problemText: Annotation<string>({
+    value: (_prev, next) => next,
     default: () => '',
   }),
   problemImage: Annotation<string | null>({
+    value: (_prev, next) => next,
     default: () => null,
   }),
   userAnswer: Annotation<string | null>({
+    value: (_prev, next) => next,
     default: () => null,
   }),
 
   // Routing
   agentId: Annotation<string>({
+    value: (_prev, next) => next,
     default: () => 'universal',
   }),
   selectedAgentId: Annotation<string | null>({
+    value: (_prev, next) => next,
     default: () => null,
   }),
   agentRoute: Annotation<SolverAgentType | null>({
+    value: (_prev, next) => next,
     default: () => null,
   }),
 
   // Output fields
   solution: Annotation<string | null>({
+    value: (_prev, next) => next,
     default: () => null,
   }),
   gradeResult: Annotation<GradeResult | null>({
+    value: (_prev, next) => next,
     default: () => null,
   }),
   votingResults: Annotation<VotingResult[]>({
@@ -54,14 +62,17 @@ export const SolveGraphAnnotation = Annotation.Root({
     default: () => [],
   }),
   fourPartOutput: Annotation<FourPartOutput | null>({
+    value: (_prev, next) => next,
     default: () => null,
   }),
   fromQuestionBank: Annotation<boolean>({
+    value: (_prev, next) => next,
     default: () => false,
   }),
 
   // Error handling
   error: Annotation<string | null>({
+    value: (_prev, next) => next,
     default: () => null,
   }),
 });

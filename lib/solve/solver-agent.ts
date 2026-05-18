@@ -12,6 +12,7 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import type { SolveGraphState } from './solve-graph-state';
 import type { SolverAgentType } from './types';
+import type { ProviderId } from '@/lib/ai/providers';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
@@ -22,7 +23,7 @@ const log = createLogger('SolveGraph');
 
 // ── Agent → provider/model mapping ───────────────────────────────
 
-const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: string; modelId: string }> = {
+const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> = {
   universal: { providerId: 'deepseek', modelId: 'deepseek-v4-pro' },
   science: { providerId: 'glm', modelId: 'glm-5.1' },
   humanities: { providerId: 'qwen', modelId: 'qwen3.6-max-preview' },
