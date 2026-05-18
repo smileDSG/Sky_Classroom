@@ -17,3 +17,4 @@ export type {
 } from './types';
 
 export { buildSolverPrompt } from './solver-prompts';
+export { solveWithAgentNode, parseSolutionResponse } from './solver-agent';
