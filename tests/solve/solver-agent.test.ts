@@ -24,7 +24,7 @@ import { callLLM } from '@/lib/ai/llm';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { getModel } from '@/lib/ai/providers';
 
-const mockModel = { modelId: 'deepseek-chat', provider: 'deepseek' };
+const mockModel = { model: {}, modelId: 'deepseek-chat', provider: 'deepseek' };
 
 beforeEach(() => {
   vi.resetAllMocks();

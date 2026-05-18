@@ -40,7 +40,8 @@ async function checkQuestionBankNode(
   _config: LangGraphRunnableConfig,
 ): Promise<Partial<SolveGraphState>> {
   log.info('[SolveGraph] checkQuestionBank: not yet implemented (A-004), skipping');
-  return { fromQuestionBank: false };
+  // Preserve initial state value until question bank is integrated
+  return { fromQuestionBank: state.fromQuestionBank ?? false };
 }
 
 /**

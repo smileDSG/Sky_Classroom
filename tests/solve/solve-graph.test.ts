@@ -21,7 +21,7 @@ vi.mock('@/lib/generation/json-repair', () => ({
 }));
 
 vi.mock('@/lib/ai/providers', () => ({
-  getModel: vi.fn().mockReturnValue({ modelId: 'test', provider: 'deepseek' }),
+  getModel: vi.fn().mockReturnValue({ model: {}, modelId: 'test', provider: 'deepseek' }),
   PROVIDERS: {
     deepseek: { id: 'deepseek', type: 'openai' },
     glm: { id: 'glm', type: 'openai' },
