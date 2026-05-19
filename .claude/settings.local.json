@@ -12,7 +12,10 @@
       "Bash(Get-Process -Name git -ErrorAction SilentlyContinue)",
       "Bash(Select-Object Id, ProcessName, CPU, StartTime)",
       "Bash(ssh -T -p 443 git@ssh.github.com)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(git pull *)",
+      "Bash(git diff *)",
+      "Bash(git commit *)"
     ]
   }
 }
