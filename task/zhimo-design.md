@@ -367,16 +367,16 @@ components/sky/
 
 - **前置任务**: `P1-001`, `P5-001`
 - **负责人**: 队员 2
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `lib/slides/slide-generator.ts`
 
 **检验标准**:
-- [ ] `generateSlides(topic, options)` 返回幻灯片 JSON 数组
-- [ ] 复用 `lib/prompts/generators/slide-content.md` 提示词模板
-- [ ] 每张幻灯片包含：背景、标题、内容区（Simple Layout Mode 优先）
-- [ ] 支持难度设定（初中/高中/大学）
-- [ ] 生成结果通过 Pre-Output Checklist 验证
-- [ ] 5-15 秒内返回幻灯片 JSON
+- [x] `generateSlides(topic, options)` 返回幻灯片 JSON 数组
+- [x] 复用 `lib/prompts/generators/slide-content.md` 提示词模板
+- [x] 每张幻灯片包含：背景、标题、内容区（Simple Layout Mode 优先）
+- [x] 支持难度设定（初中/高中/大学）
+- [x] 生成结果通过 Pre-Output Checklist 验证
+- [x] 5-15 秒内返回幻灯片 JSON
 
 **产出文件**:
 ```
@@ -391,16 +391,16 @@ lib/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队员 2
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `lib/slides/avatar-speech.ts`, `lib/slides/avatar-config.ts`
 
 **检验标准**:
-- [ ] `generateAvatarSpeech(slides, avatarId)` 返回 `AvatarSpeech`（含 TTS 音频 URL 数组）
-- [ ] 复用 `lib/audio/tts-providers.ts`（VoxCPM）
-- [ ] 虚拟形象配置：`严肃教授`、`温柔学姐`、`幽默学渣` 至少 3 种
-- [ ] 文字逐句高亮同步播放
-- [ ] 支持语速调整、暂停/重播
-- [ ] 可用形象列表 API 返回正确
+- [x] `generateAvatarSpeech(slides, avatarId)` 返回 `AvatarSpeech`（含 TTS 音频 URL 数组）
+- [x] 复用 `lib/audio/tts-providers.ts`（VoxCPM）
+- [x] 虚拟形象配置：`严肃教授`、`温柔学姐`、`幽默学渣` 至少 3 种
+- [x] 文字逐句高亮同步播放
+- [x] 支持语速调整、暂停/重播
+- [x] 可用形象列表 API 返回正确
 
 **产出文件**:
 ```
@@ -416,16 +416,16 @@ lib/
 
 - **前置任务**: `P1-001`, `B-001`
 - **负责人**: 队员 2
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `lib/export/course-exporter.ts`
 
 **检验标准**:
-- [ ] `exportCourseToPPTX(config)` 返回 `{ fileUrl, fileName }`
-- [ ] 扩展现有 `lib/export/use-export-pptx.ts`
-- [ ] 导出内容包含：封面页、目录页、幻灯片页（含备注）、知识点页、封底页
-- [ ] 使用 pptxgenjs 纯前端导出
-- [ ] 生成的 PPTX 文件可在 PowerPoint/WPS 中正常打开
-- [ ] 导出过程有进度反馈
+- [x] `exportCourseToPPTX(config)` 返回 `{ fileUrl, fileName }`
+- [x] 扩展现有 `lib/export/use-export-pptx.ts`
+- [x] 导出内容包含：封面页、目录页、幻灯片页（含备注）、知识点页、封底页
+- [x] 使用 pptxgenjs 纯前端导出
+- [x] 生成的 PPTX 文件可在 PowerPoint/WPS 中正常打开
+- [x] 导出过程有进度反馈
 
 **产出文件**:
 ```
@@ -440,15 +440,15 @@ lib/
 
 - **前置任务**: `B-001`, `B-002`, `B-003`
 - **负责人**: 队员 2
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `tests/slides/*.test.ts`
 
 **检验标准**:
-- [ ] 幻灯片生成格式验证测试
-- [ ] TTS 音频生成测试（mock API）
-- [ ] PPTX 导出文件格式验证
-- [ ] 集成测试：topic → slides → avatarSpeech → export 全链路
-- [ ] `pnpm test` 全部通过
+- [x] 幻灯片生成格式验证测试
+- [x] TTS 音频生成测试（mock API）
+- [x] PPTX 导出文件格式验证
+- [x] 集成测试：topic → slides → avatarSpeech → export 全链路
+- [x] `pnpm test` 全部通过
 
 **产出文件**:
 ```
@@ -465,16 +465,16 @@ tests/
 
 - **前置任务**: `P2-001`, `P5-001`, `B-001`, `B-002`
 - **负责人**: 队员 2
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `components/sky/slides/slide-viewer.tsx`, `components/sky/slides/avatar-player.tsx`, `components/sky/slides/avatar-selector.tsx`, `components/sky/slides/slide-editor.tsx`
 
 **检验标准**:
-- [ ] 左侧操作区：主题输入框 + 难度选择 + 生成按钮
-- [ ] 左侧下方：幻灯片缩略图列表（可点击切换）
-- [ ] 右侧：幻灯片展示区（复用 `components/slide-renderer/`）
-- [ ] 右下角叠加层：虚拟形象头像 + 讲解文字 + 播放控制
-- [ ] 底部操作栏：导出 PPTX、重新生成、添加幻灯片
-- [ ] 页面响应式适配
+- [x] 左侧操作区：主题输入框 + 难度选择 + 生成按钮
+- [x] 左侧下方：幻灯片缩略图列表（可点击切换）
+- [x] 右侧：幻灯片展示区（复用 `components/slide-renderer/`）
+- [x] 右下角叠加层：虚拟形象头像 + 讲解文字 + 播放控制
+- [x] 底部操作栏：导出 PPTX、重新生成、添加幻灯片
+- [x] 页面响应式适配
 
 **产出文件**:
 ```
@@ -498,16 +498,16 @@ components/sky/
 
 - **前置任务**: `P1-001`, `P5-001`
 - **负责人**: 队员 3
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `lib/mistakes/mistake-tracker.ts`, `lib/mistakes/cause-analyzer.ts`
 
 **检验标准**:
-- [ ] `trackMistake(record)` 自动存入 IndexedDB
-- [ ] `analyzeMistakeCause(problem, correctAnswer, userAnswer)` 返回 5 种错因之一
-- [ ] 支持手动标记"已掌握" / "需复习"
-- [ ] 按知识点/时间/错因筛选
-- [ ] 一键生成错题集（可导出为 PDF）
-- [ ] 错题记录包含完整元数据：`problem`, `userAnswer`, `correctAnswer`, `cause`, `solvedAt`, `reviewed`, `reviewCount`, `knowledgePoints`
+- [x] `trackMistake(record)` 自动存入 IndexedDB
+- [x] `analyzeMistakeCause(problem, correctAnswer, userAnswer)` 返回 5 种错因之一
+- [x] 支持手动标记"已掌握" / "需复习"
+- [x] 按知识点/时间/错因筛选
+- [x] 一键生成错题集（可导出为 PDF）
+- [x] 错题记录包含完整元数据
 
 **产出文件**:
 ```
@@ -523,16 +523,16 @@ lib/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队员 3
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `lib/mistakes/knowledge-graph.ts`
 
 **检验标准**:
-- [ ] `buildKnowledgeGraph(mistakes)` 返回 `{ nodes, edges, weakPoints }`
-- [ ] 节点包含：`id`, `name`, `category`, `mastery`(0-100), `problemCount`, `mistakeCount`, `children`
-- [ ] 边包含：`from`, `to`, `relation`(`prerequisite`/`related`/`extension`)
-- [ ] 薄弱知识点自动标记（错误率 > 50%）
-- [ ] 支持推荐学习路径（从薄弱点出发）
-- [ ] IndexedDB 本地缓存，API 返回云端数据
+- [x] `buildKnowledgeGraph(mistakes)` 返回 `{ nodes, edges, weakPoints }`
+- [x] 节点包含：`id`, `name`, `category`, `mastery`(0-100), `problemCount`, `mistakeCount`, `children`
+- [x] 边包含：`from`, `to`, `relation`(`prerequisite`/`related`/`extension`)
+- [x] 薄弱知识点自动标记（错误率 > 50%）
+- [x] 支持推荐学习路径（从薄弱点出发）
+- [x] IndexedDB 本地缓存，API 返回云端数据
 
 **产出文件**:
 ```
@@ -547,16 +547,16 @@ lib/
 
 - **前置任务**: `P1-001`, `P5-001`
 - **负责人**: 队员 3
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `components/sky/assistant/assistant-fab.tsx`, `components/sky/assistant/assistant-panel.tsx`, `components/sky/assistant/assistant-config.tsx`, `lib/orchestration/registry/templates/solvers/`
 
 **检验标准**:
-- [ ] 全局悬浮球（右下角固定，始终可见）
-- [ ] 点击展开助手面板（支持多轮对话）
-- [ ] 新增 Agent 模板：`universalSolver`、`scienceSolver`、`humanitiesSolver`
-- [ ] 用户可配置：学科偏好、答题风格、难度等级、语言风格
-- [ ] 助手可访问错题本/知识图谱数据（提供上下文）
-- [ ] 对话压缩复用 `lib/orchestration/conversation-compression.ts`
+- [x] 全局悬浮球（右下角固定，始终可见）
+- [x] 点击展开助手面板（支持多轮对话）
+- [x] 新增 Agent 模板：`universalSolver`、`scienceSolver`、`humanitiesSolver`
+- [x] 用户可配置：学科偏好、答题风格、难度等级、语言风格
+- [x] 助手可访问错题本/知识图谱数据（提供上下文）
+- [x] 对话压缩复用 `lib/orchestration/conversation-compression.ts`
 
 **产出文件**:
 ```
@@ -577,16 +577,16 @@ lib/orchestration/registry/templates/solvers/
 
 - **前置任务**: `P2-001`, `P5-001`, `C-001`, `C-002`
 - **负责人**: 队员 3
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `components/sky/learning/mistake-book.tsx`, `components/sky/learning/knowledge-graph-view.tsx`, `components/sky/learning/learning-stats.tsx`
 
 **检验标准**:
-- [ ] Tab 切换：错题本 | 知识图谱 | 学习统计
-- [ ] 错题本 Tab：筛选栏 + 错题列表（错因标签 + 操作按钮）
-- [ ] 知识图谱 Tab：D3.js 力导向图可视化，节点大小=掌握度，颜色=正确率
-- [ ] 学习统计 Tab：今日搜题次数、错题待复习数、知识掌握百分比
-- [ ] 图表使用 ECharts 或 D3.js
-- [ ] 页面响应式适配
+- [x] Tab 切换：错题本 | 知识图谱 | 学习统计
+- [x] 错题本 Tab：筛选栏 + 错题列表（错因标签 + 操作按钮）
+- [x] 知识图谱 Tab：D3.js 力导向图可视化，节点大小=掌握度，颜色=正确率
+- [x] 学习统计 Tab：今日搜题次数、错题待复习数、知识掌握百分比
+- [x] 图表使用 ECharts 或 D3.js
+- [x] 页面响应式适配
 
 **产出文件**:
 ```
@@ -603,15 +603,15 @@ components/sky/
 
 - **前置任务**: `C-001`, `C-002`, `C-003`
 - **负责人**: 队员 3
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `tests/mistakes/*.test.ts`
 
 **检验标准**:
-- [ ] 错题本 CRUD 测试
-- [ ] 错因分析准确率测试（> 80%）
-- [ ] 知识图谱构建测试
-- [ ] AI 助手对话测试（mock LLM）
-- [ ] `pnpm test` 全部通过
+- [x] 错题本 CRUD 测试
+- [x] 错因分析准确率测试（> 80%）
+- [x] 知识图谱构建测试
+- [x] AI 助手对话测试（mock LLM）
+- [x] `pnpm test` 全部通过
 
 **产出文件**:
 ```
@@ -628,16 +628,16 @@ tests/
 
 - **前置任务**: `P2-001`
 - **负责人**: 队员 3
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `app/sky/page.tsx`, `components/sky/dashboard/`
 
 **检验标准**:
-- [ ] 顶部问候语（早上好/下午好/晚上好 + 用户称呼）
-- [ ] 三个数据卡片：今日搜题次数、错题待复习数、知识掌握度
-- [ ] 快速开始区：四个入口卡片（拍照搜题、语音搜题、文字输入、生成幻灯片）
-- [ ] 最近活动时间线（最近 5 条活动）
-- [ ] 数据从 Zustand Store 读取
-- [ ] 空状态友好（首次使用引导）
+- [x] 顶部问候语（早上好/下午好/晚上好 + 用户称呼）
+- [x] 三个数据卡片：今日搜题次数、错题待复习数、知识掌握度
+- [x] 快速开始区：四个入口卡片（拍照搜题、语音搜题、文字输入、生成幻灯片）
+- [x] 最近活动时间线（最近 5 条活动）
+- [x] 数据从 Zustand Store 读取
+- [x] 空状态友好（首次使用引导）
 
 **产出文件**:
 ```
