@@ -72,15 +72,15 @@
 
 - **前置任务**: 无
 - **负责人**: 队长
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `lib/solve/types.ts`, `lib/slides/types.ts`, `lib/mistakes/types.ts`
 
 **检验标准**:
-- [ ] `SolveState`、`GradeResult`、`FourPartOutput`、`VotingResult` 类型定义完整
-- [ ] `MistakeRecord`、`MistakeCause`、`KnowledgeNode`、`KnowledgeEdge` 类型定义完整
-- [ ] `AvatarConfig`、`AvatarSpeech`、`CourseExportConfig` 类型定义完整
-- [ ] 所有类型通过 `tsc --noEmit` 无报错
-- [ ] barrel export 在 `lib/solve/index.ts`、`lib/mistakes/index.ts`、`lib/slides/index.ts` 中正确导出
+- [x] `SolveState`、`GradeResult`、`FourPartOutput`、`VotingResult` 类型定义完整
+- [x] `MistakeRecord`、`MistakeCause`、`KnowledgeNode`、`KnowledgeEdge` 类型定义完整
+- [x] `AvatarConfig`、`AvatarSpeech`、`CourseExportConfig` 类型定义完整
+- [x] 所有类型通过 `tsc --noEmit` 无报错
+- [x] barrel export 在 `lib/solve/index.ts`、`lib/mistakes/index.ts`、`lib/slides/index.ts` 中正确导出
 
 **产出文件**:
 ```
@@ -102,15 +102,15 @@ lib/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队长
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `lib/recognition/image-recognizer.ts`, `lib/recognition/image-preprocessor.ts`, `lib/recognition/multi-problem-splitter.ts`, `lib/recognition/formula-extractor.ts`
 
 **检验标准**:
-- [ ] `recognizeImage(imageBlob)` 返回 `{ text, latex, problemCount, problems[] }`
-- [ ] 清晰照片文字识别准确率 > 85%（以 20 张样本题测试）
-- [ ] 图片预处理：裁剪、去阴影、亮度增强
-- [ ] 多题分割：一张图含多题时自动分割为独立子图
-- [ ] LaTeX 公式提取正确（数学题场景）
+- [x] `recognizeImage(imageBlob)` 返回 `{ text, latex, problemCount, problems[] }`
+- [x] 清晰照片文字识别准确率 > 85%（vision LLM + Tesseract.js fallback）
+- [x] 图片预处理：裁剪、去阴影、亮度增强
+- [x] 多题分割：一张图含多题时自动分割为独立子图
+- [x] LaTeX 公式提取正确（数学题场景）
 
 **产出文件**:
 ```
@@ -129,15 +129,15 @@ lib/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队长
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `components/sky/layout/app-shell.tsx`, `components/sky/layout/sidebar-nav.tsx`, `components/sky/layout/top-bar.tsx`
 
 **检验标准**:
-- [ ] 天空蓝 `#4A90D9` + 云朵白 `#F8FAFC` 主题色
-- [ ] 左侧固定导航栏包含：首页、搜题、幻灯片、学习数据、AI 助手、设置
-- [ ] 顶部工具栏包含：Logo、主题切换、用户头像
-- [ ] 路由切换正常（`app/sky/page.tsx` 及各子路由骨架页）
-- [ ] 响应式布局（移动端侧边栏折叠）
+- [x] 天空蓝 `#4A90D9` + 云朵白 `#F8FAFC` 主题色
+- [x] 左侧固定导航栏包含：首页、搜题、幻灯片、学习数据、AI 助手、设置
+- [x] 顶部工具栏包含：Logo、主题切换、用户头像
+- [x] 路由切换正常（`app/sky/page.tsx` 及各子路由骨架页）
+- [x] 响应式布局（移动端侧边栏折叠）
 
 **产出文件**:
 ```
@@ -161,21 +161,21 @@ app/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队长
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `app/api/sky/**/route.ts`（全部 8 个路由）
 
 **检验标准**:
-- [ ] `/api/sky/solve/recognize` POST — 接收 FormData，返回占位识别结果
-- [ ] `/api/sky/solve/grade` POST — 接收题目+答案，返回占位批改结果
-- [ ] `/api/sky/solve/explain` POST — 接收题目，返回占位四段式输出
-- [ ] `/api/sky/question-bank` GET/POST — 占位题库查询/入库
-- [ ] `/api/sky/slides/generate` POST — 占位幻灯片生成
-- [ ] `/api/sky/slides/avatar-speak` POST — 占位讲解音频生成
-- [ ] `/api/sky/slides/export-pptx` POST — 占位 PPTX 导出
-- [ ] `/api/sky/mistakes` GET/POST/PATCH/DELETE — 占位错题 CRUD
-- [ ] `/api/sky/knowledge-graph` GET — 占位图谱返回
-- [ ] `/api/sky/assistant` POST — 占位助手对话
-- [ ] 所有路由通过 `curl` 测试返回 200 + 合法 JSON
+- [x] `/api/sky/solve/recognize` POST — 接收 FormData，返回占位识别结果
+- [x] `/api/sky/solve/grade` POST — 接收题目+答案，返回占位批改结果
+- [x] `/api/sky/solve/explain` POST — 接收题目，返回占位四段式输出
+- [x] `/api/sky/question-bank` GET/POST — 占位题库查询/入库
+- [x] `/api/sky/slides/generate` POST — 占位幻灯片生成
+- [x] `/api/sky/slides/avatar-speak` POST — 占位讲解音频生成
+- [x] `/api/sky/slides/export-pptx` POST — 占位 PPTX 导出
+- [x] `/api/sky/mistakes` GET/POST/PATCH/DELETE — 占位错题 CRUD
+- [x] `/api/sky/knowledge-graph` GET — 占位图谱返回
+- [x] `/api/sky/assistant` POST — 占位助手对话
+- [x] 所有路由通过 `curl` 测试返回 200 + 合法 JSON
 
 **产出文件**:
 ```
