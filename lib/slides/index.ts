@@ -11,3 +11,15 @@ export type {
   CourseExportConfig,
   CourseExportResult,
 } from './types';
+
+export { generateSlides } from './slide-generator';
+
+export { AVATAR_CONFIGS, getAvatarById } from './avatar-config';
+export {
+  generateAvatarSpeech,
+  extractTextFromSlides,
+  extractTextFromSlideElements,
+  splitSentences,
+  estimateAudioDuration,
+} from './avatar-speech';
+export type { TTSGenerateFn, TTSGenResult, AvatarSpeechOptions } from './avatar-speech';

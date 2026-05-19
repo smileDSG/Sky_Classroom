@@ -35,7 +35,7 @@ export interface AvatarSpeech {
 // ── Slide generation ─────────────────────────────────────────────
 
 export interface SlideGenerationOptions {
-  topic: string;
+  topic?: string;
   difficulty?: 'junior' | 'senior' | 'college';
   slideCount?: number;
   language?: string;

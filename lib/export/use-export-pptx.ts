@@ -27,12 +27,21 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ExportPPTX');
 
+<<<<<<< HEAD
 const DEFAULT_FONT_SIZE = 16;
 const DEFAULT_FONT_FAMILY = 'Microsoft YaHei';
 
 // ── Color formatting ──
 
 function formatColor(_color: string) {
+=======
+export const DEFAULT_FONT_SIZE = 16;
+export const DEFAULT_FONT_FAMILY = 'Microsoft YaHei';
+
+// ── Color formatting ──
+
+export function formatColor(_color: string) {
+>>>>>>> 8baf4d3 (feat: Sky Classroom Module B (B-001~B-005) complete)
   if (!_color) {
     return { alpha: 0, color: '#000000' };
   }
@@ -46,7 +55,11 @@ type FormatColor = ReturnType<typeof formatColor>;
 
 // ── HTML → pptxgenjs TextProps ──
 
+<<<<<<< HEAD
 function formatHTML(html: string, ratioPx2Pt: number) {
+=======
+export function formatHTML(html: string, ratioPx2Pt: number) {
+>>>>>>> 8baf4d3 (feat: Sky Classroom Module B (B-001~B-005) complete)
   const ast = toAST(html);
   let bulletFlag = false;
   let indent = 0;
@@ -205,7 +218,11 @@ type Points = Array<
   | { close: true }
 >;
 
+<<<<<<< HEAD
 function formatPoints(points: SvgPoints, ratioPx2Inch: number, scale = { x: 1, y: 1 }): Points {
+=======
+export function formatPoints(points: SvgPoints, ratioPx2Inch: number, scale = { x: 1, y: 1 }): Points {
+>>>>>>> 8baf4d3 (feat: Sky Classroom Module B (B-001~B-005) complete)
   return points.map((point) => {
     if (point.close !== undefined) {
       return { close: true };
@@ -249,7 +266,11 @@ function formatPoints(points: SvgPoints, ratioPx2Inch: number, scale = { x: 1, y
 
 // ── Shadow config ──
 
+<<<<<<< HEAD
 function getShadowOption(shadow: PPTElementShadow, ratioPx2Pt: number): pptxgen.ShadowProps {
+=======
+export function getShadowOption(shadow: PPTElementShadow, ratioPx2Pt: number): pptxgen.ShadowProps {
+>>>>>>> 8baf4d3 (feat: Sky Classroom Module B (B-001~B-005) complete)
   const c = formatColor(shadow.color);
   const { h, v } = shadow;
 
@@ -307,7 +328,11 @@ const dashTypeMap: Record<string, string> = {
   dotted: 'sysDot',
 };
 
+<<<<<<< HEAD
 function getOutlineOption(outline: PPTElementOutline, ratioPx2Pt: number): pptxgen.ShapeLineProps {
+=======
+export function getOutlineOption(outline: PPTElementOutline, ratioPx2Pt: number): pptxgen.ShapeLineProps {
+>>>>>>> 8baf4d3 (feat: Sky Classroom Module B (B-001~B-005) complete)
   const c = formatColor(outline?.color || '#000000');
   return {
     color: c.color,
@@ -319,7 +344,11 @@ function getOutlineOption(outline: PPTElementOutline, ratioPx2Pt: number): pptxg
 
 // ── Link config ──
 
+<<<<<<< HEAD
 function getLinkOption(link: PPTElementLink, slides: Slide[]): pptxgen.HyperlinkProps | null {
+=======
+export function getLinkOption(link: PPTElementLink, slides: Slide[]): pptxgen.HyperlinkProps | null {
+>>>>>>> 8baf4d3 (feat: Sky Classroom Module B (B-001~B-005) complete)
   const { type, target } = link;
   if (type === 'web') return { url: target };
   if (type === 'slide') {
@@ -347,7 +376,11 @@ function isSVGImage(url: string) {
  * Extract speaker notes text from a scene's actions.
  * Concatenates speech text and action labels into plain text.
  */
+<<<<<<< HEAD
 function buildSpeakerNotes(scene: Scene): string {
+=======
+export function buildSpeakerNotes(scene: Scene): string {
+>>>>>>> 8baf4d3 (feat: Sky Classroom Module B (B-001~B-005) complete)
   if (!scene.actions || scene.actions.length === 0) return '';
 
   const parts: string[] = [];
