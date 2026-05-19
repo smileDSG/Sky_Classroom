@@ -44,9 +44,11 @@ lib/server/
     cors.ts            # CORS 配置
     sky-rate-limiters.ts  # 天空课堂速率限制器
 ```
+
 app/api/
-  health/
-    route.ts          # 健康检查端点
+health/
+route.ts          # 健康检查端点
+
 ```
 
 ***
@@ -70,18 +72,20 @@ app/api/
 **产出文件：**
 
 ```
+
 lib/storage/
-  index.ts              # barrel exports（已更新）
-  storage-types.ts      # 存储接口定义（新增）
-  indexeddb-provider.ts # IndexedDB 适配器（新增）
-  local-storage-provider.ts # localStorage 适配器（新增）
-  memory-provider.ts    # 内存回退（新增）
-  storage-factory.ts    # 工厂函数 + 自动降级（新增）
-  migration.ts          # 数据迁移管理器（新增）
-  dao/                  # 数据访问对象（新增）
-    question-bank.ts    # 题库数据访问
-    mistakes.ts         # 错题本数据访问
-    knowledge-graph.ts  # 知识图谱数据访问
+index.ts              # barrel exports（已更新）
+storage-types.ts      # 存储接口定义（新增）
+indexeddb-provider.ts # IndexedDB 适配器（新增）
+local-storage-provider.ts # localStorage 适配器（新增）
+memory-provider.ts    # 内存回退（新增）
+storage-factory.ts    # 工厂函数 + 自动降级（新增）
+migration.ts          # 数据迁移管理器（新增）
+dao/                  # 数据访问对象（新增）
+question-bank.ts    # 题库数据访问
+mistakes.ts         # 错题本数据访问
+knowledge-graph.ts  # 知识图谱数据访问
+
 ```
 
 ***
@@ -105,20 +109,22 @@ lib/storage/
 
 **检验标准：**
 
-- [ ] 接收 `FormData` 图片上传
-- [ ] 调用视觉 LLM（GLM / Qwen / Anthropic 多提供商）
-- [ ] 返回识别文本 + LaTeX 公式
-- [ ] 图片格式校验（JPEG / PNG / WebP）
-- [ ] 图片大小限制（≤ 10MB）
+- [ ] 接收 `FormData` 图片上传 — `app/api/sky/solve/recognize/route.ts`
+- [ ] 调用视觉 LLM（GLM / Qwen / Anthropic 多提供商）— `lib/ai/providers.ts` + `lib/ai/llm.ts`
+- [ ] 返回识别文本 + LaTeX 公式 — `lib/recognition/formula-extractor.ts`
+- [ ] 图片格式校验（JPEG / PNG / WebP）— `lib/recognition/image-validator.ts`
+- [ ] 图片大小限制（≤ 10MB）— `lib/recognition/image-validator.ts`
 
 **产出文件：**
 
 ```
+
 app/api/sky/solve/recognize/
-  route.ts            # 图片识别端点
+route.ts            # 图片识别端点
 lib/recognition/
-  formula-extractor.ts# LaTeX 公式提取
-  image-validator.ts  # 图片格式/大小校验
+formula-extractor.ts# LaTeX 公式提取
+image-validator.ts  # 图片格式/大小校验
+
 ```
 
 ***
@@ -133,23 +139,18 @@ lib/recognition/
 
 **检验标准：**
 
-- [ ] LangGraph 解题流程（checkQuestionBank → routeToAgent → solveWithAgent → generateOutput）
-- [ ] 四段式 JSON 输出格式
-- [ ] 多 Agent 路由（science / humanities / universal）
-- [ ] 题库缓存命中检测
-- [ ] 解题时间统计
+- [ ] LangGraph 解题流程（checkQuestionBank → routeToAgent → solveWithAgent → generateOutput）— `lib/solve/solve-graph.ts`
+- [ ] 四段式 JSON 输出格式 — `lib/solve/four-part-output.ts`
+- [ ] 多 Agent 路由（science / humanities / universal）— `lib/solve/solver-agent.ts`
+- [ ] 题库缓存命中检测 — `lib/storage/dao/question-bank.ts`
+- [ ] 解题时间统计 — `lib/solve/solve-graph.ts`
 
 **产出文件：**
 
 ```
-app/api/sky/solve/explain/
-  route.ts            # 解题端点
-lib/solve/
-  solve-graph.ts      # LangGraph 流程定义
-  solver-agent.ts     # 解题 Agent
-  solver-prompts.ts   # 解题提示词
-  four-part-output.ts # 四段式输出格式化
-  types.ts            # 解题类型定义
+
+<br />
+
 ```
 
 ***
@@ -164,20 +165,18 @@ lib/solve/
 
 **检验标准：**
 
-- [ ] 接收 problem + correctAnswer + userAnswer
-- [ ] LLM 判断正误 + 错误类型分类
-- [ ] 分步打分（partial credit）
-- [ ] 错误原因分析（calculation / concept / reasoning）
-- [ ] 批改结果存入错题本
+- [ ] 接收 problem + correctAnswer + userAnswer — `app/api/sky/solve/grade/route.ts`
+- [ ] LLM 判断正误 + 错误类型分类 — `lib/solve/grader.ts`
+- [ ] 分步打分（partial credit）— `lib/solve/grader.ts`
+- [ ] 错误原因分析（calculation / concept / reasoning）— `lib/solve/error-classifier.ts`
+- [ ] 批改结果存入错题本 — `lib/storage/dao/mistakes.ts`
 
 **产出文件：**
 
 ```
-app/api/sky/solve/grade/
-  route.ts            # 批改端点
-lib/solve/
-  grader.ts           # 批改引擎
-  error-classifier.ts # 错误类型分类
+
+<br />
+
 ```
 
 ***
@@ -192,19 +191,18 @@ lib/solve/
 
 **检验标准：**
 
-- [ ] 模糊搜索（问题文本相似度匹配）
-- [ ] 按知识点 / Agent 类型筛选
-- [ ] 新题目入库（去重检测）
-- [ ] 已验证题目标记
-- [ ] 分页 + 计数
+- [ ] 模糊搜索（问题文本相似度匹配）— `lib/storage/dao/question-bank.ts`
+- [ ] 按知识点 / Agent 类型筛选 — `lib/storage/dao/question-bank.ts`
+- [ ] 新题目入库（去重检测）— `app/api/sky/question-bank/route.ts`
+- [ ] 已验证题目标记 — `lib/storage/dao/question-bank.ts`
+- [ ] 分页 + 计数 — `lib/storage/dao/question-bank.ts`
 
 **产出文件：**
 
 ```
-app/api/sky/question-bank/
-  route.ts            # GET 查询 + POST 入库
-lib/storage/dao/
-  question-bank.ts    # 题库数据访问（复用 P1-002 产出）
+
+<br />
+
 ```
 
 ***
@@ -228,20 +226,17 @@ lib/storage/dao/
 
 **检验标准：**
 
-- [ ] 接收 topic / difficulty / slideCount 参数
-- [ ] LLM 生成幻灯片大纲 + 内容
-- [ ] 支持多种布局（title-content / quiz / image-caption）
-- [ ] 返回结构化 slide 数组
+- [ ] 接收 topic / difficulty / slideCount 参数 — `app/api/sky/slides/generate/route.ts`
+- [ ] LLM 生成幻灯片大纲 + 内容 — `lib/slides/slide-generator.ts`
+- [ ] 支持多种布局（title-content / quiz / image-caption）— `lib/slides/layouts.ts`
+- [ ] 返回结构化 slide 数组 — `lib/slides/types.ts`
 
 **产出文件：**
 
 ```
-app/api/sky/slides/generate/
-  route.ts            # 生成端点
-lib/slides/
-  slide-generator.ts  # 幻灯片生成引擎
-  layouts.ts          # 布局模板
-  types.ts            # 幻灯片类型定义
+
+<br />
+
 ```
 
 ***
@@ -256,20 +251,18 @@ lib/slides/
 
 **检验标准：**
 
-- [ ] 接收 slides 数组 + avatarId
-- [ ] 为每张幻灯片生成讲解词
-- [ ] TTS 合成（调用语音提供商）
-- [ ] 返回 audioUrl + 高亮标记
-- [ ] 支持多种虚拟形象风格
+- [ ] 接收 slides 数组 + avatarId — `app/api/sky/slides/avatar-speak/route.ts`
+- [ ] 为每张幻灯片生成讲解词 — `lib/slides/speech-script.ts`
+- [ ] TTS 合成（调用语音提供商）— `lib/slides/avatar-speech.ts`
+- [ ] 返回 audioUrl + 高亮标记 — `lib/slides/avatar-speech.ts`
+- [ ] 支持多种虚拟形象风格 — `lib/slides/avatar-config.ts`
 
 **产出文件：**
 
 ```
-app/api/sky/slides/avatar-speak/
-  route.ts            # 讲解端点
-lib/slides/
-  avatar-speech.ts    # 形象讲解引擎
-  speech-script.ts    # 讲解词生成
+
+<br />
+
 ```
 
 ***
@@ -284,76 +277,17 @@ lib/slides/
 
 **检验标准：**
 
-- [ ] 接收 slides + 可选 avatar 演讲备注
-- [ ] 生成 .pptx 文件（使用 pptxgenjs 或类似库）
-- [ ] 支持演讲备注写入
-- [ ] 返回 blob URL 供下载
+- [ ] 接收 slides + 可选 avatar 演讲备注 — `app/api/sky/slides/export-pptx/route.ts`
+- [ ] 生成 .pptx 文件（使用 pptxgenjs 或类似库）— `lib/slides/pptx-exporter.ts`
+- [ ] 支持演讲备注写入 — `lib/slides/pptx-exporter.ts`
+- [ ] 返回 blob URL 供下载 — `app/api/sky/slides/export-pptx/route.ts`
 
 **产出文件：**
 
 ```
-app/api/sky/slides/export-pptx/
-  route.ts            # 导出端点
-lib/slides/
-  pptx-exporter.ts    # PPTX 导出引擎
-```
 
-***
+<br />
 
-### `B-005` NPC 头像系统
-
-> 统一所有 NPC 角色的头像资源 + 配置 + 展示
-
-- **前置任务**：`P1-001`
-- **负责人**：队员2
-- **状态**：🔴 未开始
-
-**涉及范围：**
-
-当前系统中存在两类 NPC 头像，需要统一设计：
-
-| NPC 类型 | 位置 | 当前头像文件 |
-| -------- | ---- | ----------- |
-| 幻灯片形象（严肃教授/温柔学姐/幽默学渣） | `lib/slides/avatar-config.ts` | `/avatars/teacher.png`, `/avatars/assist.png`, `/avatars/clown.png` |
-| 智能体 NPC（teacher/assistant/4 学生） | `lib/orchestration/registry/templates/` | 同上 + `/avatars/curious.png` 等 |
-
-**检验标准：**
-
-- [ ] 设计/替换所有 NPC 头像资源（至少 7 个：teacher/assistant/curious/analytical/creative/note-taker/clown）
-- [ ] 统一头像尺寸规范（推荐 256x256 或 512x512 PNG）
-- [ ] 更新 `avatar-config.ts` 中的 `avatarUrl` 指向
-- [ ] 更新 `registry/templates/` 中所有 agent template 的 `avatar` 字段
-- [ ] 头像选择器 UI 适配（`avatar-selector.tsx`）
-- [ ] 聊天消息气泡中的 NPC 头像显示适配
-- [ ] 智能体选择行（`agent-selector-row.tsx`）头像适配
-- [ ] 新增：NPC 表情状态（开心/思考/困惑/正确/错误）可选扩展
-
-**产出文件：**
-
-```
-public/avatars/
-  teacher.png         # 教师 NPC
-  assistant.png       # 助教 NPC
-  curious.png         # 好奇学生 NPC
-  analytical.png      # 分析学生 NPC
-  creative.png        # 创意学生 NPC
-  note-taker.png      # 笔记学生 NPC
-  clown.png           # 幽默学渣 NPC
-lib/slides/
-  avatar-config.ts    # 更新头像路径
-lib/orchestration/registry/templates/
-  teacher.ts          # 更新 avatar 字段
-  assistant.ts        # 更新 avatar 字段
-  students/
-    *.ts              # 更新所有学生模板 avatar 字段
-components/
-  sky/slides/
-    avatar-selector.tsx  # UI 适配
-  chat/
-    chat-session.tsx     # 聊天头像适配
-  agent/
-    agent-bar/
-      agent-selector-row.tsx  # 选择行适配
 ```
 
 ***
@@ -368,17 +302,16 @@ components/
 
 **检验标准：**
 
-- [ ] 返回预定义的虚拟形象列表
-- [ ] 每个形象包含 id / name / description / style
-- [ ] 支持扩展新形象
+- [ ] 返回预定义的虚拟形象列表 — `app/api/sky/slides/avatars/route.ts`
+- [ ] 每个形象包含 id / name / description / style — `lib/slides/avatar-presets.ts`
+- [ ] 支持扩展新形象 — `lib/slides/avatar-config.ts`
 
 **产出文件：**
 
 ```
-app/api/sky/slides/avatars/
-  route.ts            # 形象列表端点
-lib/slides/
-  avatar-presets.ts   # 预设形象数据
+
+<br />
+
 ```
 
 ***
@@ -411,72 +344,9 @@ lib/slides/
 **产出文件：**
 
 ```
-app/api/sky/mistakes/
-  route.ts            # 统一端点（GET/POST/PATCH/DELETE）
-lib/storage/dao/
-  mistakes.ts         # 错题本数据访问（复用 P1-002 产出）
-lib/mistakes/
-  mistake-types.ts    # 错题类型定义
-  review-tracker.ts   # 复习追踪
-```
 
-***
+<br />
 
-### `C-002` 知识图谱 API
-
-> `GET /api/sky/knowledge-graph` — 生成知识点关系图 + 掌握度分析
-
-- **前置任务**：`P1-002` + `C-001`（依赖错题本数据）
-- **负责人**：队员3
-- **状态**：🔴 未开始
-
-**检验标准：**
-
-- [ ] 从题库 + 错题本数据构建知识图谱
-- [ ] 节点包含：知识点名称 / 分类 / 掌握度 / 题数 / 错题数
-- [ ] 边包含：前置关系 / 关联关系
-- [ ] 薄弱点自动识别
-- [ ] 返回 graphviz / d3 兼容格式
-
-**产出文件：**
-
-```
-app/api/sky/knowledge-graph/
-  route.ts            # 知识图谱端点
-lib/knowledge/
-  graph-builder.ts    # 图谱构建引擎
-  mastery-calculator.ts # 掌握度计算
-  weak-point-detector.ts # 薄弱点检测
-```
-
-***
-
-### `C-003` AI 助手对话 API
-
-> `POST /api/sky/assistant/chat` — 基于错题/薄弱点的智能助手对话
-
-- **前置任务**：`P1-001` + `C-001` + `C-002`
-- **负责人**：队员3
-- **状态**：🔴 未开始
-
-**检验标准：**
-
-- [ ] 接收 messages + config（subject / difficulty / style）
-- [ ] LLM 对话生成
-- [ ] 上下文注入：相关错题 + 薄弱点
-- [ ] 返回 reply + context（mistakes count / weak points）
-- [ ] 支持多轮对话
-
-**产出文件：**
-
-```
-app/api/sky/assistant/
-  chat/
-    route.ts          # 对话端点
-lib/assistant/
-  chat-engine.ts      # 对话引擎
-  context-builder.ts  # 上下文构建（注入错题/薄弱点）
-  response-formatter.ts # 响应格式化
 ```
 
 ***
@@ -514,17 +384,9 @@ lib/assistant/
 **产出文件：**
 
 ```
-tests/integration/
-  solve-flow.test.ts         # 测试 1
-  question-bank-flow.test.ts # 测试 2
-  slides-flow.test.ts        # 测试 3
-  mistakes-flow.test.ts      # 测试 4
-  assistant-flow.test.ts     # 测试 5
-  provider-failover.test.ts  # 测试 6
-  agent-routing.test.ts      # 测试 7
-  rate-limiter.test.ts       # 测试 8
-  error-format.test.ts       # 测试 9
-  knowledge-consistency.test.ts # 测试 10
+
+<br />
+
 ```
 
 ***
@@ -550,12 +412,9 @@ tests/integration/
 **产出文件：**
 
 ```
-lib/monitoring/
-  performance.ts      # 性能指标采集
-  cache/
-    response-cache.ts # 响应缓存
-    slide-cache.ts    # 幻灯片缓存
-    graph-cache.ts    # 图谱缓存
+
+<br />
+
 ```
 
 ***
@@ -579,11 +438,9 @@ lib/monitoring/
 **产出文件：**
 
 ```
-docs/
-  api-reference.md    # API 参考文档（更新版）
-  api-error-codes.md  # 错误码手册
-  openapi/
-    spec.json         # OpenAPI 规范
+
+<br />
+
 ```
 
 ***
@@ -655,19 +512,10 @@ docs/
 **产出文件：**
 
 ```
-tests/user-evaluation/
-  evaluation-form.md      # 评分表模板（维度 + 1-5 分）
-  logs/
-    member1/              # 每人一个目录
-      2026-05-20.md       # 每日测试记录
-      2026-05-21.md
-    member2/
-    member3/
-    captain/
-  issues/                 # 测试中发现的 bug 列表
-    bug-001.md
-    bug-002.md
-```
+
+<br />
+
+````
 
 **评分表模板：**
 
@@ -684,7 +532,7 @@ tests/user-evaluation/
   - 复现步骤：
   - 截图：
   - 预期行为：
-```
+````
 
 ***
 
@@ -870,31 +718,31 @@ Phase 5 · 大规模测试 + v4.0 规划 (Week 9-10)
 
 ## 队员分工总览
 
-| 角色      | 任务编号  | 任务名                            | 周期       |
-| --------- | -------- | -------------------------------- | --------- |
-| **队长**  | P1-001   | API 基础架构（错误处理/速率限制/认证）   | Week 1-2  | ✅ |
-| **队长**  | P1-002   | 数据库层 + 存储抽象                  | Week 1-2  | ✅ |
-| **队长**  | P4-001   | 端到端集成测试（10 项全功能测试）       | Week 7-8  |
-| **队长**  | P4-002   | 性能调优（7 项指标优化）              | Week 7-8  |
-| **队长**  | P4-003   | API 文档完善                       | Week 7-8  |
-| **队长**  | P5-002   | 自动化批量测试（50+ 主题自动生成评分）   | Week 9-10 |
-| **队长**  | P5-003   | 测试结果分析（报告 + 图表）           | Week 9-10 |
-| **队员1** | P5-001-A | 大规模测试 — 解题 + 题库模块           | Week 9-10 |
-| **队员2** | P5-001-B | 大规模测试 — 幻灯片 + NPC 形象模块       | Week 9-10 |
-| **队员3** | P5-001-C | 大规模测试 — 错题本 + 图谱 + 助手模块    | Week 9-10 |
-| **全员**  | P5-004   | v4.0 规划会议 + 需求文档              | Week 9-10 |
-| **队员1** | A-001    | 图片识别 API（视觉 LLM + LaTeX）     | Week 3-5  |
-| **队员1** | A-002    | 解题讲解 API（四段式输出 + Agent 路由） | Week 3-5  |
-| **队员1** | A-003    | 批改 API（错误归因 + 分步打分）        | Week 3-5  |
-| **队员1** | A-004    | 题库管理 API（搜索 + 入库）           | Week 3-5  |
-| **队员2** | B-001    | 幻灯片生成 API（LLM 内容生成）        | Week 3-6  |
-| **队员2** | B-002    | 虚拟形象讲解 API（TTS + 讲解词）      | Week 3-6  |
-| **队员2** | B-003    | PPTX 导出 API                      | Week 3-6  |
-| **队员2** | B-004    | 形象列表 API（需 B-005 头像就绪）    | Week 3-4  |
-| **队员2** | B-005    | NPC 头像系统（7 个角色统一设计）      | Week 3-4  |
-| **队员3** | C-001    | 错题本管理 API（增删改查）            | Week 3-6  |
-| **队员3** | C-002    | 知识图谱 API（图谱构建 + 掌握度）      | Week 3-6  |
-| **队员3** | C-003    | AI 助手对话 API（上下文注入）         | Week 3-6  |
+| 角色      | 任务编号     | 任务名                        | 周期        |   |
+| ------- | -------- | -------------------------- | --------- | - |
+| **队长**  | P1-001   | API 基础架构（错误处理/速率限制/认证）     | Week 1-2  | ✅ |
+| **队长**  | P1-002   | 数据库层 + 存储抽象                | Week 1-2  | ✅ |
+| **队长**  | P4-001   | 端到端集成测试（10 项全功能测试）         | Week 7-8  |   |
+| **队长**  | P4-002   | 性能调优（7 项指标优化）              | Week 7-8  |   |
+| **队长**  | P4-003   | API 文档完善                   | Week 7-8  |   |
+| **队长**  | P5-002   | 自动化批量测试（50+ 主题自动生成评分）      | Week 9-10 |   |
+| **队长**  | P5-003   | 测试结果分析（报告 + 图表）            | Week 9-10 |   |
+| **队员1** | P5-001-A | 大规模测试 — 解题 + 题库模块          | Week 9-10 |   |
+| **队员2** | P5-001-B | 大规模测试 — 幻灯片 + NPC 形象模块     | Week 9-10 |   |
+| **队员3** | P5-001-C | 大规模测试 — 错题本 + 图谱 + 助手模块    | Week 9-10 |   |
+| **全员**  | P5-004   | v4.0 规划会议 + 需求文档           | Week 9-10 |   |
+| **队员1** | A-001    | 图片识别 API（视觉 LLM + LaTeX）   | Week 3-5  |   |
+| **队员1** | A-002    | 解题讲解 API（四段式输出 + Agent 路由） | Week 3-5  |   |
+| **队员1** | A-003    | 批改 API（错误归因 + 分步打分）        | Week 3-5  |   |
+| **队员1** | A-004    | 题库管理 API（搜索 + 入库）          | Week 3-5  |   |
+| **队员2** | B-001    | 幻灯片生成 API（LLM 内容生成）        | Week 3-6  |   |
+| **队员2** | B-002    | 虚拟形象讲解 API（TTS + 讲解词）      | Week 3-6  |   |
+| **队员2** | B-003    | PPTX 导出 API                | Week 3-6  |   |
+| **队员2** | B-004    | 形象列表 API（需 B-005 头像就绪）     | Week 3-4  |   |
+| **队员2** | B-005    | NPC 头像系统（7 个角色统一设计）        | Week 3-4  |   |
+| **队员3** | C-001    | 错题本管理 API（增删改查）            | Week 3-6  |   |
+| **队员3** | C-002    | 知识图谱 API（图谱构建 + 掌握度）       | Week 3-6  |   |
+| **队员3** | C-003    | AI 助手对话 API（上下文注入）         | Week 3-6  |   |
 
 **关键设计：三个模块可同时启动（只需队长总前置任务完成），模块间无交叉依赖。**
 
@@ -902,16 +750,17 @@ Phase 5 · 大规模测试 + v4.0 规划 (Week 9-10)
 
 ## API 端点总览
 
-| 模块 | 端点 | 方法 | 负责人 |
-| ---- | ---- | ---- | ------ |
-| 解题 | `/api/sky/solve/recognize` | POST | 队员1 |
-| 解题 | `/api/sky/solve/explain`   | POST | 队员1 |
-| 解题 | `/api/sky/solve/grade`     | POST | 队员1 |
-| 题库 | `/api/sky/question-bank`   | GET, POST | 队员1 |
-| 幻灯片 | `/api/sky/slides/generate` | POST | 队员2 |
-| 幻灯片 | `/api/sky/slides/avatar-speak` | POST | 队员2 |
-| 幻灯片 | `/api/sky/slides/export-pptx` | POST | 队员2 |
-| 幻灯片 | `/api/sky/slides/avatars` | GET | 队员2 |
-| 错题本 | `/api/sky/mistakes` | GET, POST, PATCH, DELETE | 队员3 |
-| 知识图谱 | `/api/sky/knowledge-graph` | GET | 队员3 |
-| AI 助手 | `/api/sky/assistant/chat` | POST | 队员3 |
+| 模块    | 端点                             | 方法                       | 负责人 |
+| ----- | ------------------------------ | ------------------------ | --- |
+| 解题    | `/api/sky/solve/recognize`     | POST                     | 队员1 |
+| 解题    | `/api/sky/solve/explain`       | POST                     | 队员1 |
+| 解题    | `/api/sky/solve/grade`         | POST                     | 队员1 |
+| 题库    | `/api/sky/question-bank`       | GET, POST                | 队员1 |
+| 幻灯片   | `/api/sky/slides/generate`     | POST                     | 队员2 |
+| 幻灯片   | `/api/sky/slides/avatar-speak` | POST                     | 队员2 |
+| 幻灯片   | `/api/sky/slides/export-pptx`  | POST                     | 队员2 |
+| 幻灯片   | `/api/sky/slides/avatars`      | GET                      | 队员2 |
+| 错题本   | `/api/sky/mistakes`            | GET, POST, PATCH, DELETE | 队员3 |
+| 知识图谱  | `/api/sky/knowledge-graph`     | GET                      | 队员3 |
+| AI 助手 | `/api/sky/assistant/chat`      | POST                     | 队员3 |
+
