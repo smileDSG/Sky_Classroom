@@ -148,9 +148,14 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
+app/api/sky/solve/explain/
+  route.ts            # 解题端点
+lib/solve/
+  solve-graph.ts      # LangGraph 流程定义
+  solver-agent.ts     # 解题 Agent
+  solver-prompts.ts   # 解题提示词
+  four-part-output.ts # 四段式输出格式化
+  types.ts            # 解题类型定义
 ```
 
 ***
@@ -174,9 +179,11 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
+app/api/sky/solve/grade/
+  route.ts            # 批改端点
+lib/solve/
+  grader.ts           # 批改引擎
+  error-classifier.ts # 错误类型分类
 ```
 
 ***
@@ -200,9 +207,10 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
+app/api/sky/question-bank/
+  route.ts            # GET 查询 + POST 入库
+lib/storage/dao/
+  question-bank.ts    # 题库数据访问（复用 P1-002 产出）
 ```
 
 ***
@@ -234,9 +242,12 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
+app/api/sky/slides/generate/
+  route.ts            # 生成端点
+lib/slides/
+  slide-generator.ts  # 幻灯片生成引擎
+  layouts.ts          # 布局模板
+  types.ts            # 幻灯片类型定义
 ```
 
 ***
@@ -260,9 +271,11 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
+app/api/sky/slides/avatar-speak/
+  route.ts            # 讲解端点
+lib/slides/
+  avatar-speech.ts    # 形象讲解引擎
+  speech-script.ts    # 讲解词生成
 ```
 
 ***
@@ -285,9 +298,10 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
+app/api/sky/slides/export-pptx/
+  route.ts            # 导出端点
+lib/slides/
+  pptx-exporter.ts    # PPTX 导出引擎
 ```
 
 ***
@@ -309,9 +323,10 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
+app/api/sky/slides/avatars/
+  route.ts            # 形象列表端点
+lib/slides/
+  avatar-presets.ts   # 预设形象数据
 ```
 
 ***
@@ -335,18 +350,22 @@ image-validator.ts  # 图片格式/大小校验
 
 **检验标准：**
 
-- [ ] 查询错题（按错误类型筛选 / 分页）
-- [ ] 新增错题（自动从批改结果入库）
-- [ ] 标记已复习（reviewed = true）
-- [ ] 删除错题
-- [ ] 复习次数统计
+- [ ] 查询错题（按错误类型筛选 / 分页）— `app/api/sky/mistakes/route.ts`
+- [ ] 新增错题（自动从批改结果入库）— `lib/storage/dao/mistakes.ts`
+- [ ] 标记已复习（reviewed = true）— `lib/storage/dao/mistakes.ts`
+- [ ] 删除错题 — `app/api/sky/mistakes/route.ts`
+- [ ] 复习次数统计 — `lib/mistakes/review-tracker.ts`
 
 **产出文件：**
 
 ```
-
-<br />
-
+app/api/sky/mistakes/
+  route.ts            # 统一端点（GET/POST/PATCH/DELETE）
+lib/storage/dao/
+  mistakes.ts         # 错题本数据访问（复用 P1-002 产出）
+lib/mistakes/
+  mistake-types.ts    # 错题类型定义
+  review-tracker.ts   # 复习追踪
 ```
 
 ***
@@ -384,9 +403,17 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
+tests/integration/
+  solve-flow.test.ts         # 测试 1
+  question-bank-flow.test.ts # 测试 2
+  slides-flow.test.ts        # 测试 3
+  mistakes-flow.test.ts      # 测试 4
+  assistant-flow.test.ts     # 测试 5
+  provider-failover.test.ts  # 测试 6
+  agent-routing.test.ts      # 测试 7
+  rate-limiter.test.ts       # 测试 8
+  error-format.test.ts       # 测试 9
+  knowledge-consistency.test.ts # 测试 10
 ```
 
 ***
@@ -412,9 +439,12 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
+lib/monitoring/
+  performance.ts      # 性能指标采集
+  cache/
+    response-cache.ts # 响应缓存
+    slide-cache.ts    # 幻灯片缓存
+    graph-cache.ts    # 图谱缓存
 ```
 
 ***
@@ -438,9 +468,11 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
+docs/
+  api-reference.md    # API 参考文档（更新版）
+  api-error-codes.md  # 错误码手册
+  openapi/
+    spec.json         # OpenAPI 规范
 ```
 
 ***
@@ -512,10 +544,19 @@ image-validator.ts  # 图片格式/大小校验
 **产出文件：**
 
 ```
-
-<br />
-
-````
+tests/user-evaluation/
+  evaluation-form.md      # 评分表模板（维度 + 1-5 分）
+  logs/
+    member1/              # 每人一个目录
+      2026-05-20.md       # 每日测试记录
+      2026-05-21.md
+    member2/
+    member3/
+    captain/
+  issues/                 # 测试中发现的 bug 列表
+    bug-001.md
+    bug-002.md
+```
 
 **评分表模板：**
 
