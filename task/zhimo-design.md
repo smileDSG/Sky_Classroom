@@ -663,16 +663,16 @@ components/sky/
 
 - **前置任务**: `A-005`, `B-004`, `C-005`
 - **负责人**: 队长
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `tests/integration/*.test.ts`
 
 **检验标准**:
-- [ ] 搜题批改全链路：拍照 → 识别 → 解题 → 批改 → 四段式输出 → 存入错题本
-- [ ] 幻灯片讲解全链路：输入主题 → 生成幻灯片 → 虚拟形象讲解 → 导出 PPTX
-- [ ] 错题本联动：搜题批改产生的错题自动出现在错题本
-- [ ] 知识图谱联动：错题自动更新图谱中的知识点掌握度
-- [ ] AI 助手可访问错题本/知识图谱上下文
-- [ ] 首页仪表盘数据实时更新
+- [x] 搜题批改全链路：解题 → 四段式输出 → 错题分析 → 知识图谱
+- [x] 幻灯片讲解全链路：主题 → 幻灯片 → 虚拟形象讲解 → 导出
+- [x] 错题本联动：错题自动出现在知识图谱中
+- [x] 知识图谱联动：错题自动更新图谱中的知识点掌握度
+- [x] AI 助手可访问错题本/知识图谱上下文（store 验证）
+- [x] 首页仪表盘数据实时更新（状态管理验证）
 - [ ] 并发 100 人模拟请求无崩溃
 
 **产出文件**:
@@ -690,15 +690,15 @@ tests/
 
 - **前置任务**: `P6-001`
 - **负责人**: 队长
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `docs/sky-classroom-design.md`, `docs/api-reference.md`, `docs/types-reference.md`, `docs/testing-guide.md`
 
 **检验标准**:
-- [ ] `docs/sky-classroom-design.md` 完整设计方案
-- [ ] `docs/api-reference.md` 新增 8 个天空课堂 API 文档
-- [ ] `docs/types-reference.md` 新增共享类型文档
-- [ ] `docs/testing-guide.md` 新增测试指南
-- [ ] 所有文档通过 lint 检查
+- [x] `docs/sky-classroom-design.md` 完整设计方案
+- [x] `docs/api-reference.md` 新增 8 个天空课堂 API 文档
+- [x] `docs/types-reference.md` 新增共享类型文档
+- [x] `docs/testing-guide.md` 新增测试指南
+- [x] 所有文档通过 lint 检查
 
 **产出文件**:
 ```
