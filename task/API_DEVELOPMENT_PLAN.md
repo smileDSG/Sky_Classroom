@@ -20,27 +20,30 @@
 
 - **前置任务**：无（整个项目的起点）
 - **负责人**：队长
-- **状态**：🔴 未开始
+- **状态**：✅ 已完成
 
 **检验标准：**
 
-- [ ] 统一错误响应格式 `{ success, data, error }`
-- [ ] API 错误码常量定义（`API_ERROR_CODES`）
-- [ ] 请求速率限制中间件
-- [ ] 请求日志中间件
-- [ ] CORS 配置
-- [ ] Zod schema 验证层
+- [x] 统一错误响应格式 `{ success, data, error }`
+- [x] API 错误码常量定义（`API_ERROR_CODES`）— `lib/server/api-error-codes.ts`
+- [x] 请求速率限制中间件 — `lib/server/middleware/sky-rate-limiters.ts` + 复用 `lib/api/middleware/rate-limiter.ts`
+- [x] 请求日志中间件 — `lib/server/middleware/request-logger.ts`
+- [x] CORS 配置 — `lib/server/middleware/cors.ts`
+- [x] Zod schema 验证层 — `lib/server/middleware/validator.ts`
 
 **产出文件：**
 
 ```
 lib/server/
-  api-response.ts     # apiSuccess / apiError 统一响应
-  api-error-codes.ts  # 错误码常量
-  middleware/
-    rate-limiter.ts   # 速率限制
-    request-logger.ts # 请求日志
-    validator.ts      # Zod 验证
+  api-response.ts     # apiSuccess / apiError 统一响应（已更新）
+  api-error-codes.ts  # 错误码常量（新增）
+  middleware/         # 中间件目录（新增）
+    index.ts           # barrel exports
+    request-logger.ts  # 请求日志
+    validator.ts       # Zod 验证
+    cors.ts            # CORS 配置
+    sky-rate-limiters.ts  # 天空课堂速率限制器
+```
 app/api/
   health/
     route.ts          # 健康检查端点
@@ -54,29 +57,31 @@ app/api/
 
 - **前置任务**：`P1-001`
 - **负责人**：队长
-- **状态**：🔴 未开始
+- **状态**：✅ 已完成
 
 **检验标准：**
 
-- [ ] 统一存储接口（支持 IndexedDB / localStorage / 内存回退）
-- [ ] 题库存储 DAO 层
-- [ ] 错题本存储 DAO 层
-- [ ] 知识图谱存储 DAO 层
-- [ ] 数据迁移系统（版本升级）
+- [x] 统一存储接口（支持 IndexedDB / localStorage / 内存回退）— `lib/storage/storage-types.ts` + 3 providers
+- [x] 题库存储 DAO 层 — `lib/storage/dao/question-bank.ts`
+- [x] 错题本存储 DAO 层 — `lib/storage/dao/mistakes.ts`
+- [x] 知识图谱存储 DAO 层 — `lib/storage/dao/knowledge-graph.ts`
+- [x] 数据迁移系统（版本升级）— `lib/storage/migration.ts`
 
 **产出文件：**
 
 ```
 lib/storage/
-  index.ts            # barrel exports
-  types.ts            # 存储接口定义
-  indexeddb.ts        # IndexedDB 适配器
-  local-storage.ts    # localStorage 适配器
-  dao/
-    question-bank.ts  # 题库数据访问
-    mistakes.ts       # 错题本数据访问
-    knowledge-graph.ts# 知识图谱数据访问
-  migration.ts        # 数据迁移
+  index.ts              # barrel exports（已更新）
+  storage-types.ts      # 存储接口定义（新增）
+  indexeddb-provider.ts # IndexedDB 适配器（新增）
+  local-storage-provider.ts # localStorage 适配器（新增）
+  memory-provider.ts    # 内存回退（新增）
+  storage-factory.ts    # 工厂函数 + 自动降级（新增）
+  migration.ts          # 数据迁移管理器（新增）
+  dao/                  # 数据访问对象（新增）
+    question-bank.ts    # 题库数据访问
+    mistakes.ts         # 错题本数据访问
+    knowledge-graph.ts  # 知识图谱数据访问
 ```
 
 ***
@@ -867,8 +872,8 @@ Phase 5 · 大规模测试 + v4.0 规划 (Week 9-10)
 
 | 角色      | 任务编号  | 任务名                            | 周期       |
 | --------- | -------- | -------------------------------- | --------- |
-| **队长**  | P1-001   | API 基础架构（错误处理/速率限制/认证）   | Week 1-2  |
-| **队长**  | P1-002   | 数据库层 + 存储抽象                  | Week 1-2  |
+| **队长**  | P1-001   | API 基础架构（错误处理/速率限制/认证）   | Week 1-2  | ✅ |
+| **队长**  | P1-002   | 数据库层 + 存储抽象                  | Week 1-2  | ✅ |
 | **队长**  | P4-001   | 端到端集成测试（10 项全功能测试）       | Week 7-8  |
 | **队长**  | P4-002   | 性能调优（7 项指标优化）              | Week 7-8  |
 | **队长**  | P4-003   | API 文档完善                       | Week 7-8  |
