@@ -14,6 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: '搜题', href: '/sky/solve', icon: '🔍' },
   { label: '幻灯片', href: '/sky/slides', icon: '📖' },
   { label: '学习数据', href: '/sky/learning', icon: '📊' },
+  { label: 'AI 助手', href: '/sky/assistant', icon: '💡' },
 ];
 
 interface SkySidebarProps {
@@ -53,10 +54,17 @@ export function SkySidebar({ collapsed }: SkySidebarProps) {
         })}
       </nav>
 
-      <div className="border-t border-gray-200 p-3">
+      <div className="border-t border-gray-200 p-3 space-y-1">
+        <Link
+          href="/"
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        >
+          <span className="text-lg">🏫</span>
+          {!collapsed && <span>课堂模拟</span>}
+        </Link>
         <Link
           href="/settings"
-          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900`}
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
         >
           <span className="text-lg">⚙️</span>
           {!collapsed && <span>设置</span>}
