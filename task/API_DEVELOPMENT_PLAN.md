@@ -706,6 +706,631 @@ docs/
 
 ***
 
+## Phase 6 · Phase 3 优化任务池 (v4.0 候选)
+
+> 📌 来源：`docs/phase3-plan.md`
+> 📌 说明：以下任务为 Phase 3 规划中的 19 项优化，按优先级（P0/P1/P2）分类
+> 可根据 Phase 5 测试结果决定哪些进入 v4.0 正式开发
+
+***
+
+### `O-001` 多模态交互 — 语音搜题 + 手写公式识别（P0）
+
+> 语音输入提问 + 手写板拍照识别，优化非标准排版手写体 OCR
+
+- **前置任务**：`A-001`（图片识别 API 已稳定）
+- **负责人**：队员1
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] 搜题页面增加语音输入按钮 — `components/sky/solve/multimodal-input.tsx`
+- [ ] 语音通过 Web Speech API 转文本 — `components/sky/solve/multimodal-input.tsx`
+- [ ] 手写板 canvas 组件 — `components/sky/solve/handwriting-canvas.tsx`
+- [ ] OCR_PROMPT 增加手写识别指令分支 — `app/api/sky/solve/recognize/route.ts`
+- [ ] 手写提交后进入正常解题流程 — `components/sky/solve/solve-page.tsx`
+
+**产出文件：**
+
+```
+components/sky/solve/
+  multimodal-input.tsx  # 多模态输入（语音+手写+图片）
+  handwriting-canvas.tsx # 手写板组件
+app/api/sky/solve/recognize/
+  route.ts              # 扩展 OCR_PROMPT 支持手写
+```
+
+***
+
+### `O-002` 智能追问链 — 对话式解题（P0）
+
+> 解题结果页增加"继续追问"，保持题目上下文进行多轮对话讲解
+
+- **前置任务**：`A-002`（解题讲解 API）
+- **负责人**：队员1
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] Store 中为每道题增加 followUpMessages 数组 — `lib/store/use-sky-classroom-store.ts`
+- [ ] 解题 API 支持可选 conversationId + history 参数 — `app/api/sky/solve/explain/route.ts`
+- [ ] 前端 FollowUpChat 组件嵌入 SolutionPanel — `components/sky/solve/followup-chat.tsx`
+- [ ] 追问记录与原题解绑定形成对话树 — `lib/store/use-sky-classroom-store.ts`
+
+**产出文件：**
+
+```
+lib/store/
+  use-sky-classroom-store.ts  # 增加追问对话状态
+app/api/sky/solve/explain/
+  route.ts                     # 支持上下文追问
+components/sky/solve/
+  followup-chat.tsx            # 追问组件
+```
+
+***
+
+### `O-003` 个性化推荐引擎 — 基于错题的薄弱点推荐（P0）
+
+> 分析错题知识点标记薄弱领域，自动推荐练习题
+
+- **前置任务**：`C-001`（错题本管理）+ `A-004`（题库管理）
+- **负责人**：队员3
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] MistakeBook 增加 knowledgeTags 字段 — `lib/store/use-sky-classroom-store.ts`
+- [ ] `/api/sky/recommend` 端点 — `app/api/sky/recommend/route.ts`
+- [ ] 读取错题标签 → 匹配题库 → 返回推荐 — `lib/recommendation/engine.ts`
+- [ ] 首页增加"今日推荐练习"卡片 — `components/sky/learning/recommendation-card.tsx`
+- [ ] KnowledgeGraphView 增加薄弱点热力图高亮 — `components/sky/learning/knowledge-graph-view.tsx`
+
+**产出文件：**
+
+```
+app/api/sky/recommend/
+  route.ts               # 推荐引擎 API
+lib/recommendation/
+  engine.ts              # 推荐逻辑
+components/sky/learning/
+  recommendation-card.tsx # 推荐卡片
+  knowledge-graph-view.tsx # 热力图增强
+```
+
+***
+
+### `O-004` AI 助教记忆机制 — 连贯对话（P1）
+
+> Agent 短期记忆（当前课堂讨论摘要）+ 长期记忆（跨课堂学习偏好）
+
+- **前置任务**：`C-003`（AI 助手对话）
+- **负责人**：队员3
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] Agent memory 模块（滑动窗口 + 摘要压缩）— `lib/ai/agent-memory.ts`
+- [ ] AgentProfile 增加 memory 字段 — `lib/store/settings/agents.ts`
+- [ ] 课堂结束后提取讨论关键信息 — `lib/orchestration/session-summary.ts`
+- [ ] 生成 Agent 发言时注入记忆摘要到系统提示词 — `lib/ai/agent-memory.ts`
+
+**产出文件：**
+
+```
+lib/ai/
+  agent-memory.ts        # Agent 记忆引擎
+lib/store/settings/
+  agents.ts              # AgentProfile 增加 memory 字段
+lib/orchestration/
+  session-summary.ts     # 课堂讨论摘要提取
+```
+
+***
+
+### `O-005` 解题进度保存（P0）
+
+> 自动保存搜题过程到 IndexedDB，退出后可恢复
+
+- **前置任务**：`P1-002`（数据库层）
+- **负责人**：队员1
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] Zustand persist 中间件 + Dexie 存储解题历史 — `lib/store/dexie-db.ts`
+- [ ] Solve 状态机增加 sessionId 字段 — `lib/store/use-sky-classroom-store.ts`
+- [ ] "历史记录"侧边栏 — `components/sky/solve/solve-history.tsx`
+- [ ] 页面刷新后自动恢复最近解题会话 — `components/sky/solve/solve-page.tsx`
+
+**产出文件：**
+
+```
+lib/store/
+  dexie-db.ts              # Dexie 数据库 schema
+  use-sky-classroom-store.ts # 增加解题会话持久化
+components/sky/solve/
+  solve-history.tsx        # 解题历史侧边栏
+```
+
+***
+
+### `O-006` 错题复习计划 — 艾宾浩斯遗忘曲线（P1）
+
+> 自动安排复习时间（1d/2d/4d/7d/15d/30d），推送变式题检验掌握度
+
+- **前置任务**：`C-001`（错题本管理）
+- **负责人**：队员3
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] Mistake 增加 lastReview/nextReview/reviewCount/masteryLevel 字段 — `lib/storage/dao/mistakes.ts`
+- [ ] 复习计划计算引擎 — `lib/schedule/review-scheduler.ts`
+- [ ] 首页通知系统增加复习提醒 — `app/page.tsx`
+- [ ] `/api/sky/review/due` 查询待复习题目 — `app/api/sky/review/due/route.ts`
+- [ ] 复习结果自动更新 masteryLevel — `lib/schedule/review-scheduler.ts`
+
+**产出文件：**
+
+```
+lib/storage/dao/
+  mistakes.ts            # 错题增加复习计划字段
+lib/schedule/
+  review-scheduler.ts    # 复习计划计算
+app/api/sky/review/due/
+  route.ts               # 查询待复习题目
+```
+
+***
+
+### `O-007` 课堂模板库（P1）
+
+> 预置学科模板（数学/物理/化学/英语等），一键选择后微调生成
+
+- **前置任务**：无（可独立开发）
+- **负责人**：队长
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] `lib/templates/` 目录存放预设模板 JSON — `lib/templates/`
+- [ ] 首页输入区增加"从模板创建"按钮 — `app/page.tsx`
+- [ ] 模板选择器弹出组件 — `components/template-picker.tsx`
+- [ ] 用户自定义模板存入 localStorage — `lib/templates/user-templates.ts`
+- [ ] 模板可编辑，修改后作为新课程生成 — `components/template-picker.tsx`
+
+**产出文件：**
+
+```
+lib/templates/
+  index.ts              # 模板注册
+  user-templates.ts     # 用户自定义模板
+  math.ts               # 数学模板
+  physics.ts            # 物理模板
+  chemistry.ts          # 化学模板
+  english.ts            # 英语模板
+components/
+  template-picker.tsx   # 模板选择器
+app/page.tsx            # 增加"从模板创建"按钮
+```
+
+***
+
+### `O-008` PPT 导出质量提升（P0）
+
+> 多种专业 PPT 主题模板、自动排版、公式渲染、封面页信息
+
+- **前置任务**：`B-003`（PPTX 导出 API）
+- **负责人**：队员2
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] 重写 pptx-generator 引入设计 token 系统 — `lib/export/themes/tokens.ts`
+- [ ] 多种 PPT 主题模板（天空蓝/极简白/学术风）— `lib/export/themes/`
+- [ ] 公式通过 MathML/OMML 转换嵌入 — `lib/export/formula-converter.ts`
+- [ ] 封面页加入课程标题/日期/教师信息 — `lib/export/pptx-generator.ts`
+- [ ] 内容页加入页码/进度指示 — `lib/export/pptx-generator.ts`
+- [ ] 用户可选择主题 — `components/sky/slides/theme-picker.tsx`
+
+**产出文件：**
+
+```
+lib/export/
+  pptx-generator.ts     # 重构 PPTX 生成引擎
+  formula-converter.ts  # 公式转换
+  themes/
+    tokens.ts           # 设计 token 系统
+    sky-blue.ts         # 天空蓝主题
+    minimal-white.ts    # 极简白主题
+    academic.ts         # 学术风主题
+components/sky/slides/
+  theme-picker.tsx      # 主题选择器
+```
+
+***
+
+### `O-009` 虚拟形象创建（P0）
+
+> 用户自定义虚拟形象：头像上传/AI 生成/预设选择
+
+- **前置任务**：`B-005`（NPC 头像系统）
+- **负责人**：队员2
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] AvatarSelector 扩展到全局 — `components/sky/slides/avatar-selector.tsx`
+- [ ] AI 生成头像功能（文生图 API）— `components/avatar-creator.tsx`
+- [ ] 形象数据存入 UserProfile Store — `lib/store/user-profile.ts`
+- [ ] AgentProfile 增加 avatarUrl 字段 — `lib/store/settings/agents.ts`
+- [ ] 形象在课堂回放/讨论区/搜题讲解中统一展示 — 各组件适配
+
+**产出文件：**
+
+```
+components/sky/slides/
+  avatar-selector.tsx   # 扩展到全局
+components/
+  avatar-creator.tsx    # AI 生成头像
+lib/store/
+  user-profile.ts       # 用户头像字段
+  settings/agents.ts    # Agent 头像
+```
+
+***
+
+### `O-010` AI 全局可用（P0）
+
+> 全局 AI 助手悬浮按钮，快捷键唤起，选中文字即可提问
+
+- **前置任务**：无（可独立开发）
+- **负责人**：队员3
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] 全局 AIProvider 上下文 — `lib/ai/global-ai-context.tsx`
+- [ ] 全局悬浮 AI 按钮 + 对话面板 — `components/ai/global-ai-panel.tsx`
+- [ ] 页面选中文字后出现"AI 解释"浮动按钮 — `components/ai/text-selection-ai.tsx`
+- [ ] 快捷键注册（Ctrl+Shift+A）— `lib/store/keyboard.ts`
+- [ ] app/layout.tsx 注入全局 AI 组件 — `app/layout.tsx`
+
+**产出文件：**
+
+```
+components/ai/
+  global-ai-panel.tsx     # 全局 AI 面板
+  text-selection-ai.tsx   # 选中文字 AI 解释
+lib/ai/
+  global-ai-context.tsx   # AI 全局上下文
+lib/store/
+  keyboard.ts             # 快捷键
+app/layout.tsx            # 注入全局 AI 组件
+```
+
+***
+
+### `O-011` 样式优化（P1）
+
+> 统一天空蓝主题色系、设计 Token、暗色模式完善、移动端响应式
+
+- **前置任务**：无（可独立开发）
+- **负责人**：队员2
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] 设计 Token 系统 — `lib/theme/tokens.ts`
+- [ ] Tailwind CSS v4 @theme 指令定义统一色板 — `app/globals.css`
+- [ ] 暗色模式审计：逐个组件检查 dark: 变体 — 各组件样式文件
+- [ ] 移动端 375px 宽度可用性测试 — 各页面响应式
+- [ ] 动画过渡统一（framer-motion 时长/缓动函数）— `lib/theme/animations.ts`
+
+**产出文件：**
+
+```
+lib/theme/
+  tokens.ts              # 设计 Token
+  animations.ts          # 动画统一配置
+app/globals.css          # 统一色板定义
+（各组件样式文件全面审计修改）
+```
+
+***
+
+### `O-012` 课堂场景 UI 布局重构（P1）
+
+> 左侧讲解区 + 右侧 PPT 展示，PPT 全屏切换，讨论区消息筛选
+
+- **前置任务**：无（可独立开发）
+- **负责人**：队长
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] stage.tsx 实现新 flex/grid 布局 — `components/stage.tsx`
+- [ ] CanvasArea 增加全屏模式 — `components/sky/slides/canvas-area.tsx`
+- [ ] ChatArea 增加消息过滤逻辑 — `components/chat/chat-area.tsx`
+- [ ] SceneSidebar 增加缩略图网格 — `components/stage/scene-sidebar.tsx`
+- [ ] classroom-complete.tsx 布局适配 — `components/scene-renderers/classroom-complete.tsx`
+
+**产出文件：**
+
+```
+components/
+  stage.tsx               # 主布局重构
+  scene-renderers/
+    classroom-complete.tsx # 布局适配
+  chat/
+    chat-area.tsx         # 消息筛选
+  stage/
+    scene-sidebar.tsx     # 缩略图网格
+  sky/slides/
+    canvas-area.tsx       # 全屏模式
+```
+
+***
+
+### `O-013` 用户登录注册系统（P0）
+
+> 用户注册/登录、JWT 认证、云端数据同步、访客模式
+
+- **前置任务**：`P1-002`（数据库层）
+- **负责人**：队长
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] `/api/auth/register` 端点 — `app/api/auth/register/route.ts`
+- [ ] `/api/auth/login` 端点 — `app/api/auth/login/route.ts`
+- [ ] `/api/auth/refresh` 端点 — `app/api/auth/refresh/route.ts`
+- [ ] bcrypt 加密密码 + JWT 签发 — `lib/auth/`
+- [ ] AuthProvider 全局上下文 — `components/auth/auth-provider.tsx`
+- [ ] 登录/注册页面 — `app/auth/login/page.tsx` + `app/auth/register/page.tsx`
+- [ ] 现有本地 Store 增加云端同步逻辑 — 各 Store 文件
+- [ ] 访客模式：未登录使用基础功能，数据存本地 — `lib/store/`
+
+**产出文件：**
+
+```
+app/api/auth/
+  register/route.ts     # 注册
+  login/route.ts        # 登录
+  refresh/route.ts      # Token 刷新
+app/auth/
+  login/page.tsx        # 登录页
+  register/page.tsx     # 注册页
+lib/auth/
+  index.ts              # 认证工具
+  jwt.ts                # JWT 处理
+  password.ts           # 密码加密
+components/auth/
+  auth-provider.tsx     # 全局认证上下文
+（各 Store 增加云端同步逻辑）
+```
+
+***
+
+### `O-014` 使用限制与付费系统（P0）
+
+> 免费用户每日 AI 使用次数限制、超限提示、支付接入
+
+- **前置任务**：`O-013`（用户登录注册系统）
+- **负责人**：队长
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] 用户模型增加 dailyUsage/usageLimit/planType 字段 — `lib/store/user-profile.ts`
+- [ ] 每日零点重置使用计数 — `lib/usage/usage-tracker.ts`
+- [ ] `/api/usage/check` 检查是否超限 — `app/api/usage/check/route.ts`
+- [ ] `/api/billing/` 创建订单/查询状态 — `app/api/billing/`
+- [ ] 支付回调处理（支付宝/微信 Webhook）— `app/api/billing/webhook/route.ts`
+- [ ] 付费升级弹窗 + 使用次数进度条 — `components/billing/`
+
+**产出文件：**
+
+```
+lib/usage/
+  usage-tracker.ts      # 使用计数
+app/api/usage/check/
+  route.ts              # 检查使用次数
+app/api/billing/
+  create/route.ts       # 创建订单
+  status/route.ts       # 查询订单状态
+  webhook/route.ts      # 支付回调
+components/billing/
+  upgrade-dialog.tsx    # 付费升级弹窗
+  usage-progress.tsx    # 使用次数进度条
+```
+
+***
+
+### `O-015` 幻灯片动画改进（P1）
+
+> 内容分步出现、强调动画、过渡动画、公式逐步推导
+
+- **前置任务**：`B-001`（幻灯片生成 API）
+- **负责人**：队员2
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] Slide 数据模型增加 animations 字段 — `lib/types/slide.ts`
+- [ ] framer-motion 实现复杂动画序列 — `components/sky/slides/animation-controller.tsx`
+- [ ] SlideViewer 新增动画控制器 — `components/sky/slides/slide-viewer.tsx`
+- [ ] 生成幻灯片时附带动画信息 — `lib/slides/slide-generator.ts`
+- [ ] 公式逐步推导动画（步骤数组逐步渲染）— `components/sky/slides/formula-step-animation.tsx`
+
+**产出文件：**
+
+```
+lib/types/
+  slide.ts               # 增加 animation 字段
+lib/slides/
+  slide-generator.ts     # 生成时附带动画信息
+components/sky/slides/
+  animation-controller.tsx   # 动画控制器
+  formula-step-animation.tsx # 公式逐步动画
+  slide-viewer.tsx       # 增强动画
+```
+
+***
+
+### `O-016` TTS 语音导入（P1）
+
+> 更多高质量 TTS 提供商、音色选择、速度/音调调节
+
+- **前置任务**：`B-002`（虚拟形象讲解 API）
+- **负责人**：队员2
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] TTS 提供商注册机制 — `lib/tts/providers/`
+- [ ] 统一 TTS 调用接口 — `lib/tts/tts-engine.ts`
+- [ ] 接入 Azure Neural TTS / ElevenLabs / Fish Audio — `lib/tts/providers/`
+- [ ] 设置页面增加 TTS 配置面板 — `lib/store/settings/audio.ts`
+- [ ] 语音播放速度/音调调节 — `components/sky/slides/tts-controls.tsx`
+
+**产出文件：**
+
+```
+lib/tts/
+  tts-engine.ts          # 统一 TTS 调用接口
+  providers/
+    azure.ts             # Azure Neural TTS
+    elevenlabs.ts        # ElevenLabs
+    fish-audio.ts        # Fish Audio
+lib/store/settings/
+  audio.ts               # TTS 配置
+components/sky/slides/
+  tts-controls.tsx       # TTS 控制面板
+```
+
+***
+
+### `O-017` 语义缓存层（P1）
+
+> 相同/相似题目语义匹配缓存，减少重复 API 调用
+
+- **前置任务**：`P1-002`（数据库层）+ `A-001`（图片识别 API）
+- **负责人**：队员1
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] 语义缓存引擎 — `lib/cache/semantic-cache.ts`
+- [ ] 文本嵌入模型转换题目为向量 — `lib/cache/embedding.ts`
+- [ ] 向量存入 IndexedDB — `lib/store/dexie-db.ts`
+- [ ] 余弦相似度超过阈值命中缓存 — `lib/cache/semantic-cache.ts`
+- [ ] 解题 API / OCR API 查询缓存 — 对应 route.ts
+- [ ] 缓存数据结构：{ embedding, result, timestamp, hitCount } — `lib/cache/semantic-cache.ts`
+
+**产出文件：**
+
+```
+lib/cache/
+  semantic-cache.ts     # 语义缓存引擎
+  embedding.ts          # 文本嵌入转换
+lib/store/
+  dexie-db.ts           # 缓存存储 schema
+app/api/sky/solve/
+  explain/route.ts      # 查询缓存
+  recognize/route.ts    # OCR 结果缓存
+```
+
+***
+
+### `O-018` PWA 离线支持（P2）
+
+> 错题本/搜题历史离线浏览、离线查看已加载课堂、网络恢复后同步
+
+- **前置任务**：`P1-002`（数据库层）
+- **负责人**：队长
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] Service Worker — `public/sw.js`
+- [ ] 离线数据管理 — `lib/offline/`
+- [ ] PWA manifest 注入 — `app/layout.tsx`
+- [ ] next.config.ts PWA 配置 — `next.config.ts`
+- [ ] 静态资源缓存策略（shell + API 响应缓存）— `public/sw.js`
+- [ ] 网络状态检测 + 自动重试队列 — `lib/offline/sync-queue.ts`
+
+**产出文件：**
+
+```
+public/
+  sw.js                  # Service Worker
+lib/offline/
+  index.ts              # 离线数据管理
+  sync-queue.ts         # 自动重试队列
+app/layout.tsx          # PWA manifest
+next.config.ts          # PWA 配置
+```
+
+***
+
+### `O-019` 性能监控 Dashboard（P2）
+
+> 实时展示 LLM 调用延迟/成功率/token 消耗、页面加载指标、API 调用统计
+
+- **前置任务**：`P1-001`（API 基础架构）
+- **负责人**：队长
+- **状态**：🔴 未开始
+
+**检验标准：**
+
+- [ ] 扩展 lib/monitoring/performance.ts 增加指标上报 — `lib/monitoring/performance.ts`
+- [ ] `/admin/performance` 管理页面 — `app/admin/performance/page.tsx`
+- [ ] Chart.js/Recharts 数据可视化 — `components/admin/performance-dashboard.tsx`
+- [ ] 指标数据存入 IndexedDB 定期聚合 — `lib/monitoring/metrics-store.ts`
+- [ ] 页面加载性能指标（FCP/LCP/CLS）— `lib/monitoring/performance.ts`
+
+**产出文件：**
+
+```
+lib/monitoring/
+  performance.ts         # 扩展监控指标
+  metrics-store.ts       # 指标存储
+app/admin/performance/
+  page.tsx               # 性能监控面板
+components/admin/
+  performance-dashboard.tsx # 监控组件
+```
+
+***
+
+## Phase 3 优化任务分配总览
+
+| 角色      | 任务编号   | 任务名                               | 优先级 |
+| ------- | -------- | --------------------------------- | ---- |
+| **队长**  | O-007    | 课堂模板库                            | P1   |
+| **队长**  | O-012    | 课堂场景 UI 布局重构                     | P1   |
+| **队长**  | O-013    | 用户登录注册系统                         | P0   |
+| **队长**  | O-014    | 使用限制与付费系统                        | P0   |
+| **队长**  | O-018    | PWA 离线支持                          | P2   |
+| **队长**  | O-019    | 性能监控 Dashboard                    | P2   |
+| **队员1** | O-001    | 多模态交互 — 语音搜题 + 手写公式识别           | P0   |
+| **队员1** | O-002    | 智能追问链 — 对话式解题                    | P0   |
+| **队员1** | O-005    | 解题进度保存                            | P0   |
+| **队员1** | O-017    | 语义缓存层                             | P1   |
+| **队员2** | O-008    | PPT 导出质量提升                        | P0   |
+| **队员2** | O-009    | 虚拟形象创建                            | P0   |
+| **队员2** | O-011    | 样式优化                              | P1   |
+| **队员2** | O-015    | 幻灯片动画改进                           | P1   |
+| **队员2** | O-016    | TTS 语音导入                          | P1   |
+| **队员3** | O-003    | 个性化推荐引擎 — 基于错题的薄弱点推荐            | P0   |
+| **队员3** | O-004    | AI 助教记忆机制 — 连贯对话                 | P1   |
+| **队员3** | O-006    | 错题复习计划 — 艾宾浩斯遗忘曲线               | P1   |
+| **队员3** | O-010    | AI 全局可用                            | P0   |
+
+***
+
 ## 任务依赖图
 
 ```
@@ -784,6 +1409,25 @@ Phase 5 · 大规模测试 + v4.0 规划 (Week 9-10)
 | **队员3** | C-001    | 错题本管理 API（增删改查）            | Week 3-6  |   |
 | **队员3** | C-002    | 知识图谱 API（图谱构建 + 掌握度）       | Week 3-6  |   |
 | **队员3** | C-003    | AI 助手对话 API（上下文注入）         | Week 3-6  |   |
+| **队长**  | O-007    | 课堂模板库                        | Phase 3   |   |
+| **队长**  | O-012    | 课堂场景 UI 布局重构                 | Phase 3   |   |
+| **队长**  | O-013    | 用户登录注册系统                     | Phase 3   |   |
+| **队长**  | O-014    | 使用限制与付费系统                    | Phase 3   |   |
+| **队长**  | O-018    | PWA 离线支持                      | Phase 3   |   |
+| **队长**  | O-019    | 性能监控 Dashboard                | Phase 3   |   |
+| **队员1** | O-001    | 多模态交互 — 语音搜题 + 手写公式识别       | Phase 3   |   |
+| **队员1** | O-002    | 智能追问链 — 对话式解题                | Phase 3   |   |
+| **队员1** | O-005    | 解题进度保存                        | Phase 3   |   |
+| **队员1** | O-017    | 语义缓存层                         | Phase 3   |   |
+| **队员2** | O-008    | PPT 导出质量提升                    | Phase 3   |   |
+| **队员2** | O-009    | 虚拟形象创建                        | Phase 3   |   |
+| **队员2** | O-011    | 样式优化                          | Phase 3   |   |
+| **队员2** | O-015    | 幻灯片动画改进                       | Phase 3   |   |
+| **队员2** | O-016    | TTS 语音导入                      | Phase 3   |   |
+| **队员3** | O-003    | 个性化推荐引擎 — 基于错题的薄弱点推荐        | Phase 3   |   |
+| **队员3** | O-004    | AI 助教记忆机制 — 连贯对话             | Phase 3   |   |
+| **队员3** | O-006    | 错题复习计划 — 艾宾浩斯遗忘曲线           | Phase 3   |   |
+| **队员3** | O-010    | AI 全局可用                        | Phase 3   |   |
 
 **关键设计：三个模块可同时启动（只需队长总前置任务完成），模块间无交叉依赖。**
 
@@ -791,17 +1435,27 @@ Phase 5 · 大规模测试 + v4.0 规划 (Week 9-10)
 
 ## API 端点总览
 
-| 模块    | 端点                             | 方法                       | 负责人 |
-| ----- | ------------------------------ | ------------------------ | --- |
-| 解题    | `/api/sky/solve/recognize`     | POST                     | 队员1 |
-| 解题    | `/api/sky/solve/explain`       | POST                     | 队员1 |
-| 解题    | `/api/sky/solve/grade`         | POST                     | 队员1 |
-| 题库    | `/api/sky/question-bank`       | GET, POST                | 队员1 |
-| 幻灯片   | `/api/sky/slides/generate`     | POST                     | 队员2 |
-| 幻灯片   | `/api/sky/slides/avatar-speak` | POST                     | 队员2 |
-| 幻灯片   | `/api/sky/slides/export-pptx`  | POST                     | 队员2 |
-| 幻灯片   | `/api/sky/slides/avatars`      | GET                      | 队员2 |
-| 错题本   | `/api/sky/mistakes`            | GET, POST, PATCH, DELETE | 队员3 |
-| 知识图谱  | `/api/sky/knowledge-graph`     | GET                      | 队员3 |
-| AI 助手 | `/api/sky/assistant/chat`      | POST                     | 队员3 |
+| 模块      | 端点                             | 方法                       | 负责人  |
+| ------- | ------------------------------ | ------------------------ | ---- |
+| 解题      | `/api/sky/solve/recognize`     | POST                     | 队员1  |
+| 解题      | `/api/sky/solve/explain`       | POST                     | 队员1  |
+| 解题      | `/api/sky/solve/grade`         | POST                     | 队员1  |
+| 题库      | `/api/sky/question-bank`       | GET, POST                | 队员1  |
+| 幻灯片     | `/api/sky/slides/generate`     | POST                     | 队员2  |
+| 幻灯片     | `/api/sky/slides/avatar-speak` | POST                     | 队员2  |
+| 幻灯片     | `/api/sky/slides/export-pptx`  | POST                     | 队员2  |
+| 幻灯片     | `/api/sky/slides/avatars`      | GET                      | 队员2  |
+| 错题本     | `/api/sky/mistakes`            | GET, POST, PATCH, DELETE | 队员3  |
+| 知识图谱    | `/api/sky/knowledge-graph`     | GET                      | 队员3  |
+| AI 助手   | `/api/sky/assistant/chat`      | POST                     | 队员3  |
+| 推荐      | `/api/sky/recommend`           | GET                      | 队员3  |
+| 复习      | `/api/sky/review/due`          | GET                      | 队员3  |
+| 认证      | `/api/auth/register`           | POST                     | 队长   |
+| 认证      | `/api/auth/login`              | POST                     | 队长   |
+| 认证      | `/api/auth/refresh`            | POST                     | 队长   |
+| 使用限制    | `/api/usage/check`             | GET                      | 队长   |
+| 付费      | `/api/billing/create`          | POST                     | 队长   |
+| 付费      | `/api/billing/status`          | GET                      | 队长   |
+| 付费      | `/api/billing/webhook`         | POST                     | 队长   |
+| 管理      | `/admin/performance`           | GET                      | 队长   |
 
