@@ -44,10 +44,12 @@ export function SlideViewer({ slide }: SlideViewerProps) {
   }, [slide, prevSlideId]);
 
   useEffect(() => {
-    if (!containerRef.current || !slide) return;
+    if (!containerRef.current || !slide?.viewportSize) return;
     const resize = () => {
       if (!containerRef.current) return;
-      setScale((containerRef.current.clientWidth - 64) / slide.viewportSize);
+      const w = containerRef.current.clientWidth;
+      if (w <= 64 || !slide.viewportSize) return;
+      setScale((w - 64) / slide.viewportSize);
     };
     resize();
     const obs = new ResizeObserver(resize);
@@ -82,8 +84,8 @@ export function SlideViewer({ slide }: SlideViewerProps) {
         style={{
           opacity: visible ? 1 : 0,
           transform: visible ? 'translateY(0)' : 'translateY(8px)',
-          width: slide.viewportSize * scale,
-          height: slide.viewportSize * slide.viewportRatio * scale,
+          width: (slide.viewportSize || 1000) * scale,
+          height: (slide.viewportSize || 1000) * (slide.viewportRatio || 0.5625) * scale,
         }}
       >
         <div

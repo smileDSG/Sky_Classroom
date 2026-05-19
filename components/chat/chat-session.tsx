@@ -108,7 +108,7 @@ const MessageBubble = memo(function MessageBubble({
   return (
     <div
       className={cn(
-        'inline-block px-2.5 py-1.5 rounded-xl text-[12px] leading-relaxed max-w-full text-left transition-shadow duration-300',
+        'inline-block px-2.5 py-1.5 rounded-xl text-[13px] leading-relaxed max-w-full text-left transition-shadow duration-300',
         isUser
           ? 'bg-gradient-to-br from-purple-600 to-purple-700 dark:from-purple-500 dark:to-purple-600 text-white rounded-tr-sm shadow-sm shadow-purple-300/30 dark:shadow-purple-900/50 ring-1 ring-purple-500/20'
           : isTeacher
@@ -214,7 +214,7 @@ export function ChatSessionComponent({
   if (session.messages.length === 0 && !isActive) {
     return (
       <div className="h-20 flex items-center justify-center text-center px-2">
-        <p className="text-[10px] text-gray-400 dark:text-gray-500">{t('chat.noMessages')}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">{t('chat.noMessages')}</p>
       </div>
     );
   }
@@ -289,7 +289,7 @@ export function ChatSessionComponent({
               <div className={cn('flex-1 min-w-0', isUser && 'text-right')}>
                 <span
                   className={cn(
-                    'text-[9px] font-bold uppercase tracking-wider block mb-0.5',
+                    'text-[10px] font-bold uppercase tracking-wider block mb-0.5',
                     isUser
                       ? 'text-purple-500 dark:text-purple-400'
                       : isTeacher
@@ -331,7 +331,7 @@ export function ChatSessionComponent({
               className="mx-3 mt-2 mb-1 flex items-center gap-2"
             >
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
-              <span className="flex items-center gap-1 text-[9px] text-gray-400 dark:text-gray-500 font-medium">
+              <span className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 font-medium">
                 <CircleStop className="w-2.5 h-2.5" />
                 {t('chat.ended')}
               </span>
@@ -352,7 +352,7 @@ export function ChatSessionComponent({
             exit={{ opacity: 0, y: 5 }}
             whileHover={{ scale: 1.02 }}
             onClick={() => onEndSession(session.id)}
-            className="mt-2 mx-2 bg-red-50/80 dark:bg-red-900/20 backdrop-blur-md text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-800/50 px-3 py-1.5 rounded-full text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm hover:shadow-md"
+            className="mt-2 mx-2 bg-red-50/80 dark:bg-red-900/20 backdrop-blur-md text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-800/50 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm hover:shadow-md"
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 dark:bg-red-500 opacity-75"></span>

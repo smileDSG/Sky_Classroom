@@ -8,7 +8,7 @@ import type { Action, SpeechAction, DiscussionAction } from '@/lib/types/action'
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store';
-import { PanelRightClose, BookOpen, MessageSquare } from 'lucide-react';
+import { PanelLeftClose, BookOpen, MessageSquare } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useChatSessions } from './use-chat-sessions';
 import { SessionList } from './session-list';
@@ -214,7 +214,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
         const startWidth = width;
 
         const handleMouseMove = (me: MouseEvent) => {
-          const delta = startX - me.clientX;
+          const delta = me.clientX - startX;
           const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta));
           onWidthChange?.(newWidth);
         };
@@ -245,7 +245,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
           transition: isDragging ? 'none' : 'width 0.3s ease',
         }}
         className={cn(
-          'bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-l border-gray-100 dark:border-gray-800 shadow-[-2px_0_24px_rgba(0,0,0,0.02)] flex flex-col shrink-0 z-20 relative overflow-visible',
+          'bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_24px_rgba(0,0,0,0.02)] flex flex-col shrink-0 z-20 relative overflow-visible h-full',
           className,
         )}
       >
@@ -253,9 +253,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
         {!collapsed && (
           <div
             onMouseDown={handleDragStart}
-            className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize z-50 group hover:bg-purple-400/30 dark:hover:bg-purple-600/30 active:bg-purple-500/40 dark:active:bg-purple-500/40 transition-colors"
+            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize z-50 group hover:bg-sky-400/30 dark:hover:bg-sky-600/30 active:bg-sky-500/40 dark:active:bg-sky-500/40 transition-colors"
           >
-            <div className="absolute left-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-purple-400 dark:group-hover:bg-purple-500 transition-colors" />
+            <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-sky-400 dark:group-hover:bg-sky-500 transition-colors" />
           </div>
         )}
 
@@ -268,11 +268,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
             {/* Tab header row */}
             <div className="h-10 flex items-center gap-1 shrink-0 mt-3 mb-1 px-3">
               <TabsList variant="line" className="h-full flex-1 w-0">
-                <TabsTrigger value="lecture" className="text-xs gap-1 flex-1">
+                <TabsTrigger value="lecture" className="text-[13px] gap-1 flex-1">
                   <BookOpen className="w-3.5 h-3.5" />
                   {t('chat.tabs.lecture')}
                 </TabsTrigger>
-                <TabsTrigger value="chat" className="text-xs gap-1 flex-1 relative">
+                <TabsTrigger value="chat" className="text-[13px] gap-1 flex-1 relative">
                   <MessageSquare className="w-3.5 h-3.5" />
                   {t('chat.tabs.chat')}
                   {/* Amber pulse dot when there's an active chat session and user is on Notes tab */}
@@ -290,7 +290,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                   onClick={() => onCollapseChange(true)}
                   className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center bg-gray-100/80 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 ring-1 ring-black/[0.04] dark:ring-white/[0.06] hover:bg-gray-200/90 dark:hover:bg-gray-700/90 hover:text-gray-700 dark:hover:text-gray-200 active:scale-90 transition-all duration-200"
                 >
-                  <PanelRightClose className="w-4 h-4" />
+                  <PanelLeftClose className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -308,10 +308,10 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                     <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 text-gray-300 dark:text-gray-600">
                       <MessageSquare className="w-6 h-6" />
                     </div>
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       {t('chat.noConversations')}
                     </p>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       {t('chat.startConversation')}
                     </p>
                   </div>

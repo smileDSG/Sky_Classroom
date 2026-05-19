@@ -13,7 +13,7 @@ export interface LayoutSliceActions {
 export function getDefaultLayoutState() {
   return {
     sidebarCollapsed: true,
-    chatAreaCollapsed: true,
+    chatAreaCollapsed: false,
     chatAreaWidth: 320,
   };
 }

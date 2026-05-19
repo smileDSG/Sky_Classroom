@@ -240,16 +240,20 @@ const DEFAULT_VALIDATE = (text: string) => text.trim().length > 0;
 /**
  * Unified wrapper around `generateText`.
  *
- * @param params - Same parameters as AI SDK's `generateText`
+ * @param params - Same parameters as AI SDK's `generateText` (messages, model, etc.)
  * @param source - A short label for log grouping (e.g. 'scene-stream', 'pbl-chat')
  * @param retryOptions - Optional retry-on-validation-failure settings
  * @param thinking - Optional per-call thinking config (overrides global LLM_THINKING_DISABLED)
+ * @param system - Optional system prompt. When provided, it overrides any system
+ *   message in the messages array. Required for providers like Anthropic that
+ *   require system messages as a separate parameter, not in the messages array.
  */
 export async function callLLM<T extends GenerateTextParams>(
   params: T,
   source: string,
   retryOptions?: LLMRetryOptions,
   thinking?: ThinkingConfig,
+  system?: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<GenerateTextResult<any, any>> {
   const maxAttempts = (retryOptions?.retries ?? 0) + 1;
@@ -259,13 +263,18 @@ export async function callLLM<T extends GenerateTextParams>(
   let lastResult: GenerateTextResult<any, any> | undefined;
   let lastError: unknown;
 
+  // If a separate system prompt is provided, merge it into params.
+  // Anthropic adapter requires system as a top-level field, not in messages.
+  const effectiveParams = system
+    ? { ...params, system } as T
+    : params;
+
   // Resolve injected params once (thinking config is per-call stable)
   const effectiveThinking = thinking ?? getGlobalThinkingConfig();
-  const injectedParams = injectProviderOptions(params, effectiveThinking);
+  const injectedParams = injectProviderOptions(effectiveParams, effectiveThinking);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-
       // Wrap in thinkingContext so the custom fetch wrapper in providers.ts
       // can read the config and inject vendor-specific body params for
       // OpenAI-compatible providers.

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
+import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -23,6 +23,7 @@ import {
   Sparkles,
   Atom,
   X,
+  Lightbulb,
 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { LanguageSwitcher } from '@/components/language-switcher';
@@ -56,6 +57,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useDraftCache } from '@/lib/hooks/use-draft-cache';
 import { SpeechButton } from '@/components/audio/speech-button';
 import { useImportClassroom } from '@/lib/import/use-import-classroom';
+import { DraggableQaButton } from '@/components/draggable-qa-button';
+import { SkyTabBar } from '@/components/sky/layout/sky-tab-bar';
 
 const log = createLogger('Home');
 
@@ -77,12 +80,25 @@ const initialFormState: FormState = {
   interactiveMode: false,
 };
 
+type HomeTab = 'classroom' | 'solve';
+
 function HomePage() {
   const { t } = useI18n();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<HomeTab>('classroom');
   const [form, setForm] = useState<FormState>(initialFormState);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Sky theme colors
+  const skyColors = {
+    primary: '#4A90D9',
+    light: '#87CEEB',
+    dark: '#2C5F8F',
+    cloud: '#F8FAFC',
+    dawn: '#FFB6C1',
+    sunset: '#FFA07A',
+  };
   const [settingsSection, setSettingsSection] = useState<
     import('@/lib/types/settings').SettingsSection | undefined
   >(undefined);
@@ -382,8 +398,12 @@ function HomePage() {
     }
   };
 
+  const handleNavigateToSolve = useCallback(() => {
+    router.push('/sky/solve');
+  }, [router]);
+
   return (
-    <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center p-4 pt-16 md:p-8 md:pt-16 overflow-x-hidden">
+    <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center overflow-x-hidden">
       <input
         ref={fileInputRef}
         type="file"
@@ -391,80 +411,70 @@ function HomePage() {
         onChange={handleFileChange}
         className="hidden"
       />
-      {/* ═══ Top-right pill (unchanged) ═══ */}
-      <div
-        ref={toolbarRef}
-        className="fixed top-4 right-4 z-50 flex items-center gap-1 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md px-2 py-1.5 rounded-full border border-gray-100/50 dark:border-gray-700/50 shadow-sm"
-      >
-        {/* Language Selector */}
-        <LanguageSwitcher onOpen={() => setThemeOpen(false)} />
 
-        <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
+      {/* ═══ Draggable 答疑 Button ═══ */}
+      <DraggableQaButton />
 
-        {/* Theme Selector */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setThemeOpen(!themeOpen);
-            }}
-            className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all"
-          >
-            {theme === 'light' && <Sun className="w-4 h-4" />}
-            {theme === 'dark' && <Moon className="w-4 h-4" />}
-            {theme === 'system' && <Monitor className="w-4 h-4" />}
-          </button>
-          {themeOpen && (
-            <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[140px]">
-              <button
-                onClick={() => {
-                  setTheme('light');
-                  setThemeOpen(false);
-                }}
-                className={cn(
-                  'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
-                  theme === 'light' &&
-                    'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                )}
-              >
-                <Sun className="w-4 h-4" />
-                {t('settings.themeOptions.light')}
-              </button>
-              <button
-                onClick={() => {
-                  setTheme('dark');
-                  setThemeOpen(false);
-                }}
-                className={cn(
-                  'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
-                  theme === 'dark' &&
-                    'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                )}
-              >
-                <Moon className="w-4 h-4" />
-                {t('settings.themeOptions.dark')}
-              </button>
-              <button
-                onClick={() => {
-                  setTheme('system');
-                  setThemeOpen(false);
-                }}
-                className={cn(
-                  'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
-                  theme === 'system' &&
-                    'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                )}
-              >
-                <Monitor className="w-4 h-4" />
-                {t('settings.themeOptions.system')}
-              </button>
-            </div>
-          )}
-        </div>
+      {/* ═══ Fixed Top Navigation Bar ═══ */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-sky-100/60 dark:border-sky-900/30 flex items-center px-4 md:px-8 gap-4">
+        {/* Navigation Tabs — same as SkyAppShell */}
+        <SkyTabBar />
 
-        <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
+        {/* Spacer */}
+        <div className="flex-1" />
 
-        {/* Settings Button */}
-        <div className="relative">
+        {/* Top-right toolbar */}
+        <div
+          ref={toolbarRef}
+          className="flex items-center gap-1 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm px-1.5 py-1 rounded-full border border-gray-100/50 dark:border-gray-700/50"
+        >
+          <LanguageSwitcher onOpen={() => setThemeOpen(false)} />
+          <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
+          <div className="relative">
+            <button
+              onClick={() => setThemeOpen(!themeOpen)}
+              className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all"
+            >
+              {theme === 'light' && <Sun className="w-4 h-4" />}
+              {theme === 'dark' && <Moon className="w-4 h-4" />}
+              {theme === 'system' && <Monitor className="w-4 h-4" />}
+            </button>
+            {themeOpen && (
+              <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[140px]">
+                <button
+                  onClick={() => { setTheme('light'); setThemeOpen(false); }}
+                  className={cn(
+                    'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
+                    theme === 'light' && 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
+                  )}
+                >
+                  <Sun className="w-4 h-4" />
+                  {t('settings.themeOptions.light')}
+                </button>
+                <button
+                  onClick={() => { setTheme('dark'); setThemeOpen(false); }}
+                  className={cn(
+                    'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
+                    theme === 'dark' && 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
+                  )}
+                >
+                  <Moon className="w-4 h-4" />
+                  {t('settings.themeOptions.dark')}
+                </button>
+                <button
+                  onClick={() => { setTheme('system'); setThemeOpen(false); }}
+                  className={cn(
+                    'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
+                    theme === 'system' && 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
+                  )}
+                >
+                  <Monitor className="w-4 h-4" />
+                  {t('settings.themeOptions.system')}
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
           <button
             onClick={() => setSettingsOpen(true)}
             className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all group"
@@ -472,7 +482,8 @@ function HomePage() {
             <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
           </button>
         </div>
-      </div>
+      </header>
+
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={(open) => {
@@ -483,357 +494,291 @@ function HomePage() {
       />
 
       {/* ═══ Background Decor ═══ */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"
-          style={{ animationDuration: '4s' }}
-        />
-        <div
-          className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"
-          style={{ animationDuration: '6s' }}
-        />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none mt-14">
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-100 via-blue-50 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900" />
+        <div className="absolute top-20 left-10 w-32 h-16 bg-white/60 dark:bg-white/10 rounded-full blur-xl" />
+        <div className="absolute top-32 right-20 w-48 h-20 bg-white/40 dark:bg-white/5 rounded-full blur-2xl" />
+        <div className="absolute top-48 left-1/4 w-24 h-12 bg-white/50 dark:bg-white/8 rounded-full blur-lg" />
+        <div className="absolute top-10 right-1/3 w-24 h-24 bg-sky-300/30 dark:bg-sky-500/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-1/3 w-1 h-1 bg-white/60 rounded-full hidden dark:block animate-pulse" />
+        <div className="absolute top-40 right-1/4 w-1 h-1 bg-white/40 rounded-full hidden dark:block animate-pulse" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute top-60 left-1/2 w-0.5 h-0.5 bg-white/50 rounded-full hidden dark:block animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
-      {/* ═══ Hero section: title + input (centered, wider) ═══ */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className={cn(
-          'relative z-20 w-full max-w-[800px] flex flex-col items-center',
-          classrooms.length === 0 ? 'justify-center min-h-[calc(100dvh-8rem)]' : 'mt-[10vh]',
-        )}
-      >
-        {/* ── Logo ── */}
-        <motion.img
-          src="/logo-horizontal.png"
-          alt="OpenMAIC"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{
-            delay: 0.1,
-            type: 'spring',
-            stiffness: 200,
-            damping: 20,
-          }}
-          className="h-12 md:h-16 mb-2 -ml-2 md:-ml-3"
-        />
-
-        {/* ── Slogan ── */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
-          className="text-sm text-muted-foreground/60 mb-8"
-        >
-          {t('home.slogan')}
-        </motion.p>
-
-        {/* ── Unified input area ── */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.35 }}
-          className="w-full"
-        >
-          <div className="w-full rounded-2xl border border-border/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl shadow-black/[0.03] dark:shadow-black/20 transition-shadow focus-within:shadow-2xl focus-within:shadow-violet-500/[0.06]">
-            {/* ── Greeting + Profile + Agents ── */}
-            <div className="relative z-20 flex items-start justify-between">
-              <GreetingBar />
-              <div className="pr-3 pt-3.5 shrink-0">
-                <AgentBar />
-              </div>
-            </div>
-
-            {/* Textarea */}
-            <textarea
-              ref={textareaRef}
-              placeholder={t('upload.requirementPlaceholder')}
-              className="w-full resize-none border-0 bg-transparent px-4 pt-1 pb-2 text-[13px] leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none min-h-[140px] max-h-[300px]"
-              value={form.requirement}
-              onChange={(e) => updateForm('requirement', e.target.value)}
-              onKeyDown={handleKeyDown}
-              rows={4}
-            />
-
-            {/* Toolbar row */}
-            <div className="px-3 pb-3 flex items-end gap-2">
-              <div className="flex-1 min-w-0">
-                <GenerationToolbar
-                  webSearch={form.webSearch}
-                  onWebSearchChange={(v) => updateForm('webSearch', v)}
-                  onSettingsOpen={(section) => {
-                    setSettingsSection(section);
-                    setSettingsOpen(true);
-                  }}
-                  pdfFile={form.pdfFile}
-                  onPdfFileChange={(f) => updateForm('pdfFile', f)}
-                  onPdfError={setError}
-                />
-              </div>
-
-              {/* Interactive mode toggle */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                    onClick={() => updateForm('interactiveMode', !form.interactiveMode)}
-                    className={cn(
-                      'relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all cursor-pointer select-none whitespace-nowrap border shrink-0 h-8',
-                      form.interactiveMode
-                        ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.35)] dark:shadow-[0_0_12px_rgba(6,182,212,0.25)]'
-                        : 'border-cyan-300/60 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20',
-                    )}
-                  >
-                    {form.interactiveMode && (
-                      <span
-                        className="absolute inset-[-4px] rounded-full border border-cyan-400/40 dark:border-cyan-400/25"
-                        style={{
-                          animation: 'interactive-mode-breathe 2s ease-in-out infinite',
-                        }}
-                      />
-                    )}
-                    <Atom className="size-3.5 relative z-10 animate-[spin_3s_linear_infinite]" />
-                    <span className="relative z-10">{t('toolbar.interactiveModeLabel')}</span>
-                  </motion.button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  {t('toolbar.interactiveModeHint')}
-                </TooltipContent>
-              </Tooltip>
-
-              {/* Voice input */}
-              <SpeechButton
-                size="md"
-                onTranscription={(text) => {
-                  setForm((prev) => {
-                    const next = prev.requirement + (prev.requirement ? ' ' : '') + text;
-                    updateRequirementCache(next);
-                    return { ...prev, requirement: next };
-                  });
-                }}
-              />
-
-              {/* Send button */}
-              <button
-                onClick={handleGenerate}
-                disabled={!canGenerate}
-                className={cn(
-                  'shrink-0 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all px-3',
-                  canGenerate
-                    ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm cursor-pointer'
-                    : 'bg-muted text-muted-foreground/40 cursor-not-allowed',
-                )}
-              >
-                <span className="text-xs font-medium">{t('toolbar.enterClassroom')}</span>
-                <ArrowUp className="size-3.5" />
-              </button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* ── Error ── */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-3 w-full p-3 bg-destructive/10 border border-destructive/20 rounded-lg"
-            >
-              <p className="text-sm text-destructive">{error}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Import button (empty state) ── */}
-        {classrooms.length === 0 && (
-          <button
-            onClick={triggerFileSelect}
-            disabled={importing}
-            className="relative z-10 mt-4 flex items-center gap-1.5 text-[12px] text-muted-foreground/40 hover:text-foreground/60 transition-colors"
+      {/* ═══ Main Content ═══ */}
+      {activeTab === 'classroom' && (
+        <>
+          {/* ── Hero section ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className={cn(
+              'relative z-20 w-full max-w-[800px] flex flex-col items-center pt-16',
+              classrooms.length === 0 ? 'justify-center min-h-[calc(100dvh-3.5rem)]' : 'mt-[6vh]',
+            )}
           >
-            <Upload className="size-3.5" />
-            <span>{t('import.classroom')}</span>
-          </button>
-        )}
-      </motion.div>
+            {/* ── Logo ── */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 20 }}
+              className="flex flex-col items-center mb-2"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="relative">
+                  <svg viewBox="0 0 64 40" className="w-16 h-10 text-sky-500 dark:text-sky-400" fill="currentColor">
+                    <ellipse cx="20" cy="28" rx="14" ry="10" />
+                    <ellipse cx="32" cy="20" rx="18" ry="14" />
+                    <ellipse cx="46" cy="26" rx="12" ry="10" />
+                  </svg>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-amber-400/80 dark:bg-amber-500/60 rounded-full blur-sm" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-3xl md:text-4xl font-black bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 dark:from-sky-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                    天空课堂
+                  </span>
+                </div>
+              </div>
+            </motion.div>
 
-      {/* ═══ Recent classrooms — collapsible ═══ */}
-      {classrooms.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="relative z-10 mt-10 w-full max-w-6xl flex flex-col items-center"
-        >
-          {/* Trigger — divider-line with centered text */}
-          <div className="group w-full flex items-center gap-4 py-2">
-            <div className="flex-1 h-px bg-border/40 group-hover:bg-border/70 transition-colors" />
-            <div className="shrink-0 flex items-center gap-3 text-[13px] text-muted-foreground/60 select-none">
-              <button
-                onClick={() => persistRecentOpen(!recentOpen)}
-                className="flex items-center gap-2 hover:text-foreground/70 transition-colors cursor-pointer"
-              >
-                <Clock className="size-3.5" />
-                {t('classroom.recentClassrooms')}
-                <span className="text-[11px] tabular-nums opacity-60">{classrooms.length}</span>
-                <motion.div
-                  animate={{ rotate: recentOpen ? 180 : 0 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                >
-                  <ChevronDown className="size-3.5" />
-                </motion.div>
-              </button>
+            {/* ── Slogan ── */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.25 }}
+              className="text-sm text-sky-600/70 dark:text-sky-400/70 mb-8"
+            >
+              云端智学，无限可能
+            </motion.p>
 
-              {/* Search toggle — icon that expands into an input in place */}
-              <AnimatePresence initial={false}>
-                {!searchOpen ? (
-                  <motion.button
-                    key="search-icon"
-                    ref={searchButtonRef}
-                    type="button"
-                    aria-label={t('classroom.searchAriaLabel')}
-                    onClick={() => {
-                      setSearchOpen(true);
-                      if (!recentOpen) persistRecentOpen(true);
-                      requestAnimationFrame(() => searchInputRef.current?.focus());
+            {/* ── Unified input area ── */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.35 }}
+              className="w-full"
+            >
+              <div className="w-full rounded-2xl border border-sky-200/60 dark:border-sky-800/40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl shadow-sky-500/[0.03] dark:shadow-sky-900/20 transition-shadow focus-within:shadow-2xl focus-within:shadow-sky-500/[0.08]">
+                <div className="relative z-20 flex items-start justify-between">
+                  <GreetingBar />
+                  <div className="pr-3 pt-3.5 shrink-0">
+                    <AgentBar />
+                  </div>
+                </div>
+                <textarea
+                  ref={textareaRef}
+                  placeholder={t('upload.requirementPlaceholder')}
+                  className="w-full resize-none border-0 bg-transparent px-4 pt-1 pb-2 text-[13px] leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none min-h-[140px] max-h-[300px]"
+                  value={form.requirement}
+                  onChange={(e) => updateForm('requirement', e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  rows={4}
+                />
+                <div className="px-3 pb-3 flex items-end gap-2">
+                  <div className="flex-1 min-w-0">
+                    <GenerationToolbar
+                      webSearch={form.webSearch}
+                      onWebSearchChange={(v) => updateForm('webSearch', v)}
+                      onSettingsOpen={(section) => { setSettingsSection(section); setSettingsOpen(true); }}
+                      pdfFile={form.pdfFile}
+                      onPdfFileChange={(f) => updateForm('pdfFile', f)}
+                      onPdfError={setError}
+                    />
+                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                        onClick={() => updateForm('interactiveMode', !form.interactiveMode)}
+                        className={cn(
+                          'relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all cursor-pointer select-none whitespace-nowrap border shrink-0 h-8',
+                          form.interactiveMode
+                            ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.35)] dark:shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                            : 'border-cyan-300/60 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20',
+                        )}
+                      >
+                        {form.interactiveMode && (
+                          <span className="absolute inset-[-4px] rounded-full border border-cyan-400/40 dark:border-cyan-400/25" style={{ animation: 'interactive-mode-breathe 2s ease-in-out infinite' }} />
+                        )}
+                        <Atom className="size-3.5 relative z-10 animate-[spin_3s_linear_infinite]" />
+                        <span className="relative z-10">{t('toolbar.interactiveModeLabel')}</span>
+                      </motion.button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      {t('toolbar.interactiveModeHint')}
+                    </TooltipContent>
+                  </Tooltip>
+                  <SpeechButton
+                    size="md"
+                    onTranscription={(text) => {
+                      setForm((prev) => {
+                        const next = prev.requirement + (prev.requirement ? ' ' : '') + text;
+                        updateRequirementCache(next);
+                        return { ...prev, requirement: next };
+                      });
                     }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.12, ease: 'easeOut' }}
-                    className="flex items-center justify-center size-6 rounded-full text-muted-foreground/50 hover:text-foreground/70 hover:bg-muted/50 transition-colors cursor-pointer"
+                  />
+                  <button
+                    onClick={handleGenerate}
+                    disabled={!canGenerate}
+                    className={cn(
+                      'shrink-0 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all px-3',
+                      canGenerate
+                        ? 'bg-sky-500 text-white hover:bg-sky-600 shadow-sm shadow-sky-500/25 cursor-pointer'
+                        : 'bg-muted text-muted-foreground/40 cursor-not-allowed',
+                    )}
                   >
-                    <Search className="size-3.5" />
-                  </motion.button>
-                ) : (
-                  <motion.div
-                    key="search-input"
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 200 }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <InputGroup
-                      className={cn(
-                        'h-7 text-[12px] rounded-full bg-muted/40 border-transparent shadow-none',
-                        'transition-colors',
-                        'hover:bg-muted/60',
-                        'has-[[data-slot=input-group-control]:focus-visible]:bg-muted/60',
-                        'has-[[data-slot=input-group-control]:focus-visible]:border-transparent',
-                        'has-[[data-slot=input-group-control]:focus-visible]:ring-0',
-                      )}
-                    >
-                      <InputGroupInput
-                        ref={searchInputRef}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape') {
-                            e.preventDefault();
-                            if (searchQuery) {
-                              setSearchQuery('');
-                            } else {
-                              setSearchOpen(false);
-                              requestAnimationFrame(() => searchButtonRef.current?.focus());
-                            }
-                          }
-                        }}
-                        onBlur={() => {
-                          if (!searchQuery) {
-                            setSearchOpen(false);
-                          }
-                        }}
-                        placeholder={t('classroom.searchPlaceholder')}
-                        aria-label={t('classroom.searchAriaLabel')}
-                        className="h-7 pl-3 placeholder:text-muted-foreground/50"
-                      />
-                      {searchQuery && (
-                        <InputGroupButton
-                          size="icon-xs"
-                          aria-label={t('classroom.clearSearch')}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => {
-                            setSearchQuery('');
-                            searchInputRef.current?.focus();
-                          }}
-                        >
-                          <X />
-                        </InputGroupButton>
-                      )}
-                    </InputGroup>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <span className="text-xs font-medium">{t('toolbar.enterClassroom')}</span>
+                    <ArrowUp className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
 
+            {/* ── Error ── */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-3 w-full p-3 bg-destructive/10 border border-destructive/20 rounded-lg"
+                >
+                  <p className="text-sm text-destructive">{error}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Import button ── */}
+            {classrooms.length === 0 && (
               <button
                 onClick={triggerFileSelect}
                 disabled={importing}
-                className="group/import grid grid-cols-[auto_0fr] hover:grid-cols-[auto_1fr] items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] text-muted-foreground/35 hover:text-muted-foreground/70 hover:bg-muted/50 transition-all duration-200 cursor-pointer"
+                className="relative z-10 mt-4 flex items-center gap-1.5 text-[12px] text-muted-foreground/40 hover:text-foreground/60 transition-colors"
               >
-                <Upload className="size-3" />
-                <span className="overflow-hidden opacity-0 group-hover/import:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                  {t('import.classroom')}
-                </span>
+                <Upload className="size-3.5" />
+                <span>{t('import.classroom')}</span>
               </button>
-            </div>
-            <div className="flex-1 h-px bg-border/40 group-hover:bg-border/70 transition-colors" />
-          </div>
-
-          {/* Expandable content */}
-          <AnimatePresence>
-            {recentOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-                className="w-full overflow-hidden"
-              >
-                {searchQuery.trim() && filteredClassrooms.length === 0 ? (
-                  <div className="pt-8 pb-2 text-center text-[13px] text-muted-foreground/60">
-                    {t('classroom.searchEmpty')}
-                  </div>
-                ) : (
-                  <div className="pt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-8">
-                    {filteredClassrooms.map((classroom, i) => (
-                      <motion.div
-                        key={classroom.id}
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                          delay: i * 0.04,
-                          duration: 0.35,
-                          ease: 'easeOut',
-                        }}
-                      >
-                        <ClassroomCard
-                          classroom={classroom}
-                          slide={thumbnails[classroom.id]}
-                          formatDate={formatDate}
-                          onDelete={handleDelete}
-                          onRename={handleRename}
-                          confirmingDelete={pendingDeleteId === classroom.id}
-                          onConfirmDelete={() => confirmDelete(classroom.id)}
-                          onCancelDelete={() => setPendingDeleteId(null)}
-                          onClick={() => router.push(`/classroom/${classroom.id}`)}
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
             )}
-          </AnimatePresence>
+          </motion.div>
+
+          {/* ═══ Recent classrooms ═══ */}
+          {classrooms.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="relative z-10 mt-10 w-full max-w-6xl flex flex-col items-center"
+            >
+              <div className="group w-full flex items-center gap-4 py-2">
+                <div className="flex-1 h-px bg-border/40 group-hover:bg-border/70 transition-colors" />
+                <div className="shrink-0 flex items-center gap-3 text-[13px] text-muted-foreground/60 select-none">
+                  <button onClick={() => persistRecentOpen(!recentOpen)} className="flex items-center gap-2 hover:text-foreground/70 transition-colors cursor-pointer">
+                    <Clock className="size-3.5" />
+                    {t('classroom.recentClassrooms')}
+                    <span className="text-[11px] tabular-nums opacity-60">{classrooms.length}</span>
+                    <motion.div animate={{ rotate: recentOpen ? 180 : 0 }} transition={{ duration: 0.3, ease: 'easeInOut' }}>
+                      <ChevronDown className="size-3.5" />
+                    </motion.div>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {!searchOpen ? (
+                      <motion.button
+                        key="search-icon" ref={searchButtonRef} type="button"
+                        aria-label={t('classroom.searchAriaLabel')}
+                        onClick={() => { setSearchOpen(true); if (!recentOpen) persistRecentOpen(true); requestAnimationFrame(() => searchInputRef.current?.focus()); }}
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        transition={{ duration: 0.12, ease: 'easeOut' }}
+                        className="flex items-center justify-center size-6 rounded-full text-muted-foreground/50 hover:text-foreground/70 hover:bg-muted/50 transition-colors cursor-pointer"
+                      >
+                        <Search className="size-3.5" />
+                      </motion.button>
+                    ) : (
+                      <motion.div
+                        key="search-input" initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 200 }} exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <InputGroup className={cn('h-7 text-[12px] rounded-full bg-muted/40 border-transparent shadow-none', 'transition-colors', 'hover:bg-muted/60', 'has-[[data-slot=input-group-control]:focus-visible]:bg-muted/60', 'has-[[data-slot=input-group-control]:focus-visible]:border-transparent', 'has-[[data-slot=input-group-control]:focus-visible]:ring-0')}>
+                          <InputGroupInput ref={searchInputRef} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); if (searchQuery) { setSearchQuery(''); } else { setSearchOpen(false); requestAnimationFrame(() => searchButtonRef.current?.focus()); } } }} onBlur={() => { if (!searchQuery) setSearchOpen(false); }} placeholder={t('classroom.searchPlaceholder')} aria-label={t('classroom.searchAriaLabel')} className="h-7 pl-3 placeholder:text-muted-foreground/50" />
+                          {searchQuery && (
+                            <InputGroupButton size="icon-xs" aria-label={t('classroom.clearSearch')} onMouseDown={(e) => e.preventDefault()} onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}>
+                              <X />
+                            </InputGroupButton>
+                          )}
+                        </InputGroup>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <button onClick={triggerFileSelect} disabled={importing} className="group/import grid grid-cols-[auto_0fr] hover:grid-cols-[auto_1fr] items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] text-muted-foreground/35 hover:text-muted-foreground/70 hover:bg-muted/50 transition-all duration-200 cursor-pointer">
+                    <Upload className="size-3" />
+                    <span className="overflow-hidden opacity-0 group-hover/import:opacity-100 transition-opacity duration-200 whitespace-nowrap">{t('import.classroom')}</span>
+                  </button>
+                </div>
+                <div className="flex-1 h-px bg-border/40 group-hover:bg-border/70 transition-colors" />
+              </div>
+              <AnimatePresence>
+                {recentOpen && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }} className="w-full overflow-hidden">
+                    {searchQuery.trim() && filteredClassrooms.length === 0 ? (
+                      <div className="pt-8 pb-2 text-center text-[13px] text-muted-foreground/60">{t('classroom.searchEmpty')}</div>
+                    ) : (
+                      <div className="pt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-8">
+                        {filteredClassrooms.map((classroom, i) => (
+                          <motion.div key={classroom.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04, duration: 0.35, ease: 'easeOut' }}>
+                            <ClassroomCard classroom={classroom} slide={thumbnails[classroom.id]} formatDate={formatDate} onDelete={handleDelete} onRename={handleRename} confirmingDelete={pendingDeleteId === classroom.id} onConfirmDelete={() => confirmDelete(classroom.id)} onCancelDelete={() => setPendingDeleteId(null)} onClick={() => router.push(`/classroom/${classroom.id}`)} />
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </>
+      )}
+
+      {/* ═══ Solve Tab Content ═══ */}
+      {activeTab === 'solve' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="relative z-20 w-full max-w-3xl flex flex-col items-center pt-24 md:pt-28"
+        >
+          {/* Hero card for solve */}
+          <div className="w-full rounded-2xl border border-sky-200/60 dark:border-sky-800/40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl p-8 text-center">
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 15 }}
+              className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-500/30 mb-4"
+            >
+              <Lightbulb className="w-8 h-8 text-white" />
+            </motion.div>
+            <h2 className="text-2xl font-bold text-sky-700 dark:text-sky-300 mb-2">
+              AI 搜题批改
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+              拍照、语音或输入题目，AI 帮你解答、批改、推荐相似题
+            </p>
+            <button
+              onClick={handleNavigateToSolve}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 text-white font-medium text-sm shadow-lg shadow-sky-500/25 hover:from-sky-600 hover:to-blue-600 hover:shadow-xl transition-all active:scale-[0.97]"
+            >
+              <Sparkles className="w-4 h-4" />
+              进入搜题
+            </button>
+          </div>
         </motion.div>
       )}
 
-      {/* Footer — flows with content, at the very end */}
-      <div className="mt-auto pt-12 pb-4 text-center text-xs text-muted-foreground/40">
-        OpenMAIC Open Source Project
+      {/* Footer */}
+      <div className="mt-auto pt-12 pb-4 text-center text-xs text-sky-600/50 dark:text-sky-400/50">
+        天空课堂 · AI 驱动的智能教学平台
       </div>
     </div>
   );

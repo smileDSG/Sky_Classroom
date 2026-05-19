@@ -222,35 +222,47 @@ function buildSlideBackground(
   return undefined;
 }
 
-/**
- * Center the title element on a cover slide.
- * Finds the largest text element (assumed to be the title) and
- * repositions it to the center of the canvas (1000 x 562.5).
- */
 const CANVAS_W = 1000;
 const CANVAS_H = 562.5;
+const COVER_TEXT_GAP = 35; // vertical gap between stacked text elements on cover
 
 function centerCoverTitle(elements: PPTElement[]): PPTElement[] {
-  // Find the largest text element by area (likely the title)
-  let titleIdx = -1;
-  let maxArea = 0;
+  // Collect all text elements with their indices and sizes
+  const textInfos: { idx: number; el: PPTTextElement; area: number }[] = [];
   for (let i = 0; i < elements.length; i++) {
     const el = elements[i];
     if (el.type === 'text') {
-      const area = (el as PPTTextElement).width * (el as PPTTextElement).height;
-      if (area > maxArea) {
-        maxArea = area;
-        titleIdx = i;
-      }
+      const textEl = el as PPTTextElement;
+      textInfos.push({ idx: i, el: textEl, area: textEl.width * textEl.height });
     }
   }
-  if (titleIdx < 0) return elements;
 
-  const title = elements[titleIdx] as PPTTextElement;
-  const centerX = (CANVAS_W - title.width) / 2;
-  const centerY = (CANVAS_H - title.height) / 2;
+  if (textInfos.length === 0) {
+    log.warn('[centerCoverTitle] No text elements found');
+    return elements;
+  }
 
-  return elements.map((el, i) =>
-    i === titleIdx ? { ...el, left: centerX, top: centerY } : el,
-  );
+  // Sort by area descending so the largest text (title) is first
+  textInfos.sort((a, b) => b.area - a.area);
+
+  // Calculate total stack height and center the whole block vertically
+  const totalStackHeight =
+    textInfos.reduce((sum, t) => sum + t.el.height, 0) +
+    COVER_TEXT_GAP * (textInfos.length - 1);
+
+  const startY = (CANVAS_H - totalStackHeight) / 2;
+
+  const result = [...elements];
+  let cursorY = startY;
+
+  for (const { idx, el } of textInfos) {
+    const centerX = (CANVAS_W - el.width) / 2;
+    log.info(
+      `[centerCoverTitle] text[${idx}] old=(${el.left}, ${el.top}) new=(${centerX.toFixed(1)}, ${cursorY.toFixed(1)}) size=${el.width}x${el.height}`,
+    );
+    result[idx] = { ...el, left: centerX, top: cursorY };
+    cursorY += el.height + COVER_TEXT_GAP;
+  }
+
+  return result;
 }

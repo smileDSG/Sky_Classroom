@@ -174,6 +174,7 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
       partialize: (state) => ({
         selectedAvatarId: state.selectedAvatarId,
         generationOptions: state.generationOptions,
+        slides: state.slides,
         subject: state.subject,
         style: state.style,
         difficulty: state.difficulty,

@@ -150,14 +150,20 @@ function normalizeCause(cause: string): MistakeCause {
   if (VALID_CAUSES.includes(normalized as MistakeCause)) {
     return normalized as MistakeCause;
   }
-  // Map common Chinese descriptions
-  const causeMap: Record<string, MistakeCause> = {
+  // Map common Chinese descriptions — full phrases first, then keywords
+  const fullPhrases: Record<string, MistakeCause> = {
     '概念不清': 'concept-unclear',
     '计算失误': 'calculation-error',
     '审题错误': 'misreading',
     '方法错误': 'method-wrong',
     '粗心': 'careless',
     '格式错误': 'format-error',
+  };
+  for (const [key, value] of Object.entries(fullPhrases)) {
+    if (normalized.includes(key)) return value;
+  }
+
+  const keywords: Record<string, MistakeCause> = {
     '概念': 'concept-unclear',
     '计算': 'calculation-error',
     '审题': 'misreading',
@@ -165,7 +171,7 @@ function normalizeCause(cause: string): MistakeCause {
     '粗心': 'careless',
     '格式': 'format-error',
   };
-  for (const [key, value] of Object.entries(causeMap)) {
+  for (const [key, value] of Object.entries(keywords)) {
     if (normalized.includes(key)) return value;
   }
   // Default: concept-unclear for wrong answers

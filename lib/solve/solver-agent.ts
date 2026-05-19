@@ -24,10 +24,10 @@ const log = createLogger('SolveGraph');
 // ── Agent → provider/model mapping ───────────────────────────────
 
 const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> = {
-  universal: { providerId: 'deepseek', modelId: 'deepseek-v4-pro' },
-  science: { providerId: 'glm', modelId: 'glm-5.1' },
-  humanities: { providerId: 'qwen', modelId: 'qwen3.6-max-preview' },
-  grading: { providerId: 'deepseek', modelId: 'deepseek-v4-pro' },
+  universal: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
+  science: { providerId: 'qwen', modelId: 'qwen3.6-plus' },
+  humanities: { providerId: 'qwen', modelId: 'qwen3.6-plus' },
+  grading: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
 };
 
 const ENV_KEY_MAP: Record<string, string> = {

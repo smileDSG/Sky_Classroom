@@ -180,6 +180,11 @@ export function migrateSettings(
     }
   }
 
+  // v2 → v3: open ChatArea by default (new left-side layout)
+  if (version < 3) {
+    state.chatAreaCollapsed = false;
+  }
+
   // Ensure providersConfig has all built-in providers (also in merge below)
   ensureBuiltInProviders(state as Partial<LLMSettingsSlice>);
   promoteLegacyCustomProviderBaseUrls(state as Partial<LLMSettingsSlice>);

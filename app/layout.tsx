@@ -19,9 +19,9 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'OpenMAIC',
+  title: '天空课堂',
   description:
-    'The open-source AI interactive classroom. Upload a PDF to instantly generate an immersive, multi-agent learning experience.',
+    '天空课堂 — AI 驱动的互动课堂。上传 PDF，即刻生成沉浸式多-agent学习体验。',
 };
 
 export default function RootLayout({

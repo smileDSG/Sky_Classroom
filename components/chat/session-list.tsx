@@ -87,19 +87,19 @@ export function SessionList({
               </span>
               <span
                 className={cn(
-                  'text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-px rounded shrink-0',
+                  'text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-px rounded shrink-0',
                   sessionBadgeStyles[session.type],
                 )}
               >
                 {t(`chat.badge.${session.type}`)}
               </span>
-              <span className="flex-1 text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">
+              <span className="flex-1 text-[13px] font-semibold text-gray-700 dark:text-gray-300 truncate">
                 {session.title}
               </span>
-              <div className="flex items-center gap-1 text-[9px] text-gray-400 dark:text-gray-500">
+              <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500">
                 {getStatusIcon(session.status)}
               </div>
-              <span className="text-[9px] text-gray-400 dark:text-gray-500 font-medium tabular-nums shrink-0">
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium tabular-nums shrink-0">
                 {session.messages.length}
               </span>
               <ChevronDown

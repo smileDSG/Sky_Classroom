@@ -110,15 +110,15 @@ export function SceneSidebar({
         width: displayWidth,
         transition: isDraggingRef.current ? 'none' : 'width 0.3s ease',
       }}
-      className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_24px_rgba(0,0,0,0.02)] flex flex-col shrink-0 z-20 relative overflow-visible"
+      className="bg-sky-50/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-sky-100 dark:border-sky-900/30 shadow-[2px_0_24px_rgba(74,144,217,0.06)] flex flex-col shrink-0 z-20 relative overflow-visible"
     >
       {/* Drag handle */}
       {!collapsed && (
         <div
           onMouseDown={handleDragStart}
-          className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize z-50 group hover:bg-purple-400/30 dark:hover:bg-purple-600/30 active:bg-purple-500/40 dark:active:bg-purple-500/40 transition-colors"
+          className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize z-50 group hover:bg-sky-400/30 dark:hover:bg-sky-600/30 active:bg-sky-500/40 dark:active:bg-sky-500/40 transition-colors"
         >
-          <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-purple-400 dark:group-hover:bg-purple-500 transition-colors" />
+          <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-sky-300 dark:bg-sky-600 group-hover:bg-sky-400 dark:group-hover:bg-sky-500 transition-colors" />
         </div>
       )}
 
@@ -127,14 +127,26 @@ export function SceneSidebar({
         <div className="h-10 flex items-center justify-between shrink-0 relative mt-3 mb-1 px-3">
           <button
             onClick={() => router.push('/')}
-            className="flex items-center gap-2 cursor-pointer rounded-lg px-1.5 -mx-1.5 py-1 -my-1 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 active:scale-[0.97] transition-all duration-150"
+            className="flex items-center gap-2 cursor-pointer rounded-lg px-1.5 -mx-1.5 py-1 -my-1 hover:bg-sky-100/80 dark:hover:bg-sky-900/40 active:scale-[0.97] transition-all duration-150"
             title={t('generation.backToHome')}
           >
-            <img src="/logo-horizontal.png" alt="OpenMAIC" className="h-6" />
+            <div className="flex items-center gap-1.5">
+              {/* Cloud icon */}
+              <svg
+                viewBox="0 0 24 16"
+                className="w-6 h-4 text-sky-500 dark:text-sky-400"
+                fill="currentColor"
+              >
+                <ellipse cx="6" cy="11" rx="5" ry="4" />
+                <ellipse cx="12" cy="8" rx="7" ry="5" />
+                <ellipse cx="17" cy="10" rx="4" ry="3" />
+              </svg>
+              <span className="text-sm font-bold text-sky-700 dark:text-sky-300">天空课堂</span>
+            </div>
           </button>
           <button
             onClick={() => onCollapseChange(true)}
-            className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center bg-gray-100/80 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 ring-1 ring-black/[0.04] dark:ring-white/[0.06] hover:bg-gray-200/90 dark:hover:bg-gray-700/90 hover:text-gray-700 dark:hover:text-gray-200 active:scale-90 transition-all duration-200"
+            className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center bg-sky-100/80 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 ring-1 ring-sky-200/60 dark:ring-sky-700/30 hover:bg-sky-200/90 dark:hover:bg-sky-800/50 hover:text-sky-700 dark:hover:text-sky-300 active:scale-90 transition-all duration-200"
           >
             <PanelLeftClose className="w-4 h-4" />
           </button>
@@ -167,8 +179,8 @@ export function SceneSidebar({
                 className={cn(
                   'group relative rounded-lg transition-all duration-200 cursor-pointer flex flex-col gap-1 p-1.5',
                   isActive
-                    ? 'bg-purple-50 dark:bg-purple-900/20 ring-1 ring-purple-200 dark:ring-purple-700'
-                    : 'hover:bg-gray-50/80 dark:hover:bg-gray-800/50',
+                    ? 'bg-sky-50 dark:bg-sky-900/20 ring-1 ring-sky-200 dark:ring-sky-700'
+                    : 'hover:bg-sky-50/50 dark:hover:bg-sky-900/10',
                 )}
               >
                 {/* Scene Header */}
@@ -178,8 +190,8 @@ export function SceneSidebar({
                       className={cn(
                         'text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shrink-0',
                         isActive
-                          ? 'bg-purple-600 dark:bg-purple-500 text-white shadow-sm shadow-purple-500/30'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
+                          ? 'bg-sky-500 dark:bg-sky-400 text-white shadow-sm shadow-sky-500/30'
+                          : 'bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400',
                       )}
                     >
                       {index + 1}
@@ -189,8 +201,8 @@ export function SceneSidebar({
                       className={cn(
                         'text-xs font-bold truncate transition-colors',
                         isActive
-                          ? 'text-purple-700 dark:text-purple-300'
-                          : 'text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100',
+                          ? 'text-sky-700 dark:text-sky-300'
+                          : 'text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100',
                       )}
                     >
                       {scene.title}
@@ -199,7 +211,7 @@ export function SceneSidebar({
                 </div>
 
                 {/* Thumbnail */}
-                <div className="relative aspect-video w-full rounded overflow-hidden bg-gray-100 dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5">
+                <div className="relative aspect-video w-full rounded overflow-hidden bg-sky-100/50 dark:bg-sky-900/20 ring-1 ring-sky-200/50 dark:ring-sky-700/30">
                   <div className="absolute inset-0 flex items-center justify-center">
                     {isSlide && slideContent ? (
                       <ThumbnailSlide

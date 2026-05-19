@@ -2,6 +2,7 @@
  * POST /api/sky/solve/grade
  * Grading endpoint: compares user answer with correct answer.
  */
+import { gradeAnswer } from '@/lib/solve/grader';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 
@@ -20,18 +21,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // TODO: Implement actual grading via lib/solve/grader.ts
-    log.debug('Grade request received');
+    const steps: string[] | undefined = Array.isArray(stepByStep)
+      ? stepByStep.map((s: { content?: string; text?: string }) => s?.content ?? s?.text ?? '')
+      : undefined;
 
-    return apiSuccess({
-      isCorrect: false,
-      score: 0,
-      correctAnswer,
-      userAnswer,
-      errorAnalysis: '批改引擎待实现',
-      cause: 'concept-unclear',
-      partialCredit: [],
-    });
+    const result = await gradeAnswer(problem, correctAnswer, userAnswer, steps);
+    return apiSuccess({ ...result });
   } catch (err) {
     log.error('Grade API error:', err);
     return apiError(
