@@ -333,16 +333,16 @@ tests/
 
 - **前置任务**: `P2-001`, `P5-001`, `A-001`, `A-002`, `A-003`
 - **负责人**: 队员 1
-- **状态**: 🔴 待开始
+- **状态**: 🟢 已完成
 - **涉及文件**: `components/sky/solve/solve-page.tsx`, `components/sky/solve/multimodal-input.tsx`, `components/sky/solve/grade-result.tsx`, `components/sky/solve/solution-panel.tsx`, `components/sky/solve/similar-problems.tsx`
 
 **检验标准**:
-- [ ] 支持拍照上传（`<input capture="environment">`）、语音输入、文字输入
-- [ ] 左侧输入区：拍照卡片 + 手动输入框 + 提交批改按钮
-- [ ] 右侧结果区：题目展示 → 批改结果 → 解题步骤 → 知识点 → 同类练习
-- [ ] 批改结果卡片有 ✅/❌ 标识 + 错因分析
-- [ ] loading 状态和错误状态处理完善
-- [ ] 页面响应式适配移动端
+- [x] 支持拍照上传（`<input capture="environment">`）、语音输入、文字输入
+- [x] 左侧输入区：拍照卡片 + 手动输入框 + 提交批改按钮
+- [x] 右侧结果区：题目展示 → 批改结果 → 解题步骤 → 知识点 → 同类练习
+- [x] 批改结果卡片有 ✅/❌ 标识 + 错因分析
+- [x] loading 状态和错误状态处理完善
+- [x] 页面响应式适配移动端
 
 **产出文件**:
 ```
