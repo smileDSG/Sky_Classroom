@@ -7,7 +7,7 @@
 import { nanoid } from 'nanoid';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type { GeneratedSlideData } from '@/lib/generation/pipeline-types';
-import type { Slide, SlideTheme, PPTElement } from '@/lib/types/slides';
+import type { Slide, SlideTheme, PPTElement, PPTTextElement } from '@/lib/types/slides';
 import type { SlideGenerationOptions, SlideGenerationResult } from '@/lib/slides/types';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
@@ -108,18 +108,23 @@ export async function generateSlides(
     return { slides: [], generationTime: Date.now() - startTime };
   }
 
-  // ── Assemble Slide objects ──
+  // ── Assemble Slide objects ─
   const slides: Slide[] = parsed.slides.map((raw, index) => {
     const slideType = inferSlideType(index, parsed.slides.length, raw);
 
     const fixedElements = fixElementDefaults(raw.elements ?? []);
     const processedElements = processLatexElements(fixedElements);
 
-    const elements: PPTElement[] = processedElements.map((el) => ({
+    let elements: PPTElement[] = processedElements.map((el) => ({
       ...el,
       id: `${el.type}_${nanoid(8)}`,
       rotate: 0,
     })) as PPTElement[];
+
+    // Center the title on cover slides (horizontally and vertically)
+    if (index === 0) {
+      elements = centerCoverTitle(elements);
+    }
 
     const background = buildSlideBackground(raw.background);
 
@@ -215,4 +220,37 @@ function buildSlideBackground(
     return { type: 'gradient', gradient: raw.gradient };
   }
   return undefined;
+}
+
+/**
+ * Center the title element on a cover slide.
+ * Finds the largest text element (assumed to be the title) and
+ * repositions it to the center of the canvas (1000 x 562.5).
+ */
+const CANVAS_W = 1000;
+const CANVAS_H = 562.5;
+
+function centerCoverTitle(elements: PPTElement[]): PPTElement[] {
+  // Find the largest text element by area (likely the title)
+  let titleIdx = -1;
+  let maxArea = 0;
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i];
+    if (el.type === 'text') {
+      const area = (el as PPTTextElement).width * (el as PPTTextElement).height;
+      if (area > maxArea) {
+        maxArea = area;
+        titleIdx = i;
+      }
+    }
+  }
+  if (titleIdx < 0) return elements;
+
+  const title = elements[titleIdx] as PPTTextElement;
+  const centerX = (CANVAS_W - title.width) / 2;
+  const centerY = (CANVAS_H - title.height) / 2;
+
+  return elements.map((el, i) =>
+    i === titleIdx ? { ...el, left: centerX, top: centerY } : el,
+  );
 }
