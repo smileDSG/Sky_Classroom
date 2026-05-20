@@ -41,6 +41,22 @@ export const API_ERROR_CODES = {
   UNAUTHORIZED: 'UNAUTHORIZED',
   /** Duplicate resource */
   DUPLICATE_RESOURCE: 'DUPLICATE_RESOURCE',
+  /** Invalid login credentials */
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  /** Email already registered */
+  EMAIL_EXISTS: 'EMAIL_EXISTS',
+  /** Username already taken */
+  USERNAME_EXISTS: 'USERNAME_EXISTS',
+  /** Account is suspended */
+  ACCOUNT_SUSPENDED: 'ACCOUNT_SUSPENDED',
+  /** Usage limit exceeded */
+  USAGE_LIMIT_EXCEEDED: 'USAGE_LIMIT_EXCEEDED',
+  /** Insufficient plan permissions */
+  INSUFFICIENT_PLAN: 'INSUFFICIENT_PLAN',
+  /** Order not found */
+  ORDER_NOT_FOUND: 'ORDER_NOT_FOUND',
+  /** Payment failed */
+  PAYMENT_FAILED: 'PAYMENT_FAILED',
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
@@ -64,6 +80,14 @@ export const ERROR_CODE_STATUS: Record<ApiErrorCode, number> = {
   NOT_FOUND: 404,
   UNAUTHORIZED: 401,
   DUPLICATE_RESOURCE: 409,
+  INVALID_CREDENTIALS: 401,
+  EMAIL_EXISTS: 409,
+  USERNAME_EXISTS: 409,
+  ACCOUNT_SUSPENDED: 403,
+  USAGE_LIMIT_EXCEEDED: 429,
+  INSUFFICIENT_PLAN: 403,
+  ORDER_NOT_FOUND: 404,
+  PAYMENT_FAILED: 502,
 };
 
 /** Default human-readable message for each error code */
@@ -85,4 +109,12 @@ export const ERROR_CODE_MESSAGES: Record<ApiErrorCode, string> = {
   NOT_FOUND: 'Resource not found',
   UNAUTHORIZED: 'Unauthorized',
   DUPLICATE_RESOURCE: 'Resource already exists',
+  INVALID_CREDENTIALS: 'Invalid email or password',
+  EMAIL_EXISTS: 'Email already registered',
+  USERNAME_EXISTS: 'Username already taken',
+  ACCOUNT_SUSPENDED: 'Account is suspended',
+  USAGE_LIMIT_EXCEEDED: 'Usage limit exceeded',
+  INSUFFICIENT_PLAN: 'Insufficient plan permissions',
+  ORDER_NOT_FOUND: 'Order not found',
+  PAYMENT_FAILED: 'Payment processing failed',
 };

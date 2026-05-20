@@ -32,7 +32,6 @@ async function verifyToken(token: string, accessCode: string): Promise<boolean> 
   const data = encode(timestamp);
   const expected = bufToHex(await crypto.subtle.sign('HMAC', key, data.buffer as ArrayBuffer));
 
-  // Constant-length comparison (not truly constant-time in JS, but sufficient here)
   if (signature.length !== expected.length) return false;
   let mismatch = 0;
   for (let i = 0; i < signature.length; i++) {
@@ -41,29 +40,57 @@ async function verifyToken(token: string, accessCode: string): Promise<boolean> 
   return mismatch === 0;
 }
 
+/** Verify a JWT access token using Web Crypto (Edge-compatible) */
+async function verifyJwtToken(token: string): Promise<boolean> {
+  try {
+    const { jwtVerify } = await import('jose');
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'change-me-in-production');
+    await jwtVerify(token, secret);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const accessCode = process.env.ACCESS_CODE;
+  const { pathname } = request.nextUrl;
+
+  // Whitelist: auth endpoints, access-code, health check
+  if (
+    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/api/access-code/') ||
+    pathname === '/api/health' ||
+    pathname === '/auth/login' ||
+    pathname === '/auth/register'
+  ) {
+    return NextResponse.next();
+  }
+
+  // If no ACCESS_CODE is set, allow all requests through (open mode)
   if (!accessCode) {
     return NextResponse.next();
   }
 
-  const { pathname } = request.nextUrl;
-
-  // Whitelist: access-code endpoints, health check
-  if (pathname.startsWith('/api/access-code/') || pathname === '/api/health') {
-    return NextResponse.next();
+  // Check JWT access token first (for authenticated users)
+  const accessToken = request.cookies.get('access_token');
+  if (accessToken?.value) {
+    const valid = await verifyJwtToken(accessToken.value);
+    if (valid) {
+      return NextResponse.next();
+    }
   }
 
-  // Check cookie — validate HMAC signature, not just existence
+  // Fall back to access-code cookie check
   const cookie = request.cookies.get('openmaic_access');
   if (cookie?.value && (await verifyToken(cookie.value, accessCode))) {
     return NextResponse.next();
   }
 
-  // API requests without valid cookie → 401
+  // API requests without valid auth → 401
   if (pathname.startsWith('/api/')) {
     return NextResponse.json(
-      { success: false, errorCode: 'INVALID_REQUEST', error: 'Access code required' },
+      { success: false, errorCode: 'INVALID_REQUEST', error: 'Authentication required' },
       { status: 401 },
     );
   }

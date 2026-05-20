@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ServerProvidersInit } from '@/components/server-providers-init';
 import { AccessCodeGuard } from '@/components/access-code-guard';
 import { SkyClassroomEntry } from '@/components/sky-classroom-entry';
+import { AuthProvider } from '@/components/auth/auth-provider';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -37,10 +38,12 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <I18nProvider>
-            <ServerProvidersInit />
-            <SkyClassroomEntry />
-            <AccessCodeGuard>{children}</AccessCodeGuard>
-            <Toaster position="top-center" />
+            <AuthProvider>
+              <ServerProvidersInit />
+              <SkyClassroomEntry />
+              <AccessCodeGuard>{children}</AccessCodeGuard>
+              <Toaster position="top-center" />
+            </AuthProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>
