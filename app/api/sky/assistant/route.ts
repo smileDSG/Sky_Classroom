@@ -46,9 +46,9 @@ export async function POST(req: NextRequest) {
     }
 
     const { model, modelInfo, thinkingConfig } = await resolveModel({
-      modelString: body.model,
-      apiKey: body.apiKey,
-      baseUrl: body.baseUrl,
+      modelString: body.model || 'openrouter:deepseek-v4-pro',
+      apiKey: body.apiKey || process.env.OPENROUTER_API_KEY || '',
+      baseUrl: body.baseUrl || process.env.OPENROUTER_BASE_URL || '',
       providerType: body.providerType,
     });
 

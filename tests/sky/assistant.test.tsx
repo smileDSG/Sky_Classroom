@@ -36,11 +36,11 @@ describe('AssistantFab', () => {
     render(<AssistantFab />);
 
     // FAB button 存在
-    const fabButton = screen.getByRole('button', { name: '打开 AI 助手' });
+    const fabButton = screen.getByRole('button', { name: '打开小镜课堂' });
     expect(fabButton).toBeDefined();
 
     // 面板内容不应该存在
-    expect(screen.queryByText('AI 助手')).toBeNull();
+    expect(screen.queryByText('小镜课堂')).toBeNull();
     expect(screen.queryByText('助手配置')).toBeNull();
   });
 
@@ -48,11 +48,11 @@ describe('AssistantFab', () => {
     render(<AssistantFab />);
 
     // 点击 FAB
-    const fabButton = screen.getByRole('button', { name: '打开 AI 助手' });
+    const fabButton = screen.getByRole('button', { name: '打开小镜课堂' });
     fireEvent.click(fabButton);
 
     // 面板标题出现
-    expect(screen.getByText('AI 助手')).toBeDefined();
+    expect(screen.getByText('小镜课堂')).toBeDefined();
     // 配置栏出现
     expect(screen.getByText('助手配置')).toBeDefined();
   });
@@ -70,8 +70,8 @@ describe('AssistantPanel', () => {
   it('渲染欢迎消息 — "AI 学习助手"文字出现', () => {
     render(<AssistantPanel />);
 
-    // 欢迎区域包含提示文字（组件内使用 "AI 学习助手" 在欢迎文本中）
-    expect(screen.getByText(/AI 学习助手/)).toBeDefined();
+    // 欢迎区域包含小镜角色提示文字
+    expect(screen.getByText(/遇到不会的题目了/)).toBeDefined();
   });
 
   it('快捷提示按钮 — 显示 3 个提示按钮', () => {

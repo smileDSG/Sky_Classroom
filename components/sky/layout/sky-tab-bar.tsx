@@ -8,8 +8,8 @@ const NAV_ITEMS = [
   { label: '概况', href: '/sky', icon: '📋' },
   { label: '搜题', href: '/sky/solve', icon: '🔍' },
   { label: '幻灯片', href: '/sky/slides', icon: '📖' },
-  { label: '学习', href: '/sky/learning', icon: '📊' },
-  { label: 'AI助手', href: '/sky/assistant', icon: '/avatars/kagami/chibi.png' },
+  { label: '学习数据', href: '/sky/learning', icon: '📊' },
+  { label: '小镜', href: '/sky/assistant', icon: '/avatars/kagami/chibi.png' },
 ];
 
 export function SkyTabBar() {

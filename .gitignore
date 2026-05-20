@@ -8,5 +8,6 @@ build/
 .DS_Store
 .env
 .env.local
+server-providers.yml
 .cache/
 tsconfig.tsbuildinfo

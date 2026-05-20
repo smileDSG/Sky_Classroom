@@ -63,23 +63,20 @@ export function KagamiPanel() {
   const [hasDragged, setHasDragged] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, originX: 0, originY: 0, dist: 0, moved: false });
   const fabRef = useRef<HTMLButtonElement>(null);
-  const posRef = useRef(pos);
-  const hasDraggedRef = useRef(hasDragged);
-  posRef.current = pos;
-  hasDraggedRef.current = hasDragged;
 
-  // Drag via native DOM events (avoids React closure & pointer capture issues)
+  // Drag via native DOM events
   useEffect(() => {
     const el = fabRef.current;
     if (!el) return;
 
     const onDown = (e: PointerEvent) => {
       e.preventDefault();
+      const rect = el.getBoundingClientRect();
       const dr = dragRef.current;
       dr.startX = e.clientX;
       dr.startY = e.clientY;
-      dr.originX = hasDraggedRef.current ? posRef.current.x : 0;
-      dr.originY = hasDraggedRef.current ? posRef.current.y : 0;
+      dr.originX = rect.left;
+      dr.originY = rect.top;
       dr.dist = 0;
       dr.moved = false;
       el.setPointerCapture(e.pointerId);
@@ -360,21 +357,19 @@ export function KagamiPanel() {
         }
       `}</style>
 
-      {/* FAB — draggable, tap to open */}
-      {!open && (
-        <button
-          ref={fabRef}
-          className="fixed z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none"
-          style={
-            hasDragged
-              ? { left: pos.x, top: pos.y }
-              : { right: 24, bottom: 24 }
-          }
-          title="小镜课堂 (Ctrl+Shift+A) — 点击打开 / 拖拽移动"
-        >
-          <img src={CHIBI} alt="小镜" draggable={false} className="h-full w-full object-cover pointer-events-none" />
-        </button>
-      )}
+      {/* FAB — always rendered, hidden via CSS when panel open (so listeners persist) */}
+      <button
+        ref={fabRef}
+        className={`fixed z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${open ? 'hidden' : ''}`}
+        style={
+          hasDragged
+            ? { left: pos.x, top: pos.y }
+            : { right: 24, bottom: 24 }
+        }
+        title="小镜课堂 (Ctrl+Shift+A) — 点击打开 / 拖拽移动"
+      >
+        <img src={CHIBI} alt="小镜" draggable={false} className="h-full w-full object-cover pointer-events-none" />
+      </button>
 
       {/* Panel */}
       {open && (
