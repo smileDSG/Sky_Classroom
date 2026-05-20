@@ -17,6 +17,7 @@ interface MultimodalInputProps {
 export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: MultimodalInputProps) {
   const [activeTab, setActiveTab] = useState<'camera' | 'voice' | 'text'>('camera');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [textInput, setTextInput] = useState('');
   const [userAnswer, setUserAnswer] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -27,6 +28,7 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
   const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.onload = (event) => {
         setSelectedImage(event.target?.result as string);
@@ -41,6 +43,7 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
 
   const clearImage = useCallback(() => {
     setSelectedImage(null);
+    setSelectedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -72,17 +75,12 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
   }, []);
 
   const handleSubmit = useCallback(() => {
-    if (activeTab === 'camera' && selectedImage) {
-      fetch(selectedImage)
-        .then((res) => res.blob())
-        .then((blob) => {
-          const file = new File([blob], 'problem.jpg', { type: 'image/jpeg' });
-          onSubmit({ type: 'image', content: file });
-        });
+    if (activeTab === 'camera' && selectedFile && selectedImage) {
+      onSubmit({ type: 'image', content: selectedFile });
     } else if (activeTab === 'text' && textInput.trim()) {
       onSubmit({ type: 'text', content: textInput.trim() });
     }
-  }, [activeTab, selectedImage, textInput, onSubmit]);
+  }, [activeTab, selectedFile, selectedImage, textInput, onSubmit]);
 
   const handleGrade = useCallback(() => {
     if (textInput.trim() && userAnswer.trim() && onGrade) {

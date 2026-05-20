@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
+import 'fake-indexeddb/auto';
 
 vi.mock('@/lib/utils/database', () => ({
   db: {

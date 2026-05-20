@@ -6,6 +6,7 @@
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { extractFormulas } from '@/lib/recognition/formula-extractor';
+import { validateImage } from '@/lib/recognition/image-validator';
 import { getModel } from '@/lib/ai/providers';
 import { callLLM } from '@/lib/ai/llm';
 
@@ -14,11 +15,12 @@ const log = createLogger('API:SkySolveRecognize');
 const OCR_PROMPT = `你是一个专业的数学题目识别助手。请仔细识别图片中的所有题目内容。
 
 要求：
-1. 准确识别题目编号和题目内容
-2. 保留数学公式的原始格式
-3. 如果有 LaTeX 公式请尽量用 LaTeX 格式输出
-4. 如果无法看清的内容用 [?] 标记
-5. 只输出识别到的文本内容，不要添加任何解释`;
+1. 逐题识别，保留题目编号（如 1.、①、(1) 等）
+2. 数学公式和符号用 LaTeX 格式输出：分数用 \\frac{}{}、根号用 \\sqrt{}、上下标用 ^ 和 _
+3. 纯文字部分保持中文原文
+4. 如果图片中有多道题，每道题之间用空行分隔
+5. 无法看清的内容用 [?] 标记，不要猜测
+6. 只输出识别到的题目文字和公式，不要添加你的解释、评价或问候语`;
 
 /** Build vision model config: GLM first (faster), then Qwen, then Anthropic */
 function getVisionModel() {
@@ -50,12 +52,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // Convert to base64 for vision model
+    const validation = validateImage(image);
+    if (!validation.valid) {
+      return apiError(
+        API_ERROR_CODES.INVALID_REQUEST,
+        400,
+        validation.error ?? '图片校验失败',
+      );
+    }
+
+    // Keep raw bytes — AI SDK handles base64 encoding internally.
+    // Passing a data URL would cause double-encoding (AI SDK re-encodes
+    // the string as base64), which produces garbled image data.
     const bytes = await image.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const base64 = buffer.toString('base64');
     const mimeType = image.type || 'image/png';
-    const dataUrl = `data:${mimeType};base64,${base64}`;
 
     const visionConfig = getVisionModel();
     log.info(`[Recognize] Using vision provider: ${visionConfig?.providerId}, model: ${visionConfig?.modelId}, apiKey present: ${!!visionConfig?.apiKey}`);
@@ -83,34 +94,19 @@ export async function POST(req: Request) {
       );
     }
 
-    let messages: Array<{ role: string; content: unknown }>;
-    let systemPrompt: string | undefined;
-
-    if (visionConfig.providerId === 'anthropic') {
-      // AI SDK Anthropic adapter: system as separate param, image as data URL
-      systemPrompt = OCR_PROMPT;
-      messages = [
-        {
-          role: 'user',
-          content: [
-            { type: 'image', image: dataUrl },
-            { type: 'text', text: '请识别图片中的数学题目内容。' },
-          ],
-        },
-      ];
-    } else {
-      // OpenAI-compatible (GLM, Qwen, etc.): pass system as top-level param
-      systemPrompt = OCR_PROMPT;
-      messages = [
-        {
-          role: 'user',
-          content: [
-            { type: 'image', image: dataUrl },
-            { type: 'text', text: '请识别图片中的数学题目内容。' },
-          ],
-        },
-      ];
-    }
+    // Pass raw buffer — AI SDK core converts it to FilePart, then the
+    // provider adapter base64-encodes it once. Passing a data URL string
+    // would be re-encoded (double base64), producing garbled data.
+    const messages = [
+      {
+        role: 'user' as const,
+        content: [
+          { type: 'image' as const, image: buffer, mimeType },
+          { type: 'text' as const, text: '请识别图片中的数学题目内容。' },
+        ],
+      },
+    ];
+    const systemPrompt = OCR_PROMPT;
 
     log.info(`[Recognize] Calling LLM with provider=${visionConfig.providerId}, model=${visionConfig.modelId}`);
 
@@ -137,6 +133,10 @@ export async function POST(req: Request) {
     const { text: cleanedText, latex } = extractFormulas(rawText);
 
     log.info(`[Recognize] OCR complete, text length=${cleanedText.length}`);
+
+    // Build data URL for response (display only — not sent to LLM)
+    const base64ForResponse = buffer.toString('base64');
+    const dataUrl = `data:${mimeType};base64,${base64ForResponse}`;
 
     return apiSuccess({
       text: cleanedText,

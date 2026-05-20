@@ -6,6 +6,7 @@
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
+import { saveToQuestionBank, isProblemInBank } from '@/lib/solve/question-bank';
 
 const log = createLogger('API:SkySolveExplain');
 
@@ -27,7 +28,9 @@ export async function POST(req: Request) {
     const graph = createSolveGraph();
     const initialState = buildSolveInitialState(problem, problemImage ?? null, userAnswer ?? null);
 
+    const startTime = performance.now();
     const finalState = await graph.invoke(initialState);
+    const solvingTime = Math.round(performance.now() - startTime);
 
     if (finalState.error) {
       log.error(`[Explain] Graph error: ${finalState.error}`);
@@ -45,12 +48,34 @@ export async function POST(req: Request) {
       similarQuestions: [],
     };
 
-    log.info(`[Explain] Done. fromQuestionBank=${finalState.fromQuestionBank}`);
+    log.info(`[Explain] 耗时 ${solvingTime}ms, 缓存命中=${finalState.fromQuestionBank}`);
+
+    // 非题库命中的题目自动入库
+    if (!finalState.fromQuestionBank && output.answer) {
+      try {
+        const alreadyInBank = await isProblemInBank(problem);
+        if (!alreadyInBank) {
+          await saveToQuestionBank({
+            problemText: problem,
+            problemImage: problemImage ?? undefined,
+            answer: output.answer,
+            steps: output.steps ?? [],
+            knowledgePoints: output.knowledgePoints ?? [],
+            agentId: agentId ?? 'universal',
+            solvedAt: new Date(),
+            verified: false,
+          });
+          log.info('[Explain] 题目已自动入库');
+        }
+      } catch (e) {
+        log.error('题库入库失败:', e);
+      }
+    }
 
     return apiSuccess({
       ...output,
       fromQuestionBank: finalState.fromQuestionBank ?? false,
-      solvingTime: 0,
+      solvingTime,
       agentsUsed: [finalState.agentRoute ?? 'universal'],
     });
   } catch (err) {

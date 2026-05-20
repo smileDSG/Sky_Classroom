@@ -5,9 +5,9 @@
 // ── Agent types ────────────────────────────────────────────────────
 
 export type SolverAgentType =
-  | 'universal'   // 通用解题（DeepSeek-V3）
-  | 'science'     // 理科专精（GLM-4-Plus）
-  | 'humanities'  // 文科综合（Qwen-Max）
+  | 'universal'   // 通用解题（DeepSeek V4 Flash）
+  | 'science'     // 理科专精（GLM-5.1）
+  | 'humanities'  // 文科综合（Qwen3.6 Plus）
   | 'grading';    // 批改专精（高精度模型）
 
 // ── Solve graph state ─────────────────────────────────────────────
