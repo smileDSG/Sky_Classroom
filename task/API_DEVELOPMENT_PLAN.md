@@ -1333,25 +1333,28 @@ components/
 
 - **前置任务**：无（可独立开发）
 - **负责人**：队长
-- **状态**：🟡 部分完成
+- **状态**：✅ 已完成
 
 **检验标准：**
 
-- [ ] stage.tsx 实现新 flex/grid 布局 — `components/stage.tsx`（组件已创建，待集成）
+- [x] stage.tsx 实现新 flex/grid 布局 — PPT 面板集成 + 浮动切换按钮
 - [x] CanvasArea 增加全屏模式 — `components/classroom/ppt-viewer.tsx`
-- [x] ChatArea 增加消息过滤逻辑 — `components/classroom/message-filters.tsx`
-- [ ] Scene Sidebar 增加缩略图网格 — `components/stage/scene-sidebar.tsx`
-- [ ] classroom-complete.tsx 布局适配 — `components/scene-renderers/classroom-complete.tsx`
+- [x] ChatArea 增加消息过滤逻辑 — `components/classroom/message-filters.tsx`（已启用）
+- [x] Scene Sidebar 增加缩略图网格 — 列表/网格双视图切换
+- [x] classroom-complete.tsx 布局适配 — 已有 absolute inset-0 自适应 CanvasArea
 
 **产出文件：**
 
 ```
 components/
   classroom/
-    ppt-viewer.tsx        # PPT 全屏查看器
-    message-filters.tsx   # 消息类型过滤
-```
-    canvas-area.tsx       # 全屏模式
+    ppt-viewer.tsx         # PPT 全屏查看器 + 缩略图导航
+    message-filters.tsx    # 消息类型/Agent 过滤
+  stage/
+    scene-sidebar.tsx      # 列表/网格双视图切换
+  chat/
+    chat-area.tsx          # 集成消息过滤栏
+  stage.tsx                # 集成 PPT 面板 + 浮动切换按钮
 ```
 
 ***

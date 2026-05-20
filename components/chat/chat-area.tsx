@@ -13,6 +13,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useChatSessions } from './use-chat-sessions';
 import { SessionList } from './session-list';
 import { LectureNotesView } from './lecture-notes-view';
+import {
+  MessageFilters,
+  type MessageFilterState,
+} from '@/components/classroom/message-filters';
+import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 
 interface ChatAreaProps {
   className?: string;
@@ -37,6 +42,8 @@ interface ChatAreaProps {
   /** When provided and returns true, StreamBuffer holds on the current text item after reveal. */
   shouldHoldAfterReveal?: () => { holding: boolean; segmentDone: number } | boolean;
   currentSceneId?: string | null;
+  /** Enable message type/agent filter bar above chat sessions. */
+  enableFilters?: boolean;
 }
 
 export interface ChatAreaRef {
@@ -82,6 +89,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       onSegmentSealed,
       shouldHoldAfterReveal,
       currentSceneId,
+      enableFilters = false,
     },
     ref,
   ) => {
@@ -164,6 +172,32 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
 
     // Filter out lecture sessions for the Chat tab
     const chatSessions = useMemo(() => sessions.filter((s) => s.type !== 'lecture'), [sessions]);
+
+    // Message filter state (local)
+    const [messageFilters, setMessageFilters] = useState<MessageFilterState>({
+      types: new Set(),
+      agentIds: new Set(),
+    });
+
+    // Map session type to MessageFilter type key
+    const sessionTypeToFilterKey: Record<string, 'discussion' | 'lecture' | 'qa' | 'system'> = {
+      discussion: 'discussion',
+      qa: 'qa',
+      lecture: 'lecture',
+      system: 'system',
+    };
+
+    // Apply message type filters to chat sessions
+    const filteredChatSessions = useMemo(() => {
+      if (!enableFilters || messageFilters.types.size === 0) return chatSessions;
+      return chatSessions.filter((s) => messageFilters.types.has(sessionTypeToFilterKey[s.type] ?? 'system'));
+    }, [chatSessions, enableFilters, messageFilters.types]);
+
+    // Get available agents for filter badges
+    const availableAgents = useMemo(() => {
+      const registry = useAgentRegistry.getState();
+      return Object.entries(registry.agents).map(([id, cfg]) => ({ id, name: cfg.name ?? id }));
+    }, []);
 
     // Whether there's an active discussion/QA session (for amber dot on Chat tab)
     const hasActiveChatSession = useMemo(
@@ -302,8 +336,15 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
 
             {/* Chat Tab */}
             <TabsContent value="chat" className="flex-1 overflow-hidden flex flex-col">
+              {enableFilters && (
+                <MessageFilters
+                  filters={messageFilters}
+                  onChange={setMessageFilters}
+                  availableAgents={availableAgents}
+                />
+              )}
               <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2 scrollbar-hide">
-                {chatSessions.length === 0 ? (
+                {filteredChatSessions.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-50">
                     <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 text-gray-300 dark:text-gray-600">
                       <MessageSquare className="w-6 h-6" />
@@ -318,7 +359,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                 ) : (
                   <>
                     <SessionList
-                      sessions={chatSessions}
+                      sessions={filteredChatSessions}
                       expandedSessionIds={expandedSessionIds}
                       isStreaming={isStreaming}
                       activeBubbleId={activeBubbleId}

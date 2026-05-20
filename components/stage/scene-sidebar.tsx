@@ -12,6 +12,8 @@ import {
   AlertCircle,
   RefreshCw,
   Trophy,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThumbnailSlide } from '@/components/slide-renderer/components/ThumbnailSlide';
@@ -49,6 +51,7 @@ export function SceneSidebar({
   const viewportRatio = useCanvasStore.use.viewportRatio();
 
   const [retryingOutlineId, setRetryingOutlineId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const handleRetryOutline = async (outlineId: string) => {
     if (!onRetryOutline) return;
@@ -150,12 +153,30 @@ export function SceneSidebar({
           >
             <PanelLeftClose className="w-4 h-4" />
           </button>
+
+          {/* Grid/List view toggle */}
+          {sidebarWidth >= 280 && (
+            <button
+              onClick={() => setViewMode((v) => (v === 'list' ? 'grid' : 'list'))}
+              className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center bg-sky-100/80 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 ring-1 ring-sky-200/60 dark:ring-sky-700/30 hover:bg-sky-200/90 dark:hover:bg-sky-800/50 hover:text-sky-700 dark:hover:text-sky-300 active:scale-90 transition-all duration-200 ml-1"
+              title={viewMode === 'list' ? '切换到网格视图' : '切换到列表视图'}
+            >
+              {viewMode === 'list' ? (
+                <LayoutGrid className="w-3.5 h-3.5" />
+              ) : (
+                <List className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
         </div>
 
         {/* Scenes List */}
         <div
           data-testid="scene-list"
-          className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-2 scrollbar-hide pt-1"
+          className={cn(
+            'flex-1 overflow-y-auto overflow-x-hidden p-2 scrollbar-hide pt-1',
+            viewMode === 'grid' ? 'grid grid-cols-2 gap-2 space-y-0' : 'space-y-2',
+          )}
         >
           {scenes.map((scene, index) => {
             const isActive = currentSceneId === scene.id;
