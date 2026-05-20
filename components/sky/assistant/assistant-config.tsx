@@ -45,7 +45,7 @@ export function AssistantConfig() {
                 onClick={() => setSubject(opt.value)}
                 className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   subject === opt.value
-                    ? 'bg-[#4A90D9] text-white shadow-sm'
+                    ? 'bg-[#8B5CF6] text-white shadow-sm'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -66,7 +66,7 @@ export function AssistantConfig() {
                 onClick={() => setStyle(opt.value)}
                 className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   style === opt.value
-                    ? 'bg-[#4A90D9] text-white shadow-sm'
+                    ? 'bg-[#8B5CF6] text-white shadow-sm'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -87,7 +87,7 @@ export function AssistantConfig() {
                 onClick={() => setDifficulty(opt.value)}
                 className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   difficulty === opt.value
-                    ? 'bg-[#4A90D9] text-white shadow-sm'
+                    ? 'bg-[#8B5CF6] text-white shadow-sm'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >

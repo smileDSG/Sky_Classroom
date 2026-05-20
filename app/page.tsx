@@ -416,18 +416,14 @@ function HomePage() {
       <DraggableQaButton />
 
       {/* ═══ Fixed Top Navigation Bar ═══ */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-sky-100/60 dark:border-sky-900/30 flex items-center px-4 md:px-8 gap-4">
-        {/* Navigation Tabs — same as SkyAppShell */}
-        <SkyTabBar />
-
-        {/* Spacer */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-sky-100/60 dark:border-sky-900/30 flex items-center px-4 md:px-8">
         <div className="flex-1" />
-
-        {/* Top-right toolbar */}
-        <div
-          ref={toolbarRef}
-          className="flex items-center gap-1 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm px-1.5 py-1 rounded-full border border-gray-100/50 dark:border-gray-700/50"
-        >
+        <SkyTabBar />
+        <div className="flex-1 flex justify-end">
+          <div
+            ref={toolbarRef}
+            className="flex items-center gap-1 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm px-1.5 py-1 rounded-full border border-gray-100/50 dark:border-gray-700/50"
+          >
           <LanguageSwitcher onOpen={() => setThemeOpen(false)} />
           <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
           <div className="relative">
@@ -481,6 +477,7 @@ function HomePage() {
           >
             <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
           </button>
+        </div>
         </div>
       </header>
 

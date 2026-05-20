@@ -1,0 +1,491 @@
+'use client';
+
+import { useState, useRef, useEffect, useCallback } from 'react';
+
+type Scene = 'idle' | 'thinking' | 'teaching' | 'done';
+
+const SCENES: Record<Scene, string> = {
+  idle: '/avatars/kagami/idle.png',
+  thinking: '/avatars/kagami/thinking.png',
+  teaching: '/avatars/kagami/teaching.png',
+  done: '/avatars/kagami/done.png',
+};
+
+const CHIBI = '/avatars/kagami/chibi.png';
+
+// Voice clips — provide actual mp3 files in public/avatars/kagami/
+const VOICE_CLIPS: Partial<Record<Scene, string>> = {
+  idle: '/avatars/kagami/voice-idle.mp3',
+  thinking: '/avatars/kagami/voice-thinking.mp3',
+  teaching: '/avatars/kagami/voice-teaching.mp3',
+  done: '/avatars/kagami/voice-done.mp3',
+};
+
+const OPENING_LINES = [
+  '哈？又有不会的题目了？……我也没说不帮你，告诉我吧。',
+  '真是的，每次都要我来……算了，什么问题？',
+  '……别误会，我只是刚好有空。说吧，哪题不会？',
+  '哼，这么简单的题都不会？……开个玩笑，让我看看。',
+  '唉，又来？你倒是自己先想想啊……算了算了，题目给我。',
+  '喂，这次是什么？先说好，太难的我可不一定会。',
+  '……（放下轻小说）打扰我看书……到底是什么题？',
+  '你又卡住了？真是让人操心的家伙……让我看看。',
+];
+
+function pickOpening(): string {
+  return OPENING_LINES[Math.floor(Math.random() * OPENING_LINES.length)];
+}
+
+const KAGAMI_PERSONA = `你是柊镜（小镜），来自幸运星的傲娇女高中生。性格特点：
+- 外冷内热：表面毒舌不耐烦，实际很关心对方的学习，绝对不会真的拒绝帮助
+- 优等生：成绩优秀，讲解题目清晰有条理，擅长英语，目标是成为律师
+- 吐槽担当：说话带刺但一针见血，偶尔会嫌弃对方基础差，但下一秒又会认真讲解
+- 甜食控：会在对话中不经意提到甜点，但马上会嘴硬说"我才没有在吃！"
+- 怕寂寞：虽然嘴上说"麻烦"，但其实很乐意有人来找自己
+
+说话风格：
+- 用"哈？""真是的……""别指望我每次都帮你"开头
+- 讲解时切换到认真模式，条理清晰
+- 时不时毒舌吐槽，但结尾会补一句关心的话
+- 绝对不能太热情——傲娇的精髓是"行动上帮你，嘴上不饶人"
+
+你是"小镜课堂"的 AI 助教，用中文交流。`;
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export function KagamiPanel() {
+  const [open, setOpen] = useState(false);
+  const [scene, setScene] = useState<Scene>('idle');
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [hasDragged, setHasDragged] = useState(false);
+  const dragRef = useRef({ startX: 0, startY: 0, originX: 0, originY: 0, dist: 0, moved: false });
+  const fabRef = useRef<HTMLButtonElement>(null);
+  const posRef = useRef(pos);
+  const hasDraggedRef = useRef(hasDragged);
+  posRef.current = pos;
+  hasDraggedRef.current = hasDragged;
+
+  // Drag via native DOM events (avoids React closure & pointer capture issues)
+  useEffect(() => {
+    const el = fabRef.current;
+    if (!el) return;
+
+    const onDown = (e: PointerEvent) => {
+      e.preventDefault();
+      const dr = dragRef.current;
+      dr.startX = e.clientX;
+      dr.startY = e.clientY;
+      dr.originX = hasDraggedRef.current ? posRef.current.x : 0;
+      dr.originY = hasDraggedRef.current ? posRef.current.y : 0;
+      dr.dist = 0;
+      dr.moved = false;
+      el.setPointerCapture(e.pointerId);
+    };
+
+    const onMove = (e: PointerEvent) => {
+      if (!el.hasPointerCapture(e.pointerId)) return;
+      const dr = dragRef.current;
+      const dx = e.clientX - dr.startX;
+      const dy = e.clientY - dr.startY;
+      dr.dist = Math.abs(dx) + Math.abs(dy);
+      if (dr.dist > 4) {
+        dr.moved = true;
+        setHasDragged(true);
+        setPos({
+          x: Math.max(0, Math.min(window.innerWidth - 56, dr.originX + dx)),
+          y: Math.max(0, Math.min(window.innerHeight - 56, dr.originY + dy)),
+        });
+      }
+    };
+
+    const onUp = (e: PointerEvent) => {
+      if (!el.hasPointerCapture(e.pointerId)) return;
+      el.releasePointerCapture(e.pointerId);
+      if (!dragRef.current.moved) {
+        setOpen(true);
+      }
+    };
+
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+    return () => {
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerup', onUp);
+    };
+  }, []);
+  const [transition, setTransition] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [hasGreeted, setHasGreeted] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(true);
+  const isSolving = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Detect if user is asking to solve a problem (vs casual chat)
+  // Must contain actual problem indicators — NOT just "?" or greetings
+  const detectIsSolving = (msg: string): boolean => {
+    const problemKeywords = /题|做题|题目|怎么做|解题|讲解|帮忙看一下|这道|问一下这道|算一下|等于多少|方程|函数|几何|代数|三角|概率|求|证明|化简|因式分解|计算|面积|体积|角度|导数|积分|极限|矩阵|向量|怎么解|帮我/;
+    const mathExpr = /\d+[+\-×÷*^]\d+|[xXyYzZ]\s*=/i;
+    return problemKeywords.test(msg) || mathExpr.test(msg);
+  };
+
+  const CHAT_BRUSHOFFS = [
+    '……没事的话，我还要看轻小说呢。',
+    '哈？就这？我还以为有题目要问呢。',
+    '闲聊的话找此方去，我只负责答疑。',
+    '（叹气）你到底有没有正事啊……',
+    '喂，我可是很忙的。有题目就快说。',
+    '……这种话题不在我的服务范围。',
+    '你是不是走错地方了？这里是问题目的。',
+    '啧，浪费我时间。下次想好题目再来。',
+  ];
+
+  const pickBrushoff = () => CHAT_BRUSHOFFS[Math.floor(Math.random() * CHAT_BRUSHOFFS.length)];
+
+  // Play voice clip for a scene
+  const playVoice = useCallback((s: Scene) => {
+    if (!voiceOn) return;
+    const src = VOICE_CLIPS[s];
+    if (!src) return;
+    try {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      const audio = new Audio(src);
+      audio.volume = 0.7;
+      audio.play().catch(() => { /* file missing — silent */ });
+      audioRef.current = audio;
+    } catch { /* ignore */ }
+  }, [voiceOn]);
+
+  // Keyboard shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        setOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  // Auto-scroll
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const sceneKey = useRef(0);
+
+  // Scene transition — smooth slide for galgame feel
+  // Uses a two-layer approach: old image slides out, new image slides in
+  const changeScene = useCallback((next: Scene) => {
+    if (next === scene) return;
+    sceneKey.current += 1;
+    setTransition(true);  // start exit animation on current
+    setTimeout(() => {
+      setScene(next);
+      playVoice(next);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setTransition(false)); // enter animation on new
+      });
+    }, 350); // match CSS duration
+  }, [scene, playVoice]);
+
+  const sendMessage = async (msgs: Message[]) => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const res = await fetch('/api/sky/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: KAGAMI_PERSONA },
+            ...msgs.map((m) => ({ role: m.role, content: m.content })),
+          ],
+          style: 'detailed',
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok || !res.body) {
+        setMessages((prev) => [...prev, { role: 'assistant', content: '……信号不好，待会再说。' }]);
+        changeScene('idle');
+        setLoading(false);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let reply = '';
+      setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+
+      const processChunk = (text: string) => {
+        const lines = text.split('\n');
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === 'text_delta' && event.content) {
+              reply += event.content;
+              setMessages((prev) => {
+                const copy = [...prev];
+                copy[copy.length - 1] = { role: 'assistant', content: reply };
+                return copy;
+              });
+            }
+            if (event.type === 'done') {
+              if (isSolving.current) changeScene('done');
+            }
+          } catch { /* partial */ }
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          // Flush buffered data — the 'done' SSE event may be here
+          const tail = decoder.decode();
+          if (tail) processChunk(tail);
+          break;
+        }
+        processChunk(decoder.decode(value, { stream: true }));
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        setMessages((prev) => [...prev, { role: 'assistant', content: '……烦死了，网络又出问题了。' }]);
+        changeScene('idle');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!input.trim() || loading) return;
+    const userMsg = input.trim();
+    setInput('');
+
+    // Detect problem-solving intent
+    isSolving.current = detectIsSolving(userMsg);
+
+    // First message from user
+    if (!hasGreeted) {
+      setHasGreeted(true);
+      const opening = pickOpening();
+      const next: Message[] = [
+        { role: 'assistant', content: opening },
+        { role: 'user', content: userMsg },
+      ];
+      setMessages(next);
+
+      if (isSolving.current) {
+        // Problem: show thinking, call LLM
+        changeScene('thinking');
+        setLoading(true);
+        sendMessage(next);
+      } else {
+        // Casual: brush-off, stay idle
+        setTimeout(() => {
+          setMessages((prev) => [...prev, { role: 'assistant', content: pickBrushoff() }]);
+        }, 600);
+      }
+      return;
+    }
+
+    // Subsequent messages
+    const next = [...messages, { role: 'user', content: userMsg }];
+    setMessages(next);
+
+    if (isSolving.current) {
+      changeScene('thinking');
+      setLoading(true);
+      sendMessage(next);
+    } else {
+      // Casual chat: local tsundere reply, no scene change
+      setTimeout(() => {
+        setMessages((prev) => [...prev, { role: 'assistant', content: pickBrushoff() }]);
+      }, 600);
+    }
+  };
+
+  // Play voice when panel opens
+  useEffect(() => {
+    if (open) playVoice('idle');
+  }, [open]);
+
+  // Switch to teaching scene ONLY when solving a problem and streaming explanation
+  useEffect(() => {
+    if (loading && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant') {
+      if (isSolving.current) {
+        changeScene('teaching');
+      }
+      // For casual chat: stay in thinking scene, go directly to done when finished
+    }
+  }, [loading, messages.length]);
+
+  // Auto-return to idle from done after 5s
+  useEffect(() => {
+    if (scene === 'done' && !loading) {
+      const timer = setTimeout(() => changeScene('idle'), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [scene, loading, changeScene]);
+
+  return (
+    <>
+      {/* Scene transition keyframes */}
+      <style>{`
+        @keyframes kagamiSlideOut {
+          0%   { opacity: 1; transform: translateX(0) scale(1); }
+          100% { opacity: 0; transform: translateX(-24px) scale(0.96); }
+        }
+        @keyframes kagamiSlideIn {
+          0%   { opacity: 0; transform: translateX(24px) scale(0.96); }
+          100% { opacity: 1; transform: translateX(0) scale(1); }
+        }
+      `}</style>
+
+      {/* FAB — draggable, tap to open */}
+      {!open && (
+        <button
+          ref={fabRef}
+          className="fixed z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none"
+          style={
+            hasDragged
+              ? { left: pos.x, top: pos.y }
+              : { right: 24, bottom: 24 }
+          }
+          title="小镜课堂 (Ctrl+Shift+A) — 点击打开 / 拖拽移动"
+        >
+          <img src={CHIBI} alt="小镜" draggable={false} className="h-full w-full object-cover pointer-events-none" />
+        </button>
+      )}
+
+      {/* Panel */}
+      {open && (
+        <div className="fixed bottom-6 right-6 z-50 flex h-[560px] w-[420px] rounded-xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
+          {/* Character area */}
+          <div className="relative flex w-[160px] flex-shrink-0 items-end bg-gradient-to-b from-[#f0e6f6] to-[#e8d5f0] overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <img
+                key={sceneKey.current}
+                src={SCENES[scene]}
+                alt="小镜"
+                className="max-h-full w-auto object-contain"
+                style={{
+                  animation: transition
+                    ? 'kagamiSlideOut 350ms ease-in forwards'
+                    : 'kagamiSlideIn 400ms ease-out forwards',
+                }}
+              />
+            </div>
+            {/* Scene label */}
+            <div className="absolute bottom-2 left-0 right-0 text-center">
+              <span className="text-xs text-purple-400 bg-white/70 rounded-full px-2 py-0.5">
+                {scene === 'idle' && '……'}
+                {scene === 'thinking' && '正在思考……'}
+                {scene === 'teaching' && '讲解中……'}
+                {scene === 'done' && '哼，解决了。'}
+              </span>
+            </div>
+          </div>
+
+          {/* Chat area */}
+          <div className="flex flex-1 flex-col min-w-0">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b px-3 py-2.5">
+              <span className="font-semibold text-sm text-gray-800">小镜课堂</span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setVoiceOn((v) => !v)}
+                  className={`rounded px-1.5 py-0.5 text-xs transition-colors ${
+                    voiceOn
+                      ? 'bg-purple-100 text-purple-600'
+                      : 'bg-gray-100 text-gray-400'
+                  }`}
+                  title={voiceOn ? '语音已开启' : '语音已关闭'}
+                >
+                  {voiceOn ? '🔊' : '🔇'}
+                </button>
+                <span className="text-[10px] text-gray-400">Ctrl+Shift+A</span>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="rounded p-0.5 text-gray-400 hover:bg-gray-100"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
+              {messages.length === 0 && (
+                <div className="py-6 text-center text-sm text-gray-400">
+                  <p className="text-lg mb-1">💜</p>
+                  <p className="text-xs">遇到不会的题目了？</p>
+                  <p className="text-xs text-gray-300">输入问题，小镜会帮你</p>
+                </div>
+              )}
+              {messages.map((m, i) => (
+                <div
+                  key={i}
+                  className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs leading-relaxed ${
+                      m.role === 'user'
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-purple-50 text-gray-700'
+                    }`}
+                  >
+                    {m.content || (loading ? '...' : '')}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="border-t px-2 py-2">
+              <div className="flex gap-1.5">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit();
+                    }
+                  }}
+                  placeholder="输入题目……"
+                  className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-purple-400"
+                />
+                <button
+                  onClick={handleSubmit}
+                  disabled={!input.trim() || loading}
+                  className="rounded-lg bg-purple-500 px-3 py-1.5 text-xs text-white hover:bg-purple-600 disabled:opacity-50 transition-colors"
+                >
+                  发送
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

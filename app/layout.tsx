@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ServerProvidersInit } from '@/components/server-providers-init';
 import { AccessCodeGuard } from '@/components/access-code-guard';
 import { SkyClassroomEntry } from '@/components/sky-classroom-entry';
+import { KagamiPanel } from '@/components/ai/kagami-panel';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -39,6 +40,7 @@ export default function RootLayout({
           <I18nProvider>
             <ServerProvidersInit />
             <SkyClassroomEntry />
+            <KagamiPanel />
             <AccessCodeGuard>{children}</AccessCodeGuard>
             <Toaster position="top-center" />
           </I18nProvider>
