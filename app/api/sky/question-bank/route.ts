@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       steps: steps ?? [],
       knowledgePoints: knowledgePoints ?? [],
       agentId: agentId ?? 'universal',
-      solvedAt: new Date(),
+      solvedAt: Date.now(),
       verified: false,
     });
 

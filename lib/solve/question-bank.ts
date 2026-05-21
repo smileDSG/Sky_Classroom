@@ -112,7 +112,7 @@ export async function findSimilarQuestions(
       }));
 
     log.info(`[QuestionBank] Found ${matches.length} matches (threshold=${threshold})`);
-    return matches;
+    return matches as QuestionBankEntry[];
   } catch (error) {
     log.error('[QuestionBank] findSimilarQuestions failed:', error);
     return [];
@@ -141,7 +141,7 @@ export async function saveToQuestionBank(
       steps: entry.steps,
       knowledgePoints: entry.knowledgePoints,
       agentId: entry.agentId,
-      solvedAt: entry.solvedAt instanceof Date ? entry.solvedAt.getTime() : Date.now(),
+      solvedAt: entry.solvedAt ?? Date.now(),
       verified: entry.verified ?? false,
     };
 
@@ -190,7 +190,7 @@ export async function listQuestionBankEntries(
         .orderBy('solvedAt')
         .reverse()
         .limit(limit)
-        .toArray();
+        .toArray() as unknown as QuestionBankEntry[];
     }
     return Array.from(memBank.values())
       .sort((a, b) => b.solvedAt - a.solvedAt)

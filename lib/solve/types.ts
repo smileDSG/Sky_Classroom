@@ -114,7 +114,7 @@ export interface QuestionBankEntry {
   steps: string[];
   knowledgePoints: string[];
   agentId: SolverAgentType;
-  solvedAt: Date;
+  solvedAt: number;  // Unix timestamp ms
   verified: boolean;
   /** Runtime-only similarity score (not persisted) */
   _similarity?: number;

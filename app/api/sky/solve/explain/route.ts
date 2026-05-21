@@ -59,10 +59,10 @@ export async function POST(req: Request) {
             problemText: problem,
             problemImage: problemImage ?? undefined,
             answer: output.answer,
-            steps: output.steps ?? [],
-            knowledgePoints: output.knowledgePoints ?? [],
+            steps: (output.steps ?? []).map(s => `${s.label}: ${s.content}`),
+            knowledgePoints: (output.knowledgePoints ?? []).map(kp => kp.name),
             agentId: agentId ?? 'universal',
-            solvedAt: new Date(),
+            solvedAt: Date.now(),
             verified: false,
           });
           log.info('[Explain] 题目已自动入库');
