@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
+import 'fake-indexeddb/auto';
 
 vi.mock('@/lib/utils/database', () => ({
   db: {
@@ -169,6 +170,7 @@ describe('saveToQuestionBank', () => {
       steps: ['移项', '计算'],
       knowledgePoints: ['一元一次方程'],
       agentId: 'science',
+      solvedAt: Date.now(),
       verified: false,
     });
 
@@ -185,9 +187,11 @@ describe('saveToQuestionBank', () => {
       problemText: 'test',
       problemHash: 'custom_hash',
       answer: 'answer',
-      steps: [],
-      knowledgePoints: [],
+      steps: [] as string[],
+      knowledgePoints: [] as string[],
       agentId: 'universal',
+      solvedAt: Date.now(),
+      verified: false,
     });
 
     expect(entry.problemHash).toBe('custom_hash');

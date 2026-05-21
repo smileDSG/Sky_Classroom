@@ -8,6 +8,7 @@
  */
 
 import type { GradeResult, MistakeCause } from './types';
+import { classifyErrorCause } from './error-classifier';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
@@ -135,49 +136,6 @@ function ruleBasedGrade(correctAnswer: string, userAnswer: string): GradeResult 
   };
 }
 
-const VALID_CAUSES: MistakeCause[] = [
-  'concept-unclear',
-  'calculation-error',
-  'misreading',
-  'method-wrong',
-  'careless',
-  'format-error',
-];
-
-function normalizeCause(cause: string): MistakeCause {
-  const normalized = cause.trim().toLowerCase();
-  // Direct match
-  if (VALID_CAUSES.includes(normalized as MistakeCause)) {
-    return normalized as MistakeCause;
-  }
-  // Map common Chinese descriptions — full phrases first, then keywords
-  const fullPhrases: Record<string, MistakeCause> = {
-    '概念不清': 'concept-unclear',
-    '计算失误': 'calculation-error',
-    '审题错误': 'misreading',
-    '方法错误': 'method-wrong',
-    '粗心': 'careless',
-    '格式错误': 'format-error',
-  };
-  for (const [key, value] of Object.entries(fullPhrases)) {
-    if (normalized.includes(key)) return value;
-  }
-
-  const keywords: Record<string, MistakeCause> = {
-    '概念': 'concept-unclear',
-    '计算': 'calculation-error',
-    '审题': 'misreading',
-    '方法': 'method-wrong',
-    '粗心': 'careless',
-    '格式': 'format-error',
-  };
-  for (const [key, value] of Object.entries(keywords)) {
-    if (normalized.includes(key)) return value;
-  }
-  // Default: concept-unclear for wrong answers
-  return 'concept-unclear';
-}
-
 /**
  * Grade a user answer against the correct answer.
  *
@@ -240,7 +198,7 @@ export async function gradeAnswer(
       correctAnswer,
       userAnswer,
       errorAnalysis: parsed.errorAnalysis || (parsed.isCorrect ? '答案正确' : '答案有误'),
-      cause: normalizeCause(parsed.cause),
+      cause: classifyErrorCause(parsed.cause),
       partialCredit: parsed.partialCredit?.map((pc) => ({
         step: pc.step,
         maxScore: pc.maxScore,

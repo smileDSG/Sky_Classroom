@@ -6,7 +6,7 @@
  *   2. If a match is found (similarity >= threshold), return it
  *   3. After solving, call saveToQuestionBank(entry) to cache
  *
- * Storage: IndexedDB via Dexie (questionBank table).
+ * Storage: IndexedDB via Dexie (browser) or in-memory Map (server).
  * Similarity: text-based Jaccard similarity (embedding reserved for future).
  */
 
@@ -15,6 +15,14 @@ import type { QuestionBankEntry } from './types';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('QuestionBank');
+
+function isBrowser() {
+  return typeof indexedDB !== 'undefined';
+}
+
+// ── In-memory fallback (server-side) ─────────────────────────────────
+
+const memBank = new Map<string, QuestionBankEntry & { problemHash: string }>();
 
 // ── Hashing ──────────────────────────────────────────────────────────
 
@@ -82,7 +90,10 @@ export async function findSimilarQuestions(
   threshold: number = DEFAULT_THRESHOLD,
 ): Promise<QuestionBankEntry[]> {
   try {
-    const allEntries = await db.questionBank.toArray();
+    const allEntries = isBrowser()
+      ? await db.questionBank.toArray()
+      : Array.from(memBank.values());
+
     if (allEntries.length === 0) {
       log.info('[QuestionBank] Empty, no matches');
       return [];
@@ -97,12 +108,11 @@ export async function findSimilarQuestions(
       .sort((a, b) => b.score - a.score)
       .map((m) => ({
         ...m.entry,
-        // Attach similarity score for UI display (non-persistent)
         _similarity: m.score,
       }));
 
     log.info(`[QuestionBank] Found ${matches.length} matches (threshold=${threshold})`);
-    return matches;
+    return matches as QuestionBankEntry[];
   } catch (error) {
     log.error('[QuestionBank] findSimilarQuestions failed:', error);
     return [];
@@ -131,11 +141,16 @@ export async function saveToQuestionBank(
       steps: entry.steps,
       knowledgePoints: entry.knowledgePoints,
       agentId: entry.agentId,
-      solvedAt: entry.solvedAt instanceof Date ? entry.solvedAt.getTime() : Date.now(),
+      solvedAt: entry.solvedAt ?? Date.now(),
       verified: entry.verified ?? false,
     };
 
-    await db.questionBank.put(record);
+    if (isBrowser()) {
+      await db.questionBank.put(record);
+    } else {
+      memBank.set(id, record);
+    }
+
     log.info(`[QuestionBank] Saved entry: ${id} (hash: ${problemHash})`);
 
     return record;
@@ -150,7 +165,11 @@ export async function saveToQuestionBank(
  */
 export async function deleteQuestionBankEntry(id: string): Promise<void> {
   try {
-    await db.questionBank.delete(id);
+    if (isBrowser()) {
+      await db.questionBank.delete(id);
+    } else {
+      memBank.delete(id);
+    }
     log.info(`[QuestionBank] Deleted entry: ${id}`);
   } catch (error) {
     log.error('[QuestionBank] deleteQuestionBankEntry failed:', error);
@@ -166,11 +185,16 @@ export async function listQuestionBankEntries(
   limit: number = 100,
 ): Promise<QuestionBankEntry[]> {
   try {
-    return db.questionBank
-      .orderBy('solvedAt')
-      .reverse()
-      .limit(limit)
-      .toArray();
+    if (isBrowser()) {
+      return db.questionBank
+        .orderBy('solvedAt')
+        .reverse()
+        .limit(limit)
+        .toArray() as unknown as QuestionBankEntry[];
+    }
+    return Array.from(memBank.values())
+      .sort((a, b) => b.solvedAt - a.solvedAt)
+      .slice(0, limit);
   } catch (error) {
     log.error('[QuestionBank] listQuestionBankEntries failed:', error);
     return [];
@@ -182,7 +206,10 @@ export async function listQuestionBankEntries(
  */
 export async function questionBankCount(): Promise<number> {
   try {
-    return db.questionBank.count();
+    if (isBrowser()) {
+      return db.questionBank.count();
+    }
+    return memBank.size;
   } catch {
     return 0;
   }
@@ -193,7 +220,11 @@ export async function questionBankCount(): Promise<number> {
  */
 export async function clearQuestionBank(): Promise<void> {
   try {
-    await db.questionBank.clear();
+    if (isBrowser()) {
+      await db.questionBank.clear();
+    } else {
+      memBank.clear();
+    }
     log.info('[QuestionBank] Cleared all entries');
   } catch (error) {
     log.error('[QuestionBank] clearQuestionBank failed:', error);
@@ -207,8 +238,14 @@ export async function clearQuestionBank(): Promise<void> {
 export async function isProblemInBank(problemText: string): Promise<boolean> {
   try {
     const hash = hashProblemText(problemText);
-    const entries = await db.questionBank.where('problemHash').equals(hash).toArray();
-    return entries.length > 0;
+    if (isBrowser()) {
+      const entries = await db.questionBank.where('problemHash').equals(hash).toArray();
+      return entries.length > 0;
+    }
+    for (const entry of memBank.values()) {
+      if (entry.problemHash === hash) return true;
+    }
+    return false;
   } catch {
     return false;
   }

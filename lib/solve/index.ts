@@ -38,3 +38,4 @@ export {
   hashProblemText,
   textSimilarity,
 } from './question-bank';
+export { classifyErrorCause, getCauseLabel, isValidCause, VALID_CAUSES } from './error-classifier';

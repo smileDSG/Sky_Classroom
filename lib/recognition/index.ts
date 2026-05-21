@@ -10,3 +10,5 @@ export { extractFormulas } from './formula-extractor';
 export type { RecognizeOptions } from './image-recognizer';
 export type { PreprocessOptions } from './image-preprocessor';
 export type { ProblemRegion } from './multi-problem-splitter';
+export { validateImage } from './image-validator';
+export type { ValidationResult } from './image-validator';
