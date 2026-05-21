@@ -59,6 +59,11 @@ import { SpeechButton } from '@/components/audio/speech-button';
 import { useImportClassroom } from '@/lib/import/use-import-classroom';
 import { DraggableQaButton } from '@/components/draggable-qa-button';
 import { SkyTabBar } from '@/components/sky/layout/sky-tab-bar';
+import { TemplatePicker } from '@/components/templates/template-picker';
+import { UsageProgress } from '@/components/billing/usage-progress';
+import { UpgradeDialog } from '@/components/billing/upgrade-dialog';
+import type { CourseTemplate } from '@/lib/templates/types';
+import { useAuth } from '@/components/auth/auth-provider';
 
 const log = createLogger('Home');
 
@@ -89,6 +94,9 @@ function HomePage() {
   const [activeTab, setActiveTab] = useState<HomeTab>('classroom');
   const [form, setForm] = useState<FormState>(initialFormState);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const { user } = useAuth();
 
   // Sky theme colors
   const skyColors = {
@@ -377,6 +385,17 @@ function HomePage() {
     }
   };
 
+  const handleTemplateSelect = (template: CourseTemplate) => {
+    setTemplatePickerOpen(false);
+    const outline = template.outline
+      .map((s, i) => `第${i + 1}幕：${s.title} — ${s.description || ''}`)
+      .join('\n');
+    setForm((prev) => ({
+      ...prev,
+      requirement: `${template.nameZh}\n\n课程目标：${template.description}\n\n大纲：\n${outline}`,
+    }));
+  };
+
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -471,6 +490,14 @@ function HomePage() {
             )}
           </div>
           <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
+          {user && user.planType !== 'enterprise' && (
+            <button
+              onClick={() => setUpgradeDialogOpen(true)}
+              className="px-2 py-1 rounded-full text-[11px] font-medium bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-600 dark:text-amber-400 hover:from-amber-500/20 hover:to-orange-500/20 transition-all border border-amber-200/40 dark:border-amber-800/30"
+            >
+              升级
+            </button>
+          )}
           <button
             onClick={() => setSettingsOpen(true)}
             className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all group"
@@ -489,6 +516,22 @@ function HomePage() {
         }}
         initialSection={settingsSection}
       />
+
+      <TemplatePicker
+        open={templatePickerOpen}
+        onClose={() => setTemplatePickerOpen(false)}
+        onSelect={handleTemplateSelect}
+      />
+
+      {user && (
+        <UpgradeDialog
+          open={upgradeDialogOpen}
+          onClose={() => setUpgradeDialogOpen(false)}
+          currentPlan={user.planType}
+        />
+      )}
+
+      {/* Usage progress indicator — shown in recent classrooms section for logged-in users */}
 
       {/* ═══ Background Decor ═══ */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none mt-14">
@@ -583,6 +626,20 @@ function HomePage() {
                       onPdfError={setError}
                     />
                   </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setTemplatePickerOpen(true)}
+                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all cursor-pointer select-none whitespace-nowrap shrink-0 h-8 border border-violet-300/60 dark:border-violet-700/40 text-violet-600 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20"
+                      >
+                        <Sparkles className="size-3.5" />
+                        <span>模板</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      从课堂模板快速创建
+                    </TooltipContent>
+                  </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <motion.button
@@ -719,6 +776,7 @@ function HomePage() {
               <AnimatePresence>
                 {recentOpen && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }} className="w-full overflow-hidden">
+                    {user && <UsageProgress />}
                     {searchQuery.trim() && filteredClassrooms.length === 0 ? (
                       <div className="pt-8 pb-2 text-center text-[13px] text-muted-foreground/60">{t('classroom.searchEmpty')}</div>
                     ) : (
