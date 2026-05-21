@@ -1,15 +1,32 @@
 /**
  * POST /api/sky/assistant
  * AI assistant chat endpoint — real LLM-powered with SSE streaming.
+ * Injects mistake-book and knowledge-graph context for personalised responses.
  */
 import { NextRequest } from 'next/server';
 import { streamLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
+import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
+import { buildGraphFromMistakes } from '@/lib/graph/builder';
+import { buildSystemPrompt } from '@/lib/assistant/context-injector';
 
 const log = createLogger('API:SkyAssistant');
 
 export const maxDuration = 30;
+
+let _daoPromise: ReturnType<typeof initDAO> | null = null;
+
+async function initDAO() {
+  const storage = await createStorageProvider();
+  return createMistakeBookDAO(storage);
+}
+
+async function getDAO() {
+  if (!_daoPromise) _daoPromise = initDAO();
+  return _daoPromise;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,36 +46,57 @@ export async function POST(req: NextRequest) {
     }
 
     const { model, modelInfo, thinkingConfig } = await resolveModel({
-      modelString: body.model,
-      apiKey: body.apiKey,
-      baseUrl: body.baseUrl,
+      modelString: body.model || 'openrouter:deepseek-v4-pro',
+      apiKey: body.apiKey || process.env.OPENROUTER_API_KEY || '',
+      baseUrl: body.baseUrl || process.env.OPENROUTER_BASE_URL || '',
       providerType: body.providerType,
     });
 
+    // Load student context for personalised responses
+    let mistakes = null;
+    let graphNodes = null;
+    try {
+      const dao = await getDAO();
+      const result = await dao.list({ pageSize: 9999 });
+      mistakes = result.items;
+      if (mistakes.length > 0) {
+        const graph = buildGraphFromMistakes(mistakes);
+        graphNodes = graph.nodes;
+      }
+    } catch (err) {
+      log.warn('Failed to load student context, continuing without it:', err);
+    }
+
     const subj = subject || '数学';
-    const diffLabel =
-      difficulty === 'junior' ? '初中' : difficulty === 'senior' ? '高中' : '大学';
-    const styleHint =
-      style === 'concise'
-        ? '回答要简洁明了，抓住重点。'
-        : style === 'heuristic'
-          ? '用启发式的方式引导学生思考，不要直接给出完整答案，多用提问和提示。'
-          : '回答要详细清楚，包含步骤和解释。';
 
-    const systemPrompt = `你是一位专业的${subj}学习助手，面向${diffLabel}水平的学生。
-${styleHint}
-要求：
-1. 用中文回答，语气亲切自然，像一个耐心的老师。
-2. 如果学生发了具体题目，请逐步分析、解答，并给出检验方法。
-3. 如果学生问概念，先用通俗语言解释，再举一个简单例子。
-4. 回答要针对学生的具体问题，不要泛泛而谈。
-5. 适当使用 Markdown 格式（如加粗重点、公式、列表）让回答更清晰。`;
+    // Check if client already sent a system message (e.g. Kagami persona)
+    const clientSystemMsg = messages.find((m) => m.role === 'system');
 
-    // Convert messages to the format expected by the AI SDK
-    const aiMessages = messages.map((m) => ({
-      role: m.role as 'user' | 'assistant' | 'system',
-      content: m.content,
-    }));
+    let systemPrompt: string;
+    if (clientSystemMsg) {
+      // Use client's system message as base, append learning context
+      systemPrompt = clientSystemMsg.content;
+      if (mistakes && mistakes.length > 0) {
+        const ctx = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
+          mistakes: mistakes,
+          graphNodes: graphNodes ?? undefined,
+        });
+        systemPrompt += '\n\n' + ctx.split('\n').slice(1).join('\n'); // append context without duplicating base
+      }
+    } else {
+      systemPrompt = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
+        mistakes: mistakes ?? undefined,
+        graphNodes: graphNodes ?? undefined,
+      });
+    }
+
+    // Convert messages — exclude system messages since we pass via system param
+    const aiMessages = messages
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
 
     const result = streamLLM(
       {

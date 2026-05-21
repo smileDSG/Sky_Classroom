@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import type {
   KnowledgeNode,
   KnowledgeGraph as KnowledgeGraphType,
@@ -47,20 +47,21 @@ export function KnowledgeGraphView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<LayoutData | null>(null);
 
-  const { mistakes, knowledgeGraph, setKnowledgeGraph } =
-    useSkyClassroomStore();
+  const { mistakes, setKnowledgeGraph } = useSkyClassroomStore();
+
+  // Build graph synchronously from mistakes — no async gap, no empty flash
+  const knowledgeGraph = useMemo(() => {
+    if (mistakes.length === 0) return null;
+    return buildKnowledgeGraph(mistakes);
+  }, [mistakes]);
+
+  // Sync to store outside render
+  useEffect(() => {
+    if (knowledgeGraph) setKnowledgeGraph(knowledgeGraph);
+  }, [knowledgeGraph, setKnowledgeGraph]);
 
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
-
-  // ── Build graph from mistakes ───────────────────────────────────────
-
-  useEffect(() => {
-    if (mistakes.length > 0) {
-      const graph = buildKnowledgeGraph(mistakes);
-      setKnowledgeGraph(graph);
-    }
-  }, [mistakes, setKnowledgeGraph]);
 
   // ── Resize observer ─────────────────────────────────────────────────
 

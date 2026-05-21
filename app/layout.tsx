@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ServerProvidersInit } from '@/components/server-providers-init';
 import { AccessCodeGuard } from '@/components/access-code-guard';
 import { SkyClassroomEntry } from '@/components/sky-classroom-entry';
+import { KagamiPanel } from '@/components/ai/kagami-panel';
 import { AuthProvider } from '@/components/auth/auth-provider';
 
 const inter = localFont({
@@ -41,6 +42,7 @@ export default function RootLayout({
             <AuthProvider>
               <ServerProvidersInit />
               <SkyClassroomEntry />
+              <KagamiPanel />
               <AccessCodeGuard>{children}</AccessCodeGuard>
               <Toaster position="top-center" />
             </AuthProvider>

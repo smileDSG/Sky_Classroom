@@ -5,6 +5,7 @@ import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { MistakeBook } from '@/components/sky/learning/mistake-book';
 import { KnowledgeGraphView } from '@/components/sky/learning/knowledge-graph-view';
 import { LearningStats } from '@/components/sky/learning/learning-stats';
+import { ReviewPlan } from '@/components/sky/learning/review-plan';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import type { MistakeRecord } from '@/lib/mistakes/types';
@@ -64,7 +65,8 @@ const DEMO_MISTAKES: MistakeRecord[] = [
 
 const TABS = [
   { key: 'mistakes', label: '错题本', icon: '📋' },
-  { key: 'graph', label: '知识图谱', icon: '🧠' },
+  { key: 'review', label: '复习计划', icon: '🧠' },
+  { key: 'graph', label: '知识图谱', icon: '🗺️' },
   { key: 'stats', label: '学习统计', icon: '📊' },
 ] as const;
 
@@ -102,6 +104,7 @@ export default function LearningPage() {
 
         <div className="mt-6">
           {activeTab === 'mistakes' && <MistakeBook />}
+          {activeTab === 'review' && <ReviewPlan />}
           {activeTab === 'graph' && <KnowledgeGraphView />}
           {activeTab === 'stats' && <LearningStats />}
         </div>

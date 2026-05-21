@@ -7,6 +7,21 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('AssistantPanel');
 
+const KAGAMI_SYSTEM_PROMPT = `你是柊镜（小镜），来自幸运星的傲娇女高中生。性格特点：
+- 外冷内热：表面毒舌不耐烦，实际很关心对方的学习，绝对不会真的拒绝帮助
+- 优等生：成绩优秀，讲解题目清晰有条理，擅长英语，目标是成为律师
+- 吐槽担当：说话带刺但一针见血，偶尔会嫌弃对方基础差，但下一秒又会认真讲解
+- 甜食控：会在对话中不经意提到甜点，但马上会嘴硬说"我才没有在吃！"
+- 怕寂寞：虽然嘴上说"麻烦"，但其实很乐意有人来找自己
+
+说话风格：
+- 用"哈？""真是的……""别指望我每次都帮你"开头
+- 讲解时切换到认真模式，条理清晰
+- 时不时毒舌吐槽，但结尾会补一句关心的话
+- 绝对不能太热情——傲娇的精髓是"行动上帮你，嘴上不饶人"
+
+你是"小镜课堂"的 AI 助教，用中文交流。`;
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -66,7 +81,12 @@ export function AssistantPanel() {
       abortRef.current = abortController;
 
       const modelConfig = getCurrentModelConfig();
-      const allMessages = [...newMessages];
+
+      // Prepend Kagami persona as system message
+      const allMessages = [
+        { role: 'system' as const, content: KAGAMI_SYSTEM_PROMPT },
+        ...newMessages,
+      ];
 
       fetch('/api/sky/assistant', {
         method: 'POST',
@@ -198,10 +218,10 @@ export function AssistantPanel() {
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-lg font-semibold text-gray-900">AI 助手</span>
+          <span className="text-lg font-semibold text-gray-900">小镜课堂</span>
           <div className="flex items-center gap-1.5">
             {subject && (
-              <span className="rounded-full bg-[#4A90D9]/10 px-2 py-0.5 text-xs font-medium text-[#4A90D9]">
+              <span className="rounded-full bg-[#8B5CF6]/10 px-2 py-0.5 text-xs font-medium text-[#8B5CF6]">
                 {subject}
               </span>
             )}
@@ -232,9 +252,11 @@ export function AssistantPanel() {
         {!hasUserMessages ? (
           <div className="flex h-full items-center justify-center">
             <div className="max-w-xs text-center">
-              <div className="mb-3 text-4xl">💡</div>
+              <div className="mb-3 flex justify-center">
+                <img src="/avatars/kagami/chibi.png" className="h-16 w-16 rounded-full object-cover" alt="小镜" />
+              </div>
               <p className="text-sm leading-relaxed text-gray-500">
-                你好！我是你的 AI 学习助手，有什么可以帮你的？
+                哈？遇到不会的题目了？告诉我吧。
               </p>
               <div className="mt-4 flex flex-col gap-1.5">
                 {hints.map((hint) => (
@@ -242,7 +264,7 @@ export function AssistantPanel() {
                     key={hint}
                     type="button"
                     onClick={() => handleSend(hint)}
-                    className="rounded-lg border border-gray-200 px-3 py-2 text-left text-sm text-gray-500 transition-colors hover:border-[#4A90D9] hover:text-[#4A90D9]"
+                    className="rounded-lg border border-gray-200 px-3 py-2 text-left text-sm text-gray-500 transition-colors hover:border-[#8B5CF6] hover:text-[#8B5CF6]"
                   >
                     {hint}
                   </button>
@@ -262,25 +284,25 @@ export function AssistantPanel() {
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm ${
                     msg.role === 'user'
                       ? 'bg-gray-200 text-gray-600'
-                      : 'bg-[#4A90D9]/10 text-[#4A90D9]'
+                      : 'bg-[#8B5CF6]/10 text-[#8B5CF6]'
                   }`}
                 >
-                  {msg.role === 'user' ? '👤' : '💡'}
+                  {msg.role === 'user' ? '👤' : (<img src="/avatars/kagami/chibi.png" className="size-full rounded-full object-cover" alt="小镜" />)}
                 </div>
                 {/* Bubble */}
                 <div
                   className={`max-w-[75%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.role === 'user'
-                      ? 'rounded-tr-sm bg-[#4A90D9] text-white'
+                      ? 'rounded-tr-sm bg-[#8B5CF6] text-white'
                       : 'rounded-tl-sm border border-gray-200 bg-[#F8FAFC] text-gray-800'
                   }`}
                 >
                   {msg.content}
                   {msg.role === 'assistant' && loading && msg.content === '' && (
                     <span className="inline-flex gap-1">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#4A90D9]" style={{ animationDelay: '0ms' }} />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#4A90D9]" style={{ animationDelay: '150ms' }} />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#4A90D9]" style={{ animationDelay: '300ms' }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '0ms' }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '150ms' }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '300ms' }} />
                     </span>
                   )}
                 </div>
@@ -288,13 +310,13 @@ export function AssistantPanel() {
             ))}
             {loading && messages.filter((m) => m.role === 'assistant').at(-1)?.content && (
               <div className="flex gap-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4A90D9]/10 text-[#4A90D9] text-sm">
-                  💡
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full">
+                  <img src="/avatars/kagami/chibi.png" className="size-full object-cover" alt="小镜" />
                 </div>
                 <div className="flex items-center gap-1.5 rounded-xl rounded-tl-sm border border-gray-200 bg-[#F8FAFC] px-4 py-3">
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#4A90D9]" style={{ animationDelay: '0ms' }} />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#4A90D9]" style={{ animationDelay: '150ms' }} />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#4A90D9]" style={{ animationDelay: '300ms' }} />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '0ms' }} />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '150ms' }} />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
@@ -316,13 +338,13 @@ export function AssistantPanel() {
             onKeyDown={handleKeyDown}
             placeholder="输入你的问题…"
             rows={1}
-            className="max-h-24 min-h-[36px] flex-1 resize-none rounded-lg border border-gray-200 bg-[#F8FAFC] px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-[#4A90D9] focus:ring-1 focus:ring-[#4A90D9]/30"
+            className="max-h-24 min-h-[36px] flex-1 resize-none rounded-lg border border-gray-200 bg-[#F8FAFC] px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6]/30"
           />
           <button
             type="button"
             onClick={() => handleSend()}
             disabled={!input.trim() || loading}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#4A90D9] text-white transition-colors hover:bg-[#3A80C9] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#8B5CF6] text-white transition-colors hover:bg-[#3A80C9] disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="发送消息"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

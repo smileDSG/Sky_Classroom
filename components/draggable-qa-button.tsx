@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, Minimize2, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const DRAG_THRESHOLD = 4; // px of movement before it counts as a drag
 
 interface DraggableQaButtonProps {
   className?: string;
@@ -14,91 +16,87 @@ export function DraggableQaButton({ className }: DraggableQaButtonProps) {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [position, setPosition] = useState({ x: 16, y: 72 });
-  const draggingRef = useRef(false);
+  const hasMovedRef = useRef(false);
+  const originRef = useRef({ x: 0, y: 0 });
   const offsetRef = useRef({ dx: 0, dy: 0 });
   const positionRef = useRef(position);
   positionRef.current = position;
 
-  const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    // Ignore if clicking the collapse toggle button
-    if ((e.target as HTMLElement).closest('[data-toggle-collapse]')) return;
-
-    e.preventDefault();
-    draggingRef.current = true;
-
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    const pos = positionRef.current;
-    offsetRef.current = { dx: clientX - pos.x, dy: clientY - pos.y };
-
-    const onMove = (me: MouseEvent | TouchEvent) => {
-      if (!draggingRef.current) return;
-      const mx = 'touches' in me ? me.touches[0].clientX : me.clientX;
-      const my = 'touches' in me ? me.touches[0].clientY : me.clientY;
-      const btnW = collapsed ? 48 : 130;
-      const newX = Math.max(0, Math.min(window.innerWidth - btnW, mx - offsetRef.current.dx));
-      const newY = Math.max(0, Math.min(window.innerHeight - 48, my - offsetRef.current.dy));
-      setPosition({ x: newX, y: newY });
-    };
-
-    const onUp = () => {
-      draggingRef.current = false;
+  const cleanupListeners = useCallback(
+    (onMove: (e: MouseEvent | TouchEvent) => void, onUp: () => void) => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onUp);
-    };
-
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('touchend', onUp);
-  }, [collapsed]);
-
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    if (draggingRef.current) return;
-    e.stopPropagation();
-    if (collapsed) {
-      setCollapsed(false);
-    } else {
-      router.push('/sky/solve');
-    }
-  }, [collapsed, router]);
-
-  const handleToggleCollapse = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setCollapsed((prev) => !prev);
     },
     [],
   );
 
-  // Prevent clicks after drag
-  const [didDrag, setDidDrag] = useState(false);
-  useEffect(() => {
-    if (!draggingRef.current && didDrag) {
-      setDidDrag(false);
-    }
-  });
+  const handlePointerDown = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if ((e.target as HTMLElement).closest('[data-toggle-collapse]')) return;
 
-  const handleMouseUp = useCallback(() => {
-    if (draggingRef.current) {
-      setDidDrag(true);
-      setTimeout(() => setDidDrag(false), 50);
-    }
+      hasMovedRef.current = false;
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      originRef.current = { x: clientX, y: clientY };
+      const pos = positionRef.current;
+      offsetRef.current = { dx: clientX - pos.x, dy: clientY - pos.y };
+
+      const onMove = (me: MouseEvent | TouchEvent) => {
+        const mx = 'touches' in me ? me.touches[0].clientX : me.clientX;
+        const my = 'touches' in me ? me.touches[0].clientY : me.clientY;
+        const dist = Math.hypot(mx - originRef.current.x, my - originRef.current.y);
+        if (dist > DRAG_THRESHOLD) {
+          hasMovedRef.current = true;
+        }
+        if (!hasMovedRef.current) return;
+        const btnW = collapsed ? 48 : 130;
+        const newX = Math.max(0, Math.min(window.innerWidth - btnW, mx - offsetRef.current.dx));
+        const newY = Math.max(0, Math.min(window.innerHeight - 48, my - offsetRef.current.dy));
+        setPosition({ x: newX, y: newY });
+      };
+
+      const onUp = () => {
+        cleanupListeners(onMove, onUp);
+      };
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', onUp);
+    },
+    [collapsed, cleanupListeners],
+  );
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (hasMovedRef.current) return;
+      e.stopPropagation();
+      if (collapsed) {
+        setCollapsed(false);
+      } else {
+        router.push('/sky/solve');
+      }
+    },
+    [collapsed, router],
+  );
+
+  const handleToggleCollapse = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCollapsed((prev) => !prev);
   }, []);
 
   return (
     <div
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onTouchEnd={handleMouseUp}
+      onMouseDown={handlePointerDown}
+      onTouchStart={handlePointerDown}
       style={{
         position: 'fixed',
         left: position.x,
         top: position.y,
         zIndex: 60,
+        touchAction: 'none',
       }}
       className={cn('select-none cursor-grab active:cursor-grabbing', className)}
     >
@@ -112,7 +110,7 @@ export function DraggableQaButton({ className }: DraggableQaButtonProps) {
             transition={{ duration: 0.15 }}
           >
             <button
-              onClick={didDrag ? undefined : handleClick}
+              onClick={handleClick}
               className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 flex items-center justify-center active:scale-95 transition-shadow"
             >
               <MessageSquare className="w-5 h-5" />
@@ -128,7 +126,7 @@ export function DraggableQaButton({ className }: DraggableQaButtonProps) {
             className="flex items-center gap-1.5"
           >
             <button
-              onClick={didDrag ? undefined : handleClick}
+              onClick={handleClick}
               className="h-9 px-3 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 text-white text-sm font-medium shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 flex items-center gap-1.5 active:scale-95 transition-shadow whitespace-nowrap"
             >
               <MessageSquare className="w-4 h-4" />

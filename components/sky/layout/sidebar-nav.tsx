@@ -14,7 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: '搜题', href: '/sky/solve', icon: '🔍' },
   { label: '幻灯片', href: '/sky/slides', icon: '📖' },
   { label: '学习数据', href: '/sky/learning', icon: '📊' },
-  { label: 'AI 助手', href: '/sky/assistant', icon: '💡' },
+  { label: '小镜课堂', href: '/sky/assistant', icon: '/avatars/kagami/chibi.png' },
 ];
 
 interface SkySidebarProps {
@@ -43,11 +43,17 @@ export function SkySidebar({ collapsed }: SkySidebarProps) {
               href={item.href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                 isActive
-                  ? 'bg-[#4A90D9]/10 text-[#4A90D9] font-semibold'
+                  ? 'bg-[#8B5CF6]/10 text-[#8B5CF6] font-semibold'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
-              <span className="text-lg">{item.icon}</span>
+              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center text-lg leading-none">
+                {item.icon.startsWith('/') ? (
+                  <img src={item.icon} className="h-5 w-5 rounded-full object-cover" alt="" />
+                ) : (
+                  item.icon
+                )}
+              </span>
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );

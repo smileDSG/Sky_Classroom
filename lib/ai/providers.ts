@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Unified AI Provider Configuration
  *
  * Supports multiple AI providers through Vercel AI SDK:
@@ -1145,7 +1145,9 @@ export function getModel(config: ModelConfig): ModelWithInfo {
       // body. The thinking config is read from AsyncLocalStorage, set by
       // callLLM / streamLLM at call time.
       if (config.providerId !== 'openai') {
-        const providerId = config.providerId;
+	        // Inject Authorization header for non-OpenAI providers
+	        openaiOptions.headers = { Authorization: `Bearer ${effectiveApiKey}` };
+          const providerId = config.providerId;
         openaiOptions.fetch = async (url: RequestInfo | URL, init?: RequestInit) => {
           // Read thinking config from globalThis (set by thinking-context.ts)
           const thinkingCtx = (globalThis as Record<string, unknown>).__thinkingContext as

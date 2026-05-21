@@ -72,15 +72,15 @@
 
 - **前置任务**: 无
 - **负责人**: 队长
-- **状态**: 🟢 已完成
+- **状态**: 🔴 待开始
 - **涉及文件**: `lib/solve/types.ts`, `lib/slides/types.ts`, `lib/mistakes/types.ts`
 
 **检验标准**:
-- [x] `SolveState`、`GradeResult`、`FourPartOutput`、`VotingResult` 类型定义完整
-- [x] `MistakeRecord`、`MistakeCause`、`KnowledgeNode`、`KnowledgeEdge` 类型定义完整
-- [x] `AvatarConfig`、`AvatarSpeech`、`CourseExportConfig` 类型定义完整
-- [x] 所有类型通过 `tsc --noEmit` 无报错
-- [x] barrel export 在 `lib/solve/index.ts`、`lib/mistakes/index.ts`、`lib/slides/index.ts` 中正确导出
+- [ ] `SolveState`、`GradeResult`、`FourPartOutput`、`VotingResult` 类型定义完整
+- [ ] `MistakeRecord`、`MistakeCause`、`KnowledgeNode`、`KnowledgeEdge` 类型定义完整
+- [ ] `AvatarConfig`、`AvatarSpeech`、`CourseExportConfig` 类型定义完整
+- [ ] 所有类型通过 `tsc --noEmit` 无报错
+- [ ] barrel export 在 `lib/solve/index.ts`、`lib/mistakes/index.ts`、`lib/slides/index.ts` 中正确导出
 
 **产出文件**:
 ```
@@ -102,15 +102,15 @@ lib/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队长
-- **状态**: 🟢 已完成
+- **状态**: 🔴 待开始
 - **涉及文件**: `lib/recognition/image-recognizer.ts`, `lib/recognition/image-preprocessor.ts`, `lib/recognition/multi-problem-splitter.ts`, `lib/recognition/formula-extractor.ts`
 
 **检验标准**:
-- [x] `recognizeImage(imageBlob)` 返回 `{ text, latex, problemCount, problems[] }`
-- [x] 清晰照片文字识别准确率 > 85%（vision LLM + Tesseract.js fallback）
-- [x] 图片预处理：裁剪、去阴影、亮度增强
-- [x] 多题分割：一张图含多题时自动分割为独立子图
-- [x] LaTeX 公式提取正确（数学题场景）
+- [ ] `recognizeImage(imageBlob)` 返回 `{ text, latex, problemCount, problems[] }`
+- [ ] 清晰照片文字识别准确率 > 85%（以 20 张样本题测试）
+- [ ] 图片预处理：裁剪、去阴影、亮度增强
+- [ ] 多题分割：一张图含多题时自动分割为独立子图
+- [ ] LaTeX 公式提取正确（数学题场景）
 
 **产出文件**:
 ```
@@ -129,15 +129,15 @@ lib/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队长
-- **状态**: 🟢 已完成
+- **状态**: 🔴 待开始
 - **涉及文件**: `components/sky/layout/app-shell.tsx`, `components/sky/layout/sidebar-nav.tsx`, `components/sky/layout/top-bar.tsx`
 
 **检验标准**:
-- [x] 天空蓝 `#4A90D9` + 云朵白 `#F8FAFC` 主题色
-- [x] 左侧固定导航栏包含：首页、搜题、幻灯片、学习数据、AI 助手、设置
-- [x] 顶部工具栏包含：Logo、主题切换、用户头像
-- [x] 路由切换正常（`app/sky/page.tsx` 及各子路由骨架页）
-- [x] 响应式布局（移动端侧边栏折叠）
+- [ ] 天空蓝 `#4A90D9` + 云朵白 `#F8FAFC` 主题色
+- [ ] 左侧固定导航栏包含：首页、搜题、幻灯片、学习数据、AI 助手、设置
+- [ ] 顶部工具栏包含：Logo、主题切换、用户头像
+- [ ] 路由切换正常（`app/sky/page.tsx` 及各子路由骨架页）
+- [ ] 响应式布局（移动端侧边栏折叠）
 
 **产出文件**:
 ```
@@ -161,21 +161,21 @@ app/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队长
-- **状态**: 🟢 已完成
+- **状态**: 🔴 待开始
 - **涉及文件**: `app/api/sky/**/route.ts`（全部 8 个路由）
 
 **检验标准**:
-- [x] `/api/sky/solve/recognize` POST — 接收 FormData，返回占位识别结果
-- [x] `/api/sky/solve/grade` POST — 接收题目+答案，返回占位批改结果
-- [x] `/api/sky/solve/explain` POST — 接收题目，返回占位四段式输出
-- [x] `/api/sky/question-bank` GET/POST — 占位题库查询/入库
-- [x] `/api/sky/slides/generate` POST — 占位幻灯片生成
-- [x] `/api/sky/slides/avatar-speak` POST — 占位讲解音频生成
-- [x] `/api/sky/slides/export-pptx` POST — 占位 PPTX 导出
-- [x] `/api/sky/mistakes` GET/POST/PATCH/DELETE — 占位错题 CRUD
-- [x] `/api/sky/knowledge-graph` GET — 占位图谱返回
-- [x] `/api/sky/assistant` POST — 占位助手对话
-- [x] 所有路由通过 `curl` 测试返回 200 + 合法 JSON
+- [ ] `/api/sky/solve/recognize` POST — 接收 FormData，返回占位识别结果
+- [ ] `/api/sky/solve/grade` POST — 接收题目+答案，返回占位批改结果
+- [ ] `/api/sky/solve/explain` POST — 接收题目，返回占位四段式输出
+- [ ] `/api/sky/question-bank` GET/POST — 占位题库查询/入库
+- [ ] `/api/sky/slides/generate` POST — 占位幻灯片生成
+- [ ] `/api/sky/slides/avatar-speak` POST — 占位讲解音频生成
+- [ ] `/api/sky/slides/export-pptx` POST — 占位 PPTX 导出
+- [ ] `/api/sky/mistakes` GET/POST/PATCH/DELETE — 占位错题 CRUD
+- [ ] `/api/sky/knowledge-graph` GET — 占位图谱返回
+- [ ] `/api/sky/assistant` POST — 占位助手对话
+- [ ] 所有路由通过 `curl` 测试返回 200 + 合法 JSON
 
 **产出文件**:
 ```
@@ -208,16 +208,16 @@ app/
 
 - **前置任务**: `P1-001`, `P1-002`
 - **负责人**: 队员 1
-- **状态**: 🟢 已完成
+- **状态**: 🔴 待开始
 - **涉及文件**: `lib/solve/solve-graph.ts`, `lib/solve/solver-agent.ts`
 
 **检验标准**:
-- [x] `createSolveGraph()` 创建完整的 StateGraph
-- [x] 节点：`checkQuestionBank` → `routeToAgent` → `solveWithAgent` → `gradeAnswer` → `generateOutput`
-- [x] 支持三种 Agent 路由：`universal` (DeepSeek-V3)、`science` (GLM-4-Plus)、`humanities` (Qwen-Max)
-- [x] 题库命中直接返回
-- [x] 新题正常解题
-- [x] 解题失败时有 failover 降级（error 条件边 → generateOutput）
+- [ ] `createSolveGraph()` 创建完整的 StateGraph
+- [ ] 节点：`checkQuestionBank` → `routeToAgent` → `solveWithAgent` → `gradeAnswer` → `generateOutput` → `saveToBank` → `recordMistake`
+- [ ] 支持三种 Agent 路由：`universal` (DeepSeek-V3)、`science` (GLM-4-Plus)、`humanities` (Qwen-Max)
+- [ ] 题库命中直接返回（< 2 秒响应）
+- [ ] 新题正常解题（5-12 秒响应）
+- [ ] 解题失败时有 failover 降级
 
 **产出文件**:
 ```
@@ -233,15 +233,15 @@ lib/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队员 1
-- **状态**: 🟢 已完成
+- **状态**: 🔴 待开始
 - **涉及文件**: `lib/solve/grader.ts`
 
 **检验标准**:
-- [x] `gradeAnswer(problem, correctAnswer, userAnswer)` 返回 `GradeResult`
-- [x] 对错判断准确率 > 90%（LLM 批改 + rule-based fallback）
-- [x] 支持分步批改（大题按步骤给分）
-- [x] 错因自动分类：`concept-unclear` / `calculation-error` / `misreading` / `method-wrong` / `careless` / `format-error`
-- [x] `partialCredit` 数组包含每步得分和评语
+- [ ] `gradeAnswer(problem, correctAnswer, userAnswer)` 返回 `GradeResult`
+- [ ] 对错判断准确率 > 90%（以 30 道样本题测试）
+- [ ] 支持分步批改（大题按步骤给分）
+- [ ] 错因自动分类：`concept-unclear` / `calculation-error` / `misreading` / `method-wrong` / `careless` / `format-error`
+- [ ] `partialCredit` 数组包含每步得分和评语
 
 **产出文件**:
 ```
@@ -256,16 +256,16 @@ lib/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队员 1
-- **状态**: 🟢 已完成
+- **状态**: 🔴 待开始
 - **涉及文件**: `lib/solve/four-part-output.ts`
 
 **检验标准**:
-- [x] `generateFourPartOutput(solution)` 返回 `FourPartOutput`
-- [x] `answer` 字段为最终答案（加粗高亮）
-- [x] `steps` 数组包含步骤标签、内容、关键点标记
-- [x] `knowledgePoints` 数组包含知识点名称、描述、难度
-- [x] `similarQuestions` 数组包含 2-3 道同类练习题
-- [x] 批改模式下输出 `GradedFourPartOutput`（含 `gradeResult` + `mistakeAnalysis` + `recommendedPractice`）
+- [ ] `generateFourPartOutput(solution)` 返回 `FourPartOutput`
+- [ ] `answer` 字段为最终答案（加粗高亮）
+- [ ] `steps` 数组包含步骤标签、内容、关键点标记
+- [ ] `knowledgePoints` 数组包含知识点名称、描述、难度
+- [ ] `similarQuestions` 数组包含 2-3 道同类练习题
+- [ ] 批改模式下输出 `GradedFourPartOutput`（含 `gradeResult` + `mistakeAnalysis` + `recommendedPractice`）
 
 **产出文件**:
 ```
@@ -280,15 +280,15 @@ lib/
 
 - **前置任务**: `P1-001`
 - **负责人**: 队员 1
-- **状态**: 🟢 已完成
+- **状态**: 🔴 待开始
 - **涉及文件**: `lib/solve/question-bank.ts`
 
 **检验标准**:
-- [x] `findSimilarQuestions(problemText, threshold)` 返回语义相似度 > 0.85 的题库条目（Jaccard bigram 算法）
-- [x] `saveToQuestionBank(entry)` 自动去重（problemHash）
-- [x] 使用 IndexedDB 本地存储（Dexie v11 迁移）
-- [x] 题库条目包含：`id`, `problemHash`, `problemText`, `answer`, `steps`, `knowledgePoints`, `agentId`, `verified`
-- [x] 相似题匹配使用 Jaccard bigram（预留 Supabase pgvector 接口）
+- [ ] `findSimilarQuestions(problemText, threshold)` 返回语义相似度 > 0.85 的题库条目
+- [ ] `saveToQuestionBank(entry)` 自动去重（problemHash）
+- [ ] 使用 IndexedDB 本地存储
+- [ ] 题库条目包含：`id`, `problemHash`, `problemText`, `answer`, `steps`, `knowledgePoints`, `agentId`, `verified`
+- [ ] 相似题匹配使用 embedding（预留 Supabase pgvector 接口）
 
 **产出文件**:
 ```
@@ -303,16 +303,16 @@ lib/
 
 - **前置任务**: `A-001`, `A-002`, `A-003`, `A-004`
 - **负责人**: 队员 1
-- **状态**: 🟢 已完成
+- **状态**: 🔴 待开始
 - **涉及文件**: `tests/solve/*.test.ts`, `tests/recognition/*.test.ts`
 
 **检验标准**:
-- [x] 解题引擎单元测试（solve-graph.test.ts, solver-agent.test.ts 等）
-- [x] 批改引擎单元测试（grader.test.ts, 14 tests）
-- [x] 四段式输出格式验证测试（four-part-output.test.ts, 17 tests）
-- [x] 题库 CRUD 测试（question-bank.test.ts, 22 tests）
-- [x] 集成测试：solve-flow.integration.test.ts 全链路
-- [x] `pnpm test` 全部通过（91 tests, 8 files in solve module）
+- [ ] 解题引擎单元测试 > 80% 覆盖率
+- [ ] 批改引擎单元测试 > 80% 覆盖率
+- [ ] 四段式输出格式验证测试
+- [ ] 题库 CRUD 测试
+- [ ] 集成测试：recognizeImage → solveGraph → fourPartOutput 全链路
+- [ ] `pnpm test` 全部通过
 
 **产出文件**:
 ```
@@ -333,16 +333,16 @@ tests/
 
 - **前置任务**: `P2-001`, `P5-001`, `A-001`, `A-002`, `A-003`
 - **负责人**: 队员 1
-- **状态**: 🟢 已完成
+- **状态**: 🔴 待开始
 - **涉及文件**: `components/sky/solve/solve-page.tsx`, `components/sky/solve/multimodal-input.tsx`, `components/sky/solve/grade-result.tsx`, `components/sky/solve/solution-panel.tsx`, `components/sky/solve/similar-problems.tsx`
 
 **检验标准**:
-- [x] 支持拍照上传（`<input capture="environment">`）、语音输入、文字输入
-- [x] 左侧输入区：拍照卡片 + 手动输入框 + 提交批改按钮
-- [x] 右侧结果区：题目展示 → 批改结果 → 解题步骤 → 知识点 → 同类练习
-- [x] 批改结果卡片有 ✅/❌ 标识 + 错因分析
-- [x] loading 状态和错误状态处理完善
-- [x] 页面响应式适配移动端
+- [ ] 支持拍照上传（`<input capture="environment">`）、语音输入、文字输入
+- [ ] 左侧输入区：拍照卡片 + 手动输入框 + 提交批改按钮
+- [ ] 右侧结果区：题目展示 → 批改结果 → 解题步骤 → 知识点 → 同类练习
+- [ ] 批改结果卡片有 ✅/❌ 标识 + 错因分析
+- [ ] loading 状态和错误状态处理完善
+- [ ] 页面响应式适配移动端
 
 **产出文件**:
 ```
@@ -560,6 +560,7 @@ lib/
 
 **产出文件**:
 ```
+
 components/sky/
 └── assistant/
     ├── assistant-fab.tsx       # 悬浮球入口
