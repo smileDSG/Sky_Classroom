@@ -31,7 +31,8 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { AlertTriangle, BookOpen } from 'lucide-react';
+import { AlertTriangle, BookOpen, Image } from 'lucide-react';
+import { PptViewer } from '@/components/classroom/ppt-viewer';
 import { VisuallyHidden } from 'radix-ui';
 
 /**
@@ -59,6 +60,10 @@ export function Stage({
   const failedOutlines = useStageStore.use.failedOutlines();
 
   const currentScene = getCurrentScene();
+
+  // PPT slide panel state
+  const [pptPanelOpen, setPptPanelOpen] = useState(false);
+  const [pptFullscreen, setPptFullscreen] = useState(false);
 
   // Layout state from settings store (persisted via localStorage)
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed);
@@ -1015,6 +1020,7 @@ export function Stage({
           onStopSession={doSessionCleanup}
           onSegmentSealed={discussionTTS.handleSegmentSealed}
           shouldHoldAfterReveal={discussionTTS.shouldHold}
+          enableFilters
         />
 
         {/* Right Panel — Canvas + Roundtable */}
@@ -1027,6 +1033,16 @@ export function Stage({
               title="展开讲解区"
             >
               <BookOpen className="w-4 h-4" />
+            </button>
+          )}
+          {/* Floating toggle to open PPT panel */}
+          {!pptPanelOpen && (
+            <button
+              onClick={() => setPptPanelOpen(true)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/60 dark:border-gray-700/60 text-amber-500 dark:text-amber-400 shadow-lg flex items-center justify-center hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:text-amber-600 dark:hover:text-amber-300 active:scale-90 transition-all"
+              title="PPT 缩略图"
+            >
+              <Image className="w-4 h-4" />
             </button>
           )}
           {/* Header */}
@@ -1200,6 +1216,25 @@ export function Stage({
             </div>
           )}
         </div>
+
+        {/* PPT Slide Panel — right side of canvas */}
+        <PptViewer
+          scenes={scenes}
+          currentSlideIndex={scenes.findIndex((s) => s.id === currentSceneId && s.type === 'slide')}
+          onSlideChange={(index) => {
+            const slideScenes = scenes.filter((s) => s.type === 'slide');
+            if (index >= 0 && index < slideScenes.length) {
+              setCurrentSceneId(slideScenes[index].id);
+            }
+          }}
+          visible={pptPanelOpen}
+          onClose={() => {
+            setPptPanelOpen(false);
+            setPptFullscreen(false);
+          }}
+          onToggleFullscreen={() => setPptFullscreen((v) => !v)}
+          isFullscreen={pptFullscreen}
+        />
       </div>
 
       {/* Scene switch confirmation dialog */}

@@ -105,12 +105,14 @@ describe('API_ERROR_CODES', () => {
       'REDIRECT_NOT_ALLOWED', 'CONTENT_SENSITIVE', 'UPSTREAM_ERROR',
       'GENERATION_FAILED', 'TRANSCRIPTION_FAILED', 'PARSE_FAILED',
       'INTERNAL_ERROR', 'STORAGE_ERROR', 'NOT_FOUND', 'UNAUTHORIZED',
-      'DUPLICATE_RESOURCE',
+      'DUPLICATE_RESOURCE', 'INVALID_CREDENTIALS', 'EMAIL_EXISTS',
+      'USERNAME_EXISTS', 'ACCOUNT_SUSPENDED', 'USAGE_LIMIT_EXCEEDED',
+      'INSUFFICIENT_PLAN', 'ORDER_NOT_FOUND', 'PAYMENT_FAILED',
     ];
     for (const code of expected) {
       expect(API_ERROR_CODES).toHaveProperty(code);
     }
-    expect(Object.keys(API_ERROR_CODES)).toHaveLength(17);
+    expect(Object.keys(API_ERROR_CODES)).toHaveLength(25);
   });
 
   test('all codes are unique', () => {

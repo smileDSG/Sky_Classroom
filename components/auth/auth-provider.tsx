@@ -1,0 +1,128 @@
+/**
+ * Auth context provider for client-side authentication state.
+ */
+
+'use client';
+
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+
+export interface AuthUser {
+  id: string;
+  email: string | null;
+  username: string;
+  role: 'guest' | 'user' | 'admin';
+  status: 'active' | 'suspended';
+  planType: 'free' | 'basic' | 'pro' | 'enterprise';
+}
+
+interface AuthContextValue {
+  user: AuthUser | null;
+  isLoading: boolean;
+  isGuest: boolean;
+  login: (emailOrUsername: string, password: string) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
+}
+
+interface RegisterData {
+  email?: string;
+  username: string;
+  password: string;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      if (res.ok) {
+        const json = await res.json();
+        setUser(json.user);
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  const login = async (emailOrUsername: string, password: string) => {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ emailOrUsername, password }),
+    });
+    if (!res.ok) {
+      const json = await res.json();
+      throw new Error(json.error || 'Login failed');
+    }
+    await fetchUser();
+  };
+
+  const register = async (data: RegisterData) => {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const json = await res.json();
+      throw new Error(json.error || 'Registration failed');
+    }
+    await fetchUser();
+  };
+
+  const logout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    setUser(null);
+  };
+
+  const refresh = async () => {
+    try {
+      const res = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        await fetchUser();
+      }
+    } catch {
+      // Ignore refresh failures
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isGuest: !user || user.role === 'guest',
+        login,
+        register,
+        logout,
+        refresh,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}

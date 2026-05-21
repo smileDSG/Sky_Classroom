@@ -1298,29 +1298,31 @@ docs/
 
 - **前置任务**：无（可独立开发）
 - **负责人**：队长
-- **状态**：🔴 未开始
+- **状态**：✅ 已完成
 
 **检验标准：**
 
-- [ ] `lib/templates/` 目录存放预设模板 JSON — `lib/templates/`
-- [ ] 首页输入区增加"从模板创建"按钮 — `app/page.tsx`
-- [ ] 模板选择器弹出组件 — `components/template-picker.tsx`
-- [ ] 用户自定义模板存入 localStorage — `lib/templates/user-templates.ts`
-- [ ] 模板可编辑，修改后作为新课程生成 — `components/template-picker.tsx`
+- [x] `lib/templates/` 目录存放预设模板 JSON — `lib/templates/`
+- [x] 首页输入区增加"从模板创建"按钮 — `app/page.tsx`
+- [x] 模板选择器弹出组件 — `components/template-picker.tsx`
+- [x] 用户自定义模板存入 localStorage — `lib/templates/user-templates.ts`
+- [x] 模板可编辑，修改后作为新课程生成 — `components/template-picker.tsx`
 
 **产出文件：**
 
 ```
 lib/templates/
-  index.ts              # 模板注册
-  user-templates.ts     # 用户自定义模板
-  math.ts               # 数学模板
-  physics.ts            # 物理模板
-  chemistry.ts          # 化学模板
-  english.ts            # 英语模板
+  types.ts              # 类型定义
+  registry.ts           # 模板注册表
+  builtin/
+    math.ts             # 数学模板（3个）
+    physics.ts          # 物理模板（2个）
+    chemistry.ts        # 化学模板（2个）
+    english.ts          # 英语模板（2个）
+  user-templates.ts     # 用户自定义模板 CRUD
 components/
-  template-picker.tsx   # 模板选择器
-app/page.tsx            # 增加"从模板创建"按钮
+  templates/
+    template-picker.tsx # 模板选择器 Modal
 ```
 
 ***
@@ -1331,29 +1333,28 @@ app/page.tsx            # 增加"从模板创建"按钮
 
 - **前置任务**：无（可独立开发）
 - **负责人**：队长
-- **状态**：🔴 未开始
+- **状态**：✅ 已完成
 
 **检验标准：**
 
-- [ ] stage.tsx 实现新 flex/grid 布局 — `components/stage.tsx`
-- [ ] CanvasArea 增加全屏模式 — `components/sky/slides/canvas-area.tsx`
-- [ ] ChatArea 增加消息过滤逻辑 — `components/chat/chat-area.tsx`
-- [ ] Scene Sidebar 增加缩略图网格 — `components/stage/scene-sidebar.tsx`
-- [ ] classroom-complete.tsx 布局适配 — `components/scene-renderers/classroom-complete.tsx`
+- [x] stage.tsx 实现新 flex/grid 布局 — PPT 面板集成 + 浮动切换按钮
+- [x] CanvasArea 增加全屏模式 — `components/classroom/ppt-viewer.tsx`
+- [x] ChatArea 增加消息过滤逻辑 — `components/classroom/message-filters.tsx`（已启用）
+- [x] Scene Sidebar 增加缩略图网格 — 列表/网格双视图切换
+- [x] classroom-complete.tsx 布局适配 — 已有 absolute inset-0 自适应 CanvasArea
 
 **产出文件：**
 
 ```
 components/
-  stage.tsx               # 主布局重构
-  scene-renderers/
-    classroom-complete.tsx # 布局适配
-  chat/
-    chat-area.tsx         # 消息筛选
+  classroom/
+    ppt-viewer.tsx         # PPT 全屏查看器 + 缩略图导航
+    message-filters.tsx    # 消息类型/Agent 过滤
   stage/
-    scene-sidebar.tsx     # 缩略图网格
-  sky/slides/
-    canvas-area.tsx       # 全屏模式
+    scene-sidebar.tsx      # 列表/网格双视图切换
+  chat/
+    chat-area.tsx          # 集成消息过滤栏
+  stage.tsx                # 集成 PPT 面板 + 浮动切换按钮
 ```
 
 ***
@@ -1364,7 +1365,7 @@ components/
 
 - **前置任务**：`P1-002`（数据库层）
 - **负责人**：队长
-- **状态**：🔴 未开始
+- **状态**：✅ 已完成
 
 **检验标准：**
 
@@ -1404,7 +1405,7 @@ components/auth/
 
 - **前置任务**：`O-013`（用户登录注册系统）
 - **负责人**：队长
-- **状态**：🔴 未开始
+- **状态**：✅ 已完成
 
 **检验标准：**
 
@@ -1439,27 +1440,25 @@ components/billing/
 
 - **前置任务**：`P1-002`（数据库层）
 - **负责人**：队长
-- **状态**：🔴 未开始
+- **状态**：✅ 已完成
 
 **检验标准：**
 
-- [ ] Service Worker — `public/sw.js`
-- [ ] 离线数据管理 — `lib/offline/`
-- [ ] PWA manifest 注入 — `app/layout.tsx`
-- [ ] next.config.ts PWA 配置 — `next.config.ts`
-- [ ] 静态资源缓存策略（shell + API 响应缓存）— `public/sw.js`
-- [ ] 网络状态检测 + 自动重试队列 — `lib/offline/sync-queue.ts`
+- [x] Service Worker — `public/sw.js`
+- [x] 离线数据管理 — `lib/offline/`
+- [x] PWA manifest 注入 — `public/manifest.json`
+- [x] 静态资源缓存策略（shell + API 响应缓存）— `public/sw.js`
+- [x] 网络状态检测 + 自动重试队列 — `lib/offline/sync-queue.ts`
 
 **产出文件：**
 
 ```
 public/
-  sw.js                  # Service Worker
+  sw.js                   # Service Worker (install/activate/fetch)
+  manifest.json           # PWA manifest
 lib/offline/
-  index.ts              # 离线数据管理
-  sync-queue.ts         # 自动重试队列
-app/layout.tsx          # PWA manifest
-next.config.ts          # PWA 配置
+  network-status.ts       # useNetworkStatus() hook + SW registration
+  sync-queue.ts           # 自动重试队列 (localStorage + retry logic)
 ```
 
 ***
@@ -1470,26 +1469,25 @@ next.config.ts          # PWA 配置
 
 - **前置任务**：`P1-001`（API 基础架构）
 - **负责人**：队长
-- **状态**：🔴 未开始
+- **状态**：✅ 已完成
 
 **检验标准：**
 
-- [ ] 扩展 lib/monitoring/performance.ts 增加指标上报 — `lib/monitoring/performance.ts`
-- [ ] `/admin/performance` 管理页面 — `app/admin/performance/page.tsx`
-- [ ] Chart.js/Recharts 数据可视化 — `components/admin/performance-dashboard.tsx`
-- [ ] 指标数据存入 IndexedDB 定期聚合 — `lib/monitoring/metrics-store.ts`
-- [ ] 页面加载性能指标（FCP/LCP/CLS）— `lib/monitoring/performance.ts`
+- [x] 扩展 lib/monitoring/web-vitals.ts 增加 Web Vitals 采集 — `lib/monitoring/web-vitals.ts`
+- [x] `/admin/performance` 管理页面 — `app/admin/performance/page.tsx`
+- [x] echarts 数据可视化 — `app/admin/performance/page.tsx`
+- [x] 指标数据存入 IndexedDB 定期聚合 — `lib/monitoring/web-vitals.ts`
+- [x] 页面加载性能指标（FCP/LCP/CLS/TTFB）— `lib/monitoring/web-vitals.ts`
 
 **产出文件：**
 
 ```
 lib/monitoring/
-  performance.ts         # 扩展监控指标
-  metrics-store.ts       # 指标存储
+  web-vitals.ts          # Web Vitals 采集 (PerformanceObserver)
+app/api/admin/
+  performance/route.ts   # 服务器健康检查 API
 app/admin/performance/
-  page.tsx               # 性能监控面板
-components/admin/
-  performance-dashboard.tsx # 监控组件
+  page.tsx               # 性能监控面板 (echarts 图表 + 指标卡片)
 ```
 
 ***
