@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 
 export interface AvatarSpeechPopupProps {
-  speakingAgentId: string | null;
-  sourceText: string | null;
+  speakingAgentId: string | null | undefined;
+  sourceText: string | null | undefined;
   participants: Array<{
     id: string;
     avatar: string;
