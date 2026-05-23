@@ -50,6 +50,8 @@ export interface CanvasToolbarProps {
   readonly onToggleAutoPlay?: () => void;
   readonly playbackSpeed?: number;
   readonly onCycleSpeed?: () => void;
+  // Ask Teacher
+  readonly onAskTeacher?: () => void;
 }
 
 /* Compact control button */
@@ -108,6 +110,7 @@ export function CanvasToolbar({
   onToggleAutoPlay,
   playbackSpeed = 1,
   onCycleSpeed,
+  onAskTeacher,
 }: CanvasToolbarProps) {
   const { t } = useI18n();
   const canGoPrev = currentSceneIndex > 0;
@@ -177,6 +180,28 @@ export function CanvasToolbar({
               : 'bg-gray-100/60 dark:bg-gray-800/60 rounded-lg',
           )}
         >
+          {/* Ask Teacher Button */}
+          {onAskTeacher && (
+            <>
+              <button
+                onClick={onAskTeacher}
+                className={cn(
+                  'flex items-center gap-1.5 h-6 px-3 rounded-md',
+                  'bg-gradient-to-r from-sky-500 to-blue-500',
+                  'text-white text-xs font-semibold',
+                  'hover:from-sky-400 hover:to-blue-400',
+                  'active:scale-95 transition-all cursor-pointer',
+                  'shadow-[0_4px_16px_rgba(14,165,233,0.3)]'
+                )}
+                title="向老师提问"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>提问</span>
+              </button>
+              <CtrlDivider />
+            </>
+          )}
+
           {/* Volume with vertical popover slider */}
           {onToggleMute && (
             <div

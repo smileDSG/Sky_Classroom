@@ -15,7 +15,8 @@ import type { AgentTurnSummary, WhiteboardActionRecord } from './types';
 import { COMPRESSION_TARGET } from './config';
 import { compressMessageHistory } from './conversation-compression';
 
-type MessageLike = { role: string; content?: unknown };
+type MessageRole = 'user' | 'assistant' | 'system' | 'agent' | 'tool';
+type MessageLike = { role: MessageRole; content?: unknown };
 
 /**
  * LangGraph state annotation for the orchestration graph

@@ -279,7 +279,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
           transition: isDragging ? 'none' : 'width 0.3s ease',
         }}
         className={cn(
-          'bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_24px_rgba(0,0,0,0.02)] flex flex-col shrink-0 z-20 relative overflow-visible h-full',
+          'bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-r border-sky-200/50 dark:border-white/5',
+          'shadow-[2px_0_24px_rgba(14,165,233,0.1)] dark:shadow-[2px_0_24px_rgba(0,0,0,0.3)]',
+          'flex flex-col shrink-0 z-20 relative overflow-visible h-full',
           className,
         )}
       >
@@ -287,9 +289,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
         {!collapsed && (
           <div
             onMouseDown={handleDragStart}
-            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize z-50 group hover:bg-sky-400/30 dark:hover:bg-sky-600/30 active:bg-sky-500/40 dark:active:bg-sky-500/40 transition-colors"
+            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize z-50 group hover:bg-sky-400/50 dark:hover:bg-violet-500/50 active:bg-sky-500/70 dark:active:bg-violet-500/70 transition-colors"
           >
-            <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-sky-400 dark:group-hover:bg-sky-500 transition-colors" />
+            <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-sky-300 dark:bg-slate-700 group-hover:bg-sky-400 dark:group-hover:bg-violet-400 transition-colors" />
           </div>
         )}
 
@@ -322,7 +324,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
               {onCollapseChange && (
                 <button
                   onClick={() => onCollapseChange(true)}
-                  className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center bg-gray-100/80 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 ring-1 ring-black/[0.04] dark:ring-white/[0.06] hover:bg-gray-200/90 dark:hover:bg-gray-700/90 hover:text-gray-700 dark:hover:text-gray-200 active:scale-90 transition-all duration-200"
+                  className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center bg-slate-800/80 text-slate-400 ring-1 ring-white/10 hover:bg-slate-700/80 hover:text-slate-200 active:scale-90 transition-all duration-200"
                 >
                   <PanelLeftClose className="w-4 h-4" />
                 </button>
@@ -346,13 +348,13 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
               <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2 scrollbar-hide">
                 {filteredChatSessions.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-50">
-                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 text-gray-300 dark:text-gray-600">
+                    <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mb-3 text-slate-600">
                       <MessageSquare className="w-6 h-6" />
                     </div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <p className="text-sm font-medium text-slate-400">
                       {t('chat.noConversations')}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       {t('chat.startConversation')}
                     </p>
                   </div>

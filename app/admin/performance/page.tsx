@@ -81,7 +81,7 @@ export default function PerformanceDashboardPage() {
     return last.rating;
   };
 
-  const ratingColor = (r?: string) =>
+  const ratingColor = (r?: string | null) =>
     r === 'good' ? 'bg-green-500' : r === 'needs-improvement' ? 'bg-yellow-500' : r === 'poor' ? 'bg-red-500' : 'bg-gray-400';
 
   if (loading) return <p className="text-center py-8">Loading...</p>;
@@ -103,7 +103,7 @@ export default function PerformanceDashboardPage() {
               <CardContent>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold">{avg !== null ? `${avg}${name === 'CLS' ? '' : 'ms'}` : '—'}</span>
-                  <Badge className={ratingColor(rating)}>{rating ?? 'n/a'}</Badge>
+                  <Badge className={ratingColor(rating || undefined)}>{rating ?? 'n/a'}</Badge>
                 </div>
               </CardContent>
             </Card>

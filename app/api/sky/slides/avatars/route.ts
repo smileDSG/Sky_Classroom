@@ -3,14 +3,15 @@
  * Returns the list of available avatar configurations.
  */
 import { apiSuccess } from '@/lib/server/api-response';
-import { AVATAR_CONFIGS } from '@/lib/slides';
+import { AVATAR_PRESETS } from '@/lib/slides';
 
 export async function GET() {
-  const avatars = AVATAR_CONFIGS.map(({ id, name, avatarUrl, personality }) => ({
+  const avatars = AVATAR_PRESETS.map(({ id, name, avatarUrl, description, style }) => ({
     id,
     name,
     avatarUrl,
-    personality,
+    description,
+    style,
   }));
   return apiSuccess({ avatars });
 }

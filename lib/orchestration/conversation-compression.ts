@@ -14,7 +14,7 @@ import { COMPRESSION_TARGET, COMPRESSION_MESSAGE_THRESHOLD } from './config';
 type MessageRole = 'user' | 'assistant' | 'system' | 'agent' | 'tool';
 
 interface MessageLike {
-  role: string;
+  role: MessageRole;
   content?: unknown;
 }
 
@@ -208,5 +208,5 @@ export { estimateTokens, extractKeyInfo };
 
 /** @deprecated Use `compressConversation` instead */
 export function compressMessageHistory(messages: MessageLike[]): MessageLike[] {
-  return compressConversation(messages);
+  return compressConversation(messages as unknown as ConversationMessage[]);
 }

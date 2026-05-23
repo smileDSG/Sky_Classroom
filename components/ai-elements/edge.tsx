@@ -44,7 +44,7 @@ const getHandleCoordsByPosition = (node: InternalNode<Node>, handlePosition: Pos
   const handleType = handlePosition === Position.Left ? 'target' : 'source';
 
   const handle = node.internals.handleBounds?.[handleType]?.find(
-    (h) => h.position === handlePosition,
+    (h: { position: Position }) => h.position === handlePosition,
   );
 
   if (!handle) {

@@ -4,7 +4,8 @@
  */
 
 import { z } from 'zod';
-import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, signRefreshToken, verifyPassword } from '@/lib/server/auth';
 import { createUserDAO } from '@/lib/storage/dao/users';
 
@@ -53,10 +54,16 @@ export async function POST(request: Request) {
     const sessionId = crypto.randomUUID();
     const refreshToken = await signRefreshToken(user.id, sessionId);
 
-    return apiSuccess({
+    return NextResponse.json({
+      success: true,
       user: { id: user.id, email: user.email, username: user.username, role: user.role },
-      accessToken,
-      refreshToken,
+    }, {
+      headers: {
+        'Set-Cookie': [
+          `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${60 * 60}`,
+          `refresh_token=${refreshToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`,
+        ].join(', '),
+      },
     });
   } catch (err) {
     return apiError('INTERNAL_ERROR', 500, 'Login failed');

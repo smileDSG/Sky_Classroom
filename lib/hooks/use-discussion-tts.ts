@@ -185,7 +185,17 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
         signal: controller.signal,
       });
 
-      if (!res.ok) throw new Error(`TTS API error: ${res.status}`);
+      if (!res.ok) {
+        // Try to get error details from response
+        let errorDetails = `Status ${res.status}`;
+        try {
+          const errorData = await res.json();
+          errorDetails = errorData.error || errorData.message || errorDetails;
+        } catch {
+          // Ignore JSON parse error
+        }
+        throw new Error(`TTS API error: ${errorDetails}`);
+      }
 
       const data = await res.json();
       if (!data.base64) throw new Error('No audio in response');
@@ -224,11 +234,33 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
       onAudioStateChangeRef.current?.(item.agentId, 'playing');
       await audio.play();
     } catch (err) {
-      if ((err as Error).name !== 'AbortError') {
-        console.error('[DiscussionTTS] TTS generation failed:', err);
+      if ((err as Error).name === 'AbortError') {
+        // User aborted, just clean up
+        audioRef.current = null;
+        isPlayingRef.current = false;
+        return;
       }
+
+      console.error('[DiscussionTTS] TTS generation failed:', err);
+
+      // Clear current state
       audioRef.current = null;
       isPlayingRef.current = false;
+
+      // Try fallback to browser native TTS if server TTS failed
+      if ((item.providerId as string) !== 'browser-native-tts') {
+        console.log('[DiscussionTTS] Falling back to browser native TTS');
+        try {
+          currentProviderRef.current = 'browser-native-tts';
+          onAudioStateChangeRef.current?.(item.agentId, 'playing');
+          browserSpeakRef.current(item.text, item.voiceId);
+          return;
+        } catch (fallbackErr) {
+          console.error('[DiscussionTTS] Browser TTS fallback also failed:', fallbackErr);
+        }
+      }
+
+      // Mark as done and continue queue
       segmentDoneCounterRef.current++;
       onAudioStateChangeRef.current?.(item.agentId, 'idle');
       if (!pausedRef.current) {

@@ -379,7 +379,7 @@ export interface ShapeText {
  */
 export interface PPTShapeElement extends PPTBaseElement {
   type: 'shape';
-  viewBox: [number, number];
+  viewBox: string;
   path: string;
   fixedRatio: boolean;
   fill: string;

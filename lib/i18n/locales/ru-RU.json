@@ -3,7 +3,8 @@
     "you": "Вы",
     "confirm": "Подтвердить",
     "cancel": "Отмена",
-    "loading": "Загрузка..."
+    "loading": "Загрузка...",
+    "send": "Отправить"
   },
   "home": {
     "slogan": "Generative Learning in Multi-Agent Interactive Classroom",
@@ -144,7 +145,9 @@
     "generatingNextPage": "Сцена генерируется, пожалуйста подождите...",
     "courseComplete": "Курс завершён",
     "fullscreen": "Полный экран",
-    "exitFullscreen": "Свернуть"
+    "exitFullscreen": "Свернуть",
+    "speakingToTeacher": "Вопрос учителю...",
+    "quickQuestions": "Быстрые вопросы"
   },
   "classroomComplete": {
     "title": "Курс завершён",
@@ -226,7 +229,9 @@
     "voiceInputDisabled": "Голосовой ввод отключён",
     "textInput": "Текстовый ввод",
     "stopRecording": "Остановить запись",
-    "startRecording": "Начать запись"
+    "startRecording": "Начать запись",
+    "askTeacher": "Спросить учителя",
+    "ask": "Спросить"
   },
   "pbl": {
     "legacyFormat": "Эта PBL-сцена использует устаревший формат. Пожалуйста, перегенерируйте курс.",
@@ -1054,5 +1059,48 @@
     "title": "Введите код доступа",
     "placeholder": "Код доступа",
     "error": "Неверный код доступа. Попробуйте ещё раз."
+  },
+  "account": {
+    "title": "Центр аккаунта",
+    "profileSection": "Профиль",
+    "accountSection": "Информация об аккаунте",
+    "securitySection": "Безопасность",
+    "nickname": "Никнейм",
+    "nicknamePlaceholder": "Введите ваш никнейм",
+    "bio": "О себе",
+    "bioPlaceholder": "Расскажите о себе",
+    "email": "Электронная почта",
+    "username": "Имя пользователя",
+    "role": "Роль",
+    "status": "Статус",
+    "planType": "Тариф",
+    "userId": "ID пользователя",
+    "roleGuest": "Гость",
+    "roleUser": "Пользователь",
+    "roleAdmin": "Администратор",
+    "statusActive": "Активен",
+    "statusSuspended": "Приостановлен",
+    "planFree": "Бесплатный",
+    "planBasic": "Базовый",
+    "planPro": "Профессиональный",
+    "planEnterprise": "Корпоративный",
+    "changePassword": "Изменить пароль",
+    "currentPassword": "Текущий пароль",
+    "newPassword": "Новый пароль",
+    "confirmPassword": "Подтвердите пароль",
+    "passwordMismatch": "Пароли не совпадают",
+    "passwordTooShort": "Пароль должен быть не менее 6 символов",
+    "passwordChanged": "Пароль успешно изменён",
+    "saveSuccess": "Сохранено",
+    "backToHome": "На главную",
+    "unauthorized": "Пожалуйста, войдите для доступа"
+  },
+  "speech": {
+    "speaking": "Говорит...",
+    "role": {
+      "teacher": "Учитель",
+      "student": "Ученик",
+      "user": "Я"
+    }
   }
 }

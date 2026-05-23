@@ -1,11 +1,13 @@
 /**
  * Sky Classroom — Avatar Speech Generator (B-002)
  *
- * Extracts text from slides, splits into sentences, and generates
- * TTS audio for each sentence using dependency-injected TTS function.
+ * Builds narration scripts from slides using the speech-script builder,
+ * then generates TTS audio for each segment with dependency-injected TTS.
  */
-import type { Slide, PPTElement } from '@/lib/types/slides';
-import type { AvatarConfig, AvatarSpeech } from '@/lib/slides/types';
+import type { Slide } from '@/lib/types/slides';
+import type { AvatarSpeech } from '@/lib/slides/types';
+import type { SpeechSegment } from './speech-script';
+import { buildFullScript } from './speech-script';
 import { getAvatarById } from './avatar-config';
 import { createLogger } from '@/lib/logger';
 
@@ -13,7 +15,7 @@ const log = createLogger('AvatarSpeech');
 
 // ── TTS Injection Type ──────────────────────────────────────────────
 
-/** Result of a single TTS generation call (structurally matches generateTTS) */
+/** Result of a single TTS generation call */
 export interface TTSGenResult {
   audio: Uint8Array;
   format: string;
@@ -32,91 +34,43 @@ export interface AvatarSpeechOptions {
   concurrency?: number;
 }
 
-// ── Text Extraction ─────────────────────────────────────────────────
+// ── Re-exports (backward compat) ─────────────────────────────────────
 
-const HTML_TAG_RE = /<[^>]*>/g;
+export {
+  buildSlideScript,
+  buildFullScript,
+} from './speech-script';
+export type { SpeechSegment, SlideScript } from './speech-script';
 
-function stripHtml(html: string): string {
-  return html.replace(HTML_TAG_RE, '').trim();
-}
+// ── Text extraction helpers (kept for backward compat, deprecated) ───
 
-export function extractTextFromSlideElements(elements: PPTElement[]): string[] {
-  const texts: string[] = [];
-
-  for (const el of elements) {
-    switch (el.type) {
-      case 'text': {
-        const t = stripHtml(el.content);
-        if (t) texts.push(t);
-        break;
-      }
-      case 'shape': {
-        const shapeEl = el as { text?: { content: string } };
-        if (shapeEl.text?.content) {
-          const t = stripHtml(shapeEl.text.content);
-          if (t) texts.push(t);
-        }
-        break;
-      }
-      case 'table': {
-        const tableEl = el as { data?: { text: string }[][] };
-        if (tableEl.data) {
-          for (const row of tableEl.data) {
-            for (const cell of row) {
-              if (cell.text?.trim()) texts.push(cell.text.trim());
-            }
-          }
-        }
-        break;
-      }
-      case 'latex': {
-        const latexEl = el as { latex?: string };
-        if (latexEl.latex?.trim()) texts.push(latexEl.latex.trim());
-        break;
-      }
-      case 'code': {
-        const codeEl = el as { lines?: { content: string }[] };
-        if (codeEl.lines) {
-          const code = codeEl.lines.map((l) => l.content).join(' ');
-          if (code.trim()) texts.push(code);
-        }
-        break;
-      }
-    }
-  }
-
-  return texts;
-}
-
+/** @deprecated Use buildSlideScript() from speech-script.ts instead */
 export function extractTextFromSlides(slides: Slide[]): string {
-  return slides
-    .map((slide) => extractTextFromSlideElements(slide.elements).join(' '))
-    .filter((t) => t.trim().length > 0)
-    .join('\n');
+  const script = buildFullScript(slides);
+  return script.flatMap((s) => s.segments.map((seg) => seg.text)).join('\n');
 }
 
-// ── Sentence Splitting ──────────────────────────────────────────────
+/** @deprecated Use buildSlideScript() from speech-script.ts instead */
+export function extractTextFromSlideElements(): string[] {
+  return [];
+}
 
-const SENTENCE_END_RE = /(?<=[。！？!?.])\s*/;
-const PUNCT_ONLY_RE = /^[。！？!?.]+$/;
-
+/** @deprecated Use SpeechSegment from speech-script.ts instead */
 export function splitSentences(text: string): string[] {
   if (!text) return [];
-  const segments = text
+  return text
     .replace(/\n+/g, '\n')
-    .split(SENTENCE_END_RE);
-  return segments
+    .split(/(?<=[。！？!?.])\s*/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !PUNCT_ONLY_RE.test(s));
+    .filter((s) => s.length > 0 && !/^[。！？!?.]+$/.test(s));
 }
 
 // ── Duration Estimation ─────────────────────────────────────────────
 
 export function estimateAudioDuration(audio: Uint8Array, format: string): number {
   if (format === 'wav' && audio.length > 44) {
-    // WAV: data chunk starts at byte 44, PCM 16-bit mono at 24000 Hz
     const dataSize = audio.length - 44;
-    const bytesPerSample = 2; // 16-bit
+    const bytesPerSample = 2;
     const sampleRate = 24000;
     return Math.round((dataSize / (sampleRate * bytesPerSample)) * 1000);
   }
@@ -136,22 +90,23 @@ export async function generateAvatarSpeech(
     throw new Error(`Avatar not found: ${avatarId}`);
   }
 
-  const text = extractTextFromSlides(slides);
-  if (!text.trim()) {
+  // Build structured narration script with highlight markers
+  const script = buildFullScript(slides);
+  const speechSegments: SpeechSegment[] = script.flatMap((s) => s.segments);
+
+  if (speechSegments.length === 0) {
     return { avatarId, segments: [] };
   }
 
-  const sentences = splitSentences(text);
   const speed = options?.speed ?? avatar.voiceConfig.speed;
   const concurrency = options?.concurrency ?? 3;
 
   const segments: AvatarSpeech['segments'] = [];
 
-  // Process sentences with bounded concurrency
-  for (let i = 0; i < sentences.length; i += concurrency) {
-    const batch = sentences.slice(i, i + concurrency);
+  for (let i = 0; i < speechSegments.length; i += concurrency) {
+    const batch = speechSegments.slice(i, i + concurrency);
     const results = await Promise.allSettled(
-      batch.map(async (sentence): Promise<AvatarSpeech['segments'][number]> => {
+      batch.map(async (seg): Promise<AvatarSpeech['segments'][number]> => {
         try {
           const result = await ttsGenFn(
             {
@@ -159,23 +114,27 @@ export async function generateAvatarSpeech(
               voice: avatar.voiceConfig.voiceId,
               speed,
             },
-            sentence,
+            seg.text,
           );
 
           const audioBuffer = Buffer.from(result.audio);
           const duration = estimateAudioDuration(result.audio, result.format);
 
           return {
-            text: sentence,
+            text: seg.text,
             audioUrl: `data:audio/${result.format};base64,${audioBuffer.toString('base64')}`,
             duration,
+            highlightElementId: seg.highlightElementId ?? undefined,
+            slideIndex: seg.slideIndex,
           };
         } catch (err) {
-          log.warn(`TTS failed for sentence: "${sentence.substring(0, 50)}..."`, err);
+          log.warn(`TTS failed for: "${seg.text.substring(0, 50)}..."`, err);
           return {
-            text: sentence,
+            text: seg.text,
             audioUrl: '',
-            duration: Math.round(sentence.length * 65),
+            duration: Math.round(seg.text.length * 65),
+            highlightElementId: seg.highlightElementId ?? undefined,
+            slideIndex: seg.slideIndex,
           };
         }
       }),

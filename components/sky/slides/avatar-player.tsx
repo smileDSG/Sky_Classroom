@@ -13,7 +13,7 @@ export function AvatarPlayer({ avatar, speech }: AvatarPlayerProps) {
   const hasSpeech = speech && speech.segments.length > 0;
 
   return (
-    <div className="absolute bottom-6 right-6 z-20 flex items-end gap-3">
+    <div className="absolute bottom-28 right-6 z-20 flex items-end gap-3">
       {hasSpeech && (
         <div className="max-w-[280px] rounded-2xl rounded-br-md border border-white/20 bg-white/90 px-4 py-3 shadow-2xl backdrop-blur-xl">
           <div className="mb-1 flex items-center gap-1.5">

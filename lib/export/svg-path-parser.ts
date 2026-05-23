@@ -50,7 +50,20 @@ export const toPoints = (d: string) => {
     return [];
   }
 
-  const points = [];
+  const points: Array<{
+    x?: number;
+    y?: number;
+    relative?: boolean;
+    type?: string;
+    curve?: {
+      type: 'quadratic' | 'cubic';
+      x1?: number;
+      y1?: number;
+      x2?: number;
+      y2?: number;
+    };
+    close?: boolean;
+  }> = [];
   for (const item of pathData.commands) {
     const type = typeMap[item.type];
 
@@ -90,7 +103,7 @@ export const toPoints = (d: string) => {
       });
     } else if (item.type === 512) {
       const lastPoint = points[points.length - 1];
-      if (!['M', 'L', 'Q', 'C'].includes(lastPoint.type)) continue;
+      if (!['M', 'L', 'Q', 'C'].includes(lastPoint.type ?? '')) continue;
 
       const cubicBezierPoints = arcToBezier({
         px: lastPoint.x as number,

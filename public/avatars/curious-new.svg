@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" fill="none">
+  <defs>
+    <linearGradient id="bgGrad-skycurious" x1="0" y1="0" x2="280" y2="280">
+      <stop offset="0%" stop-color="#fef3c7"/>
+      <stop offset="100%" stop-color="#f472b6" stop-opacity="0.15"/>
+    </linearGradient>
+    <filter id="shadow-skycurious" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#f472b6" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="280" height="280" rx="140" fill="url(#bgGrad-skycurious)"/>
+
+  <!-- 身体 -->
+  <path d="M75 198c0-26 26-46 65-46s65 20 65 46v52H75v-52z" fill="#f472b6" filter="url(#shadow-skycurious)"/>
+  <path d="M105 152h70v98H105z" fill="#ec4899"/>
+
+  <!-- 脖子 -->
+  <rect x="128" y="135" width="24" height="22" fill="#ffdbb4"/>
+
+  <!-- 头 -->
+  <ellipse cx="140" cy="105" rx="42" ry="48" fill="#ffdbb4"/>
+
+  <!-- 头发 -->
+  <path d="M98 88c0-22 19-35 42-35s42 13 42 35c0 8-3 15-8 20-3-12-12-18-24-18s-21 6-24 18c-5-5-8-12-8-20z" fill="#1f2937"/>
+
+  
+
+  
+  <!-- 大眼睛 -->
+  <circle cx="124" cy="98" r="10" fill="white"/>
+  <circle cx="124" cy="98" r="5" fill="#1f2937"/>
+  <circle cx="156" cy="98" r="10" fill="white"/>
+  <circle cx="156" cy="98" r="5" fill="#1f2937"/>
+  <circle cx="126" cy="96" r="2" fill="white"/>
+  <circle cx="158" cy="96" r="2" fill="white"/>
+  
+
+  <!-- 眉毛 - 好奇上扬 -->
+  <path d="M115 85q9-8 18-3" stroke="#1f2937" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M147 82q9-5 18 3" stroke="#1f2937" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- 小嘴 -->
+  <circle cx="140" cy="122" r="4" fill="#f472b6"/>
+
+  
+    <text x="215" y="65" font-family="Arial, sans-serif" font-size="42" fill="#f472b6" font-weight="bold">?</text>
+  
+</svg>

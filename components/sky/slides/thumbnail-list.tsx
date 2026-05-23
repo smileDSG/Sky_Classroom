@@ -17,7 +17,7 @@ const TYPE_ICONS: Record<string, string> = {
 const HTML_RE = /<[^>]*>/g;
 
 function extractTitle(slide: Slide): string {
-  for (const el of slide.elements) {
+  for (const el of slide.elements || []) {
     if (el.type === 'text') {
       const textEl = el as { content?: string };
       const plain = textEl.content?.replace(HTML_RE, '').trim();

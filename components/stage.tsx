@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useStageStore } from '@/lib/store';
 import { PENDING_SCENE_ID } from '@/lib/store/stage';
 import { useCanvasStore } from '@/lib/store/canvas';
@@ -19,6 +20,8 @@ import { useWidgetIframeStore } from '@/lib/store/widget-iframe';
 import type { AudioIndicatorState } from '@/components/roundtable/audio-indicator';
 import type { Action, DiscussionAction, SpeechAction } from '@/lib/types/action';
 import { cn } from '@/lib/utils';
+import { BottomToolbar } from '@/components/ui/bottom-toolbar';
+import { useUserProfileStore } from '@/lib/store/user-profile';
 // Playback state persistence removed — refresh always starts from the beginning
 import { ChatArea, type ChatAreaRef } from '@/components/chat/chat-area';
 import { agentsToParticipants, useAgentRegistry } from '@/lib/orchestration/registry/store';
@@ -48,6 +51,8 @@ export function Stage({
   onRetryOutline?: (outlineId: string) => Promise<void>;
 }) {
   const { t } = useI18n();
+  // 获取用户头像（与主页一致）
+  const userAvatar = useUserProfileStore((s) => s.avatar);
   const {
     mode,
     getCurrentScene,
@@ -114,6 +119,11 @@ export function Stage({
   const [isPresenting, setIsPresenting] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [isPresentationInteractionActive, setIsPresentationInteractionActive] = useState(false);
+
+  // Floating Ask Dialog state
+  const [isAskDialogOpen, setIsAskDialogOpen] = useState(false);
+  const [askInputValue, setAskInputValue] = useState('');
+  const askInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Whiteboard state (from canvas store so AI tools can open it)
   const whiteboardOpen = useCanvasStore.use.whiteboardOpen();
@@ -264,6 +274,49 @@ export function Stage({
     await chatAreaRef.current?.endActiveSession();
     doSessionCleanup();
   }, [doSessionCleanup]);
+
+  // Handle opening ask dialog
+  const handleOpenAskDialog = useCallback(() => {
+    setIsAskDialogOpen(true);
+    setAskInputValue('');
+    // Focus input after animation
+    setTimeout(() => {
+      askInputRef.current?.focus();
+    }, 100);
+  }, []);
+
+  // Handle sending question from floating dialog
+  const handleSendQuestion = useCallback(async () => {
+    if (!askInputValue.trim()) return;
+
+    const message = askInputValue.trim();
+    setIsAskDialogOpen(false);
+    setAskInputValue('');
+
+    // Send message via ChatArea
+    await chatAreaRef.current?.sendMessage(message);
+
+    // Switch to chat tab and expand
+    chatAreaRef.current?.switchToTab('chat');
+    setChatAreaCollapsed(false);
+
+    // Set streaming state
+    setChatIsStreaming(true);
+    setChatSessionType('qa');
+    setThinkingState({ stage: 'director' });
+  }, [askInputValue]);
+
+  // Handle key down in ask dialog
+  const handleAskInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      handleSendQuestion();
+    }
+    if (e.key === 'Escape') {
+      setIsAskDialogOpen(false);
+      setAskInputValue('');
+    }
+  }, [handleSendQuestion]);
 
   const clearPresentationIdleTimer = useCallback(() => {
     if (presentationIdleTimerRef.current) {
@@ -946,18 +999,16 @@ export function Stage({
       }
     : null;
 
-  // Calculate scene viewer height (subtract Header's 80px height)
-  const sceneViewerHeight = (() => {
-    const headerHeight = isPresenting ? 0 : 80; // Header h-20 = 80px
-    const roundtableHeight = mode === 'playback' && !isPresenting ? 192 : 0;
-    return `calc(100% - ${headerHeight + roundtableHeight}px)`;
-  })();
+  // Show stop button for live sessions
+  const showStopButton =
+    engineMode === 'live' ||
+    (chatIsStreaming && (chatSessionType === 'qa' || chatSessionType === 'discussion'));
 
   return (
     <div
       ref={stageRef}
       className={cn(
-        'flex-1 flex overflow-hidden bg-gray-50 dark:bg-gray-900',
+        'flex-1 flex overflow-hidden bg-slate-50 dark:bg-slate-950',
         isPresenting && !controlsVisible && 'cursor-none',
       )}
     >
@@ -970,9 +1021,203 @@ export function Stage({
         isCourseComplete={isCourseComplete}
       />
 
-      {/* Main Content Area — now flex-row: ChatArea left, Canvas+Roundtable right */}
+      {/* Main Content Area — New Layout: Roundtable(left) | Canvas(center) | Chat(right) */}
       <div className="flex-1 flex flex-row overflow-hidden min-w-0 relative">
-        {/* Chat Area (讲解区) — left side */}
+        {/* Left: Roundtable Character Strip — extends full height */}
+        {mode === 'playback' && (
+          <div className="w-20 shrink-0 flex flex-col h-full overflow-hidden">
+            <Roundtable
+              mode={mode}
+              initialParticipants={participants}
+              playbackView={playbackView}
+              currentSpeech={liveSpeech}
+              lectureSpeech={lectureSpeech}
+              idleText={firstSpeechText}
+              playbackCompleted={playbackCompleted}
+              discussionRequest={discussionRequest}
+              engineMode={engineMode}
+              isStreaming={chatIsStreaming}
+              speakingAgentId={speakingAgentId}
+              audioIndicatorState={audioIndicatorState}
+              audioAgentId={audioAgentId}
+              speechProgress={speechProgress}
+              showEndFlash={showEndFlash}
+              endFlashSessionType={endFlashSessionType}
+              thinkingState={thinkingState}
+              isCueUser={isCueUser}
+              isTopicPending={isTopicPending}
+              onMessageSend={async (msg) => {
+                setIsDiscussionPaused(false);
+                chatAreaRef.current?.resumeActiveLiveBuffer();
+                discussionTTS.cleanup();
+                if (isTopicPending) {
+                  setIsTopicPending(false);
+                  setLiveSpeech(null);
+                  setSpeakingAgentId(null);
+                }
+                if (
+                  engineRef.current &&
+                  (engineMode === 'playing' || engineMode === 'live' || engineMode === 'paused')
+                ) {
+                  engineRef.current.handleUserInterrupt(msg);
+                } else {
+                  chatAreaRef.current?.sendMessage(msg);
+                }
+                chatAreaRef.current?.switchToTab('chat');
+                setIsCueUser(false);
+                setChatIsStreaming(true);
+                setChatSessionType(chatSessionType || 'qa');
+                setThinkingState({ stage: 'director' });
+              }}
+              onDiscussionStart={() => {
+                engineRef.current?.confirmDiscussion();
+              }}
+              onDiscussionSkip={() => {
+                engineRef.current?.skipDiscussion();
+              }}
+              onStopDiscussion={handleStopDiscussion}
+              onInputActivate={() => {
+                if (chatSessionType === 'qa' || chatSessionType === 'discussion') {
+                  const paused = chatAreaRef.current?.pauseActiveLiveBuffer();
+                  if (paused) {
+                    discussionTTS.pause();
+                    setIsDiscussionPaused(true);
+                  }
+                }
+                if (engineRef.current && (engineMode === 'playing' || engineMode === 'live')) {
+                  engineRef.current.pause();
+                }
+              }}
+              onResumeTopic={doResumeTopic}
+              onPlayPause={handlePlayPause}
+              isDiscussionPaused={isDiscussionPaused}
+              onDiscussionPause={() => {
+                const paused = chatAreaRef.current?.pauseActiveLiveBuffer();
+                if (paused) {
+                  discussionTTS.pause();
+                  setIsDiscussionPaused(true);
+                }
+              }}
+              onDiscussionResume={() => {
+                chatAreaRef.current?.resumeActiveLiveBuffer();
+                discussionTTS.resume();
+                setIsDiscussionPaused(false);
+              }}
+              totalActions={totalActions}
+              currentActionIndex={0}
+              currentSceneIndex={currentSceneIndex}
+              scenesCount={totalScenesCount}
+              whiteboardOpen={whiteboardOpen}
+              sidebarCollapsed={sidebarCollapsed}
+              chatCollapsed={chatAreaCollapsed}
+              onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onToggleChat={() => setChatAreaCollapsed(!chatAreaCollapsed)}
+              onPrevSlide={handlePreviousScene}
+              onNextSlide={handleNextScene}
+              onWhiteboardClose={handleWhiteboardToggle}
+              isPresenting={isPresenting}
+              onTogglePresentation={togglePresentation}
+              onPresentationInteractionChange={setIsPresentationInteractionActive}
+              fullscreenContainerRef={stageRef}
+              onAskTeacher={handleOpenAskDialog}
+            />
+          </div>
+        )}
+
+        {/* Center: Canvas Area — Video content with golden ratio */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
+          {/* Header */}
+          {!isPresenting && (
+            <Header
+              currentSceneTitle={
+                currentScene?.title ||
+                (isCourseComplete && isPendingScene ? t('stage.courseComplete') : '')
+              }
+            />
+          )}
+
+          {/* Canvas Area — Golden ratio centered */}
+          <div className="flex-1 overflow-hidden relative flex flex-col">
+            <CanvasArea
+              currentScene={currentScene}
+              currentSceneIndex={currentSceneIndex}
+              scenesCount={totalScenesCount}
+              mode={mode}
+              engineState={canvasEngineState}
+              isLiveSession={
+                chatIsStreaming || isTopicPending || engineMode === 'live' || !!chatSessionType
+              }
+              whiteboardOpen={whiteboardOpen}
+              sidebarCollapsed={sidebarCollapsed}
+              chatCollapsed={chatAreaCollapsed}
+              onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onToggleChat={() => setChatAreaCollapsed(!chatAreaCollapsed)}
+              onPrevSlide={handlePreviousScene}
+              onNextSlide={handleNextScene}
+              onPlayPause={handlePlayPause}
+              onWhiteboardClose={handleWhiteboardToggle}
+              isPresenting={isPresenting}
+              onTogglePresentation={togglePresentation}
+              showStopDiscussion={
+                engineMode === 'live' ||
+                (chatIsStreaming && (chatSessionType === 'qa' || chatSessionType === 'discussion'))
+              }
+              onStopDiscussion={handleStopDiscussion}
+              hideToolbar={mode === 'playback'}
+              isPendingScene={isPendingScene}
+              isCourseComplete={isCourseComplete}
+              isGenerationFailed={
+                isPendingScene && failedOutlines.some((f) => f.id === generatingOutlines[0]?.id)
+              }
+              onRetryGeneration={
+                onRetryOutline && generatingOutlines[0]
+                  ? () => onRetryOutline(generatingOutlines[0].id)
+                  : undefined
+              }
+            />
+          </div>
+
+          {/* Bottom: Playback Controls */}
+          {mode === 'playback' && !isPresenting && (
+            <BottomToolbar
+              currentSceneIndex={currentSceneIndex}
+              scenesCount={totalScenesCount}
+              engineState={canvasEngineState}
+              isLiveSession={chatIsStreaming || isTopicPending || engineMode === 'live'}
+              whiteboardOpen={whiteboardOpen}
+              sidebarCollapsed={sidebarCollapsed}
+              chatCollapsed={chatAreaCollapsed}
+              onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onToggleChat={() => setChatAreaCollapsed(!chatAreaCollapsed)}
+              onPrevSlide={handlePreviousScene}
+              onNextSlide={handleNextScene}
+              onPlayPause={handlePlayPause}
+              onWhiteboardClose={handleWhiteboardToggle}
+              isPresenting={isPresenting}
+              onTogglePresentation={togglePresentation}
+              showStopDiscussion={showStopButton}
+              onStopDiscussion={handleStopDiscussion}
+              onAskTeacher={handleOpenAskDialog}
+              ttsEnabled={ttsEnabled}
+              ttsMuted={ttsMuted}
+              ttsVolume={ttsVolume}
+              onToggleMute={() => setTTSMuted(!ttsMuted)}
+              onVolumeChange={setTTSVolume}
+              playbackSpeed={playbackSpeed}
+              onCycleSpeed={() => {
+                const speeds: Array<1 | 1.25 | 1.5 | 2> = [1, 1.25, 1.5, 2];
+                const current = (playbackSpeed || 1) as 1 | 1.25 | 1.5 | 2;
+                const currentIndex = speeds.indexOf(current);
+                const nextSpeed = speeds[(currentIndex + 1) % speeds.length];
+                useSettingsStore.getState().setPlaybackSpeed(nextSpeed);
+              }}
+              autoPlayLecture={useSettingsStore.getState().autoPlayLecture}
+              onToggleAutoPlay={() => useSettingsStore.getState().setAutoPlayLecture(!useSettingsStore.getState().autoPlayLecture)}
+            />
+          )}
+        </div>
+
+        {/* Right Panel — Chat/Dialogue Area */}
         <ChatArea
           ref={chatAreaRef}
           width={chatAreaWidth}
@@ -1022,220 +1267,172 @@ export function Stage({
           shouldHoldAfterReveal={discussionTTS.shouldHold}
           enableFilters
         />
-
-        {/* Right Panel — Canvas + Roundtable */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
-          {/* Floating toggle to expand ChatArea when collapsed */}
-          {chatAreaCollapsed && (
-            <button
-              onClick={() => setChatAreaCollapsed(false)}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/60 dark:border-gray-700/60 text-sky-500 dark:text-sky-400 shadow-lg flex items-center justify-center hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:text-sky-600 dark:hover:text-sky-300 active:scale-90 transition-all"
-              title="展开讲解区"
-            >
-              <BookOpen className="w-4 h-4" />
-            </button>
-          )}
-          {/* Floating toggle to open PPT panel */}
-          {!pptPanelOpen && (
-            <button
-              onClick={() => setPptPanelOpen(true)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/60 dark:border-gray-700/60 text-amber-500 dark:text-amber-400 shadow-lg flex items-center justify-center hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:text-amber-600 dark:hover:text-amber-300 active:scale-90 transition-all"
-              title="PPT 缩略图"
-            >
-              <Image className="w-4 h-4" />
-            </button>
-          )}
-          {/* Header */}
-          {!isPresenting && (
-            <Header
-              currentSceneTitle={
-                currentScene?.title ||
-                (isCourseComplete && isPendingScene ? t('stage.courseComplete') : '')
-              }
-            />
-          )}
-
-          {/* Canvas Area */}
-          <div
-            className="overflow-hidden relative flex-1 min-h-0 isolate"
-            style={{
-              height: sceneViewerHeight,
-            }}
-            suppressHydrationWarning
-          >
-            <CanvasArea
-              currentScene={currentScene}
-              currentSceneIndex={currentSceneIndex}
-              scenesCount={totalScenesCount}
-              mode={mode}
-              engineState={canvasEngineState}
-              isLiveSession={
-                chatIsStreaming || isTopicPending || engineMode === 'live' || !!chatSessionType
-              }
-              whiteboardOpen={whiteboardOpen}
-              sidebarCollapsed={sidebarCollapsed}
-              chatCollapsed={chatAreaCollapsed}
-              onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-              onToggleChat={() => setChatAreaCollapsed(!chatAreaCollapsed)}
-              onPrevSlide={handlePreviousScene}
-              onNextSlide={handleNextScene}
-              onPlayPause={handlePlayPause}
-              onWhiteboardClose={handleWhiteboardToggle}
-              isPresenting={isPresenting}
-              onTogglePresentation={togglePresentation}
-              showStopDiscussion={
-                engineMode === 'live' ||
-                (chatIsStreaming && (chatSessionType === 'qa' || chatSessionType === 'discussion'))
-              }
-              onStopDiscussion={handleStopDiscussion}
-              hideToolbar={mode === 'playback' || (isPresenting && !controlsVisible)}
-              isPendingScene={isPendingScene}
-              isCourseComplete={isCourseComplete}
-              isGenerationFailed={
-                isPendingScene && failedOutlines.some((f) => f.id === generatingOutlines[0]?.id)
-              }
-              onRetryGeneration={
-                onRetryOutline && generatingOutlines[0]
-                  ? () => onRetryOutline(generatingOutlines[0].id)
-                  : undefined
-              }
-            />
-          </div>
-
-          {/* Roundtable Area */}
-          {mode === 'playback' && (
-            <div
-              className={cn(
-                'transition-opacity duration-300',
-                !isPresenting && 'shrink-0',
-                isPresenting && 'absolute inset-x-0 bottom-0 z-20',
-              )}
-            >
-              <Roundtable
-                mode={mode}
-                initialParticipants={participants}
-                playbackView={playbackView}
-                currentSpeech={liveSpeech}
-                lectureSpeech={lectureSpeech}
-                idleText={firstSpeechText}
-                playbackCompleted={playbackCompleted}
-                discussionRequest={discussionRequest}
-                engineMode={engineMode}
-                isStreaming={chatIsStreaming}
-                audioIndicatorState={audioIndicatorState}
-                audioAgentId={audioAgentId}
-                sessionType={
-                  chatSessionType === 'qa'
-                    ? 'qa'
-                    : chatSessionType === 'discussion'
-                      ? 'discussion'
-                      : undefined
-                }
-                speakingAgentId={speakingAgentId}
-                speechProgress={speechProgress}
-                showEndFlash={showEndFlash}
-                endFlashSessionType={endFlashSessionType}
-                thinkingState={thinkingState}
-                isCueUser={isCueUser}
-                isTopicPending={isTopicPending}
-                onMessageSend={async (msg) => {
-                  setIsDiscussionPaused(false);
-                  chatAreaRef.current?.resumeActiveLiveBuffer();
-                  discussionTTS.cleanup();
-                  if (isTopicPending) {
-                    setIsTopicPending(false);
-                    setLiveSpeech(null);
-                    setSpeakingAgentId(null);
-                  }
-                  if (
-                    engineRef.current &&
-                    (engineMode === 'playing' || engineMode === 'live' || engineMode === 'paused')
-                  ) {
-                    engineRef.current.handleUserInterrupt(msg);
-                  } else {
-                    chatAreaRef.current?.sendMessage(msg);
-                  }
-                  chatAreaRef.current?.switchToTab('chat');
-                  setIsCueUser(false);
-                  setChatIsStreaming(true);
-                  setChatSessionType(chatSessionType || 'qa');
-                  setThinkingState({ stage: 'director' });
-                }}
-                onDiscussionStart={() => {
-                  engineRef.current?.confirmDiscussion();
-                }}
-                onDiscussionSkip={() => {
-                  engineRef.current?.skipDiscussion();
-                }}
-                onStopDiscussion={handleStopDiscussion}
-                onInputActivate={() => {
-                  if (chatSessionType === 'qa' || chatSessionType === 'discussion') {
-                    const paused = chatAreaRef.current?.pauseActiveLiveBuffer();
-                    if (paused) {
-                      discussionTTS.pause();
-                      setIsDiscussionPaused(true);
-                    }
-                  }
-                  if (engineRef.current && (engineMode === 'playing' || engineMode === 'live')) {
-                    engineRef.current.pause();
-                  }
-                }}
-                onResumeTopic={doResumeTopic}
-                onPlayPause={handlePlayPause}
-                isDiscussionPaused={isDiscussionPaused}
-                onDiscussionPause={() => {
-                  const paused = chatAreaRef.current?.pauseActiveLiveBuffer();
-                  if (paused) {
-                    discussionTTS.pause();
-                    setIsDiscussionPaused(true);
-                  }
-                }}
-                onDiscussionResume={() => {
-                  chatAreaRef.current?.resumeActiveLiveBuffer();
-                  discussionTTS.resume();
-                  setIsDiscussionPaused(false);
-                }}
-                totalActions={totalActions}
-                currentActionIndex={0}
-                currentSceneIndex={currentSceneIndex}
-                scenesCount={totalScenesCount}
-                whiteboardOpen={whiteboardOpen}
-                sidebarCollapsed={sidebarCollapsed}
-                chatCollapsed={chatAreaCollapsed}
-                onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-                onToggleChat={() => setChatAreaCollapsed(!chatAreaCollapsed)}
-                onPrevSlide={handlePreviousScene}
-                onNextSlide={handleNextScene}
-                onWhiteboardClose={handleWhiteboardToggle}
-                isPresenting={isPresenting}
-                controlsVisible={controlsVisible}
-                onTogglePresentation={togglePresentation}
-                onPresentationInteractionChange={setIsPresentationInteractionActive}
-                fullscreenContainerRef={stageRef}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* PPT Slide Panel — right side of canvas */}
-        <PptViewer
-          scenes={scenes}
-          currentSlideIndex={scenes.findIndex((s) => s.id === currentSceneId && s.type === 'slide')}
-          onSlideChange={(index) => {
-            const slideScenes = scenes.filter((s) => s.type === 'slide');
-            if (index >= 0 && index < slideScenes.length) {
-              setCurrentSceneId(slideScenes[index].id);
-            }
-          }}
-          visible={pptPanelOpen}
-          onClose={() => {
-            setPptPanelOpen(false);
-            setPptFullscreen(false);
-          }}
-          onToggleFullscreen={() => setPptFullscreen((v) => !v)}
-          isFullscreen={pptFullscreen}
-        />
       </div>
+
+      {/* PPT Slide Panel — right side overlay */}
+      <PptViewer
+        scenes={scenes}
+        currentSlideIndex={scenes.findIndex((s) => s.id === currentSceneId && s.type === 'slide')}
+        onSlideChange={(index) => {
+          const slideScenes = scenes.filter((s) => s.type === 'slide');
+          if (index >= 0 && index < slideScenes.length) {
+            setCurrentSceneId(slideScenes[index].id);
+          }
+        }}
+        visible={pptPanelOpen}
+        onClose={() => {
+          setPptPanelOpen(false);
+          setPptFullscreen(false);
+        }}
+        onToggleFullscreen={() => setPptFullscreen((v) => !v)}
+        isFullscreen={pptFullscreen}
+      />
+
+      {/* Floating Ask Dialog - Redesigned as Conversation Input */}
+      <AnimatePresence>
+        {isAskDialogOpen && (
+          <>
+            {/* Backdrop with blur */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[100] bg-slate-950/60 backdrop-blur-sm"
+              onClick={() => {
+                setIsAskDialogOpen(false);
+                setAskInputValue('');
+              }}
+            />
+
+            {/* Conversation Dialog - Bottom Sheet Style */}
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 50, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: [0.21, 1, 0.36, 1] }}
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[101] w-full max-w-2xl px-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-sky-200/50 dark:border-sky-500/30 overflow-hidden">
+                {/* Top Handle Bar */}
+                <div className="flex items-center justify-center pt-3 pb-1">
+                  <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
+                </div>
+
+                {/* Header with User Avatar and Context */}
+                <div className="flex items-center gap-3 px-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="relative">
+                    {/* 用户头像 - 与主页样式一致 */}
+                    <motion.div
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                      className="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-sky-400/50"
+                    >
+                      <img
+                        src={userAvatar}
+                        alt={t('roundtable.you')}
+                        className="w-full h-full object-cover"
+                      />
+                    </motion.div>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-slate-900" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      {t('roundtable.askTeacher')}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {t('stage.speakingToTeacher')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsAskDialogOpen(false);
+                      setAskInputValue('');
+                    }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Input Area - Chat Style */}
+                <div className="p-4">
+                  <div className="relative">
+                    <textarea
+                      ref={askInputRef}
+                      value={askInputValue}
+                      onChange={(e) => setAskInputValue(e.target.value)}
+                      onKeyDown={handleAskInputKeyDown}
+                      placeholder={t('roundtable.inputPlaceholder')}
+                      rows={1}
+                      className="w-full resize-none bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 pl-4 pr-12 py-3.5 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500/50 transition-all"
+                      style={{ fieldSizing: 'content', minHeight: '52px', maxHeight: '120px' } as Record<string, string>}
+                    />
+
+                    {/* Send Button - Inside Input */}
+                    <button
+                      onClick={handleSendQuestion}
+                      disabled={!askInputValue.trim()}
+                      className={cn(
+                        'absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl flex items-center justify-center transition-all',
+                        askInputValue.trim()
+                          ? 'bg-sky-500 text-white hover:bg-sky-400 shadow-lg shadow-sky-500/30 active:scale-95'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                      )}
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Quick Actions Bar */}
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-2">
+                      {/* Voice Input */}
+                      <button
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                        {t('roundtable.voiceInput')}
+                      </button>
+                    </div>
+
+                    {/* Hint Text */}
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      Enter {t('common.send')} · Esc {t('common.cancel')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick Suggestions - Optional */}
+                <div className="px-4 pb-4">
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    <span className="text-xs text-slate-400 whitespace-nowrap">{t('stage.quickQuestions')}:</span>
+                    {['这个知识点能再解释一下吗？', '可以举个例子吗？', '我没听明白', '这和之前学的有什么联系？'].map((q, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setAskInputValue(q);
+                          askInputRef.current?.focus();
+                        }}
+                        className="px-3 py-1 rounded-full bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 text-xs text-sky-600 dark:text-sky-400 whitespace-nowrap hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-colors"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Scene switch confirmation dialog */}
       <AlertDialog
@@ -1246,7 +1443,7 @@ export function Stage({
       >
         <AlertDialogContent
           container={isPresenting ? stageRef.current : undefined}
-          className="max-w-sm rounded-2xl p-0 overflow-hidden border-0 shadow-[0_25px_60px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_25px_60px_-12px_rgba(0,0,0,0.5)]"
+          className="max-w-sm rounded-2xl p-0 overflow-hidden border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.5)]"
         >
           <VisuallyHidden.Root>
             <AlertDialogTitle>{t('stage.confirmSwitchTitle')}</AlertDialogTitle>
@@ -1256,26 +1453,26 @@ export function Stage({
 
           <div className="px-6 pt-5 pb-2 flex flex-col items-center text-center">
             {/* Icon */}
-            <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center mb-4 ring-1 ring-amber-200/50 dark:ring-amber-700/30">
-              <AlertTriangle className="w-6 h-6 text-amber-500 dark:text-amber-400" />
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mb-4 ring-1 ring-amber-500/30">
+              <AlertTriangle className="w-6 h-6 text-amber-400" />
             </div>
             {/* Title */}
-            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-1.5">
+            <h3 className="text-base font-bold text-slate-100 mb-1.5">
               {t('stage.confirmSwitchTitle')}
             </h3>
             {/* Description */}
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+            <p className="text-sm text-slate-400 leading-relaxed">
               {t('stage.confirmSwitchMessage')}
             </p>
           </div>
 
-          <AlertDialogFooter className="px-6 pb-5 pt-3 flex-row gap-3">
-            <AlertDialogCancel onClick={cancelSceneSwitch} className="flex-1 rounded-xl">
+          <AlertDialogFooter className="px-6 pb-5 pt-3 flex-row gap-3 border-t border-white/5">
+            <AlertDialogCancel onClick={cancelSceneSwitch} className="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border-white/10">
               {t('common.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmSceneSwitch}
-              className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shadow-md shadow-amber-200/50 dark:shadow-amber-900/30"
+              className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shadow-lg shadow-amber-500/20"
             >
               {t('common.confirm')}
             </AlertDialogAction>

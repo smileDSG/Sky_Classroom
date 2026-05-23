@@ -18,13 +18,7 @@ export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
 
   return (
     <div
-      className="base-element-text absolute"
-      style={{
-        top: `${elementInfo.top}px`,
-        left: `${elementInfo.left}px`,
-        width: `${elementInfo.width}px`,
-        height: `${elementInfo.height}px`,
-      }}
+      className="base-element-text relative w-full h-full overflow-hidden"
     >
       <div
         className="rotate-wrapper w-full h-full"
@@ -33,7 +27,7 @@ export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
         <div
           className="element-content relative p-[10px] leading-[1.5] break-words"
           style={{
-            width: elementInfo.vertical ? 'auto' : `${elementInfo.width}px`,
+            width: elementInfo.vertical ? 'auto' : '100%',
             height: elementInfo.vertical ? `${elementInfo.height}px` : 'auto',
             backgroundColor: elementInfo.fill,
             opacity: elementInfo.opacity,

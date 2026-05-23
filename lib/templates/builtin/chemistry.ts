@@ -2,7 +2,7 @@
  * Built-in chemistry course templates.
  */
 
-import type { CourseTemplate } from './types';
+import type { CourseTemplate } from '../types';
 
 export const CHEMISTRY_TEMPLATES: CourseTemplate[] = [
   {

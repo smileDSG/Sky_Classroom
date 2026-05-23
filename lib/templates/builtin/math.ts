@@ -2,7 +2,7 @@
  * Built-in math course templates.
  */
 
-import type { CourseTemplate } from './types';
+import type { CourseTemplate } from '../types';
 
 export const MATH_TEMPLATES: CourseTemplate[] = [
   {

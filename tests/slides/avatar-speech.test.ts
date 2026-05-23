@@ -8,10 +8,11 @@ import { describe, it, expect } from 'vitest';
 import {
   generateAvatarSpeech,
   extractTextFromSlides,
-  extractTextFromSlideElements,
   splitSentences,
   estimateAudioDuration,
 } from '@/lib/slides/avatar-speech';
+import { buildSlideScript } from '@/lib/slides/speech-script';
+import type { SpeechSegment } from '@/lib/slides/speech-script';
 import { AVATAR_CONFIGS, getAvatarById } from '@/lib/slides/avatar-config';
 import type { TTSGenerateFn, TTSGenResult } from '@/lib/slides/avatar-speech';
 import type { Slide, PPTElement } from '@/lib/types/slides';
@@ -85,8 +86,8 @@ function makeSlide(elements: PPTElement[], type: Slide['type'] = 'content'): Sli
 // ── Avatar Config Tests ──────────────────────────────────────────────
 
 describe('AVATAR_CONFIGS', () => {
-  it('has exactly 3 avatars', () => {
-    expect(AVATAR_CONFIGS).toHaveLength(3);
+  it('has exactly 7 avatars', () => {
+    expect(AVATAR_CONFIGS).toHaveLength(7);
   });
 
   it('all avatars have unique IDs', () => {
@@ -128,13 +129,27 @@ describe('getAvatarById', () => {
 
 // ── Text Extraction Tests ────────────────────────────────────────────
 
-describe('extractTextFromSlideElements', () => {
-  it('strips HTML from text elements', () => {
+describe('buildSlideScript', () => {
+  it('strips HTML from text elements and produces segments', () => {
     const el = makeTextElement({
       content: '<p style="font-size:24px;">勾股定理</p>',
     });
-    const texts = extractTextFromSlideElements([el]);
-    expect(texts).toEqual(['勾股定理']);
+    const slide = makeSlide([el]);
+    const script = buildSlideScript(slide, 0);
+    const texts = script.segments.map((s) => s.text);
+    expect(texts).toContain('勾股定理');
+  });
+
+  it('includes highlightElementId for text elements', () => {
+    const el = makeTextElement({
+      id: 'text_title',
+      content: '<p style="font-size:24px;">勾股定理</p>',
+    });
+    const slide = makeSlide([el]);
+    const script = buildSlideScript(slide, 0);
+    const firstText = script.segments.find((s) => s.highlightElementId === 'text_title');
+    expect(firstText).toBeDefined();
+    expect(firstText!.text).toContain('勾股定理');
   });
 
   it('extracts text from shape elements with embedded text', () => {
@@ -144,18 +159,24 @@ describe('extractTextFromSlideElements', () => {
       text: { content: '<p>重要概念</p>' },
       rotate: 0,
     } as unknown as PPTElement;
-    const texts = extractTextFromSlideElements([shape]);
-    expect(texts).toContain('重要概念');
+    const slide = makeSlide([shape]);
+    const script = buildSlideScript(slide, 0);
+    const texts = script.segments.map((s) => s.text);
+    expect(texts.some((t) => t.includes('重要概念'))).toBe(true);
   });
 
-  it('extracts LaTeX expressions', () => {
+  it('converts LaTeX to spoken form with highlight', () => {
     const latex: PPTElement = {
       id: 'latex_1', type: 'latex', left: 60, top: 200, width: 400, height: 70,
       latex: 'a^2 + b^2 = c^2', color: '#000',
       rotate: 0,
     } as PPTElement;
-    const texts = extractTextFromSlideElements([latex]);
-    expect(texts).toContain('a^2 + b^2 = c^2');
+    const slide = makeSlide([latex]);
+    const script = buildSlideScript(slide, 0);
+    const latexSeg = script.segments.find((s) => s.highlightElementId === 'latex_1');
+    expect(latexSeg).toBeDefined();
+    // Should contain spoken form, not raw LaTeX
+    expect(latexSeg!.text).toContain('次方');
   });
 
   it('skips non-text elements (image, line, video, audio)', () => {
@@ -164,17 +185,26 @@ describe('extractTextFromSlideElements', () => {
       src: 'https://example.com/img.png', fixedRatio: true,
       rotate: 0,
     } as PPTElement;
-    const texts = extractTextFromSlideElements([img]);
-    expect(texts).toHaveLength(0);
+    const slide = makeSlide([img]);
+    const script = buildSlideScript(slide, 0);
+    // No transition for slide 0 (cover), image has no text
+    const textSegs = script.segments.filter((s) => s.text.length > 0);
+    expect(textSegs).toHaveLength(0);
   });
 
-  it('returns empty array for empty input', () => {
-    expect(extractTextFromSlideElements([])).toEqual([]);
+  it('returns empty segments for slide with no text elements', () => {
+    const slide = makeSlide([]);
+    const script = buildSlideScript(slide, 0);
+    const textSegs = script.segments.filter((s) => s.text.length > 0);
+    expect(textSegs).toHaveLength(0);
   });
 
   it('handles text elements with empty content', () => {
     const el = makeTextElement({ content: '<p></p>' });
-    expect(extractTextFromSlideElements([el])).toEqual([]);
+    const slide = makeSlide([el]);
+    const script = buildSlideScript(slide, 0);
+    const textSegs = script.segments.filter((s) => s.text.length > 0);
+    expect(textSegs).toHaveLength(0);
   });
 });
 

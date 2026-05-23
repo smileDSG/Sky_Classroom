@@ -25,16 +25,16 @@ export const AGENT_COLOR_PALETTE = [
  * Default avatar paths cycled for generated agents.
  *
  * Every entry MUST correspond to a file that exists under `public/avatars/`.
+ * 使用与主页一致的 .jpg 格式新头像
  */
 export const AGENT_DEFAULT_AVATARS = [
-  '/avatars/teacher.png',
-  '/avatars/assist.png',
-  '/avatars/curious.png',
-  '/avatars/thinker.png',
-  '/avatars/note-taker.png',
-  '/avatars/teacher-2.png',
-  '/avatars/assist-2.png',
-  '/avatars/curious-2.png',
-  '/avatars/thinker-2.png',
-  '/avatars/note-taker-2.png',
+  // 新设计的天空课堂风格头像 (.jpg 格式，与主页一致)
+  '/avatars/teacher-new.jpg',
+  '/avatars/assistant-new.jpg',
+  '/avatars/student-curious-new.jpg',
+  '/avatars/student-meme-new.jpg',
+  '/avatars/student-reader-new.jpg',
+  '/avatars/student-glasses-new.jpg',
+  '/avatars/student-cool-new.jpg',
+  '/avatars/user.png',
 ] as const;
