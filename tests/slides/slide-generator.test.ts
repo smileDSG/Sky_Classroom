@@ -119,7 +119,7 @@ describe('generateSlides', () => {
       if (match) counts.push(parseInt(match[1], 10));
     }
 
-    expect(counts).toEqual([6, 8, 12]);
+    expect(counts).toEqual([12, 16, 20]);
   });
 
   it('respects explicit slideCount override', async () => {

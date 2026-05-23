@@ -49,7 +49,7 @@ export function ShapeCreateCanvas({ onCreated }: ShapeCreateCanvasProps) {
 
       const start: [number, number] = [minX + offset.x, minY + offset.y];
       const end: [number, number] = [maxX + offset.x, maxY + offset.y];
-      const viewBox: [number, number] = [maxX - minX, maxY - minY];
+      const viewBox = `0 0 ${maxX - minX} ${maxY - minY}`;
 
       return {
         start,

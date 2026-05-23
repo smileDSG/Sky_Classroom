@@ -14,13 +14,7 @@ export interface BaseLatexElementProps {
 export function BaseLatexElement({ elementInfo }: BaseLatexElementProps) {
   return (
     <div
-      className="base-element-latex absolute"
-      style={{
-        top: `${elementInfo.top}px`,
-        left: `${elementInfo.left}px`,
-        width: `${elementInfo.width}px`,
-        height: `${elementInfo.height}px`,
-      }}
+      className="base-element-latex relative w-full h-full"
     >
       <div
         className="rotate-wrapper w-full h-full"

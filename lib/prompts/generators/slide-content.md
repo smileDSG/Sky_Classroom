@@ -59,7 +59,7 @@ For slides whose primary purpose is conveying text information, use a **single c
 1. **Title** at the top (left-aligned)
 2. **One wide content area** below containing ALL body text
 3. **No scattered card boxes** — do NOT split content into multiple colored/boxed containers
-4. **Minimal decorative elements** — at most a thin underline or divider line
+4. **NO divider lines or thin shapes under titles** — these look amateurish and are a hallmark of AI-generated slides. Use whitespace (extra margin) to separate title from content instead.
 
 #### Simple Layout Template
 
@@ -69,10 +69,7 @@ Canvas: {{canvas_width}} x {{canvas_height}}
 [Title Bar]          top: 50-80
   text_001           left: 60-80, width: 840-880, font-size: 32-36px
 
-[Optional Divider]   top: title.bottom + 10-15
-  shape (thin line)  left: 60, width: 120-200, height: 3-4
-
-[Content Area]       top: divider.bottom + 20-30
+[Content Area]       top: title.bottom + 30-40
   text_002           left: 60-80, width: 840-880
                      Contains ALL body content as <p> elements
                      Use <strong> for section headings within content
@@ -398,7 +395,7 @@ When placing text on a background shape, follow this process:
 }
 ```
 
-#### Example 2: Content with subtle background container
+#### Example 2: Math / STEM slide with LaTeX formula
 
 ```json
 {
@@ -406,29 +403,139 @@ When placing text on a background shape, follow this process:
   "elements": [
     {
       "id": "title_001", "type": "text",
-      "left": 60, "top": 60, "width": 880, "height": 76,
-      "content": "<p style=\"font-size: 32px;\"><strong>核心概念解析</strong></p>",
+      "left": 60, "top": 56, "width": 880, "height": 70,
+      "content": "<p style=\"font-size: 32px;\"><strong>勾股定理</strong></p>",
       "defaultFontName": "", "defaultColor": "#1a1a1a"
     },
     {
-      "id": "bg_container", "type": "shape",
-      "left": 60, "top": 155, "width": 880, "height": 350,
+      "id": "divider_001", "type": "shape",
+      "left": 60, "top": 134, "width": 160, "height": 3,
       "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
-      "viewBox": [1, 1], "fill": "#f8f9fa", "fixedRatio": false
+      "viewBox": [1, 1], "fill": "#5b9bd5", "fixedRatio": false
     },
     {
-      "id": "content_001", "type": "text",
-      "left": 80, "top": 175, "width": 840, "height": 310,
-      "content": "<p style=\"font-size: 18px;\">核心概念一：解释说明文字</p>
-                  <p style=\"font-size: 18px;\">核心概念二：解释说明文字</p>
-                  <p style=\"font-size: 18px;\">核心概念三：解释说明文字</p>",
+      "id": "text_001", "type": "text",
+      "left": 60, "top": 153, "width": 440, "height": 154,
+      "content": "<p style=\"font-size: 20px;\"><strong>定理表述</strong></p><p style=\"font-size: 16px;\">直角三角形中，两条直角边的平方和等于斜边的平方。</p><p style=\"font-size: 20px;\"><strong>公式</strong></p>",
       "defaultFontName": "", "defaultColor": "#333333"
+    },
+    {
+      "id": "latex_001", "type": "latex",
+      "left": 60, "top": 260, "width": 440, "height": 80,
+      "latex": "a^2 + b^2 = c^2", "color": "#1a1a1a", "align": "center"
+    },
+    {
+      "id": "text_002", "type": "text",
+      "left": 520, "top": 153, "width": 420, "height": 260,
+      "content": "<p style=\"font-size: 20px;\"><strong>示例</strong></p><p style=\"font-size: 16px;\">直角边 a = 3cm，b = 4cm</p><p style=\"font-size: 16px;\">斜边 c = √(3² + 4²)</p><p style=\"font-size: 16px;\">c = √(9 + 16) = √25 = 5cm</p><p style=\"font-size: 16px;\">验证：3² + 4² = 9 + 16 = 25 = 5² ✓</p>",
+      "defaultFontName": "", "defaultColor": "#333333"
+    },
+    {
+      "id": "line_001", "type": "line",
+      "left": 500, "top": 153, "width": 2,
+      "start": [0, 0], "end": [0, 260],
+      "style": "solid", "color": "#e0e0e0", "points": ["", ""]
     }
   ]
 }
 ```
 
-Note: The background container uses a light neutral color. Text sits ON TOP of the shape, centered with 20px padding on each side.
+Key points from this example:
+- Formula + concrete numeric example side by side — theory paired with application
+- `LatexElement` used for the formula (NOT TextElement)
+- Thin divider line separates the two columns cleanly
+- Left column (440px) = definition + formula, right column (420px) = worked example
+
+#### Example 3: Comparison / contrast layout
+
+```json
+{
+  "background": { "type": "solid", "color": "#ffffff" },
+  "elements": [
+    {
+      "id": "title_001", "type": "text",
+      "left": 60, "top": 56, "width": 880, "height": 70,
+      "content": "<p style=\"font-size: 32px;\"><strong>有丝分裂 vs 减数分裂</strong></p>",
+      "defaultFontName": "", "defaultColor": "#1a1a1a"
+    },
+    {
+      "id": "divider_001", "type": "shape",
+      "left": 60, "top": 134, "width": 160, "height": 3,
+      "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+      "viewBox": [1, 1], "fill": "#5b9bd5", "fixedRatio": false
+    },
+    {
+      "id": "left_header", "type": "text",
+      "left": 60, "top": 155, "width": 420, "height": 58,
+      "content": "<p style=\"font-size: 24px;text-align:center;\"><strong>有丝分裂</strong></p>",
+      "defaultFontName": "", "defaultColor": "#2b5797"
+    },
+    {
+      "id": "right_header", "type": "text",
+      "left": 520, "top": 155, "width": 420, "height": 58,
+      "content": "<p style=\"font-size: 24px;text-align:center;\"><strong>减数分裂</strong></p>",
+      "defaultFontName": "", "defaultColor": "#d14424"
+    },
+    {
+      "id": "left_content", "type": "text",
+      "left": 70, "top": 225, "width": 400, "height": 208,
+      "content": "<p style=\"font-size: 16px;\">• 产生 2 个相同的子细胞</p><p style=\"font-size: 16px;\">• 染色体数不变 (2n→2n)</p><p style=\"font-size: 16px;\">• 用于生长和修复</p><p style=\"font-size: 16px;\">• 分裂 1 次</p><p style=\"font-size: 16px;\">• 无交叉互换</p>",
+      "defaultFontName": "", "defaultColor": "#333333"
+    },
+    {
+      "id": "right_content", "type": "text",
+      "left": 530, "top": 225, "width": 400, "height": 208,
+      "content": "<p style=\"font-size: 16px;\">• 产生 4 个不同的子细胞</p><p style=\"font-size: 16px;\">• 染色体数减半 (2n→n)</p><p style=\"font-size: 16px;\">• 用于产生配子</p><p style=\"font-size: 16px;\">• 分裂 2 次</p><p style=\"font-size: 16px;\">• 有交叉互换</p>",
+      "defaultFontName": "", "defaultColor": "#333333"
+    },
+    {
+      "id": "cmpline", "type": "line",
+      "left": 500, "top": 155, "width": 2,
+      "start": [0, 0], "end": [0, 270],
+      "style": "solid", "color": "#e0e0e0", "points": ["", ""]
+    }
+  ]
+}
+```
+
+Key points from this example:
+- Side-by-side comparison with clearly labeled column headers
+- Color coding helps distinguish the two sides (blue vs red headers)
+- Bullet points are concise and parallel in structure
+- Vertical divider line separates the two columns
+
+---
+
+## Content Quality Principles
+
+### Slide Variety (CRITICAL)
+
+Do NOT make every slide look the same. Vary your layouts across the deck:
+
+| Slide Position | Recommended Style |
+|---------------|-------------------|
+| Slide 1 (Cover) | Bold title, subtitle, decorative emphasis |
+| Slide 2-3 | Definition / concept introduction — Simple Layout Mode |
+| Middle slides | Mix: formula+example, comparison, diagram, step-by-step, case study |
+| Slide N-1 | Recap or key connections between topics |
+| Slide N (End) | Clean closing, thank-you, key takeaways |
+
+**Variety checklist per deck:**
+- At least 2-3 slides with LaTeX formula (for math/science topics)
+- At least 2 slides with side-by-side layout (comparison, theory+example, or diagram+caption)
+- At least 1-2 slides with numbered steps or structured progression
+- At least 1 slide covering common mistakes or misconceptions
+- Cover and end slides must look distinct from content slides
+
+**For larger decks (10+ slides):** Each major sub-topic gets 2-3 slides. First slide introduces the concept, second gives a worked example, third connects to applications. This creates a natural rhythm and deeper learning experience.
+
+### Content Density
+
+- **Per slide**: 1 main idea, explained thoroughly. Each slide should feel complete — include definition, explanation, and an example or application where appropriate.
+- **Depth over breadth**: Don't rush through topics. A slide with 4-5 well-developed bullet points (with sub-details) is better than a slide with 10 superficial one-liners. Use `<strong>` for key terms and add 1-2 sentences of explanation per point.
+- **Per bullet point**: ≤ 20 words (≤ 30 Chinese characters) for the main point. Add a sub-line with smaller font for detail if needed.
+- **Title length**: ≤ 10 words. Titles are signposts, not explanations.
+- **Longer decks (10+ slides)**: Each sub-topic deserves 2-3 slides: one for theory/definition, one for examples/applications, and optionally one for practice or deeper exploration. Do NOT spread a single idea thinly — instead, cover MORE sub-topics in depth.
 
 ---
 

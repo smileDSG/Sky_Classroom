@@ -208,5 +208,5 @@ export { estimateTokens, extractKeyInfo };
 
 /** @deprecated Use `compressConversation` instead */
 export function compressMessageHistory(messages: MessageLike[]): MessageLike[] {
-  return compressConversation(messages);
+  return compressConversation(messages as unknown as ConversationMessage[]);
 }

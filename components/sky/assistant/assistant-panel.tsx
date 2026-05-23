@@ -214,7 +214,7 @@ export function AssistantPanel() {
   );
 
   return (
-    <div className="flex h-[480px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
+    <div className="flex h-[400px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3">
         <div className="flex items-center gap-2">

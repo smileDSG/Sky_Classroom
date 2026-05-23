@@ -36,8 +36,16 @@ export interface CourseExportProgress {
 
 // ── Constants ────────────────────────────────────────────────────────
 
-const COVER_BG = '#1e3a5f';
-const END_BG = '#1e3a5f';
+// Theme-aware colors — will be overridden by selected theme
+let COVER_BG = '#1e3a5f';
+let END_BG = '#1e3a5f';
+let ACCENT = '#5b9bd5';
+let FONT_FAMILY = 'Microsoft YaHei';
+let COVER_TITLE_COLOR = '#FFFFFF';
+let COVER_SUB_COLOR = '#94a3b8';
+let BODY_COLOR = '#1e293b';
+let MUTED_COLOR = '#64748b';
+let DIVIDER_COLOR = '#e2e8f0';
 
 // ── Main Export ──────────────────────────────────────────────────────
 

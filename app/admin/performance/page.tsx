@@ -103,7 +103,7 @@ export default function PerformanceDashboardPage() {
               <CardContent>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold">{avg !== null ? `${avg}${name === 'CLS' ? '' : 'ms'}` : '—'}</span>
-                  <Badge className={ratingColor(rating)}>{rating ?? 'n/a'}</Badge>
+                  <Badge className={ratingColor(rating || undefined)}>{rating ?? 'n/a'}</Badge>
                 </div>
               </CardContent>
             </Card>

@@ -85,11 +85,7 @@ export function BaseLineElement({ elementInfo, animate }: BaseLineElementProps) 
 
   return (
     <div
-      className="base-element-line absolute"
-      style={{
-        top: `${elementInfo.top}px`,
-        left: `${elementInfo.left}px`,
-      }}
+      className="base-element-line relative w-full h-full"
     >
       <div
         className="element-content relative w-full h-full"

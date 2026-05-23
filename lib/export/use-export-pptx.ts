@@ -583,9 +583,10 @@ async function buildPptxBlob(
           }
           pptxSlide.addImage(imgOptions);
         } else {
+          const vb = typeof el.viewBox === 'string' ? el.viewBox.split(' ').map(Number) : Array.isArray(el.viewBox) ? el.viewBox : [1, 1];
           const scale = {
-            x: el.width / el.viewBox[0],
-            y: el.height / el.viewBox[1],
+            x: el.width / ((vb[2] || vb[0]) || 1),
+            y: el.height / ((vb[3] || vb[1]) || 1),
           };
           const rawPoints = toPoints(el.path);
           if (!rawPoints.length) continue; // Malformed path — toPoints already logged.
