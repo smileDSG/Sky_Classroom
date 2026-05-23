@@ -1096,6 +1096,11 @@
     "unauthorized": "请先登录后再访问"
   },
   "speech": {
-    "speaking": "说话中..."
+    "speaking": "说话中...",
+    "role": {
+      "teacher": "老师",
+      "student": "学生",
+      "user": "我"
+    }
   }
 }

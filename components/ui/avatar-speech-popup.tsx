@@ -38,12 +38,6 @@ const roleTheme = {
   },
 };
 
-const roleLabel = {
-  teacher: '老师',
-  student: '学生',
-  user: '我',
-};
-
 export function AvatarSpeechPopup({
   speakingAgentId,
   sourceText,
@@ -71,6 +65,9 @@ export function AvatarSpeechPopup({
           'fixed z-50 top-1/2 -translate-y-1/2',
         )}
         style={{ left: sidebarWidth + 8 }}
+        role="status"
+        aria-live="polite"
+        aria-label="Current speaker speech"
       >
         <div
           className={cn(
@@ -107,7 +104,7 @@ export function AvatarSpeechPopup({
                 theme.text,
               )}
             >
-              {roleLabel[speaker.role]}
+              {t(`speech.role.${speaker.role}`)}
             </span>
           </div>
 
@@ -122,6 +119,7 @@ export function AvatarSpeechPopup({
               <motion.div
                 key={i}
                 animate={{ height: [4, 10, 4], opacity: [0.3, 1, 0.3] }}
+                aria-hidden="true"
                 transition={{
                   duration: 0.6,
                   repeat: Infinity,

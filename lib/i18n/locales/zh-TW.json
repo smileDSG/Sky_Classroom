@@ -1096,6 +1096,11 @@
     "unauthorized": "請先登入再存取此頁面"
   },
   "speech": {
-    "speaking": "說話中..."
+    "speaking": "說話中...",
+    "role": {
+      "teacher": "老師",
+      "student": "學生",
+      "user": "我"
+    }
   }
 }

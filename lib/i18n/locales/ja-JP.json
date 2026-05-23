@@ -1096,6 +1096,11 @@
     "unauthorized": "このページにアクセスするにはログインしてください"
   },
   "speech": {
-    "speaking": "話しています..."
+    "speaking": "話しています...",
+    "role": {
+      "teacher": "先生",
+      "student": "生徒",
+      "user": "私"
+    }
   }
 }

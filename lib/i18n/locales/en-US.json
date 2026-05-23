@@ -1096,6 +1096,11 @@
     "unauthorized": "Please log in to access this page"
   },
   "speech": {
-    "speaking": "Speaking..."
+    "speaking": "Speaking...",
+    "role": {
+      "teacher": "Teacher",
+      "student": "Student",
+      "user": "Me"
+    }
   }
 }
