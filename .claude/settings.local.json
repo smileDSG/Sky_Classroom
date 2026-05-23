@@ -53,7 +53,18 @@
       "Bash(Select-Object Id, ProcessName, StartTime)",
       "PowerShell(taskkill *)",
       "Bash(pip install *)",
-      "Bash(npm ls *)"
+      "Bash(npm ls *)",
+      "Bash(git rm *)",
+      "Bash(Get-ChildItem -Recurse -Name \"E:\\\\01_Work\\\\OpenMAIC-backup\\\\app\")",
+      "Bash(Get-ChildItem -Recurse -Name \"E:\\\\01_Work\\\\OpenMAIC-backup\\\\lib\")",
+      "Bash(Get-ChildItem -Recurse -Name \"E:\\\\01_Work\\\\OpenMAIC-backup\\\\components\")",
+      "Bash(pnpm add *)",
+      "Bash(npx pnpm@10.28.0 add jose bcryptjs)",
+      "Bash(npx pnpm@10.28.0 add -D @types/bcryptjs)",
+      "Bash(Select-String -Pattern \"error\")",
+      "Bash(Select-String -Pattern \"error|ready|compiled|warning\")",
+      "Bash(Select-Object -First 10)",
+      "Bash(findstr \"page.tsx\")"
     ]
   }
 }
