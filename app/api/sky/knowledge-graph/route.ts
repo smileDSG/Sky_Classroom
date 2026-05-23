@@ -5,7 +5,6 @@
  * (nodes + edges + weak points), and returns the structured response.
  */
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getServerTranslation } from '@/lib/server/i18n';
 import { createStorageProvider } from '@/lib/storage/storage-factory';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildGraphFromMistakes } from '@/lib/graph/builder';
@@ -26,8 +25,7 @@ async function getDAO() {
   return _daoPromise;
 }
 
-export async function GET(request: Request) {
-  const locale = request.headers.get('X-Locale') || 'zh-CN';
+export async function GET() {
   try {
     const dao = await getDAO();
     const { items: mistakes } = await dao.list({ pageSize: 9999 });
@@ -45,6 +43,6 @@ export async function GET(request: Request) {
     });
   } catch (err) {
     log.error('Knowledge graph API error:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, getServerTranslation(locale, 'api.generateFailed'));
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '知识图谱生成失败');
   }
 }

@@ -4,7 +4,6 @@
  * Uses a vision-capable LLM for OCR, with multi-provider fallback.
  */
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getServerTranslation } from '@/lib/server/i18n';
 import { createLogger } from '@/lib/logger';
 import { extractFormulas } from '@/lib/recognition/formula-extractor';
 import { validateImage } from '@/lib/recognition/image-validator';
@@ -41,7 +40,6 @@ function getVisionModel() {
 }
 
 export async function POST(req: Request) {
-  const locale = req.headers.get('X-Locale') || 'zh-CN';
   try {
     const formData = await req.formData();
     const image = formData.get('image') as File | null;
@@ -59,7 +57,7 @@ export async function POST(req: Request) {
       return apiError(
         API_ERROR_CODES.INVALID_REQUEST,
         400,
-        validation.error ?? getServerTranslation(locale, 'api.validationFailed'),
+        validation.error ?? '图片校验失败',
       );
     }
 
@@ -77,7 +75,7 @@ export async function POST(req: Request) {
       return apiError(
         API_ERROR_CODES.INTERNAL_ERROR,
         500,
-        getServerTranslation(locale, 'api.noVisionModel'),
+        '没有配置支持视觉的模型，请配置 ANTHROPIC_API_KEY 或 GLM_API_KEY 或 QWEN_API_KEY',
       );
     }
 
@@ -91,7 +89,7 @@ export async function POST(req: Request) {
       return apiError(
         API_ERROR_CODES.INTERNAL_ERROR,
         500,
-        getServerTranslation(locale, 'api.modelInitFailed'),
+        '模型初始化失败',
         modelErr instanceof Error ? modelErr.message : undefined,
       );
     }
@@ -151,7 +149,7 @@ export async function POST(req: Request) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
-      getServerTranslation(locale, 'api.generateFailed'),
+      '图片识别失败',
       err instanceof Error ? err.message : undefined,
     );
   }

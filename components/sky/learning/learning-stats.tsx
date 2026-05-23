@@ -3,11 +3,21 @@
 import { useMemo } from 'react';
 import type { MistakeCause } from '@/lib/solve/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import {
   buildKnowledgeGraph,
   getMasterySummary,
 } from '@/lib/mistakes/knowledge-graph';
+
+// ── Cause label & colour maps ────────────────────────────────────────
+
+const causeLabels: Record<MistakeCause, string> = {
+  'concept-unclear': '概念不清',
+  'calculation-error': '计算失误',
+  'misreading': '审题错误',
+  'method-wrong': '方法错误',
+  'careless': '粗心',
+  'format-error': '格式错误',
+};
 
 const causeBarColors: Record<MistakeCause, string> = {
   'concept-unclear': 'bg-purple-500',
@@ -30,7 +40,6 @@ const allCauses: MistakeCause[] = [
 // ── Component ─────────────────────────────────────────────────────────
 
 export function LearningStats() {
-  const { t } = useI18n();
   const { mistakes } = useSkyClassroomStore();
 
   // ── Compute stats from mistakes ─────────────────────────────────────
@@ -140,7 +149,7 @@ export function LearningStats() {
             return (
               <div key={cause} className="flex items-center gap-3">
                 <span className="w-16 shrink-0 text-right text-xs text-gray-500">
-                  {t(`sky.errorCause.${cause}`)}
+                  {causeLabels[cause]}
                 </span>
                 <div className="flex-1">
                   <div className="h-5 overflow-hidden rounded bg-gray-100">

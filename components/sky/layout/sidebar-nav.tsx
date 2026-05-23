@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useI18n } from '@/lib/hooks/use-i18n';
 
 interface NavItem {
   label: string;
@@ -10,15 +9,13 @@ interface NavItem {
   icon: string;
 }
 
-function getNavItems(t: (key: string) => string): NavItem[] {
-  return [
-    { label: t('sky.layout.home'), href: '/sky', icon: '🏠' },
-    { label: t('sky.layout.solve'), href: '/sky/solve', icon: '🔍' },
-    { label: t('sky.layout.slides'), href: '/sky/slides', icon: '📖' },
-    { label: t('sky.layout.learning'), href: '/sky/learning', icon: '📊' },
-    { label: t('sky.layout.assistant'), href: '/sky/assistant', icon: '/avatars/kagami/chibi.png' },
-  ];
-}
+const NAV_ITEMS: NavItem[] = [
+  { label: '首页', href: '/sky', icon: '🏠' },
+  { label: '搜题', href: '/sky/solve', icon: '🔍' },
+  { label: '幻灯片', href: '/sky/slides', icon: '📖' },
+  { label: '学习数据', href: '/sky/learning', icon: '📊' },
+  { label: '小镜课堂', href: '/sky/assistant', icon: '/avatars/kagami/chibi.png' },
+];
 
 interface SkySidebarProps {
   collapsed: boolean;
@@ -26,8 +23,6 @@ interface SkySidebarProps {
 
 export function SkySidebar({ collapsed }: SkySidebarProps) {
   const pathname = usePathname();
-  const { t } = useI18n();
-  const navItems = getNavItems(t);
 
   return (
     <aside
@@ -36,7 +31,7 @@ export function SkySidebar({ collapsed }: SkySidebarProps) {
       }`}
     >
       <nav className="flex flex-1 flex-col gap-1 p-3">
-        {navItems.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const isActive =
             item.href === '/sky'
               ? pathname === '/sky'
@@ -71,14 +66,14 @@ export function SkySidebar({ collapsed }: SkySidebarProps) {
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
         >
           <span className="text-lg">🏫</span>
-          {!collapsed && <span>{t('sky.layout.classroomSim')}</span>}
+          {!collapsed && <span>课堂模拟</span>}
         </Link>
         <Link
           href="/settings"
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
         >
           <span className="text-lg">⚙️</span>
-          {!collapsed && <span>{t('sky.layout.settings')}</span>}
+          {!collapsed && <span>设置</span>}
         </Link>
       </div>
     </aside>

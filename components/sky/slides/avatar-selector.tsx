@@ -1,7 +1,6 @@
 'use client';
 
 import type { AvatarConfig } from '@/lib/slides/types';
-import { useI18n } from '@/lib/hooks/use-i18n';
 
 export interface AvatarSelectorProps {
   avatars: AvatarConfig[];
@@ -10,11 +9,10 @@ export interface AvatarSelectorProps {
 }
 
 export function AvatarSelector({ avatars, selectedId, onSelect }: AvatarSelectorProps) {
-  const { t } = useI18n();
   return (
     <div className="flex flex-col gap-2">
       <span className="px-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-        {t('sky.slides.avatarLabel')}
+        讲解形象
       </span>
       <div className="scrollbar-hide -mx-1 flex max-h-[200px] flex-col gap-1.5 overflow-y-auto">
         {avatars.map((avatar) => {

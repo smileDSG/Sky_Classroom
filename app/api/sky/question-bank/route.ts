@@ -3,7 +3,6 @@
  * Question bank query and auto-save endpoint.
  */
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getServerTranslation } from '@/lib/server/i18n';
 import { createLogger } from '@/lib/logger';
 import {
   findSimilarQuestions,
@@ -16,7 +15,6 @@ import type { QuestionBankEntry } from '@/lib/solve/types';
 const log = createLogger('API:SkyQuestionBank');
 
 export async function GET(req: Request) {
-  const locale = req.headers.get('X-Locale') || 'zh-CN';
   try {
     const url = new URL(req.url);
     const query = url.searchParams.get('query') || '';
@@ -63,12 +61,11 @@ export async function GET(req: Request) {
     });
   } catch (err) {
     log.error('Question bank GET error:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, getServerTranslation(locale, 'api.queryFailed'), err instanceof Error ? err.message : undefined);
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '题库查询失败', err instanceof Error ? err.message : undefined);
   }
 }
 
 export async function POST(req: Request) {
-  const locale = req.headers.get('X-Locale') || 'zh-CN';
   try {
     const body = await req.json();
     const { problemText, problemImage, answer, steps, knowledgePoints, agentId } = body;
@@ -77,7 +74,7 @@ export async function POST(req: Request) {
       return apiError(
         API_ERROR_CODES.MISSING_REQUIRED_FIELD,
         400,
-        getServerTranslation(locale, 'api.missingFields'),
+        '缺少必填字段: problemText, answer',
       );
     }
 
@@ -86,7 +83,7 @@ export async function POST(req: Request) {
       return apiSuccess({
         id: '',
         saved: false,
-        message: getServerTranslation(locale, 'api.duplicate'),
+        message: '题目已存在于题库中',
         duplicated: true,
       });
     }
@@ -114,7 +111,7 @@ export async function POST(req: Request) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
-      getServerTranslation(locale, 'api.recordFailed'),
+      '题库保存失败',
       err instanceof Error ? err.message : undefined,
     );
   }

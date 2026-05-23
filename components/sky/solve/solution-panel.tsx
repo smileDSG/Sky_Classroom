@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import type { FourPartOutput, GradedFourPartOutput } from '@/lib/solve/types';
 
 interface SolutionPanelProps {
@@ -16,7 +15,6 @@ interface SolutionPanelProps {
 }
 
 export function SolutionPanel({ output, className }: SolutionPanelProps) {
-  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState('steps');
   const [expandedSteps, setExpandedSteps] = useState<Record<number, boolean>>({ 0: true });
 
@@ -43,7 +41,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
               variant={output.gradeResult.isCorrect ? 'default' : 'destructive'}
               className={output.gradeResult.isCorrect ? 'bg-green-500' : undefined}
             >
-              {output.gradeResult.isCorrect ? t('sky.solve.passReview') : t('sky.solve.needFix')}
+              {output.gradeResult.isCorrect ? '批改通过' : '需要订正'}
             </Badge>
           )}
         </div>
@@ -172,9 +170,9 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                             point.difficulty === 'hard' && 'bg-red-50 text-red-700 dark:bg-red-900/20'
                           )}
                         >
-                          {point.difficulty === 'easy' && t('sky.solve.difficultyBasic')}
-                          {point.difficulty === 'medium' && t('sky.solve.difficultyAdvanced')}
-                          {point.difficulty === 'hard' && t('sky.solve.difficultyHard')}
+                          {point.difficulty === 'easy' && '基础'}
+                          {point.difficulty === 'medium' && '进阶'}
+                          {point.difficulty === 'hard' && '困难'}
                         </Badge>
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">{point.description}</p>

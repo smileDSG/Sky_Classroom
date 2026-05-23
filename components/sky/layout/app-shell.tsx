@@ -1,6 +1,5 @@
 'use client';
 
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { SkyTabBar } from './sky-tab-bar';
 
 interface SkyAppShellProps {
@@ -8,14 +7,12 @@ interface SkyAppShellProps {
 }
 
 export function SkyAppShell({ children }: SkyAppShellProps) {
-  const { t } = useI18n();
-
   return (
     <div className="flex h-screen w-full flex-col bg-[#F8FAFC]">
       <header className="grid h-14 shrink-0 grid-cols-3 items-center border-b border-gray-200 bg-white px-4 shadow-sm">
         <div className="flex items-center gap-3">
           <span className="text-xl">☁️</span>
-          <h1 className="text-lg font-bold text-[#8B5CF6]">{t('sky.layout.skyClassroom')}</h1>
+          <h1 className="text-lg font-bold text-[#8B5CF6]">天空课堂</h1>
         </div>
 
         <div className="flex justify-center">
@@ -25,7 +22,7 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
         <div className="flex items-center justify-end gap-3">
           <button
             className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-            aria-label={t('sky.layout.toggleTheme')}
+            aria-label="切换主题"
           >
             🌙
           </button>

@@ -6,7 +6,6 @@
  */
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getServerTranslation } from '@/lib/server/i18n';
 import { createStorageProvider } from '@/lib/storage/storage-factory';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import type { ErrorType } from '@/lib/storage/dao/mistakes';
@@ -30,7 +29,6 @@ async function getDAO() {
 // ── GET — list / query mistakes ──────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  const locale = req.headers.get('X-Locale') || 'zh-CN';
   try {
     const dao = await getDAO();
     const url = new URL(req.url);
@@ -51,14 +49,13 @@ export async function GET(req: NextRequest) {
     return apiSuccess({ items: result.items, total: result.total });
   } catch (err) {
     log.error('Mistakes GET error:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, getServerTranslation(locale, 'api.queryFailed'));
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '错题查询失败');
   }
 }
 
 // ── POST — create a new mistake entry ────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const locale = req.headers.get('X-Locale') || 'zh-CN';
   try {
     const dao = await getDAO();
     const body = await req.json();
@@ -81,21 +78,20 @@ export async function POST(req: NextRequest) {
     return apiSuccess({ id, created: true }, 201);
   } catch (err) {
     log.error('Mistakes POST error:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, getServerTranslation(locale, 'api.recordFailed'));
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '错题记录失败');
   }
 }
 
 // ── PATCH — record a review (Ebbinghaus scheduling) ──────────────────
 
 export async function PATCH(req: NextRequest) {
-  const locale = req.headers.get('X-Locale') || 'zh-CN';
   try {
     const dao = await getDAO();
     const body = await req.json();
     const id = body.id as string;
 
     if (!id) {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, getServerTranslation(locale, 'api.missingFields'));
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '缺少 id 参数');
     }
 
     await dao.recordReview(id);
@@ -103,21 +99,20 @@ export async function PATCH(req: NextRequest) {
     return apiSuccess({ reviewed: true, id });
   } catch (err) {
     log.error('Mistakes PATCH error:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, getServerTranslation(locale, 'api.updateFailed'));
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '标记复习失败');
   }
 }
 
 // ── DELETE — remove a mistake ────────────────────────────────────────
 
 export async function DELETE(req: NextRequest) {
-  const locale = req.headers.get('X-Locale') || 'zh-CN';
   try {
     const dao = await getDAO();
     const url = new URL(req.url);
     const id = url.pathname.split('/').pop();
 
     if (!id) {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, getServerTranslation(locale, 'api.missingFields'));
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '缺少 id 参数');
     }
 
     await dao.delete(id);
@@ -125,6 +120,6 @@ export async function DELETE(req: NextRequest) {
     return apiSuccess({ deleted: true, id });
   } catch (err) {
     log.error('Mistakes DELETE error:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, getServerTranslation(locale, 'api.deleteFailed'));
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '删除错题失败');
   }
 }

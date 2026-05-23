@@ -4,7 +4,6 @@
  * Executes the SolveGraph LangGraph pipeline.
  */
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getServerTranslation } from '@/lib/server/i18n';
 import { createLogger } from '@/lib/logger';
 import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
 import { saveToQuestionBank, isProblemInBank } from '@/lib/solve/question-bank';
@@ -12,7 +11,6 @@ import { saveToQuestionBank, isProblemInBank } from '@/lib/solve/question-bank';
 const log = createLogger('API:SkySolveExplain');
 
 export async function POST(req: Request) {
-  const locale = req.headers.get('X-Locale') || 'zh-CN';
   try {
     const body = await req.json();
     const { problem, problemImage, userAnswer, agentId, useHighPrecision, outputFormat } = body;
@@ -39,7 +37,7 @@ export async function POST(req: Request) {
       return apiError(
         API_ERROR_CODES.INTERNAL_ERROR,
         500,
-        `${getServerTranslation(locale, 'api.generateFailed')}: ${finalState.error}`,
+        `解题失败: ${finalState.error}`,
       );
     }
 
@@ -85,7 +83,7 @@ export async function POST(req: Request) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
-      getServerTranslation(locale, 'api.generateFailed'),
+      '解题失败',
       err instanceof Error ? err.message : undefined,
     );
   }

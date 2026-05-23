@@ -40,9 +40,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       const raw = stored || navigator.language || defaultLocale;
       const target = resolveLocale(raw);
       if (target !== i18n.language) i18n.changeLanguage(target);
-      // Apply RTL/LTR direction
-      document.documentElement.dir = target === 'ar-SA' ? 'rtl' : 'ltr';
-      document.documentElement.lang = target;
     } catch {
       // localStorage unavailable, keep default
     }
@@ -52,12 +49,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     i18n.changeLanguage(newLocale);
     try {
       localStorage.setItem(LOCALE_STORAGE_KEY, newLocale);
-      document.cookie = `locale=${newLocale};path=/;max-age=31536000;SameSite=Lax`;
-      if (newLocale === 'ar-SA') {
-        document.documentElement.dir = 'rtl';
-      } else {
-        document.documentElement.dir = 'ltr';
-      }
     } catch {
       // localStorage unavailable
     }

@@ -216,38 +216,3 @@
     transform: scale(1.08);
   }
 }
-
-/* ── RTL (Right-to-Left) support for Arabic ── */
-
-[dir='rtl'] {
-  direction: rtl;
-  text-align: right;
-}
-
-[dir='rtl'] .ltr-only {
-  direction: ltr;
-  display: inline-block;
-}
-
-/* Mirror directional icons in RTL */
-[dir='rtl'] .rtl-mirror {
-  transform: scaleX(-1);
-}
-
-/* Scrollbar position for RTL */
-[dir='rtl'] .overflow-y-auto {
-  direction: rtl;
-}
-
-[dir='rtl'] .overflow-y-auto > * {
-  direction: ltr;
-}
-
-/* Better font stack for Arabic */
-[lang='ar-SA'] body {
-  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Naskh Arabic', sans-serif;
-}
-
-/* Fix margin/padding when logical properties aren't used */
-[dir='rtl'] .ml-auto { margin-left: 0; margin-right: auto; }
-[dir='rtl'] .mr-auto { margin-right: 0; margin-left: auto; }

@@ -1,7 +1,6 @@
 'use client';
 
 import type { Slide } from '@/lib/types/slides';
-import { useI18n } from '@/lib/hooks/use-i18n';
 
 export interface ThumbnailListProps {
   slides: Slide[];
@@ -29,14 +28,13 @@ function extractTitle(slide: Slide): string {
 }
 
 export function ThumbnailList({ slides, activeIndex, onSelect }: ThumbnailListProps) {
-  const { t } = useI18n();
   if (slides.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between px-1">
         <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-          {t('sky.slides.title')}
+          幻灯片
         </span>
         <span className="text-[10px] tabular-nums text-slate-400">
           {slides.length}

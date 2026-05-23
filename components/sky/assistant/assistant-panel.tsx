@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
 
@@ -38,7 +37,6 @@ function nextId(): string {
 // ── 组件 ──────────────────────────────────────────────────────────────
 
 export function AssistantPanel() {
-  const { t } = useI18n();
   const isOpen = useSkyClassroomStore((s) => s.isOpen);
   const toggleOpen = useSkyClassroomStore((s) => s.toggleOpen);
   const subject = useSkyClassroomStore((s) => s.subject);
@@ -107,7 +105,7 @@ export function AssistantPanel() {
       })
         .then(async (res) => {
           if (!res.ok) {
-            const errData = await res.json().catch(() => ({ error: t('sky.assistant.requestFailed') }));
+            const errData = await res.json().catch(() => ({ error: '请求失败' }));
             throw new Error(errData.error || `HTTP ${res.status}`);
           }
 
@@ -139,7 +137,7 @@ export function AssistantPanel() {
                     ),
                   );
                 } else if (event.type === 'error') {
-                  throw new Error(event.message || t('sky.assistant.unknownError'));
+                  throw new Error(event.message || '未知错误');
                 }
                 // 'done' event — just let the stream close naturally
               } catch (parseErr) {
@@ -156,7 +154,7 @@ export function AssistantPanel() {
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantMsgId
-                  ? { ...m, content: t('sky.assistant.noResponse') }
+                  ? { ...m, content: '抱歉，我没有生成回答，请稍后重试。' }
                   : m,
               ),
             );
@@ -168,13 +166,13 @@ export function AssistantPanel() {
             return;
           }
           log.error('Assistant fetch error:', err);
-          setError(err.message || t('sky.assistant.requestFailed'));
+          setError(err.message || '请求失败，请重试');
           setLoading(false);
           // Replace empty assistant message with error
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantMsgId && !m.content.trim()
-                ? { ...m, content: t('sky.assistant.serviceError') }
+                ? { ...m, content: '抱歉，请求出现错误，请稍后重试。' }
                 : m,
             ),
           );
@@ -197,22 +195,22 @@ export function AssistantPanel() {
 
   const difficultyLabel =
     difficulty === 'junior'
-      ? t('sky.assistant.grades.junior')
+      ? '初中'
       : difficulty === 'senior'
-        ? t('sky.assistant.grades.senior')
+        ? '高中'
         : difficulty === 'college'
-          ? t('sky.assistant.grades.college')
+          ? '大学'
           : difficulty || '';
 
-  const styleLabel = style === 'concise' ? t('sky.assistant.styles.concise') : style === 'heuristic' ? t('sky.assistant.styles.heuristic') : t('sky.assistant.styles.detailed');
+  const styleLabel = style === 'concise' ? '简洁' : style === 'heuristic' ? '启发' : '详细';
 
   const hints = useMemo(
     () => [
-      t('sky.assistant.suggestion1', { subject: subject || t('sky.assistant.subjects.math') }),
-      t('sky.assistant.suggestion2', { subject: subject || t('sky.assistant.subjects.math') }),
-      t('sky.assistant.suggestion3'),
+      `帮我看看这道${subject || '数学'}题`,
+      `什么是${subject || '数学'}里的核心概念`,
+      '怎么高效复习错题',
     ],
-    [subject, t],
+    [subject],
   );
 
   return (
@@ -220,7 +218,7 @@ export function AssistantPanel() {
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-lg font-semibold text-gray-900">{t('sky.assistant.kagamiTitle')}</span>
+          <span className="text-lg font-semibold text-gray-900">小镜课堂</span>
           <div className="flex items-center gap-1.5">
             {subject && (
               <span className="rounded-full bg-[#8B5CF6]/10 px-2 py-0.5 text-xs font-medium text-[#8B5CF6]">
@@ -239,7 +237,7 @@ export function AssistantPanel() {
         </div>
         <button
           type="button"
-          aria-label={t('sky.assistant.closeAssistant')}
+          aria-label="关闭助手"
           onClick={toggleOpen}
           className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
         >
@@ -255,10 +253,10 @@ export function AssistantPanel() {
           <div className="flex h-full items-center justify-center">
             <div className="max-w-xs text-center">
               <div className="mb-3 flex justify-center">
-                <img src="/avatars/kagami/chibi.png" className="h-16 w-16 rounded-full object-cover" alt={t('sky.layout.assistantShort')} />
+                <img src="/avatars/kagami/chibi.png" className="h-16 w-16 rounded-full object-cover" alt="小镜" />
               </div>
               <p className="text-sm leading-relaxed text-gray-500">
-                {t('sky.assistant.welcomeMessage')}
+                哈？遇到不会的题目了？告诉我吧。
               </p>
               <div className="mt-4 flex flex-col gap-1.5">
                 {hints.map((hint) => (
@@ -289,7 +287,7 @@ export function AssistantPanel() {
                       : 'bg-[#8B5CF6]/10 text-[#8B5CF6]'
                   }`}
                 >
-                  {msg.role === 'user' ? '👤' : (<img src="/avatars/kagami/chibi.png" className="size-full rounded-full object-cover" alt={t('sky.layout.assistantShort')} />)}
+                  {msg.role === 'user' ? '👤' : (<img src="/avatars/kagami/chibi.png" className="size-full rounded-full object-cover" alt="小镜" />)}
                 </div>
                 {/* Bubble */}
                 <div
@@ -313,7 +311,7 @@ export function AssistantPanel() {
             {loading && messages.filter((m) => m.role === 'assistant').at(-1)?.content && (
               <div className="flex gap-2.5">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full">
-                  <img src="/avatars/kagami/chibi.png" className="size-full object-cover" alt={t('sky.layout.assistantShort')} />
+                  <img src="/avatars/kagami/chibi.png" className="size-full object-cover" alt="小镜" />
                 </div>
                 <div className="flex items-center gap-1.5 rounded-xl rounded-tl-sm border border-gray-200 bg-[#F8FAFC] px-4 py-3">
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '0ms' }} />
@@ -338,7 +336,7 @@ export function AssistantPanel() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={t('sky.assistant.inputPlaceholder')}
+            placeholder="输入你的问题…"
             rows={1}
             className="max-h-24 min-h-[36px] flex-1 resize-none rounded-lg border border-gray-200 bg-[#F8FAFC] px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6]/30"
           />
@@ -347,7 +345,7 @@ export function AssistantPanel() {
             onClick={() => handleSend()}
             disabled={!input.trim() || loading}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#8B5CF6] text-white transition-colors hover:bg-[#3A80C9] disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label={t('sky.assistant.sendMessage')}
+            aria-label="发送消息"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2L2 8l4 2 2 4 6-12z" />

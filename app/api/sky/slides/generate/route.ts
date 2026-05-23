@@ -9,14 +9,12 @@ import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 export const maxDuration = 300;
 import { generateSlides } from '@/lib/slides';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getServerTranslation } from '@/lib/server/i18n';
 import { createLogger } from '@/lib/logger';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 
 const log = createLogger('API:SkySlidesGenerate');
 
 export async function POST(req: NextRequest) {
-  const locale = req.headers.get('X-Locale') || 'zh-CN';
   let resolvedModel: string | undefined;
   try {
     const body = await req.json();
@@ -79,7 +77,7 @@ export async function POST(req: NextRequest) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
-      getServerTranslation(locale, 'api.generateFailed'),
+      '幻灯片生成失败',
       err instanceof Error ? err.message : undefined,
     );
   }

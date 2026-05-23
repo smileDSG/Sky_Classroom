@@ -533,7 +533,7 @@ function HomePage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-3xl md:text-4xl font-black bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 dark:from-sky-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                    {t('sky.common.title')}
+                    天空课堂
                   </span>
                 </div>
               </div>
@@ -546,7 +546,7 @@ function HomePage() {
               transition={{ delay: 0.25 }}
               className="text-sm text-sky-600/70 dark:text-sky-400/70 mb-8"
             >
-              {t('sky.common.slogan')}
+              云端智学，无限可能
             </motion.p>
 
             {/* ── Unified input area ── */}
@@ -757,17 +757,17 @@ function HomePage() {
               <Lightbulb className="w-8 h-8 text-white" />
             </motion.div>
             <h2 className="text-2xl font-bold text-sky-700 dark:text-sky-300 mb-2">
-              {t('sky.solve.title')}
+              AI 搜题批改
             </h2>
             <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-              {t('sky.solve.description')}
+              拍照、语音或输入题目，AI 帮你解答、批改、推荐相似题
             </p>
             <button
               onClick={handleNavigateToSolve}
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 text-white font-medium text-sm shadow-lg shadow-sky-500/25 hover:from-sky-600 hover:to-blue-600 hover:shadow-xl transition-all active:scale-[0.97]"
             >
               <Sparkles className="w-4 h-4" />
-              {t('sky.solve.enterSolve')}
+              进入搜题
             </button>
           </div>
         </motion.div>
@@ -775,7 +775,7 @@ function HomePage() {
 
       {/* Footer */}
       <div className="mt-auto pt-12 pb-4 text-center text-xs text-sky-600/50 dark:text-sky-400/50">
-        {t('sky.common.footer')}
+        天空课堂 · AI 驱动的智能教学平台
       </div>
     </div>
   );

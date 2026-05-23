@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 
 interface TextSelectionAIProps {
   onAsk: (text: string) => void;
 }
 
 export function TextSelectionAI({ onAsk }: TextSelectionAIProps) {
-  const { t } = useI18n();
   const [selection, setSelection] = useState<{ text: string; x: number; y: number } | null>(null);
 
   const handleMouseUp = useCallback(() => {
@@ -50,7 +48,7 @@ export function TextSelectionAI({ onAsk }: TextSelectionAIProps) {
         window.getSelection()?.removeAllRanges();
       }}
     >
-      {t('kagami.aiExplain')}
+      AI 解释
     </button>
   );
 }

@@ -9,17 +9,21 @@ import {
   type ReviewSchedule,
   type MasteryProgress,
 } from '@/lib/schedule/review-scheduler';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 
-const INTERVAL_COLORS: Record<number, string> = {
-  1:  '#EF4444',
-  2:  '#F97316',
-  4:  '#F59E0B',
-  7:  '#10B981',
-  15: '#3B82F6',
-  30: '#8B5CF6',
+const INTERVAL_META: Record<number, { label: string; color: string }> = {
+  1:  { label: '1天后',  color: '#EF4444' },
+  2:  { label: '2天后',  color: '#F97316' },
+  4:  { label: '4天后',  color: '#F59E0B' },
+  7:  { label: '7天后',  color: '#10B981' },
+  15: { label: '15天后', color: '#3B82F6' },
+  30: { label: '30天后', color: '#8B5CF6' },
 };
+
+const CURVE_POINTS = EBBINGHAUS_INTERVALS.map((day) => {
+  const retention = Math.round(100 * Math.exp(-0.35 * Math.log(day + 1)));
+  return { day, retention, ...INTERVAL_META[day] };
+});
 
 // SVG font styles (Tailwind classes don't work inside SVG)
 const SVG_TEXT_SM = { fontSize: '9px', fontFamily: 'system-ui, sans-serif' };
@@ -28,13 +32,6 @@ const SVG_TEXT_XS = { fontSize: '8px', fontFamily: 'system-ui, sans-serif' };
 type DataSource = 'api' | 'local';
 
 export function ReviewPlan() {
-  const { t } = useI18n();
-
-  const CURVE_POINTS = EBBINGHAUS_INTERVALS.map((day) => {
-    const retention = Math.round(100 * Math.exp(-0.35 * Math.log(day + 1)));
-    return { day, retention, color: INTERVAL_COLORS[day], label: t('sky.learning.day', { n: day }) };
-  });
-
   const [schedule, setSchedule] = useState<ReviewSchedule | null>(null);
   const [progress, setProgress] = useState<MasteryProgress | null>(null);
   const [urgentItems, setUrgentItems] = useState<MistakeBookEntry[]>([]);
@@ -54,7 +51,7 @@ export function ReviewPlan() {
         if (json.data) {
           setSchedule({
             today: json.data.dueToday?.length
-              ? { date: new Date().toISOString().slice(0, 10), dayLabel: t('sky.learning.today'), items: json.data.dueToday, count: json.data.dueCount }
+              ? { date: new Date().toISOString().slice(0, 10), dayLabel: '今天', items: json.data.dueToday, count: json.data.dueCount }
               : null,
             upcoming: json.data.upcoming ?? [],
             overdue: json.data.overdue ?? 0,
@@ -105,7 +102,7 @@ export function ReviewPlan() {
       setUrgentItems(getUrgentItems(entries, 5));
       setSource('local');
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : t('sky.learning.loadFailed'));
+      setErrorMsg(e instanceof Error ? e.message : '加载失败');
     }
     setLoading(false);
   }, []);
@@ -129,7 +126,7 @@ export function ReviewPlan() {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl bg-red-50 py-16">
         <p className="text-sm text-red-500">{errorMsg}</p>
-        <button onClick={loadData} className="mt-3 text-xs text-blue-500 hover:underline">{t('sky.learning.retry')}</button>
+        <button onClick={loadData} className="mt-3 text-xs text-blue-500 hover:underline">重试</button>
       </div>
     );
   }
@@ -140,8 +137,8 @@ export function ReviewPlan() {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl bg-white py-16 shadow-sm">
         <div className="text-5xl">🧠</div>
-        <h3 className="mt-4 text-base font-semibold text-gray-700">{t('sky.learning.noReviewData')}</h3>
-        <p className="mt-2 text-sm text-gray-400">{t('sky.learning.noReviewDataHint')}</p>
+        <h3 className="mt-4 text-base font-semibold text-gray-700">还没有复习数据</h3>
+        <p className="mt-2 text-sm text-gray-400">完成搜题批改后，错题会自动纳入复习计划</p>
       </div>
     );
   }
@@ -152,9 +149,9 @@ export function ReviewPlan() {
     <div className="space-y-5">
       {/* ── 1. Forgetting Curve ── */}
       <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="mb-1 text-sm font-semibold text-gray-700">{t('sky.learning.forgettingCurve')}</h3>
+        <h3 className="mb-1 text-sm font-semibold text-gray-700">📉 艾宾浩斯遗忘曲线</h3>
         <p className="mb-3 text-[11px] text-gray-400">
-          {t('sky.learning.forgettingCurveDesc', { intervals: EBBINGHAUS_INTERVALS.map((d) => `${d}d`).join(' → ') })}
+          每完成一次复习，间隔自动延长：{EBBINGHAUS_INTERVALS.map((d) => `${d}d`).join(' → ')}
         </p>
 
         <svg viewBox="0 0 360 230" className="w-full" style={{ maxHeight: 240 }}>
@@ -203,32 +200,32 @@ export function ReviewPlan() {
           })}
 
           {/* Axis titles */}
-          <text x={14} y={100} textAnchor="middle" {...SVG_TEXT_XS} fill="#9ca3af" transform="rotate(-90, 14, 100)">{t('sky.learning.retentionRate')}</text>
-          <text x={196} y={226} textAnchor="middle" {...SVG_TEXT_XS} fill="#9ca3af">{t('sky.learning.reviewInterval')}</text>
+          <text x={14} y={100} textAnchor="middle" {...SVG_TEXT_XS} fill="#9ca3af" transform="rotate(-90, 14, 100)">记忆保留率</text>
+          <text x={196} y={226} textAnchor="middle" {...SVG_TEXT_XS} fill="#9ca3af">复习间隔 →</text>
         </svg>
       </div>
 
       {/* ── 2. Stat cards ── */}
       <div className="grid grid-cols-3 gap-4">
         <StatCard
-          label={t('sky.learning.masteryProgress')} value={`${progress?.percentComplete ?? 0}%`} color="#4A90D9"
-          footer={<>{t('sky.learning.mastered', { mastered: progress?.masteredCount ?? 0, total: progress?.totalCount ?? 0 })}</>}
+          label="掌握进度" value={`${progress?.percentComplete ?? 0}%`} color="#4A90D9"
+          footer={<>{progress?.masteredCount ?? 0}/{progress?.totalCount ?? 0} 已掌握</>}
         >
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100">
             <div className="h-full rounded-full bg-gradient-to-r from-[#4A90D9] to-[#10B981] transition-all duration-700"
               style={{ width: `${progress?.percentComplete ?? 0}%` }} />
           </div>
         </StatCard>
-        <StatCard label={t('sky.learning.todayReview')} value={schedule?.today?.count ?? 0} color="#F59E0B" suffix={t('sky.learning.items')}>
+        <StatCard label="今日待复习" value={schedule?.today?.count ?? 0} color="#F59E0B" suffix="题">
           {schedule && schedule.overdue > 0 && (
-            <div className="mt-2 text-[11px] text-red-400">{t('sky.learning.overdueWarning', { n: schedule.overdue })}</div>
+            <div className="mt-2 text-[11px] text-red-400">⚠️ {schedule.overdue} 题已逾期</div>
           )}
         </StatCard>
         <StatCard
-          label={t('sky.learning.weekPlan')}
+          label="未来7天计划"
           value={schedule?.upcoming?.reduce((s, d) => s + d.count, 0) ?? 0}
-          color="#10B981" suffix={t('sky.learning.items')}
-          footer={<>{t('sky.learning.reviewDays', { n: schedule?.upcoming?.length ?? 0 })}</>}
+          color="#10B981" suffix="题"
+          footer={<>{schedule?.upcoming?.length ?? 0} 个复习日</>}
         />
       </div>
 
@@ -236,8 +233,8 @@ export function ReviewPlan() {
       {urgentItems.length > 0 && (
         <div className="rounded-xl bg-white p-5 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold text-gray-700 flex items-center gap-2">
-            {t('sky.learning.todayReviewList')}
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">{urgentItems.length} {t('sky.learning.items')}</span>
+            🔔 今日待复习
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">{urgentItems.length} 题</span>
           </h3>
           <div className="space-y-2">
             {urgentItems.map((item) => (
@@ -245,10 +242,10 @@ export function ReviewPlan() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-800 line-clamp-1">{item.problemText}</p>
                   <p className="mt-1 text-[11px] text-gray-400">
-                    {t('sky.learning.reviewTimes', { n: item.reviewCount })} · {'⭐'.repeat(Math.min(item.masteryLevel, 6)) || '—'}
+                    复习 {item.reviewCount} 次 · 掌握度 {'⭐'.repeat(Math.min(item.masteryLevel, 6)) || '—'}
                   </p>
                 </div>
-                <span className="shrink-0 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700">{t('sky.learning.nthReview', { n: item.reviewCount + 1 })}</span>
+                <span className="shrink-0 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700">第{item.reviewCount + 1}次</span>
               </div>
             ))}
           </div>
@@ -258,7 +255,7 @@ export function ReviewPlan() {
       {/* ── 4. Upcoming schedule ── */}
       {schedule?.upcoming && schedule.upcoming.length > 0 && (
         <div className="rounded-xl bg-white p-5 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700">{t('sky.learning.upcomingReviewPlan')}</h3>
+          <h3 className="mb-3 text-sm font-semibold text-gray-700">📅 未来复习计划</h3>
           <div className="divide-y divide-gray-50">
             {schedule.upcoming.map((day) => (
               <div key={day.date} className="flex items-center justify-between px-3 py-2.5">
@@ -266,7 +263,7 @@ export function ReviewPlan() {
                   <span className="text-sm font-medium text-gray-700 w-12">{day.dayLabel}</span>
                   <span className="text-[11px] text-gray-400">{day.date}</span>
                 </div>
-                <span className="rounded-full bg-[#E8F4FD] px-2.5 py-0.5 text-[11px] font-medium text-[#4A90D9]">{day.count} {t('sky.learning.items')}</span>
+                <span className="rounded-full bg-[#E8F4FD] px-2.5 py-0.5 text-[11px] font-medium text-[#4A90D9]">{day.count} 题</span>
               </div>
             ))}
           </div>
@@ -275,30 +272,30 @@ export function ReviewPlan() {
 
       {/* ── 5. Interval guide ── */}
       <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold text-gray-700">{t('sky.learning.reviewIntervalGuide')}</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gray-700">📖 复习间隔说明</h3>
         <div className="grid grid-cols-3 gap-3">
           {EBBINGHAUS_INTERVALS.map((day, i) => (
             <div key={day} className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                style={{ backgroundColor: INTERVAL_COLORS[day] }}>
+                style={{ backgroundColor: INTERVAL_META[day].color }}>
                 {i + 1}
               </div>
               <div>
-                <div className="text-xs font-medium text-gray-700">{t('sky.learning.nthReview', { n: i + 1 })}</div>
-                <div className="text-[11px] text-gray-400">{t('sky.learning.day', { n: day })}</div>
+                <div className="text-xs font-medium text-gray-700">第{i + 1}次</div>
+                <div className="text-[11px] text-gray-400">{INTERVAL_META[day].label}</div>
               </div>
             </div>
           ))}
         </div>
         <p className="mt-3 text-[11px] text-gray-400 leading-relaxed">
-          {t('sky.learning.reviewIntervalDesc')}
+          基于艾宾浩斯遗忘曲线理论，学习后分别在 1天、2天、4天、7天、15天、30天 进行复习，可将短期记忆转化为长期记忆。完成全部 6 轮复习后，该知识点即被标记为「已掌握」。
         </p>
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-gray-400">{t('sky.learning.dataSource', { source: source === 'api' ? t('sky.learning.dataSourceCloud') : t('sky.learning.dataSourceLocal') })}</span>
-        <button onClick={loadData} className="rounded-full bg-gray-100 px-3 py-1 text-[11px] text-gray-500 hover:bg-gray-200 transition-colors">{t('sky.learning.refresh')}</button>
+        <span className="text-[10px] text-gray-400">数据来源: {source === 'api' ? '云端同步' : '本地计算'}</span>
+        <button onClick={loadData} className="rounded-full bg-gray-100 px-3 py-1 text-[11px] text-gray-500 hover:bg-gray-200 transition-colors">刷新</button>
       </div>
     </div>
   );
