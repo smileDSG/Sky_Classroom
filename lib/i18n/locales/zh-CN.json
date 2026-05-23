@@ -3,7 +3,8 @@
     "you": "你",
     "confirm": "确定",
     "cancel": "取消",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "send": "发送"
   },
   "home": {
     "slogan": "Generative Learning in Multi-Agent Interactive Classroom",
@@ -144,7 +145,9 @@
     "generatingNextPage": "场景正在生成，请稍候...",
     "courseComplete": "课程完成",
     "fullscreen": "全屏",
-    "exitFullscreen": "退出全屏"
+    "exitFullscreen": "退出全屏",
+    "speakingToTeacher": "正在向老师提问...",
+    "quickQuestions": "快速提问"
   },
   "classroomComplete": {
     "title": "课程完成",
@@ -226,7 +229,9 @@
     "voiceInputDisabled": "语音输入已禁用",
     "textInput": "文字输入",
     "stopRecording": "停止录音",
-    "startRecording": "开始录音"
+    "startRecording": "开始录音",
+    "askTeacher": "向老师提问",
+    "ask": "提问"
   },
   "pbl": {
     "legacyFormat": "此PBL场景使用旧格式，请重新生成课程",
@@ -1054,5 +1059,43 @@
     "title": "请输入访问码",
     "placeholder": "访问码",
     "error": "访问码错误，请重试。"
+  },
+  "account": {
+    "title": "账户中心",
+    "profileSection": "个人资料",
+    "accountSection": "账户信息",
+    "securitySection": "安全设置",
+    "nickname": "昵称",
+    "nicknamePlaceholder": "输入你的昵称",
+    "bio": "个人简介",
+    "bioPlaceholder": "介绍一下自己吧",
+    "email": "邮箱",
+    "username": "用户名",
+    "role": "角色",
+    "status": "状态",
+    "planType": "套餐类型",
+    "userId": "用户ID",
+    "roleGuest": "访客",
+    "roleUser": "用户",
+    "roleAdmin": "管理员",
+    "statusActive": "活跃",
+    "statusSuspended": "已停用",
+    "planFree": "免费版",
+    "planBasic": "基础版",
+    "planPro": "专业版",
+    "planEnterprise": "企业版",
+    "changePassword": "修改密码",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmPassword": "确认密码",
+    "passwordMismatch": "两次输入的密码不一致",
+    "passwordTooShort": "密码至少 6 位",
+    "passwordChanged": "密码修改成功",
+    "saveSuccess": "保存成功",
+    "backToHome": "返回首页",
+    "unauthorized": "请先登录后再访问"
+  },
+  "speech": {
+    "speaking": "说话中..."
   }
 }

@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 export interface AvatarSpeechPopupProps {
   speakingAgentId: string | null | undefined;
@@ -11,6 +12,7 @@ export interface AvatarSpeechPopupProps {
     avatar: string;
     name: string;
     role: 'teacher' | 'student' | 'user';
+    color?: string;
   }>;
   sidebarWidth?: number;
 }
@@ -48,7 +50,9 @@ export function AvatarSpeechPopup({
   participants,
   sidebarWidth = 80,
 }: AvatarSpeechPopupProps) {
-  if (!speakingAgentId || !sourceText) return null;
+  const { t } = useI18n();
+
+  if (!speakingAgentId || !sourceText?.trim()) return null;
 
   const speaker = participants.find((p) => p.id === speakingAgentId);
   if (!speaker) return null;
@@ -61,7 +65,7 @@ export function AvatarSpeechPopup({
         key={speakingAgentId}
         initial={{ opacity: 0, x: -20, scale: 0.9 }}
         animate={{ opacity: 1, x: 0, scale: 1 }}
-        exit={{ opacity: 0, x: -20, scale: 0.9 }}
+        exit={{ opacity: 0, x: -20, scale: 0.9, transition: { duration: 0.25, ease: [0.21, 1, 0.36, 1] } }}
         transition={{ duration: 0.35, ease: [0.21, 1, 0.36, 1] }}
         className={cn(
           'fixed z-50 top-1/2 -translate-y-1/2',
@@ -127,7 +131,7 @@ export function AvatarSpeechPopup({
                 className={cn('w-1 rounded-full', theme.bar)}
               />
             ))}
-            <span className="text-[10px] text-slate-400 ml-1.5">说话中...</span>
+            <span className="text-[10px] text-slate-400 ml-1.5">{t('speech.speaking')}</span>
           </div>
         </div>
       </motion.div>

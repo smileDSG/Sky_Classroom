@@ -3,7 +3,8 @@
     "you": "你",
     "confirm": "確定",
     "cancel": "取消",
-    "loading": "載入中..."
+    "loading": "載入中...",
+    "send": "發送"
   },
   "home": {
     "slogan": "多智能體互動課室中的生成式學習",
@@ -144,7 +145,9 @@
     "generatingNextPage": "場景正在生成，請稍候...",
     "fullscreen": "全螢幕",
     "exitFullscreen": "離開全螢幕",
-    "courseComplete": "課程完成"
+    "courseComplete": "課程完成",
+    "speakingToTeacher": "正在向老師提問...",
+    "quickQuestions": "快速提問"
   },
   "whiteboard": {
     "title": "互動白板",
@@ -211,7 +214,9 @@
     "voiceInputDisabled": "語音輸入已停用",
     "textInput": "文字輸入",
     "stopRecording": "停止錄音",
-    "startRecording": "開始錄音"
+    "startRecording": "開始錄音",
+    "askTeacher": "向老師提問",
+    "ask": "提問"
   },
   "pbl": {
     "legacyFormat": "此PBL場景使用舊格式，請重新生成課程",
@@ -1054,5 +1059,43 @@
       "quiz": "測驗",
       "slide": "頁面"
     }
+  },
+  "account": {
+    "title": "帳戶中心",
+    "profileSection": "個人資料",
+    "accountSection": "帳戶資訊",
+    "securitySection": "安全設定",
+    "nickname": "暱稱",
+    "nicknamePlaceholder": "輸入你的暱稱",
+    "bio": "個人簡介",
+    "bioPlaceholder": "介紹一下自己吧",
+    "email": "電子信箱",
+    "username": "使用者名稱",
+    "role": "角色",
+    "status": "狀態",
+    "planType": "方案類型",
+    "userId": "使用者ID",
+    "roleGuest": "訪客",
+    "roleUser": "使用者",
+    "roleAdmin": "管理員",
+    "statusActive": "活躍",
+    "statusSuspended": "已停用",
+    "planFree": "免費版",
+    "planBasic": "基礎版",
+    "planPro": "專業版",
+    "planEnterprise": "企業版",
+    "changePassword": "修改密碼",
+    "currentPassword": "目前密碼",
+    "newPassword": "新密碼",
+    "confirmPassword": "確認密碼",
+    "passwordMismatch": "兩次輸入的密碼不一致",
+    "passwordTooShort": "密碼至少 6 位",
+    "passwordChanged": "密碼修改成功",
+    "saveSuccess": "儲存成功",
+    "backToHome": "返回首頁",
+    "unauthorized": "請先登入再存取此頁面"
+  },
+  "speech": {
+    "speaking": "說話中..."
   }
 }
