@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { SlideViewer } from './slide-viewer';
 import { AvatarPlayer } from './avatar-player';
 import { AvatarSelector } from './avatar-selector';
@@ -9,6 +9,64 @@ import { exportCourseToPPTX } from '@/lib/export/course-exporter';
 import { AVATAR_CONFIGS } from '@/lib/slides/avatar-config';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import type { AvatarConfig } from '@/lib/slides/types';
+import { cn } from '@/lib/utils';
+import { AvatarSpeechPopup } from '@/components/ui/avatar-speech-popup';
+
+// 讨论对话消息类型
+interface DiscussionMessage {
+  id: string;
+  avatar: AvatarConfig;
+  text: string;
+  duration: number; // 显示时长(ms)
+  side: 'left' | 'right'; // 从哪侧弹出
+}
+
+// 讨论对话管理 Hook
+function useDiscussion(avatars: AvatarConfig[]) {
+  const [currentMessage, setCurrentMessage] = useState<DiscussionMessage | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const messageQueueRef = useRef<DiscussionMessage[]>([]);
+
+  const playDiscussion = useCallback(
+    (messages: { text: string; avatarIndex: number; duration?: number; side?: 'left' | 'right' }[]) => {
+      const formatted = messages.map((m, i) => ({
+        id: `msg-${Date.now()}-${i}`,
+        avatar: avatars[m.avatarIndex] || avatars[0],
+        text: m.text,
+        duration: m.duration || 3000 + m.text.length * 150, // 根据文字长度计算时长
+        side: m.side || (m.avatarIndex === 0 ? 'right' : 'left'), // 老师默认右侧，学生默认左侧
+      }));
+      messageQueueRef.current = formatted;
+      setIsPlaying(true);
+      setCurrentMessage(formatted[0]);
+    },
+    [avatars]
+  );
+
+  const stopDiscussion = useCallback(() => {
+    messageQueueRef.current = [];
+    setCurrentMessage(null);
+    setIsPlaying(false);
+  }, []);
+
+  const handleMessageComplete = useCallback(() => {
+    messageQueueRef.current.shift();
+    if (messageQueueRef.current.length > 0) {
+      setCurrentMessage(messageQueueRef.current[0]);
+    } else {
+      setCurrentMessage(null);
+      setIsPlaying(false);
+    }
+  }, []);
+
+  return {
+    currentMessage,
+    isPlaying,
+    playDiscussion,
+    stopDiscussion,
+    handleMessageComplete,
+  };
+}
 
 const DIFFICULTIES = [
   { value: 'junior', label: '初中' },
@@ -101,6 +159,20 @@ export default function SlidesPage() {
   }, [slides.length]);
 
   const currentSlide = slides[activeIndex] || null;
+
+  // 讨论对话功能
+  const { currentMessage, isPlaying, playDiscussion, stopDiscussion, handleMessageComplete } =
+    useDiscussion(AVATAR_CONFIGS);
+
+  // 触发示例讨论（可以替换为实际API调用）
+  const triggerDiscussion = useCallback(() => {
+    if (isPlaying) return;
+    playDiscussion([
+      { text: '老师，这个知识点我有点不太理解，能再讲解一下吗？', avatarIndex: 2, duration: 3500, side: 'left' },
+      { text: '当然可以！让我用更简单的方式来解释这个概念...', avatarIndex: 0, duration: 4000, side: 'right' },
+      { text: '原来是这样！我明白了，谢谢老师！', avatarIndex: 2, duration: 2500, side: 'left' },
+    ]);
+  }, [isPlaying, playDiscussion]);
 
   return (
     /* Fill all available space from SkyAppShell */
@@ -223,6 +295,21 @@ export default function SlidesPage() {
             <div className="relative flex-1">
               <SlideViewer slide={currentSlide} />
               <AvatarPlayer avatar={slides.length > 0 ? selectedAvatar : null} speech={null} />
+
+              {/* 讨论对话框 - 头像侧弹出 */}
+              {currentMessage && (
+                <AvatarSpeechPopup
+                  speakingAgentId={currentMessage.avatar.id}
+                  sourceText={currentMessage.text}
+                  participants={AVATAR_CONFIGS.map((a) => ({
+                    id: a.id,
+                    avatar: a.avatarUrl,
+                    name: a.name,
+                    role: a.id.includes('professor') || a.id.includes('teacher') ? 'teacher' : 'student',
+                  }))}
+                  sidebarWidth={sidebarOpen ? 240 : 0}
+                />
+              )}
             </div>
 
             {/* Bottom bar */}
@@ -256,6 +343,31 @@ export default function SlidesPage() {
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* 讨论对话按钮 */}
+                  <button
+                    onClick={triggerDiscussion}
+                    disabled={isPlaying || slides.length === 0}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
+                      isPlaying
+                        ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                        : 'bg-sky-50 text-sky-600 hover:bg-sky-100 dark:bg-sky-900/20 dark:text-sky-400 dark:hover:bg-sky-900/30'
+                    )}
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                    </svg>
+                    {isPlaying ? '对话中...' : '演示讨论'}
+                  </button>
+                  {isPlaying && (
+                    <button
+                      onClick={stopDiscussion}
+                      className="rounded-lg px-2 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      停止
+                    </button>
+                  )}
+                  <div className="w-px h-4 bg-slate-200" />
                   <button
                     onClick={handleGenerate}
                     disabled={generating}
