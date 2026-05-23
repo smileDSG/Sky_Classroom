@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -45,6 +47,11 @@ export function AvatarSpeechPopup({
   sidebarWidth = 80,
 }: AvatarSpeechPopupProps) {
   const { t } = useI18n();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!speakingAgentId || !sourceText?.trim()) return null;
 
@@ -53,7 +60,7 @@ export function AvatarSpeechPopup({
 
   const theme = roleTheme[speaker.role];
 
-  return (
+  const content = (
     <AnimatePresence mode="wait">
       <motion.div
         key={speakingAgentId}
@@ -62,7 +69,7 @@ export function AvatarSpeechPopup({
         exit={{ opacity: 0, x: -20, scale: 0.9, transition: { duration: 0.25, ease: [0.21, 1, 0.36, 1] } }}
         transition={{ duration: 0.35, ease: [0.21, 1, 0.36, 1] }}
         className={cn(
-          'absolute z-50 top-1/2 -translate-y-1/2',
+          'fixed z-[9999] top-1/2 -translate-y-1/2',
         )}
         style={{ left: sidebarWidth + 8 }}
         role="status"
@@ -135,4 +142,8 @@ export function AvatarSpeechPopup({
       </motion.div>
     </AnimatePresence>
   );
+
+  // Portal to body to avoid any clipping/stacking issues
+  if (!mounted) return null;
+  return createPortal(content, document.body);
 }

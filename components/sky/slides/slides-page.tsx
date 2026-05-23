@@ -176,7 +176,7 @@ export default function SlidesPage() {
 
   return (
     /* Fill all available space from SkyAppShell */
-    <div className="relative -m-6 flex flex-col bg-[#F8FAFC]" style={{ minHeight: 'calc(100vh - 3.5rem)', height: 'calc(100vh - 3.5rem)' }}>
+    <div className="-m-6 flex flex-col bg-[#F8FAFC]" style={{ minHeight: 'calc(100vh - 3.5rem)', height: 'calc(100vh - 3.5rem)' }}>
       {/* Hide scrollbars globally on this page */}
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
