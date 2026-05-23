@@ -176,7 +176,7 @@ export default function SlidesPage() {
 
   return (
     /* Fill all available space from SkyAppShell */
-    <div className="-m-6 flex flex-col bg-[#F8FAFC]" style={{ minHeight: 'calc(100vh - 3.5rem)', height: 'calc(100vh - 3.5rem)' }}>
+    <div className="relative -m-6 flex flex-col bg-[#F8FAFC]" style={{ minHeight: 'calc(100vh - 3.5rem)', height: 'calc(100vh - 3.5rem)' }}>
       {/* Hide scrollbars globally on this page */}
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -295,21 +295,6 @@ export default function SlidesPage() {
             <div className="relative flex-1">
               <SlideViewer slide={currentSlide} />
               <AvatarPlayer avatar={slides.length > 0 ? selectedAvatar : null} speech={null} />
-
-              {/* 讨论对话框 - 头像侧弹出 */}
-              {currentMessage && (
-                <AvatarSpeechPopup
-                  speakingAgentId={currentMessage.avatar.id}
-                  sourceText={currentMessage.text}
-                  participants={AVATAR_CONFIGS.map((a) => ({
-                    id: a.id,
-                    avatar: a.avatarUrl,
-                    name: a.name,
-                    role: a.id.includes('professor') || a.id.includes('teacher') ? 'teacher' : 'student',
-                  }))}
-                  sidebarWidth={sidebarOpen ? 240 : 0}
-                />
-              )}
             </div>
 
             {/* Bottom bar */}
@@ -391,6 +376,21 @@ export default function SlidesPage() {
           </main>
         </div>
       </div>
+
+      {/* 讨论对话框 - 头像侧弹出 (rendered outside overflow-hidden containers) */}
+      {currentMessage && (
+        <AvatarSpeechPopup
+          speakingAgentId={currentMessage.avatar.id}
+          sourceText={currentMessage.text}
+          participants={AVATAR_CONFIGS.map((a) => ({
+            id: a.id,
+            avatar: a.avatarUrl,
+            name: a.name,
+            role: a.id.includes('professor') || a.id.includes('teacher') ? 'teacher' : 'student',
+          }))}
+          sidebarWidth={sidebarOpen ? 240 : 0}
+        />
+      )}
     </div>
   );
 }

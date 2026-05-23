@@ -62,7 +62,7 @@ export function AvatarSpeechPopup({
         exit={{ opacity: 0, x: -20, scale: 0.9, transition: { duration: 0.25, ease: [0.21, 1, 0.36, 1] } }}
         transition={{ duration: 0.35, ease: [0.21, 1, 0.36, 1] }}
         className={cn(
-          'fixed z-50 top-1/2 -translate-y-1/2',
+          'absolute z-50 top-1/2 -translate-y-1/2',
         )}
         style={{ left: sidebarWidth + 8 }}
         role="status"
