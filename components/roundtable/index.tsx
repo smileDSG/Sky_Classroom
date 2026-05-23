@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Mic,
@@ -156,6 +156,9 @@ export function Roundtable({
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [userMessage, setUserMessage] = useState<string | null>(null);
+  const [speakerTop, setSpeakerTop] = useState<number | null>(null);
+  const [popupLeft, setPopupLeft] = useState<number>(80);
+  const avatarRefMapRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const agentScrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const teacherAvatarRef = useRef<HTMLDivElement>(null);
@@ -534,6 +537,33 @@ export function Roundtable({
     isRecording ||
     isProcessing;
 
+  // Derive effective speaking agent for the popup — user messages come from local
+  // state, not from the engine, so map them to the user participant explicitly.
+  // Map speech to the correct participant for the popup.
+  // speakingAgentId from the engine covers live chat; bubbleRole covers
+  // lecture/idle playback where the engine doesn't emit an agentId.
+  const popupSpeakingAgentId = (() => {
+    if (userMessage) return userParticipant?.id ?? null;
+    if (speakingAgentId) return speakingAgentId;
+    if (bubbleRole === 'teacher' && sourceText) return teacherParticipant?.id ?? null;
+    if (bubbleRole === 'agent' && speakingStudent) return speakingStudent.id;
+    return null;
+  })();
+
+  // Track the screen position of the speaking avatar for popup alignment
+  useLayoutEffect(() => {
+    if (popupSpeakingAgentId) {
+      const el = avatarRefMapRef.current.get(popupSpeakingAgentId);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        setSpeakerTop(rect.top + rect.height / 2);
+        setPopupLeft(rect.right + 8);
+      }
+    } else {
+      setSpeakerTop(null);
+    }
+  }, [popupSpeakingAgentId, sourceText]);
+
   // Prepare participants for CharacterStrip
   const stripParticipants = initialParticipants.map((p) => ({
     id: p.id,
@@ -551,10 +581,11 @@ export function Roundtable({
     return (
       <div className="h-0 w-full relative z-10 overflow-visible">
         <AvatarSpeechPopup
-          speakingAgentId={speakingAgentId}
+          speakingAgentId={popupSpeakingAgentId}
           sourceText={sourceText}
           participants={stripParticipants}
-          sidebarWidth={80}
+          popupLeft={popupLeft}
+          speakerTop={speakerTop}
         />
 
         {/* Left side Character Strip - extends to top */}
@@ -566,6 +597,7 @@ export function Roundtable({
               thinkingId={thinkingState?.agentId}
               userAvatar={userProfileAvatar || userAvatar}
               isCueUser={isCueUser}
+              avatarRefMap={avatarRefMapRef}
               onParticipantClick={(id) => {
                 // Handle participant click
               }}
@@ -945,10 +977,11 @@ export function Roundtable({
       {/* Left: Character Strip with Speech Popup */}
       <div className="w-20 shrink-0 flex flex-col items-center py-6 bg-sky-50/60 dark:bg-slate-900/40 backdrop-blur-sm border-r border-sky-200/50 dark:border-white/5 overflow-hidden relative">
         <AvatarSpeechPopup
-          speakingAgentId={speakingAgentId}
+          speakingAgentId={popupSpeakingAgentId}
           sourceText={sourceText}
           participants={stripParticipants}
-          sidebarWidth={80}
+          popupLeft={popupLeft}
+          speakerTop={speakerTop}
         />
 
         <CharacterStrip
@@ -957,6 +990,7 @@ export function Roundtable({
           thinkingId={thinkingState?.agentId}
           userAvatar={userAvatar}
           isCueUser={isCueUser}
+          avatarRefMap={avatarRefMapRef}
           onParticipantClick={(id) => {
             // Handle participant click
           }}

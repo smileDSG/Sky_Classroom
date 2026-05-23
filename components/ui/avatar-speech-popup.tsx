@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -15,6 +17,8 @@ export interface AvatarSpeechPopupProps {
     color?: string;
   }>;
   sidebarWidth?: number;
+  speakerTop?: number | null;
+  popupLeft?: number;
 }
 
 const roleTheme = {
@@ -43,9 +47,17 @@ export function AvatarSpeechPopup({
   sourceText,
   participants,
   sidebarWidth = 80,
+  speakerTop,
+  popupLeft,
 }: AvatarSpeechPopupProps) {
   const { t } = useI18n();
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
   if (!speakingAgentId || !sourceText?.trim()) return null;
 
   const speaker = participants.find((p) => p.id === speakingAgentId);
@@ -53,10 +65,17 @@ export function AvatarSpeechPopup({
 
   const theme = roleTheme[speaker.role];
 
-  return (
+  const content = (
     <div
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 9999 }}
+      style={{
+        position: 'fixed',
+        top: speakerTop != null ? `${speakerTop}px` : '50%',
+        left: popupLeft != null ? `${popupLeft}px` : `${sidebarWidth + 8}px`,
+        transform: 'translateY(-50%)',
+        zIndex: 99999,
+        pointerEvents: 'none',
+        maxWidth: '260px',
+      }}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -65,16 +84,7 @@ export function AvatarSpeechPopup({
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: -20, scale: 0.9, transition: { duration: 0.25, ease: [0.21, 1, 0.36, 1] } }}
           transition={{ duration: 0.35, ease: [0.21, 1, 0.36, 1] }}
-          className="pointer-events-auto"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            left: sidebarWidth + 8,
-          }}
-          role="status"
-          aria-live="polite"
-          aria-label="Current speaker speech"
+          style={{ pointerEvents: 'auto' }}
         >
           <div
             className={cn(
@@ -143,4 +153,6 @@ export function AvatarSpeechPopup({
       </AnimatePresence>
     </div>
   );
+
+  return createPortal(content, document.body);
 }

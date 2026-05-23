@@ -377,7 +377,7 @@ export default function SlidesPage() {
         </div>
       </div>
 
-      {/* 讨论对话框 - 头像侧弹出 (rendered outside overflow-hidden containers) */}
+      {/* 讨论对话框 - 头像侧弹出 */}
       {currentMessage && (
         <AvatarSpeechPopup
           speakingAgentId={currentMessage.avatar.id}
