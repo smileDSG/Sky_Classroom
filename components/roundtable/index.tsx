@@ -550,12 +550,7 @@ export function Roundtable({
   if (isPresenting) {
     return (
       <div className="h-0 w-full relative z-10 overflow-visible">
-        <AvatarSpeechPopup
-          speakingAgentId={speakingAgentId}
-          sourceText={sourceText}
-          participants={stripParticipants}
-          sidebarWidth={80}
-        />
+        {/* AvatarSpeechPopup moved outside - see end of component */}
 
         {/* Left side Character Strip - extends to top */}
         <div className="fixed left-0 top-0 bottom-0 w-20 z-[35] flex flex-col items-center bg-sky-50/80 dark:bg-slate-900/80 backdrop-blur-md border-r border-sky-200/50 dark:border-white/5 overflow-y-auto">
@@ -935,6 +930,16 @@ export function Roundtable({
             )}
           </AnimatePresence>
         </div>
+
+        {/* AvatarSpeechPopup - positioned relative to viewport in presentation mode */}
+        <div className="fixed inset-0 pointer-events-none z-50">
+          <AvatarSpeechPopup
+            speakingAgentId={speakingAgentId}
+            sourceText={sourceText}
+            participants={stripParticipants}
+            sidebarWidth={80}
+          />
+        </div>
       </div>
     );
   }
@@ -942,15 +947,8 @@ export function Roundtable({
   // Normal mode - New immersive layout
   return (
     <div className="h-full w-full flex flex-row relative z-10">
-      {/* Left: Character Strip with Speech Popup */}
+      {/* Left: Character Strip */}
       <div className="w-20 shrink-0 flex flex-col items-center py-6 bg-sky-50/60 dark:bg-slate-900/40 backdrop-blur-sm border-r border-sky-200/50 dark:border-white/5 overflow-hidden relative">
-        <AvatarSpeechPopup
-          speakingAgentId={speakingAgentId}
-          sourceText={sourceText}
-          participants={stripParticipants}
-          sidebarWidth={80}
-        />
-
         <CharacterStrip
           participants={stripParticipants}
           speakingId={speakingAgentId}
@@ -1169,6 +1167,14 @@ export function Roundtable({
           onToggleAutoPlay={() => useSettingsStore.getState().setAutoPlayLecture(!useSettingsStore.getState().autoPlayLecture)}
         />
       </div>
+
+      {/* AvatarSpeechPopup - absolute positioned relative to root container */}
+      <AvatarSpeechPopup
+        speakingAgentId={speakingAgentId}
+        sourceText={sourceText}
+        participants={stripParticipants}
+        sidebarWidth={80}
+      />
     </div>
   );
 }
