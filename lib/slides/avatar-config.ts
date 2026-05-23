@@ -11,7 +11,7 @@ export const AVATAR_CONFIGS: AvatarConfig[] = [
   {
     id: 'serious-professor',
     name: '严肃教授',
-    avatarUrl: '/avatars/teacher.png',
+    avatarUrl: '/avatars/teacher-new.jpg',
     voiceConfig: {
       providerId: VOXCPM_TTS_PROVIDER_ID,
       voiceId: VOXCPM_AUTO_VOICE_ID,
@@ -24,7 +24,7 @@ export const AVATAR_CONFIGS: AvatarConfig[] = [
   {
     id: 'gentle-senior',
     name: '温柔学姐',
-    avatarUrl: '/avatars/assist.png',
+    avatarUrl: '/avatars/assistant-new.jpg',
     voiceConfig: {
       providerId: VOXCPM_TTS_PROVIDER_ID,
       voiceId: VOXCPM_AUTO_VOICE_ID,
@@ -37,7 +37,7 @@ export const AVATAR_CONFIGS: AvatarConfig[] = [
   {
     id: 'humorous-underachiever',
     name: '幽默学渣',
-    avatarUrl: '/avatars/clown.png',
+    avatarUrl: '/avatars/student-meme-new.jpg',
     voiceConfig: {
       providerId: VOXCPM_TTS_PROVIDER_ID,
       voiceId: VOXCPM_AUTO_VOICE_ID,

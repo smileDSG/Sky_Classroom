@@ -4,7 +4,8 @@
  */
 
 import { cookies } from 'next/headers';
-import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, verifyRefreshToken } from '@/lib/server/auth';
 import { createUserDAO } from '@/lib/storage/dao/users';
 
@@ -34,7 +35,14 @@ export async function POST() {
 
     const newAccessToken = await signAccessToken({ id: user.id, email: user.email ?? undefined, role: user.role });
 
-    return apiSuccess({ accessToken: newAccessToken });
+    return NextResponse.json(
+      { success: true },
+      {
+        headers: {
+          'Set-Cookie': `access_token=${newAccessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${60 * 60}`,
+        },
+      },
+    );
   } catch (err) {
     return apiError('INTERNAL_ERROR', 500, 'Token refresh failed');
   }

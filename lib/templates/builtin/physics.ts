@@ -2,7 +2,7 @@
  * Built-in physics course templates.
  */
 
-import type { CourseTemplate } from './types';
+import type { CourseTemplate } from '../types';
 
 export const PHYSICS_TEMPLATES: CourseTemplate[] = [
   {

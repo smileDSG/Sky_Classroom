@@ -2,7 +2,7 @@
  * Built-in english course templates.
  */
 
-import type { CourseTemplate } from './types';
+import type { CourseTemplate } from '../types';
 
 export const ENGLISH_TEMPLATES: CourseTemplate[] = [
   {

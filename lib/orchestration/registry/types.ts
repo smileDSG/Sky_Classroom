@@ -16,6 +16,7 @@ export interface AgentConfig {
   priority: number; // Priority for director selection (1-10)
   voiceConfig?: { providerId: TTSProviderId; modelId?: string; voiceId: string }; // Per-agent TTS voice selection
   personaType?: string; // Student persona archetype: "curious", "analytical", "creative", "note-taker"
+  enabled?: boolean; // Whether the agent is enabled
 
   // Metadata
   createdAt: Date;

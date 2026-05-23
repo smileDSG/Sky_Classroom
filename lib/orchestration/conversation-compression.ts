@@ -14,7 +14,7 @@ import { COMPRESSION_TARGET, COMPRESSION_MESSAGE_THRESHOLD } from './config';
 type MessageRole = 'user' | 'assistant' | 'system' | 'agent' | 'tool';
 
 interface MessageLike {
-  role: string;
+  role: MessageRole;
   content?: unknown;
 }
 

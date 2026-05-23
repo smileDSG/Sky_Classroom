@@ -176,7 +176,13 @@ export type PromptId =
   | 'generators/pbl-design'
   | 'generators/pbl-actions'
   | 'generators/web-search-query-rewrite'
-  | 'generators/agent-profiles';
+  | 'generators/agent-profiles'
+  // New modular generators — Ultra Mode widgets (Phase 4+)
+  | 'generators/simulation-content'
+  | 'generators/diagram-content'
+  | 'generators/code-content'
+  | 'generators/game-content'
+  | 'generators/visualization3d-content';
 
 /**
  * Legacy snippet identifier — kept for backward compatibility.

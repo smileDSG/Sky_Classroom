@@ -756,7 +756,11 @@ function GenerationPreviewContent() {
         // Preset mode — use selected agents (include persona)
         // Filter out stale generated agent IDs that may linger in settings
         const registry = useAgentRegistry.getState();
-        const presetAgentIds = settings.selectedAgentIds.filter((id) => {
+        // Use agentIds from session if available, otherwise fall back to settings
+        const agentIdsToUse = currentSession.agentIds && currentSession.agentIds.length > 0
+          ? currentSession.agentIds
+          : settings.selectedAgentIds;
+        const presetAgentIds = agentIdsToUse.filter((id) => {
           const a = registry.getAgent(id);
           return a && !a.isGenerated;
         });

@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -37,10 +37,11 @@ export default function LoginPage() {
   };
 
   // If already logged in, redirect
-  if (!isGuest) {
-    router.push('/');
-    return null;
-  }
+  useEffect(() => {
+    if (!isGuest) {
+      router.push('/');
+    }
+  }, [isGuest, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">

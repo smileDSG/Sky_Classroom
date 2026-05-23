@@ -305,7 +305,7 @@ export function KagamiPanel() {
     }
 
     // Subsequent messages
-    const next = [...messages, { role: 'user', content: userMsg }];
+    const next: Message[] = [...messages, { role: 'user' as const, content: userMsg }];
     setMessages(next);
 
     if (isSolving.current) {

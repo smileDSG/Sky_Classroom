@@ -81,7 +81,7 @@ export default function PerformanceDashboardPage() {
     return last.rating;
   };
 
-  const ratingColor = (r?: string) =>
+  const ratingColor = (r?: string | null) =>
     r === 'good' ? 'bg-green-500' : r === 'needs-improvement' ? 'bg-yellow-500' : r === 'poor' ? 'bg-red-500' : 'bg-gray-400';
 
   if (loading) return <p className="text-center py-8">Loading...</p>;
