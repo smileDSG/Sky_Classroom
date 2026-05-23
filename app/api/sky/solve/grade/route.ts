@@ -4,6 +4,7 @@
  */
 import { gradeAnswer } from '@/lib/solve/grader';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
+import { getServerTranslation } from '@/lib/server/i18n';
 import { createLogger } from '@/lib/logger';
 import { trackMistake } from '@/lib/mistakes';
 import type { MistakeRecord } from '@/lib/mistakes';
@@ -11,6 +12,7 @@ import type { MistakeRecord } from '@/lib/mistakes';
 const log = createLogger('API:SkySolveGrade');
 
 export async function POST(req: Request) {
+  const locale = req.headers.get('X-Locale') || 'zh-CN';
   try {
     const body = await req.json();
     const { problem, correctAnswer, userAnswer, stepByStep, mistakeId, knowledgePoints } = body;
@@ -19,7 +21,7 @@ export async function POST(req: Request) {
       return apiError(
         API_ERROR_CODES.MISSING_REQUIRED_FIELD,
         400,
-        '缺少必填字段: problem, correctAnswer, userAnswer',
+        getServerTranslation(locale, 'api.missingFields'),
       );
     }
 
@@ -51,7 +53,7 @@ export async function POST(req: Request) {
         return apiError(
           API_ERROR_CODES.INTERNAL_ERROR,
           500,
-          `错题本存储失败: ${errMsg}`,
+          `${getServerTranslation(locale, 'api.recordFailed')}: ${errMsg}`,
         );
       }
     }
@@ -62,7 +64,7 @@ export async function POST(req: Request) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
-      '批改失败',
+      getServerTranslation(locale, 'api.queryFailed'),
       err instanceof Error ? err.message : undefined,
     );
   }

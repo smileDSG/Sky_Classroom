@@ -1,10 +1,12 @@
 'use client';
 
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import { AssistantPanel } from './assistant-panel';
 import { AssistantConfig } from './assistant-config';
 
 export function AssistantFab() {
+  const { t } = useI18n();
   const isOpen = useSkyClassroomStore((s) => s.isOpen);
   const toggleOpen = useSkyClassroomStore((s) => s.toggleOpen);
 
@@ -12,11 +14,11 @@ export function AssistantFab() {
     return (
       <button
         type="button"
-        aria-label="打开小镜课堂"
+        aria-label={t('sky.assistant.openKagami')}
         onClick={toggleOpen}
         className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg transition-transform hover:scale-110 hover:shadow-xl"
       >
-        <img src="/avatars/kagami/chibi.png" alt="小镜" className="h-full w-full object-cover" />
+        <img src="/avatars/kagami/chibi.png" alt={t('sky.layout.assistantShort')} className="h-full w-full object-cover" />
       </button>
     );
   }

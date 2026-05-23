@@ -2,22 +2,27 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
-const NAV_ITEMS = [
-  { label: '首页', href: '/', icon: '🏠' },
-  { label: '概况', href: '/sky', icon: '📋' },
-  { label: '搜题', href: '/sky/solve', icon: '🔍' },
-  { label: '幻灯片', href: '/sky/slides', icon: '📖' },
-  { label: '学习数据', href: '/sky/learning', icon: '📊' },
-  { label: '小镜', href: '/sky/assistant', icon: '/avatars/kagami/chibi.png' },
-];
+function getNavItems(t: (key: string) => string) {
+  return [
+    { label: t('sky.layout.home'), href: '/', icon: '🏠' },
+    { label: t('sky.layout.dashboard'), href: '/sky', icon: '📋' },
+    { label: t('sky.layout.solve'), href: '/sky/solve', icon: '🔍' },
+    { label: t('sky.layout.slides'), href: '/sky/slides', icon: '📖' },
+    { label: t('sky.layout.learning'), href: '/sky/learning', icon: '📊' },
+    { label: t('sky.layout.assistantShort'), href: '/sky/assistant', icon: '/avatars/kagami/chibi.png' },
+  ];
+}
 
 export function SkyTabBar() {
   const pathname = usePathname();
+  const { t } = useI18n();
+  const navItems = getNavItems(t);
 
   return (
     <nav className="flex items-center gap-0.5 overflow-x-auto whitespace-nowrap shrink-0">
-      {NAV_ITEMS.map((item) => {
+      {navItems.map((item) => {
         let isActive: boolean;
         if (item.href === '/') {
           isActive = pathname === '/' || pathname.startsWith('/classroom/') || pathname.startsWith('/generation');

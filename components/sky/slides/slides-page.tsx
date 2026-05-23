@@ -8,15 +8,18 @@ import { ThumbnailList } from './thumbnail-list';
 import { exportCourseToPPTX } from '@/lib/export/course-exporter';
 import { AVATAR_CONFIGS } from '@/lib/slides/avatar-config';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import type { AvatarConfig } from '@/lib/slides/types';
 
-const DIFFICULTIES = [
-  { value: 'junior', label: '初中' },
-  { value: 'senior', label: '高中' },
-  { value: 'college', label: '大学' },
-] as const;
-
 export default function SlidesPage() {
+  const { t } = useI18n();
+
+  const DIFFICULTIES = [
+    { value: 'junior' as const, label: t('sky.assistant.grades.junior') },
+    { value: 'senior' as const, label: t('sky.assistant.grades.senior') },
+    { value: 'college' as const, label: t('sky.assistant.grades.college') },
+  ];
+
   // Persistent state from Zustand store
   const slides = useSkyClassroomStore((s) => s.slides);
   const setSlides = useSkyClassroomStore((s) => s.setSlides);
@@ -35,13 +38,15 @@ export default function SlidesPage() {
     AVATAR_CONFIGS.find((a) => a.id === storeSelectedAvatarId) || AVATAR_CONFIGS[0],
   );
   const [status, setStatus] = useState('');
+  const [statusType, setStatusType] = useState<'' | 'error' | 'success'>('');
   const [exporting, setExporting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleGenerate = useCallback(async () => {
     if (!topic.trim()) return;
     setGenerating(true);
-    setStatus('AI 正在生成幻灯片...');
+    setStatus(t('sky.slides.generating'));
+    setStatusType('');
     // Persist topic & difficulty so they survive navigation
     setGenerationOptions({ topic, difficulty });
     try {
@@ -60,36 +65,41 @@ export default function SlidesPage() {
         setSlides(data.slides);
         setActiveIndex(0);
         setStatus('');
+        setStatusType('');
       } else {
-        setStatus(`生成失败: ${data.error || '请重试'}`);
+        setStatus(t('sky.slides.generateFailed', { reason: data.error || t('sky.slides.retry') }));
+        setStatusType('error');
       }
     } catch {
-      setStatus('网络错误，请检查服务是否运行');
+      setStatus(t('sky.slides.networkError'));
+      setStatusType('error');
     } finally {
       setGenerating(false);
     }
-  }, [topic, difficulty]);
+  }, [topic, difficulty, t]);
 
   const handleExport = useCallback(async () => {
     if (!slides.length) return;
     setExporting(true);
     try {
       const result = await exportCourseToPPTX(
-        { title: topic || '课件', includeSlides: true, includeSpeakerNotes: false, includeKnowledgePoints: false, includeSimilarQuestions: false },
+        { title: topic || t('sky.slides.defaultTitle'), includeSlides: true, includeSpeakerNotes: false, includeKnowledgePoints: false, includeSimilarQuestions: false },
         slides,
       );
       const a = document.createElement('a');
       a.href = result.fileUrl;
       a.download = result.fileName;
       a.click();
-      setStatus(`已导出: ${result.fileName}`);
-      setTimeout(() => setStatus(''), 3000);
+      setStatus(t('sky.slides.exportSuccess', { fileName: result.fileName }));
+      setStatusType('success');
+      setTimeout(() => { setStatus(''); setStatusType(''); }, 3000);
     } catch {
-      setStatus('导出失败');
+      setStatus(t('sky.slides.exportFailed'));
+      setStatusType('error');
     } finally {
       setExporting(false);
     }
-  }, [slides, topic]);
+  }, [slides, topic, t]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -119,12 +129,12 @@ export default function SlidesPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-200">
               S
             </div>
-            <span className="text-sm font-semibold text-slate-600">幻灯片讲解</span>
+            <span className="text-sm font-semibold text-slate-600">{t('sky.slides.slideLecture')}</span>
             {slides.length > 0 && (
               <button
                 onClick={() => setSidebarOpen((v) => !v)}
                 className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-                title={sidebarOpen ? '收起讲解栏' : '展开讲解栏'}
+                title={sidebarOpen ? t('sky.slides.collapsePanel') : t('sky.slides.expandPanel')}
               >
                 <svg className="h-4 w-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ transform: sidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -140,7 +150,7 @@ export default function SlidesPage() {
                 value={topic}
                 onChange={(e) => setGenerationOptions({ topic: e.target.value, difficulty })}
                 onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                placeholder="输入教学主题，如：勾股定理、牛顿定律…"
+                placeholder={t('sky.slides.topicPlaceholder')}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 pl-10 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
               />
               <svg className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -174,7 +184,7 @@ export default function SlidesPage() {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
               )}
-              {generating ? '生成中' : '生成幻灯片'}
+              {generating ? t('sky.slides.generatingButton') : t('sky.slides.generateButton')}
             </button>
           </div>
 
@@ -182,7 +192,7 @@ export default function SlidesPage() {
           <div className="flex w-48 flex-shrink-0 items-center justify-end">
             {status && (
               <span className={`text-xs font-medium ${
-                status.includes('失败') || status.includes('错误') ? 'text-red-500' : 'text-slate-500'
+                statusType === 'error' ? 'text-red-500' : 'text-slate-500'
               }`}>
                 {generating ? (
                   <span className="inline-flex items-center gap-2">
@@ -237,7 +247,7 @@ export default function SlidesPage() {
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
-                    上一页
+                    {t('sky.slides.prevPage')}
                   </button>
                   <span className="min-w-[4rem] text-center text-xs tabular-nums text-slate-400">
                     <span className="font-semibold text-slate-600">{activeIndex + 1}</span>
@@ -249,7 +259,7 @@ export default function SlidesPage() {
                     disabled={activeIndex === slides.length - 1}
                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 disabled:hover:bg-transparent"
                   >
-                    下一页
+                    {t('sky.slides.nextPage')}
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -261,7 +271,7 @@ export default function SlidesPage() {
                     disabled={generating}
                     className="rounded-lg px-3 py-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
                   >
-                    重新生成
+                    {t('sky.slides.regenerate')}
                   </button>
                   <button
                     onClick={handleExport}
@@ -271,7 +281,7 @@ export default function SlidesPage() {
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    {exporting ? '导出中' : '导出 PPTX'}
+                    {exporting ? t('sky.slides.exportingButton') : t('sky.slides.exportButton')}
                   </button>
                 </div>
               </footer>

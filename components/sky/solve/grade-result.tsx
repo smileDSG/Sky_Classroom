@@ -5,50 +5,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import type { GradeResult, MistakeCause } from '@/lib/solve/types';
+import { useI18n } from '@/lib/hooks/use-i18n';
+import type { GradeResult } from '@/lib/solve/types';
 
 interface GradeResultCardProps {
   result: GradeResult;
   className?: string;
 }
 
-const causeLabels: Record<MistakeCause, { label: string; color: string; bgColor: string }> = {
-  'concept-unclear': {
-    label: '概念不清',
-    color: 'text-amber-600 dark:text-amber-400',
-    bgColor: 'bg-amber-50 dark:bg-amber-900/20',
-  },
-  'calculation-error': {
-    label: '计算失误',
-    color: 'text-orange-600 dark:text-orange-400',
-    bgColor: 'bg-orange-50 dark:bg-orange-900/20',
-  },
-  misreading: {
-    label: '审题错误',
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-  },
-  'method-wrong': {
-    label: '方法错误',
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-50 dark:bg-red-900/20',
-  },
-  careless: {
-    label: '粗心大意',
-    color: 'text-yellow-600 dark:text-yellow-400',
-    bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
-  },
-  'format-error': {
-    label: '格式错误',
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-  },
-};
 
 export function GradeResultCard({ result, className }: GradeResultCardProps) {
-  const { isCorrect, score, correctAnswer, userAnswer, errorAnalysis, cause, partialCredit } =
-    result;
-  const causeInfo = causeLabels[cause];
+  const { t } = useI18n();
+  const { isCorrect, score, correctAnswer, userAnswer, errorAnalysis, cause } = result;
+  const causeColors: Record<string, { color: string; bgColor: string }> = {
+    'concept-unclear': { color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 dark:bg-amber-900/20' },
+    'calculation-error': { color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-900/20' },
+    misreading: { color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-900/20' },
+    'method-wrong': { color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-50 dark:bg-red-900/20' },
+    careless: { color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-50 dark:bg-yellow-900/20' },
+    'format-error': { color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-900/20' },
+  };
+  const causeStyle = causeColors[cause] || { color: '', bgColor: '' };
+  const causeLabel = t(`sky.errorCause.${cause}`);
 
   return (
     <Card className={cn('overflow-hidden', className)}>
@@ -66,16 +44,16 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
             )}
             <div>
               <CardTitle className="text-lg">
-                {isCorrect ? '回答正确！' : '回答有误'}
+                {isCorrect ? t('sky.solve.correct') : t('sky.solve.incorrect')}
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                {isCorrect ? '继续保持，你已经掌握了这个知识点' : '别担心，我们来看看错在哪里'}
+                {isCorrect ? t('sky.solve.keepUp') : t('sky.solve.dontWorry')}
               </p>
             </div>
           </div>
           <div className="text-right">
             <div className={cn('text-3xl font-bold', isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>
-              {score}分
+              {score}
             </div>
             <div className="text-xs text-muted-foreground">满分100分</div>
           </div>
@@ -87,7 +65,7 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">得分情况</span>
             <span className={cn('font-medium', score >= 60 ? 'text-green-600' : 'text-red-600')}>
-              {score >= 60 ? '及格' : '不及格'}
+              {score >= 60 ? t('sky.solve.pass') : t('sky.solve.fail')}
             </span>
           </div>
           <Progress
@@ -126,9 +104,9 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
             <div className="space-y-2">
               <Badge
                 variant="secondary"
-                className={cn(causeInfo.bgColor, causeInfo.color, 'border-none')}
+                className={cn(causeStyle.bgColor, causeStyle.color, 'border-none')}
               >
-                {causeInfo.label}
+                {causeLabel}
               </Badge>
               <p className="text-sm text-muted-foreground">{errorAnalysis}</p>
             </div>

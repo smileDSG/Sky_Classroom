@@ -1,6 +1,7 @@
 'use client';
 
 import type { AvatarConfig, AvatarSpeech } from '@/lib/slides/types';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 export interface AvatarPlayerProps {
   avatar: AvatarConfig | null;
@@ -8,6 +9,7 @@ export interface AvatarPlayerProps {
 }
 
 export function AvatarPlayer({ avatar, speech }: AvatarPlayerProps) {
+  const { t } = useI18n();
   if (!avatar) return null;
 
   const hasSpeech = speech && speech.segments.length > 0;
@@ -38,7 +40,7 @@ export function AvatarPlayer({ avatar, speech }: AvatarPlayerProps) {
                 />
               ))}
             </div>
-            <span className="text-[10px] text-slate-400">讲解中</span>
+            <span className="text-[10px] text-slate-400">{t('kagami.scene.teaching')}</span>
           </div>
         </div>
       )}

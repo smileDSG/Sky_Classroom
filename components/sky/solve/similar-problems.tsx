@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import type { FourPartOutput } from '@/lib/solve/types';
 
 interface SimilarProblemsProps {
@@ -21,6 +22,7 @@ export function SimilarProblems({
   onPracticeClick,
   className,
 }: SimilarProblemsProps) {
+  const { t } = useI18n();
   const [completedQuestions, setCompletedQuestions] = useState<Set<number>>(new Set());
   const [showingAnswer, setShowingAnswer] = useState<Set<number>>(new Set());
 
@@ -172,7 +174,7 @@ export function SimilarProblems({
                           )}
                           onClick={() => toggleCompleted(index)}
                         >
-                          {isCompleted ? '标记未完成' : '标记完成'}
+                          {isCompleted ? t('sky.solve.markIncomplete') : t('sky.solve.markComplete')}
                         </Button>
                         <Button
                           variant="ghost"
@@ -180,7 +182,7 @@ export function SimilarProblems({
                           className="h-7 text-xs text-muted-foreground hover:text-[#4A90D9]"
                           onClick={() => toggleAnswer(index)}
                         >
-                          {isShowingAnswer ? '收起答案' : '查看答案'}
+                          {isShowingAnswer ? t('sky.solve.hideAnswer') : t('sky.solve.showAnswer')}
                         </Button>
                       </div>
                     </div>
@@ -205,8 +207,8 @@ export function SimilarProblems({
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
                 {completedQuestions.size === similarQuestions.length
-                  ? '太棒了！所有同类练习都已完成'
-                  : `还有 ${similarQuestions.length - completedQuestions.size} 道题目待练习`}
+                  ? t('sky.solve.allDone')
+                  : `${t('sky.solve.remaining', { n: similarQuestions.length - completedQuestions.size })}`}
               </div>
               <Button
                 variant="outline"

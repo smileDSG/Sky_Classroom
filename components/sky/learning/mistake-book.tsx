@@ -3,17 +3,7 @@
 import { useState, useMemo } from 'react';
 import type { MistakeCause } from '@/lib/solve/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-
-// ── Cause label & colour maps ────────────────────────────────────────
-
-const causeLabels: Record<MistakeCause, string> = {
-  'concept-unclear': '概念不清',
-  'calculation-error': '计算失误',
-  'misreading': '审题错误',
-  'method-wrong': '方法错误',
-  'careless': '粗心',
-  'format-error': '格式错误',
-};
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 const causeBadgeColors: Record<MistakeCause, string> = {
   'concept-unclear': 'bg-purple-100 text-purple-700',
@@ -43,6 +33,7 @@ function formatDate(date: Date): string {
 // ── Component ─────────────────────────────────────────────────────────
 
 export function MistakeBook() {
+  const { t } = useI18n();
   const { mistakes, markReviewed, setFilter, deleteMistake } =
     useSkyClassroomStore();
 
@@ -152,7 +143,7 @@ export function MistakeBook() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {causeLabels[cause]}
+                {t(`sky.errorCause.${cause}`)}
               </button>
             ))}
           </div>
@@ -242,7 +233,7 @@ export function MistakeBook() {
                     <span
                       className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${causeBadgeColors[m.cause]}`}
                     >
-                      {causeLabels[m.cause]}
+                      {t(`sky.errorCause.${m.cause}`)}
                     </span>
                     {m.knowledgePoints.map((kp) => (
                       <span

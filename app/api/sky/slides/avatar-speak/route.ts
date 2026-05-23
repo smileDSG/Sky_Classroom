@@ -7,12 +7,14 @@ import { generateTTS } from '@/lib/audio/tts-providers';
 import { resolveTTSApiKey, resolveTTSBaseUrl } from '@/lib/server/provider-config';
 import { generateAvatarSpeech, getAvatarById } from '@/lib/slides';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
+import { getServerTranslation } from '@/lib/server/i18n';
 import { createLogger } from '@/lib/logger';
 import type { TTSGenerateFn } from '@/lib/slides/avatar-speech';
 
 const log = createLogger('API:SkyAvatarSpeak');
 
 export async function POST(req: NextRequest) {
+  const locale = req.headers.get('X-Locale') || 'zh-CN';
   let avatarId: string | undefined;
   try {
     const body = await req.json();
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
-      '讲解音频生成失败',
+      getServerTranslation(locale, 'api.generateFailed'),
       err instanceof Error ? err.message : undefined,
     );
   }

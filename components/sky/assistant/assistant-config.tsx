@@ -1,28 +1,10 @@
 'use client';
 
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-
-const SUBJECT_OPTIONS = [
-  { label: '数学', value: '数学' },
-  { label: '物理', value: '物理' },
-  { label: '化学', value: '化学' },
-  { label: '语文', value: '语文' },
-  { label: '英语', value: '英语' },
-] as const;
-
-const STYLE_OPTIONS = [
-  { label: '详细', value: 'detailed' },
-  { label: '简洁', value: 'concise' },
-  { label: '启发式', value: 'heuristic' },
-] as const;
-
-const DIFFICULTY_OPTIONS = [
-  { label: '初中', value: 'junior' },
-  { label: '高中', value: 'senior' },
-  { label: '大学', value: 'college' },
-] as const;
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 export function AssistantConfig() {
+  const { t } = useI18n();
   const subject = useSkyClassroomStore((s) => s.subject);
   const style = useSkyClassroomStore((s) => s.style);
   const difficulty = useSkyClassroomStore((s) => s.difficulty);
@@ -30,13 +12,33 @@ export function AssistantConfig() {
   const setStyle = useSkyClassroomStore((s) => s.setStyle);
   const setDifficulty = useSkyClassroomStore((s) => s.setDifficulty);
 
+  const SUBJECT_OPTIONS = [
+    { label: t('sky.assistant.subjects.math'), value: '数学' as const },
+    { label: t('sky.assistant.subjects.physics'), value: '物理' as const },
+    { label: t('sky.assistant.subjects.chemistry'), value: '化学' as const },
+    { label: t('sky.assistant.subjects.chinese'), value: '语文' as const },
+    { label: t('sky.assistant.subjects.english'), value: '英语' as const },
+  ];
+
+  const STYLE_OPTIONS = [
+    { label: t('sky.assistant.styles.detailed'), value: 'detailed' as const },
+    { label: t('sky.assistant.styles.concise'), value: 'concise' as const },
+    { label: t('sky.assistant.styles.heuristic'), value: 'heuristic' as const },
+  ];
+
+  const DIFFICULTY_OPTIONS = [
+    { label: t('sky.assistant.grades.junior'), value: 'junior' as const },
+    { label: t('sky.assistant.grades.senior'), value: 'senior' as const },
+    { label: t('sky.assistant.grades.college'), value: 'college' as const },
+  ];
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-2xl">
-      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">助手配置</p>
+      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">{t('sky.assistant.configTitle')}</p>
       <div className="flex items-center gap-3">
         {/* Subject Selector */}
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs text-gray-500">学科</label>
+          <label className="mb-1.5 block text-xs text-gray-500">{t('sky.assistant.subjectLabel')}</label>
           <div className="flex gap-1">
             {SUBJECT_OPTIONS.map((opt) => (
               <button
@@ -57,7 +59,7 @@ export function AssistantConfig() {
 
         {/* Style Selector */}
         <div className="shrink-0">
-          <label className="mb-1.5 block text-xs text-gray-500">风格</label>
+          <label className="mb-1.5 block text-xs text-gray-500">{t('sky.assistant.styleLabel')}</label>
           <div className="flex gap-1">
             {STYLE_OPTIONS.map((opt) => (
               <button
@@ -78,7 +80,7 @@ export function AssistantConfig() {
 
         {/* Difficulty Selector */}
         <div className="shrink-0">
-          <label className="mb-1.5 block text-xs text-gray-500">难度</label>
+          <label className="mb-1.5 block text-xs text-gray-500">{t('sky.assistant.difficultyLabel')}</label>
           <div className="flex gap-1">
             {DIFFICULTY_OPTIONS.map((opt) => (
               <button

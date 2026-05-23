@@ -3,32 +3,22 @@
 import Link from 'next/link';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-
-// ── Cause label map ─────────────────────────────────────────────────
-
-const causeLabels: Record<string, string> = {
-  'concept-unclear': '概念不清',
-  'calculation-error': '计算失误',
-  'misreading': '审题错误',
-  'method-wrong': '方法错误',
-  'careless': '粗心',
-  'format-error': '格式错误',
-};
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 // ── Relative time helper ────────────────────────────────────────────
 
-function formatRelativeTime(date: Date): string {
+function formatRelativeTime(date: Date, t: (key: string, params?: Record<string, number>) => string): string {
   const now = new Date();
   const diffMs = now.getTime() - new Date(date).getTime();
   const diffMin = Math.floor(diffMs / 1000 / 60);
   const diffHour = Math.floor(diffMs / 1000 / 60 / 60);
   const diffDay = Math.floor(diffMs / 1000 / 60 / 60 / 24);
 
-  if (diffMin < 1) return '刚刚';
-  if (diffMin < 60) return `${diffMin}分钟前`;
-  if (diffHour < 24) return `${diffHour}小时前`;
-  if (diffDay < 30) return `${diffDay}天前`;
-  return `${Math.floor(diffDay / 30)}个月前`;
+  if (diffMin < 1) return t('sky.dashboard.justNow');
+  if (diffMin < 60) return t('sky.dashboard.minutesAgo', { n: diffMin });
+  if (diffHour < 24) return t('sky.dashboard.hoursAgo', { n: diffHour });
+  if (diffDay < 30) return t('sky.dashboard.daysAgo', { n: diffDay });
+  return t('sky.dashboard.monthsAgo', { n: Math.floor(diffDay / 30) });
 }
 
 // ── Helper: is today ────────────────────────────────────────────────
@@ -50,7 +40,7 @@ interface StatCardsProps {
 }
 
 export function StatCards({ mistakes }: StatCardsProps) {
-  // Also access the store for additional assistant/context data if needed
+  const { t } = useI18n();
   const _store = useSkyClassroomStore();
 
   const todayCount = mistakes.filter((m) => isToday(m.solvedAt)).length;
@@ -65,15 +55,15 @@ export function StatCards({ mistakes }: StatCardsProps) {
     <div className="grid grid-cols-3 gap-4">
       <div className="rounded-lg bg-white p-4 shadow-sm">
         <div className="text-2xl font-bold text-[#4A90D9]">{todayCount}</div>
-        <div className="text-sm text-gray-500">今日搜题</div>
+        <div className="text-sm text-gray-500">{t('sky.dashboard.totalMistakes')}</div>
       </div>
       <div className="rounded-lg bg-white p-4 shadow-sm">
         <div className="text-2xl font-bold text-[#F59E0B]">{toReviewCount}</div>
-        <div className="text-sm text-gray-500">错题待复习</div>
+        <div className="text-sm text-gray-500">{t('sky.dashboard.reviewedRate')}</div>
       </div>
       <div className="rounded-lg bg-white p-4 shadow-sm">
         <div className="text-2xl font-bold text-[#10B981]">{masteryPercent}%</div>
-        <div className="text-sm text-gray-500">知识掌握度</div>
+        <div className="text-sm text-gray-500">{t('sky.dashboard.reviewProgress')}</div>
       </div>
     </div>
   );
@@ -87,14 +77,16 @@ interface QuickAction {
   href: string;
 }
 
-const actions: QuickAction[] = [
-  { icon: '📷', label: '拍照搜题', href: '/sky/solve' },
-  { icon: '📖', label: '幻灯片讲解', href: '/sky/slides' },
-  { icon: '📊', label: '学习数据', href: '/sky/learning' },
-  { icon: '💡', label: 'AI 助手', href: '/sky/assistant' },
-];
-
 export function QuickActions() {
+  const { t } = useI18n();
+
+  const actions: QuickAction[] = [
+    { icon: '📷', label: t('sky.dashboard.photoSolve'), href: '/sky/solve' },
+    { icon: '📖', label: t('sky.dashboard.slideLecture'), href: '/sky/slides' },
+    { icon: '📊', label: t('sky.dashboard.learningData'), href: '/sky/learning' },
+    { icon: '💡', label: t('sky.dashboard.aiAssistant'), href: '/sky/assistant' },
+  ];
+
   return (
     <div className="grid grid-cols-2 gap-4">
       {actions.map((action) => (
@@ -122,6 +114,7 @@ interface ActivityTimelineProps {
 }
 
 export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
+  const { t } = useI18n();
   const recentMistakes = [...mistakes]
     .sort((a, b) => new Date(b.solvedAt).getTime() - new Date(a.solvedAt).getTime())
     .slice(0, 5);
@@ -143,7 +136,7 @@ export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
         {recentMistakes.map((m) => (
           <li key={m.id} className="flex items-start gap-3 text-sm">
             <span className="mt-0.5 shrink-0 text-gray-400">
-              {formatRelativeTime(m.solvedAt)}
+              {formatRelativeTime(m.solvedAt, t)}
             </span>
             <span className="flex-1 truncate text-gray-700">
               {m.problem.length > 60
@@ -151,7 +144,7 @@ export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
                 : m.problem}
             </span>
             <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
-              {causeLabels[m.cause] ?? m.cause}
+              {t(`sky.errorCause.${m.cause}`)}
             </span>
           </li>
         ))}

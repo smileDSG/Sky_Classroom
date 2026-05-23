@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 interface MultimodalInputProps {
   onSubmit: (input: { type: 'image' | 'voice' | 'text'; content: string | File }) => void;
@@ -15,6 +16,7 @@ interface MultimodalInputProps {
 }
 
 export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: MultimodalInputProps) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'camera' | 'voice' | 'text'>('camera');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -100,15 +102,15 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="camera" className="gap-2">
             <Camera className="h-4 w-4" />
-            <span className="hidden sm:inline">拍照</span>
+            <span className="hidden sm:inline">{t('sky.solve.cameraTab')}</span>
           </TabsTrigger>
           <TabsTrigger value="voice" className="gap-2">
             <Mic className="h-4 w-4" />
-            <span className="hidden sm:inline">语音</span>
+            <span className="hidden sm:inline">{t('sky.solve.voiceTab')}</span>
           </TabsTrigger>
           <TabsTrigger value="text" className="gap-2">
             <Type className="h-4 w-4" />
-            <span className="hidden sm:inline">文字</span>
+            <span className="hidden sm:inline">{t('sky.solve.textTab')}</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -182,10 +184,10 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
               )}
             </button>
             <p className="text-center font-medium text-foreground">
-              {isRecording ? '点击停止录音' : '点击开始录音'}
+              {isRecording ? t('sky.solve.stopRecording') : t('sky.solve.startRecording')}
             </p>
             <p className="text-center text-sm text-muted-foreground">
-              {isRecording ? '正在识别语音内容...' : '支持数学题目语音输入'}
+              {isRecording ? t('sky.solve.recordingHint') : t('sky.solve.voiceHint')}
             </p>
           </div>
         </div>

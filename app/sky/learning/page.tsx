@@ -8,6 +8,7 @@ import { LearningStats } from '@/components/sky/learning/learning-stats';
 import { ReviewPlan } from '@/components/sky/learning/review-plan';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 
 const DEMO_MISTAKES: MistakeRecord[] = [
@@ -63,15 +64,16 @@ const DEMO_MISTAKES: MistakeRecord[] = [
   },
 ];
 
-const TABS = [
-  { key: 'mistakes', label: '错题本', icon: '📋' },
-  { key: 'review', label: '复习计划', icon: '🧠' },
-  { key: 'graph', label: '知识图谱', icon: '🗺️' },
-  { key: 'stats', label: '学习统计', icon: '📊' },
-] as const;
-
 export default function LearningPage() {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<string>('mistakes');
+
+  const TABS = [
+    { key: 'mistakes', label: t('sky.learning.mistakeBook'), icon: '📋' },
+    { key: 'review', label: t('sky.learning.reviewPlan'), icon: '🧠' },
+    { key: 'graph', label: t('sky.learning.knowledgeGraph'), icon: '🗺️' },
+    { key: 'stats', label: t('sky.learning.learningStats'), icon: '📊' },
+  ] as const;
 
   useEffect(() => {
     const store = useSkyClassroomStore.getState();
@@ -84,7 +86,7 @@ export default function LearningPage() {
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-5xl">
-        <h2 className="text-2xl font-bold text-gray-900">📊 学习数据</h2>
+        <h2 className="text-2xl font-bold text-gray-900">📊 {t('sky.learning.title')}</h2>
 
         <div className="mt-4 flex gap-1 rounded-lg bg-gray-100 p-1">
           {TABS.map((tab) => (

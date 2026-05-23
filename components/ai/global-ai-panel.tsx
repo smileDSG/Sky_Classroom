@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { TextSelectionAI } from './text-selection-ai';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -9,6 +10,7 @@ interface ChatMessage {
 }
 
 export function GlobalAIPanel() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -59,7 +61,7 @@ export function GlobalAIPanel() {
       });
 
       if (!res.ok || !res.body) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: '抱歉，AI 助手暂时无法响应。' }]);
+        setMessages((prev) => [...prev, { role: 'assistant', content: t('kagami.aiError') }]);
         setLoading(false);
         return;
       }
@@ -91,7 +93,7 @@ export function GlobalAIPanel() {
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        setMessages((prev) => [...prev, { role: 'assistant', content: '请求失败，请重试。' }]);
+        setMessages((prev) => [...prev, { role: 'assistant', content: t('kagami.requestError') }]);
       }
     } finally {
       setLoading(false);
@@ -117,7 +119,7 @@ export function GlobalAIPanel() {
         <button
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#4A90D9] text-2xl text-white shadow-lg hover:bg-[#3A7BC8] transition-all hover:scale-105"
-          title="AI 助手 (Ctrl+Shift+A)"
+          title={t('kagami.title')}
         >
           💡
         </button>
@@ -128,7 +130,7 @@ export function GlobalAIPanel() {
         <div className="fixed bottom-6 right-6 z-50 flex h-[520px] w-[400px] flex-col rounded-xl bg-white shadow-2xl border border-gray-200">
           {/* Header */}
           <div className="flex items-center justify-between border-b px-4 py-3">
-            <span className="font-semibold text-gray-800">AI 助手</span>
+            <span className="font-semibold text-gray-800">{t('kagami.assistantTitle')}</span>
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-400">Ctrl+Shift+A</span>
               <button
@@ -145,8 +147,8 @@ export function GlobalAIPanel() {
             {messages.length === 0 && (
               <div className="py-8 text-center text-sm text-gray-400">
                 <div className="mb-2 text-3xl">💡</div>
-                <p>AI 助手已就绪</p>
-                <p className="mt-1 text-xs">选中页面上任意文字，或直接输入问题</p>
+                <p>{t('kagami.assistantReady')}</p>
+                <p className="mt-1 text-xs">{t('kagami.assistantHint')}</p>
               </div>
             )}
             {messages.map((m, i) => (
@@ -168,7 +170,7 @@ export function GlobalAIPanel() {
             {loading && messages[messages.length - 1]?.role !== 'assistant' && (
               <div className="flex justify-start">
                 <div className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-400">
-                  思考中...
+                  {t('kagami.scene.thinking')}
                 </div>
               </div>
             )}
@@ -181,7 +183,7 @@ export function GlobalAIPanel() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-                placeholder="输入问题..."
+                placeholder={t('kagami.inputPlaceholder')}
                 className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#4A90D9]"
               />
               <button
@@ -189,7 +191,7 @@ export function GlobalAIPanel() {
                 disabled={!input.trim() || loading}
                 className="rounded-lg bg-[#4A90D9] px-4 py-2 text-sm text-white hover:bg-[#3A7BC8] disabled:opacity-50"
               >
-                发送
+                {t('kagami.send')}
               </button>
             </div>
           </div>

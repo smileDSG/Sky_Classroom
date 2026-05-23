@@ -8,6 +8,7 @@ import { streamLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
 import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { getServerTranslation } from '@/lib/server/i18n';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildGraphFromMistakes } from '@/lib/graph/builder';
 import { buildSystemPrompt } from '@/lib/assistant/context-injector';
@@ -147,7 +148,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     log.error('Assistant API error:', err);
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : 'AI 助手响应失败' }),
+      JSON.stringify({ error: err instanceof Error ? err.message : getServerTranslation(req.headers.get('X-Locale') || 'zh-CN', 'api.responseFailed') }),
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }

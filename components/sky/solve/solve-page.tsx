@@ -9,6 +9,7 @@ import { MultimodalInput } from './multimodal-input';
 import { GradeResultCard } from './grade-result';
 import { SolutionPanel } from './solution-panel';
 import { SimilarProblems } from './similar-problems';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import type { GradeResult, FourPartOutput, GradedFourPartOutput } from '@/lib/solve/types';
 
 type SolvePageState =
@@ -70,6 +71,7 @@ async function gradeProblem(problem: string, correctAnswer: string, userAnswer: 
 }
 
 export function SolvePage() {
+  const { t } = useI18n();
   const [state, setState] = useState<SolvePageState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SolveResult | null>(null);
@@ -106,7 +108,7 @@ export function SolvePage() {
         });
         setState('success');
       } catch (err) {
-        setError(err instanceof Error ? err.message : '解题过程中出现错误');
+        setError(err instanceof Error ? err.message : t('sky.solve.solveError'));
         setState('error');
       }
     },
@@ -135,8 +137,8 @@ export function SolvePage() {
             ? []
             : [
                 {
-                  problem: '相关练习题',
-                  reason: `错因：${gradeResult.cause}`,
+                  problem: t('sky.solve.relatedProblem'),
+                  reason: `${t('sky.solve.causeReason', { cause: gradeResult.cause })}`,
                 },
               ],
         };
@@ -149,7 +151,7 @@ export function SolvePage() {
         });
         setState('graded');
       } catch (err) {
-        setError(err instanceof Error ? err.message : '批改过程中出现错误');
+        setError(err instanceof Error ? err.message : t('sky.solve.gradeError'));
         setState('error');
       }
     },
@@ -173,13 +175,13 @@ export function SolvePage() {
     <div className="mx-auto max-w-7xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">搜题批改</h1>
-          <p className="text-sm text-muted-foreground">拍照、语音或输入题目，AI 帮你解答</p>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">{t('sky.solve.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('sky.solve.description')}</p>
         </div>
         {(state === 'success' || state === 'graded' || state === 'error') && (
           <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>
             <RotateCcw className="h-4 w-4" />
-            重新搜题
+            {t('sky.solve.enterSolve')}
           </Button>
         )}
       </div>
@@ -226,7 +228,7 @@ export function SolvePage() {
                   <ImageIcon className="h-6 w-6 text-sky-500" />
                 </div>
               </div>
-              <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">正在识别图片...</p>
+              <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">{t('sky.solve.recognizing')}</p>
               <p className="text-xs text-muted-foreground">请稍候</p>
             </div>
           )}
@@ -240,10 +242,10 @@ export function SolvePage() {
                 </div>
               </div>
               <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">
-                {state === 'grading' ? '正在批改...' : '正在解题...'}
+                {state === 'grading' ? t('sky.solve.grading') : t('sky.solve.solving')}
               </p>
               <p className="text-xs text-muted-foreground">
-                {state === 'grading' ? 'AI 正在分析你的答案' : 'AI 正在思考解题思路'}
+                {state === 'grading' ? t('sky.solve.aiAnalyzing') : t('sky.solve.aiThinking')}
               </p>
             </div>
           )}
@@ -273,7 +275,7 @@ export function SolvePage() {
           {state === 'error' && error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>出错了</AlertTitle>
+              <AlertTitle>{t('sky.solve.solveError')}</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -283,7 +285,7 @@ export function SolvePage() {
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/40">
                 <Sparkles className="h-8 w-8 text-sky-500" />
               </div>
-              <h3 className="mt-4 text-lg font-medium text-foreground">开始搜题</h3>
+              <h3 className="mt-4 text-lg font-medium text-foreground">{t('sky.solve.title')}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 在左侧输入题目，AI 将为你提供详细的解题步骤
               </p>

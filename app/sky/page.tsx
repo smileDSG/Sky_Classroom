@@ -5,6 +5,7 @@ import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { StatCards, QuickActions, ActivityTimeline } from '@/components/sky/dashboard/stat-cards';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 
 const DEMO_MISTAKES: MistakeRecord[] = [
@@ -65,15 +66,8 @@ const DEMO_MISTAKES: MistakeRecord[] = [
   },
 ];
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return '早上好，同学！☀️';
-  if (hour >= 12 && hour < 18) return '下午好，同学！🌤️';
-  if (hour >= 18 && hour < 22) return '晚上好，同学！🌙';
-  return '夜深了，注意休息！⭐';
-}
-
 export default function SkyDashboardPage() {
+  const { t } = useI18n();
   const mistakes = useSkyClassroomStore((s) => s.mistakes);
 
   // Seed demo data on first visit, then sync real quiz data
@@ -84,6 +78,14 @@ export default function SkyDashboardPage() {
     }
     syncMistakesFromQuizzes();
   }, []);
+
+  function getGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return t('sky.dashboard.greetingMorning');
+    if (hour >= 12 && hour < 18) return t('sky.dashboard.greetingAfternoon');
+    if (hour >= 18 && hour < 22) return t('sky.dashboard.greetingEvening');
+    return t('sky.dashboard.greetingNight');
+  }
 
   const greeting = getGreeting();
 

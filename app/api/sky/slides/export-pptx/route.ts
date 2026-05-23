@@ -4,11 +4,13 @@
  * The actual PPTX file is generated client-side via lib/export/course-exporter.ts.
  */
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
+import { getServerTranslation } from '@/lib/server/i18n';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:SkyExportPptx');
 
 export async function POST(req: Request) {
+  const locale = req.headers.get('X-Locale') || 'zh-CN';
   try {
     const body = await req.json();
     const { title, includeSlides, includeSpeakerNotes, includeKnowledgePoints, includeSimilarQuestions, avatarName } = body;
@@ -39,7 +41,7 @@ export async function POST(req: Request) {
     return apiError(
       API_ERROR_CODES.INTERNAL_ERROR,
       500,
-      'PPTX 导出失败',
+      getServerTranslation(locale, 'api.exportFailed'),
       err instanceof Error ? err.message : undefined,
     );
   }
