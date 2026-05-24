@@ -172,7 +172,7 @@ export async function gradeAnswer(
       .replace('{stepsContext}', stepsContext);
 
     const messages: Array<{ role: string; content: unknown }> = [
-      { role: 'system', content: prompt },
+      { role: 'user', content: `题目：${problemText}\n标准答案：${correctAnswer}\n学生答案：${userAnswer}` },
     ];
 
     const result = await callLLM(
@@ -184,6 +184,8 @@ export async function gradeAnswer(
       },
       'grade-answer',
       { retries: 1 },
+      undefined,
+      prompt,
     );
 
     const parsed = parseLLMGrade(result.text);

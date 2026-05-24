@@ -1,13 +1,15 @@
 /**
  * POST /api/sky/solve/recognize
  * Image recognition endpoint for problem solving.
- * Uses a vision-capable LLM for OCR, with multi-provider fallback.
+ * Uses vision-capable LLMs for OCR, with runtime multi-model fallback.
  */
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { extractFormulas } from '@/lib/recognition/formula-extractor';
 import { validateImage } from '@/lib/recognition/image-validator';
 import { getModel } from '@/lib/ai/providers';
+import type { ProviderId } from '@/lib/ai/providers';
+import type { ProviderType } from '@/lib/types/provider';
 import { callLLM } from '@/lib/ai/llm';
 
 const log = createLogger('API:SkySolveRecognize');
@@ -22,21 +24,43 @@ const OCR_PROMPT = `你是一个专业的数学题目识别助手。请仔细识
 5. 无法看清的内容用 [?] 标记，不要猜测
 6. 只输出识别到的题目文字和公式，不要添加你的解释、评价或问候语`;
 
-/** Build vision model config: GLM first (faster), then Qwen, then Anthropic */
-function getVisionModel() {
-  // 1. GLM-5V-Turbo — fast vision model
+interface VisionModelConfig {
+  providerId: ProviderId;
+  modelId: string;
+  apiKey: string;
+  providerType: ProviderType;
+}
+
+/** Build list of available vision models in priority order (fast/cheap first) */
+function getVisionModels(): VisionModelConfig[] {
+  const models: VisionModelConfig[] = [];
+
   if (process.env.GLM_API_KEY) {
-    return { providerId: 'glm' as const, modelId: 'glm-5v-turbo', apiKey: process.env.GLM_API_KEY, providerType: 'openai' as const };
+    models.push({
+      providerId: 'glm' as ProviderId,
+      modelId: 'glm-5v-turbo',
+      apiKey: process.env.GLM_API_KEY,
+      providerType: 'openai' as ProviderType,
+    });
   }
-  // 2. Qwen VL
   if (process.env.QWEN_API_KEY) {
-    return { providerId: 'qwen' as const, modelId: 'qwen3-vl-plus', apiKey: process.env.QWEN_API_KEY, providerType: 'openai' as const };
+    models.push({
+      providerId: 'qwen' as ProviderId,
+      modelId: 'qwen3-vl-plus',
+      apiKey: process.env.QWEN_API_KEY,
+      providerType: 'openai' as ProviderType,
+    });
   }
-  // 3. Anthropic Claude — fallback
   if (process.env.ANTHROPIC_API_KEY) {
-    return { providerId: 'anthropic' as const, modelId: 'claude-sonnet-4-6', apiKey: process.env.ANTHROPIC_API_KEY, providerType: 'anthropic' as const };
+    models.push({
+      providerId: 'anthropic' as ProviderId,
+      modelId: 'claude-sonnet-4-6',
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      providerType: 'anthropic' as ProviderType,
+    });
   }
-  return null;
+
+  return models;
 }
 
 export async function POST(req: Request) {
@@ -61,17 +85,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // Keep raw bytes — AI SDK handles base64 encoding internally.
-    // Passing a data URL would cause double-encoding (AI SDK re-encodes
-    // the string as base64), which produces garbled image data.
     const bytes = await image.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const mimeType = image.type || 'image/png';
 
-    const visionConfig = getVisionModel();
-    log.info(`[Recognize] Using vision provider: ${visionConfig?.providerId}, model: ${visionConfig?.modelId}, apiKey present: ${!!visionConfig?.apiKey}`);
+    const visionModels = getVisionModels();
+    log.info(`[Recognize] Available vision models: ${visionModels.map(m => `${m.providerId}/${m.modelId}`).join(', ')}, image: ${bytes.byteLength} bytes, ${mimeType}`);
 
-    if (!visionConfig) {
+    if (visionModels.length === 0) {
       return apiError(
         API_ERROR_CODES.INTERNAL_ERROR,
         500,
@@ -79,24 +100,6 @@ export async function POST(req: Request) {
       );
     }
 
-    log.info(`[Recognize] Image size: ${bytes.byteLength} bytes, mimeType: ${mimeType}`);
-
-    let modelWithInfo;
-    try {
-      modelWithInfo = getModel(visionConfig);
-    } catch (modelErr) {
-      log.error('[Recognize] getModel failed:', modelErr);
-      return apiError(
-        API_ERROR_CODES.INTERNAL_ERROR,
-        500,
-        '模型初始化失败',
-        modelErr instanceof Error ? modelErr.message : undefined,
-      );
-    }
-
-    // Pass raw buffer — AI SDK core converts it to FilePart, then the
-    // provider adapter base64-encodes it once. Passing a data URL string
-    // would be re-encoded (double base64), producing garbled data.
     const messages = [
       {
         role: 'user' as const,
@@ -106,44 +109,64 @@ export async function POST(req: Request) {
         ],
       },
     ];
-    const systemPrompt = OCR_PROMPT;
 
-    log.info(`[Recognize] Calling LLM with provider=${visionConfig.providerId}, model=${visionConfig.modelId}`);
+    const errors: string[] = [];
 
-    let result;
-    try {
-      result = await callLLM(
-        {
-          model: modelWithInfo.model,
-          messages: messages as any,
-          temperature: 0.1,
-          maxOutputTokens: 2048,
-        },
-        'ocr-recognize',
-        { retries: 1 },
-        undefined,  // thinking
-        systemPrompt,
-      );
-    } catch (llmErr) {
-      log.error('[Recognize] LLM call failed:', llmErr);
-      throw llmErr;
+    // Try each vision model in sequence — first success wins
+    for (const visionConfig of visionModels) {
+      try {
+        const modelWithInfo = getModel(visionConfig);
+
+        log.info(`[Recognize] Trying ${visionConfig.providerId}/${visionConfig.modelId}...`);
+
+        const result = await callLLM(
+          {
+            model: modelWithInfo.model,
+            messages: messages as any,
+            temperature: 0.1,
+            maxOutputTokens: 2048,
+          },
+          'ocr-recognize',
+          { retries: 0 },  // model-level fallback handles retries
+          undefined,         // thinking
+          OCR_PROMPT,
+        );
+
+        const rawText = result.text || '';
+        if (!rawText.trim()) {
+          log.warn(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} returned empty text`);
+          errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: 返回空白内容`);
+          continue;
+        }
+
+        const { text: cleanedText, latex } = extractFormulas(rawText);
+
+        log.info(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} OK, text length=${cleanedText.length}`);
+
+        const base64ForResponse = buffer.toString('base64');
+        const dataUrl = `data:${mimeType};base64,${base64ForResponse}`;
+
+        return apiSuccess({
+          text: cleanedText,
+          latex,
+          problemCount: cleanedText ? 1 : 0,
+          problems: cleanedText ? [{ image: dataUrl, text: cleanedText, latex }] : [],
+          usedModel: `${visionConfig.providerId}/${visionConfig.modelId}`,
+        });
+      } catch (llmErr) {
+        const msg = llmErr instanceof Error ? llmErr.message : String(llmErr);
+        log.warn(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} failed: ${msg}`);
+        errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: ${msg}`);
+      }
     }
 
-    const rawText = result.text || '';
-    const { text: cleanedText, latex } = extractFormulas(rawText);
-
-    log.info(`[Recognize] OCR complete, text length=${cleanedText.length}`);
-
-    // Build data URL for response (display only — not sent to LLM)
-    const base64ForResponse = buffer.toString('base64');
-    const dataUrl = `data:${mimeType};base64,${base64ForResponse}`;
-
-    return apiSuccess({
-      text: cleanedText,
-      latex,
-      problemCount: cleanedText ? 1 : 0,
-      problems: cleanedText ? [{ image: dataUrl, text: cleanedText, latex }] : [],
-    });
+    log.error(`[Recognize] All ${visionModels.length} vision models failed: ${errors.join('; ')}`);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      `所有视觉模型均识别失败（已尝试 ${visionModels.length} 个模型）`,
+      errors.join('; '),
+    );
   } catch (err) {
     log.error('Recognize API error:', err);
     return apiError(
