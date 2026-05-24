@@ -5,7 +5,7 @@ describe('extractFormulas — LaTeX公式提取', () => {
   test('提取行内公式 $...$', () => {
     const r = extractFormulas('解方程 $x^2 + 2x + 1 = 0$ 求值');
     expect(r.latex).toContain('x^2 + 2x + 1 = 0');
-    expect(r.text).not.toContain('$');
+    expect(r.text).toContain('$x^2 + 2x + 1 = 0$'); // formulas kept in text
   });
 
   test('提取块级公式 $$...$$', () => {
@@ -47,7 +47,7 @@ describe('extractFormulas — LaTeX公式提取', () => {
 
   test('清理多余空白', () => {
     const r = extractFormulas('  解方程   $x = 1$   ');
-    expect(r.text).toBe('解方程');
+    expect(r.text).toBe('解方程 $x = 1$');
   });
 
   test('空字符串不报错', () => {
@@ -59,5 +59,37 @@ describe('extractFormulas — LaTeX公式提取', () => {
   test('多公式提取', () => {
     const r = extractFormulas('$a=1$ + $b=2$ = $c=3$');
     expect(r.latex.split('\n')).toHaveLength(3);
+  });
+
+  test('自动包裹裸 LaTeX \\frac{}{}', () => {
+    const r = extractFormulas('分数是 \\frac{1}{2} 加上 \\frac{3}{4}');
+    expect(r.latex).toContain('\\frac{1}{2}');
+    expect(r.latex).toContain('\\frac{3}{4}');
+    expect(r.text).toContain('$\\frac{1}{2}$');
+  });
+
+  test('自动包裹裸 LaTeX \\sqrt{}', () => {
+    const r = extractFormulas('根号表达式 \\sqrt{x^2 + y^2} 的值');
+    expect(r.latex).toContain('\\sqrt{x^2 + y^2}');
+    expect(r.text).toContain('$\\sqrt{x^2 + y^2}$');
+  });
+
+  test('自动包裹裸 LaTeX \\int', () => {
+    const r = extractFormulas('积分 \\int_0^1 x dx 计算');
+    expect(r.latex).toContain('\\int');
+    expect(r.text).toContain('$\\int');
+  });
+
+  test('已在 $ 内的公式不重复包裹', () => {
+    const r = extractFormulas('求解 $\\frac{a}{b}$ 的值');
+    // Formula preserved in text with $ delimiters
+    expect(r.text).toContain('$\\frac{a}{b}$');
+    expect(r.latex).toContain('a}{b');
+  });
+
+  test('自动包裹裸 LaTeX \\begin{...} 环境', () => {
+    const r = extractFormulas('矩阵 \\begin{matrix} a & b \\\\ c & d \\end{matrix}');
+    expect(r.latex).toContain('\\begin{matrix}');
+    expect(r.text).toContain('$\\begin{matrix}');
   });
 });
