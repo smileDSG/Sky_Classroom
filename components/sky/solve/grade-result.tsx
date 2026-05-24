@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { MathRenderer } from './math-renderer';
 import type { GradeResult, MistakeCause } from '@/lib/solve/types';
 
 interface GradeResultCardProps {
@@ -102,8 +103,8 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
               <Info className="h-4 w-4" />
               你的答案
             </label>
-            <div className={cn('rounded-lg border p-3 font-mono text-sm', isCorrect ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20' : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20', isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')}>
-              {userAnswer}
+            <div className={cn('rounded-lg border p-3', isCorrect ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20' : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20')}>
+              <MathRenderer content={userAnswer} className={cn('text-sm', isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')} />
             </div>
           </div>
           <div className="space-y-2">
@@ -111,8 +112,8 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
               <CheckCircle2 className="h-4 w-4" />
               正确答案
             </label>
-            <div className="rounded-lg border border-green-200 bg-green-50 p-3 font-mono text-sm text-green-700 dark:border-green-900 dark:bg-green-900/20 dark:text-green-300">
-              {correctAnswer}
+            <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-900/20">
+              <MathRenderer content={correctAnswer} className="text-sm text-green-700 dark:text-green-300" />
             </div>
           </div>
         </div>

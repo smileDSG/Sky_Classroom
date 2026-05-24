@@ -23,7 +23,7 @@ describe('generateFourPartOutput', () => {
 
     const result = generateFourPartOutput(raw);
 
-    expect(result.answer).toBe('**x = 2**');
+    expect(result.answer).toBe('x = 2');
     expect(result.steps).toHaveLength(2);
     expect(result.steps[0].label).toBe('移项');
     expect(result.steps[0].keyPoints).toContain('等式两边同时除以2');
@@ -95,7 +95,7 @@ describe('generateFourPartOutput', () => {
 
   test('trims whitespace from answer', () => {
     const result = generateFourPartOutput({ answer: '  x = 2  ' });
-    expect(result.answer).toBe('**x = 2**');
+    expect(result.answer).toBe('x = 2');
   });
 });
 
@@ -192,7 +192,7 @@ describe('generateGradedFourPartOutput', () => {
 
   test('extends FourPartOutput base fields', () => {
     const result = generateGradedFourPartOutput(raw, baseGradeResult);
-    expect(result.answer).toBe('**x = 2**');
+    expect(result.answer).toBe('x = 2');
     expect(result.steps).toBeDefined();
     expect(result.knowledgePoints).toBeDefined();
     expect(result.similarQuestions).toBeDefined();
