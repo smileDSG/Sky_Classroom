@@ -1,15 +1,19 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Sparkles, AlertCircle, RotateCcw, Image as ImageIcon, Wand2 } from 'lucide-react';
+import { Sparkles, AlertCircle, RotateCcw, Image as ImageIcon, Wand2, Clock, BookOpen, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MultimodalInput } from './multimodal-input';
 import { GradeResultCard } from './grade-result';
 import { SolutionPanel } from './solution-panel';
 import { SimilarProblems } from './similar-problems';
-import type { GradeResult, FourPartOutput, GradedFourPartOutput } from '@/lib/solve/types';
+import { HistoryPanel } from './history-panel';
+import { saveToQuestionBank } from '@/lib/solve/question-bank';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import type { GradeResult, FourPartOutput, GradedFourPartOutput, QuestionBankEntry } from '@/lib/solve/types';
 
 type SolvePageState =
   | 'idle'
@@ -74,11 +78,15 @@ export function SolvePage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SolveResult | null>(null);
   const [recognizedText, setRecognizedText] = useState<string>('');
+  const [showHistory, setShowHistory] = useState(false);
+  const [mistakeSaved, setMistakeSaved] = useState(false);
+  const addMistake = useSkyClassroomStore((s) => s.addMistake);
 
   const handleSubmit = useCallback(
     async (input: { type: 'image' | 'voice' | 'text'; content: string | File }) => {
       setError(null);
       setResult(null);
+      setMistakeSaved(false);
 
       try {
         let problemText = '';
@@ -105,6 +113,19 @@ export function SolvePage() {
           fromQuestionBank: solution.fromQuestionBank,
         });
         setState('success');
+
+        // Auto-save to question bank (fire-and-forget)
+        if (!solution.fromQuestionBank) {
+          saveToQuestionBank({
+            problemText,
+            answer: solution.answer,
+            steps: solution.steps.map((s) => `${s.label}: ${s.content}`),
+            knowledgePoints: solution.knowledgePoints.map((kp) => kp.name),
+            agentId: 'universal',
+            solvedAt: Date.now(),
+            verified: false,
+          }).catch(() => { /* ignore save errors */ });
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : '解题过程中出现错误');
         setState('error');
@@ -148,6 +169,22 @@ export function SolvePage() {
           fromQuestionBank: false,
         });
         setState('graded');
+
+        // 答案错误时自动加入错题本
+        if (!gradeResult.isCorrect) {
+          addMistake({
+            id: `mistake_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            problem: input.problem,
+            userAnswer: input.userAnswer,
+            correctAnswer,
+            cause: gradeResult.cause,
+            solvedAt: new Date(),
+            reviewed: false,
+            reviewCount: 0,
+            knowledgePoints: result?.solution.knowledgePoints?.map((kp) => kp.name) ?? [],
+          });
+          setMistakeSaved(true);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : '批改过程中出现错误');
         setState('error');
@@ -164,7 +201,24 @@ export function SolvePage() {
   }, []);
 
   const handleSimilarQuestionClick = useCallback((problem: string) => {
-    console.log('Clicked similar question:', problem);
+    handleSubmit({ type: 'text', content: problem });
+  }, [handleSubmit]);
+
+  const handleLoadFromHistory = useCallback((entry: QuestionBankEntry) => {
+    const solution: FourPartOutput = {
+      answer: entry.answer,
+      steps: [],
+      knowledgePoints: [],
+      similarQuestions: [],
+    };
+    setResult({
+      problem: entry.problemText,
+      solution,
+      fromQuestionBank: true,
+    });
+    setRecognizedText(entry.problemText);
+    setState('success');
+    setShowHistory(false);
   }, []);
 
   const isLoading = state === 'recognizing' || state === 'solving' || state === 'grading';
@@ -176,12 +230,23 @@ export function SolvePage() {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">搜题批改</h1>
           <p className="text-sm text-muted-foreground">拍照、语音或输入题目，AI 帮你解答</p>
         </div>
-        {(state === 'success' || state === 'graded' || state === 'error') && (
-          <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>
-            <RotateCcw className="h-4 w-4" />
-            重新搜题
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showHistory ? 'default' : 'outline'}
+            size="sm"
+            className="gap-2"
+            onClick={() => { setShowHistory((v) => !v); if (!showHistory) setError(null); }}
+          >
+            <Clock className="h-4 w-4" />
+            历史记录
           </Button>
-        )}
+          {(state === 'success' || state === 'graded' || state === 'error') && (
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>
+              <RotateCcw className="h-4 w-4" />
+              重新搜题
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
@@ -270,6 +335,13 @@ export function SolvePage() {
         </div>
 
         <div className="space-y-6">
+          {showHistory ? (
+            <HistoryPanel
+              onLoad={handleLoadFromHistory}
+              onClose={() => setShowHistory(false)}
+            />
+          ) : (
+            <>
           {state === 'error' && error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -291,7 +363,31 @@ export function SolvePage() {
           )}
 
           {state === 'graded' && result?.gradeResult && (
-            <GradeResultCard result={result.gradeResult} />
+            <>
+              <GradeResultCard result={result.gradeResult} />
+              {!result.gradeResult.isCorrect && (
+                <div className="flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20">
+                  {mistakeSaved ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                        已加入错题本
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">正在加入错题本...</span>
+                    </>
+                  )}
+                  <Badge variant="secondary" className="text-xs">
+                    前往
+                    <a href="/sky/learning" className="ml-1 underline">学习数据</a>
+                    {' '}查看
+                  </Badge>
+                </div>
+              )}
+            </>
           )}
 
           {(state === 'success' || state === 'graded') && result && (
@@ -301,6 +397,8 @@ export function SolvePage() {
                 similarQuestions={result.solution.similarQuestions}
                 onQuestionClick={handleSimilarQuestionClick}
               />
+            </>
+          )}
             </>
           )}
         </div>

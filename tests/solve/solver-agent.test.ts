@@ -152,11 +152,11 @@ describe('solveWithAgentNode', () => {
     expect(result.solution).toBe('e');
   });
 
-  test('returns empty solution when all agents fail', async () => {
+  test('falls back to raw text when all agents return non-JSON', async () => {
     (callLLM as any).mockResolvedValue({ text: 'not json' });
 
     const result = await solveWithAgentNode(makeState(), {} as any);
     expect(callLLM).toHaveBeenCalledTimes(3);
-    expect(result.solution).toBe('');
+    expect(result.solution).toBe('not json'); // raw text used as fallback
   });
 });

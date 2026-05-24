@@ -5,10 +5,35 @@
 import { gradeAnswer } from '@/lib/solve/grader';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
-import { trackMistake } from '@/lib/mistakes';
-import type { MistakeRecord } from '@/lib/mistakes';
+import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
+import type { ErrorType } from '@/lib/storage/dao/mistakes';
+import type { MistakeCause } from '@/lib/solve/types';
 
 const log = createLogger('API:SkySolveGrade');
+
+/** Map grader's MistakeCause to DAO's ErrorType */
+function mapCauseToErrorType(cause: MistakeCause): ErrorType {
+  const map: Record<MistakeCause, ErrorType> = {
+    'concept-unclear': 'concept',
+    'calculation-error': 'calculation',
+    'misreading': 'reading',
+    'method-wrong': 'reasoning',
+    'careless': 'careless',
+    'format-error': 'careless',
+  };
+  return map[cause] ?? 'concept';
+}
+
+let _daoPromise: ReturnType<typeof createMistakeBookDAO> | null = null;
+async function getMistakeDAO() {
+  if (!_daoPromise) {
+    const storage = await createStorageProvider();
+    _daoPromise = createMistakeBookDAO(storage);
+  }
+  return _daoPromise;
+}
+
 
 export async function POST(req: Request) {
   try {
@@ -29,21 +54,20 @@ export async function POST(req: Request) {
 
     const result = await gradeAnswer(problem, correctAnswer, userAnswer, steps);
 
-    // 错误答案写入错题本
+    // 错误答案写入错题本（使用统一存储 DAO）
     if (!result.isCorrect) {
       try {
-        const record: MistakeRecord = {
-          id: mistakeId || `mistake_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-          problem,
+        const dao = await getMistakeDAO();
+        await dao.add({
+          id: mistakeId || `mistake-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          problemText: problem,
           userAnswer,
           correctAnswer,
-          cause: result.cause,
-          solvedAt: new Date(),
-          reviewed: false,
-          reviewCount: 0,
+          errorType: mapCauseToErrorType(result.cause),
+          errorExplanation: result.errorAnalysis,
           knowledgePoints: knowledgePoints ?? [],
-        };
-        await trackMistake(record);
+          sourceSessionId: undefined,
+        });
         log.info('批改结果已存入错题本');
       } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);

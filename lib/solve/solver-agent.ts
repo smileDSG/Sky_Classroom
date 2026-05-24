@@ -91,21 +91,45 @@ function resolveSolverModel(agentType: SolverAgentType): Parameters<typeof getMo
   };
 }
 
+interface SolveOnceResult {
+  parsed: ParsedSolution | null;
+  rawText: string;
+}
+
+/**
+ * Build a degraded ParsedSolution from raw LLM text when JSON parsing fails.
+ * Uses the raw text as both solution and answer so the user still sees output.
+ */
+function rawAsSolution(rawText: string): ParsedSolution {
+  const cleaned = rawText.trim();
+  return {
+    solution: cleaned,
+    answer: cleaned,
+    confidence: 0.2,
+    steps: [],
+    knowledgePoints: [],
+    similarQuestions: [],
+  };
+}
+
 /**
  * Solve with a single agent (primary or fallback).
+ * Returns both the parsed result and the raw LLM text for fallback.
  */
 async function solveOnce(
   agentType: SolverAgentType,
   problemText: string,
   problemImage: string | null,
-): Promise<ParsedSolution | null> {
+): Promise<SolveOnceResult> {
   const modelConfig = resolveSolverModel(agentType);
   const modelWithInfo = getModel(modelConfig);
 
+  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
+
   const messages: Array<{ role: string; content: unknown }> = [
     {
-      role: 'system',
-      content: buildSolverPrompt(agentType, problemText, problemImage ?? undefined),
+      role: 'user',
+      content: problemText,
     },
   ];
 
@@ -118,9 +142,16 @@ async function solveOnce(
     },
     'solve-agent',
     { retries: 1 },
+    undefined,
+    systemPrompt,
   );
 
-  return parseSolutionResponse(result.text);
+  const rawText = result.text || '';
+  const parsed = parseSolutionResponse(rawText);
+  if (!parsed) {
+    log.warn(`[SolveGraph] ${agentType} returned non-JSON, using raw text fallback (${rawText.length} chars)`);
+  }
+  return { parsed, rawText };
 }
 
 /**
@@ -140,8 +171,8 @@ async function solveWithHybrid(
 
   // Primary
   const primaryResult = await solveOnce(primary, problemText, problemImage);
-  if (primaryResult && primaryResult.confidence >= CONFIDENCE_THRESHOLD) {
-    return { solution: primaryResult, usedAgents: [primary] };
+  if (primaryResult.parsed && primaryResult.parsed.confidence >= CONFIDENCE_THRESHOLD) {
+    return { solution: primaryResult.parsed, usedAgents: [primary] };
   }
 
   // Secondary fallback
@@ -150,34 +181,35 @@ async function solveWithHybrid(
   );
 
   const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
-  if (secondaryResult && secondaryResult.confidence >= CONFIDENCE_THRESHOLD) {
-    return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
+  if (secondaryResult.parsed && secondaryResult.parsed.confidence >= CONFIDENCE_THRESHOLD) {
+    return { solution: secondaryResult.parsed, usedAgents: [primary, fallbacks[0]] };
   }
 
   // Tertiary: last resort
   if (fallbacks.length > 1) {
     const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
-    if (tertiaryResult) {
-      return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
+    if (tertiaryResult.parsed) {
+      return { solution: tertiaryResult.parsed, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
     }
   }
 
-  // All failed or low confidence — return whatever we have, tracking all agents tried
+  // All JSON parsing failed — fall back to the best raw text we have
   const calledAgents: SolverAgentType[] = fallbacks.length > 1
     ? [primary, fallbacks[0], fallbacks[1]]
     : [primary, fallbacks[0]];
 
-  return {
-    solution: primaryResult ?? secondaryResult ?? {
-      solution: '',
-      answer: '',
-      confidence: 0,
-      steps: [],
-      knowledgePoints: [],
-      similarQuestions: [],
-    },
-    usedAgents: calledAgents,
-  };
+  const fallbackSolution =
+    primaryResult.parsed ??
+    secondaryResult.parsed ??
+    rawAsSolution(
+      primaryResult.rawText ||
+      secondaryResult.rawText ||
+      '',
+    );
+
+  log.warn(`[SolveGraph] All agents returned non-JSON, using raw text fallback (conf=${fallbackSolution.confidence})`);
+
+  return { solution: fallbackSolution, usedAgents: calledAgents };
 }
 
 /**

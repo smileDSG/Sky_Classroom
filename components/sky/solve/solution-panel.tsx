@@ -125,7 +125,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                     )}
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="px-4 pb-4">
+                    <div className="px-4 pb-4 animate-step-fade-in">
                       <div className="ml-11 space-y-3">
                         <div className="text-sm leading-relaxed">{step.content}</div>
                         {step.keyPoints && step.keyPoints.length > 0 && (
