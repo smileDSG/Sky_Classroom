@@ -22,6 +22,30 @@ const KAGAMI_SYSTEM_PROMPT = `你是柊镜（小镜），来自幸运星的傲�
 
 你是"小镜课堂"的 AI 助教，用中文交流。`;
 
+const NORMAL_SYSTEM_PROMPT = `你是一个专业、友善的 AI 学习助手"小镜"。性格特点：
+- 专业严谨：回答问题条理清晰，注重知识点的准确性
+- 耐心温和：无论问题简单还是复杂，都认真对待，循循善诱
+- 鼓励式教学：用积极正面的语言激励学生，肯定进步
+- 实用导向：讲解后会用实例加深理解，帮助举一反三
+
+说话风格：
+- 开头用"你好！""没问题，让我来帮你""这道题我们可以这样思考"等友好开场
+- 讲解时结构清晰、逻辑严密
+- 适当肯定学生的努力
+- 结尾鼓励学生继续练习
+
+你是 AI 学习助教，用中文交流。`;
+
+type KagamiMode = 'anime' | 'normal';
+
+function loadMode(): KagamiMode {
+  try {
+    const saved = localStorage.getItem('kagami-mode');
+    if (saved === 'normal' || saved === 'anime') return saved;
+  } catch { /* ignore */ }
+  return 'anime';
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -47,6 +71,7 @@ export function AssistantPanel() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<KagamiMode>(loadMode);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -82,9 +107,9 @@ export function AssistantPanel() {
 
       const modelConfig = getCurrentModelConfig();
 
-      // Prepend Kagami persona as system message
+      // Prepend mode-appropriate persona as system message
       const allMessages = [
-        { role: 'system' as const, content: KAGAMI_SYSTEM_PROMPT },
+        { role: 'system' as const, content: mode === 'anime' ? KAGAMI_SYSTEM_PROMPT : NORMAL_SYSTEM_PROMPT },
         ...newMessages,
       ];
 
@@ -178,7 +203,7 @@ export function AssistantPanel() {
           );
         });
     },
-    [input, loading, messages, subject, difficulty, style],
+    [input, loading, messages, subject, difficulty, style, mode],
   );
 
   const handleKeyDown = useCallback(
@@ -235,6 +260,22 @@ export function AssistantPanel() {
             </span>
           </div>
         </div>
+        {/* Mode toggle */}
+        <button
+          onClick={() => {
+            const next = mode === 'anime' ? 'normal' : 'anime';
+            setMode(next);
+            try { localStorage.setItem('kagami-mode', next); } catch { /* ignore */ }
+          }}
+          className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+            mode === 'anime'
+              ? 'bg-pink-100 text-pink-600 hover:bg-pink-200'
+              : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+          }`}
+          title={mode === 'anime' ? '当前：二次元版' : '当前：常规版'}
+        >
+          {mode === 'anime' ? '🌸 二次元' : '📖 常规'}
+        </button>
         <button
           type="button"
           aria-label="关闭助手"
@@ -253,10 +294,14 @@ export function AssistantPanel() {
           <div className="flex h-full items-center justify-center">
             <div className="max-w-xs text-center">
               <div className="mb-3 flex justify-center">
-                <img src="/avatars/kagami/chibi.png" className="h-16 w-16 rounded-full object-cover" alt="小镜" />
+                <img
+                  src={mode === 'anime' ? '/avatars/kagami/chibi.png' : '/avatars/teacher-new.svg'}
+                  className="h-16 w-16 rounded-full object-cover"
+                  alt="小镜"
+                />
               </div>
               <p className="text-sm leading-relaxed text-gray-500">
-                哈？遇到不会的题目了？告诉我吧。
+                {mode === 'anime' ? '哈？遇到不会的题目了？告诉我吧。' : '你好！有任何学习问题，尽管问我。'}
               </p>
               <div className="mt-4 flex flex-col gap-1.5">
                 {hints.map((hint) => (
