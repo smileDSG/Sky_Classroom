@@ -15,6 +15,28 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('StreamingSolver');
 
+// ── LaTeX JSON escape fixer ──────────────────────────────────────────
+// LLMs often emit LaTeX commands (\frac, \partial, \int, etc.) inside
+// JSON strings. These backslash-letter sequences are invalid JSON escapes
+// and cause JSON.parse to fail. We fix them by double-escaping the
+// backslash, but only for non-standard escape letters (not b f n r t u).
+
+const VALID_JSON_ESCAPE = new Set('bfnrtu');
+
+function fixLatexJsonEscapes(json: string): string {
+  // Match JSON string values and fix LaTeX escapes within them
+  let changed = false;
+  const fixed = json.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (_match, content) => {
+    const fixedContent = content.replace(/\\([a-zA-Z])/g, (_m: string, ch: string) => {
+      if (VALID_JSON_ESCAPE.has(ch)) return _m; // \n, \t, \uXXXX etc. — leave alone
+      changed = true;
+      return `\\\\${ch}`;
+    });
+    return `"${fixedContent}"`;
+  });
+  return changed ? fixed : json;
+}
+
 // ── Model mapping (same as solver-agent.ts) ──────────────────────────
 
 const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> = {
@@ -275,18 +297,35 @@ class StepStreamParser {
   }
 
   private tryParseStep(json: string): StepEvent | null {
+    const obj = this.tryJsonParse(json);
+    if (obj?.label && obj.content) {
+      return {
+        type: 'step',
+        label: String(obj.label),
+        content: String(obj.content),
+        keyPoints: Array.isArray(obj.keyPoints) ? (obj.keyPoints as string[]) : [],
+      };
+    }
+    return null;
+  }
+
+  /**
+   * Parse JSON with automatic LaTeX escape repair.
+   * LLMs often emit \frac, \partial etc. inside JSON strings, which are
+   * invalid JSON escape sequences. We fix them before parsing.
+   */
+  private tryJsonParse(json: string): Record<string, unknown> | null {
     try {
-      const obj = JSON.parse(json);
-      if (obj.label && obj.content) {
-        return {
-          type: 'step',
-          label: obj.label,
-          content: obj.content,
-          keyPoints: Array.isArray(obj.keyPoints) ? obj.keyPoints : [],
-        };
-      }
+      return JSON.parse(json);
     } catch {
-      // malformed step, skip
+      const fixed = fixLatexJsonEscapes(json);
+      if (fixed !== json) {
+        try {
+          return JSON.parse(fixed);
+        } catch {
+          // still broken
+        }
+      }
     }
     return null;
   }
@@ -299,10 +338,11 @@ class StepStreamParser {
       // Try to find a valid JSON object in the buffer
       const match = this.buffer.match(/\{[\s\S]*\}/);
       if (!match) return;
-      const obj = JSON.parse(match[0]);
+      const obj = this.tryJsonParse(match[0]);
+      if (!obj) return;
 
       if (!this.answer && obj.answer) {
-        this.answer = obj.answer;
+        this.answer = obj.answer as string;
       }
       if (this.steps.length === 0 && Array.isArray(obj.steps)) {
         for (const s of obj.steps) {
