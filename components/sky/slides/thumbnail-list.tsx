@@ -40,7 +40,7 @@ export function ThumbnailList({ slides, activeIndex, onSelect }: ThumbnailListPr
           {slides.length}
         </span>
       </div>
-      <div className="scrollbar-hide -mx-1 flex max-h-[320px] flex-col gap-1 overflow-y-auto pr-0.5" style={{ overscrollBehavior: 'contain' }}>
+      <div className="scrollbar-hide -mx-1 flex max-h-[320px] flex-col gap-1 overflow-y-auto pr-0.5">
         {slides.map((slide, i) => {
           const title = extractTitle(slide);
           const icon = TYPE_ICONS[slide.type || ''] || '·';

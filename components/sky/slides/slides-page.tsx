@@ -1,18 +1,19 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+// motion removed — using CSS animations for SSR compatibility
 // Preview now shows PPTX screenshot only — SlideViewer removed
 import { AvatarSpeechPlayer } from './avatar-speech-player';
 import { AvatarSelector } from './avatar-selector';
-import { ThemePreviewCard } from './theme-preview-card';
+import { TemplatePackGallery } from './template-pack-gallery';
 import { SlideThumbnail } from './slide-thumbnail';
 import { SlidePreviewGallery } from './slide-preview-gallery';
 import { exportCourseToPPTX } from '@/lib/export/course-exporter';
 import { AVATAR_CONFIGS } from '@/lib/slides/avatar-config';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import type { AvatarConfig } from '@/lib/slides/types';
-import type { PptxThemeId } from '@/lib/slides/types';
-import { getAllThemeIds } from '@/lib/slides/pptx-themes';
+import { SkyBackground } from '@/components/sky/home/sky-background';
 
 const DIFFICULTIES = [
   { value: 'junior', label: '初中' },
@@ -20,63 +21,145 @@ const DIFFICULTIES = [
   { value: 'college', label: '大学' },
 ] as const;
 
-const THEME_IDS = getAllThemeIds() as PptxThemeId[];
-
 export default function SlidesPage() {
+  const searchParams = useSearchParams();
+
   // Persistent state from Zustand store
-  const slides = useSkyClassroomStore((s) => s.slides);
   const setSlides = useSkyClassroomStore((s) => s.setSlides);
   const generationOptions = useSkyClassroomStore((s) => s.generationOptions);
   const setGenerationOptions = useSkyClassroomStore((s) => s.setGenerationOptions);
   const storeSelectedAvatarId = useSkyClassroomStore((s) => s.selectedAvatarId);
   const setSelectedAvatarId = useSkyClassroomStore((s) => s.setSelectedAvatar);
 
-  const topic = generationOptions.topic ?? '';
-  const difficulty = generationOptions.difficulty ?? 'senior';
+  // Defensive: localStorage may contain stale non-string values from old schema
+  const topic = typeof generationOptions?.topic === 'string' ? generationOptions.topic : '';
+  const difficulty = ['junior', 'senior', 'college'].includes(generationOptions?.difficulty as string)
+    ? generationOptions.difficulty
+    : 'senior';
 
   // Ephemeral UI state
   const [generating, setGenerating] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [autoTriggered, setAutoTriggered] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarConfig>(
     AVATAR_CONFIGS.find((a) => a.id === storeSelectedAvatarId) || AVATAR_CONFIGS[0],
   );
   const [status, setStatus] = useState('');
   const [exporting, setExporting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [exportTheme, setExportTheme] = useState<PptxThemeId>('sky-blue');
-  const [showThemePanel, setShowThemePanel] = useState(false);
-  const [layoutMode, setLayoutMode] = useState<'template-bg' | 'ai' | 'template'>('template-bg');
+  const [showTemplatePackGallery, setShowTemplatePackGallery] = useState(false);
+  const [selectedTemplatePack, setSelectedTemplatePack] = useState<string>('');
+  const [recommendedTemplate, setRecommendedTemplate] = useState<string>('');
+  const [generatedPptx, setGeneratedPptx] = useState<{ url: string; fileName: string } | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[] | null>(null);
   const [previewId, setPreviewId] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [genStage, setGenStage] = useState<'idle' | 'thinking' | 'writing' | 'rendering' | 'done'>('idle');
+  const [genProgress, setGenProgress] = useState(0);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const handleGenerate = useCallback(async () => {
-    if (!topic.trim()) return;
+  const startProgress = useCallback((stage: 'thinking' | 'writing' | 'rendering') => {
+    setGenStage(stage);
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+
+    let target = 0;
+    let current = 0;
+    let step = 0;
+    let intervalMs = 500;
+    if (stage === 'thinking') { current = 0; target = 8; step = (8 - 0) / 10; intervalMs = 300; }
+    if (stage === 'writing') { current = 10; target = 90; step = (90 - 10) / 80; intervalMs = 600; }
+    if (stage === 'rendering') { current = 92; target = 98; step = (98 - 92) / 12; intervalMs = 400; }
+    setGenProgress(current);
+
+    progressIntervalRef.current = setInterval(() => {
+      setGenProgress((p) => {
+        if (p >= target) {
+          // 到达 target 后继续以极慢速度前进，避免"卡住"感
+          if (stage === 'writing' && p < 95) {
+            return Math.min(p + 0.3, 95);
+          }
+          if (stage === 'rendering' && p < 99) {
+            return Math.min(p + 0.2, 99);
+          }
+          return p;
+        }
+        return Math.min(p + step, target);
+      });
+    }, intervalMs);
+  }, []);
+
+  const stopProgress = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  }, []);
+
+  const handleGenerateWithTemplate = useCallback(async (templateId: string, overrideTopic?: string) => {
+    const t = (overrideTopic ?? topic).trim();
+    if (!t || !templateId) return;
     setGenerating(true);
-    setStatus('AI 正在生成幻灯片...');
-    setGenerationOptions({ topic, difficulty });
+    setStatus('AI 正在生成课件内容...');
+    startProgress('writing');
+    if (overrideTopic) {
+      setGenerationOptions({ topic: overrideTopic, difficulty });
+    }
     try {
       const res = await fetch('/api/sky/slides/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          topic: topic.trim(),
+          topic: t,
           difficulty,
-          slideCount: undefined,
-          language: 'Use Simplified Chinese for all content',
-          avatarId: selectedAvatar.id,
-          themeId: exportTheme,
-          useTemplates: true,
+          templateId,
         }),
       });
       const data = await res.json();
-      if (data.success && data.slides?.length) {
-        setSlides(data.slides);
-        setActiveIndex(0);
-        setStatus('');
-        // 自动生成 PPTX 截图预览
-        setTimeout(() => handlePreview(), 0);
+      if (data.success && data.pptxUrl) {
+        setStatus('课件生成成功！');
+        setGeneratedPptx({ url: data.pptxUrl, fileName: data.fileName || '课件.pptx' });
+        // 清除旧的 v2/legacy slides，避免污染 previewImages 的页数统计
+        setSlides([]);
+
+        // 后端已直接返回预览图（合并generate+preview）
+        if (data.slideImages?.length) {
+          setGenStage('done');
+          setGenProgress(100);
+          stopProgress();
+          setPreviewImages(data.slideImages);
+          setPreviewId(data.previewId || '');
+          setStatus('');
+        } else {
+          // Fallback: 后端未返回预览图时，前端自行调用preview API
+          startProgress('rendering');
+          try {
+            setPreviewing(true);
+            setStatus('正在生成课件预览...');
+            const previewRes = await fetch('/api/sky/slides/preview', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ pptxUrl: data.pptxUrl }),
+            });
+            const previewData = await previewRes.json();
+            if (previewData.success && previewData.slideImages?.length) {
+              setGenStage('done');
+              setGenProgress(100);
+              setPreviewImages(previewData.slideImages);
+              setPreviewId(previewData.previewId);
+              setStatus('');
+            } else {
+              setStatus(`预览失败: ${previewData.error || '请重试'}`);
+              setTimeout(() => setStatus(''), 3000);
+            }
+          } catch {
+            setStatus('预览生成失败');
+            setTimeout(() => setStatus(''), 3000);
+          } finally {
+            setPreviewing(false);
+            stopProgress();
+          }
+        }
       } else {
         setStatus(`生成失败: ${data.error || '请重试'}`);
       }
@@ -84,82 +167,77 @@ export default function SlidesPage() {
       setStatus('网络错误，请检查服务是否运行');
     } finally {
       setGenerating(false);
+      stopProgress();
     }
-  }, [topic, difficulty, selectedAvatar.id, exportTheme]);
+  }, [topic, difficulty, startProgress, stopProgress]);
 
-  const handlePreview = useCallback(async () => {
-    if (!slides.length) return;
-    setPreviewing(true);
-    setStatus('正在生成预览...');
+  const handleGenerate = useCallback(async (overrideTopic?: string) => {
+    const t = (overrideTopic ?? topic).trim();
+    if (!t) return;
+    // 先调用AI推断API获取推荐模板
+    startProgress('thinking');
     try {
-      const res = await fetch('/api/sky/slides/preview', {
+      setStatus('正在分析主题风格...');
+      const res = await fetch('/api/sky/slides/infer-template', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: topic || '课件',
-          slides,
-          theme: exportTheme,
-          previewId: previewId || undefined,
-          layoutMode,
-        }),
+        body: JSON.stringify({ topic: t }),
       });
       const data = await res.json();
-      if (data.success && data.slideImages?.length) {
-        setPreviewImages(data.slideImages);
-        setPreviewId(data.previewId);
-        setShowPreview(true);
-        setStatus('');
+      if (data.success && data.templateId) {
+        setRecommendedTemplate(data.templateId);
       } else {
-        setStatus(`预览失败: ${data.error || '请重试'}`);
-        setTimeout(() => setStatus(''), 3000);
+        setRecommendedTemplate('');
       }
     } catch {
-      setStatus('预览失败');
-      setTimeout(() => setStatus(''), 3000);
+      setRecommendedTemplate('');
     } finally {
-      setPreviewing(false);
+      setStatus('');
+      stopProgress();
+      setShowTemplatePackGallery(true);
     }
-  }, [slides, topic, exportTheme, previewId, layoutMode]);
+  }, [topic, startProgress, stopProgress]);
 
-  const handleExport = useCallback(async () => {
-    if (!slides.length) return;
-    setExporting(true);
-    try {
-      const res = await fetch('/api/sky/slides/export-pptx', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: topic || '课件', slides, theme: exportTheme, layoutMode }),
-      });
-      if (!res.ok) throw new Error('Export failed');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${topic || '课件'}.pptx`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setStatus('导出成功');
-      setTimeout(() => setStatus(''), 3000);
-    } catch {
-      setStatus('导出失败');
-    } finally {
-      setExporting(false);
+  const handleDownloadGenerated = useCallback(() => {
+    if (!generatedPptx) return;
+    const a = document.createElement('a');
+    a.href = generatedPptx.url;
+    a.download = generatedPptx.fileName;
+    a.click();
+  }, [generatedPptx]);
+
+  const onTemplatePackSelected = useCallback((templateId: string) => {
+    setSelectedTemplatePack(templateId);
+    handleGenerateWithTemplate(templateId);
+  }, [handleGenerateWithTemplate]);
+
+  // Auto-trigger generation from URL ?topic=xxx
+  useEffect(() => {
+    const urlTopic = searchParams.get('topic');
+    if (urlTopic && !autoTriggered && !generating) {
+      setAutoTriggered(true);
+      handleGenerate(urlTopic);
     }
-  }, [slides, topic, exportTheme, layoutMode]);
+  }, [searchParams, autoTriggered, generating, handleGenerate]);
+
+  const totalPages = previewImages?.length ?? 0;
+  const hasContent = !!previewImages?.length || !!generatedPptx;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') setActiveIndex((i) => Math.max(0, i - 1));
-      if (e.key === 'ArrowRight') setActiveIndex((i) => Math.min(slides.length - 1, i + 1));
+      if (e.key === 'ArrowRight') setActiveIndex((i) => Math.min(totalPages - 1, i + 1));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [slides.length]);
+  }, [totalPages]);
 
-  const currentSlide = slides[activeIndex] || null;
+
 
   return (
-    <div className="-m-6 flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-[#f8fafc]">
+    <div className="flex h-screen w-full flex-col overflow-hidden relative">
+      <SkyBackground />
+
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
@@ -169,22 +247,53 @@ export default function SlidesPage() {
           scrollbar-width: none;
         }
       `}</style>
+      <style jsx global>{`
+        @keyframes fadeInLeft {
+          from { opacity: 0; transform: translateX(-20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fadeInRight {
+          from { opacity: 0; transform: translateX(20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in-left {
+          animation: fadeInLeft 0.5s ease-out forwards;
+        }
+        .animate-fade-in-right {
+          animation: fadeInRight 0.5s ease-out 0.2s forwards;
+          opacity: 0;
+        }
+        .animate-fade-in-down {
+          animation: fadeInDown 0.5s ease-out 0.1s forwards;
+          opacity: 0;
+        }
+        .animate-fade-in-scale {
+          animation: fadeInScale 0.5s ease-out forwards;
+        }
+      `}</style>
 
       {/* Top bar */}
-      <header className="flex flex-shrink-0 items-center border-b border-slate-200/60 bg-white/80 px-6 py-3 backdrop-blur-xl shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <header className="relative z-10 flex flex-shrink-0 items-center border-b border-slate-200/50 bg-white/70 px-6 py-3 backdrop-blur-xl">
         {/* Left: brand */}
-        <div className="flex w-48 flex-shrink-0 items-center gap-3">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200/50 ring-1 ring-white/20">
+        <div className="flex w-48 flex-shrink-0 items-center gap-3 animate-fade-in-left">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 text-white shadow-lg shadow-sky-500/25">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            <div className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-slate-800 tracking-tight">天空课堂</span>
+            <span className="text-sm font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent tracking-tight">天空课堂</span>
             <span className="text-[10px] font-medium text-slate-400 -mt-0.5">AI 互动课件</span>
           </div>
-          {slides.length > 0 && (
+          {hasContent && (
             <button
               onClick={() => setSidebarOpen((v) => !v)}
               className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 hover:scale-105 active:scale-95"
@@ -203,14 +312,14 @@ export default function SlidesPage() {
         </div>
 
         {/* Center: input + controls */}
-        <div className="flex flex-1 items-center justify-center gap-3">
+        <div className="flex flex-1 items-center justify-center gap-3 animate-fade-in-down">
           <div className="relative w-full max-w-md">
             <input
               value={topic}
               onChange={(e) => setGenerationOptions({ topic: e.target.value, difficulty })}
               onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
               placeholder="输入教学主题，如：勾股定理、牛顿定律…"
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pl-10 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
+              className="w-full rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm px-4 py-2.5 pl-10 text-sm text-slate-700 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-100 transition-all shadow-sm"
             />
             <svg
               className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -227,7 +336,7 @@ export default function SlidesPage() {
             </svg>
           </div>
 
-          <div className="inline-flex flex-shrink-0 rounded-xl border border-slate-200/80 bg-slate-50/80 p-0.5 shadow-sm backdrop-blur-sm">
+          <div className="inline-flex flex-shrink-0 rounded-xl border border-slate-200/80 bg-white/60 p-0.5 shadow-sm backdrop-blur-sm">
             {DIFFICULTIES.map((d) => (
               <button
                 key={d.value}
@@ -235,7 +344,7 @@ export default function SlidesPage() {
                 onClick={() => setGenerationOptions({ topic, difficulty: d.value })}
                 className={`relative rounded-[10px] px-3.5 py-2 text-sm font-semibold transition-all duration-300 ${
                   d.value === difficulty
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-200/50'
+                    ? 'bg-gradient-to-r from-sky-500 to-blue-500 text-white shadow-md shadow-sky-200/50'
                     : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
                 }`}
               >
@@ -245,9 +354,9 @@ export default function SlidesPage() {
           </div>
 
           <button
-            onClick={handleGenerate}
+            onClick={() => handleGenerate()}
             disabled={generating || !topic.trim()}
-            className="relative inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200/40 transition-all duration-300 hover:shadow-xl hover:shadow-blue-200/50 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0"
+            className="relative inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-sky-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/30 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0"
           >
             {generating && (
               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -267,8 +376,8 @@ export default function SlidesPage() {
           </button>
         </div>
 
-        {/* Right: status */}
-        <div className="flex w-48 flex-shrink-0 items-center justify-end">
+        {/* Right: status + template */}
+        <div className="flex w-48 flex-shrink-0 items-center justify-end gap-2 animate-fade-in-right">
           {status && (
             <span
               className={`text-xs font-medium ${
@@ -284,10 +393,10 @@ export default function SlidesPage() {
       </header>
 
       {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative z-10 flex flex-1 overflow-hidden">
         {/* Left panel */}
         <aside
-          className={`flex min-h-0 flex-shrink-0 flex-col overflow-hidden border-r border-slate-200/60 bg-white/70 backdrop-blur-xl transition-all duration-300 ${
+          className={`flex min-h-0 flex-shrink-0 flex-col overflow-hidden border-r border-slate-200/50 bg-white/60 backdrop-blur-xl transition-all duration-300 ${
             sidebarOpen ? 'w-64' : 'w-0 border-r-0'
           }`}
         >
@@ -306,88 +415,6 @@ export default function SlidesPage() {
 
           <div className="mx-4 h-px flex-shrink-0 bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
 
-          {/* Theme selector toggle */}
-          <div className="flex-shrink-0 px-4 py-3">
-            <button
-              onClick={() => setShowThemePanel((v) => !v)}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 transition-all hover:bg-slate-100/80 hover:text-slate-600"
-            >
-              <span className="flex items-center gap-1.5">
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                </svg>
-                导出主题
-              </span>
-              <svg
-                className={`h-3 w-3 transition-transform duration-300 ${showThemePanel ? 'rotate-180' : ''}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {showThemePanel && (
-              <div className="scrollbar-hide mt-2 grid max-h-60 grid-cols-2 gap-2 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
-                {THEME_IDS.map((tid) => (
-                  <ThemePreviewCard
-                    key={tid}
-                    themeId={tid}
-                    selected={tid === exportTheme}
-                    onSelect={setExportTheme}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="mx-4 h-px flex-shrink-0 bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
-
-          {/* Layout mode selector */}
-          <div className="flex-shrink-0 px-4 py-3">
-            <span className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-              </svg>
-              布局模式
-            </span>
-            <div className="flex flex-col gap-1.5">
-              <button
-                onClick={() => setLayoutMode('template-bg')}
-                className={`rounded-lg px-2 py-1.5 text-[11px] font-medium transition-all ${
-                  layoutMode === 'template-bg'
-                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-                }`}
-              >
-                WPS 模板背景 + AI 排版
-              </button>
-              <button
-                onClick={() => setLayoutMode('ai')}
-                className={`rounded-lg px-2 py-1.5 text-[11px] font-medium transition-all ${
-                  layoutMode === 'ai'
-                    ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-                }`}
-              >
-                AI 自由排版
-              </button>
-              <button
-                onClick={() => setLayoutMode('template')}
-                className={`rounded-lg px-2 py-1.5 text-[11px] font-medium transition-all ${
-                  layoutMode === 'template'
-                    ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
-                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-                }`}
-              >
-                WPS 模板填充
-              </button>
-            </div>
-          </div>
-
-          <div className="mx-4 h-px flex-shrink-0 bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
-
           {/* Thumbnails */}
           <div className="scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-3" style={{ overscrollBehavior: 'contain' }}>
             <div className="mb-3 flex items-center justify-between px-1">
@@ -398,63 +425,61 @@ export default function SlidesPage() {
                 幻灯片
               </span>
               <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-slate-100 px-1.5 text-[10px] font-bold tabular-nums text-slate-500">
-                {slides.length}
+                {totalPages}
               </span>
             </div>
             <div className="flex flex-col gap-1.5">
-              {slides.map((slide, i) => (
-                <button
-                  key={slide.id}
-                  onClick={() => setActiveIndex(i)}
-                  className={`group relative flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-300 ${
-                    i === activeIndex
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50/50 ring-1 ring-blue-200/60 shadow-sm shadow-blue-100/50'
-                      : 'hover:bg-slate-50/80'
-                  }`}
-                >
-                  <div className="relative flex-shrink-0">
-                    {previewImages ? (
+              {previewImages ? (
+                previewImages.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveIndex(i)}
+                    className={`group relative flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-300 ${
+                      i === activeIndex
+                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50/50 ring-1 ring-blue-200/60 shadow-sm shadow-blue-100/50'
+                        : 'hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <div className="relative flex-shrink-0">
                       <img
-                        src={previewImages[i]}
+                        src={img}
                         alt={`Thumb ${i + 1}`}
                         className="h-[45px] w-[80px] rounded-lg object-cover shadow-sm"
                         draggable={false}
                       />
-                    ) : (
-                      <SlideThumbnail slide={slide} theme={exportTheme} width={80} />
-                    )}
-                    <span className={`absolute -left-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm ${
-                      i === activeIndex
-                        ? 'bg-blue-500 text-white shadow-blue-200'
-                        : 'bg-white text-slate-400 shadow-sm ring-1 ring-slate-200'
-                    }`}>
-                      {i + 1}
-                    </span>
-                  </div>
-                  <div className="flex min-w-0 flex-col">
-                    <span
-                      className={`text-[11px] font-semibold ${
-                        i === activeIndex ? 'text-blue-700' : 'text-slate-500'
-                      }`}
-                    >
-                      {slide.type === 'cover' ? '封面' : slide.type === 'end' ? '封底' : `第 ${i + 1} 页`}
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      {i === activeIndex ? (
-                        <span className="flex items-center gap-1 text-blue-500">
-                          <span className="relative flex h-1.5 w-1.5">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
-                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />
+                      <span className={`absolute -left-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm ${
+                        i === activeIndex
+                          ? 'bg-sky-500 text-white shadow-sky-200'
+                          : 'bg-white text-slate-400 shadow-sm ring-1 ring-slate-200'
+                      }`}>
+                        {i + 1}
+                      </span>
+                    </div>
+                    <div className="flex min-w-0 flex-col">
+                      <span
+                        className={`text-[11px] font-semibold ${
+                          i === activeIndex ? 'text-sky-700' : 'text-slate-500'
+                        }`}
+                      >
+                        {i === 0 ? '封面' : i === previewImages.length - 1 ? '封底' : `第 ${i + 1} 页`}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {i === activeIndex ? (
+                          <span className="flex items-center gap-1 text-sky-500">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-500" />
+                            </span>
+                            当前
                           </span>
-                          当前
-                        </span>
-                      ) : (
-                        ''
-                      )}
-                    </span>
-                  </div>
-                </button>
-              ))}
+                        ) : (
+                          ''
+                        )}
+                      </span>
+                    </div>
+                  </button>
+                ))
+              ) : null}
             </div>
           </div>
         </aside>
@@ -463,7 +488,7 @@ export default function SlidesPage() {
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="relative min-h-0 flex-1">
             {previewImages ? (
-              <div className="flex h-full items-center justify-center bg-slate-100 p-6">
+              <div className="flex h-full items-center justify-center bg-white/40 backdrop-blur-sm p-6">
                 <img
                   src={previewImages[activeIndex]}
                   alt={`Slide ${activeIndex + 1}`}
@@ -472,101 +497,137 @@ export default function SlidesPage() {
                   draggable={false}
                 />
               </div>
-            ) : slides.length > 0 ? (
-              <div className="flex h-full flex-col items-center justify-center bg-slate-100 gap-4">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-500" />
-                <p className="text-sm text-slate-500">
-                  {previewing ? '正在生成课件预览...' : '课件生成中，请稍候...'}
-                </p>
+            ) : generating ? (
+              <div className="flex h-full flex-col items-center justify-center bg-white/30 backdrop-blur-sm gap-5">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-sky-500" />
+                <div className="flex flex-col items-center gap-3 w-64">
+                  <p className="text-sm font-medium text-slate-600">
+                    {genStage === 'thinking' && '正在分析主题风格...'}
+                    {genStage === 'writing' && 'AI 正在撰写课件内容...'}
+                    {genStage === 'rendering' && '正在渲染课件预览...'}
+                    {genStage === 'done' && '课件生成成功'}
+                  </p>
+                  {/* Progress bar */}
+                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-500 transition-all duration-500 ease-out"
+                      style={{ width: `${genProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-400 tabular-nums">{Math.round(genProgress)}%</p>
+                </div>
+              </div>
+            ) : generatedPptx ? (
+              <div className="flex h-full flex-col items-center justify-center bg-white/30 backdrop-blur-sm gap-4 animate-fade-in-scale">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 shadow-sm">
+                  <svg className="h-8 w-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <p className="text-sm font-semibold text-slate-700">课件生成成功</p>
+                  <p className="text-xs text-slate-400">文件已自动下载到本地</p>
+                </div>
+                <button
+                  onClick={handleDownloadGenerated}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  重新下载课件
+                </button>
               </div>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center bg-slate-100 gap-3">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-200/50">
-                  <svg className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="flex h-full flex-col items-center justify-center bg-white/30 backdrop-blur-sm gap-3 animate-fade-in-scale">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/60 shadow-sm">
+                  <svg className="h-8 w-8 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                   </svg>
                 </div>
-                <p className="text-sm text-slate-400">输入主题，点击生成课件</p>
+                <p className="text-sm text-slate-500">输入主题，点击生成课件</p>
               </div>
             )}
             <AvatarSpeechPlayer
-              avatar={slides.length > 0 ? selectedAvatar : null}
+              avatar={hasContent ? selectedAvatar : null}
               speech={null}
               activeSlideIndex={activeIndex}
-              totalSlides={slides.length}
+              totalSlides={totalPages}
             />
           </div>
 
-          {slides.length > 0 && (
-            <footer className="flex flex-shrink-0 items-center justify-between border-t border-slate-200/60 bg-white/70 px-6 py-2.5 backdrop-blur-xl shadow-[0_-1px_3px_rgba(0,0,0,0.03)]">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
-                  disabled={activeIndex === 0}
-                  className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100"
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                  上一页
-                </button>
+          {generatedPptx && (
+            <footer className="flex flex-shrink-0 items-center justify-between border-t border-slate-200/50 bg-white/60 px-6 py-2.5 backdrop-blur-xl">
+              {previewImages && previewImages.length > 0 ? (
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
+                    disabled={activeIndex === 0}
+                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    上一页
+                  </button>
 
-                <div className="flex flex-col items-center gap-1">
-                  <span className="min-w-[4rem] text-center text-xs tabular-nums text-slate-400">
-                    <span className="font-bold text-slate-700">{activeIndex + 1}</span>
-                    <span className="mx-1 text-slate-300">/</span>
-                    <span className="font-medium">{slides.length}</span>
-                  </span>
-                  {/* Progress bar */}
-                  <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-500"
-                      style={{ width: `${((activeIndex + 1) / slides.length) * 100}%` }}
-                    />
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="min-w-[4rem] text-center text-xs tabular-nums text-slate-400">
+                      <span className="font-bold text-slate-700">{activeIndex + 1}</span>
+                      <span className="mx-1 text-slate-300">/</span>
+                      <span className="font-medium">{totalPages}</span>
+                    </span>
+                    {/* Progress bar */}
+                    <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-500 transition-all duration-500"
+                        style={{ width: `${((activeIndex + 1) / totalPages) * 100}%` }}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <button
-                  onClick={() => setActiveIndex((i) => Math.min(slides.length - 1, i + 1))}
-                  disabled={activeIndex === slides.length - 1}
-                  className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100"
-                >
-                  下一页
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  <button
+                    onClick={() => setActiveIndex((i) => Math.min(totalPages - 1, i + 1))}
+                    disabled={activeIndex === totalPages - 1}
+                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100"
+                  >
+                    下一页
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <svg className="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                </button>
-              </div>
+                  <span>课件已生成</span>
+                </div>
+              )}
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleGenerate}
+                  onClick={() => {
+                    setGeneratedPptx(null);
+                    handleGenerate();
+                  }}
                   disabled={generating}
                   className="rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                 >
                   重新生成
                 </button>
-                <button
-                  onClick={handlePreview}
-                  disabled={previewing}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0"
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  {previewing ? '预览中' : '预览课件'}
-                </button>
-                <button
-                  onClick={handleExport}
-                  disabled={exporting}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-200/40 transition-all hover:shadow-xl hover:shadow-emerald-200/50 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0"
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  {exporting ? '导出中' : '导出 PPTX'}
-                </button>
+                {generatedPptx && (
+                  <button
+                    onClick={handleDownloadGenerated}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    下载课件
+                  </button>
+                )}
               </div>
             </footer>
           )}
@@ -580,6 +641,14 @@ export default function SlidesPage() {
           onClose={() => setShowPreview(false)}
         />
       )}
+
+      <TemplatePackGallery
+        open={showTemplatePackGallery}
+        topic={topic}
+        recommendedId={recommendedTemplate}
+        onSelect={onTemplatePackSelected}
+        onClose={() => setShowTemplatePackGallery(false)}
+      />
     </div>
   );
 }

@@ -1,0 +1,503 @@
+{
+  "template_id": "business",
+  "template_name": "business教学模板",
+  "slide_width_inches": 13.33,
+  "slide_height_inches": 7.5,
+  "mappings": {
+    "slide1": {
+      "page_type": "cover",
+      "fields": [
+        {
+          "field": "cover.en_tag",
+          "shape_idx": 2,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "PROFESSIONAL COURSE",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "cover.title",
+          "shape_idx": 3,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "项目管理实务",
+          "font_size": 48.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "cover.subtitle",
+          "shape_idx": 5,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "系统掌握项目管理核心技能",
+          "font_size": 22.0,
+          "max_chars": 50,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    "slide2": {
+      "page_type": "toc",
+      "fields": [
+        {
+          "field": "toc.en_title",
+          "shape_idx": 0,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "COURSE OUTLINE",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "toc.title",
+          "shape_idx": 1,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "课程大纲",
+          "font_size": 36.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "toc.items[0].num",
+          "shape_idx": 3,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "1",
+          "font_size": 28.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "toc.items[0].title",
+          "shape_idx": 4,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "项目启动",
+          "font_size": 24.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "toc.items[0].desc",
+          "shape_idx": 5,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "明确目标，奠定基础",
+          "font_size": 16.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "toc.items[1].num",
+          "shape_idx": 7,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "2",
+          "font_size": 28.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "toc.items[1].title",
+          "shape_idx": 8,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "项目规划",
+          "font_size": 24.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "toc.items[1].desc",
+          "shape_idx": 9,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "制定计划，分配资源",
+          "font_size": 16.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "toc.items[2].num",
+          "shape_idx": 11,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "3",
+          "font_size": 28.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "toc.items[2].title",
+          "shape_idx": 12,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "项目执行与监控",
+          "font_size": 24.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "toc.items[2].desc",
+          "shape_idx": 13,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "跟踪进度，确保交付",
+          "font_size": 16.0,
+          "max_chars": 50,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    "slide3": {
+      "page_type": "chapter",
+      "fields": [
+        {
+          "field": "chapter.num",
+          "shape_idx": 0,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "01",
+          "font_size": 96.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "chapter.en",
+          "shape_idx": 1,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "CHAPTER ONE",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "chapter.title",
+          "shape_idx": 3,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "项目启动",
+          "font_size": 44.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "chapter.subtitle",
+          "shape_idx": 4,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "明确目标，奠定基础",
+          "font_size": 20.0,
+          "max_chars": 50,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    "slide4": {
+      "page_type": "content_a",
+      "fields": [
+        {
+          "field": "content_a.tag",
+          "shape_idx": 0,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "KEY STEPS",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "content_a.title",
+          "shape_idx": 1,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "项目启动的五大步骤",
+          "font_size": 30.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "content_a.cards[0].title",
+          "shape_idx": 5,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 18.0,
+          "max_chars": 50,
+          "description": "卡片1标题"
+        },
+        {
+          "field": "content_a.cards[0].desc",
+          "shape_idx": 6,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 200,
+          "description": "卡片1描述"
+        },
+        {
+          "field": "content_a.cards[1].title",
+          "shape_idx": 9,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 18.0,
+          "max_chars": 50,
+          "description": "卡片2标题"
+        },
+        {
+          "field": "content_a.cards[1].desc",
+          "shape_idx": 10,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 200,
+          "description": "卡片2描述"
+        },
+        {
+          "field": "content_a.cards[2].title",
+          "shape_idx": 13,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 18.0,
+          "max_chars": 50,
+          "description": "卡片3标题"
+        },
+        {
+          "field": "content_a.cards[2].desc",
+          "shape_idx": 14,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 200,
+          "description": "卡片3描述"
+        },
+        {
+          "field": "content_a.cards[3].title",
+          "shape_idx": 17,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 18.0,
+          "max_chars": 50,
+          "description": "卡片4标题"
+        },
+        {
+          "field": "content_a.cards[3].desc",
+          "shape_idx": 18,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 200,
+          "description": "卡片4描述"
+        },
+        {
+          "field": "content_a.cards[4].title",
+          "shape_idx": 21,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 18.0,
+          "max_chars": 50,
+          "description": "卡片5标题"
+        },
+        {
+          "field": "content_a.cards[4].desc",
+          "shape_idx": 22,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 200,
+          "description": "卡片5描述"
+        }
+      ],
+      "notes": ""
+    },
+    "slide5": {
+      "page_type": "content_b",
+      "fields": [
+        {
+          "field": "content_b.tag",
+          "shape_idx": 0,
+          "max_chars": 20
+        },
+        {
+          "field": "content_b.title",
+          "shape_idx": 1,
+          "max_chars": 15
+        },
+        {
+          "field": "content_b.cards[0].title",
+          "shape_idx": 5,
+          "max_chars": 10
+        },
+        {
+          "field": "content_b.cards[0].desc",
+          "shape_idx": 6,
+          "max_chars": 100
+        },
+        {
+          "field": "content_b.cards[1].title",
+          "shape_idx": 9,
+          "max_chars": 10
+        },
+        {
+          "field": "content_b.cards[1].desc",
+          "shape_idx": 10,
+          "max_chars": 100
+        },
+        {
+          "field": "content_b.cards[2].title",
+          "shape_idx": 13,
+          "max_chars": 10
+        },
+        {
+          "field": "content_b.cards[2].desc",
+          "shape_idx": 14,
+          "max_chars": 100
+        },
+        {
+          "field": "content_b.cards[3].title",
+          "shape_idx": 17,
+          "max_chars": 10
+        },
+        {
+          "field": "content_b.cards[3].desc",
+          "shape_idx": 18,
+          "max_chars": 100
+        },
+        {
+          "field": "content_b.cards[4].title",
+          "shape_idx": 21,
+          "max_chars": 10
+        },
+        {
+          "field": "content_b.cards[4].desc",
+          "shape_idx": 22,
+          "max_chars": 100
+        },
+        {
+          "field": "content_b.cards[5].title",
+          "shape_idx": 25,
+          "max_chars": 10
+        },
+        {
+          "field": "content_b.cards[5].desc",
+          "shape_idx": 26,
+          "max_chars": 100
+        },
+        {
+          "field": "content_b.bullet_text",
+          "shape_idx": 27,
+          "max_chars": 300
+        }
+      ],
+      "notes": "",
+      "special_handling": {
+        "summary_textbox": {
+          "shape_idx": 27,
+          "note": "bullet list textbox"
+        }
+      }
+    },
+    "slide6": {
+      "page_type": "table",
+      "fields": [
+        {
+          "field": "table.tag",
+          "shape_idx": 0,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "ANALYSIS",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "table.title",
+          "shape_idx": 1,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "项目阶段对比分析",
+          "font_size": 30.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "table.source",
+          "shape_idx": 4,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 12.0,
+          "max_chars": 200,
+          "description": "数据来源说明"
+        }
+      ],
+      "notes": "",
+      "special_handling": {
+        "table": {
+          "shape_idx": 3
+        }
+      }
+    },
+    "slide7": {
+      "page_type": "end",
+      "fields": [
+        {
+          "field": "end.end_en",
+          "shape_idx": 1,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "THE END",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "end.slogan",
+          "shape_idx": 2,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "实践出真知",
+          "font_size": 48.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "end.subtitle",
+          "shape_idx": 4,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "理论指导实践，经验成就卓越",
+          "font_size": 20.0,
+          "max_chars": 50,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    }
+  },
+  "unsupported_fields": [],
+  "capacity": {
+    "content_a_cards": 10,
+    "content_b_cards": 6,
+    "table_cols": 4,
+    "table_rows": 5
+  }
+}

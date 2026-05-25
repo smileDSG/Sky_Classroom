@@ -11,3 +11,4 @@ build/
 server-providers.yml
 .cache/
 tsconfig.tsbuildinfo
+.kimi/

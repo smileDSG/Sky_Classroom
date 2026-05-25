@@ -234,6 +234,8 @@ export interface TemplateSlotV2 {
   /** 教学流程角色，用于指导模板选择和课件结构 */
   pageRole?: PageRole;
   params: TemplateParamsV2;
+  /** Optional English prompt for AI image generation (cover / introduction slides) */
+  imagePrompt?: string;
 }
 
 // ── PPT export ───────────────────────────────────────────────────
