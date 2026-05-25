@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { InlineMath } from '@/components/ui/inline-math';
+import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
 
 type Scene = 'idle' | 'thinking' | 'teaching' | 'done';
 type KagamiMode = 'anime' | 'normal';
@@ -84,7 +86,6 @@ export function KagamiPanel() {
   const [hasDragged, setHasDragged] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, originX: 0, originY: 0, dist: 0, moved: false });
   const fabRef = useRef<HTMLButtonElement>(null);
-
   // Drag via native DOM events
   useEffect(() => {
     const el = fabRef.current;
@@ -145,15 +146,26 @@ export function KagamiPanel() {
   const [mode, setMode] = useState<KagamiMode>('anime');
   // Hydrate mode from localStorage after mount (avoids SSR mismatch)
   useEffect(() => { setMode(loadMode()); }, []);
+  // Reset chat when mode switches
+  const prevModeRef = useRef(mode);
+  useEffect(() => {
+    if (prevModeRef.current !== mode) {
+      setMessages([]);
+      setHasGreeted(false);
+      prevModeRef.current = mode;
+    }
+  }, [mode]);
   const isSolving = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Detect if user is asking to solve a problem (vs casual chat)
-  // Must contain actual problem indicators — NOT just "?" or greetings
   const detectIsSolving = (msg: string): boolean => {
-    const problemKeywords = /题|做题|题目|怎么做|解题|讲解|帮忙看一下|这道|问一下这道|算一下|等于多少|方程|函数|几何|代数|三角|概率|求|证明|化简|因式分解|计算|面积|体积|角度|导数|积分|极限|矩阵|向量|怎么解|帮我/;
+    // Normal mode: always answer properly
+    if (mode === 'normal') return true;
+    // Anime mode: expanded keywords including educational questions
+    const problemKeywords = /题|题|题目|怎么做|解题|讲解|帮忙|这道|问一下|算|等于|方程|函数|几何|代数|三角|概率|求|证明|化简|因式分解|计算|面积|体积|角度|导数|积分|极限|矩阵|向量|怎么|帮我|什么是|什么叫|怎么理解|解释|区别|定义|概念|原理|定理|公式|方法|步骤|过程|级数|无穷|微积分|为什么/;
     const mathExpr = /\d+[+\-×÷*^]\d+|[xXyYzZ]\s*=/i;
     return problemKeywords.test(msg) || mathExpr.test(msg);
   };
@@ -248,6 +260,9 @@ export function KagamiPanel() {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Prevent scroll chaining
+  useScrollIsolation(listRef, open);
 
   const sceneKey = useRef(0);
 
@@ -522,7 +537,7 @@ export function KagamiPanel() {
             </div>
 
             {/* Messages */}
-            <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
+            <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2" style={{ overscrollBehavior: 'contain' }}>
               {messages.length === 0 && (
                 <div className="py-6 text-center text-sm text-gray-400">
                   <p className="text-lg mb-1">💜</p>
@@ -546,7 +561,7 @@ export function KagamiPanel() {
                         : 'bg-purple-50 text-gray-700'
                     }`}
                   >
-                    {m.content || (loading ? '...' : '')}
+                    {m.content ? <InlineMath text={m.content} /> : (loading ? '...' : '')}
                   </div>
                 </div>
               ))}

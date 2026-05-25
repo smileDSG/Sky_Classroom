@@ -4,6 +4,8 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
+import { InlineMath } from '@/components/ui/inline-math';
+import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
 
 const log = createLogger('AssistantPanel');
 
@@ -56,12 +58,6 @@ interface Message {
   content: string;
 }
 
-let messageIdCounter = 0;
-function nextId(): string {
-  messageIdCounter += 1;
-  return `msg-${messageIdCounter}`;
-}
-
 // ── 组件 ──────────────────────────────────────────────────────────────
 
 export function AssistantPanel() {
@@ -78,17 +74,37 @@ export function AssistantPanel() {
   const [mode, setMode] = useState<KagamiMode>('anime');
   // Hydrate mode from localStorage after mount (avoids SSR mismatch)
   useEffect(() => { setMode(loadMode()); }, []);
+  // Reset chat when mode switches so the two personas don't share history
+  const prevModeRef = useRef(mode);
+  useEffect(() => {
+    if (prevModeRef.current !== mode) {
+      setMessages([]);
+      prevModeRef.current = mode;
+    }
+  }, [mode]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const idCounterRef = useRef(0);
+  const nextId = useCallback(() => {
+    idCounterRef.current += 1;
+    return `msg-${idCounterRef.current}`;
+  }, []);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesListRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }
   }, []);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  // Prevent scroll chaining
+  useScrollIsolation(messagesListRef, true);
 
   const handleSend = useCallback(
     (text?: string) => {
@@ -245,7 +261,7 @@ export function AssistantPanel() {
   );
 
   return (
-    <div className="flex h-[400px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
+    <div id="assistant-panel" className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3">
         <div className="flex items-center gap-2">
@@ -295,7 +311,7 @@ export function AssistantPanel() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3">
+      <div ref={messagesListRef} className="flex-1 overflow-y-auto px-4 py-3" style={{ overscrollBehavior: 'contain' }}>
         {!hasUserMessages ? (
           <div className="flex h-full items-center justify-center">
             <div className="max-w-xs text-center">
@@ -348,7 +364,7 @@ export function AssistantPanel() {
                       : 'rounded-tl-sm border border-gray-200 bg-[#F8FAFC] text-gray-800'
                   }`}
                 >
-                  {msg.content}
+                  <InlineMath text={msg.content} />
                   {msg.role === 'assistant' && loading && msg.content === '' && (
                     <span className="inline-flex gap-1">
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '0ms' }} />
