@@ -15,28 +15,32 @@ interface MathRendererProps {
 const BARE_LATEX_PATTERNS: Array<{ pattern: RegExp; wrapper: (m: string) => string }> = [
   // Block-level environments — wrap with $$
   { pattern: /\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\}/g, wrapper: (m) => `$$${m}$$` },
-  // LaTeX commands with braces
-  { pattern: /\\frac\{[^}]*\}\{[^}]*\}/g, wrapper: (m) => `$${m}$` },
-  { pattern: /\\sqrt(?:\[.*?\])?\{[^}]*\}/g, wrapper: (m) => `$${m}$` },
-  { pattern: /\\int(?:_[^{}]*\{[^}]*\})?(?:\^[^{}]*\{[^}]*\})?/g, wrapper: (m) => `$${m}$` },
-  { pattern: /\\sum(?:_[^{}]*\{[^}]*\})?(?:\^[^{}]*\{[^}]*\})?/g, wrapper: (m) => `$${m}$` },
-  { pattern: /\\prod(?:_[^{}]*\{[^}]*\})?(?:\^[^{}]*\{[^}]*\})?/g, wrapper: (m) => `$${m}$` },
-  { pattern: /\\lim(?:_\{[^}]*\})?/g, wrapper: (m) => `$${m}$` },
-  { pattern: /\\infty/g, wrapper: (m) => `$${m}$` },
-  { pattern: /\\left[()[\]|]/g, wrapper: (m) => `$${m}$` },
-  { pattern: /\\right[()[\]|]/g, wrapper: (m) => `$${m}$` },
-  { pattern: /\\times|\\div|\\pm|\\leq|\\geq|\\neq|\\approx|\\cdot|\\cdots|\\pi|\\alpha|\\beta|\\theta|\\lambda|\\sigma|\\gamma|\\Delta|\\omega/g, wrapper: (m) => `$${m}$` },
-  // Braced subscripts and superscripts
-  { pattern: /[a-zA-Z0-9]_\{[^}]+\}(?:\^\{[^}]+\})?/g, wrapper: (m) => `$${m}$` },
-  { pattern: /[a-zA-Z0-9]\^\{[^}]+\}/g, wrapper: (m) => `$${m}$` },
-  // Simple subscripts: u_n, x_1 (single char + underscore + alphanumeric)
-  { pattern: /[a-zA-Z]_[a-zA-Z0-9]+/g, wrapper: (m) => `$${m}$` },
-  // Simple superscripts: x^2, (-1)^n
-  { pattern: /[a-zA-Z0-9)]\^[a-zA-Z0-9]+/g, wrapper: (m) => `$${m}$` },
-  // Combined sub + sup: u_n^2
-  { pattern: /[a-zA-Z]_[a-zA-Z0-9]+\^[a-zA-Z0-9]+/g, wrapper: (m) => `$${m}$` },
-  // Parenthesized expression with superscript: (-1)^n, (x+1)^2
-  { pattern: /\([^)]+\)\^[a-zA-Z0-9]+/g, wrapper: (m) => `$${m}$` },
+
+  // ── Generic LaTeX command (2+ letters) with optional args/sub/sup ─────
+  // Matches: \frac{1}{2}, \sqrt[3]{x}, \int_0^\infty, \iint_\Sigma,
+  //          \sum_{i=1}^n, \lim_{x\to 0}, \infty, \Sigma, \sin, \partial, etc.
+  // Brace args support one level of nesting (e.g. \sqrt{\frac{a}{b}}).
+  {
+    pattern: /\\([a-zA-Z]{2,})(\s*(?:\[[^\]]*\]|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|_[^{}$\s]+|_[^{}]*\{[^{}]*\}|\^[^{}$\s]+|\^[^{}]*\{[^{}]*\}))*/g,
+    wrapper: (m) => `$${m}$`,
+  },
+
+  // ── left/right fences ─────────────────────────────────────────────────
+  { pattern: /\\left[()[\]|.]|\\right[()[\]|.]/g, wrapper: (m) => `$${m}$` },
+
+  // ── Braced sub/superscripts on identifiers (including \cmd) ───────────
+  // e.g. x_{n+1}^{2}, \iint_{\Sigma}, R_{\phi=0}
+  { pattern: /[a-zA-Z\\][a-zA-Z]*(?:_(?:\{[^}]*\}|[^{}$\s]+))(?:\^(?:\{[^}]*\}|[^{}$\s]+))?/g, wrapper: (m) => `$${m}$` },
+  { pattern: /[a-zA-Z\\][a-zA-Z]*(?:\^(?:\{[^}]*\}|[^{}$\s]+))/g, wrapper: (m) => `$${m}$` },
+
+  // ── Simple subscripts (including \<cmd> subscripts like _\Sigma) ─────
+  { pattern: /[a-zA-Z]_[^{}$\s]+/g, wrapper: (m) => `$${m}$` },
+
+  // ── Simple superscripts ────────────────────────────────────────────────
+  { pattern: /[a-zA-Z0-9)]\^[^{}$\s]+/g, wrapper: (m) => `$${m}$` },
+
+  // ── Parenthesized expression with superscript ─────────────────────────
+  { pattern: /\([^)]+\)\^[^{}$\s]+/g, wrapper: (m) => `$${m}$` },
 ];
 
 // ── Unicode math → LaTeX conversion ─────────────────────────────────
