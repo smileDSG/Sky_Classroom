@@ -1,0 +1,401 @@
+{
+  "template_id": "sports",
+  "template_name": "sports教学模板",
+  "slide_width_inches": 13.33,
+  "slide_height_inches": 7.5,
+  "mappings": {
+    "slide1": {
+      "page_type": "cover",
+      "fields": [
+        {
+          "field": "cover.en_tag",
+          "shape_idx": 2,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "HEALTH EDUCATION",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "cover.title",
+          "shape_idx": 3,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "运动与健康生活",
+          "font_size": 52.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "cover.subtitle",
+          "shape_idx": 5,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "科学运动，健康生活",
+          "font_size": 22.0,
+          "max_chars": 50,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    "slide2": {
+      "page_type": "toc",
+      "fields": [
+        {
+          "field": "toc.en_title",
+          "shape_idx": 1,
+          "max_chars": 20
+        },
+        {
+          "field": "toc.title",
+          "shape_idx": 2,
+          "max_chars": 6
+        },
+        {
+          "field": "toc.items[0].num",
+          "shape_idx": 5,
+          "max_chars": 4
+        },
+        {
+          "field": "toc.items[0].title",
+          "shape_idx": 6,
+          "max_chars": 8
+        },
+        {
+          "field": "toc.items[0].desc",
+          "shape_idx": 7,
+          "max_chars": 18
+        },
+        {
+          "field": "toc.items[1].num",
+          "shape_idx": 10,
+          "max_chars": 4
+        },
+        {
+          "field": "toc.items[1].title",
+          "shape_idx": 11,
+          "max_chars": 8
+        },
+        {
+          "field": "toc.items[1].desc",
+          "shape_idx": 12,
+          "max_chars": 18
+        },
+        {
+          "field": "toc.items[2].num",
+          "shape_idx": 15,
+          "max_chars": 4
+        },
+        {
+          "field": "toc.items[2].title",
+          "shape_idx": 16,
+          "max_chars": 8
+        },
+        {
+          "field": "toc.items[2].desc",
+          "shape_idx": 17,
+          "max_chars": 18
+        }
+      ],
+      "notes": ""
+    },
+    "slide3": {
+      "page_type": "chapter",
+      "fields": [
+        {
+          "field": "chapter.num",
+          "shape_idx": 1,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "01",
+          "font_size": 96.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "chapter.en",
+          "shape_idx": 2,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "CHAPTER ONE",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "chapter.title",
+          "shape_idx": 4,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "运动的好处",
+          "font_size": 44.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "chapter.subtitle",
+          "shape_idx": 5,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "运动如何改变我们的身体",
+          "font_size": 20.0,
+          "max_chars": 50,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    "slide4": {
+      "page_type": "content_a",
+      "fields": [
+        {
+          "field": "content_a.tag",
+          "shape_idx": 1,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "BENEFITS",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "content_a.title",
+          "shape_idx": 2,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "运动对身体的益处",
+          "font_size": 30.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "content_a.bullet_text",
+          "shape_idx": 20,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 300,
+          "description": "bullet列表全文"
+        },
+        {
+          "field": "content_a.cards[0].title",
+          "shape_idx": 6,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 18.0,
+          "max_chars": 50,
+          "description": "卡片1标题"
+        },
+        {
+          "field": "content_a.cards[0].desc",
+          "shape_idx": 7,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 200,
+          "description": "卡片1描述"
+        },
+        {
+          "field": "content_a.cards[1].title",
+          "shape_idx": 10,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 18.0,
+          "max_chars": 50,
+          "description": "卡片2标题"
+        },
+        {
+          "field": "content_a.cards[1].desc",
+          "shape_idx": 11,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 200,
+          "description": "卡片2描述"
+        },
+        {
+          "field": "content_a.cards[2].title",
+          "shape_idx": 14,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 18.0,
+          "max_chars": 50,
+          "description": "卡片3标题"
+        },
+        {
+          "field": "content_a.cards[2].desc",
+          "shape_idx": 15,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 200,
+          "description": "卡片3描述"
+        },
+        {
+          "field": "content_a.cards[3].title",
+          "shape_idx": 18,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 18.0,
+          "max_chars": 50,
+          "description": "卡片4标题"
+        },
+        {
+          "field": "content_a.cards[3].desc",
+          "shape_idx": 19,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 200,
+          "description": "卡片4描述"
+        }
+      ],
+      "notes": ""
+    },
+    "slide5": {
+      "page_type": "content_b",
+      "fields": [
+        {
+          "field": "content_b.tag",
+          "shape_idx": 1,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "GUIDE",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "content_b.title",
+          "shape_idx": 2,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "科学运动指南",
+          "font_size": 30.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "content_b.features_text",
+          "shape_idx": 4,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 14.0,
+          "max_chars": 500,
+          "description": "features合并文本"
+        },
+        {
+          "field": "content_b.applications_title",
+          "shape_idx": 6,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 18.0,
+          "max_chars": 50,
+          "description": "应用领域标题"
+        },
+        {
+          "field": "content_b.applications_list",
+          "shape_idx": 7,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 12.0,
+          "max_chars": 300,
+          "description": "应用领域列表"
+        }
+      ],
+      "notes": ""
+    },
+    "slide6": {
+      "page_type": "table",
+      "fields": [
+        {
+          "field": "table.tag",
+          "shape_idx": 1,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "DATA",
+          "font_size": 14.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "table.title",
+          "shape_idx": 2,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "运动强度对照表",
+          "font_size": 30.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "table.source",
+          "shape_idx": 5,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "",
+          "font_size": 12.0,
+          "max_chars": 200,
+          "description": "数据来源说明"
+        }
+      ],
+      "notes": "",
+      "special_handling": {
+        "table": {
+          "shape_idx": 4
+        }
+      }
+    },
+    "slide7": {
+      "page_type": "end",
+      "fields": [
+        {
+          "field": "end.slogan",
+          "shape_idx": 2,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "动起来！",
+          "font_size": 52.0,
+          "max_chars": 50,
+          "description": ""
+        },
+        {
+          "field": "end.subtitle",
+          "shape_idx": 4,
+          "para_idx": 0,
+          "run_idx": 0,
+          "original_text": "生命在于运动，健康始于行动",
+          "font_size": 20.0,
+          "max_chars": 50,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    }
+  },
+  "unsupported_fields": [
+    "toc.items[1].title",
+    "toc.items[2].title",
+    "toc.items[2].desc"
+  ],
+  "capacity": {
+    "content_a_cards": 5,
+    "content_b_cards": 9,
+    "table_cols": 4,
+    "table_rows": 5
+  }
+}

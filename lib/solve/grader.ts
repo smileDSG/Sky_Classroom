@@ -9,7 +9,6 @@
 
 import type { GradeResult, MistakeCause } from './types';
 import { classifyErrorCause } from './error-classifier';
-import { resolveSolverModel } from './solver-constants';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
@@ -95,11 +94,15 @@ function ruleBasedGrade(correctAnswer: string, userAnswer: string): GradeResult 
       correctAnswer,
       userAnswer,
       errorAnalysis: '答案正确',
-      cause: 'careless', // no actual error — placeholder for type system
+      cause: 'careless',
     };
   }
 
   // Contains core answer
+  const coreLength = Math.min(normalizedCorrect.length, 30);
+  const coreCorrect = normalizedCorrect.slice(0, coreLength);
+  const coreUser = normalizedUser.slice(0, coreLength);
+
   if (normalizedCorrect.includes(normalizedUser) || normalizedUser.includes(normalizedCorrect)) {
     return {
       isCorrect: true,
@@ -107,13 +110,9 @@ function ruleBasedGrade(correctAnswer: string, userAnswer: string): GradeResult 
       correctAnswer,
       userAnswer,
       errorAnalysis: '答案核心正确，但表述不完全一致',
-      cause: 'format-error', // no actual error — placeholder for type system
+      cause: 'format-error',
     };
   }
-
-  const coreLength = Math.min(normalizedCorrect.length, 30);
-  const coreCorrect = normalizedCorrect.slice(0, coreLength);
-  const coreUser = normalizedUser.slice(0, coreLength);
 
   // Partial match on core content
   let matchCount = 0;
@@ -155,8 +154,12 @@ export async function gradeAnswer(
   correctAnswerSteps?: string[],
 ): Promise<GradeResult> {
   try {
-    const modelConfig = resolveSolverModel('grading');
-    const modelWithInfo = getModel(modelConfig);
+    const modelWithInfo = getModel({
+      providerId: 'deepseek',
+      modelId: 'deepseek-v4-pro',
+      apiKey: process.env.DEEPSEEK_API_KEY ?? '',
+      providerType: 'openai',
+    });
 
     const stepsContext = correctAnswerSteps
       ? `## 标准答案步骤\n${correctAnswerSteps.map((s, i) => `步骤${i + 1}: ${s}`).join('\n')}`
@@ -169,7 +172,7 @@ export async function gradeAnswer(
       .replace('{stepsContext}', stepsContext);
 
     const messages: Array<{ role: string; content: unknown }> = [
-      { role: 'user', content: `题目：${problemText}\n标准答案：${correctAnswer}\n学生答案：${userAnswer}` },
+      { role: 'system', content: prompt },
     ];
 
     const result = await callLLM(
@@ -181,8 +184,6 @@ export async function gradeAnswer(
       },
       'grade-answer',
       { retries: 1 },
-      undefined,
-      prompt,
     );
 
     const parsed = parseLLMGrade(result.text);
@@ -217,6 +218,7 @@ export async function gradeAnswer(
  * Useful for quick checks or when LLM is unavailable.
  */
 export function gradeAnswerSync(
+  problemText: string,
   correctAnswer: string,
   userAnswer: string,
 ): GradeResult {

@@ -116,7 +116,7 @@ export function AvatarSpeechPlayer({
           </div>
 
           {/* Text content with highlight */}
-          <div className="max-h-[120px] overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
+          <div className="max-h-[120px] overflow-y-auto">
             {slideSegments.map((seg, i) => (
               <p
                 key={i}

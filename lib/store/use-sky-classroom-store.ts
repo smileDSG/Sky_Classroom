@@ -97,7 +97,15 @@ const createSlidesSlice = (set: SetFn<SlidesSlice>): SlidesSlice => ({
   setAvatars: (avatars) => set({ availableAvatars: avatars }),
   setCurrentSpeech: (speech) => set({ currentSpeech: speech }),
   setGenerating: (generating) => set({ isGenerating: generating }),
-  setGenerationOptions: (options) => set({ generationOptions: options }),
+  setGenerationOptions: (options) =>
+    set({
+      generationOptions: {
+        topic: typeof options.topic === 'string' ? options.topic : '',
+        difficulty: ['junior', 'senior', 'college'].includes(options.difficulty as string)
+          ? options.difficulty
+          : 'senior',
+      },
+    }),
   setSlides: (slides) => set({ slides }),
   setGenerationResult: (result) => set({ generationResult: result }),
   setGenerationError: (error) => set({ generationError: error }),
@@ -171,6 +179,21 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
     }),
     {
       name: 'sky-classroom-storage',
+      version: 1,
+      migrate: (persistedState: unknown) => {
+        const s = persistedState as Record<string, unknown>;
+        // Sanitize generationOptions if it exists with stale schema
+        if (s?.generationOptions && typeof s.generationOptions === 'object') {
+          const g = s.generationOptions as Record<string, unknown>;
+          s.generationOptions = {
+            topic: typeof g.topic === 'string' ? g.topic : '',
+            difficulty: ['junior', 'senior', 'college'].includes(g.difficulty as string)
+              ? g.difficulty
+              : 'senior',
+          };
+        }
+        return s as unknown as SkyClassroomStore;
+      },
       partialize: (state) => ({
         selectedAvatarId: state.selectedAvatarId,
         generationOptions: state.generationOptions,

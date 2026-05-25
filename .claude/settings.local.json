@@ -93,22 +93,7 @@
       "Bash(Select-String -Pattern \"avatar-speech-popup|slides-page|roundtable\")",
       "WebFetch(domain:localhost)",
       "Bash(Remove-Item *)",
-      "PowerShell($result = npx tsc --noEmit 2>&1 | Where-Object { $_ -match \"avatar-speech-popup|slides-page|roundtable\" }; if \\($result\\) { $result | Select-Object -First 10 } else { Write-Output \"No errors in our files\" })",
-      "Bash(git submodule *)",
-      "Bash(git ls-tree *)",
-      "Bash(git sparse-checkout *)",
-      "Bash(git *)",
-      "Bash(findstr git *)",
-      "Bash(handle .git/index.lock)",
-      "Bash(GIT_INDEX_FILE=.git/index.tmp git add app/layout.tsx)",
-      "Bash(mv .git/index.tmp .git/index)",
-      "Bash(GIT_INDEX_FILE=.git/index.tmp git add --sparse app/layout.tsx)",
-      "Bash(GIT_INDEX_FILE=.git/index.tmp git commit -m ' *)",
-      "Bash(GIT_INDEX_FILE=.git/index2 git read-tree HEAD)",
-      "Bash(GIT_INDEX_FILE=.git/index2 git add --sparse app/layout.tsx)",
-      "Bash(GIT_INDEX_FILE=.git/index2 git commit -m 'chore: update site metadata title and description to Chinese *)",
-      "Bash(cat .gitmodules)",
-      "Bash(ls -la OpenMAIC/.git)"
+      "PowerShell($result = npx tsc --noEmit 2>&1 | Where-Object { $_ -match \"avatar-speech-popup|slides-page|roundtable\" }; if \\($result\\) { $result | Select-Object -First 10 } else { Write-Output \"No errors in our files\" })"
     ]
   }
 }

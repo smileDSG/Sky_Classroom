@@ -33,32 +33,33 @@ beforeEach(() => {
 
 describe('gradeAnswerSync (rule-based fallback)', () => {
   test('exact match returns score 100', () => {
-    const result = gradeAnswerSync('4', '4');
+    const result = gradeAnswerSync('2+2=?', '4', '4');
     expect(result.isCorrect).toBe(true);
     expect(result.score).toBe(100);
+    expect(result.cause).toBe('careless');
   });
 
   test('contains answer returns score 80', () => {
-    const result = gradeAnswerSync('答案是4', '4');
+    const result = gradeAnswerSync('2+2=?', '答案是4', '4');
     expect(result.isCorrect).toBe(true);
     expect(result.score).toBe(80);
   });
 
   test('answer contains expected returns score 80', () => {
-    const result = gradeAnswerSync('4', '答案是4');
+    const result = gradeAnswerSync('2+2=?', '4', '答案是4');
     expect(result.isCorrect).toBe(true);
     expect(result.score).toBe(80);
   });
 
   test('partial match returns proportional score', () => {
-    const result = gradeAnswerSync('x = 2', 'x = 3');
+    const result = gradeAnswerSync('解方程: 2x+3=7', 'x = 2', 'x = 3');
     expect(result.isCorrect).toBe(false);
     expect(result.score).toBeGreaterThan(0);
     expect(result.score).toBeLessThan(50);
   });
 
   test('completely wrong returns low score', () => {
-    const result = gradeAnswerSync('4', '香蕉');
+    const result = gradeAnswerSync('2+2=?', '4', '香蕉');
     expect(result.isCorrect).toBe(false);
     expect(result.score).toBeLessThanOrEqual(20);
   });

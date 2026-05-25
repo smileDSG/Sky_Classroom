@@ -107,7 +107,7 @@ describe('solveWithAgentNode', () => {
 
     const result = await solveWithAgentNode(makeState(), {} as any);
     expect(result.solution).toBe('解题过程');
-    expect(callLLM).toHaveBeenCalledTimes(2); // primary + secondary run in parallel
+    expect(callLLM).toHaveBeenCalledTimes(1); // primary high confidence → no fallback
   });
 
   test('sets error on LLM failure', async () => {
@@ -152,11 +152,11 @@ describe('solveWithAgentNode', () => {
     expect(result.solution).toBe('e');
   });
 
-  test('falls back to raw text when all agents return non-JSON', async () => {
+  test('returns empty solution when all agents fail', async () => {
     (callLLM as any).mockResolvedValue({ text: 'not json' });
 
     const result = await solveWithAgentNode(makeState(), {} as any);
     expect(callLLM).toHaveBeenCalledTimes(3);
-    expect(result.solution).toBe('not json'); // raw text used as fallback
+    expect(result.solution).toBe('');
   });
 });
