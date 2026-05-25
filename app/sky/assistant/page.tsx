@@ -7,9 +7,11 @@ import { AssistantConfig } from '@/components/sky/assistant/assistant-config';
 export default function AssistantPage() {
   return (
     <SkyAppShell>
-      <div className="mx-auto max-w-5xl space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">💡 AI 助手</h2>
-        <AssistantConfig />
+      <div className="mx-auto max-w-5xl h-full flex flex-col overflow-hidden gap-4">
+        <h2 className="text-2xl font-bold text-gray-900 shrink-0">AI 助手</h2>
+        <div className="shrink-0">
+          <AssistantConfig />
+        </div>
         <AssistantPanel />
       </div>
     </SkyAppShell>
