@@ -1,0 +1,133 @@
+{
+  "modern-geometric": {
+    "bg_color": "#FFFFFF",
+    "accent_color": "#7A7A7A",
+    "texts": [
+      "MATHEMATICS",
+      "几何图形的世界",
+      "探索形状与空间的奥秘"
+    ],
+    "has_image": false,
+    "name": "现代几何风"
+  },
+  "cartoon": {
+    "bg_color": "#F0F9FF",
+    "accent_color": "#4ECDC4",
+    "texts": [
+      "认识我们的身体",
+      "一起探索身体的奥秘"
+    ],
+    "has_image": false,
+    "name": "明快卡通风"
+  },
+  "classical": {
+    "bg_color": "#FDF6E3",
+    "accent_color": "#C73E1D",
+    "texts": [
+      "CHINESE CALLIGRAPHY",
+      "中国书法艺术",
+      "笔墨纸砚间的千年传承"
+    ],
+    "has_image": false,
+    "name": "古典书香风"
+  },
+  "nordic": {
+    "bg_color": "#F7FAFC",
+    "accent_color": "#A0AEC0",
+    "texts": [
+      "LEARNING METHODOLOGY",
+      "高效学习方法论",
+      "科学提升学习效率"
+    ],
+    "has_image": false,
+    "name": "简约北欧风"
+  },
+  "business": {
+    "bg_color": "#FFFFFF",
+    "accent_color": "#7F8C8D",
+    "texts": [
+      "PROFESSIONAL COURSE",
+      "项目管理实务",
+      "系统掌握项目管理核心技能"
+    ],
+    "has_image": false,
+    "name": "商务专业风"
+  },
+  "sports": {
+    "bg_color": "#E63946",
+    "accent_color": "#FFD60A",
+    "texts": [
+      "HEALTH EDUCATION",
+      "运动与健康生活",
+      "科学运动，健康生活"
+    ],
+    "has_image": false,
+    "name": "活力运动风"
+  },
+  "ocean": {
+    "bg_color": "#1E3A5F",
+    "accent_color": "#FF7F50",
+    "texts": [
+      "OCEAN EXPLORATION",
+      "海洋的奥秘",
+      "探索蓝色星球的深处"
+    ],
+    "has_image": false,
+    "name": "海洋探索风"
+  },
+  "watercolor": {
+    "bg_color": "#f8f9fa",
+    "accent_color": "#9B8AA5",
+    "texts": [
+      "ART EDUCATION",
+      "色彩的艺术世界",
+      "发现生活中的美"
+    ],
+    "has_image": false,
+    "name": "清新水彩风"
+  },
+  "nature": {
+    "bg_color": "#FAF8F5",
+    "accent_color": "#2D5F3F",
+    "texts": [
+      "BIOLOGY COURSE",
+      "生态系统与\n生物多样性",
+      "探索自然界的奥秘"
+    ],
+    "has_image": true,
+    "name": "清新自然风"
+  },
+  "humanistic": {
+    "bg_color": "#FFF8F0",
+    "accent_color": "#8B4513",
+    "texts": [
+      "CHINESE LITERATURE",
+      "中国古代诗词鉴赏",
+      "感受千年文字之美"
+    ],
+    "has_image": true,
+    "name": "温暖人文风"
+  },
+  "vintage": {
+    "bg_color": "#6B7F4A",
+    "accent_color": "#F2EBD4",
+    "texts": [
+      "AGRICULTURAL CULTURE",
+      "传统农耕文化",
+      "传承千年的农业智慧"
+    ],
+    "has_image": false,
+    "name": "田园复古风"
+  },
+  "tech": {
+    "bg_color": "#070F1D",
+    "accent_color": "#00D4AA",
+    "texts": [
+      "PROGRAMMING COURSE",
+      "Python编程入门",
+      "从零开始掌握编程思维"
+    ],
+    "has_image": false,
+    "name": "科技未来风"
+  }
+}

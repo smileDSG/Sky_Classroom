@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "template-mapping",
+  "title": "PPT Template Field Mapping Schema",
+  "description": "定义模板PPTX中每个可替换文本框与JSON字段的映射关系",
+  "type": "object",
+  "required": ["template_id", "template_name", "slide_width_inches", "slide_height_inches", "mappings"],
+  "properties": {
+    "template_id": {
+      "type": "string",
+      "description": "模板唯一标识，kebab-case",
+      "examples": ["modern-geometric", "cartoon", "classical"]
+    },
+    "template_name": {
+      "type": "string",
+      "description": "模板中文名称"
+    },
+    "slide_width_inches": {
+      "type": "number",
+      "description": "幻灯片宽度（英寸）"
+    },
+    "slide_height_inches": {
+      "type": "number",
+      "description": "幻灯片高度（英寸）"
+    },
+    "unsupported_fields": {
+      "type": "array",
+      "description": "此模板不支持的JSON字段列表",
+      "items": {
+        "type": "string",
+        "description": "JSON字段路径，如 cover.en_tag"
+      }
+    },
+    "capacity": {
+      "type": "object",
+      "description": "模板各页面的内容容量限制",
+      "properties": {
+        "content_a_cards": {
+          "type": "integer",
+          "description": "P4内容页A可容纳的卡片数量"
+        },
+        "content_b_cards": {
+          "type": "integer",
+          "description": "P5内容页B可容纳的卡片数量（卡片型模板）"
+        },
+        "table_cols": {
+          "type": "integer",
+          "description": "P6表格页列数"
+        },
+        "table_rows": {
+          "type": "integer",
+          "description": "P6表格页数据行数（不含表头）"
+        }
+      }
+    },
+    "mappings": {
+      "type": "object",
+      "description": "每页幻灯片的字段映射",
+      "properties": {
+        "slide1": { "$ref": "#/definitions/slide_mapping" },
+        "slide2": { "$ref": "#/definitions/slide_mapping" },
+        "slide3": { "$ref": "#/definitions/slide_mapping" },
+        "slide4": { "$ref": "#/definitions/slide_mapping" },
+        "slide5": { "$ref": "#/definitions/slide_mapping" },
+        "slide6": { "$ref": "#/definitions/slide_mapping" },
+        "slide7": { "$ref": "#/definitions/slide_mapping" }
+      },
+      "required": ["slide1", "slide2", "slide3", "slide4", "slide5", "slide6", "slide7"]
+    }
+  },
+  "definitions": {
+    "slide_mapping": {
+      "type": "object",
+      "required": ["page_type"],
+      "properties": {
+        "page_type": {
+          "type": "string",
+          "enum": ["cover", "toc", "chapter", "content_a", "content_b", "table", "end"],
+          "description": "页面类型"
+        },
+        "fields": {
+          "type": "array",
+          "description": "此页可替换的字段列表",
+          "items": {
+            "type": "object",
+            "required": ["field", "shape_idx", "para_idx", "run_idx"],
+            "properties": {
+              "field": {
+                "type": "string",
+                "description": "JSON字段路径，支持数组索引如 cards[0].title"
+              },
+              "shape_idx": {
+                "type": "integer",
+                "description": "shape在slide.shapes中的索引"
+              },
+              "para_idx": {
+                "type": "integer",
+                "description": "段落在text_frame.paragraphs中的索引"
+              },
+              "run_idx": {
+                "type": "integer",
+                "description": "run在paragraph.runs中的索引"
+              },
+              "original_text": {
+                "type": "string",
+                "description": "模板原始文本（用于调试和验证）"
+              },
+              "font_size": {
+                "type": ["number", "null"],
+                "description": "原始字号（pt），用于容量估算"
+              },
+              "max_chars": {
+                "type": "integer",
+                "description": "建议最大字符数，超出可能溢出"
+              },
+              "description": {
+                "type": "string",
+                "description": "字段用途说明"
+              }
+            }
+          }
+        },
+        "special_handling": {
+          "type": "object",
+          "description": "需要特殊处理的shape",
+          "properties": {
+            "bullet_list": {
+              "type": "object",
+              "properties": {
+                "shape_idx": { "type": "integer" },
+                "note": { "type": "string" }
+              }
+            },
+            "table": {
+              "type": "object",
+              "properties": {
+                "shape_idx": { "type": "integer" },
+                "note": { "type": "string" }
+              }
+            },
+            "multi_run": {
+              "type": "object",
+              "properties": {
+                "shape_idx": { "type": "integer" },
+                "note": { "type": "string" }
+              }
+            }
+          }
+        },
+        "notes": {
+          "type": "string",
+          "description": "此页的特殊说明"
+        }
+      }
+    }
+  }
+}
