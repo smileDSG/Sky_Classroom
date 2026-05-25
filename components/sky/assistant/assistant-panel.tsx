@@ -20,7 +20,9 @@ const KAGAMI_SYSTEM_PROMPT = `你是柊镜（小镜），来自幸运星的傲�
 - 时不时毒舌吐槽，但结尾会补一句关心的话
 - 绝对不能太热情——傲娇的精髓是"行动上帮你，嘴上不饶人"
 
-你是"小镜课堂"的 AI 助教，用中文交流。`;
+你是"小镜课堂"的 AI 助教，用中文交流。
+
+数学格式要求：所有数学符号、公式、表达式必须使用 LaTeX 格式。行内公式用 $...$ 包裹，独立公式用 $$...$$ 包裹。例如：$x^2 + y^2 = 1$、$$\sum_{n=0}^{\infty} a_n x^n$$、分数用 \frac{}{}、根号用 \sqrt{}、极限用 \lim、积分用 \int、求和用 \sum。严禁用 ^ 代替上标，严禁用 _ 代替下标。`;
 
 const NORMAL_SYSTEM_PROMPT = `你是一个专业、友善的 AI 学习助手"小镜"。性格特点：
 - 专业严谨：回答问题条理清晰，注重知识点的准确性
@@ -34,7 +36,9 @@ const NORMAL_SYSTEM_PROMPT = `你是一个专业、友善的 AI 学习助手"小
 - 适当肯定学生的努力
 - 结尾鼓励学生继续练习
 
-你是 AI 学习助教，用中文交流。`;
+你是 AI 学习助教，用中文交流。
+
+数学格式要求：所有数学符号、公式、表达式必须使用 LaTeX 格式。行内公式用 $...$ 包裹，独立公式用 $$...$$ 包裹。例如：$x^2 + y^2 = 1$、$$\sum_{n=0}^{\infty} a_n x^n$$、分数用 \frac{}{}、根号用 \sqrt{}、极限用 \lim、积分用 \int、求和用 \sum。严禁用 ^ 代替上标，严禁用 _ 代替下标。`;
 
 type KagamiMode = 'anime' | 'normal';
 
@@ -332,7 +336,7 @@ export function AssistantPanel() {
                       : 'bg-[#8B5CF6]/10 text-[#8B5CF6]'
                   }`}
                 >
-                  {msg.role === 'user' ? '👤' : (<img src="/avatars/kagami/chibi.png" className="size-full rounded-full object-cover" alt="小镜" />)}
+                  {msg.role === 'user' ? '👤' : (<img src={mode === 'anime' ? '/avatars/kagami/chibi.png' : '/avatars/teacher-new.svg'} className="size-full rounded-full object-cover" alt="小镜" />)}
                 </div>
                 {/* Bubble */}
                 <div
@@ -356,7 +360,7 @@ export function AssistantPanel() {
             {loading && messages.filter((m) => m.role === 'assistant').at(-1)?.content && (
               <div className="flex gap-2.5">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full">
-                  <img src="/avatars/kagami/chibi.png" className="size-full object-cover" alt="小镜" />
+                  <img src={mode === 'anime' ? '/avatars/kagami/chibi.png' : '/avatars/teacher-new.svg'} className="size-full object-cover" alt="小镜" />
                 </div>
                 <div className="flex items-center gap-1.5 rounded-xl rounded-tl-sm border border-gray-200 bg-[#F8FAFC] px-4 py-3">
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '0ms' }} />
