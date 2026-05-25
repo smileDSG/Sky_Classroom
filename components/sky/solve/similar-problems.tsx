@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { MathRenderer } from './math-renderer';
 import type { FourPartOutput } from '@/lib/solve/types';
 
 interface SimilarProblemsProps {
@@ -126,7 +127,7 @@ export function SimilarProblems({
                         )}
                         onClick={() => handleQuestionClick(question.problem, index)}
                       >
-                        {question.problem}
+                        <MathRenderer content={question.problem} />
                       </p>
 
                       <div className="mt-2 flex flex-wrap items-center gap-2">

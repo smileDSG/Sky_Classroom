@@ -18,8 +18,6 @@ export interface AgentConfig {
   personaType?: string; // Student persona archetype: "curious", "analytical", "creative", "note-taker"
   enabled?: boolean; // Whether the agent is enabled
 
-  enabled?: boolean; // Whether this agent is active in the conversation
-
   // Metadata
   createdAt: Date;
   updatedAt: Date;

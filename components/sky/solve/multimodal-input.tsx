@@ -1,20 +1,36 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import { Camera, Mic, Type, Upload, X, Loader2 } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Camera, Mic, Type, Upload, X, Loader2, ImagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { validateImage } from '@/lib/recognition/image-validator';
 
 interface MultimodalInputProps {
-  onSubmit: (input: { type: 'image' | 'voice' | 'text'; content: string | File }) => void;
+  onSubmit: (input: { type: 'image' | 'voice' | 'text'; content: string | File; previewUrl?: string }) => void;
   onGrade?: (input: { problem: string; userAnswer: string }) => void;
   isLoading?: boolean;
   className?: string;
+  /** Restored preview data URL after page navigation */
+  initialPreviewUrl?: string | null;
 }
 
-export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: MultimodalInputProps) {
+function dataUrlToFile(dataUrl: string, filename = 'photo.png'): File {
+  const [header, payload] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] || 'image/png';
+  const binary = atob(payload);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new File([bytes], filename, { type: mime });
+}
+
+const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp';
+
+export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initialPreviewUrl }: MultimodalInputProps) {
   const [activeTab, setActiveTab] = useState<'camera' | 'voice' | 'text'>('camera');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -22,28 +38,106 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
   const [userAnswer, setUserAnswer] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasInitialized = useRef(false);
+
+  // Restore image from parent after page navigation
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    if (initialPreviewUrl) {
+      setSelectedImage(initialPreviewUrl);
+      try {
+        setSelectedFile(dataUrlToFile(initialPreviewUrl));
+      } catch {
+        // If data URL conversion fails, still show the image
+      }
+      hasInitialized.current = true;
+    }
+  }, [initialPreviewUrl]);
+
+  /** Shared file processing: validate → read → store */
+  const processFile = useCallback((file: File) => {
+    setImageError(null);
+
+    const validation = validateImage(file);
+    if (!validation.valid) {
+      setImageError(validation.error ?? '图片校验失败');
+      return;
+    }
+
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setSelectedImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  // ── Click to upload ──
 
   const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setSelectedImage(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, []);
+    if (file) processFile(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [processFile]);
 
   const triggerFileInput = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
+  // ── Drag & drop ──
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  }, [processFile]);
+
+  // ── Clipboard paste (Ctrl+V) ──
+
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          processFile(file);
+          return;
+        }
+      }
+    }
+  }, [processFile]);
+
+  useEffect(() => {
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [handlePaste]);
+
   const clearImage = useCallback(() => {
     setSelectedImage(null);
     setSelectedFile(null);
+    setImageError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -76,7 +170,7 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
 
   const handleSubmit = useCallback(() => {
     if (activeTab === 'camera' && selectedFile && selectedImage) {
-      onSubmit({ type: 'image', content: selectedFile });
+      onSubmit({ type: 'image', content: selectedFile, previewUrl: selectedImage });
     } else if (activeTab === 'text' && textInput.trim()) {
       onSubmit({ type: 'text', content: textInput.trim() });
     }
@@ -114,19 +208,38 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
       </Tabs>
 
       {activeTab === 'camera' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {!selectedImage ? (
             <div
               onClick={triggerFileInput}
-              className="cursor-pointer rounded-xl border-2 border-dashed border-[#4A90D9]/30 bg-[#4A90D9]/5 p-8 transition-colors hover:border-[#4A90D9]/50 hover:bg-[#4A90D9]/10"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={cn(
+                'cursor-pointer rounded-xl border-2 border-dashed p-8 transition-all',
+                isDraggingOver
+                  ? 'border-[#4A90D9] bg-[#4A90D9]/10 scale-[1.02]'
+                  : 'border-[#4A90D9]/30 bg-[#4A90D9]/5 hover:border-[#4A90D9]/50 hover:bg-[#4A90D9]/10',
+              )}
             >
-              <div className="flex flex-col items-center gap-3 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#4A90D9]/10">
-                  <Camera className="h-8 w-8 text-[#4A90D9]" />
+              <div className="flex flex-col items-center gap-3 text-center pointer-events-none">
+                <div
+                  className={cn(
+                    'flex h-16 w-16 items-center justify-center rounded-full transition-colors',
+                    isDraggingOver ? 'bg-[#4A90D9]/20' : 'bg-[#4A90D9]/10',
+                  )}
+                >
+                  {isDraggingOver ? (
+                    <ImagePlus className="h-8 w-8 text-[#4A90D9] animate-bounce" />
+                  ) : (
+                    <Camera className="h-8 w-8 text-[#4A90D9]" />
+                  )}
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">点击拍照或上传图片</p>
-                  <p className="text-sm text-muted-foreground">支持 JPG、PNG 格式</p>
+                  <p className="font-medium text-foreground">
+                    {isDraggingOver ? '松开放入图片' : '点击、拖拽或粘贴图片'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">支持 JPEG、PNG、WebP 格式，最大 10MB</p>
                 </div>
                 <Button variant="outline" size="sm" className="mt-2 gap-2">
                   <Upload className="h-4 w-4" />
@@ -136,8 +249,7 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
-                capture="environment"
+                accept={ACCEPTED_TYPES}
                 className="hidden"
                 onChange={handleImageSelect}
               />
@@ -151,6 +263,12 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
               >
                 <X className="h-4 w-4" />
               </button>
+            </div>
+          )}
+
+          {imageError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 px-3 py-2 text-sm text-red-600 dark:text-red-400">
+              {imageError}
             </div>
           )}
         </div>
