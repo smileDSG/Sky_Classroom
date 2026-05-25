@@ -75,7 +75,9 @@ export function AssistantPanel() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<KagamiMode>(loadMode);
+  const [mode, setMode] = useState<KagamiMode>('anime');
+  // Hydrate mode from localStorage after mount (avoids SSR mismatch)
+  useEffect(() => { setMode(loadMode()); }, []);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);

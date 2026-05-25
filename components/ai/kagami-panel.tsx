@@ -142,7 +142,9 @@ export function KagamiPanel() {
   const [loading, setLoading] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
-  const [mode, setMode] = useState<KagamiMode>(loadMode);
+  const [mode, setMode] = useState<KagamiMode>('anime');
+  // Hydrate mode from localStorage after mount (avoids SSR mismatch)
+  useEffect(() => { setMode(loadMode()); }, []);
   const isSolving = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
