@@ -19,31 +19,10 @@ import { createLogger } from '@/lib/logger';
 import { formatSSE, streamSSE } from '@/lib/assistant/stream';
 import { findSimilarQuestions } from '@/lib/solve/question-bank';
 import { streamSolve, type StreamEvent } from '@/lib/solve/streaming-solver';
-import type { SolverAgentType } from '@/lib/solve/types';
+import { classifyProblem } from '@/lib/solve/solver-constants';
 import { generateFourPartOutput } from '@/lib/solve/four-part-output';
 
 const log = createLogger('API:ExplainStream');
-
-// ── Routing (same logic as solve-graph's routeToAgent) ──────────────
-
-function classifyProblem(problemText: string): SolverAgentType {
-  const scienceKeywords = ['物理', '化学', '数学', '力学', '微积分', '代数', '几何', '方程', '计算', '求解', '证明'];
-  const humanitiesKeywords = ['语文', '历史', '政治', '地理', '文学', '作文', '阅读', '分析', '论述', '谈谈'];
-
-  let scienceScore = 0;
-  let humanitiesScore = 0;
-
-  for (const kw of scienceKeywords) {
-    if (problemText.includes(kw)) scienceScore++;
-  }
-  for (const kw of humanitiesKeywords) {
-    if (problemText.includes(kw)) humanitiesScore++;
-  }
-
-  if (scienceScore > humanitiesScore) return 'science';
-  if (humanitiesScore > scienceScore) return 'humanities';
-  return 'universal';
-}
 
 // ── SSE formatting ──────────────────────────────────────────────────
 
@@ -123,10 +102,13 @@ export async function POST(req: Request) {
         let hasAnswer = false;
         let hasKnowledge = false;
         let hasSimilar = false;
+        let streamedAnswer = '';
+        const streamedSteps: string[] = [];
 
         for await (const event of streamSolve(agentType, problem, problemImage ?? null)) {
           await write(formatStreamEvent(event));
-          if (event.type === 'answer') hasAnswer = true;
+          if (event.type === 'answer') { hasAnswer = true; streamedAnswer = event.answer; }
+          if (event.type === 'step') streamedSteps.push(event.content);
           if (event.type === 'knowledge') hasKnowledge = true;
           if (event.type === 'similar') hasSimilar = true;
         }
@@ -143,22 +125,21 @@ export async function POST(req: Request) {
         }
 
         // Phase 5: Done
-        const now = Date.now();
         await write(formatSSEEvent('done', {
           fromQuestionBank: false,
           agentType,
         }));
 
-        // Auto-save to question bank (fire-and-forget)
+        // Auto-save to question bank with actual streamed content
         try {
           const { saveToQuestionBank, isProblemInBank } = await import('@/lib/solve/question-bank');
           const alreadyInBank = await isProblemInBank(problem);
-          if (!alreadyInBank) {
+          if (!alreadyInBank && streamedAnswer) {
             await saveToQuestionBank({
               problemText: problem,
               problemImage: problemImage ?? undefined,
-              answer: '',
-              steps: [],
+              answer: streamedAnswer,
+              steps: streamedSteps,
               knowledgePoints: [],
               agentId: agentType,
               solvedAt: Date.now(),

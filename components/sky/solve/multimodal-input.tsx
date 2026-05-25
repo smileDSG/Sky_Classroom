@@ -9,15 +9,28 @@ import { cn } from '@/lib/utils';
 import { validateImage } from '@/lib/recognition/image-validator';
 
 interface MultimodalInputProps {
-  onSubmit: (input: { type: 'image' | 'voice' | 'text'; content: string | File }) => void;
+  onSubmit: (input: { type: 'image' | 'voice' | 'text'; content: string | File; previewUrl?: string }) => void;
   onGrade?: (input: { problem: string; userAnswer: string }) => void;
   isLoading?: boolean;
   className?: string;
+  /** Restored preview data URL after page navigation */
+  initialPreviewUrl?: string | null;
+}
+
+function dataUrlToFile(dataUrl: string, filename = 'photo.png'): File {
+  const [header, payload] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] || 'image/png';
+  const binary = atob(payload);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new File([bytes], filename, { type: mime });
 }
 
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp';
 
-export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: MultimodalInputProps) {
+export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initialPreviewUrl }: MultimodalInputProps) {
   const [activeTab, setActiveTab] = useState<'camera' | 'voice' | 'text'>('camera');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -29,6 +42,21 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
   const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasInitialized = useRef(false);
+
+  // Restore image from parent after page navigation
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    if (initialPreviewUrl) {
+      setSelectedImage(initialPreviewUrl);
+      try {
+        setSelectedFile(dataUrlToFile(initialPreviewUrl));
+      } catch {
+        // If data URL conversion fails, still show the image
+      }
+      hasInitialized.current = true;
+    }
+  }, [initialPreviewUrl]);
 
   /** Shared file processing: validate → read → store */
   const processFile = useCallback((file: File) => {
@@ -142,7 +170,7 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className }: Mul
 
   const handleSubmit = useCallback(() => {
     if (activeTab === 'camera' && selectedFile && selectedImage) {
-      onSubmit({ type: 'image', content: selectedFile });
+      onSubmit({ type: 'image', content: selectedFile, previewUrl: selectedImage });
     } else if (activeTab === 'text' && textInput.trim()) {
       onSubmit({ type: 'text', content: textInput.trim() });
     }

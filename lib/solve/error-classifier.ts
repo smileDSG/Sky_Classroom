@@ -20,7 +20,7 @@ const KEYWORD_MAP: Record<string, MistakeCause> = {
   '粗心': 'careless', '格式': 'format-error',
 };
 
-const CAUSE_LABELS: Record<MistakeCause, string> = {
+export const CAUSE_LABELS: Record<MistakeCause, string> = {
   'concept-unclear': '概念不清',
   'calculation-error': '计算失误',
   'misreading': '审题错误',
