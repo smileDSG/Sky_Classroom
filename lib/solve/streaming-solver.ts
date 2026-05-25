@@ -8,8 +8,8 @@
 
 import { streamLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
-import type { ProviderId } from '@/lib/ai/providers';
 import { buildSolverPrompt } from './solver-prompts';
+import { resolveSolverModel } from './solver-constants';
 import type { SolverAgentType } from './types';
 import { createLogger } from '@/lib/logger';
 
@@ -19,32 +19,32 @@ const log = createLogger('StreamingSolver');
 // LLMs often emit LaTeX commands (\frac, \partial, \int, etc.) inside
 // JSON strings. These backslash-letter sequences are invalid JSON escapes
 // and cause JSON.parse to fail. We fix them by double-escaping the
-// backslash, but only for non-standard escape letters (not b f n r t u).
+// backslash.
+//
+// Key insight: if a backslash-letter is followed by another letter,
+// it's a LaTeX command (e.g. \frac, \neq, \times) and must ALWAYS be
+// double-escaped, even if the first letter is b/f/n/r/t.
 
 const VALID_JSON_ESCAPE = new Set('bfnrtu');
+const LATEX_LETTER = /[a-zA-Z]/;
 
 function fixLatexJsonEscapes(json: string): string {
-  // Match JSON string values and fix LaTeX escapes within them
   let changed = false;
   const fixed = json.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (_match, content) => {
-    const fixedContent = content.replace(/\\([a-zA-Z])/g, (_m: string, ch: string) => {
-      if (VALID_JSON_ESCAPE.has(ch)) return _m; // \n, \t, \uXXXX etc. — leave alone
+    const fixedContent = content.replace(/\\([a-zA-Z])/g, (_m: string, ch: string, offset: number, str: string) => {
+      const nextChar = str[offset + 2];
+      const isLatexCommand = nextChar != null && LATEX_LETTER.test(nextChar);
+
+      if (VALID_JSON_ESCAPE.has(ch) && !isLatexCommand) {
+        return _m; // real JSON escape: \n, \t — keep as-is
+      }
       changed = true;
-      return `\\\\${ch}`;
+      return `\\\\${ch}`; // LaTeX command — double-escape for JSON
     });
     return `"${fixedContent}"`;
   });
   return changed ? fixed : json;
 }
-
-// ── Model mapping (same as solver-agent.ts) ──────────────────────────
-
-const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> = {
-  universal: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-  science: { providerId: 'glm', modelId: 'glm-5.1' },
-  humanities: { providerId: 'qwen', modelId: 'qwen3.6-plus' },
-  grading: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-};
 
 // ── Event types emitted during streaming ─────────────────────────────
 
@@ -376,20 +376,6 @@ class StepStreamParser {
   }
 }
 
-// ── Env key lookup (same as solver-agent.ts) ─────────────────────────
-
-const ENV_KEY_MAP: Record<string, string> = {
-  deepseek: 'DEEPSEEK_API_KEY',
-  glm: 'GLM_API_KEY',
-  qwen: 'QWEN_API_KEY',
-};
-
-function resolveModelConfig(agentType: SolverAgentType): Parameters<typeof getModel>[0] {
-  const { providerId, modelId } = AGENT_MODEL_MAP[agentType];
-  const apiKey = process.env[ENV_KEY_MAP[providerId] ?? ''] ?? '';
-  return { providerId, modelId, apiKey, providerType: 'openai' as const };
-}
-
 // ── Main streaming solve function ────────────────────────────────────
 
 export async function* streamSolve(
@@ -397,7 +383,7 @@ export async function* streamSolve(
   problemText: string,
   problemImage: string | null,
 ): AsyncGenerator<StreamEvent> {
-  const modelConfig = resolveModelConfig(agentType);
+  const modelConfig = resolveSolverModel(agentType);
   const modelWithInfo = getModel(modelConfig);
 
   const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
@@ -466,7 +452,7 @@ async function* fallbackSolve(
   const { getModel: getModelFn } = await import('@/lib/ai/providers');
   const { parseJsonResponse } = await import('@/lib/generation/json-repair');
 
-  const modelConfig = resolveModelConfig(agentType);
+  const modelConfig = resolveSolverModel(agentType);
   const modelWithInfo = getModelFn(modelConfig);
 
   const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);

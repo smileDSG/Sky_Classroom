@@ -16,6 +16,7 @@ import type {
   GradedFourPartOutput,
   GradeResult,
 } from './types';
+import { CAUSE_LABELS } from './error-classifier';
 
 /**
  * Raw solution data from the solver agent.
@@ -128,16 +129,7 @@ function buildMistakeAnalysis(gradeResult: GradeResult): string {
     return '回答正确，请继续保持！';
   }
 
-  const causeLabels: Record<string, string> = {
-    'concept-unclear': '概念不清',
-    'calculation-error': '计算失误',
-    'misreading': '审题错误',
-    'method-wrong': '方法错误',
-    'careless': '粗心',
-    'format-error': '格式错误',
-  };
-
-  const causeLabel = causeLabels[cause] || cause;
+  const causeLabel = CAUSE_LABELS[cause] || cause;
   return `错因：${causeLabel}。${errorAnalysis}`;
 }
 
