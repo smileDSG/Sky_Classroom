@@ -259,12 +259,16 @@ function extractOutlineFromText(text: string, topic: string): OutlineResult {
 
   // 如果正则提取不到，尝试更宽松的模式
   if (items.length < 3) {
+    // 过滤掉 cover/end 的字段名，避免被误识别为目录项
+    const reservedFields = new Set(['en_tag', 'title', 'subtitle', 'slogan', 'end_en', 'cover', 'end', 'toc', 'items']);
     const looseMatches = text.matchAll(/(?:第?\s*(\d)[\.、\s:]*)?\s*["']?([^"'\n,]{2,12})["']?\s*[-—:]\s*["']?([^"'\n,]{2,20})["']?/gi);
     for (const m of looseMatches) {
       if (items.length >= 3) break;
       const title = m[2].trim();
       const desc = m[3].trim();
-      if (title.length >= 2 && desc.length >= 2 && !items.some(i => i.title === title)) {
+      // 必须包含至少1个中文字符（真正的章节标题都是中文），且不能是保留字段名
+      const hasChinese = /[\u4e00-\u9fa5]/.test(title);
+      if (title.length >= 2 && desc.length >= 2 && hasChinese && !reservedFields.has(title.toLowerCase()) && !items.some(i => i.title === title)) {
         items.push({ num: String(items.length + 1).padStart(2, '0'), title, desc });
       }
     }
@@ -755,6 +759,7 @@ function validateOutline(outline: OutlineResult, topic: string): { valid: boolea
     const title = item.title?.trim() ?? '';
     const desc = item.desc?.trim() ?? '';
     if (title.length < 2) issues.push(`目录第${item.num}项标题过短`);
+    if (!/[\u4e00-\u9fa5]/.test(title)) issues.push(`目录第${item.num}项标题"${title}"不是中文`);
     if (desc.length < 2 || /^\d+$/.test(desc)) issues.push(`目录第${item.num}项描述无效`);
   }
 
@@ -841,7 +846,10 @@ function validateTocConsistency(
 ): { valid: boolean; reason?: string } {
   const issues: string[] = [];
 
-  const tocTitles = outline.toc.items.map(i => i.title?.trim() ?? '');
+  // 过滤掉明显不是中文章节标题的目录项（如残留的字段名）
+  const tocTitles = outline.toc.items
+    .map(i => i.title?.trim() ?? '')
+    .filter(t => t.length >= 2 && /[\u4e00-\u9fa5]/.test(t));
   const contentA = contentJson.content_a as Record<string, unknown> | undefined;
   const contentB = contentJson.content_b as Record<string, unknown> | undefined;
   const table = contentJson.table as Record<string, unknown> | undefined;
@@ -851,6 +859,11 @@ function validateTocConsistency(
     contentB?.title as string | undefined,
     table?.title as string | undefined,
   ].filter(Boolean) as string[];
+
+  // 目录项不足时放宽检查
+  if (tocTitles.length === 0) {
+    return { valid: true };
+  }
 
   // 检查内容页标题和目录的对应关系（极宽松匹配）
   for (let i = 0; i < Math.min(tocTitles.length, contentTitles.length); i++) {

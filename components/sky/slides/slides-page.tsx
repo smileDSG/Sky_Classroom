@@ -65,18 +65,28 @@ export default function SlidesPage() {
 
     let target = 0;
     let current = 0;
-    if (stage === 'thinking') { current = 0; target = 8; }
-    if (stage === 'writing') { current = 10; target = 75; }
-    if (stage === 'rendering') { current = 78; target = 95; }
+    let step = 0;
+    let intervalMs = 500;
+    if (stage === 'thinking') { current = 0; target = 8; step = (8 - 0) / 10; intervalMs = 300; }
+    if (stage === 'writing') { current = 10; target = 90; step = (90 - 10) / 80; intervalMs = 600; }
+    if (stage === 'rendering') { current = 92; target = 98; step = (98 - 92) / 12; intervalMs = 400; }
     setGenProgress(current);
 
-    const step = (target - current) / (stage === 'writing' ? 60 : 15);
     progressIntervalRef.current = setInterval(() => {
       setGenProgress((p) => {
-        if (p >= target) return p;
+        if (p >= target) {
+          // 到达 target 后继续以极慢速度前进，避免"卡住"感
+          if (stage === 'writing' && p < 95) {
+            return Math.min(p + 0.3, 95);
+          }
+          if (stage === 'rendering' && p < 99) {
+            return Math.min(p + 0.2, 99);
+          }
+          return p;
+        }
         return Math.min(p + step, target);
       });
-    }, 500);
+    }, intervalMs);
   }, []);
 
   const stopProgress = useCallback(() => {
