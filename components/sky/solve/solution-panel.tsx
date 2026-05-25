@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { MathRenderer } from './math-renderer';
 import type { FourPartOutput, GradedFourPartOutput } from '@/lib/solve/types';
 
 interface SolutionPanelProps {
@@ -85,7 +86,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
               <div className="text-center">
                 <div className="mb-2 text-sm text-muted-foreground">最终答案</div>
                 <div className="inline-flex items-center justify-center rounded-xl bg-[#4A90D9]/10 px-8 py-4">
-                  <span className="text-2xl font-bold text-[#4A90D9]">{answer}</span>
+                  <MathRenderer content={answer} className="text-2xl font-bold text-[#4A90D9]" />
                 </div>
               </div>
               {isGraded && (
@@ -104,6 +105,12 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
 
           <TabsContent value="steps" className="mt-0">
             <div className="divide-y">
+              {steps.length === 0 && (
+                <div className="flex items-center justify-center gap-3 py-12">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#4A90D9] border-t-transparent" />
+                  <span className="text-sm text-muted-foreground">正在生成解题步骤...</span>
+                </div>
+              )}
               {steps.map((step, index) => (
                 <Collapsible
                   key={index}
@@ -127,7 +134,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                   <CollapsibleContent>
                     <div className="px-4 pb-4 animate-step-fade-in">
                       <div className="ml-11 space-y-3">
-                        <div className="text-sm leading-relaxed">{step.content}</div>
+                        <MathRenderer content={step.content} className="text-sm leading-relaxed" />
                         {step.keyPoints && step.keyPoints.length > 0 && (
                           <div className="flex flex-wrap gap-2">
                             {step.keyPoints.map((point, pidx) => (
@@ -137,7 +144,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                                 className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800"
                               >
                                 <Lightbulb className="mr-1 h-3 w-3" />
-                                {point}
+                                <MathRenderer content={point} />
                               </Badge>
                             ))}
                           </div>
@@ -160,7 +167,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">{point.name}</h4>
+                        <h4 className="font-semibold"><MathRenderer content={point.name} /></h4>
                         <Badge
                           variant="secondary"
                           className={cn(
@@ -175,7 +182,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                           {point.difficulty === 'hard' && '困难'}
                         </Badge>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">{point.description}</p>
+                      <p className="mt-1 text-sm text-muted-foreground"><MathRenderer content={point.description} /></p>
                     </div>
                   </div>
                 </div>
@@ -195,7 +202,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm leading-relaxed">{q.problem}</p>
+                      <MathRenderer content={q.problem} className="text-sm leading-relaxed" />
                       <div className="mt-2 flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
                           难度: {q.difficulty}/10
@@ -218,7 +225,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                 <div className="space-y-3">
                   {(output as GradedFourPartOutput).recommendedPractice.map((rec, index) => (
                     <div key={index} className="rounded-lg bg-muted/50 p-3">
-                      <div className="text-sm font-medium">{rec.problem}</div>
+                      <MathRenderer content={rec.problem} className="text-sm font-medium" />
                       <div className="text-xs text-muted-foreground">{rec.reason}</div>
                     </div>
                   ))}

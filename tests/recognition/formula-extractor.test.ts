@@ -87,6 +87,45 @@ describe('extractFormulas — LaTeX公式提取', () => {
     expect(r.latex).toContain('a}{b');
   });
 
+  test('自动包裹裸下标 u_n', () => {
+    const r = extractFormulas('如果级数 u_n 收敛');
+    expect(r.text).toContain('$u_n$');
+    expect(r.latex).toContain('u_n');
+  });
+
+  test('自动包裹裸下标与上标组合 u_n^2', () => {
+    const r = extractFormulas('极限 u_n^2 计算');
+    expect(r.text).toContain('$u_n^2$');
+    expect(r.latex).toContain('u_n^2');
+  });
+
+  test('自动包裹花括号下标 u_{n+1}', () => {
+    const r = extractFormulas('序列 u_{n+1} 的极限');
+    expect(r.text).toContain('$u_{n+1}$');
+    expect(r.latex).toContain('u_{n+1}');
+  });
+
+  test('自动包裹花括号上标 x^{2k}', () => {
+    const r = extractFormulas('表达式 x^{2k} 的值');
+    expect(r.text).toContain('$x^{2k}$');
+    expect(r.latex).toContain('x^{2k}');
+  });
+
+  test('已在 $ 内的下标不重复包裹', () => {
+    const r = extractFormulas('级数 $u_n$ 收敛');
+    // Should have exactly one pair of $ around u_n
+    expect(r.text).toContain('$u_n$');
+    // Check it doesn't double-wrap: $$u_n$$ or $ $u_n$ $
+    expect(r.text).not.toContain('$$u_n$$');
+  });
+
+  test('多下标同时包裹', () => {
+    const r = extractFormulas('u_n + v_n 发散，a_1 收敛');
+    expect(r.text).toContain('$u_n$');
+    expect(r.text).toContain('$v_n$');
+    expect(r.text).toContain('$a_1$');
+  });
+
   test('自动包裹裸 LaTeX \\begin{...} 环境', () => {
     const r = extractFormulas('矩阵 \\begin{matrix} a & b \\\\ c & d \\end{matrix}');
     expect(r.latex).toContain('\\begin{matrix}');

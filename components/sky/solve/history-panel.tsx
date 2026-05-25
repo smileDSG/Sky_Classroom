@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { MathRenderer } from './math-renderer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   AlertDialog,
@@ -138,11 +139,11 @@ export function HistoryPanel({ onLoad, onClose, className }: HistoryPanelProps) 
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium leading-snug line-clamp-2">
-                        {entry.problemText}
+                        <MathRenderer content={entry.problemText} />
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-2">
                         <span className="text-xs text-muted-foreground">
-                          答案：{entry.answer}
+                          答案：<MathRenderer content={entry.answer} />
                         </span>
                         {entry.agentId && (
                           <Badge variant="secondary" className="text-xs">

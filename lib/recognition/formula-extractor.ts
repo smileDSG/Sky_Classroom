@@ -21,6 +21,12 @@ const BARE_LATEX_PATTERNS = [
   /\\right[()[\]|]/g,
   /\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\}/g, // \begin{...}...\end{...}
   /[=<>≠≈≤≥±∞π]\s*(?:[\d]+\s*[+\-×÷=<>]|[a-z]\s*[+\-×÷=<>])/gi, // mixed Unicode math expressions
+  // Bare subscripts and superscripts — wrap in $...$ so KaTeX can render them
+  /[a-zA-Z]_\{[^}]+\}(?:\^\{[^}]+\})?/g,   // u_{n+1}, x_{i}^{2}  (braced)
+  /[a-zA-Z]\^\{[^}]+\}/g,                   // x^{2k}  (braced)
+  /[a-zA-Z]_[a-zA-Z0-9]+\^[a-zA-Z0-9]+/g,  // u_n^2  (simple sub + sup)
+  /[a-zA-Z]_[a-zA-Z0-9]+/g,                 // u_n, x_1  (simple subscript)
+  /[a-zA-Z]\^[a-zA-Z0-9]+/g,                // x^2  (simple superscript)
 ];
 
 /**
