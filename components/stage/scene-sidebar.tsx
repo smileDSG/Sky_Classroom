@@ -133,19 +133,17 @@ export function SceneSidebar({
             className="flex items-center gap-2 cursor-pointer rounded-lg px-1.5 -mx-1.5 py-1 -my-1 hover:bg-sky-50/50 dark:hover:bg-white/5 active:scale-[0.97] transition-all duration-150"
             title={t('generation.backToHome')}
           >
-            <div className="flex items-center gap-1.5">
-              {/* Cloud icon */}
-              <svg
-                viewBox="0 0 24 16"
-                className="w-6 h-4 text-sky-500 dark:text-violet-400"
-                fill="currentColor"
-              >
-                <ellipse cx="6" cy="11" rx="5" ry="4" />
-                <ellipse cx="12" cy="8" rx="7" ry="5" />
-                <ellipse cx="17" cy="10" rx="4" ry="3" />
-              </svg>
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">天空课堂</span>
-            </div>
+            {/* Cloud icon */}
+            <svg
+              viewBox="0 0 24 16"
+              className="w-6 h-4 text-sky-500 dark:text-violet-400"
+              fill="currentColor"
+            >
+              <ellipse cx="6" cy="11" rx="5" ry="4" />
+              <ellipse cx="12" cy="8" rx="7" ry="5" />
+              <ellipse cx="17" cy="10" rx="4" ry="3" />
+            </svg>
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">天空课堂</span>
           </button>
           <button
             onClick={() => onCollapseChange(true)}
