@@ -301,21 +301,39 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
             onValueChange={(v) => setActiveTab(v as 'lecture' | 'chat')}
             className="flex flex-col h-full gap-0"
           >
-            {/* Tab header row */}
-            <div className="h-10 flex items-center gap-1 shrink-0 mt-3 mb-1 px-3">
-              <TabsList variant="line" className="h-full flex-1 w-0">
-                <TabsTrigger value="lecture" className="text-[13px] gap-1 flex-1">
+            {/* Redesigned tab header row */}
+            <div className="h-12 flex items-center gap-2 shrink-0 px-3 pt-2 pb-1">
+              <TabsList variant="line" className="h-9 flex-1 w-0 bg-slate-100/60 dark:bg-slate-800/60 rounded-xl p-1">
+                <TabsTrigger
+                  value="lecture"
+                  className="text-[13px] gap-1.5 flex-1 rounded-lg transition-all duration-200
+                    data-[state=active]:bg-gradient-to-r data-[state=active]:from-sky-400 data-[state=active]:to-indigo-400
+                    data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:shadow-sky-300/30
+                    data-[state=active]:dark:shadow-sky-500/20
+                    text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200
+                    border-0 after:absolute after:inset-x-0 after:bottom-[-5px] after:h-0.5 after:bg-gradient-to-r after:from-sky-400 after:to-indigo-400
+                    data-[state=active]:after:opacity-100 after:opacity-0"
+                >
                   <BookOpen className="w-3.5 h-3.5" />
                   {t('chat.tabs.lecture')}
                 </TabsTrigger>
-                <TabsTrigger value="chat" className="text-[13px] gap-1 flex-1 relative">
+                <TabsTrigger
+                  value="chat"
+                  className="text-[13px] gap-1.5 flex-1 rounded-lg transition-all duration-200 relative
+                    data-[state=active]:bg-gradient-to-r data-[state=active]:from-sky-400 data-[state=active]:to-indigo-400
+                    data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:shadow-sky-300/30
+                    data-[state=active]:dark:shadow-sky-500/20
+                    text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200
+                    border-0 after:absolute after:inset-x-0 after:bottom-[-5px] after:h-0.5 after:bg-gradient-to-r after:from-sky-400 after:to-indigo-400
+                    data-[state=active]:after:opacity-100 after:opacity-0"
+                >
                   <MessageSquare className="w-3.5 h-3.5" />
                   {t('chat.tabs.chat')}
-                  {/* Amber pulse dot when there's an active chat session and user is on Notes tab */}
+                  {/* Amber pulse dot — refined position */}
                   {hasActiveChatSession && activeTab === 'lecture' && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                    <span className="absolute -top-0.5 right-2 flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 ring-2 ring-white/50 dark:ring-slate-900/50" />
                     </span>
                   )}
                 </TabsTrigger>
@@ -324,7 +342,13 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
               {onCollapseChange && (
                 <button
                   onClick={() => onCollapseChange(true)}
-                  className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center bg-slate-800/80 text-slate-400 ring-1 ring-white/10 hover:bg-slate-700/80 hover:text-slate-200 active:scale-90 transition-all duration-200"
+                  aria-label={t('common.collapse')}
+                  title={t('common.collapse')}
+                  className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center
+                    text-slate-400 dark:text-slate-500
+                    hover:text-slate-600 dark:hover:text-slate-300
+                    hover:bg-slate-100 dark:hover:bg-slate-800
+                    active:scale-90 transition-all duration-200"
                 >
                   <PanelLeftClose className="w-4 h-4" />
                 </button>
