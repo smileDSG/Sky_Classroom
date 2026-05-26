@@ -17,6 +17,9 @@ CREATE TABLE IF NOT EXISTS invitation_codes (
   notes       TEXT
 );
 
+ALTER TABLE invitation_codes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable all access for authenticated users" ON invitation_codes FOR ALL USING (true);
+
 -- 2. 内测申请记录
 CREATE TABLE IF NOT EXISTS beta_requests (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -28,6 +31,9 @@ CREATE TABLE IF NOT EXISTS beta_requests (
   reviewed_at TIMESTAMPTZ
 );
 
+ALTER TABLE beta_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable all access for authenticated users" ON beta_requests FOR ALL USING (true);
+
 -- 3. 遥测事件表
 CREATE TABLE IF NOT EXISTS telemetry_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -38,6 +44,9 @@ CREATE TABLE IF NOT EXISTS telemetry_events (
   page        TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE telemetry_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable all access for authenticated users" ON telemetry_events FOR ALL USING (true);
 
 -- 4. 性能每日汇总表
 CREATE TABLE IF NOT EXISTS performance_daily (
@@ -55,6 +64,9 @@ CREATE TABLE IF NOT EXISTS performance_daily (
   UNIQUE(date, user_id)
 );
 
+ALTER TABLE performance_daily ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable all access for authenticated users" ON performance_daily FOR ALL USING (true);
+
 -- 5. AI 任务表
 CREATE TABLE IF NOT EXISTS ai_tasks (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -66,12 +78,15 @@ CREATE TABLE IF NOT EXISTS ai_tasks (
   input_tokens    INT DEFAULT 0,
   output_tokens   INT DEFAULT 0,
   cost_usd        FLOAT DEFAULT 0,
-  started_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  started_at      TIMESTAMPTZ,
   completed_at    TIMESTAMPTZ,
   error_message   TEXT,
   progress        INT DEFAULT 0,
   progress_detail TEXT
 );
+
+ALTER TABLE ai_tasks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable all access for authenticated users" ON ai_tasks FOR ALL USING (true);
 
 -- 6. 索引
 CREATE INDEX IF NOT EXISTS idx_telemetry_events_type ON telemetry_events(event_type);
@@ -80,7 +95,6 @@ CREATE INDEX IF NOT EXISTS idx_telemetry_events_created ON telemetry_events(crea
 CREATE INDEX IF NOT EXISTS idx_ai_tasks_user ON ai_tasks(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_tasks_status ON ai_tasks(status, started_at);
 CREATE INDEX IF NOT EXISTS idx_beta_requests_status ON beta_requests(status, applied_at DESC);
-CREATE INDEX IF NOT EXISTS idx_invitation_codes_code ON invitation_codes(code);
 
 -- 7. users 表扩展（如果 users 表存在）
 -- ALTER TABLE users ADD COLUMN IF NOT EXISTS beta_status TEXT NOT NULL DEFAULT 'none';
@@ -94,4 +108,4 @@ BEGIN
   DELETE FROM performance_daily WHERE date < CURRENT_DATE - INTERVAL '90 days';
   DELETE FROM ai_tasks WHERE completed_at < now() - INTERVAL '90 days' AND status IN ('completed', 'failed', 'cancelled');
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public;
