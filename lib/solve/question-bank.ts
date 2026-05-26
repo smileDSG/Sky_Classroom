@@ -22,7 +22,19 @@ function isBrowser() {
 
 // ── In-memory fallback (server-side) ─────────────────────────────────
 
+const MAX_MEM_BANK_SIZE = 500;
 const memBank = new Map<string, QuestionBankEntry & { problemHash: string }>();
+
+function evictOldest() {
+  if (memBank.size > MAX_MEM_BANK_SIZE) {
+    let oldestKey = '';
+    let oldestTime = Infinity;
+    for (const [key, entry] of memBank) {
+      if (entry.solvedAt < oldestTime) { oldestTime = entry.solvedAt; oldestKey = key; }
+    }
+    if (oldestKey) memBank.delete(oldestKey);
+  }
+}
 
 // ── Hashing ──────────────────────────────────────────────────────────
 
@@ -45,6 +57,18 @@ function stableHash(input: string): string {
     h = ((h << 5) - h + input.charCodeAt(i)) | 0;
   }
   return `qb_${(h >>> 0).toString(36)}`;
+}
+
+// ── Bigram cache (avoids recomputing bigrams on each similarity scan) ─
+
+const bigramCache = new Map<string, Set<string>>();
+
+function getCachedBigrams(text: string, hash: string): Set<string> {
+  const cached = bigramCache.get(hash);
+  if (cached) return cached;
+  const grams = bigrams(text);
+  bigramCache.set(hash, grams);
+  return grams;
 }
 
 // ── Similarity ──────────────────────────────────────────────────────
@@ -99,11 +123,16 @@ export async function findSimilarQuestions(
       return [];
     }
 
+    const queryGrams = bigrams(problemText);
+
     const matches = allEntries
-      .map((entry) => ({
-        entry,
-        score: textSimilarity(problemText, entry.problemText),
-      }))
+      .map((entry) => {
+        const entryGrams = isBrowser()
+          ? bigrams(entry.problemText)
+          : getCachedBigrams(entry.problemText, entry.problemHash);
+        const score = jaccardFromSets(queryGrams, entryGrams);
+        return { entry, score };
+      })
       .filter((m) => m.score >= threshold)
       .sort((a, b) => b.score - a.score)
       .map((m) => ({
@@ -117,6 +146,17 @@ export async function findSimilarQuestions(
     log.error('[QuestionBank] findSimilarQuestions failed:', error);
     return [];
   }
+}
+
+/** Jaccard similarity from pre-computed bigram sets */
+function jaccardFromSets(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 && b.size === 0) return 0;
+  let intersection = 0;
+  for (const item of a) {
+    if (b.has(item)) intersection++;
+  }
+  const union = a.size + b.size - intersection;
+  return union === 0 ? 0 : intersection / union;
 }
 
 /**
@@ -149,6 +189,7 @@ export async function saveToQuestionBank(
       await db.questionBank.put(record);
     } else {
       memBank.set(id, record);
+      evictOldest();
     }
 
     log.info(`[QuestionBank] Saved entry: ${id} (hash: ${problemHash})`);
@@ -168,6 +209,8 @@ export async function deleteQuestionBankEntry(id: string): Promise<void> {
     if (isBrowser()) {
       await db.questionBank.delete(id);
     } else {
+      const entry = memBank.get(id);
+      if (entry) bigramCache.delete(entry.problemHash);
       memBank.delete(id);
     }
     log.info(`[QuestionBank] Deleted entry: ${id}`);
@@ -224,6 +267,7 @@ export async function clearQuestionBank(): Promise<void> {
       await db.questionBank.clear();
     } else {
       memBank.clear();
+      bigramCache.clear();
     }
     log.info('[QuestionBank] Cleared all entries');
   } catch (error) {

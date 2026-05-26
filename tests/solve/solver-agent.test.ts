@@ -107,7 +107,7 @@ describe('solveWithAgentNode', () => {
 
     const result = await solveWithAgentNode(makeState(), {} as any);
     expect(result.solution).toBe('解题过程');
-    expect(callLLM).toHaveBeenCalledTimes(1); // primary high confidence → no fallback
+    expect(callLLM).toHaveBeenCalledTimes(2); // primary + secondary run in parallel
   });
 
   test('sets error on LLM failure', async () => {

@@ -10,23 +10,33 @@ const log = createLogger('FormulaExtractor');
 
 /** Patterns that indicate bare LaTeX content (not inside $ delimiters) */
 const BARE_LATEX_PATTERNS = [
-  /\\frac\{[^}]*\}\{[^}]*\}/g,            // \frac{a}{b}
-  /\\sqrt(?:\[.*?\])?\{[^}]*\}/g,         // \sqrt{x}, \sqrt[n]{x}
-  /\\int(?:_[^{}]*\{[^}]*\})?(?:\^[^{}]*\{[^}]*\})?/g,  // \int with sub/superscripts
-  /\\sum(?:_[^{}]*\{[^}]*\})?(?:\^[^{}]*\{[^}]*\})?/g,  // \sum
-  /\\prod(?:_[^{}]*\{[^}]*\})?(?:\^[^{}]*\{[^}]*\})?/g, // \prod
-  /\\lim(?:_\{[^}]*\})?/g,                 // \lim
-  /\\infty/g,                              // \infty
-  /\\left[()[\]|]/g,                       // \left( \right)
-  /\\right[()[\]|]/g,
-  /\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\}/g, // \begin{...}...\end{...}
-  /[=<>≠≈≤≥±∞π]\s*(?:[\d]+\s*[+\-×÷=<>]|[a-z]\s*[+\-×÷=<>])/gi, // mixed Unicode math expressions
-  // Bare subscripts and superscripts — wrap in $...$ so KaTeX can render them
-  /[a-zA-Z]_\{[^}]+\}(?:\^\{[^}]+\})?/g,   // u_{n+1}, x_{i}^{2}  (braced)
-  /[a-zA-Z]\^\{[^}]+\}/g,                   // x^{2k}  (braced)
-  /[a-zA-Z]_[a-zA-Z0-9]+\^[a-zA-Z0-9]+/g,  // u_n^2  (simple sub + sup)
-  /[a-zA-Z]_[a-zA-Z0-9]+/g,                 // u_n, x_1  (simple subscript)
-  /[a-zA-Z]\^[a-zA-Z0-9]+/g,                // x^2  (simple superscript)
+  // Block-level environments — wrap with $$
+  /\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\}/g,
+
+  // Generic LaTeX command (2+ letters) with optional args/sub/sup
+  // Matches: \frac{1}{2}, \sqrt[3]{x}, \int_0^\infty, \iint_\Sigma,
+  //          \sum_{i=1}^n, \lim_{x\to 0}, \infty, \Sigma, \sin, \partial, etc.
+  // Brace args support one level of nesting (e.g. \sqrt{\frac{a}{b}}).
+  /\\([a-zA-Z]{2,})(\s*(?:\[[^\]]*\]|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|_[^{}$\s]+|_[^{}]*\{[^{}]*\}|\^[^{}$\s]+|\^[^{}]*\{[^{}]*\}))*/g,
+
+  // left/right fences
+  /\\left[()[\]|.]|\\right[()[\]|.]/g,
+
+  // Mixed Unicode math expressions
+  /[=<>≠≈≤≥±∞π]\s*(?:[\d]+\s*[+\-×÷=<>]|[a-z]\s*[+\-×÷=<>])/gi,
+
+  // Braced sub/superscripts on identifiers (including \cmd)
+  /[a-zA-Z\\][a-zA-Z]*(?:_(?:\{[^}]*\}|[^{}$\s]+))(?:\^(?:\{[^}]*\}|[^{}$\s]+))?/g,
+  /[a-zA-Z\\][a-zA-Z]*(?:\^(?:\{[^}]*\}|[^{}$\s]+))/g,
+
+  // Simple subscripts (including \<cmd> subscripts like _\Sigma)
+  /[a-zA-Z]_[^{}$\s]+/g,
+
+  // Simple superscripts
+  /[a-zA-Z0-9)]\^[^{}$\s]+/g,
+
+  // Parenthesized expression with superscript
+  /\([^)]+\)\^[^{}$\s]+/g,
 ];
 
 /**

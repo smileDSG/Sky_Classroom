@@ -12,35 +12,14 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import type { SolveGraphState } from './solve-graph-state';
 import type { SolverAgentType } from './types';
-import type { ProviderId } from '@/lib/ai/providers';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { buildSolverPrompt } from './solver-prompts';
+import { resolveSolverModel } from './solver-constants';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SolveGraph');
-
-// ── Agent → provider/model mapping ───────────────────────────────
-
-const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> = {
-  universal: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-  science: { providerId: 'glm', modelId: 'glm-5.1' },
-  humanities: { providerId: 'qwen', modelId: 'qwen3.6-plus' },
-  grading: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-};
-
-const ENV_KEY_MAP: Record<string, string> = {
-  deepseek: 'DEEPSEEK_API_KEY',
-  glm: 'GLM_API_KEY',
-  qwen: 'QWEN_API_KEY',
-};
-
-const ENV_URL_MAP: Record<string, string> = {
-  deepseek: 'DEEPSEEK_BASE_URL',
-  glm: 'GLM_BASE_URL',
-  qwen: 'QWEN_BASE_URL',
-};
 
 /**
  * Parsed solution from LLM response.
@@ -64,31 +43,6 @@ export function parseSolutionResponse(text: string): ParsedSolution | null {
   if (!parsed.solution || !parsed.answer) return null;
   if (typeof parsed.confidence !== 'number') parsed.confidence = 0.5;
   return parsed;
-}
-
-/**
- * Resolve the ModelConfig for a given solver agent type.
- *
- * Agent type → provider/model mapping:
- *   universal   → deepseek / deepseek-v4-flash
- *   science     → glm / glm-5.1
- *   humanities  → qwen / qwen3.6-plus
- *   grading     → deepseek / deepseek-v4-flash
- *
- * API key and base URL come from environment variables.
- */
-function resolveSolverModel(agentType: SolverAgentType): Parameters<typeof getModel>[0] {
-  const { providerId, modelId } = AGENT_MODEL_MAP[agentType];
-  const apiKey = process.env[ENV_KEY_MAP[providerId] ?? ''] ?? '';
-  const baseUrl = process.env[ENV_URL_MAP[providerId] ?? ''];
-
-  return {
-    providerId,
-    modelId,
-    apiKey,
-    baseUrl: baseUrl || undefined,
-    providerType: 'openai',
-  };
 }
 
 interface SolveOnceResult {
@@ -155,12 +109,14 @@ async function solveOnce(
 }
 
 /**
- * Hybrid strategy: primary agent first, fallback if confidence low.
+ * Hybrid strategy: run primary + secondary in parallel.
  *
- * 1. Call primary agent
- * 2. If confidence >= 0.7, return immediately
- * 3. If confidence < 0.7, call secondary agent
- * 4. If secondary also low, try tertiary as last resort
+ * 1. Fire primary and first fallback concurrently
+ * 2. If primary confidence >= 0.7, return immediately
+ * 3. If secondary confidence >= 0.7, use it
+ * 4. Otherwise try tertiary as last resort
+ *
+ * This cuts worst-case latency from 3 serial calls to 2 serial rounds.
  */
 async function solveWithHybrid(
   primary: SolverAgentType,
@@ -168,48 +124,55 @@ async function solveWithHybrid(
   problemImage: string | null,
 ): Promise<{ solution: ParsedSolution; usedAgents: SolverAgentType[] }> {
   const CONFIDENCE_THRESHOLD = 0.7;
-
-  // Primary
-  const primaryResult = await solveOnce(primary, problemText, problemImage);
-  if (primaryResult.parsed && primaryResult.parsed.confidence >= CONFIDENCE_THRESHOLD) {
-    return { solution: primaryResult.parsed, usedAgents: [primary] };
-  }
-
-  // Secondary fallback
   const fallbacks: SolverAgentType[] = (['science', 'humanities', 'universal'] as SolverAgentType[]).filter(
     (t) => t !== primary,
   );
 
-  const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
+  // Run primary and first fallback in parallel
+  const [primaryResult, secondaryResult] = await Promise.all([
+    solveOnce(primary, problemText, problemImage),
+    solveOnce(fallbacks[0], problemText, problemImage),
+  ]);
+
+  if (primaryResult.parsed && primaryResult.parsed.confidence >= CONFIDENCE_THRESHOLD) {
+    return { solution: primaryResult.parsed, usedAgents: [primary] };
+  }
+
   if (secondaryResult.parsed && secondaryResult.parsed.confidence >= CONFIDENCE_THRESHOLD) {
     return { solution: secondaryResult.parsed, usedAgents: [primary, fallbacks[0]] };
   }
 
-  // Tertiary: last resort
+  // Both low confidence — try tertiary
   if (fallbacks.length > 1) {
     const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
-    if (tertiaryResult.parsed) {
+    if (tertiaryResult.parsed && tertiaryResult.parsed.confidence >= CONFIDENCE_THRESHOLD) {
       return { solution: tertiaryResult.parsed, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
+    }
+
+    // Pick best by confidence across all three
+    const best = [primaryResult, secondaryResult, tertiaryResult]
+      .filter((r) => r.parsed)
+      .sort((a, b) => (b.parsed!.confidence) - (a.parsed!.confidence));
+    if (best[0]?.parsed) {
+      return { solution: best[0].parsed, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
     }
   }
 
-  // All JSON parsing failed — fall back to the best raw text we have
-  const calledAgents: SolverAgentType[] = fallbacks.length > 1
-    ? [primary, fallbacks[0], fallbacks[1]]
-    : [primary, fallbacks[0]];
+  // All JSON parsing failed — fall back to best raw text
+  const best = [primaryResult, secondaryResult]
+    .filter((r) => r.parsed)
+    .sort((a, b) => (b.parsed!.confidence) - (a.parsed!.confidence));
 
   const fallbackSolution =
-    primaryResult.parsed ??
-    secondaryResult.parsed ??
-    rawAsSolution(
-      primaryResult.rawText ||
-      secondaryResult.rawText ||
-      '',
-    );
+    best[0]?.parsed ??
+    rawAsSolution(primaryResult.rawText || secondaryResult.rawText || '');
 
-  log.warn(`[SolveGraph] All agents returned non-JSON, using raw text fallback (conf=${fallbackSolution.confidence})`);
+  log.warn(`[SolveGraph] Fallback used, conf=${fallbackSolution.confidence}`);
 
-  return { solution: fallbackSolution, usedAgents: calledAgents };
+  return {
+    solution: fallbackSolution,
+    usedAgents: fallbacks.length > 1 ? [primary, fallbacks[0], fallbacks[1]] : [primary, fallbacks[0]],
+  };
 }
 
 /**

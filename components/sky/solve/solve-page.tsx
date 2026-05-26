@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Sparkles, AlertCircle, RotateCcw, Image as ImageIcon, Wand2, Clock, BookOpen, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { HistoryPanel } from './history-panel';
 import { SolutionSkeleton } from './solution-skeleton';
 import { MathRenderer } from './math-renderer';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { useTaskStore } from '@/lib/store/use-task-store';
 import type { GradeResult, FourPartOutput, GradedFourPartOutput, QuestionBankEntry } from '@/lib/solve/types';
 
 type SolvePageState =
@@ -175,6 +176,91 @@ async function streamExplain(
   }
 }
 
+// ── Background job polling ────────────────────────────────────────
+
+interface JobState {
+  answer: string;
+  steps: { label: string; content: string; keyPoints: string[] }[];
+  knowledgePoints: { name: string; description: string; difficulty: string }[];
+  similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
+  fromQuestionBank: boolean;
+  solvingTime: number;
+}
+
+async function pollSolveJob(
+  jobId: string,
+  onPhase: (phase: StreamPhase) => void,
+  onUpdate: (partial: Partial<JobState>) => void,
+  signal: AbortSignal,
+): Promise<void> {
+  const pollUrl = `/api/sky/solve/jobs/${jobId}`;
+
+  while (!signal.aborted) {
+    const res = await fetch(pollUrl, { signal });
+    if (!res.ok) throw new Error(`作业查询失败 (${res.status})`);
+
+    const json = await res.json();
+    const job = json.data ?? json;
+    onPhase(job.phase as StreamPhase);
+
+    if (job.result) {
+      onUpdate({
+        answer: job.result.answer,
+        steps: job.result.steps,
+        knowledgePoints: job.result.knowledgePoints,
+        similarQuestions: job.result.similarQuestions,
+        fromQuestionBank: job.result.fromQuestionBank,
+        solvingTime: job.result.solvingTime,
+      });
+    }
+
+    if (job.done) {
+      if (job.status === 'failed') {
+        throw new Error(job.error || '解题失败');
+      }
+      return;
+    }
+
+    // Wait before next poll
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+}
+
+/** Submit a solve job and return jobId */
+async function submitSolveJob(
+  problem: string,
+  problemImage: string | null,
+): Promise<string> {
+  const res = await fetch('/api/sky/solve/jobs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ problem, problemImage }),
+  });
+  if (!res.ok) throw new Error('提交解题作业失败');
+  const json = await res.json();
+  return json.data?.jobId ?? json.jobId;
+}
+
+function phaseLabel(phase: StreamPhase): string {
+  const labels: Record<StreamPhase, string> = {
+    checking: '正在查询题库...',
+    routing: '正在分析题目类型...',
+    solving: 'AI 正在解题中...',
+    done: '解题完成',
+  };
+  return labels[phase] ?? '处理中...';
+}
+
+function phaseProgress(phase: StreamPhase): string {
+  const prog: Record<StreamPhase, string> = {
+    checking: '15%',
+    routing: '35%',
+    solving: '70%',
+    done: '100%',
+  };
+  return prog[phase] ?? '10%';
+}
+
 // ── Component ────────────────────────────────────────────────────────
 
 export function SolvePage() {
@@ -182,18 +268,161 @@ export function SolvePage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SolveResult | null>(null);
   const [recognizedText, setRecognizedText] = useState<string>('');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [streamPhase, setStreamPhase] = useState<StreamPhase>('checking');
   const [showHistory, setShowHistory] = useState(false);
   const [mistakeSaved, setMistakeSaved] = useState(false);
   const addMistake = useSkyClassroomStore((s) => s.addMistake);
-  const abortRef = useRef<AbortController | null>(null);
+  const abortRefs = useRef<Map<string, AbortController>>(new Map());
+
+  // ── Subscribe to the single active solve task ──────────────────────
+
+  const activeSolveTaskId = useTaskStore((s) => s.activeSolveTaskId);
+  const tasks = useTaskStore((s) => s.tasks);
+  const setActiveSolveTask = useTaskStore((s) => s.setActiveSolveTask);
+  const updateTask = useTaskStore((s) => s.updateTask);
+
+  // On mount: restore state from active task (survives navigation)
+  useEffect(() => {
+    if (!activeSolveTaskId) return;
+    const task = tasks[activeSolveTaskId];
+    if (!task) {
+      setActiveSolveTask(null);
+      return;
+    }
+
+    // Restore image preview and recognized text
+    if (task.previewUrl) setPreviewImage(task.previewUrl);
+    if (task.recognizedText) setRecognizedText(task.recognizedText);
+
+    if (task.status === 'running') {
+      setStreamPhase(
+        task.phase?.includes('路由') ? 'routing' :
+        task.phase?.includes('查') ? 'checking' : 'solving'
+      );
+      setState('solving');
+    } else if (task.status === 'completed' && task.result) {
+      setResult(task.result as SolveResult);
+      setState('success');
+    } else if (task.status === 'failed') {
+      setError(task.error || '解题失败');
+      setState('error');
+    }
+  }, []);
+
+  // Watch the active task for changes while on this page
+  useEffect(() => {
+    if (!activeSolveTaskId) return;
+    const task = tasks[activeSolveTaskId];
+    if (!task) return;
+
+    if (task.status === 'running') {
+      setStreamPhase(
+        task.phase?.includes('路由') ? 'routing' :
+        task.phase?.includes('查') ? 'checking' : 'solving'
+      );
+      setState('solving');
+    } else if (task.status === 'completed' && task.result) {
+      const r = task.result as SolveResult;
+      setResult(r);
+      setState('success');
+    } else if (task.status === 'failed') {
+      setError(task.error || '解题失败');
+      setState('error');
+    }
+  }, [activeSolveTaskId, tasks]);
+
+  // ── Background solve launcher ─────────────────────────────────────
+
+  async function startBackgroundPoll(
+    taskId: string,
+    problemText: string,
+    problemImage: string | null,
+  ): Promise<void> {
+    const store = useTaskStore.getState;
+    const abortController = new AbortController();
+    abortRefs.current.set(taskId, abortController);
+
+    try {
+      const jobId = await submitSolveJob(problemText, problemImage);
+
+      let latestPartial: Partial<{
+        answer: string;
+        steps: { label: string; content: string; keyPoints: string[] }[];
+        knowledgePoints: { name: string; description: string; difficulty: string }[];
+        similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
+        fromQuestionBank: boolean;
+      }> = {};
+
+      await pollSolveJob(
+        jobId,
+        (phase) => {
+          const progress =
+            phase === 'checking' ? 15 : phase === 'routing' ? 35 : phase === 'solving' ? 70 : phase === 'done' ? 100 : 10;
+          const phaseLabel =
+            phase === 'checking' ? '正在查询题库...' :
+            phase === 'routing' ? '正在分析题目类型...' :
+            phase === 'solving' ? 'AI 正在解题中...' :
+            phase === 'done' ? '解题完成' : '处理中...';
+          store().updateTask(taskId, { phase: phaseLabel, progress, jobId });
+        },
+        (partial) => {
+          latestPartial = { ...latestPartial, ...partial };
+          store().updateTask(taskId, { progress: 70, phase: 'AI 正在解题中...' });
+        },
+        abortController.signal,
+      );
+
+      // Build SolveResult from polled data
+      const solution: FourPartOutput = {
+        answer: latestPartial.answer || '',
+        steps: latestPartial.steps || [],
+        knowledgePoints: (latestPartial.knowledgePoints || []).map((k) => ({
+          name: k.name,
+          description: k.description,
+          difficulty: k.difficulty as 'easy' | 'medium' | 'hard',
+        })),
+        similarQuestions: (latestPartial.similarQuestions || []).map((q) => ({
+          problem: q.problem,
+          difficulty: q.difficulty,
+          knowledgePoint: q.knowledgePoint,
+        })),
+      };
+
+      const solveResult: SolveResult = {
+        problem: problemText,
+        problemImage: problemImage ?? undefined,
+        solution,
+        fromQuestionBank: latestPartial.fromQuestionBank || false,
+      };
+
+      store().updateTask(taskId, {
+        status: 'completed',
+        progress: 100,
+        phase: '解题完成',
+        result: solveResult,
+      });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      store().updateTask(taskId, {
+        status: 'failed',
+        progress: 0,
+        phase: '解题失败',
+        error: err instanceof Error ? err.message : '解题失败',
+      });
+    } finally {
+      abortRefs.current.delete(taskId);
+    }
+  }
 
   const handleSubmit = useCallback(
-    async (input: { type: 'image' | 'voice' | 'text'; content: string | File }) => {
-      // Cancel any in-flight streaming
-      abortRef.current?.abort();
-      const abortController = new AbortController();
-      abortRef.current = abortController;
+    async (input: { type: 'image' | 'voice' | 'text'; content: string | File; previewUrl?: string }) => {
+      // Cancel previous in-flight task
+      const prevId = useTaskStore.getState().activeSolveTaskId;
+      if (prevId) {
+        abortRefs.current.get(prevId)?.abort();
+        abortRefs.current.delete(prevId);
+      }
 
       setError(null);
       setResult(null);
@@ -202,64 +431,53 @@ export function SolvePage() {
 
       try {
         let problemText = '';
+        let problemImage: string | null = null;
+        let previewUrl: string | undefined;
 
-        // Step 1: Recognize image if needed
         if (input.type === 'image') {
           setState('recognizing');
+          previewUrl = input.previewUrl;
           const recognized = await recognizeImage(input.content as File);
           problemText = recognized.text || recognized.latex;
+          problemImage = previewUrl ?? null;
           setRecognizedText(problemText);
         } else if (input.type === 'text') {
           problemText = input.content as string;
           setRecognizedText(problemText);
         }
 
-        // Step 2: Initialize empty solution state for progressive display
-        setState('solving');
-        const initialSolution: FourPartOutput = {
-          answer: '',
-          steps: [],
-          knowledgePoints: [],
-          similarQuestions: [],
-        };
-        setResult({
-          problem: problemText,
-          problemImage: input.type === 'image' ? (input.content as File).name : undefined,
-          solution: initialSolution,
-          fromQuestionBank: false,
+        if (!problemText) {
+          setError('未能识别到题目文字');
+          setState('error');
+          return;
+        }
+
+        // Create background task — only one solve at a time
+        const taskId = `solve_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        setActiveSolveTask(taskId);
+
+        useTaskStore.getState().addTask({
+          id: taskId,
+          type: 'solve',
+          label: `搜题: ${problemText.slice(0, 20)}${problemText.length > 20 ? '...' : ''}`,
+          status: 'running',
+          progress: 10,
+          phase: '正在提交...',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          resultRoute: '/sky/solve',
+          previewUrl,
+          recognizedText: problemText,
         });
 
-        // Step 3: Stream solve — progressively update solution
-        await streamExplain(
-          problemText,
-          null,
-          (phase) => setStreamPhase(phase),
-          (partial) => {
-            setResult((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                solution: {
-                  answer: partial.answer ?? prev.solution.answer,
-                  steps: partial.steps ?? prev.solution.steps,
-                  knowledgePoints: partial.knowledgePoints ?? prev.solution.knowledgePoints,
-                  similarQuestions: partial.similarQuestions ?? prev.solution.similarQuestions,
-                },
-                fromQuestionBank: partial.fromQuestionBank ?? prev.fromQuestionBank,
-              };
-            });
-          },
-          abortController.signal,
-        );
-
-        setState('success');
+        startBackgroundPoll(taskId, problemText, problemImage);
+        setState('solving');
       } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') return;
         setError(err instanceof Error ? err.message : '解题过程中出现错误');
         setState('error');
       }
     },
-    []
+    [setActiveSolveTask]
   );
 
   const handleGrade = useCallback(
@@ -322,13 +540,16 @@ export function SolvePage() {
   );
 
   const handleReset = useCallback(() => {
-    abortRef.current?.abort();
+    abortRefs.current.forEach((c) => c.abort());
+    abortRefs.current.clear();
+    setActiveSolveTask(null);
     setState('idle');
     setResult(null);
     setError(null);
     setRecognizedText('');
+    setPreviewImage(null);
     setStreamPhase('checking');
-  }, []);
+  }, [setActiveSolveTask]);
 
   const handleSimilarQuestionClick = useCallback((problem: string) => {
     handleSubmit({ type: 'text', content: problem });
@@ -370,7 +591,7 @@ export function SolvePage() {
             <Clock className="h-4 w-4" />
             历史记录
           </Button>
-          {(state === 'success' || state === 'graded' || state === 'error') && (
+          {(state === 'success' || state === 'graded' || state === 'error' || state === 'solving') && (
             <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>
               <RotateCcw className="h-4 w-4" />
               重新搜题
@@ -395,6 +616,7 @@ export function SolvePage() {
                 onSubmit={handleSubmit}
                 onGrade={state === 'success' ? handleGrade : undefined}
                 isLoading={isLoading}
+                initialPreviewUrl={previewImage}
               />
             </CardContent>
           </Card>
@@ -429,6 +651,13 @@ export function SolvePage() {
 
           {(state === 'solving' || state === 'grading') && (
             <div className="flex flex-col items-center justify-center rounded-lg border border-sky-200/40 dark:border-sky-800/30 bg-sky-50/50 dark:bg-sky-950/20 p-8">
+              {previewImage && (
+                <img
+                  src={previewImage}
+                  alt="题目图片"
+                  className="mb-4 max-h-32 rounded-md border object-contain"
+                />
+              )}
               <div className="relative">
                 <div className="h-12 w-12 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -436,11 +665,28 @@ export function SolvePage() {
                 </div>
               </div>
               <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">
-                {state === 'grading' ? '正在批改...' : '正在解题...'}
+                {state === 'grading' ? '正在批改...' : phaseLabel(streamPhase)}
               </p>
               <p className="text-xs text-muted-foreground">
-                {state === 'grading' ? 'AI 正在分析你的答案' : 'AI 正在思考解题思路'}
+                {state === 'grading' ? 'AI 正在分析你的答案' : '后台处理中，结果即将呈现'}
               </p>
+              {recognizedText && (
+                <p className="mt-2 text-xs text-muted-foreground max-w-[280px] truncate">
+                  识别：{recognizedText}
+                </p>
+              )}
+              {/* Progress bar */}
+              <div className="mt-4 w-full max-w-[200px]">
+                <div className="h-1.5 rounded-full bg-sky-200 dark:bg-sky-800 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-sky-500 transition-all duration-700 ease-in-out"
+                    style={{ width: phaseProgress(streamPhase) }}
+                  />
+                </div>
+                <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground">
+                  <span>查库</span><span>路由</span><span>解题</span><span>完成</span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -450,6 +696,15 @@ export function SolvePage() {
                 <CardTitle className="text-sm font-medium">题目预览</CardTitle>
               </CardHeader>
               <CardContent className="p-4">
+                {previewImage && (
+                  <div className="mb-3">
+                    <img
+                      src={previewImage}
+                      alt="题目图片"
+                      className="max-h-40 rounded-md border object-contain"
+                    />
+                  </div>
+                )}
                 {recognizedText && (
                   <div className="mb-2 text-sm text-muted-foreground">
                     识别结果：<MathRenderer content={recognizedText} />
