@@ -1,0 +1,227 @@
+{
+  "id": "SKPD5zs5cw",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-05-26T11:35:45.867Z",
+  "updatedAt": "2026-05-26T11:46:47.864Z",
+  "inputSummary": {
+    "requirementPreview": "python并发\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 4,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-26T11:35:45.899Z",
+  "totalScenes": 4,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "Introduction to Effective Learning",
+        "description": "Set the stage for the course by discussing why learning effectively matters and what learners can expect to gain.",
+        "keyPoints": [
+          "The value of learning how to learn",
+          "Common challenges in traditional learning",
+          "Overview of what will be covered"
+        ],
+        "teachingObjective": "Understand the importance of effective learning strategies.",
+        "estimatedDuration": 180,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "Top 3 Learning Strategies",
+        "description": "Present three proven learning techniques: active recall, spaced repetition, and interleaving.",
+        "keyPoints": [
+          "Active recall: test yourself instead of re-reading",
+          "Spaced repetition: review material at increasing intervals",
+          "Interleaving: mix related topics for deeper understanding"
+        ],
+        "teachingObjective": "Learn three evidence-based learning techniques.",
+        "estimatedDuration": 240,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "quiz",
+        "title": "Check Your Understanding",
+        "description": "A brief quiz to reinforce the key learning strategies and test comprehension.",
+        "keyPoints": [
+          "Identify active recall examples",
+          "Choose the correct description of spaced repetition",
+          "Explain interleaving in your own words"
+        ],
+        "teachingObjective": "Assess and reinforce knowledge of learning strategies.",
+        "estimatedDuration": 300,
+        "order": 3,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "Putting It All Together",
+        "description": "Summarize the strategies and provide a simple action plan for immediate use.",
+        "keyPoints": [
+          "Quick recap of the three strategies",
+          "How to start implementing them today",
+          "Recommended daily routine for maximum effect"
+        ],
+        "teachingObjective": "Create a personal action plan for effective learning.",
+        "estimatedDuration": 180,
+        "order": 4
+      }
+    ],
+    "languageDirective": "Teach in English using clear, simple language suitable for general learners. Keep terminology in standard English and explain any advanced concepts as needed. Maintain a friendly, encouraging tone throughout the course.",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "pMTtwBJi0C",
+      "name": "Introduction to Effective Learning",
+      "languageDirective": "Teach in English using clear, simple language suitable for general learners. Keep terminology in standard English and explain any advanced concepts as needed. Maintain a friendly, encouraging tone throughout the course.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1779795374914,
+      "updatedAt": 1779795374914,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python并发\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "Introduction to Effective Learning",
+      "description": "Set the stage for the course by discussing why learning effectively matters and what learners can expect to gain.",
+      "keyPoints": [
+        "The value of learning how to learn",
+        "Common challenges in traditional learning",
+        "Overview of what will be covered"
+      ],
+      "teachingObjective": "Understand the importance of effective learning strategies.",
+      "estimatedDuration": 180,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "Top 3 Learning Strategies",
+      "description": "Present three proven learning techniques: active recall, spaced repetition, and interleaving.",
+      "keyPoints": [
+        "Active recall: test yourself instead of re-reading",
+        "Spaced repetition: review material at increasing intervals",
+        "Interleaving: mix related topics for deeper understanding"
+      ],
+      "teachingObjective": "Learn three evidence-based learning techniques.",
+      "estimatedDuration": 240,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "quiz",
+      "title": "Check Your Understanding",
+      "description": "A brief quiz to reinforce the key learning strategies and test comprehension.",
+      "keyPoints": [
+        "Identify active recall examples",
+        "Choose the correct description of spaced repetition",
+        "Explain interleaving in your own words"
+      ],
+      "teachingObjective": "Assess and reinforce knowledge of learning strategies.",
+      "estimatedDuration": 300,
+      "order": 3,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "Putting It All Together",
+      "description": "Summarize the strategies and provide a simple action plan for immediate use.",
+      "keyPoints": [
+        "Quick recap of the three strategies",
+        "How to start implementing them today",
+        "Recommended daily routine for maximum effect"
+      ],
+      "teachingObjective": "Create a personal action plan for effective learning.",
+      "estimatedDuration": 180,
+      "order": 4
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "Teach in English using clear, simple language suitable for general learners. Keep terminology in standard English and explain any advanced concepts as needed. Maintain a friendly, encouraging tone throughout the course.",
+    "totalScenes": 4
+  },
+  "completedAt": "2026-05-26T11:46:47.863Z",
+  "result": {
+    "classroomId": "pMTtwBJi0C",
+    "url": "http://localhost:3000/classroom/pMTtwBJi0C",
+    "scenesCount": 4
+  }
+}

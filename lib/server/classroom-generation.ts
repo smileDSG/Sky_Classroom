@@ -55,7 +55,21 @@ export type ClassroomGenerationStep =
   | 'generating_media'
   | 'generating_tts'
   | 'persisting'
-  | 'completed';
+  | 'completed'
+  | 'awaiting_review';
+
+export interface OutlineOnlyResult {
+  outlines: import('@/lib/types/generation').SceneOutline[];
+  languageDirective: string;
+  agents: AgentInfo[];
+  stage: Stage;
+  requirement: string;
+  pdfText?: string;
+  researchContext?: string;
+  enableImageGeneration: boolean;
+  enableVideoGeneration: boolean;
+  enableTTS: boolean;
+}
 
 export interface ClassroomGenerationProgress {
   step: ClassroomGenerationStep;
@@ -165,9 +179,16 @@ export async function generateClassroom(
   input: GenerateClassroomInput,
   options: {
     baseUrl: string;
+    phase?: 'full' | 'outline_only';
+    modelConfig?: {
+      modelString?: string;
+      apiKey?: string;
+      baseUrl?: string;
+    };
     onProgress?: (progress: ClassroomGenerationProgress) => Promise<void> | void;
   },
-): Promise<GenerateClassroomResult> {
+): Promise<GenerateClassroomResult | OutlineOnlyResult> {
+  const phase = options.phase ?? 'full';
   const { requirement, pdfContent } = input;
 
   await options.onProgress?.({
@@ -183,7 +204,7 @@ export async function generateClassroom(
     modelString,
     providerId,
     apiKey,
-  } = await resolveModel({});
+  } = await resolveModel(options.modelConfig ?? {});
   log.info(`Using server-configured model: ${modelString}`);
 
   // Fail fast if the resolved provider has no API key configured
@@ -356,6 +377,23 @@ export async function generateClassroom(
   const store = createInMemoryStore(stage);
   const api = createStageAPI(store);
 
+  // Phase 1 only: return outlines for review
+  if (phase === 'outline_only') {
+    log.info('Outline phase complete, returning outlines for review');
+    return {
+      outlines,
+      languageDirective,
+      agents,
+      stage,
+      requirement,
+      pdfText,
+      researchContext,
+      enableImageGeneration: input.enableImageGeneration ?? false,
+      enableVideoGeneration: input.enableVideoGeneration ?? false,
+      enableTTS: input.enableTTS ?? false,
+    };
+  }
+
   log.info('Stage 2: Generating scene content and actions...');
   let generatedScenes = 0;
 
@@ -462,6 +500,169 @@ export async function generateClassroom(
   );
 
   log.info(`Classroom persisted: ${persisted.id}, URL: ${persisted.url}`);
+
+  await options.onProgress?.({
+    step: 'completed',
+    progress: 100,
+    message: 'Classroom generation completed',
+    scenesGenerated: scenes.length,
+    totalScenes: outlines.length,
+  });
+
+  return {
+    id: persisted.id,
+    url: persisted.url,
+    stage,
+    scenes,
+    scenesCount: scenes.length,
+    createdAt: persisted.createdAt,
+  };
+}
+
+export async function generateClassroomContinue(
+  saved: OutlineOnlyResult,
+  options: {
+    baseUrl: string;
+    modelConfig?: {
+      modelString?: string;
+      apiKey?: string;
+      baseUrl?: string;
+    };
+    onProgress?: (progress: ClassroomGenerationProgress) => Promise<void> | void;
+  },
+): Promise<GenerateClassroomResult> {
+  const { outlines, languageDirective, agents, stage, requirement, pdfText, researchContext } = saved;
+
+  const {
+    model: languageModel,
+    modelInfo,
+    modelString,
+    providerId,
+    apiKey,
+  } = await resolveModel(options.modelConfig ?? {});
+  log.info(`Phase 2 using model: ${modelString}`);
+
+  if (isProviderKeyRequired(providerId) && !apiKey) {
+    throw new Error(
+      `No API key configured for provider "${providerId}". ` +
+        `Set the appropriate key in .env.local or server-providers.yml.`,
+    );
+  }
+
+  const aiCall: AICallFn = async (systemPrompt, userPrompt, _images) => {
+    const result = await callLLM(
+      {
+        model: languageModel,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        maxOutputTokens: modelInfo?.outputWindow,
+      },
+      'generate-classroom-continue',
+    );
+    return result.text;
+  };
+
+  const store = createInMemoryStore(stage);
+  const api = createStageAPI(store);
+
+  log.info('Phase 2: Generating scene content and actions...');
+  let generatedScenes = 0;
+
+  for (const [index, outline] of outlines.entries()) {
+    const safeOutline = applyOutlineFallbacks(outline, true);
+    const progressStart = 30 + Math.floor((index / Math.max(outlines.length, 1)) * 60);
+
+    await options.onProgress?.({
+      step: 'generating_scenes',
+      progress: Math.max(progressStart, 31),
+      message: `Generating scene ${index + 1}/${outlines.length}: ${safeOutline.title}`,
+      scenesGenerated: generatedScenes,
+      totalScenes: outlines.length,
+    });
+
+    const content = await generateSceneContent(safeOutline, aiCall, { agents, languageDirective });
+    if (!content) {
+      log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
+      continue;
+    }
+
+    const actions = await generateSceneActions(safeOutline, content, aiCall, {
+      agents,
+      languageDirective,
+    });
+
+    const sceneId = createSceneWithActions(safeOutline, content, actions, api);
+    if (!sceneId) {
+      log.warn(`Skipping scene "${safeOutline.title}" — scene creation failed`);
+      continue;
+    }
+
+    generatedScenes += 1;
+    const progressEnd = 30 + Math.floor(((index + 1) / Math.max(outlines.length, 1)) * 60);
+    await options.onProgress?.({
+      step: 'generating_scenes',
+      progress: Math.min(progressEnd, 90),
+      message: `Generated ${generatedScenes}/${outlines.length} scenes`,
+      scenesGenerated: generatedScenes,
+      totalScenes: outlines.length,
+    });
+  }
+
+  const scenes = store.getState().scenes;
+  log.info(`Phase 2 pipeline: ${scenes.length} scenes generated`);
+
+  if (scenes.length === 0) {
+    throw new Error('No scenes were generated');
+  }
+
+  const stageId = stage.id;
+
+  if (saved.enableImageGeneration || saved.enableVideoGeneration) {
+    await options.onProgress?.({
+      step: 'generating_media',
+      progress: 90,
+      message: 'Generating media files',
+      scenesGenerated: scenes.length,
+      totalScenes: outlines.length,
+    });
+
+    try {
+      const mediaMap = await generateMediaForClassroom(outlines, stageId, options.baseUrl);
+      replaceMediaPlaceholders(scenes, mediaMap);
+    } catch (err) {
+      log.warn('Media generation phase failed, continuing:', err);
+    }
+  }
+
+  if (saved.enableTTS) {
+    await options.onProgress?.({
+      step: 'generating_tts',
+      progress: 94,
+      message: 'Generating TTS audio',
+      scenesGenerated: scenes.length,
+      totalScenes: outlines.length,
+    });
+
+    try {
+      await generateTTSForClassroom(scenes, stageId, options.baseUrl);
+    } catch (err) {
+      log.warn('TTS generation phase failed, continuing:', err);
+    }
+  }
+
+  await options.onProgress?.({
+    step: 'persisting',
+    progress: 98,
+    message: 'Persisting classroom data',
+    scenesGenerated: scenes.length,
+    totalScenes: outlines.length,
+  });
+
+  const persisted = await persistClassroom({ id: stageId, stage, scenes }, options.baseUrl);
+
+  log.info(`Phase 2 classroom persisted: ${persisted.id}`);
 
   await options.onProgress?.({
     step: 'completed',
