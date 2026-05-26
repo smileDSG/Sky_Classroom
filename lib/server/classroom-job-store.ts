@@ -12,7 +12,7 @@ import {
   writeJsonFileAtomic,
 } from '@/lib/server/classroom-storage';
 
-export type ClassroomGenerationJobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+export type ClassroomGenerationJobStatus = 'queued' | 'running' | 'awaiting_review' | 'cancelled' | 'succeeded' | 'failed';
 
 export interface ClassroomGenerationJob {
   id: string;
@@ -32,6 +32,17 @@ export interface ClassroomGenerationJob {
   };
   scenesGenerated: number;
   totalScenes?: number;
+  outlines?: import('@/lib/types/generation').SceneOutline[];
+  outlinesMeta?: {
+    languageDirective: string;
+    totalScenes: number;
+  };
+  phaseOneResult?: Record<string, unknown>;
+  modelConfig?: {
+    modelString?: string;
+    apiKey?: string;
+    baseUrl?: string;
+  };
   result?: {
     classroomId: string;
     url: string;
@@ -100,6 +111,11 @@ export function isValidClassroomJobId(jobId: string): boolean {
 export async function createClassroomGenerationJob(
   jobId: string,
   input: GenerateClassroomInput,
+  modelConfig?: {
+    modelString?: string;
+    apiKey?: string;
+    baseUrl?: string;
+  },
 ): Promise<ClassroomGenerationJob> {
   const now = new Date().toISOString();
   const job: ClassroomGenerationJob = {
@@ -112,6 +128,7 @@ export async function createClassroomGenerationJob(
     updatedAt: now,
     inputSummary: buildInputSummary(input),
     scenesGenerated: 0,
+    modelConfig,
   };
 
   await ensureClassroomJobsDir();
@@ -210,6 +227,18 @@ export async function markClassroomGenerationJobSucceeded(
   });
 }
 
+export async function markClassroomGenerationJobCancelled(
+  jobId: string,
+): Promise<ClassroomGenerationJob> {
+  return updateClassroomGenerationJob(jobId, {
+    status: 'cancelled',
+    step: 'failed',
+    message: '课堂生成已取消',
+    completedAt: new Date().toISOString(),
+    error: '用户取消了生成',
+  });
+}
+
 export async function markClassroomGenerationJobFailed(
   jobId: string,
   error: string,
@@ -221,4 +250,37 @@ export async function markClassroomGenerationJobFailed(
     completedAt: new Date().toISOString(),
     error,
   });
+}
+
+export async function markClassroomGenerationJobAwaitingReview(
+  jobId: string,
+  outlines: import('@/lib/types/generation').SceneOutline[],
+  outlinesMeta: { languageDirective: string; totalScenes: number },
+): Promise<ClassroomGenerationJob> {
+  return updateClassroomGenerationJob(jobId, {
+    status: 'awaiting_review',
+    step: 'generating_outlines',
+    progress: 30,
+    message: '大纲已生成，等待审阅',
+    outlines,
+    outlinesMeta,
+  });
+}
+
+export async function markClassroomGenerationJobResumed(
+  jobId: string,
+): Promise<ClassroomGenerationJob> {
+  return updateClassroomGenerationJob(jobId, {
+    status: 'running',
+    step: 'generating_scenes',
+    progress: 30,
+    message: '大纲已审阅，继续生成场景',
+  });
+}
+
+export async function savePhaseOneResult(
+  jobId: string,
+  result: Record<string, unknown>,
+): Promise<ClassroomGenerationJob> {
+  return updateClassroomGenerationJob(jobId, { phaseOneResult: result });
 }

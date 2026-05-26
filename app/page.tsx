@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { nanoid } from 'nanoid';
+import { Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -11,6 +11,7 @@ import { useAuth } from '@/components/auth/auth-provider';
 import { useUserProfileStore } from '@/lib/store/user-profile';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useMediaGenerationStore } from '@/lib/store/media-generation';
+import { useTaskStore } from '@/lib/store/use-task-store';
 import { useDraftCache } from '@/lib/hooks/use-draft-cache';
 import { useImportClassroom } from '@/lib/import/use-import-classroom';
 
@@ -23,7 +24,6 @@ import {
 } from '@/lib/utils/stage-storage';
 import { storePdfBlob } from '@/lib/utils/image-storage';
 import { createLogger } from '@/lib/logger';
-import type { UserRequirements } from '@/lib/types/generation';
 import type { Slide } from '@/lib/types/slides';
 import type { CourseTemplate } from '@/lib/templates/types';
 
@@ -48,6 +48,15 @@ const log = createLogger('Home');
 const WEB_SEARCH_STORAGE_KEY = 'webSearchEnabled';
 const INTERACTIVE_MODE_STORAGE_KEY = 'interactiveModeEnabled';
 
+// ── Classroom background job API helpers ──────────────────────────
+
+import {
+  type ClassroomJobState,
+  submitClassroomJob,
+  fetchClassroomJob,
+  pollClassroomJob,
+} from '@/lib/classroom/classroom-job-client';
+
 interface StageListItem {
   id: string;
   name: string;
@@ -69,6 +78,60 @@ export default function HomePage() {
   const [webSearch, setWebSearch] = useState(false);
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ── Classroom background generation state ──
+  const [classroomJobId, setClassroomJobId] = useState<string | null>(null);
+  const [classroomPhase, setClassroomPhase] = useState<'idle' | 'submitting' | 'generating_outline' | 'reviewing' | 'generating_slides' | 'done'>('idle');
+  const [classroomStep, setClassroomStep] = useState('');
+  const [classroomProgress, setClassroomProgress] = useState(0);
+  const [classroomOutlines, setClassroomOutlines] = useState<ClassroomJobState['outlines']>(undefined);
+  const [classroomOutlinesMeta, setClassroomOutlinesMeta] = useState<ClassroomJobState['outlinesMeta']>(undefined);
+  const classroomAbortRef = useRef<AbortController | null>(null);
+  const outlineToastShownRef = useRef(false);
+
+  const activeSolveTaskId = useTaskStore((s) => s.activeSolveTaskId);
+  const tasks = useTaskStore((s) => s.tasks);
+  const setActiveSolveTask = useTaskStore((s) => s.setActiveSolveTask);
+
+  // ── Navigation restoration: restore classroom generation state ──
+  useEffect(() => {
+    const allSlidesTasks = Object.values(useTaskStore.getState().tasks).filter(
+      (t) => t.type === 'slides',
+    );
+    const runningTasks = allSlidesTasks.filter((t) => t.status === 'running');
+
+    // Clean up stale non-running tasks
+    for (const t of allSlidesTasks) {
+      if (t.status !== 'running') {
+        useTaskStore.getState().removeTask(t.id);
+      }
+    }
+
+    if (runningTasks.length === 0) return;
+
+    const activeTask = runningTasks[0];
+    setClassroomJobId(activeTask.jobId ?? null);
+
+    if (activeTask.phase?.includes('审阅')) {
+      setClassroomPhase('reviewing');
+    } else if (activeTask.phase?.includes('大纲')) {
+      setClassroomPhase('generating_outline');
+    } else {
+      setClassroomPhase('generating_slides');
+    }
+    setClassroomStep(activeTask.phase ?? '');
+    setClassroomProgress(activeTask.progress ?? 0);
+
+    // Resume polling
+    if (activeTask.jobId) {
+      startClassroomPoll(activeTask.jobId);
+    }
+
+    return () => {
+      classroomAbortRef.current?.abort();
+      classroomAbortRef.current = null;
+    };
+  }, []);
 
   // 老师和学生选择状态
   const [selectedTeacherId, setSelectedTeacherId] = useState('default-1');
@@ -180,6 +243,102 @@ export default function HomePage() {
     [updateRequirementCache]
   );
 
+  // ── Classroom background generation ─────────────────────────────
+
+  const startClassroomPoll = useCallback((jobId: string) => {
+    // Abort any existing poll
+    classroomAbortRef.current?.abort();
+    const abortController = new AbortController();
+    classroomAbortRef.current = abortController;
+
+    (async () => {
+      try {
+        // Phase 1: generating outline
+        setClassroomPhase('generating_outline');
+
+        await pollClassroomJob(
+          jobId,
+          (data) => {
+            // Handle cancelled
+            if (data.status === 'cancelled') {
+              useTaskStore.getState().removeTask(jobId);
+              setClassroomPhase('idle');
+              setClassroomJobId(null);
+              setClassroomProgress(0);
+              abortController.abort();
+              return;
+            }
+
+            setClassroomStep(data.step);
+            setClassroomProgress(data.progress);
+
+            useTaskStore.getState().updateTask(
+              useTaskStore.getState().tasks[jobId]?.id ?? '',
+              { progress: data.progress, phase: data.message },
+            );
+          },
+          abortController.signal,
+        );
+
+        // Check if awaiting review (poll stopped because status === 'awaiting_review')
+        const statusData = await fetchClassroomJob(jobId);
+
+        if (statusData.status === 'cancelled') {
+          useTaskStore.getState().removeTask(jobId);
+          setClassroomPhase('idle');
+          setClassroomJobId(null);
+          setClassroomProgress(0);
+          return;
+        }
+
+        if (statusData.status === 'awaiting_review') {
+          setClassroomOutlines(statusData.outlines ?? undefined);
+          setClassroomOutlinesMeta(statusData.outlinesMeta ?? undefined);
+          setClassroomPhase('reviewing');
+
+          // Show toast only once per generation session
+          if (!outlineToastShownRef.current) {
+            outlineToastShownRef.current = true;
+            toast.success('大纲已生成！', {
+              description: `共 ${statusData.outlines?.length ?? 0} 个场景，点击查看`,
+              action: {
+                label: '查看大纲',
+                onClick: () => router.push(`/generation-progress?jobId=${jobId}`),
+              },
+              duration: 10000,
+            });
+          }
+          return;
+        }
+
+        // Or done
+        if (statusData.done && statusData.result) {
+          setClassroomPhase('done');
+          handleClassroomComplete(statusData.result, jobId);
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        log.error('Classroom poll error:', err);
+        setError(err instanceof Error ? err.message : '课堂生成失败');
+        setClassroomPhase('idle');
+        setClassroomJobId(null);
+      }
+    })();
+  }, []);
+
+  const handleClassroomComplete = useCallback(
+    (result: NonNullable<ClassroomJobState['result']>, taskId: string) => {
+      useTaskStore.getState().updateTask(taskId, {
+        status: 'completed',
+        progress: 100,
+        phase: '课堂生成完成',
+        result,
+      });
+      router.push(`/classroom/${result.classroomId}`);
+    },
+    [router],
+  );
+
   // 生成
   const handleGenerate = async () => {
     if (!currentModelId) {
@@ -196,59 +355,58 @@ export default function HomePage() {
     setError(null);
 
     try {
-      const userProfile = useUserProfileStore.getState();
-      const requirements: UserRequirements = {
-        requirement: requirement,
-        userNickname: userProfile.nickname || undefined,
-        userBio: userProfile.bio || undefined,
-        webSearch: webSearch || undefined,
-        interactiveMode: interactiveMode,
-      };
-
-      let pdfStorageKey: string | undefined;
-      let pdfFileName: string | undefined;
-      let pdfProviderId: string | undefined;
-      let pdfProviderConfig: { apiKey?: string; baseUrl?: string } | undefined;
-
-      if (pdfFile) {
-        pdfStorageKey = await storePdfBlob(pdfFile);
-        pdfFileName = pdfFile.name;
-
-        const settings = useSettingsStore.getState();
-        pdfProviderId = settings.pdfProviderId;
-        const providerCfg = settings.pdfProvidersConfig?.[settings.pdfProviderId];
-        if (providerCfg) {
-          pdfProviderConfig = {
-            apiKey: providerCfg.apiKey,
-            baseUrl: providerCfg.baseUrl,
-          };
-        }
+      // Cancel previous classroom generation if any
+      if (classroomAbortRef.current) {
+        classroomAbortRef.current.abort();
+        classroomAbortRef.current = null;
       }
 
-      // 同步选择的老师和学生到全局设置，确保课堂内头像一致
+      // Sync agent selections
       useSettingsStore.getState().setSelectedAgentIds([selectedTeacherId, ...selectedStudentIds]);
 
-      const sessionState = {
-        sessionId: nanoid(),
-        requirements,
-        pdfText: '',
-        pdfImages: [],
-        imageStorageIds: [],
-        pdfStorageKey,
-        pdfFileName,
-        pdfProviderId,
-        pdfProviderConfig,
-        sceneOutlines: null,
-        currentStep: 'generating' as const,
-        // 存储选择的老师和学生
-        agentIds: [selectedTeacherId, ...selectedStudentIds],
+      // Build job body with model config from client settings
+      const settings = useSettingsStore.getState();
+      const modelString = settings.providerId && settings.modelId
+        ? `${settings.providerId}:${settings.modelId}`
+        : settings.modelId || undefined;
+      const body: Record<string, unknown> = {
+        requirement,
+        enableWebSearch: webSearch,
+        agentMode: 'default',
+        modelString,
       };
-      sessionStorage.setItem('generationSession', JSON.stringify(sessionState));
 
-      router.push('/generation-preview');
+      if (pdfFile) {
+        const pdfStorageKey = await storePdfBlob(pdfFile);
+        body.pdfContent = { storageKey: pdfStorageKey, fileName: pdfFile.name };
+      }
+
+      setClassroomPhase('submitting');
+      outlineToastShownRef.current = false;
+
+      const jobId = await submitClassroomJob(body);
+      setClassroomJobId(jobId);
+
+      // Create background task for multi-task tracking
+      const taskId = jobId;
+      useTaskStore.getState().addTask({
+        id: taskId,
+        type: 'slides',
+        label: `课堂: ${requirement.slice(0, 20)}${requirement.length > 20 ? '...' : ''}`,
+        status: 'running',
+        progress: 0,
+        phase: '正在提交...',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        resultRoute: '/classroom/',
+        jobId,
+      });
+
+      startClassroomPoll(jobId);
     } catch (err) {
       log.error('Error preparing generation:', err);
       setError(err instanceof Error ? err.message : t('upload.generateFailed'));
+      setClassroomPhase('idle');
     }
   };
 
@@ -439,6 +597,60 @@ export default function HomePage() {
                   className="mt-4 px-4 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm"
                 >
                   {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Classroom generation progress ── */}
+            <AnimatePresence>
+              {classroomPhase !== 'idle' && classroomPhase !== 'done' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-6 w-full max-w-2xl mx-auto"
+                >
+                  <button
+                    type="button"
+                    onClick={() => classroomJobId && router.push(`/generation-progress?jobId=${classroomJobId}`)}
+                    className="w-full text-left rounded-2xl border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 shadow-lg p-6 hover:shadow-xl hover:border-sky-300 dark:hover:border-sky-700 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <div className="h-10 w-10 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
+                        <Sparkles className="absolute inset-0 m-auto h-5 w-5 text-sky-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sky-700 dark:text-sky-300">
+                          {classroomPhase === 'reviewing'
+                            ? '大纲已生成，点击查看'
+                            : classroomPhase === 'submitting'
+                              ? '正在提交...'
+                              : classroomPhase === 'generating_outline'
+                                ? '正在生成大纲...'
+                                : '正在生成幻灯片...'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {classroomPhase === 'reviewing'
+                            ? `共 ${classroomOutlinesMeta?.totalScenes ?? classroomOutlines?.length ?? 0} 个场景 — 点击进入审阅`
+                            : classroomStep || '后台处理中，可自由切换页面 — 点击查看详情'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-bold text-sky-600">{classroomProgress}%</span>
+                        <svg className="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="mt-4 h-1.5 rounded-full bg-sky-100 dark:bg-sky-900 overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full bg-sky-500"
+                        animate={{ width: `${classroomProgress}%` }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    </div>
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
