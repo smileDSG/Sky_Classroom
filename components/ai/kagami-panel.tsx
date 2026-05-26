@@ -1,8 +1,19 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { InlineMath } from '@/components/ui/inline-math';
+import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
 
 type Scene = 'idle' | 'thinking' | 'teaching' | 'done';
+type KagamiMode = 'anime' | 'normal';
+
+function loadMode(): KagamiMode {
+  try {
+    const saved = localStorage.getItem('kagami-mode');
+    if (saved === 'normal' || saved === 'anime') return saved;
+  } catch { /* ignore */ }
+  return 'anime';
+}
 
 const SCENES: Record<Scene, string> = {
   idle: '/avatars/kagami/idle.png',
@@ -11,7 +22,17 @@ const SCENES: Record<Scene, string> = {
   done: '/avatars/kagami/done.png',
 };
 
+// Normal mode — single professional avatar with CSS effects per scene
+const NORMAL_AVATAR = '/avatars/teacher-new.svg';
+const NORMAL_SCENES: Record<Scene, string> = {
+  idle: NORMAL_AVATAR,
+  thinking: NORMAL_AVATAR,
+  teaching: NORMAL_AVATAR,
+  done: NORMAL_AVATAR,
+};
+
 const CHIBI = '/avatars/kagami/chibi.png';
+const NORMAL_ICON = '/avatars/teacher.svg';
 
 // Voice clips — provide actual mp3 files in public/avatars/kagami/
 const VOICE_CLIPS: Partial<Record<Scene, string>> = {
@@ -49,7 +70,9 @@ const KAGAMI_PERSONA = `你是柊镜（小镜），来自幸运星的傲娇女�
 - 时不时毒舌吐槽，但结尾会补一句关心的话
 - 绝对不能太热情——傲娇的精髓是"行动上帮你，嘴上不饶人"
 
-你是"小镜课堂"的 AI 助教，用中文交流。`;
+你是"小镜课堂"的 AI 助教，用中文交流。
+
+数学格式要求：所有数学符号、公式、表达式必须使用 LaTeX 格式。行内公式用 $...$ 包裹，独立公式用 $$...$$ 包裹。例如：$x^2 + y^2 = 1$、$$\sum_{n=0}^{\infty} a_n x^n$$、分数用 \frac{}{}、根号用 \sqrt{}、极限用 \lim、积分用 \int、求和用 \sum。严禁用 ^ 代替上标，严禁用 _ 代替下标。`;
 
 interface Message {
   role: 'user' | 'assistant';
@@ -63,7 +86,6 @@ export function KagamiPanel() {
   const [hasDragged, setHasDragged] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, originX: 0, originY: 0, dist: 0, moved: false });
   const fabRef = useRef<HTMLButtonElement>(null);
-
   // Drag via native DOM events
   useEffect(() => {
     const el = fabRef.current;
@@ -121,15 +143,29 @@ export function KagamiPanel() {
   const [loading, setLoading] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
+  const [mode, setMode] = useState<KagamiMode>('anime');
+  // Hydrate mode from localStorage after mount (avoids SSR mismatch)
+  useEffect(() => { setMode(loadMode()); }, []);
+  // Reset chat when mode switches
+  const prevModeRef = useRef(mode);
+  useEffect(() => {
+    if (prevModeRef.current !== mode) {
+      setMessages([]);
+      setHasGreeted(false);
+      prevModeRef.current = mode;
+    }
+  }, [mode]);
   const isSolving = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Detect if user is asking to solve a problem (vs casual chat)
-  // Must contain actual problem indicators — NOT just "?" or greetings
   const detectIsSolving = (msg: string): boolean => {
-    const problemKeywords = /题|做题|题目|怎么做|解题|讲解|帮忙看一下|这道|问一下这道|算一下|等于多少|方程|函数|几何|代数|三角|概率|求|证明|化简|因式分解|计算|面积|体积|角度|导数|积分|极限|矩阵|向量|怎么解|帮我/;
+    // Normal mode: always answer properly
+    if (mode === 'normal') return true;
+    // Anime mode: expanded keywords including educational questions
+    const problemKeywords = /题|题|题目|怎么做|解题|讲解|帮忙|这道|问一下|算|等于|方程|函数|几何|代数|三角|概率|求|证明|化简|因式分解|计算|面积|体积|角度|导数|积分|极限|矩阵|向量|怎么|帮我|什么是|什么叫|怎么理解|解释|区别|定义|概念|原理|定理|公式|方法|步骤|过程|级数|无穷|微积分|为什么/;
     const mathExpr = /\d+[+\-×÷*^]\d+|[xXyYzZ]\s*=/i;
     return problemKeywords.test(msg) || mathExpr.test(msg);
   };
@@ -146,6 +182,48 @@ export function KagamiPanel() {
   ];
 
   const pickBrushoff = () => CHAT_BRUSHOFFS[Math.floor(Math.random() * CHAT_BRUSHOFFS.length)];
+
+  // ── Normal (常规版) persona & responses ────────────────────────────
+
+  const NORMAL_PERSONA = `你是一个专业、友善的 AI 学习助手"小镜"。性格特点：
+  - 专业严谨：回答问题条理清晰，注重知识点的准确性
+  - 耐心温和：无论问题简单还是复杂，都认真对待，循循善诱
+  - 鼓励式教学：用积极正面的语言激励学生，肯定进步
+  - 实用导向：讲解后会用实例加深理解，帮助举一反三
+
+  说话风格：
+  - 开头用"你好！""没问题，让我来帮你""这道题我们可以这样思考"等友好开场
+  - 讲解时结构清晰、逻辑严密
+  - 适当肯定学生的努力
+  - 结尾鼓励学生继续练习
+
+  你是 AI 学习助教，用中文交流。
+
+  数学格式要求：所有数学符号、公式、表达式必须使用 LaTeX 格式。行内公式用 $...$ 包裹，独立公式用 $$...$$ 包裹。例如：$x^2 + y^2 = 1$、$$\sum_{n=0}^{\infty} a_n x^n$$、分数用 \frac{}{}、根号用 \sqrt{}、极限用 \lim、积分用 \int、求和用 \sum。严禁用 ^ 代替上标，严禁用 _ 代替下标。`;
+
+  const NORMAL_OPENING_LINES = [
+    '你好！有什么学习上的问题需要帮忙吗？',
+    '欢迎来到小镜课堂！有题目需要讲解吗？',
+    '有什么可以帮你的？学习上的问题尽管问。',
+    '你好！今天想学习什么内容呢？',
+    '在的，有什么题目需要一起探讨吗？',
+    '没问题，告诉我你需要什么帮助吧。',
+    '你好呀！无论是数学、物理还是其他科目，都可以问我。',
+    '有什么问题随时问我，我会尽力帮你解答的。',
+  ];
+
+  const pickNormalOpening = () => NORMAL_OPENING_LINES[Math.floor(Math.random() * NORMAL_OPENING_LINES.length)];
+
+  const NORMAL_CHAT_REPLIES = [
+    '如果有学习上的问题，随时可以来问我哦。',
+    '需要讲解什么题目吗？我随时在这里。',
+    '有什么不懂的知识点吗？我们一起看看。',
+    '没问题，等你准备好了就把题目发过来吧。',
+    '好的，有其他问题随时找我。',
+    '加油！有不懂的地方就问我。',
+  ];
+
+  const pickNormalReply = () => NORMAL_CHAT_REPLIES[Math.floor(Math.random() * NORMAL_CHAT_REPLIES.length)];
 
   // Play voice clip for a scene
   const playVoice = useCallback((s: Scene) => {
@@ -183,6 +261,9 @@ export function KagamiPanel() {
     }
   }, [messages]);
 
+  // Prevent scroll chaining
+  useScrollIsolation(listRef, open);
+
   const sceneKey = useRef(0);
 
   // Scene transition — smooth slide for galgame feel
@@ -211,7 +292,7 @@ export function KagamiPanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: KAGAMI_PERSONA },
+            { role: 'system', content: mode === 'anime' ? KAGAMI_PERSONA : NORMAL_PERSONA },
             ...msgs.map((m) => ({ role: m.role, content: m.content })),
           ],
           style: 'detailed',
@@ -220,7 +301,7 @@ export function KagamiPanel() {
       });
 
       if (!res.ok || !res.body) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: '……信号不好，待会再说。' }]);
+        setMessages((prev) => [...prev, { role: 'assistant', content: mode === 'anime' ? '……信号不好，待会再说。' : '抱歉，网络连接异常，请稍后重试。' }]);
         changeScene('idle');
         setLoading(false);
         return;
@@ -264,7 +345,7 @@ export function KagamiPanel() {
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        setMessages((prev) => [...prev, { role: 'assistant', content: '……烦死了，网络又出问题了。' }]);
+        setMessages((prev) => [...prev, { role: 'assistant', content: mode === 'anime' ? '……烦死了，网络又出问题了。' : '抱歉，网络出现问题，请稍后重试。' }]);
         changeScene('idle');
       }
     } finally {
@@ -283,7 +364,7 @@ export function KagamiPanel() {
     // First message from user
     if (!hasGreeted) {
       setHasGreeted(true);
-      const opening = pickOpening();
+      const opening = mode === 'anime' ? pickOpening() : pickNormalOpening();
       const next: Message[] = [
         { role: 'assistant', content: opening },
         { role: 'user', content: userMsg },
@@ -296,9 +377,10 @@ export function KagamiPanel() {
         setLoading(true);
         sendMessage(next);
       } else {
-        // Casual: brush-off, stay idle
+        // Casual: mode-appropriate reply, stay idle
         setTimeout(() => {
-          setMessages((prev) => [...prev, { role: 'assistant', content: pickBrushoff() }]);
+          const reply = mode === 'anime' ? pickBrushoff() : pickNormalReply();
+          setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
         }, 600);
       }
       return;
@@ -313,9 +395,10 @@ export function KagamiPanel() {
       setLoading(true);
       sendMessage(next);
     } else {
-      // Casual chat: local tsundere reply, no scene change
+      // Casual chat: mode-appropriate reply, no scene change
       setTimeout(() => {
-        setMessages((prev) => [...prev, { role: 'assistant', content: pickBrushoff() }]);
+        const reply = mode === 'anime' ? pickBrushoff() : pickNormalReply();
+        setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
       }, 600);
     }
   };
@@ -355,6 +438,10 @@ export function KagamiPanel() {
           0%   { opacity: 0; transform: translateX(24px) scale(0.96); }
           100% { opacity: 1; transform: translateX(0) scale(1); }
         }
+        @keyframes avatarPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.03); }
+        }
       `}</style>
 
       {/* FAB — always rendered, hidden via CSS when panel open (so listeners persist) */}
@@ -366,36 +453,42 @@ export function KagamiPanel() {
             ? { left: pos.x, top: pos.y }
             : { right: 24, bottom: 24 }
         }
-        title="小镜课堂 (Ctrl+Shift+A) — 点击打开 / 拖拽移动"
+        title={mode === 'anime' ? '小镜课堂 (Ctrl+Shift+A) — 点击打开 / 拖拽移动' : 'AI 学习助手 (Ctrl+Shift+A) — 点击打开 / 拖拽移动'}
       >
-        <img src={CHIBI} alt="小镜" draggable={false} className="h-full w-full object-cover pointer-events-none" />
+        <img src={mode === 'anime' ? CHIBI : NORMAL_ICON} alt="小镜" draggable={false} className="h-full w-full object-cover pointer-events-none" />
       </button>
 
       {/* Panel */}
       {open && (
         <div className="fixed bottom-6 right-6 z-50 flex h-[560px] w-[420px] rounded-xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
           {/* Character area */}
-          <div className="relative flex w-[160px] flex-shrink-0 items-end bg-gradient-to-b from-[#f0e6f6] to-[#e8d5f0] overflow-hidden">
+          <div className={`relative flex w-[160px] flex-shrink-0 items-end overflow-hidden ${
+            mode === 'anime'
+              ? 'bg-gradient-to-b from-[#f0e6f6] to-[#e8d5f0]'
+              : 'bg-gradient-to-b from-[#e0ecf8] to-[#d0dff0]'
+          }`}>
             <div className="absolute inset-0 flex items-center justify-center">
               <img
                 key={sceneKey.current}
-                src={SCENES[scene]}
+                src={mode === 'anime' ? SCENES[scene] : NORMAL_SCENES[scene]}
                 alt="小镜"
-                className="max-h-full w-auto object-contain"
+                className={`${mode === 'normal' ? 'drop-shadow-md' : ''} max-h-full w-auto object-contain`}
                 style={{
                   animation: transition
                     ? 'kagamiSlideOut 350ms ease-in forwards'
-                    : 'kagamiSlideIn 400ms ease-out forwards',
+                    : `kagamiSlideIn 400ms ease-out forwards ${mode === 'normal' ? ', avatarPulse 3s ease-in-out infinite' : ''}`,
                 }}
               />
             </div>
             {/* Scene label */}
             <div className="absolute bottom-2 left-0 right-0 text-center">
-              <span className="text-xs text-purple-400 bg-white/70 rounded-full px-2 py-0.5">
-                {scene === 'idle' && '……'}
-                {scene === 'thinking' && '正在思考……'}
-                {scene === 'teaching' && '讲解中……'}
-                {scene === 'done' && '哼，解决了。'}
+              <span className={`text-xs bg-white/70 rounded-full px-2 py-0.5 ${
+                mode === 'anime' ? 'text-purple-400' : 'text-blue-500'
+              }`}>
+                {scene === 'idle' && (mode === 'anime' ? '……' : '待命中')}
+                {scene === 'thinking' && (mode === 'anime' ? '正在思考……' : '思考中...')}
+                {scene === 'teaching' && (mode === 'anime' ? '讲解中……' : '讲解中...')}
+                {scene === 'done' && (mode === 'anime' ? '哼，解决了。' : '已解答 ✅')}
               </span>
             </div>
           </div>
@@ -406,6 +499,22 @@ export function KagamiPanel() {
             <div className="flex items-center justify-between border-b px-3 py-2.5">
               <span className="font-semibold text-sm text-gray-800">小镜课堂</span>
               <div className="flex items-center gap-1.5">
+                {/* Mode toggle */}
+                <button
+                  onClick={() => {
+                    const next = mode === 'anime' ? 'normal' : 'anime';
+                    setMode(next);
+                    try { localStorage.setItem('kagami-mode', next); } catch { /* ignore */ }
+                  }}
+                  className={`rounded px-1.5 py-0.5 text-xs transition-colors font-medium ${
+                    mode === 'anime'
+                      ? 'bg-pink-100 text-pink-600'
+                      : 'bg-blue-100 text-blue-600'
+                  }`}
+                  title={mode === 'anime' ? '当前：二次元版 — 点击切换常规版' : '当前：常规版 — 点击切换二次元版'}
+                >
+                  {mode === 'anime' ? '🌸 二次元' : '📖 常规'}
+                </button>
                 <button
                   onClick={() => setVoiceOn((v) => !v)}
                   className={`rounded px-1.5 py-0.5 text-xs transition-colors ${
@@ -428,12 +537,16 @@ export function KagamiPanel() {
             </div>
 
             {/* Messages */}
-            <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
+            <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2" style={{ overscrollBehavior: 'contain' }}>
               {messages.length === 0 && (
                 <div className="py-6 text-center text-sm text-gray-400">
                   <p className="text-lg mb-1">💜</p>
-                  <p className="text-xs">遇到不会的题目了？</p>
-                  <p className="text-xs text-gray-300">输入问题，小镜会帮你</p>
+                  <p className="text-xs">
+                    {mode === 'anime' ? '遇到不会的题目了？' : '有任何学习问题，尽管问我'}
+                  </p>
+                  <p className="text-xs text-gray-300">
+                    {mode === 'anime' ? '输入问题，小镜会帮你' : '输入题目，我会耐心解答'}
+                  </p>
                 </div>
               )}
               {messages.map((m, i) => (
@@ -448,7 +561,7 @@ export function KagamiPanel() {
                         : 'bg-purple-50 text-gray-700'
                     }`}
                   >
-                    {m.content || (loading ? '...' : '')}
+                    {m.content ? <InlineMath text={m.content} /> : (loading ? '...' : '')}
                   </div>
                 </div>
               ))}

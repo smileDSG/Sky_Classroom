@@ -4,6 +4,8 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
+import { InlineMath } from '@/components/ui/inline-math';
+import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
 
 const log = createLogger('AssistantPanel');
 
@@ -20,18 +22,40 @@ const KAGAMI_SYSTEM_PROMPT = `你是柊镜（小镜），来自幸运星的傲�
 - 时不时毒舌吐槽，但结尾会补一句关心的话
 - 绝对不能太热情——傲娇的精髓是"行动上帮你，嘴上不饶人"
 
-你是"小镜课堂"的 AI 助教，用中文交流。`;
+你是"小镜课堂"的 AI 助教，用中文交流。
+
+数学格式要求：所有数学符号、公式、表达式必须使用 LaTeX 格式。行内公式用 $...$ 包裹，独立公式用 $$...$$ 包裹。例如：$x^2 + y^2 = 1$、$$\sum_{n=0}^{\infty} a_n x^n$$、分数用 \frac{}{}、根号用 \sqrt{}、极限用 \lim、积分用 \int、求和用 \sum。严禁用 ^ 代替上标，严禁用 _ 代替下标。`;
+
+const NORMAL_SYSTEM_PROMPT = `你是一个专业、友善的 AI 学习助手"小镜"。性格特点：
+- 专业严谨：回答问题条理清晰，注重知识点的准确性
+- 耐心温和：无论问题简单还是复杂，都认真对待，循循善诱
+- 鼓励式教学：用积极正面的语言激励学生，肯定进步
+- 实用导向：讲解后会用实例加深理解，帮助举一反三
+
+说话风格：
+- 开头用"你好！""没问题，让我来帮你""这道题我们可以这样思考"等友好开场
+- 讲解时结构清晰、逻辑严密
+- 适当肯定学生的努力
+- 结尾鼓励学生继续练习
+
+你是 AI 学习助教，用中文交流。
+
+数学格式要求：所有数学符号、公式、表达式必须使用 LaTeX 格式。行内公式用 $...$ 包裹，独立公式用 $$...$$ 包裹。例如：$x^2 + y^2 = 1$、$$\sum_{n=0}^{\infty} a_n x^n$$、分数用 \frac{}{}、根号用 \sqrt{}、极限用 \lim、积分用 \int、求和用 \sum。严禁用 ^ 代替上标，严禁用 _ 代替下标。`;
+
+type KagamiMode = 'anime' | 'normal';
+
+function loadMode(): KagamiMode {
+  try {
+    const saved = localStorage.getItem('kagami-mode');
+    if (saved === 'normal' || saved === 'anime') return saved;
+  } catch { /* ignore */ }
+  return 'anime';
+}
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-}
-
-let messageIdCounter = 0;
-function nextId(): string {
-  messageIdCounter += 1;
-  return `msg-${messageIdCounter}`;
 }
 
 // ── 组件 ──────────────────────────────────────────────────────────────
@@ -47,17 +71,40 @@ export function AssistantPanel() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<KagamiMode>('anime');
+  // Hydrate mode from localStorage after mount (avoids SSR mismatch)
+  useEffect(() => { setMode(loadMode()); }, []);
+  // Reset chat when mode switches so the two personas don't share history
+  const prevModeRef = useRef(mode);
+  useEffect(() => {
+    if (prevModeRef.current !== mode) {
+      setMessages([]);
+      prevModeRef.current = mode;
+    }
+  }, [mode]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const idCounterRef = useRef(0);
+  const nextId = useCallback(() => {
+    idCounterRef.current += 1;
+    return `msg-${idCounterRef.current}`;
+  }, []);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesListRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }
   }, []);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  // Prevent scroll chaining
+  useScrollIsolation(messagesListRef, true);
 
   const handleSend = useCallback(
     (text?: string) => {
@@ -82,9 +129,9 @@ export function AssistantPanel() {
 
       const modelConfig = getCurrentModelConfig();
 
-      // Prepend Kagami persona as system message
+      // Prepend mode-appropriate persona as system message
       const allMessages = [
-        { role: 'system' as const, content: KAGAMI_SYSTEM_PROMPT },
+        { role: 'system' as const, content: mode === 'anime' ? KAGAMI_SYSTEM_PROMPT : NORMAL_SYSTEM_PROMPT },
         ...newMessages,
       ];
 
@@ -178,7 +225,7 @@ export function AssistantPanel() {
           );
         });
     },
-    [input, loading, messages, subject, difficulty, style],
+    [input, loading, messages, subject, difficulty, style, mode],
   );
 
   const handleKeyDown = useCallback(
@@ -214,7 +261,7 @@ export function AssistantPanel() {
   );
 
   return (
-    <div className="flex h-[400px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
+    <div id="assistant-panel" className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3">
         <div className="flex items-center gap-2">
@@ -235,6 +282,22 @@ export function AssistantPanel() {
             </span>
           </div>
         </div>
+        {/* Mode toggle */}
+        <button
+          onClick={() => {
+            const next = mode === 'anime' ? 'normal' : 'anime';
+            setMode(next);
+            try { localStorage.setItem('kagami-mode', next); } catch { /* ignore */ }
+          }}
+          className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+            mode === 'anime'
+              ? 'bg-pink-100 text-pink-600 hover:bg-pink-200'
+              : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+          }`}
+          title={mode === 'anime' ? '当前：二次元版' : '当前：常规版'}
+        >
+          {mode === 'anime' ? '🌸 二次元' : '📖 常规'}
+        </button>
         <button
           type="button"
           aria-label="关闭助手"
@@ -248,15 +311,19 @@ export function AssistantPanel() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3">
+      <div ref={messagesListRef} className="flex-1 overflow-y-auto px-4 py-3" style={{ overscrollBehavior: 'contain' }}>
         {!hasUserMessages ? (
           <div className="flex h-full items-center justify-center">
             <div className="max-w-xs text-center">
               <div className="mb-3 flex justify-center">
-                <img src="/avatars/kagami/chibi.png" className="h-16 w-16 rounded-full object-cover" alt="小镜" />
+                <img
+                  src={mode === 'anime' ? '/avatars/kagami/chibi.png' : '/avatars/teacher-new.svg'}
+                  className="h-16 w-16 rounded-full object-cover"
+                  alt="小镜"
+                />
               </div>
               <p className="text-sm leading-relaxed text-gray-500">
-                哈？遇到不会的题目了？告诉我吧。
+                {mode === 'anime' ? '哈？遇到不会的题目了？告诉我吧。' : '你好！有任何学习问题，尽管问我。'}
               </p>
               <div className="mt-4 flex flex-col gap-1.5">
                 {hints.map((hint) => (
@@ -287,7 +354,7 @@ export function AssistantPanel() {
                       : 'bg-[#8B5CF6]/10 text-[#8B5CF6]'
                   }`}
                 >
-                  {msg.role === 'user' ? '👤' : (<img src="/avatars/kagami/chibi.png" className="size-full rounded-full object-cover" alt="小镜" />)}
+                  {msg.role === 'user' ? '👤' : (<img src={mode === 'anime' ? '/avatars/kagami/chibi.png' : '/avatars/teacher-new.svg'} className="size-full rounded-full object-cover" alt="小镜" />)}
                 </div>
                 {/* Bubble */}
                 <div
@@ -297,7 +364,7 @@ export function AssistantPanel() {
                       : 'rounded-tl-sm border border-gray-200 bg-[#F8FAFC] text-gray-800'
                   }`}
                 >
-                  {msg.content}
+                  <InlineMath text={msg.content} />
                   {msg.role === 'assistant' && loading && msg.content === '' && (
                     <span className="inline-flex gap-1">
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '0ms' }} />
@@ -311,7 +378,7 @@ export function AssistantPanel() {
             {loading && messages.filter((m) => m.role === 'assistant').at(-1)?.content && (
               <div className="flex gap-2.5">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full">
-                  <img src="/avatars/kagami/chibi.png" className="size-full object-cover" alt="小镜" />
+                  <img src={mode === 'anime' ? '/avatars/kagami/chibi.png' : '/avatars/teacher-new.svg'} className="size-full object-cover" alt="小镜" />
                 </div>
                 <div className="flex items-center gap-1.5 rounded-xl rounded-tl-sm border border-gray-200 bg-[#F8FAFC] px-4 py-3">
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '0ms' }} />
