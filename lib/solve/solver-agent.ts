@@ -12,14 +12,35 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import type { SolveGraphState } from './solve-graph-state';
 import type { SolverAgentType } from './types';
+import type { ProviderId } from '@/lib/ai/providers';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { buildSolverPrompt } from './solver-prompts';
-import { resolveSolverModel } from './solver-constants';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SolveGraph');
+
+// ── Agent → provider/model mapping ───────────────────────────────
+
+const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> = {
+  universal: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
+  science: { providerId: 'glm', modelId: 'glm-5.1' },
+  humanities: { providerId: 'qwen', modelId: 'qwen3.6-plus' },
+  grading: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
+};
+
+const ENV_KEY_MAP: Record<string, string> = {
+  deepseek: 'DEEPSEEK_API_KEY',
+  glm: 'GLM_API_KEY',
+  qwen: 'QWEN_API_KEY',
+};
+
+const ENV_URL_MAP: Record<string, string> = {
+  deepseek: 'DEEPSEEK_BASE_URL',
+  glm: 'GLM_BASE_URL',
+  qwen: 'QWEN_BASE_URL',
+};
 
 /**
  * Parsed solution from LLM response.
@@ -45,45 +66,46 @@ export function parseSolutionResponse(text: string): ParsedSolution | null {
   return parsed;
 }
 
-interface SolveOnceResult {
-  parsed: ParsedSolution | null;
-  rawText: string;
-}
-
 /**
- * Build a degraded ParsedSolution from raw LLM text when JSON parsing fails.
- * Uses the raw text as both solution and answer so the user still sees output.
+ * Resolve the ModelConfig for a given solver agent type.
+ *
+ * Agent type → provider/model mapping:
+ *   universal   → deepseek / deepseek-v4-flash
+ *   science     → glm / glm-5.1
+ *   humanities  → qwen / qwen3.6-plus
+ *   grading     → deepseek / deepseek-v4-flash
+ *
+ * API key and base URL come from environment variables.
  */
-function rawAsSolution(rawText: string): ParsedSolution {
-  const cleaned = rawText.trim();
+function resolveSolverModel(agentType: SolverAgentType): Parameters<typeof getModel>[0] {
+  const { providerId, modelId } = AGENT_MODEL_MAP[agentType];
+  const apiKey = process.env[ENV_KEY_MAP[providerId] ?? ''] ?? '';
+  const baseUrl = process.env[ENV_URL_MAP[providerId] ?? ''];
+
   return {
-    solution: cleaned,
-    answer: cleaned,
-    confidence: 0.2,
-    steps: [],
-    knowledgePoints: [],
-    similarQuestions: [],
+    providerId,
+    modelId,
+    apiKey,
+    baseUrl: baseUrl || undefined,
+    providerType: 'openai',
   };
 }
 
 /**
  * Solve with a single agent (primary or fallback).
- * Returns both the parsed result and the raw LLM text for fallback.
  */
 async function solveOnce(
   agentType: SolverAgentType,
   problemText: string,
   problemImage: string | null,
-): Promise<SolveOnceResult> {
+): Promise<ParsedSolution | null> {
   const modelConfig = resolveSolverModel(agentType);
   const modelWithInfo = getModel(modelConfig);
 
-  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
-
   const messages: Array<{ role: string; content: unknown }> = [
     {
-      role: 'user',
-      content: problemText,
+      role: 'system',
+      content: buildSolverPrompt(agentType, problemText, problemImage ?? undefined),
     },
   ];
 
@@ -96,27 +118,18 @@ async function solveOnce(
     },
     'solve-agent',
     { retries: 1 },
-    undefined,
-    systemPrompt,
   );
 
-  const rawText = result.text || '';
-  const parsed = parseSolutionResponse(rawText);
-  if (!parsed) {
-    log.warn(`[SolveGraph] ${agentType} returned non-JSON, using raw text fallback (${rawText.length} chars)`);
-  }
-  return { parsed, rawText };
+  return parseSolutionResponse(result.text);
 }
 
 /**
- * Hybrid strategy: run primary + secondary in parallel.
+ * Hybrid strategy: primary agent first, fallback if confidence low.
  *
- * 1. Fire primary and first fallback concurrently
- * 2. If primary confidence >= 0.7, return immediately
- * 3. If secondary confidence >= 0.7, use it
- * 4. Otherwise try tertiary as last resort
- *
- * This cuts worst-case latency from 3 serial calls to 2 serial rounds.
+ * 1. Call primary agent
+ * 2. If confidence >= 0.7, return immediately
+ * 3. If confidence < 0.7, call secondary agent
+ * 4. If secondary also low, try tertiary as last resort
  */
 async function solveWithHybrid(
   primary: SolverAgentType,
@@ -124,54 +137,46 @@ async function solveWithHybrid(
   problemImage: string | null,
 ): Promise<{ solution: ParsedSolution; usedAgents: SolverAgentType[] }> {
   const CONFIDENCE_THRESHOLD = 0.7;
+
+  // Primary
+  const primaryResult = await solveOnce(primary, problemText, problemImage);
+  if (primaryResult && primaryResult.confidence >= CONFIDENCE_THRESHOLD) {
+    return { solution: primaryResult, usedAgents: [primary] };
+  }
+
+  // Secondary fallback
   const fallbacks: SolverAgentType[] = (['science', 'humanities', 'universal'] as SolverAgentType[]).filter(
     (t) => t !== primary,
   );
 
-  // Run primary and first fallback in parallel
-  const [primaryResult, secondaryResult] = await Promise.all([
-    solveOnce(primary, problemText, problemImage),
-    solveOnce(fallbacks[0], problemText, problemImage),
-  ]);
-
-  if (primaryResult.parsed && primaryResult.parsed.confidence >= CONFIDENCE_THRESHOLD) {
-    return { solution: primaryResult.parsed, usedAgents: [primary] };
+  const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
+  if (secondaryResult && secondaryResult.confidence >= CONFIDENCE_THRESHOLD) {
+    return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
   }
 
-  if (secondaryResult.parsed && secondaryResult.parsed.confidence >= CONFIDENCE_THRESHOLD) {
-    return { solution: secondaryResult.parsed, usedAgents: [primary, fallbacks[0]] };
-  }
-
-  // Both low confidence — try tertiary
+  // Tertiary: last resort
   if (fallbacks.length > 1) {
     const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
-    if (tertiaryResult.parsed && tertiaryResult.parsed.confidence >= CONFIDENCE_THRESHOLD) {
-      return { solution: tertiaryResult.parsed, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
-    }
-
-    // Pick best by confidence across all three
-    const best = [primaryResult, secondaryResult, tertiaryResult]
-      .filter((r) => r.parsed)
-      .sort((a, b) => (b.parsed!.confidence) - (a.parsed!.confidence));
-    if (best[0]?.parsed) {
-      return { solution: best[0].parsed, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
+    if (tertiaryResult) {
+      return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
     }
   }
 
-  // All JSON parsing failed — fall back to best raw text
-  const best = [primaryResult, secondaryResult]
-    .filter((r) => r.parsed)
-    .sort((a, b) => (b.parsed!.confidence) - (a.parsed!.confidence));
-
-  const fallbackSolution =
-    best[0]?.parsed ??
-    rawAsSolution(primaryResult.rawText || secondaryResult.rawText || '');
-
-  log.warn(`[SolveGraph] Fallback used, conf=${fallbackSolution.confidence}`);
+  // All failed or low confidence — return whatever we have, tracking all agents tried
+  const calledAgents: SolverAgentType[] = fallbacks.length > 1
+    ? [primary, fallbacks[0], fallbacks[1]]
+    : [primary, fallbacks[0]];
 
   return {
-    solution: fallbackSolution,
-    usedAgents: fallbacks.length > 1 ? [primary, fallbacks[0], fallbacks[1]] : [primary, fallbacks[0]],
+    solution: primaryResult ?? secondaryResult ?? {
+      solution: '',
+      answer: '',
+      confidence: 0,
+      steps: [],
+      knowledgePoints: [],
+      similarQuestions: [],
+    },
+    usedAgents: calledAgents,
   };
 }
 

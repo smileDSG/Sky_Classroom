@@ -129,7 +129,7 @@ export function FeatureHighlights() {
       color: 'from-violet-500 to-purple-600',
       bgColor: 'bg-violet-50 dark:bg-violet-900/20',
       iconColor: 'text-violet-500',
-      href: null, // 首页直接创建，不跳转
+      href: '/sky/slides',
     },
     {
       icon: Sparkles,

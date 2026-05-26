@@ -84,7 +84,7 @@ function detectContentBounds(
 ): ContentBounds | null {
   const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
-  const threshold = 220; // near-white = background (lowered from 240 to preserve light pencil/faint text)
+  const threshold = 240; // near-white = background
 
   let minX = width, minY = height, maxX = 0, maxY = 0;
   const step = 4; // sample every 4th pixel for performance

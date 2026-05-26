@@ -410,6 +410,16 @@ export default function HomePage() {
     }
   };
 
+  // 一键生成PPT课件（跳转到 slides 页面）
+  const handlePptGenerate = () => {
+    if (!requirement.trim()) {
+      setError(t('upload.requirementRequired'));
+      return;
+    }
+    setError(null);
+    router.push(`/sky/slides?topic=${encodeURIComponent(requirement.trim())}`);
+  };
+
   // 模板选择
   const handleTemplateSelect = (template: CourseTemplate) => {
     setTemplatePickerOpen(false);
@@ -550,6 +560,32 @@ export default function HomePage() {
                 onStudentsChange={setSelectedStudentIds}
               />
             </div>
+
+            {/* PPT课件生成入口 */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mt-3 flex items-center justify-center gap-3"
+            >
+              <span className="text-xs text-slate-400">或</span>
+              <button
+                onClick={handlePptGenerate}
+                disabled={!canGenerate}
+                className={
+                  'flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ' +
+                  (canGenerate
+                    ? 'text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20'
+                    : 'text-slate-400 cursor-not-allowed')
+                }
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M3 9h18M9 21V9" />
+                </svg>
+                生成PPT课件
+              </button>
+            </motion.div>
 
             {/* 错误提示 */}
             <AnimatePresence>

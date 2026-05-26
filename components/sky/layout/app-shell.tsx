@@ -35,7 +35,7 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-6" style={{ overscrollBehavior: 'contain' }}>{children}</main>
+      <main className="flex-1 overflow-auto p-6">{children}</main>
     </div>
   );
 }
