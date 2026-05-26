@@ -1012,7 +1012,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         for (const session of activeQAOrDiscussion) {
           await endSession(session.id);
         }
-        sessionId = await createSession('qa', 'Q&A');
+        sessionId = await createSession('qa', content.length > 30 ? content.slice(0, 30) + '...' : content);
       }
 
       const controller = new AbortController();
