@@ -13,14 +13,14 @@ function bufToHex(buf: ArrayBuffer): string {
 }
 
 /** Verify an HMAC-signed token using Web Crypto API (Edge-compatible) */
-async function verifyToken(token: string, accessCode: string): Promise<boolean> {
+async function verifyToken(token: string, secret: string): Promise<boolean> {
   const dotIndex = token.indexOf('.');
   if (dotIndex === -1) return false;
 
   const timestamp = token.substring(0, dotIndex);
   const signature = token.substring(dotIndex + 1);
 
-  const keyData = encode(accessCode);
+  const keyData = encode(secret);
   const key = await crypto.subtle.importKey(
     'raw',
     keyData.buffer as ArrayBuffer,
@@ -52,17 +52,26 @@ async function verifyJwtToken(token: string): Promise<boolean> {
   }
 }
 
+function isBetaMode(): boolean {
+  const betaMode = process.env.BETA_MODE;
+  if (!betaMode) return false;
+  return betaMode !== 'false' && betaMode !== '0';
+}
+
 export async function middleware(request: NextRequest) {
   const accessCode = process.env.ACCESS_CODE;
   const { pathname } = request.nextUrl;
 
-  // Whitelist: auth endpoints, access-code, health check
+  // Whitelist: auth endpoints, access-code, health check, beta public routes
   if (
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/access-code/') ||
     pathname === '/api/health' ||
     pathname === '/auth/login' ||
-    pathname === '/auth/register'
+    pathname === '/auth/register' ||
+    pathname === '/auth/beta-gate' ||
+    pathname === '/api/beta/invite' ||
+    pathname === '/api/beta/request'
   ) {
     return NextResponse.next();
   }
@@ -87,7 +96,30 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // API requests without valid auth → 401
+  // Beta mode: check beta_access cookie
+  if (isBetaMode()) {
+    const betaCookie = request.cookies.get('beta_access');
+    if (betaCookie?.value && (await verifyToken(betaCookie.value, accessCode))) {
+      return NextResponse.next();
+    }
+
+    // API requests without valid auth → 401
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { success: false, errorCode: 'BETA_ACCESS_REQUIRED', error: 'Beta access required' },
+        { status: 403 },
+      );
+    }
+
+    // Page requests without valid auth → redirect to beta gate
+    const gateUrl = new URL('/auth/beta-gate', request.url);
+    if (pathname !== '/auth/beta-gate') {
+      gateUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(gateUrl);
+    }
+  }
+
+  // Non-beta mode: API requests without valid auth → 401
   if (pathname.startsWith('/api/')) {
     return NextResponse.json(
       { success: false, errorCode: 'INVALID_REQUEST', error: 'Authentication required' },

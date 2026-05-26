@@ -173,6 +173,16 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     // Filter out lecture sessions for the Chat tab
     const chatSessions = useMemo(() => sessions.filter((s) => s.type !== 'lecture'), [sessions]);
 
+    // Build scene lookup map from ALL scenes for session-scene association
+    const sceneTitleMap = useMemo(() => {
+      const map = new Map<string, { title: string; order: number }>();
+      for (let i = 0; i < scenes.length; i++) {
+        const scene = scenes[i];
+        map.set(scene.id, { title: scene.title, order: scene.order });
+      }
+      return map;
+    }, [scenes]);
+
     // Message filter state (local)
     const [messageFilters, setMessageFilters] = useState<MessageFilterState>({
       types: new Set(),
@@ -369,7 +379,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                   availableAgents={availableAgents}
                 />
               )}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2 scrollbar-hide">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
                 {filteredChatSessions.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-50">
                     <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mb-3 text-slate-600">
@@ -383,17 +393,18 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                     </p>
                   </div>
                 ) : (
-                  <>
+                  <div className="py-2">
                     <SessionList
                       sessions={filteredChatSessions}
                       expandedSessionIds={expandedSessionIds}
                       isStreaming={isStreaming}
                       activeBubbleId={activeBubbleId}
+                      sceneTitleMap={sceneTitleMap}
                       onToggleExpand={toggleSessionExpand}
                       onEndSession={handleEndSession}
                     />
                     <div ref={bottomRef} />
-                  </>
+                  </div>
                 )}
               </div>
             </TabsContent>

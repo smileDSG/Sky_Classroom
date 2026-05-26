@@ -45,6 +45,7 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --animate-fade-in-up: fade-in-up 0.35s ease-out;
 }
 
 :root {
@@ -186,6 +187,42 @@
 }
 
 /* Hide scrollbar by default, show on hover */
+
+/* Custom horizontal scrollbar for timeline */
+.timeline-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.timeline-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.timeline-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.dark .timeline-scroll::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.timeline-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .timeline-scroll::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Firefox */
+.timeline-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.dark .timeline-scroll {
+  scrollbar-color: #475569 transparent;
+}
 @utility scrollbar-hide {
   &::-webkit-scrollbar {
     display: none;
@@ -214,5 +251,16 @@
   50% {
     opacity: 0.7;
     transform: scale(1.08);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

@@ -3,7 +3,7 @@
 import type { ChatSession, SessionStatus } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import { ChevronDown, Circle, CheckCircle, Clock, MessageSquare, HelpCircle, BookOpen } from 'lucide-react';
+import { MessageSquare, HelpCircle, BookOpen, Users, MapPin, Clock, CheckCircle2, Circle, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChatSessionComponent } from './chat-session';
 
@@ -12,144 +12,178 @@ interface SessionListProps {
   expandedSessionIds: Set<string>;
   isStreaming: boolean;
   activeBubbleId?: string | null;
+  sceneTitleMap?: Map<string, { title: string; order: number }>;
   onToggleExpand: (sessionId: string) => void;
   onEndSession: (sessionId: string) => Promise<void>;
 }
 
-function getStatusIcon(status: SessionStatus) {
-  switch (status) {
-    case 'active':
-      return <Circle className="size-2.5 fill-emerald-500 text-emerald-500" />;
-    case 'interrupted':
-      return <Clock className="size-2.5 text-amber-500" />;
-    case 'completed':
-      return <CheckCircle className="size-2.5 text-slate-400" />;
-    case 'idle':
-    default:
-      return <Circle className="size-2.5 text-slate-300" />;
-  }
-}
-
-function getSessionIcon(type: string) {
-  switch (type) {
-    case 'discussion':
-      return <MessageSquare className="w-3.5 h-3.5" />;
-    case 'qa':
-      return <HelpCircle className="w-3.5 h-3.5" />;
-    case 'lecture':
-      return <BookOpen className="w-3.5 h-3.5" />;
-    default:
-      return <MessageSquare className="w-3.5 h-3.5" />;
-  }
-}
-
-function getSessionColorClasses(type: string) {
-  const colors: Record<string, { border: string; bg: string; badge: string; title: string; dot: string }> = {
-    discussion: {
-      border: 'border-l-amber-400 dark:border-l-amber-500',
-      bg: 'bg-amber-50/20 dark:bg-amber-900/10',
-      badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-      title: 'text-amber-900 dark:text-amber-100',
-      dot: 'bg-amber-500',
-    },
-    qa: {
-      border: 'border-l-blue-400 dark:border-l-blue-500',
-      bg: 'bg-blue-50/20 dark:bg-blue-900/10',
-      badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-      title: 'text-blue-900 dark:text-blue-100',
-      dot: 'bg-blue-500',
-    },
-    lecture: {
-      border: 'border-l-violet-400 dark:border-l-violet-500',
-      bg: 'bg-violet-50/20 dark:bg-violet-900/10',
-      badge: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
-      title: 'text-violet-900 dark:text-violet-100',
-      dot: 'bg-violet-500',
-    },
-    default: {
-      border: 'border-l-slate-300 dark:border-l-slate-600',
-      bg: 'bg-slate-50/20 dark:bg-slate-800/20',
-      badge: 'bg-slate-100 text-slate-700 dark:bg-slate-800/30 dark:text-slate-300',
-      title: 'text-slate-900 dark:text-slate-100',
-      dot: 'bg-slate-400',
-    },
-  };
-  return colors[type] || colors.default;
-}
+const SESSION_TYPE_CONFIG: Record<string, {
+  Icon: typeof MessageSquare;
+  color: string;
+  bgGradient: string;
+  ringColor: string;
+}> = {
+  discussion: {
+    Icon: MessageSquare,
+    color: 'text-amber-600 dark:text-amber-400',
+    bgGradient: 'from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-900/10',
+    ringColor: 'ring-amber-200 dark:ring-amber-800',
+  },
+  qa: {
+    Icon: HelpCircle,
+    color: 'text-blue-600 dark:text-blue-400',
+    bgGradient: 'from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-900/10',
+    ringColor: 'ring-blue-200 dark:ring-blue-800',
+  },
+  lecture: {
+    Icon: BookOpen,
+    color: 'text-violet-600 dark:text-violet-400',
+    bgGradient: 'from-violet-50 to-violet-100/50 dark:from-violet-900/20 dark:to-violet-900/10',
+    ringColor: 'ring-violet-200 dark:ring-violet-800',
+  },
+};
 
 export function SessionList({
   sessions,
   expandedSessionIds,
   isStreaming,
   activeBubbleId,
+  sceneTitleMap,
   onToggleExpand,
   onEndSession,
 }: SessionListProps) {
   const { t } = useI18n();
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5 px-0.5">
       <AnimatePresence mode="popLayout">
         {sessions.map((session) => {
           const isExpanded = expandedSessionIds.has(session.id);
           const isActive = session.status === 'active';
-          const colors = getSessionColorClasses(session.type);
+          const cfg = SESSION_TYPE_CONFIG[session.type] || SESSION_TYPE_CONFIG.qa;
+          const { Icon } = cfg;
+
+          // Get last message preview
+          const lastMsg = session.messages[session.messages.length - 1];
+          const lastMsgText = (lastMsg?.parts as any[])
+            ?.find((p: any) => p.type === 'text' && p.text)
+            ?.text
+            ?.slice(0, 40) || '';
+
+          // Get unique participant roles
+          const participantRoles = new Set(
+            session.messages.map((m) => m.metadata?.originalRole || m.role).filter(Boolean)
+          );
+          const participantCount = participantRoles.size;
 
           return (
             <motion.div
               key={session.id}
               layout
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.96, y: 4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                'rounded-xl border border-l-[3px] transition-all duration-300 overflow-hidden',
-                colors.border,
-                isActive
-                  ? cn(colors.bg, 'shadow-sm ring-1 ring-current/10')
-                  : 'bg-white/50 dark:bg-slate-800/40 border-slate-200/50 dark:border-slate-700/50',
+                'rounded-xl border overflow-hidden transition-all duration-200',
+                isExpanded
+                  ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm'
+                  : isActive
+                    ? `bg-gradient-to-r ${cfg.bgGradient} border-transparent shadow-sm ring-1 ${cfg.ringColor}`
+                    : 'bg-white/60 dark:bg-slate-800/40 border-slate-200/50 dark:border-slate-700/40 hover:shadow-sm',
               )}
             >
-              {/* Topic header */}
               <button
                 onClick={() => onToggleExpand(session.id)}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-left
-                  hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                className="w-full flex items-center gap-3 px-3.5 py-3 text-left"
               >
-                {/* Session type icon */}
-                <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0', colors.badge)}>
-                  {getSessionIcon(session.type)}
+                {/* Type icon */}
+                <div className={cn(
+                  'h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-all',
+                  isExpanded
+                    ? `bg-gradient-to-br ${cfg.bgGradient} ${cfg.color}`
+                    : cfg.color,
+                )}>
+                  <Icon className="w-4 h-4" />
                 </div>
 
-                {/* Topic title */}
-                <span className={cn('flex-1 text-[13px] font-semibold truncate', colors.title)}>
-                  {session.title}
-                </span>
-
-                {/* Message count badge */}
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium tabular-nums shrink-0">
-                  💬 {session.messages.length}
-                </span>
-
-                {/* Status icon */}
-                <div className="shrink-0">
-                  {isActive && (
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className={cn('animate-ping absolute inline-flex h-full w-full rounded-full opacity-75', colors.dot)} />
-                      <span className={cn('relative inline-flex rounded-full h-2.5 w-2.5', colors.dot)} />
+                {/* Title + preview */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      'text-[13px] font-semibold truncate',
+                      isExpanded ? 'text-slate-800 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200',
+                    )}>
+                      {session.title}
                     </span>
+                    {isActive && (
+                      <span className="relative flex h-2 w-2 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                      </span>
+                    )}
+                  </div>
+                  {!isExpanded && (
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {lastMsgText ? (
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                          {lastMsgText}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                          暂无消息
+                        </span>
+                      )}
+                    </div>
                   )}
-                  {!isActive && getStatusIcon(session.status)}
+                  {!isExpanded && session.sceneId && sceneTitleMap?.has(session.sceneId) && (
+                    <div className="flex items-center gap-1 mt-1 text-[10px] text-sky-500/70 dark:text-sky-400/70">
+                      <MapPin className="w-3 h-3" />
+                      <span className="truncate">
+                        {(() => {
+                          const s = sceneTitleMap.get(session.sceneId!)!;
+                          return `${t('chat.lectureNotes.pageLabel', { n: s.order + 1 })} — ${s.title}`;
+                        })()}
+                      </span>
+                    </div>
+                  )}
+                  {!isExpanded && !session.sceneId && (
+                    <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-400/70 dark:text-slate-500/70">
+                      <MapPin className="w-3 h-3" />
+                      <span className="truncate">{t('chat.lectureNotes.noScene')}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Chevron */}
-                <ChevronDown
-                  className={cn(
-                    'w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-300 shrink-0',
-                    isExpanded ? 'rotate-180' : 'rotate-0',
+                {/* Badges + chevron */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {!isExpanded && (
+                    <>
+                      {participantCount > 1 && (
+                        <div className="flex items-center gap-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                          <Users className="w-3 h-3" />
+                          {participantCount}
+                        </div>
+                      )}
+                      <span className={cn(
+                        'text-[10px] font-medium px-1.5 py-px rounded-full',
+                        isActive
+                          ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                          : session.status === 'completed'
+                            ? 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400'
+                            : session.status === 'interrupted'
+                              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                              : 'bg-slate-100 dark:bg-slate-700/50 text-slate-400 dark:text-slate-500',
+                      )}>
+                        {session.messages.length}
+                      </span>
+                    </>
                   )}
-                />
+                  <ChevronRight className={cn(
+                    'w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 shrink-0',
+                    isExpanded ? 'rotate-90' : 'rotate-0',
+                  )} />
+                </div>
               </button>
 
               {/* Expanded messages */}
@@ -160,9 +194,26 @@ export function SessionList({
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.25, ease: 'easeInOut' }}
-                    className="overflow-hidden border-t border-slate-100/50 dark:border-slate-700/50"
+                    className="overflow-hidden border-t border-slate-100 dark:border-slate-700/50"
                   >
-                    <div className="px-2 pb-2 pt-1">
+                    <div className="px-1.5 pb-2 pt-1.5">
+                      {session.sceneId && sceneTitleMap?.has(session.sceneId) && (
+                        <div className="flex items-center gap-1.5 px-2 py-1 mb-1.5 text-[11px] text-sky-500/80 dark:text-sky-400/80 bg-sky-50/50 dark:bg-sky-950/30 rounded-lg">
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span className="truncate font-medium">
+                            {(() => {
+                              const s = sceneTitleMap.get(session.sceneId!)!;
+                              return `${t('chat.lectureNotes.pageLabel', { n: s.order + 1 })} — ${s.title}`;
+                            })()}
+                          </span>
+                        </div>
+                      )}
+                      {!session.sceneId && (
+                        <div className="flex items-center gap-1.5 px-2 py-1 mb-1.5 text-[11px] text-slate-500/80 dark:text-slate-400/80 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg">
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span className="truncate font-medium">{t('chat.lectureNotes.noScene')}</span>
+                        </div>
+                      )}
                       <ChatSessionComponent
                         session={session}
                         isActive={isActive}
@@ -181,14 +232,14 @@ export function SessionList({
 
       {/* Empty state */}
       {sessions.length === 0 && (
-        <div className="h-32 flex flex-col items-center justify-center text-center px-4 opacity-60">
-          <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center mb-2 text-slate-400 dark:text-slate-500">
-            <MessageSquare className="w-5 h-5" />
+        <div className="h-36 flex flex-col items-center justify-center text-center px-4">
+          <div className="w-14 h-14 bg-gradient-to-br from-slate-100 to-slate-200/50 dark:from-slate-800 dark:to-slate-800/50 rounded-2xl flex items-center justify-center mb-3 text-slate-400 dark:text-slate-500 shadow-inner">
+            <MessageSquare className="w-6 h-6" />
           </div>
-          <p className="text-[13px] font-medium text-slate-400 dark:text-slate-500">
+          <p className="text-[13px] font-semibold text-slate-400 dark:text-slate-500">
             {t('chat.noConversations')}
           </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
             {t('chat.startConversation')}
           </p>
         </div>

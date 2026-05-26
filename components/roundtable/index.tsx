@@ -39,6 +39,7 @@ export interface DiscussionRequest {
   topic: string;
   prompt?: string;
   agentId?: string;
+  sceneId?: string;
 }
 
 interface RoundtableProps {
