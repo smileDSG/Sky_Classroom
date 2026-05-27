@@ -357,12 +357,22 @@ export function SceneTimeline({
           const left = scenes.length * (fullItemWidth + GAP);
 
           return (
-            <button
+            <div
               key={`generating-${outline.id}`}
+              role="button"
+              tabIndex={isFailed ? -1 : 0}
               onClick={() => {
                 if (isFailed) return;
                 if (onSceneSelect) onSceneSelect(PENDING_SCENE_ID);
                 else setCurrentSceneId(PENDING_SCENE_ID);
+              }}
+              onKeyDown={(e) => {
+                if (isFailed) return;
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  if (onSceneSelect) onSceneSelect(PENDING_SCENE_ID);
+                  else setCurrentSceneId(PENDING_SCENE_ID);
+                }
               }}
               style={{ position: 'absolute', left, top: '50%', transform: 'translateY(-50%)', width: fullItemWidth }}
               className={cn(
@@ -370,8 +380,8 @@ export function SceneTimeline({
                 isFailed
                   ? 'cursor-default ring-transparent'
                   : isActive
-                    ? 'bg-purple-50 dark:bg-purple-900/20 ring-purple-200 dark:ring-purple-700'
-                    : 'opacity-60 ring-transparent hover:bg-gray-50/80 dark:hover:bg-gray-800/50',
+                    ? 'bg-purple-50 dark:bg-purple-900/20'
+                    : 'opacity-60 hover:bg-gray-50/80 dark:hover:bg-gray-800/50',
               )}
             >
               <div className="flex items-center gap-1 w-full">
@@ -420,7 +430,7 @@ export function SceneTimeline({
                   <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent" />
                 )}
               </div>
-            </button>
+            </div>
           );
         })()}
 

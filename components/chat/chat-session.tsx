@@ -54,15 +54,9 @@ const MessageBubble = memo(function MessageBubble({
     (p: MessagePart) => (p.type === 'text' && p.text) || p.type?.startsWith('action-'),
   );
 
-  // Loading dots
+  // Loading — hidden per user request
   if (!hasContent && isActive && message.role === 'assistant') {
-    return (
-      <div className="flex gap-1.5 items-center py-2.5 px-3.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 animate-bounce" />
-        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 animate-bounce [animation-delay:150ms]" />
-        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 animate-bounce [animation-delay:300ms]" />
-      </div>
-    );
+    return null;
   }
 
   if (!hasContent) return null;
@@ -92,9 +86,6 @@ const MessageBubble = memo(function MessageBubble({
             return (
               <span key={`${message.id}-${i}`}>
                 {text}
-                {isLive && isLast && (
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-current opacity-50 animate-pulse ml-0.5 align-middle" />
-                )}
                 {message.metadata?.interrupted && isLast && !isLive && (
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 ml-0.5 align-middle" />
                 )}

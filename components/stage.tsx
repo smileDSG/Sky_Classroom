@@ -1013,10 +1013,10 @@ export function Stage({
       )}
     >
       {/* Main Content Area — Layout: Roundtable(left) | Canvas(center) | Chat(right) */}
-      <div className="flex-1 flex flex-row overflow-hidden min-w-0 relative">
+      <div className="flex-1 flex flex-row overflow-hidden min-w-0 relative bg-white dark:bg-slate-950">
         {/* Left: Roundtable Character Strip — extends full height */}
         {mode === 'playback' && (
-          <div className="w-20 shrink-0 flex flex-col h-full overflow-hidden">
+          <div className="w-14 shrink-0 flex flex-col h-full overflow-hidden">
             <Roundtable
               mode={mode}
               initialParticipants={participants}
@@ -1116,7 +1116,7 @@ export function Stage({
         )}
 
         {/* Center: Canvas Area — Video content with golden ratio */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative bg-white dark:bg-slate-950">
           {/* Header */}
           {!isPresenting && (
             <Header

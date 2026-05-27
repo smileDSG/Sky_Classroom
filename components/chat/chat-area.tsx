@@ -289,9 +289,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
           transition: isDragging ? 'none' : 'width 0.3s ease',
         }}
         className={cn(
-          'bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-r border-sky-200/50 dark:border-white/5',
-          'shadow-[2px_0_24px_rgba(14,165,233,0.1)] dark:shadow-[2px_0_24px_rgba(0,0,0,0.3)]',
-          'flex flex-col shrink-0 z-20 relative overflow-visible h-full',
+          'bg-white dark:bg-slate-950 border-l border-sky-200/50 dark:border-slate-700',
+          'flex flex-col shrink-0 z-20 relative overflow-hidden h-full',
           className,
         )}
       >
@@ -339,13 +338,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
                   {t('chat.tabs.chat')}
-                  {/* Amber pulse dot — refined position */}
-                  {hasActiveChatSession && activeTab === 'lecture' && (
-                    <span className="absolute -top-0.5 right-2 flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 ring-2 ring-white/50 dark:ring-slate-900/50" />
-                    </span>
-                  )}
                 </TabsTrigger>
               </TabsList>
 
