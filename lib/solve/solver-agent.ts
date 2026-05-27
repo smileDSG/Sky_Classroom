@@ -209,6 +209,13 @@ export async function solveWithAgentNode(
 
     return {
       solution: solution.solution,
+      parsedSteps: solution.steps ?? [],
+      parsedKnowledgePoints: (solution.knowledgePoints ?? []).map((k) => ({
+        name: k.name,
+        description: k.description,
+        difficulty: k.difficulty,
+      })),
+      parsedSimilarQuestions: solution.similarQuestions ?? [],
       agentId: usedAgents[usedAgents.length - 1] ?? agentType,
       error: null,
     };

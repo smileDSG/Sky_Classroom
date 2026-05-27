@@ -128,7 +128,7 @@ export async function analyzeSlides(
   log.info(`Analyzing slides, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}`);
 
   const result = await generateText({
-    model: deepseek('deepseek-chat'),
+    model: deepseek.chat('deepseek-chat'),
     system: SLIDES_AGENT_SYSTEM_PROMPT,
     prompt: userPrompt,
     temperature: 0.7,
@@ -180,7 +180,7 @@ export async function streamSlidesAnalysis(
     : `请分析以下课件内容，生成完整的教学讲解：\n\n${contentText}`;
 
   const result = streamText({
-    model: deepseek('deepseek-chat'),
+    model: deepseek.chat('deepseek-chat'),
     system: SLIDES_AGENT_SYSTEM_PROMPT,
     prompt: userPrompt,
     temperature: 0.7,

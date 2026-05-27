@@ -27,7 +27,11 @@ export interface SolveJob {
   error?: string;
 }
 
-const jobs = new Map<string, SolveJob>();
+const globalForJobs = globalThis as unknown as {
+  _solveJobs: Map<string, SolveJob> | undefined;
+};
+const jobs: Map<string, SolveJob> =
+  globalForJobs._solveJobs ?? (globalForJobs._solveJobs = new Map());
 const JOB_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function cleanExpired() {

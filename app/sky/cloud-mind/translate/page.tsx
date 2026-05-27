@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { motion, AnimatePresence } from 'motion/react';
@@ -35,6 +36,7 @@ const EXAMPLES = [
 type TranslateState = 'idle' | 'translating' | 'done';
 
 export default function CloudMindTranslatePage() {
+  const router = useRouter();
   const [sourceLang, setSourceLang] = useState('zh');
   const [targetLang, setTargetLang] = useState('en');
   const [sourceText, setSourceText] = useState('');
@@ -388,12 +390,21 @@ export default function CloudMindTranslatePage() {
             {result && state === 'done' && (
               <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 dark:border-slate-700/50">
                 <span className="text-[11px] text-slate-400">{result.length} 字符</span>
-                <button
-                  onClick={() => setShowDetails((v) => !v)}
-                  className="text-[11px] text-indigo-500 hover:text-indigo-600 transition-colors"
-                >
-                  {showDetails ? '收起' : '翻译详情'}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => router.push(`/sky/cloud-mind/memory?topic=${encodeURIComponent('翻译词汇')}&content=${encodeURIComponent(`原文：${sourceText}\n\n译文：${result}`)}`)}
+                    className="flex items-center gap-1 text-[11px] font-medium text-rose-500 hover:text-rose-600 transition-colors"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    生成记忆卡片
+                  </button>
+                  <button
+                    onClick={() => setShowDetails((v) => !v)}
+                    className="text-[11px] text-indigo-500 hover:text-indigo-600 transition-colors"
+                  >
+                    {showDetails ? '收起' : '翻译详情'}
+                  </button>
+                </div>
               </div>
             )}
           </motion.div>

@@ -136,7 +136,7 @@ export async function generateMemoryCards(
   log.info(`Generating memory cards, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}`);
 
   const result = await generateText({
-    model: deepseek('deepseek-chat'),
+    model: deepseek.chat('deepseek-chat'),
     system: MEMORY_CARDS_AGENT_SYSTEM_PROMPT,
     prompt: userPrompt,
     temperature: 0.7,

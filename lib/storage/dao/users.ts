@@ -3,7 +3,7 @@
  * Uses the existing StorageFactory (IndexedDB → localStorage → memory).
  */
 
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { createStorageProvider, getStorageProvider } from '@/lib/storage/storage-factory';
 import type { StorageProvider } from '@/lib/storage/storage-types';
 
 const TABLE = 'users';
@@ -32,15 +32,8 @@ export interface UserEntry {
   resetTokenExpiry: number | null;
 }
 
-let _provider: StorageProvider | null = null;
-
 async function ensureProvider(): Promise<StorageProvider> {
-  if (!_provider) {
-    _provider = await createStorageProvider({
-      databaseName: 'MAIC-Auth',
-    });
-  }
-  return _provider;
+  return getStorageProvider();
 }
 
 export async function createUserDAO(storage?: StorageProvider): Promise<{

@@ -99,7 +99,7 @@ ${numbered}
 请输出按相关性降序排列的编号列表（如：3, 0, 1, 2, 4）：`;
 
     const result = await generateText({
-      model: deepseek('deepseek-chat'),
+      model: deepseek.chat('deepseek-chat'),
       prompt,
       temperature: 0,
       maxOutputTokens: 100,

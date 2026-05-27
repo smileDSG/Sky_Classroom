@@ -46,6 +46,9 @@ async function checkSolveCacheNode(
       fromSolveCache: true,
       solution: hit.solution,
       agentId: hit.agentId,
+      parsedSteps: [],
+      parsedKnowledgePoints: [],
+      parsedSimilarQuestions: [],
     };
   }
 
@@ -72,6 +75,13 @@ async function checkQuestionBankNode(
       fromQuestionBank: true,
       solution: hit.answer,
       agentId: hit.agentId,
+      parsedSteps: hit.steps ?? [],
+      parsedKnowledgePoints: (hit.knowledgePoints ?? []).map((k) => ({
+        name: k.name,
+        description: k.description,
+        difficulty: k.difficulty,
+      })),
+      parsedSimilarQuestions: hit.similarQuestions ?? [],
     };
   }
 
@@ -178,14 +188,15 @@ async function generateOutputNode(
   }
 
   // Build raw solution object from solver output
-  // NOTE: The solver stores full text in `solution` field. In production,
-  // the solver would also store the parsed JSON in the state. For now,
-  // we reconstruct from the solution text.
   const raw = {
     answer: solution,
-    steps: [],
-    knowledgePoints: [],
-    similarQuestions: [],
+    steps: state.parsedSteps ?? [],
+    knowledgePoints: (state.parsedKnowledgePoints ?? []).map((k) => ({
+      name: k.name,
+      description: k.description,
+      difficulty: k.difficulty as 'easy' | 'medium' | 'hard',
+    })),
+    similarQuestions: state.parsedSimilarQuestions ?? [],
   };
 
   let fourPartOutput: FourPartOutput;
@@ -275,6 +286,9 @@ export function buildSolveInitialState(
     selectedAgentId: null,
     agentRoute: null,
     solution: null,
+    parsedSteps: [],
+    parsedKnowledgePoints: [],
+    parsedSimilarQuestions: [],
     gradeResult: null,
     votingResults: [],
     fourPartOutput: null,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import type { MistakeCause } from '@/lib/solve/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import {
@@ -41,6 +41,21 @@ const allCauses: MistakeCause[] = [
 
 export function LearningStats() {
   const { mistakes } = useSkyClassroomStore();
+  const [memoryProgress, setMemoryProgress] = useState<{ totalFlipped: number; topicCount: number; lastStudied: number | null }>({ totalFlipped: 0, topicCount: 0, lastStudied: null });
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('memory-progress');
+      if (raw) {
+        const data = JSON.parse(raw);
+        setMemoryProgress({
+          totalFlipped: data.totalFlipped || 0,
+          topicCount: data.topics ? Object.keys(data.topics).length : 0,
+          lastStudied: data.lastStudied || null,
+        });
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   // ── Compute stats from mistakes ─────────────────────────────────────
 
@@ -136,6 +151,32 @@ export function LearningStats() {
           <div className="mt-1 text-sm text-gray-500 dark:text-slate-400">薄弱知识点</div>
         </div>
       </div>
+
+      {/* Memory card progress */}
+      {memoryProgress.totalFlipped > 0 && (
+        <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-lg">🧠</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-slate-200">记忆卡片学习</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-[#EC4899]">{memoryProgress.totalFlipped}</div>
+              <div className="text-xs text-gray-400">翻牌次数</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-[#8B5CF6]">{memoryProgress.topicCount}</div>
+              <div className="text-xs text-gray-400">学习主题</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-[#06B6D4]">
+                {memoryProgress.lastStudied ? new Date(memoryProgress.lastStudied).toLocaleDateString() : '-'}
+              </div>
+              <div className="text-xs text-gray-400">最近学习</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Cause distribution bar chart (pure CSS) ── */}
       <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">

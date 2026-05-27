@@ -140,6 +140,7 @@ export async function saveToQuestionBank(
       answer: entry.answer,
       steps: entry.steps,
       knowledgePoints: entry.knowledgePoints,
+      similarQuestions: entry.similarQuestions ?? [],
       agentId: entry.agentId,
       solvedAt: entry.solvedAt ?? Date.now(),
       verified: entry.verified ?? false,

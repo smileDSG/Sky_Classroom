@@ -6,6 +6,7 @@
  */
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { GraphNode } from '@/lib/graph/types';
+import type { QuestionBankEntry } from '@/lib/solve/types';
 
 const MAX_CONTEXT_CHARS = 1200;
 
@@ -90,11 +91,49 @@ export function injectGraphContext(
   return combined;
 }
 
+// ── Solve history context ────────────────────────────────────────
+
+export function injectSolveHistory(
+  basePrompt: string,
+  entries: QuestionBankEntry[],
+): string {
+  if (!entries || entries.length === 0) return basePrompt;
+
+  const recent = entries.slice(0, 5);
+  const kpSet = new Set<string>();
+  for (const e of entries) {
+    for (const kp of e.knowledgePoints) kpSet.add(kp.name);
+  }
+  const allKps = [...kpSet].slice(0, 8).join('、');
+
+  const lines = recent.map((e) => {
+    const kps = e.knowledgePoints.map((kp) => kp.name).join('、');
+    return `- ${e.problemText}（知识点：${kps}）`;
+  });
+
+  const context = [
+    '',
+    '【学生解题历史】',
+    `该学生已解答 ${entries.length} 道题目。`,
+    allKps ? `涉及知识点：${allKps}。` : '',
+    '最近解过的题目：',
+    ...lines,
+    '请根据学生的解题历史，在回答时适当关联已学内容，帮助学生巩固和拓展。',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const combined = basePrompt + '\n' + context;
+  if (combined.length > basePrompt.length + MAX_CONTEXT_CHARS) return basePrompt + '\n' + context.slice(0, MAX_CONTEXT_CHARS);
+  return combined;
+}
+
 // ── Full system prompt builder ─────────────────────────────────────
 
 export interface PromptContext {
   mistakes?: MistakeBookEntry[];
   graphNodes?: GraphNode[];
+  solveHistory?: QuestionBankEntry[];
 }
 
 export function buildSystemPrompt(
@@ -128,6 +167,10 @@ ${styleHint}
 
   if (context?.graphNodes && context.graphNodes.length > 0) {
     prompt = injectGraphContext(prompt, context.graphNodes);
+  }
+
+  if (context?.solveHistory && context.solveHistory.length > 0) {
+    prompt = injectSolveHistory(prompt, context.solveHistory);
   }
 
   return prompt;
