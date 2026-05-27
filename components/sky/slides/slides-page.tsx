@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Sparkles, Presentation, Wand2, Download, RotateCcw, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Presentation, Wand2, Download, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Image as ImageIcon, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AvatarSpeechPlayer } from './avatar-speech-player';
@@ -46,6 +46,7 @@ export default function SlidesPage() {
   );
   const [status, setStatus] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [avatarExpanded, setAvatarExpanded] = useState(false);
   // ── Cover Gallery state ──
   const [coverLoading, setCoverLoading] = useState(false);
   const [coverStage, setCoverStage] = useState<'idle' | 'analyzing' | 'designing' | 'rendering'>('idle');
@@ -402,7 +403,7 @@ export default function SlidesPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         {/* ── LEFT COLUMN ── */}
         <div className="space-y-6">
           {/* Input Card */}
@@ -448,18 +449,33 @@ export default function SlidesPage() {
                 </div>
               </div>
 
-              {/* Avatar Selector */}
+              {/* Avatar Selector - Collapsible */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">讲解角色</label>
-                <AvatarSelector
-                  avatars={AVATAR_CONFIGS}
-                  selectedId={selectedAvatar.id}
-                  onSelect={(id) => {
-                    const a = AVATAR_CONFIGS.find((av) => av.id === id) || AVATAR_CONFIGS[0];
-                    setSelectedAvatar(a);
-                    setSelectedAvatarId(a.id);
-                  }}
-                />
+                <button
+                  type="button"
+                  onClick={() => setAvatarExpanded((v) => !v)}
+                  className="flex w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                >
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-cyan-500" />
+                    <span>讲解角色：{selectedAvatar.name}</span>
+                  </div>
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${avatarExpanded ? 'rotate-180' : ''}`} />
+                </button>
+                {avatarExpanded && (
+                  <div className="rounded-lg border border-input bg-background p-3">
+                    <AvatarSelector
+                      avatars={AVATAR_CONFIGS}
+                      selectedId={selectedAvatar.id}
+                      onSelect={(id) => {
+                        const a = AVATAR_CONFIGS.find((av) => av.id === id) || AVATAR_CONFIGS[0];
+                        setSelectedAvatar(a);
+                        setSelectedAvatarId(a.id);
+                        setAvatarExpanded(false);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Generate Button */}
@@ -542,7 +558,7 @@ export default function SlidesPage() {
         {/* ── RIGHT COLUMN ── */}
         <div className="space-y-6">
           {/* Preview Card */}
-          <Card className="overflow-hidden border-cyan-200/50 dark:border-cyan-800/40 shadow-md shadow-cyan-100/50 dark:shadow-cyan-900/20 min-h-[500px]">
+          <Card className="overflow-hidden border-cyan-200/50 dark:border-cyan-800/40 shadow-md shadow-cyan-100/50 dark:shadow-cyan-900/20 min-h-[600px]">
             <CardHeader className="border-b bg-gradient-to-r from-cyan-50 to-transparent dark:from-cyan-950/30 dark:to-transparent">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base text-cyan-700 dark:text-cyan-300">
@@ -586,7 +602,7 @@ export default function SlidesPage() {
                     <img
                       src={previewImages[activeIndex]}
                       alt={`Slide ${activeIndex + 1}`}
-                      className="max-h-[400px] w-full rounded-lg shadow-lg object-contain"
+                      className="max-h-[500px] w-full rounded-lg shadow-lg object-contain"
                       style={{ aspectRatio: '16/9' }}
                       draggable={false}
                     />
