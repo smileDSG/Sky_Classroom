@@ -15,7 +15,6 @@ import { AVATAR_CONFIGS } from '@/lib/slides/avatar-config';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import type { AvatarConfig } from '@/lib/slides/types';
-import { SkyBackground } from '@/components/sky/home/sky-background';
 
 const DIFFICULTIES = [
   { value: 'junior', label: '初中' },
@@ -395,8 +394,7 @@ export default function SlidesPage() {
 
 
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden relative">
-      <SkyBackground />
+    <div className="flex h-[calc(100vh-4rem)] w-full flex-col overflow-hidden relative">
 
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar {
@@ -441,7 +439,7 @@ export default function SlidesPage() {
       `}</style>
 
       {/* Top bar */}
-      <header className="relative z-10 flex flex-shrink-0 items-center border-b border-slate-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-900/80 px-5 py-3 backdrop-blur-xl">
+      <header className="relative z-10 flex flex-shrink-0 items-center border-b border-slate-200/30 dark:border-gray-700/30 bg-white/60 dark:bg-gray-900/60 px-5 py-3 backdrop-blur-md">
         {/* Left: back + brand */}
         <div className="flex w-56 flex-shrink-0 items-center gap-3 animate-fade-in-left">
           <Link
@@ -562,7 +560,7 @@ export default function SlidesPage() {
       <div className="relative z-10 flex flex-1 overflow-hidden">
         {/* Left panel */}
         <aside
-          className={`flex min-h-0 flex-shrink-0 flex-col overflow-hidden border-r border-slate-200/50 dark:border-gray-700/50 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl transition-all duration-300 ${
+          className={`flex min-h-0 flex-shrink-0 flex-col overflow-hidden border-r border-slate-200/30 dark:border-gray-700/30 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md transition-all duration-300 ${
             sidebarOpen ? 'w-64' : 'w-0 border-r-0'
           }`}
         >
@@ -663,7 +661,7 @@ export default function SlidesPage() {
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="relative min-h-0 flex-1">
             {previewImages ? (
-              <div className="flex h-full items-center justify-center bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm p-6">
+              <div className="flex h-full items-center justify-center bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm p-6">
                 <img
                   src={previewImages[activeIndex]}
                   alt={`Slide ${activeIndex + 1}`}
@@ -673,7 +671,7 @@ export default function SlidesPage() {
                 />
               </div>
             ) : generating ? (
-              <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-sky-50/50 to-blue-50/30 dark:from-sky-900/10 dark:to-blue-900/10 backdrop-blur-sm gap-6">
+              <div className="flex h-full flex-col items-center justify-center bg-white/20 dark:bg-gray-900/20 backdrop-blur-sm gap-6">
                 {/* Animated icon */}
                 <div className="relative">
                   <div className="h-16 w-16 animate-spin rounded-full border-4 border-sky-100 dark:border-sky-900/30 border-t-sky-500" />
@@ -718,7 +716,7 @@ export default function SlidesPage() {
                 </div>
               </div>
             ) : generatedPptx ? (
-              <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-emerald-50/50 to-teal-50/30 dark:from-emerald-900/10 dark:to-teal-900/10 backdrop-blur-sm gap-6 animate-fade-in-scale">
+              <div className="flex h-full flex-col items-center justify-center bg-white/20 dark:bg-gray-900/20 backdrop-blur-sm gap-6 animate-fade-in-scale">
                 {/* Success icon with animation */}
                 <div className="relative">
                   <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 shadow-lg shadow-emerald-200/50 dark:shadow-emerald-900/20">
@@ -761,7 +759,7 @@ export default function SlidesPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-sky-50/30 to-indigo-50/20 dark:from-sky-900/5 dark:to-indigo-900/5 backdrop-blur-sm gap-6 animate-fade-in-scale">
+              <div className="flex h-full flex-col items-center justify-center bg-white/10 dark:bg-gray-900/10 backdrop-blur-sm gap-6 animate-fade-in-scale">
                 {/* Welcome icon */}
                 <div className="relative">
                   <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-blue-100 dark:from-sky-900/20 dark:to-blue-900/20 shadow-lg shadow-sky-200/30 dark:shadow-sky-900/10">
