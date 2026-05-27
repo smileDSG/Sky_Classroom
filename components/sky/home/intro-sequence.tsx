@@ -42,31 +42,31 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
   };
 
   const skyGradients = [
-    'linear-gradient(180deg, #87CEEB 0%, #B0E0E6 30%, #E0F7FA 60%, #FFF8E1 100%)',
-    'linear-gradient(180deg, #6BB5E0 0%, #9DD5F0 30%, #C8E8F8 60%, #FFF0D0 100%)',
+    'linear-gradient(180deg, #0D47A1 0%, #1565C0 20%, #1E88E5 45%, #42A5F5 70%, #90CAF9 100%)',
+    'linear-gradient(180deg, #1565C0 0%, #1E88E5 20%, #42A5F5 45%, #64B5F6 70%, #BBDEFB 100%)',
     'linear-gradient(180deg, #E8F0F8 0%, #F0F4F8 50%, #F8FAFC 80%, #FFFFFF 100%)',
   ];
 
   const cloudConfigs = [
-    { top: '6%',  w: 'w-48 h-26', dur: 22, delay: 6,   opacity: 0.5,  viewBox: '0 0 200 100',
-      shapes: [{ cx: 50, cy: 65, rx: 35, ry: 24 }, { cx: 100, cy: 45, rx: 50, ry: 34 }, { cx: 155, cy: 62, rx: 32, ry: 22 }] },
-    { top: '10%', w: 'w-44 h-24', dur: 16, delay: 0,   opacity: 0.85, viewBox: '0 0 180 90',
-      shapes: [{ cx: 45, cy: 60, rx: 32, ry: 22 }, { cx: 90, cy: 42, rx: 45, ry: 32 }, { cx: 140, cy: 58, rx: 30, ry: 20 }] },
-    { top: '14%', w: 'w-40 h-22', dur: 20, delay: 4,   opacity: 0.65, viewBox: '0 0 170 85',
+    { top: '5%',  left: '10%',  w: 'w-40 h-22', dur: 5,  delay: 0.5, opacity: 0.6,  dx: 30,  dy: 8,  viewBox: '0 0 170 85',
       shapes: [{ cx: 42, cy: 58, rx: 30, ry: 21 }, { cx: 85, cy: 40, rx: 42, ry: 30 }, { cx: 130, cy: 56, rx: 28, ry: 18 }] },
-    { top: '20%', w: 'w-32 h-18', dur: 12, delay: 1,   opacity: 0.75, viewBox: '0 0 140 70',
+    { top: '12%', left: '55%',  w: 'w-48 h-26', dur: 7,  delay: 0,   opacity: 0.75, dx: -25, dy: 12, viewBox: '0 0 200 100',
+      shapes: [{ cx: 50, cy: 65, rx: 35, ry: 24 }, { cx: 100, cy: 45, rx: 50, ry: 34 }, { cx: 155, cy: 62, rx: 32, ry: 22 }] },
+    { top: '20%', left: '75%',  w: 'w-32 h-18', dur: 6,  delay: 1,   opacity: 0.65, dx: -35, dy: -5, viewBox: '0 0 140 70',
       shapes: [{ cx: 35, cy: 48, rx: 26, ry: 18 }, { cx: 70, cy: 32, rx: 36, ry: 26 }, { cx: 110, cy: 46, rx: 24, ry: 16 }] },
-    { top: '28%', w: 'w-28 h-16', dur: 10, delay: 2.5, opacity: 0.7,  viewBox: '0 0 120 60',
-      shapes: [{ cx: 30, cy: 40, rx: 22, ry: 16 }, { cx: 60, cy: 26, rx: 30, ry: 22 }, { cx: 95, cy: 38, rx: 18, ry: 14 }] },
-    { top: '36%', w: 'w-24 h-14', dur: 14, delay: 0.5, opacity: 0.6,  viewBox: '0 0 100 50',
-      shapes: [{ cx: 25, cy: 35, rx: 18, ry: 13 }, { cx: 50, cy: 22, rx: 26, ry: 19 }, { cx: 78, cy: 33, rx: 17, ry: 12 }] },
-    { top: '46%', w: 'w-36 h-20', dur: 18, delay: 3,   opacity: 0.55, viewBox: '0 0 160 80',
+    { top: '28%', left: '5%',   w: 'w-36 h-20', dur: 8,  delay: 0.3, opacity: 0.55, dx: 20,  dy: 15, viewBox: '0 0 160 80',
       shapes: [{ cx: 40, cy: 55, rx: 30, ry: 20 }, { cx: 80, cy: 38, rx: 40, ry: 30 }, { cx: 125, cy: 52, rx: 28, ry: 18 }] },
-    { top: '56%', w: 'w-20 h-12', dur: 11, delay: 1.8, opacity: 0.5,  viewBox: '0 0 90 45',
+    { top: '35%', left: '40%',  w: 'w-28 h-16', dur: 6,  delay: 1.5, opacity: 0.7,  dx: 15,  dy: -10,viewBox: '0 0 120 60',
+      shapes: [{ cx: 30, cy: 40, rx: 22, ry: 16 }, { cx: 60, cy: 26, rx: 30, ry: 22 }, { cx: 95, cy: 38, rx: 18, ry: 14 }] },
+    { top: '42%', left: '70%',  w: 'w-24 h-14', dur: 7,  delay: 0.8, opacity: 0.5,  dx: -20, dy: 10, viewBox: '0 0 100 50',
+      shapes: [{ cx: 25, cy: 35, rx: 18, ry: 13 }, { cx: 50, cy: 22, rx: 26, ry: 19 }, { cx: 78, cy: 33, rx: 17, ry: 12 }] },
+    { top: '52%', left: '15%',  w: 'w-44 h-24', dur: 9,  delay: 0.2, opacity: 0.45, dx: 25,  dy: -8, viewBox: '0 0 180 90',
+      shapes: [{ cx: 45, cy: 60, rx: 32, ry: 22 }, { cx: 90, cy: 42, rx: 45, ry: 32 }, { cx: 140, cy: 58, rx: 30, ry: 20 }] },
+    { top: '60%', left: '50%',  w: 'w-20 h-12', dur: 5,  delay: 2,   opacity: 0.55, dx: -15, dy: 12, viewBox: '0 0 90 45',
       shapes: [{ cx: 22, cy: 30, rx: 16, ry: 12 }, { cx: 45, cy: 18, rx: 24, ry: 18 }, { cx: 72, cy: 30, rx: 14, ry: 10 }] },
-    { top: '64%', w: 'w-32 h-18', dur: 13, delay: 2,   opacity: 0.45, viewBox: '0 0 140 70',
+    { top: '68%', left: '80%',  w: 'w-32 h-18', dur: 7,  delay: 1.2, opacity: 0.4,  dx: -30, dy: -6, viewBox: '0 0 140 70',
       shapes: [{ cx: 35, cy: 48, rx: 26, ry: 18 }, { cx: 70, cy: 32, rx: 36, ry: 26 }, { cx: 110, cy: 46, rx: 24, ry: 16 }] },
-    { top: '74%', w: 'w-28 h-16', dur: 15, delay: 5,   opacity: 0.4,  viewBox: '0 0 120 60',
+    { top: '78%', left: '25%',  w: 'w-28 h-16', dur: 8,  delay: 0.6, opacity: 0.35, dx: 18,  dy: 5,  viewBox: '0 0 120 60',
       shapes: [{ cx: 30, cy: 40, rx: 22, ry: 16 }, { cx: 60, cy: 26, rx: 30, ry: 22 }, { cx: 95, cy: 38, rx: 18, ry: 14 }] },
   ];
 
@@ -137,15 +137,23 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
               />
             </motion.div>
 
-            {/* Clouds */}
+            {/* Clouds — scattered, each with its own gentle floating path */}
             {cloudConfigs.map((cloud, i) => (
               <motion.div
                 key={i}
                 className="absolute"
-                style={{ top: cloud.top }}
-                initial={{ x: '-15vw', opacity: 0 }}
-                animate={{ x: '110vw', opacity: cloud.opacity }}
-                transition={{ duration: cloud.dur, delay: cloud.delay, ease: 'linear' }}
+                style={{ top: cloud.top, left: cloud.left }}
+                initial={{ opacity: 0, x: 0, y: 0 }}
+                animate={{
+                  opacity: cloud.opacity,
+                  x: [0, cloud.dx, -cloud.dx, 0],
+                  y: [0, -cloud.dy, cloud.dy, 0],
+                }}
+                transition={{
+                  opacity: { duration: 1, delay: cloud.delay },
+                  x: { duration: cloud.dur, repeat: Infinity, ease: 'easeInOut' },
+                  y: { duration: cloud.dur * 0.8, repeat: Infinity, ease: 'easeInOut' },
+                }}
               >
                 <svg viewBox={cloud.viewBox} className={cloud.w}>
                   {cloud.shapes.map((s, j) => (
@@ -186,10 +194,10 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.8 }}
             >
-              <h1 className="text-5xl md:text-7xl font-bold text-sky-800 tracking-wider">
+              <h1 className="text-5xl md:text-7xl font-bold text-white/95 tracking-wider drop-shadow-lg">
                 天空课堂
               </h1>
-              <p className="mt-3 text-lg md:text-xl text-sky-600 font-medium tracking-wide">
+              <p className="mt-3 text-lg md:text-xl text-white/80 font-medium tracking-wide drop-shadow">
                 AI 驱动的智能学习平台
               </p>
             </motion.div>
@@ -346,7 +354,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
 
       {/* Skip button */}
       <motion.button
-        className="absolute bottom-6 right-6 z-[60] flex items-center gap-2 px-4 py-2 rounded-full text-sm text-sky-700/70 hover:text-sky-800 bg-white/30 hover:bg-white/50 backdrop-blur-sm transition-all cursor-pointer"
+        className="absolute bottom-6 right-6 z-[60] flex items-center gap-2 px-4 py-2 rounded-full text-sm text-white/70 hover:text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all cursor-pointer"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
