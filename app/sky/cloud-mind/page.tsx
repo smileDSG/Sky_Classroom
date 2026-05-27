@@ -97,7 +97,7 @@ export default function CloudMindPage() {
             </h1>
             <p className="text-indigo-100 text-base md:text-lg max-w-xl leading-relaxed">
               汇聚 AI 之力，为你的学习保驾护航。拍照搜题、PPT课件生成、智能写作、智能出题……
-              六大工具一站直达。
+              多种工具一站直达。
             </p>
 
             <div className="mt-6 flex items-center gap-4">

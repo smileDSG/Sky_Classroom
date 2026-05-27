@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { MistakeCause } from '@/lib/solve/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 
@@ -52,6 +52,8 @@ export function MistakeBook() {
     'all' | 'reviewed' | 'unreviewed'
   >('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // ── Apply filters locally ──────────────────────────────────────────
 
@@ -72,6 +74,18 @@ export function MistakeBook() {
     });
   }, [mistakes, causeFilter, reviewedFilter, searchQuery]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paged = useMemo(
+    () => filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filtered, safePage, pageSize],
+  );
+
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setPage(1);
+  }, []);
+
   const hasActiveFilters =
     causeFilter !== null || reviewedFilter !== 'all' || searchQuery.trim() !== '';
 
@@ -79,11 +93,13 @@ export function MistakeBook() {
 
   const handleCauseChange = (cause: MistakeCause | null) => {
     setCauseFilter(cause);
+    setPage(1);
     setFilter(cause ? { type: 'cause', value: cause } : null);
   };
 
   const handleReviewedChange = (value: 'all' | 'reviewed' | 'unreviewed') => {
     setReviewedFilter(value);
+    setPage(1);
     if (value === 'reviewed') {
       setFilter({ type: 'reviewed', value: true });
     } else if (value === 'unreviewed') {
@@ -95,6 +111,7 @@ export function MistakeBook() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setPage(1);
     setFilter(
       query.trim() ? { type: 'knowledgePoint', value: query.trim() } : null,
     );
@@ -213,7 +230,7 @@ export function MistakeBook() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((m) => (
+          {paged.map((m) => (
             <div
               key={m.id}
               className={`rounded-lg bg-white p-4 shadow-sm transition-opacity dark:bg-slate-800 ${
@@ -283,6 +300,89 @@ export function MistakeBook() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ── Pagination ── */}
+      {filtered.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-3 shadow-sm dark:bg-slate-800">
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400">
+            <span>每页</span>
+            <select
+              value={pageSize}
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              className="rounded border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-xs text-gray-700 dark:text-slate-200 outline-none"
+            >
+              {[10, 20, 50].map((size) => (
+                <option key={size} value={size}>{size} 条</option>
+              ))}
+            </select>
+            <span>
+              第 {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} 条，共 {filtered.length} 条
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(1)}
+              disabled={safePage <= 1}
+              className="rounded px-2 py-1 text-xs text-gray-600 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              首页
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              className="rounded px-2 py-1 text-xs text-gray-600 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              上一页
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => {
+                if (totalPages <= 7) return true;
+                if (p === 1 || p === totalPages) return true;
+                if (Math.abs(p - safePage) <= 1) return true;
+                return false;
+              })
+              .reduce<(number | 'ellipsis')[]>((acc, p, i, arr) => {
+                if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('ellipsis');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((item, i) =>
+                item === 'ellipsis' ? (
+                  <span key={`e${i}`} className="px-1 text-xs text-gray-400 dark:text-slate-500">…</span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => setPage(item as number)}
+                    className={`min-w-[28px] rounded px-2 py-1 text-xs font-medium transition-colors ${
+                      safePage === item
+                        ? 'bg-[#4A90D9] text-white'
+                        : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ),
+              )}
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              className="rounded px-2 py-1 text-xs text-gray-600 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              下一页
+            </button>
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={safePage >= totalPages}
+              className="rounded px-2 py-1 text-xs text-gray-600 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              末页
+            </button>
+          </div>
         </div>
       )}
     </div>
