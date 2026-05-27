@@ -8,6 +8,8 @@ import { NextResponse } from 'next/server';
 import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, signRefreshToken, hashPassword } from '@/lib/server/auth';
 import { createUserDAO } from '@/lib/storage/dao/users';
+import { generateVerifyToken } from '@/lib/server/auth/tokens';
+import { sendVerificationEmail } from '@/lib/server/email';
 
 const RegisterSchema = z.object({
   email: z.string().email().optional().nullable(),
@@ -39,6 +41,8 @@ export async function POST(request: Request) {
     }
 
     const passwordHash = await hashPassword(password);
+    const verifyToken = email ? generateVerifyToken() : null;
+
     const user = await dao.create({
       id: crypto.randomUUID(),
       email: email ?? null,
@@ -48,7 +52,21 @@ export async function POST(request: Request) {
       status: 'active',
       guestId: null,
       planType: 'free',
+      avatar: null,
+      nickname: null,
+      bio: null,
+      emailVerified: !email, // auto-verify if no email provided
+      emailVerifyToken: verifyToken,
+      resetToken: null,
+      resetTokenExpiry: null,
     });
+
+    // Send verification email if email provided
+    if (email && verifyToken) {
+      sendVerificationEmail(email, verifyToken).catch(() => {
+        // Non-blocking: log but don't fail registration
+      });
+    }
 
     // Auto-login: generate tokens
     const accessToken = await signAccessToken({ id: user.id, email: user.email ?? undefined, role: user.role });

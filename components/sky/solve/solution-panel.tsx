@@ -32,7 +32,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
               <BookOpen className="h-5 w-5 text-[#4A90D9]" />
               解题详解
             </CardTitle>
-            <CardDescription>步骤、知识点、同类练习</CardDescription>
+            <CardDescription>步骤 · AI 知识点总结 · 同类练习</CardDescription>
           </div>
           {isGraded && (
             <Badge
@@ -51,7 +51,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
           <div className="flex items-center gap-3">
             <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
             <div className="flex-1">
-              <div className="text-xs font-medium text-green-700 dark:text-green-400 mb-1">正确答案</div>
+              <div className="text-xs font-medium text-green-700 dark:text-green-400 mb-1">答案</div>
               <div className="inline-flex items-center rounded-lg bg-white/80 dark:bg-green-900/30 px-4 py-2 border border-green-200/50 dark:border-green-800/50">
                 <MathRenderer content={answer} className="text-lg font-bold text-green-700 dark:text-green-300" />
               </div>
@@ -122,13 +122,13 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                   </div>
                 </div>
               ))}
-              {/* 末尾：正确答案 */}
+              {/* 末尾：答案 */}
               {isComplete && (
                 <div className="px-5 py-4 bg-green-50/50 dark:bg-green-950/20">
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
                     <div>
-                      <span className="text-sm font-medium text-green-700 dark:text-green-400">正确答案为</span>
+                      <span className="text-sm font-medium text-green-700 dark:text-green-400">答案</span>
                       <span className="ml-2">
                         <MathRenderer content={answer} className="text-sm font-bold text-green-700 dark:text-green-300" />
                       </span>
@@ -139,12 +139,12 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
             </div>
           </TabsContent>
 
-          {/* ── 知识点栏：概括这道题的知识点 ── */}
+          {/* ── 知识点栏：AI 总结的知识点 ── */}
           <TabsContent value="knowledge" className="mt-0 p-6">
             <div className="space-y-4">
               {knowledgePoints.length === 0 && (
                 <div className="text-center text-sm text-muted-foreground py-8">
-                  暂无知识点概括
+                  暂无知识点总结
                 </div>
               )}
               {knowledgePoints.map((point, index) => (
@@ -170,7 +170,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                           {point.difficulty === 'hard' && '困难'}
                         </Badge>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground"><MathRenderer content={point.description} /></p>
+                      <p className="mt-2 text-sm text-muted-foreground leading-relaxed"><MathRenderer content={point.description} /></p>
                     </div>
                   </div>
                 </div>

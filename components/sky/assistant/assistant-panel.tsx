@@ -76,6 +76,28 @@ function loadMode(): KagamiMode {
   return 'anime';
 }
 
+const THEME_MAP: Record<string, string> = {
+  sky: '#0ea5e9',
+  violet: '#8B5CF6',
+  emerald: '#10b981',
+  rose: '#f43f5e',
+  amber: '#f59e0b',
+};
+
+function loadTheme(): string {
+  try {
+    const id = localStorage.getItem('assistant-theme') || 'sky';
+    return THEME_MAP[id] || THEME_MAP.sky;
+  } catch { return THEME_MAP.sky; }
+}
+
+function hexToRgb(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `${r} ${g} ${b}`;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -84,7 +106,22 @@ interface Message {
 
 // ── 组件 ──────────────────────────────────────────────────────────────
 
-export function AssistantPanel() {
+interface AssistantPanelProps {
+  mode?: KagamiMode;
+  onModeChange?: (mode: KagamiMode) => void;
+  externalLoadConvId?: string | null;
+  onConversationLoaded?: () => void;
+  accentColor?: string;
+}
+
+export function AssistantPanel({
+  mode: externalMode,
+  onModeChange,
+  externalLoadConvId,
+  onConversationLoaded,
+  accentColor: externalAccent,
+}: AssistantPanelProps = {}) {
+  const accent = externalAccent || loadTheme();
   const isOpen = useSkyClassroomStore((s) => s.isOpen);
   const toggleOpen = useSkyClassroomStore((s) => s.toggleOpen);
   const subject = useSkyClassroomStore((s) => s.subject);
@@ -95,7 +132,9 @@ export function AssistantPanel() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<KagamiMode>('anime');
+  const [internalMode, setInternalMode] = useState<KagamiMode>('anime');
+  const mode = externalMode ?? internalMode;
+  const setMode = onModeChange ?? setInternalMode;
   const [showHistory, setShowHistory] = useState(false);
   const [conversations, setConversations] = useState<AssistantConversationRecord[]>([]);
   const [memoryContextStr, setMemoryContextStr] = useState<string>('');
@@ -104,7 +143,7 @@ export function AssistantPanel() {
   const currentConvIdRef = useRef<string | null>(null);
 
   // Hydrate mode from localStorage after mount (avoids SSR mismatch)
-  useEffect(() => { setMode(loadMode()); }, []);
+  useEffect(() => { if (!externalMode) setInternalMode(loadMode()); }, [externalMode]);
 
   // Reset chat when mode switches so the two personas don't share history
   const prevModeRef = useRef(mode);
@@ -239,6 +278,15 @@ export function AssistantPanel() {
       log.warn('Failed to load conversation:', err);
     }
   }, []);
+
+  // Load conversation from external trigger (page-level history sidebar)
+  useEffect(() => {
+    if (externalLoadConvId) {
+      void loadConversation(externalLoadConvId).then(() => {
+        onConversationLoaded?.();
+      });
+    }
+  }, [externalLoadConvId, loadConversation, onConversationLoaded]);
 
   /** Start a new conversation */
   const startNewConversation = useCallback(() => {
@@ -491,14 +539,14 @@ export function AssistantPanel() {
   // ── Render ──────────────────────────────────────────────────────
 
   return (
-    <div id="assistant-panel" className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
+    <div id="assistant-panel" className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl" style={{ '--accent': accent, '--accent-rgb': hexToRgb(accent) } as React.CSSProperties}>
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-gray-100 dark:border-slate-700 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="text-lg font-semibold text-gray-900 dark:text-slate-100">{mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}</span>
           <div className="flex items-center gap-1.5">
             {subject && (
-              <span className="rounded-full bg-[#8B5CF6]/10 px-2 py-0.5 text-xs font-medium text-[#8B5CF6]">
+              <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: `rgb(var(--accent-rgb) / 0.1)`, color: `var(--accent)` }}>
                 {subject}
               </span>
             )}
@@ -528,9 +576,8 @@ export function AssistantPanel() {
           <button
             type="button"
             onClick={() => setShowHistory(!showHistory)}
-            className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
-              showHistory ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-300'
-            }`}
+            className="flex h-7 w-7 items-center justify-center rounded-md transition-colors text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-300"
+            style={showHistory ? { backgroundColor: `rgb(var(--accent-rgb) / 0.1)`, color: `var(--accent)` } : undefined}
             title="对话历史"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -584,8 +631,9 @@ export function AssistantPanel() {
                     key={conv.id}
                     onClick={() => void loadConversation(conv.id)}
                     className={`flex items-center gap-2 rounded-lg px-2 py-1.5 cursor-pointer transition-colors hover:bg-white dark:hover:bg-slate-700 ${
-                      currentConvIdRef.current === conv.id ? 'bg-white dark:bg-slate-700 ring-1 ring-[#8B5CF6]/30' : ''
+                      currentConvIdRef.current === conv.id ? 'bg-white dark:bg-slate-700 ring-1' : ''
                     }`}
+                    style={currentConvIdRef.current === conv.id ? { '--tw-ring-color': `rgb(var(--accent-rgb) / 0.3)` } as React.CSSProperties : undefined}
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-gray-700 dark:text-slate-200 truncate">{conv.title}</p>
@@ -630,7 +678,7 @@ export function AssistantPanel() {
                     key={hint}
                     type="button"
                     onClick={() => handleSend(hint)}
-                    className="rounded-lg border border-gray-200 dark:border-slate-700 px-3 py-2 text-left text-sm text-gray-500 dark:text-slate-400 transition-colors hover:border-[#8B5CF6] hover:text-[#8B5CF6]"
+                    className="rounded-lg border border-gray-200 dark:border-slate-700 px-3 py-2 text-left text-sm text-gray-500 dark:text-slate-400 transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
                   >
                     {hint}
                   </button>
@@ -650,8 +698,9 @@ export function AssistantPanel() {
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm ${
                     msg.role === 'user'
                       ? 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-slate-300'
-                      : 'bg-[#8B5CF6]/10 text-[#8B5CF6]'
+                      : 'text-[var(--accent)]'
                   }`}
+                  style={msg.role !== 'user' ? { backgroundColor: `rgb(var(--accent-rgb) / 0.1)` } : undefined}
                 >
                   {msg.role === 'user' ? '👤' : (<img src={mode === 'anime' ? '/avatars/kagami/chibi.png' : '/avatars/student-glasses-new.jpg'} className="size-full rounded-full object-cover" alt="小镜" />)}
                 </div>
@@ -659,16 +708,17 @@ export function AssistantPanel() {
                 <div
                   className={`max-w-[75%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.role === 'user'
-                      ? 'rounded-tr-sm bg-[#8B5CF6] text-white'
+                      ? 'rounded-tr-sm text-white'
                       : 'rounded-tl-sm border border-gray-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-slate-800 text-gray-800 dark:text-slate-200'
                   }`}
+                  style={msg.role === 'user' ? { backgroundColor: accent } : undefined}
                 >
                   <InlineMath text={msg.content} />
                   {msg.role === 'assistant' && loading && msg.content === '' && (
                     <span className="inline-flex gap-1">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '0ms' }} />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '150ms' }} />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '300ms' }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ backgroundColor: accent, animationDelay: '0ms' }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ backgroundColor: accent, animationDelay: '150ms' }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ backgroundColor: accent, animationDelay: '300ms' }} />
                     </span>
                   )}
                 </div>
@@ -680,9 +730,9 @@ export function AssistantPanel() {
                   <img src={mode === 'anime' ? '/avatars/kagami/chibi.png' : '/avatars/student-glasses-new.jpg'} className="size-full object-cover" alt="小镜" />
                 </div>
                 <div className="flex items-center gap-1.5 rounded-xl rounded-tl-sm border border-gray-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-slate-800 px-4 py-3">
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '0ms' }} />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '150ms' }} />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '300ms' }} />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ backgroundColor: accent, animationDelay: '0ms' }} />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ backgroundColor: accent, animationDelay: '150ms' }} />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ backgroundColor: accent, animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
@@ -704,13 +754,14 @@ export function AssistantPanel() {
             onKeyDown={handleKeyDown}
             placeholder="输入你的问题…"
             rows={1}
-            className="max-h-24 min-h-[36px] flex-1 resize-none rounded-lg border border-gray-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-slate-800 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 outline-none transition-colors focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6]/30"
+            className="max-h-24 min-h-[36px] flex-1 resize-none rounded-lg border border-gray-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-slate-800 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 outline-none transition-colors focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
           />
           <button
             type="button"
             onClick={() => handleSend()}
             disabled={!input.trim() || loading}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#8B5CF6] text-white transition-colors hover:bg-[#3A80C9] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 hover:brightness-110 active:scale-95"
+            style={{ backgroundColor: accent }}
             aria-label="发送消息"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -357,6 +357,7 @@ export function createSceneWithActions(
       content: {
         type: 'quiz',
         questions: content.questions,
+        knowledgePoints: content.knowledgePoints,
       },
       actions,
     });

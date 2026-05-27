@@ -209,7 +209,9 @@
     "aiGrading": "AI is grading...",
     "aiGradingWait": "Please wait, analyzing your answers",
     "quizReport": "Quiz Report",
-    "retry": "Retry"
+    "retry": "Retry",
+    "knowledgePoints": "Key Knowledge Points",
+    "knowledgePointsHint": "Review these concepts to strengthen your understanding"
   },
   "roundtable": {
     "teacher": "TEACHER",

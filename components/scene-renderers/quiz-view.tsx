@@ -39,6 +39,7 @@ type Phase = 'not_started' | 'answering' | 'grading' | 'reviewing';
 interface QuizViewProps {
   readonly questions: QuizQuestion[];
   readonly sceneId: string;
+  readonly knowledgePoints?: string[];
 }
 
 /** Call /api/quiz-grade for a single short-answer question. */
@@ -538,14 +539,6 @@ function QuestionCard({
 
       {/* Body */}
       {children}
-
-      {/* Analysis (review only) */}
-      {isReview && question.analysis && (
-        <div className="mt-3 p-3 rounded-lg bg-blue-50/70 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-          <span className="font-medium">{t('quiz.analysis')}</span>
-          {question.analysis}
-        </div>
-      )}
     </motion.div>
   );
 }
@@ -646,7 +639,7 @@ function ScoreBanner({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export function QuizView({ questions, sceneId }: QuizViewProps) {
+export function QuizView({ questions, sceneId, knowledgePoints }: QuizViewProps) {
   const { t, locale } = useI18n();
 
   // Rehydrate submitted state from localStorage on first mount. Runs once.
@@ -935,6 +928,42 @@ export function QuizView({ questions, sceneId }: QuizViewProps) {
             {/* Results */}
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               <ScoreBanner score={earnedScore} total={totalPoints} results={results} />
+
+              {/* Knowledge Points Summary */}
+              {knowledgePoints && knowledgePoints.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50/80 to-indigo-50/60 dark:from-violet-950/40 dark:to-indigo-950/30 p-5"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpenText className="w-5 h-5 text-violet-500" />
+                    <h3 className="text-sm font-bold text-violet-700 dark:text-violet-300">
+                      {t('quiz.knowledgePoints')}
+                    </h3>
+                  </div>
+                  <p className="text-xs text-violet-600/70 dark:text-violet-400/70 mb-3">
+                    {t('quiz.knowledgePointsHint')}
+                  </p>
+                  <ul className="space-y-2">
+                    {knowledgePoints.map((point, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + i * 0.08 }}
+                        className="flex items-start gap-2.5 text-sm text-violet-800 dark:text-violet-200 leading-relaxed"
+                      >
+                        <span className="w-5 h-5 rounded-full bg-violet-200 dark:bg-violet-800 flex items-center justify-center text-[10px] font-bold text-violet-600 dark:text-violet-300 shrink-0 mt-0.5">
+                          {i + 1}
+                        </span>
+                        {point}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </motion.div>
+              )}
 
               {questions.map((q, i) => {
                 const r = resultMap[q.id];

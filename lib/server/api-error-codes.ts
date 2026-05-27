@@ -65,6 +65,16 @@ export const API_ERROR_CODES = {
   BETA_ACCESS_REQUIRED: 'BETA_ACCESS_REQUIRED',
   /** Duplicate beta access request */
   BETA_REQUEST_DUPLICATE: 'BETA_REQUEST_DUPLICATE',
+  /** Email not verified */
+  EMAIL_NOT_VERIFIED: 'EMAIL_NOT_VERIFIED',
+  /** Invalid or expired verification token */
+  VERIFY_TOKEN_INVALID: 'VERIFY_TOKEN_INVALID',
+  /** Invalid or expired reset token */
+  RESET_TOKEN_INVALID: 'RESET_TOKEN_INVALID',
+  /** File too large */
+  FILE_TOO_LARGE: 'FILE_TOO_LARGE',
+  /** Invalid file type */
+  INVALID_FILE_TYPE: 'INVALID_FILE_TYPE',
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
@@ -100,6 +110,11 @@ export const ERROR_CODE_STATUS: Record<ApiErrorCode, number> = {
   INVITATION_EXHAUSTED: 410,
   BETA_ACCESS_REQUIRED: 403,
   BETA_REQUEST_DUPLICATE: 409,
+  EMAIL_NOT_VERIFIED: 403,
+  VERIFY_TOKEN_INVALID: 400,
+  RESET_TOKEN_INVALID: 400,
+  FILE_TOO_LARGE: 413,
+  INVALID_FILE_TYPE: 400,
 };
 
 /** Default human-readable message for each error code */
@@ -133,4 +148,9 @@ export const ERROR_CODE_MESSAGES: Record<ApiErrorCode, string> = {
   INVITATION_EXHAUSTED: 'Invitation code has reached maximum uses',
   BETA_ACCESS_REQUIRED: 'Beta access credential required',
   BETA_REQUEST_DUPLICATE: 'You have already submitted a beta access request',
+  EMAIL_NOT_VERIFIED: 'Please verify your email address first',
+  VERIFY_TOKEN_INVALID: 'Invalid or expired verification token',
+  RESET_TOKEN_INVALID: 'Invalid or expired reset token',
+  FILE_TOO_LARGE: 'File size exceeds the limit',
+  INVALID_FILE_TYPE: 'Invalid file type',
 };

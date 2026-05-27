@@ -194,7 +194,9 @@
     "aiGrading": "AI 正在批改中...",
     "aiGradingWait": "請稍候，正在分析你的答案",
     "quizReport": "答題報告",
-    "retry": "重新答題"
+    "retry": "重新答題",
+    "knowledgePoints": "知識點總結",
+    "knowledgePointsHint": "回顧以下知識點，鞏固薄弱環節"
   },
   "roundtable": {
     "teacher": "教師",

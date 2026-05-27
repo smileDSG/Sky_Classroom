@@ -43,13 +43,21 @@ export function GreetingSection() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6"
+      className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 px-1"
     >
       {/* Greeting */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-          <span className="text-3xl">{greetingEmoji}</span>
-          {greeting}
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <motion.span
+            className="text-3xl"
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 1.5, delay: 0.5, repeat: Infinity, repeatDelay: 5 }}
+          >
+            {greetingEmoji}
+          </motion.span>
+          <span className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 dark:from-sky-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+            {greeting}
+          </span>
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           今天是学习的好日子，继续加油！
@@ -66,7 +74,8 @@ export function GreetingSection() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 + i * 0.05 }}
-              className="flex items-center gap-3 rounded-xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-3"
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="flex items-center gap-3 rounded-xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-3 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-slate-900/30 transition-shadow cursor-default"
             >
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.bg}`}>
                 <Icon className={`h-4 w-4 ${stat.color}`} />

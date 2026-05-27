@@ -20,6 +20,16 @@ export interface UserEntry {
   createdAt: number;
   updatedAt: number;
   lastLoginAt: number | null;
+  /** Profile fields (server-persisted) */
+  avatar: string | null;
+  nickname: string | null;
+  bio: string | null;
+  /** Email verification */
+  emailVerified: boolean;
+  emailVerifyToken: string | null;
+  /** Password reset */
+  resetToken: string | null;
+  resetTokenExpiry: number | null;
 }
 
 let _provider: StorageProvider | null = null;
@@ -55,6 +65,13 @@ export async function createUserDAO(storage?: StorageProvider): Promise<{
           createdAt: now,
           updatedAt: now,
           lastLoginAt: null,
+          avatar: user.avatar ?? null,
+          nickname: user.nickname ?? null,
+          bio: user.bio ?? null,
+          emailVerified: user.emailVerified ?? false,
+          emailVerifyToken: user.emailVerifyToken ?? null,
+          resetToken: user.resetToken ?? null,
+          resetTokenExpiry: user.resetTokenExpiry ?? null,
         } as unknown as Record<string, unknown>,
         createdAt: now,
         updatedAt: now,

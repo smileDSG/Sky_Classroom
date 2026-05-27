@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, Minimize2, Maximize2 } from 'lucide-react';
+import { Brain, Minimize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const DRAG_THRESHOLD = 4; // px of movement before it counts as a drag
@@ -76,7 +76,7 @@ export function DraggableQaButton({ className }: DraggableQaButtonProps) {
       if (collapsed) {
         setCollapsed(false);
       } else {
-        router.push('/sky/solve');
+        router.push('/sky/cloud-mind');
       }
     },
     [collapsed, router],
@@ -113,7 +113,7 @@ export function DraggableQaButton({ className }: DraggableQaButtonProps) {
               onClick={handleClick}
               className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 flex items-center justify-center active:scale-95 transition-shadow"
             >
-              <MessageSquare className="w-5 h-5" />
+              <Brain className="w-5 h-5" />
             </button>
           </motion.div>
         ) : (
@@ -129,8 +129,8 @@ export function DraggableQaButton({ className }: DraggableQaButtonProps) {
               onClick={handleClick}
               className="h-9 px-3 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 text-white text-sm font-medium shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 flex items-center gap-1.5 active:scale-95 transition-shadow whitespace-nowrap"
             >
-              <MessageSquare className="w-4 h-4" />
-              <span>答疑</span>
+              <Brain className="w-4 h-4" />
+              <span>智囊</span>
             </button>
             <button
               data-toggle-collapse

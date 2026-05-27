@@ -7,6 +7,7 @@ import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { SettingsDialog } from '@/components/settings';
 import { UpgradeDialog } from '@/components/billing/upgrade-dialog';
 import { SkyTabBar } from './sky-tab-bar';
+import { BackgroundTasksIndicator } from './background-tasks-indicator';
 import Link from 'next/link';
 
 interface SkyAppShellProps {
@@ -72,23 +73,16 @@ function StarryBackground() {
  */
 function AnimatedLogo() {
   return (
-    <Link href="/" className="flex items-center gap-3 group">
-      <div className="relative">
-        <motion.div
-          className="text-2xl"
-          animate={{ rotate: [0, 10, -10, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          ☁️
-        </motion.div>
-        <motion.div
-          className="absolute inset-0 rounded-full bg-indigo-400/20 blur-md"
-          animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        />
-      </div>
+    <Link href="/" className="flex items-center gap-2 group">
+      <motion.img
+        src="/logo-icon.svg"
+        alt="天空课堂"
+        className="w-8 h-8"
+        animate={{ rotate: [0, 5, -5, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+      />
       <div className="flex flex-col">
-        <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+        <h1 className="text-lg font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
           天空课堂
         </h1>
         <span className="text-[10px] text-slate-400 dark:text-slate-500 -mt-0.5 tracking-wider">
@@ -142,6 +136,7 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
 
       <main className="flex-1 overflow-auto px-6 py-6">{children}</main>
 
+      <BackgroundTasksIndicator />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       <UpgradeDialog open={upgradeOpen} onClose={() => setUpgradeOpen(false)} currentPlan="free" />
     </div>

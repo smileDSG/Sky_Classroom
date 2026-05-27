@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, signRefreshToken, verifyPassword } from '@/lib/server/auth';
 import { createUserDAO } from '@/lib/storage/dao/users';
+import { ensureAdminUser } from '@/lib/server/admin-seed';
 
 const LoginSchema = z.object({
   emailOrUsername: z.string().min(1),
@@ -16,6 +17,8 @@ const LoginSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    await ensureAdminUser();
+
     const body = await request.json();
     const parsed = LoginSchema.safeParse(body);
     if (!parsed.success) {

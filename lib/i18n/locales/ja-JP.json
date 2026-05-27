@@ -209,7 +209,9 @@
     "aiGrading": "AIが採点中...",
     "aiGradingWait": "回答を分析しています。お待ちください",
     "quizReport": "クイズレポート",
-    "retry": "やり直す"
+    "retry": "やり直す",
+    "knowledgePoints": "重要ポイント",
+    "knowledgePointsHint": "これらの概念を復習して理解を深めましょう"
   },
   "roundtable": {
     "teacher": "教師",

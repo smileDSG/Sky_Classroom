@@ -209,7 +209,9 @@
     "aiGrading": "الذكاء الاصطناعي يصحح...",
     "aiGradingWait": "يرجى الانتظار، جارٍ تحليل إجاباتك",
     "quizReport": "تقرير الاختبار",
-    "retry": "إعادة المحاولة"
+    "retry": "إعادة المحاولة",
+    "knowledgePoints": "النقاط المعرفية الأساسية",
+    "knowledgePointsHint": "راجع هذه المفاهيم لتعزيز فهمك"
   },
   "roundtable": {
     "teacher": "المعلم",

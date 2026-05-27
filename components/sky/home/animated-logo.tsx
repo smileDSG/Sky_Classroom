@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Sparkles, Cloud, Zap, Brain, Wand2 } from 'lucide-react';
+import { Cloud, Brain, Wand2 } from 'lucide-react';
 
 // 动态Logo组件
 export function AnimatedLogo() {
@@ -18,9 +18,9 @@ export function AnimatedLogo() {
         className="absolute inset-0 rounded-3xl"
         animate={{
           boxShadow: [
-            '0 0 40px rgba(135,206,235,0.3)',
-            '0 0 60px rgba(135,206,235,0.5)',
-            '0 0 40px rgba(135,206,235,0.3)',
+            '0 0 40px rgba(14,165,233,0.2)',
+            '0 0 60px rgba(59,130,246,0.3)',
+            '0 0 40px rgba(14,165,233,0.2)',
           ],
         }}
         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
@@ -28,7 +28,7 @@ export function AnimatedLogo() {
 
       {/* 主Logo容器 */}
       <div className="relative flex items-center gap-4">
-        {/* 云朵图标 */}
+        {/* Logo图标 */}
         <motion.div
           className="relative w-16 h-16 md:w-20 md:h-20"
           animate={{ y: [0, -5, 0] }}
@@ -40,48 +40,7 @@ export function AnimatedLogo() {
             animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
             transition={{ duration: 3, repeat: Infinity }}
           />
-
-          {/* 云朵SVG */}
-          <svg
-            viewBox="0 0 80 60"
-            className="w-full h-full text-sky-500 dark:text-sky-400 drop-shadow-lg"
-            fill="currentColor"
-          >
-            <defs>
-              <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#87CEEB" />
-                <stop offset="100%" stopColor="#4A90D9" />
-              </linearGradient>
-            </defs>
-            <ellipse cx="25" cy="40" rx="18" ry="14" fill="url(#cloudGrad)" />
-            <ellipse cx="40" cy="28" rx="22" ry="18" fill="url(#cloudGrad)" />
-            <ellipse cx="58" cy="38" rx="16" ry="13" fill="url(#cloudGrad)" />
-            <ellipse cx="15" cy="45" rx="12" ry="9" fill="url(#cloudGrad)" />
-            <ellipse cx="65" cy="42" rx="14" ry="11" fill="url(#cloudGrad)" />
-          </svg>
-
-          {/* 太阳 */}
-          <motion.div
-            className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-r from-amber-300 to-orange-400"
-            style={{ boxShadow: '0 0 20px rgba(251,191,36,0.6)' }}
-            animate={{
-              scale: [1, 1.1, 1],
-              rotate: [0, 180, 360],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            {/* 太阳光芒 */}
-            {[...Array(8)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute top-1/2 left-1/2 w-0.5 h-2 bg-amber-300/60"
-                style={{
-                  transform: `rotate(${i * 45}deg) translateY(-10px)`,
-                  transformOrigin: 'center bottom',
-                }}
-              />
-            ))}
-          </motion.div>
+          <img src="/logo-icon.svg" alt="天空课堂" className="w-full h-full drop-shadow-lg" />
         </motion.div>
 
         {/* 文字部分 */}
@@ -89,7 +48,7 @@ export function AnimatedLogo() {
           <motion.h1
             className="text-3xl md:text-4xl font-black tracking-tight"
             style={{
-              background: 'linear-gradient(135deg, #4A90D9 0%, #722ed1 50%, #4A90D9 100%)',
+              background: 'linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #1d4ed8 100%)',
               backgroundSize: '200% 200%',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -109,7 +68,7 @@ export function AnimatedLogo() {
             transition={{ delay: 0.3 }}
           >
             <Cloud className="w-3.5 h-3.5 text-sky-400" />
-            <span>云端智学，无限可能</span>
+            <span>AI · 学习 · 无限可能</span>
           </motion.div>
         </div>
       </div>

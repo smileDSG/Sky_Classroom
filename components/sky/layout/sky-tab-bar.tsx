@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { label: '摘星锦囊', href: '/sky', icon: Star },
-  { label: '云端智囊', href: '/sky/cloud-mind', icon: Brain, badge: 'New' },
+  { label: '云端智囊', href: '/sky/cloud-mind', icon: Brain, badge: '6' },
   { label: '天梯工坊', href: '/sky/learning', icon: TrendingUp },
   { label: '云翼助手', href: '/sky/assistant', icon: Feather },
   { label: '天穹讲课', href: '/', icon: Globe },

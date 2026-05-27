@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   title: '天空课堂',
   description:
     '天空课堂 — AI 驱动的互动课堂。上传 PDF，即刻生成沉浸式多-agent学习体验。',
+  icons: {
+    icon: '/logo-icon.svg',
+  },
 };
 
 export default function RootLayout({

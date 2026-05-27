@@ -111,6 +111,7 @@ export interface SlideContent {
 export interface QuizContent {
   type: 'quiz';
   questions: QuizQuestion[];
+  knowledgePoints?: string[];
 }
 
 export interface QuizOption {

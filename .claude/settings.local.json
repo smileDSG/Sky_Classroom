@@ -132,7 +132,14 @@
       "Bash(Select-String -Pattern \"page\\\\.tsx\")",
       "Bash(Select-String -Pattern \"solver-agent\" -Context 2)",
       "Read(//usr/local/**)",
-      "Bash(npm --version)"
+      "Bash(npm --version)",
+      "Bash(start *)",
+      "Bash(npx skills *)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri 'http://localhost:3000' -TimeoutSec 10 -UseBasicParsing; Write-Host \"Status: $\\($r.StatusCode\\)\"; Write-Host \"Length: $\\($r.Content.Length\\)\" } catch { Write-Host \"Error: $_\" })",
+      "Bash(python3 *)",
+      "Bash(findstr \"page\\\\.tsx\")",
+      "Bash(findstr /V \"settings\")",
+      "Bash(findstr /n \"classroomOutlines\" app\\\\page.tsx)"
     ]
   }
 }

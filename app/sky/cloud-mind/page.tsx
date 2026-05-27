@@ -20,8 +20,8 @@ const TOOLS = [
     href: '/sky/cloud-mind/solve',
     icon: Camera,
     gradient: 'from-violet-500 to-purple-600',
-    glowColor: 'violet',
     stats: '已解答 1.2k+ 题',
+    badge: '热门',
   },
   {
     id: 'slides',
@@ -30,7 +30,6 @@ const TOOLS = [
     href: '/sky/cloud-mind/slides',
     icon: Presentation,
     gradient: 'from-cyan-500 to-blue-600',
-    glowColor: 'cyan',
     stats: '支持 PPT/PDF',
   },
   {
@@ -40,7 +39,6 @@ const TOOLS = [
     href: '/sky/cloud-mind/memory',
     icon: Brain,
     gradient: 'from-rose-500 to-pink-600',
-    glowColor: 'rose',
     stats: '科学记忆法',
   },
 ];
@@ -97,14 +95,14 @@ export default function CloudMindPage() {
               云端智囊
             </h1>
             <p className="text-indigo-100 text-base md:text-lg max-w-xl leading-relaxed">
-              汇聚 AI 之力，为你的学习保驾护航。拍照搜题、幻灯片讲解、智能写作……
-              一切尽在云端智囊。
+              汇聚 AI 之力，为你的学习保驾护航。拍照搜题、幻灯片讲解、智能写作、智能出题……
+              六大工具一站直达。
             </p>
 
             <div className="mt-6 flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-indigo-200">
                 <Zap className="h-4 w-4" />
-                <span>6 大智能工具</span>
+                <span>{TOOLS.length} 大智能工具</span>
               </div>
               <div className="h-4 w-px bg-indigo-400/40" />
               <div className="flex items-center gap-2 text-sm text-indigo-200">
@@ -120,7 +118,7 @@ export default function CloudMindPage() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5"
         >
           {TOOLS.map((tool) => {
             const Icon = tool.icon;
@@ -132,15 +130,22 @@ export default function CloudMindPage() {
                 >
                   {/* Glow effect on hover */}
                   <div
-                    className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${tool.gradient} opacity-5`}
+                    className={`absolute inset-0 opacity-0 group-hover:opacity-[0.08] transition-opacity duration-500 bg-gradient-to-br ${tool.gradient}`}
                   />
 
                   <div className="relative z-10 flex flex-col h-full">
                     <div className="flex items-start justify-between mb-4">
-                      <div
-                        className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-lg`}
-                      >
-                        <Icon className="h-6 w-6 text-white" />
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-lg`}
+                        >
+                          <Icon className="h-6 w-6 text-white" />
+                        </div>
+                        {tool.badge && (
+                          <span className="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                            {tool.badge}
+                          </span>
+                        )}
                       </div>
                       <ArrowRight className="h-5 w-5 text-slate-300 dark:text-slate-600 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all duration-300" />
                     </div>
@@ -172,7 +177,7 @@ export default function CloudMindPage() {
           className="rounded-2xl bg-gradient-to-r from-slate-100 to-indigo-50 dark:from-slate-800/50 dark:to-indigo-950/30 border border-slate-200/50 dark:border-slate-700/30 p-6 text-center"
         >
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            更多 AI 工具正在开发中，敬请期待 ✨
+            所有工具均支持多学科，持续迭代中 ✨
           </p>
         </motion.div>
       </div>
