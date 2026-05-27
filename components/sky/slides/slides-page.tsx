@@ -441,32 +441,35 @@ export default function SlidesPage() {
       `}</style>
 
       {/* Top bar */}
-      <header className="relative z-10 flex flex-shrink-0 items-center border-b border-slate-200/50 dark:border-gray-700/50 bg-white/70 dark:bg-gray-900/70 px-6 py-3 backdrop-blur-xl">
+      <header className="relative z-10 flex flex-shrink-0 items-center border-b border-slate-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-900/80 px-5 py-3 backdrop-blur-xl">
         {/* Left: back + brand */}
-        <div className="flex w-48 flex-shrink-0 items-center gap-2 animate-fade-in-left">
+        <div className="flex w-56 flex-shrink-0 items-center gap-3 animate-fade-in-left">
           <Link
             href="/sky"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-600 dark:hover:text-gray-200 hover:scale-105 active:scale-95"
-            title="返回首页"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 dark:text-gray-500 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-600 dark:hover:text-gray-200 hover:scale-105 active:scale-95"
+            title="返回云端智囊"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 text-white shadow-lg shadow-sky-500/25">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent tracking-tight">天空课堂</span>
-            <span className="text-[10px] font-medium text-slate-400 dark:text-gray-500 -mt-0.5">AI 互动课件</span>
+          <div className="h-6 w-px bg-slate-200 dark:bg-gray-700" />
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 text-white shadow-lg shadow-sky-500/25">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">PPT课件生成</span>
+              <span className="text-[10px] font-medium text-slate-400 dark:text-gray-500 -mt-0.5">AI 智能创作</span>
+            </div>
           </div>
           {hasContent && (
             <button
               onClick={() => setSidebarOpen((v) => !v)}
-              className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-600 dark:hover:text-gray-200 hover:scale-105 active:scale-95"
-              title={sidebarOpen ? '收起讲解栏' : '展开讲解栏'}
+              className="ml-auto flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 dark:text-gray-500 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-600 dark:hover:text-gray-200 hover:scale-105 active:scale-95"
+              title={sidebarOpen ? '收起侧边栏' : '展开侧边栏'}
             >
               <svg
                 className={`h-4 w-4 transition-transform duration-300 ${sidebarOpen ? '' : 'rotate-180'}`}
@@ -481,14 +484,14 @@ export default function SlidesPage() {
         </div>
 
         {/* Center: input + controls */}
-        <div className="flex flex-1 items-center justify-center gap-3 animate-fade-in-down">
-          <div className="relative w-full max-w-md">
+        <div className="flex flex-1 items-center justify-center gap-3 px-4 animate-fade-in-down">
+          <div className="relative w-full max-w-lg">
             <input
               value={topic}
               onChange={(e) => setGenerationOptions({ topic: e.target.value, difficulty })}
               onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-              placeholder="输入教学主题，如：勾股定理、牛顿定律…"
-              className="w-full rounded-xl border border-slate-200/80 dark:border-gray-700/80 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-4 py-2.5 pl-10 text-sm text-slate-700 dark:text-gray-200 placeholder:text-slate-400 dark:placeholder:text-gray-500 dark:text-gray-500 focus:border-sky-400 focus:bg-white dark:focus:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-900 transition-all shadow-sm"
+              placeholder="输入教学主题，如：勾股定理、牛顿定律、细胞分裂…"
+              className="w-full rounded-xl border border-slate-200/80 dark:border-gray-700/80 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2.5 pl-10 text-sm text-slate-700 dark:text-gray-200 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:border-sky-400 focus:bg-white dark:focus:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-900 transition-all shadow-sm"
             />
             <svg
               className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
@@ -514,7 +517,7 @@ export default function SlidesPage() {
                 className={`relative rounded-[10px] px-3.5 py-2 text-sm font-semibold transition-all duration-300 ${
                   d.value === difficulty
                     ? 'bg-gradient-to-r from-sky-500 to-blue-500 text-white shadow-md shadow-sky-200/50'
-                    : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:text-gray-200 hover:bg-white/60 dark:hover:bg-gray-800/60 dark:bg-gray-900/60'
+                    : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:text-gray-200 hover:bg-white/60 dark:hover:bg-gray-800/60'
                 }`}
               >
                 {d.label}
@@ -534,25 +537,19 @@ export default function SlidesPage() {
               </svg>
             )}
             <span className="relative">
-              {generating ? '生成中' : '生成幻灯片'}
-              {!generating && (
-                <span className="absolute -right-1 -top-1 flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                </span>
-              )}
+              {generating ? '生成中...' : '生成课件'}
             </span>
           </button>
         </div>
 
-        {/* Right: status + template */}
-        <div className="flex w-48 flex-shrink-0 items-center justify-end gap-2 animate-fade-in-right">
+        {/* Right: status */}
+        <div className="flex w-56 flex-shrink-0 items-center justify-end gap-2 animate-fade-in-right">
           {status && (
             <span
-              className={`text-xs font-medium ${
+              className={`text-xs font-medium px-3 py-1.5 rounded-lg ${
                 status.includes('失败') || status.includes('错误')
-                  ? 'text-red-500'
-                  : 'text-slate-500 dark:text-gray-400'
+                  ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
+                  : 'text-slate-500 bg-slate-50 dark:text-gray-400 dark:bg-gray-800'
               }`}
             >
               {status}
@@ -565,12 +562,18 @@ export default function SlidesPage() {
       <div className="relative z-10 flex flex-1 overflow-hidden">
         {/* Left panel */}
         <aside
-          className={`flex min-h-0 flex-shrink-0 flex-col overflow-hidden border-r border-slate-200/50 dark:border-gray-700/50 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl transition-all duration-300 ${
+          className={`flex min-h-0 flex-shrink-0 flex-col overflow-hidden border-r border-slate-200/50 dark:border-gray-700/50 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl transition-all duration-300 ${
             sidebarOpen ? 'w-64' : 'w-0 border-r-0'
           }`}
         >
           {/* Avatar selector */}
-          <div className="scrollbar-hide flex-shrink-0 overflow-y-auto px-4 pt-4" style={{ maxHeight: '35%', overscrollBehavior: 'contain' }}>
+          <div className="scrollbar-hide flex-shrink-0 overflow-y-auto px-4 pt-4 pb-2" style={{ maxHeight: '35%', overscrollBehavior: 'contain' }}>
+            <div className="mb-2 flex items-center gap-2 px-1">
+              <svg className="h-3.5 w-3.5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-gray-500">讲解角色</span>
+            </div>
             <AvatarSelector
               avatars={AVATAR_CONFIGS}
               selectedId={selectedAvatar.id}
@@ -585,7 +588,7 @@ export default function SlidesPage() {
           <div className="mx-4 h-px flex-shrink-0 bg-gradient-to-r from-transparent via-slate-200/60 dark:via-gray-700/60 to-transparent" />
 
           {/* Thumbnails */}
-          <div className="scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-3" style={{ overscrollBehavior: 'contain' }}>
+          <div className="scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-3" style={{ overscrollBehavior: 'contain' }}>
             <div className="mb-3 flex items-center justify-between px-1">
               <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-gray-500">
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -593,19 +596,21 @@ export default function SlidesPage() {
                 </svg>
                 幻灯片
               </span>
-              <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-slate-100 dark:bg-gray-800 px-1.5 text-[10px] font-bold tabular-nums text-slate-500 dark:text-gray-400">
-                {totalPages}
-              </span>
+              {totalPages > 0 && (
+                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/30 px-1.5 text-[10px] font-bold tabular-nums text-sky-600 dark:text-sky-400">
+                  {totalPages}
+                </span>
+              )}
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1">
               {previewImages ? (
                 previewImages.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveIndex(i)}
-                    className={`group relative flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-300 ${
+                    className={`group relative flex items-center gap-2.5 rounded-xl p-2 text-left transition-all duration-200 ${
                       i === activeIndex
-                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50/50 dark:from-blue-900/30 dark:to-indigo-900/20 ring-1 ring-blue-200/60 dark:ring-blue-800/40 shadow-sm shadow-blue-100/50 dark:shadow-blue-900/20'
+                        ? 'bg-gradient-to-r from-sky-50 to-blue-50/50 dark:from-sky-900/20 dark:to-blue-900/10 ring-1 ring-sky-200/60 dark:ring-sky-800/40 shadow-sm'
                         : 'hover:bg-slate-50/80 dark:hover:bg-gray-800/80'
                     }`}
                   >
@@ -613,42 +618,43 @@ export default function SlidesPage() {
                       <img
                         src={img}
                         alt={`Thumb ${i + 1}`}
-                        className="h-[45px] w-[80px] rounded-lg object-cover shadow-sm"
+                        className="h-[40px] w-[72px] rounded-lg object-cover shadow-sm ring-1 ring-slate-200/50 dark:ring-gray-700/50"
                         draggable={false}
                       />
-                      <span className={`absolute -left-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm ${
+                      <span className={`absolute -left-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold shadow-sm transition-colors ${
                         i === activeIndex
-                          ? 'bg-sky-500 text-white shadow-sky-200'
-                          : 'bg-white dark:bg-gray-800 text-slate-400 dark:text-gray-500 shadow-sm ring-1 ring-slate-200 dark:ring-gray-600'
+                          ? 'bg-sky-500 text-white shadow-sky-200/50'
+                          : 'bg-white dark:bg-gray-800 text-slate-500 dark:text-gray-400 ring-1 ring-slate-200 dark:ring-gray-600'
                       }`}>
                         {i + 1}
                       </span>
                     </div>
-                    <div className="flex min-w-0 flex-col">
-                      <span
-                        className={`text-[11px] font-semibold ${
-                          i === activeIndex ? 'text-sky-700 dark:text-sky-300' : 'text-slate-500 dark:text-gray-400'
-                        }`}
-                      >
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className={`text-[11px] font-semibold truncate ${
+                        i === activeIndex ? 'text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-gray-400'
+                      }`}>
                         {i === 0 ? '封面' : i === previewImages.length - 1 ? '封底' : `第 ${i + 1} 页`}
                       </span>
-                      <span className="text-[10px] text-slate-400 dark:text-gray-500">
-                        {i === activeIndex ? (
-                          <span className="flex items-center gap-1 text-sky-500 dark:text-sky-400">
-                            <span className="relative flex h-1.5 w-1.5">
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
-                              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-500" />
-                            </span>
-                            当前
+                      {i === activeIndex && (
+                        <span className="flex items-center gap-1 text-[10px] text-sky-500 dark:text-sky-400">
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-500" />
                           </span>
-                        ) : (
-                          ''
-                        )}
-                      </span>
+                          当前查看
+                        </span>
+                      )}
                     </div>
                   </button>
                 ))
-              ) : null}
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 gap-2">
+                  <svg className="h-8 w-8 text-slate-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a2.25 2.25 0 002.25-2.25V5.25a2.25 2.25 0 00-2.25-2.25H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                  </svg>
+                  <p className="text-[11px] text-slate-400 dark:text-gray-500">生成后显示幻灯片</p>
+                </div>
+              )}
             </div>
           </div>
         </aside>
@@ -667,51 +673,134 @@ export default function SlidesPage() {
                 />
               </div>
             ) : generating ? (
-              <div className="flex h-full flex-col items-center justify-center bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm gap-5">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 dark:border-gray-700 border-t-sky-500" />
-                <div className="flex flex-col items-center gap-3 w-80">
-                  <p className="text-sm font-medium text-slate-600 dark:text-gray-300 text-center">
-                    {status || '正在初始化...'}
-                  </p>
-                  {/* Progress bar */}
-                  <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-gray-800 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-500 transition-all duration-500 ease-out"
-                      style={{ width: `${genProgress || 5}%` }}
-                    />
+              <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-sky-50/50 to-blue-50/30 dark:from-sky-900/10 dark:to-blue-900/10 backdrop-blur-sm gap-6">
+                {/* Animated icon */}
+                <div className="relative">
+                  <div className="h-16 w-16 animate-spin rounded-full border-4 border-sky-100 dark:border-sky-900/30 border-t-sky-500" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="h-6 w-6 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
                   </div>
-                  <p className="text-[11px] text-slate-400 dark:text-gray-500 tabular-nums">{Math.round(genProgress || 5)}%</p>
+                </div>
+                <div className="flex flex-col items-center gap-4 w-80">
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-base font-semibold text-slate-700 dark:text-gray-200">
+                      {genStage === 'thinking' ? '正在构思课件结构...' :
+                       genStage === 'writing' ? '正在生成课件内容...' :
+                       genStage === 'rendering' ? '正在渲染幻灯片...' : '正在初始化...'}
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-gray-500">
+                      {status || 'AI 正在为您创作精美课件'}
+                    </p>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="w-full space-y-2">
+                    <div className="h-2.5 rounded-full bg-slate-100 dark:bg-gray-800 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 transition-all duration-500 ease-out"
+                        style={{ width: `${genProgress || 5}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] text-slate-400 dark:text-gray-500">
+                        {genStage === 'thinking' ? '分析主题' :
+                         genStage === 'writing' ? '生成内容' :
+                         genStage === 'rendering' ? '渲染幻灯片' : '准备中'}
+                      </p>
+                      <p className="text-[11px] font-medium text-sky-500 tabular-nums">{Math.round(genProgress || 5)}%</p>
+                    </div>
+                  </div>
+                  {/* Tips */}
+                  <p className="text-[11px] text-slate-400 dark:text-gray-500 text-center mt-2">
+                    生成完成后将自动显示预览，您可以继续浏览其他页面
+                  </p>
                 </div>
               </div>
             ) : generatedPptx ? (
-              <div className="flex h-full flex-col items-center justify-center bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm gap-4 animate-fade-in-scale">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 shadow-sm">
-                  <svg className="h-8 w-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+              <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-emerald-50/50 to-teal-50/30 dark:from-emerald-900/10 dark:to-teal-900/10 backdrop-blur-sm gap-6 animate-fade-in-scale">
+                {/* Success icon with animation */}
+                <div className="relative">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 shadow-lg shadow-emerald-200/50 dark:shadow-emerald-900/20">
+                    <svg className="h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="flex flex-col items-center gap-1.5">
-                  <p className="text-sm font-semibold text-slate-700 dark:text-gray-200">课件生成成功</p>
-                  <p className="text-xs text-slate-400 dark:text-gray-500">文件已自动下载到本地</p>
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-lg font-bold text-slate-800 dark:text-gray-100">课件生成成功！</p>
+                  <p className="text-sm text-slate-500 dark:text-gray-400">共 {totalPages} 页幻灯片已准备就绪</p>
                 </div>
-                <button
-                  onClick={handleDownloadGenerated}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  重新下载课件
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleDownloadGenerated}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    下载课件
+                  </button>
+                  <button
+                    onClick={() => {
+                      setGeneratedPptx(null);
+                      setPreviewImages(null);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-gray-700 px-5 py-3 text-sm font-medium text-slate-600 dark:text-gray-300 transition-all hover:bg-slate-50 dark:hover:bg-gray-800 hover:scale-105 active:scale-95"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    生成新课件
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm gap-3 animate-fade-in-scale">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/60 dark:bg-gray-900/60 shadow-sm">
-                  <svg className="h-8 w-8 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                  </svg>
+              <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-sky-50/30 to-indigo-50/20 dark:from-sky-900/5 dark:to-indigo-900/5 backdrop-blur-sm gap-6 animate-fade-in-scale">
+                {/* Welcome icon */}
+                <div className="relative">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-blue-100 dark:from-sky-900/20 dark:to-blue-900/20 shadow-lg shadow-sky-200/30 dark:shadow-sky-900/10">
+                    <svg className="h-10 w-10 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                  </div>
+                  <div className="absolute -right-2 -bottom-2 flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+                    </svg>
+                  </div>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-gray-400">输入主题，点击生成课件</p>
+                <div className="flex flex-col items-center gap-3 max-w-sm text-center">
+                  <p className="text-lg font-bold text-slate-800 dark:text-gray-100">AI PPT课件生成器</p>
+                  <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">
+                    输入教学主题，AI 将为您一键生成精美的PPT课件
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-gray-500">
+                  <div className="flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
+                    <span>快速生成</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                    </svg>
+                    <span>精美设计</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
+                    <span>多难度支持</span>
+                  </div>
+                </div>
               </div>
             )}
             <AvatarSpeechPlayer
