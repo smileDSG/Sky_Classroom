@@ -6,8 +6,32 @@ import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
 import { InlineMath } from '@/components/ui/inline-math';
 import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
+import {
+  retrieveRelevantMemories,
+  buildMemoryContext,
+  injectMemoryIntoPrompt,
+  saveExtractedMemories,
+} from '@/lib/ai/memory-context';
+import {
+  extractMemoriesFromConversation,
+  detectConversationTopic,
+  generateConversationSummary,
+} from '@/lib/ai/memory-extractor';
+import {
+  createConversation,
+  appendMessage,
+  appendMessages,
+  updateSummary,
+  listConversations,
+  deleteConversation,
+  getConversation,
+  type AssistantConversationRecord,
+} from '@/lib/storage/dao/assistant-conversation';
+import type { AssistantMessage } from '@/lib/utils/database';
 
 const log = createLogger('AssistantPanel');
+
+const AGENT_ID = 'sky-assistant';
 
 const KAGAMI_SYSTEM_PROMPT = `你是柊镜（小镜），来自幸运星的傲娇女高中生。性格特点：
 - 外冷内热：表面毒舌不耐烦，实际很关心对方的学习，绝对不会真的拒绝帮助
@@ -72,16 +96,28 @@ export function AssistantPanel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<KagamiMode>('anime');
+  const [showHistory, setShowHistory] = useState(false);
+  const [conversations, setConversations] = useState<AssistantConversationRecord[]>([]);
+  const [memoryContextStr, setMemoryContextStr] = useState<string>('');
+
+  // Current conversation ID for persistence
+  const currentConvIdRef = useRef<string | null>(null);
+
   // Hydrate mode from localStorage after mount (avoids SSR mismatch)
   useEffect(() => { setMode(loadMode()); }, []);
+
   // Reset chat when mode switches so the two personas don't share history
   const prevModeRef = useRef(mode);
   useEffect(() => {
     if (prevModeRef.current !== mode) {
+      // Save current conversation before switching
+      void saveCurrentConversation();
       setMessages([]);
+      currentConvIdRef.current = null;
       prevModeRef.current = mode;
     }
   }, [mode]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -91,6 +127,150 @@ export function AssistantPanel() {
     idCounterRef.current += 1;
     return `msg-${idCounterRef.current}`;
   }, []);
+
+  // ── Memory loading ──────────────────────────────────────────────
+
+  /** Load memory context for the current conversation */
+  const loadMemoryContext = useCallback(async (userMessage: string) => {
+    try {
+      const memories = await retrieveRelevantMemories(AGENT_ID, userMessage);
+      const context = buildMemoryContext(memories);
+      if (context) {
+        const fullContext = `以下是该学生的历史学习档案，请在回答时参考这些信息，使回答更加个性化：\n${context}`;
+        setMemoryContextStr(fullContext);
+        log.info(`Loaded ${memories.length} memories for context`);
+      } else {
+        setMemoryContextStr('');
+      }
+    } catch (err) {
+      log.warn('Failed to load memory context:', err);
+      setMemoryContextStr('');
+    }
+  }, []);
+
+  // ── Conversation persistence ────────────────────────────────────
+
+  /** Save the current conversation to IndexedDB */
+  const saveCurrentConversation = useCallback(async () => {
+    if (messages.length === 0) return;
+
+    try {
+      const now = Date.now();
+      const convMessages: AssistantMessage[] = messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: now,
+      }));
+
+      if (!currentConvIdRef.current) {
+        // Create new conversation
+        const conv = await createConversation({
+          mode,
+          subject,
+          difficulty,
+          style,
+          firstMessage: messages[0]?.content,
+        });
+        currentConvIdRef.current = conv.id;
+        await appendMessages(conv.id, convMessages);
+      } else {
+        // Append to existing conversation
+        await appendMessages(currentConvIdRef.current, convMessages);
+      }
+
+      // Extract and save memories from this conversation
+      const extracted = extractMemoriesFromConversation(
+        messages.map((m) => ({ role: m.role, content: m.content })),
+      );
+      if (extracted.length > 0) {
+        await saveExtractedMemories(AGENT_ID, extracted, currentConvIdRef.current ?? undefined);
+        log.info(`Extracted ${extracted.length} memories from conversation`);
+      }
+
+      // Update conversation summary
+      if (currentConvIdRef.current && messages.length >= 4) {
+        const summary = generateConversationSummary(
+          messages.map((m) => ({ role: m.role, content: m.content })),
+        );
+        await updateSummary(currentConvIdRef.current, summary);
+      }
+    } catch (err) {
+      log.warn('Failed to save conversation:', err);
+    }
+  }, [messages, mode, subject, difficulty, style]);
+
+  /** Load conversation history list */
+  const loadConversationHistory = useCallback(async () => {
+    try {
+      const convs = await listConversations({ mode, limit: 20 });
+      setConversations(convs);
+    } catch (err) {
+      log.warn('Failed to load conversation history:', err);
+    }
+  }, [mode]);
+
+  /** Load a past conversation */
+  const loadConversation = useCallback(async (convId: string) => {
+    try {
+      const conv = await getConversation(convId);
+      if (!conv) return;
+
+      const loadedMessages: Message[] = conv.messages
+        .filter((m) => m.role !== 'system')
+        .map((m, i) => ({
+          id: m.id || `loaded-${i}`,
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        }));
+
+      setMessages(loadedMessages);
+      currentConvIdRef.current = conv.id;
+
+      // Sync counter so new messages don't collide with loaded msg-N IDs
+      const maxNum = loadedMessages.reduce((max, m) => {
+        const match = m.id?.match(/^msg-(\d+)$/);
+        return match ? Math.max(max, parseInt(match[1], 10)) : max;
+      }, 0);
+      idCounterRef.current = maxNum;
+
+      setShowHistory(false);
+    } catch (err) {
+      log.warn('Failed to load conversation:', err);
+    }
+  }, []);
+
+  /** Start a new conversation */
+  const startNewConversation = useCallback(() => {
+    void saveCurrentConversation();
+    setMessages([]);
+    currentConvIdRef.current = null;
+    setMemoryContextStr('');
+  }, [saveCurrentConversation]);
+
+  /** Delete a conversation */
+  const handleDeleteConversation = useCallback(async (convId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await deleteConversation(convId);
+      if (currentConvIdRef.current === convId) {
+        setMessages([]);
+        currentConvIdRef.current = null;
+      }
+      await loadConversationHistory();
+    } catch (err) {
+      log.warn('Failed to delete conversation:', err);
+    }
+  }, [loadConversationHistory]);
+
+  // Load history when panel opens
+  useEffect(() => {
+    if (showHistory) {
+      void loadConversationHistory();
+    }
+  }, [showHistory, loadConversationHistory]);
+
+  // ── Scroll ──────────────────────────────────────────────────────
 
   const scrollToBottom = useCallback(() => {
     const el = messagesListRef.current;
@@ -103,8 +283,9 @@ export function AssistantPanel() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // Prevent scroll chaining
   useScrollIsolation(messagesListRef, true);
+
+  // ── Send message ────────────────────────────────────────────────
 
   const handleSend = useCallback(
     (text?: string) => {
@@ -129,28 +310,38 @@ export function AssistantPanel() {
 
       const modelConfig = getCurrentModelConfig();
 
-      // Prepend mode-appropriate persona as system message
-      const allMessages = [
-        { role: 'system' as const, content: mode === 'anime' ? KAGAMI_SYSTEM_PROMPT : NORMAL_SYSTEM_PROMPT },
-        ...newMessages,
-      ];
+      // Load memory context asynchronously, then send
+      void (async () => {
+        try {
+          const memories = await retrieveRelevantMemories(AGENT_ID, msg);
+          const memContext = buildMemoryContext(memories);
+          const fullMemoryContext = memContext
+            ? `以下是该学生的历史学习档案，请在回答时参考这些信息，使回答更加个性化：\n${memContext}`
+            : undefined;
 
-      fetch('/api/sky/assistant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: abortController.signal,
-        body: JSON.stringify({
-          messages: allMessages,
-          subject,
-          difficulty,
-          style,
-          model: modelConfig.modelString,
-          apiKey: modelConfig.apiKey,
-          baseUrl: modelConfig.baseUrl,
-          providerType: modelConfig.providerType,
-        }),
-      })
-        .then(async (res) => {
+          // Prepend mode-appropriate persona as system message
+          const allMessages = [
+            { role: 'system' as const, content: mode === 'anime' ? KAGAMI_SYSTEM_PROMPT : NORMAL_SYSTEM_PROMPT },
+            ...newMessages,
+          ];
+
+          const res = await fetch('/api/sky/assistant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: abortController.signal,
+            body: JSON.stringify({
+              messages: allMessages,
+              subject,
+              difficulty,
+              style,
+              memoryContext: fullMemoryContext,
+              model: modelConfig.modelString,
+              apiKey: modelConfig.apiKey,
+              baseUrl: modelConfig.baseUrl,
+              providerType: modelConfig.providerType,
+            }),
+          });
+
           if (!res.ok) {
             const errData = await res.json().catch(() => ({ error: '请求失败' }));
             throw new Error(errData.error || `HTTP ${res.status}`);
@@ -186,9 +377,7 @@ export function AssistantPanel() {
                 } else if (event.type === 'error') {
                   throw new Error(event.message || '未知错误');
                 }
-                // 'done' event — just let the stream close naturally
               } catch (parseErr) {
-                // Skip malformed events (heartbeats, etc.)
                 if (parseErr instanceof SyntaxError) continue;
                 throw parseErr;
               }
@@ -206,16 +395,54 @@ export function AssistantPanel() {
               ),
             );
           }
-        })
-        .catch((err) => {
-          if (err.name === 'AbortError') {
-            // User cancelled, clean up silently
-            return;
+
+          // Save conversation and extract memories after response completes
+          const finalMessages = [...newMessages, { id: assistantMsgId, role: 'assistant' as const, content: accumulatedText }];
+          try {
+            const now = Date.now();
+            const convMessages: AssistantMessage[] = finalMessages.map((m) => ({
+              id: m.id,
+              role: m.role,
+              content: m.content,
+              timestamp: now,
+            }));
+
+            if (!currentConvIdRef.current) {
+              const conv = await createConversation({
+                mode,
+                subject,
+                difficulty,
+                style,
+                firstMessage: newMessages[0]?.content,
+              });
+              currentConvIdRef.current = conv.id;
+            }
+
+            await appendMessages(currentConvIdRef.current, convMessages);
+
+            // Extract and save memories
+            const extracted = extractMemoriesFromConversation(
+              finalMessages.map((m) => ({ role: m.role, content: m.content })),
+            );
+            if (extracted.length > 0) {
+              await saveExtractedMemories(AGENT_ID, extracted, currentConvIdRef.current ?? undefined);
+            }
+
+            // Update summary
+            if (finalMessages.length >= 4) {
+              const summary = generateConversationSummary(
+                finalMessages.map((m) => ({ role: m.role, content: m.content })),
+              );
+              await updateSummary(currentConvIdRef.current, summary);
+            }
+          } catch (saveErr) {
+            log.warn('Failed to save conversation after response:', saveErr);
           }
+        } catch (err) {
+          if ((err as Error).name === 'AbortError') return;
           log.error('Assistant fetch error:', err);
-          setError(err.message || '请求失败，请重试');
+          setError((err as Error).message || '请求失败，请重试');
           setLoading(false);
-          // Replace empty assistant message with error
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantMsgId && !m.content.trim()
@@ -223,7 +450,8 @@ export function AssistantPanel() {
                 : m,
             ),
           );
-        });
+        }
+      })();
     },
     [input, loading, messages, subject, difficulty, style, mode],
   );
@@ -260,12 +488,14 @@ export function AssistantPanel() {
     [subject],
   );
 
+  // ── Render ──────────────────────────────────────────────────────
+
   return (
-    <div id="assistant-panel" className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
+    <div id="assistant-panel" className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3">
+      <div className="flex shrink-0 items-center justify-between border-b border-gray-100 dark:border-slate-700 px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-lg font-semibold text-gray-900">小镜课堂</span>
+          <span className="text-lg font-semibold text-gray-900 dark:text-slate-100">小镜课堂</span>
           <div className="flex items-center gap-1.5">
             {subject && (
               <span className="rounded-full bg-[#8B5CF6]/10 px-2 py-0.5 text-xs font-medium text-[#8B5CF6]">
@@ -273,42 +503,111 @@ export function AssistantPanel() {
               </span>
             )}
             {difficultyLabel && (
-              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+              <span className="rounded-full bg-gray-100 dark:bg-slate-700 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-slate-300">
                 {difficultyLabel}
               </span>
             )}
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+            <span className="rounded-full bg-gray-100 dark:bg-slate-700 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-slate-300">
               {styleLabel}
             </span>
           </div>
         </div>
-        {/* Mode toggle */}
-        <button
-          onClick={() => {
-            const next = mode === 'anime' ? 'normal' : 'anime';
-            setMode(next);
-            try { localStorage.setItem('kagami-mode', next); } catch { /* ignore */ }
-          }}
-          className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
-            mode === 'anime'
-              ? 'bg-pink-100 text-pink-600 hover:bg-pink-200'
-              : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-          }`}
-          title={mode === 'anime' ? '当前：二次元版' : '当前：常规版'}
-        >
-          {mode === 'anime' ? '🌸 二次元' : '📖 常规'}
-        </button>
-        <button
-          type="button"
-          aria-label="关闭助手"
-          onClick={toggleOpen}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M4 4l8 8M12 4l-8 8" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-1">
+          {/* New conversation button */}
+          <button
+            type="button"
+            onClick={startNewConversation}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 dark:text-slate-500 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-300"
+            title="新对话"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M8 3v10M3 8h10" />
+            </svg>
+          </button>
+          {/* History toggle */}
+          <button
+            type="button"
+            onClick={() => setShowHistory(!showHistory)}
+            className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+              showHistory ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-300'
+            }`}
+            title="对话历史"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="8" cy="8" r="6" />
+              <path d="M8 4v4l3 2" />
+            </svg>
+          </button>
+          {/* Mode toggle */}
+          <button
+            onClick={() => {
+              const next = mode === 'anime' ? 'normal' : 'anime';
+              setMode(next);
+              try { localStorage.setItem('kagami-mode', next); } catch { /* ignore */ }
+            }}
+            className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+              mode === 'anime'
+                ? 'bg-pink-100 text-pink-600 hover:bg-pink-200'
+                : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+            }`}
+            title={mode === 'anime' ? '当前：二次元版' : '当前：常规版'}
+          >
+            {mode === 'anime' ? '🌸 二次元' : '📖 常规'}
+          </button>
+          <button
+            type="button"
+            aria-label="关闭助手"
+            onClick={toggleOpen}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 dark:text-slate-500 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-300"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
+          </button>
+        </div>
       </div>
+
+      {/* History sidebar */}
+      {showHistory && (
+        <div className="shrink-0 border-b border-gray-100 dark:border-slate-700 max-h-48 overflow-y-auto bg-gray-50 dark:bg-slate-800/50">
+          <div className="px-3 py-2">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-gray-500 dark:text-slate-400">对话历史</span>
+              <span className="text-xs text-gray-400 dark:text-slate-500">{conversations.length} 条记录</span>
+            </div>
+            {conversations.length === 0 ? (
+              <p className="text-xs text-gray-400 dark:text-slate-500 text-center py-2">暂无历史对话</p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {conversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    onClick={() => void loadConversation(conv.id)}
+                    className={`flex items-center gap-2 rounded-lg px-2 py-1.5 cursor-pointer transition-colors hover:bg-white dark:hover:bg-slate-700 ${
+                      currentConvIdRef.current === conv.id ? 'bg-white dark:bg-slate-700 ring-1 ring-[#8B5CF6]/30' : ''
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-700 dark:text-slate-200 truncate">{conv.title}</p>
+                      <p className="text-[10px] text-gray-400 dark:text-slate-500">
+                        {conv.messageCount} 条消息 · {new Date(conv.updatedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => void handleDeleteConversation(conv.id, e)}
+                      className="shrink-0 flex h-5 w-5 items-center justify-center rounded text-gray-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M2 2l6 6M8 2l-6 6" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div ref={messagesListRef} className="flex-1 overflow-y-auto px-4 py-3" style={{ overscrollBehavior: 'contain' }}>
@@ -322,7 +621,7 @@ export function AssistantPanel() {
                   alt="小镜"
                 />
               </div>
-              <p className="text-sm leading-relaxed text-gray-500">
+              <p className="text-sm leading-relaxed text-gray-500 dark:text-slate-400">
                 {mode === 'anime' ? '哈？遇到不会的题目了？告诉我吧。' : '你好！有任何学习问题，尽管问我。'}
               </p>
               <div className="mt-4 flex flex-col gap-1.5">
@@ -331,7 +630,7 @@ export function AssistantPanel() {
                     key={hint}
                     type="button"
                     onClick={() => handleSend(hint)}
-                    className="rounded-lg border border-gray-200 px-3 py-2 text-left text-sm text-gray-500 transition-colors hover:border-[#8B5CF6] hover:text-[#8B5CF6]"
+                    className="rounded-lg border border-gray-200 dark:border-slate-700 px-3 py-2 text-left text-sm text-gray-500 dark:text-slate-400 transition-colors hover:border-[#8B5CF6] hover:text-[#8B5CF6]"
                   >
                     {hint}
                   </button>
@@ -350,7 +649,7 @@ export function AssistantPanel() {
                 <div
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm ${
                     msg.role === 'user'
-                      ? 'bg-gray-200 text-gray-600'
+                      ? 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-slate-300'
                       : 'bg-[#8B5CF6]/10 text-[#8B5CF6]'
                   }`}
                 >
@@ -361,7 +660,7 @@ export function AssistantPanel() {
                   className={`max-w-[75%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.role === 'user'
                       ? 'rounded-tr-sm bg-[#8B5CF6] text-white'
-                      : 'rounded-tl-sm border border-gray-200 bg-[#F8FAFC] text-gray-800'
+                      : 'rounded-tl-sm border border-gray-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-slate-800 text-gray-800 dark:text-slate-200'
                   }`}
                 >
                   <InlineMath text={msg.content} />
@@ -380,7 +679,7 @@ export function AssistantPanel() {
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full">
                   <img src={mode === 'anime' ? '/avatars/kagami/chibi.png' : '/avatars/teacher-new.svg'} className="size-full object-cover" alt="小镜" />
                 </div>
-                <div className="flex items-center gap-1.5 rounded-xl rounded-tl-sm border border-gray-200 bg-[#F8FAFC] px-4 py-3">
+                <div className="flex items-center gap-1.5 rounded-xl rounded-tl-sm border border-gray-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-slate-800 px-4 py-3">
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '0ms' }} />
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '150ms' }} />
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8B5CF6]" style={{ animationDelay: '300ms' }} />
@@ -396,7 +695,7 @@ export function AssistantPanel() {
       </div>
 
       {/* Input */}
-      <div className="shrink-0 border-t border-gray-100 px-3 py-2.5">
+      <div className="shrink-0 border-t border-gray-100 dark:border-slate-700 px-3 py-2.5">
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}
@@ -405,7 +704,7 @@ export function AssistantPanel() {
             onKeyDown={handleKeyDown}
             placeholder="输入你的问题…"
             rows={1}
-            className="max-h-24 min-h-[36px] flex-1 resize-none rounded-lg border border-gray-200 bg-[#F8FAFC] px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6]/30"
+            className="max-h-24 min-h-[36px] flex-1 resize-none rounded-lg border border-gray-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-slate-800 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 outline-none transition-colors focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6]/30"
           />
           <button
             type="button"

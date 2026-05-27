@@ -18,7 +18,7 @@ export const EDUCATION_PRESET: Readonly<SettingsPreset> = Object.freeze({
     ttsVolume: 1,
     ttsEnabled: true,
     asrEnabled: true,
-    sidebarCollapsed: true,
+    timelineCollapsed: true,
     chatAreaCollapsed: true,
     chatAreaWidth: 320,
   },

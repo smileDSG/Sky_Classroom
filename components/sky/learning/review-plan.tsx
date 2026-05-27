@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { EBBINGHAUS_INTERVALS } from '@/lib/storage/dao/mistakes';
 import {
   buildReviewSchedule,
@@ -114,9 +114,9 @@ export function ReviewPlan() {
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-52 rounded-xl bg-gray-100" />
+        <div className="h-52 rounded-xl bg-gray-100 dark:bg-slate-700" />
         <div className="grid grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-xl bg-gray-100" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-xl bg-gray-100 dark:bg-slate-700" />)}
         </div>
       </div>
     );
@@ -124,9 +124,9 @@ export function ReviewPlan() {
 
   if (errorMsg && !schedule) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl bg-red-50 py-16">
-        <p className="text-sm text-red-500">{errorMsg}</p>
-        <button onClick={loadData} className="mt-3 text-xs text-blue-500 hover:underline">重试</button>
+      <div className="flex flex-col items-center justify-center rounded-xl bg-red-50 py-16 dark:bg-red-900/20">
+        <p className="text-sm text-red-500 dark:text-red-400">{errorMsg}</p>
+        <button onClick={loadData} className="mt-3 text-xs text-blue-500 dark:text-blue-400 hover:underline">重试</button>
       </div>
     );
   }
@@ -135,10 +135,10 @@ export function ReviewPlan() {
 
   if (!hasData) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl bg-white py-16 shadow-sm">
+      <div className="flex flex-col items-center justify-center rounded-xl bg-white py-16 shadow-sm dark:bg-slate-800">
         <div className="text-5xl">🧠</div>
-        <h3 className="mt-4 text-base font-semibold text-gray-700">还没有复习数据</h3>
-        <p className="mt-2 text-sm text-gray-400">完成搜题批改后，错题会自动纳入复习计划</p>
+        <h3 className="mt-4 text-base font-semibold text-gray-700 dark:text-slate-200">还没有复习数据</h3>
+        <p className="mt-2 text-sm text-gray-400 dark:text-slate-400">完成搜题批改后，错题会自动纳入复习计划</p>
       </div>
     );
   }
@@ -148,9 +148,9 @@ export function ReviewPlan() {
   return (
     <div className="space-y-5">
       {/* ── 1. Forgetting Curve ── */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="mb-1 text-sm font-semibold text-gray-700">📉 艾宾浩斯遗忘曲线</h3>
-        <p className="mb-3 text-[11px] text-gray-400">
+      <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
+        <h3 className="mb-1 text-sm font-semibold text-gray-700 dark:text-slate-200">📉 艾宾浩斯遗忘曲线</h3>
+        <p className="mb-3 text-[11px] text-gray-400 dark:text-slate-400">
           每完成一次复习，间隔自动延长：{EBBINGHAUS_INTERVALS.map((d) => `${d}d`).join(' → ')}
         </p>
 
@@ -211,14 +211,14 @@ export function ReviewPlan() {
           label="掌握进度" value={`${progress?.percentComplete ?? 0}%`} color="#4A90D9"
           footer={<>{progress?.masteredCount ?? 0}/{progress?.totalCount ?? 0} 已掌握</>}
         >
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100">
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-slate-700">
             <div className="h-full rounded-full bg-gradient-to-r from-[#4A90D9] to-[#10B981] transition-all duration-700"
               style={{ width: `${progress?.percentComplete ?? 0}%` }} />
           </div>
         </StatCard>
         <StatCard label="今日待复习" value={schedule?.today?.count ?? 0} color="#F59E0B" suffix="题">
           {schedule && schedule.overdue > 0 && (
-            <div className="mt-2 text-[11px] text-red-400">⚠️ {schedule.overdue} 题已逾期</div>
+            <div className="mt-2 text-[11px] text-red-400 dark:text-red-300">⚠️ {schedule.overdue} 题已逾期</div>
           )}
         </StatCard>
         <StatCard
@@ -231,21 +231,21 @@ export function ReviewPlan() {
 
       {/* ── 3. Today's review list ── */}
       {urgentItems.length > 0 && (
-        <div className="rounded-xl bg-white p-5 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700 flex items-center gap-2">
+        <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
+          <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-slate-200 flex items-center gap-2">
             🔔 今日待复习
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">{urgentItems.length} 题</span>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{urgentItems.length} 题</span>
           </h3>
           <div className="space-y-2">
             {urgentItems.map((item) => (
-              <div key={item.id} className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-3">
+              <div key={item.id} className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-3 dark:border-amber-900/50 dark:bg-amber-900/20">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-800 line-clamp-1">{item.problemText}</p>
-                  <p className="mt-1 text-[11px] text-gray-400">
+                  <p className="text-sm text-gray-800 dark:text-slate-100 line-clamp-1">{item.problemText}</p>
+                  <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-400">
                     复习 {item.reviewCount} 次 · 掌握度 {'⭐'.repeat(Math.min(item.masteryLevel, 6)) || '—'}
                   </p>
                 </div>
-                <span className="shrink-0 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700">第{item.reviewCount + 1}次</span>
+                <span className="shrink-0 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-800 dark:text-amber-200">第{item.reviewCount + 1}次</span>
               </div>
             ))}
           </div>
@@ -254,16 +254,16 @@ export function ReviewPlan() {
 
       {/* ── 4. Upcoming schedule ── */}
       {schedule?.upcoming && schedule.upcoming.length > 0 && (
-        <div className="rounded-xl bg-white p-5 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700">📅 未来复习计划</h3>
-          <div className="divide-y divide-gray-50">
+        <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
+          <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-slate-200">📅 未来复习计划</h3>
+          <div className="divide-y divide-gray-50 dark:divide-slate-700">
             {schedule.upcoming.map((day) => (
               <div key={day.date} className="flex items-center justify-between px-3 py-2.5">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-700 w-12">{day.dayLabel}</span>
-                  <span className="text-[11px] text-gray-400">{day.date}</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-slate-200 w-12">{day.dayLabel}</span>
+                  <span className="text-[11px] text-gray-400 dark:text-slate-400">{day.date}</span>
                 </div>
-                <span className="rounded-full bg-[#E8F4FD] px-2.5 py-0.5 text-[11px] font-medium text-[#4A90D9]">{day.count} 题</span>
+                <span className="rounded-full bg-[#E8F4FD] px-2.5 py-0.5 text-[11px] font-medium text-[#4A90D9] dark:bg-blue-900/30 dark:text-blue-300">{day.count} 题</span>
               </div>
             ))}
           </div>
@@ -271,31 +271,31 @@ export function ReviewPlan() {
       )}
 
       {/* ── 5. Interval guide ── */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold text-gray-700">📖 复习间隔说明</h3>
+      <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
+        <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-slate-200">📖 复习间隔说明</h3>
         <div className="grid grid-cols-3 gap-3">
           {EBBINGHAUS_INTERVALS.map((day, i) => (
-            <div key={day} className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+            <div key={day} className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 dark:bg-slate-700/50">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
                 style={{ backgroundColor: INTERVAL_META[day].color }}>
                 {i + 1}
               </div>
               <div>
-                <div className="text-xs font-medium text-gray-700">第{i + 1}次</div>
-                <div className="text-[11px] text-gray-400">{INTERVAL_META[day].label}</div>
+                <div className="text-xs font-medium text-gray-700 dark:text-slate-200">第{i + 1}次</div>
+                <div className="text-[11px] text-gray-400 dark:text-slate-400">{INTERVAL_META[day].label}</div>
               </div>
             </div>
           ))}
         </div>
-        <p className="mt-3 text-[11px] text-gray-400 leading-relaxed">
+        <p className="mt-3 text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
           基于艾宾浩斯遗忘曲线理论，学习后分别在 1天、2天、4天、7天、15天、30天 进行复习，可将短期记忆转化为长期记忆。完成全部 6 轮复习后，该知识点即被标记为「已掌握」。
         </p>
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-gray-400">数据来源: {source === 'api' ? '云端同步' : '本地计算'}</span>
-        <button onClick={loadData} className="rounded-full bg-gray-100 px-3 py-1 text-[11px] text-gray-500 hover:bg-gray-200 transition-colors">刷新</button>
+        <span className="text-[10px] text-gray-400 dark:text-slate-400">数据来源: {source === 'api' ? '云端同步' : '本地计算'}</span>
+        <button onClick={loadData} className="rounded-full bg-gray-100 px-3 py-1 text-[11px] text-gray-500 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">刷新</button>
       </div>
     </div>
   );
@@ -308,14 +308,14 @@ function StatCard({ label, value, color, suffix, footer, children }: {
   footer?: React.ReactNode; children?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm">
-      <div className="text-xs text-gray-500">{label}</div>
+    <div className="rounded-xl bg-white p-4 shadow-sm dark:bg-slate-800">
+      <div className="text-xs text-gray-500 dark:text-slate-400">{label}</div>
       <div className="mt-1 flex items-baseline gap-1">
         <span className="text-2xl font-bold" style={{ color }}>{value}</span>
-        {suffix && <span className="text-xs text-gray-400">{suffix}</span>}
+        {suffix && <span className="text-xs text-gray-400 dark:text-slate-400">{suffix}</span>}
       </div>
       {children}
-      {footer && <div className="mt-1 text-[10px] text-gray-400">{footer}</div>}
+      {footer && <div className="mt-1 text-[10px] text-gray-400 dark:text-slate-400">{footer}</div>}
     </div>
   );
 }

@@ -58,7 +58,7 @@ describe('presets — 设置预设', () => {
     expect(s.agentMode).toBe('preset');
     expect(s.ttsMuted).toBe(false);
     expect(s.ttsVolume).toBe(1);
-    expect(s.sidebarCollapsed).toBe(true);
+    expect(s.timelineCollapsed).toBe(true);
   });
 
   // ================================================================
@@ -75,7 +75,7 @@ describe('presets — 设置预设', () => {
     expect(s.ttsMuted).toBe(true);
     expect(s.ttsEnabled).toBe(false);
     expect(s.asrEnabled).toBe(false);
-    expect(s.sidebarCollapsed).toBe(false);
+    expect(s.timelineCollapsed).toBe(false);
     // 未涉及的字段应保持或不变
     expect(s.chatAreaCollapsed).toBe(true);
   });

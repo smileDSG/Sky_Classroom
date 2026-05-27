@@ -7,11 +7,13 @@ import type { CourseTemplate } from '../types';
 export const MATH_TEMPLATES: CourseTemplate[] = [
   {
     id: 'math-quadratic',
-    name: 'Quadratic Functions',
-    nameZh: '二次函数专题',
+    name: { 'zh-CN': '二次函数专题', 'en-US': 'Quadratic Functions' },
     subject: 'math',
     grade: '9th',
-    description: 'Explore quadratic equations, parabolas, vertex form, and real-world applications.',
+    description: {
+      'zh-CN': '探索二次方程、抛物线、顶点式及其实际应用',
+      'en-US': 'Explore quadratic equations, parabolas, vertex form, and real-world applications',
+    },
     icon: '📐',
     isBuiltIn: true,
     suggestedSettings: { difficulty: 'medium' },
@@ -25,11 +27,13 @@ export const MATH_TEMPLATES: CourseTemplate[] = [
   },
   {
     id: 'math-trigonometry',
-    name: 'Trigonometry Basics',
-    nameZh: '三角函数入门',
+    name: { 'zh-CN': '三角函数入门', 'en-US': 'Trigonometry Basics' },
     subject: 'math',
     grade: '10th',
-    description: 'Sine, cosine, tangent — the foundations of trigonometry.',
+    description: {
+      'zh-CN': '学习正弦、余弦、正切——三角函数的基础',
+      'en-US': 'Sine, cosine, tangent — the foundations of trigonometry',
+    },
     icon: '📐',
     isBuiltIn: true,
     suggestedSettings: { difficulty: 'medium' },
@@ -44,11 +48,13 @@ export const MATH_TEMPLATES: CourseTemplate[] = [
   },
   {
     id: 'math-linear-equations',
-    name: 'Linear Equations',
-    nameZh: '一元一次方程',
+    name: { 'zh-CN': '一元一次方程', 'en-US': 'Linear Equations' },
     subject: 'math',
     grade: '7th',
-    description: 'Solve linear equations step by step.',
+    description: {
+      'zh-CN': '逐步学习解一元一次方程',
+      'en-US': 'Solve linear equations step by step',
+    },
     icon: '📐',
     isBuiltIn: true,
     suggestedSettings: { difficulty: 'easy' },

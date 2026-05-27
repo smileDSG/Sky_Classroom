@@ -17,14 +17,15 @@ describe('SolveGraphAnnotation', () => {
     expect(spec).toHaveProperty('votingResults');
     expect(spec).toHaveProperty('fourPartOutput');
     expect(spec).toHaveProperty('fromQuestionBank');
+    expect(spec).toHaveProperty('fromSolveCache');
     expect(spec).toHaveProperty('selectedAgentId');
     expect(spec).toHaveProperty('agentRoute');
     expect(spec).toHaveProperty('error');
   });
 
-  test('state annotation has exactly 12 fields', () => {
+  test('state annotation has exactly 13 fields', () => {
     const fieldCount = Object.keys(SolveGraphAnnotation.spec).length;
-    expect(fieldCount).toBe(12);
+    expect(fieldCount).toBe(13);
   });
 
   test('all fields are valid LangGraph channels', () => {

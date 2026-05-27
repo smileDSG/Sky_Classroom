@@ -120,6 +120,6 @@ describe('migration — 数据格式升级', () => {
     expect(store.getState().providerId).toBe('openai');
     expect(store.getState().agentMode).toBe('auto');
     expect(store.getState().ttsVolume).toBe(1);
-    expect(store.getState().sidebarCollapsed).toBe(true);
+    expect(store.getState().timelineCollapsed).toBe(true);
   });
 });

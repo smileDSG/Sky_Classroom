@@ -41,8 +41,8 @@ function GridLines({ maxVal }: { maxVal: number }) {
         const val = Math.round(maxVal - (i / lines) * maxVal);
         return (
           <g key={i}>
-            <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="#334155" strokeWidth={0.5} strokeDasharray="4,4" />
-            <text x={padL - 8} y={y + 4} textAnchor="end" fill="#94a3b8" fontSize={10}>
+            <line x1={padL} y1={y} x2={W - padR} y2={y} className="stroke-slate-300 dark:stroke-slate-600" strokeWidth={0.5} strokeDasharray="4,4" />
+            <text x={padL - 8} y={y + 4} textAnchor="end" className="fill-slate-400 dark:fill-slate-500" fontSize={10}>
               {val}
             </text>
           </g>
@@ -57,8 +57,8 @@ function Tooltip({ x, y, count, day }: { x: number; y: number; count: number; da
     <g>
       <circle cx={x} cy={y} r={10} fill="#8B5CF6" fillOpacity={0.2} />
       <circle cx={x} cy={y} r={4} fill="#8B5CF6" />
-      <rect x={x - 25} y={y - 30} width={50} height={22} rx={6} fill="#1e293b" stroke="#475569" />
-      <text x={x} y={y - 15} textAnchor="middle" fill="#e2e8f0" fontSize={11} fontWeight={600}>
+      <rect x={x - 25} y={y - 30} width={50} height={22} rx={6} className="fill-slate-800 dark:fill-slate-700" stroke="#475569" />
+      <text x={x} y={y - 15} textAnchor="middle" className="fill-slate-100 dark:fill-slate-200" fontSize={11} fontWeight={600}>
         {count} 题 · {day}
       </text>
     </g>
@@ -73,7 +73,7 @@ export function LearningTrendChart({ data }: LearningTrendChartProps) {
 
   if (data.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-2xl border border-slate-700/50 bg-slate-900/50 backdrop-blur-sm">
+      <div className="flex h-48 items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm">
         <p className="text-slate-500">暂无数据</p>
       </div>
     );
@@ -88,15 +88,15 @@ export function LearningTrendChart({ data }: LearningTrendChartProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="rounded-2xl border border-slate-700/50 bg-slate-900/50 p-5 backdrop-blur-sm"
+      className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm"
     >
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-sm font-semibold text-slate-200">近7天学习趋势</h3>
+          <TrendingUp className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">近7天学习趋势</h3>
         </div>
-        <span className="text-xs text-slate-400">共 <span className="text-cyan-400 font-bold">{Math.round(total.value)}</span> 题</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400">共 <span className="text-cyan-500 dark:text-cyan-400 font-bold">{Math.round(total.value)}</span> 题</span>
       </div>
 
       {/* SVG Chart */}
@@ -116,7 +116,7 @@ export function LearningTrendChart({ data }: LearningTrendChartProps) {
 
         {/* X axis labels */}
         {points.map((p, i) => (
-          <text key={i} x={p.x} y={CHART.height - 6} textAnchor="middle" fill="#64748b" fontSize={10}>
+          <text key={i} x={p.x} y={CHART.height - 6} textAnchor="middle" className="fill-slate-500 dark:fill-slate-400" fontSize={10}>
             {p.day}
           </text>
         ))}
@@ -158,7 +158,8 @@ export function LearningTrendChart({ data }: LearningTrendChartProps) {
               cy={p.y}
               r={4}
               fill="#8B5CF6"
-              stroke="#1e293b"
+              stroke="currentColor"
+              className="text-white dark:text-slate-800"
               strokeWidth={2}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}

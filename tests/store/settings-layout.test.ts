@@ -1,9 +1,9 @@
 /**
  * tests/store/settings-layout.test.ts
- * 测试 UI 布局相关的设置 — 侧边栏、聊天区域的折叠/展开和宽度
+ * 测试 UI 布局相关的设置 — 时间线、聊天区域的折叠/展开和宽度
  *
  * 涉及的 store：useSettingsStore
- * 状态字段：sidebarCollapsed, chatAreaCollapsed, chatAreaWidth
+ * 状态字段：timelineCollapsed, chatAreaCollapsed, chatAreaWidth
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -18,20 +18,20 @@ describe('settings-layout — 布局设置', () => {
   });
 
   // ================================================================
-  // setSidebarCollapsed — 侧边栏折叠
+  // setTimelineCollapsed — 时间线折叠
   // ================================================================
-  describe('setSidebarCollapsed', () => {
-    it('折叠侧边栏', async () => {
+  describe('setTimelineCollapsed', () => {
+    it('折叠时间线', async () => {
       const store = await getStore();
-      store.getState().setSidebarCollapsed(true);
-      expect(store.getState().sidebarCollapsed).toBe(true);
+      store.getState().setTimelineCollapsed(true);
+      expect(store.getState().timelineCollapsed).toBe(true);
     });
 
-    it('展开侧边栏', async () => {
+    it('展开时间线', async () => {
       const store = await getStore();
-      store.getState().setSidebarCollapsed(true); // 先折叠
-      store.getState().setSidebarCollapsed(false); // 再展开
-      expect(store.getState().sidebarCollapsed).toBe(false);
+      store.getState().setTimelineCollapsed(true); // 先折叠
+      store.getState().setTimelineCollapsed(false); // 再展开
+      expect(store.getState().timelineCollapsed).toBe(false);
     });
   });
 
@@ -39,22 +39,22 @@ describe('settings-layout — 布局设置', () => {
   // setChatAreaCollapsed — 聊天区域折叠
   // ================================================================
   describe('setChatAreaCollapsed', () => {
-    it('折叠聊天区域时，不影响侧边栏状态', async () => {
+    it('折叠聊天区域时，不影响时间线状态', async () => {
       const store = await getStore();
       store.getState().setChatAreaCollapsed(true);
 
       expect(store.getState().chatAreaCollapsed).toBe(true);
-      // sidebar 保持初始值
-      expect(store.getState().sidebarCollapsed).toBeDefined();
+      // timeline 保持初始值
+      expect(store.getState().timelineCollapsed).toBeDefined();
     });
 
-    it('展开聊天区域后侧边栏状态不变', async () => {
+    it('展开聊天区域后时间线状态不变', async () => {
       const store = await getStore();
-      store.getState().setSidebarCollapsed(false);
+      store.getState().setTimelineCollapsed(false);
       store.getState().setChatAreaCollapsed(false);
 
       expect(store.getState().chatAreaCollapsed).toBe(false);
-      expect(store.getState().sidebarCollapsed).toBe(false);
+      expect(store.getState().timelineCollapsed).toBe(false);
     });
   });
 
@@ -79,15 +79,15 @@ describe('settings-layout — 布局设置', () => {
   // 连续操作测试 — 确保多次切换状态正确
   // ================================================================
   describe('连续切换', () => {
-    it('sidebar 折叠 → 展开 → 再折叠 → 宽度不变', async () => {
+    it('时间线折叠 → 展开 → 再折叠 → 宽度不变', async () => {
       const store = await getStore();
       store.getState().setChatAreaWidth(350);
 
-      store.getState().setSidebarCollapsed(true);
-      store.getState().setSidebarCollapsed(false);
-      store.getState().setSidebarCollapsed(true);
+      store.getState().setTimelineCollapsed(true);
+      store.getState().setTimelineCollapsed(false);
+      store.getState().setTimelineCollapsed(true);
 
-      expect(store.getState().sidebarCollapsed).toBe(true);
+      expect(store.getState().timelineCollapsed).toBe(true);
       expect(store.getState().chatAreaWidth).toBe(350);
     });
 

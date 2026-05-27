@@ -31,6 +31,7 @@ export interface SolveState {
   votingResults: VotingResult[];
   fourPartOutput: FourPartOutput | null;
   fromQuestionBank: boolean;
+  fromSolveCache: boolean;
   error: string | null;
 }
 

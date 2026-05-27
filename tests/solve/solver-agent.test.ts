@@ -89,25 +89,26 @@ describe('solveWithAgentNode', () => {
       votingResults: [],
       fourPartOutput: null,
       fromQuestionBank: false,
+      fromSolveCache: false,
       error: null,
     };
   }
 
   test('calls LLM and returns solution update', async () => {
     const mockSolution = {
-      solution: '解题过程',
-      answer: '答案',
+      solution: '详细的解题过程，包含完整的推理步骤和计算步骤',
+      answer: '正确答案',
       confidence: 0.9,
-      steps: [],
-      knowledgePoints: [],
+      steps: [{ label: 'step1', content: '第一步' }, { label: 'step2', content: '第二步' }, { label: 'step3', content: '第三步' }],
+      knowledgePoints: [{ name: '知识点', description: '说明', difficulty: 'easy' as const }],
       similarQuestions: [],
     };
     (parseJsonResponse as any).mockReturnValue(mockSolution);
     (callLLM as any).mockResolvedValue({ text: JSON.stringify(mockSolution) });
 
     const result = await solveWithAgentNode(makeState(), {} as any);
-    expect(result.solution).toBe('解题过程');
-    expect(callLLM).toHaveBeenCalledTimes(1); // primary high confidence → no fallback
+    expect(result.solution).toBe('详细的解题过程，包含完整的推理步骤和计算步骤');
+    expect(callLLM).toHaveBeenCalledTimes(1); // primary high validated confidence → no fallback
   });
 
   test('sets error on LLM failure', async () => {
@@ -118,8 +119,10 @@ describe('solveWithAgentNode', () => {
   });
 
   test('triggers fallback when primary confidence is low', async () => {
-    const lowConf = { solution: 'a', answer: 'b', confidence: 0.5, steps: [], knowledgePoints: [], similarQuestions: [] };
-    const highConf = { solution: 'c', answer: 'd', confidence: 0.85, steps: [], knowledgePoints: [], similarQuestions: [] };
+    // Primary: minimal response — validated confidence ~0.35 (answer 'b' is 1 char = +0.05, base 0.3)
+    const lowConf = { solution: '', answer: 'b', confidence: 0.5, steps: [], knowledgePoints: [], similarQuestions: [] };
+    // Secondary: full response — validated confidence ~0.85
+    const highConf = { solution: '详细的解题过程和完整的推理步骤', answer: '正确答案', confidence: 0.85, steps: [{ label: 's', content: '步骤' }, { label: 's2', content: 'c2' }, { label: 's3', content: 'c3' }], knowledgePoints: [{ name: 'k', description: 'd', difficulty: 'easy' as const }], similarQuestions: [] };
 
     (parseJsonResponse as any)
       .mockReturnValueOnce(lowConf)  // primary returns low confidence
@@ -130,13 +133,15 @@ describe('solveWithAgentNode', () => {
 
     const result = await solveWithAgentNode(makeState('universal'), {} as any);
     expect(callLLM).toHaveBeenCalledTimes(2); // primary + secondary
-    expect(result.solution).toBe('c');
+    expect(result.solution).toBe('详细的解题过程和完整的推理步骤');
   });
 
   test('falls through to tertiary when both primary and secondary are low', async () => {
-    const lowConf1 = { solution: 'a', answer: 'b', confidence: 0.3, steps: [], knowledgePoints: [], similarQuestions: [] };
-    const lowConf2 = { solution: 'c', answer: 'd', confidence: 0.4, steps: [], knowledgePoints: [], similarQuestions: [] };
-    const highConf3 = { solution: 'e', answer: 'f', confidence: 0.75, steps: [], knowledgePoints: [], similarQuestions: [] };
+    // All three have empty/short responses (low validated confidence)
+    const lowConf1 = { solution: '', answer: 'a', confidence: 0.3, steps: [], knowledgePoints: [], similarQuestions: [] };
+    const lowConf2 = { solution: '', answer: 'b', confidence: 0.4, steps: [], knowledgePoints: [], similarQuestions: [] };
+    // Tertiary has full response
+    const highConf3 = { solution: '完整解答', answer: '最终答案', confidence: 0.75, steps: [{ label: 's', content: '步骤' }, { label: 's2', content: 'c2' }, { label: 's3', content: 'c3' }], knowledgePoints: [{ name: 'k', description: 'd', difficulty: 'easy' as const }], similarQuestions: [] };
 
     (parseJsonResponse as any)
       .mockReturnValueOnce(lowConf1)
@@ -149,7 +154,7 @@ describe('solveWithAgentNode', () => {
 
     const result = await solveWithAgentNode(makeState('universal'), {} as any);
     expect(callLLM).toHaveBeenCalledTimes(3); // primary + secondary + tertiary
-    expect(result.solution).toBe('e');
+    expect(result.solution).toBe('完整解答');
   });
 
   test('returns empty solution when all agents fail', async () => {

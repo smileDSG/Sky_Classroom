@@ -7,11 +7,13 @@ import type { CourseTemplate } from '../types';
 export const PHYSICS_TEMPLATES: CourseTemplate[] = [
   {
     id: 'physics-newton',
-    name: "Newton's Laws",
-    nameZh: '牛顿运动定律',
+    name: { 'zh-CN': '牛顿运动定律', 'en-US': "Newton's Laws" },
     subject: 'physics',
     grade: '10th',
-    description: "Understand Newton's three laws of motion with interactive examples.",
+    description: {
+      'zh-CN': '通过互动示例理解牛顿三大运动定律',
+      'en-US': "Understand Newton's three laws of motion with interactive examples",
+    },
     icon: '⚡',
     isBuiltIn: true,
     suggestedSettings: { difficulty: 'medium' },
@@ -25,11 +27,13 @@ export const PHYSICS_TEMPLATES: CourseTemplate[] = [
   },
   {
     id: 'physics-optics',
-    name: 'Optics Basics',
-    nameZh: '光学基础',
+    name: { 'zh-CN': '光学基础', 'en-US': 'Optics Basics' },
     subject: 'physics',
     grade: '10th',
-    description: 'Light, reflection, refraction, and lenses.',
+    description: {
+      'zh-CN': '光、反射、折射与透镜',
+      'en-US': 'Light, reflection, refraction, and lenses',
+    },
     icon: '⚡',
     isBuiltIn: true,
     suggestedSettings: { difficulty: 'medium' },

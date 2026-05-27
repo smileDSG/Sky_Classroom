@@ -66,7 +66,8 @@ export function generateGradedFourPartOutput(
 
 function formatAnswer(answer: string): string {
   if (!answer || !answer.trim()) return '暂无答案';
-  return `**${answer.trim()}**`;
+  // Return clean answer — UI handles styling
+  return answer.trim();
 }
 
 function normalizeSteps(

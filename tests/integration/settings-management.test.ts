@@ -34,7 +34,7 @@ describe('P6-001 Test 10: 设置导入/导出 → 预设切换', () => {
     test('exported JSON contains layout settings', () => {
       const exported = exportSettings();
       const parsed = JSON.parse(exported);
-      expect(parsed).toHaveProperty('sidebarCollapsed');
+      expect(parsed).toHaveProperty('timelineCollapsed');
     });
 
     test('exported JSON contains agent settings', () => {

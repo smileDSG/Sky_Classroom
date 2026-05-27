@@ -82,12 +82,12 @@ export function LearningStats() {
 
   if (mistakes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 shadow-sm">
+      <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 shadow-sm dark:bg-slate-800">
         <div className="text-6xl">📊</div>
-        <h3 className="mt-4 text-lg font-semibold text-gray-700">
+        <h3 className="mt-4 text-lg font-semibold text-gray-700 dark:text-slate-200">
           还没有学习数据
         </h3>
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="mt-2 text-sm text-gray-400 dark:text-slate-400">
           完成一些搜题练习后，这里会展示你的学习统计
         </p>
       </div>
@@ -101,26 +101,26 @@ export function LearningStats() {
       {/* ── Stat cards (3-column grid) ── */}
       <div className="grid grid-cols-3 gap-4">
         {/* Total mistakes */}
-        <div className="rounded-lg bg-white p-4 shadow-sm">
+        <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
           <div className="text-3xl font-bold text-[#EF4444]">
             {stats.totalCount}
           </div>
-          <div className="mt-1 text-sm text-gray-500">总错题数</div>
+          <div className="mt-1 text-sm text-gray-500 dark:text-slate-400">总错题数</div>
         </div>
 
         {/* Reviewed + review rate + progress bar */}
-        <div className="rounded-lg bg-white p-4 shadow-sm">
+        <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
           <div className="text-3xl font-bold text-[#10B981]">
             {stats.reviewedCount}
             <span className="ml-1 text-lg font-normal text-gray-400">
               / {stats.totalCount}
             </span>
           </div>
-          <div className="mt-1 text-sm text-gray-500">
+          <div className="mt-1 text-sm text-gray-500 dark:text-slate-400">
             已复习 · 复习率 {stats.reviewRate}%
           </div>
           {/* Progress bar */}
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100">
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-slate-700">
             <div
               className="h-full rounded-full bg-[#10B981] transition-all duration-500"
               style={{ width: `${stats.reviewRate}%` }}
@@ -129,17 +129,17 @@ export function LearningStats() {
         </div>
 
         {/* Weak points count */}
-        <div className="rounded-lg bg-white p-4 shadow-sm">
+        <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
           <div className="text-3xl font-bold text-[#F59E0B]">
             {stats.weakPointsCount}
           </div>
-          <div className="mt-1 text-sm text-gray-500">薄弱知识点</div>
+          <div className="mt-1 text-sm text-gray-500 dark:text-slate-400">薄弱知识点</div>
         </div>
       </div>
 
       {/* ── Cause distribution bar chart (pure CSS) ── */}
-      <div className="rounded-lg bg-white p-4 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-gray-700">错因分布</h3>
+      <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
+        <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-slate-200">错因分布</h3>
         <div className="space-y-2.5">
           {allCauses.map((cause) => {
             const count = stats.causeDist[cause] ?? 0;
@@ -148,11 +148,11 @@ export function LearningStats() {
 
             return (
               <div key={cause} className="flex items-center gap-3">
-                <span className="w-16 shrink-0 text-right text-xs text-gray-500">
+                <span className="w-16 shrink-0 text-right text-xs text-gray-500 dark:text-slate-400">
                   {causeLabels[cause]}
                 </span>
                 <div className="flex-1">
-                  <div className="h-5 overflow-hidden rounded bg-gray-100">
+                  <div className="h-5 overflow-hidden rounded bg-gray-100 dark:bg-slate-700">
                     <div
                       className={`h-full rounded transition-all duration-500 ${causeBarColors[cause]}`}
                       style={{
@@ -162,7 +162,7 @@ export function LearningStats() {
                     />
                   </div>
                 </div>
-                <span className="w-8 shrink-0 text-xs font-medium text-gray-600">
+                <span className="w-8 shrink-0 text-xs font-medium text-gray-600 dark:text-slate-300">
                   {count}
                 </span>
               </div>

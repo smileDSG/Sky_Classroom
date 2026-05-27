@@ -23,6 +23,7 @@ export type { SolveGraphState } from './solve-graph-state';
 export {
   createSolveGraph,
   buildSolveInitialState,
+  afterCheckSolveCache,
   afterCheckBank,
   afterSolve,
 } from './solve-graph';
@@ -39,3 +40,11 @@ export {
   textSimilarity,
 } from './question-bank';
 export { classifyErrorCause, getCauseLabel, isValidCause, VALID_CAUSES } from './error-classifier';
+export { validateConfidence, MIN_VALIDATED_CONFIDENCE } from './confidence-validator';
+export {
+  findSolveCacheMatches,
+  saveToSolveCache,
+  solveCacheCount,
+  clearSolveCache,
+  type SolveCacheEntry,
+} from './solve-cache';

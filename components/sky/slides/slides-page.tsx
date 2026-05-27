@@ -282,7 +282,7 @@ export default function SlidesPage() {
       `}</style>
 
       {/* Top bar */}
-      <header className="relative z-10 flex flex-shrink-0 items-center border-b border-slate-200/50 bg-white/70 px-6 py-3 backdrop-blur-xl">
+      <header className="relative z-10 flex flex-shrink-0 items-center border-b border-slate-200/50 dark:border-slate-700/50 bg-white/70 dark:bg-slate-800/70 px-6 py-3 backdrop-blur-xl">
         {/* Left: brand */}
         <Link href="/" className="flex w-48 flex-shrink-0 items-center gap-3 animate-fade-in-left hover:opacity-80 transition-opacity">
           <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 text-white shadow-lg shadow-sky-500/25">
@@ -291,13 +291,13 @@ export default function SlidesPage() {
             </svg>
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent tracking-tight">天空课堂</span>
-            <span className="text-[10px] font-medium text-slate-400 -mt-0.5">AI 互动课件</span>
+            <span className="text-sm font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent tracking-tight">天空课堂</span>
+            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 -mt-0.5">AI 互动课件</span>
           </div>
           {hasContent && (
             <button
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); setSidebarOpen((v) => !v); }}
-              className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 hover:scale-105 active:scale-95"
+              className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 hover:scale-105 active:scale-95 dark:hover:bg-slate-700 dark:hover:text-slate-200"
               title={sidebarOpen ? '收起讲解栏' : '展开讲解栏'}
             >
               <svg
@@ -320,7 +320,7 @@ export default function SlidesPage() {
               onChange={(e) => setGenerationOptions({ topic: e.target.value, difficulty })}
               onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
               placeholder="输入教学主题，如：勾股定理、牛顿定律…"
-              className="w-full rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm px-4 py-2.5 pl-10 text-sm text-slate-700 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-100 transition-all shadow-sm"
+              className="w-full rounded-xl border border-slate-200/80 dark:border-slate-600/80 bg-white/80 dark:bg-slate-700/80 backdrop-blur-sm px-4 py-2.5 pl-10 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white dark:focus:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-900 transition-all shadow-sm"
             />
             <svg
               className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -337,7 +337,7 @@ export default function SlidesPage() {
             </svg>
           </div>
 
-          <div className="inline-flex flex-shrink-0 rounded-xl border border-slate-200/80 bg-white/60 p-0.5 shadow-sm backdrop-blur-sm">
+          <div className="inline-flex flex-shrink-0 rounded-xl border border-slate-200/80 dark:border-slate-600/80 bg-white/60 dark:bg-slate-700/60 p-0.5 shadow-sm backdrop-blur-sm">
             {DIFFICULTIES.map((d) => (
               <button
                 key={d.value}
@@ -345,8 +345,8 @@ export default function SlidesPage() {
                 onClick={() => setGenerationOptions({ topic, difficulty: d.value })}
                 className={`relative rounded-[10px] px-3.5 py-2 text-sm font-semibold transition-all duration-300 ${
                   d.value === difficulty
-                    ? 'bg-gradient-to-r from-sky-500 to-blue-500 text-white shadow-md shadow-sky-200/50'
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                    ? 'bg-gradient-to-r from-sky-500 to-blue-500 text-white shadow-md shadow-sky-200/50 dark:shadow-sky-900/30'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-600/60'
                 }`}
               >
                 {d.label}
@@ -383,8 +383,8 @@ export default function SlidesPage() {
             <span
               className={`text-xs font-medium ${
                 status.includes('失败') || status.includes('错误')
-                  ? 'text-red-500'
-                  : 'text-slate-500'
+                  ? 'text-red-500 dark:text-red-400'
+                  : 'text-slate-500 dark:text-slate-400'
               }`}
             >
               {status}
@@ -397,7 +397,7 @@ export default function SlidesPage() {
       <div className="relative z-10 flex flex-1 overflow-hidden">
         {/* Left panel */}
         <aside
-          className={`flex min-h-0 flex-shrink-0 flex-col overflow-hidden border-r border-slate-200/50 bg-white/60 backdrop-blur-xl transition-all duration-300 ${
+          className={`flex min-h-0 flex-shrink-0 flex-col overflow-hidden border-r border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl transition-all duration-300 ${
             sidebarOpen ? 'w-64' : 'w-0 border-r-0'
           }`}
         >
@@ -414,18 +414,18 @@ export default function SlidesPage() {
             />
           </div>
 
-          <div className="mx-4 h-px flex-shrink-0 bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
+          <div className="mx-4 h-px flex-shrink-0 bg-gradient-to-r from-transparent via-slate-200/60 dark:via-slate-600/60 to-transparent" />
 
           {/* Thumbnails */}
           <div className="scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-3" style={{ overscrollBehavior: 'contain' }}>
             <div className="mb-3 flex items-center justify-between px-1">
-              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
                 幻灯片
               </span>
-              <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-slate-100 px-1.5 text-[10px] font-bold tabular-nums text-slate-500">
+              <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-slate-100 px-1.5 text-[10px] font-bold tabular-nums text-slate-500 dark:bg-slate-700 dark:text-slate-400">
                 {totalPages}
               </span>
             </div>
@@ -437,8 +437,8 @@ export default function SlidesPage() {
                     onClick={() => setActiveIndex(i)}
                     className={`group relative flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-300 ${
                       i === activeIndex
-                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50/50 ring-1 ring-blue-200/60 shadow-sm shadow-blue-100/50'
-                        : 'hover:bg-slate-50/80'
+                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50/50 ring-1 ring-blue-200/60 shadow-sm shadow-blue-100/50 dark:from-blue-900/30 dark:to-indigo-900/30 dark:ring-blue-700/60 dark:shadow-blue-900/30'
+                        : 'hover:bg-slate-50/80 dark:hover:bg-slate-700/50'
                     }`}
                   >
                     <div className="relative flex-shrink-0">
@@ -450,8 +450,8 @@ export default function SlidesPage() {
                       />
                       <span className={`absolute -left-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm ${
                         i === activeIndex
-                          ? 'bg-sky-500 text-white shadow-sky-200'
-                          : 'bg-white text-slate-400 shadow-sm ring-1 ring-slate-200'
+                          ? 'bg-sky-500 text-white shadow-sky-200 dark:shadow-sky-900'
+                          : 'bg-white text-slate-400 shadow-sm ring-1 ring-slate-200 dark:bg-slate-600 dark:text-slate-300 dark:ring-slate-600'
                       }`}>
                         {i + 1}
                       </span>
@@ -459,12 +459,12 @@ export default function SlidesPage() {
                     <div className="flex min-w-0 flex-col">
                       <span
                         className={`text-[11px] font-semibold ${
-                          i === activeIndex ? 'text-sky-700' : 'text-slate-500'
+                          i === activeIndex ? 'text-sky-700 dark:text-sky-400' : 'text-slate-500 dark:text-slate-400'
                         }`}
                       >
                         {i === 0 ? '封面' : i === previewImages.length - 1 ? '封底' : `第 ${i + 1} 页`}
                       </span>
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
                         {i === activeIndex ? (
                           <span className="flex items-center gap-1 text-sky-500">
                             <span className="relative flex h-1.5 w-1.5">
@@ -489,7 +489,7 @@ export default function SlidesPage() {
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="relative min-h-0 flex-1">
             {previewImages ? (
-              <div className="flex h-full items-center justify-center bg-white/40 backdrop-blur-sm p-6">
+              <div className="flex h-full items-center justify-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm p-6">
                 <img
                   src={previewImages[activeIndex]}
                   alt={`Slide ${activeIndex + 1}`}
@@ -499,35 +499,35 @@ export default function SlidesPage() {
                 />
               </div>
             ) : generating ? (
-              <div className="flex h-full flex-col items-center justify-center bg-white/30 backdrop-blur-sm gap-5">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-sky-500" />
+              <div className="flex h-full flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm gap-5">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-sky-500" />
                 <div className="flex flex-col items-center gap-3 w-64">
-                  <p className="text-sm font-medium text-slate-600">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
                     {genStage === 'thinking' && '正在分析主题风格...'}
                     {genStage === 'writing' && 'AI 正在撰写课件内容...'}
                     {genStage === 'rendering' && '正在渲染课件预览...'}
                     {genStage === 'done' && '课件生成成功'}
                   </p>
                   {/* Progress bar */}
-                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-500 transition-all duration-500 ease-out"
                       style={{ width: `${genProgress}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-slate-400 tabular-nums">{Math.round(genProgress)}%</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 tabular-nums">{Math.round(genProgress)}%</p>
                 </div>
               </div>
             ) : generatedPptx ? (
-              <div className="flex h-full flex-col items-center justify-center bg-white/30 backdrop-blur-sm gap-4 animate-fade-in-scale">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 shadow-sm">
-                  <svg className="h-8 w-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="flex h-full flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm gap-4 animate-fade-in-scale">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 shadow-sm">
+                  <svg className="h-8 w-8 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div className="flex flex-col items-center gap-1.5">
-                  <p className="text-sm font-semibold text-slate-700">课件生成成功</p>
-                  <p className="text-xs text-slate-400">文件已自动下载到本地</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">课件生成成功</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">文件已自动下载到本地</p>
                 </div>
                 <button
                   onClick={handleDownloadGenerated}
@@ -540,13 +540,13 @@ export default function SlidesPage() {
                 </button>
               </div>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center bg-white/30 backdrop-blur-sm gap-3 animate-fade-in-scale">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/60 shadow-sm">
-                  <svg className="h-8 w-8 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="flex h-full flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm gap-3 animate-fade-in-scale">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/60 dark:bg-slate-700/60 shadow-sm">
+                  <svg className="h-8 w-8 text-sky-400 dark:text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                   </svg>
                 </div>
-                <p className="text-sm text-slate-500">输入主题，点击生成课件</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">输入主题，点击生成课件</p>
               </div>
             )}
             <AvatarSpeechPlayer
@@ -558,13 +558,13 @@ export default function SlidesPage() {
           </div>
 
           {generatedPptx && (
-            <footer className="flex flex-shrink-0 items-center justify-between border-t border-slate-200/50 bg-white/60 px-6 py-2.5 backdrop-blur-xl">
+            <footer className="flex flex-shrink-0 items-center justify-between border-t border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/60 px-6 py-2.5 backdrop-blur-xl">
               {previewImages && previewImages.length > 0 ? (
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
                     disabled={activeIndex === 0}
-                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100"
+                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -573,13 +573,13 @@ export default function SlidesPage() {
                   </button>
 
                   <div className="flex flex-col items-center gap-1">
-                    <span className="min-w-[4rem] text-center text-xs tabular-nums text-slate-400">
-                      <span className="font-bold text-slate-700">{activeIndex + 1}</span>
-                      <span className="mx-1 text-slate-300">/</span>
+                    <span className="min-w-[4rem] text-center text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">{activeIndex + 1}</span>
+                      <span className="mx-1 text-slate-300 dark:text-slate-600">/</span>
                       <span className="font-medium">{totalPages}</span>
                     </span>
                     {/* Progress bar */}
-                    <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-500 transition-all duration-500"
                         style={{ width: `${((activeIndex + 1) / totalPages) * 100}%` }}
@@ -590,7 +590,7 @@ export default function SlidesPage() {
                   <button
                     onClick={() => setActiveIndex((i) => Math.min(totalPages - 1, i + 1))}
                     disabled={activeIndex === totalPages - 1}
-                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100"
+                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                   >
                     下一页
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -599,8 +599,8 @@ export default function SlidesPage() {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <svg className="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                  <svg className="h-4 w-4 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span>课件已生成</span>
@@ -614,7 +614,7 @@ export default function SlidesPage() {
                     handleGenerate();
                   }}
                   disabled={generating}
-                  className="rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                  className="rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                 >
                   重新生成
                 </button>

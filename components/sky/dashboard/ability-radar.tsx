@@ -53,12 +53,12 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="rounded-2xl border border-slate-700/50 bg-slate-900/50 p-5 backdrop-blur-sm"
+      className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm"
     >
       {/* Header */}
       <div className="mb-3 flex items-center gap-2">
-        <Brain className="w-4 h-4 text-violet-400" />
-        <h3 className="text-sm font-semibold text-slate-200">能力雷达图</h3>
+        <Brain className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">能力雷达图</h3>
       </div>
 
       {/* SVG Radar */}
@@ -76,7 +76,8 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
             key={i}
             points={pointsToAttr(level.points)}
             fill="none"
-            stroke={i === LEVELS - 1 ? '#475569' : '#334155'}
+            stroke="currentColor"
+            className={i === LEVELS - 1 ? 'text-slate-400 dark:text-slate-500' : 'text-slate-300 dark:text-slate-600'}
             strokeWidth={i === LEVELS - 1 ? 1 : 0.5}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -86,7 +87,7 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
 
         {/* Axis lines */}
         {polygonPoints(n, 1).map((p, i) => (
-          <line key={i} x1={CX} y1={CY} x2={p.x} y2={p.y} stroke="#334155" strokeWidth={0.5} />
+          <line key={i} x1={CX} y1={CY} x2={p.x} y2={p.y} className="stroke-slate-300 dark:stroke-slate-600" strokeWidth={0.5} />
         ))}
 
         {/* Data area */}
@@ -109,7 +110,8 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
             cy={p.y}
             r={3}
             fill="#8B5CF6"
-            stroke="#1e293b"
+            stroke="currentColor"
+            className="text-white dark:text-slate-800"
             strokeWidth={1.5}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -126,7 +128,7 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
               x={p.x}
               y={p.y + 4}
               textAnchor={anchor}
-              fill="#94a3b8"
+              className="fill-slate-500 dark:fill-slate-400"
               fontSize={11}
               fontWeight={500}
             >

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Sparkles, Cloud, Zap, Brain } from 'lucide-react';
+import { Sparkles, Cloud, Zap, Brain, Wand2 } from 'lucide-react';
 
 // 动态Logo组件
 export function AnimatedLogo() {
@@ -123,31 +123,22 @@ export function FeatureHighlights() {
 
   const features = [
     {
-      icon: Brain,
-      title: 'AI 智能生成',
-      desc: '一键生成精美课件',
+      icon: Wand2,
+      title: '云端智囊',
+      desc: 'AI 工具集，拍照搜题、幻灯片讲解',
       color: 'from-violet-500 to-purple-600',
       bgColor: 'bg-violet-50 dark:bg-violet-900/20',
       iconColor: 'text-violet-500',
-      href: '/sky/slides',
+      href: '/sky/cloud-mind',
     },
     {
-      icon: Sparkles,
-      title: '互动课堂',
-      desc: '沉浸式学习体验',
+      icon: Brain,
+      title: 'AI 智能生成',
+      desc: '一键生成精美课件',
       color: 'from-sky-400 to-blue-500',
       bgColor: 'bg-sky-50 dark:bg-sky-900/20',
       iconColor: 'text-sky-500',
-      href: '/sky/assistant',
-    },
-    {
-      icon: Zap,
-      title: '搜题批改',
-      desc: '拍照秒出答案',
-      color: 'from-amber-400 to-orange-500',
-      bgColor: 'bg-amber-50 dark:bg-amber-900/20',
-      iconColor: 'text-amber-500',
-      href: '/sky/solve',
+      href: '/sky/slides',
     },
   ];
 

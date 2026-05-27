@@ -7,7 +7,7 @@ export const DEVELOPMENT_PRESET: Readonly<SettingsPreset> = Object.freeze({
     ttsMuted: false,
     ttsEnabled: true,
     asrEnabled: true,
-    sidebarCollapsed: true,
+    timelineCollapsed: true,
     chatAreaCollapsed: false,
     chatAreaWidth: 400,
     agentMode: 'auto' as const,

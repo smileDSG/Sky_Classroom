@@ -16,12 +16,12 @@ const causeLabels: Record<MistakeCause, string> = {
 };
 
 const causeBadgeColors: Record<MistakeCause, string> = {
-  'concept-unclear': 'bg-purple-100 text-purple-700',
-  'calculation-error': 'bg-orange-100 text-orange-700',
-  'misreading': 'bg-blue-100 text-blue-700',
-  'method-wrong': 'bg-red-100 text-red-700',
-  'careless': 'bg-yellow-100 text-yellow-700',
-  'format-error': 'bg-gray-100 text-gray-700',
+  'concept-unclear': 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  'calculation-error': 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+  'misreading': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  'method-wrong': 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  'careless': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+  'format-error': 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300',
 };
 
 const allCauses: MistakeCause[] = [
@@ -111,12 +111,12 @@ export function MistakeBook() {
 
   if (mistakes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 shadow-sm">
+      <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 shadow-sm dark:bg-slate-800">
         <div className="text-6xl">📖</div>
-        <h3 className="mt-4 text-lg font-semibold text-gray-700">
+        <h3 className="mt-4 text-lg font-semibold text-gray-700 dark:text-slate-200">
           还没有错题记录
         </h3>
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="mt-2 text-sm text-gray-400 dark:text-slate-400">
           去搜题页练习一下吧！
         </p>
       </div>
@@ -128,7 +128,7 @@ export function MistakeBook() {
   return (
     <div className="space-y-4">
       {/* ── Filter bar ── */}
-      <div className="rounded-lg bg-white p-4 shadow-sm">
+      <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
         <div className="flex flex-wrap items-center gap-3">
           {/* Cause filter chips */}
           <div className="flex flex-wrap gap-1.5">
@@ -137,7 +137,7 @@ export function MistakeBook() {
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 !causeFilter
                   ? 'bg-[#4A90D9] text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
               }`}
             >
               全部错因
@@ -149,7 +149,7 @@ export function MistakeBook() {
                 className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   causeFilter === cause
                     ? 'bg-[#4A90D9] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
                 }`}
               >
                 {causeLabels[cause]}
@@ -158,7 +158,7 @@ export function MistakeBook() {
           </div>
 
           {/* Divider */}
-          <div className="h-6 w-px bg-gray-200" />
+          <div className="h-6 w-px bg-gray-200 dark:bg-slate-700" />
 
           {/* Review status filter */}
           <div className="flex gap-1.5">
@@ -169,7 +169,7 @@ export function MistakeBook() {
                 className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   reviewedFilter === opt
                     ? 'bg-[#4A90D9] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
                 }`}
               >
                 {opt === 'all' ? '全部' : opt === 'unreviewed' ? '未复习' : '已复习'}
@@ -178,7 +178,7 @@ export function MistakeBook() {
           </div>
 
           {/* Divider */}
-          <div className="h-6 w-px bg-gray-200" />
+          <div className="h-6 w-px bg-gray-200 dark:bg-slate-700" />
 
           {/* Knowledge-point search input */}
           <input
@@ -186,21 +186,21 @@ export function MistakeBook() {
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="搜索知识点..."
-            className="rounded-lg border border-gray-200 px-3 py-1 text-xs text-gray-700 placeholder-gray-400 outline-none transition-colors focus:border-[#4A90D9]"
+            className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 px-3 py-1 text-xs text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 outline-none transition-colors focus:border-[#4A90D9]"
           />
 
           {/* Clear filters button */}
           {hasActiveFilters && (
             <button
               onClick={handleClearFilters}
-              className="rounded-full px-3 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50"
+              className="rounded-full px-3 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/30"
             >
               清除筛选
             </button>
           )}
 
           {/* Result count */}
-          <span className="ml-auto text-xs text-gray-400">
+          <span className="ml-auto text-xs text-gray-400 dark:text-slate-400">
             {filtered.length} / {mistakes.length} 条
           </span>
         </div>
@@ -208,31 +208,31 @@ export function MistakeBook() {
 
       {/* ── Mistake list ── */}
       {filtered.length === 0 ? (
-        <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-          <p className="text-gray-400">当前筛选条件下没有错题</p>
+        <div className="rounded-lg bg-white p-8 text-center shadow-sm dark:bg-slate-800">
+          <p className="text-gray-400 dark:text-slate-400">当前筛选条件下没有错题</p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((m) => (
             <div
               key={m.id}
-              className={`rounded-lg bg-white p-4 shadow-sm transition-opacity ${
+              className={`rounded-lg bg-white p-4 shadow-sm transition-opacity dark:bg-slate-800 ${
                 m.reviewed ? 'opacity-60' : ''
               }`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   {/* Problem — 2-line clamp */}
-                  <p className="line-clamp-2 text-sm font-medium text-gray-800">
+                  <p className="line-clamp-2 text-sm font-medium text-gray-800 dark:text-slate-100">
                     {m.problem}
                   </p>
 
                   {/* User answer (red) + correct answer (green) */}
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                    <span className="text-red-500">
+                    <span className="text-red-500 dark:text-red-400">
                       我的答案：{m.userAnswer}
                     </span>
-                    <span className="text-[#10B981]">
+                    <span className="text-[#10B981] dark:text-emerald-400">
                       正确答案：{m.correctAnswer}
                     </span>
                   </div>
@@ -247,16 +247,16 @@ export function MistakeBook() {
                     {m.knowledgePoints.map((kp) => (
                       <span
                         key={kp}
-                        className="inline-block rounded bg-[#E8F4FD] px-2 py-0.5 text-xs text-[#4A90D9]"
+                        className="inline-block rounded bg-[#E8F4FD] px-2 py-0.5 text-xs text-[#4A90D9] dark:bg-blue-900/30 dark:text-blue-300"
                       >
                         {kp}
                       </span>
                     ))}
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-400 dark:text-slate-400">
                       {formatDate(m.solvedAt)}
                     </span>
                     {m.reviewed && (
-                      <span className="inline-block rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-600">
+                      <span className="inline-block rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-600 dark:bg-green-900/30 dark:text-green-400">
                         已复习 ×{m.reviewCount}
                       </span>
                     )}
@@ -275,7 +275,7 @@ export function MistakeBook() {
                   )}
                   <button
                     onClick={() => deleteMistake(m.id)}
-                    className="whitespace-nowrap rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100"
+                    className="whitespace-nowrap rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                   >
                     删除
                   </button>

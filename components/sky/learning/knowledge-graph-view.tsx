@@ -286,12 +286,12 @@ export function KnowledgeGraphView() {
 
   if (!knowledgeGraph || knowledgeGraph.nodes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 shadow-sm">
+      <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 shadow-sm dark:bg-slate-800">
         <div className="text-6xl">🧠</div>
-        <h3 className="mt-4 text-lg font-semibold text-gray-700">
+        <h3 className="mt-4 text-lg font-semibold text-gray-700 dark:text-slate-200">
           暂无知识图谱数据
         </h3>
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="mt-2 text-sm text-gray-400 dark:text-slate-400">
           完成一些练习后自动生成
         </p>
       </div>
@@ -301,14 +301,14 @@ export function KnowledgeGraphView() {
   // ── Render ──────────────────────────────────────────────────────────
 
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm" ref={containerRef}>
-      <h3 className="mb-3 text-sm font-semibold text-gray-700">知识图谱</h3>
+    <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800" ref={containerRef}>
+      <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-slate-200">知识图谱</h3>
 
       {/* Canvas container */}
       <div className="relative">
         <canvas
           ref={canvasRef}
-          className="w-full cursor-pointer rounded border border-gray-100"
+          className="w-full cursor-pointer rounded border border-gray-100 dark:border-slate-700"
           style={{ height: CANVAS_HEIGHT }}
           onClick={handleCanvasClick}
         />
@@ -316,17 +316,17 @@ export function KnowledgeGraphView() {
         {/* Tooltip overlay */}
         {tooltip && (
           <div
-            className="absolute z-10 rounded-lg border border-gray-200 bg-white p-3 shadow-lg"
+            className="absolute z-10 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-800"
             style={{
               left: Math.min(tooltip.x + 12, containerWidth - 200),
               top: Math.max(0, tooltip.y - 80),
               maxWidth: 200,
             }}
           >
-            <div className="text-sm font-semibold text-gray-800">
+            <div className="text-sm font-semibold text-gray-800 dark:text-slate-100">
               {tooltip.node.name}
             </div>
-            <div className="mt-1 space-y-0.5 text-xs text-gray-500">
+            <div className="mt-1 space-y-0.5 text-xs text-gray-500 dark:text-slate-400">
               <div>类别：{tooltip.node.category}</div>
               <div>掌握度：{tooltip.node.mastery}%</div>
               <div>题量：{tooltip.node.problemCount}</div>
@@ -343,7 +343,7 @@ export function KnowledgeGraphView() {
       </div>
 
       {/* Legend */}
-      <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
+      <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-slate-400">
         <span className="flex items-center gap-1">
           <span className="inline-block h-3 w-3 rounded-full bg-[#10B981]" />
           掌握 ≥80%

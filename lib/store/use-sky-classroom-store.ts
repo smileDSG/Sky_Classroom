@@ -47,6 +47,7 @@ const getDefaultSolveState = (): SolveState => ({
   votingResults: [],
   fourPartOutput: null,
   fromQuestionBank: false,
+  fromSolveCache: false,
   error: null,
 });
 

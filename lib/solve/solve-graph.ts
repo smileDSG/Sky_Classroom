@@ -2,12 +2,13 @@
  * Solve Graph — LangGraph StateGraph for the solve pipeline.
  *
  * Topology:
- *   START → checkQuestionBank → routeToAgent → solveWithAgent → gradeAnswer → generateOutput → END
- *                │(hit)
- *                └──────────────────────────────────────────────────────┘
+ *   START → checkSolveCache → checkQuestionBank → routeToAgent → solveWithAgent → gradeAnswer → generateOutput → END
+ *                │(hit)            │(hit)
+ *                └─────────────────┴─────────────────────────────────────────────┘
  *
  * Nodes:
- *   - checkQuestionBank: Look up in question bank cache
+ *   - checkSolveCache: Look up in solve cache (near-match, threshold 0.70)
+ *   - checkQuestionBank: Look up in question bank cache (exact match, threshold 0.85)
  *   - routeToAgent: Classify problem type and select agent
  *   - solveWithAgent: Call LLM to solve (imported from solver-agent.ts)
  *   - gradeAnswer: Compare user answer with solution (if provided)
@@ -24,6 +25,32 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('SolveGraph');
 
 // ── Node implementations ──
+
+/**
+ * checkSolveCache node.
+ *
+ * Looks up the problem in the solve cache (lower threshold 0.70).
+ * If found, returns the cached solution and skips to generateOutput.
+ */
+async function checkSolveCacheNode(
+  state: SolveGraphState,
+  _config: LangGraphRunnableConfig,
+): Promise<Partial<SolveGraphState>> {
+  const { findSolveCacheMatches } = await import('./solve-cache');
+  const matches = await findSolveCacheMatches(state.problemText, 0.70);
+
+  if (matches.length > 0) {
+    log.info(`[SolveGraph] checkSolveCache: hit (similarity=${matches[0] ? 'found' : 'none'})`);
+    const hit = matches[0];
+    return {
+      fromSolveCache: true,
+      solution: hit.solution,
+      agentId: hit.agentId,
+    };
+  }
+
+  return { fromSolveCache: false };
+}
 
 /**
  * checkQuestionBank node.
@@ -179,6 +206,13 @@ async function generateOutputNode(
 // ── Conditional edges ──
 
 /**
+ * After checkSolveCache: if hit, skip to generateOutput.
+ */
+export function afterCheckSolveCache(state: SolveGraphState): 'checkQuestionBank' | 'generateOutput' {
+  return state.fromSolveCache ? 'generateOutput' : 'checkQuestionBank';
+}
+
+/**
  * After checkQuestionBank: if hit, skip to generateOutput.
  */
 export function afterCheckBank(state: SolveGraphState): 'routeToAgent' | 'generateOutput' {
@@ -199,12 +233,17 @@ export function afterSolve(state: SolveGraphState): 'gradeAnswer' | 'generateOut
  */
 export function createSolveGraph() {
   const graph = new StateGraph(SolveGraphAnnotation)
+    .addNode('checkSolveCache', checkSolveCacheNode)
     .addNode('checkQuestionBank', checkQuestionBankNode)
     .addNode('routeToAgent', routeToAgentNode)
     .addNode('solveWithAgent', solveWithAgentNode)
     .addNode('gradeAnswer', gradeAnswerNode)
     .addNode('generateOutput', generateOutputNode)
-    .addEdge(START, 'checkQuestionBank')
+    .addEdge(START, 'checkSolveCache')
+    .addConditionalEdges('checkSolveCache', afterCheckSolveCache, {
+      checkQuestionBank: 'checkQuestionBank',
+      generateOutput: 'generateOutput',
+    })
     .addConditionalEdges('checkQuestionBank', afterCheckBank, {
       routeToAgent: 'routeToAgent',
       generateOutput: 'generateOutput',
@@ -240,6 +279,7 @@ export function buildSolveInitialState(
     votingResults: [],
     fourPartOutput: null,
     fromQuestionBank: false,
+    fromSolveCache: false,
     error: null,
   };
 }

@@ -1,0 +1,397 @@
+{
+  "id": "8jV4Ehmhez",
+  "status": "failed",
+  "step": "failed",
+  "progress": 30,
+  "message": "Classroom generation failed",
+  "createdAt": "2026-05-26T15:19:12.921Z",
+  "updatedAt": "2026-05-26T15:23:29.714Z",
+  "inputSummary": {
+    "requirementPreview": "fastapi",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-05-26T15:19:12.945Z",
+  "totalScenes": 10,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "课程简介与目标",
+        "description": "Welcome slide that introduces the course topic, structure, and learning objectives to set learner expectations.",
+        "keyPoints": [
+          "本课程旨在帮助您掌握生成互动学习课程场景大纲的核心方法。",
+          "您将学习如何分析用户需求，并生成结构化的场景大纲。",
+          "课程时长约15-20分钟，包含讲解、示例和一个小测验。"
+        ],
+        "teachingObjective": "了解课程内容、目标和结构。",
+        "estimatedDuration": 60,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "理解用户需求",
+        "description": "Explains how to analyze user requirements to infer course parameters like topic, audience, duration, and style.",
+        "keyPoints": [
+          "需求文本是生成大纲的基石。",
+          "关键信息包括：主题、目标受众、时长、风格。",
+          "当信息不充分时，应做出合理的默认假设（如时长15-20分钟、受众为普通学习者）。"
+        ],
+        "teachingObjective": "掌握从需求文本中提取关键信息的方法。",
+        "estimatedDuration": 90,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "语言推断规则",
+        "description": "Details the rules for inferring the teaching language from user text and context.",
+        "keyPoints": [
+          "用户显式指定的语言优先。",
+          "默认为用户输入所用的语言。",
+          "外语学习场景中，通常用用户的母语进行教学，而非目标语言（高级学习者除外）。"
+        ],
+        "teachingObjective": "掌握语言推断规则，确保教学语言选择正确。",
+        "estimatedDuration": 90,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "场景类型与设计原则",
+        "description": "Introduces the four scene types (slide, quiz, interactive, pbl) and the principles of instructional design for creating a logical flow.",
+        "keyPoints": [
+          "四种场景类型：slide（幻灯片）、quiz（测验）、interactive（互动）、pbl（项目式学习）。",
+          "每个场景应有清晰的教学目的。",
+          "场景之间应形成逻辑递进的教学流程。",
+          "通常一个场景时长1-3分钟，PBL场景15-30分钟。"
+        ],
+        "teachingObjective": "理解不同场景类型的用途和设计原则。",
+        "estimatedDuration": 120,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "quiz",
+        "title": "知识检查：场景类型与语言规则",
+        "description": "A short quiz to assess understanding of scene types and language inference rules.",
+        "keyPoints": [
+          "测验目的：巩固场景类型和语言推断的知识。",
+          "包含2-3个选择题，难度为简单。"
+        ],
+        "teachingObjective": "检验对场景类型和语言规则的理解。",
+        "estimatedDuration": 120,
+        "order": 5,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single"
+          ]
+        }
+      },
+      {
+        "id": "scene_6",
+        "type": "interactive",
+        "title": "动手设计：场景选择与规划",
+        "description": "An interactive exercise where learners classify given teaching objectives into appropriate scene types, reinforcing their understanding.",
+        "keyPoints": [
+          "练习目标：将不同的教学目的匹配到合适的场景类型。",
+          "例如，演示一个公式应使用‘slide’类型。",
+          "此活动旨在培养场景选择的直觉。"
+        ],
+        "teachingObjective": "能够根据教学目的选择合适的场景类型并规划其内容。",
+        "estimatedDuration": 150,
+        "order": 6,
+        "widgetType": "game",
+        "widgetOutline": {
+          "gameType": "matching",
+          "challenge": "请将左侧的教学目的与右侧最合适的场景类型进行匹配。例如，‘理解勾股定理的历史’应匹配‘slide’。"
+        }
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "输出格式详解",
+        "description": "Provides a detailed walkthrough of the required JSON output structure, including top-level keys and field descriptions.",
+        "keyPoints": [
+          "输出必须是单一的JSON对象。",
+          "包含两个顶级键：'languageDirective' 和 'outlines'。",
+          "'outlines' 是一个包含多个场景对象的数组。"
+        ],
+        "teachingObjective": "掌握生成JSON输出的标准格式。",
+        "estimatedDuration": 90,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "特殊元素：图表与表格",
+        "description": "Explains how to specify chart and table elements within scene keyPoints.",
+        "keyPoints": [
+          "图表类型：柱状图、折线图、饼图、雷达图。",
+          "在keyPoints中用 'Chart:' 前缀描述数据和用途。",
+          "表格用于对比或列举信息。在keyPoints中用 '[Table]' 前缀。"
+        ],
+        "teachingObjective": "学会在场景大纲中嵌入图表和表格元素。",
+        "estimatedDuration": 60,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "特殊元素：互动与项目式学习",
+        "description": "Details the requirements for interactive and PBL scenes, including mandatory configuration fields.",
+        "keyPoints": [
+          "互动场景需要指定widgetType和widgetOutline。",
+          "PBL场景需要pblConfig，包含项目主题、描述、目标技能和问题数量。",
+          "每门课通常最多1-2个互动场景和1个PBL场景。"
+        ],
+        "teachingObjective": "学会配置互动和PBL场景。",
+        "estimatedDuration": 90,
+        "order": 9
+      },
+      {
+        "id": "scene_10",
+        "type": "slide",
+        "title": "总结与下一步",
+        "description": "Summarizes the key takeaways from the course and provides guidance on what to do next.",
+        "keyPoints": [
+          "关键要点：理解需求、推断语言、选择场景、遵循输出格式。",
+          "始终输出符合规范的JSON对象。",
+          "下一步：尝试为一个新课程需求生成完整的场景大纲。"
+        ],
+        "teachingObjective": "回顾核心概念并为实践应用做好准备。",
+        "estimatedDuration": 60,
+        "order": 10
+      }
+    ],
+    "languageDirective": "Teach in Chinese. This is the language of the user's request and the default teaching language. All explanations, key points, and scene content should be delivered in Chinese. For technical terms like 'bar chart', 'pie chart', 'simulation', and 'quiz', use the standard Chinese translation (e.g., 柱状图, 饼图, 模拟, 测验). If a term is commonly known by its English name in the field (e.g., 'dashboard'), use the Chinese term (控制面板) but consider adding the English in parentheses on first mention for clarity.",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "5QAceyt6UM",
+      "name": "课程简介与目标",
+      "languageDirective": "Teach in Chinese. This is the language of the user's request and the default teaching language. All explanations, key points, and scene content should be delivered in Chinese. For technical terms like 'bar chart', 'pie chart', 'simulation', and 'quiz', use the standard Chinese translation (e.g., 柱状图, 饼图, 模拟, 测验). If a term is commonly known by its English name in the field (e.g., 'dashboard'), use the Chinese term (控制面板) but consider adding the English in parentheses on first mention for clarity.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1779808769051,
+      "updatedAt": 1779808769051,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "fastapi",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "课程简介与目标",
+      "description": "Welcome slide that introduces the course topic, structure, and learning objectives to set learner expectations.",
+      "keyPoints": [
+        "本课程旨在帮助您掌握生成互动学习课程场景大纲的核心方法。",
+        "您将学习如何分析用户需求，并生成结构化的场景大纲。",
+        "课程时长约15-20分钟，包含讲解、示例和一个小测验。"
+      ],
+      "teachingObjective": "了解课程内容、目标和结构。",
+      "estimatedDuration": 60,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "理解用户需求",
+      "description": "Explains how to analyze user requirements to infer course parameters like topic, audience, duration, and style.",
+      "keyPoints": [
+        "需求文本是生成大纲的基石。",
+        "关键信息包括：主题、目标受众、时长、风格。",
+        "当信息不充分时，应做出合理的默认假设（如时长15-20分钟、受众为普通学习者）。"
+      ],
+      "teachingObjective": "掌握从需求文本中提取关键信息的方法。",
+      "estimatedDuration": 90,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "语言推断规则",
+      "description": "Details the rules for inferring the teaching language from user text and context.",
+      "keyPoints": [
+        "用户显式指定的语言优先。",
+        "默认为用户输入所用的语言。",
+        "外语学习场景中，通常用用户的母语进行教学，而非目标语言（高级学习者除外）。"
+      ],
+      "teachingObjective": "掌握语言推断规则，确保教学语言选择正确。",
+      "estimatedDuration": 90,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "场景类型与设计原则",
+      "description": "Introduces the four scene types (slide, quiz, interactive, pbl) and the principles of instructional design for creating a logical flow.",
+      "keyPoints": [
+        "四种场景类型：slide（幻灯片）、quiz（测验）、interactive（互动）、pbl（项目式学习）。",
+        "每个场景应有清晰的教学目的。",
+        "场景之间应形成逻辑递进的教学流程。",
+        "通常一个场景时长1-3分钟，PBL场景15-30分钟。"
+      ],
+      "teachingObjective": "理解不同场景类型的用途和设计原则。",
+      "estimatedDuration": 120,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "quiz",
+      "title": "知识检查：场景类型与语言规则",
+      "description": "A short quiz to assess understanding of scene types and language inference rules.",
+      "keyPoints": [
+        "测验目的：巩固场景类型和语言推断的知识。",
+        "包含2-3个选择题，难度为简单。"
+      ],
+      "teachingObjective": "检验对场景类型和语言规则的理解。",
+      "estimatedDuration": 120,
+      "order": 5,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single"
+        ]
+      }
+    },
+    {
+      "id": "scene_6",
+      "type": "interactive",
+      "title": "动手设计：场景选择与规划",
+      "description": "An interactive exercise where learners classify given teaching objectives into appropriate scene types, reinforcing their understanding.",
+      "keyPoints": [
+        "练习目标：将不同的教学目的匹配到合适的场景类型。",
+        "例如，演示一个公式应使用‘slide’类型。",
+        "此活动旨在培养场景选择的直觉。"
+      ],
+      "teachingObjective": "能够根据教学目的选择合适的场景类型并规划其内容。",
+      "estimatedDuration": 150,
+      "order": 6,
+      "widgetType": "game",
+      "widgetOutline": {
+        "gameType": "matching",
+        "challenge": "请将左侧的教学目的与右侧最合适的场景类型进行匹配。例如，‘理解勾股定理的历史’应匹配‘slide’。"
+      }
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "输出格式详解",
+      "description": "Provides a detailed walkthrough of the required JSON output structure, including top-level keys and field descriptions.",
+      "keyPoints": [
+        "输出必须是单一的JSON对象。",
+        "包含两个顶级键：'languageDirective' 和 'outlines'。",
+        "'outlines' 是一个包含多个场景对象的数组。"
+      ],
+      "teachingObjective": "掌握生成JSON输出的标准格式。",
+      "estimatedDuration": 90,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "特殊元素：图表与表格",
+      "description": "Explains how to specify chart and table elements within scene keyPoints.",
+      "keyPoints": [
+        "图表类型：柱状图、折线图、饼图、雷达图。",
+        "在keyPoints中用 'Chart:' 前缀描述数据和用途。",
+        "表格用于对比或列举信息。在keyPoints中用 '[Table]' 前缀。"
+      ],
+      "teachingObjective": "学会在场景大纲中嵌入图表和表格元素。",
+      "estimatedDuration": 60,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "特殊元素：互动与项目式学习",
+      "description": "Details the requirements for interactive and PBL scenes, including mandatory configuration fields.",
+      "keyPoints": [
+        "互动场景需要指定widgetType和widgetOutline。",
+        "PBL场景需要pblConfig，包含项目主题、描述、目标技能和问题数量。",
+        "每门课通常最多1-2个互动场景和1个PBL场景。"
+      ],
+      "teachingObjective": "学会配置互动和PBL场景。",
+      "estimatedDuration": 90,
+      "order": 9
+    },
+    {
+      "id": "scene_10",
+      "type": "slide",
+      "title": "总结与下一步",
+      "description": "Summarizes the key takeaways from the course and provides guidance on what to do next.",
+      "keyPoints": [
+        "关键要点：理解需求、推断语言、选择场景、遵循输出格式。",
+        "始终输出符合规范的JSON对象。",
+        "下一步：尝试为一个新课程需求生成完整的场景大纲。"
+      ],
+      "teachingObjective": "回顾核心概念并为实践应用做好准备。",
+      "estimatedDuration": 60,
+      "order": 10
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "Teach in Chinese. This is the language of the user's request and the default teaching language. All explanations, key points, and scene content should be delivered in Chinese. For technical terms like 'bar chart', 'pie chart', 'simulation', and 'quiz', use the standard Chinese translation (e.g., 柱状图, 饼图, 模拟, 测验). If a term is commonly known by its English name in the field (e.g., 'dashboard'), use the Chinese term (控制面板) but consider adding the English in parentheses on first mention for clarity.",
+    "totalScenes": 10
+  },
+  "completedAt": "2026-05-26T15:23:29.713Z",
+  "error": "EPERM: operation not permitted, rename 'E:\\01_Work\\sky-classroom\\data\\classroom-jobs\\8jV4Ehmhez.json.36868.1779809009692.tmp' -> 'E:\\01_Work\\sky-classroom\\data\\classroom-jobs\\8jV4Ehmhez.json'"
+}
