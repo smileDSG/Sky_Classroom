@@ -6,6 +6,7 @@ import type { PptxThemeId, ThemeToken } from '@/lib/slides/types';
 import { getTheme } from '@/lib/slides/pptx-themes';
 import { getAllThemes } from '@/lib/slides/themes/modern-editor';
 import { getLuminance, isDarkBg } from '@/lib/slides/color-utils';
+import { useTheme } from '@/lib/hooks/use-theme';
 
 export interface SlideViewerProps {
   slide: Slide | null;
@@ -521,6 +522,9 @@ export function SlideViewer({ slide, theme }: SlideViewerProps) {
   const [prevSlideId, setPrevSlideId] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === 'dark';
+
   const pptxTheme = useMemo(() => (theme ? getTheme(theme) : null), [theme]);
 
   // Adapt slide colors to preview theme
@@ -580,8 +584,10 @@ export function SlideViewer({ slide, theme }: SlideViewerProps) {
         ref={containerRef}
         className="flex h-full items-center justify-center"
         style={{
-          backgroundColor: '#f8fafc',
-          backgroundImage: `
+          backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc',
+          backgroundImage: isDarkMode
+            ? undefined
+            : `
             radial-gradient(circle at 20% 50%, rgba(96,165,250,0.08) 0%, transparent 50%),
             radial-gradient(circle at 80% 50%, rgba(167,139,250,0.06) 0%, transparent 50%)
           `,
@@ -590,10 +596,10 @@ export function SlideViewer({ slide, theme }: SlideViewerProps) {
         <div className="text-center">
           {/* Animated illustration */}
           <div className="relative mx-auto mb-6" style={{ width: 120, height: 120 }}>
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 opacity-60" />
-            <div className="absolute inset-2 rounded-2xl bg-white/80 backdrop-blur-sm shadow-lg shadow-blue-100/50 ring-1 ring-white/50" />
+            <div className={`absolute inset-0 rounded-3xl ${isDarkMode ? 'bg-blue-900/30' : 'bg-gradient-to-br from-blue-100 to-indigo-100 opacity-60'}`} />
+            <div className={`absolute inset-2 rounded-2xl shadow-lg ring-1 ${isDarkMode ? 'bg-gray-800/80 shadow-blue-900/20 ring-white/5' : 'bg-white/80 backdrop-blur-sm shadow-blue-100/50 ring-white/50'}`} />
             <div className="absolute inset-0 flex items-center justify-center">
-              <svg className="h-12 w-12 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg className={`h-12 w-12 ${isDarkMode ? 'text-blue-300' : 'text-blue-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
@@ -602,11 +608,11 @@ export function SlideViewer({ slide, theme }: SlideViewerProps) {
             <div className="absolute -bottom-1 -left-1 h-3 w-3 rounded-full bg-gradient-to-br from-emerald-300 to-teal-300 shadow-sm animate-bounce" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }} />
             <div className="absolute -right-2 bottom-4 h-2.5 w-2.5 rounded-full bg-gradient-to-br from-rose-300 to-pink-300 shadow-sm animate-bounce" style={{ animationDuration: '3s', animationDelay: '1s' }} />
           </div>
-          <h3 className="mb-1 text-base font-bold text-slate-700">准备就绪</h3>
-          <p className="text-sm text-slate-400">
+          <h3 className={`mb-1 text-base font-bold ${isDarkMode ? 'text-gray-200' : 'text-slate-700'}`}>准备就绪</h3>
+          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-slate-400'}`}>
             输入教学主题，AI 将为您生成精美课件
           </p>
-          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-300">
+          <div className={`mt-4 flex items-center justify-center gap-2 text-xs ${isDarkMode ? 'text-gray-500' : 'text-slate-300'}`}>
             <span className="flex items-center gap-1">
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -673,8 +679,10 @@ export function SlideViewer({ slide, theme }: SlideViewerProps) {
       ref={containerRef}
       className="flex h-full items-center justify-center overflow-hidden"
       style={{
-        backgroundColor: '#f8fafc',
-        backgroundImage: `
+        backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc',
+        backgroundImage: isDarkMode
+          ? undefined
+          : `
           radial-gradient(ellipse 80% 50% at 20% 40%, rgba(96, 165, 250, 0.07) 0%, transparent 50%),
           radial-gradient(ellipse 60% 40% at 80% 60%, rgba(167, 139, 250, 0.05) 0%, transparent 50%),
           radial-gradient(ellipse 50% 30% at 50% 100%, rgba(99, 102, 241, 0.03) 0%, transparent 50%)

@@ -110,7 +110,7 @@ export function AvatarSpeechPlayer({
                 </span>
               )}
             </div>
-            <span className="text-[9px] text-slate-400">
+            <span className="text-[9px] text-slate-400 dark:text-gray-500">
               {currentSegmentIdx + 1} / {slideSegments.length}
             </span>
           </div>
@@ -133,7 +133,7 @@ export function AvatarSpeechPlayer({
 
           {/* Progress bar */}
           {isPlaying && (
-            <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
+            <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-gray-800">
               <div
                 className="h-full rounded-full bg-blue-500 transition-all duration-100"
                 style={{ width: `${progress}%` }}
@@ -175,7 +175,7 @@ export function AvatarSpeechPlayer({
               </div>
             )}
 
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-slate-400 dark:text-gray-500">
               {isPlaying ? '讲解中' : hasSpeech ? '点击播放' : '无讲解'}
             </span>
           </div>
@@ -198,7 +198,7 @@ export function AvatarSpeechPlayer({
         />
         {isPlaying && (
           <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-green-500 shadow-sm">
-            <div className="h-1.5 w-1.5 rounded-full bg-white" />
+            <div className="h-1.5 w-1.5 rounded-full bg-white dark:bg-gray-700" />
           </div>
         )}
       </div>
