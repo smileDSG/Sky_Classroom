@@ -130,14 +130,13 @@ export function AgentSelector({
             {selectedTeacher && (
               <div className="relative">
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden"
+                  className="relative w-10 h-10 rounded-xl overflow-hidden"
                   style={{ backgroundColor: `${selectedTeacher.color}20` }}
                 >
                   <Image
                     src={selectedTeacher.avatar}
                     alt={selectedTeacher.name}
-                    width={32}
-                    height={32}
+                    fill
                     className="object-cover"
                   />
                 </div>
@@ -164,8 +163,7 @@ export function AgentSelector({
                   <Image
                     src={student.avatar}
                     alt={student.name}
-                    width={32}
-                    height={32}
+                    fill
                     className="object-cover"
                   />
                 </div>
@@ -252,14 +250,13 @@ export function AgentSelector({
                       )}
                     >
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden"
+                        className="relative w-10 h-10 rounded-xl overflow-hidden"
                         style={{ backgroundColor: `${teacher.color}20` }}
                       >
                         <Image
                           src={teacher.avatar}
                           alt={teacher.name}
-                          width={32}
-                          height={32}
+                          fill
                           className="object-cover"
                         />
                       </div>
@@ -305,14 +302,13 @@ export function AgentSelector({
                         )}
                       >
                         <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden"
+                          className="relative w-10 h-10 rounded-xl overflow-hidden"
                           style={{ backgroundColor: `${student.color}20` }}
                         >
                           <Image
                             src={student.avatar}
                             alt={student.name}
-                            width={32}
-                            height={32}
+                            fill
                             className="object-cover"
                           />
                         </div>

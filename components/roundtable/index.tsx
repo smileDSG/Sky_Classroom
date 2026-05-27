@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Mic,
@@ -39,6 +39,7 @@ export interface DiscussionRequest {
   topic: string;
   prompt?: string;
   agentId?: string;
+  sceneId?: string;
 }
 
 interface RoundtableProps {
@@ -156,8 +157,6 @@ export function Roundtable({
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [userMessage, setUserMessage] = useState<string | null>(null);
-  const [speakerTop, setSpeakerTop] = useState<number | null>(null);
-  const [popupLeft, setPopupLeft] = useState<number>(80);
   const avatarRefMapRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const agentScrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -165,6 +164,7 @@ export function Roundtable({
   const studentAvatarRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const userMessageClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [dismissedSpeaker, setDismissedSpeaker] = useState<string | null>(null);
   const [endFlashVisible, setEndFlashVisible] = useState(false);
   const [isSendCooldown, setIsSendCooldown] = useState(false);
   const isSendCooldownRef = useRef(false);
@@ -305,6 +305,7 @@ export function Roundtable({
 
     showLocalUserMessage(inputValue);
     onMessageSend?.(inputValue);
+    setDismissedSpeaker(popupSpeakingAgentId ?? null);
     setIsSendCooldown(true);
     isSendCooldownRef.current = true;
     setInputValue('');
@@ -315,6 +316,7 @@ export function Roundtable({
     if (isSendCooldown) return;
     if (!isInputOpen) {
       onInputActivate?.();
+      setDismissedSpeaker(popupSpeakingAgentId ?? null);
     }
     setIsInputOpen(!isInputOpen);
     if (isVoiceOpen || isProcessing) {
@@ -332,6 +334,7 @@ export function Roundtable({
     } else {
       if (isSendCooldown || isProcessing) return;
       onInputActivate?.();
+      setDismissedSpeaker(popupSpeakingAgentId ?? null);
       setIsVoiceOpen(true);
       setIsInputOpen(false);
       startRecording();
@@ -545,23 +548,17 @@ export function Roundtable({
   const popupSpeakingAgentId = (() => {
     if (userMessage) return userParticipant?.id ?? null;
     if (speakingAgentId) return speakingAgentId;
-    if (bubbleRole === 'teacher' && sourceText) return teacherParticipant?.id ?? null;
-    if (bubbleRole === 'agent' && speakingStudent) return speakingStudent.id;
+    // Any agent speaking — teacher, student, or thinking agent
+    if (sourceText && bubbleRole === 'teacher') return teacherParticipant?.id ?? null;
+    if (sourceText && bubbleRole === 'agent' && speakingStudent) return speakingStudent.id;
+    // Fallback: if an agent is thinking, treat them as speaker
+    if (sourceText && thinkingState?.agentId) return thinkingState.agentId;
     return null;
   })();
 
-  // Track the screen position of the speaking avatar for popup alignment
-  useLayoutEffect(() => {
-    if (popupSpeakingAgentId) {
-      const el = avatarRefMapRef.current.get(popupSpeakingAgentId);
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        setSpeakerTop(rect.top + rect.height / 2);
-        setPopupLeft(rect.right + 8);
-      }
-    } else {
-      setSpeakerTop(null);
-    }
+  // Reset dismissed state when speaker or text changes (new speech = show popup again)
+  useEffect(() => {
+    setDismissedSpeaker(null);
   }, [popupSpeakingAgentId, sourceText]);
 
   // Prepare participants for CharacterStrip
@@ -580,41 +577,15 @@ export function Roundtable({
   if (isPresenting) {
     return (
       <div className="h-0 w-full relative z-10 overflow-visible">
+        {/* Fullscreen mode: avatar sidebar hidden, subtitles shown (closable) */}
+
         <AvatarSpeechPopup
           speakingAgentId={popupSpeakingAgentId}
           sourceText={sourceText}
           participants={stripParticipants}
-          popupLeft={popupLeft}
-          speakerTop={speakerTop}
-        />
-
-        {/* Left side Character Strip - extends to top */}
-        <div className="fixed left-0 top-0 bottom-0 w-20 z-[35] flex flex-col items-center bg-sky-50/80 dark:bg-slate-900/80 backdrop-blur-md border-r border-sky-200/50 dark:border-white/5 overflow-y-auto">
-          <div className="flex-1 flex flex-col items-center justify-center py-4">
-            <CharacterStrip
-              participants={stripParticipants}
-              speakingId={speakingAgentId}
-              thinkingId={thinkingState?.agentId}
-              userAvatar={userProfileAvatar || userAvatar}
-              isCueUser={isCueUser}
-              avatarRefMap={avatarRefMapRef}
-              onParticipantClick={(id) => {
-                // Handle participant click
-              }}
-            />
-          </div>
-        </div>
-
-        <PresentationSpeechOverlay
-          playbackView={enrichedPlaybackView}
-          participants={initialParticipants}
-          speakingAgentId={speakingAgentId ?? null}
-          isTopicPending={!!isTopicPending}
-          side="left"
-          onBubbleClick={handlePresentationBubbleClick}
-          audioIndicatorState={audioIndicatorState ?? 'idle'}
-          buttonState={enrichedPlaybackView?.buttonState}
-          isPaused={isDiscussionPaused || engineMode === 'paused'}
+          dismissed={dismissedSpeaker === popupSpeakingAgentId || isInputOpen || isVoiceOpen}
+          onDismiss={() => setDismissedSpeaker(popupSpeakingAgentId ?? null)}
+          container={fullscreenContainerRef?.current}
         />
 
         {(isInputOpen || isVoiceOpen) && (
@@ -774,26 +745,6 @@ export function Roundtable({
           </AnimatePresence>
 
           <AnimatePresence>
-            {thinkingState?.stage === 'director' && !currentSpeech && !userMessage && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900/80 backdrop-blur-xl rounded-full border border-white/10"
-              >
-                <div className="flex gap-1">
-                  {[0, 0.2, 0.4].map((delay) => (
-                    <motion.div
-                      key={delay}
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{ repeat: Infinity, duration: 1.2, delay }}
-                      className="w-1.5 h-1.5 rounded-full bg-violet-400"
-                    />
-                  ))}
-                </div>
-                <span className="text-[10px] text-slate-400 font-medium">{t('roundtable.thinking')}</span>
-              </motion.div>
-            )}
           </AnimatePresence>
         </div>
 
@@ -871,6 +822,7 @@ export function Roundtable({
                         aria-label={t('roundtable.askTeacher')}
                         onClick={(e) => {
                           e.stopPropagation();
+                          setDismissedSpeaker(popupSpeakingAgentId ?? null);
                           if (onAskTeacher) {
                             onAskTeacher();
                           } else {
@@ -974,15 +926,19 @@ export function Roundtable({
   // Normal mode - New immersive layout
   return (
     <div className="h-full w-full flex flex-row relative z-10">
-      {/* Left: Character Strip with Speech Popup */}
-      <div className="w-20 shrink-0 flex flex-col items-center py-6 bg-sky-50/60 dark:bg-slate-900/40 backdrop-blur-sm border-r border-sky-200/50 dark:border-white/5 overflow-hidden relative">
+      {/* Left: Character Strip with Speech Popup — centered vertically */}
+      <div className="w-14 shrink-0 flex flex-col items-center bg-sky-50/60 dark:bg-slate-900/40 backdrop-blur-sm border-r border-sky-200/50 dark:border-white/5 overflow-hidden relative">
         <AvatarSpeechPopup
           speakingAgentId={popupSpeakingAgentId}
           sourceText={sourceText}
           participants={stripParticipants}
-          popupLeft={popupLeft}
-          speakerTop={speakerTop}
+          dismissed={dismissedSpeaker === popupSpeakingAgentId || isInputOpen || isVoiceOpen}
+          onDismiss={() => setDismissedSpeaker(popupSpeakingAgentId ?? null)}
+          container={fullscreenContainerRef?.current}
         />
+
+        {/* Spacer to push avatars down from top */}
+        <div className="flex-1" />
 
         <CharacterStrip
           participants={stripParticipants}
@@ -992,9 +948,16 @@ export function Roundtable({
           isCueUser={isCueUser}
           avatarRefMap={avatarRefMapRef}
           onParticipantClick={(id) => {
-            // Handle participant click
+            // If subtitle was manually closed → reopen it
+            // (hover already shows agent intro via HoverCard — no need to duplicate)
+            if (dismissedSpeaker) {
+              setDismissedSpeaker(null);
+            }
           }}
         />
+
+        {/* Bottom spacer — twice as much to bias toward upper-center */}
+        <div className="flex-[2]" />
       </div>
 
       {/* Center: Main interaction area */}
@@ -1037,29 +1000,10 @@ export function Roundtable({
             {!bubbleRole && (
               <div className="flex items-center justify-center h-32">
                 <AnimatePresence>
-                  {thinkingState?.stage === 'director' && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      className="flex items-center gap-3 px-5 py-3 bg-slate-800/70 backdrop-blur-xl rounded-full border border-white/10"
-                    >
-                      <div className="flex gap-1.5">
-                        {[0, 0.2, 0.4].map((delay) => (
-                          <motion.div
-                            key={delay}
-                            animate={{ opacity: [0.3, 1, 0.3] }}
-                            transition={{ repeat: Infinity, duration: 1.2, delay }}
-                            className="w-2 h-2 rounded-full bg-violet-400"
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm text-slate-300">{t('roundtable.thinking')}</span>
-                    </motion.div>
-                  )}
 
                   {isCueUser && (
                     <motion.div
+                      key="cue-user"
                       initial={{ opacity: 0, scale: 0.85 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.85 }}
@@ -1185,7 +1129,11 @@ export function Roundtable({
           onStopDiscussion={onStopDiscussion}
           isPresenting={isPresenting}
           onTogglePresentation={onTogglePresentation}
-          onAskTeacher={onAskTeacher || handleToggleInput}
+          onAskTeacher={() => {
+            setDismissedSpeaker(popupSpeakingAgentId ?? null);
+            if (onAskTeacher) onAskTeacher();
+            else handleToggleInput();
+          }}
           ttsEnabled={ttsEnabled}
           ttsMuted={ttsMuted}
           ttsVolume={ttsVolume}

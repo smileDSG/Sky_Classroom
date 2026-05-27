@@ -13,6 +13,7 @@ import { AccessCodeGuard } from '@/components/access-code-guard';
 import { SkyClassroomEntry } from '@/components/sky-classroom-entry';
 import { KagamiPanel } from '@/components/ai/kagami-panel';
 import { AuthProvider } from '@/components/auth/auth-provider';
+import { ClassroomJobPoller } from '@/components/classroom-job-poller';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -24,6 +25,9 @@ export const metadata: Metadata = {
   title: '天空课堂',
   description:
     '天空课堂 — AI 驱动的互动课堂。上传 PDF，即刻生成沉浸式多-agent学习体验。',
+  icons: {
+    icon: '/logo-icon.svg',
+  },
 };
 
 export default function RootLayout({
@@ -43,6 +47,7 @@ export default function RootLayout({
               <ServerProvidersInit />
               <SkyClassroomEntry />
               <KagamiPanel />
+              <ClassroomJobPoller />
               <AccessCodeGuard>{children}</AccessCodeGuard>
               <Toaster position="top-center" />
             </AuthProvider>

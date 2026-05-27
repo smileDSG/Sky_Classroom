@@ -215,10 +215,6 @@ export function CanvasArea({
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-3">
-                      <div className="relative w-6 h-6">
-                        <div className="absolute inset-0 rounded-full border-2 border-slate-700" />
-                        <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-violet-500 animate-spin" />
-                      </div>
                       <motion.span
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}

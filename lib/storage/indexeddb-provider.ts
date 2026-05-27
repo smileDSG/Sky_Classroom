@@ -20,10 +20,18 @@ export class IndexedDBStorageProvider implements StorageProvider {
   }
 
   private async openDb(): Promise<IDBDatabase> {
-    if (this.db) return this.db;
+    if (this.db) {
+      // Check if the connection is still usable
+      try {
+        this.db.objectStoreNames; // throws if closing/closed
+        return this.db;
+      } catch {
+        this.db = null;
+      }
+    }
 
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 1);
+      const request = indexedDB.open(this.dbName);
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
@@ -44,6 +52,7 @@ export class IndexedDBStorageProvider implements StorageProvider {
 
       request.onsuccess = (event) => {
         this.db = (event.target as IDBOpenDBRequest).result;
+        this.db.onclose = () => { this.db = null; };
         resolve(this.db);
       };
 
@@ -51,7 +60,7 @@ export class IndexedDBStorageProvider implements StorageProvider {
     });
   }
 
-  private ensureStore(db: IDBDatabase, name: string): void {
+  private async ensureStore(db: IDBDatabase, name: string): Promise<IDBDatabase> {
     if (!db.objectStoreNames.contains(name)) {
       // Must close, reopen with new version to add stores
       const currentVersion = db.version;
@@ -68,22 +77,23 @@ export class IndexedDBStorageProvider implements StorageProvider {
         };
         req.onsuccess = (e) => {
           this.db = (e.target as IDBOpenDBRequest).result;
-          resolve(undefined);
+          this.db.onclose = () => { this.db = null; };
+          resolve(this.db);
         };
         req.onerror = () => reject(req.error);
-      }) as unknown as void;
+      });
     }
+    return db;
   }
 
-  private transaction(
+  private async transaction(
     storeName: string,
     mode: IDBTransactionMode = 'readonly',
   ): Promise<{ store: IDBObjectStore; tx: IDBTransaction }> {
-    return this.openDb().then((db) => {
-      this.ensureStore(db, storeName);
-      const tx = db.transaction(storeName, mode);
-      return { store: tx.objectStore(storeName), tx };
-    });
+    const db = await this.openDb();
+    const readyDb = await this.ensureStore(db, storeName);
+    const tx = readyDb.transaction(storeName, mode);
+    return { store: tx.objectStore(storeName), tx };
   }
 
   async isAvailable(): Promise<boolean> {

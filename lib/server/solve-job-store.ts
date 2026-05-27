@@ -21,6 +21,7 @@ export interface SolveJob {
     knowledgePoints: { name: string; description: string; difficulty: string }[];
     similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
     fromQuestionBank: boolean;
+    fromSolveCache: boolean;
     solvingTime: number;
   };
   error?: string;

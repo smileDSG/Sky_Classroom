@@ -36,6 +36,7 @@ export async function GET() {
         role: user.role,
         status: user.status,
         planType: user.planType,
+        emailVerified: user.emailVerified,
         createdAt: user.createdAt,
       },
     });

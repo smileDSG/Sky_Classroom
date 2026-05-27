@@ -83,12 +83,7 @@ export function HeroInput({
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.5 }}
-      className="w-full max-w-3xl mx-auto"
-    >
+    <div className="w-full">
       {/* 主输入框容器 */}
       <div
         className={cn(
@@ -108,7 +103,7 @@ export function HeroInput({
         onDrop={handleDrop}
       >
         {/* 顶部工具栏 */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700/50">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-slate-700/50">
           <div className="flex items-center gap-2">
             {/* 模板按钮 */}
             <Tooltip>
@@ -202,7 +197,7 @@ export function HeroInput({
         </div>
 
         {/* 角色选择器 */}
-        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30">
+        <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30">
           <AgentSelector
             selectedTeacherId={selectedTeacherId}
             selectedStudentIds={selectedStudentIds}
@@ -222,13 +217,13 @@ export function HeroInput({
             onBlur={() => setIsFocused(false)}
             placeholder={t('upload.requirementPlaceholder')}
             className={cn(
-              'w-full px-4 py-4 min-h-[140px] max-h-[300px]',
+              'w-full px-3 py-3 min-h-[226px] max-h-[400px]',
               'bg-transparent resize-none',
               'text-[15px] leading-relaxed',
               'placeholder:text-slate-400 dark:placeholder:text-slate-500',
               'focus:outline-none'
             )}
-            rows={4}
+            rows={9}
           />
 
           {/* 拖拽提示 */}
@@ -256,7 +251,7 @@ export function HeroInput({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="px-4 pb-3"
+              className="px-3 pb-2"
             >
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-700">
                 <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
@@ -282,7 +277,7 @@ export function HeroInput({
         </AnimatePresence>
 
         {/* 底部工具栏 */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 dark:border-slate-700/50">
+        <div className="flex items-center justify-between px-3 py-2 border-t border-slate-100 dark:border-slate-700/50">
           <div className="flex items-center gap-2">
             {/* 上传 PDF */}
             <Tooltip>
@@ -350,6 +345,6 @@ export function HeroInput({
       >
         按 Cmd + Enter 快速创建 · 支持拖拽上传 PDF
       </motion.p>
-    </motion.div>
+    </div>
   );
 }

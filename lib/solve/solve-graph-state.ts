@@ -69,6 +69,10 @@ export const SolveGraphAnnotation = Annotation.Root({
     value: (_prev, next) => next,
     default: () => false,
   }),
+  fromSolveCache: Annotation<boolean>({
+    value: (_prev, next) => next,
+    default: () => false,
+  }),
 
   // Error handling
   error: Annotation<string | null>({

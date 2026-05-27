@@ -79,7 +79,8 @@
       "empty": "講義の再生後にノートがここに表示されます",
       "emptyHint": "再生ボタンを押して講義を開始してください",
       "pageLabel": "ページ {{n}}",
-      "currentPage": "現在"
+      "currentPage": "現在",
+      "noScene": "スライド未関連"
     },
     "badge": {
       "qa": "Q&A",
@@ -208,7 +209,9 @@
     "aiGrading": "AIが採点中...",
     "aiGradingWait": "回答を分析しています。お待ちください",
     "quizReport": "クイズレポート",
-    "retry": "やり直す"
+    "retry": "やり直す",
+    "knowledgePoints": "重要ポイント",
+    "knowledgePointsHint": "これらの概念を復習して理解を深めましょう"
   },
   "roundtable": {
     "teacher": "教師",
@@ -1102,5 +1105,29 @@
       "student": "生徒",
       "user": "私"
     }
+  },
+  "beta": {
+    "title": "Sky Classroom · ベータ",
+    "subtitle": "招待コードを入力するか、アクセスを申請してください",
+    "inviteTab": "招待コード",
+    "applyTab": "アクセス申請",
+    "enterCode": "招待コードを入力",
+    "codePlaceholder": "例：SKY-7X3K-9M2P",
+    "validateCode": "コードを確認",
+    "validating": "確認中...",
+    "codeValid": "コードが有効です。登録ページに移動します...",
+    "codeInvalid": "無効または期限切れの招待コード",
+    "codeExhausted": "この招待コードは使用済みです",
+    "applyTitle": "ベータアクセスを申請",
+    "email": "メールアドレス",
+    "emailPlaceholder": "メールアドレスを入力",
+    "reason": "理由（任意）",
+    "reasonPlaceholder": "参加したい理由を簡単に説明してください...",
+    "submitApplication": "申請を送信",
+    "submitting": "送信中...",
+    "submitted": "申請が送信されました",
+    "submittedDesc": "審査後、メールで結果をお知らせします。",
+    "alreadyRequested": "すでに申請を送信しています。審査結果をお待ちください。",
+    "backToHome": "ホームに戻る"
   }
 }

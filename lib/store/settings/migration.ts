@@ -185,6 +185,15 @@ export function migrateSettings(
     state.chatAreaCollapsed = false;
   }
 
+  // v3 → v4: rename sidebarCollapsed to timelineCollapsed
+  if (version < 4) {
+    const legacy = (state as Record<string, unknown>);
+    if (typeof legacy.sidebarCollapsed === 'boolean') {
+      (state as Record<string, unknown>).timelineCollapsed = legacy.sidebarCollapsed;
+      delete legacy.sidebarCollapsed;
+    }
+  }
+
   // Ensure providersConfig has all built-in providers (also in merge below)
   ensureBuiltInProviders(state as Partial<LLMSettingsSlice>);
   promoteLegacyCustomProviderBaseUrls(state as Partial<LLMSettingsSlice>);
@@ -374,6 +383,17 @@ export function mergeSettings(
         merged[key] = value;
       }
     }
+  }
+
+  // Migrate old sidebarCollapsed to timelineCollapsed on every hydrate
+  if (
+    typeof (merged as Record<string, unknown>).sidebarCollapsed === 'boolean' &&
+    typeof (merged as Record<string, unknown>).timelineCollapsed === 'undefined'
+  ) {
+    (merged as Record<string, unknown>).timelineCollapsed = (
+      merged as Record<string, unknown>
+    ).sidebarCollapsed;
+    delete (merged as Record<string, unknown>).sidebarCollapsed;
   }
 
   ensureBuiltInProviders(merged as Partial<LLMSettingsSlice>);

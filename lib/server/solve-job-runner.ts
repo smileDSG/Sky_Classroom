@@ -57,14 +57,29 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
           knowledgePoints: output.knowledgePoints,
           similarQuestions: output.similarQuestions,
           fromQuestionBank: finalState.fromQuestionBank ?? false,
+          fromSolveCache: finalState.fromSolveCache ?? false,
           solvingTime,
         },
       });
 
       log.info(`Solve job ${jobId} completed in ${solvingTime}ms`);
 
-      // Auto-save to question bank
-      if (!finalState.fromQuestionBank && output.answer) {
+      // Auto-save to question bank and solve cache
+      if (!finalState.fromQuestionBank && !finalState.fromSolveCache && output.answer) {
+        try {
+          const { hashProblemText } = await import('@/lib/solve/question-bank');
+          const { saveToSolveCache } = await import('@/lib/solve/solve-cache');
+
+          await saveToSolveCache({
+            problemText,
+            problemHash: hashProblemText(problemText),
+            solution: output.answer,
+            agentId: finalState.agentRoute ?? 'universal',
+            solvedAt: Date.now(),
+          });
+        } catch {
+          // ignore save errors
+        }
         try {
           const { saveToQuestionBank, isProblemInBank } = await import('@/lib/solve/question-bank');
           const alreadyInBank = await isProblemInBank(problemText);

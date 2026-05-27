@@ -205,6 +205,66 @@ export interface QuestionBankRecord {
   embedding?: number[]; // Reserved for future semantic similarity
 }
 
+/**
+ * SolveCache table — LRU cache for recently solved problems.
+ * Lower similarity threshold (0.70) than questionBank (0.85) for near-match reuse.
+ */
+export interface SolveCacheRecord {
+  problemHash: string; // PK
+  problemText: string;
+  solution: string;
+  agentId: string;
+  solvedAt: number;
+}
+
+/**
+ * Stores long-term facts, preferences, decisions, and learning progress
+ * that persist across conversations and sessions.
+ */
+export interface AgentMemoryRecord {
+  id: string; // PK: UUID
+  agentId: string; // Agent identifier (e.g. "sky-assistant", "default-1")
+  userId?: string; // Optional user ID for multi-user support
+  type: 'core' | 'preference' | 'fact' | 'progress' | 'question' | 'decision';
+  category: string; // Topic category (e.g. "数学", "学习风格", "个人信息")
+  content: string; // The actual memory content
+  importance: number; // 0-1, higher = more important
+  sourceConversationId?: string; // FK -> assistantConversations.id
+  accessCount: number; // How many times this memory was recalled
+  lastAccessed: number; // Timestamp of last access
+  createdAt: number;
+  updatedAt: number;
+  expiresAt?: number; // Optional TTL — memories can decay
+}
+
+/**
+ * AssistantConversation table — Persistent conversation history for Sky Assistant.
+ * Each record is one complete conversation session.
+ */
+export interface AssistantConversationRecord {
+  id: string; // PK: UUID
+  title: string; // Auto-generated title from first user message
+  mode: 'anime' | 'normal'; // Kagami mode
+  subject?: string;
+  difficulty?: string;
+  style?: string;
+  messages: AssistantMessage[]; // Full conversation messages
+  summary?: string; // LLM-generated conversation summary
+  messageCount: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Message format for AssistantConversation
+ */
+export interface AssistantMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: number;
+}
+
 /** Build the compound primary key for mediaFiles: `${stageId}:${elementId}` */
 export function mediaFileKey(stageId: string, elementId: string): string {
   return `${stageId}:${elementId}`;
@@ -232,6 +292,9 @@ class MAICDatabase extends Dexie {
   generatedAgents!: EntityTable<GeneratedAgentRecord, 'id'>;
   voiceProfiles!: EntityTable<VoiceProfileRecord, 'id'>;
   questionBank!: EntityTable<QuestionBankRecord, 'id'>;
+  solveCache!: EntityTable<SolveCacheRecord, 'problemHash'>;
+  agentMemories!: EntityTable<AgentMemoryRecord, 'id'>;
+  assistantConversations!: EntityTable<AssistantConversationRecord, 'id'>;
 
   constructor() {
     super(DATABASE_NAME);
@@ -413,6 +476,43 @@ class MAICDatabase extends Dexie {
       generatedAgents: 'id, stageId',
       voiceProfiles: 'id, providerId, kind, updatedAt',
       questionBank: 'id, problemHash, agentId, solvedAt',
+    });
+
+    // Version 12: Add agentMemories and assistantConversations for GAM-style memory system.
+    this.version(12).stores({
+      stages: 'id, updatedAt',
+      scenes: 'id, stageId, order, [stageId+order]',
+      audioFiles: 'id, createdAt',
+      imageFiles: 'id, createdAt',
+      snapshots: '++id',
+      chatSessions: 'id, stageId, [stageId+createdAt]',
+      playbackState: 'stageId',
+      stageOutlines: 'stageId',
+      mediaFiles: 'id, stageId, [stageId+type]',
+      generatedAgents: 'id, stageId',
+      voiceProfiles: 'id, providerId, kind, updatedAt',
+      questionBank: 'id, problemHash, agentId, solvedAt',
+      agentMemories: 'id, agentId, type, category, importance, [agentId+type], [agentId+category]',
+      assistantConversations: 'id, mode, createdAt, updatedAt',
+    });
+
+    // Version 13: Add solveCache table for near-match problem reuse (threshold 0.70).
+    this.version(13).stores({
+      stages: 'id, updatedAt',
+      scenes: 'id, stageId, order, [stageId+order]',
+      audioFiles: 'id, createdAt',
+      imageFiles: 'id, createdAt',
+      snapshots: '++id',
+      chatSessions: 'id, stageId, [stageId+createdAt]',
+      playbackState: 'stageId',
+      stageOutlines: 'stageId',
+      mediaFiles: 'id, stageId, [stageId+type]',
+      generatedAgents: 'id, stageId',
+      voiceProfiles: 'id, providerId, kind, updatedAt',
+      questionBank: 'id, problemHash, agentId, solvedAt',
+      solveCache: 'problemHash, solvedAt',
+      agentMemories: 'id, agentId, type, category, importance, [agentId+type], [agentId+category]',
+      assistantConversations: 'id, mode, createdAt, updatedAt',
     });
   }
 }

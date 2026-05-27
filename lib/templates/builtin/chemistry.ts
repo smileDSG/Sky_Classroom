@@ -7,11 +7,13 @@ import type { CourseTemplate } from '../types';
 export const CHEMISTRY_TEMPLATES: CourseTemplate[] = [
   {
     id: 'chem-equations',
-    name: 'Balancing Equations',
-    nameZh: '化学方程式配平',
+    name: { 'zh-CN': '化学方程式配平', 'en-US': 'Balancing Equations' },
     subject: 'chemistry',
     grade: '9th',
-    description: 'Learn to balance chemical equations step by step.',
+    description: {
+      'zh-CN': '逐步学习化学方程式配平',
+      'en-US': 'Learn to balance chemical equations step by step',
+    },
     icon: '🧪',
     isBuiltIn: true,
     suggestedSettings: { difficulty: 'medium' },
@@ -25,11 +27,13 @@ export const CHEMISTRY_TEMPLATES: CourseTemplate[] = [
   },
   {
     id: 'chem-periodic',
-    name: 'Periodic Table',
-    nameZh: '元素周期表',
+    name: { 'zh-CN': '元素周期表', 'en-US': 'Periodic Table' },
     subject: 'chemistry',
     grade: '9th',
-    description: 'Explore the periodic table and element properties.',
+    description: {
+      'zh-CN': '探索元素周期表与元素性质',
+      'en-US': 'Explore the periodic table and element properties',
+    },
     icon: '🧪',
     isBuiltIn: true,
     suggestedSettings: { difficulty: 'easy' },

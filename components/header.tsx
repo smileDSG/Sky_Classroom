@@ -11,6 +11,10 @@ import {
   FileDown,
   Package,
   Archive,
+  PanelLeftClose,
+  ChevronDown,
+  ChevronUp,
+  GripHorizontal,
 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useTheme } from '@/lib/hooks/use-theme';
@@ -23,17 +27,35 @@ import { useStageStore } from '@/lib/store/stage';
 import { useMediaGenerationStore } from '@/lib/store/media-generation';
 import { useExportPPTX } from '@/lib/export/use-export-pptx';
 import { useExportClassroom } from '@/lib/export/use-export-classroom';
+import { SceneTimeline } from '@/components/stage/scene-timeline';
 
 interface HeaderProps {
   readonly currentSceneTitle: string;
+  readonly timelineCollapsed: boolean;
+  readonly onTimelineCollapseChange: (collapsed: boolean) => void;
+  readonly onSceneSelect?: (sceneId: string) => void;
+  readonly onRetryOutline?: (outlineId: string) => Promise<void>;
+  readonly isCourseComplete?: boolean;
 }
 
-export function Header({ currentSceneTitle }: HeaderProps) {
+export function Header({
+  currentSceneTitle,
+  timelineCollapsed,
+  onTimelineCollapseChange,
+  onSceneSelect,
+  onRetryOutline,
+  isCourseComplete,
+}: HeaderProps) {
   const { t } = useI18n();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(100);
+  const [isResizing, setIsResizing] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const resizeStartY = useRef(0);
+  const resizeStartHeight = useRef(0);
 
   // Export
   const { exporting: isExporting, exportPPTX, exportResourcePack } = useExportPPTX();
@@ -73,31 +95,91 @@ export function Header({ currentSceneTitle }: HeaderProps) {
     }
   }, [themeOpen, exportMenuOpen, handleClickOutside]);
 
+  // Resize handlers
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStartY.current = e.clientY;
+    resizeStartHeight.current = headerHeight;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+  }, [headerHeight]);
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+    const delta = e.clientY - resizeStartY.current;
+    const newHeight = Math.max(48, Math.min(200, resizeStartHeight.current + delta));
+    setHeaderHeight(newHeight);
+  }, [isResizing]);
+
+  const handleResizeEnd = useCallback(() => {
+    setIsResizing(false);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, []);
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      return () => {
+        document.removeEventListener('mousemove', handleResizeMove);
+        document.removeEventListener('mouseup', handleResizeEnd);
+      };
+    }
+  }, [isResizing, handleResizeMove, handleResizeEnd]);
+
+  const isCompact = headerHeight < 70;
+
   return (
     <>
-      <header className="h-20 px-8 flex items-center justify-between z-10 bg-transparent gap-4">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <button
-            onClick={() => router.push('/')}
-            className="shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            title={t('generation.backToHome')}
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex flex-col min-w-0">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500 mb-0.5">
-              {t('stage.currentScene')}
-            </span>
-            <h1
-              className="text-xl font-bold text-gray-800 dark:text-gray-200 tracking-tight truncate"
-              suppressHydrationWarning
+      <header
+        ref={headerRef}
+        style={{ height: headerHeight }}
+        className="relative px-6 py-2 flex flex-col gap-2 z-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md shrink-0 sticky top-0 transition-colors duration-200"
+      >
+        {/* Main header content */}
+        <div className="flex items-center gap-4 flex-1 min-h-0">
+          {/* Left: Back + Title - fixed width */}
+          <div className="flex items-center gap-3 shrink-0" style={{ width: 180 }}>
+            <button
+              onClick={() => router.push('/')}
+              className="shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              title={t('generation.backToHome')}
             >
-              {currentSceneTitle || t('common.loading')}
-            </h1>
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500 mb-0.5">
+                {t('stage.currentScene')}
+              </span>
+              <h1
+                className="text-sm font-bold text-gray-800 dark:text-gray-200 tracking-tight truncate"
+                suppressHydrationWarning
+              >
+                {currentSceneTitle || t('common.loading')}
+              </h1>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md px-2 py-1.5 rounded-full border border-gray-100/50 dark:border-gray-700/50 shadow-sm shrink-0">
+          {/* Center: Timeline - fills available space */}
+          <div
+            className={cn(
+              'flex-1 min-w-0 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-slate-900/50 overflow-hidden transition-all duration-200',
+              isCompact ? 'h-[28px]' : 'h-full'
+            )}
+          >
+            <SceneTimeline
+              collapsed={isCompact}
+              onCollapseChange={onTimelineCollapseChange}
+              onSceneSelect={onSceneSelect}
+              onRetryOutline={onRetryOutline}
+              isCourseComplete={isCourseComplete}
+            />
+          </div>
+
+          {/* Right: Controls */}
+          <div className="flex items-center gap-3 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md px-2 py-1.5 rounded-full border border-gray-100/50 dark:border-gray-700/50 shadow-sm shrink-0">
           {/* Language Selector */}
           <LanguageSwitcher onOpen={() => setThemeOpen(false)} />
 
@@ -248,6 +330,24 @@ export function Header({ currentSceneTitle }: HeaderProps) {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Main header content closing */}
+        </div>
+
+        {/* Resize handle at bottom */}
+        <div
+          onMouseDown={handleResizeStart}
+          className={cn(
+            'absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center',
+            'opacity-0 hover:opacity-100 transition-opacity',
+            isResizing && 'opacity-100'
+          )}
+          style={{ transform: 'translateY(50%)' }}
+        >
+          <div className="w-16 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+            <GripHorizontal className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+          </div>
         </div>
       </header>
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />

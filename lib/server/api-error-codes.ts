@@ -57,6 +57,24 @@ export const API_ERROR_CODES = {
   ORDER_NOT_FOUND: 'ORDER_NOT_FOUND',
   /** Payment failed */
   PAYMENT_FAILED: 'PAYMENT_FAILED',
+  /** Invitation code not found or expired */
+  INVITATION_INVALID: 'INVITATION_INVALID',
+  /** Invitation code max uses exhausted */
+  INVITATION_EXHAUSTED: 'INVITATION_EXHAUSTED',
+  /** No beta access token present */
+  BETA_ACCESS_REQUIRED: 'BETA_ACCESS_REQUIRED',
+  /** Duplicate beta access request */
+  BETA_REQUEST_DUPLICATE: 'BETA_REQUEST_DUPLICATE',
+  /** Email not verified */
+  EMAIL_NOT_VERIFIED: 'EMAIL_NOT_VERIFIED',
+  /** Invalid or expired verification token */
+  VERIFY_TOKEN_INVALID: 'VERIFY_TOKEN_INVALID',
+  /** Invalid or expired reset token */
+  RESET_TOKEN_INVALID: 'RESET_TOKEN_INVALID',
+  /** File too large */
+  FILE_TOO_LARGE: 'FILE_TOO_LARGE',
+  /** Invalid file type */
+  INVALID_FILE_TYPE: 'INVALID_FILE_TYPE',
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
@@ -88,6 +106,15 @@ export const ERROR_CODE_STATUS: Record<ApiErrorCode, number> = {
   INSUFFICIENT_PLAN: 403,
   ORDER_NOT_FOUND: 404,
   PAYMENT_FAILED: 502,
+  INVITATION_INVALID: 400,
+  INVITATION_EXHAUSTED: 410,
+  BETA_ACCESS_REQUIRED: 403,
+  BETA_REQUEST_DUPLICATE: 409,
+  EMAIL_NOT_VERIFIED: 403,
+  VERIFY_TOKEN_INVALID: 400,
+  RESET_TOKEN_INVALID: 400,
+  FILE_TOO_LARGE: 413,
+  INVALID_FILE_TYPE: 400,
 };
 
 /** Default human-readable message for each error code */
@@ -117,4 +144,13 @@ export const ERROR_CODE_MESSAGES: Record<ApiErrorCode, string> = {
   INSUFFICIENT_PLAN: 'Insufficient plan permissions',
   ORDER_NOT_FOUND: 'Order not found',
   PAYMENT_FAILED: 'Payment processing failed',
+  INVITATION_INVALID: 'Invitation code invalid or expired',
+  INVITATION_EXHAUSTED: 'Invitation code has reached maximum uses',
+  BETA_ACCESS_REQUIRED: 'Beta access credential required',
+  BETA_REQUEST_DUPLICATE: 'You have already submitted a beta access request',
+  EMAIL_NOT_VERIFIED: 'Please verify your email address first',
+  VERIFY_TOKEN_INVALID: 'Invalid or expired verification token',
+  RESET_TOKEN_INVALID: 'Invalid or expired reset token',
+  FILE_TOO_LARGE: 'File size exceeds the limit',
+  INVALID_FILE_TYPE: 'Invalid file type',
 };

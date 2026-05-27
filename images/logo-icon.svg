@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="50%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="cloudW" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="100%" stop-color="#bae6fd"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- Open book at bottom -->
+  <g transform="translate(24, 72)">
+    <path d="M40 36 C28 32, 10 30, 6 29 L6 12 C10 13, 28 15, 40 19 Z" fill="#fff" opacity="0.25"/>
+    <path d="M40 36 C52 32, 70 30, 74 29 L74 12 C70 13, 52 15, 40 19 Z" fill="#fff" opacity="0.18"/>
+    <line x1="40" y1="19" x2="40" y2="36" stroke="#fff" stroke-width="1.2" opacity="0.3"/>
+    <!-- page lines -->
+    <line x1="14" y1="18" x2="36" y2="21" stroke="#fff" stroke-width="0.8" opacity="0.3"/>
+    <line x1="16" y1="23" x2="37" y2="26" stroke="#fff" stroke-width="0.8" opacity="0.25"/>
+    <line x1="44" y1="21" x2="66" y2="18" stroke="#fff" stroke-width="0.8" opacity="0.3"/>
+    <line x1="43" y1="26" x2="64" y2="23" stroke="#fff" stroke-width="0.8" opacity="0.25"/>
+  </g>
+
+  <!-- Cloud -->
+  <g transform="translate(20, 30)">
+    <ellipse cx="44" cy="22" rx="24" ry="14" fill="url(#cloudW)"/>
+    <ellipse cx="28" cy="25" rx="16" ry="11" fill="url(#cloudW)"/>
+    <ellipse cx="60" cy="25" rx="16" ry="11" fill="url(#cloudW)"/>
+    <ellipse cx="44" cy="28" rx="28" ry="10" fill="url(#cloudW)"/>
+  </g>
+
+  <!-- Sun with light rays -->
+  <g transform="translate(64, 24)">
+    <circle cx="0" cy="0" r="9" fill="#fbbf24"/>
+    <circle cx="0" cy="0" r="5.5" fill="#fcd34d"/>
+    <line x1="0" y1="-13" x2="0" y2="-17" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+    <line x1="9" y1="-9" x2="12" y2="-12" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+    <line x1="-9" y1="-9" x2="-12" y2="-12" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+    <line x1="13" y1="0" x2="17" y2="0" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+    <line x1="-13" y1="0" x2="-17" y2="0" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+  </g>
+
+  <!-- Sparkle -->
+  <circle cx="28" cy="20" r="2" fill="#fbbf24" opacity="0.5"/>
+  <circle cx="100" cy="42" r="1.5" fill="#fff" opacity="0.4"/>
+</svg>

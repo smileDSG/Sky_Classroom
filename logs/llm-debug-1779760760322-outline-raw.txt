@@ -1,0 +1,27 @@
+TOPIC: 勾股定理
+DIFFICULTY: senior
+LENGTH: 465
+
+--- RAW OUTPUT ---
+{
+  "cover": {
+    "en_tag": "PYTHAGOREAN THEOREM",
+    "title": "勾股定理精讲",
+    "subtitle": "公式应用与解题策略"
+  },
+  "toc": {
+    "title": "目录",
+    "items": [
+      { "num": "01", "title": "核心公式推导", "desc": "定理证明与代数关系" },
+      { "num": "02", "title": "典型例题详解", "desc": "应用分类与解题步骤" },
+      { "num": "03", "title": "题型拓展实战", "desc": "常见考点与综合运用" }
+    ]
+  },
+  "end": {
+    "end_en": "MASTER THE THEOREM",
+    "slogan": "勾股定理，触类旁通",
+    "subtitle": "掌握核心方法，轻松应对高考题型"
+  }
+}
+
+--- END ---

@@ -1,7 +1,8 @@
 /**
  * POST /api/sky/assistant
  * AI assistant chat endpoint — real LLM-powered with SSE streaming.
- * Injects mistake-book and knowledge-graph context for personalised responses.
+ * Injects mistake-book, knowledge-graph, and GAM-style memory context
+ * for personalised responses.
  */
 import { NextRequest } from 'next/server';
 import { streamLLM } from '@/lib/ai/llm';
@@ -31,11 +32,12 @@ async function getDAO() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages, subject, difficulty, style } = body as {
+    const { messages, subject, difficulty, style, memoryContext } = body as {
       messages: { role: string; content: string }[];
       subject?: string;
       difficulty?: string;
       style?: string;
+      memoryContext?: string; // GAM-style memory context from client
     };
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -88,6 +90,11 @@ export async function POST(req: NextRequest) {
         mistakes: mistakes ?? undefined,
         graphNodes: graphNodes ?? undefined,
       });
+    }
+
+    // Inject GAM-style memory context if provided by client
+    if (memoryContext) {
+      systemPrompt += '\n\n' + memoryContext;
     }
 
     // Convert messages — exclude system messages since we pass via system param

@@ -2,7 +2,8 @@
  * User custom template management (localStorage).
  */
 
-import type { CourseTemplate } from './types';
+import type { CourseTemplate, LocalizedString } from './types';
+import { resolveLocale } from './types';
 
 const STORAGE_KEY = 'openmaic-user-templates';
 
@@ -41,9 +42,9 @@ export function getAllTemplates(): CourseTemplate[] {
 }
 
 /** Convert a template to course requirements (for generation) */
-export function templateToGenerationParams(template: CourseTemplate): Record<string, unknown> {
+export function templateToGenerationParams(template: CourseTemplate, locale = 'zh-CN'): Record<string, unknown> {
   return {
-    requirement: `${template.nameZh} — ${template.description}`,
+    requirement: `${resolveLocale(template.name as LocalizedString, locale)} — ${resolveLocale(template.description as LocalizedString, locale)}`,
     subject: template.subject,
     grade: template.grade,
     outline: template.outline,

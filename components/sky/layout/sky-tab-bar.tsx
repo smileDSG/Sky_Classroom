@@ -2,49 +2,68 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'motion/react';
+import {
+  Star,
+  Brain,
+  TrendingUp,
+  Feather,
+  Globe,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
-  { label: '首页', href: '/', icon: '🏠' },
-  { label: '概况', href: '/sky', icon: '📋' },
-  { label: '搜题', href: '/sky/solve', icon: '🔍' },
-  { label: '幻灯片', href: '/sky/slides', icon: '📖' },
-  { label: '学习数据', href: '/sky/learning', icon: '📊' },
-  { label: '小镜', href: '/sky/assistant', icon: '/avatars/kagami/chibi.png' },
+  { label: '摘星锦囊', href: '/sky', icon: Star },
+  { label: '云端智囊', href: '/sky/cloud-mind', icon: Brain, badge: '6' },
+  { label: '天梯工坊', href: '/sky/learning', icon: TrendingUp },
+  { label: '云翼助手', href: '/sky/assistant', icon: Feather },
+  { label: '天穹讲课', href: '/', icon: Globe },
 ];
 
 export function SkyTabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-0.5 overflow-x-auto whitespace-nowrap shrink-0">
+    <nav className="relative flex items-center justify-center gap-1 rounded-xl bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-sm p-1 border border-slate-200/30 dark:border-slate-700/30">
       {NAV_ITEMS.map((item) => {
         let isActive: boolean;
-        if (item.href === '/') {
-          isActive = pathname === '/' || pathname.startsWith('/classroom/') || pathname.startsWith('/generation');
-        } else if (item.href === '/sky') {
+        if (item.href === '/sky') {
           isActive = pathname === '/sky';
         } else {
           isActive = pathname.startsWith(item.href);
         }
 
+        const Icon = item.icon;
+
         return (
           <Link
             key={item.href}
             href={item.href}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={cn(
+              'relative flex flex-col items-center rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 min-w-[72px]',
               isActive
-                ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]'
-                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-            }`}
+                ? 'text-indigo-600 dark:text-indigo-400'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            )}
           >
-            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center text-base leading-none">
-              {item.icon.startsWith('/') ? (
-                <img src={item.icon} className="h-5 w-5 rounded-full object-cover" alt="" />
-              ) : (
-                item.icon
-              )}
+            {isActive && (
+              <motion.div
+                layoutId="activeTab"
+                className="absolute inset-0 rounded-lg bg-white/80 dark:bg-slate-700/60 shadow-sm shadow-indigo-500/10 dark:shadow-indigo-500/5 border border-slate-200/40 dark:border-slate-600/40"
+                transition={{ type: 'spring', bounce: 0.15, duration: 0.5 }}
+              />
+            )}
+            <span className="relative z-10 flex flex-col items-center">
+              <div className="relative">
+                <Icon className="w-4 h-4" />
+                {item.badge && (
+                  <span className="absolute -top-1 -right-2 flex h-3 w-3 items-center justify-center rounded-full bg-amber-400 text-[8px] font-semibold text-amber-800 dark:text-amber-900">
+                    {item.badge}
+                  </span>
+                )}
+              </div>
+              <span className="mt-0.5">{item.label}</span>
             </span>
-            <span>{item.label}</span>
           </Link>
         );
       })}

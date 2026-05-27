@@ -5,6 +5,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { useUserProfileStore } from '@/lib/store/user-profile';
+import { ensureAdminUserClient } from '@/lib/client/admin-seed';
 
 export interface AuthUser {
   id: string;
@@ -13,6 +15,8 @@ export interface AuthUser {
   role: 'guest' | 'user' | 'admin';
   status: 'active' | 'suspended';
   planType: 'free' | 'basic' | 'pro' | 'enterprise';
+  emailVerified: boolean;
+  createdAt: number;
 }
 
 interface AuthContextValue {
@@ -60,8 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    fetchUser();
+    ensureAdminUserClient().then(() => fetchUser());
   }, [fetchUser]);
+
+  // Sync profile from server when user changes
+  useEffect(() => {
+    if (user) {
+      useUserProfileStore.getState().fetchFromServer();
+    }
+  }, [user]);
 
   const login = async (emailOrUsername: string, password: string) => {
     const res = await fetch('/api/auth/login', {

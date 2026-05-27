@@ -31,12 +31,12 @@ export function AssistantConfig() {
   const setDifficulty = useSkyClassroomStore((s) => s.setDifficulty);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-2xl">
-      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">助手配置</p>
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-800">
+      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-slate-500">助手配置</p>
       <div className="flex items-center gap-3">
         {/* Subject Selector */}
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs text-gray-500">学科</label>
+          <label className="mb-1.5 block text-xs text-gray-500 dark:text-slate-400">学科</label>
           <div className="flex gap-1">
             {SUBJECT_OPTIONS.map((opt) => (
               <button
@@ -46,7 +46,7 @@ export function AssistantConfig() {
                 className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   subject === opt.value
                     ? 'bg-[#8B5CF6] text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
                 }`}
               >
                 {opt.label}
@@ -57,7 +57,7 @@ export function AssistantConfig() {
 
         {/* Style Selector */}
         <div className="shrink-0">
-          <label className="mb-1.5 block text-xs text-gray-500">风格</label>
+          <label className="mb-1.5 block text-xs text-gray-500 dark:text-slate-400">风格</label>
           <div className="flex gap-1">
             {STYLE_OPTIONS.map((opt) => (
               <button
@@ -67,7 +67,7 @@ export function AssistantConfig() {
                 className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   style === opt.value
                     ? 'bg-[#8B5CF6] text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
                 }`}
               >
                 {opt.label}
@@ -78,7 +78,7 @@ export function AssistantConfig() {
 
         {/* Difficulty Selector */}
         <div className="shrink-0">
-          <label className="mb-1.5 block text-xs text-gray-500">难度</label>
+          <label className="mb-1.5 block text-xs text-gray-500 dark:text-slate-400">难度</label>
           <div className="flex gap-1">
             {DIFFICULTY_OPTIONS.map((opt) => (
               <button
@@ -88,7 +88,7 @@ export function AssistantConfig() {
                 className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   difficulty === opt.value
                     ? 'bg-[#8B5CF6] text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
                 }`}
               >
                 {opt.label}

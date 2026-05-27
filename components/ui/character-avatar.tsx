@@ -92,14 +92,14 @@ export function CharacterAvatar({
     speaking: {
       boxShadow: [
         `0 0 0 0 ${accentColor}40`,
-        `0 0 20px 4px ${accentColor}60`,
+        `0 0 6px 1px ${accentColor}60`,
         `0 0 0 0 ${accentColor}40`,
       ],
     },
     thinking: {
       boxShadow: [
         `0 0 0 0 ${accentColor}30`,
-        `0 0 15px 2px ${accentColor}50`,
+        `0 0 4px 1px ${accentColor}50`,
         `0 0 0 0 ${accentColor}30`,
       ],
     },
@@ -352,7 +352,7 @@ export function CharacterStrip({
             name={teacher.name}
             role="teacher"
             shape="hexagon"
-            size="lg"
+            size="md"
             isSpeaking={speakingId === teacher.id}
             isThinking={thinkingId === teacher.id}
             isActive={speakingId === teacher.id}
@@ -387,7 +387,7 @@ export function CharacterStrip({
                 name={student.name}
                 role="student"
                 shape="diamond"
-                size="md"
+                size="sm"
                 isSpeaking={speakingId === student.id}
                 isThinking={thinkingId === student.id}
                 isActive={speakingId === student.id}
@@ -415,7 +415,7 @@ export function CharacterStrip({
           name="我"
           role="user"
           shape="blob"
-          size="xl"
+          size="md"
           isActive={isCueUser}
           isCueUser={isCueUser}
           color="#10b981"

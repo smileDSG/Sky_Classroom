@@ -14,7 +14,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('system');
-  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  );
 
   const resolvedTheme = theme === 'system' ? systemTheme : theme;
 

@@ -109,34 +109,45 @@ Open-ended question requiring a written response.
 
 ## Output Format
 
-Output a JSON array of question objects. Every question must have `analysis` and `points`:
+Output a JSON object with two fields: `questions` (array) and `knowledgePoints` (array of strings).
+
+- `questions`: Array of question objects. Every question must have `analysis` and `points`.
+- `knowledgePoints`: Array of 3-6 key knowledge points covered by the quiz. Each point should be a concise summary (one sentence) of an important concept tested. These are shown to the student as a post-quiz review summary.
 
 ```json
-[
-  {
-    "id": "q1", "type": "single", "question": "Question text",
-    "options": [
-      { "label": "Option A content", "value": "A" },
-      { "label": "Option B content", "value": "B" },
-      { "label": "Option C content", "value": "C" },
-      { "label": "Option D content", "value": "D" }
-    ],
-    "answer": ["A"], "analysis": "Why A is the correct answer...", "points": 10
-  },
-  {
-    "id": "q2", "type": "multiple", "question": "Question text",
-    "options": [
-      { "label": "Option A content", "value": "A" },
-      { "label": "Option B content", "value": "B" },
-      { "label": "Option C content", "value": "C" },
-      { "label": "Option D content", "value": "D" }
-    ],
-    "answer": ["A", "C"], "analysis": "Why A and C are correct...", "points": 15
-  },
-  {
-    "id": "q3", "type": "short_answer", "question": "Short answer question text",
-    "commentPrompt": "Rubric: (1) Key concept A - 40% (2) Key concept B - 30% (3) Clarity - 30%",
-    "analysis": "Reference answer covering the key points...", "points": 20
-  }
-]
+{
+  "questions": [
+    {
+      "id": "q1", "type": "single", "question": "Question text",
+      "options": [
+        { "label": "Option A content", "value": "A" },
+        { "label": "Option B content", "value": "B" },
+        { "label": "Option C content", "value": "C" },
+        { "label": "Option D content", "value": "D" }
+      ],
+      "answer": ["A"], "analysis": "Why A is the correct answer...", "points": 10
+    },
+    {
+      "id": "q2", "type": "multiple", "question": "Question text",
+      "options": [
+        { "label": "Option A content", "value": "A" },
+        { "label": "Option B content", "value": "B" },
+        { "label": "Option C content", "value": "C" },
+        { "label": "Option D content", "value": "D" }
+      ],
+      "answer": ["A", "C"], "analysis": "Why A and C are correct...", "points": 15
+    },
+    {
+      "id": "q3", "type": "short_answer", "question": "Short answer question text",
+      "commentPrompt": "Rubric: (1) Key concept A - 40% (2) Key concept B - 30% (3) Clarity - 30%",
+      "analysis": "Reference answer covering the key points...", "points": 20
+    }
+  ],
+  "knowledgePoints": [
+    "Concept A is the foundation of...",
+    "Understanding B requires knowing that...",
+    "The relationship between C and D shows...",
+    "Key principle: E states that..."
+  ]
+}
 ```

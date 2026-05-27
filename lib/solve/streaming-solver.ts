@@ -46,6 +46,31 @@ function fixLatexJsonEscapes(json: string): string {
   return changed ? fixed : json;
 }
 
+// ── Answer cleaner ──────────────────────────────────────────────────
+// LLMs sometimes ignore the "answer only" instruction and include
+// explanation text like "所以答案是$3$" or "Therefore, x = 4".
+// This strips explanation prefixes, keeping only the final result.
+
+const EXPLANATION_PREFIXES = /^(所以|因此|故|综上|答案[是为：:]?\s*|answer\s*[:：]?\s*|∴\s*)/i;
+const EXPLANATION_WORDS = /[,，;；。.\s]*(所以|因此|故|综上|即|也就是|等于|答案[是为])/;
+
+function cleanAnswer(raw: string): string {
+  let s = raw.trim();
+  // Remove trailing explanation after the answer
+  const explanationIdx = s.search(/[,，;；。.]\s*(所以|因此|故|综上|即|也就是)/);
+  if (explanationIdx > 0) {
+    s = s.substring(0, explanationIdx).trim();
+  }
+  // Remove leading explanation prefixes
+  s = s.replace(EXPLANATION_PREFIXES, '').trim();
+  // If the string contains both explanation and a LaTeX expression, extract the last expression
+  const latexMatches = s.match(/\$[^$]+\$/g);
+  if (latexMatches && latexMatches.length > 0 && s.length > latexMatches[latexMatches.length - 1].length + 10) {
+    return latexMatches[latexMatches.length - 1];
+  }
+  return s;
+}
+
 // ── Event types emitted during streaming ─────────────────────────────
 
 export interface StepEvent {
@@ -224,7 +249,7 @@ class StepStreamParser {
     const valuePart = after.substring(colonIdx + 1).trim();
     const match = valuePart.match(/"([^"]*)"/);
     if (match) {
-      this.answer = match[1];
+      this.answer = cleanAnswer(match[1]);
       events.push({ type: 'answer', answer: this.answer });
       this.state = 'in_knowledge';
       this.tryFindKnowledge(events);
@@ -252,7 +277,7 @@ class StepStreamParser {
 
       if (endIdx !== -1) {
         const arrStr = after.substring(bracketIdx, endIdx + 1);
-        const arr = JSON.parse(arrStr);
+        const arr = JSON.parse(fixLatexJsonEscapes(arrStr));
         if (Array.isArray(arr)) {
           this.knowledge = arr.map((k: any) => ({
             name: k.name || '',
@@ -281,7 +306,7 @@ class StepStreamParser {
 
       if (endIdx !== -1) {
         const arrStr = after.substring(bracketIdx, endIdx + 1);
-        const arr = JSON.parse(arrStr);
+        const arr = JSON.parse(fixLatexJsonEscapes(arrStr));
         if (Array.isArray(arr)) {
           this.similar = arr.map((q: any) => ({
             problem: q.problem || '',
@@ -342,7 +367,7 @@ class StepStreamParser {
       if (!obj) return;
 
       if (!this.answer && obj.answer) {
-        this.answer = obj.answer as string;
+        this.answer = cleanAnswer(obj.answer as string);
       }
       if (this.steps.length === 0 && Array.isArray(obj.steps)) {
         for (const s of obj.steps) {
@@ -390,13 +415,16 @@ export async function* streamSolve(
 
   yield { type: 'phase', phase: 'solving' };
 
+  // Dynamic token limit: short problems get fewer tokens for faster generation
+  const maxTokens = problemText.length < 100 ? 2048 : problemText.length < 300 ? 3072 : 4096;
+
   const result = streamLLM(
     {
       model: modelWithInfo.model,
       system: systemPrompt,
       messages: [{ role: 'user', content: problemText }] as any,
       temperature: 0.3,
-      maxOutputTokens: 4096,
+      maxOutputTokens: maxTokens,
     },
     'solve-streaming',
     undefined,
@@ -486,7 +514,7 @@ async function* fallbackSolve(
       }
     }
     if (parsed.answer) {
-      yield { type: 'answer', answer: parsed.answer };
+      yield { type: 'answer', answer: cleanAnswer(parsed.answer) };
     }
     if (Array.isArray(parsed.knowledgePoints)) {
       yield {

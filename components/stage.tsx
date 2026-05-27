@@ -7,7 +7,7 @@ import { PENDING_SCENE_ID } from '@/lib/store/stage';
 import { useCanvasStore } from '@/lib/store/canvas';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import { SceneSidebar } from './stage/scene-sidebar';
+import { SceneTimeline } from './stage/scene-timeline';
 import { Header } from './header';
 import { CanvasArea } from '@/components/canvas/canvas-area';
 import { Roundtable } from '@/components/roundtable';
@@ -71,8 +71,8 @@ export function Stage({
   const [pptFullscreen, setPptFullscreen] = useState(false);
 
   // Layout state from settings store (persisted via localStorage)
-  const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed);
-  const setSidebarCollapsed = useSettingsStore((s) => s.setSidebarCollapsed);
+  const timelineCollapsed = useSettingsStore((s) => s.timelineCollapsed);
+  const setTimelineCollapsed = useSettingsStore((s) => s.setTimelineCollapsed);
   const chatAreaWidth = useSettingsStore((s) => s.chatAreaWidth);
   const setChatAreaWidth = useSettingsStore((s) => s.setChatAreaWidth);
   const chatAreaCollapsed = useSettingsStore((s) => s.chatAreaCollapsed);
@@ -354,13 +354,13 @@ export function Stage({
       // Escape is handled manually in our keydown handler instead
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (navigator as any).keyboard?.lock?.(['Escape']).catch(() => {});
-      setSidebarCollapsed(true);
+      setTimelineCollapsed(true);
       setChatAreaCollapsed(true);
     } catch {
       // Firefox may deny fullscreen from certain keyboard events (e.g. F11)
       console.warn('[Presentation] Fullscreen request denied — browser policy');
     }
-  }, [setChatAreaCollapsed, setSidebarCollapsed]);
+  }, [setChatAreaCollapsed, setTimelineCollapsed]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -927,7 +927,7 @@ export function Stage({
         case 's':
         case 'S':
           event.preventDefault();
-          setSidebarCollapsed(!sidebarCollapsed);
+          setTimelineCollapsed(!timelineCollapsed);
           break;
         case 'c':
         case 'C':
@@ -952,10 +952,10 @@ export function Stage({
     isPresentationShortcutTarget,
     resetPresentationIdleTimer,
     setChatAreaCollapsed,
-    setSidebarCollapsed,
+    setTimelineCollapsed,
     setTTSMuted,
     setTTSVolume,
-    sidebarCollapsed,
+    timelineCollapsed,
     togglePresentation,
     ttsMuted,
     ttsVolume,
@@ -1008,24 +1008,15 @@ export function Stage({
     <div
       ref={stageRef}
       className={cn(
-        'flex-1 flex overflow-hidden bg-slate-50 dark:bg-slate-950',
+        'flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950',
         isPresenting && !controlsVisible && 'cursor-none',
       )}
     >
-      {/* Scene Sidebar */}
-      <SceneSidebar
-        collapsed={sidebarCollapsed}
-        onCollapseChange={setSidebarCollapsed}
-        onSceneSelect={gatedSceneSwitch}
-        onRetryOutline={onRetryOutline}
-        isCourseComplete={isCourseComplete}
-      />
-
-      {/* Main Content Area — New Layout: Roundtable(left) | Canvas(center) | Chat(right) */}
-      <div className="flex-1 flex flex-row overflow-hidden min-w-0 relative">
+      {/* Main Content Area — Layout: Roundtable(left) | Canvas(center) | Chat(right) */}
+      <div className="flex-1 flex flex-row overflow-hidden min-w-0 relative bg-white dark:bg-slate-950">
         {/* Left: Roundtable Character Strip — extends full height */}
         {mode === 'playback' && (
-          <div className="w-20 shrink-0 flex flex-col h-full overflow-hidden">
+          <div className="w-14 shrink-0 flex flex-col h-full overflow-hidden">
             <Roundtable
               mode={mode}
               initialParticipants={participants}
@@ -1108,9 +1099,9 @@ export function Stage({
               currentSceneIndex={currentSceneIndex}
               scenesCount={totalScenesCount}
               whiteboardOpen={whiteboardOpen}
-              sidebarCollapsed={sidebarCollapsed}
+              sidebarCollapsed={timelineCollapsed}
               chatCollapsed={chatAreaCollapsed}
-              onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onToggleSidebar={() => setTimelineCollapsed(!timelineCollapsed)}
               onToggleChat={() => setChatAreaCollapsed(!chatAreaCollapsed)}
               onPrevSlide={handlePreviousScene}
               onNextSlide={handleNextScene}
@@ -1125,7 +1116,7 @@ export function Stage({
         )}
 
         {/* Center: Canvas Area — Video content with golden ratio */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative bg-white dark:bg-slate-950">
           {/* Header */}
           {!isPresenting && (
             <Header
@@ -1133,6 +1124,11 @@ export function Stage({
                 currentScene?.title ||
                 (isCourseComplete && isPendingScene ? t('stage.courseComplete') : '')
               }
+              timelineCollapsed={timelineCollapsed}
+              onTimelineCollapseChange={setTimelineCollapsed}
+              onSceneSelect={gatedSceneSwitch}
+              onRetryOutline={onRetryOutline}
+              isCourseComplete={isCourseComplete}
             />
           )}
 
@@ -1148,9 +1144,9 @@ export function Stage({
                 chatIsStreaming || isTopicPending || engineMode === 'live' || !!chatSessionType
               }
               whiteboardOpen={whiteboardOpen}
-              sidebarCollapsed={sidebarCollapsed}
+              sidebarCollapsed={timelineCollapsed}
               chatCollapsed={chatAreaCollapsed}
-              onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onToggleSidebar={() => setTimelineCollapsed(!timelineCollapsed)}
               onToggleChat={() => setChatAreaCollapsed(!chatAreaCollapsed)}
               onPrevSlide={handlePreviousScene}
               onNextSlide={handleNextScene}
@@ -1185,9 +1181,9 @@ export function Stage({
               engineState={canvasEngineState}
               isLiveSession={chatIsStreaming || isTopicPending || engineMode === 'live'}
               whiteboardOpen={whiteboardOpen}
-              sidebarCollapsed={sidebarCollapsed}
+              sidebarCollapsed={timelineCollapsed}
               chatCollapsed={chatAreaCollapsed}
-              onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onToggleSidebar={() => setTimelineCollapsed(!timelineCollapsed)}
               onToggleChat={() => setChatAreaCollapsed(!chatAreaCollapsed)}
               onPrevSlide={handlePreviousScene}
               onNextSlide={handleNextScene}

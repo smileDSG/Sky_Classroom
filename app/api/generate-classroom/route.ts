@@ -14,7 +14,11 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   let requirementSnippet: string | undefined;
   try {
-    const rawBody = (await req.json()) as Partial<GenerateClassroomInput>;
+    const rawBody = (await req.json()) as Partial<GenerateClassroomInput> & {
+      modelString?: string;
+      apiKey?: string;
+      baseUrl?: string;
+    };
     requirementSnippet = rawBody.requirement?.substring(0, 60);
     const body: GenerateClassroomInput = {
       requirement: rawBody.requirement || '',
@@ -41,7 +45,15 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = buildRequestOrigin(req);
     const jobId = nanoid(10);
-    const job = await createClassroomGenerationJob(jobId, body);
+
+    // Extract model config from request body (client passes its selected model)
+    const modelConfig = {
+      modelString: rawBody.modelString as string | undefined,
+      apiKey: rawBody.apiKey as string | undefined,
+      baseUrl: rawBody.baseUrl as string | undefined,
+    };
+
+    const job = await createClassroomGenerationJob(jobId, body, modelConfig);
     const pollUrl = `${baseUrl}/api/generate-classroom/${jobId}`;
 
     after(() => runClassroomGenerationJob(jobId, body, baseUrl));

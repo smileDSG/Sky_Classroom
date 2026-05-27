@@ -7,11 +7,13 @@ import type { CourseTemplate } from '../types';
 export const ENGLISH_TEMPLATES: CourseTemplate[] = [
   {
     id: 'eng-tenses',
-    name: 'English Tenses',
-    nameZh: '语法时态练习',
+    name: { 'zh-CN': '语法时态练习', 'en-US': 'English Tenses' },
     subject: 'english',
     grade: '7th',
-    description: 'Master past, present, and future tenses with interactive exercises.',
+    description: {
+      'zh-CN': '通过互动练习掌握过去时、现在时和将来时',
+      'en-US': 'Master past, present, and future tenses with interactive exercises',
+    },
     icon: '📖',
     isBuiltIn: true,
     suggestedSettings: { difficulty: 'easy' },
@@ -26,11 +28,13 @@ export const ENGLISH_TEMPLATES: CourseTemplate[] = [
   },
   {
     id: 'eng-reading',
-    name: 'Reading Skills',
-    nameZh: '阅读理解技巧',
+    name: { 'zh-CN': '阅读理解技巧', 'en-US': 'Reading Skills' },
     subject: 'english',
     grade: '8th',
-    description: 'Strategies for understanding and analyzing texts.',
+    description: {
+      'zh-CN': '理解和分析文本的策略',
+      'en-US': 'Strategies for understanding and analyzing texts',
+    },
     icon: '📖',
     isBuiltIn: true,
     suggestedSettings: { difficulty: 'medium' },

@@ -18,6 +18,7 @@
 import { createLogger } from '@/lib/logger';
 import { formatSSE, streamSSE } from '@/lib/assistant/stream';
 import { findSimilarQuestions } from '@/lib/solve/question-bank';
+import { findSolveCacheMatches } from '@/lib/solve/solve-cache';
 import { streamSolve, type StreamEvent } from '@/lib/solve/streaming-solver';
 import { classifyProblem } from '@/lib/solve/solver-constants';
 import { generateFourPartOutput } from '@/lib/solve/four-part-output';
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
 
     (async () => {
       try {
-        // Phase 1: Check question bank
+        // Phase 1: Check question bank (exact match)
         await write(formatSSEEvent('phase', { phase: 'checking' }));
         const matches = await findSimilarQuestions(problem, 0.85);
 
@@ -88,6 +89,28 @@ export async function POST(req: Request) {
           await write(formatSSEEvent('similar', { questions: output.similarQuestions }));
           await write(formatSSEEvent('done', {
             fromQuestionBank: true,
+            solvingTime: 0,
+          }));
+          await writer.close();
+          return;
+        }
+
+        // Phase 1.5: Check solve cache (near match, faster than LLM)
+        const cacheMatches = await findSolveCacheMatches(problem, 0.70);
+        if (cacheMatches.length > 0) {
+          const hit = cacheMatches[0];
+          log.info(`[ExplainStream] Solve cache hit`);
+
+          await write(formatSSEEvent('step', {
+            label: '解答',
+            content: hit.solution,
+            keyPoints: [],
+          }));
+          await write(formatSSEEvent('answer', { answer: hit.solution }));
+          await write(formatSSEEvent('knowledge', { points: [] }));
+          await write(formatSSEEvent('similar', { questions: [] }));
+          await write(formatSSEEvent('done', {
+            fromSolveCache: true,
             solvingTime: 0,
           }));
           await writer.close();
@@ -130,9 +153,10 @@ export async function POST(req: Request) {
           agentType,
         }));
 
-        // Auto-save to question bank with actual streamed content
+        // Auto-save to question bank and solve cache
         try {
-          const { saveToQuestionBank, isProblemInBank } = await import('@/lib/solve/question-bank');
+          const { saveToQuestionBank, isProblemInBank, hashProblemText } = await import('@/lib/solve/question-bank');
+          const { saveToSolveCache } = await import('@/lib/solve/solve-cache');
           const alreadyInBank = await isProblemInBank(problem);
           if (!alreadyInBank && streamedAnswer) {
             await saveToQuestionBank({
@@ -144,6 +168,15 @@ export async function POST(req: Request) {
               agentId: agentType,
               solvedAt: Date.now(),
               verified: false,
+            });
+          }
+          if (streamedAnswer) {
+            await saveToSolveCache({
+              problemText: problem,
+              problemHash: hashProblemText(problem),
+              solution: streamedAnswer,
+              agentId: agentType,
+              solvedAt: Date.now(),
             });
           }
         } catch {

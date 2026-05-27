@@ -635,7 +635,7 @@ export const useSettingsStore = create<SettingsState>()(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     {
       name: 'settings-storage',
-      version: 3,
+      version: 4,
       migrate: migrateSettings as any,
       merge: mergeSettings as any,
     } as any,

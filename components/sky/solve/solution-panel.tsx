@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, Lightbulb, ListOrdered, Target, ChevronDown, ChevronRight } from 'lucide-react';
+import { BookOpen, Lightbulb, ListOrdered, Target, ChevronDown, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from './math-renderer';
 import type { FourPartOutput, GradedFourPartOutput } from '@/lib/solve/types';
@@ -17,14 +16,12 @@ interface SolutionPanelProps {
 
 export function SolutionPanel({ output, className }: SolutionPanelProps) {
   const [activeTab, setActiveTab] = useState('steps');
-  const [expandedSteps, setExpandedSteps] = useState<Record<number, boolean>>({ 0: true });
 
   const isGraded = 'gradeResult' in output;
   const { answer, steps, knowledgePoints, similarQuestions } = output;
 
-  const toggleStep = (index: number) => {
-    setExpandedSteps((prev) => ({ ...prev, [index]: !prev[index] }));
-  };
+  const hasSteps = steps.length > 0;
+  const isComplete = hasSteps && answer; // 解题完成 = 有步骤且有答案
 
   return (
     <Card className={cn('overflow-hidden', className)}>
@@ -35,7 +32,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
               <BookOpen className="h-5 w-5 text-[#4A90D9]" />
               解题详解
             </CardTitle>
-            <CardDescription>四段式输出：答案、步骤、知识点、同类练习</CardDescription>
+            <CardDescription>步骤 · AI 知识点总结 · 同类练习</CardDescription>
           </div>
           {isGraded && (
             <Badge
@@ -48,15 +45,23 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
         </div>
       </CardHeader>
 
+      {/* ── 答案栏：解题完成后直接显示在顶部 ── */}
+      {isComplete && (
+        <div className="border-b bg-gradient-to-r from-green-50/80 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/10 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
+            <div className="flex-1">
+              <div className="text-xs font-medium text-green-700 dark:text-green-400 mb-1">答案</div>
+              <div className="inline-flex items-center rounded-lg bg-white/80 dark:bg-green-900/30 px-4 py-2 border border-green-200/50 dark:border-green-800/50">
+                <MathRenderer content={answer} className="text-lg font-bold text-green-700 dark:text-green-300" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 rounded-none border-b bg-muted/50 p-0">
-          <TabsTrigger
-            value="answer"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#4A90D9] data-[state=active]:bg-background data-[state=active]:shadow-none"
-          >
-            <Target className="mr-1 h-4 w-4" />
-            答案
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 rounded-none border-b bg-muted/50 p-0">
           <TabsTrigger
             value="steps"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#4A90D9] data-[state=active]:bg-background data-[state=active]:shadow-none"
@@ -81,28 +86,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
         </TabsList>
 
         <CardContent className="p-0">
-          <TabsContent value="answer" className="mt-0 p-6">
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="mb-2 text-sm text-muted-foreground">最终答案</div>
-                <div className="inline-flex items-center justify-center rounded-xl bg-[#4A90D9]/10 px-8 py-4">
-                  <MathRenderer content={answer} className="text-2xl font-bold text-[#4A90D9]" />
-                </div>
-              </div>
-              {isGraded && (
-                <div className="space-y-3 border-t pt-4">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Lightbulb className="h-4 w-4 text-amber-500" />
-                    错因分析
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {(output as GradedFourPartOutput).mistakeAnalysis}
-                  </p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
+          {/* ── 步骤栏：每步换行，末尾显示正确答案 ── */}
           <TabsContent value="steps" className="mt-0">
             <div className="divide-y">
               {steps.length === 0 && (
@@ -112,53 +96,57 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                 </div>
               )}
               {steps.map((step, index) => (
-                <Collapsible
-                  key={index}
-                  open={expandedSteps[index] ?? false}
-                  onOpenChange={() => toggleStep(index)}
-                  className="group"
-                >
-                  <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#4A90D9]/10 text-sm font-bold text-[#4A90D9]">
-                        {index + 1}
-                      </div>
-                      <span className="font-medium">{step.label}</span>
+                <div key={index} className="px-5 py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#4A90D9]/10 text-xs font-bold text-[#4A90D9] mt-0.5">
+                      {index + 1}
                     </div>
-                    {expandedSteps[index] ? (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="px-4 pb-4 animate-step-fade-in">
-                      <div className="ml-11 space-y-3">
-                        <MathRenderer content={step.content} className="text-sm leading-relaxed" />
-                        {step.keyPoints && step.keyPoints.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {step.keyPoints.map((point, pidx) => (
-                              <Badge
-                                key={pidx}
-                                variant="secondary"
-                                className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800"
-                              >
-                                <Lightbulb className="mr-1 h-3 w-3" />
-                                <MathRenderer content={point} />
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm mb-1.5">{step.label}</div>
+                      <MathRenderer content={step.content} className="text-sm leading-relaxed" />
+                      {step.keyPoints && step.keyPoints.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {step.keyPoints.map((point, pidx) => (
+                            <Badge
+                              key={pidx}
+                              variant="secondary"
+                              className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800 text-xs"
+                            >
+                              <Lightbulb className="mr-1 h-3 w-3" />
+                              <MathRenderer content={point} />
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
+                  </div>
+                </div>
               ))}
+              {/* 末尾：答案 */}
+              {isComplete && (
+                <div className="px-5 py-4 bg-green-50/50 dark:bg-green-950/20">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
+                    <div>
+                      <span className="text-sm font-medium text-green-700 dark:text-green-400">答案</span>
+                      <span className="ml-2">
+                        <MathRenderer content={answer} className="text-sm font-bold text-green-700 dark:text-green-300" />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
 
+          {/* ── 知识点栏：AI 总结的知识点 ── */}
           <TabsContent value="knowledge" className="mt-0 p-6">
             <div className="space-y-4">
+              {knowledgePoints.length === 0 && (
+                <div className="text-center text-sm text-muted-foreground py-8">
+                  暂无知识点总结
+                </div>
+              )}
               {knowledgePoints.map((point, index) => (
                 <div
                   key={index}
@@ -182,7 +170,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                           {point.difficulty === 'hard' && '困难'}
                         </Badge>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground"><MathRenderer content={point.description} /></p>
+                      <p className="mt-2 text-sm text-muted-foreground leading-relaxed"><MathRenderer content={point.description} /></p>
                     </div>
                   </div>
                 </div>
@@ -190,6 +178,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
             </div>
           </TabsContent>
 
+          {/* ── 同类题栏 ── */}
           <TabsContent value="similar" className="mt-0 p-6">
             <div className="space-y-4">
               {similarQuestions.map((q, index) => (

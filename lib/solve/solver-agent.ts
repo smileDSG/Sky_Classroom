@@ -17,6 +17,7 @@ import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { buildSolverPrompt } from './solver-prompts';
+import { validateConfidence, MIN_VALIDATED_CONFIDENCE } from './confidence-validator';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SolveGraph');
@@ -102,17 +103,13 @@ async function solveOnce(
   const modelConfig = resolveSolverModel(agentType);
   const modelWithInfo = getModel(modelConfig);
 
-  const messages: Array<{ role: string; content: unknown }> = [
-    {
-      role: 'system',
-      content: buildSolverPrompt(agentType, problemText, problemImage ?? undefined),
-    },
-  ];
+  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
 
   const result = await callLLM(
     {
       model: modelWithInfo.model,
-      messages: messages as any,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: problemText }] as any,
       temperature: 0.3,
       maxOutputTokens: 4096,
     },
@@ -124,11 +121,14 @@ async function solveOnce(
 }
 
 /**
- * Hybrid strategy: primary agent first, fallback if confidence low.
+ * Hybrid strategy: primary agent first, fallback if validated confidence low.
+ *
+ * Uses post-hoc confidence validation (not self-reported LLM score).
+ * Threshold: 0.55 — lower than the old 0.70 because validated scores are more reliable.
  *
  * 1. Call primary agent
- * 2. If confidence >= 0.7, return immediately
- * 3. If confidence < 0.7, call secondary agent
+ * 2. If validated confidence >= 0.55, return immediately
+ * 3. If low, call secondary agent
  * 4. If secondary also low, try tertiary as last resort
  */
 async function solveWithHybrid(
@@ -136,12 +136,13 @@ async function solveWithHybrid(
   problemText: string,
   problemImage: string | null,
 ): Promise<{ solution: ParsedSolution; usedAgents: SolverAgentType[] }> {
-  const CONFIDENCE_THRESHOLD = 0.7;
-
   // Primary
   const primaryResult = await solveOnce(primary, problemText, problemImage);
-  if (primaryResult && primaryResult.confidence >= CONFIDENCE_THRESHOLD) {
-    return { solution: primaryResult, usedAgents: [primary] };
+  if (primaryResult) {
+    const validated = validateConfidence(primaryResult, primary);
+    if (validated >= MIN_VALIDATED_CONFIDENCE) {
+      return { solution: primaryResult, usedAgents: [primary] };
+    }
   }
 
   // Secondary fallback
@@ -150,11 +151,14 @@ async function solveWithHybrid(
   );
 
   const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
-  if (secondaryResult && secondaryResult.confidence >= CONFIDENCE_THRESHOLD) {
-    return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
+  if (secondaryResult) {
+    const validated = validateConfidence(secondaryResult, fallbacks[0]);
+    if (validated >= MIN_VALIDATED_CONFIDENCE) {
+      return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
+    }
   }
 
-  // Tertiary: last resort
+  // Tertiary: last resort — accept whatever we get
   if (fallbacks.length > 1) {
     const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
     if (tertiaryResult) {
@@ -162,7 +166,7 @@ async function solveWithHybrid(
     }
   }
 
-  // All failed or low confidence — return whatever we have, tracking all agents tried
+  // All failed — return whatever we have
   const calledAgents: SolverAgentType[] = fallbacks.length > 1
     ? [primary, fallbacks[0], fallbacks[1]]
     : [primary, fallbacks[0]];

@@ -637,6 +637,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
   const createSession = useCallback(async (type: SessionType, title: string): Promise<string> => {
     const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const now = Date.now();
+    const currentSceneId = useStageStore.getState().currentSceneId;
 
     const newSession: ChatSession = {
       id: sessionId,
@@ -652,6 +653,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       },
       toolCalls: [],
       pendingToolCalls: [],
+      sceneId: currentSceneId ?? undefined,
       createdAt: now,
       updatedAt: now,
     };
@@ -660,7 +662,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     setActiveSessionId(sessionId);
     setExpandedSessionIds((prev) => new Set([...prev, sessionId]));
 
-    log.info(`[ChatArea] Created session: ${sessionId} (${type})`);
+    log.info(`[ChatArea] Created session: ${sessionId} (${type}, sceneId: ${currentSceneId})`);
     return sessionId;
   }, []);
 
@@ -1012,7 +1014,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         for (const session of activeQAOrDiscussion) {
           await endSession(session.id);
         }
-        sessionId = await createSession('qa', 'Q&A');
+        sessionId = await createSession('qa', content.length > 30 ? content.slice(0, 30) + '...' : content);
       }
 
       const controller = new AbortController();
@@ -1051,17 +1053,21 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       setSessions((prev) => {
         const exists = prev.some((s) => s.id === sessionId);
         if (exists) {
-          return prev.map((s) =>
-            s.id === sessionId
-              ? {
-                  ...s,
-                  messages: [...s.messages, userMessage],
-                  status: 'active' as SessionStatus,
-                  updatedAt: now,
-                }
-              : s,
-          );
+          return prev.map((s) => {
+            if (s.id === sessionId) {
+              const sceneId = s.sceneId ?? useStageStore.getState().currentSceneId ?? undefined;
+              return {
+                ...s,
+                messages: [...s.messages, userMessage],
+                status: 'active' as SessionStatus,
+                sceneId,
+                updatedAt: now,
+              };
+            }
+            return s;
+          });
         } else {
+          const qaSceneId = useStageStore.getState().currentSceneId;
           const newSession: ChatSession = {
             id: sessionId!,
             type: 'qa',
@@ -1076,6 +1082,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             },
             toolCalls: [],
             pendingToolCalls: [],
+            sceneId: qaSceneId ?? undefined,
             createdAt: now,
             updatedAt: now,
           };
@@ -1200,6 +1207,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       }
 
       // No pre-created assistant message — agent_start events create them dynamically
+      const currentSceneId = request.sceneId ?? useStageStore.getState().currentSceneId;
       const newSession: ChatSession = {
         id: sessionId,
         type: 'discussion',
@@ -1214,6 +1222,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         },
         toolCalls: [],
         pendingToolCalls: [],
+        sceneId: currentSceneId ?? undefined,
         createdAt: now,
         updatedAt: now,
       };
