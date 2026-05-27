@@ -15,6 +15,7 @@ import {
   cancelClassroomJob,
 } from '@/lib/classroom/classroom-job-client';
 import { useTaskStore } from '@/lib/store/use-task-store';
+import { removeActiveJobEntry } from '@/lib/classroom/classroom-session';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('GenerationProgress');
@@ -54,16 +55,25 @@ function GenerationProgressContent() {
 
   // Start polling on mount
   useEffect(() => {
-    if (!jobId || hasStartedRef.current) return;
-    hasStartedRef.current = true;
+    if (!jobId) return;
+
+    // Reset on re-mount (handles React Strict Mode double-mount in dev)
+    hasStartedRef.current = false;
 
     const abortController = new AbortController();
     abortRef.current = abortController;
 
+    let cancelled = false;
+
     (async () => {
+      // Guard against Strict Mode double-mount: if already started, skip
+      if (hasStartedRef.current) return;
+      hasStartedRef.current = true;
+
       try {
         // Check current state first
         const current = await fetchClassroomJob(jobId);
+        if (cancelled || abortController.signal.aborted) return;
         updateFromJob(current);
 
         if (current.status === 'awaiting_review') {
@@ -86,13 +96,17 @@ function GenerationProgressContent() {
         await pollClassroomJob(
           jobId,
           (data) => {
+            if (cancelled || abortController.signal.aborted) return;
             updateFromJob(data);
           },
           abortController.signal,
         );
 
+        if (cancelled || abortController.signal.aborted) return;
+
         // Check final state after polling
         const final = await fetchClassroomJob(jobId);
+        if (cancelled || abortController.signal.aborted) return;
         updateFromJob(final);
 
         if (final.status === 'awaiting_review') {
@@ -104,6 +118,7 @@ function GenerationProgressContent() {
           }
         }
       } catch (err) {
+        if (cancelled || abortController.signal.aborted) return;
         if (err instanceof DOMException && err.name === 'AbortError') return;
         log.error('Generation progress poll error:', err);
         setError(err instanceof Error ? err.message : '生成过程出错');
@@ -111,12 +126,14 @@ function GenerationProgressContent() {
     })();
 
     return () => {
+      cancelled = true;
       abortController.abort();
     };
   }, [jobId]);
 
   const updateFromJob = useCallback((data: ClassroomJobState) => {
     if (data.status === 'cancelled') {
+      removeActiveJobEntry(jobId!);
       toast.info('课堂生成已取消');
       router.push('/');
       return;
@@ -129,7 +146,10 @@ function GenerationProgressContent() {
     if (data.outlinesMeta) setOutlinesMeta(data.outlinesMeta);
     if (data.scenesGenerated != null) setScenesGenerated(data.scenesGenerated);
     if (data.totalScenes != null) setTotalScenes(data.totalScenes);
-    if (data.result) setResult(data.result);
+    if (data.result) {
+      setResult(data.result);
+      removeActiveJobEntry(jobId!);
+    }
 
     // Update task store for multi-task tracking
     const task = useTaskStore.getState().tasks[jobId ?? ''];
@@ -144,24 +164,48 @@ function GenerationProgressContent() {
   const handleApproveOutline = useCallback(async () => {
     if (!jobId) return;
 
+    const signal = abortRef.current?.signal;
     try {
       setPhase('generating_slides');
+      const editedOutlines = outlines;
       setOutlines(undefined);
 
-      await approveClassroomOutline(jobId);
+      // 大纲已确认，清除草稿和会话数据
+      try {
+        localStorage.removeItem('requirementDraft');
+        sessionStorage.removeItem('generationSession');
+      } catch {
+        /* ignore */
+      }
+
+      await approveClassroomOutline(jobId, editedOutlines);
+      if (signal?.aborted) return;
 
       await pollClassroomJob(
         jobId,
-        (data) => updateFromJob(data),
-        abortRef.current?.signal ?? new AbortController().signal,
+        (data) => {
+          if (signal?.aborted) return;
+          updateFromJob(data);
+        },
+        signal ?? new AbortController().signal,
       );
 
+      if (signal?.aborted) return;
+
       const final = await fetchClassroomJob(jobId);
+      if (signal?.aborted) return;
+      if (final.status === 'awaiting_review') {
+        if (final.outlines) setOutlines(final.outlines);
+        if (final.outlinesMeta) setOutlinesMeta(final.outlinesMeta);
+        setPhase('reviewing');
+        return;
+      }
       if (final.result) {
         setResult(final.result);
         setPhase('done');
       }
     } catch (err) {
+      if (signal?.aborted) return;
       if (err instanceof DOMException && err.name === 'AbortError') return;
       log.error('Approve outline error:', err);
       setError(err instanceof Error ? err.message : '继续生成失败');
@@ -177,6 +221,7 @@ function GenerationProgressContent() {
 
       // Remove task from store
       useTaskStore.getState().removeTask(jobId);
+      removeActiveJobEntry(jobId!);
 
       toast.info('课堂生成已取消');
       router.push('/');
@@ -189,6 +234,7 @@ function GenerationProgressContent() {
 
   const handleGoToClassroom = useCallback(() => {
     if (result?.classroomId) {
+      removeActiveJobEntry(jobId!);
       router.push(`/classroom/${result.classroomId}`);
     }
   }, [result, router]);
@@ -201,7 +247,9 @@ function GenerationProgressContent() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button
-            onClick={() => router.push('/')}
+            onClick={() => {
+              router.push('/');
+            }}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -258,7 +306,9 @@ function GenerationProgressContent() {
                 outlines={outlines}
                 onChange={setOutlines}
                 onConfirm={handleApproveOutline}
-                onBack={() => router.push('/')}
+                onBack={() => {
+                  router.push('/');
+                }}
                 isLoading={false}
               />
             </div>
@@ -291,7 +341,9 @@ function GenerationProgressContent() {
               <div className="mb-6">
                 <div className="h-2 rounded-full bg-sky-100 dark:bg-sky-900 overflow-hidden">
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
+                    className={`h-full rounded-full bg-gradient-to-r from-sky-400 via-sky-300 to-sky-400 ${
+                      phase === 'generating' || phase === 'generating_slides' ? 'progress-bar-animated' : 'to-sky-600'
+                    }`}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.7, ease: 'easeInOut' }}
                   />

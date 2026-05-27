@@ -87,6 +87,42 @@ async function withJobLock<T>(jobId: string, fn: () => Promise<T>): Promise<T> {
 /** Max age (ms) before a "running" job without an active runner is considered stale. */
 const STALE_JOB_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
+/** Max age (ms) to keep terminal-state job files before cleanup. */
+const TERMINAL_JOB_RETENTION_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+async function cleanupOldClassroomJobs(): Promise<void> {
+  try {
+    const files = await fs.readdir(CLASSROOM_JOBS_DIR);
+    const now = Date.now();
+    let removed = 0;
+
+    for (const file of files) {
+      if (!file.endsWith('.json')) continue;
+      const filePath = path.join(CLASSROOM_JOBS_DIR, file);
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const job = JSON.parse(content) as ClassroomGenerationJob;
+        const isTerminal = job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled';
+        if (!isTerminal) continue;
+
+        const completedAt = job.completedAt ? new Date(job.completedAt).getTime() : 0;
+        if (now - completedAt > TERMINAL_JOB_RETENTION_MS) {
+          await fs.unlink(filePath);
+          removed++;
+        }
+      } catch {
+        // Skip files that can't be read/parsed (corrupt, locked, etc.)
+      }
+    }
+
+    if (removed > 0) {
+      // Logging happens at call site; keep this function quiet
+    }
+  } catch {
+    // Directory may not exist yet
+  }
+}
+
 function markStaleIfNeeded(job: ClassroomGenerationJob): ClassroomGenerationJob {
   if (job.status !== 'running') return job;
   const updatedAt = new Date(job.updatedAt).getTime();
@@ -133,6 +169,10 @@ export async function createClassroomGenerationJob(
 
   await ensureClassroomJobsDir();
   await writeJsonFileAtomic(jobFilePath(jobId), job);
+
+  // Lazy cleanup: remove terminal jobs older than 24h (don't block)
+  cleanupOldClassroomJobs().catch(() => {});
+
   return job;
 }
 
@@ -264,6 +304,7 @@ export async function markClassroomGenerationJobAwaitingReview(
     message: '大纲已生成，等待审阅',
     outlines,
     outlinesMeta,
+    totalScenes: outlines.length,
   });
 }
 

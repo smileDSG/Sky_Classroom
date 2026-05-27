@@ -13,6 +13,30 @@ Based on the user's free-form requirement text, automatically infer course detai
 
 ---
 
+## User Requirements
+
+{{requirement}}
+
+{{userProfile}}
+
+## Reference Materials
+
+### PDF Content Summary
+
+{{pdfContent}}
+
+### Available Images
+
+{{availableImages}}
+
+### Web Search Results
+
+{{researchContext}}
+
+{{teacherContext}}
+
+---
+
 ## Language Inference
 
 Infer the course language from all available signals and produce:

@@ -3,10 +3,12 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import {
   isValidClassroomJobId,
   readClassroomGenerationJob,
+  updateClassroomGenerationJob,
 } from '@/lib/server/classroom-job-store';
 import { runClassroomContinueJob } from '@/lib/server/classroom-job-runner';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { createLogger } from '@/lib/logger';
+import type { SceneOutline } from '@/lib/types/generation';
 
 const log = createLogger('ClassroomApprove API');
 
@@ -33,6 +35,22 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
         409,
         `Job is in '${job.status}' state, expected 'awaiting_review'`,
       );
+    }
+
+    // Accept user-edited outlines from request body
+    const body = await req.json().catch(() => ({}));
+    if (body.outlines && Array.isArray(body.outlines) && body.outlines.length > 0) {
+      const userOutlines = body.outlines as SceneOutline[];
+      if (job.phaseOneResult) {
+        await updateClassroomGenerationJob(jobId, {
+          phaseOneResult: { ...job.phaseOneResult, outlines: userOutlines },
+          outlines: userOutlines,
+          outlinesMeta: job.outlinesMeta
+            ? { ...job.outlinesMeta, totalScenes: userOutlines.length }
+            : undefined,
+        });
+      }
+      log.info(`Applied user-edited outlines (${userOutlines.length} scenes) for job ${jobId}`);
     }
 
     const baseUrl = buildRequestOrigin(req);
