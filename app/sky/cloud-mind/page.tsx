@@ -25,12 +25,13 @@ const TOOLS = [
   },
   {
     id: 'slides',
-    label: '幻灯片讲解',
-    description: '上传课件，AI 生成精美讲解与笔记',
+    label: 'PPT课件生成',
+    description: '输入主题，AI 一键生成精美PPT课件',
     href: '/sky/cloud-mind/slides',
     icon: Presentation,
     gradient: 'from-cyan-500 to-blue-600',
-    stats: '支持 PPT/PDF',
+    stats: 'AI 智能生成',
+    badge: '推荐',
   },
   {
     id: 'memory',
@@ -95,7 +96,7 @@ export default function CloudMindPage() {
               云端智囊
             </h1>
             <p className="text-indigo-100 text-base md:text-lg max-w-xl leading-relaxed">
-              汇聚 AI 之力，为你的学习保驾护航。拍照搜题、幻灯片讲解、智能写作、智能出题……
+              汇聚 AI 之力，为你的学习保驾护航。拍照搜题、PPT课件生成、智能写作、智能出题……
               六大工具一站直达。
             </p>
 
