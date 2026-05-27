@@ -41,10 +41,19 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
     onCompleteRef.current();
   };
 
+  const skyGradients = [
+    'linear-gradient(180deg, #87CEEB 0%, #B0E0E6 30%, #E0F7FA 60%, #FFF8E1 100%)', // Scene 0: bright daytime
+    'linear-gradient(180deg, #6BB5E0 0%, #9DD5F0 30%, #C8E8F8 60%, #FFF0D0 100%)', // Scene 1: book arrives, slightly warmer
+    'linear-gradient(180deg, #E8F0F8 0%, #F0F4F8 50%, #F8FAFC 80%, #FFFFFF 100%)',  // Scene 2: fading to white
+  ];
+
   return (
     <motion.div
       className="fixed inset-0 z-[100] overflow-hidden"
-      style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #B0E0E6 30%, #E0F7FA 60%, #FFF8E1 100%)' }}
+      style={{
+        background: skyGradients[Math.min(scene, skyGradients.length - 1)],
+        transition: 'background 1.5s ease-in-out',
+      }}
     >
       <AnimatePresence>
         {/* ── Scene 0: Sun, sky, clouds, birds ── */}
@@ -239,7 +248,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
             transition={{ duration: 0.4 }}
           >
             {/* Sky background remains */}
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #B0E0E6 30%, #E0F7FA 60%, #FFF8E1 100%)' }} />
+            <div className="absolute inset-0" style={{ background: skyGradients[1] }} />
 
             {/* Clouds fade and drift away */}
             <motion.div
@@ -358,7 +367,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
             {/* Sky background fades to white */}
             <motion.div
               className="absolute inset-0"
-              style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #B0E0E6 30%, #E0F7FA 60%, #FFF8E1 100%)' }}
+              style={{ background: skyGradients[2] }}
               initial={{ opacity: 1 }}
               animate={{ opacity: 0 }}
               transition={{ duration: 1.2, ease: 'easeOut' }}

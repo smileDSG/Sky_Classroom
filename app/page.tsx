@@ -7,6 +7,7 @@ import { Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { resolveLocale } from '@/lib/templates/types';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useUserProfileStore } from '@/lib/store/user-profile';
 import { useSettingsStore } from '@/lib/store/settings';
@@ -38,6 +39,7 @@ import { SkyBackground } from '@/components/sky/home/sky-background';
 import { MinimalNavbar } from '@/components/sky/home/minimal-navbar';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { AnimatedLogo, FeatureHighlights } from '@/components/sky/home/animated-logo';
+import { IntroSequence } from '@/components/sky/home/intro-sequence';
 import { HeroInput } from '@/components/sky/home/hero-input';
 import { ClassroomGrid } from '@/components/sky/home/classroom-grid';
 import type { SettingsSection } from '@/lib/types/settings';
@@ -68,7 +70,7 @@ interface StageListItem {
 }
 
 export default function HomePage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -78,6 +80,7 @@ export default function HomePage() {
   const [webSearch, setWebSearch] = useState(false);
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [introDone, setIntroDone] = useState(false);
 
   // ── Classroom background generation state ──
   const [classroomJobId, setClassroomJobId] = useState<string | null>(null);
@@ -426,7 +429,7 @@ export default function HomePage() {
     const outline = template.outline
       .map((s, i) => `第${i + 1}幕：${s.title} — ${s.description || ''}`)
       .join('\n');
-    const newRequirement = `${template.nameZh}\n\n课程目标：${template.description}\n\n大纲：\n${outline}`;
+    const newRequirement = `${resolveLocale(template.name, locale)}\n\n课程目标：${resolveLocale(template.description, locale)}\n\n大纲：\n${outline}`;
     setRequirement(newRequirement);
     updateRequirementCache(newRequirement);
   };
@@ -471,6 +474,12 @@ export default function HomePage() {
   };
 
   const canGenerate = !!requirement.trim();
+
+  if (!introDone) {
+    return (
+      <IntroSequence onComplete={() => setIntroDone(true)} />
+    );
+  }
 
   return (
     <div className="min-h-screen w-full relative overflow-x-hidden">
