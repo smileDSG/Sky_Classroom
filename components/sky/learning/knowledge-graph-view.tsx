@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { Search, X, Filter } from 'lucide-react';
 import type {
   KnowledgeNode,
   KnowledgeGraph as KnowledgeGraphType,
@@ -62,6 +63,46 @@ export function KnowledgeGraphView() {
 
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+
+  // Extract all categories from the graph
+  const allCategories = useMemo(() => {
+    if (!knowledgeGraph) return [];
+    return [...new Set(knowledgeGraph.nodes.map((n) => n.category))];
+  }, [knowledgeGraph]);
+
+  // Filter matching node IDs
+  const matchingNodeIds = useMemo(() => {
+    if (!knowledgeGraph) return new Set<string>();
+    const query = searchQuery.trim().toLowerCase();
+    const hasSearch = query.length > 0;
+    const hasCategoryFilter = selectedCategories.size > 0;
+
+    if (!hasSearch && !hasCategoryFilter) return null; // null = no filter active
+
+    const ids = new Set<string>();
+    for (const node of knowledgeGraph.nodes) {
+      const matchesSearch = !hasSearch || node.name.toLowerCase().includes(query);
+      const matchesCategory = !hasCategoryFilter || selectedCategories.has(node.category);
+      if (matchesSearch && matchesCategory) ids.add(node.id);
+    }
+    return ids;
+  }, [knowledgeGraph, searchQuery, selectedCategories]);
+
+  const toggleCategory = useCallback((cat: string) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setSearchQuery('');
+    setSelectedCategories(new Set());
+  }, []);
 
   // ── Resize observer ─────────────────────────────────────────────────
 
@@ -187,16 +228,21 @@ export function KnowledgeGraphView() {
 
     ctx.clearRect(0, 0, w, h);
 
+    const isFiltering = matchingNodeIds !== null && matchingNodeIds.size > 0;
+
     // Edges first (behind nodes)
     for (const edge of edges) {
       const from = nodeMap.get(edge.from);
       const to = nodeMap.get(edge.to);
       if (!from || !to) continue;
 
+      const bothMatch = !isFiltering || (matchingNodeIds!.has(edge.from) && matchingNodeIds!.has(edge.to));
+
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       ctx.lineTo(to.x, to.y);
-      ctx.strokeStyle = '#D1D5DB';
+      ctx.globalAlpha = bothMatch ? 1 : 0.1;
+      ctx.strokeStyle = bothMatch ? '#D1D5DB' : '#E5E7EB';
       ctx.lineWidth = edge.relation === 'prerequisite' ? 1.5 : 1;
 
       if (edge.relation === 'related') {
@@ -207,18 +253,22 @@ export function KnowledgeGraphView() {
       ctx.stroke();
     }
     ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
 
     // Nodes
     const weakSet = new Set(weakPoints);
     for (const ln of layoutNodes) {
       const node = nodes.find((n) => n.id === ln.id)!;
       const radius = MIN_RADIUS + node.mastery / 10; // 15–25
+      const isMatch = !isFiltering || matchingNodeIds!.has(node.id);
 
       // Color by mastery
       let color: string;
       if (node.mastery >= 80) color = '#10B981';
       else if (node.mastery >= 50) color = '#F59E0B';
       else color = '#EF4444';
+
+      ctx.globalAlpha = isMatch ? 1 : 0.15;
 
       // Fill circle
       ctx.beginPath();
@@ -227,7 +277,7 @@ export function KnowledgeGraphView() {
       ctx.fill();
 
       // Weak point: red dashed ring
-      if (weakSet.has(node.id)) {
+      if (weakSet.has(node.id) && isMatch) {
         ctx.beginPath();
         ctx.arc(ln.x, ln.y, radius + 3, 0, Math.PI * 2);
         ctx.strokeStyle = '#EF4444';
@@ -246,10 +296,11 @@ export function KnowledgeGraphView() {
         node.name.length > 4 ? node.name.slice(0, 4) + '..' : node.name;
       ctx.fillText(label, ln.x, ln.y);
     }
+    ctx.globalAlpha = 1;
 
     // Store layout for click detection
     layoutRef.current = { layoutNodes, nodeMap, nodes };
-  }, [knowledgeGraph, containerWidth]);
+  }, [knowledgeGraph, containerWidth, matchingNodeIds]);
 
   // ── Click handler for tooltip ───────────────────────────────────────
 
@@ -302,7 +353,55 @@ export function KnowledgeGraphView() {
 
   return (
     <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800" ref={containerRef}>
-      <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-slate-200">知识图谱</h3>
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-200">知识图谱</h3>
+        {matchingNodeIds !== null && (
+          <span className="text-xs text-muted-foreground">
+            匹配 {matchingNodeIds.size} / {knowledgeGraph!.nodes.length} 个节点
+          </span>
+        )}
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="mb-3 space-y-2">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="搜索知识点..."
+            className="w-full rounded-lg border border-input bg-background py-1.5 pl-8 pr-8 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+          />
+          {(searchQuery || selectedCategories.size > 0) && (
+            <button
+              onClick={clearFilters}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted"
+            >
+              <X className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          )}
+        </div>
+        {allCategories.length > 1 && (
+          <div className="flex flex-wrap gap-1.5">
+            {allCategories.map((cat) => {
+              const isActive = selectedCategories.has(cat);
+              return (
+                <button
+                  key={cat}
+                  onClick={() => toggleCategory(cat)}
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                    isActive
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-muted text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Canvas container */}
       <div className="relative">
