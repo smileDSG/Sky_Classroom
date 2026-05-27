@@ -220,6 +220,17 @@ export default function CloudMindSlidesPage() {
               {loading ? 'AI 分析中...' : '开始分析'}
             </button>
             <button
+              onClick={() => {
+                const topicParam = topic ? `?topic=${encodeURIComponent(topic)}` : '';
+                window.location.href = `/sky/slides${topicParam}`;
+              }}
+              disabled={!topic.trim()}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-6 py-2.5 text-white font-medium shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Presentation className="h-4 w-4" />
+              一键生成PPT
+            </button>
+            <button
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
