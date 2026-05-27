@@ -1,5 +1,10 @@
 'use client';
 
+import { useState } from 'react';
+import { HeaderControls } from '@/components/sky/home/header-controls';
+import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
+import { SettingsDialog } from '@/components/settings';
+import { UpgradeDialog } from '@/components/billing/upgrade-dialog';
 import { SkyTabBar } from './sky-tab-bar';
 import Link from 'next/link';
 
@@ -8,9 +13,12 @@ interface SkyAppShellProps {
 }
 
 export function SkyAppShell({ children }: SkyAppShellProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
   return (
-    <div className="flex h-screen w-full flex-col bg-[#F8FAFC]">
-      <header className="grid h-14 shrink-0 grid-cols-3 items-center border-b border-gray-200 bg-white px-4 shadow-sm">
+    <div className="flex h-screen w-full flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <header className="grid h-14 shrink-0 grid-cols-3 items-center border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm px-4">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <span className="text-xl">☁️</span>
@@ -22,20 +30,21 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
           <SkyTabBar />
         </div>
 
-        <div className="flex items-center justify-end gap-3">
-          <button
-            className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-            aria-label="切换主题"
-          >
-            🌙
-          </button>
-          <div className="h-8 w-8 rounded-full bg-[#8B5CF6]/20 flex items-center justify-center text-sm text-[#8B5CF6] font-semibold">
-            👤
-          </div>
+        <div className="flex items-center justify-end gap-2">
+          <HeaderControls />
+
+          {/* 用户区域 */}
+          <FloatingUserCard
+            onSettingsOpen={() => setSettingsOpen(true)}
+            onUpgradeOpen={() => setUpgradeOpen(true)}
+          />
         </div>
       </header>
 
       <main className="flex-1 overflow-auto p-6">{children}</main>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
     </div>
   );
 }
