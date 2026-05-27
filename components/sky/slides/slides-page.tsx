@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 // motion removed — using CSS animations for SSR compatibility
 // Preview now shows PPTX screenshot only — SlideViewer removed
@@ -13,6 +13,7 @@ import { SlidePreviewGallery } from './slide-preview-gallery';
 import { exportCourseToPPTX } from '@/lib/export/course-exporter';
 import { AVATAR_CONFIGS } from '@/lib/slides/avatar-config';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { useTaskStore } from '@/lib/store/use-task-store';
 import type { AvatarConfig } from '@/lib/slides/types';
 import { SkyBackground } from '@/components/sky/home/sky-background';
 
@@ -24,6 +25,7 @@ const DIFFICULTIES = [
 
 export default function SlidesPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // Persistent state from Zustand store
   const setSlides = useSkyClassroomStore((s) => s.setSlides);
@@ -170,6 +172,8 @@ export default function SlidesPage() {
     setGenStage('thinking');
     setGenProgress(0);
 
+    const taskId = `ppt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
     try {
       const res = await fetch('/api/sky/slides/generate', {
         method: 'POST',
@@ -182,8 +186,22 @@ export default function SlidesPage() {
       });
       const data = await res.json();
       if (data.success && data.jobId) {
-        // Start polling
         const jobId = data.jobId;
+
+        // Add to background task store
+        useTaskStore.getState().addTask({
+          id: jobId,
+          type: 'slides',
+          label: `PPT课件: ${topic.slice(0, 20)}${topic.length > 20 ? '...' : ''}`,
+          status: 'running',
+          progress: 0,
+          phase: '正在初始化...',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          jobId,
+        });
+
+        // Start polling
         const poll = setInterval(async () => {
           try {
             const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${jobId}`);
@@ -194,6 +212,12 @@ export default function SlidesPage() {
               setGenProgress(job.progress || 0);
               setStatus(job.message || '');
 
+              // Update background task
+              useTaskStore.getState().updateTask(jobId, {
+                progress: job.progress || 0,
+                phase: job.message || job.stage || '',
+              });
+
               if (job.stage === 'done') {
                 clearInterval(poll);
                 if (job.pptxUrl) {
@@ -203,8 +227,25 @@ export default function SlidesPage() {
                   setStatus('');
                   setGenStage('done');
                   setGenProgress(100);
+
+                  // Update background task as completed
+                  useTaskStore.getState().updateTask(jobId, {
+                    status: 'completed',
+                    progress: 100,
+                    phase: 'PPT生成完成',
+                    result: {
+                      pptxUrl: job.pptxUrl,
+                      fileName: job.fileName || '课件.pptx',
+                      previewImages: job.previewImages,
+                      qaReport: job.qaReport,
+                    },
+                  });
                 } else if (job.error) {
                   setStatus(`生成失败: ${job.error}`);
+                  useTaskStore.getState().updateTask(jobId, {
+                    status: 'failed',
+                    error: job.error,
+                  });
                 }
                 setGenerating(false);
               }
@@ -234,6 +275,85 @@ export default function SlidesPage() {
     a.download = generatedPptx.fileName;
     a.click();
   }, [generatedPptx]);
+
+  // ── Restore state from background task on mount ──
+  useEffect(() => {
+    const store = useTaskStore.getState();
+    const tasks = Object.values(store.tasks).filter(
+      (t) => t.type === 'slides' && t.status !== 'failed'
+    );
+    if (tasks.length === 0) return;
+    const task = tasks[tasks.length - 1];
+
+    if (task.status === 'running') {
+      setGenerating(true);
+      setGenProgress(task.progress || 0);
+      setStatus(task.phase || '生成中...');
+      // Resume polling if we have a jobId
+      if (task.jobId) {
+        const poll = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${task.jobId}`);
+            const statusData = await statusRes.json();
+            if (statusData.success) {
+              const job = statusData.data || statusData.job;
+              setGenStage(job.stage as never);
+              setGenProgress(job.progress || 0);
+              setStatus(job.message || '');
+
+              useTaskStore.getState().updateTask(task.jobId!, {
+                progress: job.progress || 0,
+                phase: job.message || job.stage || '',
+              });
+
+              if (job.stage === 'done') {
+                clearInterval(poll);
+                if (job.pptxUrl) {
+                  setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
+                  setPreviewImages(job.previewImages || null);
+                  if (job.qaReport) setQaReport(job.qaReport);
+                  setStatus('');
+                  setGenStage('done');
+                  setGenProgress(100);
+
+                  useTaskStore.getState().updateTask(task.jobId!, {
+                    status: 'completed',
+                    progress: 100,
+                    phase: 'PPT生成完成',
+                    result: {
+                      pptxUrl: job.pptxUrl,
+                      fileName: job.fileName || '课件.pptx',
+                      previewImages: job.previewImages,
+                      qaReport: job.qaReport,
+                    },
+                  });
+                } else if (job.error) {
+                  setStatus(`生成失败: ${job.error}`);
+                  useTaskStore.getState().updateTask(task.jobId!, {
+                    status: 'failed',
+                    error: job.error,
+                  });
+                }
+                setGenerating(false);
+              }
+            }
+          } catch {
+            // Polling error, ignore
+          }
+        }, 2000);
+      }
+    } else if (task.status === 'completed' && task.result) {
+      const result = task.result as { pptxUrl?: string; fileName?: string; previewImages?: string[]; qaReport?: unknown };
+      if (result.pptxUrl) {
+        setGeneratedPptx({ url: result.pptxUrl, fileName: result.fileName || '课件.pptx' });
+        setPreviewImages(result.previewImages || null);
+        if (result.qaReport) setQaReport(result.qaReport as never);
+        setGenStage('done');
+        setGenProgress(100);
+      }
+      store.removeTask(task.id);
+    }
+  }, []);
 
   // ── Cover loading stage animation ──
   useEffect(() => {
@@ -653,6 +773,22 @@ export default function SlidesPage() {
               )}
 
               <div className="flex items-center gap-2">
+                {topic.trim() && (
+                  <>
+                    <button
+                      onClick={() => router.push(`/sky/cloud-mind/memory?topic=${encodeURIComponent(topic)}&content=${encodeURIComponent(`关于"${topic}"的核心知识点`)}`)}
+                      className="rounded-xl px-3 py-2 text-xs font-semibold text-rose-500 transition-all hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                    >
+                      生成记忆卡片
+                    </button>
+                    <button
+                      onClick={() => router.push(`/sky/cloud-mind/quiz?topic=${encodeURIComponent(topic)}`)}
+                      className="rounded-xl px-3 py-2 text-xs font-semibold text-amber-500 transition-all hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    >
+                      生成练习题
+                    </button>
+                  </>
+                )}
                 {qaReport && (
                   <button
                     onClick={() => setShowQaReport(true)}
