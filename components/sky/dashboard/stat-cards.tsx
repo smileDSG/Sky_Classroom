@@ -50,7 +50,7 @@ function RingProgress({ percent, size = 48, color = '#8B5CF6' }: { percent: numb
   const circumference = 2 * Math.PI * r;
   return (
     <svg width={size} height={size} className="shrink-0">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#334155" strokeWidth={3} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth={3} />
       <motion.circle
         cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={3}
         strokeDasharray={circumference}
@@ -124,7 +124,7 @@ export function StatCards({ mistakes }: StatCardsProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: i * 0.1 }}
           whileHover={{ scale: 1.02 }}
-          className="group relative overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900/50 p-5 backdrop-blur-sm transition-shadow hover:shadow-lg hover:shadow-violet-500/10"
+          className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm transition-shadow hover:shadow-lg hover:shadow-violet-500/10 dark:hover:shadow-violet-500/10"
         >
           {/* Glow on hover */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none"
@@ -132,10 +132,10 @@ export function StatCards({ mistakes }: StatCardsProps) {
 
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-3xl font-bold text-slate-100">
+              <div className="text-3xl font-bold text-slate-800 dark:text-slate-100">
                 {card.value}{card.suffix || ''}
               </div>
-              <div className="mt-1 text-sm text-slate-400">{card.label}</div>
+              <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{card.label}</div>
             </div>
             <div className="flex flex-col items-center gap-2">
               {card.pulse && (
@@ -145,13 +145,15 @@ export function StatCards({ mistakes }: StatCardsProps) {
                   transition={{ duration: 2, repeat: Infinity }}
                 />
               )}
-              <RingProgress percent={card.ringPercent} color={card.color} />
+              {card.ringPercent !== undefined && (
+                <RingProgress percent={card.ringPercent} color={card.color} />
+              )}
             </div>
           </div>
 
           {/* Progress bar for review card */}
           {'barPercent' in card && (
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-800">
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
                 initial={{ width: 0 }}
@@ -187,10 +189,10 @@ export function QuickActions() {
         >
           <Link
             href={action.href}
-            className={`flex items-center gap-3 rounded-xl border border-slate-700/50 px-4 py-3 ${action.bg} backdrop-blur-sm transition-all hover:scale-[1.03] hover:border-slate-600/50`}
+            className={`flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700/50 px-4 py-3 ${action.bg} backdrop-blur-sm transition-all hover:scale-[1.03] hover:border-slate-300 dark:hover:border-slate-600/50`}
           >
             <action.icon className={`w-5 h-5 ${action.color}`} />
-            <span className="text-sm font-medium text-slate-300">{action.label}</span>
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{action.label}</span>
           </Link>
         </motion.div>
       ))}
@@ -214,9 +216,9 @@ export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center rounded-2xl border border-slate-700/50 bg-slate-900/50 p-8 backdrop-blur-sm"
+        className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-8 backdrop-blur-sm"
       >
-        <Sparkles className="w-8 h-8 text-slate-600 mb-3" />
+        <Sparkles className="w-8 h-8 text-slate-400" />
         <p className="text-slate-500 text-sm">还没有学习活动，去搜题页开始练习吧！</p>
       </motion.div>
     );
@@ -227,9 +229,9 @@ export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5 }}
-      className="rounded-2xl border border-slate-700/50 bg-slate-900/50 p-5 backdrop-blur-sm"
+      className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm"
     >
-      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-200">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
         <Clock className="w-4 h-4 text-slate-400" />
         最近活动
       </h3>
@@ -245,13 +247,13 @@ export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
             {/* Timeline dot + line */}
             <div className="relative flex flex-col items-center">
               <div className="w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-violet-500/20" />
-              {i < recentMistakes.length - 1 && <div className="w-px h-6 bg-slate-700" />}
+              {i < recentMistakes.length - 1 && <div className="w-px h-6 bg-slate-300 dark:bg-slate-700" />}
             </div>
 
             <span className="shrink-0 w-16 text-right text-xs text-slate-500">
               {formatRelativeTime(m.solvedAt)}
             </span>
-            <span className="flex-1 truncate text-slate-300">
+            <span className="flex-1 truncate text-slate-700 dark:text-slate-300">
               {m.problem.length > 60 ? m.problem.slice(0, 60) + '...' : m.problem}
             </span>
             <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${causeColors[m.cause] ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'}`}>
