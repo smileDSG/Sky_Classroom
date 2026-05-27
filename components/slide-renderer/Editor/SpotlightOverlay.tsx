@@ -75,7 +75,7 @@ export function SpotlightOverlay() {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 z-[100] pointer-events-none overflow-hidden"
+      className="absolute inset-0 z-10 pointer-events-none overflow-hidden"
     >
       <AnimatePresence mode="wait">
         {active && rect && (

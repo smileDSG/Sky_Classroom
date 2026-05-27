@@ -90,7 +90,7 @@ export function SessionList({
                   ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm'
                   : isActive
                     ? `bg-gradient-to-r ${cfg.bgGradient} border-transparent shadow-sm ring-1 ${cfg.ringColor}`
-                    : 'bg-white/60 dark:bg-slate-800/40 border-slate-200/50 dark:border-slate-700/40 hover:shadow-sm',
+                    : 'bg-white dark:bg-slate-800 border-slate-200/50 dark:border-slate-700/40 hover:shadow-sm',
               )}
             >
               <button
@@ -118,7 +118,6 @@ export function SessionList({
                     </span>
                     {isActive && (
                       <span className="relative flex h-2 w-2 shrink-0">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                       </span>
                     )}

@@ -9,7 +9,7 @@ type KagamiMode = 'anime' | 'normal';
 
 function loadMode(): KagamiMode {
   try {
-    const saved = localStorage.getItem('kagami-mode');
+    const saved = localStorage.getItem('kagami-panel-mode');
     if (saved === 'normal' || saved === 'anime') return saved;
   } catch { /* ignore */ }
   return 'anime';
@@ -23,7 +23,7 @@ const SCENES: Record<Scene, string> = {
 };
 
 // Normal mode — single professional avatar with CSS effects per scene
-const NORMAL_AVATAR = '/avatars/teacher-new.svg';
+const NORMAL_AVATAR = '/avatars/student-glasses-new.jpg';
 const NORMAL_SCENES: Record<Scene, string> = {
   idle: NORMAL_AVATAR,
   thinking: NORMAL_AVATAR,
@@ -32,7 +32,7 @@ const NORMAL_SCENES: Record<Scene, string> = {
 };
 
 const CHIBI = '/avatars/kagami/chibi.png';
-const NORMAL_ICON = '/avatars/teacher.svg';
+const NORMAL_ICON = '/avatars/student-glasses-new.jpg';
 
 // Voice clips — provide actual mp3 files in public/avatars/kagami/
 const VOICE_CLIPS: Partial<Record<Scene, string>> = {
@@ -185,7 +185,7 @@ export function KagamiPanel() {
 
   // ── Normal (常规版) persona & responses ────────────────────────────
 
-  const NORMAL_PERSONA = `你是一个专业、友善的 AI 学习助手"小镜"。性格特点：
+  const NORMAL_PERSONA = `你是一个专业、友善的 AI 学习助手。性格特点：
   - 专业严谨：回答问题条理清晰，注重知识点的准确性
   - 耐心温和：无论问题简单还是复杂，都认真对待，循循善诱
   - 鼓励式教学：用积极正面的语言激励学生，肯定进步
@@ -197,13 +197,13 @@ export function KagamiPanel() {
   - 适当肯定学生的努力
   - 结尾鼓励学生继续练习
 
-  你是 AI 学习助教，用中文交流。
+  你是 AI 学习助教，用中文交流。注意：你不是"小镜"，不要以小镜自称，不要使用傲娇或角色扮演的语气。
 
   数学格式要求：所有数学符号、公式、表达式必须使用 LaTeX 格式。行内公式用 $...$ 包裹，独立公式用 $$...$$ 包裹。例如：$x^2 + y^2 = 1$、$$\sum_{n=0}^{\infty} a_n x^n$$、分数用 \frac{}{}、根号用 \sqrt{}、极限用 \lim、积分用 \int、求和用 \sum。严禁用 ^ 代替上标，严禁用 _ 代替下标。`;
 
   const NORMAL_OPENING_LINES = [
     '你好！有什么学习上的问题需要帮忙吗？',
-    '欢迎来到小镜课堂！有题目需要讲解吗？',
+    '欢迎！有题目需要讲解吗？',
     '有什么可以帮你的？学习上的问题尽管问。',
     '你好！今天想学习什么内容呢？',
     '在的，有什么题目需要一起探讨吗？',
@@ -497,14 +497,14 @@ export function KagamiPanel() {
           <div className="flex flex-1 flex-col min-w-0">
             {/* Header */}
             <div className="flex items-center justify-between border-b px-3 py-2.5">
-              <span className="font-semibold text-sm text-gray-800">小镜课堂</span>
+              <span className="font-semibold text-sm text-gray-800">{mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}</span>
               <div className="flex items-center gap-1.5">
                 {/* Mode toggle */}
                 <button
                   onClick={() => {
                     const next = mode === 'anime' ? 'normal' : 'anime';
                     setMode(next);
-                    try { localStorage.setItem('kagami-mode', next); } catch { /* ignore */ }
+                    try { localStorage.setItem('kagami-panel-mode', next); } catch { /* ignore */ }
                   }}
                   className={`rounded px-1.5 py-0.5 text-xs transition-colors font-medium ${
                     mode === 'anime'
