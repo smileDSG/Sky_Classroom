@@ -31,27 +31,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check JWT access token
-  const accessToken = request.cookies.get('access_token');
-  if (accessToken?.value) {
-    const valid = await verifyJwtToken(accessToken.value);
-    if (valid) {
-      return NextResponse.next();
-    }
-  }
-
-  // API requests without valid auth → 401
+  // Check JWT access token for API requests only
   if (pathname.startsWith('/api/')) {
+    const accessToken = request.cookies.get('access_token');
+    if (accessToken?.value) {
+      const valid = await verifyJwtToken(accessToken.value);
+      if (valid) {
+        return NextResponse.next();
+      }
+    }
     return NextResponse.json(
       { success: false, errorCode: 'AUTH_REQUIRED', error: 'Authentication required' },
       { status: 401 },
     );
   }
 
-  // Page requests without valid auth → redirect to login
-  const loginUrl = new URL('/auth/login', request.url);
-  loginUrl.searchParams.set('redirect', pathname);
-  return NextResponse.redirect(loginUrl);
+  // Pages: allow all without auth check
+  return NextResponse.next();
 }
 
 export const config = {
