@@ -25,7 +25,7 @@ const typedCoverStyles = coverStyles as Record<string, CoverStyle>;
 /* ─── 封面预览组件（memo避免重渲染） ─── */
 const CoverPreview = memo(function CoverPreview({ templateId }: { templateId: string }) {
   const style = typedCoverStyles[templateId];
-  if (!style) return <div className="h-full w-full bg-slate-100" />;
+  if (!style) return <div className="h-full w-full bg-slate-100 dark:bg-gray-800" />;
 
   const enTag = style.texts[0] || '';
   const title = style.texts[1] || '';
@@ -195,20 +195,20 @@ export function TemplatePackGallery({ open, topic, recommendedId, onSelect, onCl
 
       {/* 弹窗主体 */}
       <div
-        className="relative z-10 flex w-full max-w-4xl max-h-[85vh] flex-col rounded-2xl bg-white shadow-2xl shadow-slate-900/20 overflow-hidden"
+        className="relative z-10 flex w-full max-w-4xl max-h-[85vh] flex-col rounded-2xl bg-white dark:bg-gray-900 shadow-2xl shadow-slate-900/20 overflow-hidden"
         style={{ animation: 'tgSlideUp 0.3s cubic-bezier(0.16,1,0.3,1) forwards' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100/80 bg-white">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100/80 dark:border-gray-700/80 bg-white dark:bg-gray-900">
           <div>
-            <h2 className="text-base font-bold text-slate-800 tracking-tight">选择课件模板</h2>
-            <p className="mt-0.5 text-[11px] text-slate-400">
+            <h2 className="text-base font-bold text-slate-800 dark:text-gray-100 tracking-tight">选择课件模板</h2>
+            <p className="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500">
               {topic ? `根据"${topic}"推荐「${selectedName}」` : '请选择课件风格'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all duration-200"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-600 dark:hover:text-gray-200 transition-all duration-200"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -280,11 +280,11 @@ export function TemplatePackGallery({ open, topic, recommendedId, onSelect, onCl
                         className="h-1.5 w-1.5 rounded-full flex-shrink-0"
                         style={{ background: style?.accent_color || '#3b82f6' }}
                       />
-                      <span className={`text-[13px] font-bold truncate tracking-tight ${isSelected ? 'text-slate-800' : 'text-slate-700'}`}>
+                      <span className={`text-[13px] font-bold truncate tracking-tight ${isSelected ? 'text-slate-800 dark:text-gray-100' : 'text-slate-700 dark:text-gray-300'}`}>
                         {tp.name}
                       </span>
                     </div>
-                    <span className="mt-0.5 block text-[10px] text-slate-400 truncate pl-3">
+                    <span className="mt-0.5 block text-[10px] text-slate-400 dark:text-gray-500 truncate pl-3">
                       {tp.subjectTags.slice(0, 3).join(' · ')}
                     </span>
                   </div>
@@ -295,14 +295,14 @@ export function TemplatePackGallery({ open, topic, recommendedId, onSelect, onCl
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-3.5 border-t border-slate-100/80 bg-slate-50/50">
-          <span className="text-xs text-slate-400">
+        <div className="flex items-center justify-between px-6 py-3.5 border-t border-slate-100/80 dark:border-gray-700/80 bg-slate-50/50 dark:bg-gray-800/50">
+          <span className="text-xs text-slate-400 dark:text-gray-500">
             已选 <span className="font-semibold" style={{ color: typedCoverStyles[selected]?.accent_color || '#3b82f6' }}>{selectedName}</span>
           </span>
           <div className="flex items-center gap-2.5">
             <button
               onClick={onClose}
-              className="rounded-lg px-4 py-1.5 text-sm font-medium text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all duration-200"
+              className="rounded-lg px-4 py-1.5 text-sm font-medium text-slate-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:text-slate-700 dark:hover:text-gray-200 hover:shadow-sm transition-all duration-200"
             >
               取消
             </button>
