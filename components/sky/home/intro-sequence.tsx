@@ -9,7 +9,7 @@ interface IntroSequenceProps {
 }
 
 export function IntroSequence({ onComplete }: IntroSequenceProps) {
-  const [scene, setScene] = useState(0); // 0-2: clouds → book flies in → white flash
+  const [scene, setScene] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const completedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
@@ -18,25 +18,21 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
-  // Auto-advance scenes — runs exactly once
   useEffect(() => {
-    // Scene 0: Clouds drifting (0-2s)
-    const t0 = setTimeout(() => setScene(1), 2000);
-    // Scene 1: Book flies from top to center (2-3.8s)
-    const t1 = setTimeout(() => setScene(2), 3800);
-    // Scene 2: White flash (3.8-5s) → done
+    const t0 = setTimeout(() => setScene(1), 2500);
+    const t1 = setTimeout(() => setScene(2), 4500);
     const t2 = setTimeout(() => {
       if (!completedRef.current) {
         completedRef.current = true;
         onCompleteRef.current();
       }
-    }, 5000);
+    }, 6000);
 
     timerRef.current = [t0, t1, t2];
     return () => {
       timerRef.current.forEach(clearTimeout);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSkip = () => {
     if (completedRef.current) return;
@@ -48,77 +44,188 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
   return (
     <motion.div
       className="fixed inset-0 z-[100] overflow-hidden"
-      style={{ background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #B0E0E6 30%, #E0F7FA 60%, #FFF8E1 100%)' }}
     >
       <AnimatePresence>
-        {/* ── Scene 0-1: Clouds drifting ── */}
+        {/* ── Scene 0: Sun, sky, clouds, birds ── */}
         {scene <= 1 && (
           <motion.div
-            key="clouds-scene"
+            key="sky-scene"
             className="absolute inset-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.6 }}
           >
-            {/* Cloud 1 — large, slow */}
+            {/* Sun with glow */}
             <motion.div
               className="absolute"
-              style={{ top: '25%' }}
+              style={{ top: '8%', right: '20%' }}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2, type: 'spring', stiffness: 150 }}
+            >
+              <svg viewBox="0 0 100 100" className="w-20 h-20 md:w-28 md:h-28">
+                <defs>
+                  <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#FFD700" />
+                    <stop offset="100%" stopColor="#FFA500" />
+                  </radialGradient>
+                </defs>
+                <circle cx="50" cy="50" r="25" fill="url(#sunGrad)" />
+                {/* Sun rays */}
+                {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((angle) => (
+                  <motion.line
+                    key={angle}
+                    x1="50"
+                    y1="18"
+                    x2="50"
+                    y2="10"
+                    stroke="#FFD700"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    transform={`rotate(${angle} 50 50)`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.6 }}
+                    transition={{ delay: 0.5 + angle * 0.02, duration: 0.4 }}
+                  />
+                ))}
+              </svg>
+            </motion.div>
+
+            {/* Sun glow aura */}
+            <motion.div
+              className="absolute"
+              style={{ top: '4%', right: '16%' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.3 }}
+              transition={{ delay: 0.8, duration: 0.6 }}
+            >
+              <div
+                className="w-40 h-40 md:w-52 md:h-52 rounded-full"
+                style={{ background: 'radial-gradient(circle, rgba(255,215,0,0.4), transparent 70%)' }}
+              />
+            </motion.div>
+
+            {/* Cloud 1 */}
+            <motion.div
+              className="absolute"
+              style={{ top: '20%' }}
               initial={{ x: -200, opacity: 0 }}
-              animate={{ x: '110vw', opacity: 0.7 }}
-              transition={{ duration: 6, ease: 'linear' }}
+              animate={{ x: '110vw', opacity: 0.9 }}
+              transition={{ duration: 8, ease: 'linear' }}
             >
-              <svg viewBox="0 0 160 80" className="w-32 h-16" fill="white">
-                <ellipse cx="40" cy="55" rx="30" ry="20" />
-                <ellipse cx="80" cy="38" rx="40" ry="30" />
-                <ellipse cx="125" cy="52" rx="28" ry="18" />
+              <svg viewBox="0 0 160 80" className="w-36 h-20">
+                <ellipse cx="40" cy="55" rx="30" ry="20" fill="white" />
+                <ellipse cx="80" cy="38" rx="40" ry="30" fill="white" />
+                <ellipse cx="125" cy="52" rx="28" ry="18" fill="white" />
               </svg>
             </motion.div>
 
-            {/* Cloud 2 — medium */}
+            {/* Cloud 2 */}
             <motion.div
               className="absolute"
-              style={{ top: '45%' }}
+              style={{ top: '35%' }}
               initial={{ x: '-15vw', opacity: 0 }}
-              animate={{ x: '110vw', opacity: 0.5 }}
-              transition={{ duration: 8, delay: 0.5, ease: 'linear' }}
+              animate={{ x: '110vw', opacity: 0.7 }}
+              transition={{ duration: 10, delay: 0.8, ease: 'linear' }}
             >
-              <svg viewBox="0 0 140 70" className="w-28 h-14" fill="white">
-                <ellipse cx="35" cy="48" rx="26" ry="18" />
-                <ellipse cx="70" cy="32" rx="36" ry="26" />
-                <ellipse cx="110" cy="46" rx="24" ry="16" />
+              <svg viewBox="0 0 140 70" className="w-28 h-14">
+                <ellipse cx="35" cy="48" rx="26" ry="18" fill="white" />
+                <ellipse cx="70" cy="32" rx="36" ry="26" fill="white" />
+                <ellipse cx="110" cy="46" rx="24" ry="16" fill="white" />
               </svg>
             </motion.div>
 
-            {/* Cloud 3 — small, fast */}
+            {/* Cloud 3 */}
             <motion.div
               className="absolute"
-              style={{ top: '60%' }}
-              initial={{ x: '-20vw', opacity: 0 }}
-              animate={{ x: '110vw', opacity: 0.4 }}
-              transition={{ duration: 5, delay: 1.2, ease: 'linear' }}
-            >
-              <svg viewBox="0 0 100 50" className="w-20 h-10" fill="white">
-                <ellipse cx="25" cy="35" rx="18" ry="13" />
-                <ellipse cx="50" cy="22" rx="26" ry="19" />
-                <ellipse cx="78" cy="33" rx="17" ry="12" />
-              </svg>
-            </motion.div>
-
-            {/* Cloud 4 — top layer, wispy */}
-            <motion.div
-              className="absolute"
-              style={{ top: '15%' }}
+              style={{ top: '50%' }}
               initial={{ x: '-10vw', opacity: 0 }}
-              animate={{ x: '110vw', opacity: 0.3 }}
-              transition={{ duration: 10, delay: 0.2, ease: 'linear' }}
+              animate={{ x: '110vw', opacity: 0.6 }}
+              transition={{ duration: 7, delay: 1.5, ease: 'linear' }}
             >
-              <svg viewBox="0 0 180 60" className="w-36 h-12" fill="white">
-                <ellipse cx="50" cy="40" rx="35" ry="16" />
-                <ellipse cx="90" cy="28" rx="45" ry="22" />
-                <ellipse cx="140" cy="38" rx="32" ry="14" />
+              <svg viewBox="0 0 100 50" className="w-24 h-12">
+                <ellipse cx="25" cy="35" rx="18" ry="13" fill="white" />
+                <ellipse cx="50" cy="22" rx="26" ry="19" fill="white" />
+                <ellipse cx="78" cy="33" rx="17" ry="12" fill="white" />
               </svg>
             </motion.div>
+
+            {/* Birds */}
+            {[
+              { top: '15%', delay: 1, duration: 4 },
+              { top: '22%', delay: 1.3, duration: 4.5 },
+              { top: '18%', delay: 1.6, duration: 3.8 },
+            ].map((bird, i) => (
+              <motion.div
+                key={i}
+                className="absolute"
+                style={{ top: bird.top }}
+                initial={{ x: -30, opacity: 0 }}
+                animate={{ x: '105vw', opacity: 0.7 }}
+                transition={{ duration: bird.duration, delay: bird.delay, ease: 'linear' }}
+              >
+                <svg viewBox="0 0 40 20" className="w-8 h-4" fill="none" stroke="#555" strokeWidth="1.5" strokeLinecap="round">
+                  <motion.path
+                    d="M5 12 Q12 4 20 12 Q28 4 35 12"
+                    animate={{ d: ['M5 12 Q12 4 20 12 Q28 4 35 12', 'M5 10 Q12 6 20 10 Q28 6 35 10', 'M5 12 Q12 4 20 12 Q28 4 35 12'] }}
+                    transition={{ duration: 0.6, repeat: Infinity }}
+                  />
+                </svg>
+              </motion.div>
+            ))}
+
+            {/* Rainbow arc (subtle) */}
+            <motion.svg
+              className="absolute bottom-0 left-0 w-full h-full"
+              viewBox="0 0 1000 600"
+              fill="none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.25 }}
+              transition={{ delay: 1, duration: 1.2 }}
+            >
+              <path d="M100 600 Q500 100 900 600" stroke="#FF6B6B" strokeWidth="8" opacity="0.5" />
+              <path d="M110 600 Q500 115 890 600" stroke="#FFA500" strokeWidth="8" opacity="0.5" />
+              <path d="M120 600 Q500 130 880 600" stroke="#FFD700" strokeWidth="8" opacity="0.5" />
+              <path d="M130 600 Q500 145 870 600" stroke="#4CAF50" strokeWidth="8" opacity="0.5" />
+              <path d="M140 600 Q500 160 860 600" stroke="#2196F3" strokeWidth="8" opacity="0.5" />
+              <path d="M150 600 Q500 175 850 600" stroke="#9C27B0" strokeWidth="8" opacity="0.5" />
+            </motion.svg>
+
+            {/* Title text */}
+            <motion.div
+              className="absolute inset-0 flex flex-col items-center justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.8 }}
+            >
+              <h1 className="text-5xl md:text-7xl font-bold text-sky-800 tracking-wider">
+                天空课堂
+              </h1>
+              <p className="mt-3 text-lg md:text-xl text-sky-600 font-medium tracking-wide">
+                AI 驱动的智能学习平台
+              </p>
+            </motion.div>
+
+            {/* Sparkle particles */}
+            {Array.from({ length: 12 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1.5 h-1.5 rounded-full bg-yellow-300"
+                style={{
+                  left: `${10 + (i * 7) % 85}%`,
+                  top: `${5 + (i * 13) % 70}%`,
+                }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: [0, 1, 0], opacity: [0, 0.8, 0] }}
+                transition={{
+                  duration: 2,
+                  delay: 0.5 + i * 0.25,
+                  repeat: Infinity,
+                  repeatDelay: 1,
+                }}
+              />
+            ))}
           </motion.div>
         )}
 
@@ -131,56 +238,88 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
           >
-            {/* Clouds fade out */}
+            {/* Sky background remains */}
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #B0E0E6 30%, #E0F7FA 60%, #FFF8E1 100%)' }} />
+
+            {/* Clouds fade and drift away */}
             <motion.div
               className="absolute inset-0"
-              initial={{ opacity: 0.6 }}
-              animate={{ opacity: 0.1 }}
+              initial={{ opacity: 0.8 }}
+              animate={{ opacity: 0.2 }}
               transition={{ duration: 1 }}
             >
-              <svg viewBox="0 0 160 80" className="absolute w-32 h-16 top-[25%] left-1/4" fill="white">
-                <ellipse cx="40" cy="55" rx="30" ry="20" />
-                <ellipse cx="80" cy="38" rx="40" ry="30" />
-                <ellipse cx="125" cy="52" rx="28" ry="18" />
+              <svg viewBox="0 0 160 80" className="absolute w-36 h-20 top-[20%] left-1/4">
+                <ellipse cx="40" cy="55" rx="30" ry="20" fill="white" />
+                <ellipse cx="80" cy="38" rx="40" ry="30" fill="white" />
+                <ellipse cx="125" cy="52" rx="28" ry="18" fill="white" />
               </svg>
             </motion.div>
 
-            {/* Book flying in from top */}
+            {/* Sparkle particles gather around center */}
+            {Array.from({ length: 16 }).map((_, i) => {
+              const angle = (i / 16) * Math.PI * 2;
+              const radius = 120;
+              return (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 rounded-full"
+                  style={{
+                    left: `${50 + Math.cos(angle) * radius / window.innerWidth * 100}%`,
+                    top: `${50 + Math.sin(angle) * radius / (window.innerHeight || 800) * 100}%`,
+                    background: `hsl(${i * 22}, 70%, 60%)`,
+                  }}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: [0, 1, 0.5], opacity: [0, 0.9, 0.3] }}
+                  transition={{
+                    duration: 1.2,
+                    delay: 0.3 + i * 0.08,
+                  }}
+                />
+              );
+            })}
+
+            {/* Book flying in from sky */}
             <motion.div
               className="absolute inset-0 flex items-center justify-center"
-              initial={{ y: '-120vh', rotate: -15 }}
-              animate={{ y: 0, rotate: 0 }}
-              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ y: '-100vh', rotate: -20, scale: 0.3 }}
+              animate={{ y: 0, rotate: 0, scale: 1 }}
+              transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
             >
               {/* Glow behind book */}
               <motion.div
                 className="absolute"
                 style={{
-                  width: 300,
-                  height: 300,
-                  background: 'radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 40%, transparent 70%)',
+                  width: 250,
+                  height: 250,
+                  background: 'radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(135,206,235,0.3) 40%, transparent 70%)',
                   borderRadius: '50%',
                 }}
                 initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1.5, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
+                animate={{ scale: 2, opacity: 1 }}
+                transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
               />
 
               {/* Book SVG */}
               <svg
                 viewBox="0 0 200 140"
-                className="w-40 h-28 md:w-56 md:h-40 relative z-10"
+                className="w-44 h-32 md:w-64 md:h-44 relative z-10"
                 fill="none"
-                stroke="white"
                 strokeWidth="2"
                 style={{
-                  filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.8)) drop-shadow(0 0 40px rgba(255,255,255,0.4))',
+                  filter: 'drop-shadow(0 0 25px rgba(255,255,255,0.9)) drop-shadow(0 0 50px rgba(135,206,235,0.5))',
                 }}
               >
+                <defs>
+                  <linearGradient id="bookStroke" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#4A90D9" />
+                    <stop offset="100%" stopColor="#2C5F8A" />
+                  </linearGradient>
+                </defs>
                 {/* Left page */}
                 <motion.path
                   d="M100 20 Q70 10 10 25 L10 110 Q70 95 100 120Z"
-                  fill="rgba(255,255,255,0.15)"
+                  fill="rgba(255,255,255,0.8)"
+                  stroke="url(#bookStroke)"
                   animate={{ d: [
                     'M100 20 Q70 10 10 25 L10 110 Q70 95 100 120Z',
                     'M100 20 Q60 15 5 20 L5 105 Q60 100 100 120Z',
@@ -191,7 +330,8 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                 {/* Right page */}
                 <motion.path
                   d="M100 20 Q130 10 190 25 L190 110 Q130 95 100 120Z"
-                  fill="rgba(255,255,255,0.15)"
+                  fill="rgba(255,255,255,0.8)"
+                  stroke="url(#bookStroke)"
                   animate={{ d: [
                     'M100 20 Q130 10 190 25 L190 110 Q130 95 100 120Z',
                     'M100 20 Q140 15 195 20 L195 105 Q140 100 100 120Z',
@@ -200,13 +340,13 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                   transition={{ delay: 1, duration: 0.8, repeat: 1 }}
                 />
                 {/* Spine */}
-                <line x1="100" y1="20" x2="100" y2="120" strokeWidth="2.5" />
+                <line x1="100" y1="20" x2="100" y2="120" stroke="url(#bookStroke)" strokeWidth="2.5" />
               </svg>
             </motion.div>
           </motion.div>
         )}
 
-        {/* ── Scene 2: Book glow intensifies + white flash ── */}
+        {/* ── Scene 2: Book glow + white flash transition ── */}
         {scene >= 2 && (
           <motion.div
             key="book-glow-scene"
@@ -215,34 +355,42 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Expanding glow */}
+            {/* Sky background fades to white */}
             <motion.div
-              className="absolute"
-              style={{
-                width: 300,
-                height: 300,
-                background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 30%, transparent 60%)',
-                borderRadius: '50%',
-              }}
-              initial={{ scale: 1.5, opacity: 1 }}
-              animate={{ scale: 8, opacity: 0 }}
+              className="absolute inset-0"
+              style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #B0E0E6 30%, #E0F7FA 60%, #FFF8E1 100%)' }}
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 0 }}
               transition={{ duration: 1.2, ease: 'easeOut' }}
             />
 
-            {/* Book at center, pulsing glow */}
+            {/* Expanding light from book */}
+            <motion.div
+              className="absolute"
+              style={{
+                width: 250,
+                height: 250,
+                background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(135,206,235,0.5) 25%, transparent 55%)',
+                borderRadius: '50%',
+              }}
+              initial={{ scale: 1, opacity: 1 }}
+              animate={{ scale: 12, opacity: 0 }}
+              transition={{ duration: 1.5, ease: 'easeOut' }}
+            />
+
+            {/* Book at center, bright glow */}
             <svg
               viewBox="0 0 200 140"
-              className="w-40 h-28 md:w-56 md:h-40 relative z-10"
+              className="w-44 h-32 md:w-64 md:h-44 relative z-10"
               fill="none"
-              stroke="white"
               strokeWidth="2"
               style={{
-                filter: 'drop-shadow(0 0 30px rgba(255,255,255,1)) drop-shadow(0 0 60px rgba(255,255,255,0.6))',
+                filter: 'drop-shadow(0 0 40px rgba(255,255,255,1)) drop-shadow(0 0 80px rgba(135,206,235,0.8))',
               }}
             >
-              <path d="M100 20 Q70 10 10 25 L10 110 Q70 95 100 120Z" fill="rgba(255,255,255,0.2)" />
-              <path d="M100 20 Q130 10 190 25 L190 110 Q130 95 100 120Z" fill="rgba(255,255,255,0.2)" />
-              <line x1="100" y1="20" x2="100" y2="120" strokeWidth="2.5" />
+              <path d="M100 20 Q70 10 10 25 L10 110 Q70 95 100 120Z" fill="rgba(255,255,255,0.9)" stroke="#4A90D9" />
+              <path d="M100 20 Q130 10 190 25 L190 110 Q130 95 100 120Z" fill="rgba(255,255,255,0.9)" stroke="#4A90D9" />
+              <line x1="100" y1="20" x2="100" y2="120" stroke="#4A90D9" strokeWidth="2.5" />
             </svg>
 
             {/* White flash overlay */}
@@ -255,15 +403,15 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
               animate={{
                 clipPath: 'circle(150% at 50% 50%)',
               }}
-              transition={{ duration: 1, ease: 'easeInOut' }}
+              transition={{ duration: 1.2, ease: 'easeInOut' }}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Skip button — always visible */}
+      {/* Skip button */}
       <motion.button
-        className="absolute bottom-6 right-6 z-[60] flex items-center gap-2 px-4 py-2 rounded-full text-sm text-white/70 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all cursor-pointer"
+        className="absolute bottom-6 right-6 z-[60] flex items-center gap-2 px-4 py-2 rounded-full text-sm text-sky-700/70 hover:text-sky-800 bg-white/30 hover:bg-white/50 backdrop-blur-sm transition-all cursor-pointer"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
