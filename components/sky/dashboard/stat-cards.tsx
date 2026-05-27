@@ -1,8 +1,11 @@
+// components/sky/dashboard/stat-cards.tsx
 'use client';
 
 import Link from 'next/link';
 import type { MistakeRecord } from '@/lib/mistakes/types';
-import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { useAnimatedNumber } from '@/lib/hooks/use-animated-number';
+import { motion } from 'motion/react';
+import { Search, BookOpen, BarChart3, Sparkles, Clock } from 'lucide-react';
 
 // ── Cause label map ─────────────────────────────────────────────────
 
@@ -13,6 +16,15 @@ const causeLabels: Record<string, string> = {
   'method-wrong': '方法错误',
   'careless': '粗心',
   'format-error': '格式错误',
+};
+
+const causeColors: Record<string, string> = {
+  'concept-unclear': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  'calculation-error': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  'misreading': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  'method-wrong': 'bg-red-500/20 text-red-400 border-red-500/30',
+  'careless': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  'format-error': 'bg-gray-500/20 text-gray-400 border-gray-500/30',
 };
 
 // ── Relative time helper ────────────────────────────────────────────
@@ -31,85 +43,156 @@ function formatRelativeTime(date: Date): string {
   return `${Math.floor(diffDay / 30)}个月前`;
 }
 
-// ── Helper: is today ────────────────────────────────────────────────
+// ── RingProgress SVG ────────────────────────────────────────────────
 
-function isToday(date: Date): boolean {
-  const d = new Date(date);
-  const today = new Date();
+function RingProgress({ percent, size = 48, color = '#8B5CF6' }: { percent: number; size?: number; color?: string }) {
+  const r = 18;
+  const circumference = 2 * Math.PI * r;
   return (
-    d.getFullYear() === today.getFullYear() &&
-    d.getMonth() === today.getMonth() &&
-    d.getDate() === today.getDate()
+    <svg width={size} height={size} className="shrink-0">
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#334155" strokeWidth={3} />
+      <motion.circle
+        cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={3}
+        strokeDasharray={circumference}
+        initial={{ strokeDashoffset: circumference }}
+        animate={{ strokeDashoffset: circumference - (percent / 100) * circumference }}
+        transition={{ duration: 1.2, ease: 'easeOut' }}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
+    </svg>
   );
 }
 
 // ── StatCards ───────────────────────────────────────────────────────
+
+function isToday(date: Date): boolean {
+  const d = new Date(date);
+  const today = new Date();
+  return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+}
 
 interface StatCardsProps {
   mistakes: MistakeRecord[];
 }
 
 export function StatCards({ mistakes }: StatCardsProps) {
-  // Also access the store for additional assistant/context data if needed
-  const _store = useSkyClassroomStore();
-
   const todayCount = mistakes.filter((m) => isToday(m.solvedAt)).length;
   const toReviewCount = mistakes.filter((m) => !m.reviewed).length;
   const reviewedCount = mistakes.filter((m) => m.reviewed).length;
-  const masteryPercent =
-    mistakes.length > 0
-      ? Math.round((reviewedCount / mistakes.length) * 100)
-      : 0;
+  const masteryPercent = mistakes.length > 0 ? Math.round((reviewedCount / mistakes.length) * 100) : 0;
+
+  const animToday = useAnimatedNumber(todayCount, { duration: 1200 });
+  const animReview = useAnimatedNumber(toReviewCount, { duration: 1200 });
+  const animMastery = useAnimatedNumber(masteryPercent, { duration: 1500 });
+
+  const cards = [
+    {
+      label: '今日搜题',
+      value: Math.round(animToday.value),
+      color: '#8B5CF6',
+      gradient: 'from-violet-500/20 to-purple-500/20',
+      icon: <Search className="w-5 h-5 text-violet-400" />,
+      ringPercent: Math.min(todayCount, 100),
+      pulse: todayCount > 0,
+    },
+    {
+      label: '错题待复习',
+      value: Math.round(animReview.value),
+      color: '#F59E0B',
+      gradient: 'from-amber-500/20 to-orange-500/20',
+      icon: <BookOpen className="w-5 h-5 text-amber-400" />,
+      barPercent: mistakes.length > 0 ? Math.round((toReviewCount / mistakes.length) * 100) : 0,
+    },
+    {
+      label: '知识掌握度',
+      value: Math.round(animMastery.value),
+      suffix: '%',
+      color: '#10B981',
+      gradient: 'from-emerald-500/20 to-green-500/20',
+      icon: <BarChart3 className="w-5 h-5 text-emerald-400" />,
+      ringPercent: masteryPercent,
+    },
+  ];
 
   return (
     <div className="grid grid-cols-3 gap-4">
-      <div className="rounded-lg bg-white p-4 shadow-sm">
-        <div className="text-2xl font-bold text-[#4A90D9]">{todayCount}</div>
-        <div className="text-sm text-gray-500">今日搜题</div>
-      </div>
-      <div className="rounded-lg bg-white p-4 shadow-sm">
-        <div className="text-2xl font-bold text-[#F59E0B]">{toReviewCount}</div>
-        <div className="text-sm text-gray-500">错题待复习</div>
-      </div>
-      <div className="rounded-lg bg-white p-4 shadow-sm">
-        <div className="text-2xl font-bold text-[#10B981]">{masteryPercent}%</div>
-        <div className="text-sm text-gray-500">知识掌握度</div>
-      </div>
+      {cards.map((card, i) => (
+        <motion.div
+          key={card.label}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: i * 0.1 }}
+          whileHover={{ scale: 1.02 }}
+          className="group relative overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900/50 p-5 backdrop-blur-sm transition-shadow hover:shadow-lg hover:shadow-violet-500/10"
+        >
+          {/* Glow on hover */}
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none"
+            style={{ backgroundImage: `linear-gradient(135deg, ${card.color}15, transparent)` }} />
+
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-3xl font-bold text-slate-100">
+                {card.value}{card.suffix || ''}
+              </div>
+              <div className="mt-1 text-sm text-slate-400">{card.label}</div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              {card.pulse && (
+                <motion.div
+                  className="w-2 h-2 rounded-full bg-violet-400"
+                  animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              )}
+              <RingProgress percent={card.ringPercent} color={card.color} />
+            </div>
+          </div>
+
+          {/* Progress bar for review card */}
+          {'barPercent' in card && (
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-800">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
+                initial={{ width: 0 }}
+                animate={{ width: `${card.barPercent}%` }}
+                transition={{ duration: 1.2, delay: 0.3 }}
+              />
+            </div>
+          )}
+        </motion.div>
+      ))}
     </div>
   );
 }
 
 // ── QuickActions ────────────────────────────────────────────────────
 
-interface QuickAction {
-  icon: string;
-  label: string;
-  href: string;
-}
-
-const actions: QuickAction[] = [
-  { icon: '📷', label: '拍照搜题', href: '/sky/solve' },
-  { icon: '📖', label: '幻灯片讲解', href: '/sky/slides' },
-  { icon: '📊', label: '学习数据', href: '/sky/learning' },
-  { icon: '💡', label: 'AI 助手', href: '/sky/assistant' },
+const actions = [
+  { icon: Search, label: '拍照搜题', href: '/sky/solve', color: 'text-violet-400', bg: 'bg-violet-500/10 hover:bg-violet-500/20' },
+  { icon: BookOpen, label: '幻灯片讲解', href: '/sky/slides', color: 'text-cyan-400', bg: 'bg-cyan-500/10 hover:bg-cyan-500/20' },
+  { icon: BarChart3, label: '学习数据', href: '/sky/learning', color: 'text-emerald-400', bg: 'bg-emerald-500/10 hover:bg-emerald-500/20' },
+  { icon: Sparkles, label: 'AI 助手', href: '/sky/assistant', color: 'text-amber-400', bg: 'bg-amber-500/10 hover:bg-amber-500/20' },
 ];
 
 export function QuickActions() {
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {actions.map((action) => (
-        <Link
+    <div className="flex gap-3">
+      {actions.map((action, i) => (
+        <motion.div
           key={action.label}
-          href={action.href}
-          className="rounded-lg border-2 border-transparent bg-white p-4 shadow-sm transition-colors hover:border-[#4A90D9]"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 + i * 0.08 }}
         >
-          <div className="text-center">
-            <div className="text-2xl">{action.icon}</div>
-            <div className="mt-1 text-sm font-medium text-gray-700">
-              {action.label}
-            </div>
-          </div>
-        </Link>
+          <Link
+            href={action.href}
+            className={`flex items-center gap-3 rounded-xl border border-slate-700/50 px-4 py-3 ${action.bg} backdrop-blur-sm transition-all hover:scale-[1.03] hover:border-slate-600/50`}
+          >
+            <action.icon className={`w-5 h-5 ${action.color}`} />
+            <span className="text-sm font-medium text-slate-300">{action.label}</span>
+          </Link>
+        </motion.div>
       ))}
     </div>
   );
@@ -128,34 +211,55 @@ export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
 
   if (recentMistakes.length === 0) {
     return (
-      <div className="rounded-lg bg-white p-6 shadow-sm text-center">
-        <p className="text-gray-400">
-          还没有学习活动，去搜题页开始练习吧！
-        </p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center rounded-2xl border border-slate-700/50 bg-slate-900/50 p-8 backdrop-blur-sm"
+      >
+        <Sparkles className="w-8 h-8 text-slate-600 mb-3" />
+        <p className="text-slate-500 text-sm">还没有学习活动，去搜题页开始练习吧！</p>
+      </motion.div>
     );
   }
 
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm">
-      <h3 className="mb-3 text-sm font-semibold text-gray-700">最近活动</h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+      className="rounded-2xl border border-slate-700/50 bg-slate-900/50 p-5 backdrop-blur-sm"
+    >
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-200">
+        <Clock className="w-4 h-4 text-slate-400" />
+        最近活动
+      </h3>
       <ul className="space-y-3">
-        {recentMistakes.map((m) => (
-          <li key={m.id} className="flex items-start gap-3 text-sm">
-            <span className="mt-0.5 shrink-0 text-gray-400">
+        {recentMistakes.map((m, i) => (
+          <motion.li
+            key={m.id}
+            initial={{ opacity: 0, x: -15 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 + i * 0.08 }}
+            className="flex items-center gap-3 text-sm"
+          >
+            {/* Timeline dot + line */}
+            <div className="relative flex flex-col items-center">
+              <div className="w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-violet-500/20" />
+              {i < recentMistakes.length - 1 && <div className="w-px h-6 bg-slate-700" />}
+            </div>
+
+            <span className="shrink-0 w-16 text-right text-xs text-slate-500">
               {formatRelativeTime(m.solvedAt)}
             </span>
-            <span className="flex-1 truncate text-gray-700">
-              {m.problem.length > 60
-                ? m.problem.slice(0, 60) + '...'
-                : m.problem}
+            <span className="flex-1 truncate text-slate-300">
+              {m.problem.length > 60 ? m.problem.slice(0, 60) + '...' : m.problem}
             </span>
-            <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
+            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${causeColors[m.cause] ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'}`}>
               {causeLabels[m.cause] ?? m.cause}
             </span>
-          </li>
+          </motion.li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   );
 }
