@@ -42,9 +42,32 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
   };
 
   const skyGradients = [
-    'linear-gradient(180deg, #87CEEB 0%, #B0E0E6 30%, #E0F7FA 60%, #FFF8E1 100%)', // Scene 0: bright daytime
-    'linear-gradient(180deg, #6BB5E0 0%, #9DD5F0 30%, #C8E8F8 60%, #FFF0D0 100%)', // Scene 1: book arrives, slightly warmer
-    'linear-gradient(180deg, #E8F0F8 0%, #F0F4F8 50%, #F8FAFC 80%, #FFFFFF 100%)',  // Scene 2: fading to white
+    'linear-gradient(180deg, #87CEEB 0%, #B0E0E6 30%, #E0F7FA 60%, #FFF8E1 100%)',
+    'linear-gradient(180deg, #6BB5E0 0%, #9DD5F0 30%, #C8E8F8 60%, #FFF0D0 100%)',
+    'linear-gradient(180deg, #E8F0F8 0%, #F0F4F8 50%, #F8FAFC 80%, #FFFFFF 100%)',
+  ];
+
+  const cloudConfigs = [
+    { top: '6%',  w: 'w-48 h-26', dur: 22, delay: 6,   opacity: 0.5,  viewBox: '0 0 200 100',
+      shapes: [{ cx: 50, cy: 65, rx: 35, ry: 24 }, { cx: 100, cy: 45, rx: 50, ry: 34 }, { cx: 155, cy: 62, rx: 32, ry: 22 }] },
+    { top: '10%', w: 'w-44 h-24', dur: 16, delay: 0,   opacity: 0.85, viewBox: '0 0 180 90',
+      shapes: [{ cx: 45, cy: 60, rx: 32, ry: 22 }, { cx: 90, cy: 42, rx: 45, ry: 32 }, { cx: 140, cy: 58, rx: 30, ry: 20 }] },
+    { top: '14%', w: 'w-40 h-22', dur: 20, delay: 4,   opacity: 0.65, viewBox: '0 0 170 85',
+      shapes: [{ cx: 42, cy: 58, rx: 30, ry: 21 }, { cx: 85, cy: 40, rx: 42, ry: 30 }, { cx: 130, cy: 56, rx: 28, ry: 18 }] },
+    { top: '20%', w: 'w-32 h-18', dur: 12, delay: 1,   opacity: 0.75, viewBox: '0 0 140 70',
+      shapes: [{ cx: 35, cy: 48, rx: 26, ry: 18 }, { cx: 70, cy: 32, rx: 36, ry: 26 }, { cx: 110, cy: 46, rx: 24, ry: 16 }] },
+    { top: '28%', w: 'w-28 h-16', dur: 10, delay: 2.5, opacity: 0.7,  viewBox: '0 0 120 60',
+      shapes: [{ cx: 30, cy: 40, rx: 22, ry: 16 }, { cx: 60, cy: 26, rx: 30, ry: 22 }, { cx: 95, cy: 38, rx: 18, ry: 14 }] },
+    { top: '36%', w: 'w-24 h-14', dur: 14, delay: 0.5, opacity: 0.6,  viewBox: '0 0 100 50',
+      shapes: [{ cx: 25, cy: 35, rx: 18, ry: 13 }, { cx: 50, cy: 22, rx: 26, ry: 19 }, { cx: 78, cy: 33, rx: 17, ry: 12 }] },
+    { top: '46%', w: 'w-36 h-20', dur: 18, delay: 3,   opacity: 0.55, viewBox: '0 0 160 80',
+      shapes: [{ cx: 40, cy: 55, rx: 30, ry: 20 }, { cx: 80, cy: 38, rx: 40, ry: 30 }, { cx: 125, cy: 52, rx: 28, ry: 18 }] },
+    { top: '56%', w: 'w-20 h-12', dur: 11, delay: 1.8, opacity: 0.5,  viewBox: '0 0 90 45',
+      shapes: [{ cx: 22, cy: 30, rx: 16, ry: 12 }, { cx: 45, cy: 18, rx: 24, ry: 18 }, { cx: 72, cy: 30, rx: 14, ry: 10 }] },
+    { top: '64%', w: 'w-32 h-18', dur: 13, delay: 2,   opacity: 0.45, viewBox: '0 0 140 70',
+      shapes: [{ cx: 35, cy: 48, rx: 26, ry: 18 }, { cx: 70, cy: 32, rx: 36, ry: 26 }, { cx: 110, cy: 46, rx: 24, ry: 16 }] },
+    { top: '74%', w: 'w-28 h-16', dur: 15, delay: 5,   opacity: 0.4,  viewBox: '0 0 120 60',
+      shapes: [{ cx: 30, cy: 40, rx: 22, ry: 16 }, { cx: 60, cy: 26, rx: 30, ry: 22 }, { cx: 95, cy: 38, rx: 18, ry: 14 }] },
   ];
 
   return (
@@ -81,7 +104,6 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                   </radialGradient>
                 </defs>
                 <circle cx="50" cy="50" r="25" fill="url(#sunGrad)" />
-                {/* Sun rays */}
                 {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((angle) => (
                   <motion.line
                     key={angle}
@@ -115,50 +137,23 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
               />
             </motion.div>
 
-            {/* Cloud 1 */}
-            <motion.div
-              className="absolute"
-              style={{ top: '20%' }}
-              initial={{ x: -200, opacity: 0 }}
-              animate={{ x: '110vw', opacity: 0.9 }}
-              transition={{ duration: 8, ease: 'linear' }}
-            >
-              <svg viewBox="0 0 160 80" className="w-36 h-20">
-                <ellipse cx="40" cy="55" rx="30" ry="20" fill="white" />
-                <ellipse cx="80" cy="38" rx="40" ry="30" fill="white" />
-                <ellipse cx="125" cy="52" rx="28" ry="18" fill="white" />
-              </svg>
-            </motion.div>
-
-            {/* Cloud 2 */}
-            <motion.div
-              className="absolute"
-              style={{ top: '35%' }}
-              initial={{ x: '-15vw', opacity: 0 }}
-              animate={{ x: '110vw', opacity: 0.7 }}
-              transition={{ duration: 10, delay: 0.8, ease: 'linear' }}
-            >
-              <svg viewBox="0 0 140 70" className="w-28 h-14">
-                <ellipse cx="35" cy="48" rx="26" ry="18" fill="white" />
-                <ellipse cx="70" cy="32" rx="36" ry="26" fill="white" />
-                <ellipse cx="110" cy="46" rx="24" ry="16" fill="white" />
-              </svg>
-            </motion.div>
-
-            {/* Cloud 3 */}
-            <motion.div
-              className="absolute"
-              style={{ top: '50%' }}
-              initial={{ x: '-10vw', opacity: 0 }}
-              animate={{ x: '110vw', opacity: 0.6 }}
-              transition={{ duration: 7, delay: 1.5, ease: 'linear' }}
-            >
-              <svg viewBox="0 0 100 50" className="w-24 h-12">
-                <ellipse cx="25" cy="35" rx="18" ry="13" fill="white" />
-                <ellipse cx="50" cy="22" rx="26" ry="19" fill="white" />
-                <ellipse cx="78" cy="33" rx="17" ry="12" fill="white" />
-              </svg>
-            </motion.div>
+            {/* Clouds */}
+            {cloudConfigs.map((cloud, i) => (
+              <motion.div
+                key={i}
+                className="absolute"
+                style={{ top: cloud.top }}
+                initial={{ x: '-15vw', opacity: 0 }}
+                animate={{ x: '110vw', opacity: cloud.opacity }}
+                transition={{ duration: cloud.dur, delay: cloud.delay, ease: 'linear' }}
+              >
+                <svg viewBox={cloud.viewBox} className={cloud.w}>
+                  {cloud.shapes.map((s, j) => (
+                    <ellipse key={j} cx={s.cx} cy={s.cy} rx={s.rx} ry={s.ry} fill="white" />
+                  ))}
+                </svg>
+              </motion.div>
+            ))}
 
             {/* Birds */}
             {[
@@ -183,23 +178,6 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                 </svg>
               </motion.div>
             ))}
-
-            {/* Rainbow arc (subtle) */}
-            <motion.svg
-              className="absolute bottom-0 left-0 w-full h-full"
-              viewBox="0 0 1000 600"
-              fill="none"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.25 }}
-              transition={{ delay: 1, duration: 1.2 }}
-            >
-              <path d="M100 600 Q500 100 900 600" stroke="#FF6B6B" strokeWidth="8" opacity="0.5" />
-              <path d="M110 600 Q500 115 890 600" stroke="#FFA500" strokeWidth="8" opacity="0.5" />
-              <path d="M120 600 Q500 130 880 600" stroke="#FFD700" strokeWidth="8" opacity="0.5" />
-              <path d="M130 600 Q500 145 870 600" stroke="#4CAF50" strokeWidth="8" opacity="0.5" />
-              <path d="M140 600 Q500 160 860 600" stroke="#2196F3" strokeWidth="8" opacity="0.5" />
-              <path d="M150 600 Q500 175 850 600" stroke="#9C27B0" strokeWidth="8" opacity="0.5" />
-            </motion.svg>
 
             {/* Title text */}
             <motion.div
@@ -247,46 +225,6 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
           >
-            {/* Sky background remains */}
-            <div className="absolute inset-0" style={{ background: skyGradients[1] }} />
-
-            {/* Clouds fade and drift away */}
-            <motion.div
-              className="absolute inset-0"
-              initial={{ opacity: 0.8 }}
-              animate={{ opacity: 0.2 }}
-              transition={{ duration: 1 }}
-            >
-              <svg viewBox="0 0 160 80" className="absolute w-36 h-20 top-[20%] left-1/4">
-                <ellipse cx="40" cy="55" rx="30" ry="20" fill="white" />
-                <ellipse cx="80" cy="38" rx="40" ry="30" fill="white" />
-                <ellipse cx="125" cy="52" rx="28" ry="18" fill="white" />
-              </svg>
-            </motion.div>
-
-            {/* Sparkle particles gather around center */}
-            {Array.from({ length: 16 }).map((_, i) => {
-              const angle = (i / 16) * Math.PI * 2;
-              const radius = 120;
-              return (
-                <motion.div
-                  key={i}
-                  className="absolute w-2 h-2 rounded-full"
-                  style={{
-                    left: `${50 + Math.cos(angle) * radius / window.innerWidth * 100}%`,
-                    top: `${50 + Math.sin(angle) * radius / (window.innerHeight || 800) * 100}%`,
-                    background: `hsl(${i * 22}, 70%, 60%)`,
-                  }}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: [0, 1, 0.5], opacity: [0, 0.9, 0.3] }}
-                  transition={{
-                    duration: 1.2,
-                    delay: 0.3 + i * 0.08,
-                  }}
-                />
-              );
-            })}
-
             {/* Book flying in from sky */}
             <motion.div
               className="absolute inset-0 flex items-center justify-center"
@@ -324,7 +262,6 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                     <stop offset="100%" stopColor="#2C5F8A" />
                   </linearGradient>
                 </defs>
-                {/* Left page */}
                 <motion.path
                   d="M100 20 Q70 10 10 25 L10 110 Q70 95 100 120Z"
                   fill="rgba(255,255,255,0.8)"
@@ -336,7 +273,6 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                   ]}}
                   transition={{ delay: 0.8, duration: 0.8, repeat: 1 }}
                 />
-                {/* Right page */}
                 <motion.path
                   d="M100 20 Q130 10 190 25 L190 110 Q130 95 100 120Z"
                   fill="rgba(255,255,255,0.8)"
@@ -348,7 +284,6 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                   ]}}
                   transition={{ delay: 1, duration: 0.8, repeat: 1 }}
                 />
-                {/* Spine */}
                 <line x1="100" y1="20" x2="100" y2="120" stroke="url(#bookStroke)" strokeWidth="2.5" />
               </svg>
             </motion.div>
@@ -364,15 +299,6 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Sky background fades to white */}
-            <motion.div
-              className="absolute inset-0"
-              style={{ background: skyGradients[2] }}
-              initial={{ opacity: 1 }}
-              animate={{ opacity: 0 }}
-              transition={{ duration: 1.2, ease: 'easeOut' }}
-            />
-
             {/* Expanding light from book */}
             <motion.div
               className="absolute"
