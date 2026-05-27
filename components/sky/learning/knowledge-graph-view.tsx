@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { Search, X, Filter } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import type {
   KnowledgeNode,
   KnowledgeGraph as KnowledgeGraphType,
