@@ -298,19 +298,38 @@ export async function generateClassroom(
     scenesGenerated: 0,
   });
 
-  const outlinesResult = await generateSceneOutlinesFromRequirements(
-    requirements,
-    pdfText,
-    undefined,
-    aiCall,
-    undefined,
-    {
-      imageGenerationEnabled: input.enableImageGeneration,
-      videoGenerationEnabled: input.enableVideoGeneration,
-      researchContext,
-      // NO teacherContext — agents haven't been generated yet
-    },
-  );
+  // Heartbeat: increment progress while LLM runs (can take 30-60s with no updates)
+  let outlineProgress = 15;
+  const heartbeat = options.onProgress
+    ? setInterval(() => {
+        outlineProgress = Math.min(outlineProgress + 2, 28);
+        options.onProgress!({
+          step: 'generating_outlines',
+          progress: outlineProgress,
+          message: 'AI is thinking...',
+          scenesGenerated: 0,
+        }).catch(() => {});
+      }, 2000)
+    : null;
+
+  let outlinesResult;
+  try {
+    outlinesResult = await generateSceneOutlinesFromRequirements(
+      requirements,
+      pdfText,
+      undefined,
+      aiCall,
+      undefined,
+      {
+        imageGenerationEnabled: input.enableImageGeneration,
+        videoGenerationEnabled: input.enableVideoGeneration,
+        researchContext,
+        // NO teacherContext — agents haven't been generated yet
+      },
+    );
+  } finally {
+    if (heartbeat) clearInterval(heartbeat);
+  }
 
   if (!outlinesResult.success || !outlinesResult.data) {
     log.error('Failed to generate outlines:', outlinesResult.error);

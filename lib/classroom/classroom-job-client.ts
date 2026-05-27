@@ -59,7 +59,7 @@ export async function pollClassroomJob(
 
     if (data.status === 'awaiting_review') return;
 
-    await new Promise((resolve) => setTimeout(resolve, 4000));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
   }
 }
 
@@ -70,9 +70,14 @@ export async function cancelClassroomJob(jobId: string): Promise<void> {
   if (!res.ok) throw new Error('取消生成失败');
 }
 
-export async function approveClassroomOutline(jobId: string): Promise<void> {
+export async function approveClassroomOutline(
+  jobId: string,
+  outlines?: import('@/lib/types/generation').SceneOutline[],
+): Promise<void> {
   const res = await fetch(`/api/generate-classroom/${jobId}/approve`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: outlines?.length ? JSON.stringify({ outlines }) : undefined,
   });
   if (!res.ok) throw new Error('审阅提交失败');
 }
