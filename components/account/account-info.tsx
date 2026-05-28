@@ -124,7 +124,7 @@ export function AccountInfo() {
       {/* Usage Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t('account.usageTitle') ?? 'Usage & Limits'}</CardTitle>
+          <CardTitle className="text-base">{t('account.usageTitle') ?? '使用额度'}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading || !usage ? (
@@ -133,11 +133,11 @@ export function AccountInfo() {
             </div>
           ) : (
             <div className="space-y-4">
-              {/* LLM Calls */}
+              {/* AI 调用次数 */}
               {usage.llmCalls.limit > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">AI Calls</span>
+                    <span className="text-sm text-muted-foreground">AI 调用</span>
                     <span className="text-sm font-medium">
                       {usage.llmCalls.current} / {usage.llmCalls.limit}
                     </span>
@@ -147,22 +147,22 @@ export function AccountInfo() {
                     className={`h-2 ${barColor(pct(usage.llmCalls.current, usage.llmCalls.limit))}`}
                   />
                   <p className="text-xs text-muted-foreground">
-                    {usage.llmCalls.limit - usage.llmCalls.current} remaining
+                    剩余 {usage.llmCalls.limit - usage.llmCalls.current} 次
                   </p>
                 </div>
               )}
               {usage.llmCalls.limit === 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">AI Calls</span>
-                  <Badge variant="secondary">Unlimited</Badge>
+                  <span className="text-sm text-muted-foreground">AI 调用</span>
+                  <Badge variant="secondary">不限量</Badge>
                 </div>
               )}
 
-              {/* Generations */}
+              {/* 课程生成次数 */}
               {usage.generationCount.limit > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Generations</span>
+                    <span className="text-sm text-muted-foreground">课程生成</span>
                     <span className="text-sm font-medium">
                       {usage.generationCount.current} / {usage.generationCount.limit}
                     </span>
@@ -172,20 +172,20 @@ export function AccountInfo() {
                     className={`h-2 ${barColor(pct(usage.generationCount.current, usage.generationCount.limit))}`}
                   />
                   <p className="text-xs text-muted-foreground">
-                    {usage.generationCount.limit - usage.generationCount.current} remaining
+                    剩余 {usage.generationCount.limit - usage.generationCount.current} 次
                   </p>
                 </div>
               )}
               {usage.generationCount.limit === 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Generations</span>
-                  <Badge variant="secondary">Unlimited</Badge>
+                  <span className="text-sm text-muted-foreground">课程生成</span>
+                  <Badge variant="secondary">不限量</Badge>
                 </div>
               )}
 
               {resetTime && (
                 <p className="text-xs text-muted-foreground pt-2 border-t">
-                  Resets daily at {resetTime}
+                  每日 {resetTime} 重置额度
                 </p>
               )}
             </div>

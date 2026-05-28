@@ -13,7 +13,7 @@ import {
   markClassroomGenerationJobResumed,
   readClassroomGenerationJob,
   savePhaseOneResult,
-  updateClassroomGenerationJobProgress,
+  updateClassroomGenerationJobProgressHybrid as updateClassroomGenerationJobProgress,
 } from '@/lib/server/classroom-job-store-hybrid';
 
 async function assertNotCancelled(jobId: string): Promise<void> {

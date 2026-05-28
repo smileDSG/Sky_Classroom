@@ -1,5 +1,5 @@
 /**
- * Upgrade dialog with plan comparison and checkout.
+ * 升级套餐对话框 — 套餐对比与下单。
  */
 
 'use client';
@@ -37,22 +37,22 @@ export function UpgradeDialog({ open, onClose, currentPlan, onPlanChanged }: Upg
 
       if (!res.ok) {
         const json = await res.json();
-        setMessage(json.error || 'Failed to create order');
+        setMessage(json.error || '创建订单失败');
         return;
       }
 
       const json = await res.json();
-      // Simulate payment completion
+      // 模拟支付完成
       const payRes = await fetch(json.mockPayUrl, { method: 'POST', credentials: 'include' });
       if (payRes.ok) {
-        setMessage('Payment successful! Plan upgraded.');
+        setMessage('支付成功！套餐已升级。');
         onPlanChanged?.();
         setTimeout(onClose, 2000);
       } else {
-        setMessage('Payment failed');
+        setMessage('支付失败');
       }
     } catch {
-      setMessage('Network error');
+      setMessage('网络错误');
     } finally {
       setProcessing(false);
     }
@@ -62,12 +62,12 @@ export function UpgradeDialog({ open, onClose, currentPlan, onPlanChanged }: Upg
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Upgrade Plan</DialogTitle>
-          <DialogDescription>Choose a plan that fits your needs</DialogDescription>
+          <DialogTitle>升级套餐</DialogTitle>
+          <DialogDescription>选择适合你的套餐方案</DialogDescription>
         </DialogHeader>
 
         {message && (
-          <div className={`text-sm p-3 rounded-md ${message.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          <div className={`text-sm p-3 rounded-md ${message.includes('成功') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
             {message}
           </div>
         )}
@@ -82,17 +82,17 @@ export function UpgradeDialog({ open, onClose, currentPlan, onPlanChanged }: Upg
                 <CardHeader>
                   <CardTitle className="text-lg">{plan.name}</CardTitle>
                   <CardDescription>
-                    ¥{plan.price}/month
+                    ¥{plan.price}/月
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
-                  <div>AI Calls: {plan.llmCallsPerDay === 0 ? 'Unlimited' : `${plan.llmCallsPerDay}/day`}</div>
-                  <div>Generations: {plan.generationsPerDay === 0 ? 'Unlimited' : `${plan.generationsPerDay}/day`}</div>
-                  <div>Storage: {plan.storageLimit === 0 ? 'Unlimited' : `${(plan.storageLimit / 1073741824).toFixed(0)} GB`}</div>
+                  <div>AI 调用：{plan.llmCallsPerDay === 0 ? '不限量' : `${plan.llmCallsPerDay}次/天`}</div>
+                  <div>内容生成：{plan.generationsPerDay === 0 ? '不限量' : `${plan.generationsPerDay}次/天`}</div>
+                  <div>存储空间：{plan.storageLimit === 0 ? '不限量' : `${(plan.storageLimit / 1073741824).toFixed(0)} GB`}</div>
                 </CardContent>
                 <CardFooter>
                   {isCurrent ? (
-                    <span className="text-xs text-muted-foreground">Current Plan</span>
+                    <span className="text-xs text-muted-foreground">当前套餐</span>
                   ) : (
                     <Button
                       className="w-full"
@@ -100,7 +100,7 @@ export function UpgradeDialog({ open, onClose, currentPlan, onPlanChanged }: Upg
                       onClick={() => handleUpgrade(plan.type)}
                       disabled={processing}
                     >
-                      {isUpgrading ? 'Processing...' : 'Upgrade'}
+                      {isUpgrading ? '处理中...' : '升级'}
                     </Button>
                   )}
                 </CardFooter>
