@@ -9,6 +9,7 @@ import { createLogger } from '@/lib/logger';
 import type { LanguageModel } from 'ai';
 import type { DesignDNA } from './design-dna';
 import { z } from 'zod';
+import { getSubjectContext, buildPageTypeList } from './page-type-selector';
 
 const log = createLogger('PlanningAgent');
 
@@ -47,19 +48,15 @@ export type PagePlan = z.infer<typeof pagePlanSchema>;
 
 // ── Prompt Building ──────────────────────────────────────────────────
 
-function buildSystemPrompt(): string {
+function buildSystemPrompt(pageTypes: string[], preference: string): string {
+  const pageTypeList = buildPageTypeList(pageTypes);
   return `## 角色
 你是一位教学设计师，为课程规划 PPT 的页级大纲和内容要点。
 
-## 可用页面类型
-- cover: 封面（第1页）| toc: 目录（第2页）| end: 结束页（最后1页）
-- chapter: 章节过渡页 | summary: 章末总结 | quiz: 课堂练习
-- concept: 概念讲解（多卡片） | case: 案例/例题
-- compare: 对比分析 | process: 步骤流程
-- table: 数据对比表 | formula: 公式推导
-- timeline: 时间线
+## 可用页面类型（仅限以下，不可自创）
+${pageTypeList}
 
-## 硬规则
+## 硬规则（不可违反）
 - cover 永远是第1页，end 永远是最后1页，toc 紧跟 cover
 - chapter 之后必须跟2-5页相关内容页
 - concept 必须在 case 之前
@@ -67,15 +64,9 @@ function buildSystemPrompt(): string {
 - summary 放在每个章节末尾
 
 ## 页型选择偏好
-- 数学/物理: 多用 formula > case > concept
-- 语文/历史/文学: 多用 concept > timeline > compare
-- 生物/地理/生态: 多用 concept > compare > process
-- 信息技术/编程: 多用 process > case > table
-- 初中: 少推导多生活实例
-- 高中: 公式+例题均衡
-- 大学: 理论深度优先
+${preference}
 
-## 输出格式（纯JSON数组）`;
+## 输出格式（纯JSON）`;
 }
 
 function buildUserPrompt(
@@ -143,15 +134,16 @@ export async function planOutline(
   languageModel: LanguageModel,
 ): Promise<PlanningResult> {
   try {
-    const system = buildSystemPrompt();
+    const subjectCtx = getSubjectContext(topic);
+    const system = buildSystemPrompt(subjectCtx.pageTypes, subjectCtx.preference);
     const user = buildUserPrompt(topic, difficulty, minPages, maxPages, designDNA);
 
-    log.info(`Planning outline for "${topic}" [${minPages}-${maxPages}p]`);
+    log.info(`Planning outline for "${topic}" [${subjectCtx.subject}, ${minPages}-${maxPages}p, ${subjectCtx.pageTypes.length} types]`);
 
     const result = await callLLM(
       { model: languageModel, system, prompt: user, maxOutputTokens: 8192, temperature: 0.7 },
       'planning-agent',
-      { retries: 1, validate: (text) => {
+      { retries: 2, validate: (text) => {
         const t = text.trim();
         return t.length > 500 && t.includes('sections') && t.endsWith('}');
       } },

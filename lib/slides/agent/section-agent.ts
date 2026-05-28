@@ -10,7 +10,7 @@ import type { LanguageModel } from 'ai';
 import type { DesignDNA } from './design-dna';
 import type { SectionPlan } from './planning-agent';
 import { z } from 'zod';
-import { SCHEMA_DESCRIPTIONS, CONTENT_SCHEMAS, autoFixContent } from './content-schemas';
+import { SCHEMA_DESCRIPTIONS, CONTENT_SCHEMAS, autoFixContent, convertInlineLatexToUnicode } from './content-schemas';
 
 const log = createLogger('SectionAgent');
 
@@ -98,6 +98,29 @@ ${pagesDesc}
 
 // ── JSON Cleanup ────────────────────────────────────────────────────
 
+/** Recursively convert inline LaTeX ($...$) in content object to Unicode. */
+function convertContentLatex(content: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(content)) {
+    if (typeof value === 'string') {
+      result[key] = convertInlineLatexToUnicode(value);
+    } else if (Array.isArray(value)) {
+      result[key] = value.map((item) =>
+        typeof item === 'string'
+          ? convertInlineLatexToUnicode(item)
+          : typeof item === 'object' && item !== null
+            ? convertContentLatex(item as Record<string, unknown>)
+            : item,
+      );
+    } else if (typeof value === 'object' && value !== null) {
+      result[key] = convertContentLatex(value as Record<string, unknown>);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 function cleanJsonText(text: string): string {
   let cleaned = text.trim();
   if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
@@ -131,9 +154,11 @@ export async function generateSectionContent(
     const result = await callLLM(
       { model: languageModel, system, prompt: user, maxOutputTokens: 16384, temperature: 0.7 },
       `section-agent-${section.sectionId}`,
-      { retries: 1, validate: (text) => {
+      { retries: 2, validate: (text) => {
         const t = text.trim();
-        return t.length > 500 && t.includes('pages') && (t.endsWith('}') || t.endsWith('}]'));
+        const pageCount = section.pages.length;
+        const minLen = pageCount <= 2 ? 150 : 500; // Small sections have less output
+        return t.length > minLen && t.includes('pages') && (t.endsWith('}') || t.endsWith('}]'));
       } },
     );
 
@@ -144,6 +169,11 @@ export async function generateSectionContent(
     if (!validated.success) {
       log.error(`Section ${section.sectionId} output validation failed`);
       return { success: false, error: validated.error.message };
+    }
+
+    // ── Convert inline LaTeX to Unicode before validation ──
+    for (const page of validated.data.pages) {
+      page.content = convertContentLatex(page.content);
     }
 
     // ── Per-page content schema validation + auto-fix ──

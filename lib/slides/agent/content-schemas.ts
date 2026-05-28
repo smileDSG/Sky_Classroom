@@ -165,16 +165,16 @@ export function autoFixContent(
   // Simple heuristics: truncate known string fields, cap arrays
   const fixed = { ...content } as Record<string, unknown>;
 
-  // Fix common fields
-  if (typeof fixed.title === 'string') fixed.title = trunc(fixed.title, 15);
-  if (typeof fixed.summary === 'string') fixed.summary = trunc(fixed.summary, 150);
-  if (typeof fixed.subtitle === 'string') fixed.subtitle = trunc(fixed.subtitle, 35);
-  if (typeof fixed.slogan === 'string') fixed.slogan = trunc(fixed.slogan, 20);
-  if (typeof fixed.highlight === 'string') fixed.highlight = trunc(fixed.highlight, 50);
-  if (typeof fixed.preview === 'string') fixed.preview = trunc(fixed.preview, 80);
-  if (typeof fixed.derivation === 'string') fixed.derivation = trunc(fixed.derivation, 350);
-  if (typeof fixed.application === 'string') fixed.application = trunc(fixed.application, 250);
-  if (typeof fixed.mainFormula === 'string') fixed.mainFormula = trunc(fixed.mainFormula, 250);
+  // Fix common fields — truncation limits MUST align with Zod schema max
+  if (typeof fixed.title === 'string') fixed.title = trunc(fixed.title, 12);
+  if (typeof fixed.summary === 'string') fixed.summary = trunc(fixed.summary, 120);
+  if (typeof fixed.subtitle === 'string') fixed.subtitle = trunc(fixed.subtitle, 25);
+  if (typeof fixed.slogan === 'string') fixed.slogan = trunc(fixed.slogan, 15);
+  if (typeof fixed.highlight === 'string') fixed.highlight = trunc(fixed.highlight, 40);
+  if (typeof fixed.preview === 'string') fixed.preview = trunc(fixed.preview, 60);
+  if (typeof fixed.derivation === 'string') fixed.derivation = trunc(fixed.derivation, 300);
+  if (typeof fixed.application === 'string') fixed.application = trunc(fixed.application, 200);
+  if (typeof fixed.mainFormula === 'string') fixed.mainFormula = trunc(fixed.mainFormula, 200);
 
   // Fix arrays: cap at max
   const arrayCaps: Record<string, number> = { cards: 6, items: 6, scenarios: 3, steps: 8, rows: 8, questions: 5, events: 8, keyPoints: 6, options: 6 };
@@ -183,13 +183,13 @@ export function autoFixContent(
       fixed[key] = (fixed[key] as unknown[]).slice(0, cap).map((item: unknown) => {
         if (typeof item === 'object' && item !== null) {
           const obj = { ...item as Record<string, unknown> };
-          if (typeof obj.title === 'string') obj.title = trunc(obj.title, 10);
-          if (typeof obj.desc === 'string') obj.desc = trunc(obj.desc, 120);
-          if (typeof obj.problem === 'string') obj.problem = trunc(obj.problem, 280);
-          if (typeof obj.solution === 'string') obj.solution = trunc(obj.solution, 280);
-          if (typeof obj.content === 'string') obj.content = trunc(obj.content, 100);
-          if (typeof obj.date === 'string') obj.date = trunc(obj.date, 30);
-          if (typeof obj.q === 'string') obj.q = trunc(obj.q, 180);
+          if (typeof obj.title === 'string') obj.title = trunc(obj.title, 8);
+          if (typeof obj.desc === 'string') obj.desc = trunc(obj.desc, 100);
+          if (typeof obj.problem === 'string') obj.problem = trunc(obj.problem, 250);
+          if (typeof obj.solution === 'string') obj.solution = trunc(obj.solution, 250);
+          if (typeof obj.content === 'string') obj.content = trunc(obj.content, 80);
+          if (typeof obj.date === 'string') obj.date = trunc(obj.date, 20);
+          if (typeof obj.q === 'string') obj.q = trunc(obj.q, 150);
           return obj;
         }
         return typeof item === 'string' ? trunc(item, 80) : item;
@@ -200,13 +200,13 @@ export function autoFixContent(
   // Fix nested objects
   if (fixed.left && typeof fixed.left === 'object') {
     const l = fixed.left as Record<string, unknown>;
-    if (Array.isArray(l.items)) l.items = (l.items as string[]).map((s) => trunc(s, 80)).slice(0, 6);
-    if (typeof l.title === 'string') l.title = trunc(l.title, 12);
+    if (Array.isArray(l.items)) l.items = (l.items as string[]).map((s) => trunc(s, 60)).slice(0, 6);
+    if (typeof l.title === 'string') l.title = trunc(l.title, 10);
   }
   if (fixed.right && typeof fixed.right === 'object') {
     const r = fixed.right as Record<string, unknown>;
-    if (Array.isArray(r.items)) r.items = (r.items as string[]).map((s) => trunc(s, 80)).slice(0, 6);
-    if (typeof r.title === 'string') r.title = trunc(r.title, 12);
+    if (Array.isArray(r.items)) r.items = (r.items as string[]).map((s) => trunc(s, 60)).slice(0, 6);
+    if (typeof r.title === 'string') r.title = trunc(r.title, 10);
   }
 
   // Fill missing required fields with defaults
@@ -221,6 +221,107 @@ export function autoFixContent(
   if (pageType === 'end' && !fixed.slogan) fixed.slogan = '谢谢';
 
   return fixed;
+}
+
+// ── Inline LaTeX → Unicode Conversion ──────────────────────────────
+
+/** Convert inline $...$ LaTeX to Unicode. Block formulas $$...$$ are left as-is for addFormula. */
+export function convertInlineLatexToUnicode(text: string): string {
+  // ── Inline LaTeX → Unicode ──────────────────────────────────────────
+  // Applies in order: longer patterns first to avoid partial matches.
+  // Each rule strips the $ delimiters and replaces with Unicode chars.
+  //
+  // LLMs output superscript charges in several formats:
+  //   $Na^+$  $Na^\+$  $Na^{+}$  $Ca^{2+}$
+  // We handle all variants with flexible patterns.
+
+  // Unicode digit maps
+  const subDigits: Record<string, string> = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉' };
+  const superDigits: Record<string, string> = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹' };
+
+  let result = text;
+
+  // ── Phase 1: Named chemical patterns ──
+  const namedRules: [RegExp, string][] = [
+    // Superscript charges (flexible: opt braces, opt backslash before +)
+    [/\$Ca\^\{2\+?\}\$/gi, 'Ca²⁺'],
+    [/\$Mg\^\{2\+?\}\$/gi, 'Mg²⁺'],
+    [/\$Na\^(\{\+?\}|\+?\\?\+)\$/gi, 'Na⁺'],
+    [/\$K\^(\{\+?\}|\+?\\?\+)\$/gi, 'K⁺'],
+    [/\$H\^(\{\+?\}|\+?\\?\+)\$/gi, 'H⁺'],
+    [/\$NADP\^(\{\+?\}|\+?\\?\+)\$/gi, 'NADP⁺'],
+    [/\$NAD\^(\{\+?\}|\+?\\?\+)\$/gi, 'NAD⁺'],
+    [/\$Cl\^(\{-?\}|-)\$/gi, 'Cl⁻'],
+    [/\$OH\^(\{-?\}|-)\$/gi, 'OH⁻'],
+    [/\$e\^(\{-?\}|-)\$/gi, 'e⁻'],
+    // Subscript formulas
+    [/\$C_6H_\{12\}O_6\$/gi, 'C₆H₁₂O₆'],
+    [/\$CO_2\$/gi, 'CO₂'],
+    [/\$H_2O_2\$/gi, 'H₂O₂'],
+    [/\$H_2O\$/gi, 'H₂O'],
+    [/\$H_2S\$/gi, 'H₂S'],
+    [/\$NO_2\$/gi, 'NO₂'],
+    [/\$SO_2\$/gi, 'SO₂'],
+    [/\$NH_3\$/gi, 'NH₃'],
+    [/\$CH_4\$/gi, 'CH₄'],
+    [/\$O_2\$/gi, 'O₂'],
+    [/\$N_2\$/gi, 'N₂'],
+    [/\$H_2\$/gi, 'H₂'],
+    [/\$Cl_2\$/gi, 'Cl₂'],
+    [/\$CO\$/gi, 'CO'],
+    [/\$NO\$/gi, 'NO'],
+    // Plain biochemical terms (no super/subscript)
+    [/\$ADP\$/gi, 'ADP'],
+    [/\$ATP\$/gi, 'ATP'],
+    [/\$NADPH\$/gi, 'NADPH'],
+    [/\$RuBisCO\$/gi, 'RuBisCO'],
+    [/\$RuBP\$/gi, 'RuBP'],
+    [/\$PEPC\$/gi, 'PEPC'],
+    [/\$PEP\$/gi, 'PEP'],
+    [/\$G3P\$/gi, 'G3P'],
+    [/\$3-PGA\$/gi, '3-PGA'],
+    // LaTeX command → text (e.g. \alpha → α)
+    [/\$\\([A-Za-z0-9]+)\\$/g, '$1'],
+  ];
+  for (const [pattern, replacement] of namedRules) {
+    result = result.replace(pattern, replacement);
+  }
+
+  // ── Phase 2: Generic single-element subscript $X_n$ → Xₙ ──
+  // Only matches simple patterns (no operators inside), e.g. $C_3$, $P_i$
+  result = result.replace(
+    /\$([A-Z][a-z]?)_(\d+)\$/g,
+    (_, el: string, num: string) => el + num.split('').map((d: string) => subDigits[d] || d).join(''),
+  );
+
+  // ── Phase 3: Generic single-element superscript $X^n$ → Xⁿ ──
+  // e.g. $C^{14}$ → C¹⁴ (radioactive isotope notation)
+  result = result.replace(
+    /\$([A-Z][a-z]?)\^\{(\d+)\}\$/g,
+    (_, el: string, num: string) => el + num.split('').map((d: string) => superDigits[d] || d).join(''),
+  );
+
+  // ── Phase 4: Remaining simple inline $...$ — convert sub/sup inside ──
+  // Handles edge cases like $(CH_2O)$, $HCO_3^-$, etc.
+  // Only processes $...$ blocks with NO math operators (+, =, -, >, \, etc.)
+  result = result.replace(
+    /\$([^$+\-=>\\/\s]{1,40})\$/g,
+    (_, inner: string) => {
+      // Convert _n → subscript unicode
+      let s = inner.replace(/_(\d+)/g, (_m: string, num: string) =>
+        num.split('').map((d: string) => subDigits[d] || d).join(''),
+      );
+      // Convert ^{n} → superscript unicode
+      s = s.replace(/\^\{(\d+)\}/g, (_m: string, num: string) =>
+        num.split('').map((d: string) => superDigits[d] || d).join(''),
+      );
+      // Convert ^+ / ^- → superscript unicode
+      s = s.replace(/\^(-|\+)/g, (_m: string, ch: string) => ch === '+' ? '⁺' : '⁻');
+      return s;
+    },
+  );
+
+  return result;
 }
 
 // ── Schema Description for LLM Prompt ──────────────────────────────

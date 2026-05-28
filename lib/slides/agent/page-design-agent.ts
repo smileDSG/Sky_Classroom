@@ -105,7 +105,7 @@ export async function designPage(
     const result = await callLLM(
       { model: languageModel, system, prompt: user, maxOutputTokens: 24576, temperature: 0.5 },
       `page-design-${pageNum}`,
-      { retries: 1, validate: (text) => {
+      { retries: 2, validate: (text) => {
         const t = text.trim();
         return t.length > 300 && t.includes('instructions') && (t.endsWith('}') || t.endsWith('}]'));
       } },

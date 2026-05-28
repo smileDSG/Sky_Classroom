@@ -60,13 +60,15 @@ export default function SlidesPage() {
   const [previewImages, setPreviewImages] = useState<string[] | null>(null);
   const [previewId, setPreviewId] = useState('');
   const [showPreview, setShowPreview] = useState(false);
-  const [genStage, setGenStage] = useState<'idle' | 'thinking' | 'writing' | 'rendering' | 'done'>('idle');
+  const [genStage, setGenStage] = useState<'idle' | 'planning' | 'sections_generating' | 'pages_designing' | 'qa_reviewing' | 'repairing' | 'merging' | 'done'>('idle');
   const [genProgress, setGenProgress] = useState(0);
+  const activeJobId = useSkyClassroomStore((s) => s.activeJobId);
+  const setActiveJobId = useSkyClassroomStore((s) => s.setActiveJobId);
   const [qaReport, setQaReport] = useState<{ totalScore: number; pass: boolean; issues: Array<{ pageNum: number; severity: string; type: string; layer: string; detail: string }> } | null>(null);
   const [showQaReport, setShowQaReport] = useState(false);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const startProgress = useCallback((stage: 'thinking' | 'writing' | 'rendering') => {
+  const startProgress = useCallback((stage: 'planning' | 'sections_generating' | 'pages_designing') => {
     setGenStage(stage);
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
 
@@ -74,19 +76,19 @@ export default function SlidesPage() {
     let current = 0;
     let step = 0;
     let intervalMs = 500;
-    if (stage === 'thinking') { current = 0; target = 8; step = (8 - 0) / 10; intervalMs = 300; }
-    if (stage === 'writing') { current = 10; target = 90; step = (90 - 10) / 80; intervalMs = 600; }
-    if (stage === 'rendering') { current = 92; target = 98; step = (98 - 92) / 12; intervalMs = 400; }
+    if (stage === 'planning') { current = 0; target = 8; step = (8 - 0) / 10; intervalMs = 300; }
+    if (stage === 'sections_generating') { current = 10; target = 90; step = (90 - 10) / 80; intervalMs = 600; }
+    if (stage === 'pages_designing') { current = 92; target = 98; step = (98 - 92) / 12; intervalMs = 400; }
     setGenProgress(current);
 
     progressIntervalRef.current = setInterval(() => {
       setGenProgress((p) => {
         if (p >= target) {
           // 到达 target 后继续以极慢速度前进，避免"卡住"感
-          if (stage === 'writing' && p < 95) {
+          if (stage === 'sections_generating' && p < 95) {
             return Math.min(p + 0.3, 95);
           }
-          if (stage === 'rendering' && p < 99) {
+          if (stage === 'pages_designing' && p < 99) {
             return Math.min(p + 0.2, 99);
           }
           return p;
@@ -107,6 +109,9 @@ export default function SlidesPage() {
   const handleGenerateCovers = useCallback(async (overrideTopic?: string) => {
     const t = (overrideTopic ?? topic).trim();
     if (!t) return;
+
+    // Prevent duplicate requests
+    if (coverLoading) return;
 
     // Check cache first
     const cacheKey = `${t}_${difficulty}`;
@@ -155,19 +160,19 @@ export default function SlidesPage() {
 
   const handleRefreshCovers = useCallback(async () => {
     const t = topic.trim();
-    if (!t) return;
+    if (!t || coverLoading) return;
     setShowCoverGallery(false);
     // Clear cache for this topic
     const cacheKey = `${t}_${difficulty}`;
     coverCacheRef.current.delete(cacheKey);
     // Re-generate
     await handleGenerateCovers(t);
-  }, [topic, difficulty, handleGenerateCovers]);
+  }, [topic, difficulty, coverLoading, handleGenerateCovers]);
 
   const onCoverSelected = useCallback(async (cover: CoverItem) => {
     setShowCoverGallery(false);
     setGenerating(true);
-    setGenStage('thinking');
+    setGenStage('planning');
     setGenProgress(0);
 
     try {
@@ -182,6 +187,8 @@ export default function SlidesPage() {
       });
       const data = await res.json();
       if (data.success && data.jobId) {
+        // Persist jobId so user can resume after navigation
+        setActiveJobId(data.jobId);
         // Start polling
         const jobId = data.jobId;
         const poll = setInterval(async () => {
@@ -190,12 +197,13 @@ export default function SlidesPage() {
             const statusData = await statusRes.json();
             if (statusData.success) {
               const job = statusData.data || statusData.job;
-              setGenStage(job.stage as never);
+              setGenStage(job.stage);
               setGenProgress(job.progress || 0);
               setStatus(job.message || '');
 
               if (job.stage === 'done') {
                 clearInterval(poll);
+                setActiveJobId(null);
                 if (job.pptxUrl) {
                   setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
                   setPreviewImages(job.previewImages || null);
@@ -205,6 +213,7 @@ export default function SlidesPage() {
                   setGenProgress(100);
                 } else if (job.error) {
                   setStatus(`生成失败: ${job.error}`);
+                  setActiveJobId(null);
                 }
                 setGenerating(false);
               }
@@ -250,6 +259,50 @@ export default function SlidesPage() {
     }, 4000);
     return () => clearInterval(timer);
   }, [coverLoading]);
+
+  // Auto-resume job polling on mount (survives navigation)
+  useEffect(() => {
+    if (!activeJobId || generating) return;
+    setGenerating(true);
+    setGenStage('planning');
+    setGenProgress(5);
+    const poll = setInterval(async () => {
+      try {
+        const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${activeJobId}`);
+        const statusData = await statusRes.json();
+        if (statusData.success) {
+          const job = statusData.data || statusData.job;
+          if (!job) return;
+          setGenStage(job.stage);
+          setGenProgress(job.progress || 0);
+          setStatus(job.message || '');
+          if (job.stage === 'done') {
+            clearInterval(poll);
+            setActiveJobId(null);
+            if (job.pptxUrl) {
+              setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
+              setPreviewImages(job.previewImages || null);
+              if (job.qaReport) setQaReport(job.qaReport);
+              setStatus('');
+              setGenStage('done');
+              setGenProgress(100);
+            } else if (job.error) {
+              setStatus(`生成失败: ${job.error}`);
+              setActiveJobId(null);
+            }
+            setGenerating(false);
+          }
+        } else if (statusRes.status === 404) {
+          // Job expired, stop polling
+          clearInterval(poll);
+          setActiveJobId(null);
+          setGenerating(false);
+          setStatus('生成任务已过期，请重新生成');
+        }
+      } catch { /* ignore */ }
+    }, 2000);
+    return () => clearInterval(poll);
+  }, [activeJobId]);
 
   // Auto-trigger generation from URL ?topic=xxx
   useEffect(() => {
