@@ -118,7 +118,7 @@ export function SimilarProblems({
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p
+                      <div
                         className={cn(
                           'text-sm leading-relaxed cursor-pointer transition-colors',
                           isCompleted
@@ -128,7 +128,7 @@ export function SimilarProblems({
                         onClick={() => handleQuestionClick(question.problem, index)}
                       >
                         <MathRenderer content={question.problem} />
-                      </p>
+                      </div>
 
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         <Badge

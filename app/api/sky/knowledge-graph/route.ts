@@ -5,7 +5,7 @@
  * (nodes + edges + weak points), and returns the structured response.
  */
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildGraphFromMistakes } from '@/lib/graph/builder';
 import { overallMastery } from '@/lib/graph/mastery';
@@ -16,7 +16,7 @@ const log = createLogger('API:SkyKnowledgeGraph');
 let _daoPromise: ReturnType<typeof initDAO> | null = null;
 
 async function initDAO() {
-  const storage = await createStorageProvider();
+  const storage = await getServerStorage();
   return createMistakeBookDAO(storage);
 }
 

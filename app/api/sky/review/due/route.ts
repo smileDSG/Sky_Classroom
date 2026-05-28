@@ -4,7 +4,7 @@
  * Returns mistakes due for review based on Ebbinghaus scheduling.
  */
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildReviewSchedule, getMasteryProgress } from '@/lib/schedule/review-scheduler';
 import { createLogger } from '@/lib/logger';
@@ -14,7 +14,7 @@ const log = createLogger('API:SkyReviewDue');
 let _daoPromise: ReturnType<typeof initDAO> | null = null;
 
 async function initDAO() {
-  const storage = await createStorageProvider();
+  const storage = await getServerStorage();
   return createMistakeBookDAO(storage);
 }
 

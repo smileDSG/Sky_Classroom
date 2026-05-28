@@ -137,6 +137,7 @@ export function AgentSelector({
                     src={selectedTeacher.avatar}
                     alt={selectedTeacher.name}
                     fill
+                    sizes="40px"
                     className="object-cover"
                   />
                 </div>
@@ -164,6 +165,7 @@ export function AgentSelector({
                     src={student.avatar}
                     alt={student.name}
                     fill
+                    sizes="32px"
                     className="object-cover"
                   />
                 </div>
@@ -257,6 +259,7 @@ export function AgentSelector({
                           src={teacher.avatar}
                           alt={teacher.name}
                           fill
+                          sizes="40px"
                           className="object-cover"
                         />
                       </div>
@@ -309,6 +312,7 @@ export function AgentSelector({
                             src={student.avatar}
                             alt={student.name}
                             fill
+                            sizes="40px"
                             className="object-cover"
                           />
                         </div>

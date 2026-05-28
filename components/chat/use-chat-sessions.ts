@@ -507,13 +507,26 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             return currentSession?.messages ?? requestTemplate.messages;
           },
 
-          fetchChat: (body, signal) =>
-            fetch('/api/chat', {
+          fetchChat: async (body, signal) => {
+            let res = await fetch('/api/chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
               signal,
-            }),
+            });
+            if (res.status === 401) {
+              const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+              if (refreshRes.ok) {
+                res = await fetch('/api/chat', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body),
+                  signal,
+                });
+              }
+            }
+            return res;
+          },
 
           onEvent: (event) => {
             // Create buffer on first event of each iteration

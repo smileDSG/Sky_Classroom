@@ -1,10 +1,12 @@
 /**
  * User DAO — data access layer for user accounts.
- * Uses the existing StorageFactory (IndexedDB → localStorage → memory).
+ * Uses server storage (MySQL/Supabase) on the server, client storage (IndexedDB) on the client.
  */
 
 import { createStorageProvider, getStorageProvider } from '@/lib/storage/storage-factory';
 import type { StorageProvider } from '@/lib/storage/storage-types';
+
+const isServer = typeof window === 'undefined';
 
 const TABLE = 'users';
 
@@ -47,6 +49,10 @@ export interface UserEntry {
 }
 
 async function ensureProvider(): Promise<StorageProvider> {
+  if (isServer) {
+    const { getServerStorage } = await import('@/lib/server/server-storage');
+    return getServerStorage();
+  }
   return getStorageProvider();
 }
 

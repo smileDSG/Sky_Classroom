@@ -49,7 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUser = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      let res = await fetch('/api/auth/me', { credentials: 'include' });
+      // If access token expired, try refreshing it once
+      if (res.status === 401) {
+        const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+        if (refreshRes.ok) {
+          res = await fetch('/api/auth/me', { credentials: 'include' });
+        }
+      }
       if (res.ok) {
         const json = await res.json();
         setUser(json.user);
@@ -66,6 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     ensureAdminUserClient().then(() => fetchUser());
   }, [fetchUser]);
+
+  // Auto-refresh access token every 10 minutes
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' }).catch(() => {});
+    }, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Sync profile from server when user changes
   useEffect(() => {

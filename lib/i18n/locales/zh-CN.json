@@ -1143,29 +1143,5 @@
       "student": "学生",
       "user": "我"
     }
-  },
-  "beta": {
-    "title": "天空课堂 · 内测",
-    "subtitle": "输入邀请码或申请内测资格",
-    "inviteTab": "邀请码",
-    "applyTab": "申请内测",
-    "enterCode": "输入邀请码",
-    "codePlaceholder": "如：SKY-7X3K-9M2P",
-    "validateCode": "验证邀请码",
-    "validating": "验证中...",
-    "codeValid": "邀请码有效，即将跳转注册页...",
-    "codeInvalid": "邀请码无效或已过期",
-    "codeExhausted": "邀请码已被使用完",
-    "applyTitle": "申请内测资格",
-    "email": "邮箱地址",
-    "emailPlaceholder": "请输入你的邮箱",
-    "reason": "申请理由（选填）",
-    "reasonPlaceholder": "简单介绍一下你想参与内测的原因...",
-    "submitApplication": "提交申请",
-    "submitting": "提交中...",
-    "submitted": "申请已提交",
-    "submittedDesc": "我们会尽快审核，审核结果将通过邮件通知你。",
-    "alreadyRequested": "你已经提交过申请，请耐心等待审核结果。",
-    "backToHome": "返回首页"
   }
 }

@@ -267,18 +267,30 @@ function convertFractions(text: string): string {
 // ── sqrt fix: convert \sqrt(...) → \sqrt{...} ─────────────────────────
 
 function fixSqrtParens(text: string): string {
-  // Only fix inside $...$ delimiters
-  const parts = text.split(/(\$[\s\S]*?\$)/g);
-  for (let i = 0; i < parts.length; i++) {
-    if (i % 2 === 1) {
-      // Inside math mode: convert \sqrt( → \sqrt{
-      parts[i] = parts[i].replace(
-        /\\sqrt(\[[^\]]*\])?\(([^)]+)\)/g,
-        (_m, opt: string, inner: string) => `\\sqrt${opt || ''}{${inner}}`,
-      );
-    }
-  }
-  return parts.join('');
+  // Fix both inside and outside $...$ delimiters
+  return text.replace(
+    /\\sqrt(\[[^\]]*\])?\(([^)]+)\)/g,
+    (_m, opt: string, inner: string) => `\\sqrt${opt || ''}{${inner}}`,
+  );
+}
+
+// ── Fix common LLM LaTeX mistakes ─────────────────────────────────────
+
+function fixCommonLatexErrors(text: string): string {
+  let result = text;
+  // \sqrtn → \sqrt{n}, \sqrtabc → \sqrt{abc}
+  // Matches \sqrt followed by letters (no brace/bracket), wraps in braces
+  result = result.replace(
+    /\\sqrt(?![\[{])([a-zA-Z]+)/g,
+    (_m, letters: string) => `\\sqrt{${letters}}`,
+  );
+  // \fracabc → \frac{a}{bc} is too ambiguous, skip
+  // Fix \cdotx → \cdot x (space before variable after operator commands)
+  result = result.replace(
+    /\\(cdot|times|div|pm|mp|star|circ|bullet)([a-zA-Z])/g,
+    (_m, cmd: string, ch: string) => `\\${cmd} ${ch}`,
+  );
+  return result;
 }
 
 // ── Main preprocessing ─────────────────────────────────────────────────
@@ -286,6 +298,9 @@ function fixSqrtParens(text: string): string {
 function wrapBareLatex(text: string): string {
   // Step 0: Fix sqrt parentheses (LLMs sometimes use \sqrt(...) instead of \sqrt{...})
   let result = fixSqrtParens(text);
+
+  // Step 0.5: Fix common LLM LaTeX errors
+  result = fixCommonLatexErrors(result);
 
   // Step 1: Convert Unicode math symbols
   result = convertUnicodeMath(result);
@@ -356,6 +371,34 @@ function parseMixedContent(text: string): Segment[] {
 
 // ── Component ───────────────────────────────────────────────────────────
 
+function renderKatex(math: string, displayMode: boolean): string {
+  try {
+    return katex.renderToString(math, {
+      displayMode,
+      throwOnError: true,
+      strict: false,
+    });
+  } catch {
+    // First attempt failed — try common fixes
+    const fixed = math
+      // Remove stray backslashes before normal text
+      .replace(/\\(?=\s)/g, '')
+      // Fix mismatched braces
+      .replace(/\{([^{}]*)$/g, '{$1}')
+      .replace(/^([^{}]*)\}/g, '{$1}');
+    try {
+      return katex.renderToString(fixed, {
+        displayMode,
+        throwOnError: false,
+        strict: false,
+      });
+    } catch {
+      // Last resort: render as styled text so it looks like math, not code
+      return `<span style="font-family: 'Times New Roman', serif; font-style: italic;">${math.replace(/[{}]/g, '').replace(/\\/g, ' ')}</span>`;
+    }
+  }
+}
+
 export function MathRenderer({ content, className }: MathRendererProps) {
   if (!content) return null;
 
@@ -370,11 +413,7 @@ export function MathRenderer({ content, className }: MathRendererProps) {
         if (seg.type === 'text') {
           return <Fragment key={i}>{seg.value}</Fragment>;
         }
-        const html = katex.renderToString(seg.value, {
-          displayMode: seg.type === 'block-math',
-          throwOnError: false,
-          strict: false,
-        });
+        const html = renderKatex(seg.value, seg.type === 'block-math');
         const Tag = seg.type === 'block-math' ? 'div' : 'span';
         return (
           <Tag

@@ -87,7 +87,13 @@ export default function HomePage() {
   const [webSearch, setWebSearch] = useState(false);
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [introDone, setIntroDone] = useState(true);
+  const [introDone, setIntroDone] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('skyIntroDone') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   // ── Classroom background generation state (multi-job) ──
   interface JobCardState {
@@ -329,16 +335,6 @@ export default function HomePage() {
     setRequirement(cachedRequirement);
   }, [cachedRequirement]);
 
-  // 检查是否已完成开场动画
-  useEffect(() => {
-    try {
-      if (localStorage.getItem('skyIntroDone') !== 'true') {
-        setIntroDone(false);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
 
   // 加载设置
   useEffect(() => {
@@ -582,7 +578,6 @@ export default function HomePage() {
       <MinimalNavbar
         userSection={
           <FloatingUserCard
-            onSettingsOpen={() => setSettingsOpen(true)}
             onUpgradeOpen={() => setUpgradeDialogOpen(true)}
           />
         }

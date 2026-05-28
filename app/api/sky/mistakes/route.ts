@@ -6,7 +6,7 @@
  */
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import type { ErrorType } from '@/lib/storage/dao/mistakes';
 import { createLogger } from '@/lib/logger';
@@ -17,7 +17,7 @@ const log = createLogger('API:SkyMistakes');
 let _daoPromise: ReturnType<typeof initDAO> | null = null;
 
 async function initDAO() {
-  const storage = await createStorageProvider();
+  const storage = await getServerStorage();
   return createMistakeBookDAO(storage);
 }
 

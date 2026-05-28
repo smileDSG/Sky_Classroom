@@ -144,7 +144,20 @@
       "Bash(Select-String -Pattern \"error TS\")",
       "Bash(npm -v)",
       "Bash(Test-Path *)",
-      "Bash(findstr /C:\"ProsemirrorEditor\" /C:\"TextElement\" /C:\"useSelectElement\" /C:\"lodash-replacements\")"
+      "Bash(findstr /C:\"ProsemirrorEditor\" /C:\"TextElement\" /C:\"useSelectElement\" /C:\"lodash-replacements\")",
+      "Bash(Select-String \"beta\")",
+      "Bash(git mv *)",
+      "Bash(pnpm build *)",
+      "Bash(git merge *)",
+      "Bash(git reset *)",
+      "Bash(findstr sky *)",
+      "Bash(npx tsx -e ' *)",
+      "PowerShell(pnpm add *)",
+      "Bash(corepack enable *)",
+      "Bash(corepack prepare *)",
+      "Bash(mysql *)",
+      "Bash(C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysql.exe *)",
+      "PowerShell(Start-Service *)"
     ]
   }
 }

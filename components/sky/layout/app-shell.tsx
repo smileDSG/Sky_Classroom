@@ -9,7 +9,6 @@ import { UpgradeDialog } from '@/components/billing/upgrade-dialog';
 import { SkyTabBar } from './sky-tab-bar';
 import { BackgroundTasksIndicator } from './background-tasks-indicator';
 import { useAuth } from '@/components/auth/auth-provider';
-import { BetaChrome } from '@/components/beta/beta-chrome';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { CheckCircle2, Sparkles } from 'lucide-react';
@@ -191,7 +190,6 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
           <HeaderControls />
           <div className="h-5 w-px bg-slate-200 dark:bg-slate-700" />
           <FloatingUserCard
-            onSettingsOpen={() => setSettingsOpen(true)}
             onUpgradeOpen={() => setUpgradeOpen(true)}
           />
         </div>
@@ -207,7 +205,6 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
         currentPlan={user?.planType ?? 'free'}
         onPlanChanged={refresh}
       />
-      <BetaChrome />
     </div>
   );
 }

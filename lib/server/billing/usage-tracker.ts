@@ -2,7 +2,7 @@
  * Usage tracker — per-user daily usage counting and limit checking.
  */
 
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { getServerStorage } from '@/lib/server/server-storage';
 import type { StorageProvider } from '@/lib/storage/storage-types';
 import { getPlanLimits, type PlanType } from './plans';
 
@@ -25,9 +25,7 @@ let _provider: StorageProvider | null = null;
 
 async function ensureProvider(): Promise<StorageProvider> {
   if (!_provider) {
-    _provider = await createStorageProvider({
-      databaseName: 'MAIC-Billing',
-    });
+    _provider = await getServerStorage();
   }
   return _provider;
 }

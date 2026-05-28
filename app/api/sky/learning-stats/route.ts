@@ -9,7 +9,7 @@
  */
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO, EBBINGHAUS_INTERVALS } from '@/lib/storage/dao/mistakes';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { StorageEntry } from '@/lib/storage/storage-types';
@@ -53,10 +53,22 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const storage = await createStorageProvider();
+    // If not authenticated, return default values
+    if (!userId) {
+      return apiSuccess({
+        todayStudyMinutes: 0,
+        streakDays: 0,
+        masteryPercent: 0,
+        checkedInToday: false,
+        todayMistakeCount: 0,
+        totalMistakes: 0,
+      });
+    }
+
+    const storage = await getServerStorage();
     const dao = createMistakeBookDAO(storage);
 
-    // Fetch all mistakes (filter by userId if available)
+    // Fetch all mistakes
     const result = await dao.list({ pageSize: 9999 });
     const entries = result.items as unknown as StorageEntry<MistakeBookEntry>[];
 
@@ -79,22 +91,26 @@ export async function GET(req: NextRequest) {
     const todayCount = timestamps.filter((ts) => ts >= todayStartMs).length;
     const todayStudyMinutes = Math.round(todayCount * 3 * 10) / 10;
 
-    // ── Streak days ──
-    // Count consecutive days backwards from today that have at least 1 mistake
-    const activeDays = new Set<string>();
-    for (const ts of timestamps) {
-      activeDays.add(new Date(ts).toISOString().split('T')[0]);
-    }
+    // ── Streak days (from check-in records) ──
     let streakDays = 0;
-    const today = new Date();
-    for (let i = 0; i < 365; i++) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().split('T')[0];
-      if (activeDays.has(key)) {
-        streakDays++;
-      } else {
-        break;
+    if (userId) {
+      const todayStr = today();
+      let checkDate = todayStr;
+      for (let i = 0; i < 365; i++) {
+        const entry = await storage.get<CheckInEntry>(CHECKIN_TABLE, `${userId}_${checkDate}`);
+        if (entry?.data) {
+          streakDays++;
+          const d = new Date(checkDate);
+          d.setDate(d.getDate() - 1);
+          checkDate = d.toISOString().split('T')[0];
+        } else if (checkDate === todayStr) {
+          // Today not checked in yet, check yesterday
+          const d = new Date(checkDate);
+          d.setDate(d.getDate() - 1);
+          checkDate = d.toISOString().split('T')[0];
+        } else {
+          break;
+        }
       }
     }
 
