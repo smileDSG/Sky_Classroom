@@ -12,6 +12,7 @@ import {
   LogOut,
   Sparkles,
   Crown,
+  User,
 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
@@ -379,7 +380,22 @@ export function FloatingUserCard({
                 </div>
 
                 {/* 操作按钮 */}
-                <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-4 gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => { setIsExpanded(false); router.push('/account'); }}
+                        className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                      >
+                        <User className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                        <span className="text-xs text-slate-600 dark:text-slate-300">
+                          个人中心
+                        </span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>个人中心</TooltipContent>
+                  </Tooltip>
+
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button

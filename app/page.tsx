@@ -864,6 +864,17 @@ export default function HomePage() {
           <p className="text-[11px] text-slate-300 dark:text-slate-600">
             &copy; {new Date().getFullYear()} Sky Classroom. All rights reserved.
           </p>
+          <button
+            onClick={() => {
+              try {
+                localStorage.removeItem('skyIntroDone');
+                window.location.reload();
+              } catch { /* ignore */ }
+            }}
+            className="text-[10px] text-slate-400/50 hover:text-slate-500 dark:hover:text-slate-400 transition-colors mt-1"
+          >
+            重置开场动画
+          </button>
         </motion.div>
       </footer>
     </div>

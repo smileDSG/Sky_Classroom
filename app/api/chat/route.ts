@@ -20,7 +20,11 @@ import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
 import type { ThinkingConfig } from '@/lib/types/provider';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 const log = createLogger('Chat API');
+
+// Limit message history to prevent large request bodies
+const MAX_CHAT_MESSAGES = 50;
 
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
@@ -56,6 +60,11 @@ export async function POST(req: NextRequest) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: messages');
     }
 
+    // Limit message history to prevent huge request bodies
+    const messages = body.messages.length > MAX_CHAT_MESSAGES
+      ? body.messages.slice(-MAX_CHAT_MESSAGES)
+      : body.messages;
+
     if (!body.storeState) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: storeState');
     }
@@ -79,9 +88,13 @@ export async function POST(req: NextRequest) {
       return apiError('MISSING_API_KEY', 401, 'API Key is required');
     }
 
+    // Check billing quota before starting LLM call
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     log.info('Processing request');
     log.info(
-      `Agents: ${body.config.agentIds.join(', ')}, Messages: ${body.messages.length}, Turn: ${body.directorState?.turnCount ?? 0}`,
+      `Agents: ${body.config.agentIds.join(', ')}, Messages: ${messages.length}, Turn: ${body.directorState?.turnCount ?? 0}`,
     );
 
     // Use the native request signal for abort propagation
@@ -93,10 +106,14 @@ export async function POST(req: NextRequest) {
 
     // Stream generation in background with heartbeat to prevent connection timeout
     const HEARTBEAT_INTERVAL_MS = 15_000;
+    const MAX_QUEUE_SIZE = 50; // Backpressure: max events to queue
     (async () => {
       // Heartbeat: periodically send SSE comments to keep the connection alive.
       // Proxies / browsers may close idle SSE connections after 30-120s of silence.
       let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+      let pendingWrites = 0;
+      let droppedCount = 0;
+
       const startHeartbeat = () => {
         stopHeartbeat();
         heartbeatTimer = setInterval(() => {
@@ -125,6 +142,7 @@ export async function POST(req: NextRequest) {
         const generator = statelessGenerate(
           {
             ...body,
+            messages,
             apiKey: resolvedApiKey,
           },
           signal,
@@ -138,9 +156,27 @@ export async function POST(req: NextRequest) {
             break;
           }
 
+          // Backpressure: skip non-critical events if client is slow
+          if (pendingWrites > MAX_QUEUE_SIZE) {
+            if (event.type !== 'text-delta') {
+              droppedCount++;
+              continue;
+            }
+          }
+
+          pendingWrites++;
           const data = `data: ${JSON.stringify(event)}\n\n`;
-          await writer.write(encoder.encode(data));
+          writer.write(encoder.encode(data)).finally(() => {
+            pendingWrites--;
+          });
         }
+
+        if (droppedCount > 0) {
+          log.info(`Dropped ${droppedCount} events due to backpressure`);
+        }
+
+        // Record LLM usage after successful completion
+        await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
         stopHeartbeat();
         await writer.close();
@@ -159,7 +195,7 @@ export async function POST(req: NextRequest) {
         }
 
         log.error(
-          `Chat stream error [model=${body.model ?? 'unknown'}, agents=${body.config?.agentIds?.length ?? 0}, messages=${body.messages?.length ?? 0}]:`,
+          `Chat stream error [model=${body.model ?? 'unknown'}, agents=${body.config?.agentIds?.length ?? 0}, messages=${messages?.length ?? 0}]:`,
           error,
         );
 

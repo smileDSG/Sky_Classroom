@@ -2,8 +2,8 @@ import { type NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import {
   isValidClassroomJobId,
-  readClassroomGenerationJob,
-} from '@/lib/server/classroom-job-store';
+  readClassroomGenerationJobHybrid,
+} from '@/lib/server/classroom-job-store-hybrid';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { createLogger } from '@/lib/logger';
 
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ jobId: 
       return apiError('INVALID_REQUEST', 400, 'Invalid classroom generation job id');
     }
 
-    const job = await readClassroomGenerationJob(jobId);
+    const job = await readClassroomGenerationJobHybrid(jobId);
     if (!job) {
       return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
     }

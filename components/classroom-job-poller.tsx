@@ -19,6 +19,9 @@ export function ClassroomJobPoller() {
   const navigatedJobsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    const entries = getActiveJobEntries();
+    if (entries.length === 0) return; // 没有活跃 job 时不启动轮询
+
     const poll = async () => {
       try {
         // Already on a generation page — don't interrupt
@@ -30,7 +33,14 @@ export function ClassroomJobPoller() {
         }
 
         const entries = getActiveJobEntries();
-        if (entries.length === 0) return;
+        if (entries.length === 0) {
+          // 没有活跃 job，停止轮询
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          return;
+        }
 
         for (const entry of entries) {
           try {

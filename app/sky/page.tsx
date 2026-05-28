@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
@@ -11,6 +11,7 @@ import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { buildKnowledgeGraph, getMasterySummary } from '@/lib/mistakes/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import { useTheme } from '@/lib/hooks/use-theme';
+import { useAuth } from '@/components/auth/auth-provider';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import {
   Brain,
@@ -162,16 +163,68 @@ function CloudMindMiniCard() {
 
 // ── Quick Stats Row ───────────────────────────────────────────────
 
+interface LearningStats {
+  todayStudyMinutes: number;
+  streakDays: number;
+  masteryPercent: number;
+}
+
+function formatStudyTime(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return m > 0 ? `${h}h${m}m` : `${h}h`;
+}
+
 function QuickStatsRow() {
-  const stats = [
-    { label: '今日学习', value: '2.5h', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: '连续打卡', value: '7 天', icon: Sparkles, color: 'text-rose-500', bg: 'bg-rose-500/10' },
-    { label: '知识掌握', value: '68%', icon: Brain, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  const { user } = useAuth();
+  const [stats, setStats] = useState<LearningStats>({
+    todayStudyMinutes: 0,
+    streakDays: 0,
+    masteryPercent: 0,
+  });
+  const [sessionMinutes, setSessionMinutes] = useState(0);
+
+  // Session timer - track time spent on page
+  useEffect(() => {
+    if (!user) return;
+
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 60000);
+      setSessionMinutes(elapsed);
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    fetch('/api/sky/learning-stats', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.success) setStats(j);
+      })
+      .catch(() => {
+        /* ignore — keep zeros */
+      });
+  }, [user]);
+
+  // Don't show stats if not logged in
+  if (!user) return null;
+
+  const displayMinutes = stats.todayStudyMinutes + sessionMinutes;
+
+  const dynamicStats = [
+    { label: '今日学习', value: formatStudyTime(displayMinutes), icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: '连续打卡', value: stats.streakDays > 0 ? `${stats.streakDays} 天` : '—', icon: Sparkles, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+    { label: '知识掌握', value: stats.masteryPercent > 0 ? `${stats.masteryPercent}%` : '—', icon: Brain, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
   ];
 
   return (
     <div className="grid grid-cols-3 gap-3">
-      {stats.map((stat) => {
+      {dynamicStats.map((stat) => {
         const Icon = stat.icon;
         return (
           <motion.div

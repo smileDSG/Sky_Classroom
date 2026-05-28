@@ -10,6 +10,8 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createLogger } from '@/lib/logger';
 import { resolveApiKey, resolveBaseUrl } from '@/lib/server/provider-config';
 import { retrieveRelevantContext } from '@/lib/agents/rag/retriever';
+import { buildPersonalizationPrompt } from '@/lib/agents/personalization-utils';
+import type { PersonalizationSliceState } from '@/lib/store/settings/personalization';
 
 const log = createLogger('SlidesAgent');
 
@@ -96,6 +98,7 @@ const SLIDES_AGENT_SYSTEM_PROMPT = `你是一位资深的教学设计师和课�
 export async function analyzeSlides(
   contentText: string,
   topic?: string,
+  personalization?: Partial<PersonalizationSliceState>,
 ): Promise<SlidesAnalysisOutput> {
   const apiKey = resolveApiKey('deepseek');
   const baseUrl = resolveBaseUrl('deepseek') || 'https://api.deepseek.com/v1';
@@ -108,18 +111,26 @@ export async function analyzeSlides(
 
   // — RAG: 从知识库检索相关补充资料
   let ragContext = '';
-  try {
-    const ragResult = await retrieveRelevantContext(
-      topic || contentText.slice(0, 200),
-      { topK: 3, rerank: true, maxContextChars: 2000 },
-    );
-    if (ragResult.contextText) {
-      ragContext = `\n\n【补充参考资料（来自知识库）】\n${ragResult.contextText}`;
-      log.info(`RAG retrieved ${ragResult.chunks.length} chunks for slides analysis`);
+  if (personalization?.enableRAG !== false) {
+    try {
+      const ragResult = await retrieveRelevantContext(
+        topic || contentText.slice(0, 200),
+        { topK: 3, rerank: true, maxContextChars: 2000 },
+      );
+      if (ragResult.contextText) {
+        ragContext = `\n\n【补充参考资料（来自知识库）】\n${ragResult.contextText}`;
+        log.info(`RAG retrieved ${ragResult.chunks.length} chunks for slides analysis`);
+      }
+    } catch (ragErr) {
+      log.warn('RAG retrieval failed for slides analysis:', ragErr);
     }
-  } catch (ragErr) {
-    log.warn('RAG retrieval failed for slides analysis:', ragErr);
   }
+
+  // Build personalized system prompt
+  const personalizationPrompt = personalization
+    ? buildPersonalizationPrompt(personalization)
+    : '';
+  const systemPrompt = `${SLIDES_AGENT_SYSTEM_PROMPT}${personalizationPrompt}`;
 
   const userPrompt = topic
     ? `请分析以下"${topic}"相关的课件内容，生成完整的教学讲解：\n\n${contentText}${ragContext}`
@@ -129,7 +140,7 @@ export async function analyzeSlides(
 
   const result = await generateText({
     model: deepseek.chat('deepseek-chat'),
-    system: SLIDES_AGENT_SYSTEM_PROMPT,
+    system: systemPrompt,
     prompt: userPrompt,
     temperature: 0.7,
     maxOutputTokens: 8192,

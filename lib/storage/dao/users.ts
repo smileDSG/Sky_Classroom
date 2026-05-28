@@ -24,6 +24,20 @@ export interface UserEntry {
   avatar: string | null;
   nickname: string | null;
   bio: string | null;
+  /** Personalization fields */
+  educationLevel: string | null;
+  grade: string | null;
+  favoriteSubjects: { id: string; name: string; enabled: boolean }[] | null;
+  learningStyle: string | null;
+  detailLevel: string | null;
+  preferredLanguage: string | null;
+  aiPersonality: string | null;
+  aiName: string | null;
+  customInstructions: string | null;
+  autoGenerateQuiz: boolean | null;
+  showStepByStep: boolean | null;
+  enableMemory: boolean | null;
+  enableRAG: boolean | null;
   /** Email verification */
   emailVerified: boolean;
   emailVerifyToken: string | null;

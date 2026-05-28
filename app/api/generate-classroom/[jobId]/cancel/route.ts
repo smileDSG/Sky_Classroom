@@ -4,7 +4,7 @@ import {
   isValidClassroomJobId,
   readClassroomGenerationJob,
   markClassroomGenerationJobCancelled,
-} from '@/lib/server/classroom-job-store';
+} from '@/lib/server/classroom-job-store-hybrid';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ClassroomCancel API');
