@@ -77,7 +77,10 @@ export async function appendMessages(
   const conv = await db.assistantConversations.get(conversationId);
   if (!conv) return;
 
-  const messages = [...conv.messages, ...newMessages];
+  const existingIds = new Set(conv.messages.map((m) => m.id));
+  const deduped = newMessages.filter((m) => !existingIds.has(m.id));
+  if (deduped.length === 0) return;
+  const messages = [...conv.messages, ...deduped];
   await db.assistantConversations.update(conversationId, {
     messages,
     messageCount: messages.filter((m) => m.role !== 'system').length,

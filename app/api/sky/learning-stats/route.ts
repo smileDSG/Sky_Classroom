@@ -27,7 +27,7 @@ interface CheckInEntry {
   timestamp: number;
 }
 
-function today(): string {
+function getTodayStr(): string {
   return new Date().toISOString().split('T')[0];
 }
 
@@ -125,7 +125,7 @@ export async function GET(req: NextRequest) {
     // ── Checked in today ──
     let checkedInToday = false;
     if (userId) {
-      const todayStr = today();
+      const todayStr = getTodayStr();
       const checkInEntry = await storage.get<CheckInEntry>(CHECKIN_TABLE, `${userId}_${todayStr}`);
       checkedInToday = !!checkInEntry?.data;
     }
