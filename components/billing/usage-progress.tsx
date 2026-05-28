@@ -38,10 +38,7 @@ export function UsageProgress() {
 
   return (
     <div className="space-y-3 p-3 rounded-lg border bg-card text-sm">
-      <div className="flex items-center justify-between">
-        <span className="font-medium capitalize">{usage.planType} Plan</span>
-        {resetTime && <span className="text-xs text-muted-foreground">Resets at {resetTime}</span>}
-      </div>
+      {resetTime && <div className="text-xs text-muted-foreground text-right">Resets at {resetTime}</div>}
       {usage.llmCalls.limit > 0 && (
         <div className="space-y-1">
           <div className="flex justify-between">

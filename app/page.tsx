@@ -31,7 +31,7 @@ import type { CourseTemplate } from '@/lib/templates/types';
 import { SettingsDialog } from '@/components/settings';
 import { TemplatePicker } from '@/components/templates/template-picker';
 import { UpgradeDialog } from '@/components/billing/upgrade-dialog';
-import { UsageProgress } from '@/components/billing/usage-progress';
+
 import { DraggableQaButton } from '@/components/draggable-qa-button';
 
 // 新组件
@@ -812,16 +812,7 @@ export default function HomePage() {
             </motion.div>
           )}
 
-          {/* 用量进度（已登录） */}
-          {user && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <UsageProgress />
-            </motion.div>
-          )}
+
 
           {/* 最近课堂 */}
           {classrooms.length > 0 && (
