@@ -71,6 +71,7 @@
     "unknown": "不明",
     "stopDiscussion": "ディスカッションを終了",
     "endQA": "Q&Aを終了",
+    "deleteSession": "セッションを削除",
     "tabs": {
       "lecture": "ノート",
       "chat": "チャット"

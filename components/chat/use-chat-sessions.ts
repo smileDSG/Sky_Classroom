@@ -754,6 +754,43 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     [activeSessionId],
   );
 
+  /** Delete a session permanently from the list */
+  const deleteSession = useCallback((sessionId: string) => {
+    log.info(`[ChatArea] Deleting session: ${sessionId}`);
+
+    // Abort if currently streaming
+    if (abortControllerRef.current && streamingSessionIdRef.current === sessionId) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      streamingSessionIdRef.current = null;
+      setIsStreaming(false);
+    }
+
+    // Shutdown and remove buffer
+    const buf = buffersRef.current.get(sessionId);
+    if (buf) {
+      buf.shutdown();
+      buffersRef.current.delete(sessionId);
+    }
+    lectureMessageIds.current.delete(sessionId);
+    lectureLastActionIndexRef.current.delete(sessionId);
+
+    // Clear live state callbacks if deleting active session
+    if (activeSessionId === sessionId) {
+      setActiveSessionId(null);
+      onLiveSpeechRef.current?.(null, null);
+      onThinkingRef.current?.(null);
+    }
+
+    setExpandedSessionIds((prev) => {
+      const next = new Set(prev);
+      next.delete(sessionId);
+      return next;
+    });
+
+    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+  }, [activeSessionId]);
+
   /**
    * End the currently active QA/Discussion session (if any).
    */
@@ -1516,6 +1553,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     isStreaming,
     createSession,
     endSession,
+    deleteSession,
     endActiveSession,
     softPauseActiveSession,
     resumeActiveSession,
