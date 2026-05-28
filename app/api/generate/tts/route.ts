@@ -15,6 +15,7 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('TTS API');
 
@@ -95,6 +96,10 @@ export async function POST(req: NextRequest) {
       providerOptions: ttsProviderOptions,
     };
 
+    // Check billing quota before TTS generation
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     log.info(
       `Generating TTS: provider=${ttsProviderId}, model=${ttsModelId || 'default'}, voice=${ttsVoice}, audioId=${audioId}, textLen=${text.length}`,
     );
@@ -105,6 +110,10 @@ export async function POST(req: NextRequest) {
       try {
         const { audio, format } = await generateTTS(config, text);
         const base64 = Buffer.from(audio).toString('base64');
+
+        // Record LLM usage
+        await recordUsage(quota.userId, quota.planType, 'llmCalls');
+
         return apiSuccess({ audioId, base64, format });
       } catch (error) {
         lastError = error;

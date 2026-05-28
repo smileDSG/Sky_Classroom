@@ -4,7 +4,7 @@ import {
   isValidClassroomJobId,
   readClassroomGenerationJob,
   updateClassroomGenerationJob,
-} from '@/lib/server/classroom-job-store';
+} from '@/lib/server/classroom-job-store-hybrid';
 import { runClassroomContinueJob } from '@/lib/server/classroom-job-runner';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { createLogger } from '@/lib/logger';

@@ -6,6 +6,8 @@
  */
 
 import type { SolverAgentType } from './types';
+import { buildPersonalizationPrompt } from '@/lib/agents/personalization-utils';
+import type { PersonalizationSliceState } from '@/lib/store/settings/personalization';
 
 // 知识点生成的通用指令（所有 agent 共用）
 const KNOWLEDGE_POINTS_INSTRUCTION = `
@@ -67,8 +69,14 @@ export function buildSolverPrompt(
   userAnswer?: string,
   knowledgePoints?: string[],
   standardAnswer?: string,
+  personalization?: Partial<PersonalizationSliceState>,
 ): string {
   const basePrompt = AGENT_SYSTEM_PROMPTS[agentType];
+
+  // Add personalization context
+  const personalizationPrompt = personalization
+    ? buildPersonalizationPrompt(personalization)
+    : '';
 
   const contextParts: string[] = [];
 
@@ -84,11 +92,13 @@ export function buildSolverPrompt(
     ? `\n\n附加信息：\n${contextParts.join('\n')}`
     : '';
 
+  const fullPrompt = `${basePrompt}${personalizationPrompt}${contextBlock}`;
+
   if (agentType === 'grading') {
-    return `${basePrompt}${contextBlock}\n\n题目：${problemText}\n标准答案：${standardAnswer ?? '未提供'}\n用户答案：${userAnswer ?? '未提供'}`;
+    return `${fullPrompt}\n\n题目：${problemText}\n标准答案：${standardAnswer ?? '未提供'}\n用户答案：${userAnswer ?? '未提供'}`;
   }
 
-  return `${basePrompt}${contextBlock}\n\n题目：${problemText}`;
+  return `${fullPrompt}\n\n题目：${problemText}`;
 }
 
 /**

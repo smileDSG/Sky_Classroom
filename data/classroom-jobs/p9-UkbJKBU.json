@@ -1,0 +1,22 @@
+{
+  "id": "p9-UkbJKBU",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 17,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-05-28T02:06:26.464Z",
+  "updatedAt": "2026-05-28T02:06:30.025Z",
+  "inputSummary": {
+    "requirementPreview": "二次函数专题\n\n课程目标：探索二次方程、抛物线、顶点式及其实际应用\n\n大纲：\n第1幕：Introduction to Quadratics — What is a quadratic function?\n第2幕：Standard Form — y = ax² + bx + c\n第3幕：Vertex Form — y = a(x-h)² + k\n第4幕：Graphing Practice — ...",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-05-28T02:06:26.477Z",
+  "completedAt": "2026-05-28T02:06:30.023Z",
+  "error": "用户取消了生成"
+}

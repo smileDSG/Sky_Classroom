@@ -11,6 +11,7 @@ import { useAuth } from '@/components/auth/auth-provider';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { SidebarNav, type AccountSection } from '@/components/account/sidebar-nav';
 import { ProfileForm } from '@/components/account/profile-form';
+import { PersonalizationForm } from '@/components/account/personalization-form';
 import { AccountInfo } from '@/components/account/account-info';
 import { SecurityForm } from '@/components/account/security-form';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,8 @@ export default function AccountPage() {
     switch (activeSection) {
       case 'profile':
         return <ProfileForm />;
+      case 'personalization':
+        return <PersonalizationForm />;
       case 'account':
         return <AccountInfo />;
       case 'security':
