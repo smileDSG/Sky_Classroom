@@ -18,6 +18,7 @@ function generateShapePath(shapeType: ShapeSubType, viewBox: string): string {
   const parts = viewBox.split(' ').map(Number);
   const w = parts[2] || 200;
   const h = parts[3] || 200;
+  // viewBox format: "minX minY width height"
   const cx = w / 2;
   const cy = h / 2;
 
@@ -94,6 +95,7 @@ interface UserWhiteboardStore extends Record<string, unknown> {
   drawingStroke: PenPoint[] | null;
   drawingShape: { type: ShapeSubType; start: PenPoint; end: PenPoint } | null;
   drawingLine: { type: LineSubType; start: PenPoint; end: PenPoint } | null;
+  editingTextId: string | null;
 
   // Actions
   setActiveTool: (tool: WhiteboardTool) => void;
@@ -132,6 +134,11 @@ interface UserWhiteboardStore extends Record<string, unknown> {
 
   // Clear
   clearUserContent: () => void;
+
+  // Text editing
+  editingTextId: string | null;
+  setEditingTextId: (id: string | null) => void;
+  updateTextContent: (id: string, content: string) => void;
 }
 
 const useUserWhiteboardStoreBase = create<UserWhiteboardStore>((set, get) => ({
@@ -153,6 +160,7 @@ const useUserWhiteboardStoreBase = create<UserWhiteboardStore>((set, get) => ({
   drawingStroke: null,
   drawingShape: null,
   drawingLine: null,
+  editingTextId: null,
 
   // ── Tool selection ──
   setActiveTool: (tool) => set({ activeTool: tool }),
@@ -217,8 +225,8 @@ const useUserWhiteboardStoreBase = create<UserWhiteboardStore>((set, get) => ({
       id: nextStrokeId(),
       type: 'shape',
       left: x, top: y, width: w, height: h,
-      viewBox: '200 200',
-      path: generateShapePath(type, '200 200'),
+      viewBox: '0 0 200 200',
+      path: generateShapePath(type, '0 0 200 200'),
       fill: shapeFill ? shapeColor : 'transparent',
       outline: { color: shapeColor, width: 2 },
       fixedRatio: false,
@@ -330,7 +338,18 @@ const useUserWhiteboardStoreBase = create<UserWhiteboardStore>((set, get) => ({
 
   clearUserContent: () => {
     get().pushSnapshot();
-    set({ strokes: [], userElements: [] });
+    set({ strokes: [], userElements: [], editingTextId: null });
+  },
+
+  // ── Text editing ──
+  setEditingTextId: (id) => set({ editingTextId: id }),
+
+  updateTextContent: (id, content) => {
+    set({
+      userElements: get().userElements.map((e) =>
+        e.id === id ? { ...e, content } : e,
+      ),
+    });
   },
 }));
 

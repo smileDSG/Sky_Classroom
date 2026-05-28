@@ -2,8 +2,7 @@
 
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { useUserWhiteboardStore } from '@/lib/store/whiteboard-user';
-import type { PenPoint } from '@/lib/types/whiteboard-tools';
-import { nanoid } from 'nanoid';
+import type { PenPoint, ShapeSubType } from '@/lib/types/whiteboard-tools';
 import type { PPTElement } from '@/lib/types/slides';
 
 // ── Coordinate helpers ────────────────────────────────────────────────
@@ -40,6 +39,78 @@ interface LaserPoint {
 
 const LASER_FADE_MS = 600;
 
+// ── Shape preview ──────────────────────────────────────────────────────
+
+function ShapePreview({ type, w, h, color, fill }: {
+  type: ShapeSubType;
+  w: number;
+  h: number;
+  color: string;
+  fill: boolean;
+}) {
+  const cx = w / 2;
+  const cy = h / 2;
+  const strokeW = 2;
+
+  switch (type) {
+    case 'rect':
+      return (
+        <rect
+          x={strokeW} y={strokeW}
+          width={w - strokeW * 2} height={h - strokeW * 2}
+          fill={fill ? color : 'none'}
+          stroke={color}
+          strokeWidth={strokeW}
+        />
+      );
+    case 'circle': {
+      const rx = w / 2 - strokeW;
+      const ry = h / 2 - strokeW;
+      return (
+        <ellipse
+          cx={cx} cy={cy} rx={Math.max(rx, 0)} ry={Math.max(ry, 0)}
+          fill={fill ? color : 'none'}
+          stroke={color}
+          strokeWidth={strokeW}
+        />
+      );
+    }
+    case 'triangle':
+      return (
+        <polygon
+          points={`${cx},${strokeW} ${w - strokeW},${h - strokeW} ${strokeW},${h - strokeW}`}
+          fill={fill ? color : 'none'}
+          stroke={color}
+          strokeWidth={strokeW}
+        />
+      );
+    case 'star': {
+      const outerR = Math.min(w, h) / 2 - strokeW;
+      const innerR = outerR * 0.382;
+      let points = '';
+      for (let i = 0; i < 5; i++) {
+        const outerAngle = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+        const innerAngle = outerAngle + Math.PI / 5;
+        const ox = cx + outerR * Math.cos(outerAngle);
+        const oy = cy + outerR * Math.sin(outerAngle);
+        const ix = cx + innerR * Math.cos(innerAngle);
+        const iy = cy + innerR * Math.sin(innerAngle);
+        points += `${ox},${oy} ${ix},${iy} `;
+      }
+      return (
+        <polygon
+          points={points.trim()}
+          fill={fill ? color : 'none'}
+          stroke={color}
+          strokeWidth={strokeW}
+        />
+      );
+    }
+    default:
+      return null;
+  }
+}
+
 // ── Component ─────────────────────────────────────────────────────────
 
 export function DrawingCanvas({ canvasWidth, canvasHeight }: DrawingCanvasProps) {
@@ -50,7 +121,11 @@ export function DrawingCanvas({ canvasWidth, canvasHeight }: DrawingCanvasProps)
   const [previewRect, setPreviewRect] = useState<{
     x: number; y: number; w: number; h: number;
   } | null>(null);
+  const [textPreviewRect, setTextPreviewRect] = useState<{
+    x: number; y: number; w: number; h: number;
+  } | null>(null);
   const previewStartRef = useRef<PenPoint | null>(null);
+  const textStartRef = useRef<PenPoint | null>(null);
 
   // Store access (reactive for rendering)
   const activeTool = useUserWhiteboardStore.use.activeTool();
@@ -59,6 +134,7 @@ export function DrawingCanvas({ canvasWidth, canvasHeight }: DrawingCanvasProps)
   const shapeColor = useUserWhiteboardStore.use.shapeColor();
   const shapeFill = useUserWhiteboardStore.use.shapeFill();
   const shapeSubType = useUserWhiteboardStore.use.shapeSubType();
+  const fontSize = useUserWhiteboardStore.use.fontSize();
   const drawingStroke = useUserWhiteboardStore.use.drawingStroke();
   const drawingLine = useUserWhiteboardStore.use.drawingLine();
   const strokes = useUserWhiteboardStore.use.strokes();
@@ -177,19 +253,10 @@ export function DrawingCanvas({ canvasWidth, canvasHeight }: DrawingCanvasProps)
       if (store.activeTool === 'text') {
         const pt = getCanvasPoint(e);
         if (!pt) return;
-        const element = {
-          id: nanoid(),
-          type: 'text',
-          left: pt.x,
-          top: pt.y,
-          width: 200,
-          height: 40,
-          content: '',
-          defaultFontName: 'Microsoft YaHei',
-          defaultColor: store.shapeColor,
-          rotate: 0,
-        } as unknown as PPTElement;
-        store.commitTextElement(element);
+        textStartRef.current = pt;
+        setTextPreviewRect({ x: pt.x, y: pt.y, w: 0, h: 0 });
+        isDrawingRef.current = true;
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
         return;
       }
 
@@ -270,6 +337,15 @@ export function DrawingCanvas({ canvasWidth, canvasHeight }: DrawingCanvasProps)
         return;
       }
 
+      if (store.activeTool === 'text' && textStartRef.current) {
+        const x = Math.min(textStartRef.current.x, pt.x);
+        const y = Math.min(textStartRef.current.y, pt.y);
+        const w = Math.abs(pt.x - textStartRef.current.x);
+        const h = Math.abs(pt.y - textStartRef.current.y);
+        setTextPreviewRect({ x, y, w, h });
+        return;
+      }
+
       if (store.activeTool === 'line' && previewStartRef.current) {
         store.setDrawingLine({ type: store.lineSubType, start: previewStartRef.current, end: pt });
         return;
@@ -293,6 +369,38 @@ export function DrawingCanvas({ canvasWidth, canvasHeight }: DrawingCanvasProps)
       }
 
       if (store.activeTool === 'eraser') {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        return;
+      }
+
+      if (store.activeTool === 'text') {
+        const rect = textStartRef.current;
+        if (rect) {
+          const pt = getCanvasPoint(e);
+          const endPt = pt || rect;
+          const x = Math.min(rect.x, endPt.x);
+          const y = Math.min(rect.y, endPt.y);
+          const w = Math.abs(endPt.x - rect.x);
+          const h = Math.abs(endPt.y - rect.y);
+          const minSize = 20;
+          const element = {
+            id: `text_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            type: 'text',
+            left: x,
+            top: y,
+            width: Math.max(w, minSize),
+            height: Math.max(h, minSize),
+            content: '',
+            defaultFontName: 'Microsoft YaHei',
+            defaultColor: store.shapeColor,
+            fill: 'transparent',
+            rotate: 0,
+          } as unknown as PPTElement;
+          store.commitTextElement(element);
+          store.setEditingTextId(element.id);
+        }
+        setTextPreviewRect(null);
+        textStartRef.current = null;
         (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
         return;
       }
@@ -356,20 +464,40 @@ export function DrawingCanvas({ canvasWidth, canvasHeight }: DrawingCanvasProps)
 
       {/* Shape rubber-band preview */}
       {previewRect && (
-        <div
-          className="absolute z-20 pointer-events-none"
+        <svg
+          className="absolute z-20 pointer-events-none overflow-visible"
           style={{
             left: `${(previewRect.x / canvasWidth) * 100}%`,
             top: `${(previewRect.y / canvasHeight) * 100}%`,
             width: `${(previewRect.w / canvasWidth) * 100}%`,
             height: `${(previewRect.h / canvasHeight) * 100}%`,
-            border: `2px solid ${shapeColor}`,
-            background: shapeFill ? `${shapeColor}44` : 'transparent',
-            borderRadius: shapeSubType === 'circle' ? '50%' : shapeSubType === 'star' ? '8px' : '0',
+          }}
+          viewBox={`0 0 ${previewRect.w} ${previewRect.h}`}
+        >
+          <ShapePreview
+            type={shapeSubType}
+            w={previewRect.w}
+            h={previewRect.h}
+            color={shapeColor}
+            fill={shapeFill}
+          />
+        </svg>
+      )}
+      {/* Text box rubber-band preview */}
+      {textPreviewRect && (
+        <div
+          className="absolute z-20 pointer-events-none border-2 border-dashed"
+          style={{
+            left: `${(textPreviewRect.x / canvasWidth) * 100}%`,
+            top: `${(textPreviewRect.y / canvasHeight) * 100}%`,
+            width: `${(textPreviewRect.w / canvasWidth) * 100}%`,
+            height: `${(textPreviewRect.h / canvasHeight) * 100}%`,
+            borderColor: shapeColor,
+            backgroundColor: `${shapeColor}11`,
           }}
         />
       )}
-      {drawingLine && !previewRect && (
+      {drawingLine && !previewRect && !textPreviewRect && (
         <svg
           className="absolute inset-0 z-20 pointer-events-none"
           style={{ width: '100%', height: '100%' }}

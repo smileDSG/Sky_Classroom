@@ -44,6 +44,10 @@ export function Whiteboard({ isOpen, onClose }: WhiteboardProps) {
   // Drawing state
   const userElements = useUserWhiteboardStore.use.userElements();
   const activeTool = useUserWhiteboardStore.use.activeTool();
+  const editingTextId = useUserWhiteboardStore.use.editingTextId();
+  const setEditingTextId = useUserWhiteboardStore.use.setEditingTextId();
+  const updateTextContent = useUserWhiteboardStore.use.updateTextContent();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -61,6 +65,13 @@ export function Whiteboard({ isOpen, onClose }: WhiteboardProps) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOpen]);
+
+  // Auto-focus textarea when entering text edit mode
+  useEffect(() => {
+    if (editingTextId && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [editingTextId]);
 
   const DRAW_W = 1000;
   const DRAW_H = 562.5;
@@ -206,7 +217,56 @@ export function Whiteboard({ isOpen, onClose }: WhiteboardProps) {
 
               {/* User-drawn elements */}
               <div className="absolute inset-0 z-[126] pointer-events-none" style={{ width: '100%', height: '100%' }}>
-                {userElements.map((element, index) => {
+                {/* Editing textarea overlay */}
+                {editingTextId && (() => {
+                  const editingEl = userElements.find((e) => e.id === editingTextId) as { id: string; left: number; top: number; width: number; height: number; content: string; defaultColor: string; defaultFontName: string } | undefined;
+                  if (!editingEl) return null;
+                  const fs = useUserWhiteboardStore.getState().fontSize;
+                  const handleCommit = () => {
+                    const el = document.getElementById(`whiteboard-textarea-${editingTextId}`) as HTMLTextAreaElement | null;
+                    if (el) {
+                      const text = el.value;
+                      if (text.trim()) {
+                        updateTextContent(editingTextId, text);
+                      } else {
+                        // Delete empty text element
+                        useUserWhiteboardStore.getState().deleteUserElement(editingTextId);
+                      }
+                    }
+                    setEditingTextId(null);
+                  };
+                  return (
+                    <textarea
+                      id={`whiteboard-textarea-${editingTextId}`}
+                      ref={textareaRef}
+                      className="absolute resize-none outline-none pointer-events-auto"
+                      style={{
+                        left: `${(editingEl.left / DRAW_W) * 100}%`,
+                        top: `${(editingEl.top / DRAW_H) * 100}%`,
+                        width: `${(editingEl.width / DRAW_W) * 100}%`,
+                        height: `${(editingEl.height / DRAW_H) * 100}%`,
+                        fontSize: `${fs}px`,
+                        color: editingEl.defaultColor,
+                        fontFamily: editingEl.defaultFontName,
+                        background: 'transparent',
+                        border: '1px solid #6366f1',
+                        borderRadius: '4px',
+                        padding: '8px',
+                        lineHeight: '1.5',
+                        overflow: 'auto',
+                      }}
+                      defaultValue={editingEl.content || ''}
+                      onBlur={handleCommit}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          e.preventDefault();
+                          handleCommit();
+                        }
+                      }}
+                    />
+                  );
+                })()}
+                {userElements.filter((e) => e.id !== editingTextId).map((element, index) => {
                   // Calculate bounding box - lines use start/end, others use left/top/width/height
                   const isLine = element.type === 'line';
                   const lineEl = isLine ? (element as { left: number; top: number; start: [number, number]; end: [number, number] }) : null;

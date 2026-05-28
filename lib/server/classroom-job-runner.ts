@@ -63,6 +63,7 @@ export function runClassroomGenerationJob(
           languageDirective: result.languageDirective,
           totalScenes: result.outlines.length,
         },
+        result.topicSummary,
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

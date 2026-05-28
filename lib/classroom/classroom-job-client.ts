@@ -11,6 +11,7 @@ export interface ClassroomJobState {
   totalScenes?: number;
   outlines?: import('@/lib/types/generation').SceneOutline[];
   outlinesMeta?: { languageDirective: string; totalScenes: number };
+  topicSummary?: string;
   result?: { classroomId: string; url: string; scenesCount: number };
   error?: string;
   done: boolean;
