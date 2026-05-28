@@ -8,6 +8,8 @@ import { SettingsDialog } from '@/components/settings';
 import { UpgradeDialog } from '@/components/billing/upgrade-dialog';
 import { SkyTabBar } from './sky-tab-bar';
 import { BackgroundTasksIndicator } from './background-tasks-indicator';
+import { useAuth } from '@/components/auth/auth-provider';
+import { BetaChrome } from '@/components/beta/beta-chrome';
 import Link from 'next/link';
 
 interface SkyAppShellProps {
@@ -94,6 +96,7 @@ function AnimatedLogo() {
 }
 
 export function SkyAppShell({ children }: SkyAppShellProps) {
+  const { user, refresh } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -138,7 +141,13 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
 
       <BackgroundTasksIndicator />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <UpgradeDialog open={upgradeOpen} onClose={() => setUpgradeOpen(false)} currentPlan="free" />
+      <UpgradeDialog
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        currentPlan={user?.planType ?? 'free'}
+        onPlanChanged={refresh}
+      />
+      <BetaChrome />
     </div>
   );
 }
