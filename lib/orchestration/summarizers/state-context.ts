@@ -99,6 +99,11 @@ export function buildStateContext(storeState: StatelessChatRequest['storeState']
 
   const lines: string[] = [];
 
+  // CRITICAL: Prevent the model from reciting slide content as a script
+  lines.push(
+    '⚠️ This is BACKGROUND CONTEXT only. The student is talking to you directly — respond to THEIR message, do NOT describe or lecture about these slides. Only mention slide elements if the student explicitly asks about them or if they are directly relevant to answering a question.',
+  );
+
   // Mode
   lines.push(`Mode: ${mode}`);
 
@@ -124,10 +129,10 @@ export function buildStateContext(storeState: StatelessChatRequest['storeState']
         `Current scene: "${currentScene.title}" (${currentScene.type}, id: ${currentSceneId})`,
       );
 
-      // Slide scene: include element details
+      // Slide scene: only show element count (do NOT list details — model may recite them)
       if (currentScene.content.type === 'slide') {
         const elements = currentScene.content.canvas.elements;
-        lines.push(`Current slide elements (${elements.length}):\n${summarizeElements(elements)}`);
+        lines.push(`Slide has ${elements.length} elements (not listed to avoid influencing your response)`);
       }
 
       // Quiz scene: include question summary
@@ -161,9 +166,7 @@ export function buildStateContext(storeState: StatelessChatRequest['storeState']
   if (stage?.whiteboard && stage.whiteboard.length > 0) {
     const lastWb = stage.whiteboard[stage.whiteboard.length - 1];
     const wbElements = lastWb.elements || [];
-    lines.push(
-      `Whiteboard (last of ${stage.whiteboard.length}, ${wbElements.length} elements):\n${summarizeElements(wbElements)}`,
-    );
+    lines.push(`Whiteboard has ${wbElements.length} elements (not listed to avoid influencing your response)`);
     const conflictsText = buildWhiteboardConflicts(wbElements);
     if (conflictsText) lines.push(conflictsText);
   }

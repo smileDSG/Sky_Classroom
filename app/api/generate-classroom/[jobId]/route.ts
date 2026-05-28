@@ -51,6 +51,10 @@ export async function GET(req: NextRequest, context: { params: Promise<{ jobId: 
       response.outlinesMeta = job.outlinesMeta;
     }
 
+    if (job.topicSummary) {
+      response.topicSummary = job.topicSummary;
+    }
+
     return apiSuccess(response);
   } catch (error) {
     log.error(`Classroom job retrieval failed [jobId=${resolvedJobId ?? 'unknown'}]:`, error);

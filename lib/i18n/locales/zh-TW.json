@@ -71,6 +71,7 @@
     "unknown": "未知",
     "stopDiscussion": "結束討論",
     "endQA": "結束問答",
+    "deleteSession": "刪除會話",
     "tabs": {
       "lecture": "筆記",
       "chat": "對話"

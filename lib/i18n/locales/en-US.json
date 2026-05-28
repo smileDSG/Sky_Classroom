@@ -71,6 +71,7 @@
     "unknown": "Unknown",
     "stopDiscussion": "Stop Discussion",
     "endQA": "End Q&A",
+    "deleteSession": "Delete Session",
     "tabs": {
       "lecture": "Notes",
       "chat": "Chat"

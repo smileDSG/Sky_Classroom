@@ -93,6 +93,7 @@ export default function HomePage() {
   interface JobCardState {
     jobId: string;
     topic: string;
+    topicSummary?: string;
     phase: 'submitting' | 'generating_outline' | 'reviewing' | 'generating_slides' | 'done';
     step: string;
     progress: number;
@@ -184,6 +185,7 @@ export default function HomePage() {
                 progress: data.progress,
                 outlines: data.outlines ?? existing.outlines,
                 outlinesMeta: data.outlinesMeta ?? existing.outlinesMeta,
+                topicSummary: data.topicSummary ?? existing.topicSummary,
               },
             };
           });
@@ -286,6 +288,7 @@ export default function HomePage() {
               progress: data.progress,
               outlines: data.outlines ?? undefined,
               outlinesMeta: data.outlinesMeta ?? undefined,
+              topicSummary: data.topicSummary,
             },
           }));
 
@@ -737,7 +740,7 @@ export default function HomePage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-sky-700 dark:text-sky-300 truncate">
-                        {job.topic}
+                        {job.topicSummary || job.topic}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {job.phase === 'reviewing'

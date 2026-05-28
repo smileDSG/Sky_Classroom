@@ -71,6 +71,7 @@
     "unknown": "غير معروف",
     "stopDiscussion": "إيقاف النقاش",
     "endQA": "إنهاء الأسئلة والأجوبة",
+    "deleteSession": "حذف الجلسة",
     "tabs": {
       "lecture": "الملاحظات",
       "chat": "المحادثة"

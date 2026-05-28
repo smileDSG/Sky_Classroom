@@ -30,6 +30,7 @@ export interface ClassroomGenerationJob {
     pdfTextLength: number;
     pdfImageCount: number;
   };
+  topicSummary?: string;
   scenesGenerated: number;
   totalScenes?: number;
   outlines?: import('@/lib/types/generation').SceneOutline[];
@@ -296,6 +297,7 @@ export async function markClassroomGenerationJobAwaitingReview(
   jobId: string,
   outlines: import('@/lib/types/generation').SceneOutline[],
   outlinesMeta: { languageDirective: string; totalScenes: number },
+  topicSummary?: string,
 ): Promise<ClassroomGenerationJob> {
   return updateClassroomGenerationJob(jobId, {
     status: 'awaiting_review',
@@ -305,6 +307,7 @@ export async function markClassroomGenerationJobAwaitingReview(
     outlines,
     outlinesMeta,
     totalScenes: outlines.length,
+    topicSummary,
   });
 }
 

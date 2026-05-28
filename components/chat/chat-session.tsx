@@ -7,7 +7,7 @@ import type { UIMessage } from 'ai';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { AvatarDisplay } from '@/components/ui/avatar-display';
-import { CircleStop, CircleX } from 'lucide-react';
+import { CircleStop, CircleX, Trash2 } from 'lucide-react';
 import { InlineActionTag } from './inline-action-tag';
 import { useUserProfileStore } from '@/lib/store/user-profile';
 
@@ -25,6 +25,7 @@ interface ChatSessionProps {
   readonly isStreaming?: boolean;
   readonly activeBubbleId?: string | null;
   readonly onEndSession?: (sessionId: string) => void;
+  readonly onDeleteSession?: (sessionId: string) => void;
 }
 
 const AVATARS = {
@@ -116,6 +117,7 @@ export function ChatSessionComponent({
   isStreaming,
   activeBubbleId,
   onEndSession,
+  onDeleteSession,
 }: ChatSessionProps) {
   const { t } = useI18n();
   const userProfileAvatar = useUserProfileStore((s) => s.avatar);
@@ -309,6 +311,26 @@ export function ChatSessionComponent({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 dark:bg-red-400" />
             </span>
             {endButtonText}
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Session Button */}
+      <AnimatePresence>
+        {!canEnd && onDeleteSession && (
+          <motion.button
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            whileHover={{ scale: 1.02 }}
+            onClick={() => onDeleteSession(session.id)}
+            className="mt-1 mb-2 mx-2 bg-slate-100 dark:bg-slate-800/60
+              text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700/50
+              px-3 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-2
+              transition-all hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {t('chat.deleteSession')}
           </motion.button>
         )}
       </AnimatePresence>

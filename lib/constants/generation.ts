@@ -10,4 +10,4 @@ export const MAX_PDF_CONTENT_CHARS = 50000;
 export const MAX_VISION_IMAGES = 20;
 
 // Maximum concurrent scene generation calls (limits parallel AI API requests)
-export const GENERATION_CONCURRENCY = 4;
+export const GENERATION_CONCURRENCY = 6;
