@@ -1,0 +1,128 @@
+TOPIC: 勾股定理
+LENGTH: 2681
+
+--- RAW OUTPUT ---
+[
+  {
+    "styleName": "深海学术",
+    "paletteId": "midnight-executive",
+    "fontId": "cambria-calibri",
+    "motif": "geometric-lines",
+    "density": "moderate",
+    "recommended": true,
+    "mood": "严谨理性",
+    "bestFor": ["数学"]
+  },
+  {
+    "styleName": "墨韵书香",
+    "paletteId": "classical-chinese",
+    "fontId": "cambria-calibri",
+    "motif": "ink-wash",
+    "density": "sparse",
+    "recommended": false,
+    "mood": "古典雅致",
+    "bestFor": ["历史"]
+  },
+  {
+    "styleName": "翠林微光",
+    "paletteId": "forest-moss",
+    "fontId": "calibri-light",
+    "motif": "organic-circles",
+    "density": "moderate",
+    "recommended": false,
+    "mood": "自然清新",
+    "bestFor": ["生物"]
+  },
+  {
+    "styleName": "炽热活力",
+    "paletteId": "coral-energy",
+    "fontId": "impact-arial",
+    "motif": "geometric-lines",
+    "density": "rich",
+    "recommended": false,
+    "mood": "热情动感",
+    "bestFor": ["体育"]
+  },
+  {
+    "styleName": "陶土暖韵",
+    "paletteId": "warm-terracotta",
+    "fontId": "calibri-light",
+    "motif": "organic-circles",
+    "density": "sparse",
+    "recommended": false,
+    "mood": "温暖质朴",
+    "bestFor": ["地理"]
+  },
+  {
+    "styleName": "深海科技",
+    "paletteId": "ocean-gradient",
+    "fontId": "arial-black-arial",
+    "motif": "neon-grid",
+    "density": "rich",
+    "recommended": false,
+    "mood": "深邃未来",
+    "bestFor": ["物理"]
+  },
+  {
+    "styleName": "极简炭灰",
+    "paletteId": "charcoal-minimal",
+    "fontId": "georgia-calibri",
+    "motif": "geometric-lines",
+    "density": "sparse",
+    "recommended": false,
+    "mood": "冷静现代",
+    "bestFor": ["设计"]
+  },
+  {
+    "styleName": "清泉碧波",
+    "paletteId": "teal-trust",
+    "fontId": "calibri-light",
+    "motif": "organic-circles",
+    "density": "moderate",
+    "recommended": false,
+    "mood": "清新信任",
+    "bestFor": ["化学"]
+  },
+  {
+    "styleName": "浆果柔雾",
+    "paletteId": "berry-cream",
+    "fontId": "georgia-calibri",
+    "motif": "ink-wash",
+    "density": "sparse",
+    "recommended": false,
+    "mood": "柔美文艺",
+    "bestFor": ["文学"]
+  },
+  {
+    "styleName": "青苔石径",
+    "paletteId": "sage-calm",
+    "fontId": "calibri-light",
+    "motif": "organic-circles",
+    "density": "moderate",
+    "recommended": false,
+    "mood": "宁静治愈",
+    "bestFor": ["环境科学"]
+  },
+  {
+    "styleName": "红白烈焰",
+    "paletteId": "cherry-bold",
+    "fontId": "impact-arial",
+    "motif": "geometric-lines",
+    "density": "rich",
+    "recommended": false,
+    "mood": "强烈冲击",
+    "bestFor": ["政治"]
+  },
+  {
+    "styleName": "暗金赛博",
+    "paletteId": "tech-dark-cn",
+    "fontId": "arial-black-arial",
+    "motif": "neon-grid",
+    "density": "rich",
+    "recommended": false,
+    "mood": "科技冷峻",
+    "bestFor": ["信息技术"]
+  }
+]
+
+--- END ---

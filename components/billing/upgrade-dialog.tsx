@@ -14,9 +14,10 @@ interface UpgradeDialogProps {
   open: boolean;
   onClose: () => void;
   currentPlan: PlanType;
+  onPlanChanged?: () => void;
 }
 
-export function UpgradeDialog({ open, onClose, currentPlan }: UpgradeDialogProps) {
+export function UpgradeDialog({ open, onClose, currentPlan, onPlanChanged }: UpgradeDialogProps) {
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState('');
@@ -45,6 +46,7 @@ export function UpgradeDialog({ open, onClose, currentPlan }: UpgradeDialogProps
       const payRes = await fetch(json.mockPayUrl, { method: 'POST', credentials: 'include' });
       if (payRes.ok) {
         setMessage('Payment successful! Plan upgraded.');
+        onPlanChanged?.();
         setTimeout(onClose, 2000);
       } else {
         setMessage('Payment failed');

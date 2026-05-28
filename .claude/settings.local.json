@@ -139,7 +139,12 @@
       "Bash(python3 *)",
       "Bash(findstr \"page\\\\.tsx\")",
       "Bash(findstr /V \"settings\")",
-      "Bash(findstr /n \"classroomOutlines\" app\\\\page.tsx)"
+      "Bash(findstr /n \"classroomOutlines\" app\\\\page.tsx)",
+      "Bash(awk '{added=$1; deleted=$2; if\\(added+0 > deleted+0\\) print \"+\" added, $3; else print \"-\" deleted, $3}')",
+      "Bash(Select-String -Pattern \"error TS\")",
+      "Bash(npm -v)",
+      "Bash(Test-Path *)",
+      "Bash(findstr /C:\"ProsemirrorEditor\" /C:\"TextElement\" /C:\"useSelectElement\" /C:\"lodash-replacements\")"
     ]
   }
 }

@@ -128,9 +128,6 @@ importers:
       katex:
         specifier: ^0.16.33
         version: 0.16.38
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.23
       lucide-react:
         specifier: ^0.562.0
         version: 0.562.0(react@19.2.3)
@@ -294,9 +291,6 @@ importers:
       '@types/katex':
         specifier: ^0.16.8
         version: 0.16.8
-      '@types/lodash':
-        specifier: ^4.17.23
-        version: 4.17.24
       '@types/node':
         specifier: ^20
         version: 20.19.37
@@ -3644,9 +3638,6 @@ packages:
 
   '@types/katex@0.16.8':
     resolution: {integrity: sha512-trgaNyfU+Xh2Tc+ABIb44a5AYUpicB3uwirOioeOkNPPbmgRNtcWyDeeFRzjPZENO9Vq8gvVqfhaaXWLlevVwg==}
-
-  '@types/lodash@4.17.24':
-    resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
 
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
@@ -13148,8 +13139,6 @@ snapshots:
   '@types/json5@0.0.29': {}
 
   '@types/katex@0.16.8': {}
-
-  '@types/lodash@4.17.24': {}
 
   '@types/mdast@4.0.4':
     dependencies:

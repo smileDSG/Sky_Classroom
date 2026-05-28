@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { HeaderControls } from '@/components/sky/home/header-controls';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
@@ -10,7 +10,9 @@ import { SkyTabBar } from './sky-tab-bar';
 import { BackgroundTasksIndicator } from './background-tasks-indicator';
 import { useAuth } from '@/components/auth/auth-provider';
 import { BetaChrome } from '@/components/beta/beta-chrome';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { CheckCircle2, Sparkles } from 'lucide-react';
 
 interface SkyAppShellProps {
   children: React.ReactNode;
@@ -100,12 +102,52 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [checkedIn, setCheckedIn] = useState(false);
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [streakDays, setStreakDays] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Check today's check-in status
+  useEffect(() => {
+    if (!user) return;
+
+    fetch('/api/sky/learning-stats', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success) {
+          setCheckedIn(data.checkedInToday || false);
+          setStreakDays(data.streakDays || 0);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
+
+  const handleCheckIn = useCallback(async () => {
+    if (!user || checkedIn || checkingIn) return;
+
+    setCheckingIn(true);
+    try {
+      const res = await fetch('/api/sky/check-in', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json();
+
+      if (data?.success) {
+        setCheckedIn(true);
+        setStreakDays(data.streakDays || 0);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setCheckingIn(false);
+    }
+  }, [user, checkedIn, checkingIn]);
 
   return (
     <div className="flex h-screen w-full flex-col relative">
@@ -128,6 +170,24 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
         </div>
 
         <div className="flex items-center justify-end gap-3">
+          {/* Check-in Button - Only show when logged in and not checked in */}
+          {user && !checkedIn && (
+            <Button
+              size="sm"
+              onClick={handleCheckIn}
+              disabled={checkingIn}
+              className="hidden md:flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg shadow-rose-500/25"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              {checkingIn ? '打卡中...' : '今日打卡'}
+            </Button>
+          )}
+          {user && checkedIn && (
+            <div className="hidden md:flex items-center gap-1.5 text-sm text-rose-500 font-medium">
+              <Sparkles className="h-4 w-4" />
+              <span>{streakDays > 0 ? `${streakDays} 天` : '已打卡'}</span>
+            </div>
+          )}
           <HeaderControls />
           <div className="h-5 w-px bg-slate-200 dark:bg-slate-700" />
           <FloatingUserCard

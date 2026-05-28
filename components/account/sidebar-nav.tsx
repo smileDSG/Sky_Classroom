@@ -4,11 +4,12 @@
 
 'use client';
 
-import { User, CreditCard, Shield } from 'lucide-react';
+import { User, CreditCard, Shield, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SECTIONS = [
   { key: 'profile', icon: User, labelKey: 'profileSection' },
+  { key: 'personalization', icon: Sparkles, labelKey: 'personalizationSection' },
   { key: 'account', icon: CreditCard, labelKey: 'accountSection' },
   { key: 'security', icon: Shield, labelKey: 'securitySection' },
 ] as const;

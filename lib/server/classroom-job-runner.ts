@@ -14,7 +14,7 @@ import {
   readClassroomGenerationJob,
   savePhaseOneResult,
   updateClassroomGenerationJobProgress,
-} from '@/lib/server/classroom-job-store';
+} from '@/lib/server/classroom-job-store-hybrid';
 
 async function assertNotCancelled(jobId: string): Promise<void> {
   const job = await readClassroomGenerationJob(jobId);

@@ -22,14 +22,32 @@ export async function submitClassroomJob(body: Record<string, unknown>): Promise
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error('提交课堂生成作业失败');
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const body = await res.json();
+      detail = body.error ?? body.details ?? '';
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail || '提交课堂生成作业失败');
+  }
   const json = await res.json();
   return json.data?.jobId ?? json.jobId;
 }
 
 export async function fetchClassroomJob(jobId: string): Promise<ClassroomJobState> {
   const res = await fetch(`/api/generate-classroom/${jobId}`);
-  if (!res.ok) throw new Error(`作业查询失败 (${res.status})`);
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const body = await res.json();
+      detail = body.error ?? body.details ?? '';
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail || `作业查询失败 (${res.status})`);
+  }
   const json = await res.json();
   return (json.data ?? json) as ClassroomJobState;
 }
@@ -43,7 +61,16 @@ export async function pollClassroomJob(
 
   while (!signal.aborted) {
     const res = await fetch(pollUrl, { signal });
-    if (!res.ok) throw new Error(`作业查询失败 (${res.status})`);
+    if (!res.ok) {
+      let detail = '';
+      try {
+        const body = await res.json();
+        detail = body.error ?? body.details ?? '';
+      } catch {
+        /* ignore */
+      }
+      throw new Error(detail || `作业查询失败 (${res.status})`);
+    }
 
     const json = await res.json();
     const data = (json.data ?? json) as ClassroomJobState;
@@ -67,7 +94,16 @@ export async function cancelClassroomJob(jobId: string): Promise<void> {
   const res = await fetch(`/api/generate-classroom/${jobId}/cancel`, {
     method: 'POST',
   });
-  if (!res.ok) throw new Error('取消生成失败');
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const body = await res.json();
+      detail = body.error ?? body.details ?? '';
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail || '取消生成失败');
+  }
 }
 
 export async function approveClassroomOutline(
@@ -79,5 +115,14 @@ export async function approveClassroomOutline(
     headers: { 'Content-Type': 'application/json' },
     body: outlines?.length ? JSON.stringify({ outlines }) : undefined,
   });
-  if (!res.ok) throw new Error('审阅提交失败');
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const body = await res.json();
+      detail = body.error ?? body.details ?? '';
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail || `审阅提交失败 (${res.status})`);
+  }
 }

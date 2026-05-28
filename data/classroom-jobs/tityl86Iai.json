@@ -1,0 +1,523 @@
+{
+  "id": "tityl86Iai",
+  "status": "running",
+  "step": "generating_scenes",
+  "progress": 43,
+  "message": "Generating scene 3/9: 探索抛物线：a、b、c 的作用",
+  "createdAt": "2026-05-28T02:48:55.810Z",
+  "updatedAt": "2026-05-28T02:50:07.248Z",
+  "inputSummary": {
+    "requirementPreview": "二次函数专题\n\n课程目标：探索二次方程、抛物线、顶点式及其实际应用\n\n大纲：\n第1幕：Introduction to Quadratics — What is a quadratic function?\n第2幕：Standard Form — y = ax² + bx + c\n第3幕：Vertex Form — y = a(x-h)² + k\n第4幕：Graphing Practice — ...",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 2,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-05-28T02:48:55.840Z",
+  "totalScenes": 9,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "什么是二次函数？",
+        "description": "引入二次函数的概念，解释其定义和与现实世界的关系，激发学习兴趣。",
+        "keyPoints": [
+          "二次函数是形如 y = ax² + bx + c 的函数（a ≠ 0）。",
+          "二次函数的图像是一条称为'抛物线'的曲线。",
+          "现实生活中的例子：抛射物体的轨迹、拱桥的形状。"
+        ],
+        "teachingObjective": "理解二次函数的基本定义和现实意义。",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "标准形式：y = ax² + bx + c",
+        "description": "深入讲解二次函数的标准形式、各项参数的含义以及开口方向。",
+        "keyPoints": [
+          "标准形式：y = ax² + bx + c。",
+          "系数 a 决定抛物线的开口方向：a > 0 开口向上，a < 0 开口向下。",
+          "c 是 y 轴截距，代表抛物线与 y 轴的交点。",
+          "对称轴公式：x = -b / (2a)。"
+        ],
+        "teachingObjective": "掌握标准形式中参数 a、b、c 的几何意义。",
+        "estimatedDuration": 150,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "探索抛物线：a、b、c 的作用",
+        "description": "通过交互式模拟器，让学习者调整参数 a、b、c，实时观察抛物线形状的变化，深化对标准形式的理解。",
+        "keyPoints": [
+          "拖动滑块改变参数。",
+          "观察开口方向、宽度、位置如何随参数变化。",
+          "尝试找出使抛物线经过特定点的参数组合。"
+        ],
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "二次函数标准形式 y = ax² + bx + c 的图像与参数关系",
+          "keyVariables": [
+            {
+              "name": "a",
+              "range": [
+                -3,
+                3
+              ],
+              "step": 0.1,
+              "default": 1
+            },
+            {
+              "name": "b",
+              "range": [
+                -5,
+                5
+              ],
+              "step": 0.5,
+              "default": 0
+            },
+            {
+              "name": "c",
+              "range": [
+                -5,
+                5
+              ],
+              "step": 0.5,
+              "default": 0
+            }
+          ]
+        },
+        "estimatedDuration": 180,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "顶点式：y = a(x-h)² + k",
+        "description": "介绍顶点式及其优势，解释参数 (h, k) 代表抛物线顶点的坐标。",
+        "keyPoints": [
+          "顶点式：y = a(x-h)² + k。",
+          "(h, k) 是抛物线的顶点（最高点或最低点）。",
+          "与标准形式的关系：可以通过配方法相互转换。",
+          "可以直接从顶点式读出对称轴：x = h。"
+        ],
+        "teachingObjective": "理解顶点式的形式和顶点的几何意义。",
+        "estimatedDuration": 120,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "图解抛物线：描点法",
+        "description": "讲解使用描点法绘制抛物线图像的步骤，如求顶点、对称轴和选取对称点。",
+        "keyPoints": [
+          "步骤 1：确定抛物线开口方向和顶点。",
+          "步骤 2：确定对称轴。",
+          "步骤 3：以顶点为中心，左右对称取点。",
+          "步骤 4：将点连成平滑的曲线。"
+        ],
+        "teachingObjective": "学会用描点法绘制简单的抛物线。",
+        "estimatedDuration": 150,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "quiz",
+        "title": "二次函数小测验",
+        "description": "通过选择题和填空题，检验学习者对二次函数基本概念、参数意义和图像特征的理解。",
+        "keyPoints": [
+          "覆盖标准形式与顶点式的核心概念。",
+          "检验对参数 a、c 和顶点坐标的理解。",
+          "包含对开口方向和对称轴的判断。"
+        ],
+        "quizConfig": {
+          "questionCount": 4,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ],
+          "questions": [
+            {
+              "type": "single",
+              "question": "二次函数 y = -2x² + 3 的开口方向是？",
+              "options": [
+                "向上",
+                "向下"
+              ],
+              "answer": "向下"
+            },
+            {
+              "type": "single",
+              "question": "抛物线 y = 3(x - 1)² + 2 的顶点坐标是？",
+              "options": [
+                "(1, 2)",
+                "(-1, 2)",
+                "(1, -2)",
+                "(-1, -2)"
+              ],
+              "answer": "(1, 2)"
+            },
+            {
+              "type": "single",
+              "question": "函数 y = x² + 2x + 1 与 y 轴的交点坐标是？",
+              "options": [
+                "(0, 1)",
+                "(1, 0)",
+                "(0, 0)"
+              ],
+              "answer": "(0, 1)"
+            },
+            {
+              "type": "short_answer",
+              "question": "写出二次函数 y = x² -4x + 3 的对称轴方程（如 x = 2，则输入 x=2）",
+              "answer": "x=2"
+            }
+          ]
+        },
+        "estimatedDuration": 200,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "二次函数的应用",
+        "description": "展示二次函数在物理、工程和商业中的经典应用案例，如最大利润问题和抛体运动。",
+        "keyPoints": [
+          "物理：抛体运动的轨迹（高度与时间的关系）。",
+          "工程：桥梁拱形和天线反射面的形状。",
+          "商业：通过二次函数模型求最大利润或最小成本。"
+        ],
+        "teachingObjective": "了解二次函数的实际应用，建立理论与现实的连接。",
+        "estimatedDuration": 90,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "pbl",
+        "title": "项目挑战：设计一个游乐场滑梯",
+        "description": "一个综合性的项目式学习任务，要求学生运用二次函数知识设计一个符合安全与刺激要求的抛物线形滑水道。",
+        "keyPoints": [
+          "将二次函数应用于工程设计。",
+          "团队协作，使用顶点式和标准式。",
+          "基于给定的约束条件（起点高度、落点位置）进行优化。"
+        ],
+        "teachingObjective": "综合运用二次函数的图像和表达式解决一个开放性的设计问题。",
+        "estimatedDuration": 900,
+        "order": 8,
+        "pblConfig": {
+          "projectTopic": "设计一个抛物线滑水道",
+          "projectDescription": "你是一个游乐场设计师。你需要用二次函数为孩子们设计一段抛物线形滑水道。滑水道起点高度为 5 米，安全落水点距离起点的水平距离为 8 米。你需要确定抛物线的方程，并解释你的设计如何确保安全又有趣。",
+          "targetSkills": [
+            "将实际问题转化为二次函数模型",
+            "根据约束条件求解二次函数参数",
+            "将数学表达与物理意义对应",
+            "团队合作与汇报展示"
+          ],
+          "issueCount": 3
+        }
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "课程总结",
+        "description": "回顾本课程的关键知识点，总结二次函数的三种表达形式和相互关系。",
+        "keyPoints": [
+          "二次函数的标准形式、顶点式和交点式。",
+          "参数 a 控制开口和宽度，h、k 控制位置。",
+          "核心技能：绘图、理解参数、实际问题建模。"
+        ],
+        "estimatedDuration": 60,
+        "order": 9
+      }
+    ],
+    "languageDirective": "使用简体中文作为教学语言。所有教学内容、解释、示例和评估问题均使用中文。数学术语如'quadratic function'、'parabola'、'vertex form'等使用中文翻译'二次函数'、'抛物线'、'顶点式'。在首次介绍术语时，可以附带英文原文以作参考，但核心教学和交流始终使用中文。",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "BNignEQaAp",
+      "name": "什么是二次函数？",
+      "languageDirective": "使用简体中文作为教学语言。所有教学内容、解释、示例和评估问题均使用中文。数学术语如'quadratic function'、'parabola'、'vertex form'等使用中文翻译'二次函数'、'抛物线'、'顶点式'。在首次介绍术语时，可以附带英文原文以作参考，但核心教学和交流始终使用中文。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1779936560364,
+      "updatedAt": 1779936560364,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "二次函数专题\n\n课程目标：探索二次方程、抛物线、顶点式及其实际应用\n\n大纲：\n第1幕：Introduction to Quadratics — What is a quadratic function?\n第2幕：Standard Form — y = ax² + bx + c\n第3幕：Vertex Form — y = a(x-h)² + k\n第4幕：Graphing Practice — Plot parabolas\n第5幕：Quiz — Test your understanding",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "什么是二次函数？",
+      "description": "引入二次函数的概念，解释其定义和与现实世界的关系，激发学习兴趣。",
+      "keyPoints": [
+        "二次函数是形如 y = ax² + bx + c 的函数（a ≠ 0）。",
+        "二次函数的图像是一条称为'抛物线'的曲线。",
+        "现实生活中的例子：抛射物体的轨迹、拱桥的形状。"
+      ],
+      "teachingObjective": "理解二次函数的基本定义和现实意义。",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "标准形式：y = ax² + bx + c",
+      "description": "深入讲解二次函数的标准形式、各项参数的含义以及开口方向。",
+      "keyPoints": [
+        "标准形式：y = ax² + bx + c。",
+        "系数 a 决定抛物线的开口方向：a > 0 开口向上，a < 0 开口向下。",
+        "c 是 y 轴截距，代表抛物线与 y 轴的交点。",
+        "对称轴公式：x = -b / (2a)。"
+      ],
+      "teachingObjective": "掌握标准形式中参数 a、b、c 的几何意义。",
+      "estimatedDuration": 150,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "探索抛物线：a、b、c 的作用",
+      "description": "通过交互式模拟器，让学习者调整参数 a、b、c，实时观察抛物线形状的变化，深化对标准形式的理解。",
+      "keyPoints": [
+        "拖动滑块改变参数。",
+        "观察开口方向、宽度、位置如何随参数变化。",
+        "尝试找出使抛物线经过特定点的参数组合。"
+      ],
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "二次函数标准形式 y = ax² + bx + c 的图像与参数关系",
+        "keyVariables": [
+          {
+            "name": "a",
+            "range": [
+              -3,
+              3
+            ],
+            "step": 0.1,
+            "default": 1
+          },
+          {
+            "name": "b",
+            "range": [
+              -5,
+              5
+            ],
+            "step": 0.5,
+            "default": 0
+          },
+          {
+            "name": "c",
+            "range": [
+              -5,
+              5
+            ],
+            "step": 0.5,
+            "default": 0
+          }
+        ]
+      },
+      "estimatedDuration": 180,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "顶点式：y = a(x-h)² + k",
+      "description": "介绍顶点式及其优势，解释参数 (h, k) 代表抛物线顶点的坐标。",
+      "keyPoints": [
+        "顶点式：y = a(x-h)² + k。",
+        "(h, k) 是抛物线的顶点（最高点或最低点）。",
+        "与标准形式的关系：可以通过配方法相互转换。",
+        "可以直接从顶点式读出对称轴：x = h。"
+      ],
+      "teachingObjective": "理解顶点式的形式和顶点的几何意义。",
+      "estimatedDuration": 120,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "图解抛物线：描点法",
+      "description": "讲解使用描点法绘制抛物线图像的步骤，如求顶点、对称轴和选取对称点。",
+      "keyPoints": [
+        "步骤 1：确定抛物线开口方向和顶点。",
+        "步骤 2：确定对称轴。",
+        "步骤 3：以顶点为中心，左右对称取点。",
+        "步骤 4：将点连成平滑的曲线。"
+      ],
+      "teachingObjective": "学会用描点法绘制简单的抛物线。",
+      "estimatedDuration": 150,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "quiz",
+      "title": "二次函数小测验",
+      "description": "通过选择题和填空题，检验学习者对二次函数基本概念、参数意义和图像特征的理解。",
+      "keyPoints": [
+        "覆盖标准形式与顶点式的核心概念。",
+        "检验对参数 a、c 和顶点坐标的理解。",
+        "包含对开口方向和对称轴的判断。"
+      ],
+      "quizConfig": {
+        "questionCount": 4,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ],
+        "questions": [
+          {
+            "type": "single",
+            "question": "二次函数 y = -2x² + 3 的开口方向是？",
+            "options": [
+              "向上",
+              "向下"
+            ],
+            "answer": "向下"
+          },
+          {
+            "type": "single",
+            "question": "抛物线 y = 3(x - 1)² + 2 的顶点坐标是？",
+            "options": [
+              "(1, 2)",
+              "(-1, 2)",
+              "(1, -2)",
+              "(-1, -2)"
+            ],
+            "answer": "(1, 2)"
+          },
+          {
+            "type": "single",
+            "question": "函数 y = x² + 2x + 1 与 y 轴的交点坐标是？",
+            "options": [
+              "(0, 1)",
+              "(1, 0)",
+              "(0, 0)"
+            ],
+            "answer": "(0, 1)"
+          },
+          {
+            "type": "short_answer",
+            "question": "写出二次函数 y = x² -4x + 3 的对称轴方程（如 x = 2，则输入 x=2）",
+            "answer": "x=2"
+          }
+        ]
+      },
+      "estimatedDuration": 200,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "二次函数的应用",
+      "description": "展示二次函数在物理、工程和商业中的经典应用案例，如最大利润问题和抛体运动。",
+      "keyPoints": [
+        "物理：抛体运动的轨迹（高度与时间的关系）。",
+        "工程：桥梁拱形和天线反射面的形状。",
+        "商业：通过二次函数模型求最大利润或最小成本。"
+      ],
+      "teachingObjective": "了解二次函数的实际应用，建立理论与现实的连接。",
+      "estimatedDuration": 90,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "pbl",
+      "title": "项目挑战：设计一个游乐场滑梯",
+      "description": "一个综合性的项目式学习任务，要求学生运用二次函数知识设计一个符合安全与刺激要求的抛物线形滑水道。",
+      "keyPoints": [
+        "将二次函数应用于工程设计。",
+        "团队协作，使用顶点式和标准式。",
+        "基于给定的约束条件（起点高度、落点位置）进行优化。"
+      ],
+      "teachingObjective": "综合运用二次函数的图像和表达式解决一个开放性的设计问题。",
+      "estimatedDuration": 900,
+      "order": 8,
+      "pblConfig": {
+        "projectTopic": "设计一个抛物线滑水道",
+        "projectDescription": "你是一个游乐场设计师。你需要用二次函数为孩子们设计一段抛物线形滑水道。滑水道起点高度为 5 米，安全落水点距离起点的水平距离为 8 米。你需要确定抛物线的方程，并解释你的设计如何确保安全又有趣。",
+        "targetSkills": [
+          "将实际问题转化为二次函数模型",
+          "根据约束条件求解二次函数参数",
+          "将数学表达与物理意义对应",
+          "团队合作与汇报展示"
+        ],
+        "issueCount": 3
+      }
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "课程总结",
+      "description": "回顾本课程的关键知识点，总结二次函数的三种表达形式和相互关系。",
+      "keyPoints": [
+        "二次函数的标准形式、顶点式和交点式。",
+        "参数 a 控制开口和宽度，h、k 控制位置。",
+        "核心技能：绘图、理解参数、实际问题建模。"
+      ],
+      "estimatedDuration": 60,
+      "order": 9
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "使用简体中文作为教学语言。所有教学内容、解释、示例和评估问题均使用中文。数学术语如'quadratic function'、'parabola'、'vertex form'等使用中文翻译'二次函数'、'抛物线'、'顶点式'。在首次介绍术语时，可以附带英文原文以作参考，但核心教学和交流始终使用中文。",
+    "totalScenes": 9
+  }
+}

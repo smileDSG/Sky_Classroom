@@ -1,15 +1,24 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Zap, Sparkles, Brain } from 'lucide-react';
 import { useTheme } from '@/lib/hooks/use-theme';
+import { useAuth } from '@/components/auth/auth-provider';
 
-const stats = [
-  { label: '今日学习', value: '2.5h', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  { label: '连续打卡', value: '7 天', icon: Sparkles, color: 'text-rose-500', bg: 'bg-rose-500/10' },
-  { label: '知识掌握', value: '68%', icon: Brain, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-];
+interface LearningStats {
+  todayStudyMinutes: number;
+  streakDays: number;
+  masteryPercent: number;
+  checkedInToday?: boolean;
+}
+
+function formatStudyTime(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return m > 0 ? `${h}h${m}m` : `${h}h`;
+}
 
 function getGreeting(isDark: boolean): string {
   const hour = new Date().getHours();
@@ -35,8 +44,57 @@ function getGreetingEmoji(isDark: boolean): string {
 
 export function GreetingSection() {
   const { resolvedTheme } = useTheme();
+  const { user } = useAuth();
   const greeting = useMemo(() => getGreeting(resolvedTheme === 'dark'), [resolvedTheme]);
   const greetingEmoji = useMemo(() => getGreetingEmoji(resolvedTheme === 'dark'), [resolvedTheme]);
+
+  const [stats, setStats] = useState<LearningStats>({
+    todayStudyMinutes: 0,
+    streakDays: 0,
+    masteryPercent: 0,
+  });
+  const [sessionMinutes, setSessionMinutes] = useState(0);
+
+  // Session timer - track time spent on page
+  useEffect(() => {
+    if (!user) return;
+
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 60000);
+      setSessionMinutes(elapsed);
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, [user]);
+
+  // Fetch learning stats
+  useEffect(() => {
+    if (!user) return;
+
+    fetch('/api/sky/learning-stats', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success) {
+          setStats({
+            todayStudyMinutes: data.todayStudyMinutes || 0,
+            streakDays: data.streakDays || 0,
+            masteryPercent: data.masteryPercent || 0,
+          });
+        }
+      })
+      .catch(() => {
+        /* ignore — keep zeros */
+      });
+  }, [user]);
+
+  const displayMinutes = stats.todayStudyMinutes + sessionMinutes;
+
+  const dynamicStats = user ? [
+    { label: '今日学习', value: formatStudyTime(displayMinutes), icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: '连续打卡', value: stats.streakDays > 0 ? `${stats.streakDays} 天` : '—', icon: Sparkles, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+    { label: '知识掌握', value: stats.masteryPercent > 0 ? `${stats.masteryPercent}%` : '—', icon: Brain, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  ] : [];
 
   return (
     <motion.div
@@ -64,30 +122,32 @@ export function GreetingSection() {
         </p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        {stats.map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 + i * 0.05 }}
-              whileHover={{ scale: 1.05, y: -2 }}
-              className="flex items-center gap-3 rounded-xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-3 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-slate-900/30 transition-shadow cursor-default"
-            >
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.bg}`}>
-                <Icon className={`h-4 w-4 ${stat.color}`} />
-              </div>
-              <div>
-                <div className="text-base font-bold text-slate-800 dark:text-slate-100">{stat.value}</div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">{stat.label}</div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+      {/* Quick Stats - Only show when logged in */}
+      {user && dynamicStats.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {dynamicStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 + i * 0.05 }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                className="flex items-center gap-3 rounded-xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-3 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-slate-900/30 transition-shadow cursor-default"
+              >
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.bg}`}>
+                  <Icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
+                <div>
+                  <div className="text-base font-bold text-slate-800 dark:text-slate-100">{stat.value}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{stat.label}</div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </motion.div>
   );
 }
