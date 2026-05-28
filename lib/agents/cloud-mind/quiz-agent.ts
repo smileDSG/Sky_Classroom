@@ -136,7 +136,7 @@ export async function generateQuiz(
   log.info(`Generating quiz: ${subjectLabel} / ${difficultyLabel} / ${count} questions`);
 
   const result = await generateText({
-    model: deepseek('deepseek-chat'),
+    model: deepseek.chat('deepseek-chat'),
     system: QUIZ_AGENT_SYSTEM_PROMPT,
     prompt: userPrompt,
     temperature: 0.8,

@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     // Load student context for personalised responses
     let mistakes = null;
     let graphNodes = null;
+    let solveHistory = null;
     try {
       const dao = await getDAO();
       const result = await dao.list({ pageSize: 9999 });
@@ -66,7 +67,13 @@ export async function POST(req: NextRequest) {
         graphNodes = graph.nodes;
       }
     } catch (err) {
-      log.warn('Failed to load student context, continuing without it:', err);
+      log.warn('Failed to load mistake context, continuing without it:', err);
+    }
+    try {
+      const { listQuestionBankEntries } = await import('@/lib/solve/question-bank');
+      solveHistory = await listQuestionBankEntries(10);
+    } catch (err) {
+      log.warn('Failed to load question bank, continuing without it:', err);
     }
 
     const subj = subject || '数学';
@@ -82,6 +89,7 @@ export async function POST(req: NextRequest) {
         const ctx = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
           mistakes: mistakes,
           graphNodes: graphNodes ?? undefined,
+          solveHistory: solveHistory ?? undefined,
         });
         systemPrompt += '\n\n' + ctx.split('\n').slice(1).join('\n'); // append context without duplicating base
       }
@@ -89,6 +97,7 @@ export async function POST(req: NextRequest) {
       systemPrompt = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
         mistakes: mistakes ?? undefined,
         graphNodes: graphNodes ?? undefined,
+        solveHistory: solveHistory ?? undefined,
       });
     }
 

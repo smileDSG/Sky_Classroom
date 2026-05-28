@@ -197,8 +197,9 @@ export interface QuestionBankRecord {
   problemText: string;
   problemImage?: string; // base64
   answer: string;
-  steps: string[];
-  knowledgePoints: string[];
+  steps: { label: string; content: string; keyPoints?: string[] }[];
+  knowledgePoints: { name: string; description: string; difficulty: string }[];
+  similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string }[];
   agentId: string;
   solvedAt: number;
   verified: boolean;

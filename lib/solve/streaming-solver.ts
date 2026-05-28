@@ -264,21 +264,26 @@ class StepStreamParser {
   private tryFindKnowledge(events: StreamEvent[]): void {
     const idx = this.buffer.indexOf('"knowledgePoints"');
     if (idx === -1) {
-      // Might be after similarQuestions
-      this.state = 'in_similar';
-      return this.tryFindSimilar(events);
+      // Not yet in buffer — stay in in_knowledge to wait for more data
+      // Only skip to similar if we've accumulated enough buffer to be sure
+      // the key is truly missing (e.g., buffer contains "similarQuestions")
+      if (this.buffer.indexOf('"similarQuestions"') !== -1) {
+        this.state = 'in_similar';
+        this.tryFindSimilar(events);
+      }
+      return;
     }
 
     try {
-      const after = this.buffer.substring(idx + 18);
+      const after = this.buffer.substring(idx + 17);
       const bracketIdx = after.indexOf('[');
-      if (bracketIdx === -1) return;
+      if (bracketIdx === -1) return; // wait for more data
       const endIdx = after.indexOf(']', bracketIdx);
 
       if (endIdx !== -1) {
         const arrStr = after.substring(bracketIdx, endIdx + 1);
         const arr = JSON.parse(fixLatexJsonEscapes(arrStr));
-        if (Array.isArray(arr)) {
+        if (Array.isArray(arr) && arr.length > 0) {
           this.knowledge = arr.map((k: any) => ({
             name: k.name || '',
             description: k.description || '',
@@ -286,12 +291,14 @@ class StepStreamParser {
           }));
           events.push({ type: 'knowledge', points: this.knowledge });
         }
+        // Successfully parsed (or empty array) — move to similar
+        this.state = 'in_similar';
+        this.tryFindSimilar(events);
       }
+      // else: end bracket not found, wait for more data
     } catch {
-      // incomplete, will retry with more data
+      // Parse failed — wait for more data, don't transition yet
     }
-    this.state = 'in_similar';
-    this.tryFindSimilar(events);
   }
 
   private tryFindSimilar(events: StreamEvent[]): void {
@@ -357,7 +364,7 @@ class StepStreamParser {
 
   /** Last-resort: try to parse the entire buffer as JSON to extract data */
   private extractFallback(): void {
-    if (this.steps.length > 0 && this.answer) return;
+    if (this.steps.length > 0 && this.answer && this.knowledge.length > 0 && this.similar.length > 0) return;
 
     try {
       // Try to find a valid JSON object in the buffer

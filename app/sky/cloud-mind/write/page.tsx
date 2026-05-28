@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { motion, AnimatePresence } from 'motion/react';
@@ -37,6 +38,7 @@ const TEMPLATES = [
 type WritingState = 'idle' | 'generating' | 'done';
 
 export default function CloudMindWritePage() {
+  const router = useRouter();
   const [topic, setTopic] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('essay');
   const [requirements, setRequirements] = useState('');
@@ -518,10 +520,19 @@ export default function CloudMindWritePage() {
 
                 {/* Footer Stats */}
                 {state === 'done' && (
-                  <div className="flex items-center gap-4 px-6 py-3 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30">
-                    <span className="text-[11px] text-slate-400">字数：{wordCountActual}</span>
-                    <span className="text-[11px] text-slate-400">类型：{GENRES.find((g) => g.id === selectedGenre)?.label}</span>
-                    <span className="text-[11px] text-slate-400">耗时：{elapsed}s</span>
+                  <div className="flex items-center justify-between px-6 py-3 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30">
+                    <div className="flex items-center gap-4">
+                      <span className="text-[11px] text-slate-400">字数：{wordCountActual}</span>
+                      <span className="text-[11px] text-slate-400">类型：{GENRES.find((g) => g.id === selectedGenre)?.label}</span>
+                      <span className="text-[11px] text-slate-400">耗时：{elapsed}s</span>
+                    </div>
+                    <button
+                      onClick={() => router.push(`/sky/cloud-mind/memory?topic=${encodeURIComponent(topic || '写作素材')}&content=${encodeURIComponent(result.slice(0, 2000))}`)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-rose-500 hover:text-rose-600 transition-colors"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      生成记忆卡片
+                    </button>
                   </div>
                 )}
               </div>

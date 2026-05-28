@@ -87,7 +87,7 @@ export async function translateText(
   log.info(`Translating: ${sourceLabel} → ${targetLabel}, length: ${text.length}`);
 
   const result = await generateText({
-    model: deepseek('deepseek-chat'),
+    model: deepseek.chat('deepseek-chat'),
     system: TRANSLATE_AGENT_SYSTEM_PROMPT,
     prompt: userPrompt,
     temperature: 0.3,
@@ -148,7 +148,7 @@ export function streamTranslation(
   log.info(`Streaming translation: ${sourceLabel} → ${targetLabel}`);
 
   const result = streamText({
-    model: deepseek('deepseek-chat'),
+    model: deepseek.chat('deepseek-chat'),
     system: '你是一位专业的多语言翻译专家。请直接输出翻译结果，不要输出任何解释、标注或额外内容。',
     prompt: userPrompt,
     temperature: 0.3,

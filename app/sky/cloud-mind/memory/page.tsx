@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTaskStore } from '@/lib/store/use-task-store';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { motion, AnimatePresence } from 'motion/react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import {
@@ -16,11 +18,13 @@ import {
   CheckCircle2,
   BookOpen,
   Layers,
+  AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { MemoryCardDeck } from '@/lib/agents/cloud-mind/memory-cards-agent';
 
 export default function CloudMindMemoryPage() {
+  const searchParams = useSearchParams();
   const [content, setContent] = useState('');
   const [topic, setTopic] = useState('');
   const [cardCount, setCardCount] = useState(12);
@@ -31,6 +35,37 @@ export default function CloudMindMemoryPage() {
   const [flipped, setFlipped] = useState(false);
   const [studyMode, setStudyMode] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+
+  // Pre-fill from URL query params (e.g., from slides/write/translate)
+  useEffect(() => {
+    const qContent = searchParams.get('content');
+    const qTopic = searchParams.get('topic');
+    if (qContent) setContent(qContent);
+    if (qTopic) setTopic(qTopic);
+  }, [searchParams]);
+
+  // Import from mistakes (错题 → 记忆卡片)
+  const handleImportFromMistakes = () => {
+    const mistakes = useSkyClassroomStore.getState().mistakes;
+    if (mistakes.length === 0) {
+      setError('暂无错题记录，先去做些练习吧');
+      return;
+    }
+    const kpCounts = new Map<string, number>();
+    for (const m of mistakes) {
+      for (const kp of m.knowledgePoints) {
+        kpCounts.set(kp, (kpCounts.get(kp) ?? 0) + 1);
+      }
+    }
+    const sortedKps = [...kpCounts.entries()].sort((a, b) => b[1] - a[1]);
+    const topKps = sortedKps.slice(0, 8);
+    const topicStr = topKps.map(([kp]) => kp).join('、');
+    const contentStr = topKps
+      .map(([kp, count]) => `知识点"${kp}"错误${count}次，典型题目：${mistakes.find(m => m.knowledgePoints.includes(kp))?.problem ?? ''}`)
+      .join('\n\n');
+    setTopic(`错题薄弱点：${topicStr}`);
+    setContent(contentStr);
+  };
 
   // Restore state from background task on mount
   useEffect(() => {
@@ -136,6 +171,23 @@ export default function CloudMindMemoryPage() {
     setFlipped(false);
     setCurrentCard((prev) => (prev + 1) % deck.cards.length);
   };
+
+  // Track memory progress to localStorage
+  const trackFlip = () => {
+    setFlipped(!flipped);
+    if (!flipped && deck) {
+      try {
+        const key = 'memory-progress';
+        const raw = localStorage.getItem(key);
+        const progress = raw ? JSON.parse(raw) : { totalFlipped: 0, topics: {} };
+        progress.totalFlipped = (progress.totalFlipped || 0) + 1;
+        const topicKey = deck.topic || 'unknown';
+        progress.topics[topicKey] = (progress.topics[topicKey] || 0) + 1;
+        progress.lastStudied = Date.now();
+        localStorage.setItem(key, JSON.stringify(progress));
+      } catch { /* ignore */ }
+    }
+  };
   const prevCard = () => {
     if (!deck) return;
     setFlipped(false);
@@ -219,7 +271,17 @@ export default function CloudMindMemoryPage() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">学习内容 / 知识点</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">学习内容 / 知识点</label>
+                <button
+                  type="button"
+                  onClick={handleImportFromMistakes}
+                  className="flex items-center gap-1.5 text-xs font-medium text-rose-500 hover:text-rose-600 transition-colors"
+                >
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  从错题生成
+                </button>
+              </div>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -296,7 +358,7 @@ export default function CloudMindMemoryPage() {
 
                   {/* Card */}
                   <div
-                    onClick={() => setFlipped(!flipped)}
+                    onClick={trackFlip}
                     className="w-full max-w-2xl cursor-pointer perspective-1000"
                   >
                     <motion.div

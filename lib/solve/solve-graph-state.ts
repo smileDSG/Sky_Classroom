@@ -53,6 +53,18 @@ export const SolveGraphAnnotation = Annotation.Root({
     value: (_prev, next) => next,
     default: () => null,
   }),
+  parsedSteps: Annotation<{ label: string; content: string; keyPoints?: string[] }[]>({
+    value: (_prev, next) => next,
+    default: () => [],
+  }),
+  parsedKnowledgePoints: Annotation<{ name: string; description: string; difficulty: string }[]>({
+    value: (_prev, next) => next,
+    default: () => [],
+  }),
+  parsedSimilarQuestions: Annotation<{ problem: string; difficulty: number; knowledgePoint: string }[]>({
+    value: (_prev, next) => next,
+    default: () => [],
+  }),
   gradeResult: Annotation<GradeResult | null>({
     value: (_prev, next) => next,
     default: () => null,

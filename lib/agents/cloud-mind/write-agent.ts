@@ -78,7 +78,7 @@ ${requirements ? `【补充要求】${requirements}` : ''}
   log.info(`Streaming writing: topic="${topic}", genre=${genre}, wordCount=${wordCount}`);
 
   const result = streamText({
-    model: deepseek('deepseek-chat'),
+    model: deepseek.chat('deepseek-chat'),
     system: WRITE_AGENT_SYSTEM_PROMPT,
     prompt: userPrompt,
     temperature: 0.8,

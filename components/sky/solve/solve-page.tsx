@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Sparkles, AlertCircle, RotateCcw, Image as ImageIcon, Wand2, Clock, BookOpen, CheckCircle2 } from 'lucide-react';
+import { Sparkles, AlertCircle, RotateCcw, Image as ImageIcon, Wand2, Clock, BookOpen, CheckCircle2, Plus, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -272,6 +272,7 @@ export function SolvePage() {
   const [streamPhase, setStreamPhase] = useState<StreamPhase>('checking');
   const [showHistory, setShowHistory] = useState(false);
   const [mistakeSaved, setMistakeSaved] = useState(false);
+  const [mistakeBookState, setMistakeBookState] = useState<'idle' | 'prompt' | 'saving' | 'saved' | 'dismissed'>('idle');
   const addMistake = useSkyClassroomStore((s) => s.addMistake);
   const abortRefs = useRef<Map<string, AbortController>>(new Map());
 
@@ -304,6 +305,7 @@ export function SolvePage() {
     } else if (task.status === 'completed' && task.result) {
       setResult(task.result as SolveResult);
       setState('success');
+      setMistakeBookState('prompt');
     } else if (task.status === 'failed') {
       setError(task.error || '解题失败');
       setState('error');
@@ -326,6 +328,7 @@ export function SolvePage() {
       const r = task.result as SolveResult;
       setResult(r);
       setState('success');
+      setMistakeBookState('prompt');
     } else if (task.status === 'failed') {
       setError(task.error || '解题失败');
       setState('error');
@@ -427,6 +430,7 @@ export function SolvePage() {
       setError(null);
       setResult(null);
       setMistakeSaved(false);
+      setMistakeBookState('idle');
       setStreamPhase('checking');
 
       try {
@@ -549,18 +553,46 @@ export function SolvePage() {
     setRecognizedText('');
     setPreviewImage(null);
     setStreamPhase('checking');
+    setMistakeBookState('idle');
   }, [setActiveSolveTask]);
 
   const handleSimilarQuestionClick = useCallback((problem: string) => {
     handleSubmit({ type: 'text', content: problem });
   }, [handleSubmit]);
 
+  const handleSaveToMistakeBook = useCallback(async () => {
+    if (!result) return;
+    setMistakeBookState('saving');
+    try {
+      const res = await fetch('/api/sky/mistakes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          problemText: result.problem,
+          problemImage: result.problemImage,
+          userAnswer: '',
+          correctAnswer: result.solution.answer,
+          errorType: 'concept',
+          knowledgePoints: result.solution.knowledgePoints?.map((kp) => kp.name) ?? [],
+        }),
+      });
+      if (!res.ok) throw new Error('保存失败');
+      setMistakeBookState('saved');
+    } catch {
+      setMistakeBookState('prompt'); // retry allowed
+    }
+  }, [result]);
+
   const handleLoadFromHistory = useCallback((entry: QuestionBankEntry) => {
     const solution: FourPartOutput = {
       answer: entry.answer,
-      steps: [],
-      knowledgePoints: [],
-      similarQuestions: [],
+      steps: entry.steps ?? [],
+      knowledgePoints: (entry.knowledgePoints ?? []).map((kp) => ({
+        name: kp.name,
+        description: kp.description,
+        difficulty: (kp.difficulty as 'easy' | 'medium' | 'hard') ?? 'medium',
+      })),
+      similarQuestions: entry.similarQuestions ?? [],
     };
     setResult({
       problem: entry.problemText,
@@ -569,6 +601,7 @@ export function SolvePage() {
     });
     setRecognizedText(entry.problemText);
     setState('success');
+    setMistakeBookState('idle');
     setShowHistory(false);
   }, []);
 
@@ -782,6 +815,47 @@ export function SolvePage() {
                     </div>
                   )}
                 </>
+              )}
+
+              {/* Mistake book prompt — shown after solve completes */}
+              {state === 'success' && mistakeBookState !== 'idle' && mistakeBookState !== 'dismissed' && (
+                <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <span className="text-sm text-amber-700 dark:text-amber-300">
+                      {mistakeBookState === 'saved' ? '已加入错题本' : '是否将此题加入错题本？'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {mistakeBookState === 'prompt' && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="h-7 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
+                          onClick={handleSaveToMistakeBook}
+                        >
+                          <Plus className="h-3 w-3" />
+                          加入
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-muted-foreground"
+                          onClick={() => setMistakeBookState('dismissed')}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+                    {mistakeBookState === 'saving' && (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+                    )}
+                    {mistakeBookState === 'saved' && (
+                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    )}
+                  </div>
+                </div>
               )}
 
               {(state === 'success' || state === 'graded') && result && (
