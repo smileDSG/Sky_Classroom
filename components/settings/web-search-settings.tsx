@@ -11,10 +11,9 @@ import { ExternalLink, Eye, EyeOff } from 'lucide-react';
 
 interface WebSearchSettingsProps {
   selectedProviderId: WebSearchProviderId;
-  t?: (key: string) => string;
 }
 
-export function WebSearchSettings({ selectedProviderId, t = (key: string) => key }: WebSearchSettingsProps) {const [showApiKey, setShowApiKey] = useState(false);
+export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps) {const [showApiKey, setShowApiKey] = useState(false);
 
   const webSearchProvidersConfig = useSettingsStore((state) => state.webSearchProvidersConfig);
   const setWebSearchProviderConfig = useSettingsStore((state) => state.setWebSearchProviderConfig);
@@ -153,9 +152,9 @@ export function WebSearchSettings({ selectedProviderId, t = (key: string) => key
                   className="flex items-center justify-between gap-4 rounded-md border px-3 py-2"
                 >
                   <div className="min-w-0 space-y-0.5">
-                    <div className="text-sm font-medium">{t(meta.labelKey)}</div>
+                    <div className="text-sm font-medium">{meta.label}</div>
                     <div className="text-xs text-muted-foreground">
-                      {t(meta.descriptionKey)}
+                      {meta.description}
                       {meta.docsUrl && (
                         <a
                           href={meta.docsUrl}
@@ -172,7 +171,7 @@ export function WebSearchSettings({ selectedProviderId, t = (key: string) => key
                   <Switch
                     checked={enabled}
                     onCheckedChange={(checked) => setBaiduSubSources({ [key]: checked })}
-                    aria-label={t(meta.labelKey)}
+                    aria-label={meta.label}
                   />
                 </div>
               );

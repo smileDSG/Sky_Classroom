@@ -53,15 +53,13 @@ export function ModelSelector({
     return translated !== translationKey ? translated : name;
   };
 
-  // Helper function for model count with proper plural form
+  // Helper function for model count
   const getModelCountText = (count: number) => {
-    const key = count === 1 ? 'settings.modelSingular' : 'settings.modelCount';
-    return `${count} ${t(key)}`;
+    return `${count} 个模型`;
   };
 
   const getFilteredModelCountText = (filtered: number, total: number) => {
-    const key = total === 1 ? 'settings.modelSingular' : 'settings.modelCount';
-    return `${filtered}/${total} ${t(key)}`;
+    return `${filtered}/${total} 个模型`;
   };
 
   // Get all providers that are ready to use:

@@ -23,7 +23,8 @@ import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import type { TTSProviderId } from '@/lib/audio/types';
 import type { ProviderWithVoices } from '@/lib/audio/voice-resolver';
 
-export function AgentBar() {const { listAgents } = useAgentRegistry();
+export function AgentBar() {
+  const t = (key: string) => key;const { listAgents } = useAgentRegistry();
   const selectedAgentIds = useSettingsStore((s) => s.selectedAgentIds);
   const setSelectedAgentIds = useSettingsStore((s) => s.setSelectedAgentIds);
   const maxTurns = useSettingsStore((s) => s.maxTurns);

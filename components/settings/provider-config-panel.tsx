@@ -49,7 +49,6 @@ interface ProviderConfigPanelProps {
   onAddModel: () => void;
   onResetToDefault?: () => void; // Reset provider to default configuration
   isBuiltIn: boolean; // To determine if reset button should be shown
-  t?: (key: string) => string;
 }
 
 export function ProviderConfigPanel({
@@ -65,7 +64,6 @@ export function ProviderConfigPanel({
   onAddModel,
   onResetToDefault,
   isBuiltIn,
-  t = (key: string) => key,
 }: ProviderConfigPanelProps) {// Local state for this provider
   const [apiKey, setApiKey] = useState(initialApiKey);
   const [baseUrl, setBaseUrl] = useState(initialBaseUrl);
@@ -277,7 +275,7 @@ export function ProviderConfigPanel({
                       : 'bg-background text-muted-foreground border-border hover:bg-muted',
                   )}
                 >
-                  {t(alt.label)}
+                  {alt.label}
                 </button>
               );
             })}

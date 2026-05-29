@@ -25,6 +25,7 @@ interface ChatSessionProps {
   readonly activeBubbleId?: string | null;
   readonly onEndSession?: (sessionId: string) => void;
   readonly onDeleteSession?: (sessionId: string) => void;
+  t?: (key: string) => string;
 }
 
 const AVATARS = {
@@ -117,6 +118,7 @@ export function ChatSessionComponent({
   activeBubbleId,
   onEndSession,
   onDeleteSession,
+  t = (key: string) => key,
 }: ChatSessionProps) {const userProfileAvatar = useUserProfileStore((s) => s.avatar);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);

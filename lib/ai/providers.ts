@@ -335,8 +335,8 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
     type: 'openai',
     defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
     alternateBaseUrls: [
-      { label: 'settings.baseUrlRegion.china', url: 'https://open.bigmodel.cn/api/paas/v4' },
-      { label: 'settings.baseUrlRegion.international', url: 'https://api.z.ai/api/paas/v4' },
+      { label: '国内', url: 'https://open.bigmodel.cn/api/paas/v4' },
+      { label: '国际', url: 'https://api.z.ai/api/paas/v4' },
     ],
     requiresApiKey: true,
     icon: '/logos/glm.svg',
@@ -595,8 +595,8 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
     type: 'openai',
     defaultBaseUrl: 'https://api.moonshot.cn/v1',
     alternateBaseUrls: [
-      { label: 'settings.baseUrlRegion.china', url: 'https://api.moonshot.cn/v1' },
-      { label: 'settings.baseUrlRegion.international', url: 'https://api.moonshot.ai/v1' },
+      { label: '国内', url: 'https://api.moonshot.cn/v1' },
+      { label: '国际', url: 'https://api.moonshot.ai/v1' },
     ],
     requiresApiKey: true,
     icon: '/logos/kimi.png',
@@ -659,8 +659,8 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
     type: 'anthropic',
     defaultBaseUrl: 'https://api.minimaxi.com/anthropic/v1',
     alternateBaseUrls: [
-      { label: 'settings.baseUrlRegion.china', url: 'https://api.minimaxi.com/anthropic/v1' },
-      { label: 'settings.baseUrlRegion.international', url: 'https://api.minimax.io/anthropic/v1' },
+      { label: '国内', url: 'https://api.minimaxi.com/anthropic/v1' },
+      { label: '国际', url: 'https://api.minimax.io/anthropic/v1' },
     ],
     requiresApiKey: true,
     icon: '/logos/minimax.svg',
@@ -889,9 +889,9 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
     type: 'openai',
     defaultBaseUrl: 'https://tokenhub.tencentmaas.com/v1',
     alternateBaseUrls: [
-      { label: 'settings.baseUrlRegion.china', url: 'https://tokenhub.tencentmaas.com/v1' },
+      { label: '国内', url: 'https://tokenhub.tencentmaas.com/v1' },
       {
-        label: 'settings.baseUrlRegion.international',
+        label: '国际',
         url: 'https://tokenhub-intl.tencentmaas.com/v1',
       },
     ],

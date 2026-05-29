@@ -88,11 +88,6 @@ export function useVoicePreview(opts: {
             ttsModelId: modelId || providerConfig?.modelId,
             ttsVoice: voiceId,
             ttsSpeed: 1,
-            ttsApiKey: providerConfig?.apiKey,
-            ttsBaseUrl:
-              providerConfig?.serverBaseUrl ||
-              providerConfig?.baseUrl ||
-              providerConfig?.customDefaultBaseUrl,
             ttsProviderOptions: providerOptions,
           }),
           signal: controller.signal,

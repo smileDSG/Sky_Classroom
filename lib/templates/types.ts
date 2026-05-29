@@ -13,10 +13,6 @@ export interface SceneOutlineItem {
 export type LocalizedString = {
   'zh-CN': string;
   'en-US': string;
-  'zh-TW'?: string;
-  'ja-JP'?: string;
-  'ru-RU'?: string;
-  'ar-SA'?: string;
 };
 
 /** Resolve a LocalizedString to a plain string for the given locale. */

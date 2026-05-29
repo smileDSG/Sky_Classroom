@@ -39,11 +39,7 @@
  *   - Add case to generateTTS() or transcribeAudio() switch statement
  *   - Implement API call logic for the new provider
  *
- * Step 4: Add i18n translations
- *   - Add provider name translations in lib/i18n.ts
- *   - Format: `provider{ProviderName}TTS` or `provider{ProviderName}ASR`
- *
- * Step 5 (Optional): Create client-side hook if needed
+ * Step 4 (Optional): Create client-side hook if needed
  *   - For browser-only providers, create hooks like use-browser-tts.ts
  *   - Export from lib/hooks/
  *

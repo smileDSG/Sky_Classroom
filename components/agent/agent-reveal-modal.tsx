@@ -40,6 +40,12 @@ const ROLE_ICONS: Record<string, string> = {
   student: '🎓',
 };
 
+const ROLE_NAMES: Record<string, string> = {
+  teacher: '老师',
+  assistant: '助手',
+  student: '学生',
+};
+
 export function AgentRevealModal({ agents, open, onClose, onAllRevealed }: AgentRevealModalProps) {const [revealedCount, setRevealedCount] = useState(0);
   const [flipsComplete, setFlipsComplete] = useState(false);
   const allRevealedFiredRef = useRef(false);
@@ -256,7 +262,7 @@ export function AgentRevealModal({ agents, open, onClose, onAllRevealed }: Agent
                               }}
                             >
                               <span className="text-[9px]">{roleIcon}</span>
-                              {t(`settings.agentRoles.${agent.role}`)}
+                              {ROLE_NAMES[agent.role] || agent.role}
                             </span>
                           </div>
 

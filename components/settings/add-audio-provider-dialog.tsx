@@ -19,7 +19,6 @@ interface AddAudioProviderDialogProps {
   onOpenChange: (open: boolean) => void;
   onAdd: (data: NewAudioProviderData) => void;
   type: 'tts' | 'asr';
-  t?: (key: string) => string;
 }
 
 export function AddAudioProviderDialog({
@@ -27,7 +26,6 @@ export function AddAudioProviderDialog({
   onOpenChange,
   onAdd,
   type,
-  t = (key: string) => key,
 }: AddAudioProviderDialogProps) {const [name, setName] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
   const [defaultModel, setDefaultModel] = useState('');
@@ -56,19 +54,18 @@ export function AddAudioProviderDialog({
     onOpenChange(false);
   };
 
-  const titleKey =
-    type === 'tts' ? 'settings.addCustomTTSProvider' : 'settings.addCustomASRProvider';
+  const title = type === 'tts' ? '添加自定义 TTS 服务' : '添加自定义 ASR 服务';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
-        <DialogTitle className="sr-only">{t(titleKey)}</DialogTitle>
+        <DialogTitle className="sr-only">{title}</DialogTitle>
         <DialogDescription className="sr-only">
           {'添加兼容 OpenAI 协议的音频服务'}
         </DialogDescription>
         <div className="space-y-4">
           <div className="pb-3 border-b">
-            <h2 className="text-lg font-semibold">{t(titleKey)}</h2>
+            <h2 className="text-lg font-semibold">{title}</h2>
             <p className="text-xs text-muted-foreground mt-1">
               {'添加兼容 OpenAI 协议的音频服务'}
             </p>
