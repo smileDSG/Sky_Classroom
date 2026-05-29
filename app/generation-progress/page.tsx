@@ -15,6 +15,7 @@ import {
   cancelClassroomJob,
 } from '@/lib/classroom/classroom-job-client';
 import { useTaskStore } from '@/lib/store/use-task-store';
+import { useSettingsStore } from '@/lib/store/settings';
 import { removeActiveJobEntry } from '@/lib/classroom/classroom-session';
 import { createLogger } from '@/lib/logger';
 
@@ -52,6 +53,9 @@ function GenerationProgressContent() {
 
   const abortRef = useRef<AbortController | null>(null);
   const hasStartedRef = useRef(false);
+
+  const alwaysReview = useSettingsStore((s) => s.reviewOutlineEnabled);
+  const setAlwaysReview = useSettingsStore((s) => s.setReviewOutlineEnabled);
 
   // Start polling on mount
   useEffect(() => {
@@ -309,6 +313,8 @@ function GenerationProgressContent() {
                 onBack={() => {
                   router.push('/');
                 }}
+                alwaysReview={alwaysReview}
+                onAlwaysReviewChange={setAlwaysReview}
                 isLoading={false}
               />
               <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
