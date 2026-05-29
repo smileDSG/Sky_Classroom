@@ -14,15 +14,6 @@ const nextConfig: NextConfig = {
   // Gzip/Brotli compression (Next.js prod default, explicit here)
   compress: true,
 
-  // Tree-shaking hints for large packages
-  optimizePackageImports: [
-    'lucide-react',
-    '@xyflow/react',
-    'motion',
-    'embla-carousel-react',
-    'cmdk',
-  ],
-
   experimental: {
     proxyClientMaxBodySize: '200mb',
   },
