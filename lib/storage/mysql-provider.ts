@@ -45,7 +45,7 @@ export class MySQLStorageProvider implements StorageProvider {
     const pool = getPool();
     await pool.query(
       `INSERT INTO storage_entries (id, table_name, data, created_at, updated_at)
-       VALUES (?, ?, ?, FROM_UNIXTIME(? / 1000), FROM_UNIXTIME(? / 1000))
+       VALUES (?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE data = VALUES(data), updated_at = VALUES(updated_at)`,
       [entry.id, table, JSON.stringify(entry.data), entry.createdAt, entry.updatedAt],
     );
@@ -62,8 +62,8 @@ export class MySQLStorageProvider implements StorageProvider {
     return {
       id: row.id as string,
       data: typeof row.data === 'string' ? JSON.parse(row.data) : row.data,
-      createdAt: new Date(row.created_at).getTime(),
-      updatedAt: new Date(row.updated_at).getTime(),
+      createdAt: typeof row.created_at === 'number' ? row.created_at : new Date(row.created_at).getTime(),
+      updatedAt: typeof row.updated_at === 'number' ? row.updated_at : new Date(row.updated_at).getTime(),
     };
   }
 
@@ -76,8 +76,8 @@ export class MySQLStorageProvider implements StorageProvider {
     const entries: StorageEntry<T>[] = rows.map((row) => ({
       id: row.id as string,
       data: typeof row.data === 'string' ? JSON.parse(row.data) : row.data,
-      createdAt: new Date(row.created_at).getTime(),
-      updatedAt: new Date(row.updated_at).getTime(),
+      createdAt: typeof row.created_at === 'number' ? row.created_at : new Date(row.created_at).getTime(),
+      updatedAt: typeof row.updated_at === 'number' ? row.updated_at : new Date(row.updated_at).getTime(),
     }));
     return filter ? entries.filter(filter) : entries;
   }
