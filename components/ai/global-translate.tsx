@@ -113,6 +113,27 @@ export function GlobalTranslate() {
 
   return (
     <>
+      {/* DEBUG: always-visible marker to confirm component mounted */}
+      {typeof window !== 'undefined' && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 8,
+            right: 8,
+            zIndex: 99999,
+            background: '#0ea5e9',
+            color: '#fff',
+            padding: '2px 8px',
+            borderRadius: 4,
+            fontSize: 11,
+            fontFamily: 'monospace',
+            opacity: 0.85,
+          }}
+        >
+          TL:ON
+        </div>
+      )}
+
       {/* Floating translation button — appears on text selection */}
       {selection &&
         createPortal(
