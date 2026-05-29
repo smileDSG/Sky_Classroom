@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 // CSS keyframes for infinite animations — runs on GPU compositor thread, no JS cost
 const cloudKeyframes = `
 @keyframes cloud-drift {
@@ -87,15 +89,37 @@ function TwinklingStar({
   );
 }
 
-// 流星
+// 流星 — 随机间隔出现
 function ShootingStar() {
+  const [visible, setVisible] = useState(false);
+  const [pos, setPos] = useState({ x: 10, y: 10 });
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      // 3~10 秒随机间隔
+      const delay = 3000 + Math.random() * 7000;
+      timeout = setTimeout(() => {
+        setPos({ x: 5 + Math.random() * 30, y: 5 + Math.random() * 20 });
+        setVisible(true);
+        // 动画持续 1.5s 后消失
+        setTimeout(() => setVisible(false), 1500);
+        schedule();
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(timeout);
+  }, []);
+
+  if (!visible) return null;
+
   return (
     <div
       className="absolute pointer-events-none"
       style={{
-        left: '10%',
-        top: '10%',
-        animation: 'shooting 2s ease-out 8s infinite',
+        left: `${pos.x}%`,
+        top: `${pos.y}%`,
+        animation: 'shooting 1.5s ease-out forwards',
       }}
     >
       <div
