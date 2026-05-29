@@ -92,7 +92,6 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
               problemText,
               problemImage: problemImage ?? undefined,
               answer: output.answer,
-              steps: output.steps ?? [],
               knowledgePoints: (output.knowledgePoints ?? []).map(kp => ({
                 name: kp.name,
                 description: kp.description,

@@ -50,14 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUser = useCallback(async () => {
     try {
-      let res = await fetch('/api/auth/me', { credentials: 'include' });
-      // If access token expired, try refreshing it once
-      if (res.status === 401) {
-        const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
-        if (refreshRes.ok) {
-          res = await fetch('/api/auth/me', { credentials: 'include' });
-        }
-      }
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
       if (res.ok) {
         const json = await res.json();
         setUser(json.user);

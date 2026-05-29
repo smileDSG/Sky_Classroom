@@ -157,7 +157,21 @@
       "Bash(corepack prepare *)",
       "Bash(mysql *)",
       "Bash(C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysql.exe *)",
-      "PowerShell(Start-Service *)"
+      "PowerShell(Start-Service *)",
+      "PowerShell(Get-ChildItem -Path \"E:\\\\01_Work\\\\sky-classroom\" -Directory -Name | Where-Object { $_ -notmatch '^\\\\.' -and $_ -ne 'node_modules' -and $_ -ne '.next' })",
+      "Bash(corepack pnpm *)",
+      "WebSearch",
+      "Bash(npm test *)",
+      "Bash(Select-String \"math-renderer\" -Context 0,2)",
+      "Bash(Select-String \"node.exe\")",
+      "Bash(Select-String \"LISTENING\")",
+      "PowerShell(node E:\\\\01-Work\\\\sky-classroom\\\\test-regex.mjs)",
+      "PowerShell(node test-bare-latex.mjs)",
+      "PowerShell(node test-full-pipeline.mjs)",
+      "PowerShell(node test-mc-fix.mjs)",
+      "PowerShell(node test-cjk-fix.mjs)",
+      "PowerShell(node test-final-fix.mjs)",
+      "PowerShell(node test-new-regex.mjs)"
     ]
   }
 }

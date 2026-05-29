@@ -47,14 +47,14 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
 
       {/* ── 答案栏：解题完成后直接显示在顶部 ── */}
       {isComplete && (
-        <div className="border-b bg-gradient-to-r from-green-50/80 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/10 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
-            <div className="flex-1">
-              <div className="text-xs font-medium text-green-700 dark:text-green-400 mb-1">答案</div>
-              <div className="inline-flex items-center rounded-lg bg-white/80 dark:bg-green-900/30 px-4 py-2 border border-green-200/50 dark:border-green-800/50">
-                <MathRenderer content={answer} className="text-lg font-bold text-green-700 dark:text-green-300" />
-              </div>
+        <div className="border-b bg-gradient-to-r from-green-50/80 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/10 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+            <div className="flex-1 flex items-center gap-2">
+              <span className="text-xs font-medium text-green-700 dark:text-green-400">答案</span>
+              <span className="inline-flex items-center rounded-md bg-white/80 dark:bg-green-900/30 px-3 py-1 border border-green-200/50 dark:border-green-800/50">
+                <MathRenderer content={answer} className="text-sm font-semibold text-green-700 dark:text-green-300" />
+              </span>
             </div>
           </div>
         </div>
@@ -124,15 +124,13 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
               ))}
               {/* 末尾：答案 */}
               {isComplete && (
-                <div className="px-5 py-4 bg-green-50/50 dark:bg-green-950/20">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
-                    <div>
-                      <span className="text-sm font-medium text-green-700 dark:text-green-400">答案</span>
-                      <span className="ml-2">
-                        <MathRenderer content={answer} className="text-sm font-bold text-green-700 dark:text-green-300" />
-                      </span>
-                    </div>
+                <div className="px-5 py-3 bg-green-50/50 dark:bg-green-950/20">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+                    <span className="text-xs font-medium text-green-700 dark:text-green-400">答案</span>
+                    <span className="ml-1">
+                      <MathRenderer content={answer} className="text-sm font-semibold text-green-700 dark:text-green-300" />
+                    </span>
                   </div>
                 </div>
               )}
@@ -170,7 +168,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                           {point.difficulty === 'hard' && '困难'}
                         </Badge>
                       </div>
-                      <p className="mt-2 text-sm text-muted-foreground leading-relaxed"><MathRenderer content={point.description} /></p>
+                      <div className="mt-2 text-sm text-muted-foreground leading-relaxed"><MathRenderer content={point.description} /></div>
                     </div>
                   </div>
                 </div>

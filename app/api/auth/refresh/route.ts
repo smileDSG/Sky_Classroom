@@ -35,14 +35,15 @@ export async function POST() {
 
     const newAccessToken = await signAccessToken({ id: user.id, email: user.email ?? undefined, role: user.role });
 
-    return NextResponse.json(
-      { success: true },
-      {
-        headers: {
-          'Set-Cookie': `access_token=${newAccessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${60 * 60}`,
-        },
-      },
-    );
+    const response = NextResponse.json({ success: true });
+    response.cookies.set('access_token', newAccessToken, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60,
+    });
+    return response;
   } catch (err) {
     return apiError('INTERNAL_ERROR', 500, 'Token refresh failed');
   }

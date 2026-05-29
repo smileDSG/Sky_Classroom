@@ -66,13 +66,21 @@ export function readSubmittedState(sceneId: string): SubmittedState {
     const answers = JSON.parse(rawA) as QuizAnswers;
     const rawR = safeGet(RESULTS_KEY_PREFIX + sceneId);
     if (rawR) {
-      const results = JSON.parse(rawR) as QuestionResult[];
-      if (Array.isArray(results) && results.length > 0) {
-        return { kind: 'reviewing', answers, results };
+      try {
+        const results = JSON.parse(rawR) as QuestionResult[];
+        if (Array.isArray(results) && results.length > 0) {
+          return { kind: 'reviewing', answers, results };
+        }
+      } catch {
+        // Corrupted results — clear but keep answers
+        safeRemove(RESULTS_KEY_PREFIX + sceneId);
       }
     }
     return { kind: 'answering', answers };
   } catch {
+    // Corrupted answers — clear both
+    safeRemove(ANSWERS_KEY_PREFIX + sceneId);
+    safeRemove(RESULTS_KEY_PREFIX + sceneId);
     return null;
   }
 }
@@ -88,7 +96,8 @@ export function readAnswersForSummary(sceneId: string): QuizAnswers {
     try {
       return JSON.parse(rawA) as QuizAnswers;
     } catch {
-      /* fall through */
+      // Corrupted — clear so it doesn't persist
+      safeRemove(ANSWERS_KEY_PREFIX + sceneId);
     }
   }
   const rawD = safeGet(DRAFT_KEY_PREFIX + sceneId);
@@ -96,7 +105,8 @@ export function readAnswersForSummary(sceneId: string): QuizAnswers {
     try {
       return JSON.parse(rawD) as QuizAnswers;
     } catch {
-      /* fall through */
+      // Corrupted — clear so it doesn't persist
+      safeRemove(DRAFT_KEY_PREFIX + sceneId);
     }
   }
   return {};

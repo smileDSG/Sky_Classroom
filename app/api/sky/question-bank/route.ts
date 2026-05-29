@@ -84,7 +84,7 @@ export async function DELETE(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { problemText, problemImage, answer, steps, knowledgePoints, agentId } = body;
+    const { problemText, problemImage, answer, knowledgePoints, agentId } = body;
 
     if (!problemText || !answer) {
       return apiError(
@@ -108,7 +108,6 @@ export async function POST(req: Request) {
       problemText,
       problemImage: problemImage ?? undefined,
       answer,
-      steps: steps ?? [],
       knowledgePoints: knowledgePoints ?? [],
       agentId: agentId ?? 'universal',
       solvedAt: Date.now(),

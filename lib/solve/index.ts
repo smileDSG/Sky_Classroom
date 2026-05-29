@@ -36,9 +36,8 @@ export {
   questionBankCount,
   clearQuestionBank,
   isProblemInBank,
-  hashProblemText,
-  textSimilarity,
 } from './question-bank';
+export { hashProblemText, textSimilarity } from './question-bank-utils';
 export { classifyErrorCause, getCauseLabel, isValidCause, VALID_CAUSES } from './error-classifier';
 export { validateConfidence, MIN_VALIDATED_CONFIDENCE } from './confidence-validator';
 export {

@@ -83,17 +83,18 @@ const KNOWN_LATEX_COMMANDS = new Set([
 ]);
 
 // ── Bare LaTeX patterns ────────────────────────────────────────────────
+// CJK-safe character class: excludes CJK chars/punctuation so A^2，其中
+// doesn't swallow the following Chinese text.
+const M = String.raw`[^\s{}$一-鿿　-〿＀-￯]+`;
 
 const BARE_LATEX_PATTERNS: Array<{ pattern: RegExp; wrapper: (m: string, ...groups: string[]) => string }> = [
   // Block-level environments
   { pattern: /\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\}/g, wrapper: (m) => `$$${m}$$` },
 
   // Known LaTeX commands with optional args/sub/sup
-  // Matches: \frac{1}{2}, \sqrt[3]{x}, \sum_{i=1}^n, \partial
   {
-    pattern: /\\([a-zA-Z]{2,})(\s*(?:\[[^\]]*\]|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|_[^{}$\s]+|_[^{}]*\{[^{}]*\}|\^[^{}$\s]+|\^[^{}]*\{[^{}]*\}))*/g,
+    pattern: new RegExp(String.raw`\\([a-zA-Z]{2,})(\s*(?:\[[^\]]*\]|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|_${M}|_[^{}]*\{[^{}]*\}|\^${M}|\^[^{}]*\{[^{}]*\}))*`, 'g'),
     wrapper: (m: string, cmd: string) => {
-      // Find the longest known command prefix within the matched letters
       let knownLen = 0;
       for (let len = Math.min(cmd.length, 12); len >= 2; len--) {
         if (KNOWN_LATEX_COMMANDS.has(cmd.slice(0, len))) {
@@ -102,14 +103,11 @@ const BARE_LATEX_PATTERNS: Array<{ pattern: RegExp; wrapper: (m: string, ...grou
         }
       }
       if (knownLen > 0 && knownLen < cmd.length) {
-        // Extra letters after known command are separate variables
         const known = cmd.slice(0, knownLen);
         const extra = cmd.slice(knownLen);
-        // Reconstruct: wrap the known command part, leave extra as plain text
-        const afterCmd = m.slice(1 + cmd.length); // the sub/sup part after the command name
+        const afterCmd = m.slice(1 + cmd.length);
         return `$\\${known}${afterCmd}$ ${extra}`;
       }
-      // Unknown or exact match — wrap whole thing
       return `$${m}$`;
     },
   },
@@ -117,18 +115,22 @@ const BARE_LATEX_PATTERNS: Array<{ pattern: RegExp; wrapper: (m: string, ...grou
   // left/right fences
   { pattern: /\\left[()[\]|.]|\\right[()[\]|.]/g, wrapper: (m) => `$${m}$` },
 
+  // Variables with prime notation: A' E'' f''' → $A'$ $E''$ $f'''$
+  // Must come BEFORE superscript patterns to capture primes as a unit
+  { pattern: /\b([a-zA-Z])('(?:'')?)(?!\w)/g, wrapper: (m: string, v: string, p: string) => `$${v}${p}$` },
+
   // Braced sub/superscripts on identifiers
-  { pattern: /[a-zA-Z\\][a-zA-Z]*(?:_(?:\{[^}]*\}|[^{}$\s]+))(?:\^(?:\{[^}]*\}|[^{}$\s]+))?/g, wrapper: (m) => `$${m}$` },
-  { pattern: /[a-zA-Z\\][a-zA-Z]*(?:\^(?:\{[^}]*\}|[^{}$\s]+))/g, wrapper: (m) => `$${m}$` },
+  { pattern: new RegExp(String.raw`[a-zA-Z\\][a-zA-Z]*(?:_(?:\{[^}]*\}|${M}))(?:\^(?:\{[^}]*\}|${M}))?`, 'g'), wrapper: (m) => `$${m}$` },
+  { pattern: new RegExp(String.raw`[a-zA-Z\\][a-zA-Z]*(?:\^(?:\{[^}]*\}|${M}))`, 'g'), wrapper: (m) => `$${m}$` },
 
   // Simple subscripts
-  { pattern: /[a-zA-Z]_[^{}$\s]+/g, wrapper: (m) => `$${m}$` },
+  { pattern: new RegExp(String.raw`[a-zA-Z]_${M}`, 'g'), wrapper: (m) => `$${m}$` },
 
-  // Simple superscripts
-  { pattern: /[a-zA-Z0-9)]\^[^{}$\s]+/g, wrapper: (m) => `$${m}$` },
+  // Simple superscripts (no ) so (2A)^2 is handled by the parenthesized pattern)
+  { pattern: new RegExp(String.raw`[a-zA-Z0-9]\^${M}`, 'g'), wrapper: (m) => `$${m}$` },
 
   // Parenthesized expression with superscript
-  { pattern: /\([^)]+\)\^[^{}$\s]+/g, wrapper: (m) => `$${m}$` },
+  { pattern: new RegExp(String.raw`\([^)]+\)\^${M}`, 'g'), wrapper: (m) => `$${m}$` },
 ];
 
 // ── Unicode math → LaTeX ───────────────────────────────────────────────
@@ -296,8 +298,12 @@ function fixCommonLatexErrors(text: string): string {
 // ── Main preprocessing ─────────────────────────────────────────────────
 
 function wrapBareLatex(text: string): string {
-  // Step 0: Fix sqrt parentheses (LLMs sometimes use \sqrt(...) instead of \sqrt{...})
-  let result = fixSqrtParens(text);
+  // Step 0: Normalize \(...\) → $...$ and \[...\] → $$...$$
+  let result = text.replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$');
+  result = result.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
+
+  // Step 1: Fix sqrt parentheses (LLMs sometimes use \sqrt(...) instead of \sqrt{...})
+  result = fixSqrtParens(result);
 
   // Step 0.5: Fix common LLM LaTeX errors
   result = fixCommonLatexErrors(result);
@@ -333,7 +339,39 @@ function wrapBareLatex(text: string): string {
     }
   }
 
+  // Step 4: Merge adjacent $...$ blocks separated by operators
+  // e.g. $\frac{1}{4}$·$\frac{1}{2}$ → $\frac{1}{4} \cdot \frac{1}{2}$
+  result = mergeAdjacentMathBlocks(result);
+
   return result;
+}
+
+// ── Merge adjacent math blocks ──────────────────────────────────────
+
+const OPERATOR_TO_LATEX: Record<string, string> = {
+  '·': '\\cdot', '*': '\\cdot',
+  '×': '\\times', '÷': '\\div',
+  '=': '=', '+': '+', '-': '-',
+  '<': '<', '>': '>',
+  '≠': '\\neq', '≤': '\\leq', '≥': '\\geq',
+  '≈': '\\approx', '≡': '\\equiv',
+};
+
+function mergeAdjacentMathBlocks(text: string): string {
+  // Repeatedly merge until no more changes (handles 3+ adjacent blocks)
+  let prev = text;
+  while (true) {
+    const next = prev.replace(
+      /\$([^$]+)\$\s*([·×÷+\-=*/<>≠≤≥≈≡])\s*\$([^$]+)\$/g,
+      (_m, left: string, op: string, right: string) => {
+        const latexOp = OPERATOR_TO_LATEX[op] ?? op;
+        return `$${left} ${latexOp} ${right}$`;
+      },
+    );
+    if (next === prev) break;
+    prev = next;
+  }
+  return prev;
 }
 
 // ── Segment types ───────────────────────────────────────────────────────

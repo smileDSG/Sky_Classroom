@@ -167,7 +167,6 @@ describe('saveToQuestionBank', () => {
     const entry = await saveToQuestionBank({
       problemText: '解方程 2x+3=7',
       answer: 'x = 2',
-      steps: [{ label: '解答', content: '移项', keyPoints: [] }],
       knowledgePoints: [{ name: '一元一次方程', description: '', difficulty: 'medium' }],
       agentId: 'science',
       solvedAt: Date.now(),
@@ -184,7 +183,6 @@ describe('saveToQuestionBank', () => {
       problemText: 'test',
       problemHash: 'custom_hash',
       answer: 'answer',
-      steps: [],
       knowledgePoints: [],
       agentId: 'universal',
       solvedAt: Date.now(),
@@ -199,7 +197,6 @@ describe('saveToQuestionBank', () => {
     await saveToQuestionBank({
       problemText: '解方程 2x+3=7',
       answer: 'x = 2',
-      steps: [],
       knowledgePoints: [],
       agentId: 'science',
       solvedAt: Date.now(),
