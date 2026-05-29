@@ -45,6 +45,7 @@ import { GreetingSection } from '@/components/sky/home/greeting-section';
 import { QuickAccessGrid } from '@/components/sky/home/quick-access-grid';
 import { FeaturedSection } from '@/components/sky/home/featured-section';
 import { FloatingParticles } from '@/components/sky/home/floating-particles';
+import { GlobalTranslate } from '@/components/ai/global-translate';
 import type { SettingsSection } from '@/lib/types/settings';
 
 const log = createLogger('Home');
@@ -868,6 +869,7 @@ export default function HomePage() {
           </button>
         </motion.div>
       </footer>
+      <GlobalTranslate />
     </div>
   );
 }
