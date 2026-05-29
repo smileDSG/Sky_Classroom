@@ -10,7 +10,6 @@ import { useMediaStageId } from '@/lib/contexts/media-stage-context';
 import { retryMediaTask } from '@/lib/media/media-orchestrator';
 import { getVideoMediaRefForElement } from '@/lib/media/video-manifest';
 import { RotateCcw, Film, ShieldAlert, VideoOff } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('BaseVideoElement');
@@ -28,9 +27,7 @@ function isLegacySequentialVideoRef(value: string | undefined): boolean {
  * Controlled exclusively by the canvas store via the play_video action.
  * Videos never autoplay — they wait for an explicit play_video action.
  */
-export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {
-  const { t } = useI18n();
-  const videoRef = useRef<HTMLVideoElement>(null);
+export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {const videoRef = useRef<HTMLVideoElement>(null);
   const playingVideoElementId = useCanvasStore.use.playingVideoElementId();
   const prevPlayingRef = useRef('');
   const [scope, animate] = useAnimate<HTMLDivElement>();
@@ -131,7 +128,7 @@ export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {
           <div className="w-full h-full bg-gray-50 dark:bg-gray-900/30 flex items-center justify-center rounded">
             <div className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 dark:text-gray-400">
               <VideoOff className="w-3 h-3 shrink-0" />
-              <span>{t('settings.mediaGenerationDisabled')}</span>
+              <span>{'已在设置中关闭生成'}</span>
             </div>
           </div>
         ) : showSkeleton ? (
@@ -157,12 +154,12 @@ export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {
             {task?.errorCode === 'CONTENT_SENSITIVE' ? (
               <div className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
                 <ShieldAlert className="w-3 h-3 shrink-0" />
-                <span>{t('settings.mediaContentSensitive')}</span>
+                <span>{'抱歉，该内容触发了安全检查'}</span>
               </div>
             ) : task?.errorCode === 'GENERATION_DISABLED' ? (
               <div className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 dark:text-gray-400">
                 <VideoOff className="w-3 h-3 shrink-0" />
-                <span>{t('settings.mediaGenerationDisabled')}</span>
+                <span>{'已在设置中关闭生成'}</span>
               </div>
             ) : (
               <button
@@ -174,7 +171,7 @@ export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {
                 className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40 rounded hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
-                {t('settings.mediaRetry')}
+                {'重试'}
               </button>
             )}
           </div>

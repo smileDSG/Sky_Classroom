@@ -7,8 +7,6 @@ import { IssueboardPanel } from './issueboard-panel';
 import { ChatPanel } from './chat-panel';
 import { usePBLChat } from './use-pbl-chat';
 import { PBLGuidePanel } from './guide';
-import { useI18n } from '@/lib/hooks/use-i18n';
-
 interface PBLWorkspaceProps {
   readonly projectConfig: PBLProjectConfig;
   readonly userRole: string;
@@ -21,9 +19,7 @@ export function PBLWorkspace({
   userRole,
   onConfigUpdate,
   onReset,
-}: PBLWorkspaceProps) {
-  const { t } = useI18n();
-  const [showConfirm, setShowConfirm] = useState(false);
+}: PBLWorkspaceProps) {const [showConfirm, setShowConfirm] = useState(false);
 
   const { messages, isLoading, sendMessage, currentIssue } = usePBLChat({
     projectConfig,
@@ -44,7 +40,7 @@ export function PBLWorkspace({
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1.5 py-1 rounded-md hover:bg-muted"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>{t('pbl.workspace.restart')}</span>
+                <span>{'重新开始'}</span>
               </button>
               <div className="ml-auto">
                 <PBLGuidePanel />
@@ -52,7 +48,7 @@ export function PBLWorkspace({
             </div>
           ) : (
             <div className="flex items-center gap-1.5 text-xs">
-              <span className="text-muted-foreground">{t('pbl.workspace.confirmRestart')}</span>
+              <span className="text-muted-foreground">{'确定重置进度？'}</span>
               <button
                 onClick={() => {
                   setShowConfirm(false);
@@ -60,13 +56,13 @@ export function PBLWorkspace({
                 }}
                 className="px-2 py-0.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
               >
-                {t('pbl.workspace.confirm')}
+                {'确定'}
               </button>
               <button
                 onClick={() => setShowConfirm(false)}
                 className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 transition-colors"
               >
-                {t('pbl.workspace.cancel')}
+                {'取消'}
               </button>
             </div>
           )}

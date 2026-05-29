@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, User, Users, Sparkles, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface Agent {
@@ -25,6 +24,7 @@ interface AgentSettingsProps {
   onToggleAgent: (agentId: string) => void;
   onMaxTurnsChange: (value: string) => void;
   onAgentModeChange: (mode: 'preset' | 'auto') => void;
+  t?: (key: string) => string;
 }
 
 export function AgentSettings({
@@ -35,10 +35,8 @@ export function AgentSettings({
   onToggleAgent,
   onMaxTurnsChange,
   onAgentModeChange,
-}: AgentSettingsProps) {
-  const { t } = useI18n();
-
-  const getAgentName = (agent: Agent) => {
+  t = (key: string) => key,
+}: AgentSettingsProps) {const getAgentName = (agent: Agent) => {
     const key = `settings.agentNames.${agent.id}`;
     const translated = t(key);
     return translated !== key ? translated : agent.name;
@@ -55,7 +53,7 @@ export function AgentSettings({
       <div className="space-y-4">
         {/* Mode Toggle */}
         <div className="space-y-2">
-          <Label>{t('settings.agentMode')}</Label>
+          <Label>{'智能体模式'}</Label>
           <div className="inline-flex rounded-lg border bg-muted/30 p-0.5">
             <button
               onClick={() => onAgentModeChange('preset')}
@@ -66,7 +64,7 @@ export function AgentSettings({
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              {t('settings.agentModePreset')}
+              {'预设模式'}
             </button>
             <button
               onClick={() => onAgentModeChange('auto')}
@@ -78,7 +76,7 @@ export function AgentSettings({
               )}
             >
               <Sparkles className="h-3.5 w-3.5" />
-              {t('settings.agentModeAuto')}
+              {'自动生成'}
             </button>
           </div>
         </div>
@@ -87,8 +85,8 @@ export function AgentSettings({
           <>
             {/* Preset mode: existing agent multi-select */}
             <div className="space-y-2">
-              <Label>{t('settings.selectAgents')}</Label>
-              <p className="text-sm text-muted-foreground">{t('settings.agentSettingsDesc')}</p>
+              <Label>{'选择智能体'}</Label>
+              <p className="text-sm text-muted-foreground">{'选择参与对话的智能体。选择1个为单智能体模式，选择多个为多智能体协作模式。'}</p>
             </div>
 
             <div className="space-y-2 border rounded-lg p-2 bg-muted/30">
@@ -118,7 +116,7 @@ export function AgentSettings({
                       {getAgentName(agent)}
                       {agent.role === 'teacher' && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 leading-none">
-                          {t('settings.required')}
+                          {'必选'}
                         </span>
                       )}
                     </div>
@@ -141,27 +139,25 @@ export function AgentSettings({
               {selectedAgentIds.length === 0 && (
                 <span className="flex items-center gap-1.5">
                   <AlertCircle className="h-4 w-4" />
-                  {t('settings.atLeastOneAgent')}
+                  {'请至少选择1个智能体'}
                 </span>
               )}
               {selectedAgentIds.length === 1 && (
                 <span className="flex items-center gap-1.5">
                   <User className="h-4 w-4" />
-                  <strong>{t('settings.singleAgentMode')}</strong> -{' '}
+                  <strong>{'单智能体模式'}</strong> -{' '}
                   {(() => {
                     const agent = agents.find((a) => a.id === selectedAgentIds[0]);
-                    return agent ? getAgentName(agent) : t('settings.selectedAgent');
+                    return agent ? getAgentName(agent) : '选中的智能体';
                   })()}{' '}
-                  {t('settings.directAnswer')}
+                  {'直接回答'}
                 </span>
               )}
               {selectedAgentIds.length > 1 && (
                 <span className="flex items-center gap-1.5">
                   <Users className="h-4 w-4" />
-                  <strong>{t('settings.multiAgentMode')}</strong> -{' '}
-                  {t('settings.agentsCollaboratingCount', {
-                    count: selectedAgentIds.length,
-                  })}
+                  <strong>{'多智能体模式'}</strong> -{' '}
+                  {`已选择 ${selectedAgentIds.length} 个智能体协作讨论`}
                 </span>
               )}
             </div>
@@ -169,8 +165,8 @@ export function AgentSettings({
             {/* Max turns config - only show for multi-agent */}
             {selectedAgentIds.length > 1 && (
               <div className="space-y-2 border-l-4 border-purple-500 pl-4">
-                <Label>{t('settings.maxTurns')}</Label>
-                <p className="text-xs text-muted-foreground">{t('settings.maxTurnsDesc')}</p>
+                <Label>{'最大讨论轮数'}</Label>
+                <p className="text-xs text-muted-foreground">{'智能体之间最多讨论多少轮（每个智能体完成动作并回复算一轮）'}</p>
                 <Input
                   type="number"
                   min="1"
@@ -187,7 +183,7 @@ export function AgentSettings({
             {/* Auto mode: description */}
             <div className="flex items-start gap-2.5 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 text-sm">
               <Info className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>{t('settings.agentModeAutoDesc')}</span>
+              <span>{'AI 将根据课程内容自动生成适合的课堂角色'}</span>
             </div>
           </>
         )}

@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sparkles, Wrench, Zap, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import type { EditingModel } from '@/lib/types/settings';
 import type { ProviderId } from '@/lib/ai/providers';
 import { cn } from '@/lib/utils';
@@ -41,9 +40,7 @@ export function ModelEditDialog({
   providerType,
   requiresApiKey,
   isServerConfigured,
-}: ModelEditDialogProps) {
-  const { t } = useI18n();
-  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+}: ModelEditDialogProps) {const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
 
   // Reset test status when dialog closes
@@ -89,16 +86,16 @@ export function ModelEditDialog({
 
       if (data.success) {
         setTestStatus('success');
-        setTestMessage(t('settings.connectionSuccess'));
+        setTestMessage('连接成功');
       } else {
         setTestStatus('error');
-        setTestMessage(data.error || t('settings.connectionFailed'));
+        setTestMessage(data.error || '连接失败');
       }
     } catch (_error) {
       setTestStatus('error');
-      setTestMessage(t('settings.connectionFailed'));
+      setTestMessage('连接失败');
     }
-  }, [editingModel, apiKey, baseUrl, providerId, providerType, requiresApiKey, t]);
+  }, [editingModel, apiKey, baseUrl, providerId, providerType, requiresApiKey]);
 
   if (!editingModel) return null;
 
@@ -106,27 +103,27 @@ export function ModelEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogTitle className="sr-only">
-          {editingModel.modelIndex === null ? t('settings.addNewModel') : t('settings.editModel')}
+          {editingModel.modelIndex === null ? '新建模型' : '编辑模型'}
         </DialogTitle>
         <DialogDescription className="sr-only">
           {editingModel.modelIndex === null
-            ? t('settings.addNewModelDescription')
-            : t('settings.editModelDescription')}
+            ? '添加新的模型配置'
+            : '编辑模型配置和能力'}
         </DialogDescription>
         <div className="space-y-4">
           <div className="pb-3 border-b">
             <h2 className="text-lg font-semibold">
               {editingModel.modelIndex === null
-                ? t('settings.addNewModel')
-                : t('settings.editModel')}
+                ? '新建模型'
+                : '编辑模型'}
             </h2>
           </div>
 
           {/* Model ID */}
           <div className="space-y-2">
-            <Label>{t('settings.modelId')}</Label>
+            <Label>{'模型ID'}</Label>
             <Input
-              placeholder={t('settings.modelIdPlaceholder')}
+              placeholder={'例如：gpt-4o'}
               value={editingModel.model.id}
               onChange={(e) => {
                 const newId = e.target.value;
@@ -155,9 +152,9 @@ export function ModelEditDialog({
 
           {/* Display Name */}
           <div className="space-y-2">
-            <Label>{t('settings.modelName')}</Label>
+            <Label>{'显示名称'}</Label>
             <Input
-              placeholder={t('settings.modelNamePlaceholder')}
+              placeholder={'可选'}
               value={editingModel.model.name}
               onChange={(e) =>
                 setEditingModel({
@@ -171,7 +168,7 @@ export function ModelEditDialog({
 
           {/* Capabilities */}
           <div className="space-y-2">
-            <Label>{t('settings.modelCapabilities')}</Label>
+            <Label>{'能力'}</Label>
             <div className="flex gap-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -196,7 +193,7 @@ export function ModelEditDialog({
                   className="text-sm flex items-center gap-1.5 cursor-pointer"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
-                  {t('settings.capabilities.vision')}
+                  {'视觉'}
                 </label>
               </div>
 
@@ -223,7 +220,7 @@ export function ModelEditDialog({
                   className="text-sm flex items-center gap-1.5 cursor-pointer"
                 >
                   <Wrench className="h-3.5 w-3.5" />
-                  {t('settings.capabilities.tools')}
+                  {'工具'}
                 </label>
               </div>
 
@@ -250,7 +247,7 @@ export function ModelEditDialog({
                   className="text-sm flex items-center gap-1.5 cursor-pointer"
                 >
                   <Zap className="h-3.5 w-3.5" />
-                  {t('settings.capabilities.streaming')}
+                  {'流式'}
                 </label>
               </div>
             </div>
@@ -258,14 +255,14 @@ export function ModelEditDialog({
 
           {/* Advanced Settings */}
           <div className="space-y-3 pt-3 border-t">
-            <Label className="text-base">{t('settings.advancedSettings')}</Label>
+            <Label className="text-base">{'高级设置'}</Label>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-sm">{t('settings.contextWindowLabel')}</Label>
+                <Label className="text-sm">{'上下文窗口'}</Label>
                 <Input
                   type="number"
-                  placeholder={t('settings.contextWindowPlaceholder')}
+                  placeholder={'例如 128000'}
                   value={editingModel.model.contextWindow || ''}
                   onChange={(e) =>
                     setEditingModel({
@@ -281,10 +278,10 @@ export function ModelEditDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm">{t('settings.outputWindowLabel')}</Label>
+                <Label className="text-sm">{'最大输出Token数'}</Label>
                 <Input
                   type="number"
-                  placeholder={t('settings.outputWindowPlaceholder')}
+                  placeholder={'例如 4096'}
                   value={editingModel.model.outputWindow || ''}
                   onChange={(e) =>
                     setEditingModel({
@@ -304,7 +301,7 @@ export function ModelEditDialog({
           {/* Test Model */}
           <div className="space-y-3 pt-3 border-t">
             <div className="flex items-center justify-between">
-              <Label className="text-base">{t('settings.testModel')}</Label>
+              <Label className="text-base">{'测试模型'}</Label>
               <Button
                 variant="outline"
                 size="sm"
@@ -322,7 +319,7 @@ export function ModelEditDialog({
                 {testStatus === 'testing' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {testStatus === 'success' && <CheckCircle className="mr-2 h-4 w-4" />}
                 {testStatus === 'error' && <XCircle className="mr-2 h-4 w-4" />}
-                {testStatus === 'testing' ? t('settings.testing') : t('settings.testConnection')}
+                {testStatus === 'testing' ? '测试中...' : '测试连接'}
               </Button>
             </div>
             {testMessage && (
@@ -345,10 +342,10 @@ export function ModelEditDialog({
           {/* Footer */}
           <div className="flex items-center justify-end gap-2 pt-3 border-t">
             <Button variant="outline" size="sm" onClick={handleClose}>
-              {t('settings.cancelEdit')}
+              {'取消'}
             </Button>
             <Button size="sm" onClick={onSave}>
-              {t('settings.saveModel')}
+              {'保存'}
             </Button>
           </div>
         </div>

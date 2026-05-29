@@ -28,7 +28,6 @@ import {
   Mic,
   Plus,
 } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { toast } from 'sonner';
 import { type ProviderId } from '@/lib/ai/providers';
@@ -112,7 +111,7 @@ function ProviderListColumn<T extends string>({
             <span className="font-medium text-sm flex-1 truncate">{provider.name}</span>
             {configs[provider.id]?.isServerConfigured && (
               <span className="text-[10px] px-1 py-0 h-4 leading-4 rounded shrink-0 bg-muted text-muted-foreground">
-                {t('settings.serverConfigured')}
+                {'服务端'}
               </span>
             )}
           </button>
@@ -122,7 +121,7 @@ function ProviderListColumn<T extends string>({
         <div className="p-3 border-t">
           <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={onAdd}>
             <Plus className="h-3.5 w-3.5" />
-            {t('settings.addProviderButton')}
+            {'添加'}
           </Button>
         </div>
       )}
@@ -137,16 +136,16 @@ function getTTSProviderName(providerId: TTSProviderId, t: (key: string) => strin
     return cfg?.customName || providerId;
   }
   const names: Record<string, string> = {
-    'openai-tts': t('settings.providerOpenAITTS'),
-    'azure-tts': t('settings.providerAzureTTS'),
-    'glm-tts': t('settings.providerGLMTTS'),
-    'qwen-tts': t('settings.providerQwenTTS'),
-    'voxcpm-tts': t('settings.providerVoxCPMTTS'),
-    'doubao-tts': t('settings.providerDoubaoTTS'),
-    'elevenlabs-tts': t('settings.providerElevenLabsTTS'),
-    'minimax-tts': t('settings.providerMiniMaxTTS'),
-    'lemonade-tts': t('settings.providerLemonadeTTS'),
-    'browser-native-tts': t('settings.providerBrowserNativeTTS'),
+    'openai-tts': 'OpenAI TTS (gpt-4o-mini-tts)',
+    'azure-tts': 'Azure TTS',
+    'glm-tts': 'GLM TTS',
+    'qwen-tts': 'Qwen TTS（阿里云百炼）',
+    'voxcpm-tts': 'VoxCPM2',
+    'doubao-tts': '豆包 TTS 2.0（火山引擎）',
+    'elevenlabs-tts': 'ElevenLabs TTS',
+    'minimax-tts': 'MiniMax TTS',
+    'lemonade-tts': 'Lemonade TTS（本地）',
+    'browser-native-tts': '浏览器原生 TTS',
   };
   return names[providerId] || providerId;
 }
@@ -157,10 +156,10 @@ function getASRProviderName(providerId: ASRProviderId, t: (key: string) => strin
     return cfg?.customName || providerId;
   }
   const names: Record<string, string> = {
-    'openai-whisper': t('settings.providerOpenAIWhisper'),
-    'browser-native': t('settings.providerBrowserNative'),
-    'qwen-asr': t('settings.providerQwenASR'),
-    'lemonade-asr': t('settings.providerLemonadeASR'),
+    'openai-whisper': 'OpenAI ASR (gpt-4o-mini-transcribe)',
+    'browser-native': '浏览器原生 ASR',
+    'qwen-asr': 'Qwen ASR（阿里云百炼）',
+    'lemonade-asr': 'Lemonade ASR（本地）',
   };
   return names[providerId] || providerId;
 }
@@ -210,12 +209,10 @@ interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialSection?: SettingsSection;
+  t?: (key: string) => string;
 }
 
-export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsDialogProps) {
-  const { t } = useI18n();
-
-  // Get settings from store
+export function SettingsDialog({ open, onOpenChange, initialSection, t = (key: string) => key }: SettingsDialogProps) {// Get settings from store
   const providerId = useSettingsStore((state) => state.providerId);
   const _modelId = useSettingsStore((state) => state.modelId);
   const providersConfig = useSettingsStore((state) => state.providersConfig);
@@ -441,7 +438,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
     if (!editingModel) return;
     const { providerId: pid, modelIndex, model } = editingModel;
     if (!model.id.trim()) {
-      toast.error(t('settings.modelIdRequired'));
+      toast.error('请输入模型 ID');
       return;
     }
     const currentModels = providersConfig[pid]?.models || [];
@@ -460,7 +457,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
   // Handle provider management
   const handleAddProvider = (providerData: NewProviderData) => {
     if (!providerData.name.trim()) {
-      toast.error(t('settings.providerNameRequired'));
+      toast.error('请输入提供方名称');
       return;
     }
     const newProviderId = `custom-${Date.now()}` as ProviderId;
@@ -475,7 +472,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
 
   const handleDeleteProvider = (pid: ProviderId) => {
     if (providersConfig[pid]?.isBuiltIn) {
-      toast.error(t('settings.cannotDeleteBuiltIn'));
+      toast.error('无法删除内置提供方');
       return;
     }
     setProviderToDelete(pid);
@@ -510,7 +507,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
     const provider = PROVIDERS[pid];
     if (!provider) return;
     setProviderConfig(pid, { models: [...provider.models] });
-    toast.success(t('settings.resetSuccess'));
+    toast.success('已成功重置为默认配置');
   };
 
   // Get all providers from providersConfig
@@ -540,7 +537,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
   const getHeaderContent = () => {
     switch (activeSection) {
       case 'general':
-        return <h2 className="text-lg font-semibold">{t('settings.systemSettings')}</h2>;
+        return <h2 className="text-lg font-semibold">{'系统设置'}</h2>;
       case 'providers':
         if (selectedProvider) {
           return (
@@ -713,8 +710,8 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="h-[85vh] p-0 gap-0 block" showCloseButton={false}>
-        <DialogTitle className="sr-only">{t('settings.title')}</DialogTitle>
-        <DialogDescription className="sr-only">{t('settings.description')}</DialogDescription>
+        <DialogTitle className="sr-only">{'设置'}</DialogTitle>
+        <DialogDescription className="sr-only">{'配置应用程序设置'}</DialogDescription>
         <div className="flex h-full overflow-hidden">
           {/* Left Sidebar - Navigation */}
           <div className="flex-shrink-0 bg-muted/30 p-3 space-y-1" style={{ width: sidebarWidth }}>
@@ -728,7 +725,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               )}
             >
               <Box className="h-4 w-4 shrink-0" />
-              <span className="truncate">{t('settings.providers')}</span>
+              <span className="truncate">{'语言模型'}</span>
             </button>
 
             <button
@@ -741,7 +738,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               )}
             >
               <ImageIcon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{t('settings.imageSettings')}</span>
+              <span className="truncate">{'图像生成'}</span>
             </button>
 
             <button
@@ -754,7 +751,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               )}
             >
               <Film className="h-4 w-4 shrink-0" />
-              <span className="truncate">{t('settings.videoSettings')}</span>
+              <span className="truncate">{'视频生成'}</span>
             </button>
 
             <button
@@ -767,7 +764,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               )}
             >
               <Volume2 className="h-4 w-4 shrink-0" />
-              <span className="truncate">{t('settings.ttsSettings')}</span>
+              <span className="truncate">{'语音合成'}</span>
             </button>
 
             <button
@@ -780,7 +777,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               )}
             >
               <Mic className="h-4 w-4 shrink-0" />
-              <span className="truncate">{t('settings.asrSettings')}</span>
+              <span className="truncate">{'语音识别'}</span>
             </button>
 
             <button
@@ -793,7 +790,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               )}
             >
               <FileText className="h-4 w-4 shrink-0" />
-              <span className="truncate">{t('settings.pdfSettings')}</span>
+              <span className="truncate">{'PDF 解析'}</span>
             </button>
 
             <button
@@ -806,7 +803,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               )}
             >
               <Search className="h-4 w-4 shrink-0" />
-              <span className="truncate">{t('settings.webSearchSettings')}</span>
+              <span className="truncate">{'网络搜索'}</span>
             </button>
 
             <button
@@ -819,7 +816,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               )}
             >
               <Settings className="h-4 w-4 shrink-0" />
-              <span className="truncate">{t('settings.systemSettings')}</span>
+              <span className="truncate">{'系统设置'}</span>
             </button>
           </div>
 
@@ -1072,20 +1069,20 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               {saveStatus === 'saved' && (
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <CheckCircle2 className="h-4 w-4" />
-                  <span>{t('settings.saveSuccess')}</span>
+                  <span>{'配置已保存'}</span>
                 </div>
               )}
               {saveStatus === 'error' && (
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <XCircle className="h-4 w-4" />
-                  <span>{t('settings.saveFailed')}</span>
+                  <span>{'保存失败，请重试'}</span>
                 </div>
               )}
               <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-                {t('settings.close')}
+                {'关闭'}
               </Button>
               <Button size="sm" onClick={handleSave}>
-                {t('settings.save')}
+                {'保存'}
               </Button>
             </div>
           </div>
@@ -1138,13 +1135,13 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('settings.deleteProvider')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('settings.deleteProviderConfirm')}</AlertDialogDescription>
+            <AlertDialogTitle>{'删除提供方'}</AlertDialogTitle>
+            <AlertDialogDescription>{'确定要删除此提供方吗？'}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('settings.cancelEdit')}</AlertDialogCancel>
+            <AlertDialogCancel>{'取消'}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteProvider}>
-              {t('settings.deleteProvider')}
+              {'删除提供方'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

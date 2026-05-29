@@ -13,7 +13,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { PDF_PROVIDERS } from '@/lib/pdf/constants';
 import type { PDFProviderId } from '@/lib/pdf/types';
@@ -59,9 +58,7 @@ export function GenerationToolbar({
   pdfFile,
   onPdfFileChange,
   onPdfError,
-}: GenerationToolbarProps) {
-  const { t } = useI18n();
-  const currentProviderId = useSettingsStore((s) => s.providerId);
+}: GenerationToolbarProps) {const currentProviderId = useSettingsStore((s) => s.providerId);
   const currentModelId = useSettingsStore((s) => s.modelId);
   const providersConfig = useSettingsStore((s) => s.providersConfig);
   const setModel = useSettingsStore((s) => s.setModel);
@@ -120,7 +117,7 @@ export function GenerationToolbar({
   const handleFileSelect = (file: File) => {
     if (file.type !== 'application/pdf') return;
     if (file.size > MAX_PDF_SIZE_BYTES) {
-      onPdfError(t('upload.fileTooLarge'));
+      onPdfError('文件过大，请选择小于50MB的PDF文件');
       return;
     }
     onPdfError(null);
@@ -162,10 +159,10 @@ export function GenerationToolbar({
               )}
             >
               <Bot className="size-3.5" />
-              <span>{t('toolbar.configureProvider')}</span>
+              <span>{'配置模型'}</span>
             </button>
           </TooltipTrigger>
-          <TooltipContent>{t('toolbar.configureProviderHint')}</TooltipContent>
+          <TooltipContent>{'请先配置至少一个模型服务商才能生成课程'}</TooltipContent>
         </Tooltip>
       )}
 
@@ -201,7 +198,7 @@ export function GenerationToolbar({
             {/* Parser selector */}
             <div className="flex items-center gap-2 px-3 pt-3 pb-2">
               <span className="text-xs font-medium text-muted-foreground shrink-0">
-                {t('toolbar.pdfParser')}
+                {'解析器'}
               </span>
               <Select
                 value={pdfProviderId}
@@ -226,7 +223,7 @@ export function GenerationToolbar({
                           {provider.name}
                           {cfg?.isServerConfigured && (
                             <span className="text-[9px] px-1 py-0 rounded border text-muted-foreground">
-                              {t('settings.serverConfigured')}
+                              {'服务端'}
                             </span>
                           )}
                         </div>
@@ -267,7 +264,7 @@ export function GenerationToolbar({
                     onClick={() => onPdfFileChange(null)}
                     className="w-full text-xs text-destructive hover:underline text-left"
                   >
-                    {t('toolbar.removePdf')}
+                    {'移除文件'}
                   </button>
                 </div>
               ) : (
@@ -292,9 +289,9 @@ export function GenerationToolbar({
                   }}
                 >
                   <Paperclip className="size-5 text-muted-foreground/50 mb-1.5" />
-                  <p className="text-xs font-medium">{t('toolbar.pdfUpload')}</p>
+                  <p className="text-xs font-medium">{'上传 PDF'}</p>
                   <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                    {t('upload.pdfSizeLimit')}
+                    {'支持最大50MB的PDF文件'}
                   </p>
                 </div>
               )}
@@ -340,10 +337,10 @@ export function GenerationToolbar({
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium">
-                    {webSearch ? t('toolbar.webSearchOn') : t('toolbar.webSearchOff')}
+                    {webSearch ? '已开启' : '点击开启'}
                   </p>
                   <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                    {t('toolbar.webSearchDesc')}
+                    {'生成前搜索网络获取最新资料，让内容更丰富准确'}
                   </p>
                 </div>
               </button>
@@ -351,7 +348,7 @@ export function GenerationToolbar({
               {/* Provider selector */}
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-muted-foreground shrink-0">
-                  {t('toolbar.webSearchProvider')}
+                  {'搜索引擎'}
                 </span>
                 <Select
                   value={webSearchProviderId}
@@ -373,7 +370,7 @@ export function GenerationToolbar({
                             {getWebSearchProviderDisplayName(provider.id, t)}
                             {cfg?.isServerConfigured && (
                               <span className="text-[9px] px-1 py-0 rounded border text-muted-foreground">
-                                {t('settings.serverConfigured')}
+                                {'服务端'}
                               </span>
                             )}
                           </div>
@@ -395,7 +392,7 @@ export function GenerationToolbar({
                 <Globe2 className="size-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>{t('toolbar.webSearchNoProvider')}</TooltipContent>
+            <TooltipContent>{'请在设置中配置搜索引擎 API Key'}</TooltipContent>
           </Tooltip>
         )}
 
@@ -411,7 +408,7 @@ export function GenerationToolbar({
 
 function formatThinkingValue(value?: string, t?: (key: string) => string) {
   if (!value) return '';
-  if (value === 'none') return t ? t('toolbar.off') : 'off';
+  if (value === 'none') return t ? '关闭' : 'off';
   if (t && (value === 'dynamic' || value === 'on' || value === 'off' || value === 'auto')) {
     return t(`toolbar.${value}`);
   }
@@ -523,14 +520,14 @@ function InlineThinkingControl({
             <SelectContent align="end" className="min-w-[96px]">
               {thinking.control === 'toggle-budget' && (
                 <SelectItem value="disabled" className={selectItemCls}>
-                  {t('toolbar.off')}
+                  {'关闭'}
                 </SelectItem>
               )}
               <SelectItem value="enabled" className={selectItemCls}>
-                {t('toolbar.on')}
+                {'开启'}
               </SelectItem>
               <SelectItem value="auto" className={selectItemCls}>
-                {t('toolbar.auto')}
+                {'自动'}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -552,14 +549,14 @@ function InlineThinkingControl({
             <SelectContent align="end" className="min-w-[96px]">
               {thinking.control === 'mode' && (
                 <SelectItem value="auto" className={selectItemCls}>
-                  {t('toolbar.auto')}
+                  {'自动'}
                 </SelectItem>
               )}
               <SelectItem value="disabled" className={selectItemCls}>
-                {t('toolbar.off')}
+                {'关闭'}
               </SelectItem>
               <SelectItem value="enabled" className={selectItemCls}>
-                {t('toolbar.on')}
+                {'开启'}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -614,12 +611,12 @@ function InlineThinkingControl({
           (!hasAutoBudget || autoBudgetMode === 'enabled') && (
             <label className="ml-0.5 grid h-6 shrink-0 grid-cols-[auto_60px] items-stretch overflow-hidden rounded-full border border-violet-200/70 bg-background dark:border-violet-800/70">
               <span className="grid h-[22px] shrink-0 place-items-center border-r border-violet-200/70 bg-muted/30 px-2 font-sans text-[11px] font-medium leading-[22px] text-muted-foreground dark:border-violet-800/70">
-                {t('toolbar.thinkingBudget')}
+                {'预算'}
               </span>
               <input
                 type="text"
                 inputMode="numeric"
-                aria-label={t('toolbar.thinkingBudget')}
+                aria-label={'预算'}
                 disabled={effective?.mode === 'disabled'}
                 value={
                   typeof effective?.budgetTokens === 'number' && effective.budgetTokens !== -1
@@ -714,7 +711,7 @@ function ModelSettingsPopover({
   const currentProviderName =
     currentProvider?.name ?? currentProviderConfig?.name ?? currentProviderId;
   const currentProviderIcon = currentProvider?.icon ?? currentProviderConfig?.icon;
-  const currentModelLabel = currentModel?.name || currentModelId || t('settings.selectModel');
+  const currentModelLabel = currentModel?.name || currentModelId || '选择模型';
   const currentThinkingValue = getThinkingDisplayValue(
     currentModel?.capabilities?.thinking,
     thinkingConfig,
@@ -764,7 +761,7 @@ function ModelSettingsPopover({
         <TooltipContent>
           {currentModelId
             ? `${currentProviderConfig?.name || currentProviderId} / ${currentModelId}`
-            : t('settings.selectModel')}
+            : '选择模型'}
         </TooltipContent>
       </Tooltip>
 
@@ -778,12 +775,12 @@ function ModelSettingsPopover({
         <div className="grid h-[430px] grid-cols-[128px_minmax(0,1fr)] sm:grid-cols-[160px_minmax(0,1fr)]">
           <div className="min-h-0 border-r bg-muted/20">
             <div className="px-3 py-2 text-[10px] font-semibold uppercase text-muted-foreground">
-              {t('toolbar.selectProvider')}
+              {'选择模型服务商'}
             </div>
             <div className="h-[calc(100%-28px)] overflow-y-auto px-2 pb-2 pt-1">
               {providerEntries.length === 0 ? (
                 <div className="px-2 py-4 text-[11px] text-muted-foreground">
-                  {t('settings.noModelsFound')}
+                  {'未找到匹配的模型'}
                 </div>
               ) : (
                 providerEntries.map(({ provider, matchingModels }) => {
@@ -836,7 +833,7 @@ function ModelSettingsPopover({
                       setSearchQuery(nextSearch);
                       if (!nextSearch.trim()) setActiveProviderId(currentProviderId);
                     }}
-                    placeholder={t('settings.searchModels')}
+                    placeholder={'搜索模型'}
                     className="h-8 pl-8 text-xs"
                   />
                 </div>
@@ -846,7 +843,7 @@ function ModelSettingsPopover({
             <div className="min-h-0 flex-1 overflow-y-auto p-2">
               {visibleModelEntries.length === 0 ? (
                 <div className="px-3 py-8 text-center text-xs text-muted-foreground">
-                  {searchQuery ? t('settings.noModelsFound') : t('settings.noModelsAvailable')}
+                  {searchQuery ? '未找到匹配的模型' : '没有可用于测试的模型'}
                 </div>
               ) : (
                 visibleModelEntries.map(({ provider, model }) => {

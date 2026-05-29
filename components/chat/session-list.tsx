@@ -2,7 +2,6 @@
 
 import type { ChatSession, SessionStatus } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { MessageSquare, HelpCircle, BookOpen, Users, MapPin, Clock, CheckCircle2, Circle, ChevronRight, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChatSessionComponent } from './chat-session';
@@ -53,10 +52,7 @@ export function SessionList({
   onToggleExpand,
   onEndSession,
   onDeleteSession,
-}: SessionListProps) {
-  const { t } = useI18n();
-
-  return (
+}: SessionListProps) {return (
     <div className="space-y-1.5 px-0.5">
       <AnimatePresence mode="popLayout">
         {sessions.map((session) => {
@@ -146,7 +142,7 @@ export function SessionList({
                       <span className="truncate">
                         {(() => {
                           const s = sceneTitleMap.get(session.sceneId!)!;
-                          return `${t('chat.lectureNotes.pageLabel', { n: s.order + 1 })} — ${s.title}`;
+                          return `${`第 ${s.order + 1} 页`} — ${s.title}`;
                         })()}
                       </span>
                     </div>
@@ -154,7 +150,7 @@ export function SessionList({
                   {!isExpanded && !session.sceneId && (
                     <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-400/70 dark:text-slate-500/70">
                       <MapPin className="w-3 h-3" />
-                      <span className="truncate">{t('chat.lectureNotes.noScene')}</span>
+                      <span className="truncate">{'未关联幻灯片'}</span>
                     </div>
                   )}
                 </div>
@@ -202,7 +198,7 @@ export function SessionList({
                       className="w-5 h-5 rounded-full flex items-center justify-center
                         text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
                         transition-colors shrink-0 cursor-pointer"
-                      title={t('chat.deleteSession')}
+                      title={'删除会话'}
                     >
                       <X className="w-3 h-3" />
                     </span>
@@ -231,7 +227,7 @@ export function SessionList({
                           <span className="truncate font-medium">
                             {(() => {
                               const s = sceneTitleMap.get(session.sceneId!)!;
-                              return `${t('chat.lectureNotes.pageLabel', { n: s.order + 1 })} — ${s.title}`;
+                              return `${`第 ${s.order + 1} 页`} — ${s.title}`;
                             })()}
                           </span>
                         </div>
@@ -239,7 +235,7 @@ export function SessionList({
                       {!session.sceneId && (
                         <div className="flex items-center gap-1.5 px-2 py-1 mb-1.5 text-[11px] text-slate-500/80 dark:text-slate-400/80 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg">
                           <MapPin className="w-3.5 h-3.5" />
-                          <span className="truncate font-medium">{t('chat.lectureNotes.noScene')}</span>
+                          <span className="truncate font-medium">{'未关联幻灯片'}</span>
                         </div>
                       )}
                       <ChatSessionComponent
@@ -266,10 +262,10 @@ export function SessionList({
             <MessageSquare className="w-6 h-6" />
           </div>
           <p className="text-[13px] font-semibold text-slate-400 dark:text-slate-500">
-            {t('chat.noConversations')}
+            {'暂无对话'}
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            {t('chat.startConversation')}
+            {'输入消息开始对话'}
           </p>
         </div>
       )}

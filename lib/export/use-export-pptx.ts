@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { useStageStore } from '@/lib/store';
 import { useCanvasStore } from '@/lib/store/canvas';
 import { useMediaGenerationStore, isMediaPlaceholder } from '@/lib/store/media-generation';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import type {
   Slide,
   PPTElementOutline,
@@ -1093,10 +1092,7 @@ async function buildPptxBlob(
 
 export function useExportPPTX() {
   const [exporting, setExporting] = useState(false);
-  const exportingRef = useRef(false);
-  const { t } = useI18n();
-
-  const scenes = useStageStore((s) => s.scenes);
+  const exportingRef = useRef(false);const scenes = useStageStore((s) => s.scenes);
   const stage = useStageStore((s) => s.stage);
   const viewportSize = useCanvasStore.use.viewportSize();
   const viewportRatio = useCanvasStore.use.viewportRatio();
@@ -1118,14 +1114,14 @@ export function useExportPPTX() {
           await action();
         } catch (err) {
           log.error('Export failed:', err);
-          toast.error(t('export.exportFailed'));
+          toast.error('导出失败');
         } finally {
           exportingRef.current = false;
           setExporting(false);
         }
       }, 100);
     },
-    [slides.length, t],
+    [slides.length],
   );
 
   // ── Export PPTX only ──
@@ -1141,7 +1137,7 @@ export function useExportPPTX() {
         ratioPx2Pt,
       );
       saveAs(blob, `${fileName}.pptx`);
-      toast.success(t('export.exportSuccess'));
+      toast.success('导出成功');
     });
   }, [
     withExportGuard,
@@ -1187,7 +1183,7 @@ export function useExportPPTX() {
       // 3. Download ZIP
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       saveAs(zipBlob, `${fileName}.zip`);
-      toast.success(t('export.exportSuccess'));
+      toast.success('导出成功');
     });
   }, [
     withExportGuard,

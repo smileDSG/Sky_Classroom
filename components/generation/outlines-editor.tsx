@@ -24,7 +24,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { cn } from '@/lib/utils';
 import type { SceneOutline } from '@/lib/types/generation';
 
@@ -88,19 +87,17 @@ function normalizeOrder(outlines: SceneOutline[]): SceneOutline[] {
   }));
 }
 
-function useSceneTypeLabel() {
-  const { t } = useI18n();
-  return (type: SceneType) => {
+function useSceneTypeLabel() {return (type: SceneType) => {
     switch (type) {
       case 'quiz':
-        return t('generation.sceneTypeQuiz');
+        return '测验';
       case 'interactive':
-        return t('generation.sceneTypeInteractive');
+        return '互动';
       case 'pbl':
-        return t('generation.sceneTypePbl');
+        return '项目式学习';
       case 'slide':
       default:
-        return t('generation.sceneTypeSlide');
+        return '幻灯片';
     }
   };
 }
@@ -115,9 +112,7 @@ export function OutlinesEditor({
   isLoading = false,
   isStreaming = false,
   onCollapse,
-}: OutlinesEditorProps) {
-  const { t } = useI18n();
-  const sceneTypeLabel = useSceneTypeLabel();
+}: OutlinesEditorProps) {const sceneTypeLabel = useSceneTypeLabel();
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const lastScrollTargetRef = useRef<string | null>(null);
@@ -195,11 +190,11 @@ export function OutlinesEditor({
   const headerSubtitle = useMemo(() => {
     if (isStreaming) {
       return outlines.length > 0
-        ? t('generation.outlineEditorStreamingProgress', { count: outlines.length })
-        : t('generation.outlineEditorStreamingWaiting');
+        ? `生成中 · 已就位 ${outlines.length} 个场景`
+        : '正在等待第一个场景到达…';
     }
-    return t('generation.outlineEditorSummary', { count: outlines.length });
-  }, [isStreaming, outlines.length, t]);
+    return `共 ${outlines.length} 个场景，可在生成前编辑、添加、删除或重排序`;
+  }, [isStreaming, outlines.length]);
 
   return (
     <motion.div
@@ -224,10 +219,10 @@ export function OutlinesEditor({
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
             <Sparkles className="size-3 text-blue-500" />
-            {t('generation.outlineEditorEyebrow')}
+            {'AI 生成的大纲'}
           </div>
           <h2 className="text-2xl font-semibold tracking-tight md:text-[28px]">
-            {t('generation.outlineEditorTitle')}
+            {'场景大纲'}
           </h2>
           <p className="flex min-h-[1.5rem] items-center gap-2 text-sm text-muted-foreground">
             {isStreaming && (
@@ -246,7 +241,7 @@ export function OutlinesEditor({
             type="button"
             onClick={onCollapse}
             disabled={isLoading}
-            aria-label={t('generation.collapseEditor')}
+            aria-label={'收起'}
             className={cn(
               'mt-1 inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium',
               'text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
@@ -255,7 +250,7 @@ export function OutlinesEditor({
             )}
           >
             <Minimize2 className="size-3.5" />
-            <span className="hidden sm:inline">{t('generation.collapseEditor')}</span>
+            <span className="hidden sm:inline">{'收起'}</span>
           </button>
         )}
       </div>
@@ -339,10 +334,10 @@ export function OutlinesEditor({
             checked={alwaysReview}
             onCheckedChange={(checked) => onAlwaysReviewChange?.(checked === true)}
             disabled={isLoading}
-            aria-label={t('generation.alwaysReviewOutlines')}
+            aria-label={'以后生成前都审阅大纲'}
             className="size-4"
           />
-          <span>{t('generation.alwaysReviewOutlines')}</span>
+          <span>{'以后生成前都审阅大纲'}</span>
         </label>
 
         <div className="flex flex-col-reverse gap-2 md:flex-row md:items-center md:gap-2">
@@ -352,7 +347,7 @@ export function OutlinesEditor({
             disabled={isLoading}
             className="rounded-full px-4 text-muted-foreground hover:text-foreground"
           >
-            {t('generation.backToRequirements')}
+            {'返回修改需求'}
           </Button>
           <Button
             onClick={onConfirm}
@@ -362,17 +357,17 @@ export function OutlinesEditor({
             {isLoading ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                {t('generation.generatingInProgress')}
+                {'生成中...'}
               </>
             ) : isStreaming ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                {t('generation.outlineEditorWaitingConfirm')}
+                {'等待大纲生成完成…'}
               </>
             ) : (
               <>
                 <Check className="size-4" />
-                {t('generation.confirmAndGenerateCourse')}
+                {'确认并生成课程'}
               </>
             )}
           </Button>
@@ -424,9 +419,7 @@ function SceneRow({
   onDragEnd,
   onDragEnter,
   onDrop,
-}: SceneRowProps) {
-  const { t } = useI18n();
-  const theme = TYPE_THEME[outline.type] ?? TYPE_THEME.slide;
+}: SceneRowProps) {const theme = TYPE_THEME[outline.type] ?? TYPE_THEME.slide;
   const [keyPointDraft, setKeyPointDraft] = useState('');
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
@@ -493,8 +486,8 @@ function SceneRow({
           <button
             type="button"
             draggable={!disabled}
-            title={t('generation.dragSceneHint')}
-            aria-label={t('generation.dragSceneHint')}
+            title={'拖动排序；或聚焦后按 Ctrl/⌘ + ↑ / ↓'}
+            aria-label={'拖动排序；或聚焦后按 Ctrl/⌘ + ↑ / ↓'}
             aria-keyshortcuts="Control+ArrowUp Control+ArrowDown Meta+ArrowUp Meta+ArrowDown"
             onDragStart={(event) => {
               event.dataTransfer.effectAllowed = 'move';
@@ -556,7 +549,7 @@ function SceneRow({
               ref={titleRef}
               value={outline.title}
               onChange={(event) => onUpdate({ title: event.target.value })}
-              placeholder={t('generation.sceneTitlePlaceholder')}
+              placeholder={'场景标题'}
               disabled={disabled}
               rows={1}
               spellCheck={false}
@@ -584,7 +577,7 @@ function SceneRow({
             ref={descRef}
             value={outline.description}
             onChange={(event) => onUpdate({ description: event.target.value })}
-            placeholder={t('generation.sceneDescriptionPlaceholder')}
+            placeholder={'简短描述这个场景的目的和内容'}
             disabled={disabled}
             rows={1}
             className={cn(
@@ -616,7 +609,7 @@ function SceneRow({
                     <button
                       type="button"
                       onClick={() => removeKeyPoint(idx)}
-                      aria-label={t('generation.removeKeyPoint')}
+                      aria-label={'移除要点'}
                       className="ml-0.5 inline-flex size-3.5 shrink-0 items-center justify-center rounded-full text-muted-foreground/0 transition-colors hover:bg-muted-foreground/20 hover:text-muted-foreground group-hover/chip:text-muted-foreground/70"
                     >
                       <X className="size-2.5" />
@@ -630,7 +623,7 @@ function SceneRow({
                 value={keyPointDraft}
                 onChange={setKeyPointDraft}
                 onKeyDown={handleKeyPointKeyDown}
-                placeholder={t('generation.addKeyPoint')}
+                placeholder={'添加要点'}
               />
             )}
           </div>
@@ -657,10 +650,7 @@ function EmptyState({
   isStreaming: boolean;
   disabled: boolean;
   onAdd: () => void;
-}) {
-  const { t } = useI18n();
-
-  if (isStreaming) {
+}) {if (isStreaming) {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 px-6 py-12 text-center">
         <motion.div
@@ -671,7 +661,7 @@ function EmptyState({
           <Loader2 className="size-6" />
         </motion.div>
         <p className="text-sm text-muted-foreground">
-          {t('generation.outlineEditorStreamingWaiting')}
+          {'正在等待第一个场景到达…'}
         </p>
       </div>
     );
@@ -679,10 +669,10 @@ function EmptyState({
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 px-6 py-12 text-center">
-      <p className="text-sm text-muted-foreground">{t('generation.noOutlines')}</p>
+      <p className="text-sm text-muted-foreground">{'暂无场景大纲'}</p>
       <Button variant="outline" onClick={onAdd} disabled={disabled} className="rounded-full">
         <Plus className="size-4" />
-        {t('generation.addFirstScene')}
+        {'添加第一个场景'}
       </Button>
     </div>
   );
@@ -700,9 +690,7 @@ function TypePill({
   disabled: boolean;
   label: string;
   theme: (typeof TYPE_THEME)[SceneType];
-}) {
-  const { t } = useI18n();
-  return (
+}) {return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={disabled}>
         <button
@@ -740,16 +728,14 @@ function TypePill({
   );
 }
 
-function DeleteSceneButton({ onConfirm }: { onConfirm: () => void }) {
-  const { t } = useI18n();
-  const [open, setOpen] = useState(false);
+function DeleteSceneButton({ onConfirm }: { onConfirm: () => void }) {const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label={t('generation.deleteScene')}
+          aria-label={'删除场景'}
           className={cn(
             'inline-flex size-7 items-center justify-center rounded-full text-muted-foreground/40 transition-all',
             'hover:bg-destructive/10 hover:text-destructive',
@@ -762,9 +748,9 @@ function DeleteSceneButton({ onConfirm }: { onConfirm: () => void }) {
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={4} className="w-56 p-3">
-        <p className="text-sm font-medium">{t('generation.deleteSceneConfirm')}</p>
+        <p className="text-sm font-medium">{'删除该场景？'}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {t('generation.deleteSceneConfirmDesc')}
+          {'该场景及其关键要点将从大纲中移除。'}
         </p>
         <div className="mt-3 flex justify-end gap-2">
           <Button
@@ -774,7 +760,7 @@ function DeleteSceneButton({ onConfirm }: { onConfirm: () => void }) {
             onClick={() => setOpen(false)}
             className="h-8"
           >
-            {t('common.cancel')}
+            {'取消'}
           </Button>
           <Button
             type="button"
@@ -786,7 +772,7 @@ function DeleteSceneButton({ onConfirm }: { onConfirm: () => void }) {
             }}
             className="h-8"
           >
-            {t('generation.deleteSceneConfirmAction')}
+            {'删除'}
           </Button>
         </div>
       </PopoverContent>
@@ -794,9 +780,7 @@ function DeleteSceneButton({ onConfirm }: { onConfirm: () => void }) {
   );
 }
 
-function StreamingPlaceholder({ nextIndex }: { nextIndex: number }) {
-  const { t } = useI18n();
-  return (
+function StreamingPlaceholder({ nextIndex }: { nextIndex: number }) {return (
     <motion.li
       layout
       initial={{ opacity: 0, y: 8 }}
@@ -804,7 +788,7 @@ function StreamingPlaceholder({ nextIndex }: { nextIndex: number }) {
       exit={{ opacity: 0, y: -8 }}
       transition={{ type: 'spring', stiffness: 360, damping: 32 }}
       aria-live="polite"
-      aria-label={t('generation.outlineEditorStreamingWaiting')}
+      aria-label={'正在等待第一个场景到达…'}
       className="relative flex items-start gap-2.5 px-3 py-3.5 md:px-4"
     >
       {/* Left rail: spacer for grip column + spinner where the number badge would be */}
@@ -833,7 +817,7 @@ function StreamingPlaceholder({ nextIndex }: { nextIndex: number }) {
 
       {/* Hidden but exposed to screen readers */}
       <span className="sr-only">
-        {t('generation.outlineEditorStreamingProgress', { count: nextIndex - 1 })}
+        {`生成中 · 已就位 ${nextIndex - 1} 个场景`}
       </span>
     </motion.li>
   );
@@ -848,9 +832,7 @@ function InsertDivider({
   disabled: boolean;
   /** Edge dividers (before first / after last) keep a faint hint to invite adding. */
   position?: 'between' | 'edge';
-}) {
-  const { t } = useI18n();
-  const isEdge = position === 'edge';
+}) {const isEdge = position === 'edge';
   return (
     <li
       role="presentation"
@@ -860,7 +842,7 @@ function InsertDivider({
         type="button"
         onClick={onClick}
         disabled={disabled}
-        aria-label={t('generation.insertSceneHere')}
+        aria-label={'在此处插入一个场景'}
         className={cn(
           'group/insert relative flex h-full w-full items-center justify-center transition-opacity',
           // Edges show a barely-there hint by default; hover/focus brings it to full
@@ -946,9 +928,7 @@ function QuizConfigDisclosure({
 }: {
   outline: SceneOutline;
   onUpdate: (updates: Partial<SceneOutline>) => void;
-}) {
-  const { t } = useI18n();
-  const config = outline.quizConfig ?? {
+}) {const config = outline.quizConfig ?? {
     questionCount: 3,
     difficulty: 'medium' as const,
     questionTypes: ['single' as const],
@@ -975,7 +955,7 @@ function QuizConfigDisclosure({
             'text-purple-600 transition-colors hover:bg-purple-500/[0.06] dark:text-purple-300',
           )}
         >
-          <span>{t('generation.quizConfigSummary', { count: config.questionCount ?? 3 })}</span>
+          <span>{`${config.questionCount ?? 3} 道题`}</span>
           <ChevronDown className="size-3 opacity-70" />
         </button>
       </PopoverTrigger>
@@ -983,7 +963,7 @@ function QuizConfigDisclosure({
         {/* Count: label left, stepper right */}
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs font-medium text-muted-foreground">
-            {t('generation.quizQuestionCount')}
+            {'题目数量'}
           </span>
           <Stepper
             value={config.questionCount ?? 3}
@@ -995,22 +975,22 @@ function QuizConfigDisclosure({
         {/* Difficulty: label left, segmented right */}
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs font-medium text-muted-foreground">
-            {t('generation.quizDifficulty')}
+            {'难度'}
           </span>
           <SegmentedControl
             value={config.difficulty ?? 'medium'}
             onChange={(value) => updateConfig({ difficulty: value as 'easy' | 'medium' | 'hard' })}
             options={[
-              { value: 'easy', label: t('generation.quizDifficultyEasy') },
-              { value: 'medium', label: t('generation.quizDifficultyMedium') },
-              { value: 'hard', label: t('generation.quizDifficultyHard') },
+              { value: 'easy', label: '简单' },
+              { value: 'medium', label: '中等' },
+              { value: 'hard', label: '困难' },
             ]}
           />
         </div>
         {/* Type: label above, multi-select pills below */}
         <div className="space-y-1.5">
           <span className="text-xs font-medium text-muted-foreground">
-            {t('generation.quizType')}
+            {'题型'}
           </span>
           <div className="flex gap-1">
             {(

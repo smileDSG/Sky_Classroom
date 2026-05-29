@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { ArrowRight, ShieldCheck, LoaderCircle } from 'lucide-react';
 
 interface AccessCodeModalProps {
@@ -10,9 +9,7 @@ interface AccessCodeModalProps {
   onSuccess: () => void;
 }
 
-export function AccessCodeModal({ open, onSuccess }: AccessCodeModalProps) {
-  const { t } = useI18n();
-  const [code, setCode] = useState('');
+export function AccessCodeModal({ open, onSuccess }: AccessCodeModalProps) {const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -41,12 +38,12 @@ export function AccessCodeModal({ open, onSuccess }: AccessCodeModalProps) {
         setSuccess(true);
         setTimeout(onSuccess, 600);
       } else {
-        setError(t('accessCode.error'));
+        setError('访问码错误，请重试。');
         setCode('');
         inputRef.current?.focus();
       }
     } catch {
-      setError(t('accessCode.error'));
+      setError('访问码错误，请重试。');
     } finally {
       setLoading(false);
     }
@@ -109,7 +106,7 @@ export function AccessCodeModal({ open, onSuccess }: AccessCodeModalProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.4 }}
               >
-                {t('accessCode.title')}
+                {'请输入访问码'}
               </motion.h1>
 
               <motion.p
@@ -133,7 +130,7 @@ export function AccessCodeModal({ open, onSuccess }: AccessCodeModalProps) {
                   <input
                     ref={inputRef}
                     type="password"
-                    placeholder={t('accessCode.placeholder')}
+                    placeholder={'访问码'}
                     value={code}
                     onChange={(e) => {
                       setCode(e.target.value);

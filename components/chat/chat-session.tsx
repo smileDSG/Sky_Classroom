@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import type { ChatSession, ChatMessageMetadata } from '@/lib/types/chat';
 import type { UIMessage } from 'ai';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { AvatarDisplay } from '@/components/ui/avatar-display';
 import { CircleStop, CircleX, Trash2 } from 'lucide-react';
 import { InlineActionTag } from './inline-action-tag';
@@ -118,9 +117,7 @@ export function ChatSessionComponent({
   activeBubbleId,
   onEndSession,
   onDeleteSession,
-}: ChatSessionProps) {
-  const { t } = useI18n();
-  const userProfileAvatar = useUserProfileStore((s) => s.avatar);
+}: ChatSessionProps) {const userProfileAvatar = useUserProfileStore((s) => s.avatar);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const activeBubbleRef = useRef<HTMLDivElement>(null);
@@ -164,12 +161,12 @@ export function ChatSessionComponent({
   if (session.messages.length === 0 && !isActive) {
     return (
       <div className="h-16 flex items-center justify-center text-center px-2">
-        <p className="text-xs text-slate-400 dark:text-slate-500">{t('chat.noMessages')}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">{'暂无消息'}</p>
       </div>
     );
   }
 
-  const endButtonText = isDiscussion ? t('chat.stopDiscussion') : t('chat.endQA');
+  const endButtonText = isDiscussion ? '结束讨论' : '结束问答';
 
   return (
     <div className="flex flex-col">
@@ -251,7 +248,7 @@ export function ChatSessionComponent({
                       const i18nName = t(`settings.agentNames.${agentId}`);
                       if (i18nName !== `settings.agentNames.${agentId}`) return i18nName;
                     }
-                    return message.metadata?.senderName || t('chat.unknown');
+                    return message.metadata?.senderName || '未知';
                   })()}
                 </span>
 
@@ -281,7 +278,7 @@ export function ChatSessionComponent({
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent" />
               <span className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">
                 <CircleStop className="w-3 h-3" />
-                {t('chat.ended')}
+                {'已结束'}
               </span>
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent" />
             </motion.div>
@@ -330,7 +327,7 @@ export function ChatSessionComponent({
               transition-all hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            {t('chat.deleteSession')}
+            {'删除会话'}
           </motion.button>
         )}
       </AnimatePresence>

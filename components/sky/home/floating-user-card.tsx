@@ -13,7 +13,6 @@ import {
   Crown,
   User,
 } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 import { useAuth } from '@/components/auth/auth-provider';
 import { cn } from '@/lib/utils';
@@ -33,9 +32,7 @@ export function FloatingUserCard({
   onUpgradeOpen,
 }: {
   onUpgradeOpen: () => void;
-}) {
-  const { t } = useI18n();
-  const router = useRouter();
+}) {const router = useRouter();
   const { user, logout } = useAuth();
   const avatar = useUserProfileStore((s) => s.avatar);
   const nickname = useUserProfileStore((s) => s.nickname);
@@ -52,7 +49,7 @@ export function FloatingUserCard({
   const nameInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const displayName = nickname || t('profile.defaultNickname');
+  const displayName = nickname || '同学';
   const isPremium = user?.planType === 'enterprise' || user?.planType === 'pro';
 
   // 点击外部关闭
@@ -84,11 +81,11 @@ export function FloatingUserCard({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_AVATAR_SIZE) {
-      toast.error(t('profile.fileTooLarge'));
+      toast.error('图片过大，请选择小于 5MB 的图片');
       return;
     }
     if (!file.type.startsWith('image/')) {
-      toast.error(t('profile.invalidFileType'));
+      toast.error('请选择图片文件');
       return;
     }
     const reader = new FileReader();
@@ -369,7 +366,7 @@ export function FloatingUserCard({
                   <Textarea
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    placeholder={t('profile.bioPlaceholder')}
+                    placeholder={'介绍一下自己，AI老师会根据你的背景个性化教学...'}
                     maxLength={200}
                     rows={2}
                     className="resize-none text-sm bg-slate-50 dark:bg-slate-700/30 border-0 rounded-xl focus:ring-2 focus:ring-sky-400/50"

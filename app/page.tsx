@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { resolveLocale } from '@/lib/templates/types';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useUserProfileStore } from '@/lib/store/user-profile';
@@ -76,9 +75,7 @@ interface StageListItem {
   interactiveMode?: boolean;
 }
 
-export default function HomePage() {
-  const { t, locale } = useI18n();
-  const router = useRouter();
+export default function HomePage() {const router = useRouter();
   const { user } = useAuth();
 
   // 状态
@@ -426,7 +423,7 @@ export default function HomePage() {
     }
 
     if (!requirement.trim()) {
-      setError(t('upload.requirementRequired'));
+      setError('请输入课程需求');
       return;
     }
 
@@ -492,7 +489,7 @@ export default function HomePage() {
       startJobPolling(jobId, topic);
     } catch (err) {
       log.error('Error preparing generation:', err);
-      setError(err instanceof Error ? err.message : t('upload.generateFailed'));
+      setError(err instanceof Error ? err.message : '生成课堂失败，请重试');
     }
   };
 
@@ -502,7 +499,7 @@ export default function HomePage() {
     const outline = template.outline
       .map((s, i) => `第${i + 1}幕：${s.title} — ${s.description || ''}`)
       .join('\n');
-    const newRequirement = `${resolveLocale(template.name, locale)}\n\n课程目标：${resolveLocale(template.description, locale)}\n\n大纲：\n${outline}`;
+    const newRequirement = `${resolveLocale(template.name, 'zh-CN')}\n\n课程目标：${resolveLocale(template.description, 'zh-CN')}\n\n大纲：\n${outline}`;
     setRequirement(newRequirement);
     updateRequirementCache(newRequirement);
   };
@@ -540,9 +537,9 @@ export default function HomePage() {
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return t('classroom.today');
-    if (diffDays === 1) return t('classroom.yesterday');
-    if (diffDays < 7) return `${diffDays} ${t('classroom.daysAgo')}`;
+    if (diffDays === 0) return '今天';
+    if (diffDays === 1) return '昨天';
+    if (diffDays < 7) return `${diffDays} ${'天前'}`;
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
   };
 

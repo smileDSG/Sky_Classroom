@@ -1,0 +1,22 @@
+{
+  "id": "Od8JoxkfXj",
+  "status": "failed",
+  "step": "failed",
+  "progress": 28,
+  "message": "Classroom generation failed",
+  "createdAt": "2026-05-29T07:44:10.423Z",
+  "updatedAt": "2026-05-29T07:45:11.905Z",
+  "inputSummary": {
+    "requirementPreview": "python学习教程",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-29T07:44:10.433Z",
+  "completedAt": "2026-05-29T07:45:11.905Z",
+  "error": "AI_APICallError: Failed to process successful response"
+}

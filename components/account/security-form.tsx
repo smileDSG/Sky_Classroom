@@ -9,12 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { toast } from 'sonner';
 
-export function SecurityForm() {
-  const { t } = useI18n();
-  const [currentPassword, setCurrentPassword] = useState('');
+export function SecurityForm() {const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,15 +20,15 @@ export function SecurityForm() {
     e.preventDefault();
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error(t('common.fillRequired'));
+      toast.error('请填写必填项');
       return;
     }
     if (newPassword.length < 6) {
-      toast.error(t('account.passwordTooShort'));
+      toast.error('密码至少 6 位');
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error(t('account.passwordMismatch'));
+      toast.error('两次输入的密码不一致');
       return;
     }
 
@@ -52,15 +49,15 @@ export function SecurityForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{t('account.changePassword')}</CardTitle>
+        <CardTitle className="text-base">{'修改密码'}</CardTitle>
         <CardDescription>
-          {t('account.passwordTooShort')}
+          {'密码至少 6 位'}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
           <div className="space-y-2">
-            <Label>{t('account.currentPassword')}</Label>
+            <Label>{'当前密码'}</Label>
             <Input
               type="password"
               value={currentPassword}
@@ -69,7 +66,7 @@ export function SecurityForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label>{t('account.newPassword')}</Label>
+            <Label>{'新密码'}</Label>
             <Input
               type="password"
               value={newPassword}
@@ -78,7 +75,7 @@ export function SecurityForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label>{t('account.confirmPassword')}</Label>
+            <Label>{'确认密码'}</Label>
             <Input
               type="password"
               value={confirmPassword}
@@ -87,7 +84,7 @@ export function SecurityForm() {
             />
           </div>
           <Button type="submit" disabled={loading}>
-            {loading ? '提交中...' : t('account.changePassword')}
+            {loading ? '提交中...' : '修改密码'}
           </Button>
         </form>
       </CardContent>

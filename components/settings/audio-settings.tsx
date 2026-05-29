@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import {
   TTS_PROVIDERS,
@@ -35,47 +34,49 @@ const log = createLogger('AudioSettings');
 /**
  * Get provider display name with i18n
  */
-function getTTSProviderName(providerId: TTSProviderId, t: (key: string) => string): string {
+function getTTSProviderName(providerId: TTSProviderId): string {
   const names: Record<TTSProviderId, string> = {
-    'openai-tts': t('settings.providerOpenAITTS'),
-    'azure-tts': t('settings.providerAzureTTS'),
-    'glm-tts': t('settings.providerGLMTTS'),
-    'qwen-tts': t('settings.providerQwenTTS'),
-    'voxcpm-tts': t('settings.providerVoxCPMTTS'),
-    'doubao-tts': t('settings.providerDoubaoTTS'),
-    'elevenlabs-tts': t('settings.providerElevenLabsTTS'),
-    'minimax-tts': t('settings.providerMiniMaxTTS'),
-    'lemonade-tts': t('settings.providerLemonadeTTS'),
-    'browser-native-tts': t('settings.providerBrowserNativeTTS'),
+    'openai-tts': 'OpenAI TTS (gpt-4o-mini-tts)',
+    'azure-tts': 'Azure TTS',
+    'glm-tts': 'GLM TTS',
+    'qwen-tts': 'Qwen TTS（阿里云百炼）',
+    'voxcpm-tts': 'VoxCPM2',
+    'doubao-tts': '豆包 TTS 2.0（火山引擎）',
+    'elevenlabs-tts': 'ElevenLabs TTS',
+    'minimax-tts': 'MiniMax TTS',
+    'lemonade-tts': 'Lemonade TTS（本地）',
+    'browser-native-tts': '浏览器原生 TTS',
   };
   return names[providerId];
 }
 
-function getASRProviderName(providerId: ASRProviderId, t: (key: string) => string): string {
+function getASRProviderName(providerId: ASRProviderId): string {
   const names: Record<ASRProviderId, string> = {
-    'openai-whisper': t('settings.providerOpenAIWhisper'),
-    'browser-native': t('settings.providerBrowserNative'),
-    'qwen-asr': t('settings.providerQwenASR'),
-    'lemonade-asr': t('settings.providerLemonadeASR'),
+    'openai-whisper': 'OpenAI ASR (gpt-4o-mini-transcribe)',
+    'browser-native': '浏览器原生 ASR',
+    'qwen-asr': 'Qwen ASR（阿里云百炼）',
+    'lemonade-asr': 'Lemonade ASR（本地）',
   };
   return names[providerId];
 }
 
-function getLanguageName(code: string, t: (key: string) => string): string {
-  const key = `settings.lang_${code}`;
-  const translated = t(key);
-  // If translation key not found, return the code itself
-  return translated === key ? code : translated;
+function getLanguageName(code: string): string {
+  const names: Record<string, string> = {
+    'zh-CN': '中文',
+    'en-US': 'English',
+    'ja-JP': '日本語',
+    'yue-CN': '粤语',
+  };
+  return names[code] ?? code;
 }
 
 interface AudioSettingsProps {
   onSave?: () => void;
 }
 
-export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
-  const { t } = useI18n();
-
-  // TTS state
+export function AudioSettings({
+  onSave }: AudioSettingsProps = {}) {
+  const locale = 'zh-CN';// TTS state
   const ttsProviderId = useSettingsStore((state) => state.ttsProviderId);
   const ttsVoice = useSettingsStore((state) => state.ttsVoice);
   const ttsProvidersConfig = useSettingsStore((state) => state.ttsProvidersConfig);
@@ -289,7 +290,7 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
           (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
         if (!SpeechRecognitionCtor) {
           setASRTestStatus('error');
-          setASRTestMessage(t('settings.asrNotSupported'));
+          setASRTestMessage('浏览器不支持语音识别 API');
           return;
         }
 
@@ -304,12 +305,12 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
           const transcript = event.results[0][0].transcript;
           setASRResult(transcript);
           setASRTestStatus('success');
-          setASRTestMessage(t('settings.asrTestSuccess'));
+          setASRTestMessage('语音识别成功');
         };
         recognition.onerror = (event: { error: string }) => {
           log.error('Speech recognition error:', event.error);
           setASRTestStatus('error');
-          setASRTestMessage(t('settings.asrTestFailed') + ': ' + event.error);
+          setASRTestMessage('语音识别失败' + ': ' + event.error);
         };
         recognition.onend = () => {
           setIsRecording(false);
@@ -362,7 +363,7 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                 const data = await response.json();
                 setASRResult(data.text);
                 setASRTestStatus('success');
-                setASRTestMessage(t('settings.asrTestSuccess'));
+                setASRTestMessage('语音识别成功');
               } else {
                 setASRTestStatus('error');
                 const errorData = await response
@@ -370,13 +371,13 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                   .catch(() => ({ error: response.statusText }));
                 // Show details if available, otherwise show error message
                 setASRTestMessage(
-                  errorData.details || errorData.error || t('settings.asrTestFailed'),
+                  errorData.details || errorData.error || '语音识别失败',
                 );
               }
             } catch (error) {
               log.error('ASR test failed:', error);
               setASRTestStatus('error');
-              setASRTestMessage(t('settings.asrTestFailed'));
+              setASRTestMessage('语音识别失败');
             }
           };
 
@@ -385,7 +386,7 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
         } catch (error) {
           log.error('Failed to access microphone:', error);
           setASRTestStatus('error');
-          setASRTestMessage(t('settings.microphoneAccessFailed'));
+          setASRTestMessage('无法访问麦克风');
         }
       }
     }
@@ -422,9 +423,9 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                 !ttsEnabled && 'text-muted-foreground',
               )}
             >
-              {t('settings.ttsSection')}
+              {'文字转语音 (TTS)'}
             </h3>
-            <p className="text-xs text-muted-foreground">{t('settings.ttsEnabledDescription')}</p>
+            <p className="text-xs text-muted-foreground">{'开启后，课程生成时将自动合成语音'}</p>
           </div>
           <Switch
             checked={ttsEnabled}
@@ -441,10 +442,10 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
             ttsEnabled ? 'opacity-100' : 'opacity-40 max-h-0 pointer-events-none',
           )}
         >
-          <p className="text-xs text-muted-foreground">{t('settings.ttsVoiceConfigHint')}</p>
+          <p className="text-xs text-muted-foreground">{'每个 Agent 的音色可在首页「课堂角色配置」中设置'}</p>
 
           <div className="space-y-2">
-            <Label className="text-sm">{t('settings.ttsProvider')}</Label>
+            <Label className="text-sm">{'TTS 提供商'}</Label>
             <Select
               value={ttsProviderId}
               onValueChange={(value) => handleTTSProviderChange(value as TTSProviderId)}
@@ -459,10 +460,10 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                       {provider.icon && (
                         <img src={provider.icon} alt={provider.name} className="w-4 h-4" />
                       )}
-                      {getTTSProviderName(provider.id, t)}
+                      {getTTSProviderName(provider.id)}
                       {ttsProvidersConfig[provider.id]?.isServerConfigured && (
                         <span className="text-[10px] px-1 py-0.5 rounded border text-muted-foreground">
-                          {t('settings.serverConfigured')}
+                          {'服务端'}
                         </span>
                       )}
                     </div>
@@ -488,14 +489,14 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                 {(ttsProvider.requiresApiKey ||
                   ttsProvidersConfig[ttsProviderId]?.isServerConfigured) && (
                   <div className="space-y-2">
-                    <Label className="text-sm">{t('settings.ttsApiKey')}</Label>
+                    <Label className="text-sm">{'API 密钥'}</Label>
                     <div className="relative">
                       <Input
                         type={showTTSApiKey ? 'text' : 'password'}
                         placeholder={
                           ttsProvidersConfig[ttsProviderId]?.isServerConfigured
-                            ? t('settings.optionalOverride')
-                            : t('settings.enterApiKey')
+                            ? '可选，留空则使用服务端配置'
+                            : '输入 API Key'
                         }
                         value={ttsProvidersConfig[ttsProviderId]?.apiKey || ''}
                         onChange={(e) =>
@@ -521,9 +522,9 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                 )}
 
                 <div className="space-y-2">
-                  <Label className="text-sm">{t('settings.ttsBaseUrl')}</Label>
+                  <Label className="text-sm">{'Base URL'}</Label>
                   <Input
-                    placeholder={ttsProvider.defaultBaseUrl || t('settings.enterCustomBaseUrl')}
+                    placeholder={ttsProvider.defaultBaseUrl || '输入自定义 Base URL'}
                     value={ttsProvidersConfig[ttsProviderId]?.baseUrl || ''}
                     onChange={(e) =>
                       handleTTSProviderConfigChange(ttsProviderId, {
@@ -568,9 +569,9 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                 !asrEnabled && 'text-muted-foreground',
               )}
             >
-              {t('settings.asrSection')}
+              {'语音识别 (ASR)'}
             </h3>
-            <p className="text-xs text-muted-foreground">{t('settings.asrEnabledDescription')}</p>
+            <p className="text-xs text-muted-foreground">{'开启后，学生可使用麦克风进行语音输入'}</p>
           </div>
           <Switch
             checked={asrEnabled}
@@ -588,7 +589,7 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
           )}
         >
           <div className="space-y-2">
-            <Label className="text-sm">{t('settings.asrProvider')}</Label>
+            <Label className="text-sm">{'ASR 提供商'}</Label>
             <Select
               value={asrProviderId}
               onValueChange={(value) => handleASRProviderChange(value as ASRProviderId)}
@@ -603,10 +604,10 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                       {provider.icon && (
                         <img src={provider.icon} alt={provider.name} className="w-4 h-4" />
                       )}
-                      {getASRProviderName(provider.id, t)}
+                      {getASRProviderName(provider.id)}
                       {asrProvidersConfig[provider.id]?.isServerConfigured && (
                         <span className="text-[10px] px-1 py-0.5 rounded border text-muted-foreground">
-                          {t('settings.serverConfigured')}
+                          {'服务端'}
                         </span>
                       )}
                     </div>
@@ -629,14 +630,14 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-sm">{t('settings.asrApiKey')}</Label>
+                  <Label className="text-sm">{'API 密钥'}</Label>
                   <div className="relative">
                     <Input
                       type={showASRApiKey ? 'text' : 'password'}
                       placeholder={
                         asrProvidersConfig[asrProviderId]?.isServerConfigured
-                          ? t('settings.optionalOverride')
-                          : t('settings.enterApiKey')
+                          ? '可选，留空则使用服务端配置'
+                          : '输入 API Key'
                       }
                       value={asrProvidersConfig[asrProviderId]?.apiKey || ''}
                       onChange={(e) =>
@@ -657,13 +658,13 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm">{t('settings.asrBaseUrl')}</Label>
+                  <Label className="text-sm">{'Base URL'}</Label>
                   <Input
                     placeholder={
                       isCustomASR
                         ? asrProvidersConfig[asrProviderId]?.customDefaultBaseUrl ||
                           'http://localhost:8000/v1'
-                        : asrProvider?.defaultBaseUrl || t('settings.enterCustomBaseUrl')
+                        : asrProvider?.defaultBaseUrl || '输入自定义 Base URL'
                     }
                     value={asrProvidersConfig[asrProviderId]?.baseUrl || ''}
                     onChange={(e) =>
@@ -705,7 +706,7 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                 const fullUrl = effectiveBaseUrl + endpointPath;
                 return (
                   <p className="text-xs text-muted-foreground break-all">
-                    {t('settings.requestUrl')}: {fullUrl}
+                    {'请求地址'}: {fullUrl}
                   </p>
                 );
               })()}
@@ -725,7 +726,7 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
               >
                 {hasLanguageSelection && (
                   <div className="space-y-2">
-                    <Label className="text-sm">{t('settings.asrLanguage')}</Label>
+                    <Label className="text-sm">{'识别语言'}</Label>
                     <Select value={asrLanguage} onValueChange={handleASRLanguageChange}>
                       <SelectTrigger className="w-full">
                         <SelectValue />
@@ -733,7 +734,7 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                       <SelectContent>
                         {supportedLanguages.map((lang) => (
                           <SelectItem key={lang} value={lang}>
-                            {getLanguageName(lang, t)}
+                            {getLanguageName(lang)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -742,12 +743,12 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                 )}
 
                 <div className="space-y-2">
-                  <Label className="text-sm">{t('settings.testASR')}</Label>
+                  <Label className="text-sm">{'测试 ASR'}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={asrResult}
                       readOnly
-                      placeholder={t('settings.asrResultPlaceholder')}
+                      placeholder={'录音后将显示识别结果'}
                       className="flex-1 bg-muted/50"
                     />
                     <Button
@@ -762,12 +763,12 @@ export function AudioSettings({ onSave }: AudioSettingsProps = {}) {
                       {isRecording ? (
                         <>
                           <MicOff className="h-4 w-4" />
-                          {t('settings.stopRecording')}
+                          {'停止录音'}
                         </>
                       ) : (
                         <>
                           <Mic className="h-4 w-4" />
-                          {t('settings.startRecording')}
+                          {'开始录音'}
                         </>
                       )}
                     </Button>

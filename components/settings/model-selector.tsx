@@ -17,7 +17,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import type { ProviderId } from '@/lib/ai/providers';
 import { MONO_LOGO_PROVIDERS } from '@/lib/ai/providers';
 import type { ProvidersConfig } from '@/lib/types/settings';
@@ -28,6 +27,7 @@ interface ModelSelectorProps {
   modelId: string;
   onModelChange: (providerId: ProviderId, modelId: string) => void;
   providersConfig: ProvidersConfig;
+  t?: (key: string) => string;
 }
 
 export function ModelSelector({
@@ -35,9 +35,8 @@ export function ModelSelector({
   modelId,
   onModelChange,
   providersConfig,
-}: ModelSelectorProps) {
-  const { t } = useI18n();
-  const [activeProvider, setActiveProvider] = useState<ProviderId>(providerId);
+  t = (key: string) => key,
+}: ModelSelectorProps) {const [activeProvider, setActiveProvider] = useState<ProviderId>(providerId);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
@@ -148,7 +147,7 @@ export function ModelSelector({
 
       if (providerConfig.requiresApiKey && !apiKey && !providerConfig.isServerConfigured) {
         setTestStatus('error');
-        setTestMessage(t('settings.apiKeyRequired'));
+        setTestMessage('API密钥不能为空');
         setTestingModelId(mid);
         return;
       }
@@ -177,23 +176,23 @@ export function ModelSelector({
 
         if (data.success) {
           setTestStatus('success');
-          setTestMessage(t('settings.connectionSuccess'));
+          setTestMessage('连接成功');
         } else {
           setTestStatus('error');
-          setTestMessage(data.error || t('settings.connectionFailed'));
+          setTestMessage(data.error || '连接失败');
         }
       } catch {
         setTestStatus('error');
-        setTestMessage(t('settings.connectionFailed'));
+        setTestMessage('连接失败');
       }
     },
-    [providersConfig, t],
+    [providersConfig],
   );
 
   if (configuredProviders.length === 0) {
     return (
       <div className="p-4 border-2 border-dashed rounded-lg text-center text-sm text-muted-foreground">
-        {t('settings.configureProvidersFirst')}
+        {'请先在左侧"模型提供方"中配置提供方连接信息'}
       </div>
     );
   }
@@ -244,7 +243,7 @@ export function ModelSelector({
                             : 'bg-muted text-muted-foreground',
                         )}
                       >
-                        {t('settings.serverConfigured')}
+                        {'服务端'}
                       </span>
                     )}
                   </div>
@@ -268,7 +267,7 @@ export function ModelSelector({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   ref={searchInputRef}
-                  placeholder={t('settings.searchModels')}
+                  placeholder={'搜索模型'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onBlur={() => {
@@ -295,7 +294,7 @@ export function ModelSelector({
           <div className="flex-1 overflow-y-auto">
             {filteredModels.length === 0 ? (
               <div className="p-6 text-center text-sm text-muted-foreground">
-                {searchQuery ? t('settings.noModelsFound') : t('settings.noModelsAvailable')}
+                {searchQuery ? '未找到匹配的模型' : '没有可用于测试的模型'}
               </div>
             ) : (
               filteredModels.map((model) => {
@@ -326,17 +325,17 @@ export function ModelSelector({
                               {/* Capabilities */}
                               <div className="flex items-center gap-1">
                                 {model.capabilities?.vision && (
-                                  <div title={t('settings.capabilities.vision')}>
+                                  <div title={'视觉'}>
                                     <Sparkles className="h-3 w-3" />
                                   </div>
                                 )}
                                 {model.capabilities?.tools && (
-                                  <div title={t('settings.capabilities.tools')}>
+                                  <div title={'工具'}>
                                     <Wrench className="h-3 w-3" />
                                   </div>
                                 )}
                                 {model.capabilities?.streaming && (
-                                  <div title={t('settings.capabilities.streaming')}>
+                                  <div title={'流式'}>
                                     <Zap className="h-3 w-3" />
                                   </div>
                                 )}

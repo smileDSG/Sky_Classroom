@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { IMAGE_PROVIDERS } from '@/lib/media/image-providers';
 import { VIDEO_PROVIDERS } from '@/lib/media/video-providers';
@@ -63,9 +62,7 @@ const TABS: Array<{ id: TabId; icon: LucideIcon; label: string }> = [
   { id: 'asr', icon: Mic, label: 'ASR' },
 ];
 
-export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
-  const { t } = useI18n();
-  const [open, setOpen] = useState(false);
+export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('image');
 
   // ─── Store ───
@@ -253,7 +250,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
           {activeTab === 'image' && (
             <TabPanel
               icon={ImageIcon}
-              label={t('media.imageCapability')}
+              label={'图像生成'}
               enabled={imageGenerationEnabled}
               onToggle={setImageGenerationEnabled}
             >
@@ -272,7 +269,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
           {activeTab === 'video' && (
             <TabPanel
               icon={Video}
-              label={t('media.videoCapability')}
+              label={'视频生成'}
               enabled={videoGenerationEnabled}
               onToggle={setVideoGenerationEnabled}
             >
@@ -291,7 +288,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
           {activeTab === 'tts' && (
             <TabPanel
               icon={Volume2}
-              label={t('media.ttsCapability')}
+              label={'语音合成'}
               enabled={ttsEnabled}
               onToggle={setTTSEnabled}
             />
@@ -300,7 +297,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
           {activeTab === 'asr' && (
             <TabPanel
               icon={Mic}
-              label={t('media.asrCapability')}
+              label={'语音识别'}
               enabled={asrEnabled}
               onToggle={setASREnabled}
             >
@@ -326,7 +323,7 @@ export function MediaPopover({ onSettingsOpen }: MediaPopoverProps) {
             }}
             className="w-full flex items-center justify-between px-3.5 py-2.5 text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
           >
-            <span>{t('toolbar.advancedSettings')}</span>
+            <span>{'高级设置'}</span>
             <ChevronRight className="size-3" />
           </button>
         </div>

@@ -6,7 +6,6 @@ import type { LectureNoteEntry } from '@/lib/types/chat';
 import type { DiscussionRequest } from '@/components/roundtable';
 import type { Action, SpeechAction, DiscussionAction } from '@/lib/types/action';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store';
 import { PanelLeftClose, BookOpen, MessageSquare } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -93,9 +92,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       enableFilters = false,
     },
     ref,
-  ) => {
-    const { t } = useI18n();
-    const scenes = useStageStore((s) => s.scenes);
+  ) => {const scenes = useStageStore((s) => s.scenes);
     const {
       sessions,
       activeSessionType,
@@ -335,7 +332,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                     data-[state=active]:after:opacity-100 after:opacity-0"
                 >
                   <BookOpen className="w-3.5 h-3.5" />
-                  {t('chat.tabs.lecture')}
+                  {'笔记'}
                 </TabsTrigger>
                 <TabsTrigger
                   value="chat"
@@ -348,15 +345,15 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                     data-[state=active]:after:opacity-100 after:opacity-0"
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
-                  {t('chat.tabs.chat')}
+                  {'对话'}
                 </TabsTrigger>
               </TabsList>
 
               {onCollapseChange && (
                 <button
                   onClick={() => onCollapseChange(true)}
-                  aria-label={t('common.collapse')}
-                  title={t('common.collapse')}
+                  aria-label="收起"
+                  title="收起"
                   className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center
                     text-slate-400 dark:text-slate-500
                     hover:text-slate-600 dark:hover:text-slate-300
@@ -389,10 +386,10 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                       <MessageSquare className="w-6 h-6" />
                     </div>
                     <p className="text-sm font-medium text-slate-400">
-                      {t('chat.noConversations')}
+                      {'暂无对话'}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
-                      {t('chat.startConversation')}
+                      {'输入消息开始对话'}
                     </p>
                   </div>
                 ) : (

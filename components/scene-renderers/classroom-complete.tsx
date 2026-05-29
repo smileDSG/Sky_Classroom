@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { animate, motion, MotionConfig, useReducedMotion } from 'motion/react';
 import { FileText, HelpCircle, Gamepad2, Puzzle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store';
 import type { Scene, SceneType } from '@/lib/types/stage';
 import { summarizeScenes } from '@/lib/classroom/complete-summary';
@@ -305,9 +304,9 @@ interface ClassroomCompletePageProps {
   readonly title: string;
 }
 
-export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePageProps) {
-  const { t, locale } = useI18n();
-  const prefersReducedMotion = useReducedMotion();
+export function ClassroomCompletePage({
+  scenes, title }: ClassroomCompletePageProps) {
+  const locale = 'zh-CN';const prefersReducedMotion = useReducedMotion();
 
   // Computed once on mount: re-grading on every render would be wasteful and
   // the underlying localStorage values only change when the user revisits a
@@ -335,12 +334,12 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
     <MotionConfig reducedMotion={prefersReducedMotion ? 'always' : 'user'}>
       <section
         className="absolute inset-0 z-[105] flex items-center justify-center overflow-auto"
-        aria-label={t('classroomComplete.title')}
+        aria-label={'课程完成'}
       >
         {/* Single-shot announcement for screen readers — replaces the noisy
             outer aria-live region that used to wrap the live-updating counters. */}
         <span className="sr-only" role="status">
-          {t('classroomComplete.title')}
+          {'课程完成'}
         </span>
         {/* Base background - Sky Theme */}
         <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-900 dark:to-sky-950/30" />
@@ -407,7 +406,7 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
             className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-sky-400 via-blue-400 to-sky-500 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-sky-500/30"
           >
             <Sparkle className="w-3 h-3" />
-            {t('classroomComplete.title')}
+            {'课程完成'}
             <Sparkle className="w-3 h-3" />
           </motion.div>
 
@@ -419,7 +418,7 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
             className="text-center space-y-1.5"
           >
             <h2 className="text-3xl md:text-4xl font-black leading-tight bg-gradient-to-br from-sky-600 via-blue-600 to-indigo-700 dark:from-sky-300 dark:via-blue-300 dark:to-indigo-300 bg-clip-text text-transparent">
-              {title || t('classroomComplete.title')}
+              {title || '课程完成'}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">{dateLabel}</p>
           </motion.div>
@@ -478,10 +477,7 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
                 <QuizRing pct={summary.quiz.pct} delay={1.3} />
                 <div className="flex-1 min-w-0">
                   <div className="text-base font-bold text-sky-700 dark:text-sky-300">
-                    {t('classroomComplete.quizScoreLabel', {
-                      correct: summary.quiz.correct,
-                      total: summary.quiz.total,
-                    })}
+                    {`答对 ${summary.quiz.correct} / ${summary.quiz.total}`}
                   </div>
                   <div className="mt-1 text-sm text-sky-700/80 dark:text-sky-300/80">
                     {t(`classroomComplete.encouragement.${encouragementKey(summary.quiz.pct)}`)}

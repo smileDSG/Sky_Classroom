@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { BookOpen, MessageSquare, Flashlight, MousePointer2, Play, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import type { LectureNoteEntry } from '@/lib/types/chat';
 
 const ACTION_CONFIG: Record<string, { Icon: typeof Flashlight; label: string; style: string }> = {
@@ -29,9 +28,7 @@ interface LectureNotesViewProps {
   currentSceneId?: string | null;
 }
 
-export function LectureNotesView({ notes, currentSceneId }: LectureNotesViewProps) {
-  const { t } = useI18n();
-  const [expandedSceneId, setExpandedSceneId] = useState<string | null>(currentSceneId ?? null);
+export function LectureNotesView({ notes, currentSceneId }: LectureNotesViewProps) {const [expandedSceneId, setExpandedSceneId] = useState<string | null>(currentSceneId ?? null);
   const filmstripRef = useRef<HTMLDivElement>(null);
   const wheelThrottleRef = useRef(0);
 
@@ -82,10 +79,10 @@ export function LectureNotesView({ notes, currentSceneId }: LectureNotesViewProp
           <BookOpen className="w-8 h-8" />
         </div>
         <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-          {t('chat.lectureNotes.empty')}
+          {'播放课程后，笔记将在此显示'}
         </p>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
-          {t('chat.lectureNotes.emptyHint')}
+          {'点击播放按钮开始授课'}
         </p>
       </div>
     );
@@ -106,7 +103,7 @@ export function LectureNotesView({ notes, currentSceneId }: LectureNotesViewProp
                 {activeIdx + 1}
               </div>
               <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                {t('chat.lectureNotes.pageLabel', { n: activeIdx + 1 })}
+                {`第 ${activeIdx + 1} 页`}
               </span>
               {activeNote.sceneId === currentSceneId && (
                 <span className="ml-auto flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300">

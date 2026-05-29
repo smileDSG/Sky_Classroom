@@ -16,7 +16,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { cn } from '@/lib/utils';
 import { StageListItem } from '@/lib/utils/stage-storage';
 import { Slide } from '@/lib/types/slides';
@@ -48,9 +47,7 @@ function ClassroomCard({
   onCancelDelete: () => void;
   viewMode: 'grid' | 'list';
 }) {
-  const router = useRouter();
-  const { t } = useI18n();
-  const thumbRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();const thumbRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -127,7 +124,7 @@ function ClassroomCard({
               </h3>
             )}
             <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
-              <span>{classroom.sceneCount} {t('classroom.slides')}</span>
+              <span>{classroom.sceneCount} {'页'}</span>
               <span>·</span>
               <span>{formatDate(classroom.updatedAt)}</span>
             </div>
@@ -182,19 +179,19 @@ function ClassroomCard({
                 onClick={(e) => e.stopPropagation()}
               >
                 <span className="text-sm text-slate-600 dark:text-slate-300">
-                  {t('classroom.deleteConfirmTitle')}?
+                  {'删除课堂'}?
                 </span>
                 <button
                   onClick={onCancelDelete}
                   className="px-3 py-1.5 rounded-lg text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
                 >
-                  {t('common.cancel')}
+                  {'取消'}
                 </button>
                 <button
                   onClick={onConfirmDelete}
                   className="px-3 py-1.5 rounded-lg text-sm bg-red-500 text-white"
                 >
-                  {t('classroom.delete')}
+                  {'删除'}
                 </button>
               </motion.div>
             )}
@@ -274,7 +271,7 @@ function ClassroomCard({
                         onClick={(e) => {
                           e.stopPropagation();
                           navigator.clipboard.writeText(classroom.name);
-                          toast.success(t('classroom.nameCopied'));
+                          toast.success('课堂名称已复制');
                         }}
                         className="p-2 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-sm transition-colors"
                       >
@@ -319,20 +316,20 @@ function ClassroomCard({
                 onClick={(e) => e.stopPropagation()}
               >
                 <span className="text-sm font-medium text-white">
-                  {t('classroom.deleteConfirmTitle')}?
+                  {'删除课堂'}?
                 </span>
                 <div className="flex gap-2">
                   <button
                     onClick={onCancelDelete}
                     className="px-4 py-1.5 rounded-lg text-sm font-medium bg-white/20 text-white hover:bg-white/30 transition-colors"
                   >
-                    {t('common.cancel')}
+                    {'取消'}
                   </button>
                   <button
                     onClick={onConfirmDelete}
                     className="px-4 py-1.5 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
                   >
-                    {t('classroom.delete')}
+                    {'删除'}
                   </button>
                 </div>
               </motion.div>
@@ -374,7 +371,7 @@ function ClassroomCard({
 
           <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400">
-              {classroom.sceneCount} {t('classroom.slides')}
+              {classroom.sceneCount} {'页'}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
@@ -400,9 +397,7 @@ export function ClassroomGrid({
   formatDate: (ts: number) => string;
   onDelete: (id: string) => Promise<void>;
   onRename: (id: string, newName: string) => Promise<void>;
-}) {
-  const { t } = useI18n();
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+}) {const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
@@ -426,7 +421,7 @@ export function ClassroomGrid({
           </div>
           <div>
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-              {t('classroom.recentClassrooms')}
+              {'最近学习'}
             </h2>
             <p className="text-sm text-slate-500">
               共 {classrooms.length} 个课堂

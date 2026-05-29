@@ -7,7 +7,6 @@
 import { useState, useCallback } from 'react';
 import type { PBLProjectConfig, PBLChatMessage, PBLAgent, PBLIssue } from '@/lib/pbl/types';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('PBLChat');
@@ -18,9 +17,7 @@ interface UsePBLChatOptions {
   onConfigUpdate: (config: PBLProjectConfig) => void;
 }
 
-export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLChatOptions) {
-  const { t } = useI18n();
-  const [isLoading, setIsLoading] = useState(false);
+export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLChatOptions) {const [isLoading, setIsLoading] = useState(false);
 
   const messages = projectConfig.chat.messages;
 
@@ -121,7 +118,7 @@ export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLCh
         setIsLoading(false);
       }
     },
-    [projectConfig, userRole, currentIssue, isLoading, onConfigUpdate, t],
+    [projectConfig, userRole, currentIssue, isLoading, onConfigUpdate],
   );
 
   return { messages, isLoading, sendMessage, currentIssue };
@@ -248,10 +245,7 @@ async function handleIssueComplete(
     config.chat.messages.push({
       id: `msg_${Date.now()}_system`,
       agent_name: 'System',
-      message: t('pbl.chat.issueCompleteMessage', {
-        completed: completedIssue.title,
-        next: nextIssue.title,
-      }),
+      message: `任务「${completedIssue.title}」已完成！进入下一个任务：「${nextIssue.title}」`,
       timestamp: Date.now(),
       read_by: [],
     });
@@ -260,7 +254,7 @@ async function handleIssueComplete(
     config.chat.messages.push({
       id: `msg_${Date.now()}_system`,
       agent_name: 'System',
-      message: t('pbl.chat.allCompleteMessage'),
+      message: '🎉 所有任务都已完成！项目做得很棒！',
       timestamp: Date.now(),
       read_by: [],
     });
