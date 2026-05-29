@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
     // ── Streak days (from check-in records) ──
     let streakDays = 0;
     if (userId) {
-      const todayStr = today();
+      const todayStr = getTodayStr();
       let checkDate = todayStr;
       for (let i = 0; i < 365; i++) {
         const entry = await storage.get<CheckInEntry>(CHECKIN_TABLE, `${userId}_${checkDate}`);

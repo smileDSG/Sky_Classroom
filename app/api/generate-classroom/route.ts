@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { type GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
-import { createClassroomGenerationJob } from '@/lib/server/classroom-job-store-hybrid';
+import { createClassroomGenerationJobHybrid } from '@/lib/server/classroom-job-store-hybrid';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { createLogger } from '@/lib/logger';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       baseUrl: rawBody.baseUrl as string | undefined,
     };
 
-    const job = await createClassroomGenerationJob(jobId, body, modelConfig);
+    const job = await createClassroomGenerationJobHybrid(jobId, body, modelConfig);
     const pollUrl = `${baseUrl}/api/generate-classroom/${jobId}`;
 
     // Record generation usage

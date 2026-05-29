@@ -87,13 +87,13 @@ export default function HomePage() {
   const [webSearch, setWebSearch] = useState(false);
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [introDone, setIntroDone] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('skyIntroDone') === 'true';
-    } catch {
-      return false;
+  const [introDone, setIntroDone] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem('introDone') === 'true') {
+      setIntroDone(true);
     }
-  });
+  }, []);
 
   // ── Classroom background generation state (multi-job) ──
   interface JobCardState {
@@ -551,14 +551,14 @@ export default function HomePage() {
   if (!introDone) {
     return (
       <IntroSequence onComplete={() => {
-        try { localStorage.setItem('skyIntroDone', 'true'); } catch { /* ignore */ }
+        sessionStorage.setItem('introDone', 'true');
         setIntroDone(true);
       }} />
     );
   }
 
   return (
-    <div className="min-h-screen w-full relative overflow-x-hidden">
+    <div suppressHydrationWarning className="min-h-screen w-full relative overflow-x-hidden">
       {/* 动态天空背景 */}
       <SkyBackground />
 

@@ -341,6 +341,31 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
     });
 
     log.info(`Pipeline complete: ${pptxUrl} (${instructions.length} pages)`);
+
+    // Save to slides knowledge base (fire and forget)
+    try {
+      const { write } = await import('@/lib/knowledge-base/kb-manager');
+      const kbContent = JSON.stringify({
+        topic,
+        difficulty,
+        sections: outline.sections.map((s) => ({
+          title: s.title,
+          pageCount: s.pages.length,
+        })),
+        totalPages: instructions.length,
+        fileName,
+      });
+      write({
+        kbType: 'slides',
+        title: `课件: ${topic}`,
+        content: kbContent,
+        tags: [difficulty, designDNA.styleName],
+        sourceId: jobId,
+        verified: true,
+      }).catch((e) => log.warn('KB save failed:', e));
+    } catch {
+      // ignore KB save errors
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.error(`Pipeline failed for job ${jobId}: ${msg}`);

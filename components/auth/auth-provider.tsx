@@ -7,6 +7,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { useUserProfileStore } from '@/lib/store/user-profile';
 import { ensureAdminUserClient } from '@/lib/client/admin-seed';
+import { installFetchInterceptor } from '@/lib/client/fetch-interceptor';
 
 export interface AuthUser {
   id: string;
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    installFetchInterceptor();
     ensureAdminUserClient().then(() => fetchUser());
   }, [fetchUser]);
 

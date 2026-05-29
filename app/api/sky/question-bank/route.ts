@@ -65,6 +65,22 @@ export async function GET(req: Request) {
   }
 }
 
+export async function DELETE(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const id = url.searchParams.get('id');
+    if (!id) {
+      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing id parameter');
+    }
+    const { deleteQuestionBankEntry } = await import('@/lib/solve/question-bank');
+    await deleteQuestionBankEntry(id);
+    return apiSuccess({ deleted: true });
+  } catch (err) {
+    log.error('Question bank DELETE error:', err);
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '题库删除失败');
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();

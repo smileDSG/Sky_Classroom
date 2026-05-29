@@ -19,6 +19,7 @@ import {
   BookOpen,
   Layers,
   AlertCircle,
+  FileDown,
   X,
 } from 'lucide-react';
 import type { MistakeCause } from '@/lib/solve/types';
@@ -292,17 +293,22 @@ export default function CloudMindMemoryPage() {
             </div>
 
             <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">学习内容 / 知识点</label>
-                <button
-                  type="button"
-                  onClick={handleImportFromMistakes}
-                  className="flex items-center gap-1.5 text-xs font-medium text-rose-500 hover:text-rose-600 transition-colors"
-                >
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  从错题生成
-                </button>
-              </div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">学习内容 / 知识点</label>
+
+              {/* Quick import from mistakes */}
+              <button
+                type="button"
+                onClick={handleImportFromMistakes}
+                className="w-full mb-3 flex items-center gap-3 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-600/50 bg-indigo-50/50 dark:bg-indigo-900/10 px-4 py-3 text-left hover:bg-indigo-100/70 dark:hover:bg-indigo-900/20 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all group"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-800/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-700/40 transition-colors">
+                  <FileDown className="h-4.5 w-4.5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-indigo-700 dark:text-indigo-300">从错题本导入</div>
+                  <div className="text-xs text-indigo-400 dark:text-indigo-500 mt-0.5">选择错题自动生成记忆卡片</div>
+                </div>
+              </button>
 
               {/* Mistake Picker Panel */}
               {showMistakePicker && (
