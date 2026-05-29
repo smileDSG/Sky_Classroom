@@ -45,16 +45,14 @@ export function GlobalTranslate() {
     fetch('/api/sky/cloud-mind/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: sel.slice(0, 500), sourceLang: src === 'auto' ? '' : src, targetLang: 'zh', stream: true }),
+      body: JSON.stringify({ text: sel.slice(0, 500), sourceLang: src === 'auto' ? '' : src, targetLang: 'zh', stream: false }),
     }).then(async (res) => {
       if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error((j as { error?: string }).error || 'HTTP ' + res.status); }
-      const reader = res.body?.getReader();
-      if (!reader) throw new Error('No stream');
-      const dec = new TextDecoder(); let buf = '', acc = '';
-      while (true) {
-        const { done, value } = await reader.read(); if (done) break;
-        buf += dec.decode(value, { stream: true }); const lines = buf.split('\n'); buf = lines.pop() || '';
-        for (const ln of lines) { if (ln.startsWith('0:')) { try { acc += JSON.parse(ln.slice(2)); setResult(acc); } catch { /* skip */ } } }
+      const j = await res.json();
+      if (j?.success && j?.data?.translation) {
+        setResult(j.data.translation);
+      } else {
+        throw new Error(j?.error || '翻译失败');
       }
     }).catch((err) => {
       setError(err instanceof Error ? err.message : String(err));
@@ -98,7 +96,7 @@ export function GlobalTranslate() {
               <div className="h-px bg-sky-100 dark:bg-slate-700 mb-2" />
               {translating && <div className="flex items-center gap-1.5 py-2"><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '120ms' }} /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '240ms' }} /><span className="text-xs text-slate-400 ml-2">正在翻译…</span></div>}
               {!translating && error && <p className="text-sm text-red-500">{error}</p>}
-              {!translating && !error && result && <p className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">{result}</p>}
+              {!translating && !error && <p className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">{result || '（翻译完成，但未返回结果）'}</p>}
             </div>
           </div>
         </div>
