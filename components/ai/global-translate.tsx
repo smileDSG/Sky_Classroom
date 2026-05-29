@@ -42,19 +42,26 @@ export function GlobalTranslate() {
     setResult('');
     setError('');
 
+    alert('1: 开始请求翻译: ' + sel.slice(0, 30));
     fetch('/api/sky/cloud-mind/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: sel.slice(0, 500), sourceLang: src === 'auto' ? '' : src, targetLang: 'zh', stream: false }),
     }).then(async (res) => {
-      if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error((j as { error?: string }).error || 'HTTP ' + res.status); }
-      const j = await res.json();
-      if (j?.success && j?.data?.translation) {
-        setResult(j.data.translation);
-      } else {
-        throw new Error(j?.error || '翻译失败');
+      const text = await res.text();
+      alert('2: HTTP ' + res.status + '\n' + text.slice(0, 500));
+      try {
+        const j = JSON.parse(text);
+        if (j?.success && j?.data?.translation) {
+          setResult(j.data.translation);
+        } else {
+          setError(j?.error || '翻译失败');
+        }
+      } catch {
+        setResult(text.slice(0, 500));
       }
     }).catch((err) => {
+      alert('3: 错误\n' + (err instanceof Error ? err.message : String(err)));
       setError(err instanceof Error ? err.message : String(err));
     }).finally(() => setTranslating(false));
   }, []);
