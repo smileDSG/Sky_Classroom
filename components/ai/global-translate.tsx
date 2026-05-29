@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Languages } from 'lucide-react';
 import { detectLanguage } from '@/lib/utils/language-detect';
 import type { DetectLang } from '@/lib/utils/language-detect';
 
