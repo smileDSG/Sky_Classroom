@@ -12,7 +12,6 @@ import { ServerProvidersInit } from '@/components/server-providers-init';
 import { AccessCodeGuard } from '@/components/access-code-guard';
 import { SkyClassroomEntry } from '@/components/sky-classroom-entry';
 import { KagamiPanel } from '@/components/ai/kagami-panel';
-import { GlobalTranslate } from '@/components/ai/global-translate';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { ClassroomJobPoller } from '@/components/classroom-job-poller';
 
@@ -48,7 +47,6 @@ export default function RootLayout({
               <ServerProvidersInit />
               <SkyClassroomEntry />
               <KagamiPanel />
-              <GlobalTranslate />
               <ClassroomJobPoller />
               <AccessCodeGuard>{children}</AccessCodeGuard>
               <Toaster position="top-center" />
