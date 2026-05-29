@@ -10,7 +10,6 @@ import { SkyTabBar } from './sky-tab-bar';
 import { BackgroundTasksIndicator } from './background-tasks-indicator';
 import { useAuth } from '@/components/auth/auth-provider';
 import { BetaChrome } from '@/components/beta/beta-chrome';
-import { GlobalTranslate } from '@/components/ai/global-translate';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { CheckCircle2, Sparkles } from 'lucide-react';
@@ -209,7 +208,6 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
         onPlanChanged={refresh}
       />
       <BetaChrome />
-      <GlobalTranslate />
     </div>
   );
 }

@@ -2,74 +2,146 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Languages } from 'lucide-react';
-import { TranslatePopover } from '@/components/ai/translate-popover';
-import { detectLanguage, type DetectLang } from '@/lib/utils/language-detect';
+import { detectLanguage } from '@/lib/utils/language-detect';
+import type { DetectLang } from '@/lib/utils/language-detect';
 
-const DEFAULT_TARGET: DetectLang = 'zh';
+const TARGET: DetectLang = 'zh';
 
 export function GlobalTranslate() {
-  const [selection, setSelection] = useState<{ text: string; x: number; y: number } | null>(null);
-  const [translating, setTranslating] = useState<{ text: string; sourceLang: DetectLang; x: number; y: number } | null>(null);
+  const [btn, setBtn] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [popup, setPopup] = useState<{ text: string; src: DetectLang; x: number; y: number } | null>(null);
+  const [rt, setRt] = useState('');       // translated text
+  const [st, setSt] = useState<'idle' | 'loading' | 'streaming' | 'done'>('idle');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
-  const handleMouseUp = useCallback(() => {
-    try {
-      setTimeout(() => {
+  // ── detect selection on mouseup ──────────────────────────────────
+
+  const onMouseUp = useCallback(() => {
+    setTimeout(() => {
+      try {
         const sel = window.getSelection();
-        if (!sel || !sel.toString().trim()) { setSelection(null); return; }
-        const text = sel.toString().trim();
-        if (text.length < 2 || text.length > 500) { setSelection(null); return; }
-        const range = sel.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        setSelection({ text, x: rect.left + rect.width / 2, y: rect.top - 10 });
-      }, 100);
-    } catch { /* ignore */ }
+        if (!sel) return;
+        const t = sel.toString().trim();
+        if (t.length < 2 || t.length > 500) { setBtn(null); return; }
+        const r = sel.getRangeAt(0).getBoundingClientRect();
+        setBtn({ text: t, x: r.left + r.width / 2, y: r.top - 10 });
+      } catch { /* ignore */ }
+    }, 120);
   }, []);
 
   useEffect(() => {
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => document.removeEventListener('mouseup', handleMouseUp);
-  }, [handleMouseUp]);
+    document.addEventListener('mouseup', onMouseUp);
+    return () => document.removeEventListener('mouseup', onMouseUp);
+  }, [onMouseUp]);
 
-  const handleTranslate = useCallback(() => {
-    if (!selection) return;
-    setTranslating({ text: selection.text, sourceLang: detectLanguage(selection.text), x: selection.x, y: selection.y });
-    setSelection(null);
-    window.getSelection()?.removeAllRanges();
-  }, [selection]);
+  // ── translate ────────────────────────────────────────────────────
+
+  const doTranslate = useCallback(async () => {
+    if (!btn) return;
+    const src = detectLanguage(btn.text);
+    setPopup({ text: btn.text, src, x: btn.x, y: btn.y });
+    setBtn(null);
+    setRt('');
+    setSt('loading');
+
+    try {
+      const res = await fetch('/api/sky/cloud-mind/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: btn.text, sourceLang: src === 'auto' ? '' : src, targetLang: TARGET, stream: true }),
+      });
+      if (!res.ok) throw new Error('翻译失败');
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No stream');
+      const dec = new TextDecoder();
+      let buf = '', acc = '';
+      setSt('streaming');
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split('\n'); buf = lines.pop() || '';
+        for (const ln of lines) {
+          if (ln.startsWith('0:')) {
+            try { acc += JSON.parse(ln.slice(2)); setRt(acc); } catch { /* skip */ }
+          }
+        }
+      }
+      setSt('done');
+    } catch {
+      setSt('done');
+      setRt('翻译失败，请重试');
+    }
+  }, [btn]);
+
+  const closePopup = useCallback(() => { setPopup(null); setRt(''); setSt('idle'); }, []);
+
+  // ── dismiss on outside click ────────────────────────────────────
+
+  useEffect(() => {
+    if (!popup) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closePopup(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [popup, closePopup]);
 
   return (
     <>
-      {/* Permanent indicator */}
+      {/* mount indicator */}
       {mounted && (
         <div style={{ position: 'fixed', bottom: 4, right: 4, zIndex: 99999, background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: 3, fontSize: 10, fontFamily: 'monospace', opacity: 0.85 }}>
           译
         </div>
       )}
 
-      {selection && (
-        <div className="fixed z-[60] -translate-x-1/2 -translate-y-full flex items-center gap-1.5"
-          style={{ left: selection.x, top: selection.y }}>
+      {/* floating translate button */}
+      {btn && (
+        <div className="fixed z-[60] -translate-x-1/2 -translate-y-full" style={{ left: btn.x, top: btn.y }}>
           <button
-            onClick={handleTranslate}
-            className="rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1.5 text-sm text-white shadow-lg shadow-sky-500/30 hover:from-sky-600 hover:to-blue-700 transition-colors flex items-center gap-1"
+            onClick={doTranslate}
+            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1.5 text-sm text-white shadow-lg shadow-sky-500/30 hover:from-sky-600 hover:to-blue-700 active:scale-95 transition-all font-medium"
           >
-            <Languages className="w-3.5 h-3.5" />
-            翻译
+            <Languages className="w-3.5 h-3.5" />翻译
           </button>
         </div>
       )}
 
-      {translating && (
-        <TranslatePopover
-          text={translating.text}
-          sourceLang={translating.sourceLang}
-          targetLang={DEFAULT_TARGET}
-          position={{ x: translating.x, y: translating.y }}
-          onClose={() => setTranslating(null)}
-        />
+      {/* translate result popover */}
+      {popup && (
+        <div
+          className="fixed inset-0 z-[99998]"
+          onClick={(e) => { if (e.target === e.currentTarget) closePopup(); }}
+        >
+          <div
+            className="absolute w-[340px] max-w-[calc(100vw-2rem)] rounded-2xl border border-sky-200/60 dark:border-sky-700/30 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden"
+            style={{ left: Math.min(popup.x, window.innerWidth - 360), top: Math.min(popup.y, window.innerHeight - 200) }}
+          >
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-sky-100 dark:border-sky-800/30 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/50 dark:to-blue-950/50">
+              <span className="text-xs font-medium text-sky-700 dark:text-sky-300">翻译</span>
+              <button onClick={closePopup} className="text-slate-400 hover:text-slate-600 text-sm leading-none">&times;</button>
+            </div>
+            <div className="p-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 line-clamp-3 italic border-l-2 border-sky-200 pl-2">{popup.text}</p>
+              <div className="h-px bg-sky-100 dark:bg-sky-800/30 mb-2" />
+              {st === 'loading' && (
+                <div className="flex items-center gap-1.5 py-2">
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '0ms' }} />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '120ms' }} />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '240ms' }} />
+                  <span className="text-xs text-slate-400 ml-2">正在翻译…</span>
+                </div>
+              )}
+              {(st === 'streaming' || st === 'done') && (
+                <p className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">
+                  {rt || '（无结果）'}
+                  {st === 'streaming' && <span className="inline-block w-1.5 h-4 bg-sky-500 animate-pulse ml-0.5 align-middle" />}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
