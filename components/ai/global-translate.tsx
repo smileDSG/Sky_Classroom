@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { Languages } from 'lucide-react';
 import { TranslatePopover } from '@/components/ai/translate-popover';
 import { detectLanguage, type DetectLang } from '@/lib/utils/language-detect';
@@ -127,26 +127,23 @@ export function GlobalTranslate() {
       {/* Floating right-click menu */}
       {menu &&
         createPortal(
-          <AnimatePresence>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.15 }}
-              className="fixed z-[99998] shadow-xl"
-              style={{ left: menu.menuPos.x, top: menu.menuPos.y }}
-            >
-              <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-1 min-w-[120px] overflow-hidden">
-                <button
-                  onClick={handleTranslate}
-                  className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
-                >
-                  <Languages className="w-4 h-4 text-sky-500" />
-                  <span>翻译</span>
-                </button>
-              </div>
-            </motion.div>
-          </AnimatePresence>,
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.15 }}
+            className="fixed z-[99998] shadow-xl"
+            style={{ left: menu.menuPos.x, top: menu.menuPos.y }}
+          >
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-1 min-w-[120px] overflow-hidden">
+              <button
+                onClick={handleTranslate}
+                className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+              >
+                <Languages className="w-4 h-4 text-sky-500" />
+                <span>翻译</span>
+              </button>
+            </div>
+          </motion.div>,
           document.body,
         )}
 
