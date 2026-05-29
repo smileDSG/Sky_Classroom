@@ -17,8 +17,6 @@ export interface QuestionBankEntry {
   problemImage?: string;
   /** Correct answer */
   answer: string;
-  /** Solution steps */
-  steps: { label: string; content: string; keyPoints?: string[] }[];
   /** Associated knowledge points */
   knowledgePoints: { name: string; description: string; difficulty: string }[];
   /** Similar questions */

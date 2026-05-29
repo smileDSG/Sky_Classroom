@@ -83,7 +83,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
         completedRef.current = true;
         onComplete();
       }
-    }, 7000);
+    }, 5000);
     timerRef.current = [t0];
     return () => timerRef.current.forEach(clearTimeout);
   }, [onComplete, mounted]);
@@ -106,7 +106,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
         style={{ zIndex: 50 }}
         initial={{ clipPath: 'circle(0% at 50% 65%)' }}
         animate={{ clipPath: 'circle(150% at 50% 65%)' }}
-        transition={{ delay: 5, duration: 1.8, ease: 'easeInOut' }}
+        transition={{ delay: 3.5, duration: 1.5, ease: 'easeInOut' }}
       />
 
       {/* 太阳 + 云朵 — 仅客户端渲染，避免 SSR hydration mismatch */}
@@ -118,7 +118,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
             style={{ top: '12%', left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 0.75, scale: 1 }}
-            transition={{ duration: 1.5, ease: 'easeOut' }}
+            transition={{ duration: 1, ease: 'easeOut' }}
           >
             <svg viewBox="0 0 120 120" className="w-44 h-44 md:w-60 md:h-60">
               <defs>
@@ -188,7 +188,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
         <motion.div
           initial={{ y: -500, scale: 0.3, opacity: 0 }}
           animate={{ y: 0, scale: 1, opacity: 1 }}
-          transition={{ delay: 1.5, duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ delay: 1, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
         >
           <motion.div
             animate={{
@@ -198,7 +198,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                 'drop-shadow(0 0 20px rgba(255,255,255,0.5))',
               ],
             }}
-            transition={{ duration: 2, delay: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            transition={{ duration: 2, delay: 1.6, repeat: Infinity, ease: 'easeInOut' }}
           >
             <svg viewBox="0 0 200 160" className="w-44 h-36 md:w-60 md:h-48" fill="none" strokeWidth="2">
               <defs>
@@ -228,7 +228,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
             className="text-center mt-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 2.8, duration: 0.6 }}
+            transition={{ delay: 2, duration: 0.5 }}
           >
             <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg tracking-wider">
               天空课堂
@@ -245,7 +245,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
         className="absolute bottom-6 right-6 z-[60] flex items-center gap-2 px-4 py-2 rounded-full text-sm text-white/70 hover:text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all cursor-pointer"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.3 }}
         onClick={handleSkip}
       >
         跳过

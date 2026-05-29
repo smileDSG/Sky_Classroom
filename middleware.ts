@@ -6,6 +6,7 @@ const PUBLIC_PATHS = [
   '/',
   '/auth',
   '/api/auth',
+  '/api/sky/solve/clear',
 ];
 
 /** Static asset prefixes to always skip */

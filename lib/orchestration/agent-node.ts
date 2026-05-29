@@ -170,6 +170,20 @@ function buildAgentMessages(
     messages.push(new HumanMessage(AGENT_TURN_PROMPT));
   }
 
+  // Highlight the latest student message so the AI answers the CURRENT question
+  // Find the last HumanMessage and prepend a clear instruction
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i] instanceof HumanMessage) {
+      const content = (messages[i] as HumanMessage).content as string;
+      if (content && !content.startsWith('[LATEST STUDENT MESSAGE')) {
+        messages[i] = new HumanMessage(
+          `[LATEST STUDENT MESSAGE — ANSWER THIS DIRECTLY]:\n${content}`,
+        );
+      }
+      break;
+    }
+  }
+
   return messages;
 }
 

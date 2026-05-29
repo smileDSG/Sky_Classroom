@@ -119,7 +119,19 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
           modelId: ttsProvidersConfig[globalTtsProviderId]?.modelId,
         };
       }
+      // Students: same provider as teacher, but different voice by index
       const index = agentIndexMap.current.get(agentId) ?? 0;
+      const providerConfig = ttsProvidersConfig[globalTtsProviderId];
+      if (providerConfig) {
+        const voices = providers.find((p) => p.providerId === globalTtsProviderId)?.voices ?? [];
+        if (voices.length > 0) {
+          return {
+            providerId: globalTtsProviderId,
+            voiceId: voices[index % voices.length].id,
+            modelId: providerConfig.modelId,
+          };
+        }
+      }
       return resolveAgentVoice(agent, index, providers);
     },
     [agents, ttsProvidersConfig, voxcpmProfiles, globalTtsProviderId, globalTtsVoice],
@@ -175,11 +187,6 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
           ttsModelId: item.modelId || providerConfig?.modelId,
           ttsVoice: item.voiceId,
           ttsSpeed: ttsSpeed,
-          ttsApiKey: providerConfig?.apiKey,
-          ttsBaseUrl:
-            providerConfig?.serverBaseUrl ||
-            providerConfig?.baseUrl ||
-            providerConfig?.customDefaultBaseUrl,
           ttsProviderOptions: providerOptions,
         }),
         signal: controller.signal,

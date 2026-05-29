@@ -171,6 +171,12 @@ export function migrateSettings(
   persistedState: unknown,
   version: number,
 ): MigratableState {
+  // Guard against corrupted localStorage: if the persisted state is not a
+  // valid object, return an empty object so migrate runs on defaults.
+  if (!persistedState || typeof persistedState !== 'object' || Array.isArray(persistedState)) {
+    log.warn('migrateSettings received non-object state, resetting to defaults');
+    return {} as MigratableState;
+  }
   const state = persistedState as MigratableState;
 
   // v0 → v1: clear hardcoded default model so user must actively select
@@ -376,7 +382,7 @@ export function mergeSettings(
 ): Record<string, unknown> {
   // Start with currentState (has actions) and overlay persisted data (JSON, no functions)
   const merged = { ...currentState };
-  if (persistedState && typeof persistedState === 'object') {
+  if (persistedState && typeof persistedState === 'object' && !Array.isArray(persistedState)) {
     for (const [key, value] of Object.entries(persistedState as Record<string, unknown>)) {
       // Only overwrite with non-function values from persisted JSON
       if (typeof value !== 'function') {

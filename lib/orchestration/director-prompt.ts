@@ -83,11 +83,11 @@ export function buildDirectorPrompt(
   const discussionSection = isDiscussion
     ? `\n# Discussion Mode
 Topic: "${discussionContext!.topic}"${discussionContext!.prompt ? `\nPrompt: "${discussionContext!.prompt}"` : ''}${triggerAgentId ? `\nInitiator: "${triggerAgentId}"` : ''}
-This is a student-initiated discussion, not a Q&A session.\n`
+This is a student-initiated discussion. After the initiator speaks, a student agent should respond first with their perspective, then the teacher guides, and other students add diverse viewpoints. Encourage active student participation throughout.\n`
     : '';
 
   const rule1 = isDiscussion
-    ? `1. The discussion initiator${triggerAgentId ? ` ("${triggerAgentId}")` : ''} should speak first to kick off the topic. Then the teacher responds to guide the discussion. After that, other students may add their perspectives.`
+    ? `1. The discussion initiator${triggerAgentId ? ` ("${triggerAgentId}")` : ''} should speak first to kick off the topic. Then a student agent shares their perspective. The teacher guides, and other students add their viewpoints.`
     : "1. The teacher (role: teacher, highest priority) should usually speak first to address the user's question or topic.";
 
   const studentProfileSection =

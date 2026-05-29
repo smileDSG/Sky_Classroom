@@ -70,7 +70,6 @@ export async function saveToQuestionBank(
       problemText: entry.problemText,
       problemImage: entry.problemImage ?? undefined,
       answer: entry.answer,
-      steps: entry.steps,
       knowledgePoints: entry.knowledgePoints,
       similarQuestions: entry.similarQuestions ?? [],
       agentId: entry.agentId,

@@ -57,17 +57,25 @@ export async function POST(request: Request) {
     const sessionId = crypto.randomUUID();
     const refreshToken = await signRefreshToken(user.id, sessionId);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: { id: user.id, email: user.email, username: user.username, role: user.role },
-    }, {
-      headers: {
-        'Set-Cookie': [
-          `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${60 * 60}`,
-          `refresh_token=${refreshToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`,
-        ].join(', '),
-      },
     });
+    response.cookies.set('access_token', accessToken, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60,
+    });
+    response.cookies.set('refresh_token', refreshToken, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60,
+    });
+    return response;
   } catch (err) {
     return apiError('INTERNAL_ERROR', 500, 'Login failed');
   }

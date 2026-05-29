@@ -46,6 +46,54 @@ function fixLatexJsonEscapes(json: string): string {
   return changed ? fixed : json;
 }
 
+// ── LaTeX content cleaner ───────────────────────────────────────────
+// LLMs emit messy LaTeX: stray newlines inside $...$, misplaced $,
+// \sqrtn (missing braces), etc. Clean before display.
+
+function cleanLatexContent(text: string): string {
+  if (!text) return text;
+
+  let s = text;
+
+  // 1. /sum → \sum, /frac → \frac (LLM sometimes emits forward slash)
+  s = s.replace(
+    /\/(sum|prod|int|frac|sqrt|lim|sin|cos|tan|log|ln|exp|partial|nabla|infty|alpha|beta|gamma|delta|theta|lambda|mu|pi|sigma|phi|omega|cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|rightarrow|leftarrow|Rightarrow|Leftarrow|to|in|notin|subset|supset|subseteq|supseteq|cup|cap|forall|exists|neg|land|lor|emptyset)/g,
+    (_m, cmd: string) => `\\${cmd}`,
+  );
+
+  // 2. Fix \sqrtn → \sqrt{n}, \sqrtabc → \sqrt{abc}
+  s = s.replace(/\\sqrt(?![\[{])([a-zA-Z]+)/g, (_m, letters: string) => `\\sqrt{${letters}}`);
+
+  // 3. Fix bare subscripts: \sum_n → \sum_{n}
+  s = s.replace(
+    /(\\(?:sum|prod|int|lim|bigcup|bigcap))_([a-zA-Z0-9]+)/g,
+    (_m, cmd: string, sub: string) => `${cmd}_{${sub}}`,
+  );
+  s = s.replace(
+    /(\\(?:sum|prod|int|lim))\^([a-zA-Z0-9]+)/g,
+    (_m, cmd: string, sup: string) => `${cmd}^{${sup}}`,
+  );
+
+  // 4. Remove newlines inside $...$ blocks
+  s = s.replace(/\$\$([\s\S]*?)\$\$/g, (_m, math: string) => {
+    return '$$' + math.replace(/\n/g, ' ') + '$$';
+  });
+  s = s.replace(/\$([^$]+?)\$/g, (_m, math: string) => {
+    if (!math.includes('\n')) return '$' + math + '$';
+    return '$' + math.replace(/\n/g, ' ') + '$';
+  });
+
+  // 5. Fix stray $ inside expressions: (-1$)^n → (-1)^n
+  s = s.replace(/\$(?=[)}\]])/g, '');
+  s = s.replace(/(?<=[({\[])\$/g, '');
+  s = s.replace(/([a-zA-Z0-9])\$(?=[_^])/g, '$1');
+
+  // 6. Fix split fractions: \frac{a}\n{b} → \frac{a}{b}
+  s = s.replace(/(\\(?:frac|dfrac|tfrac|binom|dbinom|tbinom)\{[^}]*\})\s*\n\s*(\{)/g, '$1$2');
+
+  return s;
+}
+
 // ── Answer cleaner ──────────────────────────────────────────────────
 // LLMs sometimes ignore the "answer only" instruction and include
 // explanation text like "所以答案是$3$" or "Therefore, x = 4".
@@ -249,7 +297,7 @@ class StepStreamParser {
     const valuePart = after.substring(colonIdx + 1).trim();
     const match = valuePart.match(/"([^"]*)"/);
     if (match) {
-      this.answer = cleanAnswer(match[1]);
+      this.answer = cleanLatexContent(cleanAnswer(match[1]));
       events.push({ type: 'answer', answer: this.answer });
       this.state = 'in_knowledge';
       this.tryFindKnowledge(events);
@@ -285,8 +333,8 @@ class StepStreamParser {
         const arr = JSON.parse(fixLatexJsonEscapes(arrStr));
         if (Array.isArray(arr) && arr.length > 0) {
           this.knowledge = arr.map((k: any) => ({
-            name: k.name || '',
-            description: k.description || '',
+            name: cleanLatexContent(k.name || ''),
+            description: cleanLatexContent(k.description || ''),
             difficulty: k.difficulty || 'medium',
           }));
           events.push({ type: 'knowledge', points: this.knowledge });
@@ -316,9 +364,9 @@ class StepStreamParser {
         const arr = JSON.parse(fixLatexJsonEscapes(arrStr));
         if (Array.isArray(arr)) {
           this.similar = arr.map((q: any) => ({
-            problem: q.problem || '',
+            problem: cleanLatexContent(q.problem || ''),
             difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
-            knowledgePoint: q.knowledgePoint || '',
+            knowledgePoint: cleanLatexContent(q.knowledgePoint || ''),
           }));
           events.push({ type: 'similar', questions: this.similar });
         }
@@ -334,8 +382,8 @@ class StepStreamParser {
       return {
         type: 'step',
         label: String(obj.label),
-        content: String(obj.content),
-        keyPoints: Array.isArray(obj.keyPoints) ? (obj.keyPoints as string[]) : [],
+        content: cleanLatexContent(String(obj.content)),
+        keyPoints: Array.isArray(obj.keyPoints) ? (obj.keyPoints as string[]).map(cleanLatexContent) : [],
       };
     }
     return null;
@@ -514,21 +562,21 @@ async function* fallbackSolve(
           yield {
             type: 'step',
             label: s.label,
-            content: s.content,
-            keyPoints: Array.isArray(s.keyPoints) ? s.keyPoints : [],
+            content: cleanLatexContent(s.content),
+            keyPoints: Array.isArray(s.keyPoints) ? s.keyPoints.map(cleanLatexContent) : [],
           };
         }
       }
     }
     if (parsed.answer) {
-      yield { type: 'answer', answer: cleanAnswer(parsed.answer) };
+      yield { type: 'answer', answer: cleanLatexContent(cleanAnswer(parsed.answer)) };
     }
     if (Array.isArray(parsed.knowledgePoints)) {
       yield {
         type: 'knowledge',
         points: parsed.knowledgePoints.map((k: any) => ({
-          name: k.name || '',
-          description: k.description || '',
+          name: cleanLatexContent(k.name || ''),
+          description: cleanLatexContent(k.description || ''),
           difficulty: k.difficulty || 'medium',
         })),
       };
@@ -537,9 +585,9 @@ async function* fallbackSolve(
       yield {
         type: 'similar',
         questions: parsed.similarQuestions.map((q: any) => ({
-          problem: q.problem || '',
+          problem: cleanLatexContent(q.problem || ''),
           difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
-          knowledgePoint: q.knowledgePoint || '',
+          knowledgePoint: cleanLatexContent(q.knowledgePoint || ''),
         })),
       };
     }

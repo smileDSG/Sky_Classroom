@@ -112,7 +112,6 @@ export interface QuestionBankEntry {
   problemText: string;
   problemImage?: string;
   answer: string;
-  steps: { label: string; content: string; keyPoints?: string[] }[];
   knowledgePoints: { name: string; description: string; difficulty: string }[];
   similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string }[];
   agentId: SolverAgentType;

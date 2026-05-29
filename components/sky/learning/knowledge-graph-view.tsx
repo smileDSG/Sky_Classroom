@@ -389,9 +389,12 @@ export function KnowledgeGraphView() {
     }
   }, [screenToGraph, hitTestNode]);
 
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
+  const handleWheelNative = useCallback((e: WheelEvent) => {
     e.preventDefault();
-    const rect = canvasRef.current!.getBoundingClientRect();
+    e.stopPropagation();
+
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
 
@@ -399,7 +402,6 @@ export function KnowledgeGraphView() {
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, oldScale * delta));
 
-    // Zoom toward cursor position
     const ratio = newScale / oldScale;
     offsetRef.current = {
       x: mx - (mx - offsetRef.current.x) * ratio,
@@ -410,6 +412,13 @@ export function KnowledgeGraphView() {
     drawRef.current();
     forceRedraw((n) => n + 1);
   }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.addEventListener('wheel', handleWheelNative, { passive: false });
+    return () => canvas.removeEventListener('wheel', handleWheelNative);
+  }, [handleWheelNative]);
 
   // ── Zoom controls ───────────────────────────────────────────────────
 
@@ -538,7 +547,6 @@ export function KnowledgeGraphView() {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={() => { dragRef.current = null; isDraggingRef.current = false; }}
-          onWheel={handleWheel}
         />
 
         {/* Zoom controls */}
