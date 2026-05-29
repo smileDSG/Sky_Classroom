@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Languages } from 'lucide-react';
+import { Languages, X } from 'lucide-react';
 import { TranslatePopover } from '@/components/ai/translate-popover';
 import { detectLanguage, type DetectLang } from '@/lib/utils/language-detect';
 
@@ -17,76 +17,80 @@ interface TranslateState {
 }
 
 /**
- * Global right-click text translator.
+ * Global text-selection translator.
  *
- * Select text anywhere on the page → right-click → floating "翻译" menu appears.
- * Click the option to open a streaming translation popover.
+ * Select text → a big floating "翻译" button appears near the selection.
+ * Clicks anywhere else dismiss it. No right-click needed — fires on mouseup,
+ * before any browser translation UI.
  *
  * Mount under <SkyAppShell> for classroom-wide coverage, or on the home page.
  */
 export function GlobalTranslate() {
-  const [menu, setMenu] = useState<TranslateState | null>(null);
+  const [selection, setSelection] = useState<TranslateState | null>(null);
   const [translate, setTranslate] = useState<TranslateState | null>(null);
   const [targetLang] = useState<DetectLang>(DEFAULT_TARGET);
 
-  // ── Right-click handler ───────────────────────────────────────────
+  // ── Text-selection handler (mouseup) ──────────────────────────────
 
-  const handleContextMenu = useCallback((e: MouseEvent) => {
+  const handleMouseUp = useCallback(() => {
     try {
-      const target = e.target as HTMLElement;
+      // Small delay so the browser finalises the selection
+      setTimeout(() => {
+        const sel = window.getSelection();
+        if (!sel) return;
 
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
-      if (target.closest('[contenteditable="true"]')) return;
-      if (target.closest('[data-translate-popover]')) return;
+        const text = sel.toString().trim();
+        if (text.length < MIN_SELECTION_LENGTH || text.length > MAX_SELECTION_LENGTH) {
+          setSelection(null);
+          return;
+        }
 
-      const sel = window.getSelection();
-      if (!sel) return;
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
 
-      const text = sel.toString().trim();
-      if (text.length < MIN_SELECTION_LENGTH || text.length > MAX_SELECTION_LENGTH) return;
+        const sourceLang = detectLanguage(text);
 
-      e.preventDefault();
-      e.stopPropagation();
-
-      const sourceLang = detectLanguage(text);
-
-      setMenu({
-        text,
-        sourceLang,
-        position: { x: e.clientX, y: e.clientY },
-      });
+        setSelection({
+          text,
+          sourceLang,
+          position: {
+            x: Math.min(rect.left + rect.width / 2, window.innerWidth - 180),
+            y: Math.max(rect.top - 52, 8),
+          },
+        });
+      }, 150);
     } catch {
-      // Never let the handler break right-click entirely
+      // silently ignore
     }
   }, []);
 
   useEffect(() => {
-    document.addEventListener('contextmenu', handleContextMenu, true);
-    return () => document.removeEventListener('contextmenu', handleContextMenu, true);
-  }, [handleContextMenu]);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => document.removeEventListener('mouseup', handleMouseUp);
+  }, [handleMouseUp]);
 
   // ── Dismiss ───────────────────────────────────────────────────────
 
   const dismissAll = useCallback(() => {
-    setMenu(null);
+    setSelection(null);
     setTranslate(null);
+    window.getSelection()?.removeAllRanges();
   }, []);
 
-  // Close menu on any click outside
+  // Close on outside click
   useEffect(() => {
-    if (!menu) return;
+    if (!selection && !translate) return;
     const close = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest('[data-translate-menu]') || target.closest('[data-translate-popover]')) return;
+      if (target.closest('[data-translate-ui]')) return;
       dismissAll();
     };
-    // delay registration so the current right-click doesn't immediately close it
     const t = setTimeout(() => document.addEventListener('click', close, true), 100);
     return () => {
       clearTimeout(t);
       document.removeEventListener('click', close, true);
     };
-  }, [menu, dismissAll]);
+  }, [selection, translate, dismissAll]);
 
   // Close on Escape
   useEffect(() => {
@@ -100,35 +104,44 @@ export function GlobalTranslate() {
   // ── Translation trigger ───────────────────────────────────────────
 
   const handleTranslate = useCallback(() => {
-    if (!menu) return;
-    setTranslate({ ...menu });
-    setMenu(null);
-  }, [menu]);
+    if (!selection) return;
+    setTranslate({ ...selection });
+    setSelection(null);
+  }, [selection]);
 
   // ── Render ───────────────────────────────────────────────────────
 
   return (
     <>
-      {menu &&
+      {/* Floating translation button — appears on text selection */}
+      {selection &&
         createPortal(
           <div
-            data-translate-menu
-            className="fixed z-[99998]"
-            style={{ left: Math.min(menu.position.x, window.innerWidth - 140), top: Math.min(menu.position.y, window.innerHeight - 60) }}
+            data-translate-ui
+            className="fixed z-[99998] flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200"
+            style={{
+              left: Math.max(selection.position.x - 90, 8),
+              top: selection.position.y,
+            }}
           >
-            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xl py-1 min-w-[120px]">
-              <button
-                onClick={handleTranslate}
-                className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
-              >
-                <Languages className="w-4 h-4 text-sky-500" />
-                <span>翻译</span>
-              </button>
-            </div>
+            <button
+              onClick={handleTranslate}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-2xl shadow-sky-500/30 hover:from-sky-600 hover:to-blue-700 active:scale-95 transition-all font-medium text-sm"
+            >
+              <Languages className="w-4 h-4" />
+              <span>翻译</span>
+            </button>
+            <button
+              onClick={dismissAll}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 shadow-lg transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>,
           document.body,
         )}
 
+      {/* Translation result popover */}
       {translate && (
         <TranslatePopover
           text={translate.text}
