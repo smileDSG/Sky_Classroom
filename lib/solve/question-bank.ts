@@ -1,57 +1,17 @@
 /**
- * Question Bank — backed by the Knowledge Base system (MySQL).
+ * Question Bank — server-side operations backed by MySQL (Knowledge Base).
  *
- * Workflow:
- *   1. Before solving, call findSimilarQuestions(problemText)
- *   2. If a match is found (similarity >= threshold), return it
- *   3. After solving, call saveToQuestionBank(entry) to cache
- *
- * Storage: MySQL via kb-manager. All operations are server-side only.
- * Similarity: text-based Jaccard bigram + KB TF-IDF retrieval.
+ * All functions here use dynamic imports for kb-manager so they only
+ * load server-side code when actually called.
  */
 
 import type { QuestionBankEntry } from './types';
+import { hashProblemText, textSimilarity } from './question-bank-utils';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('QuestionBank');
 
-// ── Hashing ──────────────────────────────────────────────────────────
-
-export function hashProblemText(text: string): string {
-  const normalized = text
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .replace(/[，。！？、；：""''（）【】《》\s]/g, '');
-  return stableHash(normalized);
-}
-
-function stableHash(input: string): string {
-  let h = 0;
-  for (let i = 0; i < input.length; i++) {
-    h = ((h << 5) - h + input.charCodeAt(i)) | 0;
-  }
-  return `qb_${(h >>> 0).toString(36)}`;
-}
-
-// ── Similarity ──────────────────────────────────────────────────────
-
-export function textSimilarity(a: string, b: string): number {
-  if (!a || !b) return 0;
-  const aGrams = bigrams(a);
-  const bGrams = bigrams(b);
-  const intersection = new Set([...aGrams].filter((x) => bGrams.has(x)));
-  const union = new Set([...aGrams, ...bGrams]);
-  return intersection.size / union.size;
-}
-
-function bigrams(text: string): Set<string> {
-  const grams = new Set<string>();
-  for (let i = 0; i < text.length - 1; i++) {
-    grams.add(text.slice(i, i + 2));
-  }
-  return grams;
-}
+export { hashProblemText, textSimilarity };
 
 // ── Core operations ─────────────────────────────────────────────────
 
@@ -67,7 +27,7 @@ export async function findSimilarQuestions(
       kbType: 'solve',
       query: problemText,
       topK: 10,
-      threshold: 0.01, // low threshold for TF-IDF, we'll filter with Jaccard below
+      threshold: 0.01,
     });
 
     if (results.length === 0) {
@@ -75,7 +35,6 @@ export async function findSimilarQuestions(
       return [];
     }
 
-    // Parse the stored content back to QuestionBankEntry and apply Jaccard similarity
     const matches: QuestionBankEntry[] = [];
     for (const result of results) {
       try {
@@ -121,7 +80,6 @@ export async function saveToQuestionBank(
 
     const { write, hasSource } = await import('@/lib/knowledge-base/kb-manager');
 
-    // Deduplicate by problemHash
     const exists = await hasSource(problemHash);
     if (exists) {
       log.info(`[QuestionBank] Duplicate hash: ${problemHash}, skipping`);
@@ -161,10 +119,9 @@ export async function listQuestionBankEntries(
 ): Promise<QuestionBankEntry[]> {
   try {
     const { search } = await import('@/lib/knowledge-base/kb-manager');
-    // Search with empty query to get all solve entries, sorted by recency
     const results = await search({
       kbType: 'solve',
-      query: ' ', // minimal query to trigger retrieval
+      query: ' ',
       topK: limit,
       threshold: 0,
     });
@@ -178,7 +135,6 @@ export async function listQuestionBankEntries(
       }
     }
 
-    // Sort by solvedAt descending
     entries.sort((a, b) => b.solvedAt - a.solvedAt);
     return entries.slice(0, limit);
   } catch (error) {

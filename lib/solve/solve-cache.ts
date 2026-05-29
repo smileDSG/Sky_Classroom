@@ -9,7 +9,7 @@
  * Similarity: reuses textSimilarity from question-bank.ts at 0.70 threshold.
  */
 
-import { hashProblemText, textSimilarity } from './question-bank';
+import { hashProblemText, textSimilarity } from './question-bank-utils';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SolveCache');
