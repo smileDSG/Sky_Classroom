@@ -1,13 +1,19 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Languages } from 'lucide-react';
+import { TranslatePopover } from '@/components/ai/translate-popover';
+import { detectLanguage, type DetectLang } from '@/lib/utils/language-detect';
+
+const DEFAULT_TARGET: DetectLang = 'zh';
 
 interface TextSelectionAIProps {
-  onAsk: (text: string) => void;
+  onAsk?: (text: string) => void;
 }
 
-export function TextSelectionAI({ onAsk }: TextSelectionAIProps) {
+export function TextSelectionAI({ onAsk }: TextSelectionAIProps = {}) {
   const [selection, setSelection] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [translating, setTranslating] = useState<{ text: string; sourceLang: DetectLang; x: number; y: number } | null>(null);
 
   const handleMouseUp = useCallback(() => {
     setTimeout(() => {
@@ -36,19 +42,54 @@ export function TextSelectionAI({ onAsk }: TextSelectionAIProps) {
     return () => document.removeEventListener('mouseup', handleMouseUp);
   }, [handleMouseUp]);
 
-  if (!selection) return null;
+  const handleTranslate = useCallback(() => {
+    if (!selection) return;
+    const sl = detectLanguage(selection.text);
+    setTranslating({ text: selection.text, sourceLang: sl, x: selection.x, y: selection.y });
+    setSelection(null);
+    window.getSelection()?.removeAllRanges();
+  }, [selection]);
+
+  if (!selection) {
+    // Show translate popover if active
+    if (translating) {
+      return (
+        <TranslatePopover
+          text={translating.text}
+          sourceLang={translating.sourceLang}
+          targetLang={DEFAULT_TARGET}
+          position={{ x: translating.x, y: translating.y }}
+          onClose={() => setTranslating(null)}
+        />
+      );
+    }
+    return null;
+  }
 
   return (
-    <button
-      className="fixed z-[60] -translate-x-1/2 -translate-y-full rounded-lg bg-[#4A90D9] px-3 py-1.5 text-sm text-white shadow-lg hover:bg-[#3A7BC8] transition-colors"
-      style={{ left: selection.x, top: selection.y }}
-      onClick={() => {
-        onAsk(selection.text);
-        setSelection(null);
-        window.getSelection()?.removeAllRanges();
-      }}
-    >
-      AI 解释
-    </button>
+    <div className="fixed z-[60] -translate-x-1/2 -translate-y-full flex items-center gap-1.5"
+      style={{ left: selection.x, top: selection.y }}>
+      {/* AI 解释 button (only when wired) */}
+      {onAsk && (
+        <button
+          className="rounded-lg bg-[#4A90D9] px-3 py-1.5 text-sm text-white shadow-lg hover:bg-[#3A7BC8] transition-colors"
+          onClick={() => {
+            onAsk(selection.text);
+            setSelection(null);
+            window.getSelection()?.removeAllRanges();
+          }}
+        >
+          AI 解释
+        </button>
+      )}
+      {/* 翻译 button */}
+      <button
+        onClick={handleTranslate}
+        className="rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1.5 text-sm text-white shadow-lg shadow-sky-500/30 hover:from-sky-600 hover:to-blue-700 transition-colors flex items-center gap-1"
+      >
+        <Languages className="w-3.5 h-3.5" />
+        翻译
+      </button>
+    </div>
   );
 }
