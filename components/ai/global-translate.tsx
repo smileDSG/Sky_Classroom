@@ -89,23 +89,46 @@ export function GlobalTranslate() {
 
   return (
     <>
-      {/* mount indicator */}
+      {/* DEBUG: always-visible translate button */}
       {mounted && (
-        <div style={{ position: 'fixed', bottom: 4, right: 4, zIndex: 99999, background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: 3, fontSize: 10, fontFamily: 'monospace', opacity: 0.85 }}>
-          译
-        </div>
-      )}
-
-      {/* floating translate button */}
-      {btn && (
-        <div className="fixed z-[60] -translate-x-1/2 -translate-y-full" style={{ left: btn.x, top: btn.y }}>
+        <>
+          <div style={{ position: 'fixed', bottom: 4, right: 4, zIndex: 99999, background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: 3, fontSize: 10, fontFamily: 'monospace', opacity: 0.85 }}>
+            译
+          </div>
           <button
-            onClick={doTranslate}
-            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1.5 text-sm text-white shadow-lg shadow-sky-500/30 hover:from-sky-600 hover:to-blue-700 active:scale-95 transition-all font-medium"
+            onClick={() => {
+              const sel = window.getSelection()?.toString()?.trim();
+              if (!sel || sel.length < 2) { alert('请先选中文字'); return; }
+              setBtn({ text: sel, x: window.innerWidth / 2, y: window.innerHeight / 2 });
+              // use setTimeout to let setBtn propagate, then translate
+              setTimeout(() => {
+                const src = detectLanguage(sel);
+                setPopup({ text: sel, src, x: window.innerWidth / 2, y: window.innerHeight / 2 - 100 });
+                setRt('');
+                setSt('loading');
+                fetch('/api/sky/cloud-mind/translate', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ text: sel, sourceLang: src === 'auto' ? '' : src, targetLang: TARGET, stream: true }),
+                }).then(async (res) => {
+                  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error((e as { error?: string }).error || 'HTTP ' + res.status); }
+                  const reader = res.body?.getReader();
+                  if (!reader) throw new Error('No stream');
+                  const dec = new TextDecoder(); let buf = '', acc = '';
+                  setSt('streaming');
+                  while (true) { const { done, value } = await reader.read(); if (done) break;
+                    buf += dec.decode(value, { stream: true }); const lines = buf.split('\n'); buf = lines.pop() || '';
+                    for (const ln of lines) { if (ln.startsWith('0:')) { try { acc += JSON.parse(ln.slice(2)); setRt(acc); } catch { /* skip */ } } }
+                  }
+                  setSt('done');
+                }).catch((err) => { setSt('done'); setRt('错误: ' + (err instanceof Error ? err.message : String(err))); });
+              }, 50);
+            }}
+            style={{ position: 'fixed', bottom: 40, right: 8, zIndex: 99999, background: 'linear-gradient(135deg, #0ea5e9, #2563eb)', color: '#fff', padding: '8px 16px', borderRadius: 8, fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(14,165,233,0.4)' }}
           >
-            <Languages className="w-3.5 h-3.5" />翻译
+            翻译选中文字
           </button>
-        </div>
+        </>
       )}
 
       {/* translate result popover */}
