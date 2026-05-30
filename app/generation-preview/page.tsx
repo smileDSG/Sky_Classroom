@@ -29,6 +29,7 @@ import type { Stage } from '@/lib/types/stage';
 import type { SceneOutline, PdfImage, ImageMapping } from '@/lib/types/generation';
 import { AgentRevealModal } from '@/components/agent/agent-reveal-modal';
 import { createLogger } from '@/lib/logger';
+import { addActiveJobEntry, removeActiveJobEntry } from '@/lib/classroom/classroom-session';
 import { type GenerationSessionState, ALL_STEPS, getActiveSteps } from './types';
 import { StepVisualizer } from './components/visualizers';
 
@@ -804,6 +805,10 @@ function GenerationPreviewContent() {
       // Generate ONLY the first scene
       store.setGeneratingOutlines(outlines);
 
+      // Register as active job so ClassroomJobPoller can show a dialog
+      // if the user navigates away during generation
+      addActiveJobEntry({ jobId: stage.id, topic: stage.name, isClientSide: true });
+
       const firstOutline = outlines[0];
 
       // Step 2: Generate content (currentStepIndex is already 2)
@@ -953,6 +958,7 @@ function GenerationPreviewContent() {
       );
 
       sessionStorage.removeItem('generationSession');
+      removeActiveJobEntry(stage.id);
       await store.saveToStorage();
       router.push(`/classroom/${stage.id}`);
     } catch (err) {
@@ -960,9 +966,11 @@ function GenerationPreviewContent() {
       // AbortError is expected when navigating away — don't show as error
       if (err instanceof DOMException && err.name === 'AbortError') {
         log.info('[GenerationPreview] Generation aborted');
+        removeActiveJobEntry(stage.id);
         return;
       }
       sessionStorage.removeItem('generationSession');
+      removeActiveJobEntry(stage.id);
       setError(err instanceof Error ? err.message : String(err));
     }
   };

@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { CheckCircle2, Sparkles } from 'lucide-react';
+import { CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { fetchClassroomJob } from '@/lib/classroom/classroom-job-client';
-import { getActiveJobEntries, removeActiveJobEntry } from '@/lib/classroom/classroom-session';
+import { getActiveJobEntries, removeActiveJobEntry, type StoredJobEntry } from '@/lib/classroom/classroom-session';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,13 @@ interface ReadyJob {
   sceneCount: number;
 }
 
+interface GeneratingJob {
+  jobId: string;
+  topic: string;
+}
+
 interface CompletedJob {
+  jobId: string;
   classroomId: string;
   topic: string;
   scenesCount: number;
@@ -43,6 +49,7 @@ export function ClassroomJobPoller() {
   const dialogShownRef = useRef<Set<string>>(new Set());
   const [readyJob, setReadyJob] = useState<ReadyJob | null>(null);
   const [completedJob, setCompletedJob] = useState<CompletedJob | null>(null);
+  const [generatingJob, setGeneratingJob] = useState<GeneratingJob | null>(null);
 
   const handleGoToReview = useCallback(() => {
     if (readyJob) {
@@ -53,18 +60,34 @@ export function ClassroomJobPoller() {
 
   const handleGoToClassroom = useCallback(() => {
     if (completedJob) {
+      removeActiveJobEntry(completedJob.jobId);
       router.push(`/classroom/${completedJob.classroomId}`);
       setCompletedJob(null);
     }
   }, [completedJob, router]);
 
   const handleDismissReady = useCallback(() => {
+    if (readyJob) removeActiveJobEntry(readyJob.jobId);
     setReadyJob(null);
-  }, []);
+  }, [readyJob]);
 
   const handleDismissCompleted = useCallback(() => {
+    if (completedJob) removeActiveJobEntry(completedJob.jobId);
     setCompletedJob(null);
-  }, []);
+  }, [completedJob]);
+
+  const handleGoToGenerating = useCallback(() => {
+    if (generatingJob) {
+      removeActiveJobEntry(generatingJob.jobId);
+      router.push(`/classroom/${generatingJob.jobId}`);
+      setGeneratingJob(null);
+    }
+  }, [generatingJob, router]);
+
+  const handleDismissGenerating = useCallback(() => {
+    if (generatingJob) removeActiveJobEntry(generatingJob.jobId);
+    setGeneratingJob(null);
+  }, [generatingJob]);
 
   useEffect(() => {
     const entries = getActiveJobEntries();
@@ -91,6 +114,15 @@ export function ClassroomJobPoller() {
 
         for (const entry of entries) {
           try {
+            // Client-side generation — show "generating" dialog directly
+            if (entry.isClientSide) {
+              if (!dialogShownRef.current.has(`gen:${entry.jobId}`)) {
+                dialogShownRef.current.add(`gen:${entry.jobId}`);
+                setGeneratingJob({ jobId: entry.jobId, topic: entry.topic });
+              }
+              continue;
+            }
+
             const data = await fetchClassroomJob(entry.jobId);
 
             if (data.status === 'cancelled' || data.status === 'failed') {
@@ -101,17 +133,18 @@ export function ClassroomJobPoller() {
 
             // Classroom completed — show dialog on non-home pages
             if (data.done && data.status === 'succeeded') {
-              removeActiveJobEntry(entry.jobId);
-              // Home page handles redirect via handleClassroomComplete; other pages show dialog
-              if (pathname !== '/' && data.result && !dialogShownRef.current.has(`done:${entry.jobId}`)) {
+              // Don't remove entry yet — keep it so the dialog can reappear
+              // if the user navigates again without clicking the action button.
+              // Entry is removed when the user clicks the dialog action or dismisses it.
+              if (data.result && !dialogShownRef.current.has(`done:${entry.jobId}`)) {
                 dialogShownRef.current.add(`done:${entry.jobId}`);
                 setCompletedJob({
+                  jobId: entry.jobId,
                   classroomId: data.result.classroomId,
                   topic: data.topicSummary || entry.topic,
                   scenesCount: data.result.scenesCount,
                 });
               }
-              dialogShownRef.current.delete(entry.jobId);
               continue;
             }
 
@@ -148,7 +181,7 @@ export function ClassroomJobPoller() {
     };
   }, [pathname]);
 
-  const activeDialog = completedJob ? 'completed' : readyJob ? 'ready' : null;
+  const activeDialog = completedJob ? 'completed' : readyJob ? 'ready' : generatingJob ? 'generating' : null;
 
   return (
     <AlertDialog
@@ -157,6 +190,7 @@ export function ClassroomJobPoller() {
         if (!open) {
           if (completedJob) handleDismissCompleted();
           if (readyJob) handleDismissReady();
+          if (generatingJob) handleDismissGenerating();
         }
       }}
     >
@@ -192,6 +226,23 @@ export function ClassroomJobPoller() {
             <AlertDialogFooter>
               <AlertDialogCancel onClick={handleDismissReady}>稍后再说</AlertDialogCancel>
               <AlertDialogAction onClick={handleGoToReview}>前往审阅</AlertDialogAction>
+            </AlertDialogFooter>
+          </>
+        )}
+        {generatingJob && !completedJob && !readyJob && (
+          <>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Loader2 className="h-5 w-5 text-sky-500 animate-spin" />
+                课堂正在生成
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                课堂「{generatingJob.topic}」正在生成中，是否前往查看？
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleDismissGenerating}>稍后再说</AlertDialogCancel>
+              <AlertDialogAction onClick={handleGoToGenerating}>前往查看</AlertDialogAction>
             </AlertDialogFooter>
           </>
         )}

@@ -152,7 +152,9 @@ function GenerationProgressContent() {
     if (data.totalScenes != null) setTotalScenes(data.totalScenes);
     if (data.result) {
       setResult(data.result);
-      removeActiveJobEntry(jobId!);
+      // Don't remove active job entry here — let ClassroomJobPoller show
+      // a dialog if the user navigates away before clicking "进入课堂".
+      // Entry is removed in handleGoToClassroom and handleCancel instead.
     }
 
     // Update task store for multi-task tracking

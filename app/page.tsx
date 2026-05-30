@@ -273,10 +273,12 @@ export default function HomePage() {const router = useRouter();
         try {
           const data = await fetchClassroomJob(entry.jobId);
 
-          if (data.status === 'cancelled' || data.status === 'failed' || (data.done && data.status === 'succeeded')) {
+          if (data.status === 'cancelled' || data.status === 'failed') {
             removeActiveJobEntry(entry.jobId);
             return;
           }
+          // Don't remove completed entries here — let ClassroomJobPoller
+          // show a dialog on other pages. Home page handles via startJobPolling.
 
           const phase = data.status === 'awaiting_review'
             ? 'reviewing'
