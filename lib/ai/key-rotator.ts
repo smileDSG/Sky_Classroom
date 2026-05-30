@@ -18,17 +18,17 @@ export class KeyRotator {
 
   register(providerId: string, keys: string[]): void {
     if (keys.length === 0) return;
-    const now = Date.now();
+    const unique = [...new Set(keys)];
     this.pools.set(
       providerId,
-      keys.map((key) => ({
+      unique.map((key) => ({
         key,
         lastUsedAt: 0,
         failureCount: 0,
         cooldownUntil: 0,
       })),
     );
-    log.info(`Registered ${keys.length} key(s) for provider "${providerId}"`);
+    log.info(`Registered ${unique.length} key(s) for provider "${providerId}"`);
   }
 
   getNextKey(providerId: string): string | null {
@@ -50,7 +50,10 @@ export class KeyRotator {
     const pool = this.pools.get(providerId);
     if (!pool) return;
     const entry = pool.find((e) => e.key === key);
-    if (!entry) return;
+    if (!entry) {
+      log.warn(`markFailed: key ...${key.slice(-4)} not found in pool for "${providerId}"`);
+      return;
+    }
     entry.failureCount++;
     const cooldownMs =
       entry.failureCount >= ESCALATION_THRESHOLD ? COOLDOWN_ESCALATED_MS : COOLDOWN_429_MS;
@@ -64,7 +67,10 @@ export class KeyRotator {
     const pool = this.pools.get(providerId);
     if (!pool) return;
     const entry = pool.find((e) => e.key === key);
-    if (!entry) return;
+    if (!entry) {
+      log.warn(`markSuccess: key ...${key.slice(-4)} not found in pool for "${providerId}"`);
+      return;
+    }
     entry.failureCount = 0;
     entry.cooldownUntil = 0;
   }
