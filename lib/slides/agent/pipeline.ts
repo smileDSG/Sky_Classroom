@@ -135,92 +135,75 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
     const outline = planResult.outline;
     updateJob(jobId, { stage: 'planning', message: `大纲规划完成，共 ${outline.sections.length} 章节 ${planResult.totalPages} 页`, progress: 15, totalPages: planResult.totalPages });
 
-    // ══ Step 2: Section Agents (concurrent) ══
+    // ══ Step 2+3: Section Content → Page Design (streaming pipeline) ══
     updateJob(jobId, { stage: 'sections_generating', message: '正在生成章节内容...', progress: 20 });
-    const sectionsHeartbeat = setInterval(() => {
-      const job = getJob(jobId);
-      if (job && job.stage === 'sections_generating' && job.progress < 35) {
-        updateJob(jobId, { progress: job.progress + 1 });
-      }
-    }, 8000);
 
-    const sectionResults = await Promise.all(
-      outline.sections.map(async (section, idx) => {
-        const result = await generateSectionContent(section, topic, difficulty, designDNA, languageModel);
-        updateJob(jobId, {
-          message: `第 ${idx + 1}/${outline.sections.length} 章内容生成${result.success ? '完毕' : '失败'}...`,
-          progress: 20 + Math.round((idx + 1) / outline.sections.length * 20),
-        });
-        return result;
-      }),
-    );
+    const totalPages = outline.sections.reduce((sum, s) => sum + s.pages.length, 0);
+    let completedSections = 0;
 
-    clearInterval(sectionsHeartbeat);
+    // Process sections: as each completes, immediately start its page design
+    const sectionDesignPromises = outline.sections.map(async (section, idx) => {
+      const result = await generateSectionContent(section, topic, difficulty, designDNA, languageModel);
+      completedSections++;
+      updateJob(jobId, {
+        message: `第 ${completedSections}/${outline.sections.length} 章内容生成${result.success ? '完毕' : '失败'}...`,
+        progress: 20 + Math.round(completedSections / outline.sections.length * 20),
+      });
 
-    // Handle failed sections — use contentOutline as fallback
-    const allContent: SectionOutput[] = [];
-    for (let i = 0; i < outline.sections.length; i++) {
-      if (sectionResults[i].success && sectionResults[i].output) {
-        allContent.push(sectionResults[i].output!);
-      } else {
-        // Fallback: build basic content from contentOutline
-        const section = outline.sections[i];
-        const fallback: SectionOutput = {
-          sectionId: section.sectionId,
-          pages: section.pages.map((p) => ({
-            pageNum: p.pageNum,
-            pageType: p.type,
-            content: { title: p.title, fallback: true, notes: p.contentOutline.focus },
-          })),
-        };
-        allContent.push(fallback);
+      // Use fallback if section content generation failed
+      const sectionOutput = result.success && result.output
+        ? result.output
+        : {
+            sectionId: section.sectionId,
+            pages: section.pages.map((p) => ({
+              pageNum: p.pageNum,
+              pageType: p.type,
+              content: { title: p.title, fallback: true, notes: p.contentOutline.focus },
+            })),
+          };
+
+      if (!result.success) {
         log.warn(`Section ${section.sectionId} used fallback content`);
       }
-    }
 
-    // Flatten all pages
+      // Immediately start page design for this section's pages
+      const pages = sectionOutput.pages;
+      const BATCH = 8;
+      const sectionInstructions: PageInstructions[] = [];
+
+      for (let i = 0; i < pages.length; i += BATCH) {
+        const batch = pages.slice(i, i + BATCH);
+        const batchResults = await Promise.all(
+          batch.map(async (page) => {
+            return designPage(page.pageNum, page.pageType, page.content, totalPages, designDNA, languageModel);
+          }),
+        );
+        for (const dr of batchResults) {
+          if (dr.success && dr.pageInstructions) {
+            sectionInstructions.push(dr.pageInstructions);
+          } else {
+            sectionInstructions.push({
+              pageNum: dr.pageNum,
+              instructions: [
+                { op: 'setBackground', params: { color: dr.pageNum === 1 || dr.pageNum === totalPages ? designDNA.colors.coverBg : designDNA.colors.contentBg } },
+                { op: 'addText', params: { text: `第 ${dr.pageNum} 页`, x: 1, y: 2, w: 11.3, h: 1, fontSize: 24, fontFace: designDNA.fonts.heading, color: designDNA.colors.textPrimary, align: 'center' } },
+              ],
+            });
+          }
+        }
+      }
+
+      return { sectionOutput, sectionInstructions };
+    });
+
+    // Wait for all sections (content + page design) to complete
+    const allSectionResults = await Promise.all(sectionDesignPromises);
+    const allContent = allSectionResults.map((r) => r.sectionOutput);
     const allPages = allContent.flatMap((s) => s.pages).sort((a, b) => a.pageNum - b.pageNum);
+    const instructions = allSectionResults
+      .flatMap((r) => r.sectionInstructions)
+      .sort((a, b) => a.pageNum - b.pageNum);
 
-    updateJob(jobId, { stage: 'pages_designing', message: `正在渲染 ${allPages.length} 页幻灯片...`, progress: 40 });
-
-    // Heartbeat during page design
-    const designHeartbeat = setInterval(() => {
-      const job = getJob(jobId);
-      if (job && job.stage === 'pages_designing' && job.progress < 70) {
-        updateJob(jobId, { progress: job.progress + 1 });
-      }
-    }, 6000);
-
-    // ══ Step 3: Page Design Agents (batched, max 8 concurrent) ══
-    const BATCH = 8;
-    const designResults: Array<{ pageNum: number; result: Awaited<ReturnType<typeof designPage>> }> = [];
-    for (let i = 0; i < allPages.length; i += BATCH) {
-      const batch = allPages.slice(i, i + BATCH);
-      const batchResults = await Promise.all(
-        batch.map(async (page) => {
-          const result = await designPage(page.pageNum, page.pageType, page.content, allPages.length, designDNA, languageModel);
-          return { pageNum: page.pageNum, result };
-        }),
-      );
-      designResults.push(...batchResults);
-    }
-
-    const instructions: PageInstructions[] = [];
-    for (const dr of designResults) {
-      if (dr.result.success && dr.result.pageInstructions) {
-        instructions.push(dr.result.pageInstructions);
-      } else {
-        instructions.push({
-          pageNum: dr.pageNum,
-          instructions: [
-            { op: 'setBackground', params: { color: dr.pageNum === 1 || dr.pageNum === allPages.length ? designDNA.colors.coverBg : designDNA.colors.contentBg } },
-            { op: 'addText', params: { text: `第 ${dr.pageNum} 页`, x: 1, y: 2, w: 11.3, h: 1, fontSize: 24, fontFace: designDNA.fonts.heading, color: designDNA.colors.textPrimary, align: 'center' } },
-          ],
-        });
-      }
-    }
-
-    clearInterval(designHeartbeat);
     updateJob(jobId, { stage: 'merging', message: '正在合并课件...', progress: 75 });
 
     // ══ Step 4: QA + Repair Loop ══
