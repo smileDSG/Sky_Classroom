@@ -28,24 +28,27 @@ import { createLogger } from '@/lib/logger';
 import type { Slide } from '@/lib/types/slides';
 import type { CourseTemplate } from '@/lib/templates/types';
 
-import { SettingsDialog } from '@/components/settings';
-import { TemplatePicker } from '@/components/templates/template-picker';
-import { UpgradeDialog } from '@/components/billing/upgrade-dialog';
+import dynamic from 'next/dynamic';
 
 import { DraggableQaButton } from '@/components/draggable-qa-button';
 
-// 新组件
+// 轻量组件 — 同步导入
 import { SkyBackground } from '@/components/sky/home/sky-background';
 import { MinimalNavbar } from '@/components/sky/home/minimal-navbar';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
-import { IntroSequence } from '@/components/sky/home/intro-sequence';
 import { HeroInput } from '@/components/sky/home/hero-input';
 import { ClassroomGrid } from '@/components/sky/home/classroom-grid';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
 import { QuickAccessGrid } from '@/components/sky/home/quick-access-grid';
 import { FeaturedSection } from '@/components/sky/home/featured-section';
-import { FloatingParticles } from '@/components/sky/home/floating-particles';
 import type { SettingsSection } from '@/lib/types/settings';
+
+// 重型组件 — 懒加载
+const SettingsDialog = dynamic(() => import('@/components/settings').then(m => ({ default: m.SettingsDialog })));
+const TemplatePicker = dynamic(() => import('@/components/templates/template-picker').then(m => ({ default: m.TemplatePicker })));
+const UpgradeDialog = dynamic(() => import('@/components/billing/upgrade-dialog').then(m => ({ default: m.UpgradeDialog })));
+const IntroSequence = dynamic(() => import('@/components/sky/home/intro-sequence').then(m => ({ default: m.IntroSequence })));
+const FloatingParticles = dynamic(() => import('@/components/sky/home/floating-particles').then(m => ({ default: m.FloatingParticles })));
 
 const log = createLogger('Home');
 
@@ -87,7 +90,13 @@ export default function HomePage() {
   const [webSearch, setWebSearch] = useState(false);
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [introDone, setIntroDone] = useState(true);
+  const [introDone, setIntroDone] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem('introDone') === 'true') {
+      setIntroDone(true);
+    }
+  }, []);
 
   // ── Classroom background generation state (multi-job) ──
   interface JobCardState {
@@ -329,16 +338,6 @@ export default function HomePage() {
     setRequirement(cachedRequirement);
   }, [cachedRequirement]);
 
-  // 检查是否已完成开场动画
-  useEffect(() => {
-    try {
-      if (localStorage.getItem('skyIntroDone') !== 'true') {
-        setIntroDone(false);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
 
   // 加载设置
   useEffect(() => {
@@ -353,7 +352,7 @@ export default function HomePage() {
   }, []);
 
   // 加载课堂列表
-  const loadClassrooms = async () => {
+  const loadClassrooms = useCallback(async () => {
     try {
       const list = await listStages();
       // 转换类型
@@ -379,7 +378,7 @@ export default function HomePage() {
     } catch (err) {
       log.error('Failed to load classrooms:', err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // 清理媒体存储
@@ -538,7 +537,7 @@ export default function HomePage() {
   };
 
   // 格式化日期
-  const formatDate = (timestamp: number) => {
+  const formatDate = useCallback((timestamp: number) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -548,21 +547,21 @@ export default function HomePage() {
     if (diffDays === 1) return t('classroom.yesterday');
     if (diffDays < 7) return `${diffDays} ${t('classroom.daysAgo')}`;
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-  };
+  }, [t]);
 
   const canGenerate = !!requirement.trim();
 
   if (!introDone) {
     return (
       <IntroSequence onComplete={() => {
-        try { localStorage.setItem('skyIntroDone', 'true'); } catch { /* ignore */ }
+        sessionStorage.setItem('introDone', 'true');
         setIntroDone(true);
       }} />
     );
   }
 
   return (
-    <div className="min-h-screen w-full relative overflow-x-hidden">
+    <div suppressHydrationWarning className="min-h-screen w-full relative overflow-x-hidden">
       {/* 动态天空背景 */}
       <SkyBackground />
 
@@ -582,7 +581,6 @@ export default function HomePage() {
       <MinimalNavbar
         userSection={
           <FloatingUserCard
-            onSettingsOpen={() => setSettingsOpen(true)}
             onUpgradeOpen={() => setUpgradeDialogOpen(true)}
           />
         }

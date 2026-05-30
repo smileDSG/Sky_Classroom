@@ -14,6 +14,30 @@ export function convertMessagesToOpenAI(
     .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
     .map((msg) => {
       if (msg.role === 'assistant') {
+        // Lecture messages: extract text parts as plain content (not JSON format)
+        // Lecture parts use {type:'text',text:'...'} and {type:'action-spotlight',...}
+        // which differ from QA/discussion parts that use {type:'action-...',state:'result'}
+        const isLecture =
+          msg.metadata?.originalRole === 'teacher' &&
+          msg.parts?.some((part) => {
+            const p = part as Record<string, unknown>;
+            return p.type === 'text' && p.text && !p._partId;
+          });
+
+        if (isLecture) {
+          const textParts = (msg.parts || [])
+            .filter((part) => {
+              const p = part as Record<string, unknown>;
+              return p.type === 'text' && p.text;
+            })
+            .map((part) => (part as { type: 'text'; text: string }).text)
+            .join('\n');
+
+          if (textParts) {
+            return { role: 'assistant' as const, content: textParts };
+          }
+        }
+
         // Assistant messages use JSON array format to serve as few-shot examples
         // that match the expected output format from the system prompt
         const items: Array<{ type: string; [key: string]: string }> = [];

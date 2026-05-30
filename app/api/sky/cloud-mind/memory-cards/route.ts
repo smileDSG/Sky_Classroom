@@ -33,6 +33,34 @@ export async function POST(req: NextRequest) {
     const trimmedContent = content.slice(0, 30000);
 
     const result = await generateMemoryCards(trimmedContent, topic, cardCount);
+
+    // Save to cards knowledge base (fire and forget)
+    try {
+      const { write } = await import('@/lib/knowledge-base/kb-manager');
+      const kbContent = JSON.stringify({
+        topic: result.topic,
+        description: result.description,
+        cardCount: result.cards.length,
+        cards: result.cards.map((c) => ({
+          front: c.front,
+          back: c.back,
+          difficulty: c.difficulty,
+          tags: c.tags,
+        })),
+        studyTips: result.studyTips,
+      });
+      write({
+        kbType: 'cards',
+        title: `卡片: ${result.topic}`,
+        content: kbContent,
+        tags: result.cards[0]?.tags || [],
+        sourceId: `cards-${Date.now()}`,
+        verified: true,
+      }).catch((e) => log.warn('KB save failed:', e));
+    } catch {
+      // ignore KB save errors
+    }
+
     return new Response(JSON.stringify({ success: true, data: result }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

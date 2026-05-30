@@ -507,13 +507,26 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             return currentSession?.messages ?? requestTemplate.messages;
           },
 
-          fetchChat: (body, signal) =>
-            fetch('/api/chat', {
+          fetchChat: async (body, signal) => {
+            let res = await fetch('/api/chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
               signal,
-            }),
+            });
+            if (res.status === 401) {
+              const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+              if (refreshRes.ok) {
+                res = await fetch('/api/chat', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body),
+                  signal,
+                });
+              }
+            }
+            return res;
+          },
 
           onEvent: (event) => {
             // Create buffer on first event of each iteration
@@ -934,6 +947,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             config: {
               agentIds,
               sessionType: session.type,
+              triggerAgentId: 'default-2', // 恢复会话也让助教回答
             },
             userProfile: {
               nickname: userProfileState.nickname || undefined,
@@ -1081,9 +1095,17 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
 
       // Read current session data from ref (avoids stale closure AND keeps updater pure)
       const existingSession = sessionsRef.current.find((s) => s.id === sessionId);
+
+      // When transitioning from lecture to QA, inject lecture messages as context
+      // so the AI knows what was just taught and can answer questions about it.
+      let lectureContextMessages: UIMessage<ChatMessageMetadata>[] = [];
+      if (needNewSession && activeSession?.type === 'lecture' && activeSession.messages.length > 0) {
+        lectureContextMessages = activeSession.messages;
+      }
+
       const sessionMessages: UIMessage<ChatMessageMetadata>[] = existingSession
-        ? [...existingSession.messages, userMessage]
-        : [userMessage];
+        ? [...lectureContextMessages, ...existingSession.messages, userMessage]
+        : [...lectureContextMessages, userMessage];
       const sessionType: SessionType = existingSession?.type || 'qa';
 
       // Pure updater — no side effects
@@ -1151,6 +1173,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             config: {
               agentIds,
               sessionType,
+              triggerAgentId: 'default-2', // 用户提问后直接让 AI 助教回答
             },
             userProfile: {
               nickname: userProfileState.nickname || undefined,

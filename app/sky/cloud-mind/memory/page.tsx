@@ -19,8 +19,13 @@ import {
   BookOpen,
   Layers,
   AlertCircle,
+  FileDown,
+  X,
 } from 'lucide-react';
+import type { MistakeCause } from '@/lib/solve/types';
+import type { MistakeRecord } from '@/lib/mistakes/types';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { MemoryCardDeck } from '@/lib/agents/cloud-mind/memory-cards-agent';
 
 export default function CloudMindMemoryPage() {
@@ -35,6 +40,9 @@ export default function CloudMindMemoryPage() {
   const [flipped, setFlipped] = useState(false);
   const [studyMode, setStudyMode] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [showMistakePicker, setShowMistakePicker] = useState(false);
+  const [studiedCards, setStudiedCards] = useState<Set<number>>(new Set());
+  const router = useRouter();
 
   // Pre-fill from URL query params (e.g., from slides/write/translate)
   useEffect(() => {
@@ -44,27 +52,33 @@ export default function CloudMindMemoryPage() {
     if (qTopic) setTopic(qTopic);
   }, [searchParams]);
 
-  // Import from mistakes (错题 → 记忆卡片)
+  // Cause labels for display
+  const causeLabels: Record<MistakeCause, string> = {
+    'concept-unclear': '概念不清',
+    'calculation-error': '计算失误',
+    'misreading': '审题错误',
+    'method-wrong': '方法错误',
+    'careless': '粗心',
+    'format-error': '格式错误',
+  };
+
+  // Import from mistakes — toggle picker panel
   const handleImportFromMistakes = () => {
     const mistakes = useSkyClassroomStore.getState().mistakes;
     if (mistakes.length === 0) {
       setError('暂无错题记录，先去做些练习吧');
       return;
     }
-    const kpCounts = new Map<string, number>();
-    for (const m of mistakes) {
-      for (const kp of m.knowledgePoints) {
-        kpCounts.set(kp, (kpCounts.get(kp) ?? 0) + 1);
-      }
-    }
-    const sortedKps = [...kpCounts.entries()].sort((a, b) => b[1] - a[1]);
-    const topKps = sortedKps.slice(0, 8);
-    const topicStr = topKps.map(([kp]) => kp).join('、');
-    const contentStr = topKps
-      .map(([kp, count]) => `知识点"${kp}"错误${count}次，典型题目：${mistakes.find(m => m.knowledgePoints.includes(kp))?.problem ?? ''}`)
-      .join('\n\n');
-    setTopic(`错题薄弱点：${topicStr}`);
-    setContent(contentStr);
+    setShowMistakePicker(true);
+  };
+
+  // Select a specific mistake to fill topic + content
+  const handleSelectMistake = (m: MistakeRecord) => {
+    setTopic(m.knowledgePoints.join('、'));
+    setContent(
+      `【题目】${m.problem}\n\n【我的答案】${m.userAnswer}\n\n【正确答案】${m.correctAnswer}\n\n【错因】${causeLabels[m.cause]}\n\n【知识点】${m.knowledgePoints.join('、')}`,
+    );
+    setShowMistakePicker(false);
   };
 
   // Restore state from background task on mount
@@ -82,6 +96,7 @@ export default function CloudMindMemoryPage() {
     } else if (task.status === 'completed' && task.result) {
       setDeck(task.result as MemoryCardDeck);
       setCurrentCard(0);
+      setStudiedCards(new Set());
       store.removeTask(task.id);
       setActiveTaskId(null);
     }
@@ -100,6 +115,7 @@ export default function CloudMindMemoryPage() {
       if (task.status === 'completed' && task.result) {
         setDeck(task.result as MemoryCardDeck);
         setCurrentCard(0);
+        setStudiedCards(new Set());
         setLoading(false);
         useTaskStore.getState().removeTask(task.id);
         setActiveTaskId(null);
@@ -123,6 +139,7 @@ export default function CloudMindMemoryPage() {
     setError(null);
     setDeck(null);
     setFlipped(false);
+    setStudiedCards(new Set());
 
     const taskId = `memory_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     setActiveTaskId(taskId);
@@ -176,6 +193,11 @@ export default function CloudMindMemoryPage() {
   const trackFlip = () => {
     setFlipped(!flipped);
     if (!flipped && deck) {
+      setStudiedCards((prev) => {
+        const next = new Set(prev);
+        next.add(currentCard);
+        return next;
+      });
       try {
         const key = 'memory-progress';
         const raw = localStorage.getItem(key);
@@ -271,17 +293,31 @@ export default function CloudMindMemoryPage() {
             </div>
 
             <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">学习内容 / 知识点</label>
-                <button
-                  type="button"
-                  onClick={handleImportFromMistakes}
-                  className="flex items-center gap-1.5 text-xs font-medium text-rose-500 hover:text-rose-600 transition-colors"
-                >
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  从错题生成
-                </button>
-              </div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">学习内容 / 知识点</label>
+
+              {/* Quick import from mistakes */}
+              <button
+                type="button"
+                onClick={handleImportFromMistakes}
+                className="w-full mb-3 flex items-center gap-3 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-600/50 bg-indigo-50/50 dark:bg-indigo-900/10 px-4 py-3 text-left hover:bg-indigo-100/70 dark:hover:bg-indigo-900/20 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all group"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-800/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-700/40 transition-colors">
+                  <FileDown className="h-4.5 w-4.5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-indigo-700 dark:text-indigo-300">从错题本导入</div>
+                  <div className="text-xs text-indigo-400 dark:text-indigo-500 mt-0.5">选择错题自动生成记忆卡片</div>
+                </div>
+              </button>
+
+              {/* Mistake Picker Panel */}
+              {showMistakePicker && (
+                <MistakePicker
+                  onSelect={handleSelectMistake}
+                  onClose={() => setShowMistakePicker(false)}
+                />
+              )}
+
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -320,7 +356,7 @@ export default function CloudMindMemoryPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => { setDeck(null); setContent(''); }}
+                    onClick={() => { setDeck(null); setContent(''); setStudiedCards(new Set()); }}
                     className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
                   >
                     <RotateCcw className="h-4 w-4" />
@@ -414,15 +450,40 @@ export default function CloudMindMemoryPage() {
                     </motion.div>
                   </div>
 
-                  {/* Navigation */}
-                  <div className="flex items-center gap-4">
-                    <button onClick={prevCard} className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                      <ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" />
-                    </button>
-                    <button onClick={nextCard} className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                      <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-300" />
-                    </button>
-                  </div>
+                  {/* Navigation / Completion */}
+                  {studiedCards.size >= deck.cards.length ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex flex-col items-center gap-4 py-6"
+                    >
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                        <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">学习完成！</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                          你已完成全部 {deck.cards.length} 张卡片的学习
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => router.push('/sky/cloud-mind')}
+                        className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-6 py-2.5 text-white font-medium shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/30 transition-all hover:-translate-y-0.5"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        完成学习
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <button onClick={prevCard} className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        <ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                      </button>
+                      <button onClick={nextCard} className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Card List View */
@@ -490,5 +551,108 @@ export default function CloudMindMemoryPage() {
         </AnimatePresence>
       </div>
     </SkyAppShell>
+  );
+}
+
+// ── Mistake Picker Panel ──────────────────────────────────────────────
+
+const causeColors: Record<MistakeCause, string> = {
+  'concept-unclear': 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  'calculation-error': 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+  'misreading': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  'method-wrong': 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  'careless': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+  'format-error': 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300',
+};
+
+const pickerCauseLabels: Record<MistakeCause, string> = {
+  'concept-unclear': '概念不清',
+  'calculation-error': '计算失误',
+  'misreading': '审题错误',
+  'method-wrong': '方法错误',
+  'careless': '粗心',
+  'format-error': '格式错误',
+};
+
+function MistakePicker({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (m: MistakeRecord) => void;
+  onClose: () => void;
+}) {
+  const mistakes = useSkyClassroomStore((s) => s.mistakes);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      className="mb-4 rounded-2xl border border-rose-200 dark:border-rose-700/30 bg-white dark:bg-slate-800 overflow-hidden"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700/50">
+        <div className="flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 text-rose-500" />
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            选择错题生成卡片
+          </span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">
+            共 {mistakes.length} 条
+          </span>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        >
+          <X className="h-4 w-4 text-slate-400" />
+        </button>
+      </div>
+
+      {/* List */}
+      <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/50">
+        {mistakes.length === 0 ? (
+          <div className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+            暂无错题记录，先去做些练习吧
+          </div>
+        ) : (
+          mistakes.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => onSelect(m)}
+              className="w-full text-left px-4 py-3 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-colors group"
+            >
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200 line-clamp-2 leading-relaxed">
+                {m.problem}
+              </p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                <span className="text-red-500 dark:text-red-400">
+                  我的答案：{m.userAnswer}
+                </span>
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  正确答案：{m.correctAnswer}
+                </span>
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <span className={`inline-block rounded px-2 py-0.5 text-[10px] font-medium ${causeColors[m.cause]}`}>
+                  {pickerCauseLabels[m.cause]}
+                </span>
+                {m.knowledgePoints.map((kp) => (
+                  <span
+                    key={kp}
+                    className="inline-block rounded bg-rose-50 dark:bg-rose-900/20 px-2 py-0.5 text-[10px] text-rose-600 dark:text-rose-400"
+                  >
+                    {kp}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-1 text-[10px] text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                点击选择此错题
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </motion.div>
   );
 }

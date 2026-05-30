@@ -8,7 +8,7 @@ import { NextRequest } from 'next/server';
 import { streamLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildGraphFromMistakes } from '@/lib/graph/builder';
 import { buildSystemPrompt } from '@/lib/assistant/context-injector';
@@ -20,7 +20,7 @@ export const maxDuration = 30;
 let _daoPromise: ReturnType<typeof initDAO> | null = null;
 
 async function initDAO() {
-  const storage = await createStorageProvider();
+  const storage = await getServerStorage();
   return createMistakeBookDAO(storage);
 }
 

@@ -23,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { listQuestionBankEntries, deleteQuestionBankEntry } from '@/lib/solve/question-bank';
 import type { QuestionBankEntry } from '@/lib/solve/types';
 
 interface HistoryPanelProps {
@@ -42,8 +41,9 @@ export function HistoryPanel({ onLoad, onClose, className }: HistoryPanelProps) 
     setLoading(true);
     setError(null);
     try {
-      const result = await listQuestionBankEntries(50);
-      setEntries(result);
+      const res = await fetch('/api/sky/question-bank?limit=50');
+      const data = await res.json();
+      setEntries(data?.data?.questions || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : '加载历史记录失败');
     } finally {
@@ -58,7 +58,7 @@ export function HistoryPanel({ onLoad, onClose, className }: HistoryPanelProps) 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
-      await deleteQuestionBankEntry(deleteTarget);
+      await fetch(`/api/sky/question-bank?id=${deleteTarget}`, { method: 'DELETE' });
       setEntries((prev) => prev.filter((e) => e.id !== deleteTarget));
     } catch (e) {
       setError(e instanceof Error ? e.message : '删除失败');

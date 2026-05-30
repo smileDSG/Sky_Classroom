@@ -3,14 +3,12 @@
  * Clear auth cookies and invalidate sessions.
  */
 
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
 import { verifyRefreshToken } from '@/lib/server/auth';
 import { createSessionDAO } from '@/lib/storage/dao/sessions';
 
-export async function POST() {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get('refresh_token');
+export async function POST(request: NextRequest) {
+  const refreshToken = request.cookies.get('refresh_token');
 
   // Invalidate session if refresh token exists
   if (refreshToken) {

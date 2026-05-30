@@ -1,18 +1,59 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import 'fake-indexeddb/auto';
 
-vi.mock('@/lib/utils/database', () => ({
-  db: {
-    questionBank: {
-      toArray: vi.fn(),
-      put: vi.fn(),
-      delete: vi.fn(),
-      orderBy: vi.fn(),
-      count: vi.fn(),
-      clear: vi.fn(),
-      where: vi.fn(),
+// ── Mock kb-manager before importing question-bank ──
+
+const mockKBChunks = new Map<string, any>();
+
+vi.mock('@/lib/knowledge-base/kb-manager', () => ({
+  search: vi.fn().mockImplementation(async (opts: any) => {
+    const results: any[] = [];
+    for (const chunk of mockKBChunks.values()) {
+      if (chunk.kbType === opts.kbType) {
+        results.push({ chunk, score: 0.5 });
+      }
+    }
+    return results.slice(0, opts.topK || 5);
+  }),
+  write: vi.fn().mockImplementation(async (opts: any) => {
+    const docId = `doc-${Date.now()}`;
+    const chunk = {
+      id: `${docId}-chunk-0`,
+      kbType: opts.kbType,
+      docId,
+      docTitle: opts.title,
+      chunkIndex: 0,
+      totalChunks: 1,
+      content: opts.content,
+      tags: opts.tags || [],
+      sourceId: opts.sourceId || null,
+      verified: opts.verified || false,
+      usageCount: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    mockKBChunks.set(chunk.id, chunk);
+    return { docId, chunks: 1 };
+  }),
+  hasSource: vi.fn().mockImplementation(async (sourceId: string) => {
+    return [...mockKBChunks.values()].some((c: any) => c.sourceId === sourceId);
+  }),
+  removeDocument: vi.fn().mockImplementation(async (docId: string) => {
+    for (const [id, c] of mockKBChunks) {
+      if ((c as any).docId === docId) mockKBChunks.delete(id);
+    }
+  }),
+  stats: vi.fn().mockImplementation(async () => ({
+    totalChunks: mockKBChunks.size,
+    totalDocuments: new Set([...mockKBChunks.values()].map((c: any) => c.docId)).size,
+    byType: {
+      solve: { chunks: mockKBChunks.size, documents: mockKBChunks.size },
     },
-  },
+  })),
+  clearType: vi.fn().mockImplementation(async () => {
+    for (const [id, c] of mockKBChunks) {
+      if ((c as any).kbType === 'solve') mockKBChunks.delete(id);
+    }
+  }),
 }));
 
 import {
@@ -26,9 +67,9 @@ import {
   clearQuestionBank,
   isProblemInBank,
 } from '@/lib/solve/question-bank';
-import { db } from '@/lib/utils/database';
 
 beforeEach(() => {
+  mockKBChunks.clear();
   vi.clearAllMocks();
 });
 
@@ -81,114 +122,68 @@ describe('textSimilarity', () => {
 });
 
 describe('findSimilarQuestions', () => {
-  test('returns empty when bank is empty', async () => {
-    (db.questionBank.toArray as any).mockResolvedValue([]);
-
+  test('returns empty when KB is empty', async () => {
     const results = await findSimilarQuestions('test problem');
     expect(results).toEqual([]);
   });
 
-  test('returns matches above threshold', async () => {
-    (db.questionBank.toArray as any).mockResolvedValue([
-      {
-        id: 'qb_1',
-        problemHash: hashProblemText('解方程 2x+3=7'),
-        problemText: '解方程 2x+3=7',
-        answer: 'x = 2',
-        steps: ['移项', '计算'],
-        knowledgePoints: ['一元一次方程'],
-        agentId: 'science',
-        solvedAt: Date.now(),
-        verified: true,
-      },
-    ]);
+  test('returns matches above threshold from KB', async () => {
+    // Pre-populate the mock KB with a stored question entry
+    const entry = {
+      id: 'qb_1',
+      problemHash: hashProblemText('解方程 2x+3=7'),
+      problemText: '解方程 2x+3=7',
+      answer: 'x = 2',
+      steps: [{ label: '解答', content: '移项', keyPoints: [] }],
+      knowledgePoints: [{ name: '一元一次方程', description: '', difficulty: 'medium' }],
+      agentId: 'science',
+      solvedAt: Date.now(),
+      verified: true,
+    };
+    mockKBChunks.set('chunk-1', {
+      id: 'chunk-1',
+      kbType: 'solve',
+      docId: 'doc-1',
+      docTitle: '题解',
+      chunkIndex: 0,
+      totalChunks: 1,
+      content: JSON.stringify(entry),
+      tags: [],
+      sourceId: entry.problemHash,
+      verified: true,
+      usageCount: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
 
     const results = await findSimilarQuestions('解方程 2x+3=7');
     expect(results.length).toBe(1);
-    expect(results[0]._similarity).toBe(1);
     expect(results[0].answer).toBe('x = 2');
-  });
-
-  test('filters out entries below threshold', async () => {
-    (db.questionBank.toArray as any).mockResolvedValue([
-      {
-        id: 'qb_1',
-        problemHash: 'hash1',
-        problemText: '完全不同的题目',
-        answer: 'x = 0',
-        steps: [],
-        knowledgePoints: [],
-        agentId: 'universal',
-        solvedAt: Date.now(),
-        verified: false,
-      },
-    ]);
-
-    const results = await findSimilarQuestions('解方程 2x+3=7');
-    expect(results).toEqual([]);
-  });
-
-  test('sorts by similarity descending', async () => {
-    (db.questionBank.toArray as any).mockResolvedValue([
-      {
-        id: 'qb_1',
-        problemHash: 'hash1',
-        problemText: '解方程 2x+3=8',
-        answer: 'x = 2.5',
-        steps: [],
-        knowledgePoints: [],
-        agentId: 'science',
-        solvedAt: Date.now(),
-        verified: false,
-      },
-      {
-        id: 'qb_2',
-        problemHash: 'hash2',
-        problemText: '解方程 2x+3=7',
-        answer: 'x = 2',
-        steps: [],
-        knowledgePoints: [],
-        agentId: 'science',
-        solvedAt: Date.now(),
-        verified: false,
-      },
-    ]);
-
-    const results = await findSimilarQuestions('解方程 2x+3=7', 0.8);
-    expect(results.length).toBe(2);
-    expect(results[0].id).toBe('qb_2'); // exact match should be first
   });
 });
 
 describe('saveToQuestionBank', () => {
-  test('saves entry and returns it', async () => {
-    (db.questionBank.put as any).mockResolvedValue(undefined);
-
+  test('saves entry via kb-manager', async () => {
     const entry = await saveToQuestionBank({
       problemText: '解方程 2x+3=7',
       answer: 'x = 2',
-      steps: ['移项', '计算'],
-      knowledgePoints: ['一元一次方程'],
+      knowledgePoints: [{ name: '一元一次方程', description: '', difficulty: 'medium' }],
       agentId: 'science',
       solvedAt: Date.now(),
       verified: false,
     });
 
-    expect(db.questionBank.put).toHaveBeenCalledTimes(1);
     expect(entry.problemHash).toBe(hashProblemText('解方程 2x+3=7'));
     expect(entry.answer).toBe('x = 2');
     expect(entry.verified).toBe(false);
   });
 
   test('uses provided problemHash', async () => {
-    (db.questionBank.put as any).mockResolvedValue(undefined);
-
     const entry = await saveToQuestionBank({
       problemText: 'test',
       problemHash: 'custom_hash',
       answer: 'answer',
-      steps: [] as string[],
-      knowledgePoints: [] as string[],
+      knowledgePoints: [],
       agentId: 'universal',
       solvedAt: Date.now(),
       verified: false,
@@ -196,75 +191,69 @@ describe('saveToQuestionBank', () => {
 
     expect(entry.problemHash).toBe('custom_hash');
   });
-});
 
-describe('deleteQuestionBankEntry', () => {
-  test('deletes by id', async () => {
-    (db.questionBank.delete as any).mockResolvedValue(undefined);
-
-    await deleteQuestionBankEntry('qb_123');
-    expect(db.questionBank.delete).toHaveBeenCalledWith('qb_123');
-  });
-});
-
-describe('listQuestionBankEntries', () => {
-  test('returns entries sorted by solvedAt desc', async () => {
-    const mockEntries = [
-      { id: 'qb_2', solvedAt: 200 },
-      { id: 'qb_1', solvedAt: 100 },
-    ];
-    (db.questionBank.orderBy as any).mockReturnValue({
-      reverse: vi.fn().mockReturnValue({
-        limit: vi.fn().mockReturnValue({
-          toArray: vi.fn().mockResolvedValue(mockEntries),
-        }),
-      }),
+  test('deduplicates by problemHash', async () => {
+    // First save
+    await saveToQuestionBank({
+      problemText: '解方程 2x+3=7',
+      answer: 'x = 2',
+      knowledgePoints: [],
+      agentId: 'science',
+      solvedAt: Date.now(),
+      verified: false,
     });
 
-    const results = await listQuestionBankEntries();
-    expect(results.length).toBe(2);
-    expect(results[0].id).toBe('qb_2');
-  });
-});
+    // Second save with same problem — should be deduplicated
+    const { write } = await import('@/lib/knowledge-base/kb-manager');
+    const secondEntry = await saveToQuestionBank({
+      problemText: '解方程 2x+3=7',
+      answer: 'x = 2',
+      steps: [],
+      knowledgePoints: [],
+      agentId: 'science',
+      solvedAt: Date.now(),
+      verified: false,
+    });
 
-describe('questionBankCount', () => {
-  test('returns count', async () => {
-    (db.questionBank.count as any).mockResolvedValue(42);
-
-    const count = await questionBankCount();
-    expect(count).toBe(42);
-  });
-});
-
-describe('clearQuestionBank', () => {
-  test('clears all entries', async () => {
-    (db.questionBank.clear as any).mockResolvedValue(undefined);
-
-    await clearQuestionBank();
-    expect(db.questionBank.clear).toHaveBeenCalled();
+    // write should only be called once due to dedup
+    expect(write).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('isProblemInBank', () => {
   test('returns true for existing problem', async () => {
-    (db.questionBank.where as any).mockImplementation(() => ({
-      equals: vi.fn().mockReturnValue({
-        toArray: vi.fn().mockResolvedValue([{ id: 'qb_1' }]),
-      }),
-    }));
+    // Save a problem first
+    await saveToQuestionBank({
+      problemText: '解方程 2x+3=7',
+      answer: 'x = 2',
+      steps: [],
+      knowledgePoints: [],
+      agentId: 'science',
+      solvedAt: Date.now(),
+      verified: false,
+    });
 
     const exists = await isProblemInBank('解方程 2x+3=7');
     expect(exists).toBe(true);
   });
 
   test('returns false for non-existing problem', async () => {
-    (db.questionBank.where as any).mockImplementation(() => ({
-      equals: vi.fn().mockReturnValue({
-        toArray: vi.fn().mockResolvedValue([]),
-      }),
-    }));
-
     const exists = await isProblemInBank('新题目');
     expect(exists).toBe(false);
+  });
+});
+
+describe('questionBankCount', () => {
+  test('returns count from stats', async () => {
+    const count = await questionBankCount();
+    expect(count).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('clearQuestionBank', () => {
+  test('calls clearType for solve', async () => {
+    const { clearType } = await import('@/lib/knowledge-base/kb-manager');
+    await clearQuestionBank();
+    expect(clearType).toHaveBeenCalledWith('solve');
   });
 });

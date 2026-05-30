@@ -1069,6 +1069,8 @@
     "profileSection": "個人資料",
     "accountSection": "帳戶資訊",
     "securitySection": "安全設定",
+    "planSection": "套餐與帳單",
+    "personalizationSection": "個人化設定",
     "nickname": "暱稱",
     "nicknamePlaceholder": "輸入你的暱稱",
     "bio": "個人簡介",
@@ -1106,29 +1108,5 @@
       "student": "學生",
       "user": "我"
     }
-  },
-  "beta": {
-    "title": "天空課堂 · 內測",
-    "subtitle": "輸入邀請碼或申請內測資格",
-    "inviteTab": "邀請碼",
-    "applyTab": "申請內測",
-    "enterCode": "輸入邀請碼",
-    "codePlaceholder": "如：SKY-7X3K-9M2P",
-    "validateCode": "驗證邀請碼",
-    "validating": "驗證中...",
-    "codeValid": "邀請碼有效，即將跳轉註冊頁...",
-    "codeInvalid": "邀請碼無效或已過期",
-    "codeExhausted": "邀請碼已被使用完",
-    "applyTitle": "申請內測資格",
-    "email": "郵箱地址",
-    "emailPlaceholder": "請輸入你的郵箱",
-    "reason": "申請理由（選填）",
-    "reasonPlaceholder": "簡單介紹一下你想參與內測的原因...",
-    "submitApplication": "提交申請",
-    "submitting": "提交中...",
-    "submitted": "申請已提交",
-    "submittedDesc": "我們會盡快審核，審核結果將通過郵件通知你。",
-    "alreadyRequested": "你已經提交過申請，請耐心等待審核結果。",
-    "backToHome": "返回首頁"
   }
 }

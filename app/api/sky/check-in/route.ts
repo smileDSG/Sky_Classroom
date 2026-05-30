@@ -5,7 +5,7 @@
  */
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { createLogger } from '@/lib/logger';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const userId = payload.sub;
     const todayStr = today();
 
-    const storage = await createStorageProvider();
+    const storage = await getServerStorage();
 
     // Check if already checked in today
     const todayEntry = await storage.get<CheckInEntry>(CHECKIN_TABLE, `${userId}_${todayStr}`);
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function calculateStreak(storage: Awaited<ReturnType<typeof createStorageProvider>>, userId: string): Promise<number> {
+async function calculateStreak(storage: Awaited<ReturnType<typeof getServerStorage>>, userId: string): Promise<number> {
   let streak = 0;
   const todayStr = today();
   let checkDate = todayStr;

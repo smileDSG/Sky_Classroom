@@ -2,8 +2,8 @@ import { after, type NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import {
   isValidClassroomJobId,
-  readClassroomGenerationJob,
-  updateClassroomGenerationJob,
+  readClassroomGenerationJobHybrid,
+  updateClassroomGenerationJobHybrid,
 } from '@/lib/server/classroom-job-store-hybrid';
 import { runClassroomContinueJob } from '@/lib/server/classroom-job-runner';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
       return apiError('INVALID_REQUEST', 400, 'Invalid classroom generation job id');
     }
 
-    const job = await readClassroomGenerationJob(jobId);
+    const job = await readClassroomGenerationJobHybrid(jobId);
     if (!job) {
       return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
     }
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
     if (body.outlines && Array.isArray(body.outlines) && body.outlines.length > 0) {
       const userOutlines = body.outlines as SceneOutline[];
       if (job.phaseOneResult) {
-        await updateClassroomGenerationJob(jobId, {
+        await updateClassroomGenerationJobHybrid(jobId, {
           phaseOneResult: { ...job.phaseOneResult, outlines: userOutlines },
           outlines: userOutlines,
           outlinesMeta: job.outlinesMeta

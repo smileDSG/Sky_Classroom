@@ -902,12 +902,6 @@ function GenerationPreviewContent() {
                 ttsModelId: ttsProviderConfig?.modelId,
                 ttsVoice: settings.ttsVoice,
                 ttsSpeed: settings.ttsSpeed,
-                ttsApiKey: ttsProviderConfig?.apiKey || undefined,
-                ttsBaseUrl:
-                  ttsProviderConfig?.serverBaseUrl ||
-                  ttsProviderConfig?.baseUrl ||
-                  ttsProviderConfig?.customDefaultBaseUrl ||
-                  undefined,
                 ttsProviderOptions: providerOptions,
               }),
               signal,

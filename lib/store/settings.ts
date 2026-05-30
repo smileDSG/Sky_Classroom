@@ -693,6 +693,16 @@ export const useSettingsStore = create<SettingsState>()(
       version: 4,
       migrate: migrateSettings as any,
       merge: mergeSettings as any,
+      // Recover from corrupted localStorage: clear the broken key so the
+      // store falls back to its initial state (all defaults from the creator).
+      onError: (error: unknown) => {
+        log.error('Settings store hydration failed — clearing corrupted cache:', error);
+        try {
+          localStorage.removeItem('settings-storage');
+        } catch {
+          // ignore — localStorage might be unavailable
+        }
+      },
     } as any,
   ),
 );

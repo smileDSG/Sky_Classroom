@@ -21,6 +21,7 @@ import { findSolveCacheMatches } from '@/lib/solve/solve-cache';
 import { streamSolve, type StreamEvent } from '@/lib/solve/streaming-solver';
 import { classifyProblem, resolveSolverModel } from '@/lib/solve/solver-constants';
 import { buildKnowledgePointsPrompt } from '@/lib/solve/solver-prompts';
+import { postProcessMathContent } from '@/lib/solve/math-postprocessor';
 
 const log = createLogger('API:ExplainStream');
 
@@ -113,16 +114,21 @@ export async function POST(req: Request) {
           const hit = matches[0];
           log.info(`[ExplainStream] Question bank hit (${hit._similarity?.toFixed(2)})`);
 
+          const processedAnswer = postProcessMathContent(hit.answer);
           await write(formatSSEEvent('step', {
             label: '解答',
-            content: hit.answer,
+            content: processedAnswer,
             keyPoints: [],
           }));
-          await write(formatSSEEvent('answer', { answer: hit.answer }));
+          await write(formatSSEEvent('answer', { answer: processedAnswer }));
 
           // Generate knowledge points via LLM
           const kp = hit.knowledgePoints && hit.knowledgePoints.length > 0
-            ? hit.knowledgePoints.map((k) => ({ name: k.name, description: k.description, difficulty: k.difficulty }))
+            ? hit.knowledgePoints.map((k) => ({
+                name: postProcessMathContent(k.name),
+                description: postProcessMathContent(k.description),
+                difficulty: k.difficulty,
+              }))
             : await generateKnowledgePoints(problem, hit.answer);
           await write(formatSSEEvent('knowledge', { points: kp }));
           await write(formatSSEEvent('similar', { questions: [] }));
@@ -140,12 +146,13 @@ export async function POST(req: Request) {
           const hit = cacheMatches[0];
           log.info(`[ExplainStream] Solve cache hit`);
 
+          const processedSolution = postProcessMathContent(hit.solution);
           await write(formatSSEEvent('step', {
             label: '解答',
-            content: hit.solution,
+            content: processedSolution,
             keyPoints: [],
           }));
-          await write(formatSSEEvent('answer', { answer: hit.solution }));
+          await write(formatSSEEvent('answer', { answer: processedSolution }));
 
           // Generate knowledge points via LLM
           const kp = await generateKnowledgePoints(problem, hit.solution);
@@ -173,11 +180,39 @@ export async function POST(req: Request) {
         let streamedSimilar: { problem: string; difficulty: number; knowledgePoint: string }[] = [];
 
         for await (const event of streamSolve(agentType, problem, problemImage ?? null)) {
-          await write(formatStreamEvent(event));
-          if (event.type === 'answer') { hasAnswer = true; streamedAnswer = event.answer; }
-          if (event.type === 'step') streamedSteps.push({ label: event.label, content: event.content, keyPoints: event.keyPoints });
-          if (event.type === 'knowledge') { hasKnowledge = true; streamedKnowledge = event.points; }
-          if (event.type === 'similar') { hasSimilar = true; streamedSimilar = event.questions; }
+          // Post-process math content before sending to client
+          let processedEvent = event;
+          if (event.type === 'step') {
+            processedEvent = {
+              ...event,
+              content: postProcessMathContent(event.content),
+              keyPoints: (event.keyPoints ?? []).map(postProcessMathContent),
+            };
+          } else if (event.type === 'answer') {
+            processedEvent = { ...event, answer: postProcessMathContent(event.answer) };
+          } else if (event.type === 'knowledge') {
+            processedEvent = {
+              ...event,
+              points: event.points.map((p) => ({
+                ...p,
+                name: postProcessMathContent(p.name),
+                description: postProcessMathContent(p.description),
+              })),
+            };
+          } else if (event.type === 'similar') {
+            processedEvent = {
+              ...event,
+              questions: event.questions.map((q) => ({
+                ...q,
+                problem: postProcessMathContent(q.problem),
+              })),
+            };
+          }
+          await write(formatStreamEvent(processedEvent));
+          if (processedEvent.type === 'answer') { hasAnswer = true; streamedAnswer = processedEvent.answer; }
+          if (processedEvent.type === 'step') streamedSteps.push({ label: processedEvent.label, content: processedEvent.content, keyPoints: processedEvent.keyPoints });
+          if (processedEvent.type === 'knowledge') { hasKnowledge = true; streamedKnowledge = processedEvent.points; }
+          if (processedEvent.type === 'similar') { hasSimilar = true; streamedSimilar = processedEvent.questions; }
         }
 
         // Phase 4: Fill in any missing sections
@@ -212,7 +247,6 @@ export async function POST(req: Request) {
               problemText: problem,
               problemImage: problemImage ?? undefined,
               answer: streamedAnswer,
-              steps: streamedSteps,
               knowledgePoints: streamedKnowledge,
               similarQuestions: streamedSimilar,
               agentId: agentType,

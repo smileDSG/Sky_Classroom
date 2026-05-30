@@ -5,7 +5,7 @@
 import { gradeAnswer } from '@/lib/solve/grader';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import type { ErrorType } from '@/lib/storage/dao/mistakes';
 import type { MistakeCause } from '@/lib/solve/types';
@@ -28,7 +28,7 @@ function mapCauseToErrorType(cause: MistakeCause): ErrorType {
 let _daoPromise: ReturnType<typeof createMistakeBookDAO> | null = null;
 async function getMistakeDAO() {
   if (!_daoPromise) {
-    const storage = await createStorageProvider();
+    const storage = await getServerStorage();
     _daoPromise = createMistakeBookDAO(storage);
   }
   return _daoPromise;

@@ -7,6 +7,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { useUserProfileStore } from '@/lib/store/user-profile';
 import { ensureAdminUserClient } from '@/lib/client/admin-seed';
+import { installFetchInterceptor } from '@/lib/client/fetch-interceptor';
 
 export interface AuthUser {
   id: string;
@@ -64,8 +65,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    installFetchInterceptor();
     ensureAdminUserClient().then(() => fetchUser());
   }, [fetchUser]);
+
+  // Auto-refresh access token every 10 minutes
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' }).catch(() => {});
+    }, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Sync profile from server when user changes
   useEffect(() => {
