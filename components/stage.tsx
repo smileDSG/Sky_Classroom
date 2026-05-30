@@ -133,7 +133,7 @@ export function Stage({
 
   // Generate participants from selected agents
   const participants = useMemo(
-    () => agentsToParticipants(selectedAgentIds, t),
+    () => agentsToParticipants(selectedAgentIds),
     [selectedAgentIds],
   );
 

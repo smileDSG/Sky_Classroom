@@ -1148,7 +1148,6 @@ export function useExportPPTX() {
     viewportRatio,
     ratioPx2Inch,
     ratioPx2Pt,
-    t,
   ]);
 
   // ── Export Resource Pack (PPTX + interactive HTML pages as ZIP) ──
@@ -1195,7 +1194,6 @@ export function useExportPPTX() {
     viewportRatio,
     ratioPx2Inch,
     ratioPx2Pt,
-    t,
   ]);
 
   return { exporting, exportPPTX, exportResourcePack };

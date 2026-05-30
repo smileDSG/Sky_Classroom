@@ -1212,7 +1212,6 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       createSession,
       endSession,
       runAgentLoopFn,
-      t,
     ],
   );
 
@@ -1350,7 +1349,6 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- t is stable from i18n context
     [clearLiveSessionAfterError, endSession, runAgentLoopFn],
   );
 

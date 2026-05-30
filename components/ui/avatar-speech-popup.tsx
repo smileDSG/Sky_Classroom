@@ -101,7 +101,7 @@ export function AvatarSpeechPopup({
                     theme.badge,
                   )}
                 >
-                  {t(`speech.role.${speaker.role}`)}
+                  {speaker.role === 'teacher' ? '老师' : speaker.role === 'user' ? '你' : '学生'}
                 </span>
                 {/* Speaking dots */}
                 <span className="flex items-center gap-0.5 ml-1">
