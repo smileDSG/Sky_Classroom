@@ -6,6 +6,7 @@ import { useStageStore } from '@/lib/store';
 import { PENDING_SCENE_ID } from '@/lib/store/stage';
 import { useCanvasStore } from '@/lib/store/canvas';
 import { useSettingsStore } from '@/lib/store/settings';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import { SceneTimeline } from './stage/scene-timeline';
 import { Header } from './header';
 import { CanvasArea } from '@/components/canvas/canvas-area';
@@ -48,7 +49,9 @@ export function Stage({
   onRetryOutline,
 }: {
   onRetryOutline?: (outlineId: string) => Promise<void>;
-}) {// 获取用户头像（与主页一致）
+}) {
+  const { t } = useI18n();
+  // 获取用户头像（与主页一致）
   const userAvatar = useUserProfileStore((s) => s.avatar);
   const {
     mode,
@@ -133,8 +136,8 @@ export function Stage({
 
   // Generate participants from selected agents
   const participants = useMemo(
-    () => agentsToParticipants(selectedAgentIds),
-    [selectedAgentIds],
+    () => agentsToParticipants(selectedAgentIds, t),
+    [selectedAgentIds, t],
   );
 
   // Resolved AgentConfig array for hooks that need full agent objects
@@ -1108,6 +1111,7 @@ export function Stage({
               onPresentationInteractionChange={setIsPresentationInteractionActive}
               fullscreenContainerRef={stageRef}
               onAskTeacher={handleOpenAskDialog}
+              isAskDialogOpen={isAskDialogOpen}
             />
           </div>
         )}
@@ -1119,7 +1123,7 @@ export function Stage({
             <Header
               currentSceneTitle={
                 currentScene?.title ||
-                (isCourseComplete && isPendingScene ? '课程完成' : '')
+                (isCourseComplete && isPendingScene ? t('stage.courseComplete') : '')
               }
               timelineCollapsed={timelineCollapsed}
               onTimelineCollapseChange={setTimelineCollapsed}
@@ -1324,7 +1328,7 @@ export function Stage({
                     >
                       <img
                         src={userAvatar}
-                        alt={'你'}
+                        alt={t('roundtable.you')}
                         className="w-full h-full object-cover"
                       />
                     </motion.div>
@@ -1332,10 +1336,10 @@ export function Stage({
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {'向老师提问'}
+                      {t('roundtable.askTeacher')}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {'正在向老师提问...'}
+                      {t('stage.speakingToTeacher')}
                     </p>
                   </div>
                   <button
@@ -1359,7 +1363,7 @@ export function Stage({
                       value={askInputValue}
                       onChange={(e) => setAskInputValue(e.target.value)}
                       onKeyDown={handleAskInputKeyDown}
-                      placeholder={'输入你的消息...'}
+                      placeholder={t('roundtable.inputPlaceholder')}
                       rows={1}
                       className="w-full resize-none bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 pl-4 pr-12 py-3.5 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500/50 transition-all"
                       style={{ fieldSizing: 'content', minHeight: '52px', maxHeight: '120px' } as Record<string, string>}
@@ -1392,13 +1396,13 @@ export function Stage({
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                         </svg>
-                        {'语音输入'}
+                        {t('roundtable.voiceInput')}
                       </button>
                     </div>
 
                     {/* Hint Text */}
                     <p className="text-xs text-slate-400 dark:text-slate-500">
-                      Enter {'发送'} · Esc {'取消'}
+                      Enter {t('common.send')} · Esc {t('common.cancel')}
                     </p>
                   </div>
                 </div>
@@ -1406,7 +1410,7 @@ export function Stage({
                 {/* Quick Suggestions - Optional */}
                 <div className="px-4 pb-4">
                   <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    <span className="text-xs text-slate-400 whitespace-nowrap">{'快速提问'}:</span>
+                    <span className="text-xs text-slate-400 whitespace-nowrap">{t('stage.quickQuestions')}:</span>
                     {['这个知识点能再解释一下吗？', '可以举个例子吗？', '我没听明白', '这和之前学的有什么联系？'].map((q, i) => (
                       <button
                         key={i}
@@ -1439,7 +1443,7 @@ export function Stage({
           className="max-w-sm rounded-2xl p-0 overflow-hidden border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.5)]"
         >
           <VisuallyHidden.Root>
-            <AlertDialogTitle>{'切换页面'}</AlertDialogTitle>
+            <AlertDialogTitle>{t('stage.confirmSwitchTitle')}</AlertDialogTitle>
           </VisuallyHidden.Root>
           {/* Top accent bar */}
           <div className="h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-red-400" />
@@ -1451,23 +1455,23 @@ export function Stage({
             </div>
             {/* Title */}
             <h3 className="text-base font-bold text-slate-100 mb-1.5">
-              {'切换页面'}
+              {t('stage.confirmSwitchTitle')}
             </h3>
             {/* Description */}
             <p className="text-sm text-slate-400 leading-relaxed">
-              {'当前话题正在进行中，切换页面将结束当前话题。确定要切换吗？'}
+              {t('stage.confirmSwitchMessage')}
             </p>
           </div>
 
           <AlertDialogFooter className="px-6 pb-5 pt-3 flex-row gap-3 border-t border-white/5">
             <AlertDialogCancel onClick={cancelSceneSwitch} className="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border-white/10">
-              {'取消'}
+              {t('common.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmSceneSwitch}
               className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shadow-lg shadow-amber-500/20"
             >
-              {'确定'}
+              {t('common.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

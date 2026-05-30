@@ -114,6 +114,48 @@ const createSlidesSlice = (set: SetFn<SlidesSlice>): SlidesSlice => ({
 
 // ── Mistakes Slice ─────────────────────────────────────────────────
 
+/** Map client MistakeCause → server ErrorType */
+function causeToErrorType(cause: MistakeRecord['cause']): string {
+  const map: Record<string, string> = {
+    'concept-unclear': 'concept',
+    'calculation-error': 'calculation',
+    'misreading': 'reading',
+    'method-wrong': 'reasoning',
+    'careless': 'careless',
+    'format-error': 'careless',
+  };
+  return map[cause] ?? 'concept';
+}
+
+/** Fire-and-forget: POST mistake to server */
+function syncAddToServer(m: MistakeRecord): void {
+  fetch('/api/sky/mistakes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      problemText: m.problem,
+      userAnswer: m.userAnswer,
+      correctAnswer: m.correctAnswer,
+      errorType: causeToErrorType(m.cause),
+      knowledgePoints: m.knowledgePoints,
+    }),
+  }).catch(() => { /* ignore — local store is source of truth for UI */ });
+}
+
+/** Fire-and-forget: PATCH mistake review on server */
+function syncReviewToServer(id: string): void {
+  fetch('/api/sky/mistakes', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  }).catch(() => {});
+}
+
+/** Fire-and-forget: DELETE mistake on server */
+function syncDeleteToServer(id: string): void {
+  fetch(`/api/sky/mistakes/${id}`, { method: 'DELETE' }).catch(() => {});
+}
+
 interface MistakesSlice {
   mistakes: MistakeRecord[];
   knowledgeGraph: KnowledgeGraph | null;
@@ -124,17 +166,43 @@ interface MistakesSlice {
   setFilter: (filter: MistakeFilter | null) => void;
   setKnowledgeGraph: (graph: KnowledgeGraph) => void;
   deleteMistake: (id: string) => void;
+  mergeMistakes: (serverMistakes: MistakeRecord[]) => void;
 }
 
-const createMistakesSlice = (set: SetFn<MistakesSlice>): MistakesSlice => ({
+const createMistakesSlice = (set: SetFn<MistakesSlice>, get: () => SkyClassroomStore): MistakesSlice => ({
   mistakes: [],
   knowledgeGraph: null,
   activeFilter: null,
-  addMistake: (m) => set((s) => ({ mistakes: [...s.mistakes, m] })),
-  markReviewed: (id) => set((s) => ({ mistakes: s.mistakes.map((m) => m.id === id ? { ...m, reviewed: true, reviewCount: m.reviewCount + 1 } : m) })),
+  addMistake: (m) => {
+    set((s) => {
+      if (s.mistakes.some((existing) => existing.id === m.id)) return s;
+      return { mistakes: [...s.mistakes, m] };
+    });
+    syncAddToServer(m);
+  },
+  markReviewed: (id) => {
+    set((s) => ({ mistakes: s.mistakes.map((m) => m.id === id ? { ...m, reviewed: true, reviewCount: m.reviewCount + 1 } : m) }));
+    syncReviewToServer(id);
+  },
   setFilter: (filter) => set({ activeFilter: filter }),
   setKnowledgeGraph: (graph) => set({ knowledgeGraph: graph }),
-  deleteMistake: (id) => set((s) => ({ mistakes: s.mistakes.filter((m) => m.id !== id) })),
+  deleteMistake: (id) => {
+    set((s) => ({ mistakes: s.mistakes.filter((m) => m.id !== id) }));
+    syncDeleteToServer(id);
+  },
+  mergeMistakes: (serverMistakes) => {
+    const local = get().mistakes;
+    const seen = new Set<string>();
+    const dedupedLocal = local.filter((m) => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    });
+    const newFromServer = serverMistakes.filter((m) => !seen.has(m.id));
+    if (newFromServer.length > 0 || dedupedLocal.length !== local.length) {
+      set({ mistakes: [...dedupedLocal, ...newFromServer] });
+    }
+  },
 });
 
 // ── Assistant Slice ────────────────────────────────────────────────
@@ -174,7 +242,7 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
       // Slides
       ...createSlidesSlice(set),
       // Mistakes
-      ...createMistakesSlice(set),
+      ...createMistakesSlice(set, get),
       // Assistant
       ...createAssistantSlice(set),
     }),
@@ -195,6 +263,15 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
               ? g.difficulty
               : 'senior',
           };
+        }
+        // Deduplicate mistakes with duplicate IDs (legacy data)
+        if (Array.isArray(s.mistakes)) {
+          const seen = new Set<string>();
+          s.mistakes = (s.mistakes as { id: string }[]).filter((m) => {
+            if (!m.id || seen.has(m.id)) return false;
+            seen.add(m.id);
+            return true;
+          });
         }
         return s as unknown as SkyClassroomStore;
       },

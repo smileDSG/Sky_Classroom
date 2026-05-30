@@ -230,9 +230,9 @@ export function MistakeBook() {
         </div>
       ) : (
         <div className="space-y-3">
-          {paged.map((m) => (
+          {paged.map((m, i) => (
             <div
-              key={m.id}
+              key={`${m.id}-${i}`}
               className={`rounded-lg bg-white p-4 shadow-sm transition-opacity dark:bg-slate-800 ${
                 m.reviewed ? 'opacity-60' : ''
               }`}
@@ -261,9 +261,9 @@ export function MistakeBook() {
                     >
                       {causeLabels[m.cause]}
                     </span>
-                    {m.knowledgePoints.map((kp) => (
+                    {m.knowledgePoints.map((kp, ki) => (
                       <span
-                        key={kp}
+                        key={`${m.id}-kp-${ki}`}
                         className="inline-block rounded bg-[#E8F4FD] px-2 py-0.5 text-xs text-[#4A90D9] dark:bg-blue-900/30 dark:text-blue-300"
                       >
                         {kp}

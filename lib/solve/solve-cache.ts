@@ -28,25 +28,40 @@ export interface SolveCacheEntry {
 // ── In-memory LRU cache (server-side) ──
 
 const memCache = new Map<string, SolveCacheEntry>();
+const hashIndex = new Map<string, SolveCacheEntry>();
 
 function evictIfNeeded() {
   if (memCache.size <= MAX_CACHE_ENTRIES) return;
   const entries = [...memCache.entries()];
   entries.sort((a, b) => a[1].solvedAt - b[1].solvedAt);
   const toRemove = entries.slice(0, memCache.size - MAX_CACHE_ENTRIES);
-  for (const [key] of toRemove) {
+  for (const [key, entry] of toRemove) {
     memCache.delete(key);
+    hashIndex.delete(entry.problemHash);
   }
 }
 
+/**
+ * Find cache matches — first tries O(1) hash exact match,
+ * then falls back to O(n) similarity scan.
+ */
 export async function findSolveCacheMatches(
   problemText: string,
   threshold: number = SOLVE_CACHE_THRESHOLD,
 ): Promise<SolveCacheEntry[]> {
   try {
-    const allEntries = Array.from(memCache.values());
-    if (allEntries.length === 0) return [];
+    if (memCache.size === 0) return [];
 
+    // Fast path: hash exact match O(1)
+    const hash = hashProblemText(problemText);
+    const exactHit = hashIndex.get(hash);
+    if (exactHit) {
+      log.info(`[SolveCache] Hash exact match: ${hash}`);
+      return [exactHit];
+    }
+
+    // Slow path: similarity scan O(n)
+    const allEntries = Array.from(memCache.values());
     const matches = allEntries
       .map((entry) => ({
         entry,
@@ -68,6 +83,7 @@ export async function findSolveCacheMatches(
 export async function saveToSolveCache(entry: SolveCacheEntry): Promise<void> {
   try {
     memCache.set(entry.problemHash, entry);
+    hashIndex.set(entry.problemHash, entry);
     evictIfNeeded();
     log.info(`[SolveCache] Saved: ${entry.problemHash.slice(0, 20)}...`);
   } catch (error) {
@@ -81,5 +97,6 @@ export async function solveCacheCount(): Promise<number> {
 
 export async function clearSolveCache(): Promise<void> {
   memCache.clear();
+  hashIndex.clear();
   log.info('[SolveCache] Cleared');
 }

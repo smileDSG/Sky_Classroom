@@ -3,16 +3,14 @@
  * Refresh access token using a valid refresh token.
  */
 
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, verifyRefreshToken } from '@/lib/server/auth';
 import { createUserDAO } from '@/lib/storage/dao/users';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const refreshToken = cookieStore.get('refresh_token');
+    const refreshToken = request.cookies.get('refresh_token');
 
     if (!refreshToken) {
       return apiError('UNAUTHORIZED', 401, 'No refresh token');

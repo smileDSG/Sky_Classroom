@@ -171,7 +171,26 @@
       "PowerShell(node test-mc-fix.mjs)",
       "PowerShell(node test-cjk-fix.mjs)",
       "PowerShell(node test-final-fix.mjs)",
-      "PowerShell(node test-new-regex.mjs)"
+      "PowerShell(node test-new-regex.mjs)",
+      "Bash(Get-Service -Name \"*mysql*\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object Name, Status, DisplayName)",
+      "PowerShell(docker --version 2>&1; docker ps -a --filter \"name=mysql\" --format \"table {{.Names}}\\\\t{{.Status}}\\\\t{{.Ports}}\" 2>&1)",
+      "PowerShell(cmd /c \"dir /s /b C:\\\\mysqld.exe D:\\\\mysqld.exe 2>nul\")",
+      "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" --console 2>&1)",
+      "PowerShell(Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -Command', 'New-Item -ItemType Directory -Path \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\data\" -Force')",
+      "PowerShell(cmd /c \"mkdir C:\\\\ProgramData\\\\MySQL\\\\data_80\" 2>&1; cmd /c \"mklink /D C:\\\\ProgramData\\\\MySQL\\\\Server8.0\\\\data C:\\\\ProgramData\\\\MySQL\\\\data_80\" 2>&1)",
+      "PowerShell(Start-Process -FilePath \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" -ArgumentList \"--console\" -WindowStyle Normal -PassThru | Select-Object Id, ProcessName)",
+      "Bash(findstr /i mysqld)",
+      "PowerShell(icacls *)",
+      "Bash(cmd *)",
+      "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" --initialize-insecure --datadir=\"D:\\\\MySQL\\\\data\" --console 2>&1)",
+      "PowerShell(Start-Process -FilePath \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" -ArgumentList \"--datadir=D:\\\\MySQL\\\\data\", \"--console\" -WindowStyle Normal -PassThru | Select-Object Id4)",
+      "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" \"--datadir=D:\\\\MySQL\\\\data\" --console 2>&1)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" --initialize-insecure --datadir=\"D:\\\\MySQL\\\\data\" 2>&1)",
+      "PowerShell($env:MYSQLD_DATADIR = \"D:\\\\MySQL\\\\data\"; & \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" --initialize-insecure 2>&1 | Out-String -Width 200)",
+      "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" --initialize-insecure --datadir=\"D:\\\\MySQL\\\\data\" 2> \"D:\\\\MySQL\\\\init_error.log\"; Get-Content \"D:\\\\MySQL\\\\init_error.log\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Server 8.0/bin/mysqld.exe\" --initialize-insecure --datadir=\"D:\\\\MySQL\\\\data\" --console)"
     ]
   }
 }

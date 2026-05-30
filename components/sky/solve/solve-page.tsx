@@ -152,6 +152,7 @@ async function streamExplain(
                 problem: q.problem || '',
                 difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
                 knowledgePoint: q.knowledgePoint || '',
+                ...(q.answer ? { answer: q.answer } : {}),
               }));
               onUpdate({ similarQuestions: accumulated.similarQuestions });
               break;
@@ -443,7 +444,8 @@ export function SolvePage() {
           previewUrl = input.previewUrl;
           const recognized = await recognizeImage(input.content as File);
           problemText = recognized.text || recognized.latex;
-          problemImage = previewUrl ?? null;
+          // Don't send image to solver when we already have text — saves bandwidth
+          problemImage = null;
           setRecognizedText(problemText);
         } else if (input.type === 'text') {
           problemText = input.content as string;

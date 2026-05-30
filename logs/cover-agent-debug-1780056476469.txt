@@ -1,0 +1,7 @@
+TOPIC: 勾股定理
+LENGTH: 179
+
+--- RAW OUTPUT ---
+[{"styleName":"风格 1","paletteId":"midnight-executive","fontId":"georgia-calibri","motif":"geometric-lines","density":"moderate","recommended":true,"mood":"专业学术","bestFor":["数学"]}]
+
+--- END ---

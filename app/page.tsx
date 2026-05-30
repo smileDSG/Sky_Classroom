@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { useI18n } from '@/lib/hooks/use-i18n';
 import { resolveLocale } from '@/lib/templates/types';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useUserProfileStore } from '@/lib/store/user-profile';
@@ -78,7 +79,9 @@ interface StageListItem {
   interactiveMode?: boolean;
 }
 
-export default function HomePage() {const router = useRouter();
+export default function HomePage() {
+  const { t, locale } = useI18n();
+  const router = useRouter();
   const { user } = useAuth();
 
   // 状态
@@ -159,6 +162,17 @@ export default function HomePage() {const router = useRouter();
 
         while (!abortController.signal.aborted) {
           const data = await fetchClassroomJob(jobId);
+          if (!data) {
+            // Job no longer exists (404) — clean up silently
+            removeActiveJobEntry(jobId);
+            abortRefs.current.delete(jobId);
+            setActiveJobs((prev) => {
+              const next = { ...prev };
+              delete next[jobId];
+              return next;
+            });
+            return;
+          }
           if (abortController.signal.aborted) return;
 
           if (data.status === 'cancelled' || data.status === 'failed') {
@@ -272,13 +286,15 @@ export default function HomePage() {const router = useRouter();
       (async () => {
         try {
           const data = await fetchClassroomJob(entry.jobId);
-
-          if (data.status === 'cancelled' || data.status === 'failed') {
+          if (!data) {
             removeActiveJobEntry(entry.jobId);
             return;
           }
-          // Don't remove completed entries here — let ClassroomJobPoller
-          // show a dialog on other pages. Home page handles via startJobPolling.
+
+          if (data.status === 'cancelled' || data.status === 'failed' || (data.done && data.status === 'succeeded')) {
+            removeActiveJobEntry(entry.jobId);
+            return;
+          }
 
           const phase = data.status === 'awaiting_review'
             ? 'reviewing'
@@ -428,7 +444,7 @@ export default function HomePage() {const router = useRouter();
     }
 
     if (!requirement.trim()) {
-      setError('请输入课程需求');
+      setError(t('upload.requirementRequired'));
       return;
     }
 
@@ -494,7 +510,7 @@ export default function HomePage() {const router = useRouter();
       startJobPolling(jobId, topic);
     } catch (err) {
       log.error('Error preparing generation:', err);
-      setError(err instanceof Error ? err.message : '生成课堂失败，请重试');
+      setError(err instanceof Error ? err.message : t('upload.generateFailed'));
     }
   };
 
@@ -504,7 +520,7 @@ export default function HomePage() {const router = useRouter();
     const outline = template.outline
       .map((s, i) => `第${i + 1}幕：${s.title} — ${s.description || ''}`)
       .join('\n');
-    const newRequirement = `${resolveLocale(template.name, 'zh-CN')}\n\n课程目标：${resolveLocale(template.description, 'zh-CN')}\n\n大纲：\n${outline}`;
+    const newRequirement = `${resolveLocale(template.name, locale)}\n\n课程目标：${resolveLocale(template.description, locale)}\n\n大纲：\n${outline}`;
     setRequirement(newRequirement);
     updateRequirementCache(newRequirement);
   };
@@ -542,11 +558,11 @@ export default function HomePage() {const router = useRouter();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return '今天';
-    if (diffDays === 1) return '昨天';
-    if (diffDays < 7) return `${diffDays} ${'天前'}`;
+    if (diffDays === 0) return t('classroom.today');
+    if (diffDays === 1) return t('classroom.yesterday');
+    if (diffDays < 7) return `${diffDays} ${t('classroom.daysAgo')}`;
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-  }, []);
+  }, [t]);
 
   const canGenerate = !!requirement.trim();
 
@@ -854,10 +870,8 @@ export default function HomePage() {const router = useRouter();
           </p>
           <button
             onClick={() => {
-              try {
-                localStorage.removeItem('skyIntroDone');
-                window.location.reload();
-              } catch { /* ignore */ }
+              sessionStorage.removeItem('introDone');
+              setIntroDone(false);
             }}
             className="text-[10px] text-slate-400/50 hover:text-slate-500 dark:hover:text-slate-400 transition-colors mt-1"
           >
