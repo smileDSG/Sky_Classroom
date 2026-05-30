@@ -45,6 +45,9 @@ function GenerationPreviewContent() {
   // streaming card mid-stream, or by restoring a session that was already in review).
   // Combined with `reviewOutlineEnabled` to decide whether the post-stream timer fires.
   const outlineReviewIntentRef = useRef(false);
+  // Track outline IDs deleted by the user during SSE streaming so they can be
+  // filtered out when the stream completes or when the editor collapses.
+  const deletedOutlineIdsRef = useRef(new Set<string>());
   const { profiles: voxcpmProfiles } = useVoxCPMVoiceProfiles();
 
   const [session, setSession] = useState<GenerationSessionState | null>(null);
@@ -225,6 +228,7 @@ function GenerationPreviewContent() {
 
     setError(null);
     setCurrentStepIndex(0);
+    deletedOutlineIdsRef.current.clear();
 
     try {
       // Compute active steps for this session (recomputed after session mutations)
@@ -513,15 +517,21 @@ function GenerationPreviewContent() {
                           directive = evt.data;
                         } else if (evt.type === 'outline') {
                           collected.push(evt.data);
-                          setStreamingOutlines([...collected]);
+                          setStreamingOutlines(
+                            collected.filter((o) => !deletedOutlineIdsRef.current.has(o.id)),
+                          );
                         } else if (evt.type === 'retry') {
                           collected.length = 0;
                           setStreamingOutlines([]);
                           setStatusMessage('大纲生成异常，正在重试...');
                         } else if (evt.type === 'done') {
                           directive = evt.languageDirective || directive;
+                          const rawOutlines = evt.outlines || collected;
+                          const filteredOutlines = rawOutlines.filter(
+                            (o: SceneOutline) => !deletedOutlineIdsRef.current.has(o.id),
+                          );
                           resolve({
-                            outlines: evt.outlines || collected,
+                            outlines: filteredOutlines,
                             languageDirective:
                               directive ||
                               'Teach in the language that matches the user requirement.',
@@ -559,6 +569,7 @@ function GenerationPreviewContent() {
         outlines = outlineResult.outlines;
         languageDirective = outlineResult.languageDirective;
         setIsOutlineStreaming(false);
+        deletedOutlineIdsRef.current.clear();
 
         // Mid-stream review intent (sticky ref) overrides the auto-continue timer.
         const userOpenedReviewEarly = outlineReviewIntentRef.current;
@@ -1022,7 +1033,11 @@ function GenerationPreviewContent() {
       setStatusMessage('');
       return;
     }
-    const collapsedOutlines = session.sceneOutlines ?? streamingOutlines;
+    const rawOutlines = session.sceneOutlines ?? streamingOutlines;
+    const collapsedOutlines = rawOutlines
+      ? rawOutlines.filter((o) => !deletedOutlineIdsRef.current.has(o.id))
+      : rawOutlines;
+    deletedOutlineIdsRef.current.clear();
     if (!collapsedOutlines || collapsedOutlines.length === 0) return;
     outlineReviewIntentRef.current = false;
     persistSession({
@@ -1060,10 +1075,19 @@ function GenerationPreviewContent() {
 
   const handleOutlinesChange = (outlines: SceneOutline[]) => {
     if (!session) return;
-    // Streaming SSE owns `streamingOutlines` while it's running; ignore editor
-    // changes until the stream completes (the editor is read-only in that state
-    // anyway, but guard defensively against any racy event).
-    if (isOutlineStreaming) return;
+    if (isOutlineStreaming) {
+      // During streaming the editor is read-only except for deletions. Track
+      // which outlines the user deleted so we can filter them from the final
+      // SSE result and from the collapse fallback.
+      const currentIds = new Set(outlines.map((o) => o.id));
+      const streamingIds = new Set((streamingOutlines ?? []).map((o) => o.id));
+      for (const id of streamingIds) {
+        if (!currentIds.has(id)) {
+          deletedOutlineIdsRef.current.add(id);
+        }
+      }
+      return;
+    }
     persistSession({
       ...session,
       sceneOutlines: outlines,
@@ -1131,7 +1155,11 @@ function GenerationPreviewContent() {
     );
     // Editor source-of-truth: prefer the persisted final list; fall back to the
     // live streaming buffer so the editor can render mid-stream after expansion.
-    const editorOutlines = session.sceneOutlines ?? streamingOutlines ?? [];
+    // Filter out any outlines the user deleted during streaming.
+    const rawEditorOutlines = session.sceneOutlines ?? streamingOutlines ?? [];
+    const editorOutlines = rawEditorOutlines.filter(
+      (o) => !deletedOutlineIdsRef.current.has(o.id),
+    );
 
     return (
       <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center p-4 relative overflow-hidden">

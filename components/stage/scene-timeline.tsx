@@ -87,7 +87,7 @@ export function SceneTimeline({
   const itemWidth = collapsed ? compactItemWidth : fullItemWidth;
   const totalItems =
     scenes.length +
-    (generatingOutlines.length > 0 ? 1 : 0) +
+    generatingOutlines.length +
     (isCourseComplete && generatingOutlines.length === 0 ? 1 : 0);
   const containerWidth = totalItems * itemWidth + (collapsed ? 0 : 16); // padding
 
@@ -243,21 +243,21 @@ export function SceneTimeline({
           );
         })}
 
-        {/* Generating dot */}
-        {generatingOutlines.length > 0 && (
+        {/* Generating dots — one per pending outline */}
+        {generatingOutlines.map((outline, idx) => (
           <button
-            key="generating"
-            style={{ position: 'absolute', left: scenes.length * (DOT_SIZE + COMPACT_GAP), top: '50%', transform: 'translateY(-50%)' }}
+            key={`generating-${outline.id}`}
+            style={{ position: 'absolute', left: (scenes.length + idx) * (DOT_SIZE + COMPACT_GAP), top: '50%', transform: 'translateY(-50%)' }}
             className="flex items-center opacity-60 cursor-default"
           >
             <div
               className="absolute -left-[5px] w-[5px] h-0.5 rounded-full bg-gray-300 dark:bg-gray-600"
             />
             <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
-              {scenes.length + 1}
+              {scenes.length + idx + 1}
             </div>
           </button>
-        )}
+        ))}
 
         {/* Course complete */}
         {isCourseComplete && generatingOutlines.length === 0 && (
@@ -346,28 +346,27 @@ export function SceneTimeline({
         );
       })}
 
-      {/* Generating placeholder */}
-      {generatingOutlines.length > 0 &&
-        (() => {
-          const outline = generatingOutlines[0];
+      {/* Generating placeholders — one per pending outline */}
+      {generatingOutlines.map((outline, idx) => {
           const isFailed = failedOutlines.some((f) => f.id === outline.id);
           const isRetrying = retryingOutlineId === outline.id;
           const isPaused = generationStatus === 'paused';
-          const isActive = currentSceneId === PENDING_SCENE_ID;
-          const left = scenes.length * (fullItemWidth + GAP);
+          const isFirst = idx === 0;
+          const isActive = isFirst && currentSceneId === PENDING_SCENE_ID;
+          const left = (scenes.length + idx) * (fullItemWidth + GAP);
 
           return (
             <div
               key={`generating-${outline.id}`}
               role="button"
-              tabIndex={isFailed ? -1 : 0}
+              tabIndex={isFailed || !isFirst ? -1 : 0}
               onClick={() => {
-                if (isFailed) return;
+                if (isFailed || !isFirst) return;
                 if (onSceneSelect) onSceneSelect(PENDING_SCENE_ID);
                 else setCurrentSceneId(PENDING_SCENE_ID);
               }}
               onKeyDown={(e) => {
-                if (isFailed) return;
+                if (isFailed || !isFirst) return;
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   if (onSceneSelect) onSceneSelect(PENDING_SCENE_ID);
@@ -386,7 +385,7 @@ export function SceneTimeline({
             >
               <div className="flex items-center gap-1 w-full">
                 <span className="text-[9px] font-black w-4 h-3.5 rounded-full flex items-center justify-center shrink-0 bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
-                  {scenes.length + 1}
+                  {scenes.length + idx + 1}
                 </span>
                 <span className="text-[10px] font-bold truncate flex-1 text-left text-gray-400 dark:text-gray-500">
                   {outline.title}
@@ -432,7 +431,7 @@ export function SceneTimeline({
               </div>
             </div>
           );
-        })()}
+        })}
 
       {/* Course complete */}
       {isCourseComplete && generatingOutlines.length === 0 && (
