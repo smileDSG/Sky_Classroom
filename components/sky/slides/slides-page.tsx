@@ -52,6 +52,7 @@ export default function SlidesPage() {
   const [coverStage, setCoverStage] = useState<'idle' | 'analyzing' | 'designing' | 'rendering'>('idle');
   const [coverCovers, setCoverCovers] = useState<CoverItem[]>([]);
   const [showCoverGallery, setShowCoverGallery] = useState(false);
+  const [showCoverOverlay, setShowCoverOverlay] = useState(false);
   const coverCacheRef = useRef<Map<string, CoverItem[]>>(new Map());
   // ── Legacy ──
   const [generatedPptx, setGeneratedPptx] = useState<{ url: string; fileName: string } | null>(null);
@@ -109,6 +110,7 @@ export default function SlidesPage() {
     }
 
     setCoverLoading(true);
+    setShowCoverOverlay(true);
     setCoverStage('analyzing');
 
     try {
@@ -421,11 +423,20 @@ export default function SlidesPage() {
     <div className="mx-auto max-w-7xl">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent">
-            PPT课件生成
-          </h1>
-          <p className="text-sm text-muted-foreground">输入教学主题，AI 为你一键生成精美PPT课件</p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all duration-200"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            返回首页
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent">
+              PPT课件生成
+            </h1>
+            <p className="text-sm text-muted-foreground">输入教学主题，AI 为你一键生成精美PPT课件</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {(generating || generatedPptx) && (
@@ -666,6 +677,46 @@ export default function SlidesPage() {
                     </div>
                   </div>
                 </div>
+              ) : coverLoading && !showCoverOverlay ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-6">
+                  {/* Animated icon */}
+                  <div className="relative">
+                    <div className="h-16 w-16 animate-spin rounded-full border-4 border-cyan-100 dark:border-cyan-900/30 border-t-cyan-500" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Presentation className="h-6 w-6 text-cyan-500" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center gap-3 w-80">
+                    <p className="text-base font-semibold text-foreground">
+                      {coverStage === 'analyzing' ? '正在分析主题...' :
+                       coverStage === 'designing' ? '正在设计风格...' :
+                       coverStage === 'rendering' ? '正在渲染预览...' : '正在初始化...'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {status || 'AI 正在为您生成封面方案'}
+                    </p>
+                    {/* Progress steps */}
+                    <div className="flex items-center gap-2 w-full">
+                      {[
+                        { key: 'analyzing', label: '分析主题' },
+                        { key: 'designing', label: '设计风格' },
+                        { key: 'rendering', label: '渲染预览' },
+                      ].map((s, i) => (
+                        <div key={s.key} className="flex items-center gap-2 flex-1">
+                          <div className={`flex items-center justify-center h-3 w-3 rounded-full transition-all duration-500 ${
+                            coverStage === s.key ? 'bg-cyan-500 animate-pulse' :
+                            (coverStage === 'rendering' || (coverStage === 'designing' && i < 2) || (coverStage === 'analyzing' && i < 1))
+                              ? 'bg-cyan-500' : 'bg-muted'
+                          }`} />
+                          <span className={`text-[10px] font-medium whitespace-nowrap ${
+                            coverStage === s.key ? 'text-cyan-600 dark:text-cyan-400' : 'text-muted-foreground'
+                          }`}>{s.label}</span>
+                          {i < 2 && <div className="flex-1 h-px bg-border" />}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               ) : generating ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-6">
                   {/* Animated icon */}
@@ -797,9 +848,18 @@ export default function SlidesPage() {
       )}
 
       {/* Cover Loading Overlay */}
-      {coverLoading && (
+      {coverLoading && showCoverOverlay && (
         <div className="fixed inset-0 z-[101] flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-5 rounded-2xl bg-card p-8 shadow-2xl max-w-sm w-full mx-4 border">
+          <div className="relative flex flex-col items-center gap-5 rounded-2xl bg-card p-8 shadow-2xl max-w-sm w-full mx-4 border">
+            {/* Close button */}
+            <button
+              onClick={() => setShowCoverOverlay(false)}
+              className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-600 dark:hover:text-gray-200 transition-all duration-200"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             <div className="flex items-center gap-2 w-full">
               {[
                 { key: 'analyzing', label: '分析主题' },
@@ -825,6 +885,16 @@ export default function SlidesPage() {
               {coverStage === 'rendering' && '即将呈现封面画廊…'}
             </p>
             <div className="h-8 w-8 animate-spin rounded-full border-3 border-muted border-t-cyan-500" />
+            <button
+              onClick={() => setShowCoverOverlay(false)}
+              className="flex items-center gap-2 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all duration-200"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              返回
+            </button>
+            <p className="text-[11px] text-muted-foreground text-center">
+              后台继续生成，返回后可查看进度
+            </p>
           </div>
         </div>
       )}
