@@ -7,8 +7,9 @@
 import { generateText, streamText } from 'ai';
 import type { GenerateTextResult, StreamTextResult } from 'ai';
 import { createLogger } from '@/lib/logger';
-import { PROVIDERS } from './providers';
+import { PROVIDERS, getModel } from './providers';
 import { thinkingContext } from './thinking-context';
+import { keyRotator } from './key-rotator';
 import { getModelMetadataKey } from './model-metadata';
 import type { ThinkingCapability, ThinkingConfig } from '@/lib/types/provider';
 import { getPerfMonitor } from '@/lib/monitoring/performance';
@@ -237,6 +238,18 @@ export interface LLMRetryOptions {
 
 const DEFAULT_VALIDATE = (text: string) => text.trim().length > 0;
 
+function isRateLimitError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const e = error as Record<string, unknown>;
+  if (e.statusCode === 429 || e.status === 429) return true;
+  if (e.code === 'rate_limit_exceeded' || e.code === '429') return true;
+  const response = e.response as Record<string, unknown> | undefined;
+  if (response?.status === 429) return true;
+  if (typeof e.message === 'string' && e.message.includes('429')) return true;
+  if (typeof e.message === 'string' && e.message.toLowerCase().includes('rate limit')) return true;
+  return false;
+}
+
 /**
  * Unified wrapper around `generateText`.
  *
@@ -271,7 +284,10 @@ export async function callLLM<T extends GenerateTextParams>(
 
   // Resolve injected params once (thinking config is per-call stable)
   const effectiveThinking = thinking ?? getGlobalThinkingConfig();
-  const injectedParams = injectProviderOptions(effectiveParams, effectiveThinking);
+  let injectedParams = injectProviderOptions(effectiveParams, effectiveThinking);
+
+  // Resolve providerId for key rotation on 429
+  const providerId = getModelProviderId(injectedParams);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -314,6 +330,26 @@ export async function callLLM<T extends GenerateTextParams>(
         durationMs: 0,
         success: false,
       });
+
+      // Key rotation on 429 (rate limit)
+      if (isRateLimitError(error) && providerId) {
+        const nextKey = keyRotator.getNextKey(providerId);
+        if (nextKey) {
+          log.warn(`[${source}] Rate limited, rotating to key ...${nextKey.slice(-4)}`);
+          const modelId = getModelId(injectedParams);
+          const { model: newModel } = getModel({
+            providerId: providerId as any,
+            modelId,
+            apiKey: nextKey,
+          });
+          injectedParams = injectProviderOptions(
+            { ...injectedParams, model: newModel } as T,
+            effectiveThinking,
+          );
+          continue; // retry with new key (don't count as attempt)
+        }
+        log.warn(`[${source}] All keys for "${providerId}" exhausted`);
+      }
 
       if (attempt < maxAttempts) {
         log.warn(`[${source}] Call failed (attempt ${attempt}/${maxAttempts}), retrying...`, error);
