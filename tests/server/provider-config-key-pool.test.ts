@@ -21,8 +21,9 @@ describe('resolveApiKeyPool', () => {
   });
 
   it('returns single key as array when only apiKey is set', () => {
+    process.env.DEEPSEEK_API_KEY = 'sk-single';
     const result = resolveApiKeyPool('deepseek', undefined);
-    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual(['sk-single']);
   });
 
   it('parses comma-separated env var into multiple keys', () => {
