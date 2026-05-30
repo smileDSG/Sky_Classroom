@@ -8,7 +8,7 @@ import {
   generateSceneOutlinesFromRequirements,
 } from '@/lib/generation/outline-generator';
 import pMap from 'p-map';
-import { GENERATION_CONCURRENCY } from '@/lib/constants/generation';
+import { resolveConcurrency } from '@/lib/constants/generation';
 import {
   createSceneWithActions,
   generateSceneActions,
@@ -253,6 +253,9 @@ export async function generateClassroom(
     log.info(`Key rotation enabled for "${providerId}": ${keyPool.length} keys`);
   }
 
+  const concurrency = resolveConcurrency(keyPool.length);
+  log.info(`Generation concurrency: ${concurrency} (keys: ${keyPool.length})`);
+
   // Fail fast if the resolved provider has no API key configured
   if (isProviderKeyRequired(providerId) && !apiKey) {
     throw new Error(
@@ -464,7 +467,7 @@ export async function generateClassroom(
     };
   }
 
-  log.info(`Stage 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${GENERATION_CONCURRENCY})...`);
+  log.info(`Stage 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`);
 
   await options.onProgress?.({
     step: 'generating_scenes',
@@ -491,7 +494,7 @@ export async function generateClassroom(
         return null;
       }
     },
-    { concurrency: GENERATION_CONCURRENCY },
+    { concurrency },
   );
 
   // Phase B: Generate all scene actions in parallel (content already available)
@@ -511,7 +514,7 @@ export async function generateClassroom(
         return null;
       }
     },
-    { concurrency: GENERATION_CONCURRENCY },
+    { concurrency },
   );
 
   // Phase B: Write to store sequentially (fast, avoids race conditions)
@@ -647,6 +650,9 @@ export async function generateClassroomContinue(
     log.info(`Key rotation enabled for "${providerId}": ${keyPool.length} keys`);
   }
 
+  const concurrency = resolveConcurrency(keyPool.length);
+  log.info(`Generation concurrency: ${concurrency} (keys: ${keyPool.length})`);
+
   if (isProviderKeyRequired(providerId) && !apiKey) {
     throw new Error(
       `No API key configured for provider "${providerId}". ` +
@@ -672,7 +678,7 @@ export async function generateClassroomContinue(
   const store = createInMemoryStore(stage);
   const api = createStageAPI(store);
 
-  log.info(`Phase 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${GENERATION_CONCURRENCY})...`);
+  log.info(`Phase 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`);
 
   await options.onProgress?.({
     step: 'generating_scenes',
@@ -699,7 +705,7 @@ export async function generateClassroomContinue(
         return null;
       }
     },
-    { concurrency: GENERATION_CONCURRENCY },
+    { concurrency },
   );
 
   // Phase B: Generate all scene actions in parallel (content already available)
@@ -718,7 +724,7 @@ export async function generateClassroomContinue(
         return null;
       }
     },
-    { concurrency: GENERATION_CONCURRENCY },
+    { concurrency },
   );
 
   // Phase B: Write to store sequentially (fast, avoids race conditions)
