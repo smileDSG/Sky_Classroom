@@ -19,6 +19,8 @@ import platform
 import subprocess
 import sys
 import glob
+import tempfile
+import shutil
 
 
 def find_soffice():
@@ -60,17 +62,29 @@ def convert_pptx_to_pdf(pptx_path, output_dir):
 
     os.makedirs(output_dir, exist_ok=True)
 
-    cmd = [
-        soffice,
-        "--headless",
-        "--convert-to", 'pdf:"impress_pdf_Export:MaxImageResolution=300"',
-        "--outdir", output_dir,
-        pptx_path,
-    ]
+    # Use a fresh temp user profile dir to avoid conflicts in concurrent/headless runs
+    user_profile_dir = tempfile.mkdtemp(prefix="lo_profile_")
+    user_install_url = "file:///" + user_profile_dir.replace("\\", "/")
 
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
-    if result.returncode != 0:
-        raise RuntimeError(f"soffice failed: {result.stderr}")
+    try:
+        cmd = [
+            soffice,
+            "--headless",
+            "--convert-to", "pdf",
+            "-env:UserInstallation=" + user_install_url,
+            "--outdir", output_dir,
+            pptx_path,
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if result.returncode != 0:
+            raise RuntimeError(f"soffice failed: {result.stderr}")
+    finally:
+        # Clean up the temp user profile
+        try:
+            shutil.rmtree(user_profile_dir, ignore_errors=True)
+        except OSError:
+            pass
 
     # Find the generated PDF
     base_name = os.path.splitext(os.path.basename(pptx_path))[0]
