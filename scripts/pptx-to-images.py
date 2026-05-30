@@ -63,7 +63,7 @@ def convert_pptx_to_pdf(pptx_path, output_dir):
     cmd = [
         soffice,
         "--headless",
-        "--convert-to", "pdf",
+        "--convert-to", 'pdf:"impress_pdf_Export:MaxImageResolution=300"',
         "--outdir", output_dir,
         pptx_path,
     ]
@@ -99,8 +99,8 @@ def pdf_to_images(pdf_path, output_dir):
 
     for page_num in range(len(doc)):
         page = doc.load_page(page_num)
-        # Render at 2x resolution for crisp preview
-        mat = fitz.Matrix(2, 2)
+        # Render at 4x resolution for crisp preview (~288 DPI)
+        mat = fitz.Matrix(4, 4)
         pix = page.get_pixmap(matrix=mat)
         img_name = f"Slide_{page_num + 1}.png"
         img_path = os.path.join(output_dir, img_name)

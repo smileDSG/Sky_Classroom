@@ -5,7 +5,7 @@
  * This executor validates params, translates ops to pptxgenjs calls,
  * and handles errors gracefully (single instruction failure does not crash the page).
  */
-import pptxgen from 'pptxgenjs';
+import pptxgen, { PresSlide } from 'pptxgenjs';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 import { latexToOmml } from '@/lib/export/latex-to-omml';
@@ -53,7 +53,7 @@ const addShapeSchema = z.object({
     rectRadius: z.number().optional(),
     shadow: z.object({
       type: z.enum(['outer', 'inner']),
-      color: z.string().regex(/^[0-9A-Fa-f]{6}$/),
+      color: z.string().regex(/^#?[0-9A-Fa-f]{6}$/),
       blur: z.number(), offset: z.number(), angle: z.number(), opacity: z.number(),
     }).optional(),
   }),
@@ -82,7 +82,7 @@ const addTableSchema = z.object({
     altRowBgColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     fontSize: z.number().optional(),
     fontFace: z.string().optional(),
-    textColor: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
+    textColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
   }),
 });
 
@@ -193,7 +193,7 @@ function isSafePath(p: string): boolean {
 
 export class InstructionExecutor {
   execute(
-    slide: pptxgen.Slide,
+    slide: PresSlide,
     pres: pptxgen,
     instructions: Instruction[],
     pageNum: number,
@@ -392,7 +392,8 @@ export class InstructionExecutor {
                   align: params.align ?? 'center',
                 });
               }
-            } catch {
+            } catch (err) {
+              log.warn(`Formula render failed on page ${pageNum}: ${err instanceof Error ? err.message : String(err)}`);
               const fallbackText = sanitizePlainTextLatex(convertInlineLatexToUnicode(params.latex));
               slide.addText(fallbackText, {
                 x: params.x, y: params.y, w: params.w, h: params.h,

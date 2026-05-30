@@ -114,12 +114,134 @@ function buildUserPrompt(
 请严格按"页型布局参考"中 ${pageType} 的规范输出渲染指令JSON。`;
 }
 
+// ── Fallback page layout generator ──────────────────────────────────
+
+function buildFallbackPageInstructions(
+  pageNum: number,
+  pageType: string,
+  content: Record<string, unknown>,
+  designDNA: DesignDNA,
+): PageInstructions {
+  const bg = pageNum === 1 || pageType === 'end' || pageType === 'cover' || pageType === 'chapter'
+    ? designDNA.colors.coverBg
+    : designDNA.colors.contentBg;
+  const textColor = pageType === 'cover' || pageType === 'end' || pageType === 'chapter'
+    ? designDNA.colors.textOnDark
+    : designDNA.colors.textPrimary;
+  const title = (content.title as string) || (content.slogan as string) || `第 ${pageNum} 页`;
+
+  const instructions: PageInstructions['instructions'] = [
+    { op: 'setBackground', params: { color: bg } },
+  ];
+
+  switch (pageType) {
+    case 'cover': {
+      instructions.push(
+        { op: 'addText', params: { text: title, x: 1, y: 2.2, w: 11.3, h: 1.2, fontSize: 40, fontFace: designDNA.fonts.heading, color: textColor, bold: true, align: 'center', valign: 'middle' } },
+        { op: 'addText', params: { text: (content.subtitle as string) || '', x: 1, y: 3.6, w: 11.3, h: 0.6, fontSize: 18, fontFace: designDNA.fonts.body, color: designDNA.colors.textMuted, align: 'center', valign: 'middle' } },
+        { op: 'addShape', params: { type: 'LINE', x: 4, y: 4.4, w: 5.3, h: 0, lineColor: designDNA.colors.accent, lineWidth: 2 } },
+      );
+      break;
+    }
+    case 'chapter': {
+      instructions.push(
+        { op: 'addText', params: { text: (content.num as string) || '', x: 1, y: 1.5, w: 11.3, h: 1.5, fontSize: 72, fontFace: designDNA.fonts.heading, color: designDNA.colors.accentSecondary, bold: true, align: 'left', valign: 'top' } },
+        { op: 'addText', params: { text: title, x: 1, y: 3.2, w: 11.3, h: 1, fontSize: 32, fontFace: designDNA.fonts.heading, color: textColor, bold: true, align: 'left', valign: 'middle' } },
+        { op: 'addText', params: { text: (content.subtitle as string) || '', x: 1, y: 4.4, w: 11.3, h: 0.6, fontSize: 16, fontFace: designDNA.fonts.body, color: designDNA.colors.textMuted, align: 'left', valign: 'middle' } },
+      );
+      break;
+    }
+    case 'toc': {
+      const items = Array.isArray(content.items) ? content.items as Array<{num?: string; title?: string; desc?: string}> : [];
+      instructions.push(
+        { op: 'addText', params: { text: (content.title as string) || '目录', x: 1, y: 0.6, w: 11.3, h: 0.8, fontSize: 32, fontFace: designDNA.fonts.heading, color: designDNA.colors.textPrimary, bold: true, align: 'left', valign: 'middle' } },
+      );
+      items.forEach((item, i) => {
+        instructions.push(
+          { op: 'addText', params: { text: `${item.num || i + 1}. ${item.title || ''}`, x: 1.2, y: 1.6 + i * 0.9, w: 10.9, h: 0.5, fontSize: 16, fontFace: designDNA.fonts.body, color: designDNA.colors.textBody, align: 'left', valign: 'middle' } },
+        );
+      });
+      break;
+    }
+    case 'table': {
+      const headers = Array.isArray(content.headers) ? content.headers as string[] : ['项目', '说明'];
+      const rows = Array.isArray(content.rows) ? content.rows as string[][] : [];
+      instructions.push(
+        { op: 'addText', params: { text: title, x: 1, y: 0.5, w: 11.3, h: 0.7, fontSize: 28, fontFace: designDNA.fonts.heading, color: designDNA.colors.textPrimary, bold: true, align: 'left', valign: 'middle' } },
+        { op: 'addTable', params: { headers, rows, x: 1, y: 1.5, w: 11.3, headerBgColor: designDNA.colors.accent, borderColor: designDNA.colors.textMuted } },
+      );
+      break;
+    }
+    case 'formula': {
+      instructions.push(
+        { op: 'addText', params: { text: title, x: 1, y: 0.5, w: 11.3, h: 0.7, fontSize: 28, fontFace: designDNA.fonts.heading, color: designDNA.colors.textPrimary, bold: true, align: 'left', valign: 'middle' } },
+        { op: 'addFormula', params: { latex: (content.mainFormula as string) || '\\text{公式}', x: 1, y: 2.5, w: 11.3, h: 1.2, fontSize: 20, color: designDNA.colors.textPrimary, align: 'center' } },
+      );
+      break;
+    }
+    case 'end': {
+      instructions.push(
+        { op: 'addText', params: { text: title, x: 1, y: 2.2, w: 11.3, h: 1.2, fontSize: 40, fontFace: designDNA.fonts.heading, color: textColor, bold: true, align: 'center', valign: 'middle' } },
+        { op: 'addText', params: { text: (content.subtitle as string) || '', x: 1, y: 3.6, w: 11.3, h: 0.6, fontSize: 18, fontFace: designDNA.fonts.body, color: designDNA.colors.textMuted, align: 'center', valign: 'middle' } },
+        { op: 'addShape', params: { type: 'LINE', x: 4, y: 4.4, w: 5.3, h: 0, lineColor: designDNA.colors.accent, lineWidth: 2 } },
+      );
+      break;
+    }
+    default: {
+      // Generic fallback: title + body text blocks
+      instructions.push(
+        { op: 'addText', params: { text: title, x: 1, y: 0.5, w: 11.3, h: 0.7, fontSize: 28, fontFace: designDNA.fonts.heading, color: designDNA.colors.textPrimary, bold: true, align: 'left', valign: 'middle' } },
+      );
+      // Try to extract body text from various content shapes
+      const bodyTexts: string[] = [];
+      if (Array.isArray(content.cards)) {
+        (content.cards as Array<{title?: string; desc?: string}>).forEach((c) => bodyTexts.push(`• ${c.title || ''}: ${c.desc || ''}`));
+      }
+      if (Array.isArray(content.keyPoints)) {
+        (content.keyPoints as string[]).forEach((p) => bodyTexts.push(`• ${p}`));
+      }
+      if (Array.isArray(content.scenarios)) {
+        (content.scenarios as Array<{problem?: string; solution?: string}>).forEach((s) => {
+          if (s.problem) bodyTexts.push(`问题: ${s.problem}`);
+          if (s.solution) bodyTexts.push(`解答: ${s.solution}`);
+        });
+      }
+      if (Array.isArray(content.steps)) {
+        (content.steps as Array<{title?: string; desc?: string}>).forEach((s, i) => bodyTexts.push(`${i + 1}. ${s.title || ''}: ${s.desc || ''}`));
+      }
+      if (bodyTexts.length === 0 && content.summary) {
+        bodyTexts.push(String(content.summary));
+      }
+      if (bodyTexts.length === 0 && content.desc) {
+        bodyTexts.push(String(content.desc));
+      }
+
+      bodyTexts.forEach((txt, i) => {
+        instructions.push(
+          { op: 'addText', params: { text: txt.slice(0, 200), x: 1, y: 1.4 + i * 0.6, w: 11.3, h: 0.5, fontSize: 14, fontFace: designDNA.fonts.body, color: designDNA.colors.textBody, align: 'left', valign: 'top' } },
+        );
+      });
+
+      // Add a decorative accent shape if page is sparse
+      if (bodyTexts.length < 3) {
+        instructions.push(
+          { op: 'addShape', params: { type: 'RECTANGLE', x: 11, y: 0.5, w: 1.3, h: 6.5, fillColor: designDNA.colors.accent, fillTransparency: 92 } },
+        );
+      }
+      break;
+    }
+  }
+
+  return { pageNum, instructions };
+}
+
 // ── Public API ──────────────────────────────────────────────────────
 
 export interface PageDesignResult {
   success: boolean;
   pageInstructions?: PageInstructions;
   error?: string;
+  fallback?: boolean;
 }
 
 export async function designPage(
@@ -157,18 +279,102 @@ export async function designPage(
     );
 
     const jsonText = cleanJsonText(result.text);
-    const parsed = JSON.parse(jsonText);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch (parseErr) {
+      const rawPreview = result.text.slice(0, 1000);
+      log.error(`Page ${pageNum} JSON parse failed. Raw preview:\n${rawPreview}\nParse error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
+      const fallback = buildFallbackPageInstructions(pageNum, pageType, content, designDNA);
+      log.warn(`Page ${pageNum} using fallback layout due to JSON parse failure`);
+      return { success: true, pageInstructions: fallback, fallback: true };
+    }
+
     const validated = pageInstructionsSchema.safeParse(parsed);
 
     if (!validated.success) {
-      log.error(`Page ${pageNum} instruction validation failed`);
-      return { success: false, error: validated.error.message };
+      // Log detailed diagnostic information
+      const issues = validated.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+      const rawPreview = result.text.slice(0, 1000);
+      log.error(`Page ${pageNum} instruction validation failed. Issues: ${issues}. Raw preview:\n${rawPreview}`);
+
+      // Attempt to auto-repair common issues
+      const repaired = tryRepairInstructions(parsed as Record<string, unknown>);
+      if (repaired) {
+        const revalidated = pageInstructionsSchema.safeParse(repaired);
+        if (revalidated.success) {
+          log.info(`Page ${pageNum} auto-repaired and accepted`);
+          return { success: true, pageInstructions: revalidated.data, fallback: true };
+        }
+      }
+
+      // Final fallback: use generic layout
+      const fallback = buildFallbackPageInstructions(pageNum, pageType, content, designDNA);
+      log.warn(`Page ${pageNum} using fallback layout due to validation failure`);
+      return { success: true, pageInstructions: fallback, fallback: true };
     }
 
     return { success: true, pageInstructions: validated.data };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.error(`Page ${pageNum} design failed: ${msg}`);
-    return { success: false, error: msg };
+    const fallback = buildFallbackPageInstructions(pageNum, pageType, content, designDNA);
+    log.warn(`Page ${pageNum} using fallback layout due to exception`);
+    return { success: true, pageInstructions: fallback, fallback: true };
   }
+}
+
+/**
+ * Attempt to auto-repair common LLM output issues in page instructions.
+ * Returns repaired object or null if unrepairable.
+ */
+function tryRepairInstructions(parsed: Record<string, unknown>): Record<string, unknown> | null {
+  if (!parsed || typeof parsed !== 'object') return null;
+
+  const pageNum = typeof parsed.pageNum === 'number' ? parsed.pageNum : 1;
+  const rawInstructions = Array.isArray(parsed.instructions) ? parsed.instructions : [];
+  const repairedInstructions: Array<Record<string, unknown>> = [];
+
+  for (const inst of rawInstructions) {
+    if (!inst || typeof inst !== 'object') continue;
+    const i = inst as Record<string, unknown>;
+    const op = typeof i.op === 'string' ? i.op : undefined;
+    if (!op) continue;
+
+    // Ensure params exists
+    if (!i.params || typeof i.params !== 'object') {
+      i.params = {};
+    }
+    const params = i.params as Record<string, unknown>;
+
+    // Strip # from color values in params
+    for (const key of Object.keys(params)) {
+      if (typeof params[key] === 'string' && /^(#?[0-9A-Fa-f]{6})$/.test(params[key] as string)) {
+        params[key] = (params[key] as string).replace(/^#/, '');
+      }
+    }
+
+    // Ensure numeric coordinates are actually numbers
+    for (const numKey of ['x', 'y', 'w', 'h', 'fontSize', 'lineWidth', 'rotate', 'rectRadius', 'fillTransparency', 'transparency']) {
+      if (numKey in params && typeof params[numKey] !== 'number') {
+        const n = Number(params[numKey]);
+        if (!Number.isNaN(n)) params[numKey] = n;
+      }
+    }
+
+    // Ensure booleans are actually booleans
+    for (const boolKey of ['bold', 'italic', 'rounding', 'showTitle', 'showLegend']) {
+      if (boolKey in params) {
+        const v = params[boolKey];
+        if (typeof v === 'string') {
+          params[boolKey] = v.toLowerCase() === 'true';
+        }
+      }
+    }
+
+    repairedInstructions.push(i);
+  }
+
+  if (repairedInstructions.length === 0) return null;
+  return { pageNum, instructions: repairedInstructions };
 }

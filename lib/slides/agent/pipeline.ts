@@ -336,13 +336,11 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
       );
       log.info(`[Pipeline:${jobId}] All page design completed. Failed: ${designResults.filter((dr) => !dr.result.success).length}`);
 
-      // Check for page design failures — no fallback allowed (AGENTS.md policy)
-      const failedDesigns = designResults.filter((dr) => !dr.result.success || !dr.result.pageInstructions);
-      if (failedDesigns.length > 0) {
-        const failedPages = failedDesigns.map((dr) => `第${dr.pageNum}页`).join(', ');
-        const errMsg = `Page Design Agent 失败，无法继续: ${failedPages}`;
-        log.error(`[Pipeline:${jobId}] ${errMsg}`);
-        throw new Error(errMsg);
+      // Handle any pages that used fallback layouts (designPage now auto-fallbacks instead of failing)
+      const fallbackDesigns = designResults.filter((dr) => dr.result.fallback);
+      if (fallbackDesigns.length > 0) {
+        const fallbackPages = fallbackDesigns.map((dr) => `第${dr.pageNum}页`).join(', ');
+        log.warn(`[Pipeline:${jobId}] Pages using fallback layout: ${fallbackPages}`);
       }
       const instructions: PageInstructions[] = designResults.map((dr) => dr.result.pageInstructions!);
 

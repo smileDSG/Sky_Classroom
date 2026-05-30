@@ -542,11 +542,21 @@ function removeTrailingCommas(json: string): string {
   return result;
 }
 
-/** Strip markdown fences, trailing commas, and control chars from LLM JSON output. */
+/** Strip markdown fences, trailing commas, comments, and control chars from LLM JSON output. */
 export function cleanJsonText(text: string): string {
   let cleaned = text.trim();
   if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
   else if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+
+  // Remove single-line comments (// ...) — not valid in JSON
+  cleaned = cleaned.replace(/\/\/[^\n\r]*/g, '');
+  // Remove multi-line comments (/* ... */)
+  cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // Replace single-quoted strings with double-quoted (naïve but handles common LLM mistakes)
+  // Matches: key: 'value' or "key": 'value'
+  cleaned = cleaned.replace(/(?<=[:\[,]\s*)'((?:[^'\\]|\\.)*)'/g, '"$1"');
+
   cleaned = removeTrailingCommas(cleaned).replace(/[\x00-\x1f\x7f-\x9f]/g, '');
   cleaned = tryRepairJson(cleaned);
   return cleaned;

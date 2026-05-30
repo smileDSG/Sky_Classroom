@@ -30,7 +30,7 @@ function isApiRoute(pathname: string): boolean {
   return pathname.startsWith('/api/');
 }
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip public routes and static assets

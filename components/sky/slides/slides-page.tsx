@@ -786,7 +786,7 @@ export default function SlidesPage() {
                       <img
                         src={img}
                         alt={`Thumb ${i + 1}`}
-                        className={`h-[45px] w-[80px] rounded-lg object-cover shadow-sm transition-all duration-300 ${
+                        className={`h-[56px] w-[100px] rounded-lg object-cover shadow-sm transition-all duration-300 ${
                           i === activeIndex ? 'ring-2 ring-sky-400/40 shadow-md shadow-sky-500/15' : 'group-hover:scale-[1.04] group-hover:shadow-md'
                         }`}
                         draggable={false}
@@ -863,7 +863,6 @@ export default function SlidesPage() {
                       src={previewImages[activeIndex]}
                       alt={`Slide ${activeIndex + 1}`}
                       className="relative max-h-full max-w-full rounded-xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] object-contain border border-white/20 dark:border-white/5 transition-shadow duration-500 group-hover:shadow-[0_35px_70px_-15px_rgba(14,165,233,0.2)]"
-                      style={{ aspectRatio: '16/9' }}
                       draggable={false}
                     />
                     {/* Corner accents */}
