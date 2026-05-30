@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { callLLM } from '@/lib/ai/llm';
+import { keyRotator } from '@/lib/ai/key-rotator';
 import { createStageAPI } from '@/lib/api/stage-api';
 import type { StageStore } from '@/lib/api/stage-api-types';
 import {
@@ -242,8 +243,15 @@ export async function generateClassroom(
     modelString,
     providerId,
     apiKey,
+    keyPool,
   } = await resolveModel(options.modelConfig ?? {});
   log.info(`Using server-configured model: ${modelString}`);
+
+  // Register key pool for rotation (if multiple keys available)
+  if (keyPool.length > 1) {
+    keyRotator.register(providerId, keyPool);
+    log.info(`Key rotation enabled for "${providerId}": ${keyPool.length} keys`);
+  }
 
   // Fail fast if the resolved provider has no API key configured
   if (isProviderKeyRequired(providerId) && !apiKey) {
@@ -614,8 +622,15 @@ export async function generateClassroomContinue(
     modelString,
     providerId,
     apiKey,
+    keyPool,
   } = await resolveModel(options.modelConfig ?? {});
   log.info(`Phase 2 using model: ${modelString}`);
+
+  // Register key pool for rotation (if multiple keys available)
+  if (keyPool.length > 1) {
+    keyRotator.register(providerId, keyPool);
+    log.info(`Key rotation enabled for "${providerId}": ${keyPool.length} keys`);
+  }
 
   if (isProviderKeyRequired(providerId) && !apiKey) {
     throw new Error(
