@@ -346,40 +346,6 @@ export default function SlidesPage() {
     }
   }, []);
 
-  // ── Load existing PPTX preview on mount ──
-  useEffect(() => {
-    const pptxUrl = '/temp/pptx/springcloud_暗夜蓝调_1779873513809(2).pptx';
-    let cancelled = false;
-
-    (async () => {
-      try {
-        setGenerating(true);
-        setStatus('正在加载PPT预览...');
-        const res = await fetch('/api/sky/slides/preview', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pptxUrl }),
-        });
-        if (cancelled) return;
-        const data = await res.json();
-        if (data.success && data.slideImages?.length) {
-          setPreviewImages(data.slideImages);
-          setGeneratedPptx({ url: pptxUrl, fileName: 'springcloud_暗夜蓝调.pptx' });
-          setGenStage('done');
-          setGenProgress(100);
-        } else {
-          setStatus(`预览加载失败: ${data.error || '未知错误'}`);
-        }
-      } catch (err) {
-        if (!cancelled) setStatus('预览加载失败，请检查服务');
-      } finally {
-        if (!cancelled) setGenerating(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, []);
-
   // ── Cover loading stage animation ──
   useEffect(() => {
     if (!coverLoading) return;
