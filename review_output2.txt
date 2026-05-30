@@ -1,0 +1,33 @@
+Traceback (most recent call last):
+  File "<string>", line 26, in <module>
+    print(f'  TEXT: {t[:120]}')
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'gbk' codec can't encode character '\u207b' in position 48: illegal multibyte sequence
+SLIDE 1:
+  TEXT: 原电池
+  TEXT: 电化学基础：从原理到应用
+  TEXT: Galvanic Cell Basics
+
+SLIDE 2:
+  TEXT: 目录
+  TEXT: 01
+  TEXT: 定义与构成
+  TEXT: 原电池基本组成单元
+  TEXT: 02
+  TEXT: 工作过程
+  TEXT: 电子与离子迁移机制
+  TEXT: 03
+  TEXT: 电极电势
+  TEXT: 双电层与标准电势
+
+SLIDE 3:
+  TEXT: 01
+  TEXT: 原电池基本原理与电极电势
+  TEXT: 探索电化学能量转换之门
+  TEXT: 从原电池定义出发，掌握组成、电子流动及标准电极电势概念。
+
+SLIDE 4:
+  TEXT: 原电池定义与构成
+  TEXT: 定义
+  TEXT: 将化学反应的化学能转化为电能的装置，基于自发的氧化还原反应。
+  TEXT: 负极

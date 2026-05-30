@@ -268,6 +268,7 @@ async function generateOneCover(
         `cover-agent-${slotIndex}`,
         {
           retries: CALL_LLM_RETRIES,
+          timeoutMs: 30000,
           validate: (text) => {
             // Salvage before judging — most LLM format flaws are fixable
             const repaired = salvageJson(text);

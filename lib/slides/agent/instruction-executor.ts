@@ -9,6 +9,7 @@ import pptxgen from 'pptxgenjs';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 import { latexToOmml } from '@/lib/export/latex-to-omml';
+import { convertInlineLatexToUnicode } from './content-schemas';
 
 const log = createLogger('InstructionExecutor');
 
@@ -17,7 +18,7 @@ const log = createLogger('InstructionExecutor');
 const setBackgroundSchema = z.object({
   op: z.literal('setBackground'),
   params: z.object({
-    color: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
+    color: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     path: z.string().optional(),
   }),
 });
@@ -29,7 +30,7 @@ const addTextSchema = z.object({
     x: z.number(), y: z.number(), w: z.number(), h: z.number(),
     fontSize: z.number().optional(),
     fontFace: z.string().optional(),
-    color: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
+    color: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     bold: z.boolean().optional(),
     italic: z.boolean().optional(),
     align: z.enum(['left', 'center', 'right']).optional(),
@@ -44,9 +45,9 @@ const addShapeSchema = z.object({
   params: z.object({
     type: z.enum(['RECTANGLE', 'OVAL', 'LINE', 'ROUNDED_RECTANGLE']),
     x: z.number(), y: z.number(), w: z.number(), h: z.number(),
-    fillColor: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
+    fillColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     fillTransparency: z.number().min(0).max(100).optional(),
-    lineColor: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
+    lineColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     lineWidth: z.number().optional(),
     rotate: z.number().optional(),
     rectRadius: z.number().optional(),
@@ -75,10 +76,10 @@ const addTableSchema = z.object({
     headers: z.array(z.string()),
     rows: z.array(z.array(z.string())),
     x: z.number(), y: z.number(), w: z.number(),
-    headerColor: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
-    headerBgColor: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
-    borderColor: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
-    altRowBgColor: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
+    headerColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
+    headerBgColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
+    borderColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
+    altRowBgColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     fontSize: z.number().optional(),
     fontFace: z.string().optional(),
     textColor: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
@@ -91,7 +92,7 @@ const addFormulaSchema = z.object({
     latex: z.string(),
     x: z.number(), y: z.number(), w: z.number(), h: z.number(),
     fontSize: z.number().optional(),
-    color: z.string().regex(/^[0-9A-Fa-f]{6}$/).optional(),
+    color: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     align: z.enum(['left', 'center', 'right']).optional(),
   }),
 });
@@ -142,7 +143,52 @@ export interface ExecutionResult {
 }
 
 function hex(c: string): string {
-  return c;
+  return c.startsWith('#') ? c.slice(1) : c;
+}
+
+/**
+ * Sanitize LaTeX commands that leaked into plain text (not wrapped in $...$).
+ * Converts common commands to Unicode and strips orphaned backslashes.
+ */
+function sanitizePlainTextLatex(text: string): string {
+  const latexCmdMap: Record<string, string> = {
+    '\\Delta': 'Δ', '\\delta': 'δ', '\\alpha': 'α', '\\beta': 'β',
+    '\\gamma': 'γ', '\\Gamma': 'Γ', '\\pi': 'π', '\\theta': 'θ',
+    '\\lambda': 'λ', '\\mu': 'μ', '\\sigma': 'σ', '\\Sigma': 'Σ',
+    '\\omega': 'ω', '\\Omega': 'Ω', '\\phi': 'φ', '\\Phi': 'Φ',
+    '\\psi': 'ψ', '\\Psi': 'Ψ', '\\rho': 'ρ', '\\tau': 'τ',
+    '\\eta': 'η', '\\epsilon': 'ε', '\\varepsilon': 'ε',
+    '\\kappa': 'κ', '\\chi': 'χ', '\\nu': 'ν', '\\xi': 'ξ', '\\zeta': 'ζ',
+    '\\approx': '≈', '\\rightarrow': '→', '\\to': '→',
+    '\\leftarrow': '←', '\\leftrightarrow': '↔',
+    '\\leq': '≤', '\\geq': '≥', '\\pm': '±',
+    '\\times': '×', '\\div': '÷', '\\cdot': '·',
+    '\\infty': '∞', '\\partial': '∂', '\\nabla': '∇',
+    '\\sqrt': '√', '\\int': '∫', '\\sum': '∑', '\\prod': '∏',
+    '\\ln': 'ln', '\\log': 'log', '\\sin': 'sin', '\\cos': 'cos', '\\tan': 'tan',
+    '\\circ': '°', '\\degree': '°',
+  };
+
+  let result = text;
+  // Sort by length desc to avoid partial matches (e.g. \delta before \Delta)
+  const cmds = Object.keys(latexCmdMap).sort((a, b) => b.length - a.length);
+  for (const cmd of cmds) {
+    // Use split/join to avoid RegExp escaping issues with backslashes
+    result = result.split(cmd).join(latexCmdMap[cmd]);
+  }
+
+  // Strip remaining orphaned backslashes (\word → word, \\ → \, \! → !)
+  result = result.replace(/\\([a-zA-Z]+)/g, '$1');
+  result = result.replace(/\\([^a-zA-Z])/g, '$1');
+
+  return result;
+}
+
+function isSafePath(p: string): boolean {
+  if (p.startsWith('http://') || p.startsWith('https://')) return true;
+  if (p.includes('..')) return false;
+  if (!p.startsWith('/')) return false;
+  return true;
 }
 
 export class InstructionExecutor {
@@ -169,11 +215,48 @@ export class InstructionExecutor {
         switch (op) {
           case 'setBackground': {
             if (params.color) slide.background = { color: hex(params.color) };
-            else if (params.path) slide.background = { path: params.path };
+            else if (params.path) {
+              if (!isSafePath(params.path)) {
+                errors.push({ opIndex: i, op: 'setBackground', error: 'Invalid path (traversal or unsafe protocol)' });
+                break;
+              }
+              slide.background = { path: params.path };
+            }
             break;
           }
           case 'addText': {
-            slide.addText(params.text, {
+            const trimmed = params.text.trim();
+            // Filter out orphaned arrow symbols (process step connectors without labels)
+            if (trimmed === '→' || trimmed === '->' || trimmed === '←' || trimmed === '<-' || trimmed === '↔') {
+              log.warn(`Filtered orphaned arrow at instruction ${i} (page ${pageNum})`);
+              break;
+            }
+            // Filter out placeholder text that should have been addFormula
+            if (trimmed === '[Formula]' || trimmed === '[formula]' || trimmed === '【公式】') {
+              log.warn(`Filtered [Formula] placeholder at instruction ${i} (page ${pageNum})`);
+              break;
+            }
+            // Filter out design hints that leaked from LLM prompts
+            const designHintPatterns = [
+              /^章节封面页[。，.]/,
+              /^使用一个.*示意图/,
+              /^激发学习者.*好奇心/,
+              /^标题醒目/,
+              /^副标题可点明/,
+            ];
+            let isDesignHint = false;
+            for (const pattern of designHintPatterns) {
+              if (pattern.test(trimmed)) {
+                log.warn(`Filtered design hint text at instruction ${i} (page ${pageNum}): ${trimmed.slice(0, 50)}...`);
+                isDesignHint = true;
+                break;
+              }
+            }
+            if (isDesignHint) break;
+            // Sanitize LaTeX that leaked into plain text (e.g. \Delta G, \ln K)
+            let displayText = convertInlineLatexToUnicode(params.text);
+            displayText = sanitizePlainTextLatex(displayText);
+            slide.addText(displayText, {
               x: params.x, y: params.y, w: params.w, h: params.h,
               fontSize: params.fontSize ?? 14,
               fontFace: params.fontFace ?? 'Microsoft YaHei',
@@ -211,7 +294,13 @@ export class InstructionExecutor {
               rounding: params.rounding,
             };
             if (params.data) imgOpts.data = params.data;
-            else if (params.path) imgOpts.path = params.path;
+            else if (params.path) {
+              if (!isSafePath(params.path)) {
+                errors.push({ opIndex: i, op: 'addImage', error: 'Invalid path (traversal or unsafe protocol)' });
+                break;
+              }
+              imgOpts.path = params.path;
+            }
             else break;
             slide.addImage(imgOpts as never);
             break;
@@ -293,8 +382,9 @@ export class InstructionExecutor {
                   align: params.align ?? 'center',
                 });
               } else {
-                // Fallback: plain text
-                slide.addText(params.latex.replace(/[\\{}^_]/g, '').trim(), {
+                // Fallback: convert LaTeX to Unicode plain text
+                const fallbackText = sanitizePlainTextLatex(convertInlineLatexToUnicode(params.latex));
+                slide.addText(fallbackText, {
                   x: params.x, y: params.y, w: params.w, h: params.h,
                   fontSize: params.fontSize ?? 14,
                   fontFace: 'KaTeX_Main, Times New Roman, serif',
@@ -303,7 +393,8 @@ export class InstructionExecutor {
                 });
               }
             } catch {
-              slide.addText(params.latex.replace(/[\\{}^_]/g, '').trim(), {
+              const fallbackText = sanitizePlainTextLatex(convertInlineLatexToUnicode(params.latex));
+              slide.addText(fallbackText, {
                 x: params.x, y: params.y, w: params.w, h: params.h,
                 fontSize: params.fontSize ?? 14, color: '1E293B', align: 'center',
               });

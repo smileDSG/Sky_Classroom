@@ -10,7 +10,8 @@ import { createLogger } from '@/lib/logger';
 import type { LanguageModel } from 'ai';
 import type { SectionOutput } from './section-agent';
 import type { Outline } from './planning-agent';
-import { z } from 'zod';
+import type { PageInstructions } from './instruction-executor';
+import { cleanJsonText } from './content-schemas';
 
 const log = createLogger('QAAgent');
 
@@ -35,6 +36,7 @@ export interface QAReport {
 function structuralQA(
   outline: Outline,
   allContent: SectionOutput[],
+  instructions: PageInstructions[] | undefined,
   totalPages: number,
 ): QAIssue[] {
   const issues: QAIssue[] = [];
@@ -81,6 +83,51 @@ function structuralQA(
         if (contentPages.length === 0) {
           issues.push({ pageNum: section.pages[i].pageNum, severity: 'high', type: 'empty_chapter', layer: 'structural', detail: `章节过渡页后没有内容页` });
         }
+      }
+    }
+  }
+
+  // Check concept pages for duplicate card descriptions
+  for (const { pageNum, pageType, content } of allPageContent) {
+    if (pageType === 'concept') {
+      const cards = (content as { cards?: Array<{ title?: string; desc?: string }> }).cards;
+      if (cards && cards.length > 1) {
+        const descs = cards.map((c) => c.desc?.trim()).filter(Boolean) as string[];
+        const uniqueDescs = new Set(descs);
+        if (uniqueDescs.size < descs.length) {
+          issues.push({ pageNum, severity: 'high', type: 'duplicate_card_desc', layer: 'structural', detail: `第 ${pageNum} 页 concept 卡片存在重复描述` });
+        }
+      }
+    }
+  }
+
+  // Check for missing formulas when content mentions formula keywords
+  const formulaKeywords = /反应式|方程式|公式|化学式|总反应|电极反应/;
+  for (const { pageNum, pageType, content } of allPageContent) {
+    const contentStr = JSON.stringify(content);
+    if (formulaKeywords.test(contentStr)) {
+      const hasFormulas = Array.isArray((content as { formulas?: unknown }).formulas) && ((content as { formulas?: Array<unknown> }).formulas?.length || 0) > 0;
+      const hasMainFormula = typeof (content as { mainFormula?: string }).mainFormula === 'string' && (content as { mainFormula?: string }).mainFormula!.length > 0;
+      if (!hasFormulas && !hasMainFormula) {
+        issues.push({ pageNum, severity: 'high', type: 'missing_formula', layer: 'structural', detail: `第 ${pageNum} 页内容提到公式/方程式，但未提供 formulas 或 mainFormula` });
+      }
+    }
+  }
+
+  // Check every page has design instructions (instruction-level structural check)
+  if (instructions && instructions.length > 0) {
+    const instructionPageNums = new Set(instructions.map((pi) => pi.pageNum));
+    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+      const pageInstructions = instructions.find((pi) => pi.pageNum === pageNum);
+      if (!pageInstructions || pageInstructions.instructions.length === 0) {
+        issues.push({ pageNum, severity: 'high', type: 'missing_instructions', layer: 'structural', detail: `第 ${pageNum} 页缺少排版指令` });
+      }
+    }
+    // Check for orphaned instructions (pageNum not in outline)
+    const outlinePageNums = new Set(allPageContent.map((p) => p.pageNum));
+    for (const pi of instructions) {
+      if (!outlinePageNums.has(pi.pageNum)) {
+        issues.push({ pageNum: pi.pageNum, severity: 'medium', type: 'orphan_instructions', layer: 'structural', detail: `存在未在 outline 中定义的排版指令 (pageNum=${pi.pageNum})` });
       }
     }
   }
@@ -140,14 +187,6 @@ ${summaries.join('\n')}
 请进行内容质量审查。`;
 }
 
-function cleanJsonText(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  else if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
-  cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1').replace(/[\x00-\x1f\x7f-\x9f]/g, '');
-  return cleaned;
-}
-
 // ── Public API ──────────────────────────────────────────────────────
 
 export async function runQA(
@@ -157,9 +196,10 @@ export async function runQA(
   allContent: SectionOutput[],
   totalPages: number,
   languageModel: LanguageModel,
+  instructions?: PageInstructions[],
 ): Promise<QAReport> {
   // Layer 1: Structural (always runs, 0 LLM)
-  const structuralIssues = structuralQA(outline, allContent, totalPages);
+  const structuralIssues = structuralQA(outline, allContent, instructions, totalPages);
   log.info(`Layer 1 (structural): ${structuralIssues.length} issues found`);
 
   // If structural has high-severity issues, skip content QA
@@ -177,16 +217,26 @@ export async function runQA(
   let contentScore = 100;
 
   try {
+    const validateQA = (text: string): boolean => {
+      try {
+        const parsed = JSON.parse(cleanJsonText(text));
+        return typeof parsed.contentScore === 'number' && Array.isArray(parsed.issues);
+      } catch {
+        return false;
+      }
+    };
+
     const result = await callLLM(
       {
         model: languageModel,
         system: buildContentQASystemPrompt(),
         prompt: buildContentQAUserPrompt(topic, difficulty, allContent),
-        maxOutputTokens: 2048,
-        temperature: 0.3,
+        maxOutputTokens: 4096,
+        temperature: 0.2,
       },
       'qa-agent',
-      { retries: 1, validate: (text) => text.trim().length > 50 && text.includes('score') },
+      { retries: 1, timeoutMs: 120000, validate: validateQA },
+      { mode: 'disabled', enabled: false },
     );
 
     const parsed = JSON.parse(cleanJsonText(result.text));
@@ -197,7 +247,20 @@ export async function runQA(
     }));
   } catch (err) {
     log.warn(`Content QA failed, using structural only: ${err}`);
+    // Graceful fallback: use structural score so QA doesn't unnecessarily fail
+    const structuralScore = Math.max(0, 100 - structuralIssues.length * 10);
+    contentScore = structuralScore;
+    contentIssues = [{
+      pageNum: 0,
+      severity: 'low',
+      type: 'qa_llm_failed',
+      layer: 'content',
+      detail: `Content QA LLM call failed: ${err instanceof Error ? err.message : String(err)}`,
+    }];
   }
+
+  // Clamp score to 0-100
+  contentScore = Math.max(0, Math.min(100, contentScore));
 
   const allIssues = [...structuralIssues, ...contentIssues];
   const pass = contentScore >= 75

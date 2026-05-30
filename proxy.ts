@@ -12,7 +12,7 @@ async function verifyJwtToken(token: string): Promise<boolean> {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Whitelist: auth pages, auth API endpoints, health check, static assets
@@ -26,7 +26,8 @@ export async function middleware(request: NextRequest) {
     pathname === '/auth/forgot-password' ||
     pathname === '/auth/reset-password' ||
     pathname === '/auth/verify-email' ||
-    pathname === '/auth/beta-gate'
+    pathname === '/auth/beta-gate' ||
+    pathname.startsWith('/temp/pptx/')
   ) {
     return NextResponse.next();
   }

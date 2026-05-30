@@ -68,7 +68,7 @@ def convert_pptx_to_pdf(pptx_path, output_dir):
         pptx_path,
     ]
 
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     if result.returncode != 0:
         raise RuntimeError(f"soffice failed: {result.stderr}")
 

@@ -15,78 +15,52 @@ interface SkyAppShellProps {
 }
 
 /**
- * Starry background with floating particles
+ * Atmospheric background — soft watercolor washes and drifting light
  */
-function StarryBackground() {
-  const [stars, setStars] = useState<Array<{ id: number; x: number; y: number; size: number; delay: number; duration: number }>>([]);
-
-  useEffect(() => {
-    const generated = Array.from({ length: 50 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 2 + 1,
-      delay: Math.random() * 5,
-      duration: Math.random() * 3 + 2,
-    }));
-    setStars(generated);
-  }, []);
-
+function AtmosphericBackground() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-      {/* Base gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-indigo-50/30 to-blue-50/50 dark:from-slate-950 dark:via-indigo-950/30 dark:to-slate-900" />
+      {/* Base warm paper tone */}
+      <div className="absolute inset-0 bg-[#FAFBFC] dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
 
-      {/* Floating stars */}
-      {stars.map((star) => (
-        <motion.div
-          key={star.id}
-          className="absolute rounded-full bg-indigo-400/40 dark:bg-indigo-300/30"
-          style={{
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: star.size,
-            height: star.size,
-          }}
-          animate={{
-            opacity: [0.2, 0.8, 0.2],
-            scale: [1, 1.5, 1],
-          }}
-          transition={{
-            duration: star.duration,
-            delay: star.delay,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-      ))}
+      {/* Soft watercolor washes */}
+      <div className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] bg-sky-100/40 dark:bg-sky-900/10 rounded-full blur-[120px]" />
+      <div className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] bg-blue-50/50 dark:bg-blue-900/8 rounded-full blur-[100px]" />
+      <div className="absolute top-1/3 left-1/2 w-[400px] h-[400px] bg-indigo-50/30 dark:bg-indigo-900/5 rounded-full blur-[80px]" />
 
-      {/* Subtle aurora effect */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-400/5 dark:bg-indigo-500/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-400/5 dark:bg-blue-500/10 rounded-full blur-3xl" />
+      {/* Subtle grain texture overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+      />
     </div>
   );
 }
 
 /**
- * Animated logo with glow effect
+ * Logo with refined hover interaction
  */
-function AnimatedLogo() {
+function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2 group">
-      <motion.img
-        src="/logo-icon.svg"
-        alt="天空课堂"
-        className="w-8 h-8"
-        animate={{ rotate: [0, 5, -5, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-      />
+    <Link href="/" className="flex items-center gap-2.5 group">
+      <div className="relative">
+        <motion.img
+          src="/logo-icon.svg"
+          alt="天空课堂"
+          className="w-7 h-7"
+          whileHover={{ scale: 1.08, rotate: 3 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        />
+        <div className="absolute inset-0 rounded-lg bg-sky-400/0 group-hover:bg-sky-400/10 transition-colors duration-300 -z-10 blur-md" />
+      </div>
       <div className="flex flex-col">
-        <h1 className="text-lg font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
+        <h1 className="text-[15px] font-bold tracking-tight text-slate-800 dark:text-slate-100">
           天空课堂
         </h1>
-        <span className="text-[10px] text-slate-400 dark:text-slate-500 -mt-0.5 tracking-wider">
-          SKY CLASSROOM
+        <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 -mt-0.5 tracking-[0.15em] uppercase">
+          Sky Classroom
         </span>
       </div>
     </Link>
@@ -106,18 +80,27 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
 
   return (
     <div className="flex h-screen w-full flex-col relative">
-      <StarryBackground />
+      <AtmosphericBackground />
 
       {/* Header */}
       <header
         className={`sticky top-0 z-50 grid h-16 shrink-0 grid-cols-3 items-center px-6 transition-all duration-500 ${
           scrolled
-            ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-lg shadow-indigo-500/5 border-b border-slate-200/50 dark:border-slate-700/30'
+            ? 'bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0_1px_20px_-8px_rgba(15,23,42,0.08)] dark:shadow-[0_1px_20px_-8px_rgba(0,0,0,0.2)] border-b border-slate-200/40 dark:border-slate-700/20'
             : 'bg-transparent'
         }`}
       >
+        {/* Top accent line on scroll */}
+        {scrolled && (
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-sky-400/40 to-transparent origin-left"
+          />
+        )}
+
         <div className="flex items-center gap-3">
-          <AnimatedLogo />
+          <Logo />
         </div>
 
         <div className="flex justify-center">
@@ -126,7 +109,7 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
 
         <div className="flex items-center justify-end gap-3">
           <HeaderControls />
-          <div className="h-5 w-px bg-slate-200 dark:bg-slate-700" />
+          <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700/40" />
           <FloatingUserCard
             onSettingsOpen={() => setSettingsOpen(true)}
             onUpgradeOpen={() => setUpgradeOpen(true)}

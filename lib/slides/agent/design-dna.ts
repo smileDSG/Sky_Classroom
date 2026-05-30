@@ -84,40 +84,67 @@ export const COLOR_PALETTES: Record<string, ColorPalette> = {
   },
 };
 
+export const PALETTE_STYLE_INFO: Record<string, { styleName: string; mood: string; bestFor: string[] }> = {
+  'midnight-executive': { styleName: '商务天空蓝', mood: '专业稳重', bestFor: ['商务汇报', '学术演讲', '企业培训'] },
+  'forest-moss': { styleName: '森林生机绿', mood: '自然清新', bestFor: ['生物科学', '环保主题', '生态教育'] },
+  'coral-energy': { styleName: '珊瑚活力橙', mood: '热情活力', bestFor: ['创意营销', '活动宣讲', '青年教育'] },
+  'warm-terracotta': { styleName: '陶土暖红', mood: '温暖人文', bestFor: ['历史人文', '艺术鉴赏', '传统文化'] },
+  'ocean-gradient': { styleName: '深海科技蓝', mood: '科技冷静', bestFor: ['信息技术', '工程科学', '数据分析'] },
+  'charcoal-minimal': { styleName: '极简炭灰', mood: '克制现代', bestFor: ['建筑设ư计', '产品发布', '极简主义'] },
+  'teal-trust': { styleName: '青绿健康', mood: '可信稳重', bestFor: ['医疗健康', '公共管理', '金融理财'] },
+  'berry-cream': { styleName: '浆果优雅紫', mood: '优雅柔和', bestFor: ['艺术设计', '时尚美妆', '文学创作'] },
+  'sage-calm': { styleName: '鼠尾草治愈', mood: '平静治愈', bestFor: ['心理健康', '生活美学', '冥想放松'] },
+  'cherry-bold': { styleName: '樱桃热烈红', mood: '醒目大胆', bestFor: ['节庆活动', '公益宣传', '紧急通知'] },
+  'classical-chinese': { styleName: '中式古典', mood: '传统雅致', bestFor: ['国学经典', '诗词鉴赏', '书法绘画'] },
+  'tech-dark-cn': { styleName: '暗夜科技', mood: '深邃未来', bestFor: ['人工智能', '前沿科技', '黑客松'] },
+};
+
 export const DEFAULT_COLOR_PALETTE = COLOR_PALETTES['midnight-executive'];
 
 // ── Font Pairings (from pptx skill) ────────────────────────────────────
 
 export interface FontPairing {
-  heading: string;
+  heading: string;     // 中文字体主名（PPTX 用）
   body: string;
-  en: string;
+  en: string;          // 英文字体
   headingSize: number;
   pageTitleSize: number;
   bodySize: number;
   captionSize: number;
+  headingStack?: string; // CSS 字体栈（SVG / 前端预览用）
+  bodyStack?: string;
 }
 
 export const FONT_PAIRS: Record<string, FontPairing> = {
   'georgia-calibri': {
-    heading: 'Microsoft YaHei', body: 'Microsoft YaHei', en: 'Georgia',
+    heading: 'SimSun', body: 'SimSun', en: 'Georgia',
     headingSize: 52, pageTitleSize: 34, bodySize: 13, captionSize: 10,
+    headingStack: 'SimSun, STSong, "Songti SC", serif',
+    bodyStack: 'SimSun, STSong, "Songti SC", serif',
   },
   'arial-black-arial': {
     heading: 'Microsoft YaHei', body: 'Microsoft YaHei', en: 'Arial Black',
     headingSize: 48, pageTitleSize: 32, bodySize: 14, captionSize: 11,
+    headingStack: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif',
+    bodyStack: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif',
   },
   'calibri-light': {
-    heading: 'Microsoft YaHei', body: 'Microsoft YaHei', en: 'Calibri',
+    heading: 'PingFang SC', body: 'PingFang SC', en: 'Calibri',
     headingSize: 50, pageTitleSize: 34, bodySize: 14, captionSize: 10,
+    headingStack: '"PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif',
+    bodyStack: '"PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif',
   },
   'cambria-calibri': {
-    heading: 'Microsoft YaHei', body: 'Microsoft YaHei', en: 'Cambria',
+    heading: 'FangSong', body: 'FangSong', en: 'Cambria',
     headingSize: 52, pageTitleSize: 34, bodySize: 13, captionSize: 10,
+    headingStack: 'FangSong, STFangsong, "Fangsong SC", serif',
+    bodyStack: 'FangSong, STFangsong, "Fangsong SC", serif',
   },
   'impact-arial': {
-    heading: 'Microsoft YaHei', body: 'Microsoft YaHei', en: 'Impact',
+    heading: 'SimHei', body: 'SimHei', en: 'Impact',
     headingSize: 56, pageTitleSize: 36, bodySize: 14, captionSize: 10,
+    headingStack: 'SimHei, STHeiti, "Heiti SC", sans-serif',
+    bodyStack: 'SimHei, STHeiti, "Heiti SC", sans-serif',
   },
 };
 
@@ -191,6 +218,8 @@ export const fontsSchema = z.object({
   pageTitleSize: z.number().min(24).max(44),
   bodySize: z.number().min(10).max(18),
   captionSize: z.number().min(8).max(14),
+  headingStack: z.string().optional(),
+  bodyStack: z.string().optional(),
 });
 
 export const decorationSchema = z.object({
@@ -242,7 +271,10 @@ function sanitizeColors(colors: Record<string, string>): Record<string, string> 
 
 function sanitizeFonts(fonts: Record<string, unknown>): typeof DEFAULT_FONT_PAIR {
   const validPairs = Object.values(FONT_PAIRS);
-  const found = validPairs.find((p) => p.en === fonts.en || p.headingSize === fonts.headingSize);
+  // Require exact match on font pair key (heading + body + en + size)
+  const found = validPairs.find(
+    (p) => p.en === fonts.en && p.heading === fonts.heading && p.body === fonts.body && p.headingSize === fonts.headingSize,
+  );
   if (found) return found;
   return DEFAULT_FONT_PAIR;
 }
@@ -253,7 +285,7 @@ function sanitizeDecoration(dec: Record<string, unknown>) {
     ? dec.motif : (replacementCount++, 'geometric-lines');
   const density = ALLOWED_DENSITIES.includes(dec.density as typeof ALLOWED_DENSITIES[number])
     ? dec.density : (replacementCount++, 'moderate');
-  const cornerWeight = typeof dec.cornerWeight === 'string' && dec.cornerWeight.length > 0
+  const cornerWeight = ALLOWED_CORNER_WEIGHTS.includes(dec.cornerWeight as typeof ALLOWED_CORNER_WEIGHTS[number])
     ? dec.cornerWeight : (replacementCount++, 'top-right');
   return { motif, density, cornerWeight, replacementCount } as const;
 }
