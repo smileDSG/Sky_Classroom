@@ -288,6 +288,7 @@ export async function callLLM<T extends GenerateTextParams>(
 
   // Resolve providerId for key rotation on 429
   const providerId = getModelProviderId(injectedParams);
+  let currentKey: string | undefined; // tracked for markFailed on rotation
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -333,6 +334,9 @@ export async function callLLM<T extends GenerateTextParams>(
 
       // Key rotation on 429 (rate limit)
       if (isRateLimitError(error) && providerId) {
+        // Mark current key as failed (sets cooldown)
+        if (currentKey) keyRotator.markFailed(currentKey, providerId);
+
         const nextKey = keyRotator.getNextKey(providerId);
         if (nextKey) {
           log.warn(`[${source}] Rate limited, rotating to key ...${nextKey.slice(-4)}`);
@@ -342,6 +346,7 @@ export async function callLLM<T extends GenerateTextParams>(
             modelId,
             apiKey: nextKey,
           });
+          currentKey = nextKey;
           injectedParams = injectProviderOptions(
             { ...injectedParams, model: newModel } as T,
             effectiveThinking,
