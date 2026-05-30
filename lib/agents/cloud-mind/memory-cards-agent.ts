@@ -114,13 +114,33 @@ export async function generateMemoryCards(
   // — RAG: 从知识库检索相关补充内容
   let ragContext = '';
   try {
-    const ragResult = await retrieveRelevantContext(
-      topic || contentText.slice(0, 200),
-      { topK: 3, rerank: true, maxContextChars: 2000 },
-    );
-    if (ragResult.contextText) {
-      ragContext = `\n\n【补充参考资料（来自知识库）】\n${ragResult.contextText}`;
-      log.info(`RAG retrieved ${ragResult.chunks.length} chunks for memory cards`);
+    const query = topic || contentText.slice(0, 200);
+    // 1) Search cards-specific KB first
+    const { search } = await import('@/lib/knowledge-base/kb-manager');
+    const kbResults = await search({
+      kbType: 'cards',
+      query,
+      topK: 3,
+      threshold: 0.05,
+      verifiedOnly: true,
+    });
+
+    if (kbResults.length > 0) {
+      const contextParts = kbResults.map((r) =>
+        `【${r.chunk.docTitle}】\n${r.chunk.content}`
+      );
+      ragContext = `\n\n【参考卡片（来自已有卡片库）】\n${contextParts.join('\n---\n')}`;
+      log.info(`Cards KB retrieved ${kbResults.length} chunks`);
+    } else {
+      // 2) Fall back to general RAG
+      const ragResult = await retrieveRelevantContext(
+        query,
+        { topK: 3, rerank: true, maxContextChars: 2000 },
+      );
+      if (ragResult.contextText) {
+        ragContext = `\n\n【补充参考资料（来自知识库）】\n${ragResult.contextText}`;
+        log.info(`RAG retrieved ${ragResult.chunks.length} chunks for memory cards`);
+      }
     }
   } catch (ragErr) {
     log.warn('RAG retrieval failed for memory cards:', ragErr);
@@ -136,7 +156,7 @@ export async function generateMemoryCards(
   log.info(`Generating memory cards, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}`);
 
   const result = await generateText({
-    model: deepseek('deepseek-chat'),
+    model: deepseek.chat('deepseek-chat'),
     system: MEMORY_CARDS_AGENT_SYSTEM_PROMPT,
     prompt: userPrompt,
     temperature: 0.7,

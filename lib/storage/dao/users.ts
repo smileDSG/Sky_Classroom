@@ -1,10 +1,12 @@
 /**
  * User DAO — data access layer for user accounts.
- * Uses the existing StorageFactory (IndexedDB → localStorage → memory).
+ * Uses server storage (MySQL/Supabase) on the server, client storage (IndexedDB) on the client.
  */
 
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { createStorageProvider, getStorageProvider } from '@/lib/storage/storage-factory';
 import type { StorageProvider } from '@/lib/storage/storage-types';
+
+const isServer = typeof window === 'undefined';
 
 const TABLE = 'users';
 
@@ -24,6 +26,20 @@ export interface UserEntry {
   avatar: string | null;
   nickname: string | null;
   bio: string | null;
+  /** Personalization fields */
+  educationLevel: string | null;
+  grade: string | null;
+  favoriteSubjects: { id: string; name: string; enabled: boolean }[] | null;
+  learningStyle: string | null;
+  detailLevel: string | null;
+  preferredLanguage: string | null;
+  aiPersonality: string | null;
+  aiName: string | null;
+  customInstructions: string | null;
+  autoGenerateQuiz: boolean | null;
+  showStepByStep: boolean | null;
+  enableMemory: boolean | null;
+  enableRAG: boolean | null;
   /** Email verification */
   emailVerified: boolean;
   emailVerifyToken: string | null;
@@ -32,15 +48,12 @@ export interface UserEntry {
   resetTokenExpiry: number | null;
 }
 
-let _provider: StorageProvider | null = null;
-
 async function ensureProvider(): Promise<StorageProvider> {
-  if (!_provider) {
-    _provider = await createStorageProvider({
-      databaseName: 'MAIC-Auth',
-    });
+  if (isServer) {
+    const { getServerStorage } = await import('@/lib/server/server-storage');
+    return getServerStorage();
   }
-  return _provider;
+  return getStorageProvider();
 }
 
 export async function createUserDAO(storage?: StorageProvider): Promise<{

@@ -26,6 +26,7 @@ import type { ImageProviderId, ImageGenerationOptions } from '@/lib/media/types'
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('ImageGeneration API');
 
@@ -63,6 +64,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check billing quota before image generation
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     const baseUrl = clientBaseUrl ? clientBaseUrl : resolveImageBaseUrl(providerId, clientBaseUrl);
 
     // Resolve dimensions from aspect ratio if not explicitly set
@@ -78,6 +83,9 @@ export async function POST(request: NextRequest) {
     );
 
     const result = await generateImage({ providerId, apiKey, baseUrl, model: clientModel }, body);
+
+    // Record LLM usage
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     return apiSuccess({ result });
   } catch (error) {

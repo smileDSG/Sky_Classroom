@@ -3,15 +3,14 @@
  * Return current authenticated user profile.
  */
 
-import { cookies } from 'next/headers';
+import { NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { verifyAccessToken } from '@/lib/server/auth';
 import { createUserDAO } from '@/lib/storage/dao/users';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
+    const accessToken = request.cookies.get('access_token');
 
     if (!accessToken) {
       return apiError('UNAUTHORIZED', 401, 'Not authenticated');

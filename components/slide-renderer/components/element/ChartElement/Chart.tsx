@@ -79,7 +79,7 @@ export function Chart({
       });
 
       if (option) {
-        chartInstance.current.setOption(option, true);
+        chartInstance.current.setOption(option, { notMerge: false, lazyUpdate: true });
       }
     };
   }, [type, data, themeColors, textColor, lineColor, options]);

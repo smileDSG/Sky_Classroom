@@ -121,7 +121,10 @@ export function AssistantPanel({
   onConversationLoaded,
   accentColor: externalAccent,
 }: AssistantPanelProps = {}) {
-  const accent = externalAccent || loadTheme();
+  const [accent, setAccent] = useState(externalAccent || THEME_MAP.sky);
+  useEffect(() => {
+    if (!externalAccent) setAccent(loadTheme());
+  }, [externalAccent]);
   const isOpen = useSkyClassroomStore((s) => s.isOpen);
   const toggleOpen = useSkyClassroomStore((s) => s.toggleOpen);
   const subject = useSkyClassroomStore((s) => s.subject);
@@ -141,6 +144,7 @@ export function AssistantPanel({
 
   // Current conversation ID for persistence
   const currentConvIdRef = useRef<string | null>(null);
+  const savedCountRef = useRef(0);
 
   // Hydrate mode from localStorage after mount (avoids SSR mismatch)
   useEffect(() => { if (!externalMode) setInternalMode(loadMode()); }, [externalMode]);
@@ -153,6 +157,7 @@ export function AssistantPanel({
       void saveCurrentConversation();
       setMessages([]);
       currentConvIdRef.current = null;
+      savedCountRef.current = 0;
       prevModeRef.current = mode;
     }
   }, [mode]);
@@ -161,11 +166,7 @@ export function AssistantPanel({
   const messagesListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const idCounterRef = useRef(0);
-  const nextId = useCallback(() => {
-    idCounterRef.current += 1;
-    return `msg-${idCounterRef.current}`;
-  }, []);
+  const nextId = useCallback(() => `msg-${crypto.randomUUID()}`, []);
 
   // ── Memory loading ──────────────────────────────────────────────
 
@@ -189,13 +190,16 @@ export function AssistantPanel({
 
   // ── Conversation persistence ────────────────────────────────────
 
-  /** Save the current conversation to IndexedDB */
+  /** Save the current conversation to IndexedDB (delta: only new messages since last save) */
   const saveCurrentConversation = useCallback(async () => {
     if (messages.length === 0) return;
 
+    const newMessages = messages.slice(savedCountRef.current);
+    if (newMessages.length === 0 && currentConvIdRef.current) return;
+
     try {
       const now = Date.now();
-      const convMessages: AssistantMessage[] = messages.map((m) => ({
+      const convMessages: AssistantMessage[] = newMessages.map((m) => ({
         id: m.id,
         role: m.role,
         content: m.content,
@@ -203,7 +207,6 @@ export function AssistantPanel({
       }));
 
       if (!currentConvIdRef.current) {
-        // Create new conversation
         const conv = await createConversation({
           mode,
           subject,
@@ -212,11 +215,11 @@ export function AssistantPanel({
           firstMessage: messages[0]?.content,
         });
         currentConvIdRef.current = conv.id;
-        await appendMessages(conv.id, convMessages);
-      } else {
-        // Append to existing conversation
+        if (convMessages.length > 0) await appendMessages(conv.id, convMessages);
+      } else if (convMessages.length > 0) {
         await appendMessages(currentConvIdRef.current, convMessages);
       }
+      savedCountRef.current = messages.length;
 
       // Extract and save memories from this conversation
       const extracted = extractMemoriesFromConversation(
@@ -255,7 +258,7 @@ export function AssistantPanel({
       const conv = await getConversation(convId);
       if (!conv) return;
 
-      const loadedMessages: Message[] = conv.messages
+      const rawMessages = conv.messages
         .filter((m) => m.role !== 'system')
         .map((m, i) => ({
           id: m.id || `loaded-${i}`,
@@ -263,15 +266,19 @@ export function AssistantPanel({
           content: m.content,
         }));
 
+      // Deduplicate by ID (handles previously corrupted data from duplicate saves)
+      const seen = new Set<string>();
+      const loadedMessages: Message[] = [];
+      for (const m of rawMessages) {
+        if (!seen.has(m.id)) {
+          seen.add(m.id);
+          loadedMessages.push(m);
+        }
+      }
+
       setMessages(loadedMessages);
       currentConvIdRef.current = conv.id;
-
-      // Sync counter so new messages don't collide with loaded msg-N IDs
-      const maxNum = loadedMessages.reduce((max, m) => {
-        const match = m.id?.match(/^msg-(\d+)$/);
-        return match ? Math.max(max, parseInt(match[1], 10)) : max;
-      }, 0);
-      idCounterRef.current = maxNum;
+      savedCountRef.current = loadedMessages.length;
 
       setShowHistory(false);
     } catch (err) {
@@ -293,6 +300,7 @@ export function AssistantPanel({
     void saveCurrentConversation();
     setMessages([]);
     currentConvIdRef.current = null;
+    savedCountRef.current = 0;
     setMemoryContextStr('');
   }, [saveCurrentConversation]);
 
@@ -444,11 +452,11 @@ export function AssistantPanel({
             );
           }
 
-          // Save conversation and extract memories after response completes
+          // Save conversation and extract memories after response completes (delta only)
           const finalMessages = [...newMessages, { id: assistantMsgId, role: 'assistant' as const, content: accumulatedText }];
           try {
             const now = Date.now();
-            const convMessages: AssistantMessage[] = finalMessages.map((m) => ({
+            const newOnly = finalMessages.slice(savedCountRef.current).map((m) => ({
               id: m.id,
               role: m.role,
               content: m.content,
@@ -466,7 +474,8 @@ export function AssistantPanel({
               currentConvIdRef.current = conv.id;
             }
 
-            await appendMessages(currentConvIdRef.current, convMessages);
+            if (newOnly.length > 0) await appendMessages(currentConvIdRef.current, newOnly);
+            savedCountRef.current = finalMessages.length;
 
             // Extract and save memories
             const extracted = extractMemoriesFromConversation(
@@ -539,11 +548,11 @@ export function AssistantPanel({
   // ── Render ──────────────────────────────────────────────────────
 
   return (
-    <div id="assistant-panel" className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl" style={{ '--accent': accent, '--accent-rgb': hexToRgb(accent) } as React.CSSProperties}>
+    <div id="assistant-panel" className="flex flex-col h-full overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl" style={{ '--accent': accent, '--accent-rgb': hexToRgb(accent) } as React.CSSProperties}>
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-gray-100 dark:border-slate-700 px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-lg font-semibold text-gray-900 dark:text-slate-100">{mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}</span>
+          <span className="text-lg font-semibold text-gray-900 dark:text-slate-100" suppressHydrationWarning>{mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}</span>
           <div className="flex items-center gap-1.5">
             {subject && (
               <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: `rgb(var(--accent-rgb) / 0.1)`, color: `var(--accent)` }}>
@@ -688,9 +697,9 @@ export function AssistantPanel({
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {messages.map((msg) => (
+            {messages.map((msg, i) => (
               <div
-                key={msg.id}
+                key={`${msg.id}-${i}`}
                 className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
                 {/* Avatar */}

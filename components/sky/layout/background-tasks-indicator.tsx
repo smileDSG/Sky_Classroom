@@ -27,7 +27,6 @@ const TASK_ICONS: Record<TaskType, React.ComponentType<{ className?: string }>> 
   quiz: FileQuestion,
   write: PenTool,
   translate: Languages,
-  react: Search,
   memory: Brain,
   general: Zap,
 };
@@ -38,7 +37,6 @@ const TASK_COLORS: Record<TaskType, string> = {
   quiz: 'text-amber-500',
   write: 'text-emerald-500',
   translate: 'text-indigo-500',
-  react: 'text-orange-500',
   memory: 'text-rose-500',
   general: 'text-sky-500',
 };

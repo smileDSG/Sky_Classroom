@@ -17,10 +17,10 @@ export interface QuestionBankEntry {
   problemImage?: string;
   /** Correct answer */
   answer: string;
-  /** Solution steps */
-  steps: string[];
   /** Associated knowledge points */
-  knowledgePoints: string[];
+  knowledgePoints: { name: string; description: string; difficulty: string }[];
+  /** Similar questions */
+  similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string }[];
   /** Agent ID that solved this */
   agentId: string;
   /** Whether this has been verified by a teacher */

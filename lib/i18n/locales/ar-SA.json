@@ -71,6 +71,7 @@
     "unknown": "غير معروف",
     "stopDiscussion": "إيقاف النقاش",
     "endQA": "إنهاء الأسئلة والأجوبة",
+    "deleteSession": "حذف الجلسة",
     "tabs": {
       "lecture": "الملاحظات",
       "chat": "المحادثة"
@@ -1068,6 +1069,8 @@
     "profileSection": "الملف الشخصي",
     "accountSection": "معلومات الحساب",
     "securitySection": "الأمان",
+    "planSection": "الخطة والفوترة",
+    "personalizationSection": "التخصيص",
     "nickname": "اللقب",
     "nicknamePlaceholder": "أدخل لقبك",
     "bio": "نبذة",
@@ -1105,29 +1108,5 @@
       "student": "طالب",
       "user": "أنا"
     }
-  },
-  "beta": {
-    "title": "Sky Classroom · تجريبي",
-    "subtitle": "أدخل رمز الدعوة أو قدم طلبًا للوصول",
-    "inviteTab": "رمز الدعوة",
-    "applyTab": "طلب الوصول",
-    "enterCode": "أدخل رمز الدعوة",
-    "codePlaceholder": "مثال: SKY-7X3K-9M2P",
-    "validateCode": "تحقق من الرمز",
-    "validating": "جاري التحقق...",
-    "codeValid": "الرمز صالح، جاري التوجيه للتسجيل...",
-    "codeInvalid": "رمز الدعوة غير صالح أو منتهي الصلاحية",
-    "codeExhausted": "تم استخدام رمز الدعوة بالكامل",
-    "applyTitle": "طلب الوصول التجريبي",
-    "email": "البريد الإلكتروني",
-    "emailPlaceholder": "أدخل بريدك الإلكتروني",
-    "reason": "السبب (اختياري)",
-    "reasonPlaceholder": "صف بإيجاز سبب رغبتك في الانضمام...",
-    "submitApplication": "تقديم الطلب",
-    "submitting": "جاري التقديم...",
-    "submitted": "تم تقديم الطلب",
-    "submittedDesc": "سنراجع طلبك ونخطرك عبر البريد الإلكتروني.",
-    "alreadyRequested": "لقد قدمت طلبًا بالفعل. يرجى انتظار المراجعة.",
-    "backToHome": "العودة إلى الصفحة الرئيسية"
   }
 }

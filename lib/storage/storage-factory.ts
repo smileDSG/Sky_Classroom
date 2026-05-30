@@ -64,12 +64,14 @@ export async function createStorageProvider(
   return new MemoryStorageProvider();
 }
 
-/** Singleton instance — create once and reuse */
-let _provider: StorageProvider | null = null;
+/** Singleton instance — shared across all API routes via globalThis */
+const globalForStorage = globalThis as unknown as {
+  _storageProvider: StorageProvider | null;
+};
 
 export async function getStorageProvider(): Promise<StorageProvider> {
-  if (!_provider) {
-    _provider = await createStorageProvider();
+  if (!globalForStorage._storageProvider) {
+    globalForStorage._storageProvider = await createStorageProvider();
   }
-  return _provider;
+  return globalForStorage._storageProvider;
 }

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { MistakeBook } from '@/components/sky/learning/mistake-book';
@@ -9,6 +10,7 @@ import { LearningStats } from '@/components/sky/learning/learning-stats';
 import { ReviewPlan } from '@/components/sky/learning/review-plan';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
+import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import {
   BookOpen,
@@ -91,7 +93,15 @@ const itemVariants = {
 };
 
 export default function LearningPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>('mistakes');
+  const mistakes = useSkyClassroomStore((s) => s.mistakes);
+
+  const weakPoints = useMemo(() => {
+    if (mistakes.length === 0) return [];
+    const graph = buildKnowledgeGraph(mistakes);
+    return graph.weakPoints;
+  }, [mistakes]);
 
   useEffect(() => {
     const store = useSkyClassroomStore.getState();
@@ -221,7 +231,37 @@ export default function LearningPage() {
         >
           {activeTab === 'mistakes' && <MistakeBook />}
           {activeTab === 'review' && <ReviewPlan />}
-          {activeTab === 'graph' && <KnowledgeGraphView />}
+          {activeTab === 'graph' && (
+            <div className="space-y-4">
+              <KnowledgeGraphView />
+              {weakPoints.length > 0 && (
+                <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">薄弱知识点针对性复习</h3>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {weakPoints.map((kp) => (
+                      <span key={kp} className="inline-flex items-center rounded-full bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50 dark:border-rose-700/30 px-3 py-1 text-xs font-medium text-rose-600 dark:text-rose-400">
+                        {kp}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => router.push(`/sky/cloud-mind/memory?topic=${encodeURIComponent(weakPoints.join('、'))}&content=${encodeURIComponent(weakPoints.map(kp => `知识点：${kp}`).join('\n'))}`)}
+                      className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-rose-500/25 hover:shadow-xl transition-all hover:-translate-y-0.5"
+                    >
+                      生成记忆卡片
+                    </button>
+                    <button
+                      onClick={() => router.push(`/sky/cloud-mind/quiz?topic=${encodeURIComponent(weakPoints.join('、'))}`)}
+                      className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-amber-500/25 hover:shadow-xl transition-all hover:-translate-y-0.5"
+                    >
+                      针对出题
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {activeTab === 'stats' && <LearningStats />}
         </motion.div>
       </div>

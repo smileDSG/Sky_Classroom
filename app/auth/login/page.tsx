@@ -7,6 +7,7 @@ import { User, Lock, Eye, EyeOff, Loader2, CloudSun } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { AuthLayout } from '@/components/sky/auth/auth-layout';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,13 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const redirect = searchParams.get('redirect') || '/';
+  const reason = searchParams.get('reason');
+
+  useEffect(() => {
+    if (reason === 'login_required') {
+      toast.warning('请先登录后再访问');
+    }
+  }, [reason]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +96,7 @@ function LoginForm() {
               value={emailOrUsername}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="off"
               className="pl-10 bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 focus-visible:ring-sky-400 h-11"
             />
           </div>
@@ -115,6 +124,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="new-password"
               className="pl-10 pr-10 bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 focus-visible:ring-sky-400 h-11"
             />
             <button

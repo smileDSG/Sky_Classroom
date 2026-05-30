@@ -3,7 +3,7 @@
 import type { ChatSession, SessionStatus } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import { MessageSquare, HelpCircle, BookOpen, Users, MapPin, Clock, CheckCircle2, Circle, ChevronRight } from 'lucide-react';
+import { MessageSquare, HelpCircle, BookOpen, Users, MapPin, Clock, CheckCircle2, Circle, ChevronRight, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChatSessionComponent } from './chat-session';
 
@@ -15,6 +15,7 @@ interface SessionListProps {
   sceneTitleMap?: Map<string, { title: string; order: number }>;
   onToggleExpand: (sessionId: string) => void;
   onEndSession: (sessionId: string) => Promise<void>;
+  onDeleteSession?: (sessionId: string) => void;
 }
 
 const SESSION_TYPE_CONFIG: Record<string, {
@@ -51,6 +52,7 @@ export function SessionList({
   sceneTitleMap,
   onToggleExpand,
   onEndSession,
+  onDeleteSession,
 }: SessionListProps) {
   const { t } = useI18n();
 
@@ -93,9 +95,12 @@ export function SessionList({
                     : 'bg-white dark:bg-slate-800 border-slate-200/50 dark:border-slate-700/40 hover:shadow-sm',
               )}
             >
-              <button
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => onToggleExpand(session.id)}
-                className="w-full flex items-center gap-3 px-3.5 py-3 text-left"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleExpand(session.id); } }}
+                className="w-full flex items-center gap-3 px-3.5 py-3 text-left cursor-pointer"
               >
                 {/* Type icon */}
                 <div className={cn(
@@ -178,12 +183,36 @@ export function SessionList({
                       </span>
                     </>
                   )}
+                  {/* Delete button on collapsed card */}
+                  {!isActive && !isExpanded && onDeleteSession && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteSession(session.id);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDeleteSession(session.id);
+                        }
+                      }}
+                      className="w-5 h-5 rounded-full flex items-center justify-center
+                        text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
+                        transition-colors shrink-0 cursor-pointer"
+                      title={t('chat.deleteSession')}
+                    >
+                      <X className="w-3 h-3" />
+                    </span>
+                  )}
                   <ChevronRight className={cn(
                     'w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 shrink-0',
                     isExpanded ? 'rotate-90' : 'rotate-0',
                   )} />
                 </div>
-              </button>
+              </div>
 
               {/* Expanded messages */}
               <AnimatePresence initial={false}>
@@ -219,6 +248,7 @@ export function SessionList({
                         isStreaming={isStreaming && isActive}
                         activeBubbleId={activeBubbleId}
                         onEndSession={onEndSession}
+                        onDeleteSession={onDeleteSession}
                       />
                     </div>
                   </motion.div>

@@ -1,60 +1,70 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAccessToken } from '@/lib/server/auth/jwt';
 
-/** Verify a JWT access token using Web Crypto (Edge-compatible) */
-async function verifyJwtToken(token: string): Promise<boolean> {
-  try {
-    const { jwtVerify } = await import('jose');
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'change-me-in-production');
-    await jwtVerify(token, secret);
+/** Routes that don't require authentication */
+const PUBLIC_PATHS = [
+  '/',
+  '/auth',
+  '/api/auth',
+  '/api/sky/solve/clear',
+];
+
+/** Static asset prefixes to always skip */
+const STATIC_PREFIXES = [
+  '/_next',
+  '/favicon.ico',
+  '/logos/',
+  '/avatars/',
+  '/logo-icon.svg',
+  '/logo-horizontal.png',
+];
+
+function isPublicPath(pathname: string): boolean {
+  if (STATIC_PREFIXES.some((p) => pathname.startsWith(p) || pathname === p)) {
     return true;
-  } catch {
-    return false;
   }
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
 }
 
-export async function proxy(request: NextRequest) {
+function isApiRoute(pathname: string): boolean {
+  return pathname.startsWith('/api/');
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Whitelist: auth pages, auth API endpoints, health check, static assets
-  if (
-    pathname.startsWith('/api/auth/') ||
-    pathname.startsWith('/api/beta/') ||
-    pathname.startsWith('/api/access-code/') ||
-    pathname === '/api/health' ||
-    pathname === '/auth/login' ||
-    pathname === '/auth/register' ||
-    pathname === '/auth/forgot-password' ||
-    pathname === '/auth/reset-password' ||
-    pathname === '/auth/verify-email' ||
-    pathname === '/auth/beta-gate' ||
-    pathname.startsWith('/temp/pptx/')
-  ) {
+  // Skip public routes and static assets
+  if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
-  // Check JWT access token
-  const accessToken = request.cookies.get('access_token');
-  if (accessToken?.value) {
-    const valid = await verifyJwtToken(accessToken.value);
-    if (valid) {
-      return NextResponse.next();
+  // Check access token
+  const accessToken = request.cookies.get('access_token')?.value;
+
+  if (!accessToken) {
+    if (isApiRoute(pathname)) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    loginUrl.searchParams.set('reason', 'login_required');
+    return NextResponse.redirect(loginUrl);
   }
 
-  // API requests without valid auth → 401
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.json(
-      { success: false, errorCode: 'AUTH_REQUIRED', error: 'Authentication required' },
-      { status: 401 },
-    );
+  const payload = await verifyAccessToken(accessToken);
+  if (!payload) {
+    if (isApiRoute(pathname)) {
+      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+    }
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    loginUrl.searchParams.set('reason', 'login_required');
+    return NextResponse.redirect(loginUrl);
   }
 
-  // Page requests without valid auth → redirect to login
-  const loginUrl = new URL('/auth/login', request.url);
-  loginUrl.searchParams.set('redirect', pathname);
-  return NextResponse.redirect(loginUrl);
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|logos/|avatars/).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png).*)'],
 };

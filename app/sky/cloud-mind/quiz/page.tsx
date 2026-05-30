@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { motion, AnimatePresence } from 'motion/react';
@@ -47,6 +48,8 @@ interface QuizQuestion {
 type QuizState = 'idle' | 'generating' | 'answering' | 'done';
 
 export default function CloudMindQuizPage() {
+  const searchParams = useSearchParams();
+  const [quizMode, setQuizMode] = useState<'ai' | 'bank'>('ai');
   const [subject, setSubject] = useState('math');
   const [difficulty, setDifficulty] = useState('medium');
   const [topic, setTopic] = useState('');
@@ -59,6 +62,12 @@ export default function CloudMindQuizPage() {
   const [showExplanation, setShowExplanation] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+
+  // Pre-fill from URL query params (e.g., from slides/learning page)
+  useEffect(() => {
+    const qTopic = searchParams.get('topic');
+    if (qTopic) setTopic(qTopic);
+  }, [searchParams]);
 
   // Restore state from background task on mount
   useEffect(() => {
@@ -114,6 +123,36 @@ export default function CloudMindQuizPage() {
     });
     return unsub;
   }, [activeTaskId]);
+
+  const handleLoadFromBank = useCallback(async () => {
+    setState('generating');
+    setError(null);
+    try {
+      const { listQuestionBankEntries } = await import('@/lib/solve/question-bank');
+      const entries = await listQuestionBankEntries(count);
+      if (entries.length === 0) {
+        setError('题库为空，先去做些题目吧');
+        setState('idle');
+        return;
+      }
+      const bankQuestions: QuizQuestion[] = entries.slice(0, count).map((e, i) => ({
+        id: i,
+        question: e.problemText,
+        options: [e.answer, '（干扰项 A）', '（干扰项 B）', '（干扰项 C）'],
+        answer: 0,
+        explanation: e.steps?.join('\n') || e.answer,
+      }));
+      setQuestions(bankQuestions);
+      setAnswers(new Array(bankQuestions.length).fill(null));
+      setCurrentIdx(0);
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+      setState('answering');
+    } catch (err) {
+      setError('加载题库失败，请重试');
+      setState('idle');
+    }
+  }, [count]);
 
   const handleGenerate = useCallback(async () => {
     setState('generating');
@@ -252,7 +291,37 @@ export default function CloudMindQuizPage() {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-5"
             >
+              {/* Mode Toggle */}
+              <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 block">出题模式</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setQuizMode('ai')}
+                    className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium transition-all ${
+                      quizMode === 'ai'
+                        ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-600 text-amber-700 dark:text-amber-300'
+                        : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-amber-200'
+                    }`}
+                  >
+                    <Wand2 className="h-4 w-4" />
+                    AI 出题
+                  </button>
+                  <button
+                    onClick={() => setQuizMode('bank')}
+                    className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium transition-all ${
+                      quizMode === 'bank'
+                        ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-600 text-amber-700 dark:text-amber-300'
+                        : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-amber-200'
+                    }`}
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    题库练习
+                  </button>
+                </div>
+              </div>
+
               {/* Subject */}
+              {quizMode === 'ai' && (<>
               <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
                 <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 block">选择学科</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -374,6 +443,59 @@ export default function CloudMindQuizPage() {
                 >
                   {error}
                 </motion.div>
+              )}
+              </>
+              )}
+
+              {/* Bank Mode */}
+              {quizMode === 'bank' && (
+              <div className="space-y-5">
+                <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2 block">题目数量</label>
+                  <div className="flex gap-2">
+                    {[3, 5, 10, 15].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => setCount(n)}
+                        disabled={state === 'generating'}
+                        className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all disabled:opacity-50 ${
+                          count === n
+                            ? 'bg-amber-500 text-white shadow-sm'
+                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                        }`}
+                      >
+                        {n} 题
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={handleLoadFromBank}
+                  disabled={state === 'generating'}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3.5 text-white font-medium shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                >
+                  {state === 'generating' ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      加载中…
+                    </>
+                  ) : (
+                    <>
+                      <BookOpen className="h-5 w-5" />
+                      从题库出题
+                    </>
+                  )}
+                </button>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 px-4 py-3 text-sm text-red-600 dark:text-red-400"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </div>
               )}
             </motion.div>
 

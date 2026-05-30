@@ -112,8 +112,8 @@ export interface QuestionBankEntry {
   problemText: string;
   problemImage?: string;
   answer: string;
-  steps: string[];
-  knowledgePoints: string[];
+  knowledgePoints: { name: string; description: string; difficulty: string }[];
+  similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string }[];
   agentId: SolverAgentType;
   solvedAt: number;  // Unix timestamp ms
   verified: boolean;

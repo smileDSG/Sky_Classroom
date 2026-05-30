@@ -1,0 +1,305 @@
+{
+  "id": "7HydoI_lrz",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 40,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-05-28T02:03:20.596Z",
+  "updatedAt": "2026-05-28T02:03:46.998Z",
+  "inputSummary": {
+    "requirementPreview": "三角函数入门\n\n课程目标：学习正弦、余弦、正切——三角函数的基础\n\n大纲：\n第1幕：Right Triangle Ratios — \n第2幕：Sine Function — \n第3幕：Cosine Function — \n第4幕：Tangent Function — \n第5幕：Unit Circle — \n第6幕：Practice Quiz — ",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-05-28T02:03:20.620Z",
+  "totalScenes": 6,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "直角三角形中的比例",
+        "description": "引入三角函数的基础——直角三角形中的边长比例关系，为后续学习正弦、余弦、正切函数奠定基础。",
+        "keyPoints": [
+          "认识直角三角形的组成部分：直角边和斜边",
+          "通过固定锐角，理解对边、邻边和斜边的相对概念",
+          "引出三角函数是角度与边长比例的函数"
+        ],
+        "teachingObjective": "理解直角三角形中边与角的基本关系，为学习具体三角函数做准备。",
+        "estimatedDuration": 180,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "正弦函数 (sin)",
+        "description": "专门讲解正弦函数的定义、符号表示和核心概念，并通过图形化方式帮助理解。",
+        "keyPoints": [
+          "正弦定义：sin(θ) = 对边 / 斜边",
+          "理解sin(θ)的值只与角度θ有关，与三角形大小无关",
+          "使用直角三角形实例进行计算演示"
+        ],
+        "teachingObjective": "掌握正弦函数的基本定义并能进行简单计算。",
+        "estimatedDuration": 180,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "余弦函数 (cos)",
+        "description": "讲解余弦函数的定义及其与正弦函数的区别和联系。",
+        "keyPoints": [
+          "余弦定义：cos(θ) = 邻边 / 斜边",
+          "对比正弦和余弦，体会不同比例对应不同函数",
+          "通过直角三角形实例进行计算演示"
+        ],
+        "teachingObjective": "掌握余弦函数的基本定义并能进行简单计算。",
+        "estimatedDuration": 180,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "正切函数 (tan)",
+        "description": "讲解正切函数的定义，并建立其与正弦、余弦的关系。",
+        "keyPoints": [
+          "正切定义：tan(θ) = 对边 / 邻边",
+          "重要关系：tan(θ) = sin(θ) / cos(θ)",
+          "通过直角三角形实例进行计算演示"
+        ],
+        "teachingObjective": "掌握正切函数的基本定义并能进行简单计算。",
+        "estimatedDuration": 180,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "interactive",
+        "title": "单位圆可视化",
+        "description": "通过交互式单位圆，让学习者直观地查看角度变化如何影响正弦、余弦和正切的值。",
+        "keyPoints": [
+          "单位圆的定义：半径为1的圆",
+          "在单位圆上，cos(θ) 和 sin(θ) 分别对应点的x和y坐标",
+          "通过拖动角度滑块，实时观察三个函数值的变化"
+        ],
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "单位圆与三角函数",
+          "keyVariables": [
+            {
+              "name": "角度θ",
+              "range": [
+                0,
+                360
+              ],
+              "unit": "度"
+            }
+          ]
+        },
+        "teachingObjective": "理解单位圆上三角函数值与角度之间的动态关系。",
+        "estimatedDuration": 240,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "quiz",
+        "title": "知识小测",
+        "description": "通过5道选择题和简答题，综合检验学习者对正弦、余弦、正切和单位圆的理解。",
+        "keyPoints": [
+          "考察正弦、余弦、正切的基本定义",
+          "考察单位圆上特殊角度的三角函数值",
+          "考察三个函数之间的基本关系"
+        ],
+        "teachingObjective": "巩固本章所学知识，查漏补缺。",
+        "estimatedDuration": 300,
+        "order": 6,
+        "quizConfig": {
+          "questionCount": 5,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        }
+      }
+    ],
+    "languageDirective": "This course on basic trigonometry will be taught in Chinese (Simplified). All instruction, explanations, scene titles, and keyPoints will be in Chinese. Standard academic terms for trigonometric functions (正弦, 余弦, 正切, 单位圆) will be used to ensure clarity. For beginner learners, complex terms will be introduced with simple explanations.",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "5DxP0-ss6D",
+      "name": "直角三角形中的比例",
+      "languageDirective": "This course on basic trigonometry will be taught in Chinese (Simplified). All instruction, explanations, scene titles, and keyPoints will be in Chinese. Standard academic terms for trigonometric functions (正弦, 余弦, 正切, 单位圆) will be used to ensure clarity. For beginner learners, complex terms will be introduced with simple explanations.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1779933810846,
+      "updatedAt": 1779933810846,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "三角函数入门\n\n课程目标：学习正弦、余弦、正切——三角函数的基础\n\n大纲：\n第1幕：Right Triangle Ratios — \n第2幕：Sine Function — \n第3幕：Cosine Function — \n第4幕：Tangent Function — \n第5幕：Unit Circle — \n第6幕：Practice Quiz — ",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "直角三角形中的比例",
+      "description": "引入三角函数的基础——直角三角形中的边长比例关系，为后续学习正弦、余弦、正切函数奠定基础。",
+      "keyPoints": [
+        "认识直角三角形的组成部分：直角边和斜边",
+        "通过固定锐角，理解对边、邻边和斜边的相对概念",
+        "引出三角函数是角度与边长比例的函数"
+      ],
+      "teachingObjective": "理解直角三角形中边与角的基本关系，为学习具体三角函数做准备。",
+      "estimatedDuration": 180,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "正弦函数 (sin)",
+      "description": "专门讲解正弦函数的定义、符号表示和核心概念，并通过图形化方式帮助理解。",
+      "keyPoints": [
+        "正弦定义：sin(θ) = 对边 / 斜边",
+        "理解sin(θ)的值只与角度θ有关，与三角形大小无关",
+        "使用直角三角形实例进行计算演示"
+      ],
+      "teachingObjective": "掌握正弦函数的基本定义并能进行简单计算。",
+      "estimatedDuration": 180,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "余弦函数 (cos)",
+      "description": "讲解余弦函数的定义及其与正弦函数的区别和联系。",
+      "keyPoints": [
+        "余弦定义：cos(θ) = 邻边 / 斜边",
+        "对比正弦和余弦，体会不同比例对应不同函数",
+        "通过直角三角形实例进行计算演示"
+      ],
+      "teachingObjective": "掌握余弦函数的基本定义并能进行简单计算。",
+      "estimatedDuration": 180,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "正切函数 (tan)",
+      "description": "讲解正切函数的定义，并建立其与正弦、余弦的关系。",
+      "keyPoints": [
+        "正切定义：tan(θ) = 对边 / 邻边",
+        "重要关系：tan(θ) = sin(θ) / cos(θ)",
+        "通过直角三角形实例进行计算演示"
+      ],
+      "teachingObjective": "掌握正切函数的基本定义并能进行简单计算。",
+      "estimatedDuration": 180,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "interactive",
+      "title": "单位圆可视化",
+      "description": "通过交互式单位圆，让学习者直观地查看角度变化如何影响正弦、余弦和正切的值。",
+      "keyPoints": [
+        "单位圆的定义：半径为1的圆",
+        "在单位圆上，cos(θ) 和 sin(θ) 分别对应点的x和y坐标",
+        "通过拖动角度滑块，实时观察三个函数值的变化"
+      ],
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "单位圆与三角函数",
+        "keyVariables": [
+          {
+            "name": "角度θ",
+            "range": [
+              0,
+              360
+            ],
+            "unit": "度"
+          }
+        ]
+      },
+      "teachingObjective": "理解单位圆上三角函数值与角度之间的动态关系。",
+      "estimatedDuration": 240,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "quiz",
+      "title": "知识小测",
+      "description": "通过5道选择题和简答题，综合检验学习者对正弦、余弦、正切和单位圆的理解。",
+      "keyPoints": [
+        "考察正弦、余弦、正切的基本定义",
+        "考察单位圆上特殊角度的三角函数值",
+        "考察三个函数之间的基本关系"
+      ],
+      "teachingObjective": "巩固本章所学知识，查漏补缺。",
+      "estimatedDuration": 300,
+      "order": 6,
+      "quizConfig": {
+        "questionCount": 5,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      }
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "This course on basic trigonometry will be taught in Chinese (Simplified). All instruction, explanations, scene titles, and keyPoints will be in Chinese. Standard academic terms for trigonometric functions (正弦, 余弦, 正切, 单位圆) will be used to ensure clarity. For beginner learners, complex terms will be introduced with simple explanations.",
+    "totalScenes": 6
+  },
+  "completedAt": "2026-05-28T02:03:46.997Z",
+  "error": "用户取消了生成"
+}

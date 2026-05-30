@@ -214,8 +214,12 @@ function loadEnvSection(
 const DEFAULT_FILENAME = 'server-providers.yml';
 const OPENAI_IMAGE_PROVIDER_ID = 'openai-image';
 
-/** Cache keyed by YAML filename (empty string = default file). */
-const _configs: Map<string, ServerConfig> = new Map();
+/** Cache keyed by YAML filename (empty string = default file). Shared via globalThis. */
+const globalForConfigs = globalThis as unknown as {
+  _providerConfigs: Map<string, ServerConfig> | undefined;
+};
+const _configs: Map<string, ServerConfig> =
+  globalForConfigs._providerConfigs ?? (globalForConfigs._providerConfigs = new Map());
 
 function applyOpenAIImageFallback(
   imageConfig: Record<string, ServerProviderEntry>,

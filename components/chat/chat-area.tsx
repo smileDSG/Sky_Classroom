@@ -49,6 +49,7 @@ interface ChatAreaProps {
 export interface ChatAreaRef {
   createSession: (type: SessionType, title: string) => Promise<string>;
   endSession: (sessionId: string) => Promise<void>;
+  deleteSession: (sessionId: string) => void;
   endActiveSession: () => Promise<void>;
   softPauseActiveSession: () => Promise<void>;
   resumeActiveSession: () => Promise<void>;
@@ -111,6 +112,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       addLectureMessage,
       toggleSessionExpand,
       getLectureMessageId,
+      deleteSession,
       pauseBuffer,
       resumeBuffer,
       pauseActiveLiveBuffer,
@@ -224,6 +226,14 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       [endSession, onStopSession],
     );
 
+    const handleDeleteSession = useCallback(
+      (sessionId: string) => {
+        deleteSession(sessionId);
+        onStopSession?.();
+      },
+      [deleteSession, onStopSession],
+    );
+
     const switchToTab = useCallback((tab: 'lecture' | 'chat') => {
       setActiveTab(tab);
     }, []);
@@ -231,6 +241,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     useImperativeHandle(ref, () => ({
       createSession,
       endSession,
+      deleteSession,
       endActiveSession,
       softPauseActiveSession,
       resumeActiveSession,
@@ -394,6 +405,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                       sceneTitleMap={sceneTitleMap}
                       onToggleExpand={toggleSessionExpand}
                       onEndSession={handleEndSession}
+                      onDeleteSession={handleDeleteSession}
                     />
                     <div ref={bottomRef} />
                   </div>

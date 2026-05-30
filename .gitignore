@@ -15,3 +15,4 @@ server-providers.yml
 tsconfig.tsbuildinfo
 .kimi/
 .gstack/
+.superpowers/

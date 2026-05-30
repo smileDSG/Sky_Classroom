@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { AssistantPanel } from '@/components/sky/assistant/assistant-panel';
@@ -25,14 +25,16 @@ const SIDEBAR_ITEMS = [
 
 export default function AssistantPage() {
   const [activeSidebar, setActiveSidebar] = useState<string>('chat');
-  const [mode, setMode] = useState<'anime' | 'normal'>(() => {
-    try {
-      const saved = localStorage.getItem('kagami-mode');
-      if (saved === 'normal' || saved === 'anime') return saved;
-    } catch { /* ignore */ }
-    return 'anime';
-  });
+  const [mode, setMode] = useState<'anime' | 'normal'>('anime');
   const [loadConvId, setLoadConvId] = useState<string | null>(null);
+
+  // Hydrate mode from localStorage after mount to avoid SSR mismatch
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('assistant-panel-mode');
+      if (saved === 'normal' || saved === 'anime') setMode(saved);
+    } catch { /* ignore */ }
+  }, []);
 
   const handleLoadConversation = useCallback((messages: { id: string; role: 'user' | 'assistant'; content: string }[], convId: string) => {
     setLoadConvId(convId);
@@ -45,7 +47,7 @@ export default function AssistantPage() {
 
   const handleModeChange = useCallback((newMode: 'anime' | 'normal') => {
     setMode(newMode);
-    try { localStorage.setItem('kagami-mode', newMode); } catch { /* ignore */ }
+    try { localStorage.setItem('assistant-panel-mode', newMode); } catch { /* ignore */ }
   }, []);
 
   return (

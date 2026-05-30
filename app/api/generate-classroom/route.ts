@@ -3,9 +3,10 @@ import { nanoid } from 'nanoid';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { type GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
-import { createClassroomGenerationJob } from '@/lib/server/classroom-job-store';
+import { createClassroomGenerationJobHybrid } from '@/lib/server/classroom-job-store-hybrid';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { createLogger } from '@/lib/logger';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('GenerateClassroom API');
 
@@ -43,6 +44,10 @@ export async function POST(req: NextRequest) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: requirement');
     }
 
+    // Check billing quota before expensive work
+    const quota = await requireQuota('generationCount');
+    if ('error' in quota) return quota.error;
+
     const baseUrl = buildRequestOrigin(req);
     const jobId = nanoid(10);
 
@@ -53,8 +58,11 @@ export async function POST(req: NextRequest) {
       baseUrl: rawBody.baseUrl as string | undefined,
     };
 
-    const job = await createClassroomGenerationJob(jobId, body, modelConfig);
+    const job = await createClassroomGenerationJobHybrid(jobId, body, modelConfig);
     const pollUrl = `${baseUrl}/api/generate-classroom/${jobId}`;
+
+    // Record generation usage
+    await recordUsage(quota.userId, quota.planType, 'generationCount');
 
     after(() => runClassroomGenerationJob(jobId, body, baseUrl));
 

@@ -100,7 +100,12 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({ covers });
   } catch (err) {
-    log.error('Generate covers failed:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '封面生成失败', err instanceof Error ? err.message : undefined);
+    const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    log.error('Generate covers failed:', msg, stack);
+    console.error('=== Generate Covers 500 Error ===');
+    console.error('Message:', msg);
+    console.error('Stack:', stack);
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, `封面生成失败: ${msg}`);
   }
 }

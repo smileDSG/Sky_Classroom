@@ -1,130 +1,62 @@
 /**
- * Question Bank — self-improvement cache for solved problems.
+ * Question Bank — server-side operations backed by MySQL (Knowledge Base).
  *
- * Workflow:
- *   1. Before solving, call findSimilarQuestions(problemText)
- *   2. If a match is found (similarity >= threshold), return it
- *   3. After solving, call saveToQuestionBank(entry) to cache
- *
- * Storage: IndexedDB via Dexie (browser) or in-memory Map (server).
- * Similarity: text-based Jaccard similarity (embedding reserved for future).
+ * All functions here use dynamic imports for kb-manager so they only
+ * load server-side code when actually called.
  */
 
-import { db } from '@/lib/utils/database';
 import type { QuestionBankEntry } from './types';
+import { hashProblemText, textSimilarity } from './question-bank-utils';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('QuestionBank');
 
-function isBrowser() {
-  return typeof indexedDB !== 'undefined';
-}
-
-// ── In-memory fallback (server-side) ─────────────────────────────────
-
-const memBank = new Map<string, QuestionBankEntry & { problemHash: string }>();
-
-// ── Hashing ──────────────────────────────────────────────────────────
-
-/**
- * Deterministic hash of problem text for dedup.
- * Normalizes whitespace and case before hashing.
- */
-export function hashProblemText(text: string): string {
-  const normalized = text
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .replace(/[，。！？、；：""''（）【】《》\s]/g, '');
-  return stableHash(normalized);
-}
-
-function stableHash(input: string): string {
-  let h = 0;
-  for (let i = 0; i < input.length; i++) {
-    h = ((h << 5) - h + input.charCodeAt(i)) | 0;
-  }
-  return `qb_${(h >>> 0).toString(36)}`;
-}
-
-// ── Similarity ──────────────────────────────────────────────────────
-
-/**
- * Jaccard similarity between two Chinese text strings.
- * Uses character-level bigram overlap for better semantic matching.
- * Returns 0-1 score.
- */
-export function textSimilarity(a: string, b: string): number {
-  if (!a || !b) return 0;
-
-  const aGrams = bigrams(a);
-  const bGrams = bigrams(b);
-
-  const intersection = new Set([...aGrams].filter((x) => bGrams.has(x)));
-  const union = new Set([...aGrams, ...bGrams]);
-
-  return intersection.size / union.size;
-}
-
-function bigrams(text: string): Set<string> {
-  const grams = new Set<string>();
-  for (let i = 0; i < text.length - 1; i++) {
-    grams.add(text.slice(i, i + 2));
-  }
-  return grams;
-}
+export { hashProblemText, textSimilarity };
 
 // ── Core operations ─────────────────────────────────────────────────
 
 const DEFAULT_THRESHOLD = 0.85;
 
-/**
- * Find similar questions in the question bank.
- *
- * @param problemText - The problem text to search for
- * @param threshold - Similarity threshold (0-1), default 0.85
- * @returns Array of matching entries sorted by similarity desc
- */
 export async function findSimilarQuestions(
   problemText: string,
   threshold: number = DEFAULT_THRESHOLD,
 ): Promise<QuestionBankEntry[]> {
   try {
-    const allEntries = isBrowser()
-      ? await db.questionBank.toArray()
-      : Array.from(memBank.values());
+    const { search } = await import('@/lib/knowledge-base/kb-manager');
+    const results = await search({
+      kbType: 'solve',
+      query: problemText,
+      topK: 10,
+      threshold: 0.01,
+    });
 
-    if (allEntries.length === 0) {
-      log.info('[QuestionBank] Empty, no matches');
+    if (results.length === 0) {
+      log.info('[QuestionBank] Empty KB, no matches');
       return [];
     }
 
-    const matches = allEntries
-      .map((entry) => ({
-        entry,
-        score: textSimilarity(problemText, entry.problemText),
-      }))
-      .filter((m) => m.score >= threshold)
-      .sort((a, b) => b.score - a.score)
-      .map((m) => ({
-        ...m.entry,
-        _similarity: m.score,
-      }));
+    const matches: QuestionBankEntry[] = [];
+    for (const result of results) {
+      try {
+        const entry = JSON.parse(result.chunk.content) as QuestionBankEntry;
+        const score = textSimilarity(problemText, entry.problemText);
+        if (score >= threshold) {
+          matches.push({ ...entry, _similarity: score });
+        }
+      } catch {
+        // skip malformed chunks
+      }
+    }
 
+    matches.sort((a, b) => ((b as any)._similarity || 0) - ((a as any)._similarity || 0));
     log.info(`[QuestionBank] Found ${matches.length} matches (threshold=${threshold})`);
-    return matches as QuestionBankEntry[];
+    return matches;
   } catch (error) {
     log.error('[QuestionBank] findSimilarQuestions failed:', error);
     return [];
   }
 }
 
-/**
- * Save a question to the bank.
- * Auto-deduplicates by problemHash — existing entries are overwritten.
- *
- * @returns The saved entry
- */
 export async function saveToQuestionBank(
   entry: Omit<QuestionBankEntry, 'id' | 'problemHash'> & { problemHash?: string },
 ): Promise<QuestionBankEntry> {
@@ -132,27 +64,37 @@ export async function saveToQuestionBank(
     const problemHash = entry.problemHash ?? hashProblemText(entry.problemText);
     const id = `qb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-    const record = {
+    const record: QuestionBankEntry = {
       id,
       problemHash,
       problemText: entry.problemText,
       problemImage: entry.problemImage ?? undefined,
       answer: entry.answer,
-      steps: entry.steps,
       knowledgePoints: entry.knowledgePoints,
+      similarQuestions: entry.similarQuestions ?? [],
       agentId: entry.agentId,
       solvedAt: entry.solvedAt ?? Date.now(),
       verified: entry.verified ?? false,
     };
 
-    if (isBrowser()) {
-      await db.questionBank.put(record);
-    } else {
-      memBank.set(id, record);
+    const { write, hasSource } = await import('@/lib/knowledge-base/kb-manager');
+
+    const exists = await hasSource(problemHash);
+    if (exists) {
+      log.info(`[QuestionBank] Duplicate hash: ${problemHash}, skipping`);
+      return record;
     }
 
-    log.info(`[QuestionBank] Saved entry: ${id} (hash: ${problemHash})`);
+    await write({
+      kbType: 'solve',
+      title: `题解: ${entry.problemText.slice(0, 60)}`,
+      content: JSON.stringify(record),
+      tags: [entry.agentId, ...record.knowledgePoints.map((k) => k.name)],
+      sourceId: problemHash,
+      verified: record.verified,
+    });
 
+    log.info(`[QuestionBank] Saved entry: ${id} (hash: ${problemHash})`);
     return record;
   } catch (error) {
     log.error('[QuestionBank] saveToQuestionBank failed:', error);
@@ -160,16 +102,10 @@ export async function saveToQuestionBank(
   }
 }
 
-/**
- * Delete an entry from the question bank.
- */
 export async function deleteQuestionBankEntry(id: string): Promise<void> {
   try {
-    if (isBrowser()) {
-      await db.questionBank.delete(id);
-    } else {
-      memBank.delete(id);
-    }
+    const { removeDocument } = await import('@/lib/knowledge-base/kb-manager');
+    await removeDocument(id);
     log.info(`[QuestionBank] Deleted entry: ${id}`);
   } catch (error) {
     log.error('[QuestionBank] deleteQuestionBankEntry failed:', error);
@@ -177,54 +113,49 @@ export async function deleteQuestionBankEntry(id: string): Promise<void> {
   }
 }
 
-/**
- * List all entries, sorted by most recent first.
- * Returns a limited set to avoid loading the entire bank.
- */
 export async function listQuestionBankEntries(
   limit: number = 100,
 ): Promise<QuestionBankEntry[]> {
   try {
-    if (isBrowser()) {
-      return db.questionBank
-        .orderBy('solvedAt')
-        .reverse()
-        .limit(limit)
-        .toArray() as unknown as QuestionBankEntry[];
+    const { search } = await import('@/lib/knowledge-base/kb-manager');
+    const results = await search({
+      kbType: 'solve',
+      query: ' ',
+      topK: limit,
+      threshold: 0,
+    });
+
+    const entries: QuestionBankEntry[] = [];
+    for (const result of results) {
+      try {
+        entries.push(JSON.parse(result.chunk.content));
+      } catch {
+        // skip malformed
+      }
     }
-    return Array.from(memBank.values())
-      .sort((a, b) => b.solvedAt - a.solvedAt)
-      .slice(0, limit);
+
+    entries.sort((a, b) => b.solvedAt - a.solvedAt);
+    return entries.slice(0, limit);
   } catch (error) {
     log.error('[QuestionBank] listQuestionBankEntries failed:', error);
     return [];
   }
 }
 
-/**
- * Get the total count of entries in the question bank.
- */
 export async function questionBankCount(): Promise<number> {
   try {
-    if (isBrowser()) {
-      return db.questionBank.count();
-    }
-    return memBank.size;
+    const { stats } = await import('@/lib/knowledge-base/kb-manager');
+    const s = await stats();
+    return s.byType?.solve?.documents || 0;
   } catch {
     return 0;
   }
 }
 
-/**
- * Clear all entries from the question bank.
- */
 export async function clearQuestionBank(): Promise<void> {
   try {
-    if (isBrowser()) {
-      await db.questionBank.clear();
-    } else {
-      memBank.clear();
-    }
+    const { clearType } = await import('@/lib/knowledge-base/kb-manager');
+    await clearType('solve');
     log.info('[QuestionBank] Cleared all entries');
   } catch (error) {
     log.error('[QuestionBank] clearQuestionBank failed:', error);
@@ -232,20 +163,11 @@ export async function clearQuestionBank(): Promise<void> {
   }
 }
 
-/**
- * Check if a problem is already in the question bank (exact match by hash).
- */
 export async function isProblemInBank(problemText: string): Promise<boolean> {
   try {
     const hash = hashProblemText(problemText);
-    if (isBrowser()) {
-      const entries = await db.questionBank.where('problemHash').equals(hash).toArray();
-      return entries.length > 0;
-    }
-    for (const entry of memBank.values()) {
-      if (entry.problemHash === hash) return true;
-    }
-    return false;
+    const { hasSource } = await import('@/lib/knowledge-base/kb-manager');
+    return hasSource(hash);
   } catch {
     return false;
   }

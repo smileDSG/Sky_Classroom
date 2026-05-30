@@ -21,6 +21,14 @@ import type { WebSearchProviderId } from '@/lib/web-search/types';
 import { createLogger } from '@/lib/logger';
 import { validateProvider, validateModel } from '@/lib/store/settings-validation';
 
+// ── Cache for server providers fetch ─────────────────────────────────
+let serverProvidersCache: {
+  data: unknown;
+  timestamp: number;
+} | null = null;
+let fetchInProgress = false;
+const CACHE_TTL_MS = 300_000; // 5 minutes
+
 // ── Slice imports ──────────────────────────────────────────────────
 
 import {
@@ -56,6 +64,13 @@ import {
   getDefaultAgentsState,
   createAgentsActions,
 } from './settings/agents';
+
+import {
+  type PersonalizationSliceState,
+  type PersonalizationSliceActions,
+  getDefaultPersonalizationState,
+  createPersonalizationActions,
+} from './settings/personalization';
 
 // ── Migration ──────────────────────────────────────────────────────
 
@@ -109,7 +124,9 @@ export interface SettingsState
     LayoutSliceState,
     LayoutSliceActions,
     AgentsSliceState,
-    AgentsSliceActions {
+    AgentsSliceActions,
+    PersonalizationSliceState,
+    PersonalizationSliceActions {
   // Cross-cutting action touching all domains
   fetchServerProviders: () => Promise<void>;
 }
@@ -133,6 +150,7 @@ export const useSettingsStore = create<SettingsState>()(
       const mediaDefaults = getDefaultMediaState();
       const layoutDefaults = getDefaultLayoutState();
       const agentsDefaults = getDefaultAgentsState();
+      const personalizationDefaults = getDefaultPersonalizationState();
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const baseState: any = {
@@ -142,6 +160,7 @@ export const useSettingsStore = create<SettingsState>()(
         ...mediaDefaults,
         ...layoutDefaults,
         ...agentsDefaults,
+        ...personalizationDefaults,
 
         // ── Override with migrated data ────────────────────────
         ...(migratedData
@@ -175,13 +194,19 @@ export const useSettingsStore = create<SettingsState>()(
         ...createLayoutActions(setAny),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...createAgentsActions(setAny),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...createPersonalizationActions(setAny),
 
         // ── Cross-cutting: fetch server providers ──────────────
         fetchServerProviders: async () => {
-          try {
-            const res = await fetch('/api/server-providers');
-            if (!res.ok) return;
-            const data = (await res.json()) as {
+          // Concurrent request protection
+          if (fetchInProgress) return;
+
+          // Cache check
+          const now = Date.now();
+          if (serverProvidersCache && now - serverProvidersCache.timestamp < CACHE_TTL_MS) {
+            // Use cached data
+            const data = serverProvidersCache.data as {
               providers: Record<string, { models?: string[]; baseUrl?: string }>;
               tts: Record<string, { baseUrl?: string }>;
               asr: Record<string, { baseUrl?: string }>;
@@ -190,7 +215,37 @@ export const useSettingsStore = create<SettingsState>()(
               video: Record<string, { baseUrl?: string }>;
               webSearch: Record<string, { baseUrl?: string }>;
             };
+            // Skip fetch, proceed to merge logic below using cached data
+            // ... rest of merge logic continues
+          } else {
+            // Fetch fresh data
+            try {
+              fetchInProgress = true;
+              const res = await fetch('/api/server-providers');
+              fetchInProgress = false;
+              if (!res.ok) return;
+              const data = await res.json();
 
+              // Update cache
+              serverProvidersCache = { data, timestamp: Date.now() };
+            } catch (e) {
+              fetchInProgress = false;
+              log.warn('Failed to fetch server providers:', e);
+              return;
+            }
+          }
+
+          const data = serverProvidersCache.data as {
+            providers: Record<string, { models?: string[]; baseUrl?: string }>;
+            tts: Record<string, { baseUrl?: string }>;
+            asr: Record<string, { baseUrl?: string }>;
+            pdf: Record<string, { baseUrl?: string }>;
+            image: Record<string, { baseUrl?: string }>;
+            video: Record<string, { baseUrl?: string }>;
+            webSearch: Record<string, { baseUrl?: string }>;
+          };
+
+          try {
             setAny((state: SettingsState) => {
               // Merge LLM providers
               const newProvidersConfig = { ...state.providersConfig };
@@ -638,6 +693,16 @@ export const useSettingsStore = create<SettingsState>()(
       version: 4,
       migrate: migrateSettings as any,
       merge: mergeSettings as any,
+      // Recover from corrupted localStorage: clear the broken key so the
+      // store falls back to its initial state (all defaults from the creator).
+      onError: (error: unknown) => {
+        log.error('Settings store hydration failed — clearing corrupted cache:', error);
+        try {
+          localStorage.removeItem('settings-storage');
+        } catch {
+          // ignore — localStorage might be unavailable
+        }
+      },
     } as any,
   ),
 );
@@ -664,3 +729,20 @@ export function importSettings(json: string): void {
 
 // Re-export migrateFromOldStorage for external consumers
 export { migrateFromOldStorage } from './settings/migration';
+
+// ── Personalization exports ────────────────────────────────────────
+
+export {
+  type PersonalizationSliceState,
+  type PersonalizationSliceActions,
+  type LearningStyle,
+  type DetailLevel,
+  type AIPersonality,
+  type EducationLevel,
+  type SubjectPreference,
+  LEARNING_STYLE_LABELS,
+  DETAIL_LEVEL_LABELS,
+  AI_PERSONALITY_LABELS,
+  EDUCATION_LEVEL_LABELS,
+  DEFAULT_SUBJECTS,
+} from './settings/personalization';

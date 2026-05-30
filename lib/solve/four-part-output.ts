@@ -16,6 +16,7 @@ import type {
   GradedFourPartOutput,
   GradeResult,
 } from './types';
+import { postProcessFourPartOutput } from './math-postprocessor';
 
 /**
  * Raw solution data from the solver agent.
@@ -34,12 +35,13 @@ interface RawSolution {
  * Normalizes missing/invalid fields and ensures all arrays have sensible defaults.
  */
 export function generateFourPartOutput(raw: RawSolution): FourPartOutput {
-  return {
+  const output = {
     answer: formatAnswer(raw.answer),
     steps: normalizeSteps(raw.steps, raw.answer),
     knowledgePoints: normalizeKnowledgePoints(raw.knowledgePoints),
     similarQuestions: normalizeSimilarQuestions(raw.similarQuestions),
   };
+  return postProcessFourPartOutput(output);
 }
 
 /**
@@ -52,7 +54,7 @@ export function generateGradedFourPartOutput(
   raw: RawSolution,
   gradeResult: GradeResult,
 ): GradedFourPartOutput {
-  const base = generateFourPartOutput(raw);
+  const base = postProcessFourPartOutput(generateFourPartOutput(raw));
 
   return {
     ...base,

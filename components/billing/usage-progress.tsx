@@ -9,10 +9,8 @@ import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 
 interface UsageData {
-  planType: string;
   llmCalls: { current: number; limit: number };
   generationCount: { current: number; limit: number };
-  resetAt: number;
 }
 
 export function UsageProgress() {
@@ -30,18 +28,13 @@ export function UsageProgress() {
   }, []);
 
   if (loading || !usage) return null;
+  if (usage.llmCalls.limit === 0 && usage.generationCount.limit === 0) return null;
 
   const pct = (current: number, limit: number) => (limit === 0 ? 0 : Math.round((current / limit) * 100));
   const barColor = (p: number) => (p > 90 ? 'bg-red-500' : p > 70 ? 'bg-yellow-500' : 'bg-green-500');
 
-  const resetTime = usage.resetAt ? new Date(usage.resetAt).toLocaleTimeString() : '';
-
   return (
     <div className="space-y-3 p-3 rounded-lg border bg-card text-sm">
-      <div className="flex items-center justify-between">
-        <span className="font-medium capitalize">{usage.planType} Plan</span>
-        {resetTime && <span className="text-xs text-muted-foreground">Resets at {resetTime}</span>}
-      </div>
       {usage.llmCalls.limit > 0 && (
         <div className="space-y-1">
           <div className="flex justify-between">

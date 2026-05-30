@@ -186,6 +186,9 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
       name: 'sky-classroom-storage',
       version: 1,
       migrate: (persistedState: unknown) => {
+        if (!persistedState || typeof persistedState !== 'object' || Array.isArray(persistedState)) {
+          return {} as unknown as SkyClassroomStore;
+        }
         const s = persistedState as Record<string, unknown>;
         // Sanitize generationOptions if it exists with stale schema
         if (s?.generationOptions && typeof s.generationOptions === 'object') {
@@ -198,6 +201,10 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
           };
         }
         return s as unknown as SkyClassroomStore;
+      },
+      onError: (error: unknown) => {
+        console.error('[SkyClassroom] Hydration failed — clearing corrupted cache:', error);
+        try { localStorage.removeItem('sky-classroom-storage'); } catch { /* ignore */ }
       },
       partialize: (state) => ({
         selectedAvatarId: state.selectedAvatarId,

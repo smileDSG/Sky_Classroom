@@ -71,6 +71,7 @@
     "unknown": "Unknown",
     "stopDiscussion": "Stop Discussion",
     "endQA": "End Q&A",
+    "deleteSession": "Delete Session",
     "tabs": {
       "lecture": "Notes",
       "chat": "Chat"
@@ -1068,6 +1069,8 @@
     "profileSection": "Profile",
     "accountSection": "Account Info",
     "securitySection": "Security",
+    "planSection": "Plan & Billing",
+    "personalizationSection": "Personalization",
     "nickname": "Nickname",
     "nicknamePlaceholder": "Enter your nickname",
     "bio": "Bio",
@@ -1105,29 +1108,5 @@
       "student": "Student",
       "user": "Me"
     }
-  },
-  "beta": {
-    "title": "Sky Classroom · Beta",
-    "subtitle": "Enter invitation code or apply for access",
-    "inviteTab": "Invitation Code",
-    "applyTab": "Apply for Access",
-    "enterCode": "Enter Invitation Code",
-    "codePlaceholder": "e.g. SKY-7X3K-9M2P",
-    "validateCode": "Verify Code",
-    "validating": "Verifying...",
-    "codeValid": "Code valid, redirecting to registration...",
-    "codeInvalid": "Invalid or expired invitation code",
-    "codeExhausted": "This invitation code has been fully used",
-    "applyTitle": "Apply for Beta Access",
-    "email": "Email Address",
-    "emailPlaceholder": "Enter your email",
-    "reason": "Reason (optional)",
-    "reasonPlaceholder": "Briefly describe why you'd like to join...",
-    "submitApplication": "Submit Application",
-    "submitting": "Submitting...",
-    "submitted": "Application Submitted",
-    "submittedDesc": "We will review your application and notify you via email.",
-    "alreadyRequested": "You have already submitted an application. Please wait for review.",
-    "backToHome": "Back to Home"
   }
 }

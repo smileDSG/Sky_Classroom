@@ -7,7 +7,11 @@ import { updateSolveJob } from './solve-job-store';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SolveJobRunner');
-const runningJobs = new Map<string, Promise<void>>();
+const globalForRunningJobs = globalThis as unknown as {
+  _solveRunningJobs: Map<string, Promise<void>> | undefined;
+};
+const runningJobs: Map<string, Promise<void>> =
+  globalForRunningJobs._solveRunningJobs ?? (globalForRunningJobs._solveRunningJobs = new Map());
 
 export function runSolveJob(jobId: string, problemText: string, problemImage: string | null, userAnswer: string | null): Promise<void> {
   const existing = runningJobs.get(jobId);
@@ -88,8 +92,12 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
               problemText,
               problemImage: problemImage ?? undefined,
               answer: output.answer,
-              steps: (output.steps ?? []).map(s => `${s.label}: ${s.content}`),
-              knowledgePoints: (output.knowledgePoints ?? []).map(kp => kp.name),
+              knowledgePoints: (output.knowledgePoints ?? []).map(kp => ({
+                name: kp.name,
+                description: kp.description,
+                difficulty: kp.difficulty,
+              })),
+              similarQuestions: output.similarQuestions ?? [],
               agentId: finalState.agentRoute ?? 'universal',
               solvedAt: Date.now(),
               verified: false,

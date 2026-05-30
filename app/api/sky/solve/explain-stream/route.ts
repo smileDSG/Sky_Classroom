@@ -16,14 +16,56 @@
  */
 
 import { createLogger } from '@/lib/logger';
-import { formatSSE, streamSSE } from '@/lib/assistant/stream';
 import { findSimilarQuestions } from '@/lib/solve/question-bank';
 import { findSolveCacheMatches } from '@/lib/solve/solve-cache';
 import { streamSolve, type StreamEvent } from '@/lib/solve/streaming-solver';
-import { classifyProblem } from '@/lib/solve/solver-constants';
-import { generateFourPartOutput } from '@/lib/solve/four-part-output';
+import { classifyProblem, resolveSolverModel } from '@/lib/solve/solver-constants';
+import { buildKnowledgePointsPrompt } from '@/lib/solve/solver-prompts';
+import { postProcessMathContent } from '@/lib/solve/math-postprocessor';
 
 const log = createLogger('API:ExplainStream');
+
+// ── Knowledge points generation ─────────────────────────────────────
+
+async function generateKnowledgePoints(
+  problemText: string,
+  answer: string,
+): Promise<{ name: string; description: string; difficulty: string }[]> {
+  try {
+    const { callLLM } = await import('@/lib/ai/llm');
+    const { getModel } = await import('@/lib/ai/providers');
+    const { parseJsonResponse } = await import('@/lib/generation/json-repair');
+
+    const modelConfig = resolveSolverModel('universal');
+    const modelWithInfo = getModel(modelConfig);
+    const prompt = buildKnowledgePointsPrompt(problemText, answer);
+
+    const result = await callLLM(
+      {
+        model: modelWithInfo.model,
+        messages: [{ role: 'user', content: prompt }] as any,
+        temperature: 0.3,
+        maxOutputTokens: 1024,
+      },
+      'knowledge-gen',
+      { retries: 1 },
+      undefined,
+      '你是知识点总结专家。请直接输出 JSON，不要输出其他内容。',
+    );
+
+    const parsed = parseJsonResponse<any>(result.text || '');
+    if (parsed && Array.isArray(parsed.knowledgePoints)) {
+      return parsed.knowledgePoints.map((k: any) => ({
+        name: k.name || '',
+        description: k.description || '',
+        difficulty: k.difficulty || 'medium',
+      }));
+    }
+  } catch (err) {
+    log.warn('Failed to generate knowledge points:', err);
+  }
+  return [];
+}
 
 // ── SSE formatting ──────────────────────────────────────────────────
 
@@ -72,21 +114,24 @@ export async function POST(req: Request) {
           const hit = matches[0];
           log.info(`[ExplainStream] Question bank hit (${hit._similarity?.toFixed(2)})`);
 
-          const output = generateFourPartOutput({
-            answer: hit.answer,
-            steps: [],
-            knowledgePoints: [],
-            similarQuestions: [],
-          });
-
+          const processedAnswer = postProcessMathContent(hit.answer);
           await write(formatSSEEvent('step', {
             label: '解答',
-            content: hit.answer,
+            content: processedAnswer,
             keyPoints: [],
           }));
-          await write(formatSSEEvent('answer', { answer: hit.answer }));
-          await write(formatSSEEvent('knowledge', { points: output.knowledgePoints }));
-          await write(formatSSEEvent('similar', { questions: output.similarQuestions }));
+          await write(formatSSEEvent('answer', { answer: processedAnswer }));
+
+          // Generate knowledge points via LLM
+          const kp = hit.knowledgePoints && hit.knowledgePoints.length > 0
+            ? hit.knowledgePoints.map((k) => ({
+                name: postProcessMathContent(k.name),
+                description: postProcessMathContent(k.description),
+                difficulty: k.difficulty,
+              }))
+            : await generateKnowledgePoints(problem, hit.answer);
+          await write(formatSSEEvent('knowledge', { points: kp }));
+          await write(formatSSEEvent('similar', { questions: [] }));
           await write(formatSSEEvent('done', {
             fromQuestionBank: true,
             solvingTime: 0,
@@ -101,13 +146,17 @@ export async function POST(req: Request) {
           const hit = cacheMatches[0];
           log.info(`[ExplainStream] Solve cache hit`);
 
+          const processedSolution = postProcessMathContent(hit.solution);
           await write(formatSSEEvent('step', {
             label: '解答',
-            content: hit.solution,
+            content: processedSolution,
             keyPoints: [],
           }));
-          await write(formatSSEEvent('answer', { answer: hit.solution }));
-          await write(formatSSEEvent('knowledge', { points: [] }));
+          await write(formatSSEEvent('answer', { answer: processedSolution }));
+
+          // Generate knowledge points via LLM
+          const kp = await generateKnowledgePoints(problem, hit.solution);
+          await write(formatSSEEvent('knowledge', { points: kp }));
           await write(formatSSEEvent('similar', { questions: [] }));
           await write(formatSSEEvent('done', {
             fromSolveCache: true,
@@ -126,14 +175,44 @@ export async function POST(req: Request) {
         let hasKnowledge = false;
         let hasSimilar = false;
         let streamedAnswer = '';
-        const streamedSteps: string[] = [];
+        const streamedSteps: { label: string; content: string; keyPoints?: string[] }[] = [];
+        let streamedKnowledge: { name: string; description: string; difficulty: string }[] = [];
+        let streamedSimilar: { problem: string; difficulty: number; knowledgePoint: string }[] = [];
 
         for await (const event of streamSolve(agentType, problem, problemImage ?? null)) {
-          await write(formatStreamEvent(event));
-          if (event.type === 'answer') { hasAnswer = true; streamedAnswer = event.answer; }
-          if (event.type === 'step') streamedSteps.push(event.content);
-          if (event.type === 'knowledge') hasKnowledge = true;
-          if (event.type === 'similar') hasSimilar = true;
+          // Post-process math content before sending to client
+          let processedEvent = event;
+          if (event.type === 'step') {
+            processedEvent = {
+              ...event,
+              content: postProcessMathContent(event.content),
+              keyPoints: (event.keyPoints ?? []).map(postProcessMathContent),
+            };
+          } else if (event.type === 'answer') {
+            processedEvent = { ...event, answer: postProcessMathContent(event.answer) };
+          } else if (event.type === 'knowledge') {
+            processedEvent = {
+              ...event,
+              points: event.points.map((p) => ({
+                ...p,
+                name: postProcessMathContent(p.name),
+                description: postProcessMathContent(p.description),
+              })),
+            };
+          } else if (event.type === 'similar') {
+            processedEvent = {
+              ...event,
+              questions: event.questions.map((q) => ({
+                ...q,
+                problem: postProcessMathContent(q.problem),
+              })),
+            };
+          }
+          await write(formatStreamEvent(processedEvent));
+          if (processedEvent.type === 'answer') { hasAnswer = true; streamedAnswer = processedEvent.answer; }
+          if (processedEvent.type === 'step') streamedSteps.push({ label: processedEvent.label, content: processedEvent.content, keyPoints: processedEvent.keyPoints });
+          if (processedEvent.type === 'knowledge') { hasKnowledge = true; streamedKnowledge = processedEvent.points; }
+          if (processedEvent.type === 'similar') { hasSimilar = true; streamedSimilar = processedEvent.questions; }
         }
 
         // Phase 4: Fill in any missing sections
@@ -141,7 +220,12 @@ export async function POST(req: Request) {
           await write(formatSSEEvent('answer', { answer: '' }));
         }
         if (!hasKnowledge) {
-          await write(formatSSEEvent('knowledge', { points: [] }));
+          // LLM didn't return knowledge points — generate them separately
+          const kp = streamedAnswer
+            ? await generateKnowledgePoints(problem, streamedAnswer)
+            : [];
+          streamedKnowledge = kp;
+          await write(formatSSEEvent('knowledge', { points: kp }));
         }
         if (!hasSimilar) {
           await write(formatSSEEvent('similar', { questions: [] }));
@@ -163,8 +247,8 @@ export async function POST(req: Request) {
               problemText: problem,
               problemImage: problemImage ?? undefined,
               answer: streamedAnswer,
-              steps: streamedSteps,
-              knowledgePoints: [],
+              knowledgePoints: streamedKnowledge,
+              similarQuestions: streamedSimilar,
               agentId: agentType,
               solvedAt: Date.now(),
               verified: false,

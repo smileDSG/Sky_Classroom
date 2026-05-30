@@ -43,11 +43,11 @@ export async function directorNode(
     return handleSingleAgent(state, write);
   }
 
-  // Multi agent: fast-path for first turn with trigger
-  if (state.turnCount === 0 && state.triggerAgentId) {
+  // Multi agent: fast-path when triggerAgentId is set (user initiated Q&A)
+  if (state.triggerAgentId) {
     const triggerId = state.triggerAgentId;
     if (state.availableAgentIds.includes(triggerId)) {
-      log.info(`[Director] First turn: dispatching trigger agent "${triggerId}"`);
+      log.info(`[Director] User triggered: dispatching agent "${triggerId}"`);
       write({ type: 'thinking', data: { stage: 'agent_loading', agentId: triggerId } });
       return { currentAgentId: triggerId, shouldEnd: false };
     }

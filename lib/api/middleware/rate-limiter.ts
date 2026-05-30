@@ -41,6 +41,20 @@ interface TokenBucket {
 
 const buckets = new Map<string, TokenBucket>();
 
+// Cleanup: remove stale buckets every 60s (idle > 5 min)
+const CLEANUP_INTERVAL_MS = 60_000;
+const MAX_BUCKET_IDLE_MS = 300_000;
+const MAX_BUCKETS = 10_000;
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of buckets.entries()) {
+    if (now - bucket.lastRefill > MAX_BUCKET_IDLE_MS) {
+      buckets.delete(key);
+    }
+  }
+}, CLEANUP_INTERVAL_MS);
+
 /**
  * Create a token-bucket rate limiter.
  */
@@ -55,6 +69,15 @@ export function createRateLimiter(config: RateLimitConfig) {
       const bucketKey = `${config.prefix ?? ''}${key}`;
       const now = Date.now();
       let bucket = buckets.get(bucketKey);
+
+      // Capacity protection: emergency cleanup if too many buckets
+      if (buckets.size > MAX_BUCKETS) {
+        const entries = Array.from(buckets.entries());
+        entries
+          .sort((a, b) => a[1].lastRefill - b[1].lastRefill)
+          .slice(0, Math.floor(MAX_BUCKETS / 2))
+          .forEach(([k]) => buckets.delete(k));
+      }
 
       if (!bucket) {
         bucket = {

@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Settings,
   ChevronDown,
   ChevronUp,
   Pencil,
@@ -12,6 +11,7 @@ import {
   LogOut,
   Sparkles,
   Crown,
+  User,
 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
@@ -30,10 +30,8 @@ function isCustomAvatar(src: string) {
 
 // 浮动用户卡片组件 - 全新设计
 export function FloatingUserCard({
-  onSettingsOpen,
   onUpgradeOpen,
 }: {
-  onSettingsOpen: () => void;
   onUpgradeOpen: () => void;
 }) {
   const { t } = useI18n();
@@ -383,16 +381,16 @@ export function FloatingUserCard({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={onSettingsOpen}
-                        className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
+                        onClick={() => { setIsExpanded(false); router.push('/account'); }}
+                        className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
                       >
-                        <Settings className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                        <User className="w-5 h-5 text-slate-600 dark:text-slate-300" />
                         <span className="text-xs text-slate-600 dark:text-slate-300">
-                          设置
+                          个人中心
                         </span>
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent>打开设置</TooltipContent>
+                    <TooltipContent>个人中心</TooltipContent>
                   </Tooltip>
 
                   {!isPremium && (

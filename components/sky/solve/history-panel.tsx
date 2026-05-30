@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { MathRenderer } from './math-renderer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -24,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { listQuestionBankEntries, deleteQuestionBankEntry } from '@/lib/solve/question-bank';
 import type { QuestionBankEntry } from '@/lib/solve/types';
 
 interface HistoryPanelProps {
@@ -32,24 +30,6 @@ interface HistoryPanelProps {
   onClose?: () => void;
   className?: string;
 }
-
-function timeAgo(ts: number): string {
-  const seconds = Math.floor((Date.now() - ts) / 1000);
-  if (seconds < 60) return '刚刚';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} 分钟前`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} 小时前`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} 天前`;
-  return new Date(ts).toLocaleDateString('zh-CN');
-}
-
-const AGENT_LABELS: Record<string, string> = {
-  universal: '通用',
-  science: '理科',
-  humanities: '文科',
-};
 
 export function HistoryPanel({ onLoad, onClose, className }: HistoryPanelProps) {
   const [entries, setEntries] = useState<QuestionBankEntry[]>([]);
@@ -61,8 +41,9 @@ export function HistoryPanel({ onLoad, onClose, className }: HistoryPanelProps) 
     setLoading(true);
     setError(null);
     try {
-      const result = await listQuestionBankEntries(50);
-      setEntries(result);
+      const res = await fetch('/api/sky/question-bank?limit=50');
+      const data = await res.json();
+      setEntries(data?.data?.questions || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : '加载历史记录失败');
     } finally {
@@ -77,7 +58,7 @@ export function HistoryPanel({ onLoad, onClose, className }: HistoryPanelProps) 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
-      await deleteQuestionBankEntry(deleteTarget);
+      await fetch(`/api/sky/question-bank?id=${deleteTarget}`, { method: 'DELETE' });
       setEntries((prev) => prev.filter((e) => e.id !== deleteTarget));
     } catch (e) {
       setError(e instanceof Error ? e.message : '删除失败');
@@ -126,49 +107,29 @@ export function HistoryPanel({ onLoad, onClose, className }: HistoryPanelProps) 
               <p className="text-xs text-muted-foreground">解题成功后会自动保存到题库</p>
             </div>
           ) : (
-            <ScrollArea className="h-[600px]">
+            <ScrollArea className="h-[400px]">
               <div className="divide-y">
                 {entries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="group flex items-start gap-3 p-4 transition-colors hover:bg-muted/30 cursor-pointer"
+                    className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/30 cursor-pointer"
                     onClick={() => onLoad?.(entry)}
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/40">
-                      <BookOpen className="h-4 w-4 text-sky-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-snug line-clamp-2">
-                        <MathRenderer content={entry.problemText} />
-                      </p>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          答案：<MathRenderer content={entry.answer} />
-                        </span>
-                        {entry.agentId && (
-                          <Badge variant="secondary" className="text-xs">
-                            {AGENT_LABELS[entry.agentId] ?? entry.agentId}
-                          </Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {timeAgo(entry.solvedAt)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteTarget(entry.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    </div>
+                    <p className="flex-1 min-w-0 text-sm leading-snug line-clamp-1">
+                      <MathRenderer content={entry.problemText} />
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteTarget(entry.id);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </div>
                 ))}
               </div>

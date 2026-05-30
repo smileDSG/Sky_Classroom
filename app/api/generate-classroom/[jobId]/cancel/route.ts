@@ -2,9 +2,9 @@ import { type NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import {
   isValidClassroomJobId,
-  readClassroomGenerationJob,
-  markClassroomGenerationJobCancelled,
-} from '@/lib/server/classroom-job-store';
+  readClassroomGenerationJobHybrid,
+  markClassroomGenerationJobCancelledHybrid,
+} from '@/lib/server/classroom-job-store-hybrid';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ClassroomCancel API');
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
       return apiError('INVALID_REQUEST', 400, 'Invalid classroom generation job id');
     }
 
-    const job = await readClassroomGenerationJob(jobId);
+    const job = await readClassroomGenerationJobHybrid(jobId);
     if (!job) {
       return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
     }
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
       return apiError('INVALID_REQUEST', 409, 'Job is already in a terminal state');
     }
 
-    await markClassroomGenerationJobCancelled(jobId);
+    await markClassroomGenerationJobCancelledHybrid(jobId);
 
     return apiSuccess({ jobId, status: 'cancelled' });
   } catch (error) {
