@@ -175,7 +175,7 @@ export default function SlidesPage() {
 
         useTaskStore.getState().addTask({
           id: jobId,
-          type: 'slides',
+          type: 'pptx',
           label: `PPT课件: ${topic.slice(0, 20)}${topic.length > 20 ? '...' : ''}`,
           status: 'running',
           progress: 0,
@@ -270,7 +270,7 @@ export default function SlidesPage() {
   useEffect(() => {
     const store = useTaskStore.getState();
     const tasks = Object.values(store.tasks).filter(
-      (t) => t.type === 'slides' && t.status !== 'failed'
+      (t) => t.type === 'pptx' && t.status !== 'failed'
     );
     if (tasks.length === 0) return;
     const task = tasks[tasks.length - 1];

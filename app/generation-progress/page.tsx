@@ -252,18 +252,22 @@ function GenerationProgressContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white dark:from-slate-950 dark:to-slate-900">
+      {/* Back button */}
+      <div className="fixed top-4 left-4 z-50">
+        <button
+          onClick={() => {
+            router.push('/');
+          }}
+          className="flex items-center gap-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all duration-200"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          返回首页
+        </button>
+      </div>
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <button
-            onClick={() => {
-              router.push('/');
-            }}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            返回首页
-          </button>
+          <div className="w-20" />
           <h1 className="text-xl font-bold">课堂生成</h1>
           <div className="w-20" />
         </div>
@@ -423,6 +427,13 @@ function GenerationProgressContent() {
 
               <div className="mt-4 space-y-2">
                 <button
+                  onClick={() => router.push('/')}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all duration-200"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  返回首页
+                </button>
+                <button
                   onClick={handleCancel}
                   disabled={cancelling}
                   className="w-full rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 disabled:opacity-50 transition-colors"
@@ -431,8 +442,8 @@ function GenerationProgressContent() {
                 </button>
               </div>
 
-              <p className="mt-4 text-center text-xs text-muted-foreground">
-                可返回首页，后台继续生成
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                后台继续生成，返回后可查看进度
               </p>
             </div>
 

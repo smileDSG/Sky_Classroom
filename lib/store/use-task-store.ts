@@ -8,7 +8,7 @@
 
 import { create } from 'zustand';
 
-export type TaskType = 'solve' | 'slides' | 'general' | 'quiz' | 'write' | 'translate' | 'memory';
+export type TaskType = 'solve' | 'slides' | 'pptx' | 'general' | 'quiz' | 'write' | 'translate' | 'memory';
 export type TaskStatus = 'running' | 'completed' | 'failed';
 
 export interface BackgroundTask {
@@ -47,10 +47,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   dismissedIds: new Set<string>(),
   activeSolveTaskId: null,
 
-  addTask: (task) =>
+  addTask: (task) => {
+    console.log('[TaskStore] addTask:', { id: task.id, type: task.type, status: task.status });
     set((s) => ({
       tasks: { ...s.tasks, [task.id]: { ...task, updatedAt: Date.now() } },
-    })),
+    }));
+  },
 
   updateTask: (id, update) =>
     set((s) => {
@@ -64,14 +66,16 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       };
     }),
 
-  removeTask: (id) =>
+  removeTask: (id) => {
+    console.log('[TaskStore] removeTask:', id);
     set((s) => {
       const next = { ...s.tasks };
       delete next[id];
       const dismissed = new Set(s.dismissedIds);
       dismissed.delete(id);
       return { tasks: next, dismissedIds: dismissed };
-    }),
+    });
+  },
 
   dismissTask: (id) =>
     set((s) => {

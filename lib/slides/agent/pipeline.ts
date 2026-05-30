@@ -15,6 +15,7 @@ import { generatePreviewFromPptx } from '../pptx-preview';
 import { createLogger } from '@/lib/logger';
 import type { LanguageModel } from 'ai';
 import type { DesignDNA } from './design-dna';
+import type { PipelineStage } from './slides-job-store';
 
 const log = createLogger('Pipeline');
 
@@ -28,115 +29,40 @@ export interface GenerateOptions {
   designDNA: DesignDNA;
   languageModel: LanguageModel;
   jobId: string;
+  onProgress?: (progress: { stage: PipelineStage; progress: number; message: string; totalPages?: number }) => Promise<void>;
+  onComplete?: (result: { pptxUrl: string; fileName: string; previewImages?: string[]; qaReport?: unknown }) => Promise<void>;
 }
-
-export type PipelineStage =
-  | 'planning'
-  | 'sections_generating'
-  | 'pages_designing'
-  | 'merging'
-  | 'qa_reviewing'
-  | 'repairing'
-  | 'done';
-
-export interface JobState {
-  jobId: string;
-  stage: PipelineStage;
-  message: string;
-  progress: number;
-  totalPages: number;
-  pptxUrl?: string;
-  fileName?: string;
-  previewImages?: string[];
-  qaReport?: { totalScore: number; pass: boolean; issues: Array<{ pageNum: number; severity: string; type: string; layer: string; detail: string }> };
-  error?: string;
-}
-
-// ── Job Manager ──────────────────────────────────────────────────────
-
-const jobs = new Map<string, JobState>();
-
-export function createJob(jobId: string, totalPages?: number): JobState {
-  const state: JobState = {
-    jobId,
-    stage: 'planning',
-    message: '正在规划课程大纲...',
-    progress: 0,
-    totalPages: totalPages || 0,
-  };
-  jobs.set(jobId, state);
-  return state;
-}
-
-export function getJob(jobId: string): JobState | undefined {
-  return jobs.get(jobId);
-}
-
-export function updateJob(jobId: string, update: Partial<JobState>) {
-  const job = jobs.get(jobId);
-  if (job) Object.assign(job, update);
-}
-
-// Add completed timestamp tracking
-const _doneTimestamps = new Map<string, number>();
-
-// Background cleanup: remove jobs that have been done for > 10 min
-setInterval(() => {
-  const cutoff = Date.now() - 10 * 60 * 1000;
-  for (const [id, job] of jobs) {
-    if (job.stage === 'done') {
-      const doneAt = _doneTimestamps.get(id);
-      if (!doneAt) {
-        _doneTimestamps.set(id, Date.now()); // First time seeing it done, skip
-      } else if (doneAt < cutoff) {
-        jobs.delete(id);
-        _doneTimestamps.delete(id);
-      }
-    }
-    if (job.stage === 'done' && job.error) {
-      // Error jobs: keep for 2 min
-      const errAt = _doneTimestamps.get(id);
-      if (!errAt) _doneTimestamps.set(id, Date.now());
-      else if (errAt < Date.now() - 2 * 60 * 1000) {
-        jobs.delete(id);
-        _doneTimestamps.delete(id);
-      }
-    }
-  }
-}, 60_000);
 
 // ── Pipeline ─────────────────────────────────────────────────────────
 
 export async function runPipeline(options: GenerateOptions): Promise<void> {
-  const { topic, difficulty, minPages, maxPages, designDNA, languageModel, jobId } = options;
+  const { topic, difficulty, minPages, maxPages, designDNA, languageModel, jobId, onProgress, onComplete } = options;
 
   try {
     const publicDir = path.resolve(process.cwd(), 'public');
     const outputDir = path.join(publicDir, 'temp', 'pptx');
     await fs.mkdir(outputDir, { recursive: true });
 
-    // ══ Step 1: Planning ══
-    updateJob(jobId, { stage: 'planning', message: '正在规划课程大纲...', progress: 5 });
-    // Heartbeat: slowly increment progress while LLM runs
-    const planningHeartbeat = setInterval(() => {
-      const job = getJob(jobId);
-      if (job && job.stage === 'planning' && job.progress < 13) {
-        updateJob(jobId, { progress: job.progress + 1 });
+    // Helper to report progress
+    const reportProgress = async (stage: PipelineStage, progress: number, message: string, totalPages?: number) => {
+      if (onProgress) {
+        await onProgress({ stage, progress, message, totalPages });
       }
-    }, 15000); // +1% every 15s
+    };
+
+    // ══ Step 1: Planning ══
+    await reportProgress('planning', 5, '正在规划课程大纲...');
     const planResult = await planOutline(topic, difficulty, minPages, maxPages, designDNA, languageModel);
-    clearInterval(planningHeartbeat);
 
     if (!planResult.success || !planResult.outline) {
-      updateJob(jobId, { stage: 'done', progress: 0, error: planResult.error || '大纲规划失败' });
-      return;
+      throw new Error(planResult.error || '大纲规划失败');
     }
 
     const outline = planResult.outline;
-    updateJob(jobId, { stage: 'planning', message: `大纲规划完成，共 ${outline.sections.length} 章节 ${planResult.totalPages} 页`, progress: 15, totalPages: planResult.totalPages });
+    await reportProgress('planning', 15, `大纲规划完成，共 ${outline.sections.length} 章节 ${planResult.totalPages} 页`, planResult.totalPages);
 
     // ══ Step 2+3: Section Content → Page Design (streaming pipeline) ══
-    updateJob(jobId, { stage: 'sections_generating', message: '正在生成章节内容...', progress: 20 });
+    await reportProgress('sections_generating', 20, '正在生成章节内容...');
 
     const totalPages = outline.sections.reduce((sum, s) => sum + s.pages.length, 0);
     let completedSections = 0;
@@ -145,10 +71,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
     const sectionDesignPromises = outline.sections.map(async (section, idx) => {
       const result = await generateSectionContent(section, topic, difficulty, designDNA, languageModel);
       completedSections++;
-      updateJob(jobId, {
-        message: `第 ${completedSections}/${outline.sections.length} 章内容生成${result.success ? '完毕' : '失败'}...`,
-        progress: 20 + Math.round(completedSections / outline.sections.length * 20),
-      });
+      await reportProgress('sections_generating', 20 + Math.round(completedSections / outline.sections.length * 20), `第 ${completedSections}/${outline.sections.length} 章内容生成${result.success ? '完毕' : '失败'}...`);
 
       // Use fallback if section content generation failed
       const sectionOutput = result.success && result.output
@@ -204,10 +127,10 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
       .flatMap((r) => r.sectionInstructions)
       .sort((a, b) => a.pageNum - b.pageNum);
 
-    updateJob(jobId, { stage: 'merging', message: '正在合并课件...', progress: 75 });
+    await reportProgress('merging', 75, '正在合并课件...');
 
     // ══ Step 4: QA + Repair Loop ══
-    updateJob(jobId, { stage: 'qa_reviewing', message: '正在质检课件质量...', progress: 80 });
+    await reportProgress('qa_reviewing', 80, '正在质检课件质量...');
 
     const { runQA } = await import('./qa-agent');
     const qaReport = await runQA(topic, difficulty, outline, allContent, allPages.length, languageModel);
@@ -215,7 +138,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
     let finalQAReport = qaReport;
 
     if (!qaReport.pass) {
-      updateJob(jobId, { stage: 'repairing', message: `发现 ${qaReport.issues.length} 个问题，正在自动修复...`, progress: 82 });
+      await reportProgress('repairing', 82, `发现 ${qaReport.issues.length} 个问题，正在自动修复...`);
 
       // Repair Round 1: fix all issues concurrently
       const repairPages = new Set(qaReport.issues.map((i) => i.pageNum));
@@ -260,7 +183,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         }
       }
 
-      updateJob(jobId, { message: '修复完成，重新质检中...', progress: 90 });
+      await reportProgress('repairing', 90, '修复完成，重新质检中...');
 
       // Re-run QA after round 1
       const qaAfterR1 = await runQA(topic, difficulty, outline, allContent, allPages.length, languageModel);
@@ -282,7 +205,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         const finalQA = await runQA(topic, difficulty, outline, allContent, allPages.length, languageModel);
         finalQAReport = finalQA;
         if (!finalQA.pass) {
-          updateJob(jobId, { message: '部分页面问题已降级处理', progress: 95 });
+          await reportProgress('repairing', 95, '部分页面问题已降级处理');
         }
       }
     }
@@ -307,21 +230,20 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
     const pptxUrl = `/temp/pptx/${fileName}`;
 
     // ══ Step 5: Preview PNGs — per-slide via python-pptx + LibreOffice ══
-    updateJob(jobId, { stage: 'merging', message: '正在生成预览图...', progress: 85 });
+    await reportProgress('merging', 85, '正在生成预览图...');
 
     const previewResult = await generatePreviewFromPptx(pptxUrl);
     const previewImages: string[] = previewResult.success ? previewResult.slideImages : [];
 
     // ══ Done ══
-    updateJob(jobId, {
-      stage: 'done',
-      progress: 100,
-      message: '课件生成完毕',
-      pptxUrl,
-      fileName,
-      previewImages: previewImages.length > 0 ? previewImages : undefined,
-      qaReport: finalQAReport || qaReport,
-    });
+    if (onComplete) {
+      await onComplete({
+        pptxUrl,
+        fileName,
+        previewImages: previewImages.length > 0 ? previewImages : undefined,
+        qaReport: finalQAReport || qaReport,
+      });
+    }
 
     log.info(`Pipeline complete: ${pptxUrl} (${instructions.length} pages)`);
 
@@ -352,6 +274,6 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.error(`Pipeline failed for job ${jobId}: ${msg}`);
-    updateJob(jobId, { stage: 'done', progress: 0, error: msg });
+    throw err;
   }
 }
