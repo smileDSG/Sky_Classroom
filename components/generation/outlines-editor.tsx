@@ -717,7 +717,7 @@ function TypePill({
             >
               <span className="flex items-center gap-2">
                 <span className={cn('size-2 rounded-full', optionTheme.accent)} />
-                {t(`generation.sceneType${capitalize(option)}`)}
+                {option === 'slide' ? '幻灯片' : option === 'quiz' ? '测验' : option === 'interactive' ? '互动' : '项目式学习'}
               </span>
               {option === type && <Check className="size-3.5 text-muted-foreground" />}
             </DropdownMenuItem>
@@ -995,9 +995,9 @@ function QuizConfigDisclosure({
           <div className="flex gap-1">
             {(
               [
-                ['single', 'generation.quizTypeSingle'],
-                ['multiple', 'generation.quizTypeMultiple'],
-                ['text', 'generation.quizTypeText'],
+                ['single', '单选'],
+                ['multiple', '多选'],
+                ['text', '文本'],
               ] as const
             ).map(([type, labelKey]) => {
               const current = config.questionTypes ?? ['single'];
@@ -1025,7 +1025,7 @@ function QuizConfigDisclosure({
                     isOnlySelected && 'cursor-not-allowed opacity-90',
                   )}
                 >
-                  {t(labelKey)}
+                  {labelKey}
                 </button>
               );
             })}

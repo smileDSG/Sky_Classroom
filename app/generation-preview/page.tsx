@@ -1305,14 +1305,14 @@ function GenerationPreviewContent() {
                         ? '生成失败'
                         : isComplete
                           ? '生成完成！'
-                          : t(activeStep.title)}
+                          : activeStep.title}
                     </h2>
                     <p className="text-muted-foreground text-base">
                       {error
                         ? error
                         : isComplete
                           ? '你的个性化AI学习环境已成功生成。'
-                          : statusMessage || t(activeStep.description)}
+                          : statusMessage || activeStep.description}
                     </p>
                   </motion.div>
                 </AnimatePresence>
