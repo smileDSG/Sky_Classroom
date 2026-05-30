@@ -156,7 +156,11 @@ export function SimilarProblems({
                             参考答案
                           </div>
                           <div className="mt-1 text-sm text-amber-700 dark:text-amber-300">
-                            点击查看解析后可查看完整答案
+                            {question.answer ? (
+                              <MathRenderer content={question.answer} />
+                            ) : (
+                              '点击"解题"按钮查看完整解析'
+                            )}
                           </div>
                         </div>
                       )}

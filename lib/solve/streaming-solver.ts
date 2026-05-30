@@ -140,7 +140,7 @@ export interface KnowledgeEvent {
 
 export interface SimilarEvent {
   type: 'similar';
-  questions: { problem: string; difficulty: number; knowledgePoint: string }[];
+  questions: { problem: string; difficulty: number; knowledgePoint: string; answer?: string }[];
 }
 
 export interface PhaseEvent {
@@ -367,6 +367,7 @@ class StepStreamParser {
             problem: cleanLatexContent(q.problem || ''),
             difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
             knowledgePoint: cleanLatexContent(q.knowledgePoint || ''),
+            ...(q.answer ? { answer: cleanLatexContent(q.answer) } : {}),
           }));
           events.push({ type: 'similar', questions: this.similar });
         }
@@ -448,6 +449,7 @@ class StepStreamParser {
           problem: q.problem || '',
           difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
           knowledgePoint: q.knowledgePoint || '',
+          ...(q.answer ? { answer: q.answer } : {}),
         }));
       }
     } catch {
@@ -588,6 +590,7 @@ async function* fallbackSolve(
           problem: cleanLatexContent(q.problem || ''),
           difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
           knowledgePoint: cleanLatexContent(q.knowledgePoint || ''),
+          ...(q.answer ? { answer: cleanLatexContent(q.answer) } : {}),
         })),
       };
     }

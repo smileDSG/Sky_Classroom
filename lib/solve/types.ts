@@ -92,6 +92,7 @@ export interface FourPartOutput {
     problem: string;
     difficulty: number;
     knowledgePoint: string;
+    answer?: string;
   }[];
 }
 
@@ -113,7 +114,7 @@ export interface QuestionBankEntry {
   problemImage?: string;
   answer: string;
   knowledgePoints: { name: string; description: string; difficulty: string }[];
-  similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string }[];
+  similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string; answer?: string }[];
   agentId: SolverAgentType;
   solvedAt: number;  // Unix timestamp ms
   verified: boolean;

@@ -45,6 +45,11 @@ export function ClassroomJobPoller() {
         for (const entry of entries) {
           try {
             const data = await fetchClassroomJob(entry.jobId);
+            if (!data) {
+              removeActiveJobEntry(entry.jobId);
+              navigatedJobsRef.current.delete(entry.jobId);
+              continue;
+            }
 
             if (data.status === 'cancelled' || data.status === 'failed') {
               removeActiveJobEntry(entry.jobId);

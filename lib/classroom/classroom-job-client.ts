@@ -18,11 +18,22 @@ export interface ClassroomJobState {
 }
 
 export async function submitClassroomJob(body: Record<string, unknown>): Promise<string> {
-  const res = await fetch('/api/generate-classroom', {
+  const opts: RequestInit = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  });
+    credentials: 'include',
+  };
+
+  let res = await fetch('/api/generate-classroom', opts);
+
+  // If 401, the fetch interceptor is already refreshing the token.
+  // Wait briefly then retry once.
+  if (res.status === 401) {
+    await new Promise((r) => setTimeout(r, 600));
+    res = await fetch('/api/generate-classroom', opts);
+  }
+
   if (!res.ok) {
     let detail = '';
     try {
@@ -37,9 +48,10 @@ export async function submitClassroomJob(body: Record<string, unknown>): Promise
   return json.data?.jobId ?? json.jobId;
 }
 
-export async function fetchClassroomJob(jobId: string): Promise<ClassroomJobState> {
+export async function fetchClassroomJob(jobId: string): Promise<ClassroomJobState | null> {
   const res = await fetch(`/api/generate-classroom/${jobId}`);
   if (!res.ok) {
+    if (res.status === 404) return null;
     let detail = '';
     try {
       const body = await res.json();

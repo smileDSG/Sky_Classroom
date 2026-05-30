@@ -25,7 +25,11 @@ export async function getServerStorage(): Promise<StorageProvider> {
       _cached = provider;
       return provider;
     }
-    log.warn('MySQL configured but unavailable');
+    log.error(
+      `MySQL configured (database: ${process.env.MYSQL_DATABASE}) but connection failed. ` +
+      `Check: MySQL is running, host=${process.env.MYSQL_HOST || 'localhost'}:${process.env.MYSQL_PORT || 3306}, ` +
+      `user=${process.env.MYSQL_USER || 'root'}. Falling back to next provider.`
+    );
   }
 
   // Try Supabase
@@ -36,10 +40,14 @@ export async function getServerStorage(): Promise<StorageProvider> {
       _cached = provider;
       return provider;
     }
-    log.warn('Supabase configured but unavailable');
+    log.error('Supabase configured but unavailable');
   }
 
-  log.warn('No persistent storage configured — using in-memory (data will NOT persist across restarts)');
+  log.error(
+    '!!! NO PERSISTENT STORAGE AVAILABLE — falling back to in-memory. ' +
+    'Data (check-ins, mistakes, etc.) will be LOST on server restart. ' +
+    'Fix: Start MySQL and ensure it is accessible, or configure SUPABASE_URL.'
+  );
   _cached = new MemoryStorageProvider();
   return _cached;
 }

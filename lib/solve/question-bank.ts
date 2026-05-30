@@ -6,12 +6,12 @@
  */
 
 import type { QuestionBankEntry } from './types';
-import { hashProblemText, textSimilarity } from './question-bank-utils';
+import { hashProblemText } from './question-bank-utils';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('QuestionBank');
 
-export { hashProblemText, textSimilarity };
+export { hashProblemText };
 
 // ── Core operations ─────────────────────────────────────────────────
 
@@ -35,21 +35,23 @@ export async function findSimilarQuestions(
       return [];
     }
 
+    // Use the vector search score directly instead of computing textSimilarity again.
+    // The KB uses TF-IDF cosine similarity — adjust threshold accordingly.
+    // Old bigram Jaccard threshold 0.85 ≈ cosine threshold ~0.60 for TF-IDF.
+    const vectorThreshold = Math.max(threshold - 0.25, 0.3);
     const matches: QuestionBankEntry[] = [];
     for (const result of results) {
+      if (result.score < vectorThreshold) continue;
       try {
         const entry = JSON.parse(result.chunk.content) as QuestionBankEntry;
-        const score = textSimilarity(problemText, entry.problemText);
-        if (score >= threshold) {
-          matches.push({ ...entry, _similarity: score });
-        }
+        matches.push({ ...entry, _similarity: result.score });
       } catch {
         // skip malformed chunks
       }
     }
 
     matches.sort((a, b) => ((b as any)._similarity || 0) - ((a as any)._similarity || 0));
-    log.info(`[QuestionBank] Found ${matches.length} matches (threshold=${threshold})`);
+    log.info(`[QuestionBank] Found ${matches.length} matches (vectorThreshold=${vectorThreshold.toFixed(2)})`);
     return matches;
   } catch (error) {
     log.error('[QuestionBank] findSimilarQuestions failed:', error);
@@ -170,5 +172,81 @@ export async function isProblemInBank(problemText: string): Promise<boolean> {
     return hasSource(hash);
   } catch {
     return false;
+  }
+}
+
+/**
+ * Find similar questions by knowledge point overlap.
+ *
+ * Searches the question bank for entries that share at least one knowledge
+ * point with the current problem. Returns real questions with answers.
+ *
+ * @param currentProblemText - The current problem (used as search query + exclusion)
+ * @param knowledgePoints - Knowledge points from the current problem's solution
+ * @param excludeHash - Hash of the current problem to exclude from results
+ * @param limit - Max number of similar questions to return
+ */
+export async function findSimilarByKnowledgePoints(
+  currentProblemText: string,
+  knowledgePoints: { name: string }[],
+  excludeHash: string,
+  limit: number = 3,
+): Promise<{ problem: string; difficulty: number; knowledgePoint: string; answer: string }[]> {
+  if (knowledgePoints.length === 0) return [];
+
+  try {
+    const { search } = await import('@/lib/knowledge-base/kb-manager');
+
+    // Build a query that combines problem text + knowledge point names for better recall
+    const kpNames = knowledgePoints.map((k) => k.name).join(' ');
+    const query = `${currentProblemText} ${kpNames}`;
+
+    const results = await search({
+      kbType: 'solve',
+      query,
+      topK: 20,
+      threshold: 0.01,
+    });
+
+    if (results.length === 0) return [];
+
+    const currentKpNames = new Set(knowledgePoints.map((k) => k.name));
+    const seen = new Set<string>();
+    const candidates: { problem: string; difficulty: number; knowledgePoint: string; answer: string }[] = [];
+
+    for (const result of results) {
+      try {
+        const entry = JSON.parse(result.chunk.content) as QuestionBankEntry;
+
+        // Skip the current problem itself
+        if (entry.problemHash === excludeHash) continue;
+        if (seen.has(entry.problemHash)) continue;
+        seen.add(entry.problemHash);
+
+        // Check knowledge point overlap
+        const entryKpNames = (entry.knowledgePoints || []).map((k) => k.name);
+        const overlap = entryKpNames.filter((name) => currentKpNames.has(name));
+        if (overlap.length === 0) continue;
+
+        candidates.push({
+          problem: entry.problemText,
+          // Estimate difficulty from knowledge points if available, otherwise default
+          difficulty: entry.knowledgePoints?.[0]?.difficulty === 'easy' ? 3
+            : entry.knowledgePoints?.[0]?.difficulty === 'hard' ? 7 : 5,
+          knowledgePoint: overlap[0], // Use the first overlapping knowledge point
+          answer: entry.answer,
+        });
+
+        if (candidates.length >= limit) break;
+      } catch {
+        // skip malformed
+      }
+    }
+
+    log.info(`[QuestionBank] findSimilarByKnowledgePoints: ${candidates.length} results for KPs [${kpNames}]`);
+    return candidates;
+  } catch (error) {
+    log.error('[QuestionBank] findSimilarByKnowledgePoints failed:', error);
+    return [];
   }
 }

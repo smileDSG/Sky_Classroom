@@ -91,6 +91,7 @@ interface RoundtableProps {
   readonly onPresentationInteractionChange?: (active: boolean) => void;
   readonly fullscreenContainerRef?: React.RefObject<HTMLDivElement | null>;
   readonly onAskTeacher?: () => void;
+  readonly isAskDialogOpen?: boolean;
 }
 
 export function Roundtable({
@@ -140,6 +141,7 @@ export function Roundtable({
   onPresentationInteractionChange,
   fullscreenContainerRef,
   onAskTeacher,
+  isAskDialogOpen,
 }: RoundtableProps) {
   const { t } = useI18n();
   const ttsMuted = useSettingsStore((s) => s.ttsMuted);
@@ -583,7 +585,7 @@ export function Roundtable({
           speakingAgentId={popupSpeakingAgentId}
           sourceText={sourceText}
           participants={stripParticipants}
-          dismissed={dismissedSpeaker === popupSpeakingAgentId || isInputOpen || isVoiceOpen}
+          dismissed={dismissedSpeaker === popupSpeakingAgentId || isInputOpen || isVoiceOpen || isAskDialogOpen}
           onDismiss={() => setDismissedSpeaker(popupSpeakingAgentId ?? null)}
           container={fullscreenContainerRef?.current}
         />
@@ -932,7 +934,7 @@ export function Roundtable({
           speakingAgentId={popupSpeakingAgentId}
           sourceText={sourceText}
           participants={stripParticipants}
-          dismissed={dismissedSpeaker === popupSpeakingAgentId || isInputOpen || isVoiceOpen}
+          dismissed={dismissedSpeaker === popupSpeakingAgentId || isInputOpen || isVoiceOpen || isAskDialogOpen}
           onDismiss={() => setDismissedSpeaker(popupSpeakingAgentId ?? null)}
           container={fullscreenContainerRef?.current}
         />
@@ -971,9 +973,9 @@ export function Roundtable({
                   key={bubbleKey}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{
-                    opacity: isInputOpen || isVoiceOpen ? 0.4 : 1,
+                    opacity: isInputOpen || isVoiceOpen || isAskDialogOpen ? 0.4 : 1,
                     y: 0,
-                    filter: isInputOpen || isVoiceOpen ? 'blur(1px) grayscale(0.2)' : 'none',
+                    filter: isInputOpen || isVoiceOpen || isAskDialogOpen ? 'blur(1px) grayscale(0.2)' : 'none',
                   }}
                   exit={{ opacity: 0, y: -8, transition: { duration: 0.12 } }}
                   transition={{ duration: 0.2, ease: [0.21, 1, 0.36, 1] }}
