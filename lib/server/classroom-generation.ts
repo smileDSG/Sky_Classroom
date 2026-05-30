@@ -474,8 +474,8 @@ export async function generateClassroom(
     totalScenes: outlines.length,
   });
 
-  // Phase A: Generate all scene content + actions in parallel (LLM-bound)
-  const sceneResults = await pMap(
+  // Phase A: Generate all scene content in parallel
+  const contentResults = await pMap(
     outlines,
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
@@ -485,14 +485,29 @@ export async function generateClassroom(
           log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
           return null;
         }
-        const actions = await generateSceneActions(safeOutline, content, aiCall, {
+        return { outline: safeOutline, content, index };
+      } catch (err) {
+        log.error(`Scene "${safeOutline.title}" content generation error:`, err);
+        return null;
+      }
+    },
+    { concurrency: GENERATION_CONCURRENCY },
+  );
+
+  // Phase B: Generate all scene actions in parallel (content already available)
+  const sceneResults = await pMap(
+    contentResults,
+    async (result) => {
+      if (!result) return null;
+      try {
+        const actions = await generateSceneActions(result.outline, result.content, aiCall, {
           agents,
           languageDirective,
         });
-        log.info(`Scene "${safeOutline.title}": ${actions.length} actions`);
-        return { outline: safeOutline, content, actions, index };
+        log.info(`Scene "${result.outline.title}": ${actions.length} actions`);
+        return { outline: result.outline, content: result.content, actions, index: result.index };
       } catch (err) {
-        log.error(`Scene "${safeOutline.title}" generation error:`, err);
+        log.error(`Scene "${result.outline.title}" action generation error:`, err);
         return null;
       }
     },
@@ -667,8 +682,8 @@ export async function generateClassroomContinue(
     totalScenes: outlines.length,
   });
 
-  // Phase A: Generate all scene content + actions in parallel (LLM-bound)
-  const sceneResults = await pMap(
+  // Phase A: Generate all scene content in parallel
+  const contentResults = await pMap(
     outlines,
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
@@ -678,13 +693,28 @@ export async function generateClassroomContinue(
           log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
           return null;
         }
-        const actions = await generateSceneActions(safeOutline, content, aiCall, {
+        return { outline: safeOutline, content, index };
+      } catch (err) {
+        log.error(`Scene "${safeOutline.title}" content generation error:`, err);
+        return null;
+      }
+    },
+    { concurrency: GENERATION_CONCURRENCY },
+  );
+
+  // Phase B: Generate all scene actions in parallel (content already available)
+  const sceneResults = await pMap(
+    contentResults,
+    async (result) => {
+      if (!result) return null;
+      try {
+        const actions = await generateSceneActions(result.outline, result.content, aiCall, {
           agents,
           languageDirective,
         });
-        return { outline: safeOutline, content, actions, index };
+        return { outline: result.outline, content: result.content, actions, index: result.index };
       } catch (err) {
-        log.error(`Scene "${safeOutline.title}" generation error:`, err);
+        log.error(`Scene "${result.outline.title}" action generation error:`, err);
         return null;
       }
     },
