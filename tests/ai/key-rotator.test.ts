@@ -43,11 +43,19 @@ describe('KeyRotator', () => {
   });
 
   it('extends cooldown after 3 consecutive failures', () => {
+    vi.useFakeTimers();
     rotator.register('deepseek', ['sk-a']);
-    rotator.markFailed('sk-a', 'deepseek');
-    rotator.markFailed('sk-a', 'deepseek');
-    rotator.markFailed('sk-a', 'deepseek');
+    rotator.markFailed('sk-a', 'deepseek'); // 1st → 60s
+    rotator.markFailed('sk-a', 'deepseek'); // 2nd → 60s
+    rotator.markFailed('sk-a', 'deepseek'); // 3rd → 5min
     expect(rotator.getNextKey('deepseek')).toBeNull();
+    // After 61s: still in cooldown (5min cooldown, not 60s)
+    vi.advanceTimersByTime(61_000);
+    expect(rotator.getNextKey('deepseek')).toBeNull();
+    // After 301s total: cooldown expired
+    vi.advanceTimersByTime(240_000);
+    expect(rotator.getNextKey('deepseek')).toBe('sk-a');
+    vi.useRealTimers();
   });
 
   it('recovers keys after cooldown expires', () => {
