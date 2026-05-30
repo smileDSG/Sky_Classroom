@@ -11,7 +11,7 @@ import { ReviewPlan } from '@/components/sky/learning/review-plan';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
-import type { MistakeRecord } from '@/lib/mistakes/types';
+import type { MistakeCause } from '@/lib/solve/types';
 import {
   BookOpen,
   CalendarCheck,
@@ -22,58 +22,17 @@ import {
   Leaf,
 } from 'lucide-react';
 
-const DEMO_MISTAKES: MistakeRecord[] = [
-  {
-    id: 'demo-1',
-    problem: '解方程：2x + 5 = 13，求 x 的值。',
-    userAnswer: 'x = 3',
-    correctAnswer: 'x = 4',
-    cause: 'calculation-error',
-    solvedAt: new Date(Date.now() - 3600000),
-    reviewed: false, reviewCount: 0,
-    knowledgePoints: ['代数', '一元一次方程'],
-  },
-  {
-    id: 'demo-2',
-    problem: '若 sin A = 3/5，且 A 为锐角，求 cos A。',
-    userAnswer: 'cos A = 3/5',
-    correctAnswer: 'cos A = 4/5',
-    cause: 'concept-unclear',
-    solvedAt: new Date(Date.now() - 7200000),
-    reviewed: false, reviewCount: 0,
-    knowledgePoints: ['几何', '三角函数'],
-  },
-  {
-    id: 'demo-3',
-    problem: '下列选项中，哪一个是二次函数 y = x² - 4x + 3 的对称轴？',
-    userAnswer: 'x = 1',
-    correctAnswer: 'x = 2',
-    cause: 'method-wrong',
-    solvedAt: new Date(Date.now() - 86400000),
-    reviewed: true, reviewCount: 1,
-    knowledgePoints: ['代数', '二次函数'],
-  },
-  {
-    id: 'demo-4',
-    problem: '一个物体从 20 米高处自由落下，求落地时的速度。（g=10m/s²）',
-    userAnswer: '10 m/s',
-    correctAnswer: '20 m/s',
-    cause: 'misreading',
-    solvedAt: new Date(Date.now() - 172800000),
-    reviewed: false, reviewCount: 0,
-    knowledgePoints: ['物理', '自由落体'],
-  },
-  {
-    id: 'demo-5',
-    problem: '计算：(a + b)² 的展开式。',
-    userAnswer: 'a² + b²',
-    correctAnswer: 'a² + 2ab + b²',
-    cause: 'careless',
-    solvedAt: new Date(Date.now() - 259200000),
-    reviewed: true, reviewCount: 3,
-    knowledgePoints: ['代数', '乘法公式'],
-  },
-];
+/** Map server ErrorType → client MistakeCause */
+function errorTypeToCause(errorType: string): MistakeCause {
+  const map: Record<string, MistakeCause> = {
+    concept: 'concept-unclear',
+    calculation: 'calculation-error',
+    reading: 'misreading',
+    reasoning: 'method-wrong',
+    careless: 'careless',
+  };
+  return map[errorType] ?? 'concept-unclear';
+}
 
 const TABS = [
   { key: 'mistakes', label: '错题本', icon: BookOpen, desc: '记录与反思' },
@@ -104,11 +63,29 @@ export default function LearningPage() {
   }, [mistakes]);
 
   useEffect(() => {
-    const store = useSkyClassroomStore.getState();
-    if (store.mistakes.length === 0) {
-      DEMO_MISTAKES.forEach((m) => store.addMistake(m));
-    }
+    // Sync from local quizzes first
     syncMistakesFromQuizzes();
+
+    // Then load from server and merge
+    fetch('/api/sky/mistakes?pageSize=9999', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.items)) {
+          const serverMistakes = data.items.map((entry: Record<string, unknown>) => ({
+            id: entry.id as string,
+            problem: entry.problemText as string,
+            userAnswer: entry.userAnswer as string,
+            correctAnswer: entry.correctAnswer as string,
+            cause: errorTypeToCause(entry.errorType as string),
+            solvedAt: entry.lastReview ? new Date(entry.lastReview as number) : new Date(),
+            reviewed: entry.reviewed as boolean,
+            reviewCount: entry.reviewCount as number,
+            knowledgePoints: (entry.knowledgePoints as string[]) ?? [],
+          }));
+          useSkyClassroomStore.getState().mergeMistakes(serverMistakes);
+        }
+      })
+      .catch(() => { /* ignore — local data is fallback */ });
   }, []);
 
   return (

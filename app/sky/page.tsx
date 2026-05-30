@@ -183,41 +183,30 @@ function QuickStatsRow() {
     streakDays: 0,
     masteryPercent: 0,
   });
-  const [sessionMinutes, setSessionMinutes] = useState(0);
 
-  // Session timer - track time spent on page
+  // Fetch real stats from user_stats table
   useEffect(() => {
     if (!user) return;
 
-    const startTime = Date.now();
-    const timer = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTime) / 60000);
-      setSessionMinutes(elapsed);
-    }, 60000); // Update every minute
+    const fetchStats = () => {
+      fetch('/api/sky/learning-stats', { credentials: 'include' })
+        .then((r) => r.json())
+        .then((j) => {
+          if (j.success) setStats(j);
+        })
+        .catch(() => {});
+    };
 
-    return () => clearInterval(timer);
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    fetch('/api/sky/learning-stats', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((j) => {
-        if (j.success) setStats(j);
-      })
-      .catch(() => {
-        /* ignore — keep zeros */
-      });
+    fetchStats();
+    const interval = setInterval(fetchStats, 60_000);
+    return () => clearInterval(interval);
   }, [user]);
 
   // Don't show stats if not logged in
   if (!user) return null;
 
-  const displayMinutes = stats.todayStudyMinutes + sessionMinutes;
-
   const dynamicStats = [
-    { label: '今日学习', value: formatStudyTime(displayMinutes), icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: '今日学习', value: formatStudyTime(stats.todayStudyMinutes), icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     { label: '连续打卡', value: stats.streakDays > 0 ? `${stats.streakDays} 天` : '—', icon: Sparkles, color: 'text-rose-500', bg: 'bg-rose-500/10' },
     { label: '知识掌握', value: stats.masteryPercent > 0 ? `${stats.masteryPercent}%` : '—', icon: Brain, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
   ];

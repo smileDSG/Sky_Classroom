@@ -4,7 +4,10 @@
  */
 
 import { createUserDAO } from '@/lib/storage/dao/users';
-import { hashPassword } from '@/lib/server/auth';
+import { hashPassword, verifyPassword } from '@/lib/server/auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('AdminSeed');
 
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = '123';
@@ -18,10 +21,24 @@ export async function ensureAdminUser(): Promise<void> {
     const dao = await createUserDAO();
     const existing = await dao.getByUsername(ADMIN_USERNAME);
     if (existing) {
+      // Verify password hash is valid — reset if corrupted
+      if (existing.passwordHash) {
+        const valid = await verifyPassword(ADMIN_PASSWORD, existing.passwordHash);
+        if (valid) {
+          seeded = true;
+          return;
+        }
+        log.warn('Admin password hash invalid — resetting');
+      }
+      // Hash missing or invalid — reset password
+      const passwordHash = await hashPassword(ADMIN_PASSWORD);
+      await dao.update(existing.id, { passwordHash });
+      log.info('Admin password reset to default');
       seeded = true;
       return;
     }
 
+    log.info('Creating default admin user');
     const passwordHash = await hashPassword(ADMIN_PASSWORD);
     await dao.create({
       id: 'admin-default',
@@ -42,7 +59,8 @@ export async function ensureAdminUser(): Promise<void> {
     });
 
     seeded = true;
-  } catch {
-    // Silent fail — don't block login
+    log.info('Admin user created successfully');
+  } catch (err) {
+    log.error('ensureAdminUser failed:', err instanceof Error ? err.message : err);
   }
 }

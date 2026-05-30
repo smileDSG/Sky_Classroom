@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-// Preview now shows PPTX screenshot only — SlideViewer removed
+import { Sparkles, Presentation, Wand2, Download, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Image as ImageIcon, Users, CheckCircle2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { AvatarSpeechPlayer } from './avatar-speech-player';
 import { AvatarSelector } from './avatar-selector';
 import { CoverGallery, type CoverItem } from './cover-gallery';
@@ -404,6 +406,92 @@ export default function SlidesPage() {
     a.click();
   }, [generatedPptx]);
 
+  const handleReset = useCallback(() => {
+    setGeneratedPptx(null);
+    setPreviewImages(null);
+    setGenStage('idle');
+    setGenProgress(0);
+    setStatus('');
+    setQaReport(null);
+  }, []);
+
+  // ── Restore state from background task on mount ──
+  useEffect(() => {
+    const store = useTaskStore.getState();
+    const tasks = Object.values(store.tasks).filter(
+      (t) => t.type === 'slides' && t.status !== 'failed'
+    );
+    if (tasks.length === 0) return;
+    const task = tasks[tasks.length - 1];
+
+    if (task.status === 'running') {
+      setGenerating(true);
+      setGenProgress(task.progress || 0);
+      setStatus(task.phase || '生成中...');
+      if (task.jobId) {
+        const poll = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${task.jobId}`);
+            const statusData = await statusRes.json();
+            if (statusData.success) {
+              const job = statusData.data || statusData.job;
+              setGenStage(job.stage as never);
+              setGenProgress(job.progress || 0);
+              setStatus(job.message || '');
+
+              useTaskStore.getState().updateTask(task.jobId!, {
+                progress: job.progress || 0,
+                phase: job.message || job.stage || '',
+              });
+
+              if (job.stage === 'done') {
+                clearInterval(poll);
+                if (job.pptxUrl) {
+                  setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
+                  setPreviewImages(job.previewImages || null);
+                  if (job.qaReport) setQaReport(job.qaReport);
+                  setStatus('');
+                  setGenStage('done');
+                  setGenProgress(100);
+
+                  useTaskStore.getState().updateTask(task.jobId!, {
+                    status: 'completed',
+                    progress: 100,
+                    phase: 'PPT生成完成',
+                    result: {
+                      pptxUrl: job.pptxUrl,
+                      fileName: job.fileName || '课件.pptx',
+                      previewImages: job.previewImages,
+                      qaReport: job.qaReport,
+                    },
+                  });
+                } else if (job.error) {
+                  setStatus(`生成失败: ${job.error}`);
+                  useTaskStore.getState().updateTask(task.jobId!, {
+                    status: 'failed',
+                    error: job.error,
+                  });
+                }
+                setGenerating(false);
+              }
+            }
+          } catch {
+            // Polling error, ignore
+          }
+        }, 2000);
+      }
+    } else if (task.status === 'completed' && task.result) {
+      const result = task.result as { pptxUrl?: string; fileName?: string; previewImages?: string[]; qaReport?: unknown };
+      if (result.pptxUrl) {
+        setGeneratedPptx({ url: result.pptxUrl, fileName: result.fileName || '课件.pptx' });
+        setPreviewImages(result.previewImages || null);
+        if (result.qaReport) setQaReport(result.qaReport as never);
+        setGenStage('done');
+        setGenProgress(100);
+      }
+      store.removeTask(task.id);
+    }
+  }, []);
   // ── Cover loading stage animation ──
   useEffect(() => {
     if (!coverLoading) return;

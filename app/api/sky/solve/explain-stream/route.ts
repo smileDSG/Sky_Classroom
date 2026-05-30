@@ -67,6 +67,54 @@ async function generateKnowledgePoints(
   return [];
 }
 
+/**
+ * Generate knowledge points from problem text only (no answer needed).
+ * Runs in parallel with the main solver to save ~2s.
+ */
+async function generateKnowledgePointsParallel(
+  problemText: string,
+): Promise<{ name: string; description: string; difficulty: string }[]> {
+  try {
+    const { callLLM } = await import('@/lib/ai/llm');
+    const { getModel } = await import('@/lib/ai/providers');
+    const { parseJsonResponse } = await import('@/lib/generation/json-repair');
+
+    const modelConfig = resolveSolverModel('universal');
+    const modelWithInfo = getModel(modelConfig);
+
+    const prompt = `你是知识点总结专家。根据题目生成2-4个相关知识点。
+每个知识点description包含：核心概念+应用场景+易错点。
+输出JSON：{"knowledgePoints":[{"name":"...","description":"...","difficulty":"easy|medium|hard"}]}
+
+题目：${problemText}`;
+
+    const result = await callLLM(
+      {
+        model: modelWithInfo.model,
+        messages: [{ role: 'user', content: prompt }] as any,
+        temperature: 0.3,
+        maxOutputTokens: 1024,
+      },
+      'knowledge-gen-parallel',
+      { retries: 0 },
+      undefined,
+      '你是知识点总结专家。请直接输出 JSON，不要输出其他内容。',
+    );
+
+    const parsed = parseJsonResponse<any>(result.text || '');
+    if (parsed && Array.isArray(parsed.knowledgePoints)) {
+      return parsed.knowledgePoints.map((k: any) => ({
+        name: k.name || '',
+        description: k.description || '',
+        difficulty: k.difficulty || 'medium',
+      }));
+    }
+  } catch (err) {
+    log.warn('Parallel knowledge generation failed:', err);
+  }
+  return [];
+}
+
 // ── SSE formatting ──────────────────────────────────────────────────
 
 function formatStreamEvent(event: StreamEvent): string {
@@ -106,12 +154,16 @@ export async function POST(req: Request) {
 
     (async () => {
       try {
-        // Phase 1: Check question bank (exact match)
+        // Phase 1: Check question bank and solve cache in parallel
         await write(formatSSEEvent('phase', { phase: 'checking' }));
-        const matches = await findSimilarQuestions(problem, 0.85);
+        const [bankMatches, cacheMatches] = await Promise.all([
+          findSimilarQuestions(problem, 0.85),
+          findSolveCacheMatches(problem, 0.70),
+        ]);
 
-        if (matches.length > 0) {
-          const hit = matches[0];
+        // Prefer question bank (higher quality) over solve cache
+        if (bankMatches.length > 0) {
+          const hit = bankMatches[0];
           log.info(`[ExplainStream] Question bank hit (${hit._similarity?.toFixed(2)})`);
 
           const processedAnswer = postProcessMathContent(hit.answer);
@@ -122,7 +174,6 @@ export async function POST(req: Request) {
           }));
           await write(formatSSEEvent('answer', { answer: processedAnswer }));
 
-          // Generate knowledge points via LLM
           const kp = hit.knowledgePoints && hit.knowledgePoints.length > 0
             ? hit.knowledgePoints.map((k) => ({
                 name: postProcessMathContent(k.name),
@@ -140,8 +191,6 @@ export async function POST(req: Request) {
           return;
         }
 
-        // Phase 1.5: Check solve cache (near match, faster than LLM)
-        const cacheMatches = await findSolveCacheMatches(problem, 0.70);
         if (cacheMatches.length > 0) {
           const hit = cacheMatches[0];
           log.info(`[ExplainStream] Solve cache hit`);
@@ -154,7 +203,6 @@ export async function POST(req: Request) {
           }));
           await write(formatSSEEvent('answer', { answer: processedSolution }));
 
-          // Generate knowledge points via LLM
           const kp = await generateKnowledgePoints(problem, hit.solution);
           await write(formatSSEEvent('knowledge', { points: kp }));
           await write(formatSSEEvent('similar', { questions: [] }));
@@ -170,7 +218,10 @@ export async function POST(req: Request) {
         const agentType = classifyProblem(problem);
         await write(formatSSEEvent('phase', { phase: 'routing', agentType }));
 
-        // Phase 3: Stream solve
+        // Phase 3: Stream solve + parallel knowledge points generation
+        // Start knowledge points LLM in parallel with the main solver
+        const knowledgePromise = generateKnowledgePointsParallel(problem);
+
         let hasAnswer = false;
         let hasKnowledge = false;
         let hasSimilar = false;
@@ -180,7 +231,6 @@ export async function POST(req: Request) {
         let streamedSimilar: { problem: string; difficulty: number; knowledgePoint: string }[] = [];
 
         for await (const event of streamSolve(agentType, problem, problemImage ?? null)) {
-          // Post-process math content before sending to client
           let processedEvent = event;
           if (event.type === 'step') {
             processedEvent = {
@@ -215,20 +265,44 @@ export async function POST(req: Request) {
           if (processedEvent.type === 'similar') { hasSimilar = true; streamedSimilar = processedEvent.questions; }
         }
 
-        // Phase 4: Fill in any missing sections
+        // Phase 4: Fill in missing sections (use parallel result if solver didn't return them)
         if (!hasAnswer) {
           await write(formatSSEEvent('answer', { answer: '' }));
         }
         if (!hasKnowledge) {
-          // LLM didn't return knowledge points — generate them separately
-          const kp = streamedAnswer
-            ? await generateKnowledgePoints(problem, streamedAnswer)
-            : [];
+          // Use parallel knowledge generation — already running, just await result
+          const kp = await knowledgePromise;
           streamedKnowledge = kp;
           await write(formatSSEEvent('knowledge', { points: kp }));
         }
+        // Phase 4b: Query KB for real similar questions by knowledge point overlap
+        if (streamedKnowledge.length > 0) {
+          try {
+            const { findSimilarByKnowledgePoints, hashProblemText } = await import('@/lib/solve/question-bank');
+            const currentHash = hashProblemText(problem);
+            const kbSimilar = await findSimilarByKnowledgePoints(
+              problem,
+              streamedKnowledge,
+              currentHash,
+              3,
+            );
+            if (kbSimilar.length >= 2) {
+              streamedSimilar = kbSimilar.map((q) => ({
+                problem: q.problem,
+                difficulty: q.difficulty,
+                knowledgePoint: q.knowledgePoint,
+                answer: q.answer,
+              }));
+              hasSimilar = true;
+              await write(formatSSEEvent('similar', { questions: streamedSimilar }));
+              log.info(`[ExplainStream] KB similar questions: ${streamedSimilar.length} found`);
+            }
+          } catch (err) {
+            log.warn('KB similar questions lookup failed:', err);
+          }
+        }
         if (!hasSimilar) {
-          await write(formatSSEEvent('similar', { questions: [] }));
+          await write(formatSSEEvent('similar', { questions: streamedSimilar }));
         }
 
         // Phase 5: Done

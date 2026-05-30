@@ -74,6 +74,7 @@ function GenerationProgressContent() {
         // Check current state first
         const current = await fetchClassroomJob(jobId);
         if (cancelled || abortController.signal.aborted) return;
+        if (!current) { setError('课堂生成任务不存在'); return; }
         updateFromJob(current);
 
         if (current.status === 'awaiting_review') {
@@ -107,6 +108,7 @@ function GenerationProgressContent() {
         // Check final state after polling
         const final = await fetchClassroomJob(jobId);
         if (cancelled || abortController.signal.aborted) return;
+        if (!final) { setError('课堂生成任务不存在'); return; }
         updateFromJob(final);
 
         if (final.status === 'awaiting_review') {
@@ -194,6 +196,7 @@ function GenerationProgressContent() {
 
       const final = await fetchClassroomJob(jobId);
       if (signal?.aborted) return;
+      if (!final) { setError('课堂生成任务不存在'); return; }
       if (final.status === 'awaiting_review') {
         if (final.outlines) setOutlines(final.outlines);
         if (final.outlinesMeta) setOutlinesMeta(final.outlinesMeta);

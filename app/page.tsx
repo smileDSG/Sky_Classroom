@@ -162,6 +162,17 @@ export default function HomePage() {
 
         while (!abortController.signal.aborted) {
           const data = await fetchClassroomJob(jobId);
+          if (!data) {
+            // Job no longer exists (404) — clean up silently
+            removeActiveJobEntry(jobId);
+            abortRefs.current.delete(jobId);
+            setActiveJobs((prev) => {
+              const next = { ...prev };
+              delete next[jobId];
+              return next;
+            });
+            return;
+          }
           if (abortController.signal.aborted) return;
 
           if (data.status === 'cancelled' || data.status === 'failed') {
@@ -275,6 +286,10 @@ export default function HomePage() {
       (async () => {
         try {
           const data = await fetchClassroomJob(entry.jobId);
+          if (!data) {
+            removeActiveJobEntry(entry.jobId);
+            return;
+          }
 
           if (data.status === 'cancelled' || data.status === 'failed' || (data.done && data.status === 'succeeded')) {
             removeActiveJobEntry(entry.jobId);
@@ -855,10 +870,8 @@ export default function HomePage() {
           </p>
           <button
             onClick={() => {
-              try {
-                localStorage.removeItem('skyIntroDone');
-                window.location.reload();
-              } catch { /* ignore */ }
+              sessionStorage.removeItem('introDone');
+              setIntroDone(false);
             }}
             className="text-[10px] text-slate-400/50 hover:text-slate-500 dark:hover:text-slate-400 transition-colors mt-1"
           >

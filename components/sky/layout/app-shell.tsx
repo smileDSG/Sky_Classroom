@@ -9,6 +9,7 @@ import { UpgradeDialog } from '@/components/billing/upgrade-dialog';
 import { SkyTabBar } from './sky-tab-bar';
 import { BackgroundTasksIndicator } from './background-tasks-indicator';
 import { useAuth } from '@/components/auth/auth-provider';
+import { useStudyTimer } from '@/lib/hooks/use-study-timer';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { CheckCircle2, Sparkles } from 'lucide-react';
@@ -78,6 +79,9 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
   const [streakDays, setStreakDays] = useState(0);
+
+  // Track real study time when user is logged in
+  useStudyTimer(!!user);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);

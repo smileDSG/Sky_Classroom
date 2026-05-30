@@ -1111,6 +1111,7 @@ export function Stage({
               onPresentationInteractionChange={setIsPresentationInteractionActive}
               fullscreenContainerRef={stageRef}
               onAskTeacher={handleOpenAskDialog}
+              isAskDialogOpen={isAskDialogOpen}
             />
           </div>
         )}

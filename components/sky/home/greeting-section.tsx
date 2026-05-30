@@ -53,45 +53,34 @@ export function GreetingSection() {
     streakDays: 0,
     masteryPercent: 0,
   });
-  const [sessionMinutes, setSessionMinutes] = useState(0);
 
-  // Session timer - track time spent on page
+  // Fetch learning stats (real data from user_stats table)
   useEffect(() => {
     if (!user) return;
 
-    const startTime = Date.now();
-    const timer = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTime) / 60000);
-      setSessionMinutes(elapsed);
-    }, 60000); // Update every minute
+    const fetchStats = () => {
+      fetch('/api/sky/learning-stats', { credentials: 'include' })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data?.success) {
+            setStats({
+              todayStudyMinutes: data.todayStudyMinutes || 0,
+              streakDays: data.streakDays || 0,
+              masteryPercent: data.masteryPercent || 0,
+            });
+          }
+        })
+        .catch(() => {});
+    };
 
-    return () => clearInterval(timer);
+    fetchStats();
+    // Refresh every 60 seconds to pick up study timer updates
+    const interval = setInterval(fetchStats, 60_000);
+    return () => clearInterval(interval);
   }, [user]);
-
-  // Fetch learning stats
-  useEffect(() => {
-    if (!user) return;
-
-    fetch('/api/sky/learning-stats', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.success) {
-          setStats({
-            todayStudyMinutes: data.todayStudyMinutes || 0,
-            streakDays: data.streakDays || 0,
-            masteryPercent: data.masteryPercent || 0,
-          });
-        }
-      })
-      .catch(() => {
-        /* ignore — keep zeros */
-      });
-  }, [user]);
-
-  const displayMinutes = stats.todayStudyMinutes + sessionMinutes;
 
   const dynamicStats = user ? [
-    { label: '今日学习', value: formatStudyTime(displayMinutes), icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: '今日学习', value: formatStudyTime(stats.todayStudyMinutes), icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     { label: '连续打卡', value: stats.streakDays > 0 ? `${stats.streakDays} 天` : '—', icon: Sparkles, color: 'text-rose-500', bg: 'bg-rose-500/10' },
     { label: '知识掌握', value: stats.masteryPercent > 0 ? `${stats.masteryPercent}%` : '—', icon: Brain, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
   ] : [];
