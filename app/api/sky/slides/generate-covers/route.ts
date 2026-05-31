@@ -9,7 +9,7 @@ import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import path from 'path';
 import fs from 'fs/promises';
 
-export const maxDuration = 120;
+export const maxDuration = 180;
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { generateCovers } from '@/lib/slides/agent/cover-agent';
 import { renderCoverPptx } from '@/lib/slides/agent/cover-renderer';
@@ -95,7 +95,6 @@ export async function POST(req: NextRequest) {
         pngUrl: pngMap.get(baseName) || null,
         recommended: r.recommended,
         designParams: r.designDNA,
-        replaced: r.replaced,
       };
     });
 

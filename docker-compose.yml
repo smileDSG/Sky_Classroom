@@ -5,6 +5,10 @@ services:
       - "3000:3000"
     env_file:
       - .env.local
+    environment:
+      # LibreOffice is bundled in the Docker image.
+      # Override only if you use a custom LO build.
+      - LO_SOFFICE_PATH=/usr/bin/soffice
     volumes:
       # Optional: mount server-providers.yml for provider config
       # - ./server-providers.yml:/app/server-providers.yml:ro

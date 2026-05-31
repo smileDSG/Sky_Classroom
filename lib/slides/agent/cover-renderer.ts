@@ -199,7 +199,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutFn> = {
     // Double-frame border
     const m = 0.6;
     slide.addShape('rect' as never, { x: m, y: m, w: W - 2 * m, h: H - 2 * m, fill: { color: hex(colors.accent), transparency: 97 }, line: { color: hex(colors.accent), width: 0.8 } } as never);
-    slide.addShape('rect' as never, { x: m + 0.15, y: m + 0.15, w: W - 2 * (m + 0.15), h: H - 2 * (m + 0.15), fill: { color: 'transparent' } as never, line: { color: hex(colors.accent), width: 0.5 } } as never);
+    slide.addShape('rect' as never, { x: m + 0.15, y: m + 0.15, w: W - 2 * (m + 0.15), h: H - 2 * (m + 0.15), line: { color: hex(colors.accent), width: 0.5 } } as never);
     // Small corner dots
     for (const [xx, yy] of [[m, m], [W - m, m], [m, H - m], [W - m, H - m]]) {
       slide.addShape('ellipse' as never, { x: xx - 0.12, y: yy - 0.12, w: 0.24, h: 0.24, fill: { color: hex(colors.accent) } } as never);
