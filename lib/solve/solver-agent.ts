@@ -131,7 +131,7 @@ async function solveOnce(
  * 3. If low, call secondary agent
  * 4. If secondary also low, try tertiary as last resort
  */
-async function solveWithHybrid(
+export async function solveWithHybrid(
   primary: SolverAgentType,
   problemText: string,
   problemImage: string | null,
