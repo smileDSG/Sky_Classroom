@@ -57,6 +57,7 @@ export default function SlidesPage() {
   // ── Legacy ──
   const [generatedPptx, setGeneratedPptx] = useState<{ url: string; fileName: string } | null>(null);
   const [previewImages, setPreviewImages] = useState<string[] | null>(null);
+  const [previewLoadError, setPreviewLoadError] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [genStage, setGenStage] = useState<'idle' | 'thinking' | 'writing' | 'rendering' | 'done'>('idle');
   const [genProgress, setGenProgress] = useState(0);
@@ -259,9 +260,30 @@ export default function SlidesPage() {
     a.click();
   }, [generatedPptx]);
 
+  // Regenerate preview images when they fail to load (e.g. cleaned up by TTL)
+  const handlePreviewImageError = useCallback(async () => {
+    if (!generatedPptx || previewLoadError) return;
+    setPreviewLoadError(true);
+    try {
+      const res = await fetch('/api/sky/slides/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pptxUrl: generatedPptx.url }),
+      });
+      const data = await res.json();
+      if (data.success && data.slideImages?.length) {
+        setPreviewImages(data.slideImages);
+        setPreviewLoadError(false);
+      }
+    } catch {
+      // Preview regeneration failed — file likely cleaned up
+    }
+  }, [generatedPptx, previewLoadError]);
+
   const handleReset = useCallback(() => {
     setGeneratedPptx(null);
     setPreviewImages(null);
+    setPreviewLoadError(false);
     setGenStage('idle');
     setGenProgress(0);
     setStatus('');
@@ -302,6 +324,7 @@ export default function SlidesPage() {
                 if (job.pptxUrl) {
                   setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
                   setPreviewImages(job.previewImages || null);
+                  setPreviewLoadError(false);
                   if (job.qaReport) setQaReport(job.qaReport);
                   setStatus('');
                   setGenStage('done');
@@ -332,12 +355,16 @@ export default function SlidesPage() {
             // Polling error, ignore
           }
         }, 2000);
+
+        // Cleanup: clear polling interval on unmount
+        return () => clearInterval(poll);
       }
     } else if (task.status === 'completed' && task.result) {
       const result = task.result as { pptxUrl?: string; fileName?: string; previewImages?: string[]; qaReport?: unknown };
       if (result.pptxUrl) {
         setGeneratedPptx({ url: result.pptxUrl, fileName: result.fileName || '课件.pptx' });
         setPreviewImages(result.previewImages || null);
+        setPreviewLoadError(false);
         if (result.qaReport) setQaReport(result.qaReport as never);
         setGenStage('done');
         setGenProgress(100);
@@ -616,6 +643,7 @@ export default function SlidesPage() {
                       className="max-h-[500px] w-full rounded-lg shadow-lg object-contain"
                       style={{ aspectRatio: '16/9' }}
                       draggable={false}
+                      onError={handlePreviewImageError}
                     />
                   </div>
 

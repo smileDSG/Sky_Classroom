@@ -252,18 +252,6 @@ function GenerationProgressContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white dark:from-slate-950 dark:to-slate-900">
-      {/* Back button */}
-      <div className="fixed top-4 left-4 z-50">
-        <button
-          onClick={() => {
-            router.push('/');
-          }}
-          className="flex items-center gap-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all duration-200"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          返回首页
-        </button>
-      </div>
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

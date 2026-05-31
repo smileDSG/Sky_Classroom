@@ -1163,21 +1163,6 @@ function GenerationPreviewContent() {
 
     return (
       <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center p-4 relative overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed top-4 left-4 z-50"
-        >
-          <button
-            onClick={goBackToHome}
-            disabled={isConfirmingOutlines}
-            className="flex items-center gap-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            返回首页
-          </button>
-        </motion.div>
-
         <div className="z-10 w-full max-w-3xl pt-16 pb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1247,21 +1232,6 @@ function GenerationPreviewContent() {
           style={{ animationDuration: '6s' }}
         />
       </div>
-
-      {/* Back button */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed top-4 left-4 z-50"
-      >
-        <button
-          onClick={goBackToHome}
-          className="flex items-center gap-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all duration-200"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          返回首页
-        </button>
-      </motion.div>
 
       <div className="z-10 w-full max-w-lg space-y-8 flex flex-col items-center">
         <motion.div
