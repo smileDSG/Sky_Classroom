@@ -90,7 +90,6 @@ export function SlidePreviewGallery({
             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-transform duration-200"
             style={{
               transform: `scale(${scale})`,
-              aspectRatio: '16 / 9',
             }}
             draggable={false}
           />

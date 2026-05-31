@@ -35,15 +35,18 @@ const log = createLogger('PptxExporterV2');
 
 /** Resolve background image path: URL → absolute filesystem path */
 function resolveBgImagePath(src: string): string | null {
-  // Already an absolute path
-  if (src.startsWith('/')) {
-    return path.join(process.cwd(), 'public', src);
+  if (!src || typeof src !== 'string') return null;
+
+  // Local path
+  if (src.startsWith('/') || !src.includes('://')) {
+    if (src.includes('..')) return null;
+    const resolved = path.resolve(process.cwd(), 'public', src.replace(/^\//, ''));
+    const publicDir = path.resolve(process.cwd(), 'public');
+    if (!resolved.startsWith(publicDir)) return null;
+    return resolved;
   }
-  // Relative path
-  if (!src.includes('://')) {
-    return path.join(process.cwd(), 'public', src);
-  }
-  // Remote URL — pptxgenjs can fetch it directly in Node
+
+  // Remote URL — return as-is (SSRF guard applied upstream in image handler)
   return src;
 }
 

@@ -1,0 +1,19 @@
+{
+  "id": "0UWnVvkmJD5G",
+  "status": "running",
+  "stage": "sections_generating",
+  "progress": 40,
+  "message": "第 5/5 章内容生成完毕...",
+  "totalPages": 21,
+  "createdAt": "2026-05-30T13:26:32.338Z",
+  "updatedAt": "2026-05-30T13:29:23.596Z",
+  "inputSummary": {
+    "topic": "定积分的定义",
+    "difficulty": "senior",
+    "styleName": "暖陶几何",
+    "minPages": 15,
+    "maxPages": 25
+  },
+  "modelConfig": {},
+  "startedAt": "2026-05-30T13:26:32.346Z"
+}

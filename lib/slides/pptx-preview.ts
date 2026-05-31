@@ -28,8 +28,9 @@ async function findPython(): Promise<string | null> {
   if (cachedPythonPath !== undefined) return cachedPythonPath;
   for (const p of PYTHON_PATHS) {
     try {
+      // Check both python-pptx and PyMuPDF (fitz) are available
       await new Promise<void>((resolve, reject) => {
-        const proc = spawn(p, ['-c', 'import pptx; print(pptx.__version__)']);
+        const proc = spawn(p, ['-c', 'import pptx, fitz; print(pptx.__version__)']);
         let stdout = '';
         proc.stdout.on('data', (d) => { stdout += d; });
         proc.on('close', (code) => {
@@ -78,12 +79,20 @@ export async function generatePreviewFromPptx(
   existingPreviewId?: string,
 ): Promise<PptxPreviewResult> {
   try {
-    const absPptxPath = path.join(process.cwd(), 'public', pptxUrl.replace(/^\//, ''));
+    // Validate pptxUrl: must be under public/temp/pptx/
+    const publicDir = path.resolve(process.cwd(), 'public');
+    const absPptxPath = path.resolve(publicDir, pptxUrl.replace(/^\//, ''));
+    if (!absPptxPath.startsWith(publicDir) || !absPptxPath.endsWith('.pptx')) {
+      return { success: false, previewId: '', slideImages: [], error: 'Invalid pptxUrl' };
+    }
     if (!fs.existsSync(absPptxPath)) {
       return { success: false, previewId: '', slideImages: [], error: `PPTX not found: ${pptxUrl}` };
     }
 
     const previewId = existingPreviewId || randomUUID().replace(/-/g, '').slice(0, 16);
+    if (existingPreviewId && !/^[a-f0-9]{16}$/i.test(existingPreviewId)) {
+      return { success: false, previewId: '', slideImages: [], error: 'Invalid previewId' };
+    }
     const previewDir = path.join(PREVIEW_BASE_DIR, previewId);
     const imagesDir = path.join(previewDir, 'images');
     const pptxPath = path.join(previewDir, 'source.pptx');
@@ -115,15 +124,29 @@ export async function generatePreviewFromPptx(
     }
 
     log.info(`Converting PPTX to images: ${pptxPath}`);
+    const PREVIEW_SPAWN_TIMEOUT_MS = 120_000;
     const { images } = await new Promise<{ images: string[] }>((resolve, reject) => {
       const proc = spawn(pythonPath, [scriptPath, pptxPath, imagesDir]);
       let stdout = '';
       let stderr = '';
+      let killedByTimeout = false;
+
+      const timeoutId = setTimeout(() => {
+        killedByTimeout = true;
+        proc.kill('SIGTERM');
+        // Force kill after 5s if still alive
+        setTimeout(() => proc.kill('SIGKILL'), 5000);
+      }, PREVIEW_SPAWN_TIMEOUT_MS);
 
       proc.stdout.on('data', (d) => { stdout += d; });
       proc.stderr.on('data', (d) => { stderr += d; });
 
-      proc.on('close', (code) => {
+      proc.on('close', (code, signal) => {
+        clearTimeout(timeoutId);
+        if (killedByTimeout) {
+          reject(new Error(`Preview generation timed out after ${PREVIEW_SPAWN_TIMEOUT_MS}ms`));
+          return;
+        }
         if (code !== 0) {
           reject(new Error(`pptx-to-images.py exited with code ${code}: ${stderr}`));
           return;
@@ -140,7 +163,10 @@ export async function generatePreviewFromPptx(
         }
       });
 
-      proc.on('error', (err) => reject(err));
+      proc.on('error', (err) => {
+        clearTimeout(timeoutId);
+        reject(err);
+      });
     });
 
     const slideImages = images.map((img) => `/temp/preview/${previewId}/images/${img}`);

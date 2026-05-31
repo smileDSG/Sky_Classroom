@@ -39,6 +39,7 @@ import { applyModelMetadata, getCatalogThinkingCapability } from './model-metada
 import { getDefaultThinkingConfig } from './thinking-config';
 import { buildThinkingBodyParams } from './strategies/thinking-strategy';
 import { normalizeMiniMaxBaseUrl } from './adapters/minimax-adapter';
+import { getKeyPool } from './key-pool';
 // NOTE: Do NOT import thinking-context.ts here — it uses node:async_hooks
 // which is server-only, and this file is also used on the client via
 // settings.ts. The thinking context is read from globalThis instead
@@ -1145,9 +1146,27 @@ export function getModel(config: ModelConfig): ModelWithInfo {
       // body. The thinking config is read from AsyncLocalStorage, set by
       // callLLM / streamLLM at call time.
       if (config.providerId !== 'openai') {
-	        // Inject Authorization header for non-OpenAI providers
-	        openaiOptions.headers = { Authorization: `Bearer ${effectiveApiKey}` };
-          const providerId = config.providerId;
+        const providerId = config.providerId;
+
+        // Multi-key load balancing: resolve all keys for this provider
+        // Server-only: provider-config.ts uses fs, must not be bundled client-side
+        let apiKeys: string[] = [];
+        if (typeof window === 'undefined') {
+          try {
+            const { resolveApiKeys: serverResolveApiKeys } = require('@/lib/server/provider-config');
+            // If client explicitly passes comma-separated keys, respect it.
+            // Otherwise let server-side env/YAML config (including key pool)
+            // take precedence over a single fallback key.
+            const clientKeys = config.apiKey?.includes(',') ? config.apiKey : undefined;
+            apiKeys = serverResolveApiKeys(providerId, clientKeys);
+          } catch {
+            apiKeys = config.apiKey ? [config.apiKey] : [];
+          }
+        } else {
+          apiKeys = config.apiKey ? [config.apiKey] : [];
+        }
+        const keyPool = apiKeys.length > 0 ? getKeyPool(providerId, apiKeys) : null;
+
         openaiOptions.fetch = async (url: RequestInfo | URL, init?: RequestInit) => {
           // Read thinking config from globalThis (set by thinking-context.ts)
           const thinkingCtx = (globalThis as Record<string, unknown>).__thinkingContext as
@@ -1174,15 +1193,44 @@ export function getModel(config: ModelConfig): ModelWithInfo {
               }
             }
           }
-          const response = await globalThis.fetch(url, init);
+          // Multi-key load balancing: select key and override Authorization header
+          let selectedKey: string | null = null;
+          if (keyPool) {
+            selectedKey = keyPool.select();
+            keyPool.acquire(selectedKey);
+          }
+
+          const newInit: RequestInit = init ? { ...init } : {};
+          if (selectedKey) {
+            const headers = new Headers(newInit.headers || {});
+            headers.set('Authorization', `Bearer ${selectedKey}`);
+            newInit.headers = headers;
+          }
+
+          const fetchStart = Date.now();
+          let response: Response;
+          try {
+            response = await globalThis.fetch(url, newInit);
+          } catch (fetchErr) {
+            if (keyPool && selectedKey) {
+              keyPool.markFailed(selectedKey, fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr)));
+            }
+            throw fetchErr;
+          }
+          const fetchDuration = Date.now() - fetchStart;
+
+          // Detect rate limit and mark key failed
+          if (response.status === 429 && keyPool && selectedKey) {
+            keyPool.markFailed(selectedKey, new Error('Rate limited'));
+          }
 
           // For non-streaming OpenAI-compatible providers, strip non-standard
           // fields (e.g. reasoning_content) from the response body that would
           // cause the @ai-sdk/openai Chat Completion schema validation to fail.
           let isStreamingRequest = false;
-          if (init?.body && typeof init.body === 'string') {
+          if (newInit?.body && typeof newInit.body === 'string') {
             try {
-              isStreamingRequest = JSON.parse(init.body)?.stream === true;
+              isStreamingRequest = JSON.parse(newInit.body)?.stream === true;
             } catch {
               /* ignore */
             }
@@ -1190,30 +1238,93 @@ export function getModel(config: ModelConfig): ModelWithInfo {
 
           if (isStreamingRequest) {
             // Streaming: pass through (SSE parser handles chunk-level validation)
+            // Do NOT release key here — stream may be consumed for minutes.
+            // Key will be released when the consumer finishes reading.
+            // Note: this inflates inflight count for streaming; acceptable for
+            // now since PPT generation uses non-streaming calls exclusively.
+            log.info(`[FetchWrapper] streaming request, passthrough in ${fetchDuration}ms`);
             return response;
           }
 
           // Non-streaming: transform response to strip incompatible fields
+          let transformErrorLogged = false;
+          let bodyReadTimer: ReturnType<typeof setTimeout> | null = null;
           try {
-            const cloned = response.clone();
-            const text = await cloned.text();
+            log.info(`[FetchWrapper] reading response body... status=${response.status} fetch=${fetchDuration}ms`);
+            const textStart = Date.now();
+            // Page design outputs up to 24k tokens; DeepSeek can take 3-5 min.
+            // Because Node.js fetch cannot cancel response.text() via AbortSignal
+            // once the response headers have arrived, this timeout acts as the
+            // *real* deadline for body consumption. 120s covers normal peaks
+            // (observed 25-85s) while preventing indefinite hangs.
+            const BODY_READ_TIMEOUT_MS = 120_000;
+            const textPromise = response.text();
+            const text = await Promise.race([
+              textPromise.then((t) => {
+                if (bodyReadTimer) {
+                  clearTimeout(bodyReadTimer);
+                  bodyReadTimer = null;
+                }
+                return t;
+              }),
+              new Promise<never>((_, reject) => {
+                bodyReadTimer = setTimeout(() => {
+                  bodyReadTimer = null;
+                  // Cancel the body reader to free the TCP connection
+                  textPromise.catch(() => {}); // swallow late rejection
+                  if (response.body) {
+                    response.body.cancel(new Error('Response body read timeout')).catch(() => {});
+                  }
+                  reject(new Error('Response body read timeout'));
+                }, BODY_READ_TIMEOUT_MS);
+              }),
+            ]);
+            log.info(`[FetchWrapper] response.text() done in ${Date.now() - textStart}ms, length=${text.length}`);
             const parsed = JSON.parse(text);
 
-            // Strip reasoning_content from choices (DeepSeek thinking)
-            if (parsed.choices && Array.isArray(parsed.choices)) {
-              for (const choice of parsed.choices) {
-                if (choice.message && typeof choice.message === 'object') {
-                  delete (choice.message as Record<string, unknown>).reasoning_content;
-                  delete (choice.message as Record<string, unknown>).reasoning;
-                }
-              }
+            // 1. Detect error-in-200 response (DeepSeek load-balancer behavior)
+            if (parsed.error) {
+              log.error(`DeepSeek API returned error in HTTP 200 body: ${JSON.stringify(parsed.error)}`);
+              throw new Error(`DeepSeek API error: ${JSON.stringify(parsed.error)}`);
             }
 
-            // Strip top-level non-standard fields
+            // 2. Guard empty / malformed choices — DO NOT fabricate empty content
+            if (!parsed.choices || !Array.isArray(parsed.choices) || parsed.choices.length === 0) {
+              log.error(`DeepSeek response missing choices. Body keys: ${Object.keys(parsed).join(',')}`);
+              throw new Error(`DeepSeek response missing choices: ${Object.keys(parsed).join(',')}`);
+            }
+
+            // 3. Deep-clean each choice — whitelist approach
+            const allowedMessageFields = ['role', 'content', 'tool_calls', 'function_call'];
+            for (const choice of parsed.choices) {
+              if (!choice.message || typeof choice.message !== 'object') {
+                choice.message = { role: 'assistant', content: '' };
+              }
+              const msg = choice.message as Record<string, unknown>;
+
+              // content: null → '' (DeepSeek thinking mode returns null content)
+              if (msg.content === null) msg.content = '';
+
+              // Strip known non-standard fields
+              delete msg.reasoning_content;
+              delete msg.reasoning;
+
+              // Strip any other unknown fields on message
+              for (const key of Object.keys(msg)) {
+                if (!allowedMessageFields.includes(key)) {
+                  delete msg[key];
+                }
+              }
+
+              // Guard finish_reason
+              if (choice.finish_reason === null) choice.finish_reason = 'stop';
+            }
+
+            // 4. Strip top-level non-standard fields
             delete parsed.reasoning_content;
             delete parsed.reasoning;
 
-            // Strip non-standard usage fields
+            // 5. Strip non-standard usage fields
             if (parsed.usage && typeof parsed.usage === 'object') {
               const usage = parsed.usage as Record<string, unknown>;
               if (usage.completion_tokens_details && typeof usage.completion_tokens_details === 'object') {
@@ -1223,14 +1334,29 @@ export function getModel(config: ModelConfig): ModelWithInfo {
               delete usage.prompt_cache_miss_tokens;
             }
 
+            if (keyPool && selectedKey) keyPool.release(selectedKey);
             return new Response(JSON.stringify(parsed), {
               status: response.status,
               statusText: response.statusText,
               headers: response.headers,
             });
-          } catch {
-            // If transformation fails (e.g. non-JSON body), return original
-            return response;
+          } catch (err) {
+            if (bodyReadTimer) {
+              clearTimeout(bodyReadTimer);
+              bodyReadTimer = null;
+            }
+            if (keyPool && selectedKey) keyPool.release(selectedKey);
+            // Re-throw abort errors so postToApi can recognize them via isAbortError
+            if (err instanceof Error && (err.name === 'AbortError' || err.message.includes('abort') || err.message.includes('timeout'))) {
+              throw err;
+            }
+            if (!transformErrorLogged) {
+              transformErrorLogged = true;
+              log.error(`Response transform failed: ${err instanceof Error ? err.message : String(err)}`);
+            }
+            // Body already consumed by response.text(); returning raw response would
+            // cause downstream readers to see empty body. Always throw.
+            throw err;
           }
         };
       }

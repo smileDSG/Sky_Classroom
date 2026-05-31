@@ -1,0 +1,21 @@
+{
+  "id": "C00sHt8KRHFa",
+  "status": "cancelled",
+  "stage": "failed",
+  "progress": 5,
+  "message": "课件生成已取消",
+  "totalPages": 0,
+  "createdAt": "2026-05-30T12:59:53.848Z",
+  "updatedAt": "2026-05-30T13:00:17.934Z",
+  "inputSummary": {
+    "topic": "���κ�������",
+    "difficulty": "����",
+    "styleName": "�Ƽ�����",
+    "minPages": 5,
+    "maxPages": 8
+  },
+  "modelConfig": {},
+  "startedAt": "2026-05-30T12:59:53.858Z",
+  "completedAt": "2026-05-30T13:00:17.934Z",
+  "error": "用户取消了生成"
+}

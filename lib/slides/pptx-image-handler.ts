@@ -264,6 +264,10 @@ async function resolveSingleImage(src: string, options: ResolveOptions = {}): Pr
 
   // Remote URL — fetch and convert to base64
   if (src.startsWith('http://') || src.startsWith('https://')) {
+    if (!isSafeImageUrl(src)) {
+      log.warn(`Blocked unsafe image URL: ${src.slice(0, 60)}`);
+      return null;
+    }
     try {
       const response = await fetch(src, { redirect: 'follow' });
       if (!response.ok) {

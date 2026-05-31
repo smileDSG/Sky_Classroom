@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { Sparkles, BookOpen, Lightbulb } from 'lucide-react';
+import { BookOpen, Lightbulb, Compass, FileStack } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface GenerationStatusProps {
@@ -13,11 +13,11 @@ interface GenerationStatusProps {
 
 const phaseLabels: Record<string, string> = {
   idle: '',
-  submitting: '正在提交...',
-  generating_outline: '正在生成大纲...',
-  reviewing: '大纲已生成，点击查看',
-  generating_slides: '正在生成幻灯片...',
-  done: '课堂生成完成',
+  submitting: '提交请求中...',
+  generating_outline: '构思课堂结构...',
+  reviewing: '大纲就绪，等待确认',
+  generating_slides: '编排幻灯片中...',
+  done: '课堂已就绪',
 };
 
 export function GenerationStatus({ phase, progress, step, jobId }: GenerationStatusProps) {
@@ -33,26 +33,38 @@ export function GenerationStatus({ phase, progress, step, jobId }: GenerationSta
         <button
           type="button"
           onClick={() => jobId && router.push(`/generation-progress?jobId=${jobId}`)}
-          className="w-full text-left rounded-2xl border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 shadow-lg p-5 hover:shadow-xl hover:border-sky-300 dark:hover:border-sky-700 transition-all cursor-pointer"
+          className="w-full text-left rounded-2xl border border-slate-200/70 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm p-5 hover:shadow-[0_4px_24px_-8px_rgba(15,23,42,0.1)] hover:border-slate-300/70 dark:hover:border-slate-600/50 transition-all cursor-pointer group"
         >
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="h-10 w-10 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
-              <Sparkles className="absolute inset-0 m-auto h-5 w-5 text-sky-500" />
+            {/* Workshop cards metaphor */}
+            <div className="relative flex items-center justify-center h-11 w-11 shrink-0">
+              <motion.div
+                className="absolute h-6 w-5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200/40 dark:border-slate-700/30"
+                animate={{ y: [0, 1, 0], rotate: [-2, 0, -2] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <motion.div
+                className="absolute h-6 w-5 rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm flex items-center justify-center"
+                animate={{ y: [0, -2, 0], rotate: [1, 3, 1] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
+                style={{ marginLeft: 3, marginTop: -4 }}
+              >
+                <div className="w-3 h-[2px] rounded-full bg-slate-200 dark:bg-slate-500" />
+              </motion.div>
             </div>
-            <div className="flex-1">
-              <p className="font-medium text-sky-700 dark:text-sky-300">
-                {phaseLabels[phase] || '后台处理中'}
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-slate-700 dark:text-slate-200 text-sm">
+                {phaseLabels[phase] || '处理中'}
               </p>
-              <p className="text-sm text-muted-foreground">
-                {step || '后台处理中，可自由切换页面 — 点击查看详情'}
+              <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                {step || '可自由浏览其他页面，后台继续处理 — 点击查看详情'}
               </p>
             </div>
-            <span className="text-lg font-bold text-sky-600">{progress}%</span>
+            <span className="text-sm font-semibold text-slate-500 tabular-nums tracking-wide">{progress}%</span>
           </div>
-          <div className="mt-3 h-1.5 rounded-full bg-sky-100 dark:bg-sky-900 overflow-hidden">
+          <div className="mt-3.5 h-[2px] rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
             <motion.div
-              className="h-full rounded-full bg-sky-500"
+              className="h-full rounded-full bg-slate-600 dark:bg-slate-400"
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.5 }}
             />
@@ -68,41 +80,36 @@ export function GenerationStatus({ phase, progress, step, jobId }: GenerationSta
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.2 }}
-      className="relative rounded-2xl border border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/40 backdrop-blur-sm p-5 overflow-hidden"
+      className="relative rounded-2xl border border-slate-200/50 dark:border-slate-700/40 bg-white/60 dark:bg-slate-800/30 backdrop-blur-sm p-5 overflow-hidden"
     >
-      {/* Decorative gradient orb */}
-      <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-gradient-to-br from-sky-400/20 to-blue-500/10 blur-2xl pointer-events-none" />
+      {/* Subtle paper texture */}
+      <div
+        className="absolute inset-0 opacity-[0.02] dark:opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+      />
 
       <div className="relative flex items-start gap-4">
-        <motion.div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-500 shadow-lg shadow-sky-500/25"
-          animate={{ rotate: [0, 5, -5, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <BookOpen className="h-6 w-6 text-white" />
-        </motion.div>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/40">
+          <BookOpen className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+        </div>
         <div className="flex-1">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">
+          <h3 className="text-[15px] font-semibold text-slate-800 dark:text-slate-100 mb-1">
             开始你的第一个课堂
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
             在上方输入框中描述你想要的课堂内容，点击"创建课堂"即可开始
           </p>
           <div className="flex flex-wrap gap-2">
-            <motion.span
-              whileHover={{ scale: 1.05 }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/50 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 cursor-default"
-            >
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/40 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 cursor-default border border-slate-200/50 dark:border-slate-600/30">
               <Lightbulb className="w-3 h-3 text-amber-500" />
               试试输入"初中物理：力的作用"
-            </motion.span>
-            <motion.span
-              whileHover={{ scale: 1.05 }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/50 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 cursor-default"
-            >
-              <Sparkles className="w-3 h-3 text-sky-500" />
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/40 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 cursor-default border border-slate-200/50 dark:border-slate-600/30">
+              <Compass className="w-3 h-3 text-sky-500" />
               或点击"模板"快速开始
-            </motion.span>
+            </span>
           </div>
         </div>
       </div>

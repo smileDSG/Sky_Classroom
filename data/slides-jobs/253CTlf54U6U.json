@@ -1,0 +1,19 @@
+{
+  "id": "253CTlf54U6U",
+  "status": "running",
+  "stage": "sections_generating",
+  "progress": 40,
+  "message": "第 4/4 章内容生成完毕...",
+  "totalPages": 20,
+  "createdAt": "2026-05-30T13:23:03.647Z",
+  "updatedAt": "2026-05-30T13:25:03.765Z",
+  "inputSummary": {
+    "topic": "定积分的定义",
+    "difficulty": "senior",
+    "styleName": "深邃蓝调",
+    "minPages": 15,
+    "maxPages": 25
+  },
+  "modelConfig": {},
+  "startedAt": "2026-05-30T13:23:03.657Z"
+}

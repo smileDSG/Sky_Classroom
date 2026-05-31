@@ -234,6 +234,11 @@ export interface LLMRetryOptions {
   /** Custom validation function. Return true to accept the result, false to retry.
    *  Default: checks that response text is non-empty. */
   validate?: (text: string) => boolean;
+  /** Timeout for each attempt in milliseconds (default: 90000 = 90s) */
+  timeoutMs?: number;
+  /** When true, throw error if all retries exhausted and validation still fails.
+   *  Default false (returns last result for backward compatibility). */
+  failOnValidationError?: boolean;
 }
 
 const DEFAULT_VALIDATE = (text: string) => text.trim().length > 0;
@@ -290,15 +295,24 @@ export async function callLLM<T extends GenerateTextParams>(
   const providerId = getModelProviderId(injectedParams);
   let currentKey: string | undefined; // tracked for markFailed on rotation
 
+  const timeoutMs = retryOptions?.timeoutMs ?? 90_000;
+  log.info(`[callLLM] source=${source} timeoutMs=${timeoutMs} maxAttempts=${maxAttempts}`);
+
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      log.warn(`[callLLM] ABORT triggered for source=${source} after ${timeoutMs}ms (attempt ${attempt})`);
+      abortController.abort(new Error('LLM call timeout'));
+    }, timeoutMs);
     try {
       // Wrap in thinkingContext so the custom fetch wrapper in providers.ts
       // can read the config and inject vendor-specific body params for
       // OpenAI-compatible providers.
       const startTime = performance.now();
       const result = await thinkingContext.run(effectiveThinking, () =>
-        generateText(injectedParams),
+        generateText({ ...injectedParams, abortSignal: abortController.signal }),
       );
+      clearTimeout(timeoutId);
       const durationMs = Math.round(performance.now() - startTime);
 
       // Record performance metrics
@@ -317,11 +331,19 @@ export async function callLLM<T extends GenerateTextParams>(
           `[${source}] Validation failed (attempt ${attempt}/${maxAttempts}), ${attempt < maxAttempts ? 'retrying...' : 'giving up'}`,
         );
         lastResult = result;
+        if (attempt < maxAttempts) {
+          const backoffMs = 2000 * (attempt - 1);
+          if (backoffMs > 0) {
+            log.info(`[${source}] Backing off ${backoffMs}ms before retry ${attempt + 1}`);
+            await new Promise((r) => setTimeout(r, backoffMs));
+          }
+        }
         continue;
       }
 
       return result;
     } catch (error) {
+      clearTimeout(timeoutId);
       lastError = error;
 
       // Record failed call
@@ -357,14 +379,38 @@ export async function callLLM<T extends GenerateTextParams>(
       }
 
       if (attempt < maxAttempts) {
+        // Only retry on transient errors (network, timeout, 5xx, rate limit)
+        const isRetryable = !(error instanceof Error && (
+          error.message.includes('401') ||
+          error.message.includes('403') ||
+          error.message.includes('API key') ||
+          error.message.includes('invalid') ||
+          error.message.includes('bad request')
+        ));
+        if (!isRetryable) {
+          log.warn(`[${source}] Non-retryable error (attempt ${attempt}/${maxAttempts}), giving up:`, error);
+          throw error;
+        }
         log.warn(`[${source}] Call failed (attempt ${attempt}/${maxAttempts}), retrying...`, error);
+        const backoffMs = 2000 * (attempt - 1);
+        if (backoffMs > 0) {
+          log.info(`[${source}] Backing off ${backoffMs}ms before retry ${attempt + 1}`);
+          await new Promise((r) => setTimeout(r, backoffMs));
+        }
         continue;
       }
     }
   }
 
   // All attempts exhausted — return last result or throw last error
-  if (lastResult) return lastResult;
+  if (lastResult) {
+    if (retryOptions?.failOnValidationError) {
+      throw new Error(
+        `[${source}] Validation failed after ${maxAttempts} attempts. Last response: ${lastResult.text.slice(0, 200)}`,
+      );
+    }
+    return lastResult;
+  }
   throw lastError;
 }
 
