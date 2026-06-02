@@ -190,13 +190,13 @@ export const MAX_PAGES_PER_RUN = 100;
 export const MAX_QUESTIONS_PER_RUN = 200;
 
 /** Maximum questions to store in question bank per run */
-export const MAX_STORE_PER_RUN = 100;
+export const MAX_STORE_PER_RUN = 5000;
 
 /** Bing Search API max results per query */
 export const BING_MAX_RESULTS_PER_QUERY = 15;
 
 /** Max concurrent solve operations */
-export const MAX_CONCURRENT_SOLVES = 5;
+export const MAX_CONCURRENT_SOLVES = 10;
 
 /** Minimum solve confidence to store in question bank */
 export const MIN_STORE_CONFIDENCE = 0.65;

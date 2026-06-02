@@ -23,4 +23,5 @@ export { importDataset, importAllDatasets } from './dataset-importer';
 export { DATASET_SOURCES } from './dataset-sources';
 export type { DatasetSource } from './dataset-sources';
 export { generateQuestions } from './question-generator';
-export { runEnrichment, runEnrichmentParallel, getEnrichmentStatus } from './enrichment-pipeline';
+export { runEnrichment, runEnrichmentParallel, getEnrichmentStatus, getEnrichmentProgress } from './enrichment-pipeline';
+export { saveQuestion, hasProblem, getCount, getBySubject, getRecent, getStats } from './sqlite-store';

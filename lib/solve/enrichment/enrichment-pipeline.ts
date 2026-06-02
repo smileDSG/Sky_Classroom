@@ -2,13 +2,12 @@
  * Enrichment pipeline — main orchestrator.
  *
  * Flow:
- *   ① Search (Bing API) → ② Fetch pages → ③ LLM extract questions
- *   → ④ Solve (reuse solveWithHybrid) → ⑤ Store in question bank
+ *   LLM generate questions (DeepSeek) → dedup via SQLite
+ *   → solve (reuse solveWithHybrid) → store in SQLite question bank
  *
- * Designed for Phase 1 batch (cold start): subjects processed sequentially
- * in priority order (数学→物理→化学→...), focusing on senior+college.
- *
- * Phase 2 will add Vercel Cron for periodic incremental enrichment.
+ * Processes subjects in priority order (数学→物理→化学→生物),
+ * generating questions in batches and solving with 5 concurrent workers.
+ * Supports checkpoint-based resume for long-running bulk enrichment runs.
  */
 
 import type {
@@ -19,16 +18,13 @@ import type {
   SubjectId,
   GradeLevel,
 } from './types';
-import { searchForSubject, isSearchConfigured } from './web-search';
-import { fetchPages } from './page-fetcher';
-import { extractQuestionsFromPages } from './question-extractor';
+import { generateTemplateQuestions } from './template-generator';
+import { scrapeQuestions } from './direct-scraper';
+import { importLocalFile } from './local-file-importer';
+import { saveQuestion, hasProblem } from './sqlite-store';
 import { solveWithHybrid } from '../solver-agent';
-import { saveToLocalStore } from './local-store';
 import { createLogger } from '@/lib/logger';
 import {
-  SUBJECTS,
-  GRADE_MAP,
-  MAX_QUESTIONS_PER_RUN,
   MAX_STORE_PER_RUN,
   MAX_CONCURRENT_SOLVES,
   MIN_STORE_CONFIDENCE,
@@ -37,12 +33,51 @@ import {
 
 const log = createLogger('Enrichment:Pipeline');
 
+// ── Subjects processed by the LLM generation flow (priority order) ───
+
+const DEFAULT_LLM_SUBJECTS: SubjectId[] = ['math', 'physics', 'chemistry', 'biology'];
+
+// ── Checkpoint ────────────────────────────────────────────────────────
+
+interface EnrichmentCheckpoint {
+  lastSubject: SubjectId;
+  lastGradeLevel: GradeLevel;
+  totalStored: number;
+  totalFailed: number;
+  timestamp: number;
+}
+
+const CHECKPOINT_PATH = '.data/enrichment-checkpoint.json';
+
+function loadCheckpoint(): EnrichmentCheckpoint | null {
+  try {
+    const fs = require('fs');
+    const data = fs.readFileSync(CHECKPOINT_PATH, 'utf-8');
+    const cp = JSON.parse(data) as EnrichmentCheckpoint;
+    log.info(`[Checkpoint] Loaded: subject=${cp.lastSubject}, grade=${cp.lastGradeLevel}, stored=${cp.totalStored}`);
+    return cp;
+  } catch {
+    return null;
+  }
+}
+
+function saveCheckpoint(cp: EnrichmentCheckpoint): void {
+  try {
+    const fs = require('fs');
+    const dir = '.data';
+    try { fs.mkdirSync(dir, { recursive: true }); } catch { /* exists */ }
+    fs.writeFileSync(CHECKPOINT_PATH, JSON.stringify(cp, null, 2), 'utf-8');
+  } catch (err) {
+    log.warn(`[Checkpoint] Failed to save: ${err}`);
+  }
+}
+
 // ── In-memory job state (server lifetime) ────────────────────────────
 
 let currentJob: EnrichJob | null = null;
 let lastJob: EnrichJob | null = null;
 
-// ── Single question: extract → solve → store ──────────────────────
+// ── Single question: solve → store ───────────────────────────────────
 
 /**
  * Process one extracted question through the solve pipeline and store it.
@@ -57,7 +92,7 @@ async function processOneQuestion(
     stored: false,
   };
 
-  // Step ④: Solve using the existing hybrid strategy
+  // Solve using the existing hybrid strategy
   try {
     const agentType = subjectToAgentType(question.subject);
     const { solution, usedAgents } = await solveWithHybrid(
@@ -72,32 +107,34 @@ async function processOneQuestion(
       result.agentType = usedAgents[usedAgents.length - 1] ?? agentType;
       result.solveConfidence = solution.confidence ?? 0.5;
 
-      // Step ⑤: Store in question bank if confidence is sufficient
+      // Store in SQLite question bank if confidence is sufficient
       if (solution.confidence >= MIN_STORE_CONFIDENCE) {
-        try {
-          await saveToLocalStore({
-            problemText: question.problemText,
-            answer: solution.answer,
-            solution: solution.solution,
-            knowledgePoints: (solution.knowledgePoints ?? []).map((k) => ({
-              name: k.name,
-              description: k.description,
-              difficulty: k.difficulty,
-            })),
-            subject: question.subject,
-            gradeLevel: question.gradeLevel,
-            agentId: String(result.agentType ?? 'universal'),
-            confidence: solution.confidence ?? 0.5,
-            sourceUrl: question.sourceUrl,
-          });
+        // Dedup already happened before solving, so this is always a fresh insert.
+        saveQuestion({
+          problemText: question.problemText,
+          answer: solution.answer,
+          solution: solution.solution,
+          knowledgePoints: (solution.knowledgePoints ?? []).map((k) => ({
+            name: k.name,
+            description: k.description,
+            difficulty: k.difficulty,
+          })),
+          subject: question.subject,
+          gradeLevel: question.gradeLevel,
+          agentId: String(result.agentType ?? 'universal'),
+          confidence: solution.confidence ?? 0.5,
+          sourceUrl: question.sourceUrl,
+        });
 
-          result.stored = true;
-          stats.totalStored++;
-          log.info(`[Pipeline] Stored question: ${question.problemText.slice(0, 60)}...`);
-        } catch (err) {
-          log.warn(`[Pipeline] Failed to store question: ${err}`);
-          stats.totalFailed++;
+        result.stored = true;
+        stats.totalStored++;
+        if (!stats.bySubject[question.subject]) {
+          stats.bySubject[question.subject] = {
+            searched: 0, fetched: 0, extracted: 0, solved: 0, stored: 0, failed: 0,
+          };
         }
+        stats.bySubject[question.subject].stored++;
+        log.info(`[Pipeline] Stored: ${question.problemText.slice(0, 60)}...`);
       } else {
         log.info(`[Pipeline] Low confidence (${solution.confidence}), skipping store`);
         stats.totalFailed++;
@@ -108,6 +145,9 @@ async function processOneQuestion(
     }
 
     stats.totalSolved++;
+    if (stats.bySubject[question.subject]) {
+      stats.bySubject[question.subject].solved++;
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.error(`[Pipeline] Solve failed: ${msg}`);
@@ -145,348 +185,18 @@ async function processBatch(
 }
 
 // ── Subject → agent type mapping ────────────────────────────────────
+// NOTE: Always use 'universal' (DeepSeek) since only DeepSeek key is configured.
+// The multi-model hybrid fallback (GLM, Qwen) requires separate API keys.
+// This avoids "API key required" errors from unavailable providers.
 
-function subjectToAgentType(subject: SubjectId) {
-  switch (subject) {
-    case 'math':
-    case 'physics':
-    case 'chemistry':
-    case 'biology':
-      return 'science' as const;
-    case 'chinese':
-    case 'english':
-    case 'history':
-    case 'geography':
-    case 'politics':
-      return 'humanities' as const;
-    default:
-      return 'universal' as const;
-  }
-}
-
-// ── Run enrichment for one subject ──────────────────────────────────
-
-interface RunSubjectOpts {
-  subject: SubjectId;
-  gradeLevels: GradeLevel[];
-  maxQuestions?: number;
-}
-
-async function runForSubject(opts: RunSubjectOpts): Promise<{
-  questions: ExtractedQuestion[];
-  stats: { searched: number; fetched: number; extracted: number };
-}> {
-  const { subject, gradeLevels, maxQuestions = MAX_QUESTIONS_PER_RUN } = opts;
-
-  let totalSearched = 0;
-  let totalFetched = 0;
-
-  const allQuestions: ExtractedQuestion[] = [];
-
-  for (const gradeLevel of gradeLevels) {
-    if (allQuestions.length >= maxQuestions) break;
-
-    // ① Search
-    const searchResults = await searchForSubject({
-      subject,
-      gradeLevel,
-      maxResults: 20,
-      filterAllowedDomains: true,
-    });
-    totalSearched += searchResults.length;
-
-    if (searchResults.length === 0) {
-      log.info(`[Pipeline] No search results for ${subject}/${gradeLevel}`);
-      continue;
-    }
-
-    // ② Fetch
-    const urls = searchResults.map((r) => r.url);
-    const pages = await fetchPages({ urls, skipRobotsCheck: false, maxPages: 10 });
-    totalFetched += pages.length;
-
-    if (pages.length === 0) {
-      log.info(`[Pipeline] No pages fetched for ${subject}/${gradeLevel}`);
-      continue;
-    }
-
-    // ③ Extract
-    const questions = await extractQuestionsFromPages({
-      pages: pages.map((p) => ({ url: p.url, textContent: p.textContent })),
-      expectedSubject: subject,
-      expectedGrade: gradeLevel,
-      maxTotalQuestions: maxQuestions - allQuestions.length,
-    });
-
-    allQuestions.push(...questions);
-    log.info(
-      `[Pipeline] ${subject}/${gradeLevel}: ${searchResults.length} searched → ${pages.length} fetched → ${questions.length} extracted`,
-    );
-  }
-
-  return {
-    questions: allQuestions,
-    stats: { searched: totalSearched, fetched: totalFetched, extracted: allQuestions.length },
-  };
-}
-
-// ── Seed questions (built-in, no network needed) ─────────────────────
-
-const SEED_QUESTIONS: Record<SubjectId, ExtractedQuestion[]> = {
-  math: [
-    // ── existing seeds 001-008 ──────────────────────────────────────
-    {
-      problemText: '已知函数 $f(x) = x^3 - 3x^2 + 2x + 1$，求 $f(x)$ 的极值点。',
-      subject: 'math', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://math/001', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '在 $\triangle ABC$ 中，已知 $a=3$, $b=4$, $\angle C = 60^\circ$，求 $c$ 的长度。',
-      subject: 'math', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://math/002', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '已知等差数列 $\{a_n\}$ 中，$a_1 = 2$，$a_5 = 14$，求公差 $d$ 和通项公式。',
-      subject: 'math', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://math/003', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '求不定积分 $\int (2x^3 + 3x^2 - 4x + 1) \, dx$。',
-      subject: 'math', gradeLevel: 'college', questionType: 'solve',
-      sourceUrl: 'seed://math/004', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '若 $A = \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}$，求 $A$ 的行列式和逆矩阵。',
-      subject: 'math', gradeLevel: 'college', questionType: 'solve',
-      sourceUrl: 'seed://math/005', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '函数 $y = \sin(2x + \frac{\pi}{3})$ 的最小正周期是多少？A. $\pi$ B. $2\pi$ C. $\frac{\pi}{2}$ D. $4\pi$',
-      subject: 'math', gradeLevel: 'senior', questionType: 'choice',
-      sourceUrl: 'seed://math/006', extractionConfidence: 1.0, sourceAnswer: 'A',
-    },
-    {
-      problemText: '已知 $|a|=2$, $|b|=3$, $a \cdot b = -3$，求 $a$ 与 $b$ 的夹角。',
-      subject: 'math', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://math/007', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '解方程：$\log_2(x+1) + \log_2(x-1) = 3$。',
-      subject: 'math', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://math/008', extractionConfidence: 1.0,
-    },
-    // ── new seeds 009-018 ───────────────────────────────────────────
-    {
-      problemText: '抛物线 $y^2 = 4x$ 的焦点坐标是？A. $(1,0)$ B. $(0,1)$ C. $(2,0)$ D. $(0,2)$',
-      subject: 'math', gradeLevel: 'senior', questionType: 'choice',
-      sourceUrl: 'seed://math/009', extractionConfidence: 1.0, sourceAnswer: 'A',
-    },
-    {
-      problemText: '已知等比数列 $\{a_n\}$ 中，$a_1 = 3$，公比 $q = 2$，求前 $n$ 项和 $S_n$ 的公式。',
-      subject: 'math', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://math/010', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '从 $5$ 名男生和 $3$ 名女生中选出 $3$ 人组成小组，求至少有 $1$ 名女生的选法数。',
-      subject: 'math', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://math/011', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '计算极限 $\lim_{x \to 0} \frac{\sin 3x}{x}$。',
-      subject: 'math', gradeLevel: 'college', questionType: 'fill',
-      sourceUrl: 'seed://math/012', extractionConfidence: 1.0, sourceAnswer: '3',
-    },
-    {
-      problemText: '求二重积分 $\iint_{D} (x + y) \, dx dy$，其中 $D$ 是由 $x=0$, $y=0$, $x=1$, $y=1$ 围成的正方形区域。',
-      subject: 'math', gradeLevel: 'college', questionType: 'solve',
-      sourceUrl: 'seed://math/013', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '函数 $f(x) = e^x \sin x$ 在 $x=0$ 处的导数 $f\'(0)$ 等于？A. $0$ B. $1$ C. $e$ D. $2$',
-      subject: 'math', gradeLevel: 'college', questionType: 'choice',
-      sourceUrl: 'seed://math/014', extractionConfidence: 1.0, sourceAnswer: 'B',
-    },
-    {
-      problemText: '设随机变量 $X \sim N(0,1)$，求 $P(-1 < X < 1)$。（已知 $\Phi(1) = 0.8413$）',
-      subject: 'math', gradeLevel: 'college', questionType: 'solve',
-      sourceUrl: 'seed://math/015', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '已知椭圆 $\frac{x^2}{25} + \frac{y^2}{9} = 1$，求椭圆的离心率。',
-      subject: 'math', gradeLevel: 'senior', questionType: 'fill',
-      sourceUrl: 'seed://math/016', extractionConfidence: 1.0, sourceAnswer: '0.8',
-    },
-    {
-      problemText: '求级数 $\sum_{n=1}^{\infty} \frac{1}{n(n+1)}$ 的和。',
-      subject: 'math', gradeLevel: 'college', questionType: 'solve',
-      sourceUrl: 'seed://math/017', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '已知复数 $z = 1 + \sqrt{3}i$，求 $z$ 的模和辐角主值。',
-      subject: 'math', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://math/018', extractionConfidence: 1.0,
-    },
-  ],
-  physics: [
-    // ── existing seeds 001-003 ──────────────────────────────────────
-    {
-      problemText: '一质量为 $2\text{kg}$ 的物体在水平面上受到 $10\text{N}$ 的水平拉力，物体与地面的摩擦系数为 $0.2$，求物体的加速度。（$g=10\text{m/s}^2$）',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/001', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '一个电阻为 $R=10\Omega$ 的导体，两端电压为 $U=220\text{V}$，求通过导体的电流和电功率。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/002', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '一束光从空气射入玻璃（$n=1.5$），入射角为 $30^\circ$，求折射角。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/003', extractionConfidence: 1.0,
-    },
-    // ── new seeds 004-013 ───────────────────────────────────────────
-    {
-      problemText: '一辆汽车以 $72\text{km/h}$ 的速度行驶，紧急刹车后在 $4\text{s}$ 内停下，求汽车的加速度和刹车距离。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/004', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '一质点做匀速圆周运动，半径为 $0.5\text{m}$，角速度为 $4\text{rad/s}$，求质点的线速度和向心加速度。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/005', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '一辆质量为 $1000\text{kg}$ 的汽车以 $10\text{m/s}$ 的速度行驶，求汽车的动能。若汽车在 $20\text{m}$ 内停下，求平均阻力。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/006', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '三个电阻 $R_1=4\Omega$、$R_2=6\Omega$、$R_3=12\Omega$ 并联后接在 $24\text{V}$ 电源上，求总电流和各支路电流。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/007', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '一个面积为 $0.1\text{m}^2$ 的线圈在 $B=0.5\text{T}$ 的匀强磁场中以 $\omega=10\text{rad/s}$ 的角速度匀速转动，线圈匝数为 $100$，求产生的最大感应电动势。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/008', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '一凸透镜的焦距为 $20\text{cm}$，物体距透镜 $30\text{cm}$，求像距和像的放大率，并判断像的虚实。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/009', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '波长为 $600\text{nm}$ 的单色光垂直照射到双缝上，双缝间距为 $0.5\text{mm}$，缝到屏幕距离为 $2\text{m}$，求相邻亮条纹的间距。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/010', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '一定质量的理想气体在 $27^\circ\text{C}$ 时压强为 $1.0 \times 10^5\text{Pa}$，体积为 $2.0 \times 10^{-3}\text{m}^3$。若温度升高到 $127^\circ\text{C}$ 且体积不变，求气体的压强。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/011', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '一颗质量为 $0.1\text{kg}$ 的子弹以 $200\text{m/s}$ 的速度射入质量为 $4.9\text{kg}$ 的静止木块中并嵌入其中，求子弹嵌入后木块的速度及系统损失的动能。',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/012', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '在一个平行板电容器中，两极板间距为 $2\text{mm}$，电势差为 $100\text{V}$，求两极板间的电场强度。若一个电子从负极板由静止释放，求它到达正极板时的速度。（$m_e = 9.1 \times 10^{-31}\text{kg}$, $e = 1.6 \times 10^{-19}\text{C}$）',
-      subject: 'physics', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://physics/013', extractionConfidence: 1.0,
-    },
-  ],
-  chemistry: [
-    // ── existing seed 001 ───────────────────────────────────────────
-    {
-      problemText: '配平化学方程式：$\ce{Fe + HCl -> FeCl2 + H2}$，并计算 $5.6\text{g}$ 铁与足量盐酸反应产生氢气的体积（标准状况）。',
-      subject: 'chemistry', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://chemistry/001', extractionConfidence: 1.0,
-    },
-    // ── new seeds 002-006 ───────────────────────────────────────────
-    {
-      problemText: '在酸性 $\ce{KMnO4}$ 溶液中加入 $\ce{FeSO4}$ 溶液，写出该氧化还原反应的离子方程式，并指出氧化剂和还原剂。',
-      subject: 'chemistry', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://chemistry/002', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '工业上用氮气和氢气合成氨的反应为 $\ce{N2 + 3H2 <=> 2NH3}$，此为放热反应。试分析增大压强和升高温度对平衡的影响。',
-      subject: 'chemistry', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://chemistry/003', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '写出乙醇（$\ce{C2H5OH}$）在浓硫酸催化下加热到 $170^\circ\text{C}$ 发生消去反应的化学方程式，并说出生成物的名称。',
-      subject: 'chemistry', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://chemistry/004', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '某有机物完全燃烧后只生成 $\ce{CO2}$ 和 $\ce{H2O}$，已知 $0.1\text{mol}$ 该有机物燃烧生成 $8.8\text{g}$ $\ce{CO2}$ 和 $5.4\text{g}$ $\ce{H2O}$，该有机物蒸气的密度是同温同压下氢气密度的 $23$ 倍，求该有机物的分子式。',
-      subject: 'chemistry', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://chemistry/005', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '在标准状况下，$11.2\text{L}$ 的 $\ce{HCl}$ 气体溶于水配成 $500\text{mL}$ 溶液，求所得盐酸的物质的量浓度。若取该盐酸 $25\text{mL}$ 与足量 $\ce{Na2CO3}$ 反应，求产生的 $\ce{CO2}$ 在标准状况下的体积。',
-      subject: 'chemistry', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://chemistry/006', extractionConfidence: 1.0,
-    },
-  ],
-  chinese: [],
-  english: [
-    // ── new seeds 001-002 ───────────────────────────────────────────
-    {
-      problemText: '阅读下面短文，回答问题：\n\n"Artificial intelligence (AI) is transforming education in profound ways. From personalized learning platforms that adapt to each student\'s pace, to automated grading systems that free up teachers\' time, AI tools are becoming increasingly common in classrooms around the world. However, critics argue that over-reliance on AI could reduce human interaction and critical thinking skills among students."\n\n问题：According to the passage, what is one benefit and one concern regarding AI in education?',
-      subject: 'english', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://english/001', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '阅读下面的短文并选择最佳答案：\n\n"Climate change is one of the most pressing challenges of our time. Rising global temperatures have led to more frequent extreme weather events, melting polar ice caps, and rising sea levels. Scientists agree that human activities, particularly the burning of fossil fuels, are the primary cause. Many countries have pledged to reduce carbon emissions, but progress has been slow."\n\nAccording to the passage, what is the primary cause of climate change?\nA. Melting polar ice caps\nB. Rising sea levels\nC. Human activities, especially burning fossil fuels\nD. Extreme weather events',
-      subject: 'english', gradeLevel: 'senior', questionType: 'choice',
-      sourceUrl: 'seed://english/002', extractionConfidence: 1.0, sourceAnswer: 'C',
-    },
-  ],
-  biology: [
-    // ── new seeds 001-003 ───────────────────────────────────────────
-    {
-      problemText: '在孟德尔的豌豆杂交实验中，用纯种高茎（显性，DD）与纯种矮茎（隐性，dd）杂交，得到子一代（$F_1$）全部为高茎。若让 $F_1$ 自交，求 $F_2$ 的基因型比例和表现型比例。',
-      subject: 'biology', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://biology/001', extractionConfidence: 1.0,
-    },
-    {
-      problemText: 'DNA 分子的双螺旋结构模型是由谁提出的？DNA 复制时遵循什么原则？简述 DNA 半保留复制的过程。',
-      subject: 'biology', gradeLevel: 'senior', questionType: 'solve',
-      sourceUrl: 'seed://biology/002', extractionConfidence: 1.0,
-    },
-    {
-      problemText: '在有丝分裂过程中，染色体数目加倍发生在哪个时期？纺锤体是在哪个时期形成的？A. 前期 B. 中期 C. 后期 D. 末期',
-      subject: 'biology', gradeLevel: 'senior', questionType: 'choice',
-      sourceUrl: 'seed://biology/003', extractionConfidence: 1.0, sourceAnswer: 'C',
-    },
-  ],
-  history: [],
-  geography: [],
-  politics: [],
-};
-
-function getSeedQuestions(
-  subjects: SubjectId[],
-  _gradeLevels: GradeLevel[],
-  maxQuestions: number,
-): ExtractedQuestion[] {
-  const questions: ExtractedQuestion[] = [];
-  for (const subject of subjects) {
-    const seed = SEED_QUESTIONS[subject] ?? [];
-    for (const q of seed) {
-      if (questions.length >= maxQuestions) break;
-      questions.push(q);
-    }
-  }
-  return questions;
+function subjectToAgentType(_subject: SubjectId) {
+  return 'universal' as const;
 }
 
 // ── Main entry point ────────────────────────────────────────────────
 
 export interface RunEnrichmentOptions {
-  /** Specific subjects to run (default: all in priority order) */
+  /** Specific subjects to run (default: math, physics, chemistry, biology in priority order) */
   subjects?: SubjectId[];
   /** Specific grade levels (default: senior, college) */
   gradeLevels?: GradeLevel[];
@@ -497,16 +207,20 @@ export interface RunEnrichmentOptions {
 }
 
 /**
- * Run the full enrichment pipeline.
+ * Run the full enrichment pipeline using LLM generation + SQLite storage.
  *
- * Processes subjects sequentially in priority order (数学→物理→化学→...).
- * For each subject: search → fetch → extract → solve → store.
+ * Processes subjects in priority order. For each subject/grade combination,
+ * generates questions via DeepSeek in batches of 20, deduplicates against
+ * the SQLite store, solves with 5 concurrent workers, and stores results.
+ *
+ * Supports checkpoint-based resume: if a checkpoint file exists, the pipeline
+ * resumes from the last subject/grade level, picking up where it left off.
  *
  * @returns The completed job with statistics
  */
 export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<EnrichJob> {
   const {
-    subjects = SUBJECTS.map((s) => s.id),
+    subjects = DEFAULT_LLM_SUBJECTS,
     gradeLevels = ['senior', 'college'],
     maxQuestions = MAX_STORE_PER_RUN,
     _parallel = false,
@@ -530,98 +244,163 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
   if (!_parallel) {
     currentJob = job;
   }
-  log.info(`[Pipeline] Starting enrichment job ${job.id}`);
+  log.info(`[Pipeline] Starting enrichment job ${job.id} (target: ${maxQuestions} questions)`);
+
+  // ── Resume from checkpoint ─────────────────────────────────────────
+  let resumeSubjectIdx = 0;
+  let resumeGradeIdx = 0;
+
+  const cp = loadCheckpoint();
+  if (cp) {
+    const foundSubjectIdx = subjects.indexOf(cp.lastSubject);
+    if (foundSubjectIdx !== -1) {
+      resumeSubjectIdx = foundSubjectIdx;
+      const foundGradeIdx = gradeLevels.indexOf(cp.lastGradeLevel);
+      if (foundGradeIdx !== -1) {
+        resumeGradeIdx = foundGradeIdx;
+      }
+      job.stats.totalStored = cp.totalStored;
+      job.stats.totalFailed = cp.totalFailed;
+      log.info(`[Pipeline] Resuming from ${cp.lastSubject}/${cp.lastGradeLevel} (${cp.totalStored} already stored)`);
+    }
+  }
 
   try {
-    // Check if we should use dataset mode (no search API) or search mode
-    const useDatasets = !isSearchConfigured();
+    const BATCH_SIZE = 20;
+    let batchCount = 0;
+    const allDatasetQuestions: ExtractedQuestion[] = [];
 
-    if (useDatasets) {
-      log.info('[Pipeline] Using LLM GENERATION mode (no search API, datasets unreachable)');
-
-      // Skip datasets entirely — GitHub is blocked. Use built-in seed questions.
-      const questions = getSeedQuestions(subjects, gradeLevels, maxQuestions);
-
-      job.stats.totalExtracted = questions.length;
-      for (const q of questions) {
-        if (!job.stats.bySubject[q.subject]) {
-          job.stats.bySubject[q.subject] = {
-            searched: 0, fetched: 0, extracted: 0, solved: 0, stored: 0, failed: 0,
-          };
-        }
-        job.stats.bySubject[q.subject].extracted++;
+    for (let si = resumeSubjectIdx; si < subjects.length; si++) {
+      const subject = subjects[si];
+      if (job.stats.totalStored >= maxQuestions) {
+        log.info(`[Pipeline] Reached target (${maxQuestions} stored), stopping`);
+        break;
       }
 
-      log.info(`[Pipeline] Generated ${questions.length} questions via LLM`);
+      const gradeStartIdx = si === resumeSubjectIdx ? resumeGradeIdx : 0;
 
-      if (questions.length > 0) {
-        await processBatch(questions, job.stats);
-      }
-    } else {
-      // ── Search mode (original path) ──────────────────────────────
-      const subjectSet = new Set(subjects);
-      const toProcess = SUBJECTS.filter((s) => subjectSet.has(s.id)).sort(
-        (a, b) => a.priority - b.priority,
-      );
-
-      let totalQuestions = 0;
-
-      for (const subj of toProcess) {
-        if (totalQuestions >= maxQuestions) {
-          log.info(`[Pipeline] Reached max store limit (${maxQuestions}), stopping`);
+      for (let gi = gradeStartIdx; gi < gradeLevels.length; gi++) {
+        const gradeLevel = gradeLevels[gi];
+        if (job.stats.totalStored >= maxQuestions) {
+          log.info(`[Pipeline] Reached target (${maxQuestions} stored), stopping`);
           break;
         }
 
-        const activeGradeLevels = gradeLevels.filter((g) =>
-          subj.gradeLevels.includes(g),
-        );
+        job.subject = subject;
 
-        if (activeGradeLevels.length === 0) {
-          log.info(`[Pipeline] Skipping ${subj.id}: no matching grade levels`);
-          continue;
-        }
-
-        log.info(`[Pipeline] Processing ${subj.label} (${activeGradeLevels.map((g) => GRADE_MAP[g]?.label).join(', ')})...`);
-
-        // Search + fetch + extract
-        const { questions, stats: phaseStats } = await runForSubject({
-          subject: subj.id,
-          gradeLevels: activeGradeLevels,
-          maxQuestions: maxQuestions - totalQuestions,
-        });
-
-        job.stats.totalSearched += phaseStats.searched;
-        job.stats.totalFetched += phaseStats.fetched;
-        job.stats.totalExtracted += phaseStats.extracted;
-
-        if (!job.stats.bySubject[subj.id]) {
-          job.stats.bySubject[subj.id] = {
-            searched: 0,
-            fetched: 0,
-            extracted: 0,
-            solved: 0,
-            stored: 0,
-            failed: 0,
+        // Initialize per-subject stats
+        if (!job.stats.bySubject[subject]) {
+          job.stats.bySubject[subject] = {
+            searched: 0, fetched: 0, extracted: 0, solved: 0, stored: 0, failed: 0,
           };
         }
-        const ss = job.stats.bySubject[subj.id];
-        ss.searched += phaseStats.searched;
-        ss.fetched += phaseStats.fetched;
-        ss.extracted += phaseStats.extracted;
 
-        if (questions.length > 0) {
-          const results = await processBatch(questions, job.stats);
-          for (const r of results) {
-            ss.solved += r.solved ? 1 : 0;
-            ss.stored += r.stored ? 1 : 0;
-            ss.failed += r.stored ? 0 : 1;
+        log.info(`[Pipeline] Processing ${subject}/${gradeLevel} (stored: ${job.stats.totalStored}/${maxQuestions})`);
+
+        // ① Load questions from local dataset files (real exam problems)
+        if (subject === 'math' && job.stats.totalExtracted === 0) {
+          const datasetFiles = [
+            '.data/tal-scq5k-train.jsonl',
+            '.data/tal-scq5k-test.jsonl',
+          ];
+          for (const file of datasetFiles) {
+            try {
+              const imported = await importLocalFile({ filePath: file, format: 'tal-scq5k' });
+              log.info(`[Pipeline] Loaded ${imported.length} questions from ${file}`);
+              allDatasetQuestions.push(...imported);
+            } catch (err) {
+              log.warn(`[Pipeline] Failed to load ${file}: ${err}`);
+            }
           }
-          totalQuestions += results.filter((r) => r.stored).length;
+          log.info(`[Pipeline] Total dataset questions: ${allDatasetQuestions.length}`);
         }
 
-        log.info(
-          `[Pipeline] ${subj.label} done: ${ss.extracted} extracted → ${ss.solved} solved → ${ss.stored} stored`,
-        );
+        let datasetIndex = 0;
+        let consecutiveEmptyBatches = 0;
+
+        while (job.stats.totalStored < maxQuestions) {
+          // ① Get questions: dataset first → scrape second → templates last
+          let generated: ExtractedQuestion[] = [];
+
+          // Use dataset questions (real exam problems) when available
+          while (generated.length < BATCH_SIZE && datasetIndex < allDatasetQuestions.length) {
+            generated.push(allDatasetQuestions[datasetIndex]);
+            datasetIndex++;
+          }
+
+          // Scrape for more
+          if (generated.length < BATCH_SIZE) {
+            const scraped = await scrapeQuestions({
+              subject,
+              gradeLevel,
+              maxQuestions: BATCH_SIZE - generated.length,
+            });
+            generated = [...generated, ...scraped];
+          }
+
+          // Fill gap with templates
+          if (generated.length < BATCH_SIZE) {
+            const templateCount = BATCH_SIZE - generated.length;
+            const templates = generateTemplateQuestions({
+              subject,
+              gradeLevel,
+              count: templateCount,
+            });
+            generated = [...generated, ...templates];
+          }
+
+          if (generated.length === 0) {
+            consecutiveEmptyBatches++;
+            log.warn(`[Pipeline] Empty batch for ${subject}/${gradeLevel} (${consecutiveEmptyBatches} consecutive)`);
+            if (consecutiveEmptyBatches >= 3) {
+              log.warn(`[Pipeline] Too many empty batches, moving to next grade/subject`);
+              break;
+            }
+            continue;
+          }
+          consecutiveEmptyBatches = 0;
+
+          job.stats.totalExtracted += generated.length;
+          job.stats.bySubject[subject].extracted += generated.length;
+
+          // ② Dedup against SQLite
+          const newQuestions = generated.filter((q) => !hasProblem(q.problemText));
+          const dupedCount = generated.length - newQuestions.length;
+
+          if (newQuestions.length === 0) {
+            log.info(`[Pipeline] All ${generated.length} questions already stored (dedup)`);
+            batchCount++;
+            continue;
+          }
+
+          // ③ Solve with concurrent workers
+          await processBatch(newQuestions, job.stats);
+
+          batchCount++;
+
+          // ④ Log progress
+          const subjectStats = job.stats.bySubject[subject];
+          log.info(
+            `[${subject}] Batch ${batchCount}: ${generated.length} generated → ${dupedCount} duped → ` +
+            `${newQuestions.length} new → ${job.stats.totalStored} total stored ` +
+            `(${job.stats.totalFailed} failed)`,
+          );
+
+          // ⑤ Save checkpoint every 5 batches
+          if (batchCount % 5 === 0) {
+            saveCheckpoint({
+              lastSubject: subject,
+              lastGradeLevel: gradeLevel,
+              totalStored: job.stats.totalStored,
+              totalFailed: job.stats.totalFailed,
+              timestamp: Date.now(),
+            });
+            log.info(`[Checkpoint] Saved: ${job.stats.totalStored} stored, ${job.stats.totalFailed} failed`);
+          }
+
+          // ⑥ Brief pause between batches to let LLM breathe
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
       }
     }
 
@@ -630,11 +409,28 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
     log.info(
       `[Pipeline] Job ${job.id} completed: ${job.stats.totalStored} stored, ${job.stats.totalFailed} failed`,
     );
+
+    // Clear checkpoint on successful completion
+    try {
+      const fs = require('fs');
+      fs.unlinkSync(CHECKPOINT_PATH);
+    } catch { /* no checkpoint to clear */ }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.error(`[Pipeline] Job ${job.id} failed: ${msg}`);
     job.status = 'failed';
     job.error = msg;
+
+    // Save checkpoint on failure for resume
+    if (job.subject && job.gradeLevels.length > 0) {
+      saveCheckpoint({
+        lastSubject: job.subject,
+        lastGradeLevel: job.gradeLevels[0],
+        totalStored: job.stats.totalStored,
+        totalFailed: job.stats.totalFailed,
+        timestamp: Date.now(),
+      });
+    }
   }
 
   if (!_parallel) {
@@ -654,7 +450,7 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
  */
 export async function runEnrichmentParallel(opts: RunEnrichmentOptions = {}): Promise<EnrichJob> {
   const {
-    subjects = SUBJECTS.map((s) => s.id),
+    subjects = DEFAULT_LLM_SUBJECTS,
     gradeLevels = ['senior', 'college'],
     maxQuestions = MAX_STORE_PER_RUN,
   } = opts;
@@ -739,5 +535,36 @@ export function getEnrichmentStatus() {
     currentJob,
     lastJob,
     totalStored: lastJob?.stats?.totalStored ?? 0,
+  };
+}
+
+/**
+ * Get detailed enrichment progress including estimates.
+ */
+export function getEnrichmentProgress() {
+  const now = Date.now();
+  const elapsed = currentJob?.startedAt ? now - currentJob.startedAt : 0;
+
+  const totalStored = currentJob?.stats?.totalStored ?? lastJob?.stats?.totalStored ?? 0;
+  const totalSolved = currentJob?.stats?.totalSolved ?? lastJob?.stats?.totalSolved ?? 0;
+  const totalFailed = currentJob?.stats?.totalFailed ?? lastJob?.stats?.totalFailed ?? 0;
+  const bySubject = currentJob?.stats?.bySubject ?? lastJob?.stats?.bySubject ?? {};
+  const currentSubject = currentJob?.subject ?? null;
+
+  let estimatedRemainingMs = 0;
+  if (totalStored > 0 && elapsed > 0) {
+    const rate = totalStored / elapsed; // questions per ms
+    const remaining = MAX_STORE_PER_RUN - totalStored;
+    estimatedRemainingMs = rate > 0 ? remaining / rate : 0;
+  }
+
+  return {
+    totalStored,
+    totalSolved,
+    totalFailed,
+    bySubject,
+    currentSubject,
+    elapsedMs: elapsed,
+    estimatedRemainingMs,
   };
 }

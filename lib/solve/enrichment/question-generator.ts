@@ -115,7 +115,8 @@ const GENERATION_SYSTEM_PROMPT = `你是一个资深教育题库出题专家。�
  */
 function resolveGeneratorModel() {
   const providerId = 'deepseek' as const;
-  const modelId = 'deepseek-v4-flash';
+  // Use pro model for more reliable structured output generation
+  const modelId = 'deepseek-v4-pro';
   return {
     providerId,
     modelId,
@@ -178,11 +179,11 @@ export async function generateQuestions(
             { role: 'system', content: GENERATION_SYSTEM_PROMPT },
             { role: 'user', content: userPrompt },
           ] as any,
-          temperature: 0.8,
+          temperature: 0.4,
           maxOutputTokens: 4096,
         },
         'enrichment-generator',
-        { retries: 1 },
+        { retries: 2, timeoutMs: 60000 },
       );
 
       log.info(`[Generator] Raw response length: ${result.text?.length ?? 0}, first 200: ${result.text?.slice(0, 200) ?? '(empty)'}`);
