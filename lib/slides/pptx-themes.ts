@@ -60,6 +60,7 @@ export const PPTX_THEMES: Record<PptxThemeId, PptxTheme> = {
   'tech-dark': toLegacyTheme(getThemeById('tech-dark')),
   'nature-fresh': toLegacyTheme(getThemeById('nature-fresh')),
   'macaron-pink': toLegacyTheme(getThemeById('macaron-pink')),
+  handdrawn: toLegacyTheme(getThemeById('handdrawn')),
 };
 
 /** Get legacy theme by ID (backward compatible) */
