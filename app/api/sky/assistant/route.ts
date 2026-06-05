@@ -12,6 +12,7 @@ import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildGraphFromMistakes } from '@/lib/graph/builder';
 import { buildSystemPrompt } from '@/lib/assistant/context-injector';
+import { apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 
 const log = createLogger('API:SkyAssistant');
 
@@ -41,10 +42,7 @@ export async function POST(req: NextRequest) {
     };
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return new Response(JSON.stringify({ error: 'messages is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'messages is required');
     }
 
     const { model, modelInfo, thinkingConfig } = await resolveModel({
@@ -162,9 +160,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     log.error('Assistant API error:', err);
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : 'AI 助手响应失败' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
-    );
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, err instanceof Error ? err.message : 'AI 助手响应失败');
   }
 }

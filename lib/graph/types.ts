@@ -20,7 +20,7 @@ export interface GraphNode {
 export interface GraphEdge {
   from: string;
   to: string;
-  relation: 'prerequisite' | 'related' | 'extension';
+  relation: 'prerequisite' | 'related';
 }
 
 /** Full knowledge graph response */
