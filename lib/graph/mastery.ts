@@ -40,17 +40,14 @@ export function buildRecommendations(
 
   return weakPoints.map((wp) => {
     let suggested = 0;
-    let priority: LearningRecommendation['priority'] = 'low';
+    let priority: LearningRecommendation['priority'];
 
     if (wp.mastery < 30) {
       suggested = maxPerPoint;
       priority = 'high';
-    } else if (wp.mastery < 50) {
+    } else {
       suggested = defaultSuggest;
       priority = 'medium';
-    } else {
-      suggested = 1;
-      priority = 'low';
     }
 
     return {

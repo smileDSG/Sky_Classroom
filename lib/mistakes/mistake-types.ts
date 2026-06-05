@@ -1,17 +1,15 @@
 /**
  * Module C — Client-side mistake type definitions.
  *
- * Mirrors the DAO's MistakeBookEntry so components and hooks can
- * consume the API response without importing from lib/storage/dao.
+ * Core types (ErrorType, MistakeBookEntry) are re-exported from the
+ * canonical DAO definition so there is a single source of truth.
+ * Client-specific request/response types and UI labels are defined here.
  */
 
-/** Error type classification — kept in sync with lib/storage/dao/mistakes.ts */
-export type ErrorType =
-  | 'calculation'   // Arithmetic / algebraic mistake
-  | 'concept'       // Misunderstood concept
-  | 'reasoning'     // Logical reasoning error
-  | 'reading'       // Misread the question
-  | 'careless';     // Simple oversight
+import type { ErrorType, MistakeBookEntry } from '@/lib/storage/dao/mistakes';
+
+// Re-export canonical types
+export type { ErrorType, MistakeBookEntry };
 
 /** Label mapping for UI display */
 export const ERROR_TYPE_LABELS: Record<ErrorType, string> = {
@@ -21,24 +19,6 @@ export const ERROR_TYPE_LABELS: Record<ErrorType, string> = {
   reading: '审题错误',
   careless: '粗心',
 };
-
-/** A single mistake entry — mirrors MistakeBookEntry from the DAO */
-export interface MistakeBookEntry {
-  id: string;
-  problemText: string;
-  problemImage?: string;
-  userAnswer: string;
-  correctAnswer: string;
-  errorType: ErrorType;
-  errorExplanation?: string;
-  knowledgePoints: string[];
-  reviewCount: number;
-  lastReview?: number;
-  nextReview?: number;
-  masteryLevel: number;
-  reviewed: boolean;
-  sourceSessionId?: string;
-}
 
 /** Request body for POST /api/sky/mistakes */
 export interface CreateMistakeRequest {

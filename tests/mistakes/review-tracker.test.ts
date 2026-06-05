@@ -102,4 +102,14 @@ describe('getReviewStats', () => {
     expect(stats.mastered).toBe(1);
     expect(stats.reviewRate).toBe(0.5);
   });
+
+  it('masteryLevel=6 exactly is counted as mastered', () => {
+    const entries = [
+      makeEntry({ id: 'a', reviewed: true, masteryLevel: 6 }),
+      makeEntry({ id: 'b', reviewed: true, masteryLevel: 5 }),
+    ];
+    const stats = getReviewStats(entries);
+    expect(stats.mastered).toBe(1);
+    expect(stats.total).toBe(2);
+  });
 });

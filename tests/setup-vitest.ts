@@ -52,8 +52,10 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock requestAnimationFrame + cancelAnimationFrame — motion/framer-motion 需要
+// 注意：传递 performance.now() 作为时间戳参数，使 useAnimatedNumber 的
+// animate(now) 能正确计算 elapsed 时间，避免 NaN 问题。
 global.requestAnimationFrame = vi.fn((cb: FrameRequestCallback) => {
-  return setTimeout(cb, 16) as unknown as number;
+  return setTimeout(() => cb(performance.now()), 16) as unknown as number;
 });
 global.cancelAnimationFrame = vi.fn((id: number) => {
   clearTimeout(id);

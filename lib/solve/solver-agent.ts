@@ -145,31 +145,39 @@ export async function solveWithHybrid(
     }
   }
 
-  // Secondary fallback
-  const fallbacks: SolverAgentType[] = (['science', 'humanities', 'universal'] as SolverAgentType[]).filter(
-    (t) => t !== primary,
-  );
+  // Secondary fallback — only include providers with configured API keys
+  const allTypes: SolverAgentType[] = ['science', 'humanities', 'universal'];
+  const configuredFallbacks = allTypes.filter((t) => {
+    if (t === primary) return false;
+    const { providerId } = AGENT_MODEL_MAP[t];
+    const key = process.env[ENV_KEY_MAP[providerId] ?? ''] ?? '';
+    return key.length > 0;
+  });
+  const fallbacks: SolverAgentType[] = configuredFallbacks.length > 0
+    ? configuredFallbacks
+    : ['universal'].filter((t) => t !== primary);
 
-  const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
-  if (secondaryResult) {
-    const validated = validateConfidence(secondaryResult, fallbacks[0]);
-    if (validated >= MIN_VALIDATED_CONFIDENCE) {
-      return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
+  let secondaryResult: ParsedSolution | null = null;
+  if (fallbacks.length > 0) {
+    secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
+    if (secondaryResult) {
+      const validated = validateConfidence(secondaryResult, fallbacks[0]);
+      if (validated >= MIN_VALIDATED_CONFIDENCE) {
+        return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
+      }
     }
-  }
 
-  // Tertiary: last resort — accept whatever we get
-  if (fallbacks.length > 1) {
-    const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
-    if (tertiaryResult) {
-      return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
+    // Tertiary: last resort — accept whatever we get
+    if (fallbacks.length > 1) {
+      const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
+      if (tertiaryResult) {
+        return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
+      }
     }
   }
 
   // All failed — return whatever we have
-  const calledAgents: SolverAgentType[] = fallbacks.length > 1
-    ? [primary, fallbacks[0], fallbacks[1]]
-    : [primary, fallbacks[0]];
+  const calledAgents: SolverAgentType[] = [primary, ...fallbacks];
 
   return {
     solution: primaryResult ?? secondaryResult ?? {

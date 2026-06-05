@@ -104,6 +104,72 @@ interface Message {
   content: string;
 }
 
+// ── 持久化辅助函数 ──────────────────────────────────────────────────
+
+/**
+ * Shared helper: persist conversation messages to IndexedDB, extract memories,
+ * and update the conversation summary. Used by both saveCurrentConversation
+ * (called on mode-switch / new-conversation) and the inline post-SSE-fetch path.
+ */
+async function persistConversation(
+  messages: { id: string; role: 'user' | 'assistant'; content: string }[],
+  currentConvIdRef: React.MutableRefObject<string | null>,
+  savedCountRef: React.MutableRefObject<number>,
+  mode: KagamiMode,
+  subject: string,
+  difficulty: string,
+  style: string,
+): Promise<void> {
+  if (messages.length === 0) return;
+
+  const newMessages = messages.slice(savedCountRef.current);
+  if (newMessages.length === 0 && currentConvIdRef.current) return;
+
+  try {
+    const now = Date.now();
+    const convMessages: AssistantMessage[] = newMessages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      timestamp: now,
+    }));
+
+    if (!currentConvIdRef.current) {
+      const conv = await createConversation({
+        mode,
+        subject,
+        difficulty,
+        style,
+        firstMessage: messages[0]?.content,
+      });
+      currentConvIdRef.current = conv.id;
+      if (convMessages.length > 0) await appendMessages(conv.id, convMessages);
+    } else if (convMessages.length > 0) {
+      await appendMessages(currentConvIdRef.current, convMessages);
+    }
+    savedCountRef.current = messages.length;
+
+    // Extract and save memories from this conversation
+    const extracted = extractMemoriesFromConversation(
+      messages.map((m) => ({ role: m.role, content: m.content })),
+    );
+    if (extracted.length > 0) {
+      await saveExtractedMemories(AGENT_ID, extracted, currentConvIdRef.current ?? undefined);
+      log.info(`Extracted ${extracted.length} memories from conversation`);
+    }
+
+    // Update conversation summary
+    if (currentConvIdRef.current && messages.length >= 4) {
+      const summary = generateConversationSummary(
+        messages.map((m) => ({ role: m.role, content: m.content })),
+      );
+      await updateSummary(currentConvIdRef.current, summary);
+    }
+  } catch (err) {
+    log.warn('Failed to persist conversation:', err);
+  }
+}
+
 // ── 组件 ──────────────────────────────────────────────────────────────
 
 interface AssistantPanelProps {
@@ -192,54 +258,7 @@ export function AssistantPanel({
 
   /** Save the current conversation to IndexedDB (delta: only new messages since last save) */
   const saveCurrentConversation = useCallback(async () => {
-    if (messages.length === 0) return;
-
-    const newMessages = messages.slice(savedCountRef.current);
-    if (newMessages.length === 0 && currentConvIdRef.current) return;
-
-    try {
-      const now = Date.now();
-      const convMessages: AssistantMessage[] = newMessages.map((m) => ({
-        id: m.id,
-        role: m.role,
-        content: m.content,
-        timestamp: now,
-      }));
-
-      if (!currentConvIdRef.current) {
-        const conv = await createConversation({
-          mode,
-          subject,
-          difficulty,
-          style,
-          firstMessage: messages[0]?.content,
-        });
-        currentConvIdRef.current = conv.id;
-        if (convMessages.length > 0) await appendMessages(conv.id, convMessages);
-      } else if (convMessages.length > 0) {
-        await appendMessages(currentConvIdRef.current, convMessages);
-      }
-      savedCountRef.current = messages.length;
-
-      // Extract and save memories from this conversation
-      const extracted = extractMemoriesFromConversation(
-        messages.map((m) => ({ role: m.role, content: m.content })),
-      );
-      if (extracted.length > 0) {
-        await saveExtractedMemories(AGENT_ID, extracted, currentConvIdRef.current ?? undefined);
-        log.info(`Extracted ${extracted.length} memories from conversation`);
-      }
-
-      // Update conversation summary
-      if (currentConvIdRef.current && messages.length >= 4) {
-        const summary = generateConversationSummary(
-          messages.map((m) => ({ role: m.role, content: m.content })),
-        );
-        await updateSummary(currentConvIdRef.current, summary);
-      }
-    } catch (err) {
-      log.warn('Failed to save conversation:', err);
-    }
+    await persistConversation(messages, currentConvIdRef, savedCountRef, mode, subject, difficulty, style);
   }, [messages, mode, subject, difficulty, style]);
 
   /** Load conversation history list */
@@ -452,49 +471,9 @@ export function AssistantPanel({
             );
           }
 
-          // Save conversation and extract memories after response completes (delta only)
+          // Persist conversation and extract memories after response completes
           const finalMessages = [...newMessages, { id: assistantMsgId, role: 'assistant' as const, content: accumulatedText }];
-          try {
-            const now = Date.now();
-            const newOnly = finalMessages.slice(savedCountRef.current).map((m) => ({
-              id: m.id,
-              role: m.role,
-              content: m.content,
-              timestamp: now,
-            }));
-
-            if (!currentConvIdRef.current) {
-              const conv = await createConversation({
-                mode,
-                subject,
-                difficulty,
-                style,
-                firstMessage: newMessages[0]?.content,
-              });
-              currentConvIdRef.current = conv.id;
-            }
-
-            if (newOnly.length > 0) await appendMessages(currentConvIdRef.current, newOnly);
-            savedCountRef.current = finalMessages.length;
-
-            // Extract and save memories
-            const extracted = extractMemoriesFromConversation(
-              finalMessages.map((m) => ({ role: m.role, content: m.content })),
-            );
-            if (extracted.length > 0) {
-              await saveExtractedMemories(AGENT_ID, extracted, currentConvIdRef.current ?? undefined);
-            }
-
-            // Update summary
-            if (finalMessages.length >= 4) {
-              const summary = generateConversationSummary(
-                finalMessages.map((m) => ({ role: m.role, content: m.content })),
-              );
-              await updateSummary(currentConvIdRef.current, summary);
-            }
-          } catch (saveErr) {
-            log.warn('Failed to save conversation after response:', saveErr);
-          }
+          await persistConversation(finalMessages, currentConvIdRef, savedCountRef, mode, subject, difficulty, style);
         } catch (err) {
           if ((err as Error).name === 'AbortError') return;
           log.error('Assistant fetch error:', err);

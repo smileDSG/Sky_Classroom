@@ -83,13 +83,54 @@ function parseJSON(text: string): Record<string, unknown>[] {
   }
 }
 
+// ── AGIEval parser ───────────────────────────────────────────────────
+
+interface AGIEvalQuestion {
+  passage?: string | null;
+  question: string;
+  options?: string[];
+  label?: string;
+  answer?: string | null;
+  other?: { source?: string };
+}
+
+function parseAGIEvalQuestion(raw: Record<string, unknown>, subject: SubjectId): ExtractedQuestion | null {
+  const q = raw as unknown as AGIEvalQuestion;
+  if (!q.question || q.question.length < 5) return null;
+
+  // Build full question text
+  let text = q.question.trim();
+
+  // Add passage if present
+  if (q.passage) {
+    text = q.passage.trim() + '\n\n' + text;
+  }
+
+  // Add options
+  if (q.options && q.options.length > 0) {
+    text += '\n' + q.options.join('\n');
+  }
+
+  return {
+    problemText: text.slice(0, 3000),
+    subject,
+    gradeLevel: 'senior' as GradeLevel,
+    questionType: q.options ? 'choice' : 'solve',
+    sourceAnswer: q.label || q.answer || undefined,
+    sourceUrl: q.other?.source ?? `agieval://${subject}`,
+    extractionConfidence: 0.95, // official exam questions
+  };
+}
+
 // ── Main importer ────────────────────────────────────────────────────
 
 export interface LocalFileImportOptions {
   /** Path to local JSONL/JSON file */
   filePath: string;
   /** Parser to use */
-  format?: 'tal-scq5k' | 'generic-jsonl' | 'generic-json';
+  format?: 'tal-scq5k' | 'agieval' | 'generic-jsonl' | 'generic-json';
+  /** Subject for AGIEval format */
+  agievalSubject?: SubjectId;
   /** Max questions to import */
   maxQuestions?: number;
 }
@@ -124,6 +165,15 @@ export async function importLocalFile(
       log.info(`[FileImport] Parsed ${rows.length} JSONL rows`);
       questions = rows
         .map(parseTALQuestion)
+        .filter(Boolean) as ExtractedQuestion[];
+      break;
+    }
+    case 'agieval': {
+      const rows = parseJSONL(text);
+      log.info(`[FileImport] Parsed ${rows.length} AGIEval JSONL rows`);
+      const subject = opts.agievalSubject ?? 'physics';
+      questions = rows
+        .map((r) => parseAGIEvalQuestion(r, subject))
         .filter(Boolean) as ExtractedQuestion[];
       break;
     }

@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { StatCards, QuickActions, ActivityTimeline } from '@/components/sky/dashboard/stat-cards';
@@ -32,6 +32,14 @@ vi.mock('next/link', () => ({
       { href, 'data-test-next-link': true, ...props },
       children,
     ),
+}));
+
+// ── Mock useAnimatedNumber ──────────────────────────────────────────
+// StatCards 使用 useAnimatedNumber 驱动数字动画。组件测试中 bypass
+// 动画，直接返回目标值，避免依赖 requestAnimationFrame / fake timers。
+
+vi.mock('@/lib/hooks/use-animated-number', () => ({
+  useAnimatedNumber: (target: number) => ({ value: target, raw: target }),
 }));
 
 // ── Helpers ──────────────────────────────────────────────────────────

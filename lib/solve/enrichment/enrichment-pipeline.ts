@@ -297,23 +297,35 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
 
         log.info(`[Pipeline] Processing ${subject}/${gradeLevel} (stored: ${job.stats.totalStored}/${maxQuestions})`);
 
-        // ① Load questions from local dataset files (real exam problems)
-        if (subject === 'math' && job.stats.totalExtracted === 0) {
-          const datasetFiles = [
-            '.data/tal-scq5k-train.jsonl',
-            '.data/tal-scq5k-test.jsonl',
-          ];
-          for (const file of datasetFiles) {
+        // ① Load questions from local datasets — only for the current subject
+        const subjectDatasets: Record<SubjectId, Array<{ files: string[]; format: 'tal-scq5k' | 'agieval'; agievalSubject?: SubjectId }>> = {
+          math: [{ files: ['.data/tal-scq5k-train.jsonl', '.data/tal-scq5k-test.jsonl'], format: 'tal-scq5k' }],
+          physics: [{ files: ['.data/agieval-gaokao-physics.jsonl'], format: 'agieval', agievalSubject: 'physics' as SubjectId }],
+          chemistry: [{ files: ['.data/agieval-gaokao-chemistry.jsonl'], format: 'agieval', agievalSubject: 'chemistry' as SubjectId }],
+          biology: [{ files: ['.data/agieval-gaokao-biology.jsonl'], format: 'agieval', agievalSubject: 'biology' as SubjectId }],
+          chinese: [],
+          english: [],
+          history: [],
+          geography: [],
+          politics: [],
+        };
+        const cfg = subjectDatasets[subject] ?? [];
+        for (const c of cfg) {
+          for (const file of c.files) {
             try {
-              const imported = await importLocalFile({ filePath: file, format: 'tal-scq5k' });
-              log.info(`[Pipeline] Loaded ${imported.length} questions from ${file}`);
+              const imported = await importLocalFile({
+                filePath: file,
+                format: c.format,
+                agievalSubject: c.agievalSubject,
+              });
+              log.info(`[Pipeline] Loaded ${imported.length} from ${file} for ${subject}`);
               allDatasetQuestions.push(...imported);
             } catch (err) {
               log.warn(`[Pipeline] Failed to load ${file}: ${err}`);
             }
           }
-          log.info(`[Pipeline] Total dataset questions: ${allDatasetQuestions.length}`);
         }
+        log.info(`[Pipeline] ${subject}: ${allDatasetQuestions.length} dataset questions loaded`);
 
         let datasetIndex = 0;
         let consecutiveEmptyBatches = 0;

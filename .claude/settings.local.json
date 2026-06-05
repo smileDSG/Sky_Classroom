@@ -190,7 +190,10 @@
       "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" --initialize-insecure --datadir=\"D:\\\\MySQL\\\\data\" 2>&1)",
       "PowerShell($env:MYSQLD_DATADIR = \"D:\\\\MySQL\\\\data\"; & \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" --initialize-insecure 2>&1 | Out-String -Width 200)",
       "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysqld.exe\" --initialize-insecure --datadir=\"D:\\\\MySQL\\\\data\" 2> \"D:\\\\MySQL\\\\init_error.log\"; Get-Content \"D:\\\\MySQL\\\\init_error.log\")",
-      "Bash(\"/c/Program Files/MySQL/MySQL Server 8.0/bin/mysqld.exe\" --initialize-insecure --datadir=\"D:\\\\MySQL\\\\data\" --console)"
+      "Bash(\"/c/Program Files/MySQL/MySQL Server 8.0/bin/mysqld.exe\" --initialize-insecure --datadir=\"D:\\\\MySQL\\\\data\" --console)",
+      "PowerShell(sqlite3 *)",
+      "Bash(Get-ChildItem *)",
+      "PowerShell(New-Item *)"
     ]
   }
 }
