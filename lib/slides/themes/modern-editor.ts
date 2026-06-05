@@ -351,6 +351,63 @@ export const MACARON_PINK_THEME: ThemeToken = {
   shapeOutlineColor: '#f5d0fe',
 };
 
+// ── Theme 7: Handdrawn → 手绘风 (暖黄纸张 + 咖啡线条 + 手账感) ───────
+
+export const HANDDRAWN_THEME: ThemeToken = {
+  id: 'handdrawn',
+  name: '手绘风',
+  description: '暖黄纸张底色，手绘线条与涂鸦点缀，亲切自然',
+  coverBg: '#F5F0E6',
+  coverBgGradient: { from: '#F5F0E6', to: '#EDE4D3', angle: 135 },
+  contentBg: '#FDFCF8',
+  contentBgGradient: undefined,
+  accent: '#D4A574',
+  accentSecondary: '#8B9A7C',
+  accentLight: '#F0E6D3',
+  coverTitleColor: '#5C4033',
+  coverSubColor: '#8B6F5C',
+  bodyColor: '#3D3229',
+  bodyMutedColor: '#A09080',
+  pageNumColor: '#D4A574',
+  dividerColor: '#E8DCC8',
+  fontFamily: 'Microsoft YaHei',
+  headingFont: 'Comic Sans MS',
+  coverTitleSize: 38,
+  coverSubSize: 18,
+  titleFontSize: 26,
+  bodyFontSize: 15,
+  captionFontSize: 12,
+  bulletSize: 16,
+  useWideContent: false,
+  pageMargin: 60,
+  contentMaxWidth: 880,
+  coverDecorations: [
+    {
+      type: 'shape',
+      position: { x: 780, y: 30, w: 200, h: 200 },
+      style: { fill: '#D4A574', opacity: 0.08, shape: 'ellipse' },
+    },
+    {
+      type: 'shape',
+      position: { x: 40, y: 400, w: 140, h: 140 },
+      style: { fill: '#8B9A7C', opacity: 0.1, shape: 'ellipse' },
+    },
+    {
+      type: 'line',
+      position: { x: 120, y: 380, w: 760, h: 2 },
+      style: { color: '#D4A574', width: 2, opacity: 0.25 },
+    },
+    {
+      type: 'shape',
+      position: { x: 880, y: 480, w: 60, h: 60 },
+      style: { fill: '#D4A574', opacity: 0.15, shape: 'ellipse' },
+    },
+  ],
+  bulletStyle: 'dot',
+  shadowColor: 'rgba(92, 64, 51, 0.06)',
+  shapeOutlineColor: '#D4A574',
+};
+
 // ── Registry ───────────────────────────────────────────────────────
 
 export const ALL_THEMES: ThemeToken[] = [
@@ -360,6 +417,7 @@ export const ALL_THEMES: ThemeToken[] = [
   TECH_DARK_THEME,
   NATURE_FRESH_THEME,
   MACARON_PINK_THEME,
+  HANDDRAWN_THEME,
 ];
 
 export const THEME_MAP: Record<string, ThemeToken> = Object.fromEntries(
