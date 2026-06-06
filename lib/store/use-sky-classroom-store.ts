@@ -74,6 +74,7 @@ interface SlidesSlice {
   slides: Slide[];
   generationResult: SlideGenerationResult | null;
   generationError: string | null;
+  activeJobId: string | null;
 
   setSelectedAvatar: (id: string) => void;
   setAvatars: (avatars: AvatarConfig[]) => void;
@@ -83,6 +84,7 @@ interface SlidesSlice {
   setSlides: (slides: Slide[]) => void;
   setGenerationResult: (result: SlideGenerationResult | null) => void;
   setGenerationError: (error: string | null) => void;
+  setActiveJobId: (jobId: string | null) => void;
 }
 
 const createSlidesSlice = (set: SetFn<SlidesSlice>): SlidesSlice => ({
@@ -94,6 +96,7 @@ const createSlidesSlice = (set: SetFn<SlidesSlice>): SlidesSlice => ({
   slides: [],
   generationResult: null,
   generationError: null,
+  activeJobId: null,
   setSelectedAvatar: (id) => set({ selectedAvatarId: id }),
   setAvatars: (avatars) => set({ availableAvatars: avatars }),
   setCurrentSpeech: (speech) => set({ currentSpeech: speech }),
@@ -110,6 +113,7 @@ const createSlidesSlice = (set: SetFn<SlidesSlice>): SlidesSlice => ({
   setSlides: (slides) => set({ slides }),
   setGenerationResult: (result) => set({ generationResult: result }),
   setGenerationError: (error) => set({ generationError: error }),
+  setActiveJobId: (jobId) => set({ activeJobId: jobId }),
 });
 
 // ── Mistakes Slice ─────────────────────────────────────────────────

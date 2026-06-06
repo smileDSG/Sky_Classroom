@@ -200,4 +200,27 @@ describe('analyzeMistakeCause', () => {
       'concept-unclear',
     );
   });
+
+  // ── 7. 精确/归一化匹配 → careless ──────────────────────────────────
+  it('exact normalized match returns careless', () => {
+    const { problem, correctAnswer, userAnswer } = makeProblem(
+      '1 + 1 = ?',
+      '4',
+      '4',
+    );
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
+      'careless',
+    );
+  });
+
+  it('whitespace/case differences that normalize to same returns careless', () => {
+    const { problem, correctAnswer, userAnswer } = makeProblem(
+      '计算总和',
+      '  Hello   World  ',
+      'hello world',
+    );
+    expect(analyzeMistakeCause(problem, correctAnswer, userAnswer)).toBe(
+      'careless',
+    );
+  });
 });

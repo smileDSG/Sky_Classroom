@@ -5,6 +5,8 @@ build/
 *.zip
 *.tar.gz
 *.log
+logs/
+public/temp/
 .DS_Store
 .env
 .env.local
@@ -14,3 +16,4 @@ tsconfig.tsbuildinfo
 .kimi/
 .gstack/
 .superpowers/
+.data

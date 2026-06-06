@@ -11,6 +11,7 @@ import { nanoid } from 'nanoid';
 export const maxDuration = 300;
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createJob, runPipeline, updateJob } from '@/lib/slides/agent/pipeline';
+import { validateDesignDNA } from '@/lib/slides/agent/design-dna';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:Generate');
@@ -27,11 +28,21 @@ export async function POST(req: NextRequest) {
     };
 
     if (!topic?.trim()) return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing topic');
+    if (topic.trim().length > 100) return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Topic too long (max 100 characters)');
     if (!designDNA) return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing designDNA');
 
+    const dnaValidation = validateDesignDNA(designDNA);
+    if (!dnaValidation.valid) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, `Invalid designDNA: ${dnaValidation.warnings.join('; ')}`);
+    }
+    const validatedDNA = dnaValidation.designDNA;
+
     const diff = difficulty || '高中';
-    const minP = minPages || 15;
-    const maxP = maxPages || 25;
+    const minP = Math.max(1, Math.min(60, Number(minPages) || 15));
+    const maxP = Math.max(1, Math.min(60, Number(maxPages) || 25));
+    if (minP > maxP) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'minPages cannot exceed maxPages');
+    }
 
     const { model: languageModel, modelString } = await resolveModelFromRequest(req, body);
     log.info(`Starting pipeline for "${topic}" [${diff}, ${minP}-${maxP}p, model=${modelString}]`);
@@ -45,7 +56,7 @@ export async function POST(req: NextRequest) {
       difficulty: diff,
       minPages: minP,
       maxPages: maxP,
-      designDNA: designDNA as never,
+      designDNA: validatedDNA,
       languageModel,
       jobId,
     }).catch((err) => {

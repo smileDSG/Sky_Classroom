@@ -9,11 +9,50 @@
 
 import React from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { AssistantFab } from '@/components/sky/assistant/assistant-fab';
 import { AssistantPanel } from '@/components/sky/assistant/assistant-panel';
 import { AssistantConfig } from '@/components/sky/assistant/assistant-config';
+
+// ── fetch mock — required for AssistantPanel send tests ──────────
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
+// ── Mock modules that depend on IndexedDB / settings store ──────
+vi.mock('@/lib/utils/model-config', () => ({
+  getCurrentModelConfig: () => ({
+    providerId: 'openai',
+    modelId: 'gpt-4',
+    modelString: 'openai:gpt-4',
+    apiKey: 'mock-key',
+    baseUrl: 'https://api.openai.com',
+    providerType: 'openai',
+  }),
+}));
+
+vi.mock('@/lib/ai/memory-context', () => ({
+  retrieveRelevantMemories: async () => [] as never,
+  buildMemoryContext: () => undefined,
+  injectMemoryIntoPrompt: (p: string) => p,
+  saveExtractedMemories: async () => {},
+}));
+
+vi.mock('@/lib/ai/memory-extractor', () => ({
+  extractMemoriesFromConversation: () => [],
+  detectConversationTopic: () => '',
+  generateConversationSummary: () => '',
+}));
+
+vi.mock('@/lib/storage/dao/assistant-conversation', () => ({
+  createConversation: async () => ({ id: 'mock-conv-id' }),
+  appendMessage: async () => {},
+  appendMessages: async () => {},
+  updateSummary: async () => {},
+  listConversations: async () => [],
+  deleteConversation: async () => {},
+  getConversation: async () => null,
+}));
 
 function resetStore() {
   localStorage.clear();
@@ -63,6 +102,7 @@ describe('AssistantFab', () => {
 describe('AssistantPanel', () => {
   beforeEach(() => {
     resetStore();
+    mockFetch.mockReset();
     // 需要 isOpen 为 true 才能看到内容
     useSkyClassroomStore.setState({ isOpen: true });
   });
@@ -88,6 +128,77 @@ describe('AssistantPanel', () => {
     const textarea = screen.getByPlaceholderText('输入你的问题…');
     expect(textarea).toBeDefined();
     expect(textarea.tagName).toBe('TEXTAREA');
+  });
+
+  // ── 交互测试（send / loading / error）───────────────────────────
+
+  it('typing in textarea updates input value', () => {
+    render(<AssistantPanel />);
+
+    const textarea = screen.getByPlaceholderText('输入你的问题…');
+    fireEvent.change(textarea, { target: { value: 'new message' } });
+
+    expect((textarea as HTMLTextAreaElement).value).toBe('new message');
+  });
+
+  it('clicking send with empty input does not trigger fetch', () => {
+    render(<AssistantPanel />);
+
+    const sendButton = screen.getByRole('button', { name: '发送消息' });
+    fireEvent.click(sendButton);
+
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('shows loading state while waiting for response', async () => {
+    // never-resolving promise → loading stays true indefinitely
+    mockFetch.mockReturnValue(new Promise<Response>(() => {}));
+
+    render(<AssistantPanel />);
+
+    const textarea = screen.getByPlaceholderText('输入你的问题…');
+    fireEvent.change(textarea, { target: { value: 'test message' } });
+
+    const sendButton = screen.getByRole('button', { name: '发送消息' });
+    fireEvent.click(sendButton);
+
+    // loading is set synchronously before the async fetch, so button is disabled right away
+    await waitFor(() => {
+      expect(sendButton).toBeDisabled();
+    });
+  });
+
+  it('displays error message on API failure', async () => {
+    mockFetch.mockRejectedValue(new Error('请求失败，请重试'));
+
+    render(<AssistantPanel />);
+
+    const textarea = screen.getByPlaceholderText('输入你的问题…');
+    fireEvent.change(textarea, { target: { value: 'test question' } });
+
+    const sendButton = screen.getByRole('button', { name: '发送消息' });
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('请求失败，请重试')).toBeDefined();
+    });
+  });
+
+  it('send button is disabled while loading', async () => {
+    mockFetch.mockReturnValue(new Promise<Response>(() => {}));
+
+    render(<AssistantPanel />);
+
+    const textarea = screen.getByPlaceholderText('输入你的问题…');
+    fireEvent.change(textarea, { target: { value: 'test message' } });
+
+    const sendButton = screen.getByRole('button', { name: '发送消息' });
+    fireEvent.click(sendButton);
+
+    // loading is set synchronously → button disabled attribute present
+    await waitFor(() => {
+      expect(sendButton).toBeDisabled();
+    });
   });
 });
 
