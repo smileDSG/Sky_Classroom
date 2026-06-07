@@ -235,10 +235,11 @@ function convertUnicodeMath(text: string): string {
 // ── Fraction conversion ────────────────────────────────────────────────
 
 function convertFractions(text: string): string {
-  const parts = text.split(/(\$[\s\S]*?\$)/g);
+  const parts = text.split(/(\$\$[\s\S]*?\$\$|\$[^$\n]+?\$)/g);
 
   for (let i = 0; i < parts.length; i++) {
-    if (i % 2 === 1) continue;
+    // Skip anything already delimited as math ($...$ or $$...$$)
+    if (parts[i].startsWith('$') || parts[i].startsWith('$$')) continue;
     let segment = parts[i];
 
     // Parenthesized numerator
@@ -381,15 +382,35 @@ type Segment = { type: 'text'; value: string } | { type: 'inline-math' | 'block-
 function parseMixedContent(text: string): Segment[] {
   const segments: Segment[] = [];
 
-  const blockParts = text.split(/(\$\$[\s\S]*?\$\$)/g);
+  // Step 1: Extract $$...$$ blocks character-by-character (handles $ inside LaTeX like \text{$100$})
+  const blockParts: string[] = [];
+  let idx = 0;
 
+  while (idx < text.length) {
+    if (text.startsWith('$$', idx)) {
+      const endIdx = text.indexOf('$$', idx + 2);
+      if (endIdx !== -1) {
+        blockParts.push(text.slice(idx, endIdx + 2));
+        idx = endIdx + 2;
+      } else {
+        blockParts.push(text.slice(idx));
+        idx = text.length;
+      }
+    } else {
+      blockParts.push(text[idx]);
+      idx++;
+    }
+  }
+
+  // Step 2: Process each part for inline math or block math
   for (const part of blockParts) {
-    if (part.startsWith('$$') && part.endsWith('$$')) {
+    if (part.startsWith('$$') && part.endsWith('$$') && part.length > 4) {
       const math = part.slice(2, -2).trim();
       if (math) {
         segments.push({ type: 'block-math', value: math });
       }
     } else {
+      // Split by $...$ but skip $$ delimiters
       const inlineParts = part.split(/(\$[^$\n]+?\$)/g);
       for (const inline of inlineParts) {
         if (inline.startsWith('$') && inline.endsWith('$') && inline.length > 2) {
@@ -418,12 +439,17 @@ function renderKatex(math: string, displayMode: boolean): string {
     });
   } catch {
     // First attempt failed — try common fixes
-    const fixed = math
-      // Remove stray backslashes before normal text
+    let fixed = math
+      // Remove stray backslashes before spaces
       .replace(/\\(?=\s)/g, '')
-      // Fix mismatched braces
-      .replace(/\{([^{}]*)$/g, '{$1}')
-      .replace(/^([^{}]*)\}/g, '{$1}');
+      // Remove stray $ inside math content (from nested delimiters)
+      .replace(/\$/g, '')
+      // Fix unbalanced braces: append missing closing braces
+      .replace(/\{([^{}]*)$/, '{$1}')
+      // Fix missing \right for \left (KaTeX requires pairs)
+      .replace(/\\left(?![a-zA-Z\[\]()|])/g, '')
+      .replace(/\\right(?![a-zA-Z\[\]()|])/g, '');
+
     try {
       return katex.renderToString(fixed, {
         displayMode,
@@ -431,8 +457,20 @@ function renderKatex(math: string, displayMode: boolean): string {
         strict: false,
       });
     } catch {
-      // Last resort: render as styled text so it looks like math, not code
-      return `<span style="font-family: 'Times New Roman', serif; font-style: italic;">${math.replace(/[{}]/g, '').replace(/\\/g, ' ')}</span>`;
+      // Second fallback — strip all LaTeX commands, keep plain text
+      const minimal = math
+        .replace(/\\[a-zA-Z]+/g, '')
+        .replace(/[{}_$^]/g, ' ');
+      try {
+        return katex.renderToString(minimal, {
+          displayMode,
+          throwOnError: false,
+          strict: false,
+        });
+      } catch {
+        // Last resort: render as styled text
+        return `<span style="font-family: 'Times New Roman', serif; font-style: italic;">${minimal.trim()}</span>`;
+      }
     }
   }
 }
