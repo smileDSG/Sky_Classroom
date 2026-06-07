@@ -35,7 +35,7 @@ export function generateFourPartOutput(raw: RawSolution): FourPartOutput {
   const output = {
     solution: raw.solution || '',
     answer: formatAnswer(raw.answer),
-    steps: normalizeSteps(raw.steps, raw.answer),
+    steps: normalizeSteps(raw.steps, raw.answer, raw.solution),
     knowledgePoints: normalizeKnowledgePoints(raw.knowledgePoints),
     similarQuestions: normalizeSimilarQuestions(raw.similarQuestions),
   };
@@ -73,9 +73,13 @@ function formatAnswer(answer: string): string {
 function normalizeSteps(
   steps: { label: string; content: string; keyPoints?: string[] }[] | undefined,
   fallbackAnswer: string,
+  rawSolution?: string,
 ): FourPartOutput['steps'] {
   if (!steps || steps.length === 0) {
-    return [{ label: '解答', content: fallbackAnswer, keyPoints: [] }];
+    // Use full solution derivation when steps are absent (common for complex
+    // problems like series/calculation). Fall back to answer if solution empty.
+    const content = (rawSolution && rawSolution.trim()) ? rawSolution : fallbackAnswer;
+    return [{ label: '解答', content, keyPoints: [] }];
   }
 
   return steps.map((step, index) => ({
