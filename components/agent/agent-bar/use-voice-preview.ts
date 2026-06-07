@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { playBrowserTTSPreview } from '@/lib/audio/browser-tts-preview';
 import { getVoxCPMProviderOptions } from '@/lib/audio/voxcpm-voices';
@@ -13,11 +14,12 @@ import type { TTSProviderId } from '@/lib/audio/types';
  * - `stopPreview`   — cancel any in-flight preview and reset state
  */
 export function useVoicePreview(opts: {
-  const locale = 'zh-CN';
   agentName: string;
   agentRole?: string;
   agentPersona?: string;
-}) {const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
+}) {
+  const { t, locale } = useI18n();
+  const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
 
   const [previewingId, setPreviewingId] = useState<string | null>(null);
   const previewCancelRef = useRef<(() => void) | null>(null);
@@ -47,7 +49,7 @@ export function useVoicePreview(opts: {
       stopPreview();
       setPreviewingId(key);
 
-      const previewText = '你好，这是一段测试语音。';
+      const previewText = t('settings.ttsTestTextDefault');
 
       if (providerId === 'browser-native-tts') {
         const { promise, cancel } = playBrowserTTSPreview({ text: previewText, voice: voiceId });

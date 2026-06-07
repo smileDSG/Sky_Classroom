@@ -48,5 +48,5 @@ function t(key: string): string {
 }
 
 export function useI18n() {
-  return { t };
+  return { t, locale: 'zh-CN' };
 }

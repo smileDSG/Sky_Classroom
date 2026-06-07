@@ -147,7 +147,7 @@ export async function solveWithHybrid(
 
   // Secondary fallback — only include providers with configured API keys
   const allTypes: SolverAgentType[] = ['science', 'humanities', 'universal'];
-  const configuredFallbacks = allTypes.filter((t) => {
+  const configuredFallbacks = allTypes.filter((t): t is SolverAgentType => {
     if (t === primary) return false;
     const { providerId } = AGENT_MODEL_MAP[t];
     const key = process.env[ENV_KEY_MAP[providerId] ?? ''] ?? '';
@@ -168,30 +168,31 @@ export async function solveWithHybrid(
     }
 
     // Tertiary: last resort — still validate, pick best of all three
-  if (fallbacks.length > 1) {
-    const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
-    if (tertiaryResult) {
-      const validated = validateConfidence(tertiaryResult, fallbacks[1]);
-      if (validated >= MIN_VALIDATED_CONFIDENCE) {
-        return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
+    if (fallbacks.length > 1) {
+      const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
+      if (tertiaryResult) {
+        const validated = validateConfidence(tertiaryResult, fallbacks[1]);
+        if (validated >= MIN_VALIDATED_CONFIDENCE) {
+          return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
+        }
       }
-    }
-    // All three below threshold — return the one with highest validated confidence
-    const results = [
-      { result: primaryResult, agent: primary },
-      { result: secondaryResult, agent: fallbacks[0] },
-      { result: tertiaryResult, agent: fallbacks[1] },
-    ]
-      .filter((r) => r.result !== null)
-      .map((r) => ({
-        result: r.result!,
-        agent: r.agent,
-        score: validateConfidence(r.result!, r.agent),
-      }))
-      .sort((a, b) => b.score - a.score);
+      // All three below threshold — return the one with highest validated confidence
+      const results = [
+        { result: primaryResult, agent: primary },
+        { result: secondaryResult, agent: fallbacks[0] },
+        { result: tertiaryResult, agent: fallbacks[1] },
+      ]
+        .filter((r) => r.result !== null)
+        .map((r) => ({
+          result: r.result!,
+          agent: r.agent,
+          score: validateConfidence(r.result!, r.agent),
+        }))
+        .sort((a, b) => b.score - a.score);
 
-    if (results.length > 0) {
-      return { solution: results[0].result, usedAgents: results.map((r) => r.agent) };
+      if (results.length > 0) {
+        return { solution: results[0].result, usedAgents: results.map((r) => r.agent) };
+      }
     }
   }
 
