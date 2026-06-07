@@ -56,6 +56,30 @@ describe('POST /api/sky/assistant - validation', () => {
     const res = await POST(req);
     expect(res.status).toBe(400);
   });
+
+  it('missing messages field returns 400', async () => {
+    const req = makeRequest({});
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe('messages is required');
+  });
+
+  it('empty messages array returns 400', async () => {
+    const req = makeRequest({ messages: [] });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe('messages is required');
+  });
+
+  it('messages not an array returns 400', async () => {
+    const req = makeRequest({ messages: 'not an array' });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe('messages is required');
+  });
 });
 
 // ── Successful response ────────────────────────────────────────────

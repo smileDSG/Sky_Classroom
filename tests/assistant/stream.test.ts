@@ -97,4 +97,16 @@ describe('streamSSE', () => {
       }
     }
   });
+
+  it('emits error event when async iterable throws mid-stream', async () => {
+    async function* throwingChunks(): AsyncIterable<string> {
+      yield 'first';
+      throw new Error('connection lost');
+    }
+    const response = streamSSE(throwingChunks());
+    const body = await readSSEBody(response);
+    const full = body.join('');
+    expect(full).toContain('"type":"error"');
+    expect(full).toContain('connection lost');
+  });
 });

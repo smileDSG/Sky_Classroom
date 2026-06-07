@@ -17,7 +17,7 @@ export type {
 } from './types';
 
 export { buildSolverPrompt } from './solver-prompts';
-export { solveWithAgentNode, parseSolutionResponse } from './solver-agent';
+export { solveWithAgentNode, solveWithHybrid, parseSolutionResponse } from './solver-agent';
 export { SolveGraphAnnotation } from './solve-graph-state';
 export type { SolveGraphState } from './solve-graph-state';
 export {

@@ -131,7 +131,7 @@ JSON 必须包含：solution（字符串）、answer（字符串）、steps（�
  * 3. If low, call secondary agent
  * 4. If secondary also low, try tertiary as last resort
  */
-async function solveWithHybrid(
+export async function solveWithHybrid(
   primary: SolverAgentType,
   problemText: string,
   problemImage: string | null,
@@ -145,20 +145,29 @@ async function solveWithHybrid(
     }
   }
 
-  // Secondary fallback
-  const fallbacks: SolverAgentType[] = (
-    ['science', 'humanities', 'universal'] as SolverAgentType[]
-  ).filter((t) => t !== primary);
+  // Secondary fallback — only include providers with configured API keys
+  const allTypes: SolverAgentType[] = ['science', 'humanities', 'universal'];
+  const configuredFallbacks = allTypes.filter((t) => {
+    if (t === primary) return false;
+    const { providerId } = AGENT_MODEL_MAP[t];
+    const key = process.env[ENV_KEY_MAP[providerId] ?? ''] ?? '';
+    return key.length > 0;
+  });
+  const fallbacks: SolverAgentType[] = configuredFallbacks.length > 0
+    ? configuredFallbacks
+    : ['universal'].filter((t) => t !== primary);
 
-  const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
-  if (secondaryResult) {
-    const validated = validateConfidence(secondaryResult, fallbacks[0]);
-    if (validated >= MIN_VALIDATED_CONFIDENCE) {
-      return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
+  let secondaryResult: ParsedSolution | null = null;
+  if (fallbacks.length > 0) {
+    secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
+    if (secondaryResult) {
+      const validated = validateConfidence(secondaryResult, fallbacks[0]);
+      if (validated >= MIN_VALIDATED_CONFIDENCE) {
+        return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
+      }
     }
-  }
 
-  // Tertiary: last resort — still validate, pick best of all three
+    // Tertiary: last resort — still validate, pick best of all three
   if (fallbacks.length > 1) {
     const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
     if (tertiaryResult) {
