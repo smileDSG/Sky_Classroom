@@ -588,7 +588,7 @@ export function SolvePage() {
   const handleLoadFromHistory = useCallback((entry: QuestionBankEntry) => {
     const solution: FourPartOutput = {
       answer: entry.answer,
-      steps: entry.steps ?? [],
+      steps: [],
       knowledgePoints: (entry.knowledgePoints ?? []).map((kp) => ({
         name: kp.name,
         description: kp.description,

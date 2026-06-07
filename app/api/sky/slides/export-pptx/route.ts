@@ -4,7 +4,6 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { exportPptx } from '@/lib/slides/pptx-exporter';
-import { exportPptxWithTemplate } from '@/lib/slides/template-exporter';
 import type { PptxThemeId } from '@/lib/slides/pptx-themes';
 import { apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
@@ -34,7 +33,7 @@ export async function POST(req: NextRequest) {
       speakerNotes?: string[];
       avatarSpeech?: AvatarSpeech;
       includeSpeakerNotes?: boolean;
-      layoutMode?: 'ai' | 'template';
+      layoutMode?: 'ai';
     };
 
     if (!title || !title.trim()) {
@@ -55,16 +54,13 @@ export async function POST(req: NextRequest) {
 
     log.info(`Exporting PPTX: "${titleSnippet}" (${slides.length} slides, notes=${!!includeSpeakerNotes})`);
 
-    const exporter = exportPptxWithTemplate;
-
-    const result = await exporter({
+    const result = await exportPptx({
       title: title.trim(),
       slides,
       theme: theme as PptxThemeId | undefined,
       speakerNotes,
       avatarSpeech,
       includeSpeakerNotes: includeSpeakerNotes ?? false,
-      layoutMode: layoutMode,
     });
 
     const blob = new Uint8Array(result.buffer);

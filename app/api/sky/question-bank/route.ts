@@ -1,133 +1,190 @@
 /**
- * GET/POST /api/sky/question-bank
- * Question bank query and auto-save endpoint.
+ * GET/POST/DELETE /api/sky/question-bank
+ *
+ * Query and manage questions in the dedicated MySQL question_bank table.
+ * Replaces the legacy KB-backed question bank with the new relational schema.
  */
-import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
+
+import { NextRequest } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
-import {
-  findSimilarQuestions,
-  saveToQuestionBank,
-  listQuestionBankEntries,
-  isProblemInBank,
-} from '@/lib/solve/question-bank';
-import type { QuestionBankEntry } from '@/lib/solve/types';
+import { search, count, insertOne, deleteById, deleteByIds, update, findById, findAdjacentIds } from '@/lib/question-bank/dao';
+import type { QuestionBankInsert } from '@/lib/question-bank/types';
 
 const log = createLogger('API:SkyQuestionBank');
 
-export async function GET(req: Request) {
+// ── GET ─────────────────────────────────────────────────────────────
+
+export async function GET(req: NextRequest) {
   try {
-    const url = new URL(req.url);
-    const query = url.searchParams.get('query') || '';
-    const agentType = url.searchParams.get('agentType') || '';
-    const verified = url.searchParams.get('verified');
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '10')));
+    const { searchParams } = new URL(req.url);
 
-    let entries: QuestionBankEntry[];
-    let total: number;
+    const id = searchParams.get('id');
+    if (id) {
+      const adjacent = searchParams.get('adjacent') === 'true';
+      if (adjacent) {
+        const adjacentIds = await findAdjacentIds(id, {
+          subject: searchParams.get('subject') || undefined,
+          grade: searchParams.get('grade') || undefined,
+          difficulty: (searchParams.get('difficulty') as 'easy' | 'medium' | 'hard') || undefined,
+          questionType: (searchParams.get('questionType') as 'choice' | 'fill' | 'solve' | 'judge') || undefined,
+          verified: searchParams.has('verified')
+            ? searchParams.get('verified') === 'true'
+            : undefined,
+          keyword: searchParams.get('query') || searchParams.get('keyword') || undefined,
+        });
+        return apiSuccess(adjacentIds);
+      }
 
-    if (query) {
-      const matches = await findSimilarQuestions(query, 0.3);
-      entries = matches;
-      if (agentType) {
-        entries = entries.filter((e) => e.agentId === agentType);
+      const question = await findById(id);
+      if (!question) {
+        return apiError('NOT_FOUND', 404, '题目不存在');
       }
-      if (verified !== null && verified !== undefined) {
-        entries = entries.filter((e) => e.verified === (verified === 'true'));
-      }
-      total = entries.length;
-      const start = (page - 1) * limit;
-      entries = entries.slice(start, start + limit);
-    } else {
-      const allEntries = await listQuestionBankEntries(1000);
-      let filtered = allEntries;
-      if (agentType) {
-        filtered = filtered.filter((e) => e.agentId === agentType);
-      }
-      if (verified !== null && verified !== undefined) {
-        filtered = filtered.filter((e) => e.verified === (verified === 'true'));
-      }
-      total = filtered.length;
-      const start = (page - 1) * limit;
-      entries = filtered.slice(start, start + limit);
+      return apiSuccess({ question });
     }
+
+    const idsParam = searchParams.get('ids');
+    const ids = idsParam
+      ? idsParam.split(',').map((s) => s.trim()).filter(Boolean)
+      : undefined;
+
+    const filter = {
+      keyword: searchParams.get('query') || searchParams.get('keyword') || undefined,
+      subject: searchParams.get('subject') || undefined,
+      grade: searchParams.get('grade') || undefined,
+      difficulty: (searchParams.get('difficulty') as 'easy' | 'medium' | 'hard') || undefined,
+      questionType: (searchParams.get('questionType') as 'choice' | 'fill' | 'solve' | 'judge') || undefined,
+      verified: searchParams.has('verified')
+        ? searchParams.get('verified') === 'true'
+        : undefined,
+      tags: searchParams.get('tags')
+        ? searchParams.get('tags')!.split(',').map((t) => t.trim()).filter(Boolean)
+        : undefined,
+      ids,
+      limit: Math.min(100, Math.max(1, Number(searchParams.get('limit') || '20'))),
+      offset: Math.max(0, (Number(searchParams.get('page') || '1') - 1) * Number(searchParams.get('limit') || '20')),
+    };
+
+    const [questions, total] = await Promise.all([
+      search(filter),
+      count({
+        subject: filter.subject,
+        grade: filter.grade,
+        difficulty: filter.difficulty,
+        questionType: filter.questionType,
+        verified: filter.verified,
+        keyword: filter.keyword,
+        ids,
+      }),
+    ]);
 
     return apiSuccess({
-      questions: entries,
+      questions,
       total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      page: Math.floor(filter.offset / filter.limit) + 1,
+      limit: filter.limit,
+      totalPages: Math.ceil(total / filter.limit),
     });
-  } catch (err) {
+  } catch (err: any) {
     log.error('Question bank GET error:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '题库查询失败', err instanceof Error ? err.message : undefined);
+    return apiError('INTERNAL_ERROR', 500, '题库查询失败', err.message);
   }
 }
 
-export async function DELETE(req: Request) {
-  try {
-    const url = new URL(req.url);
-    const id = url.searchParams.get('id');
-    if (!id) {
-      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing id parameter');
-    }
-    const { deleteQuestionBankEntry } = await import('@/lib/solve/question-bank');
-    await deleteQuestionBankEntry(id);
-    return apiSuccess({ deleted: true });
-  } catch (err) {
-    log.error('Question bank DELETE error:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '题库删除失败');
-  }
-}
+// ── POST ────────────────────────────────────────────────────────────
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { problemText, problemImage, answer, knowledgePoints, agentId } = body;
 
-    if (!problemText || !answer) {
-      return apiError(
-        API_ERROR_CODES.MISSING_REQUIRED_FIELD,
-        400,
-        '缺少必填字段: problemText, answer',
-      );
+    const entry: QuestionBankInsert = {
+      subject: body.subject ?? '未知学科',
+      grade: body.grade ?? '',
+      difficulty: body.difficulty ?? 'medium',
+      questionType: body.questionType ?? 'solve',
+      content: body.content ?? body.problemText ?? '',
+      answer: body.answer ?? '',
+      explanation: body.explanation ?? '',
+      knowledgePoints: body.knowledgePoints ?? [],
+      image: body.image ?? body.problemImage ?? undefined,
+      options: body.options ?? undefined,
+      source: body.source ?? undefined,
+      tags: body.tags ?? [],
+      verified: body.verified ?? true,
+    };
+
+    if (!entry.content || !entry.answer) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, '缺少必填字段: content, answer');
     }
 
-    const exists = await isProblemInBank(problemText);
-    if (exists) {
-      return apiSuccess({
-        id: '',
-        saved: false,
-        message: '题目已存在于题库中',
-        duplicated: true,
-      });
-    }
-
-    const entry = await saveToQuestionBank({
-      problemText,
-      problemImage: problemImage ?? undefined,
-      answer,
-      knowledgePoints: knowledgePoints ?? [],
-      agentId: agentId ?? 'universal',
-      solvedAt: Date.now(),
-      verified: false,
-    });
-
-    log.info(`题目已入库: ${entry.id}`);
+    const row = await insertOne(entry);
 
     return apiSuccess({
-      id: entry.id,
+      id: row.id,
       saved: true,
       duplicated: false,
     });
-  } catch (err) {
+  } catch (err: any) {
     log.error('Question bank POST error:', err);
-    return apiError(
-      API_ERROR_CODES.INTERNAL_ERROR,
-      500,
-      '题库保存失败',
-      err instanceof Error ? err.message : undefined,
-    );
+    if (err.message?.includes('Duplicate entry') || err.message?.includes('uq_problem_hash')) {
+      return apiSuccess({ id: '', saved: false, duplicated: true, message: '题目已存在于题库中' });
+    }
+    return apiError('INTERNAL_ERROR', 500, '题库保存失败', err.message);
+  }
+}
+
+// ── DELETE ──────────────────────────────────────────────────────────
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const idsParam = searchParams.get('ids');
+    const id = searchParams.get('id');
+
+    if (idsParam) {
+      const ids = idsParam.split(',').map((s) => s.trim()).filter(Boolean);
+      if (ids.length === 0) {
+        return apiError('MISSING_REQUIRED_FIELD', 400, '缺少 id 参数');
+      }
+      const deleted = await deleteByIds(ids);
+      return apiSuccess({ deleted, ids });
+    }
+
+    if (!id) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, '缺少 id 参数');
+    }
+
+    const ok = await deleteById(id);
+    if (!ok) {
+      return apiError('NOT_FOUND', 404, '题目不存在');
+    }
+
+    return apiSuccess({ deleted: true });
+  } catch (err: any) {
+    log.error('Question bank DELETE error:', err);
+    return apiError('INTERNAL_ERROR', 500, '题库删除失败', err.message);
+  }
+}
+
+// ── PATCH ───────────────────────────────────────────────────────────
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return apiError('MISSING_REQUIRED_FIELD', 400, '缺少 id 参数');
+    }
+
+    const body = await req.json();
+    const ok = await update(id, body);
+    if (!ok) {
+      return apiError('NOT_FOUND', 404, '题目不存在');
+    }
+
+    return apiSuccess({ updated: true });
+  } catch (err: any) {
+    log.error('Question bank PATCH error:', err);
+    return apiError('INTERNAL_ERROR', 500, '题库更新失败', err.message);
   }
 }

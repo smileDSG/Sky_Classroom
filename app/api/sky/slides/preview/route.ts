@@ -13,7 +13,7 @@ import { generatePreviewFromPptx } from '@/lib/slides/pptx-preview';
 const log = createLogger('API:SkySlidesPreview');
 
 const PREVIEW_BASE_DIR = path.join(process.cwd(), 'public', 'temp', 'preview');
-const PREVIEW_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const PREVIEW_TTL_MS = 120 * 60 * 1000; // 2 hours
 
 function scheduleCleanup(previewDir: string) {
   setTimeout(() => {
@@ -42,7 +42,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate pptxUrl format: must start with /temp/pptx/ and end with .pptx
-    if (!pptxUrl.startsWith('/temp/pptx/') || !pptxUrl.endsWith('.pptx') || pptxUrl.includes('..')) {
+    // Decode first to prevent %2e%2e bypass, then normalize separators
+    const decodedUrl = decodeURIComponent(pptxUrl).replace(/\\/g, '/').replace(/\/+/g, '/');
+    if (!decodedUrl.startsWith('/temp/pptx/') || !decodedUrl.endsWith('.pptx') || decodedUrl.includes('..')) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid pptxUrl format');
     }
 

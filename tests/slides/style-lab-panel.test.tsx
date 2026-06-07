@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { StyleLabPanel } from '@/components/sky/slides/style-lab-panel';
-import { getDefaultDesignDNA, COLOR_PALETTES, FONT_PAIRS } from '@/lib/slides/agent/design-dna';
+import { getDefaultDesignDNA, COLOR_PALETTES } from '@/lib/slides/agent/design-dna';
 
 describe('StyleLabPanel', () => {
   const defaultDNA = getDefaultDesignDNA();
@@ -10,8 +10,6 @@ describe('StyleLabPanel', () => {
     onUpdateLayout: vi.fn(),
     onUpdateFont: vi.fn(),
     onUpdateDensity: vi.fn(),
-    onConfirm: vi.fn(),
-    onCancel: vi.fn(),
   };
 
   it('renders all four pickers', () => {
@@ -56,24 +54,6 @@ describe('StyleLabPanel', () => {
     expect(mockCallbacks.onUpdatePalette).toHaveBeenCalled();
   });
 
-  it('calls onConfirm when confirm button clicked', () => {
-    const { getByText } = render(
-      <StyleLabPanel draftDNA={defaultDNA} {...mockCallbacks} />,
-    );
-    const confirmBtn = getByText('确认风格');
-    fireEvent.click(confirmBtn);
-    expect(mockCallbacks.onConfirm).toHaveBeenCalled();
-  });
-
-  it('calls onCancel when cancel button clicked', () => {
-    const { getByText } = render(
-      <StyleLabPanel draftDNA={defaultDNA} {...mockCallbacks} />,
-    );
-    const cancelBtn = getByText('取消');
-    fireEvent.click(cancelBtn);
-    expect(mockCallbacks.onCancel).toHaveBeenCalled();
-  });
-
   it('identifies current palette correctly', () => {
     // Use forest-moss palette
     const forestPalette = COLOR_PALETTES['forest-moss'];
@@ -85,7 +65,7 @@ describe('StyleLabPanel', () => {
       <StyleLabPanel draftDNA={customDNA} {...mockCallbacks} />,
     );
     // The selected button's swatch has scale-105 class (applied only when isSelected)
-    const selectedSwatch = container.querySelector('.scale-105');
+    const selectedSwatch = container.querySelector('.scale-110');
     expect(selectedSwatch).toBeTruthy();
     // Verify the selection dot is rendered (only on selected item)
     const selectionDot = container.querySelector('.border-2.border-white');

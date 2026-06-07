@@ -5,11 +5,25 @@
  * - cache-first: static assets (_next/static/*)
  * - network-first: API calls (/api/*)
  * - stale-while-revalidate: HTML pages
+ *
+ * DEV MODE: bypasses all caching for localhost so Turbopack HMR and
+ * chunk invalidation work correctly. The static-cache strategy below
+ * caused stale Next.js chunks to be served after rebuilds, leading to
+ * "module factory is not available" errors (e.g., lucide-react Clock).
  */
 
-const CACHE_NAME = 'openmaic-v1';
-const STATIC_CACHE = 'openmaic-static-v1';
-const API_CACHE = 'openmaic-api-v1';
+// Bump this version whenever the build output changes (e.g., after deploy/rebuild).
+// A new version forces the browser to install a fresh SW, which clears stale caches.
+const CACHE_VERSION = 'v2';
+const CACHE_NAME = `openmaic-${CACHE_VERSION}`;
+const STATIC_CACHE = `openmaic-static-${CACHE_VERSION}`;
+const API_CACHE = `openmaic-api-${CACHE_VERSION}`;
+
+const isDev =
+  self.location.hostname === 'localhost' ||
+  self.location.hostname === '127.0.0.1' ||
+  self.location.port === '3000' ||
+  self.location.port === '3001';
 
 // Pre-cache shell assets on install
 const SHELL_ASSETS = ['/', '/manifest.json'];
@@ -24,7 +38,11 @@ self.addEventListener('install', (event: ExtendableEvent) => {
 self.addEventListener('activate', (event: ExtendableEvent) => {
   event.waitUntil(
     caches.keys().then((names) =>
-      Promise.all(names.filter((n) => n !== CACHE_NAME && n !== STATIC_CACHE && n !== API_CACHE).map((n) => caches.delete(n))),
+      Promise.all(
+        names
+          .filter((n) => n !== CACHE_NAME && n !== STATIC_CACHE && n !== API_CACHE)
+          .map((n) => caches.delete(n)),
+      ),
     ),
   );
   self.clients.claim();
@@ -33,6 +51,10 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
 self.addEventListener('fetch', (event: FetchEvent) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // In development, never intercept Next.js chunks or pages so Turbopack
+  // can serve fresh modules on every rebuild.
+  if (isDev) return;
 
   // Static assets — cache-first
   if (url.pathname.startsWith('/_next/static/')) {
@@ -89,12 +111,14 @@ async function networkFirst(request: Request): Promise<Response> {
 
 async function staleWhileRevalidate(request: Request): Promise<Response> {
   const cached = await caches.match(request);
-  const fetchPromise = fetch(request).then((response) => {
-    if (response.ok) {
-      caches.open(STATIC_CACHE).then((cache) => cache.put(request, response.clone()));
-    }
-    return response;
-  }).catch(() => cached || new Response('Offline', { status: 503 }));
+  const fetchPromise = fetch(request)
+    .then((response) => {
+      if (response.ok) {
+        caches.open(STATIC_CACHE).then((cache) => cache.put(request, response.clone()));
+      }
+      return response;
+    })
+    .catch(() => cached || new Response('Offline', { status: 503 }));
 
   return cached || fetchPromise;
 }

@@ -17,7 +17,7 @@ const quickAccessItems = [
     color: 'text-sky-500',
     bg: 'bg-sky-500/10 hover:bg-sky-500/20',
     border: 'border-sky-200/50 dark:border-sky-800/30',
-    href: '/sky/slides',
+    href: '/sky/cloud-mind/slides',
   },
   {
     icon: Search,

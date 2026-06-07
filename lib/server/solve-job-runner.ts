@@ -101,6 +101,8 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
               agentId: finalState.agentRoute ?? 'universal',
               solvedAt: Date.now(),
               verified: false,
+              questionType: output.questionType,
+              options: output.options,
             });
           }
         } catch {

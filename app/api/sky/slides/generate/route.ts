@@ -10,14 +10,40 @@ import { nanoid } from 'nanoid';
 
 export const maxDuration = 300;
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { createJob, runPipeline, updateJob } from '@/lib/slides/agent/pipeline';
+import { createJob, runPipeline, updateJob, getActiveJobCount } from '@/lib/slides/agent/pipeline';
 import { validateDesignDNA } from '@/lib/slides/agent/design-dna';
 import { createLogger } from '@/lib/logger';
+import { verifyAccessToken } from '@/lib/server/auth/jwt';
+import { rateLimiters, rateLimitResponse, getClientIp } from '@/lib/api/middleware/rate-limiter';
 
 const log = createLogger('API:Generate');
 
 export async function POST(req: NextRequest) {
   try {
+    // ── Auth check ──
+    const accessToken = req.cookies.get('access_token');
+    if (!accessToken) {
+      return apiError(API_ERROR_CODES.UNAUTHORIZED, 401, 'Authentication required');
+    }
+    const payload = await verifyAccessToken(accessToken.value);
+    if (!payload) {
+      return apiError(API_ERROR_CODES.UNAUTHORIZED, 401, 'Invalid or expired token');
+    }
+
+    // ── Rate limit ──
+    const clientIp = getClientIp(req);
+    const rateLimitResult = rateLimiters.generate.consume(clientIp);
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(rateLimitResult);
+    }
+
+    // ── Concurrency cap ──
+    const activeJobs = getActiveJobCount();
+    const MAX_CONCURRENT_JOBS = 5;
+    if (activeJobs >= MAX_CONCURRENT_JOBS) {
+      return apiError(API_ERROR_CODES.RATE_LIMITED, 429, `Server busy: ${activeJobs} jobs running, please try again later`);
+    }
+
     const body = await req.json();
     const { topic, difficulty, designDNA, minPages, maxPages } = body as {
       topic?: string;

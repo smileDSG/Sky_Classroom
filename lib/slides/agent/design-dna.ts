@@ -117,10 +117,10 @@ export interface FontPairing {
 
 export const FONT_PAIRS: Record<string, FontPairing> = {
   'georgia-calibri': {
-    heading: 'SimSun', body: 'SimSun', en: 'Georgia',
+    heading: 'Microsoft YaHei', body: 'Microsoft YaHei', en: 'Georgia',
     headingSize: 52, pageTitleSize: 34, bodySize: 13, captionSize: 10,
-    headingStack: 'SimSun, STSong, "Songti SC", serif',
-    bodyStack: 'SimSun, STSong, "Songti SC", serif',
+    headingStack: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif',
+    bodyStack: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif',
   },
   'arial-black-arial': {
     heading: 'Microsoft YaHei', body: 'Microsoft YaHei', en: 'Arial Black',
@@ -148,7 +148,7 @@ export const FONT_PAIRS: Record<string, FontPairing> = {
   },
 };
 
-export const DEFAULT_FONT_PAIR = FONT_PAIRS['georgia-calibri'];
+export const DEFAULT_FONT_PAIR = FONT_PAIRS['arial-black-arial'];
 
 // ── Allowed Values ─────────────────────────────────────────────────────
 
@@ -287,7 +287,7 @@ function sanitizeDecoration(dec: Record<string, unknown>) {
     ? dec.density : (replacementCount++, 'moderate');
   const cornerWeight = ALLOWED_CORNER_WEIGHTS.includes(dec.cornerWeight as typeof ALLOWED_CORNER_WEIGHTS[number])
     ? dec.cornerWeight : (replacementCount++, 'top-right');
-  return { motif, density, cornerWeight, replacementCount } as const;
+  return { motif, density, cornerWeight: cornerWeight as string, replacementCount };
 }
 
 function sanitizeComponents(comp: Record<string, unknown>) {

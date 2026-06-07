@@ -17,6 +17,7 @@ import type pptxgen from 'pptxgenjs';
 import type { ThemeToken } from './types';
 import { toPptxHex, toPptxColor } from './color-utils';
 import { createLogger } from '@/lib/logger';
+import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 
 const log = createLogger('PptxImageHandler');
 
@@ -264,8 +265,15 @@ async function resolveSingleImage(src: string, options: ResolveOptions = {}): Pr
 
   // Remote URL — fetch and convert to base64
   if (src.startsWith('http://') || src.startsWith('https://')) {
+    // Layer 1: fast synchronous check
     if (!isSafeImageUrl(src)) {
-      log.warn(`Blocked unsafe image URL: ${src.slice(0, 60)}`);
+      log.warn(`Blocked unsafe image URL (sync): ${src.slice(0, 60)}`);
+      return null;
+    }
+    // Layer 2: async DNS-based SSRF guard (prevents IPv6 tunnel bypass, CNAME rebinding, etc.)
+    const ssrfError = await validateUrlForSSRF(src);
+    if (ssrfError) {
+      log.warn(`Blocked unsafe image URL (SSRF guard): ${src.slice(0, 60)} — ${ssrfError}`);
       return null;
     }
     try {

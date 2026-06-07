@@ -189,7 +189,7 @@ describe('coverSkeletonSchema', () => {
 describe('assembleDesignDNA', () => {
   const validSkeleton = {
     styleName: '科技暗金',
-    fontId: 'georgia-calibri' as const,
+    fontId: 'arial-black-arial' as const,
     density: 'moderate' as const,
     mood: '专业学术',
     bestFor: ['数学'],
@@ -214,10 +214,10 @@ describe('assembleDesignDNA', () => {
     expect(dna.colors.coverBg).toBe('1E2761'); // midnight-executive default
   });
 
-  it('falls back to georgia-calibri for invalid fontId', () => {
+  it('falls back to arial-black-arial for invalid fontId', () => {
     const badSkeleton = { ...validSkeleton, fontId: 'bad-font' as never };
     const dna = assembleDesignDNA(badSkeleton, 'midnight-executive', 'geometric-lines', 'hero-centered');
-    expect(dna.fonts.en).toBe('Georgia'); // georgia-calibri default
+    expect(dna.fonts.en).toBe('Arial Black'); // arial-black-arial default
   });
 
   it('derives card style from motif (chinese-seal → accent-left-bar)', () => {

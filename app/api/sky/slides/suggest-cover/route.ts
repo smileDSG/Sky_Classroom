@@ -22,7 +22,14 @@ const log = createLogger('API:SuggestCover');
 export async function POST(req: NextRequest) {
   const reqStart = Date.now();
   try {
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch (parseErr) {
+      const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
+      log.error(`[API:SuggestCover] request body parse failed: ${msg}`);
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '请求格式错误', msg);
+    }
     const { topic, difficulty } = body as { topic?: string; difficulty?: string };
 
     if (!topic || !topic.trim()) {
@@ -37,8 +44,15 @@ export async function POST(req: NextRequest) {
     log.info(`[API:SuggestCover] using model=${modelString}`);
 
     // Step 1: LLM → style recommendation
+    let styleResult: Awaited<ReturnType<typeof suggestCoverStyle>>;
     const styleStart = Date.now();
-    const styleResult = await suggestCoverStyle(topic.trim(), diff, languageModel);
+    try {
+      styleResult = await suggestCoverStyle(topic.trim(), diff, languageModel);
+    } catch (styleErr) {
+      const msg = styleErr instanceof Error ? styleErr.message : String(styleErr);
+      log.error(`[API:SuggestCover] style recommendation threw: ${msg}`);
+      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '风格推荐异常', msg);
+    }
     log.info(`[API:SuggestCover] style recommendation took ${Date.now() - styleStart}ms, success=${styleResult.success}`);
 
     if (!styleResult.success || !styleResult.designDNA) {

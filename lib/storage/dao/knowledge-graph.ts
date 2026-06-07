@@ -92,8 +92,8 @@ export function createKnowledgeGraphDAO(storage: StorageProvider) {
       // From question bank
       for (const q of questions) {
         for (const kp of q.knowledgePoints) {
-          const key = kp.toLowerCase();
-          const existing = pointMap.get(key) ?? { name: kp, questions: 0, mistakes: 0, masterySum: 0 };
+          const key = kp.name.toLowerCase();
+          const existing = pointMap.get(key) ?? { name: kp.name, questions: 0, mistakes: 0, masterySum: 0 };
           existing.questions += 1;
           pointMap.set(key, existing);
         }
@@ -129,10 +129,10 @@ export function createKnowledgeGraphDAO(storage: StorageProvider) {
 
       for (const q of questions) {
         for (const kp of q.knowledgePoints) {
-          const key = kp.toLowerCase();
+          const key = kp.name.toLowerCase();
           if (!questionGroups.has(key)) questionGroups.set(key, new Set());
           for (const other of q.knowledgePoints) {
-            const otherKey = other.toLowerCase();
+            const otherKey = other.name.toLowerCase();
             if (key !== otherKey) {
               questionGroups.get(key)!.add(otherKey);
             }

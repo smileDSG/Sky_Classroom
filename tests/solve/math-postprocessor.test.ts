@@ -83,6 +83,6 @@ describe('postProcessFourPartOutput', () => {
 
   it('processes keyPoints', () => {
     const result = postProcessFourPartOutput(mockOutput);
-    expect(result.steps[0].keyPoints[0]).toContain('\\frac{1}{4}');
+    expect(result.steps[0].keyPoints?.[0]).toContain('\\frac{1}{4}');
   });
 });

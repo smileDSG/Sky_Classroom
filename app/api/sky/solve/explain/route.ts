@@ -68,6 +68,8 @@ export async function POST(req: Request) {
             agentId: agentId ?? 'universal',
             solvedAt: Date.now(),
             verified: false,
+            questionType: output.questionType,
+            options: output.options,
           });
           log.info('[Explain] 题目已自动入库');
         }

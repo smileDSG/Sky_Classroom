@@ -9,7 +9,7 @@ vi.mock('@/lib/knowledge-base/kb-manager', () => ({
     const results: any[] = [];
     for (const chunk of mockKBChunks.values()) {
       if (chunk.kbType === opts.kbType) {
-        results.push({ chunk, score: 0.5 });
+        results.push({ chunk, score: 0.9 });
       }
     }
     return results.slice(0, opts.topK || 5);
@@ -54,6 +54,11 @@ vi.mock('@/lib/knowledge-base/kb-manager', () => ({
       if ((c as any).kbType === 'solve') mockKBChunks.delete(id);
     }
   }),
+}));
+
+vi.mock('@/lib/question-bank/dao', () => ({
+  search: vi.fn().mockResolvedValue([]),
+  findByHash: vi.fn().mockResolvedValue(null),
 }));
 
 import {

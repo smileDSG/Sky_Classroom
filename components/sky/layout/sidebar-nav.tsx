@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 const NAV_ITEMS = [
   { label: '首页', href: '/sky', icon: '🏠' },
   { label: '搜题', href: '/sky/solve', icon: '🔍' },
-  { label: '幻灯片', href: '/sky/slides', icon: '📖' },
+  { label: '幻灯片', href: '/sky/cloud-mind/slides', icon: '📖' },
   { label: '学习数据', href: '/sky/learning', icon: '📊' },
   { label: '小镜课堂', href: '/sky/assistant', icon: '/avatars/kagami/chibi.png' },
 ];

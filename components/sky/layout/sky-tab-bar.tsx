@@ -9,13 +9,15 @@ import {
   TrendingUp,
   Feather,
   Globe,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { label: string; href: string; icon: typeof Star; badge?: string }[] = [
   { label: '摘星锦囊', href: '/sky', icon: Star },
   { label: '云端智囊', href: '/sky/cloud-mind', icon: Brain },
   { label: '天梯工坊', href: '/sky/learning', icon: TrendingUp },
+  { label: '题库中心', href: '/sky/question-bank', icon: BookOpen },
   { label: '云翼助手', href: '/sky/assistant', icon: Feather },
   { label: '天穹讲课', href: '/', icon: Globe },
 ];

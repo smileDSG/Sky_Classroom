@@ -279,10 +279,6 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
         }
         return s as unknown as SkyClassroomStore;
       },
-      onError: (error: unknown) => {
-        console.error('[SkyClassroom] Hydration failed — clearing corrupted cache:', error);
-        try { localStorage.removeItem('sky-classroom-storage'); } catch { /* ignore */ }
-      },
       partialize: (state) => ({
         selectedAvatarId: state.selectedAvatarId,
         generationOptions: state.generationOptions,

@@ -119,24 +119,14 @@ export async function exportPptx(options: PptxExportOptions): Promise<PptxExport
   pptx.subject = title;
 
   // ── Define Slide Masters ─────────────────────────────────────────
+  // NOTE: We intentionally do NOT include title/body placeholders here.
+  // The AI renderer adds every element explicitly via instructions.
+  // Empty placeholders would leave unfilled shapes in the output.
   pptx.defineSlideMaster({
     title: 'sky-content-master',
     background: { color: toPptxHex(theme.contentBg) },
     margin: [theme.pageMargin / 96, theme.pageMargin / 96, theme.pageMargin / 96, theme.pageMargin / 96],
-    objects: [
-      {
-        placeholder: {
-          options: { name: 'title', type: 'title', x: theme.pageMargin / 96, y: 0.5, w: theme.contentMaxWidth / 96, h: 0.6 },
-          text: 'Click to add title',
-        },
-      },
-      {
-        placeholder: {
-          options: { name: 'body', type: 'body', x: theme.pageMargin / 96, y: 1.2, w: theme.contentMaxWidth / 96, h: 5 },
-          text: 'Click to add text',
-        },
-      },
-    ],
+    objects: [],
   });
 
   // ── Cover Slide ──────────────────────────────────────────────────

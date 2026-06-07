@@ -287,11 +287,11 @@ export async function callLLM<T extends GenerateTextParams>(
       log.warn(`[callLLM] ABORT triggered for source=${source} after ${timeoutMs}ms (attempt ${attempt})`);
       abortController.abort(new Error('LLM call timeout'));
     }, timeoutMs);
+    const startTime = performance.now();
     try {
       // Wrap in thinkingContext so the custom fetch wrapper in providers.ts
       // can read the config and inject vendor-specific body params for
       // OpenAI-compatible providers.
-      const startTime = performance.now();
       const result = await thinkingContext.run(effectiveThinking, () =>
         generateText({ ...injectedParams, abortSignal: abortController.signal }),
       );
@@ -328,14 +328,16 @@ export async function callLLM<T extends GenerateTextParams>(
     } catch (error) {
       clearTimeout(timeoutId);
       lastError = error;
+      const durationMs = Math.round(performance.now() - startTime);
 
-      // Record failed call
+      // Record failed call with actual duration
       getPerfMonitor().recordLLMCall({
         model: getModelId(injectedParams),
         source,
-        durationMs: 0,
+        durationMs,
         success: false,
       });
+      log.warn(`[callLLM] source=${source} attempt=${attempt}/${maxAttempts} failed after ${durationMs}ms: ${error instanceof Error ? error.message : String(error)}`);
 
       if (attempt < maxAttempts) {
         // Only retry on transient errors (network, timeout, 5xx, rate limit)
@@ -345,7 +347,7 @@ export async function callLLM<T extends GenerateTextParams>(
           error.message.includes('API key') ||
           error.message.includes('invalid') ||
           error.message.includes('bad request')
-        ));
+        )) || (error instanceof Error && /terminated|aborted|ECONNRESET|ETIMEDOUT|timeout/i.test(error.message));
         if (!isRetryable) {
           log.warn(`[${source}] Non-retryable error (attempt ${attempt}/${maxAttempts}), giving up:`, error);
           throw error;

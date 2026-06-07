@@ -148,7 +148,13 @@ export interface PhaseEvent {
   phase: string;
 }
 
-export type StreamEvent = StepEvent | AnswerEvent | KnowledgeEvent | SimilarEvent | PhaseEvent;
+export interface MetadataEvent {
+  type: 'metadata';
+  questionType?: 'choice' | 'fill' | 'solve' | 'judge';
+  options?: string[];
+}
+
+export type StreamEvent = StepEvent | AnswerEvent | KnowledgeEvent | SimilarEvent | PhaseEvent | MetadataEvent;
 
 // ── Streaming JSON parser state machine ──────────────────────────────
 
@@ -177,6 +183,8 @@ class StepStreamParser {
   private answer = '';
   private knowledge: KnowledgeEvent['points'] = [];
   private similar: SimilarEvent['questions'] = [];
+  private questionType: 'choice' | 'fill' | 'solve' | 'judge' | undefined = undefined;
+  private options: string[] | undefined = undefined;
 
   /** Feed a chunk of text, returns any newly completed steps */
   feed(chunk: string): StreamEvent[] {
@@ -211,7 +219,7 @@ class StepStreamParser {
   }
 
   /** Get all collected results at end of stream */
-  finalize(): { answer: string; steps: StepEvent[]; knowledge: KnowledgeEvent['points']; similar: SimilarEvent['questions'] } {
+  finalize(): { answer: string; steps: StepEvent[]; knowledge: KnowledgeEvent['points']; similar: SimilarEvent['questions']; questionType?: 'choice' | 'fill' | 'solve' | 'judge'; options?: string[] } {
     // Try to extract remaining data from buffer
     this.extractFallback();
     return {
@@ -219,6 +227,8 @@ class StepStreamParser {
       steps: this.steps,
       knowledge: this.knowledge,
       similar: this.similar,
+      questionType: this.questionType,
+      options: this.options,
     };
   }
 
@@ -452,6 +462,15 @@ class StepStreamParser {
           ...(q.answer ? { answer: q.answer } : {}),
         }));
       }
+      if (!this.questionType && obj.questionType) {
+        const t = String(obj.questionType);
+        if (t === 'choice' || t === 'fill' || t === 'solve' || t === 'judge') {
+          this.questionType = t;
+        }
+      }
+      if (!this.options && Array.isArray(obj.options)) {
+        this.options = obj.options.filter((o: unknown) => typeof o === 'string');
+      }
     } catch {
       // give up
     }
@@ -524,6 +543,9 @@ export async function* streamSolve(
   }
   if (final.similar.length > 0) {
     yield { type: 'similar', questions: final.similar };
+  }
+  if (final.questionType) {
+    yield { type: 'metadata', questionType: final.questionType, options: final.options };
   }
 }
 

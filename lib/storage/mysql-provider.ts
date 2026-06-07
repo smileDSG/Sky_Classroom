@@ -292,7 +292,7 @@ export class MySQLStorageProvider implements StorageProvider {
           data.preferredLanguage ?? null, data.aiPersonality ?? null, data.aiName ?? null, data.customInstructions ?? null,
           data.autoGenerateQuiz ?? false, data.showStepByStep ?? true, data.enableMemory ?? true, data.enableRAG ?? true,
           data.emailVerified ?? false, data.emailVerifyToken ?? null, data.resetToken ?? null,
-          data.resetTokenExpiry ? toDatetime(data.resetTokenExpiry) : null,
+          data.resetTokenExpiry && typeof data.resetTokenExpiry === 'number' ? toDatetime(data.resetTokenExpiry) : null,
           toDatetime(entry.createdAt), toDatetime(entry.updatedAt),
           data.lastLoginAt ? toDatetime(data.lastLoginAt as number) : null,
         ],

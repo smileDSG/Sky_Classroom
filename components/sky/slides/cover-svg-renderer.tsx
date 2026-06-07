@@ -10,13 +10,7 @@
 'use client';
 
 import type { DesignDNA, LayoutType } from '@/lib/slides/agent/design-dna';
-import {
-  HeroLeftCover,
-  HeroCenteredCover,
-  SplitPanelCover,
-  MinimalTypeCover,
-  BoldAccentCover,
-} from './cover-layouts';
+import { LAYOUT_COMPONENTS } from './cover-layouts';
 
 export interface CoverSVGRendererProps {
   designDNA: DesignDNA;
@@ -29,15 +23,6 @@ export interface CoverSVGRendererProps {
 export function ptToInch(pt: number): number {
   return pt / 72;
 }
-
-/** Layout registry: layoutType → SVG component */
-const LAYOUT_COMPONENTS: Record<string, React.FC<LayoutComponentProps>> = {
-  'hero-left': HeroLeftCover,
-  'hero-centered': HeroCenteredCover,
-  'split-panel': SplitPanelCover,
-  'minimal-type': MinimalTypeCover,
-  'bold-accent': BoldAccentCover,
-};
 
 export interface LayoutComponentProps {
   dna: DesignDNA;
@@ -52,7 +37,7 @@ export default function CoverSVGRenderer({
   className = '',
 }: CoverSVGRendererProps) {
   const layoutType = (designDNA.layoutType as LayoutType) || 'hero-left';
-  const LayoutComponent = LAYOUT_COMPONENTS[layoutType] || HeroLeftCover;
+  const LayoutComponent = LAYOUT_COMPONENTS[layoutType] || LAYOUT_COMPONENTS['hero-left'];
 
   return (
     <svg

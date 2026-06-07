@@ -63,7 +63,7 @@ const SOFFICE_CANDIDATES = [
   '/usr/lib64/libreoffice/program/soffice',
 ];
 
-const CONVERT_TIMEOUT_MS = 15_000;
+const CONVERT_TIMEOUT_MS = 45_000;
 const RETRY_DELAY_MS = 2_000;
 const MAX_RETRIES = 2;
 

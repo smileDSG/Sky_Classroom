@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import type { QuestionBankRow } from '@/lib/question-bank/types';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { motion, AnimatePresence } from 'motion/react';
@@ -47,6 +48,38 @@ interface QuizQuestion {
 
 type QuizState = 'idle' | 'generating' | 'answering' | 'done';
 
+function mapBankRowToQuiz(row: QuestionBankRow, index: number): QuizQuestion {
+  if (row.questionType === 'choice' && row.options && row.options.length >= 2) {
+    const letterMatch = row.answer.trim().toUpperCase().match(/^[A-Z]/);
+    const answerIndex = letterMatch ? letterMatch[0].charCodeAt(0) - 65 : 0;
+    return {
+      id: index,
+      question: row.content,
+      options: row.options,
+      answer: Math.min(Math.max(0, answerIndex), row.options.length - 1),
+      explanation: row.explanation || row.answer,
+    };
+  }
+  if (row.questionType === 'judge') {
+    const ans = row.answer.trim().toLowerCase();
+    const isTrue = /^(正确|对|是|yes|true|1|√)$/.test(ans);
+    return {
+      id: index,
+      question: row.content,
+      options: ['正确', '错误'],
+      answer: isTrue ? 0 : 1,
+      explanation: row.explanation || row.answer,
+    };
+  }
+  return {
+    id: index,
+    question: row.content,
+    options: ['查看答案'],
+    answer: 0,
+    explanation: row.explanation || row.answer,
+  };
+}
+
 export default function CloudMindQuizPage() {
   const searchParams = useSearchParams();
   const [quizMode, setQuizMode] = useState<'ai' | 'bank'>('ai');
@@ -62,12 +95,113 @@ export default function CloudMindQuizPage() {
   const [showExplanation, setShowExplanation] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const bankAutoLoadedRef = useRef(false);
+
+  const handleLoadFromBank = useCallback(async () => {
+    setState('generating');
+    setError(null);
+    try {
+      const ids = searchParams.get('ids');
+      const startFrom = searchParams.get('startFrom');
+      const subject = searchParams.get('subject') || undefined;
+      const difficulty = searchParams.get('difficulty') || undefined;
+      const questionType = searchParams.get('questionType') || undefined;
+      const verified = searchParams.has('verified')
+        ? searchParams.get('verified') === 'true'
+        : undefined;
+      const keyword = searchParams.get('keyword') || undefined;
+
+      let rows: QuestionBankRow[] = [];
+
+      if (ids) {
+        const res = await fetch(`/api/sky/question-bank?ids=${encodeURIComponent(ids)}&limit=100`);
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || '加载失败');
+        rows = (json.questions as QuestionBankRow[]) ?? [];
+      } else if (startFrom) {
+        const [startRes, listRes] = await Promise.all([
+          fetch(`/api/sky/question-bank?id=${encodeURIComponent(startFrom)}`),
+          fetch(
+            `/api/sky/question-bank?${new URLSearchParams({
+              ...(subject ? { subject } : {}),
+              ...(difficulty ? { difficulty } : {}),
+              questionType: 'choice',
+              ...(verified !== undefined ? { verified: String(verified) } : {}),
+              ...(keyword ? { keyword } : {}),
+              limit: String(Math.max(1, count - 1)),
+            }).toString()}`
+          ),
+        ]);
+        const startJson = await startRes.json();
+        const listJson = await listRes.json();
+        if (!startJson.success) throw new Error(startJson.error || '加载失败');
+        const startRow = startJson.question as QuestionBankRow | undefined;
+        const extraRows = (listJson.questions as QuestionBankRow[]) ?? [];
+        rows = startRow
+          ? [startRow, ...extraRows.filter((r) => r.id !== startRow.id)]
+          : extraRows;
+        rows = rows.slice(0, count);
+      } else {
+        const params = new URLSearchParams();
+        if (subject) params.set('subject', subject);
+        if (difficulty) params.set('difficulty', difficulty);
+        if (questionType) params.set('questionType', questionType);
+        else params.set('questionType', 'choice');
+        if (verified !== undefined) params.set('verified', String(verified));
+        if (keyword) params.set('keyword', keyword);
+        params.set('limit', String(count));
+        const res = await fetch(`/api/sky/question-bank?${params.toString()}`);
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || '加载失败');
+        rows = (json.questions as QuestionBankRow[]) ?? [];
+      }
+
+      if (rows.length === 0) {
+        setError('题库为空或没有符合筛选条件的题目');
+        setState('idle');
+        return;
+      }
+
+      const bankQuestions: QuizQuestion[] = rows
+        .slice(0, count)
+        .map((e, i) => mapBankRowToQuiz(e, i));
+      setQuestions(bankQuestions);
+      setAnswers(new Array(bankQuestions.length).fill(null));
+      setCurrentIdx(0);
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+      setState('answering');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '加载题库失败');
+      setState('idle');
+    }
+  }, [count, searchParams]);
 
   // Pre-fill from URL query params (e.g., from slides/learning page)
   useEffect(() => {
     const qTopic = searchParams.get('topic');
     if (qTopic) setTopic(qTopic);
   }, [searchParams]);
+
+  // Auto-enter bank mode and load when URL carries bank params
+  useEffect(() => {
+    if (bankAutoLoadedRef.current) return;
+    const mode = searchParams.get('mode');
+    if (mode !== 'bank') return;
+    setQuizMode('bank');
+    const ids = searchParams.get('ids');
+    const startFrom = searchParams.get('startFrom');
+    const hasFilters =
+      searchParams.get('subject') ||
+      searchParams.get('difficulty') ||
+      searchParams.get('questionType') ||
+      searchParams.has('verified') ||
+      searchParams.get('keyword');
+    if (ids || startFrom || hasFilters) {
+      bankAutoLoadedRef.current = true;
+      handleLoadFromBank();
+    }
+  }, [searchParams, handleLoadFromBank]);
 
   // Restore state from background task on mount
   useEffect(() => {
@@ -123,36 +257,6 @@ export default function CloudMindQuizPage() {
     });
     return unsub;
   }, [activeTaskId]);
-
-  const handleLoadFromBank = useCallback(async () => {
-    setState('generating');
-    setError(null);
-    try {
-      const { listQuestionBankEntries } = await import('@/lib/solve/question-bank');
-      const entries = await listQuestionBankEntries(count);
-      if (entries.length === 0) {
-        setError('题库为空，先去做些题目吧');
-        setState('idle');
-        return;
-      }
-      const bankQuestions: QuizQuestion[] = entries.slice(0, count).map((e, i) => ({
-        id: i,
-        question: e.problemText,
-        options: [e.answer, '（干扰项 A）', '（干扰项 B）', '（干扰项 C）'],
-        answer: 0,
-        explanation: e.steps?.join('\n') || e.answer,
-      }));
-      setQuestions(bankQuestions);
-      setAnswers(new Array(bankQuestions.length).fill(null));
-      setCurrentIdx(0);
-      setSelectedAnswer(null);
-      setShowExplanation(false);
-      setState('answering');
-    } catch (err) {
-      setError('加载题库失败，请重试');
-      setState('idle');
-    }
-  }, [count]);
 
   const handleGenerate = useCallback(async () => {
     setState('generating');

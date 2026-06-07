@@ -65,6 +65,14 @@ export const SolveGraphAnnotation = Annotation.Root({
     value: (_prev, next) => next,
     default: () => [],
   }),
+  questionType: Annotation<'choice' | 'fill' | 'solve' | 'judge' | null>({
+    value: (_prev, next) => next,
+    default: () => null,
+  }),
+  options: Annotation<string[] | null>({
+    value: (_prev, next) => next,
+    default: () => null,
+  }),
   gradeResult: Annotation<GradeResult | null>({
     value: (_prev, next) => next,
     default: () => null,

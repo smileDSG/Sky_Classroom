@@ -91,7 +91,8 @@ export function useCoverDraft(): CoverDraftState & CoverDraftActions {
     });
   }, []);
 
-  const updateLayout = useCallback((layoutType: LayoutType) => {
+  const updateLayout = useCallback((layoutType: LayoutType | undefined) => {
+    if (!layoutType) return;
     setDraftDNA((prev) => {
       if (!prev) return null;
       const motif = getMotifForLayout(layoutType);

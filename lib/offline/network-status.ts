@@ -36,7 +36,7 @@ export function useNetworkStatus(): NetworkStatus {
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return null;
   try {
-    return await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    return await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
   } catch (err) {
     console.warn('[PWA] Service Worker registration failed:', err);
     return null;

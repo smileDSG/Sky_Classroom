@@ -1252,12 +1252,12 @@ export function getModel(config: ModelConfig): ModelWithInfo {
           try {
             log.info(`[FetchWrapper] reading response body... status=${response.status} fetch=${fetchDuration}ms`);
             const textStart = Date.now();
-            // Page design outputs up to 24k tokens; DeepSeek can take 3-5 min.
+            // Page design outputs up to 24k tokens; DeepSeek can take 3-7 min.
             // Because Node.js fetch cannot cancel response.text() via AbortSignal
             // once the response headers have arrived, this timeout acts as the
-            // *real* deadline for body consumption. 120s covers normal peaks
-            // (observed 25-85s) while preventing indefinite hangs.
-            const BODY_READ_TIMEOUT_MS = 120_000;
+            // *real* deadline for body consumption. 600s covers large outputs
+            // (8192 tokens ~ 4-5 min at 30 tps) while preventing indefinite hangs.
+            const BODY_READ_TIMEOUT_MS = 600_000;
             const textPromise = response.text();
             const text = await Promise.race([
               textPromise.then((t) => {
@@ -1280,6 +1280,11 @@ export function getModel(config: ModelConfig): ModelWithInfo {
               }),
             ]);
             log.info(`[FetchWrapper] response.text() done in ${Date.now() - textStart}ms, length=${text.length}`);
+            // Detect encoding corruption: look for Unicode replacement char (U+FFFD) or
+            // bare question-mark sequences that often appear when UTF-8 bytes are mis-decoded.
+            if (text.includes('\uFFFD') || /\?{4,}/.test(text)) {
+              log.warn(`[FetchWrapper] Possible encoding corruption detected in response body (U+FFFD or ???? found). Provider=${providerId} model=${config.modelId}`);
+            }
             const parsed = JSON.parse(text);
 
             // 1. Detect error-in-200 response (DeepSeek load-balancer behavior)
@@ -1297,13 +1302,23 @@ export function getModel(config: ModelConfig): ModelWithInfo {
             // 3. Deep-clean each choice — whitelist approach
             const allowedMessageFields = ['role', 'content', 'tool_calls', 'function_call'];
             for (const choice of parsed.choices) {
+              // Handle delta format (sometimes returned even for non-streaming by some proxies)
+              if (!choice.message && choice.delta && typeof choice.delta === 'object') {
+                const delta = choice.delta as Record<string, unknown>;
+                choice.message = {
+                  role: 'assistant',
+                  content: typeof delta.content === 'string' ? delta.content : '',
+                };
+              }
               if (!choice.message || typeof choice.message !== 'object') {
                 choice.message = { role: 'assistant', content: '' };
               }
               const msg = choice.message as Record<string, unknown>;
 
-              // content: null → '' (DeepSeek thinking mode returns null content)
-              if (msg.content === null) msg.content = '';
+              // content: null / undefined / non-string → ''
+              if (msg.content === null || msg.content === undefined || typeof msg.content !== 'string') {
+                msg.content = '';
+              }
 
               // Strip known non-standard fields
               delete msg.reasoning_content;
@@ -1346,13 +1361,36 @@ export function getModel(config: ModelConfig): ModelWithInfo {
               bodyReadTimer = null;
             }
             if (keyPool && selectedKey) keyPool.release(selectedKey);
-            // Re-throw abort errors so postToApi can recognize them via isAbortError
-            if (err instanceof Error && (err.name === 'AbortError' || err.message.includes('abort') || err.message.includes('timeout'))) {
+            // Re-throw abort/timeout errors so postToApi can recognize them via isAbortError
+            // NOTE: Node.js AbortError message may be 'The operation was aborted' or
+            // 'This operation was aborted'; DOMException may have name 'AbortError'.
+            // Also guard against 'Response body read timeout' from our own timer.
+            const isAbortOrTimeout = err instanceof Error && (
+              err.name === 'AbortError' ||
+              err.name === 'TimeoutError' ||
+              err.message.toLowerCase().includes('abort') ||
+              err.message.toLowerCase().includes('timeout') ||
+              err.message.toLowerCase().includes('operation was aborted')
+            );
+            if (isAbortOrTimeout) {
               throw err;
+            }
+            const errMsg = err instanceof Error ? err.message : String(err);
+            // Provider-terminated connections (e.g. DeepSeek 60s limit) should mark key failed
+            // so retries can pick a different key / provider.
+            const isTerminated = errMsg.toLowerCase().includes('terminated');
+            if (isTerminated && keyPool && selectedKey) {
+              keyPool.markFailed(selectedKey, new Error(`Provider terminated connection after ${fetchDuration}ms`));
             }
             if (!transformErrorLogged) {
               transformErrorLogged = true;
-              log.error(`Response transform failed: ${err instanceof Error ? err.message : String(err)}`);
+              // Try to capture raw response preview for debugging
+              let rawPreview = '';
+              try {
+                // Clone response to re-read body (response.text() may have been consumed)
+                // If body was consumed, we can't re-read; but we log what we can.
+              } catch { /* ignore */ }
+              log.error(`Response transform failed: ${errMsg}. status=${response.status} fetch=${fetchDuration}ms. Raw response preview unavailable (body consumed).`);
             }
             // Body already consumed by response.text(); returning raw response would
             // cause downstream readers to see empty body. Always throw.

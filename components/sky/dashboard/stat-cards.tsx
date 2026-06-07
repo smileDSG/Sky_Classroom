@@ -172,7 +172,7 @@ export function StatCards({ mistakes }: StatCardsProps) {
 
 const actions = [
   { icon: Search, label: '拍照搜题', href: '/sky/solve', color: 'text-violet-400', bg: 'bg-violet-500/10 hover:bg-violet-500/20' },
-  { icon: BookOpen, label: '幻灯片讲解', href: '/sky/slides', color: 'text-cyan-400', bg: 'bg-cyan-500/10 hover:bg-cyan-500/20' },
+  { icon: BookOpen, label: '幻灯片讲解', href: '/sky/cloud-mind/slides', color: 'text-cyan-400', bg: 'bg-cyan-500/10 hover:bg-cyan-500/20' },
   { icon: BarChart3, label: '学习数据', href: '/sky/learning', color: 'text-emerald-400', bg: 'bg-emerald-500/10 hover:bg-emerald-500/20' },
   { icon: Sparkles, label: 'AI 助手', href: '/sky/assistant', color: 'text-amber-400', bg: 'bg-amber-500/10 hover:bg-amber-500/20' },
 ];

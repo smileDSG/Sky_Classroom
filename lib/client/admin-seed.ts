@@ -3,13 +3,12 @@
  * Ensures the admin account exists in IndexedDB/localStorage.
  */
 
-import { createUserDAO, type UserEntry } from '@/lib/storage/dao/users';
-
 const ADMIN_USERNAME = 'admin';
 const ADMIN_ID = 'admin-default';
 
 export async function ensureAdminUserClient(): Promise<void> {
   try {
+    const { createUserDAO } = await import('@/lib/storage/dao/users');
     const dao = await createUserDAO();
     const existing = await dao.getByUsername(ADMIN_USERNAME);
     if (existing) return;
@@ -32,6 +31,19 @@ export async function ensureAdminUserClient(): Promise<void> {
           avatar: null,
           nickname: '管理员',
           bio: null,
+          educationLevel: null,
+          grade: null,
+          favoriteSubjects: null,
+          learningStyle: null,
+          detailLevel: null,
+          preferredLanguage: null,
+          aiPersonality: null,
+          aiName: null,
+          customInstructions: null,
+          autoGenerateQuiz: null,
+          showStepByStep: null,
+          enableMemory: null,
+          enableRAG: null,
           emailVerified: true,
           emailVerifyToken: null,
           resetToken: null,

@@ -50,6 +50,8 @@ interface ParsedSolution {
   solution: string;
   answer: string;
   confidence: number;
+  questionType?: 'choice' | 'fill' | 'solve' | 'judge';
+  options?: string[];
   steps: { label: string; content: string; keyPoints?: string[] }[];
   knowledgePoints: { name: string; description: string; difficulty: 'easy' | 'medium' | 'hard' }[];
   similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
@@ -216,6 +218,8 @@ export async function solveWithAgentNode(
         difficulty: k.difficulty,
       })),
       parsedSimilarQuestions: solution.similarQuestions ?? [],
+      questionType: solution.questionType ?? null,
+      options: solution.options ?? null,
       agentId: usedAgents[usedAgents.length - 1] ?? agentType,
       error: null,
     };

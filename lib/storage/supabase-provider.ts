@@ -250,7 +250,7 @@ export function createSupabaseUserDAO() {
       if (updates.emailVerifyToken !== undefined) mapped.email_verify_token = updates.emailVerifyToken;
       if (updates.resetToken !== undefined) mapped.reset_token = updates.resetToken;
       if (updates.resetTokenExpiry !== undefined) mapped.reset_token_expiry = updates.resetTokenExpiry;
-      if (updates.lastLoginAt !== undefined) mapped.last_login_at = updates.lastLoginAt ? new Date(updates.lastLoginAt).toISOString() : null;
+      if (updates.lastLoginAt !== undefined) mapped.last_login_at = updates.lastLoginAt && typeof updates.lastLoginAt === 'number' ? new Date(updates.lastLoginAt).toISOString() : null;
 
       const { data, error } = await client
         .from('users')

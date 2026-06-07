@@ -124,7 +124,7 @@ describe('QuickActions', () => {
     expect(
       hrefs.every((h) =>
         h === '/sky/solve' ||
-        h === '/sky/slides' ||
+        h === '/sky/cloud-mind/slides' ||
         h === '/sky/learning' ||
         h === '/sky/assistant',
       ),

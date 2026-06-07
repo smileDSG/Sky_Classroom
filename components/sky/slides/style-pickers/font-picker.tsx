@@ -55,8 +55,8 @@ const FONT_META: Record<string, FontMeta> = {
 
 export function FontPicker({ selectedFontId, onSelect }: FontPickerProps) {
   return (
-    <div className="flex flex-col gap-2.5">
-      <span className="text-[11px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">字体气质</span>
+    <div className="flex flex-col gap-2">
+      <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">字体气质</span>
       <div className="grid grid-cols-5 gap-1.5">
         {Object.entries(FONT_PAIRS).map(([id, font]) => {
           const meta = FONT_META[id];
@@ -68,26 +68,25 @@ export function FontPicker({ selectedFontId, onSelect }: FontPickerProps) {
             <button
               key={id}
               onClick={() => onSelect(id)}
-              className={`group relative flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 transition-all duration-200 ${
+              className={`group relative flex flex-col items-center gap-1 rounded-lg px-2 py-2 transition-colors ${
                 isSelected
-                  ? 'bg-sky-50/80 dark:bg-sky-900/20'
+                  ? 'bg-primary/5 dark:bg-primary/10'
                   : 'hover:bg-slate-50 dark:hover:bg-gray-800'
               }`}
               title={meta?.desc}
             >
-              {/* Character preview — CN large + EN small */}
               <div className="relative flex items-baseline gap-0.5 h-7">
                 <span
-                  className={`text-xl font-bold leading-none transition-all duration-200 ${
-                    isSelected ? 'text-sky-600 dark:text-sky-400 scale-110' : 'text-slate-700 dark:text-gray-300 group-hover:scale-105'
+                  className={`text-xl font-bold leading-none ${
+                    isSelected ? 'text-primary' : 'text-slate-700 dark:text-gray-300'
                   }`}
                   style={{ fontFamily: cnStack }}
                 >
                   {meta?.cnPreview ?? '字'}
                 </span>
                 <span
-                  className={`text-[10px] font-bold leading-none transition-all duration-200 ${
-                    isSelected ? 'text-sky-500/70 dark:text-sky-400/70' : 'text-slate-400/70 dark:text-gray-500/70'
+                  className={`text-[10px] font-bold leading-none ${
+                    isSelected ? 'text-primary/70' : 'text-slate-400/70 dark:text-gray-500/70'
                   }`}
                   style={{ fontFamily: enStack }}
                 >
@@ -95,15 +94,14 @@ export function FontPicker({ selectedFontId, onSelect }: FontPickerProps) {
                 </span>
               </div>
 
-              <span className={`text-[9px] font-semibold ${
-                isSelected ? 'text-sky-600 dark:text-sky-400' : 'text-slate-500 dark:text-gray-500'
+              <span className={`text-[10px] font-semibold ${
+                isSelected ? 'text-primary' : 'text-slate-500 dark:text-gray-500'
               }`}>
                 {meta?.label ?? id}
               </span>
 
-              {/* Selected indicator */}
               {isSelected && (
-                <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-sky-400" />
+                <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-primary" />
               )}
             </button>
           );

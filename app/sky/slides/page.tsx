@@ -1,10 +1,5 @@
-import { Suspense } from 'react';
-import SlidesPage from '@/components/sky/slides/slides-page';
+import { redirect } from 'next/navigation';
 
-export default function SlidesPageRoute() {
-  return (
-    <Suspense fallback={null}>
-      <SlidesPage />
-    </Suspense>
-  );
+export default function LegacySlidesRedirect() {
+  redirect('/sky/cloud-mind/slides');
 }

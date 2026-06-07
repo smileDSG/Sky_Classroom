@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 
 test('generate slides for 勾股定理 and verify no overflow', async ({ page }) => {
   // Navigate to the slides page
-  await page.goto('http://localhost:3003/sky/slides');
+  await page.goto('http://localhost:3003/sky/cloud-mind/slides');
 
   // Wait for the page to load
   await page.waitForSelector('input[placeholder*="教学主题"]', { timeout: 10000 });

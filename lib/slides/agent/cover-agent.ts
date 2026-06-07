@@ -26,7 +26,7 @@ const log = createLogger('CoverAgent');
 
 export const coverSkeletonSchema = z.object({
   styleName: z.string().min(2).max(12),
-  fontId: z.enum(['georgia-calibri', 'impact-arial', 'noto-sans', 'lora-inter', 'pt-serif']),
+  fontId: z.enum(['arial-black-arial', 'calibri-light', 'impact-arial']),
   density: z.enum(['sparse', 'moderate', 'rich']),
   mood: z.string().min(2).max(15),
   bestFor: z.array(z.string().min(1).max(20)).min(1).max(4),
@@ -156,13 +156,15 @@ ${DESIGN_NOTES}
 A single JSON object:
 {
   "styleName": "风格名称≤12字",
-  "fontId": "georgia-calibri",
+  "fontId": "arial-black-arial",
+  "styleName": "现代学术",
   "density": "moderate",
   "mood": "风格情绪≤15字",
   "bestFor": ["学科1"]
 }
 
-Available fonts: georgia-calibri, impact-arial, noto-sans, lora-inter, pt-serif
+Available fonts: arial-black-arial, calibri-light, impact-arial
+Recommended: arial-black-arial (modern sans-serif, best for Chinese academic presentations)
 Available densities: sparse, moderate, rich
 
 ## Rules
@@ -197,7 +199,7 @@ export function assembleDesignDNA(
   layoutType: LayoutType,
 ): DesignDNA {
   const palette = COLOR_PALETTES[paletteId] ?? COLOR_PALETTES['midnight-executive'];
-  const fonts = FONT_PAIRS[skeleton.fontId] ?? FONT_PAIRS['georgia-calibri'];
+  const fonts = FONT_PAIRS[skeleton.fontId] ?? FONT_PAIRS['arial-black-arial'];
 
   const cardStyle: DesignDNA['components']['cardStyle'] =
     motif === 'chinese-seal' ? 'accent-left-bar' :

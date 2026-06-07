@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
 
           // Backpressure: skip non-critical events if client is slow
           if (pendingWrites > MAX_QUEUE_SIZE) {
-            if (event.type !== 'text-delta') {
+            if (event.type !== 'text_delta') {
               droppedCount++;
               continue;
             }

@@ -94,6 +94,8 @@ export interface FourPartOutput {
     knowledgePoint: string;
     answer?: string;
   }[];
+  questionType?: 'choice' | 'fill' | 'solve' | 'judge';
+  options?: string[];
 }
 
 export interface GradedFourPartOutput extends FourPartOutput {
@@ -118,6 +120,8 @@ export interface QuestionBankEntry {
   agentId: SolverAgentType;
   solvedAt: number;  // Unix timestamp ms
   verified: boolean;
+  questionType?: 'choice' | 'fill' | 'solve' | 'judge';
+  options?: string[];
   /** Runtime-only similarity score (not persisted) */
   _similarity?: number;
 }

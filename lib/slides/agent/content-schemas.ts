@@ -20,30 +20,30 @@ function trunc(s: string, max: number): string {
 // ── Individual Page Schemas ───────────────────────────────────────
 
 export const coverContentSchema = z.object({
-  title: z.string().min(1).max(12),
-  subtitle: z.string().min(1).max(25),
-  tagline: z.string().max(30).optional(),
+  title: z.string().min(1).max(28),
+  subtitle: z.string().min(1).max(50),
+  tagline: z.string().max(60).optional(),
 });
 
 export const tocContentSchema = z.object({
-  title: z.string().max(10),
+  title: z.string().max(15),
   items: z.array(z.object({
-    num: z.string().max(3),
-    title: z.string().max(8),
-    desc: z.string().max(20),
+    num: z.string().max(4),
+    title: z.string().max(15),
+    desc: z.string().max(30),
   })).min(2).max(6),
 });
 
 export const endContentSchema = z.object({
-  slogan: z.string().min(1).max(15),
-  subtitle: z.string().min(1).max(30),
-  thanks: z.string().max(20).optional(),
+  slogan: z.string().min(1).max(28),
+  subtitle: z.string().min(1).max(40),
+  thanks: z.string().max(25).optional(),
 });
 
 export const chapterContentSchema = z.object({
   num: z.string().max(4),
-  title: z.string().min(1).max(12),
-  subtitle: z.string().max(25),
+  title: z.string().min(1).max(28),
+  subtitle: z.string().max(80),
 });
 
 export const formulaItemSchema = z.object({
@@ -52,81 +52,81 @@ export const formulaItemSchema = z.object({
 });
 
 export const conceptContentSchema = z.object({
-  title: z.string().min(1).max(12),
+  title: z.string().min(1).max(25),
   cards: z.array(z.object({
-    title: z.string().min(1).max(8),
-    desc: z.string().min(1).max(100),
+    title: z.string().min(1).max(28),
+    desc: z.string().min(1).max(200),
   })).min(1).max(6),
   formulas: z.array(formulaItemSchema).max(3).optional(),
-  summary: z.string().min(1).max(120),
+  summary: z.string().min(1).max(150),
 });
 
 export const caseContentSchema = z.object({
-  title: z.string().min(1).max(12),
+  title: z.string().min(1).max(25),
   scenarios: z.array(z.object({
-    problem: z.string().min(1).max(250),
-    solution: z.string().min(1).max(250),
+    problem: z.string().min(1).max(400),
+    solution: z.string().min(1).max(400),
   })).min(1).max(3),
   formulas: z.array(formulaItemSchema).max(3).optional(),
-  highlight: z.string().max(40).optional(),
+  highlight: z.string().max(60).optional(),
 });
 
 export const compareContentSchema = z.object({
-  title: z.string().min(1).max(12),
+  title: z.string().min(1).max(28),
   left: z.object({
-    title: z.string().max(10),
-    items: z.array(z.string().max(60)).min(1).max(6),
+    title: z.string().max(15),
+    items: z.array(z.string().max(100)).min(1).max(6),
   }),
   right: z.object({
-    title: z.string().max(10),
-    items: z.array(z.string().max(60)).min(1).max(6),
+    title: z.string().max(15),
+    items: z.array(z.string().max(100)).min(1).max(6),
   }),
-  conclusion: z.string().min(1).max(120),
+  conclusion: z.string().min(1).max(150),
 });
 
 export const processContentSchema = z.object({
-  title: z.string().min(1).max(12),
+  title: z.string().min(1).max(25),
   steps: z.array(z.object({
-    num: z.string().max(3),
-    title: z.string().max(10),
-    desc: z.string().min(1).max(120),
+    num: z.string().max(5),
+    title: z.string().max(25),
+    desc: z.string().min(1).max(200),
   })).min(1).max(8),
 });
 
 export const tableContentSchema = z.object({
-  title: z.string().min(1).max(15),
-  headers: z.array(z.string().max(15)).min(1).max(6),
-  rows: z.array(z.array(z.string().max(40))).min(1).max(8),
-  summary: z.string().min(1).max(100),
+  title: z.string().min(1).max(25),
+  headers: z.array(z.string().max(20)).min(1).max(6),
+  rows: z.array(z.array(z.string().max(120))).min(1).max(8),
+  summary: z.string().min(1).max(150),
 });
 
 export const formulaContentSchema = z.object({
-  title: z.string().min(1).max(15),
-  mainFormula: z.string().min(1).max(200),
-  derivation: z.string().min(1).max(300),
-  application: z.string().max(200).optional(),
+  title: z.string().min(1).max(25),
+  mainFormula: z.string().min(1).max(300),
+  derivation: z.string().min(1).max(400),
+  application: z.string().max(300).optional(),
 });
 
 export const timelineContentSchema = z.object({
-  title: z.string().min(1).max(12),
+  title: z.string().min(1).max(28),
   events: z.array(z.object({
-    date: z.string().max(20),
-    content: z.string().min(1).max(80),
+    date: z.string().max(25),
+    content: z.string().min(1).max(120),
   })).min(1).max(8),
 });
 
 export const summaryContentSchema = z.object({
-  title: z.string().max(12),
-  keyPoints: z.array(z.string().min(1).max(80)).min(1).max(6),
+  title: z.string().max(28),
+  keyPoints: z.array(z.string().min(1).max(120)).min(1).max(6),
   formulas: z.array(formulaItemSchema).max(3).optional(),
-  preview: z.string().max(60).optional(),
+  preview: z.string().max(80).optional(),
 });
 
 export const quizContentSchema = z.object({
-  title: z.string().min(1).max(12),
+  title: z.string().min(1).max(25),
   questions: z.array(z.object({
-    q: z.string().min(1).max(150),
-    options: z.array(z.string().max(80)).min(2).max(6),
+    q: z.string().min(1).max(200),
+    options: z.array(z.string().max(100)).min(2).max(6),
     answer: z.string().max(2),
   })).min(1).max(5),
 });
@@ -164,12 +164,12 @@ export function autoFixContent(
   const schema = CONTENT_SCHEMAS[pageType];
   if (!schema) return content;
 
-  // Try parse first — if it passes, no fix needed
+  // Try parse first — if it passes, return stripped result (removes extra fields LLM may have added)
   const result = schema.safeParse(content);
-  if (result.success) return content;
+  if (result.success) return result.data as Record<string, unknown>;
 
   // Deep repair: type coercion + structure normalization + truncation
-  const fixed = deepRepairContent(pageType, content);
+  let fixed = deepRepairContent(pageType, content);
 
   // Fill missing required fields with defaults
   if (!fixed.title || typeof fixed.title !== 'string') fixed.title = '本节内容';
@@ -184,12 +184,75 @@ export function autoFixContent(
   }
   if (pageType === 'summary' && !Array.isArray(fixed.keyPoints)) fixed.keyPoints = ['本节核心内容'];
   if (pageType === 'end' && !fixed.slogan) fixed.slogan = '谢谢';
+  // Ensure every formula item has both label and latex, and reject placeholder text
+  if (Array.isArray(fixed.formulas)) {
+    fixed.formulas = (fixed.formulas as Array<Record<string, unknown>>).map((f) => {
+      const label = typeof f.label === 'string' && f.label.trim() ? f.label.trim() : '相关方程式';
+      let latex = typeof f.latex === 'string' && f.latex.trim() ? f.latex.trim() : '';
+      // Reject [Formula] / [formula] / 【公式】 placeholders — treat as empty so fallback kicks in
+      if (/\[\s*formula\s*\]/i.test(latex) || /【\s*公式\s*】/.test(latex) || latex.trim() === '') {
+        latex = `\\text{${label}}`;
+      }
+      return { label, latex };
+    }).filter((f) => f.latex && f.latex !== '\\text{}');
+  }
 
-  return fixed;
+  // Aggressive fallback: re-parse and truncate ANY too_big string field
+  // based on the exact maximum reported by Zod. Loop up to 5 times to
+  // handle multiple too_big issues (e.g. multiple array elements).
+  let finalFixed = fixed;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const check = schema.safeParse(finalFixed);
+    if (check.success) break;
+
+    let changed = false;
+    for (const issue of check.error.issues) {
+      // Zod v4 uses `origin`, v3 uses `type` — support both
+      const issueOrigin = ((issue as unknown) as Record<string, unknown>).origin as string | undefined;
+      const issueType = ((issue as unknown) as Record<string, unknown>).type as string | undefined;
+      const isStringIssue = issueOrigin === 'string' || issueType === 'string';
+      if (issue.code === 'too_big' && isStringIssue && typeof issue.maximum === 'number') {
+        const maxLen = issue.maximum;
+        const path = issue.path as (string | number)[];
+        try {
+          let target: Record<string, unknown> = finalFixed;
+          for (let i = 0; i < path.length - 1; i++) {
+            const key = path[i];
+            if (typeof key === 'number' && Array.isArray(target)) {
+              target = target[key] as Record<string, unknown>;
+            } else {
+              target = target[key as string] as Record<string, unknown>;
+            }
+          }
+          const lastKey = path[path.length - 1];
+          if (typeof lastKey === 'string' && typeof target[lastKey] === 'string') {
+            const original = target[lastKey] as string;
+            const trimmed = trunc(original, maxLen);
+            if (trimmed !== original) {
+              target[lastKey] = trimmed;
+              changed = true;
+            }
+          }
+        } catch { /* ignore path traversal errors */ }
+      }
+    }
+    if (!changed) break;
+  }
+
+  return finalFixed;
 }
 
 export function deepRepairContent(pageType: string, content: Record<string, unknown>): Record<string, unknown> {
   const fixed = { ...content } as Record<string, unknown>;
+
+  // DEBUG: verify Turbopack has loaded this version (write to file so we can check via API)
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const logPath = path.join(process.cwd(), 'logs', 'pipeline-diagnostic.log');
+    const line = `[${new Date().toISOString()}] [DEBUG] [deepRepairContent] v2.1 called pageType=${pageType} keys=${Object.keys(fixed).join(',')}\n`;
+    fs.appendFileSync(logPath, line);
+  } catch { /* ignore */ }
 
   // Type coercion: convert numbers/booleans/null to strings
   for (const [key, value] of Object.entries(fixed)) {
@@ -200,16 +263,22 @@ export function deepRepairContent(pageType: string, content: Record<string, unkn
     }
   }
 
-  // Truncate string fields
-  if (typeof fixed.title === 'string') fixed.title = trunc(fixed.title, 12);
-  if (typeof fixed.summary === 'string') fixed.summary = trunc(fixed.summary, 120);
-  if (typeof fixed.subtitle === 'string') fixed.subtitle = trunc(fixed.subtitle, 25);
-  if (typeof fixed.slogan === 'string') fixed.slogan = trunc(fixed.slogan, 15);
-  if (typeof fixed.highlight === 'string') fixed.highlight = trunc(fixed.highlight, 40);
-  if (typeof fixed.preview === 'string') fixed.preview = trunc(fixed.preview, 60);
-  if (typeof fixed.derivation === 'string') fixed.derivation = trunc(fixed.derivation, 300);
-  if (typeof fixed.application === 'string') fixed.application = trunc(fixed.application, 200);
-  if (typeof fixed.mainFormula === 'string') fixed.mainFormula = trunc(fixed.mainFormula, 200);
+  // Truncate string fields to match updated schema limits
+  if (typeof fixed.title === 'string') fixed.title = trunc(fixed.title, 25);
+  const summaryMax = pageType === 'table' ? 150 : 200;
+  if (typeof fixed.summary === 'string') fixed.summary = trunc(fixed.summary, summaryMax);
+  if (typeof fixed.subtitle === 'string') fixed.subtitle = trunc(fixed.subtitle, 80);
+  if (typeof fixed.slogan === 'string') fixed.slogan = trunc(fixed.slogan, 20);
+  if (typeof fixed.thanks === 'string') fixed.thanks = trunc(fixed.thanks, 25);
+  if (typeof fixed.subtitle === 'string' && pageType === 'end') fixed.subtitle = trunc(fixed.subtitle, 40);
+  if (typeof fixed.tagline === 'string') fixed.tagline = trunc(fixed.tagline, 60);
+  if (typeof fixed.highlight === 'string') fixed.highlight = trunc(fixed.highlight, 60);
+  if (typeof fixed.preview === 'string') fixed.preview = trunc(fixed.preview, 80);
+  if (typeof fixed.derivation === 'string') fixed.derivation = trunc(fixed.derivation, 400);
+  if (typeof fixed.application === 'string') fixed.application = trunc(fixed.application, 300);
+  if (typeof fixed.mainFormula === 'string') fixed.mainFormula = trunc(fixed.mainFormula, 300);
+  if (typeof fixed.conclusion === 'string') fixed.conclusion = trunc(fixed.conclusion, 150);
+  if (typeof fixed.num === 'string') fixed.num = trunc(fixed.num, 4);
 
   // Fix arrays: cap at max + type coercion inside arrays
   const arrayCaps: Record<string, number> = { cards: 6, items: 6, scenarios: 3, steps: 8, rows: 8, questions: 5, events: 8, keyPoints: 6, options: 6, formulas: 3 };
@@ -224,16 +293,28 @@ export function deepRepairContent(pageType: string, content: Record<string, unkn
             if (v === null || v === undefined) obj[k] = '';
             else if (typeof v === 'number' || typeof v === 'boolean') obj[k] = String(v);
           }
-          if (typeof obj.title === 'string') obj.title = trunc(obj.title, 8);
-          if (typeof obj.desc === 'string') obj.desc = trunc(obj.desc, 100);
-          if (typeof obj.problem === 'string') obj.problem = trunc(obj.problem, 250);
-          if (typeof obj.solution === 'string') obj.solution = trunc(obj.solution, 250);
-          if (typeof obj.content === 'string') obj.content = trunc(obj.content, 80);
+          const titleMax = pageType === 'toc' ? 15 : 20;
+          if (typeof obj.title === 'string') obj.title = trunc(obj.title, titleMax);
+          if (typeof obj.desc === 'string') obj.desc = trunc(obj.desc, 200);
+          if (typeof obj.problem === 'string') obj.problem = trunc(obj.problem, 400);
+          if (typeof obj.solution === 'string') obj.solution = trunc(obj.solution, 400);
+          if (typeof obj.content === 'string') obj.content = trunc(obj.content, 120);
           if (typeof obj.date === 'string') obj.date = trunc(obj.date, 20);
-          if (typeof obj.q === 'string') obj.q = trunc(obj.q, 150);
+          if (typeof obj.q === 'string') obj.q = trunc(obj.q, 200);
+          if (typeof obj.answer === 'string') obj.answer = trunc(obj.answer, 2);
+          if (typeof obj.num === 'string') obj.num = trunc(obj.num, 5);
+          // Ensure formula items always have both label and latex
+          if (key === 'formulas') {
+            if (!obj.label || typeof obj.label !== 'string' || (obj.label as string).trim() === '') {
+              obj.label = '相关方程式';
+            }
+            if (!obj.latex || typeof obj.latex !== 'string' || (obj.latex as string).trim() === '') {
+              obj.latex = `\\text{${obj.label as string}}`;
+            }
+          }
           return obj;
         }
-        return typeof item === 'string' ? trunc(item, 80) : String(item);
+        return typeof item === 'string' ? trunc(item, 100) : String(item);
       }).filter((item) => item !== undefined && item !== null && item !== '');
     }
   }
@@ -242,50 +323,62 @@ export function deepRepairContent(pageType: string, content: Record<string, unkn
   if (fixed.left && typeof fixed.left === 'object') {
     const l = fixed.left as Record<string, unknown>;
     if (Array.isArray(l.items)) {
-      l.items = (l.items as unknown[]).map((s) => typeof s === 'string' ? trunc(s, 60) : String(s)).slice(0, 6);
+      l.items = (l.items as unknown[]).map((s) => typeof s === 'string' ? trunc(s, 100) : String(s)).slice(0, 6);
     }
-    if (typeof l.title === 'string') l.title = trunc(l.title, 10);
+    if (typeof l.title === 'string') l.title = trunc(l.title, 15);
   }
   if (fixed.right && typeof fixed.right === 'object') {
     const r = fixed.right as Record<string, unknown>;
     if (Array.isArray(r.items)) {
-      r.items = (r.items as unknown[]).map((s) => typeof s === 'string' ? trunc(s, 60) : String(s)).slice(0, 6);
+      r.items = (r.items as unknown[]).map((s) => typeof s === 'string' ? trunc(s, 100) : String(s)).slice(0, 6);
     }
-    if (typeof r.title === 'string') r.title = trunc(r.title, 10);
+    if (typeof r.title === 'string') r.title = trunc(r.title, 15);
   }
 
   // Table-specific deep repair
   if (pageType === 'table') {
-    // Ensure headers is string array
+    // Ensure headers is string array, capped at 25 chars
     if (Array.isArray(fixed.headers)) {
-      fixed.headers = (fixed.headers as unknown[]).map((h) => String(h));
+      fixed.headers = (fixed.headers as unknown[]).map((h) => trunc(String(h), 20));
     }
     // Ensure rows is string[][] — recursively extract text from nested objects.
     // If a row contains a single object cell, expand its string values into multiple cells
     // to match the header count (common LLM hallucination pattern).
+    // Cap each cell at 40 chars.
     if (Array.isArray(fixed.rows)) {
       fixed.rows = (fixed.rows as unknown[]).map((row) => {
         if (Array.isArray(row)) {
           return (row as unknown[]).flatMap((cell) => {
-            if (cell === null || cell === undefined) return [''];
-            if (typeof cell === 'string') return [cell];
-            if (typeof cell === 'number' || typeof cell === 'boolean') return [String(cell)];
-            if (typeof cell === 'object') {
+            let text = '';
+            if (cell === null || cell === undefined) text = '';
+            else if (typeof cell === 'string') text = cell;
+            else if (typeof cell === 'number' || typeof cell === 'boolean') text = String(cell);
+            else if (typeof cell === 'object') {
               const obj = cell as Record<string, unknown>;
-              // Try common text-bearing keys first
-              if (typeof obj.text === 'string') return [obj.text];
-              if (typeof obj.value === 'string') return [obj.value];
-              if (typeof obj.content === 'string') return [obj.content];
-              if (typeof obj.name === 'string') return [obj.name];
-              // Fallback: expand all string values as separate cells
-              const strs = Object.values(obj).filter((v): v is string => typeof v === 'string');
-              if (strs.length > 0) return strs;
-              return [JSON.stringify(obj)];
+              if (typeof obj.text === 'string') text = obj.text;
+              else if (typeof obj.value === 'string') text = obj.value;
+              else if (typeof obj.content === 'string') text = obj.content;
+              else if (typeof obj.name === 'string') text = obj.name;
+              else {
+                const strs = Object.values(obj).filter((v): v is string => typeof v === 'string');
+                text = strs.length > 0 ? strs.join(', ') : JSON.stringify(obj);
+              }
+            } else {
+              text = String(cell);
             }
-            return [String(cell)];
+            return [trunc(text, 120)];
           });
         }
-        return [String(row)];
+        if (typeof row === 'object' && row !== null && !Array.isArray(row)) {
+          const obj = row as Record<string, unknown>;
+          if (typeof obj.text === 'string') return [trunc(obj.text, 120)];
+          if (typeof obj.value === 'string') return [trunc(obj.value, 120)];
+          if (typeof obj.content === 'string') return [trunc(obj.content, 120)];
+          const strs = Object.values(obj).filter((v): v is string => typeof v === 'string');
+          const text = strs.length > 0 ? strs.join(', ') : JSON.stringify(obj);
+          return [trunc(text, 120)];
+        }
+        return [trunc(String(row), 120)];
       });
     }
   }
@@ -486,19 +579,19 @@ export function extractFormulasFromText(text: string): string[] {
 
 /** Human-readable schema descriptions for prompt injection. */
 export const SCHEMA_DESCRIPTIONS: Record<string, string> = {
-  cover: `{ "title": "大标题≤12字", "subtitle": "副标题≤25字", "tagline": "英文标签≤30字母" }`,
-  toc: `{ "title": "目录", "items": [{ "num":"01", "title":"章节≤8字", "desc":"描述≤20字" }], 2-6项 }`,
-  end: `{ "slogan": "结束语≤15字", "subtitle": "副标语≤30字", "thanks": "感谢语≤20字" }`,
-  chapter: `{ "num": "01", "title": "章节标题≤12字", "subtitle": "副标题≤25字" }`,
-  concept: `{ "title": "标题≤12字", "cards": [{ "title":"≤8字", "desc":"≤100字" }], 2-6个卡片, "formulas": [{ "label":"公式名≤20字", "latex":"LaTeX≤200字" }], 0-3条, "summary": "总结≤120字" }`,
-  case: `{ "title": "标题≤12字", "scenarios": [{ "problem":"题目≤250字", "solution":"解答≤250字" }], 1-3个案例, "formulas": [{ "label":"公式名≤20字", "latex":"LaTeX≤200字" }], 0-3条, "highlight": "关键句≤40字" }`,
-  compare: `{ "title": "标题≤12字", "left":{ "title":"≤10字", "items":["≤60字"] }, "right":{ "title":"≤10字", "items":["≤60字"] }, "conclusion": "结论≤120字" }`,
-  process: `{ "title": "标题≤12字", "steps": [{ "num":"1", "title":"≤10字", "desc":"≤120字" }], 2-8步 }`,
-  table: `{ "title": "标题≤15字", "headers": ["≤15字"], 2-6列, "rows": [["≤40字"]], 1-8行, "summary": "总结≤100字" }`,
-  formula: `{ "title": "标题≤15字", "mainFormula": "LaTeX≤200字", "derivation": "推导≤300字", "application": "应用≤200字" }`,
-  timeline: `{ "title": "标题≤12字", "events": [{ "date":"≤20字", "content":"≤80字" }], 2-8项 }`,
-  summary: `{ "title": "标题≤12字", "keyPoints": ["≤80字"], 1-6个要点, "formulas": [{ "label":"公式名≤20字", "latex":"LaTeX≤200字" }], 0-3条, "preview": "预览≤60字" }`,
-  quiz: `{ "title": "标题≤12字", "questions": [{ "q":"题目≤150字", "options":["≤80字"], 2-6选项, "answer":"答案≤2字" }], 1-5题 }`,
+  cover: `{ "title": "大标题≤20字", "subtitle": "副标题≤50字", "tagline": "英文标签≤60字母" }`,
+  toc: `{ "title": "目录≤15字", "items": [{ "num":"01", "title":"章节≤15字", "desc":"描述≤30字" }], 2-6项 }`,
+  end: `{ "slogan": "结束语≤20字", "subtitle": "副标语≤40字", "thanks": "感谢语≤25字" }`,
+  chapter: `{ "num": "01", "title": "章节标题≤20字", "subtitle": "副标题≥30字,≤80字" }`,
+  concept: `{ "title": "标题≤25字", "cards": [{ "title":"≤20字", "desc":"≥40字,≤200字" }], 3-6个卡片, "formulas": [{ "label":"公式名≤20字", "latex":"LaTeX≤200字" }], 0-3条, "summary": "总结≥30字,≤200字" }`,
+  case: `{ "title": "标题≤25字", "scenarios": [{ "problem":"≥30字,≤400字", "solution":"≥30字,≤400字" }], 1-3个案例, "formulas": [{ "label":"公式名≤20字", "latex":"LaTeX≤200字" }], 0-3条, "highlight": "关键句≤60字" }`,
+  compare: `{ "title": "标题≤20字", "left":{ "title":"≤15字", "items":["≥15字,≤100字"] }, "right":{ "title":"≤15字", "items":["≥15字,≤100字"] }, "conclusion": "结论≥30字,≤150字" }`,
+  process: `{ "title": "标题≤25字", "steps": [{ "num":"1", "title":"≤25字", "desc":"≥30字,≤200字" }], 3-8步 }`,
+  table: `{ "title": "标题≤25字", "headers": ["≤20字"], 2-6列, "rows": [["≤120字"]], 1-8行, "summary": "总结≥30字,≤150字" }`,
+  formula: `{ "title": "标题≤25字", "mainFormula": "LaTeX≤300字", "derivation": "推导≥50字,≤400字", "application": "应用≥30字,≤300字" }`,
+  timeline: `{ "title": "标题≤20字", "events": [{ "date":"≤25字", "content":"≥20字,≤120字" }], 2-8项 }`,
+  summary: `{ "title": "标题≤20字", "keyPoints": ["≥20字,≤120字"], 4-6个要点, "formulas": [{ "label":"公式名≤20字", "latex":"LaTeX≤200字" }], 0-3条, "preview": "预览≤80字" }`,
+  quiz: `{ "title": "标题≤25字", "questions": [{ "q":"题目≤200字", "options":["≤100字"], 2-6选项, "answer":"答案≤2字" }], 1-5题 }`,
 };
 
 // ── JSON Text Cleaner (shared) ──────────────────────────────────────
@@ -542,6 +635,197 @@ function removeTrailingCommas(json: string): string {
   return result;
 }
 
+/**
+ * State-machine scanner that fixes invalid escape sequences inside JSON
+ * string literals.  Walks char-by-char tracking whether we're inside a
+ * string and whether the previous char was an escape.  Any backslash not
+ * followed by a valid JSON escape char is doubled.
+ *
+ * Valid escapes: \" \\ \/ \b \f \n \r \t \uXXXX
+ */
+function fixInvalidEscapes(text: string): string {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+
+    if (!inString) {
+      if (char === '"') inString = true;
+      result += char;
+      continue;
+    }
+
+    // Inside a string
+    if (escaped) {
+      const validEscapes = '"\\/bfnrtu';
+      if (!validEscapes.includes(char)) {
+        // Invalid escape — double the backslash so it becomes a literal backslash
+        result = result.slice(0, -1) + '\\\\' + char;
+      } else if (char === 'u') {
+        // \u must be followed by exactly 4 hex digits
+        const hex = text.slice(i + 1, i + 5);
+        if (!/^[0-9a-fA-F]{4}$/.test(hex)) {
+          result = result.slice(0, -1) + '\\\\u';
+        } else {
+          result += char;
+        }
+      } else {
+        result += char;
+      }
+      escaped = false;
+    } else {
+      if (char === '\\') {
+        escaped = true;
+        result += char;
+      } else if (char === '"') {
+        inString = false;
+        result += char;
+      } else {
+        result += char;
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Fix missing commas between JSON values.
+ * LLMs often forget commas between array elements or object properties.
+ * Examples:
+ *   [{"a":1}{"b":2}]  → [{"a":1},{"b":2}]
+ *   {"a":1 "b":2}      → {"a":1,"b":2}
+ *   ["a" "b"]          → ["a","b"]
+ *
+ * We walk char-by-char with a state machine (skipping inside strings)
+ * and insert a comma when a value terminator (} ] ") is immediately
+ * followed by another value start ({ [ ").
+ */
+function fixMissingCommas(text: string): string {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (c === '\\') {
+        escaped = true;
+      } else if (c === '"') {
+        inString = false;
+      }
+      result += c;
+      continue;
+    }
+
+    if (c === '"') {
+      inString = true;
+      result += c;
+      continue;
+    }
+
+    result += c;
+
+    // After a value terminator, check if next non-space char starts a new value
+    if (c === '}' || c === ']' || c === '"') {
+      let j = i + 1;
+      while (j < text.length && /\s/.test(text[j])) j++;
+      const next = text[j];
+      if (next === '{' || next === '[' || next === '"') {
+        result += ',';
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Escape unescaped double-quotes that appear inside JSON string literals.
+ * LLMs frequently output Chinese text containing straight quotes, e.g.
+ *   "desc": "这是一个"测试"字符串"
+ * which breaks JSON.parse.  We walk the text with a state machine and,
+ * whenever we see a quote inside a string whose following non-space char
+ * is NOT a valid JSON delimiter (,:}]) and is NOT another value start
+ * ({["), we escape it.
+ *
+ * NOTE: Value-start chars ({ [ ") are handled by fixMissingCommas which
+ * runs BEFORE this function, so by the time we see them there should already
+ * be a comma.  If there isn't, we treat the quote as a normal string end
+ * so fixMissingCommas can insert the comma rather than us mangling the JSON.
+ */
+function escapeUnescapedQuotes(text: string): string {
+  let result = '';
+  let i = 0;
+  let inString = false;
+  let escaped = false;
+
+  while (i < text.length) {
+    const c = text[i];
+
+    if (!inString) {
+      if (c === '"') inString = true;
+      result += c;
+      i++;
+      continue;
+    }
+
+    // Inside a string
+    if (escaped) {
+      result += c;
+      escaped = false;
+      i++;
+      continue;
+    }
+
+    if (c === '\\') {
+      result += c;
+      escaped = true;
+      i++;
+      continue;
+    }
+
+    if (c === '"') {
+      // Peek ahead (skipping whitespace) to decide whether this quote
+      // ends the string or is an unescaped quote inside the value.
+      let j = i + 1;
+      while (j < text.length && /\s/.test(text[j])) j++;
+      const next = text[j];
+      // Valid JSON delimiters after a string value: , : } ] or EOF
+      if (!next || /[,:\}\]]/.test(next)) {
+        result += '"';
+        inString = false;
+        i++;
+        continue;
+      }
+      // If next char starts a new value, this is a missing-comma scenario.
+      // fixMissingCommas (which runs before us) should have already handled it.
+      // If it somehow didn't, DON'T escape — end the string normally so the
+      // JSON remains structurally valid even if there's still a missing comma.
+      if (next === '{' || next === '[' || next === '"') {
+        result += '"';
+        inString = false;
+        i++;
+        continue;
+      }
+      // Otherwise it is an unescaped quote inside the string content
+      result += '\\"';
+      i++;
+      continue;
+    }
+
+    result += c;
+    i++;
+  }
+
+  return result;
+}
+
 /** Strip markdown fences, trailing commas, comments, and control chars from LLM JSON output. */
 export function cleanJsonText(text: string): string {
   let cleaned = text.trim();
@@ -558,6 +842,22 @@ export function cleanJsonText(text: string): string {
   cleaned = cleaned.replace(/(?<=[:\[,]\s*)'((?:[^'\\]|\\.)*)'/g, '"$1"');
 
   cleaned = removeTrailingCommas(cleaned).replace(/[\x00-\x1f\x7f-\x9f]/g, '');
+
+  // Fix invalid escape sequences inside JSON string literals.
+  // LLMs sometimes emit backslashes that are not valid JSON escapes
+  // (e.g. LaTeX \ce{}, \rightarrow, stray \x, \U, etc.).
+  // We use a state-machine scan: track whether we're inside a string and
+  // whether the previous char was an escape. Any \ not followed by a valid
+  // JSON escape char gets doubled.
+  // Valid escapes: \" \\ \/ \b \f \n \r \t \uXXXX
+  cleaned = fixInvalidEscapes(cleaned);
+
+  // Fix missing commas between values (must run BEFORE escapeUnescapedQuotes)
+  cleaned = fixMissingCommas(cleaned);
+
+  // Fix unescaped quotes inside JSON string values (common with Chinese LLM output)
+  cleaned = escapeUnescapedQuotes(cleaned);
+
   cleaned = tryRepairJson(cleaned);
   return cleaned;
 }

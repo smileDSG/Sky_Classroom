@@ -341,12 +341,12 @@ export async function generateClassroom(
   const heartbeat = options.onProgress
     ? setInterval(() => {
         outlineProgress = Math.min(outlineProgress + 2, 28);
-        options.onProgress!({
+        Promise.resolve(options.onProgress!({
           step: 'generating_outlines',
           progress: outlineProgress,
           message: 'AI is thinking...',
           scenesGenerated: 0,
-        }).catch(() => {});
+        })).catch(() => {});
       }, 2000)
     : null;
 

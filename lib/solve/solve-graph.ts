@@ -75,13 +75,15 @@ async function checkQuestionBankNode(
       fromQuestionBank: true,
       solution: hit.answer,
       agentId: hit.agentId,
-      parsedSteps: hit.steps ?? [],
+      parsedSteps: [],
       parsedKnowledgePoints: (hit.knowledgePoints ?? []).map((k) => ({
         name: k.name,
         description: k.description,
         difficulty: k.difficulty,
       })),
       parsedSimilarQuestions: hit.similarQuestions ?? [],
+      questionType: hit.questionType ?? null,
+      options: hit.options ?? null,
     };
   }
 
@@ -197,6 +199,8 @@ async function generateOutputNode(
       difficulty: k.difficulty as 'easy' | 'medium' | 'hard',
     })),
     similarQuestions: state.parsedSimilarQuestions ?? [],
+    questionType: state.questionType ?? undefined,
+    options: state.options ?? undefined,
   };
 
   let fourPartOutput: FourPartOutput;
@@ -289,6 +293,8 @@ export function buildSolveInitialState(
     parsedSteps: [],
     parsedKnowledgePoints: [],
     parsedSimilarQuestions: [],
+    questionType: null,
+    options: null,
     gradeResult: null,
     votingResults: [],
     fourPartOutput: null,

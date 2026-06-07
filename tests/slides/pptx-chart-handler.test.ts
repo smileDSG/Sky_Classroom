@@ -20,7 +20,7 @@ function baseTheme(): ThemeToken {
     titleFontSize: 32,
     bodyFontSize: 18,
     bulletSize: 16,
-    bulletStyle: 'disc',
+    bulletStyle: 'dot',
     pageMargin: 60,
     contentMaxWidth: 880,
     accent: '#3b82f6',

@@ -48,17 +48,19 @@ function postProcessOmml(omml: string, szHundredths?: number): string {
 
   // Strip <w:rPr> elements (WordprocessingML run properties, invalid in PPTX)
   // mathml2omml sometimes injects these even though we're targeting presentationML
-  result = result.replace(/<w:rPr\b[^>]*>.*?<\/w:rPr>/gs, '');
+  result = result.replace(/<w:rPr\b[^>]*>[\s\S]*?<\/w:rPr>/g, '');
   result = result.replace(/<w:rPr\b[^>]*\/>/g, '');
 
-  // Insert <a:rPr> before <m:t> inside <m:r> (only if not already present)
-  result = result.replace(/<m:r>(\s*)<m:t/g, `<m:r>$1${rpr}$1<m:t`);
+  // Insert <m:rPr><a:rPr>...</a:rPr></m:rPr> before <m:t> inside <m:r>
+  // Per OMML spec, <m:r> children are: m:rPr?, m:t. <a:rPr> must be wrapped in <m:rPr>.
+  result = result.replace(/<m:r>(\s*)<m:t/g, `<m:r>$1<m:rPr>${rpr}</m:rPr>$1<m:t`);
 
-  // Fill empty <m:ctrlPr/> with <a:rPr>
-  result = result.replace(/<m:ctrlPr\/>/g, `<m:ctrlPr>${rpr}</m:ctrlPr>`);
+  // Fill empty <m:ctrlPr/> with <m:rPr><a:rPr>...</a:rPr></m:rPr>
+  const ctrlRpr = `<m:rPr>${rpr}</m:rPr>`;
+  result = result.replace(/<m:ctrlPr\/>/g, `<m:ctrlPr>${ctrlRpr}</m:ctrlPr>`);
 
-  // Fill empty <m:ctrlPr></m:ctrlPr> with <a:rPr>
-  result = result.replace(/<m:ctrlPr><\/m:ctrlPr>/g, `<m:ctrlPr>${rpr}</m:ctrlPr>`);
+  // Fill empty <m:ctrlPr></m:ctrlPr>
+  result = result.replace(/<m:ctrlPr><\/m:ctrlPr>/g, `<m:ctrlPr>${ctrlRpr}</m:ctrlPr>`);
 
   return result;
 }

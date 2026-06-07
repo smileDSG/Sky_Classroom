@@ -229,6 +229,8 @@ export async function POST(req: Request) {
         const streamedSteps: { label: string; content: string; keyPoints?: string[] }[] = [];
         let streamedKnowledge: { name: string; description: string; difficulty: string }[] = [];
         let streamedSimilar: { problem: string; difficulty: number; knowledgePoint: string }[] = [];
+        let streamedQuestionType: 'choice' | 'fill' | 'solve' | 'judge' | undefined = undefined;
+        let streamedOptions: string[] | undefined = undefined;
 
         for await (const event of streamSolve(agentType, problem, problemImage ?? null)) {
           let processedEvent = event;
@@ -263,6 +265,10 @@ export async function POST(req: Request) {
           if (processedEvent.type === 'step') streamedSteps.push({ label: processedEvent.label, content: processedEvent.content, keyPoints: processedEvent.keyPoints });
           if (processedEvent.type === 'knowledge') { hasKnowledge = true; streamedKnowledge = processedEvent.points; }
           if (processedEvent.type === 'similar') { hasSimilar = true; streamedSimilar = processedEvent.questions; }
+          if (processedEvent.type === 'metadata') {
+            streamedQuestionType = processedEvent.questionType;
+            streamedOptions = processedEvent.options;
+          }
         }
 
         // Phase 4: Fill in missing sections (use parallel result if solver didn't return them)
@@ -326,6 +332,8 @@ export async function POST(req: Request) {
               agentId: agentType,
               solvedAt: Date.now(),
               verified: false,
+              questionType: streamedQuestionType,
+              options: streamedOptions,
             });
           }
           if (streamedAnswer) {

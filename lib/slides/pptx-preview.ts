@@ -12,7 +12,7 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('PPTXPreview');
 
 const PREVIEW_BASE_DIR = path.join(process.cwd(), 'public', 'temp', 'preview');
-const PREVIEW_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const PREVIEW_TTL_MS = 120 * 60 * 1000; // 2 hours
 
 const PYTHON_PATHS = [
   path.join(os.homedir(), 'AppData', 'Local', 'hermes', 'hermes-agent', 'venv', 'Scripts', 'python.exe'),
@@ -77,11 +77,14 @@ export interface PptxPreviewResult {
 export async function generatePreviewFromPptx(
   pptxUrl: string,
   existingPreviewId?: string,
+  sidecarPath?: string,
 ): Promise<PptxPreviewResult> {
   try {
     // Validate pptxUrl: must be under public/temp/pptx/
     const publicDir = path.resolve(process.cwd(), 'public');
-    const absPptxPath = path.resolve(publicDir, pptxUrl.replace(/^\//, ''));
+    // Decode URI to prevent %2e%2e bypass before path resolution
+    const decodedPptxUrl = decodeURIComponent(pptxUrl);
+    const absPptxPath = path.resolve(publicDir, decodedPptxUrl.replace(/^\//, ''));
     if (!absPptxPath.startsWith(publicDir) || !absPptxPath.endsWith('.pptx')) {
       return { success: false, previewId: '', slideImages: [], error: 'Invalid pptxUrl' };
     }
@@ -123,10 +126,26 @@ export async function generatePreviewFromPptx(
       return { success: false, previewId: '', slideImages: [], error: 'pptx-to-images script not found' };
     }
 
-    log.info(`Converting PPTX to images: ${pptxPath}`);
+    // Resolve optional sidecar path
+    let resolvedSidecar: string | undefined;
+    if (sidecarPath) {
+      const absSidecar = path.resolve(sidecarPath);
+      if (fs.existsSync(absSidecar)) {
+        resolvedSidecar = absSidecar;
+      }
+    } else {
+      const defaultSidecar = absPptxPath.replace('.pptx', '.sidecar.json');
+      if (fs.existsSync(defaultSidecar)) {
+        resolvedSidecar = defaultSidecar;
+      }
+    }
+
+    log.info(`Converting PPTX to images: ${pptxPath}${resolvedSidecar ? ' (with sidecar)' : ''}`);
     const PREVIEW_SPAWN_TIMEOUT_MS = 120_000;
     const { images } = await new Promise<{ images: string[] }>((resolve, reject) => {
-      const proc = spawn(pythonPath, [scriptPath, pptxPath, imagesDir]);
+      const args = [scriptPath, pptxPath, imagesDir];
+      if (resolvedSidecar) args.push(resolvedSidecar);
+      const proc = spawn(pythonPath, args);
       let stdout = '';
       let stderr = '';
       let killedByTimeout = false;

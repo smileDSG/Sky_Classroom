@@ -1,15 +1,15 @@
 # PPT Agent 架构设计文档
 
-> 状态: 讨论中 | 日期: 2026-05-26
+> 状态: **已实现** | 日期: 2026-05-30 | 版本: v2.0
 
 ## 一、项目愿景
 
-将现有的 PPT 生成功能模块重构为一个**能力强大的 PPT 生成 Agent 系统**，具备：
+将 PPT 生成功能模块重构为一个**多 Agent 并行生成系统**，具备：
 
-1. **灵活的页级规划** — 页数、页型、顺序由 LLM 动态决定，不再受固定 7 页模板限制
-2. **并行生成** — 多 Agent 并发生成不同页面，大幅提升生成速度
+1. **灵活的页级规划** — 页数、页型、顺序由 LLM 动态决定，不再受固定模板限制
+2. **并行生成** — 多 Agent 并发生成不同章节和页面，大幅提升生成速度
 3. **质量闭环** — 生成 → 质检 → 修复，确保输出质量达标
-4. **可独立部署** — 后期可从此项目剥离为独立 Agent 项目
+4. **可独立部署** — 核心逻辑封装在 `lib/slides/agent/` 中，后期可剥离为独立服务
 
 ## 二、整体架构
 
@@ -18,890 +18,812 @@
 
         ▼
 ┌─────────────────────────────────────────┐
-│  Phase 0: 封面画廊（本次交互）            │
-│  LLM 生成 12 套封面设计参数                │
+│  Phase 0A: Smart Cover 推荐              │
+│  单 LLM 调用 → 推荐 DesignDNA + 3 备选    │
+│  → 渲染封面 PPTX → LibreOffice → PNG     │
+│  → 用户确认或进入封面画廊                 │
+└─────────────────────────────────────────┘
+        │ (可选：进入 Phase 0B)
+        ▼
+┌─────────────────────────────────────────┐
+│  Phase 0B: 封面画廊（12 套）              │
+│  12 并发 LLM 调用 → 12 套 DesignDNA       │
 │  → pptxgenjs 渲染 → LibreOffice → PNG    │
 │  → 用户从画廊选 1 套                      │
 └─────────────────────────────────────────┘
         ▼
 ┌─────────────────────────────────────────┐
-│  Phase 1: Outline Planner Agent         │
-│  规划详细页级大纲                          │
+│  Phase 1: Planning Agent (两层)          │
+│  Layer 1: 章节骨架规划                     │
+│  Layer 2: 各章节页面详情（并发）            │
 └─────────────────────────────────────────┘
         ▼
 ┌─────────────────────────────────────────┐
-│  Phase 2: Parallel Page Agents          │
-│  多 Agent 并发生成各页内容                 │
+│  Phase 2: Section Agents (并发)          │
+│  每章节独立 Agent 生成内容 JSON            │
 └─────────────────────────────────────────┘
         ▼
 ┌─────────────────────────────────────────┐
-│  Phase 3: Assembly & Render             │
-│  内容合并 + pptxgenjs 整件渲染             │
+│  Phase 3: Page Design Agents (并发)      │
+│  每页独立 Agent 生成渲染指令               │
 └─────────────────────────────────────────┘
         ▼
 ┌─────────────────────────────────────────┐
-│  Phase 4: QA & Repair Loop              │
-│  质检 → 修复 → 再检，直到达标              │
+│  Phase 4: QA & Repair                    │
+│  结构质检 → 内容质检 → 自动修复            │
 └─────────────────────────────────────────┘
         ▼
-    输出 PPTX + LibreOffice → PNG 预览
+┌─────────────────────────────────────────┐
+│  Phase 5: Merge & Preview                │
+│  指令合并 → pptxgenjs 渲染 → PNG 预览      │
+└─────────────────────────────────────────┘
+        ▼
+    输出 PPTX + PNG 预览图
 ```
 
-## 三、Phase 0: 封面画廊（已定案）
+## 三、Phase 0A: Smart Cover 推荐
 
 ### 3.1 数据流
 
 ```
-POST /api/slides/generate-covers
+POST /api/sky/slides/suggest-cover
 Body: { topic: "勾股定理", difficulty: "高中" }
 
     ▼
-Step A: LLM 生成 12 套封面设计参数（1 次调用，3-8s）
-    System Prompt 注入 pptx skill 设计规范
-    输出 12 套 JSON: { colors, fonts, decoration, layout, styleName, recommended }
+Step A: LLM 风格推荐（单调用，~5-8s）
+  - System Prompt 注入 12 套色板 + 5 套字体 + 布局类型列表
+  - LLM 输出: { paletteId, fontId, layoutType, density, mood, styleName, bestFor }
+  - 附带 3 个备选方向 (alternatives)
 
     ▼
-Step B: pptxgenjs 渲染 12 个单页 PPTX（全并行，<1s）
-    每套参数 → 1 个 .pptx（只含封面页）
+Step B: 组装 DesignDNA + 渲染封面 PPTX（<1s）
+  - 调用 cover-renderer.tsx（12 种布局类型之一）
 
     ▼
-Step C: LibreOffice headless → 12 个 PNG（全并行，3-6s）
-    12 个独立 LibreOffice 进程，1920×1080，144 DPI
+Step C: LibreOffice headless → PNG（3-6s）
 
     ▼
-Response: { covers: [{ id, styleName, pngUrl, recommended, designParams }] }
+Response: {
+  cover: { pngUrl, designDNA },
+  alternatives: [{ paletteId, fontId, layoutType, density, mood, styleName }]
+}
 总耗时: ~8-15s
 ```
 
-### 3.2 前端加载动画
+### 3.2 实现文件
 
-三阶段进度指示器（非精确百分比，阶段过渡）：
+| 文件 | 职责 |
+|------|------|
+| `lib/slides/agent/suggest-cover-agent.ts` | LLM 风格推荐、DesignDNA 组装、备选方向生成 |
+| `lib/slides/agent/cover-renderer.ts` | 12 种布局类型的封面渲染器 |
+| `lib/slides/agent/png-converter.ts` | LibreOffice PNG 转换（信号量限制 3 并发） |
+| `app/api/sky/slides/suggest-cover/route.ts` | API 端点，串联 Step A→B→C |
 
-```
-┌─────────────────────────────────────────┐
-│    ✨ 正在为"勾股定理"设计封面            │
-│                                         │
-│    ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●     │
-│   分析主题      设计风格      渲染预览    │
-│   (进行中)      (等待中)      (等待中)   │
-│                                         │
-│   AI 正在结合学科特点匹配最佳视觉风格     │
-└─────────────────────────────────────────┘
-```
+### 3.3 Topic-Aware Motif 分配
 
-| 阶段 | 文案 | 后端动作 | 耗时 |
-|------|------|----------|------|
-| 分析主题 | "AI 正在分析'勾股定理'的学科特点…" | LLM 生成 12 套设计参数 | 3-8s |
-| 设计风格 | "正在渲染 12 种封面风格…" | pptxgenjs 批量渲染 | <1s |
-| 渲染预览 | "即将呈现封面画廊…" | LibreOffice 转 PNG | 3-6s |
+`suggest-cover-agent.ts` 和 `cover-agent.ts` 共享 `getMotifsForTopic()`，根据主题关键词推断学科类别：
 
-### 3.3 封面画廊 UI
-
-12 宫格排列，第 1 个标记"推荐"并高亮，用户点击选择后确认，进入完整生成流程。
+| 学科类别 | 关键词示例 | 优先 Motif |
+|----------|-----------|-----------|
+| humanities | 语文、历史、文学、诗词 | ink-wash → chinese-seal → organic-circles |
+| stem | 数学、物理、化学、编程 | geometric-lines → neon-grid → organic-circles |
+| science | 生物、地理、生态 | organic-circles → neon-grid → geometric-lines |
+| general | 其他未匹配主题 | 均衡分配 |
 
 ---
 
-## 四、决策记录
+## 四、Phase 0B: 封面画廊（12 套）
 
-### D-001: 页面生成方案（2026-05-26）
-
-**决策**：AI 动态生成封面 → 用户选风格 → 锁定设计参数全链路渲染。完全舍弃旧的 12 个固定 PPTX 模板。
-
-**核心链路**：
+### 4.1 数据流
 
 ```
-用户输入 topic（如"勾股定理"）
-    │
+POST /api/sky/slides/generate-covers
+Body: { topic: "勾股定理", difficulty: "高中" }
+
     ▼
-Step A: 1 次 LLM 调用 → 生成 12 套封面设计参数
-    │  每套包含: { 色板, 字体, 装饰motif, 布局方式, 风格名 }
-    │  设计约束来源: pptx skill 的 10 套色板 + 字体配对表 + 设计铁律
-    │
+Step A: 12 并发 LLM 调用（限制 6 并发）
+  - 每套预分配: paletteId（12 套色板随机分配）+ motif（topic-aware）+ layoutType（motif 候选池轮询）
+  - 每调用输出: { styleName, fontId, density, mood, bestFor }
+  - JSON Salvage: markdown fences、控制字符、尾随逗号、未闭合括号自动修复
+  - 每 slot 最多 2 次外部重试
+
     ▼
-Step B: 12 套参数 → pptxgenjs 纯代码渲染 12 个封面缩略图（毫秒级，不调 LLM）
-    │
+Step B: pptxgenjs 渲染 12 个单页 PPTX（全并行，<1s）
+  - 12 种布局类型: hero-centered, hero-left, split-panel, big-number, vertical-poem,
+    corner-drama, frame-border, minimal-type, bold-accent, gradient-wash,
+    double-stripe, image-zone
+
     ▼
-Step C: 用户从画廊选 1 套 → 锁定该套的设计参数为全链路"设计 DNA"
-    │
+Step C: LibreOffice 转 PNG（信号量 3 并发，约 4 轮）
+
     ▼
-Step D→E: 大纲 Agent + Page Agent 全部注入同一套设计 DNA
+Response: { covers: [{ id, styleName, pngUrl, recommended, designParams }] }
+最低成功数: 8/12
 ```
 
-**与旧方案的本质区别**：
+### 4.2 实现文件
 
-| | 旧方案 | 新方案 |
-|---|---|---|
-| 12 个选项 | 12 个固定 PPTX 文件，所有 topic 看到同样的封面 | AI 每次针对具体 topic 生成 12 个封面。勾股定理和荷塘月色看到的封面完全不同 |
-| 选中后 | 固定 7 页序列，Python 按 shape_idx 填文本 | 大纲 Agent 自由规划页数页型，pptxgenjs 代码渲染每页 |
-| 风格如何适配 topic | 不匹配——同一个"科技风"模板给电路和给古文用一样的设计 | LLM 根据 topic 实时诠释：古典风 × 数学 = 弦图+隶书，古典风 × 文学 = 荷花+行楷 |
+| 文件 | 职责 |
+|------|------|
+| `lib/slides/agent/cover-agent.ts` | 12 套封面生成、JSON Salvage、topic-aware motif 分配 |
+| `lib/slides/agent/cover-renderer.ts` | 12 种布局类型的纯代码渲染 |
+| `app/api/sky/slides/generate-covers/route.ts` | API 端点 |
 
-**视觉底层如何实现（不需要多模态 LLM）**：
+### 4.3 JSON Salvage 机制
 
-| 视觉需求 | 实现方式 |
-|----------|----------|
-| 几何装饰（线条、圆形、网格） | pptxgenjs 原生形状 |
-| 图标 | react-icons → SVG → PNG → 嵌入 PPT |
-| 数据图表 | pptxgenjs 内置 chart |
-| 公式 | LaTeX → mathml2omml |
-| 照片（可选增强） | 图片生成 API，非核心依赖 |
+`cover-agent.ts` 中的 `salvageJson()` 处理常见 LLM 输出问题：
 
-### D-002: 封面画廊实现方案（2026-05-26）
-
-- **封面渲染**: pptxgenjs 代码渲染 → LibreOffice headless → PNG，不用 Canvas
-- **转换工具**: LibreOffice 26.2，输出 1920×1080/144 DPI，质量已验证
-- **并发**: 12 个 pptxgenjs 并行渲染，12 个 LibreOffice 进程并行转换
-- **总耗时**: ~8-15s（LLM 3-8s + 渲染 <1s + 转换 3-6s）
-- **加载动画**: 三阶段进度指示器 + 动态文案，非精确百分比
+1. 去除 markdown fences (` ```json `)
+2. 去除控制字符
+3. 去除尾随逗号
+4. 自动闭合未匹配的 `{` `[`
+5. 尝试提取有效 JSON 对象边界
 
 ---
 
-## 五、待决策事项
+## 五、Phase 1: Planning Agent（两层架构）
 
-### Q2: 并行粒度？ ✅ 已决策
-
-**决策**：按章节模块分组（方向 B）。
-
-大纲 Agent 将整个 PPT 切分为 3-5 个章节模块，每个模块交给一个 Section Agent 独立生成该章节的完整内容（过渡页 + 概念页 + 案例页 + ...）。
-
-**决策理由**：
-- 同一模块内的过渡页和内容页由同一个 LLM 调用生成，天然保证页间逻辑一致性，不需要信任 Agent 会遵守外部上下文
-- 并发数适中（3-5 个），不被限流
-- 每个 Agent 只需要知道自己负责的章节，不需要全局上下文
-
-**各方案对比**：
-
-| | 方案 1：逐页并发 | 方案 2：章节模块 ✅ | 方案 3：按页型分组 |
-|---|---|---|---|
-| 并发数 | 15-20 个 | 3-5 个 | 5-8 个 |
-| 跨页一致性 | 弱 | 强（同一 LLM 调用） | 弱（跨 Agent 无共享上下文） |
-| 速度 | 最快 | 较快 | 中等 |
-| 页间逻辑 | 无协调 | 天然连续 | 需额外上下文注入 |
-
-### Q2: 并行粒度？ ✅ 已决策
-
-**决策**：章节模块并发 × 页面设计全并发。
-
-**三层 Agent 架构**：
+### 5.1 架构
 
 ```
-规划 Agent（1 次 LLM）
-    │  输入: topic + difficulty + 设计 DNA
-    │  输出: 页级大纲，按 Section 分块
-    │  [{ section:1, pages:[{num:1,type:"cover"}, {num:2,type:"toc"}] },
-    │   { section:2, pages:[{num:3,type:"chapter"}, {num:4,type:"concept"}, ...] }]
-    │
-    ▼
-章节 Agent × 3-5（并发）
-    │  输入: 所在 Section 的页级大纲 + 设计 DNA
-    │  输出: 按页结构化的纯内容 JSON
-    │  { sectionId, pages: [{ pageNum, pageType, content: {...} }, ...] }
-    │
-    ▼
-页面设计 Agent × N（全并发，N = 总页数）
-    │  不需要额外"拆页处理器"——Section Agent 输出本身按页组织
-    │  输入: 单页内容 + 设计 DNA + pptxgenjs API 参考
-    │  输出: 该页 renderCode（pptxgenjs 代码片段）
-    │
-    ▼
-合并执行: N 段 renderCode → pptxgenjs 顺序渲染 → 完整 PPTX
+Layer 1: planSections()
+  │ 输入: topic + difficulty + minPages + maxPages + designDNA
+  │ 输出: SectionSkeleton[] (章节骨架 + 页数分配)
+  │ 验证: 计算总页数 ≥ minPages
+  │ 单调用，temperature=0.7，maxTokens=4096
+  │
+  ▼
+Layer 2: planSectionPages() × N (并发，limit=12)
+  │ 输入: 单个 SectionSkeleton
+  │ 输出: PagePlan[] (该章节每页的 type/title/contentOutline)
+  │ 验证: 页数严格匹配、pageNum 连续、contentOutline.focus 存在
+  │ 每调用 maxTokens = min(8192, pages×1800+400)
+  │
+  ▼
+mergeOutline()
+  │ 插入 cover(1) + toc(2) + end(末尾)
+  │ 全局重排 pageNum
+  │
+  ▼
+Zod 校验 + 页数范围校验
 ```
 
-**并发量分析**：DS v4 Pro 并发上限 500，本架构峰值并发 ~25 个（1 规划 + 5 章节 + 20 页面设计），远未触及瓶颈。
+### 5.2 硬规则（注入 System Prompt）
 
-### Q3: 质检标准 & 修复闭环 ✅ 已决策
+- 总页数 = 1(cover) + 1(toc) + Σ(各章节页数) + 1(end)
+- 每个章节必须包含：1 页 chapter + 2-5 页内容页 + 1 页 summary
+- 3 个及以上并列对比项时，该章节必须分配 table 页型
+- concept 必须在 case 之前
+- 同一章节内避免连续 3 页以上相同页型
 
-**决策**：三层质检 + 两轮全量修复 + 兜底降级。
+### 5.3 页数修剪
 
-#### 质检三层的执行顺序
+Layer 1 输出后，若计算总页数 > maxPages，从最后一个章节开始逐页削减（每章最少保留 3 页）。若仍无法削减至范围内，返回失败。
 
-```
-Layer 1（结构质检，代码层，<0.1s）
-    │  门禁作用
-    │
-    ├─ 有 high 级问题 → 跳过 Layer 2/3，直接进修复
-    │
-    └─ 通过 → Layer 2 和 Layer 3 并行启动
-              ├─ Layer 2（内容质检，1 次 LLM，~5s）
-              └─ Layer 3（视觉质检，SubAgent 看图，~5s）
-            │
-            ▼
-        合并问题清单 → 判分
-```
+### 5.4 实现文件
 
-#### Layer 1: 结构质检（代码，0 LLM）
+| 文件 | 职责 |
+|------|------|
+| `lib/slides/agent/planning-agent.ts` | Layer 1/2 + mergeOutline + 整体校验 |
+| `lib/slides/agent/page-type-selector.ts` | Topic → 学科推断 → 页型白名单 + 偏好规则 |
+| `lib/slides/agent/concurrency.ts` | 通用并发限制器（带超时 + 交错启动） |
 
-检查项：renderCode 是否为空、content.title 是否为空、pageType 与 content 结构匹配、元素坐标在画布内、设计 DNA 一致性、cover 是否在第 1 页、end 是否在最后 1 页、pageNum 连续不跳号。
+---
 
-#### Layer 2: 内容质检（1 次 LLM）
+## 六、Phase 2: Section Agent
 
-输入每页内容摘要（非全文，节省 token），检查维度：跑题、重复、逻辑递进、目录对应、难度匹配。输出 `{ contentScore, issues }`。
+### 6.1 职责
 
-#### Layer 3: 视觉质检（SubAgent 看图）
+接收 SectionPlan（含每页的 type/title/contentOutline），输出每页的完整内容 JSON。
 
-LibreOffice 渲染 PNG → SubAgent 逐张检查：文字溢出、元素重叠、对比度不足、间距不均、对齐偏差。
+### 6.2 内容 Schema 注入
 
-#### 修复循环
+System Prompt 只注入该 Section 涉及的页型 Schema（从 `content-schemas.ts` 动态提取），减少 token 浪费。
+
+### 6.3 多层校验与自动修复
 
 ```
-Round 0: 初始生成 → 合并
-    │
-    ▼
-QA（Layer 1 门禁 → Layer 2 + 3 并行）
-    │
-    ├─ pass → 输出 PPTX ✅
-    │
-    └─ 未通过 → 修复 Round 1
-                  │
-                  所有问题（high/medium/low）全部并发修复
-                  内容问题 → 重调该页所属 Section Agent
-                  布局问题 → 重调该页页面设计 Agent
-                  │
-                  ▼
-                  重新合并 → QA
-                  │
-                  ├─ pass → 输出 ✅
-                  │
-                  └─ 未通过 → 修复 Round 2（最后一轮）
-                                │
-                                所有剩余问题再次全部并发修复
-                                │
-                                ▼
-                                重新合并 → 最终 QA
-                                │
-                                ├─ pass → 输出 ✅
-                                │
-                                └─ 未通过 → 输出 + 降级兜底
+LLM 输出
+  │
+  ▼
+validateSectionOutput (callLLM 重试触发条件)
+  ├─ 基础格式: 包含 pages 数组、长度匹配、以 }/}] 结尾
+  ├─ 质量校验 A: concept 卡片 desc 不重复
+  ├─ 质量校验 B: 含公式关键词的页面必须有 formulas/mainFormula
+  └─ 质量校验 C: 创作指引未混入正文（正则过滤）
+  │
+  ▼
+JSON 解析 → sectionOutputSchema Zod 校验
+  │
+  ▼
+convertContentLatex() — 行内 LaTeX ($...$) → Unicode
+  │ 注意: formulas[].latex 保留原始 LaTeX，供下游 addFormula 使用
+  │
+  ▼
+postProcessContent() — 三层自动修复
+  │
+  ├─ A. 概念卡片重复修复: 相同 desc → 前缀添加 title
+  ├─ B. 公式缺失智能修复:
+  │     - concept: 从 cards.desc 提取公式
+  │     - case: 从 scenarios 提取公式
+  │     - summary: 从 keyPoints 提取公式
+  │     - formula: mainFormula/derivation 兜底填充
+  │     - 最多 3 条，去重
+  └─ C. 创作指引混入修复:
+        - 正则过滤指令性前缀（"必须"、"严禁"、"请"、"强调"...）
+        - 过滤设计说明类文本
+        - 过短或不洁文本 → fallback 替换
+  │
+  ▼
+二次校验: 公式关键词页面强制兜底
+  │ 若仍无公式 → 注入 placeholder (focus/notes 文本提取)
+  │
+  ▼
+Per-page CONTENT_SCHEMAS 校验 + autoFixContent()
+  │ schema 失败 → autoFixContent() → 重校验
+  │ 仍失败 → 返回错误（不再 fallback）
+  │
+  ▼
+输出 SectionOutput
 ```
 
-#### 两轮修复失败后的兜底
+### 6.4 公式输出规则（硬规则）
 
-| 问题类型 | 兜底策略 |
-|----------|----------|
-| 内容问题（跑题/重复/深度不足） | 整页放弃，替换为"标题 + 此页内容需人工补充"占位页 |
-| 视觉问题（溢出/重叠/对比度） | 回退到最简布局：标题居中 + 正文左对齐 + 无装饰 |
+| 页型 | 公式字段 | 说明 |
+|------|---------|------|
+| formula | `mainFormula` (主公式) + `derivation` + `application` | 整页展示单一公式，禁止 `formulas` |
+| concept/case/summary | `formulas[]` (可选，最多 3 条) | 辅助公式，每条 `{ label, latex }` |
 
-输出附带 QA 报告，标记降级和兜底页面，前端展示时提示用户手动编辑。
+触发关键词：反应式、方程式、公式、化学式、总反应、电极反应、电势、能斯特、半反应、氧化还原、浓度商、吉布斯、自由能
 
-### Q4: 页面类型体系 ✅ 已决策（初版，保留扩展空间）
+### 6.5 严格失败策略
 
-**决策**：14 种页型，分为四类。规划 Agent 依据硬规则 + 软规则自动选择。
+任何 Section 生成失败直接 throw，不再 fallback。失败原因记录到日志，前端展示错误信息。
 
-#### 页型目录
+### 6.6 实现文件
 
-**结构页（每份 PPT 必有）**：
+| 文件 | 职责 |
+|------|------|
+| `lib/slides/agent/section-agent.ts` | Section 内容生成、多层校验、自动修复 |
+| `lib/slides/agent/content-schemas.ts` | 14 种页型 Zod Schema + autoFix + LaTeX/Unicode 转换 |
 
-| 页型 | 内容 Schema | 教学角色 |
-|------|-------------|----------|
-| `cover` | `{ title, subtitle, tagline }` | 课程封面 |
-| `toc` | `{ items: [{ num, title, desc }] }` | 学习导航 |
-| `end` | `{ slogan, subtitle, thanks }` | 收尾 |
+---
 
-**章节过渡页**：
+## 七、Phase 3: Page Design Agent
 
-| `chapter` | `{ num, title, subtitle, preview }` | 章节引入 |
+### 7.1 职责
 
-**内容页**：
+接收单页 content JSON + DesignDNA，输出该页的渲染指令序列（JSON 格式，非 JS 代码）。
 
-| 页型 | 内容 Schema | 适用场景 |
-|------|-------------|----------|
-| `concept` | `{ title, cards: [{ title, desc }], summary }` | 多概念并列讲解 |
-| `case` | `{ title, scenarios: [{ problem, solution }], highlight }` | 例题/案例 |
-| `compare` | `{ title, left: {...}, right: {...}, conclusion }` | 对比分析 |
-| `process` | `{ title, steps: [{ num, title, desc }] }` | 步骤/流程 |
-| `table` | `{ title, headers, rows, summary }` | 数据对比表 |
-| `formula` | `{ title, mainFormula, derivation, application }` | 公式推导 |
-| `timeline` | `{ title, events: [{ date, content }] }` | 历史/发展脉络 |
+### 7.2 输出格式
 
-**互动/总结页**：
-
-| `summary` | `{ title, keyPoints, preview }` | 章末总结 |
-| `quiz` | `{ title, questions: [{ q, options, answer }] }` | 课堂练习 |
-
-#### 页型选择规则
-
-**硬规则（代码约束，不靠 LLM）**：
-- cover 永远是第 1 页，end 永远是最后 1 页
-- toc 紧跟 cover
-- chapter 必须在其所属内容页之前
-
-**软规则（注入规划 Agent system prompt）**：
-- 学科偏好：数理多用 formula/case，文史多用 timeline/compare，生物地理多用 concept/process
-- 学段适配：初中少推导多案例，高中均衡，大学深度优先
-- 递进规则：concept 在 case 之前，避免连续 3+ 页同类型
-- summary 放在章节末尾
-
-#### 扩展设计
-
-页型体系通过 `pageTypeRegistry`（TypeScript enum + zod schema）集中管理，规划 Agent prompt 中的页型列表从 registry 动态生成。新增/废弃页型只需修改 registry，prompt 自动同步。
-
-### D-003: 设计 DNA Schema（2026-05-26）
-
-**定位**：LLM 在约束框架里做选择题，不是任意设计。
-
-```typescript
-interface DesignDNA {
-  styleName: string;           // "古典中式"、"科技深色"
-
-  colors: {
-    coverBg: string;            // 封面底色
-    contentBg: string;          // 内容页底色
-    accent: string;             // 主强调色
-    accentSecondary: string;    // 辅强调色
-    accentLight: string;        // 浅变体（卡片底、半透明装饰）
-    textPrimary: string;        // 标题
-    textBody: string;           // 正文
-    textMuted: string;          // 标签/页码
-    textOnDark: string;         // 深色底上文字
-  };
-
-  fonts: {
-    heading: string;            // 标题字体
-    body: string;               // 正文字体
-    en: string;                 // 英文/数字字体
-    headingSize: number;        // 封面标题 pt
-    pageTitleSize: number;      // 内容页标题 pt
-    bodySize: number;           // 正文 pt
-    captionSize: number;        // 标签 pt
-  };
-
-  decoration: {
-    motif: string;              // 装饰母题: geometric-lines | ink-wash | neon-grid | organic-circles | chinese-seal
-    density: 'sparse' | 'moderate' | 'rich';
-    cornerWeight: string;       // 装饰重心位置
-  };
-
-  components: {
-    cardStyle: 'accent-left-bar' | 'top-accent-border' | 'shadow-only' | 'filled-accent';
-    bulletStyle: 'dot' | 'check' | 'arrow' | 'chinese-brush';
-    pageNumberStyle: 'simple-number' | 'number-slash-total' | 'circle-number';
-  };
-
-  mood: string;                 // "严谨学术"、"清新自然"——LLM 理解用
-  bestFor: string[];            // ["数学", "物理"]——推荐匹配用
-}
-```
-
-**约束来源**：10 套预定义色板（从 pptx skill + 旧模板提取）、字体配对表、装饰 motif 目录。Cover Agent 从中选择组合，不允许自创。
-
-## 七、API 端点设计
-
-### 端点 1：POST /api/slides/generate-covers
-
-用户输入 topic 后，快速返回 12 套封面画廊。
-
-```
-POST /api/slides/generate-covers
-Body: { topic: "勾股定理", difficulty: "senior" }
-
-Response (200, ~8-15s):
+```json
 {
-  success: true,
-  covers: [
-    {
-      id: 1,
-      styleName: "古典中式",
-      pngUrl: "/temp/covers/cover-1-xxxx.png",
-      recommended: true,
-      designParams: { ...DesignDNA }
-    },
-    ...共 12 个
+  "pageNum": 5,
+  "instructions": [
+    { "op": "setBackground", "params": { "color": "1A2744" } },
+    { "op": "addText", "params": { "text": "...", "x": 0.8, "y": 0.5, "w": 11.7, "h": 0.7, "fontSize": 34, "fontFace": "...", "color": "FFFFFF", "bold": true, "align": "left" } },
+    { "op": "addShape", "params": { "type": "RECTANGLE", "x": 1, "y": 1, "w": 3, "h": 2, "fillColor": "722ED1", "fillTransparency": 90 } },
+    { "op": "addFormula", "params": { "latex": "\\int_a^b f(x)dx", "x": 1, "y": 2, "w": 8, "h": 0.8, "fontSize": 16, "color": "1E293B" } },
+    { "op": "addTable", "params": { "headers": ["A","B"], "rows": [["1","2"]], "x": 0.8, "y": 2, "w": 11.7, "headerBgColor": "...", "borderColor": "..." } },
+    { "op": "addChart", "params": { "chartType": "BAR", "data": [...], "x": 1, "y": 2, "w": 5, "h": 3 } } },
+    { "op": "addImage", "params": { "path": "/temp/...", "x": 1, "y": 1, "w": 3, "h": 2 } }
   ]
 }
 ```
 
-### 端点 2：POST /api/slides/generate
+### 7.3 公式渲染硬规则
 
-用户选中封面后，提交完整生成任务。异步执行，前端轮询进度。
+- 数学公式、化学方程式 **必须用 `addFormula` 指令**，严禁用 `addText` 塞 LaTeX 文本
+- 严禁使用 `[Formula]` 等占位符文本
+- `formulas` 数组每个元素必须生成对应的 `addText(label) + addFormula(latex)` 指令
+- 文本中的数学表达式必须提取并生成 `addFormula`
+- LaTeX 正确使用 `^` 上标和 `_` 下标：`Zn^{2+}`、`H_2O`
+- 流程步骤间禁止使用 `addText` 输出孤立的 "→" 符号，步骤连接通过 `addShape(LINE)` 实现
+
+### 7.4 Fallback 布局生成器
+
+任何 LLM 输出失败（JSON 解析失败、Schema 校验失败、异常）时，自动使用 `buildFallbackPageInstructions()` 生成兜底布局：
+
+- cover/chapter/end/toc/table/formula：专用兜底布局
+- 其他页型：通用布局（标题 + 正文提取 + 装饰形状）
+
+### 7.5 指令自动修复
+
+`tryRepairInstructions()` 处理常见 LLM 输出问题：
+
+- 颜色值去除 `#` 前缀
+- 数值字段强制转为 number
+- 坐标 clamp 到安全范围 (x,y: 0-10; w,h: 0.1-13.3)
+- 布尔字段字符串转 boolean
+
+### 7.6 Token 预算按页型分配
+
+| 页型 | maxOutputTokens |
+|------|----------------|
+| cover, toc, end, chapter | 4096 |
+| concept, case, compare, process, timeline, summary, quiz | 6144 |
+| table, formula | 8192 |
+
+### 7.7 实现文件
+
+| 文件 | 职责 |
+|------|------|
+| `lib/slides/agent/page-design-agent.ts` | 页面设计 Agent、fallback 生成器、指令修复 |
+| `lib/slides/agent/instruction-executor.ts` | 7 种指令的 Zod Schema + 安全执行引擎 |
+
+---
+
+## 八、Phase 4: QA & Repair
+
+### 8.1 三层质检架构
 
 ```
-POST /api/slides/generate
-Body: { topic, difficulty, designDNA }
-
-立即返回 202:
-{ jobId: "abc123", status: "planning" }
+Layer 1: structuralQA() — 代码层，<0.1s
+  │ 门禁作用
+  ├─ 有 high 级问题 → 直接进修复
+  └─ 通过 → 启动 Layer 2
+       │
+       ▼
+  Layer 2: contentQA() — LLM 层，~5s
+    输入每页内容摘要，检查跑题/重复/逻辑递进/难度匹配
+    │
+    ▼
+  合并问题清单 → 判分
 ```
 
-### 端点 3：GET /api/slides/generate/status
+**注**: Layer 3（视觉质检，SubAgent 看图）已预留接口，当前未实现。
+
+### 8.2 Layer 1: structuralQA 检查项
+
+| 检查类别 | 具体项 |
+|----------|--------|
+| 结构完整性 | cover 在第 1 页、end 在最后一页、toc 存在、chapter 分布合理 |
+| 页码连续性 | pageNum 连续不跳号 |
+| 内容非空 | 无空 content、无空 title |
+| 重复检测 | 无重复卡片、无重复页面 |
+| 公式完整性 | 含公式关键词的页面有 formulas/mainFormula |
+| 孤儿指令 | 无未使用的 contentOutline 或创作指引残留 |
+| 设计 DNA 一致性 | 颜色值在预定义范围内 |
+
+### 8.3 Layer 2: contentQA 判定标准
+
+- `totalScore ≥ 75` + 无 high 级问题 + medium < 3 → **pass**
+- LLM 失败时 contentScore 默认 30（低于及格线），不盲信
+
+### 8.4 修复策略
+
+当前实现采用**单轮自动修复**：
+
+- 结构问题（missing_cover/end/title/formula/orphan/duplicate）→ 代码层自动修复
+- 内容问题 → 标记在 QA Report 中，不触发重生成（避免无限循环）
+
+### 8.5 实现文件
+
+| 文件 | 职责 |
+|------|------|
+| `lib/slides/agent/qa-agent.ts` | structuralQA + contentQA + 修复逻辑 |
+
+---
+
+## 九、Phase 5: Merge & Preview
+
+### 9.1 合并流程
 
 ```
-GET /api/slides/generate/status?jobId=abc123
+N 页 PageInstructions
+  │
+  ▼
+new pptxgen() — LAYOUT_WIDE (13.33" × 7.5")
+  │
+  ▼
+for each page:
+  pres.addSlide()
+  instructionExecutor.execute(slide, pres, instructions, pageNum)
+  │  单指令失败 → 记录错误，继续下一指令（不崩溃整页）
+  │
+  ▼
+pres.writeFile() → .pptx
+  │
+  ▼
+LibreOffice headless → PNG 预览图（每页一张）
+```
 
-Response:
-{
-  jobId: "abc123",
-  stage: "sections_generating",
-  message: "第 2 章内容生成中...",
-  progress: 35,
-  totalPages: 15
+### 9.2 Instruction Executor 安全机制
+
+- 每条指令 Zod Schema 校验，未知 op 跳过 + 日志
+- `addText` 过滤：孤立箭头符号、placeholder 文本、设计指引泄漏
+- `addImage`/`setBackground` 路径安全校验（禁止 `..` traversal）
+- `addFormula`: LaTeX → OMML (`latex-to-omml.ts`)，失败 fallback 到 Unicode 文本
+- `addText` 行内 LaTeX 自动转 Unicode，防泄漏
+
+### 9.3 实现文件
+
+| 文件 | 职责 |
+|------|------|
+| `lib/slides/agent/instruction-executor.ts` | 指令执行引擎 |
+| `lib/slides/agent/png-converter.ts` | LibreOffice PNG 转换 |
+| `lib/export/latex-to-omml.ts` | LaTeX → OMML 转换 |
+
+---
+
+## 十、Design DNA 系统
+
+### 10.1 色板（12 套）
+
+| ID | 名称 | 氛围 |
+|----|------|------|
+| midnight-executive | 商务专业 | 深色底 + 金色强调 |
+| forest-moss | 自然清新 | 绿色系 |
+| coral-energy | 活力热情 | 橙红色系 |
+| warm-terracotta | 温暖人文 | 土橙色系 |
+| ocean-gradient | 科技冷静 | 蓝色系 |
+| charcoal-minimal | 极简现代 | 灰白系 |
+| teal-trust | 可信稳重 | 青色系 |
+| berry-cream | 优雅柔和 | 粉紫系 |
+| sage-calm | 平静治愈 | 鼠尾草绿 |
+| cherry-bold | 醒目大胆 | 深红色系 |
+| classical-chinese | 中式古典 | 深红 + 金色 |
+| tech-dark-cn | 科技深邃 | 深蓝 + 紫色 |
+
+### 10.2 字体配对（5 套）
+
+| ID | 标题字体 | 正文字体 | 英文字体 |
+|----|---------|---------|---------|
+| georgia-calibri | Microsoft YaHei | Microsoft YaHei | Georgia |
+| impact-arial | SimHei | Microsoft YaHei | Impact |
+| noto-sans | Noto Sans SC | Noto Sans SC | Calibri |
+| lora-inter | SimSun | Microsoft YaHei | Lora |
+| pt-serif | SimHei | SimSun | PT Serif |
+
+### 10.3 Motif（装饰母题）
+
+- `geometric-lines`: 几何线条
+- `ink-wash`: 水墨渲染
+- `neon-grid`: 霓虹网格
+- `organic-circles`: 有机圆形
+- `chinese-seal`: 中式印章
+
+### 10.4 校验与兜底
+
+`validateDesignDNA()`: 逐字段 Zod 校验 + 自动替换非法值：
+
+- 色板值不在预定义范围 → 替换为默认色板
+- 字体不在配对表 → 替换为 `georgia-calibri`
+- motif 非法 → `geometric-lines`
+- 字段缺失 → 默认 DesignDNA 补全
+- replacementCount > 3 → 标记降级
+
+### 10.5 实现文件
+
+| 文件 | 职责 |
+|------|------|
+| `lib/slides/agent/design-dna.ts` | 12 套色板 + 5 套字体 + motif 规则 + 校验逻辑 |
+
+---
+
+## 十一、API 端点设计
+
+### 11.1 POST /api/sky/slides/suggest-cover
+
+Smart Cover 推荐。返回推荐封面 + 3 个备选方向。
+
+```typescript
+Body: { topic: string, difficulty: string, model?: string }
+Response: {
+  cover: { pngUrl: string, designDNA: DesignDNA },
+  alternatives: AlternativeDirection[]
 }
+```
 
-// 完成时:
-{
-  jobId: "abc123",
-  stage: "done",
-  progress: 100,
-  pptxUrl: "/temp/pptx/xxx.pptx",
-  fileName: "勾股定理_古典中式.pptx",
-  previewImages: ["/temp/preview/slide-1.png", ...],
-  qaReport: { totalScore: 92, pass: true, issues: [] },
-  generationTime: 42000
+### 11.2 POST /api/sky/slides/generate-covers
+
+生成 12 套封面画廊。
+
+```typescript
+Body: { topic: string, difficulty: string, model?: string }
+Response: {
+  covers: [{ id, styleName, pngUrl, recommended, designParams: DesignDNA }]
 }
 ```
 
-### 进度阶段映射
+### 11.3 POST /api/sky/slides/generate
+
+启动完整生成 Pipeline。异步执行，前端轮询进度。
+
+```typescript
+Body: {
+  topic: string,
+  difficulty: string,
+  designDNA: DesignDNA,
+  minPages?: number,  // default 15
+  maxPages?: number,  // default 25
+  model?: string
+}
+Response (202): { jobId: string, status: 'planning' }
+```
+
+**服务端保护**：
+- JWT 鉴权
+- IP 级别速率限制
+- 最大并发 Job 数: 5
+- topic 长度限制: ≤100 字符
+- 页数范围: 1-60，minPages ≤ maxPages
+
+### 11.4 GET /api/sky/slides/generate/status
+
+```typescript
+Query: { jobId: string }
+Response: { job: JobState }
+```
+
+Job 不存在时返回 404（可能已过期或从未存在）。
+
+### 11.5 Pipeline Stage 映射
 
 | stage | progress | 典型耗时 | 文案示例 |
 |------|:--:|------|------|
 | planning | 0-15% | 3-8s | "正在规划课程大纲..." |
 | sections_generating | 15-40% | 5-10s | "第 2 章内容生成中..." |
 | pages_designing | 40-75% | 10-20s | "正在渲染 12/15 页..." |
-| merging | 75-80% | <1s | "正在合并课件..." |
-| qa_reviewing | 80-90% | 5-8s | "正在质检课件质量..." |
-| repairing | 90-95% | 5-10s | "发现 2 个问题，修复中..." |
+| qa_reviewing | 75-85% | 5-8s | "正在质检课件质量..." |
+| repairing | 85-90% | 2-5s | "发现 2 个问题，修复中..." |
+| merging | 90-95% | <1s | "正在合并课件..." |
 | done | 100% | — | "课件生成完毕 ✅" |
 
 ---
 
-## 八、前端状态机
+## 十二、前端状态机
 
-### 状态流转图
+### 12.1 状态流转
 
 ```
-IDLE → COVER_LOADING → COVER_GALLERY → GENERATING → PREVIEW
-                              │              │
-                              └→ IDLE        └→ ERROR → IDLE
-                                              └→ PREVIEW（带降级标记）
+EMPTY → SMART_COVER_LOADING → SMART_COVER_PREVIEW
+  │                              │
+  │ (点击快捷主题/输入生成)        │ (点击"查看更多")
+  │                              ▼
+  │                         COVER_GALLERY_LOADING → COVER_GALLERY
+  │                              │                      │
+  │                              │ (选择封面确认)         │ (点击"使用推荐")
+  │                              └──────────────────────┘
+  │                                         │
+  │                                         ▼
+  │                              GENERATING → PREVIEW
+  │                                 │           │
+  │                                 └→ ERROR ←──┘ (重新生成)
+  │
+  └────────────────────────────────────────────── (修改主题)
 ```
 
-### 各状态定义
+### 12.2 各状态定义
 
 | 状态 | UI | 用户可操作 |
 |------|----|-----------|
-| IDLE | 输入框 + 学段选择 + 生成按钮 | 输入、选学段、点击生成 |
-| COVER_LOADING | 三阶段加载动画，输入区锁定 | 不可操作 |
-| COVER_GALLERY | 12 宫格模态弹窗 + "重新生成推荐模板"按钮 | 浏览、选中、确认/取消、刷新模板 |
-| GENERATING | 顶部横幅进度条 + 阶段文案，页面其他区域可操作 | 不可发起新生成（提示等待），可浏览已有结果 |
-| PREVIEW | 左侧缩略图 + 中央大图 + 底栏 | 翻页、下载、重新生成、修改主题、查看质检报告 |
-| ERROR | 错误提示 + 重试/返回按钮 | 重试、返回 IDLE |
+| EMPTY | 全屏居中：标题 + 说明 + 快捷主题 pills | 输入主题、选学段、点击快捷主题 |
+| SMART_COVER_LOADING | 全屏加载动画（阶段文案） | 不可操作 |
+| SMART_COVER_PREVIEW | 中央封面大图 + 右侧备选列表 + 底部操作栏 | 切换备选、确认使用、查看更多 |
+| COVER_GALLERY_LOADING | 全屏加载动画 | 不可操作 |
+| COVER_GALLERY | 12 宫格封面画廊 | 浏览、选中、确认/取消 |
+| GENERATING | 顶部进度条（stage + progress + message） | 不可发起新生成 |
+| PREVIEW | 左侧缩略图栏 + 中央大图 + 底部操作栏 | 翻页、下载、重新生成、修改主题 |
+| ERROR | 错误提示 + 重试/返回按钮 | 重试、返回 |
 
-### 封面缓存
-
-首次生成完成后，封面画廊以 `topic + difficulty` 为 key 缓存在前端内存中。
-
-- **重新生成**（PREVIEW 底栏）→ 直接展示缓存画廊，0 秒等待，用户可重新选择风格
-- **重新生成推荐模板**（COVER_GALLERY 内）→ 清除缓存，重新调 LLM 生成 12 套全新封面
-
-### PREVIEW 功能细节
-
-- **下载课件**：下载 .pptx 文件
-- **查看质检报告**：弹窗展示总分 + 每页问题列表，点击问题条目直接切到对应页面预览
-- **重新生成**：弹出缓存画廊，用户重新选风格生成
-- **修改主题**：回到 IDLE，保留 topic，清空设计 DNA
-
-### 异常处理
-
-**COVER_LOADING 阶段**：LLM 调用失败 → 静默重试 1 次 → 仍失败进 ERROR。pptxgenjs 渲染/LibreOffice 失败同理。
-
-**GENERATING 阶段**：任何阶段失败进 ERROR，保留 jobId 供重试。重试从失败阶段续跑（非从头开始）。并发控制：已有任务进行中时，点击生成提示"请等待当前任务完成"。
-
-**GENERATING → PREVIEW（带降级）**：QA 两轮修复后仍有残留问题，正常进入 PREVIEW，问题页在缩略图右上角标记 ⚠️。
-
----
-
-## 九、Agent Prompt 设计
-
-### pptx Skill 内容分配表
-
-| pptx skill 内容 | Cover | 规划 | 章节 | 页面设计 | QA |
-|------|:--:|:--:|:--:|:--:|:--:|
-| 10 套色板 | ✅ | | | ✅ | |
-| 字体配对表 + 字号层级 | ✅ | | | ✅ | |
-| 设计铁律（标题不下划线、不居中正文...） | ✅ | | | ✅ | |
-| 装饰 motif 规则 | ✅ | | | ✅ | |
-| 布局模式（双栏/网格/图标行...） | | ✅ | | ✅ | |
-| 间距规范（边距/块间距） | | | | ✅ | |
-| 数据展示规范（大数字/对比栏/时间线） | | | | ✅ | |
-| 14 种页型目录 | | ✅ | ✅ | | |
-| 页型 × 学科匹配偏好 + 递进规则 | | ✅ | | | |
-| 每页型的内容 Schema | | ✅ | ✅ | | |
-| pptxgenjs API 参考 | | | | ✅ | |
-| react-icons 图标嵌入方法 | | | | ✅ | |
-| QA 检查维度 + 输出格式 | | | | | ✅ |
-
----
-
-### 7.1 Cover 生成 Agent
-
-**职责**：根据 topic + difficulty，输出 12 套 DesignDNA。
-
-**注入内容**：10 套色板 + 字体配对表 + 字号层级 + 设计铁律 + 装饰 motif 规则
-
-**System Prompt**：
+### 12.3 前端组件结构
 
 ```
-## 角色
-你是一位资深演示设计师，为教学课件设计封面视觉方案。
-
-## 设计规范（所有约束来自专业研究，不可违反）
-
-[嵌入：10 套色板完整表]
-[嵌入：字体配对表 + 字号层级]
-[嵌入：设计铁律]
-[嵌入：装饰 motif 规则]
-
-## 任务
-为以下主题设计 12 套不同风格的封面视觉方案。
-
-规则：
-1. 12 套方案必须风格差异明显，不允许 2 套共用同一色板
-2. colors 所有字段必须从色板中选择，不允许自创
-3. fonts 必须从配对表中选择，不允许自创
-4. decoration.motif 根据学科匹配：
-   - 数学/物理/编程 → geometric-lines, neon-grid
-   - 语文/历史/文学 → ink-wash, chinese-seal
-   - 生物/地理/生态 → organic-circles
-   - 通用 → geometric-lines, organic-circles
-5. cardStyle 与 decoration.motif 配套
-6. 仅 1 套标记 recommended:true，必须是最匹配该学科的
-7. mood 和 bestFor 必须反映真实风格和适配学科
-
-## 输出格式
-只输出纯 JSON 数组，不要 markdown 代码块：
-[
-  {
-    "styleName": "古典中式",
-    "recommended": true,
-    "colors": { "coverBg":"...","contentBg":"...","accent":"...","accentSecondary":"...","accentLight":"...","textPrimary":"...","textBody":"...","textMuted":"...","textOnDark":"..." },
-    "fonts": { "heading":"","body":"","en":"","headingSize":0,"pageTitleSize":0,"bodySize":0,"captionSize":0 },
-    "decoration": { "motif":"","density":"moderate","cornerWeight":"top-right" },
-    "components": { "cardStyle":"accent-left-bar","bulletStyle":"dot","pageNumberStyle":"number-slash-total" },
-    "mood": "",
-    "bestFor": []
-  },
-  ...共 12 套
-]
+slides-page.tsx (主协调器, 682 行)
+  ├── ControlBar (条件渲染: hasContent 时显示)
+  │     ├── 学段 Toggle (初中/高中/大学)
+  │     ├── 主题输入框 (Search icon + input, flex gap-2)
+  │     └── 生成按钮 + Sidebar 切换
+  ├── EmptyState (无内容时全屏显示)
+  │     ├── 标题 + 说明
+  │     └── 快捷主题 pills (勾股定理、牛顿定律、光合作用、唐诗宋词)
+  ├── SmartCover (SmartCover 推荐结果)
+  ├── GeneratingState (生成中进度展示)
+  ├── PreviewPane (生成完成预览)
+  │     ├── Sidebar (缩略图列表)
+  │     ├── MainView (大图)
+  │     └── Footer (下载/重生成/修改主题)
+  └── CoverGalleryModal (12 宫格画廊弹窗)
 ```
 
-**User Prompt**：
-```
-主题：{topic}
-学段：{difficulty}
-语言：中文
+### 12.4 布局细节
 
-请为以上主题设计 12 套不同风格的封面视觉方案。
-推荐风格应匹配 {topic} 的学科特性。
-```
+- 页面通过 `-mx-6 -my-6` 抵消 `SkyAppShell` main 的 `px-6 py-6`，实现**全 bleed 无边距**
+- ControlBar 无背景色，仅 `border-b` 分隔线
+- 最小字体 12px，统一 `rounded-lg`，仅保留必要 hover 过渡 (0.15s)
+- purple-primary `#722ed1`
 
----
+### 12.5 Hydration Mismatch 防护
 
-### 7.2 规划 Agent
-
-**职责**：产出按 Section 分组的页级大纲，每页含 contentOutline。
-
-**注入内容**：14 种页型目录 + 页型 × 学科匹配偏好 + 递进规则 + 每页型的内容 Schema
-
-**System Prompt**：
-
-```
-## 角色
-你是一位教学设计师，为课程规划幻灯片的大纲和内容要点。
-
-## 可用页面类型
-[嵌入：14 种页型目录 + 每种的内容 Schema]
-
-## 页型选择规则
-[嵌入：学科匹配偏好 + 学段适配 + 递进规则]
-
-## 硬规则（不可违反）
-- cover 永远是第 1 页，end 永远是最后 1 页
-- toc 紧跟 cover
-- chapter 之后必须跟 2-5 页相关内容页
-- concept 必须在 case 之前
-- 同一章节内避免连续 3 页以上相同页型
-- summary 放在每个章节末尾
-
-## 设计 DNA（全文链路统一）
-{designDNA 完整 JSON}
-
-## 任务
-根据主题、学段和设计 DNA，规划完整的页级大纲。
-按章节（Section）分组，每页输出页型、标题、内容要点（contentOutline）。
-
-contentOutline 是将来的章节 Agent 的创作依据，必须包含：
-- 该页要讲的核心知识点或案例场景
-- 需要覆盖的关键概念名称
-- 如果是案例页，给出具体例题类型和方向
-
-## 输出格式
-只输出纯 JSON：
-{
-  "sections": [
-    {
-      "sectionId": 1,
-      "title": "章节标题",
-      "pages": [
-        {
-          "pageNum": 4,
-          "type": "concept",
-          "title": "页面标题（≤10 字）",
-          "contentOutline": {
-            "focus": "这页要讲什么",
-            "keyConcepts": ["概念1", "概念2"],
-            "notes": "章节 Agent 的创作指引"
-          }
-        },
-        ...
-      ]
-    },
-    ...
-  ]
-}
-```
-
-**User Prompt**：
-```
-主题：{topic}
-学段：{difficulty}
-语言：中文
-总页数建议：初中 10-14 页，高中 14-18 页，大学 18-24 页
-
-请规划完整的页级大纲，确保内容深度递进、章节逻辑清晰。
-```
-
----
-
-### 7.3 章节 Agent
-
-**职责**：接收所在 Section 的页级大纲 + contentOutline，产出每页的完整内容 JSON。不碰布局。
-
-**注入内容**：14 种页型目录 + 每页型内容 Schema + 设计 DNA
-
-**System Prompt**：
-
-```
-## 角色
-你是一位 {difficulty} 学科教师，正在为"{sectionTitle}"章节编写课件内容。
-
-## 设计 DNA（全文链路统一）
-{designDNA 完整 JSON}
-
-## 页面内容 Schema 参考
-[嵌入：该 Section 涉及页型的内容 Schema]
-
-## 任务
-根据下面的大纲，为每一页生成完整的内容数据（纯 JSON，不含坐标和样式）。
-
-## 重要规则
-1. 严格遵循 contentOutline 的指引，不要偏离 focus/keyConcepts
-2. 所有示例、案例必须真实可查，不编造
-3. 卡片标题 ≤6 字，卡片描述 ≤80 字
-4. 涉及公式的页面，公式必须用 LaTeX 格式
-5. 内容深度匹配 {difficulty} 学段
-6. 【反例警示】如果主题是 {topic}，严禁引入无关学科内容
-
-## 输出格式
-只输出纯 JSON：
-{
-  "sectionId": 2,
-  "pages": [
-    {
-      "pageNum": 4,
-      "pageType": "concept",
-      "content": {
-        "title": "...",
-        "cards": [{ "title": "电流", "desc": "电荷定向移动形成的物理量..." }],
-        "summary": "..."
-      }
-    },
-    ...
-  ]
-}
-```
-
-**User Prompt**：
-```
-主题：{topic}
-学段：{difficulty}
-章节：{sectionTitle}（共 {sectionPageCount} 页）
-
-## 本章大纲
-{JSON：该 Section 的完整大纲，含每页 contentOutline}
-
-请逐页生成完整内容。
-```
-
----
-
-### 7.4 页面设计 Agent
-
-**职责**：接收单页的内容 JSON + DesignDNA，输出该页的 pptxgenjs renderCode。
-
-**注入内容**：pptxgenjs API 参考 + react-icons 图标方法 + 布局模式 + 间距规范 + 设计铁律 + 10 套色板
-
-**System Prompt**：
-
-```
-## 角色
-你是一位 pptxgenjs 开发专家，将教学内容渲染为专业幻灯片页面。
-
-## pptxgenjs API 参考
-[嵌入：pptxgenjs.md 完整内容]
-
-## 设计约束
-- 画布尺寸: 13.3" × 7.5" (LAYOUT_WIDE)
-- 设计铁律: [九条设计铁律]
-- 当前设计 DNA: {designDNA 完整 JSON}
-- 间距: 0.5" 最小边距, 0.3-0.5" 块间距
-- 布局模式参考: [嵌入布局模式描述]
-
-## 任务
-为下面这一页生成 pptxgenjs renderCode。只输出这一页的代码，不要定义 pres 对象，不要调用 writeFile。
-
-假设 pres 和 slide 已创建，你只需要写 slide.xxx() 调用。
-
-## 代码规范
-- 颜色必须从 designDNA.colors 中取
-- 字体必须从 designDNA.fonts 中取
-- decoration 使用 designDNA.decoration.motif 对应的形状组合
-- 卡片样式使用 designDNA.components.cardStyle
-- 使用 designDNA.components.bulletStyle 样式做 bullet 列表
-- 所有颜色用 6 位 hex，不带 # 前缀
-- 需要图标时用 react-icons + sharp 方法
-
-## 输出格式
-只输出 JavaScript 代码块：
-```js
-// Page {pageNum}: {pageType} — "{title}"
-slide.background = { color: "{contentBg}" };
-slide.addText("{title}", {
-  x: 0.8, y: 0.5, w: 11.7, h: 0.7,
-  fontSize: {pageTitleSize}, fontFace: "{heading}",
-  color: "{textPrimary}", bold: true, margin: 0
+```typescript
+// page.tsx (两个路由相同)
+'use client';
+const SlidesPage = dynamic(() => import('@/components/sky/slides/slides-page'), {
+  ssr: false,
 });
-...
-```
 ```
 
-**User Prompt**：
-```
-设计 DNA: {designDNA JSON}
-页面类型: {pageType}
-页面内容: {content JSON}
-页号: {pageNum} / {totalPages}
+- `'use client'` + `dynamic({ ssr: false })` 让 SlidesPage **完全客户端渲染**
+- 避开 Turbopack Windows 缓存滞后导致的 hydration mismatch
 
-请为此页生成 renderCode。
+### 12.6 轮询 Hook
+
+```typescript
+// useJobPolling.ts
+startPolling(jobId, {
+  onStageUpdate: (stage, progress, message) => {...},
+  onComplete: (result: { pptxUrl, fileName, previewImages, qaReport }) => {...},
+  onError: (error) => {...},
+});
+// 轮询间隔: 2s
+// 最大连续错误: 5 次 → 停止轮询并报错
+```
+
+### 12.7 实现文件
+
+| 文件 | 职责 |
+|------|------|
+| `app/sky/slides/page.tsx` | 路由包装器（ssr: false） |
+| `app/sky/cloud-mind/slides/page.tsx` | 同上 |
+| `components/sky/slides/slides-page.tsx` | 主协调器、状态机 |
+| `components/sky/slides/states/empty-state.tsx` | 空状态 |
+| `components/sky/slides/hooks/use-job-polling.ts` | Job 轮询 Hook |
+
+---
+
+## 十三、关键技术细节
+
+### 13.1 并发控制
+
+| 阶段 | 并发限制 | 实现 |
+|------|---------|------|
+| Layer 2 页面规划 | 12 | `withConcurrencyLimit()` |
+| Section Agent | 12 | `withConcurrencyLimit()` |
+| Page Design Agent | 8 | `withConcurrencyLimit()` |
+| 封面生成 (12 套) | 6 | 内部 `concurrencyLimit()` |
+| LibreOffice PNG 转换 | 3 | `Semaphore` 信号量 |
+| 最大并发 Job | 5 | API 层硬限制 |
+
+`withConcurrencyLimit()`: 工作者池 + 每项 10min 硬超时 + 交错启动（避免服务商队列饱和）。
+
+### 13.2 Job 状态管理
+
+- 存储: `globalThis.__pptJobs`（内存 Map）
+- 自动清理: 10 分钟后删除
+- 服务重启丢失 → 前端轮询 404 → 提示用户重新生成
+- Job Stage: `planning` → `sections_generating` → `pages_designing` → `qa_reviewing` → `repairing` → `merging` → `done`
+
+### 13.3 封面渲染器布局类型
+
+`cover-renderer.ts` 支持 12 种布局：
+
+1. `hero-centered` — 居中巨大标题 + 装饰围绕
+2. `hero-left` — 左对齐文本 + 右侧装饰
+3. `split-panel` — 左半深色面板 + 右半浅色
+4. `big-number` — 超大数字/公式占视觉重心
+5. `vertical-poem` — 竖排中文，中式书封感
+6. `corner-drama` — 装饰集中一角
+7. `frame-border` — 细边框包裹
+8. `minimal-type` — 纯排版无形状
+9. `bold-accent` — 顶部粗色带
+10. `gradient-wash` — 柔和渐变底
+11. `double-stripe` — 上下平行线夹标题
+12. `image-zone` — 右侧图区占位
+
+### 13.4 页型体系（14 种）
+
+**结构页**: cover, toc, end
+**章节过渡**: chapter
+**内容页**: concept, case, compare, process, table, formula, timeline
+**互动/总结**: summary, quiz
+
+页型选择通过 `page-type-selector.ts` 实现 topic-aware 白名单：
+- 数学 → formula > case > concept
+- 物理 → formula > case > concept
+- 化学 → formula > case > table
+- 生物 → concept > compare > process
+- 历史 → timeline > compare > concept
+- 文学 → concept > compare > case
+- 计算机 → process > case > table
+
+### 13.5 内容 Schema 自动修复
+
+`content-schemas.ts` 中的 `autoFixContent()`:
+
+- 截断超长字符串至 Schema 限制
+- 填充缺失字段（空字符串 / 空数组 / 默认值）
+- 数组去重、长度 clamp 到范围
+- `deepRepairContent()`: 类型强制转换、嵌套对象修复、表格行展开
+
+### 13.6 LaTeX / Unicode 转换工具
+
+| 函数 | 用途 |
+|------|------|
+| `convertInlineLatexToUnicode()` | 化学式/电荷/下标/上标 Unicode 转换 |
+| `unicodeMathToLatex()` | Unicode → LaTeX 反向转换 |
+| `cleanJsonText()` | 去除 markdown fences、尾随逗号、注释、单引号修复、JSON 截断修复 |
+| `extractFormulasFromText()` | 从文本中提取数学表达式 |
+
+### 13.7 PNG 转换稳定性
+
+`png-converter.ts`:
+
+- LibreOffice 路径自动发现（Windows/macOS/Linux）
+- `-env:UserInstallation=file:///` 隔离每个进程，防止 profile 损坏
+- 信号量限制 3 并发
+- 2 次重试 + 2s 退避
+- 15s 超时 + SIGKILL
+
+### 13.8 日志与调试
+
+所有 Agent 使用统一日志系统 (`createLogger`)：
+
+- 日志标识: `PlanningAgent`, `SectionAgent`, `PageDesignAgent`, `QAAgent`, `CoverAgent`, `SuggestCoverAgent`, `CoverRenderer`, `PngConverter`
+- 关键阶段记录耗时（ms）
+- Cover Agent 调试日志写入 `logs/cover-agent-{slot}-{timestamp}.txt`
+
+---
+
+## 十四、文件目录总览
+
+```
+lib/slides/agent/
+├── pipeline.ts              # Pipeline 编排器（Job 管理 + Stage 推进）
+├── planning-agent.ts        # Planning Agent（Layer 1/2 + Merge）
+├── section-agent.ts         # Section Agent（内容生成 + 多层修复）
+├── page-design-agent.ts     # Page Design Agent（JSON 指令 + Fallback）
+├── qa-agent.ts              # QA Agent（结构质检 + 内容质检 + 修复）
+├── design-dna.ts            # 设计 DNA（12 色板 + 5 字体 + 校验）
+├── content-schemas.ts       # 14 种页型 Schema + 自动修复 + LaTeX 工具
+├── instruction-executor.ts  # 指令执行引擎（7 种指令 + 安全校验）
+├── cover-agent.ts           # 12 套封面生成（Salvage + Topic-aware）
+├── suggest-cover-agent.ts   # Smart Cover 推荐（单 LLM 调用）
+├── cover-renderer.ts        # 封面渲染器（12 种布局）
+├── png-converter.ts         # LibreOffice PNG 转换（信号量 + 重试）
+├── page-type-selector.ts    # Topic → 学科推断 → 页型白名单
+├── concurrency.ts           # 通用并发限制器
+
+app/api/sky/slides/
+├── suggest-cover/route.ts       # POST Smart Cover 推荐
+├── generate-covers/route.ts     # POST 12 套封面画廊
+├── generate/route.ts            # POST 启动 Pipeline
+└── generate/status/route.ts     # GET Job 状态查询
+
+components/sky/slides/
+├── slides-page.tsx            # 主协调器
+├── states/
+│   ├── empty-state.tsx        # 空状态
+│   ├── smart-cover.tsx        # Smart Cover 预览
+│   ├── generating-state.tsx   # 生成中
+│   └── preview-pane.tsx       # 预览面板
+├── cover-gallery-modal.tsx    # 12 宫格画廊弹窗
+└── hooks/
+    └── use-job-polling.ts     # Job 轮询
 ```
 
 ---
 
-### 7.5 QA Agent
+## 十五、演进记录
 
-**职责**：质检整个 PPT 的内容和结构。
+### 2026-05-26 — v1.0 初版架构设计
 
-**注入内容**：QA 检查维度 + 输出格式
+- 确定四层 Agent 架构（Planning → Section → Page Design → QA）
+- 确定 14 种页型体系
+- 确定 DesignDNA Schema
+- 确定封面画廊方案
 
-**System Prompt**（内容质检层）：
+### 2026-05-30 — v2.0 实现对齐
 
-```
-## 角色
-你是教学课件质检专家。对以下 PPT 内容进行严格审查。
-
-## 检查维度
-1. 跑题检查：任何页面的内容是否偏离主题？
-2. 重复检查：哪些页面之间内容重叠或互为重复？
-3. 递进检查：页面之间的逻辑顺序是否合理？
-   - 概念是否在案例之前讲？
-   - 是否有跳跃（前一页没讲就跳到下一页）？
-4. 目录检查：toc 页的条目和后续 chapter 页标题是否一一对应？
-5. 难度检查：内容是否符合 {difficulty} 学段要求？
-6. 完整性检查：每页的 content 是否完整？有无空字段？
-
-## 输出格式
-只输出纯 JSON：
-{
-  "contentScore": 0-100,
-  "pass": true/false,
-  "issues": [
-    {
-      "pageNum": 4,
-      "severity": "high|medium|low",
-      "type": "off_topic|duplicate|logic_gap|toc_mismatch|difficulty|incomplete",
-      "detail": "具体问题描述（中文）"
-    }
-  ]
-}
-
-## 判定规则
-- 任何 high 级问题 → pass=false
-- 3 个及以上 medium 级问题 → pass=false
-- contentScore < 75 → pass=false
-```
-
-**User Prompt**：
-```
-主题：{topic}
-学段：{difficulty}
-
-## 页面内容
-{每页的 pageNum + type + title + content 摘要}
-```
-
----
-
-### 7.6 修复 Agent
-
-复用现有 Agent，额外注入修复上下文：
-
-```
-内容修复:
-  复用章节 Agent
-  额外注入: "上一版问题: {issue.detail}，本次必须修正。其他正常页面不需要修改。"
-
-布局修复:
-  复用页面设计 Agent
-  额外注入: "上一版问题: {issue.detail}，请调整坐标/字体大小/颜色。"
-```
-
-## 十、关键技术细节
-
-### 10.1 renderCode 安全执行
-
-页面设计 Agent 不输出原始 JS 代码，输出 JSON 指令序列。执行层逐个执行并校验。
-
-```json
-{ "pageNum": 5, "instructions": [
-  { "op": "setBackground", "params": { "color": "1A2744" } },
-  { "op": "addText", "params": { "text": "...", "x": 0.8, ... } },
-  { "op": "addShape", "params": { "type": "RECTANGLE", ... } }
-]}
-```
-
-`InstructionExecutor` 类，每个 op 对应独立处理器，参数 zod 校验。未知 op 跳过 + 日志。任何指令失败 → 该页进修复循环。
-
-### 10.2 合并步骤
-
-顺序执行所有页的 instructions：`pres.addSlide()` → 遍历执行该页指令 → 下一页。纯代码 <1s。单页失败用空白页 + 标题兜底。
-
-### 10.3 LibreOffice 进程管理
-
-进程池：最大并发 6，单次超时 10s，失败重试 1 次。任务队列 + 信号量控制。
-
-### 10.4 Job 状态管理
-
-内存 Map，不持久化。Job 完成后 5 分钟自动清理。服务重启丢失 → 前端轮询 404 → 提示用户重新生成。
-
-### 10.5 Cover Agent DesignDNA 校验
-
-zod schema 逐套校验。色板值不在预定义范围 → 替换为默认色板；字体不在配对表 → 替换为 "Microsoft YaHei + Georgia"；motif 非法 → "geometric-lines"；字段缺失 → 默认 DesignDNA 补全。单套被替换 >3 个字段标记"降级方案"但不阻断流程。
-
-### 10.6 页数控制
-
-用户在前端选择范围：简洁(10-20) / 标准(20-35) / 详细(35-50) / 深度(50)。学段决定默认值（初中→简洁，高中→标准，大学→详细）。规划 Agent 收到 {minPages, maxPages} 硬约束，超出范围→reject 要求重规划。
-
-### 10.7 Section Agent 部分失败
-
-只重试失败的 Section，最多 2 次。2 次仍失败 → 该 Section 用 contentOutline 自动生成基础内容页兜底，标记 ⚠️。已成功的 Section 不受影响。
-
-### 10.8 临时文件清理
-
-/temp/ 下文件 30 分钟过期。setInterval 每 10 分钟扫一次目录清理。Job 清理时关联文件一并删除。
+- **Smart Cover 推荐** 从概念变为独立 API (`suggest-cover-agent.ts`)
+- **Planning Agent** 明确为两层（Layer 1 骨架 + Layer 2 详情），并发=12
+- **Section Agent** 补充多层自动修复细节（公式缺失、创作指引过滤、卡片去重）
+- **Page Design Agent** 输出从 JS 代码改为 JSON 指令，补充 fallback 生成器和指令修复
+- **QA Agent** 明确当前为两层（Layer 3 视觉预留），补充具体检查项和判分标准
+- **前端状态机** 完全重写：移除 SlidesHeader/SkyBackground、ControlBar 去背景化、EmptyState 简化、单行一体化输入框、全 bleed 布局
+- **并发参数** 确定：sections=12, pageDesign=8, LO=3, maxJobs=5
+- **Job 管理** 明确内存 Map + 10min 自动清理
+- **设计 DNA** 更新为 12 套色板 + 5 套字体 + topic-aware motif 分配
+- **API 路由** 统一为 `/api/sky/slides/...`
+- **Hydration 防护** 采用 `'use client'` + `dynamic({ ssr: false })`

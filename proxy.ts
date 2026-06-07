@@ -7,6 +7,7 @@ const PUBLIC_PATHS = [
   '/auth',
   '/api/auth',
   '/api/sky/solve/clear',
+  '/api/sky/slides/generate/jobs',
 ];
 
 /** Static asset prefixes to always skip */
@@ -17,6 +18,7 @@ const STATIC_PREFIXES = [
   '/avatars/',
   '/logo-icon.svg',
   '/logo-horizontal.png',
+  '/temp/',
 ];
 
 function isPublicPath(pathname: string): boolean {
@@ -66,5 +68,5 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png|temp/).*)'],
 };

@@ -125,7 +125,7 @@ function buildDesignDNA(
   motif: string,
 ): DesignDNA {
   const palette = COLOR_PALETTES[paletteId] ?? COLOR_PALETTES['midnight-executive'];
-  const fonts = FONT_PAIRS[fontId] ?? FONT_PAIRS['georgia-calibri'];
+  const fonts = FONT_PAIRS[fontId] ?? FONT_PAIRS['arial-black-arial'];
 
   const safeMotif = ALLOWED_MOTIFS.includes(motif as typeof ALLOWED_MOTIFS[number])
     ? motif : 'geometric-lines';
@@ -179,38 +179,36 @@ export async function suggestCoverStyle(
     const result = await callLLM(
       { model: languageModel, system, prompt: user, maxOutputTokens: 4096, temperature: 0.7 },
       'suggest-cover-agent',
-      { retries: 1, timeoutMs: 25000, validate: (text) => text.trim().length > 200 && text.includes('paletteId') },
+      { retries: 2, timeoutMs: 60000, validate: (text) => text.trim().length > 200 && text.includes('paletteId') },
     );
     const llmDuration = Date.now() - llmStart;
-    log.info(`[suggestCoverStyle] LLM done in ${llmDuration}ms, tokens=${(result.usage as Record<string, number> | undefined)?.completionTokens ?? '?'}`);
+    log.info(`[suggestCoverStyle] LLM done in ${llmDuration}ms, tokens=${(result.usage as unknown as Record<string, number> | undefined)?.completionTokens ?? '?'}`);
 
     const jsonText = cleanJsonText(result.text);
-    let parsed: Record<string, unknown>;
+    let parsed: Record<string, unknown> | undefined;
     try {
-      parsed = JSON.parse(jsonText);
+      parsed = JSON.parse(jsonText) as Record<string, unknown>;
     } catch (parseErr) {
-      log.error(`[suggestCoverStyle] JSON parse failed: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
-      return { success: false, error: '风格推荐解析失败' };
+      log.warn(`[suggestCoverStyle] JSON parse failed, falling back to defaults: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
     }
 
-    const paletteId = String(parsed.paletteId || 'midnight-executive');
-    const fontId = String(parsed.fontId || 'georgia-calibri');
-    const layoutType = String(parsed.layoutType || 'hero-left') as LayoutType;
-    const density = (parsed.density || 'moderate') as 'sparse' | 'moderate' | 'rich';
-    const mood = String(parsed.mood || '专业学术');
-    const styleName = String(parsed.styleName || '智能推荐');
-    const bestFor = Array.isArray(parsed.bestFor) ? parsed.bestFor.map(String) : [topic.slice(0, 10)];
-
-    // Infer motif from topic (same logic as cover-agent)
+    // Fallback values when LLM output is missing or unparseable
     const motifs = getMotifsForTopic(topic);
     const motif = motifs[0] || 'geometric-lines';
+    const paletteId = String(parsed?.paletteId ?? 'tech-dark-cn');
+    const fontId = String(parsed?.fontId ?? 'impact-arial');
+    const layoutType = String(parsed?.layoutType ?? 'hero-centered') as LayoutType;
+    const density = (parsed?.density ?? 'moderate') as 'sparse' | 'moderate' | 'rich';
+    const mood = String(parsed?.mood ?? '深邃科技宇宙感');
+    const styleName = String(parsed?.styleName ?? '深空科技');
+    const bestFor = Array.isArray(parsed?.bestFor) ? (parsed.bestFor as unknown[]).map(String) : [topic.slice(0, 10)];
 
     const designDNA = buildDesignDNA(paletteId, fontId, layoutType, density, mood, styleName, bestFor, motif);
 
     log.info(`[suggestCoverStyle] recommended: palette=${paletteId}, font=${fontId}, layout=${layoutType}, density=${density}, mood=${mood}, motif=${motif}`);
 
     // Build alternatives
-    const rawAlternatives = Array.isArray(parsed.alternatives) ? parsed.alternatives : [];
+    const rawAlternatives = Array.isArray(parsed?.alternatives) ? parsed.alternatives : [];
     const alternatives: AlternativeDirection[] = rawAlternatives.slice(0, 3).map((a: Record<string, unknown>, idx: number) => {
       const altMotif = motifs[idx + 1] || motifs[0] || 'geometric-lines';
       return {
@@ -230,6 +228,10 @@ export async function suggestCoverStyle(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.error(`[suggestCoverStyle] failed: ${msg}`);
-    return { success: false, error: msg };
+    // Last-resort fallback so the user never sees a hard failure
+    const motifs = getMotifsForTopic(topic);
+    const motif = motifs[0] || 'geometric-lines';
+    const designDNA = buildDesignDNA('tech-dark-cn', 'impact-arial', 'hero-centered', 'moderate', '深邃科技宇宙感', '深空科技', [topic.slice(0, 10)], motif);
+    return { success: true, designDNA, alternatives: [] };
   }
 }

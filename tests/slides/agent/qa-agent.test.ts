@@ -75,4 +75,30 @@ describe('QAAgent', () => {
     const result = await runQA('测试', '高中', makeValidOutline(), [content], 5, mockModel);
     expect(result.issues.some((i) => i.type === 'empty_content')).toBe(true);
   });
+
+  it('should NOT flag missing_formula for chapter page that mentions formula keywords in title/subtitle', async () => {
+    mockCallLLM.mockResolvedValueOnce({ text: JSON.stringify({ contentScore: 90, issues: [] }) });
+    const outline = makeValidOutline();
+    const content = makeValidContent();
+    // Chapter page (pageNum 3) mentions "方程式" in subtitle but has no formulas field by design
+    content.pages[2].content = { num: '02', title: '化学方程式', subtitle: '掌握化学方程式的书写与配平方法' };
+
+    const result = await runQA('化学', '高中', outline, [content], 5, mockModel);
+    const formulaIssues = result.issues.filter((i) => i.type === 'missing_formula');
+    expect(formulaIssues.length).toBe(0);
+  });
+
+  it('detects missing_formula when concept page mentions formula keywords but provides no formulas', async () => {
+    mockCallLLM.mockResolvedValueOnce({ text: JSON.stringify({ contentScore: 90, issues: [] }) });
+    const outline = makeValidOutline();
+    const content = makeValidContent();
+    // Concept page (pageNum 4) mentions "化学方程式" but provides no formulas array
+    content.pages[3].content = { title: '氧化还原反应', cards: [{ title: '定义', desc: '氧化还原反应的本质是电子转移。' }], summary: '化学方程式是描述化学反应的重要工具。' };
+
+    const result = await runQA('化学', '高中', outline, [content], 5, mockModel);
+    const formulaIssues = result.issues.filter((i) => i.type === 'missing_formula');
+    expect(formulaIssues.length).toBe(1);
+    expect(formulaIssues[0].pageNum).toBe(4);
+    expect(formulaIssues[0].severity).toBe('high');
+  });
 });

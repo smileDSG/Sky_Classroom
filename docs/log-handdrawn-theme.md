@@ -6,14 +6,37 @@
 
 ---
 
-## 状态：Phase 4 — 自动化测试（进行中）
+## 状态：Phase 7 — 已完成 ✅
 
 - Phase 3 完成时间：2026-06-03 10:35
-- 修改文件：
-  - `lib/slides/themes/modern-editor.ts` — 新增 `HANDDRAWN_THEME`，更新 `ALL_THEMES`
-  - `lib/slides/types.ts` — `PptxThemeId` 增加 `'handdrawn'`
-  - `lib/slides/pptx-themes.ts` — `PPTX_THEMES` 增加手绘风映射
-  - `tests/slides/theme-tokens.test.ts` — 新建（14 个测试用例）
+- Phase 4 完成时间：2026-06-03 10:59（16/16 测试通过）
+- Phase 5 完成时间：2026-06-03 11:00（编译通过，无回归）
+- Phase 6 完成时间：2026-06-03 11:01（Code Review 通过）
+- Phase 7 完成时间：2026-06-03 11:02（commit `f77b8e6`）
+
+### 修改文件
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `lib/slides/themes/modern-editor.ts` | 修改 | 新增 `HANDDRAWN_THEME`，更新 `ALL_THEMES` / `THEME_MAP` |
+| `lib/slides/types.ts` | 修改 | `PptxThemeId` 增加 `'handdrawn'` |
+| `lib/slides/pptx-themes.ts` | 修改 | `PPTX_THEMES` 增加手绘风映射 |
+| `tests/slides/theme-tokens.test.ts` | 新建 | 16 个测试用例 |
+| `docs/plan-handdrawn-theme.md` | 新建 | 规划文档 |
+| `docs/log-handdrawn-theme.md` | 新建 | 日志文档 |
+
+### Commit
+
+```
+feat(slides): add handdrawn theme token
+
+- Add HANDDRAWN_THEME to modern-editor.ts with paper-inspired palette
+- Extend PptxThemeId union type with 'handdrawn'
+- Register handdrawn in PPTX_THEMES backward-compat mapping
+- Add theme-tokens.test.ts with 16 test cases covering registry integrity
+
+Relates to: F-001 主题模板系统增强
+```
 
 ---
 

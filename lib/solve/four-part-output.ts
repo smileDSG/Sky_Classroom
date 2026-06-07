@@ -27,6 +27,8 @@ interface RawSolution {
   steps?: { label: string; content: string; keyPoints?: string[] }[];
   knowledgePoints?: { name: string; description: string; difficulty?: string }[];
   similarQuestions?: { problem: string; difficulty?: number; knowledgePoint?: string }[];
+  questionType?: 'choice' | 'fill' | 'solve' | 'judge';
+  options?: string[];
 }
 
 /**
@@ -35,11 +37,13 @@ interface RawSolution {
  * Normalizes missing/invalid fields and ensures all arrays have sensible defaults.
  */
 export function generateFourPartOutput(raw: RawSolution): FourPartOutput {
-  const output = {
+  const output: FourPartOutput = {
     answer: formatAnswer(raw.answer),
     steps: normalizeSteps(raw.steps, raw.answer),
     knowledgePoints: normalizeKnowledgePoints(raw.knowledgePoints),
     similarQuestions: normalizeSimilarQuestions(raw.similarQuestions),
+    questionType: normalizeQuestionType(raw.questionType),
+    options: normalizeOptions(raw.options, raw.questionType),
   };
   return postProcessFourPartOutput(output);
 }
@@ -120,6 +124,27 @@ function normalizeSimilarQuestions(
     difficulty: typeof q.difficulty === 'number' ? q.difficulty : 0.5,
     knowledgePoint: q.knowledgePoint || '综合',
   }));
+}
+
+function normalizeQuestionType(
+  raw?: string,
+): FourPartOutput['questionType'] {
+  if (raw === 'choice' || raw === 'fill' || raw === 'solve' || raw === 'judge') return raw;
+  return undefined;
+}
+
+function normalizeOptions(
+  raw?: string[],
+  questionType?: string,
+): string[] | undefined {
+  if (!raw || raw.length === 0) return undefined;
+  if (questionType === 'judge') {
+    return ['正确', '错误'];
+  }
+  if (questionType === 'choice') {
+    return raw.slice(0, 4);
+  }
+  return undefined;
 }
 
 // ── Graded output helpers ─────────────────────────────────────────

@@ -101,9 +101,12 @@ function structuralQA(
     }
   }
 
-  // Check for missing formulas when content mentions formula keywords
+  // Check for missing formulas when content mentions formula keywords.
+  // Only page types that actually support formulas in their schema should be checked.
+  const pageTypesWithFormulaSupport = new Set(['concept', 'case', 'formula', 'summary']);
   const formulaKeywords = /反应式|方程式|公式|化学式|总反应|电极反应/;
   for (const { pageNum, pageType, content } of allPageContent) {
+    if (!pageTypesWithFormulaSupport.has(pageType)) continue;
     const contentStr = JSON.stringify(content);
     if (formulaKeywords.test(contentStr)) {
       const hasFormulas = Array.isArray((content as { formulas?: unknown }).formulas) && ((content as { formulas?: Array<unknown> }).formulas?.length || 0) > 0;
@@ -128,6 +131,28 @@ function structuralQA(
     for (const pi of instructions) {
       if (!outlinePageNums.has(pi.pageNum)) {
         issues.push({ pageNum: pi.pageNum, severity: 'medium', type: 'orphan_instructions', layer: 'structural', detail: `存在未在 outline 中定义的排版指令 (pageNum=${pi.pageNum})` });
+      }
+    }
+  }
+
+  // Check for placeholder contamination in instructions (Layer 1 structural)
+  if (instructions && instructions.length > 0) {
+    const placeholderPattern = /[\[(【]\s*[Ff]ormula\s*[\])】]/;
+    const cnPlaceholderPattern = /【\s*公式\s*】/;
+    for (const pi of instructions) {
+      for (const inst of pi.instructions) {
+        if (inst.op === 'addText') {
+          const text = (inst.params as { text?: string }).text || '';
+          if (placeholderPattern.test(text) || cnPlaceholderPattern.test(text)) {
+            issues.push({
+              pageNum: pi.pageNum,
+              severity: 'high',
+              type: 'placeholder_contamination',
+              layer: 'structural',
+              detail: `第 ${pi.pageNum} 页 addText 指令包含 [Formula] 占位符，应使用 addFormula 指令渲染公式`,
+            });
+          }
+        }
       }
     }
   }
@@ -247,12 +272,13 @@ export async function runQA(
     }));
   } catch (err) {
     log.warn(`Content QA failed, using structural only: ${err}`);
-    // Graceful fallback: use structural score so QA doesn't unnecessarily fail
+    // When LLM fails we cannot assume content is good — cap the score.
+    // If structural is clean, default to 30 (explicitly below passing threshold).
     const structuralScore = Math.max(0, 100 - structuralIssues.length * 10);
-    contentScore = structuralScore;
+    contentScore = Math.min(structuralScore, 30);
     contentIssues = [{
       pageNum: 0,
-      severity: 'low',
+      severity: 'high',
       type: 'qa_llm_failed',
       layer: 'content',
       detail: `Content QA LLM call failed: ${err instanceof Error ? err.message : String(err)}`,

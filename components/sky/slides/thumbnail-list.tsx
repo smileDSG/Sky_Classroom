@@ -20,7 +20,7 @@ function extractTitle(slide: Slide): string {
   for (const el of slide.elements || []) {
     if (el.type === 'text') {
       const textEl = el as { content?: string };
-      const plain = textEl.content?.replace(HTML_RE, '').trim();
+      const plain = (textEl.content ?? '').replace(HTML_RE, '').trim();
       if (plain) return plain.length > 16 ? plain.slice(0, 16) + '…' : plain;
     }
   }

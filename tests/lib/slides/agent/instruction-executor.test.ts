@@ -1,5 +1,20 @@
 import { describe, it, expect, vi } from 'vitest';
-import { InstructionExecutor } from '@/lib/slides/agent/instruction-executor';
+import { InstructionExecutor, type Slide } from '@/lib/slides/agent/instruction-executor';
+
+// Mock external dependencies for addFormula fallback chain
+vi.mock('@/lib/slides/latex-to-image', () => ({
+  renderLatexToPng: vi.fn(),
+}));
+
+vi.mock('@/lib/export/latex-to-omml', () => ({
+  latexToOmml: vi.fn(),
+}));
+
+import { renderLatexToPng } from '@/lib/slides/latex-to-image';
+import { latexToOmml } from '@/lib/export/latex-to-omml';
+
+const mockedRenderLatexToPng = vi.mocked(renderLatexToPng);
+const mockedLatexToOmml = vi.mocked(latexToOmml);
 
 // Minimal pptxgenjs mock
 function createMockSlide() {
@@ -37,10 +52,10 @@ describe('InstructionExecutor', () => {
   const executor = new InstructionExecutor();
 
   describe('addText filtering', () => {
-    it('filters [Formula] placeholder text', () => {
+    it('filters [Formula] placeholder text', async () => {
       const slide = createMockSlide();
-      const result = executor.execute(
-        slide as unknown as import('pptxgenjs').Slide,
+      const result = await executor.execute(
+        slide as unknown as Slide,
         mockPres,
         [
           { op: 'addText', params: { text: '[Formula]', x: 1, y: 2, w: 8, h: 1, fontSize: 14 } },
@@ -53,10 +68,10 @@ describe('InstructionExecutor', () => {
       expect(slide._texts[0].text).toBe('正常文本');
     });
 
-    it('filters orphaned arrow symbols', () => {
+    it('filters orphaned arrow symbols', async () => {
       const slide = createMockSlide();
-      executor.execute(
-        slide as unknown as import('pptxgenjs').Slide,
+      await executor.execute(
+        slide as unknown as Slide,
         mockPres,
         [
           { op: 'addText', params: { text: '→', x: 1, y: 2, w: 1, h: 0.5 } },
@@ -71,10 +86,10 @@ describe('InstructionExecutor', () => {
   });
 
   describe('addText LaTeX sanitization', () => {
-    it('converts leaked LaTeX commands to Unicode', () => {
+    it('converts leaked LaTeX commands to Unicode', async () => {
       const slide = createMockSlide();
-      executor.execute(
-        slide as unknown as import('pptxgenjs').Slide,
+      await executor.execute(
+        slide as unknown as Slide,
         mockPres,
         [
           { op: 'addText', params: { text: '\\Delta G = -nFE，电动势', x: 1, y: 2, w: 8, h: 1 } },
@@ -89,10 +104,10 @@ describe('InstructionExecutor', () => {
       expect(slide._texts[2].text).toBe('α + β → γ');
     });
 
-    it('converts inline $...$ LaTeX to Unicode', () => {
+    it('converts inline $...$ LaTeX to Unicode', async () => {
       const slide = createMockSlide();
-      executor.execute(
-        slide as unknown as import('pptxgenjs').Slide,
+      await executor.execute(
+        slide as unknown as Slide,
         mockPres,
         [
           { op: 'addText', params: { text: '离子浓度 $Na^+$ 和 $Cl^-$', x: 1, y: 2, w: 8, h: 1 } },
@@ -109,10 +124,10 @@ describe('InstructionExecutor', () => {
   });
 
   describe('addTable rendering', () => {
-    it('renders table with string cells', () => {
+    it('renders table with string cells', async () => {
       const slide = createMockSlide();
-      executor.execute(
-        slide as unknown as import('pptxgenjs').Slide,
+      await executor.execute(
+        slide as unknown as Slide,
         mockPres,
         [
           {
@@ -137,13 +152,13 @@ describe('InstructionExecutor', () => {
       expect(data[3][1].text).toBe('6');
     });
 
-    it('skips addTable when cells are objects (schema validation fails)', () => {
+    it('skips addTable when cells are objects (schema validation fails)', async () => {
       // deepRepairContent in section-agent is responsible for fixing object cells
       // before they reach the instruction executor. If they slip through,
       // schema validation rejects the instruction.
       const slide = createMockSlide();
-      const result = executor.execute(
-        slide as unknown as import('pptxgenjs').Slide,
+      const result = await executor.execute(
+        slide as unknown as Slide,
         mockPres,
         [
           {
@@ -163,6 +178,83 @@ describe('InstructionExecutor', () => {
       expect(slide._tables.length).toBe(0);
       expect(result.errors.length).toBe(1);
       expect(result.errors[0].op).toBe('addTable');
+    });
+  });
+
+  describe('addFormula fallback chain', () => {
+    beforeEach(() => {
+      mockedLatexToOmml.mockReset();
+      mockedRenderLatexToPng.mockReset();
+    });
+
+    it('uses OMML (slide.addFormula) when latexToOmml returns valid OMML', async () => {
+      mockedLatexToOmml.mockReturnValue('<m:oMath><m:r><m:t>x</m:t></m:r></m:oMath>');
+
+      const slide = createMockSlide();
+      const result = await executor.execute(
+        slide as unknown as Slide,
+        mockPres,
+        [
+          { op: 'addFormula', params: { latex: 'x^2 + y^2 = r^2', x: 1, y: 2, w: 8, h: 1, fontSize: 16 } },
+        ],
+        1,
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockedLatexToOmml).toHaveBeenCalledWith('x^2 + y^2 = r^2', 16);
+      expect(slide._formulas.length).toBe(1);
+      expect(slide._formulas[0].opts.omml).toContain('<m:oMath>');
+      expect(slide.addImage).not.toHaveBeenCalled();
+      expect(slide._texts.length).toBe(0);
+    });
+
+    it('falls back to PNG (slide.addImage) when OMML returns null', async () => {
+      mockedLatexToOmml.mockReturnValue(null);
+      mockedRenderLatexToPng.mockResolvedValue({
+        buffer: Buffer.from('fake-png'),
+        width: 100,
+        height: 40,
+      });
+
+      const slide = createMockSlide();
+      const result = await executor.execute(
+        slide as unknown as Slide,
+        mockPres,
+        [
+          { op: 'addFormula', params: { latex: '\\frac{a}{b}', x: 1, y: 2, w: 8, h: 1 } },
+        ],
+        1,
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockedLatexToOmml).toHaveBeenCalled();
+      expect(mockedRenderLatexToPng).toHaveBeenCalled();
+      expect(slide.addImage).toHaveBeenCalled();
+      expect(slide._formulas.length).toBe(0);
+    });
+
+    it('falls back to Unicode text (slide.addText) when both OMML and PNG fail', async () => {
+      mockedLatexToOmml.mockImplementation(() => {
+        throw new Error('OMML conversion error');
+      });
+      mockedRenderLatexToPng.mockRejectedValue(new Error('PNG render error'));
+
+      const slide = createMockSlide();
+      const result = await executor.execute(
+        slide as unknown as Slide,
+        mockPres,
+        [
+          { op: 'addFormula', params: { latex: '\\Delta G', x: 1, y: 2, w: 8, h: 1 } },
+        ],
+        1,
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockedLatexToOmml).toHaveBeenCalled();
+      expect(mockedRenderLatexToPng).toHaveBeenCalled();
+      expect(slide.addImage).not.toHaveBeenCalled();
+      expect(slide._texts.length).toBe(1);
+      expect(slide._texts[0].text).toContain('Δ');
     });
   });
 });

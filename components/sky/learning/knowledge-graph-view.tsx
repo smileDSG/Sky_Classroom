@@ -39,7 +39,7 @@ const ITERATIONS = 100;
 const REPULSION = 3000;
 const ATTRACTION = 0.005;
 const DAMPING = 0.9;
-const CANVAS_HEIGHT = 400;
+const CANVAS_HEIGHT: number = 400;
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 3;
 

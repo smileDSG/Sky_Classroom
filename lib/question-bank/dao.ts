@@ -1,3 +1,5 @@
+'use server';
+
 /**
  * Question Bank — MySQL DAO layer.
  *
@@ -88,6 +90,17 @@ function safeParseJson<T>(raw: string | null, fallback: T): T {
   try { return JSON.parse(raw) as T; } catch { return fallback; }
 }
 
+function escapeLike(raw: string): string {
+  return raw.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
+function needsLikeFallback(keyword: string): boolean {
+  if (!keyword) return false;
+  if (keyword.length <= 2) return true;
+  // MySQL boolean-mode special operators break ngram or need escaping
+  return /[\+\-\*\(\)"<>@~]/.test(keyword);
+}
+
 // ── Ensure table exists ─────────────────────────────────────────────
 
 let _tableEnsured = false;
@@ -104,12 +117,12 @@ export async function ensureTable(): Promise<void> {
       question_type    VARCHAR(16)  NOT NULL DEFAULT 'solve',
       content          TEXT         NOT NULL,
       answer           TEXT         NOT NULL,
-      explanation      TEXT         NOT NULL DEFAULT '',
+      explanation      TEXT         NOT NULL,
       knowledge_points JSON         NOT NULL DEFAULT (JSON_ARRAY()),
       image            TEXT,
       options          JSON,
       source           VARCHAR(255),
-      tags             JSON         NOT NULL (JSON_ARRAY()),
+      tags             JSON         NOT NULL DEFAULT (JSON_ARRAY()),
       problem_hash     VARCHAR(64)  NOT NULL,
       verified         BOOLEAN      NOT NULL DEFAULT FALSE,
       created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -278,6 +291,58 @@ export async function findById(id: string): Promise<QuestionBankRow | null> {
   return rows.length > 0 ? toRow(rows[0]) : null;
 }
 
+export async function findAdjacentIds(
+  id: string,
+  filter: Pick<QuestionBankFilter, 'subject' | 'grade' | 'difficulty' | 'questionType' | 'verified' | 'keyword'> = {},
+): Promise<{ prevId: string | null; nextId: string | null }> {
+  await ensureTable();
+  const pool = getPool();
+
+  // Get current row's created_at
+  const [curRows] = await pool.query<QBRow[]>('SELECT created_at FROM question_bank WHERE id = ?', [id]);
+  if (curRows.length === 0) return { prevId: null, nextId: null };
+  const createdAt = curRows[0].created_at;
+
+  const conditions: string[] = [];
+  const params: any[] = [];
+
+  if (filter.subject) { conditions.push('subject = ?'); params.push(filter.subject); }
+  if (filter.grade) { conditions.push('grade = ?'); params.push(filter.grade); }
+  if (filter.difficulty) { conditions.push('difficulty = ?'); params.push(filter.difficulty); }
+  if (filter.questionType) { conditions.push('question_type = ?'); params.push(filter.questionType); }
+  if (filter.verified !== undefined) { conditions.push('verified = ?'); params.push(filter.verified ? 1 : 0); }
+  if (filter.keyword) {
+    if (needsLikeFallback(filter.keyword)) {
+      const like = `%${escapeLike(filter.keyword)}%`;
+      conditions.push('(content LIKE ? ESCAPE \'\\\\\' OR explanation LIKE ? ESCAPE \'\\\\\' OR knowledge_points LIKE ? ESCAPE \'\\\\\')');
+      params.push(like, like, like);
+    } else {
+      conditions.push('MATCH(content, explanation) AGAINST(? IN BOOLEAN MODE)');
+      params.push(filter.keyword);
+    }
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const andWhere = conditions.length > 0 ? 'AND' : 'WHERE';
+
+  // Previous: created_at < current, order by created_at DESC
+  const [prevRows] = await pool.query<QBRow[]>(
+    `SELECT id FROM question_bank ${where} ${andWhere} created_at < ? ORDER BY created_at DESC LIMIT 1`,
+    [...params, createdAt],
+  );
+
+  // Next: created_at > current, order by created_at ASC
+  const [nextRows] = await pool.query<QBRow[]>(
+    `SELECT id FROM question_bank ${where} ${andWhere} created_at > ? ORDER BY created_at ASC LIMIT 1`,
+    [...params, createdAt],
+  );
+
+  return {
+    prevId: prevRows.length > 0 ? prevRows[0].id : null,
+    nextId: nextRows.length > 0 ? nextRows[0].id : null,
+  };
+}
+
 export async function findByHash(problemHash: string): Promise<QuestionBankRow | null> {
   await ensureTable();
   const pool = getPool();
@@ -321,9 +386,20 @@ export async function search(filter: QuestionBankFilter = {}): Promise<QuestionB
     conditions.push('verified = ?');
     params.push(filter.verified ? 1 : 0);
   }
+  if (filter.ids && filter.ids.length > 0) {
+    const placeholders = filter.ids.map(() => '?').join(',');
+    conditions.push(`id IN (${placeholders})`);
+    params.push(...filter.ids);
+  }
   if (filter.keyword) {
-    conditions.push('MATCH(content, explanation) AGAINST(? IN BOOLEAN MODE)');
-    params.push(filter.keyword);
+    if (needsLikeFallback(filter.keyword)) {
+      const like = `%${escapeLike(filter.keyword)}%`;
+      conditions.push('(content LIKE ? ESCAPE \'\\\\\' OR explanation LIKE ? ESCAPE \'\\\\\' OR knowledge_points LIKE ? ESCAPE \'\\\\\')');
+      params.push(like, like, like);
+    } else {
+      conditions.push('MATCH(content, explanation) AGAINST(? IN BOOLEAN MODE)');
+      params.push(filter.keyword);
+    }
   }
   if (filter.tags && filter.tags.length > 0) {
     // JSON_CONTAINS checks if any of the given tags exist in the JSON array
@@ -390,7 +466,19 @@ export async function deleteById(id: string): Promise<boolean> {
   return (res.affectedRows ?? 0) > 0;
 }
 
-export async function count(filter: Pick<QuestionBankFilter, 'subject' | 'difficulty' | 'grade' | 'questionType' | 'verified'> = {}): Promise<number> {
+export async function deleteByIds(ids: string[]): Promise<number> {
+  await ensureTable();
+  if (ids.length === 0) return 0;
+  const pool = getPool();
+  const placeholders = ids.map(() => '?').join(',');
+  const [res] = await pool.query<ResultSetHeader>(
+    `DELETE FROM question_bank WHERE id IN (${placeholders})`,
+    ids,
+  );
+  return res.affectedRows ?? 0;
+}
+
+export async function count(filter: Pick<QuestionBankFilter, 'subject' | 'difficulty' | 'grade' | 'questionType' | 'verified' | 'keyword' | 'ids'> = {}): Promise<number> {
   await ensureTable();
   const pool = getPool();
 
@@ -402,6 +490,21 @@ export async function count(filter: Pick<QuestionBankFilter, 'subject' | 'diffic
   if (filter.difficulty) { conditions.push('difficulty = ?'); params.push(filter.difficulty); }
   if (filter.questionType) { conditions.push('question_type = ?'); params.push(filter.questionType); }
   if (filter.verified !== undefined) { conditions.push('verified = ?'); params.push(filter.verified ? 1 : 0); }
+  if (filter.ids && filter.ids.length > 0) {
+    const placeholders = filter.ids.map(() => '?').join(',');
+    conditions.push(`id IN (${placeholders})`);
+    params.push(...filter.ids);
+  }
+  if (filter.keyword) {
+    if (needsLikeFallback(filter.keyword)) {
+      const like = `%${escapeLike(filter.keyword)}%`;
+      conditions.push('(content LIKE ? ESCAPE \'\\\\\' OR explanation LIKE ? ESCAPE \'\\\\\' OR knowledge_points LIKE ? ESCAPE \'\\\\\')');
+      params.push(like, like, like);
+    } else {
+      conditions.push('MATCH(content, explanation) AGAINST(? IN BOOLEAN MODE)');
+      params.push(filter.keyword);
+    }
+  }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   const [rows] = await pool.query<RowDataPacket[]>(

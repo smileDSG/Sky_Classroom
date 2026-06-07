@@ -12,6 +12,8 @@ import {
   writeJsonFileAtomic,
 } from '@/lib/server/classroom-storage';
 
+export type { ClassroomGenerationProgress, GenerateClassroomInput, GenerateClassroomResult } from '@/lib/server/classroom-generation';
+
 export type ClassroomGenerationJobStatus = 'queued' | 'running' | 'awaiting_review' | 'cancelled' | 'succeeded' | 'failed';
 
 export interface ClassroomGenerationJob {

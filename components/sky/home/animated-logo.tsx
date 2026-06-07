@@ -97,7 +97,7 @@ export function FeatureHighlights() {
       color: 'from-sky-400 to-blue-500',
       bgColor: 'bg-sky-50 dark:bg-sky-900/20',
       iconColor: 'text-sky-500',
-      href: '/sky/slides',
+      href: '/sky/cloud-mind/slides',
     },
   ];
 
