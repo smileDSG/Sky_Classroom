@@ -33,6 +33,8 @@ interface TaskStore {
   dismissedIds: Set<string>;
   /** The single active solve task ID — survives navigation */
   activeSolveTaskId: string | null;
+  /** AbortControllers for in-flight tasks — survives navigation */
+  abortControllers: Map<string, AbortController>;
 
   addTask: (task: BackgroundTask) => void;
   updateTask: (id: string, update: Partial<BackgroundTask>) => void;
@@ -40,12 +42,15 @@ interface TaskStore {
   dismissTask: (id: string) => void;
   setActiveSolveTask: (id: string | null) => void;
   getTask: (id: string) => BackgroundTask | undefined;
+  registerAbortController: (id: string, controller: AbortController) => void;
+  abortTask: (id: string) => void;
 }
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
   tasks: {},
   dismissedIds: new Set<string>(),
   activeSolveTaskId: null,
+  abortControllers: new Map<string, AbortController>(),
 
   addTask: (task) => {
     console.log('[TaskStore] addTask:', { id: task.id, type: task.type, status: task.status });
@@ -68,6 +73,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   removeTask: (id) => {
     console.log('[TaskStore] removeTask:', id);
+    // Abort any in-flight request for this task
+    const ctrl = get().abortControllers.get(id);
+    if (ctrl) {
+      ctrl.abort();
+      get().abortControllers.delete(id);
+    }
     set((s) => {
       const next = { ...s.tasks };
       delete next[id];
@@ -87,4 +98,16 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   setActiveSolveTask: (id) => set({ activeSolveTaskId: id }),
 
   getTask: (id) => get().tasks[id],
+
+  registerAbortController: (id, controller) => {
+    get().abortControllers.set(id, controller);
+  },
+
+  abortTask: (id) => {
+    const ctrl = get().abortControllers.get(id);
+    if (ctrl) {
+      ctrl.abort();
+      get().abortControllers.delete(id);
+    }
+  },
 }));

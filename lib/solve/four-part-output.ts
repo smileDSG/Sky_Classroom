@@ -11,11 +11,7 @@
  *   - gradeResult, mistakeAnalysis, recommendedPractice
  */
 
-import type {
-  FourPartOutput,
-  GradedFourPartOutput,
-  GradeResult,
-} from './types';
+import type { FourPartOutput, GradedFourPartOutput, GradeResult } from './types';
 import { postProcessFourPartOutput } from './math-postprocessor';
 
 /**
@@ -23,6 +19,7 @@ import { postProcessFourPartOutput } from './math-postprocessor';
  * May come directly from LLM JSON output or from question bank.
  */
 interface RawSolution {
+  solution?: string;
   answer: string;
   steps?: { label: string; content: string; keyPoints?: string[] }[];
   knowledgePoints?: { name: string; description: string; difficulty?: string }[];
@@ -36,6 +33,7 @@ interface RawSolution {
  */
 export function generateFourPartOutput(raw: RawSolution): FourPartOutput {
   const output = {
+    solution: raw.solution || '',
     answer: formatAnswer(raw.answer),
     steps: normalizeSteps(raw.steps, raw.answer),
     knowledgePoints: normalizeKnowledgePoints(raw.knowledgePoints),
@@ -134,9 +132,9 @@ function buildMistakeAnalysis(gradeResult: GradeResult): string {
   const causeLabels: Record<string, string> = {
     'concept-unclear': '概念不清',
     'calculation-error': '计算失误',
-    'misreading': '审题错误',
+    misreading: '审题错误',
     'method-wrong': '方法错误',
-    'careless': '粗心',
+    careless: '粗心',
     'format-error': '格式错误',
   };
 
@@ -188,9 +186,9 @@ function generateRemedialQuestions(
   const causeAdvice: Record<string, string> = {
     'concept-unclear': '请复习相关概念后再尝试',
     'calculation-error': '请仔细检查计算步骤',
-    'misreading': '请仔细阅读题目条件',
+    misreading: '请仔细阅读题目条件',
     'method-wrong': '请学习正确的解题方法',
-    'careless': '请注意细节',
+    careless: '请注意细节',
     'format-error': '请注意答题格式',
   };
 

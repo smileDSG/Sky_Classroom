@@ -162,10 +162,19 @@ function GenerationProgressContent() {
     // Update task store for multi-task tracking
     const task = useTaskStore.getState().tasks[jobId ?? ''];
     if (task) {
-      useTaskStore.getState().updateTask(task.id, {
+      const update: Record<string, unknown> = {
         progress: data.progress,
         phase: data.message,
-      });
+      };
+
+      // When outline is ready for review, mark task as completed
+      if (data.status === 'awaiting_review') {
+        update.status = 'completed';
+        update.progress = 100;
+        update.phase = '大纲已生成，等待审阅';
+      }
+
+      useTaskStore.getState().updateTask(task.id, update);
     }
   }, [jobId, router]);
 

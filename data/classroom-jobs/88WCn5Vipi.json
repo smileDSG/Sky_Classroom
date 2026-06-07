@@ -1,0 +1,22 @@
+{
+  "id": "88WCn5Vipi",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 28,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-06-04T13:38:22.879Z",
+  "updatedAt": "2026-06-04T13:38:54.485Z",
+  "inputSummary": {
+    "requirementPreview": "python入门教学",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-06-04T13:38:22.889Z",
+  "completedAt": "2026-06-04T13:38:54.485Z",
+  "error": "用户取消了生成"
+}

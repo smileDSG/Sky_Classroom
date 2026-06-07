@@ -7,8 +7,12 @@ export interface VerifyResult {
   reasoning: string;
 }
 
+/**
+ * Default when verification fails/errors.
+ * isCorrect=false ensures bad answers are NOT silently passed through.
+ */
 export const DEFAULT_VERIFY: VerifyResult = {
-  isCorrect: true,
+  isCorrect: false,
   confidence: 0,
   reasoning: 'verify skipped or failed',
 };

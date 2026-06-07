@@ -1,0 +1,22 @@
+{
+  "id": "1Xu4hJ1ZJ7",
+  "status": "failed",
+  "step": "failed",
+  "progress": 15,
+  "message": "Classroom generation failed",
+  "createdAt": "2026-06-04T12:40:50.163Z",
+  "updatedAt": "2026-06-04T12:40:50.648Z",
+  "inputSummary": {
+    "requirementPreview": "python入门教学",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-06-04T12:40:50.174Z",
+  "completedAt": "2026-06-04T12:40:50.648Z",
+  "error": "Error: DeepSeek API error: {\"message\":\"Authentication Fails, Your api key: ****7e7f is invalid\",\"type\":\"authentication_error\",\"param\":null,\"code\":\"invalid_request_error\"}"
+}

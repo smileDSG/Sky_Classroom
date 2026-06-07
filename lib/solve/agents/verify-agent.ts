@@ -10,12 +10,20 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('VerifyAgent');
 
+/**
+ * Use the 'science' model (GLM-5.1) for verification — different from
+ * the solve agent's default ('universal' / DeepSeek Flash) to ensure
+ * truly independent validation. 'grading' maps to the same model as
+ * 'universal', so we use 'science' instead.
+ */
+const VERIFY_MODEL_KEY = 'science';
+
 export async function verifyAnswer(
   problemText: string,
   originalAnswer: string,
 ): Promise<VerifyResult> {
   try {
-    const modelConfig = resolveSolverModel('universal');
+    const modelConfig = resolveSolverModel(VERIFY_MODEL_KEY);
     const { model } = getModel(modelConfig);
 
     const result = await callLLM(
@@ -37,7 +45,8 @@ export async function verifyAnswer(
       return DEFAULT_VERIFY;
     }
 
-    // Use answer-matcher for robust comparison
+    // The LLM provides its own independently-derived answer.
+    // We use answer-matcher to robustly compare it against the original.
     const llmAnswer = typeof parsed.yourAnswer === 'string' ? parsed.yourAnswer : '';
     const comparison = matchAnswers(llmAnswer, originalAnswer);
 
@@ -61,7 +70,8 @@ export async function verifyAnswer(
       reasoning: typeof parsed.reasoning === 'string' ? parsed.reasoning : 'answers differ',
     };
   } catch (err) {
-    log.warn('verifyAnswer failed, returning optimistic default:', err);
+    log.warn('verifyAnswer caught error, returning fail-safe default:', err);
+    // Return isCorrect=false so the pipeline doesn't silently accept a bad answer.
     return DEFAULT_VERIFY;
   }
 }

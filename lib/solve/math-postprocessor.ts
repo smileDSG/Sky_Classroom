@@ -14,8 +14,16 @@ import type { FourPartOutput } from './types';
 // ── Unicode superscript normalization ──────────────────────────────
 
 const UNICODE_SUPERSCRIPTS: Array<[string, string]> = [
-  ['²', '^2'], ['³', '^3'], ['⁰', '^0'], ['¹', '^1'],
-  ['⁴', '^4'], ['⁵', '^5'], ['⁶', '^6'], ['⁷', '^7'], ['⁸', '^8'], ['⁹', '^9'],
+  ['²', '^2'],
+  ['³', '^3'],
+  ['⁰', '^0'],
+  ['¹', '^1'],
+  ['⁴', '^4'],
+  ['⁵', '^5'],
+  ['⁶', '^6'],
+  ['⁷', '^7'],
+  ['⁸', '^8'],
+  ['⁹', '^9'],
 ];
 
 const UNICODE_PRIME = '′';
@@ -67,22 +75,20 @@ function processTextSegment(text: string): string {
   // Matches patterns like: 1/4·1/2kA^2=1/4E  or  A/2=B/4  or  3/4×2/3=1/2
   result = wrapChainedExpressions(result);
 
-  // Step 3: Wrap single fractions: 1/4, A/2, kA/2
+  // Step 3: Wrap single fractions -- only in math contexts
+  // Avoid wrapping when adjacent to Chinese characters (e.g. "3/4季度" is prose, not math)
   result = result.replace(
-    /(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?|[a-zA-Z][a-zA-Z0-9]*)/g,
+    /(?<![一-鿿a-zA-Z])(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)(?![一-鿆a-zA-Z])/g,
     (_m, num: string, den: string) => `$\\frac{${num}}{${den}}$`,
   );
   result = result.replace(
-    /([a-zA-Z][a-zA-Z0-9]*)\/(\d+(?:\.\d+)?|[a-zA-Z][a-zA-Z0-9]*)/g,
+    /(?<![一-鿿])([a-zA-Z][a-zA-Z0-9]*)\/(\d+(?:\.\d+)?|[a-zA-Z][a-zA-Z0-9]*)(?![一-鿆])/g,
     (_m, num: string, den: string) => `$\\frac{${num}}{${den}}$`,
   );
 
   // Step 4: Wrap variables with primes: A', E'', f'''
   // Match 1+ consecutive apostrophes after a letter
-  result = result.replace(
-    /([A-Z])('+)(?!\w)/g,
-    (_m, v: string, p: string) => `$${v}${p}$`,
-  );
+  result = result.replace(/([A-Z])('+)(?!\w)/g, (_m, v: string, p: string) => `$${v}${p}$`);
 
   // Step 5: Wrap bare equations: variable = value
   // Handles: A = B, E = 4E, x = 5, but avoids matching Chinese text
@@ -159,11 +165,13 @@ export function postProcessMathContent(text: string): string {
   const processed = parts.map((part, i) => {
     if (isMath[i]) return part;
     // For math blocks, also normalize Unicode superscripts inside
-    const mathInner = part.replace(/\$\$([\s\S]*?)\$\$/g, (_m, inner: string) => {
-      return '$$' + normalizeUnicodeSuperscripts(inner) + '$$';
-    }).replace(/\$([^$\n]+?)\$/g, (_m, inner: string) => {
-      return '$' + normalizeUnicodeSuperscripts(inner) + '$';
-    });
+    const mathInner = part
+      .replace(/\$\$([\s\S]*?)\$\$/g, (_m, inner: string) => {
+        return '$$' + normalizeUnicodeSuperscripts(inner) + '$$';
+      })
+      .replace(/\$([^$\n]+?)\$/g, (_m, inner: string) => {
+        return '$' + normalizeUnicodeSuperscripts(inner) + '$';
+      });
     if (isMath[i]) return mathInner;
     return processTextSegment(part);
   });
@@ -177,6 +185,7 @@ export function postProcessMathContent(text: string): string {
 export function postProcessFourPartOutput(output: FourPartOutput): FourPartOutput {
   return {
     ...output,
+    solution: output.solution ? postProcessMathContent(output.solution) : '',
     answer: postProcessMathContent(output.answer),
     steps: output.steps.map((step) => ({
       ...step,

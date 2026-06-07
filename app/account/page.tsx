@@ -87,7 +87,6 @@ export default function AccountPage() {const router = useRouter();
               <SidebarNav
                 active={activeSection}
                 onChange={setActiveSection}
-                t={t}
               />
             </div>
           </aside>

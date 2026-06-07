@@ -26,12 +26,41 @@ export const ENV_URL_MAP: Record<string, string> = {
   qwen: 'QWEN_BASE_URL',
 };
 
-/** Resolve ModelConfig for a solver agent type. */
-export function resolveSolverModel(agentType: SolverAgentType): ModelConfig {
+/** Vision-capable models in priority order (best math OCR first). */
+export const VISION_MODELS: { providerId: ProviderId; modelId: string }[] = [
+  { providerId: 'qwen', modelId: 'qwen3-vl-plus' },
+  { providerId: 'glm', modelId: 'glm-5v-turbo' },
+  { providerId: 'glm', modelId: 'glm-4.6v-flash' },
+];
+
+/**
+ * Resolve ModelConfig for a solver agent type.
+ * When hasImage is true, picks the first vision-capable model whose
+ * API key is configured. Returns null flag if no vision model available.
+ */
+export function resolveSolverModel(agentType: SolverAgentType, hasImage?: boolean): ModelConfig {
+  if (hasImage) {
+    for (const vm of VISION_MODELS) {
+      const key = process.env[ENV_KEY_MAP[vm.providerId] ?? ''] ?? '';
+      if (key) {
+        const baseUrl = process.env[ENV_URL_MAP[vm.providerId] ?? ''];
+        return { providerId: vm.providerId, modelId: vm.modelId, apiKey: key, baseUrl: baseUrl || undefined, providerType: 'openai' };
+      }
+    }
+    // No vision model available — fall back to text-only model
+  }
+
   const { providerId, modelId } = AGENT_MODEL_MAP[agentType];
   const apiKey = process.env[ENV_KEY_MAP[providerId] ?? ''] ?? '';
   const baseUrl = process.env[ENV_URL_MAP[providerId] ?? ''];
   return { providerId, modelId, apiKey, baseUrl: baseUrl || undefined, providerType: 'openai' };
+}
+
+/**
+ * Check if a vision-capable model is available for solving with images.
+ */
+export function hasVisionModel(): boolean {
+  return VISION_MODELS.some((vm) => !!process.env[ENV_KEY_MAP[vm.providerId]]);
 }
 
 // ── Keyword-based problem routing ────────────────────────────────

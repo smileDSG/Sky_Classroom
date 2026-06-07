@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Loader2,
   CheckCircle2,
@@ -56,12 +56,29 @@ function TaskItem({ task }: { task: BackgroundTask }) {
   const updateTask = useTaskStore((s) => s.updateTask);
   const removeTask = useTaskStore((s) => s.removeTask);
   const dismissTask = useTaskStore((s) => s.dismissTask);
+  const autoDismissTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const Icon = TASK_ICONS[task.type] || Zap;
   const color = TASK_COLORS[task.type] || 'text-slate-500';
   const isRunning = task.status === 'running';
   const isCompleted = task.status === 'completed';
   const isFailed = task.status === 'failed';
+
+  // Auto-dismiss completed tasks after 10 seconds
+  // Timer starts when the component mounts (when user sees the notification)
+  useEffect(() => {
+    if (isCompleted) {
+      autoDismissTimerRef.current = setTimeout(() => {
+        dismissTask(task.id);
+      }, 10000); // 10 seconds
+
+      return () => {
+        if (autoDismissTimerRef.current) {
+          clearTimeout(autoDismissTimerRef.current);
+        }
+      };
+    }
+  }, [isCompleted, task.id, dismissTask]);
 
   const handleClick = () => {
     if (isCompleted) {
@@ -73,6 +90,10 @@ function TaskItem({ task }: { task: BackgroundTask }) {
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Clear auto-dismiss timer if manually dismissed
+    if (autoDismissTimerRef.current) {
+      clearTimeout(autoDismissTimerRef.current);
+    }
     removeTask(task.id);
   };
 
@@ -141,9 +162,12 @@ export function BackgroundTasksIndicator() {
   const [expanded, setExpanded] = useState(true);
   const tasks = useTaskStore((s) => s.tasks);
   const dismissedIds = useTaskStore((s) => s.dismissedIds);
+  const pathname = usePathname();
 
+  // Hide tasks whose resultRoute matches the current page —
+  // those already have their own inline progress UI.
   const visibleTasks = Object.values(tasks).filter(
-    (t) => !dismissedIds.has(t.id)
+    (t) => !dismissedIds.has(t.id) && t.resultRoute !== pathname
   );
 
   if (visibleTasks.length === 0) return null;

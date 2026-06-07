@@ -51,7 +51,9 @@ export async function findSimilarQuestions(
     }
 
     matches.sort((a, b) => ((b as any)._similarity || 0) - ((a as any)._similarity || 0));
-    log.info(`[QuestionBank] Found ${matches.length} matches (vectorThreshold=${vectorThreshold.toFixed(2)})`);
+    log.info(
+      `[QuestionBank] Found ${matches.length} matches (vectorThreshold=${vectorThreshold.toFixed(2)})`,
+    );
     return matches;
   } catch (error) {
     log.error('[QuestionBank] findSimilarQuestions failed:', error);
@@ -71,6 +73,7 @@ export async function saveToQuestionBank(
       problemHash,
       problemText: entry.problemText,
       problemImage: entry.problemImage ?? undefined,
+      solution: 'solution' in entry ? ((entry as any).solution ?? '') : '',
       answer: entry.answer,
       knowledgePoints: entry.knowledgePoints,
       similarQuestions: entry.similarQuestions ?? [],
@@ -115,9 +118,7 @@ export async function deleteQuestionBankEntry(id: string): Promise<void> {
   }
 }
 
-export async function listQuestionBankEntries(
-  limit: number = 100,
-): Promise<QuestionBankEntry[]> {
+export async function listQuestionBankEntries(limit: number = 100): Promise<QuestionBankEntry[]> {
   try {
     const { search } = await import('@/lib/knowledge-base/kb-manager');
     const results = await search({
@@ -212,7 +213,12 @@ export async function findSimilarByKnowledgePoints(
 
     const currentKpNames = new Set(knowledgePoints.map((k) => k.name));
     const seen = new Set<string>();
-    const candidates: { problem: string; difficulty: number; knowledgePoint: string; answer: string }[] = [];
+    const candidates: {
+      problem: string;
+      difficulty: number;
+      knowledgePoint: string;
+      answer: string;
+    }[] = [];
 
     for (const result of results) {
       try {
@@ -231,8 +237,12 @@ export async function findSimilarByKnowledgePoints(
         candidates.push({
           problem: entry.problemText,
           // Estimate difficulty from knowledge points if available, otherwise default
-          difficulty: entry.knowledgePoints?.[0]?.difficulty === 'easy' ? 3
-            : entry.knowledgePoints?.[0]?.difficulty === 'hard' ? 7 : 5,
+          difficulty:
+            entry.knowledgePoints?.[0]?.difficulty === 'easy'
+              ? 3
+              : entry.knowledgePoints?.[0]?.difficulty === 'hard'
+                ? 7
+                : 5,
           knowledgePoint: overlap[0], // Use the first overlapping knowledge point
           answer: entry.answer,
         });
@@ -243,7 +253,9 @@ export async function findSimilarByKnowledgePoints(
       }
     }
 
-    log.info(`[QuestionBank] findSimilarByKnowledgePoints: ${candidates.length} results for KPs [${kpNames}]`);
+    log.info(
+      `[QuestionBank] findSimilarByKnowledgePoints: ${candidates.length} results for KPs [${kpNames}]`,
+    );
     return candidates;
   } catch (error) {
     log.error('[QuestionBank] findSimilarByKnowledgePoints failed:', error);

@@ -1,7 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, Lightbulb, ListOrdered, Target, ChevronDown, ChevronRight, CheckCircle2 } from 'lucide-react';
+import {
+  BookOpen,
+  Lightbulb,
+  ListOrdered,
+  Target,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle2,
+  Sparkles,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -18,7 +27,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
   const [activeTab, setActiveTab] = useState('steps');
 
   const isGraded = 'gradeResult' in output;
-  const { answer, steps, knowledgePoints, similarQuestions } = output;
+  const { solution, answer, steps, knowledgePoints, similarQuestions } = output;
 
   const hasSteps = steps.length > 0;
   const isComplete = hasSteps && answer; // 解题完成 = 有步骤且有答案
@@ -53,10 +62,25 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
             <div className="flex-1 flex items-center gap-2">
               <span className="text-xs font-medium text-green-700 dark:text-green-400">答案</span>
               <span className="inline-flex items-center rounded-md bg-white/80 dark:bg-green-900/30 px-3 py-1 border border-green-200/50 dark:border-green-800/50">
-                <MathRenderer content={answer} className="text-sm font-semibold text-green-700 dark:text-green-300" />
+                <MathRenderer
+                  content={answer}
+                  className="text-sm font-semibold text-green-700 dark:text-green-300"
+                />
               </span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── 解题详解：详细推导过程，在步骤上方 ── */}
+      {/* 仅在没有结构化步骤、或只有一个笼统"解答"时显示，避免与步骤 tab 内容重复 */}
+      {solution && steps.length <= 1 && (
+        <div className="border-b bg-gradient-to-r from-blue-50/50 to-indigo-50/30 dark:from-blue-950/15 dark:to-indigo-950/10 px-5 py-4">
+          <div className="flex items-start gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+            <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">解题详解</span>
+          </div>
+          <MathRenderer content={solution} className="text-sm leading-relaxed text-foreground" />
         </div>
       )}
 
@@ -122,18 +146,6 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                   </div>
                 </div>
               ))}
-              {/* 末尾：答案 */}
-              {isComplete && (
-                <div className="px-5 py-3 bg-green-50/50 dark:bg-green-950/20">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
-                    <span className="text-xs font-medium text-green-700 dark:text-green-400">答案</span>
-                    <span className="ml-1">
-                      <MathRenderer content={answer} className="text-sm font-semibold text-green-700 dark:text-green-300" />
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
           </TabsContent>
 
@@ -141,9 +153,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
           <TabsContent value="knowledge" className="mt-0 p-6">
             <div className="space-y-4">
               {knowledgePoints.length === 0 && (
-                <div className="text-center text-sm text-muted-foreground py-8">
-                  暂无知识点总结
-                </div>
+                <div className="text-center text-sm text-muted-foreground py-8">暂无知识点总结</div>
               )}
               {knowledgePoints.map((point, index) => (
                 <div
@@ -153,14 +163,19 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold"><MathRenderer content={point.name} /></h4>
+                        <h4 className="font-semibold">
+                          <MathRenderer content={point.name} />
+                        </h4>
                         <Badge
                           variant="secondary"
                           className={cn(
                             'text-xs',
-                            point.difficulty === 'easy' && 'bg-green-50 text-green-700 dark:bg-green-900/20',
-                            point.difficulty === 'medium' && 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20',
-                            point.difficulty === 'hard' && 'bg-red-50 text-red-700 dark:bg-red-900/20'
+                            point.difficulty === 'easy' &&
+                              'bg-green-50 text-green-700 dark:bg-green-900/20',
+                            point.difficulty === 'medium' &&
+                              'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20',
+                            point.difficulty === 'hard' &&
+                              'bg-red-50 text-red-700 dark:bg-red-900/20',
                           )}
                         >
                           {point.difficulty === 'easy' && '基础'}
@@ -168,7 +183,9 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                           {point.difficulty === 'hard' && '困难'}
                         </Badge>
                       </div>
-                      <div className="mt-2 text-sm text-muted-foreground leading-relaxed"><MathRenderer content={point.description} /></div>
+                      <div className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                        <MathRenderer content={point.description} />
+                      </div>
                     </div>
                   </div>
                 </div>

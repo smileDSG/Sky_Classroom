@@ -9,6 +9,12 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('CorrectAgent');
 
+/**
+ * Use the 'science' model for correction — different from the default
+ * solve agent ('universal') to bring a fresh perspective.
+ */
+const CORRECT_MODEL_KEY = 'science';
+
 export interface CorrectResult {
   steps: { label: string; content: string; keyPoints?: string[] }[];
   answer: string;
@@ -21,7 +27,7 @@ export async function correctAnswer(
   reasoning: string,
 ): Promise<CorrectResult | null> {
   try {
-    const modelConfig = resolveSolverModel('universal');
+    const modelConfig = resolveSolverModel(CORRECT_MODEL_KEY);
     const { model } = getModel(modelConfig);
 
     const prompt = buildCorrectPrompt(problemText, originalAnswer, suggestedAnswer, reasoning);

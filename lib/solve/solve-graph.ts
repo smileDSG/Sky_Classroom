@@ -37,7 +37,7 @@ async function checkSolveCacheNode(
   _config: LangGraphRunnableConfig,
 ): Promise<Partial<SolveGraphState>> {
   const { findSolveCacheMatches } = await import('./solve-cache');
-  const matches = await findSolveCacheMatches(state.problemText, 0.70);
+  const matches = await findSolveCacheMatches(state.problemText, 0.7);
 
   if (matches.length > 0) {
     log.info(`[SolveGraph] checkSolveCache: hit (similarity=${matches[0] ? 'found' : 'none'})`);
@@ -69,7 +69,9 @@ async function checkQuestionBankNode(
   const matches = await findSimilarQuestions(state.problemText, 0.85);
 
   if (matches.length > 0) {
-    log.info(`[SolveGraph] checkQuestionBank: hit (similarity=${matches[0]._similarity?.toFixed(2)})`);
+    log.info(
+      `[SolveGraph] checkQuestionBank: hit (similarity=${matches[0]._similarity?.toFixed(2)})`,
+    );
     const hit = matches[0];
     return {
       fromQuestionBank: true,
@@ -105,8 +107,31 @@ async function routeToAgentNode(
 ): Promise<Partial<SolveGraphState>> {
   const { problemText } = state;
 
-  const scienceKeywords = ['物理', '化学', '数学', '力学', '微积分', '代数', '几何', '方程', '计算', '求解', '证明'];
-  const humanitiesKeywords = ['语文', '历史', '政治', '地理', '文学', '作文', '阅读', '分析', '论述', '谈谈'];
+  const scienceKeywords = [
+    '物理',
+    '化学',
+    '数学',
+    '力学',
+    '微积分',
+    '代数',
+    '几何',
+    '方程',
+    '计算',
+    '求解',
+    '证明',
+  ];
+  const humanitiesKeywords = [
+    '语文',
+    '历史',
+    '政治',
+    '地理',
+    '文学',
+    '作文',
+    '阅读',
+    '分析',
+    '论述',
+    '谈谈',
+  ];
 
   let scienceScore = 0;
   let humanitiesScore = 0;
@@ -127,7 +152,9 @@ async function routeToAgentNode(
     route = 'universal';
   }
 
-  log.info(`[SolveGraph] routeToAgent: ${route} (science=${scienceScore}, humanities=${humanitiesScore})`);
+  log.info(
+    `[SolveGraph] routeToAgent: ${route} (science=${scienceScore}, humanities=${humanitiesScore})`,
+  );
 
   return { agentRoute: route };
 }
@@ -157,9 +184,41 @@ async function gradeAnswerNode(
   const { gradeAnswer: gradeFn } = await import('./grader');
   const gradeResult = await gradeFn(state.problemText, solution, userAnswer);
 
-  log.info(`[SolveGraph] gradeAnswer: isCorrect=${gradeResult.isCorrect}, score=${gradeResult.score}`);
+  log.info(
+    `[SolveGraph] gradeAnswer: isCorrect=${gradeResult.isCorrect}, score=${gradeResult.score}`,
+  );
 
   return { gradeResult };
+}
+
+/**
+ * Extract a concise answer from a full solution string.
+ * Looks for answer markers ("答案是", "所以", etc.) and extracts the trailing text.
+ * Falls back to the last sentence if no marker found.
+ */
+function extractConciseAnswer(solution: string): string {
+  const answerMarkers = [
+    /答案[是为：:]\s*([^\n。]{1,80})/,
+    /故[为是]?\s*([^\n。]{1,80})$/,
+    /因此(?:可得)?\s*([^\n。]{1,80})$/,
+    /所以(?:有)?\s*([^\n。]{1,80})$/,
+    /最终结果[是为：:]?\s*([^\n。]{1,80})/,
+    /解[为得：:]\s*([^\n。]{1,80})/,
+  ];
+
+  for (const marker of answerMarkers) {
+    const match = solution.match(marker);
+    if (match && match[1].trim().length > 0) {
+      return match[1].trim();
+    }
+  }
+
+  // Fallback: last sentence
+  const sentences = solution.split(/[。！？\n]+/).filter((s) => s.trim());
+  if (sentences.length > 0) {
+    return sentences[sentences.length - 1].trim();
+  }
+  return solution;
 }
 
 /**
@@ -187,9 +246,15 @@ async function generateOutputNode(
     };
   }
 
-  // Build raw solution object from solver output
+  // Build raw solution object from solver output.
+  // When parsedSteps is empty (cache hit), extract a concise answer from
+  // the solution instead of using the full solution text as the answer.
+  const hasSteps = state.parsedSteps && state.parsedSteps.length > 0;
+  const conciseAnswer = hasSteps ? solution : extractConciseAnswer(solution);
+
   const raw = {
-    answer: solution,
+    answer: conciseAnswer,
+    solution,
     steps: state.parsedSteps ?? [],
     knowledgePoints: (state.parsedKnowledgePoints ?? []).map((k) => ({
       name: k.name,
@@ -219,7 +284,9 @@ async function generateOutputNode(
 /**
  * After checkSolveCache: if hit, skip to generateOutput.
  */
-export function afterCheckSolveCache(state: SolveGraphState): 'checkQuestionBank' | 'generateOutput' {
+export function afterCheckSolveCache(
+  state: SolveGraphState,
+): 'checkQuestionBank' | 'generateOutput' {
   return state.fromSolveCache ? 'generateOutput' : 'checkQuestionBank';
 }
 

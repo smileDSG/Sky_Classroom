@@ -49,7 +49,9 @@ describe('parseSolutionResponse', () => {
       answer: 'x = 2',
       confidence: 0.9,
       steps: [{ label: '步骤1', content: '移项', keyPoints: ['等式两边同时减去3'] }],
-      knowledgePoints: [{ name: '一元一次方程', description: '基础代数', difficulty: 'easy' as const }],
+      knowledgePoints: [
+        { name: '一元一次方程', description: '基础代数', difficulty: 'easy' as const },
+      ],
       similarQuestions: [{ problem: '3x+1=7', difficulty: 0.5, knowledgePoint: '一元一次方程' }],
     };
 
@@ -99,7 +101,11 @@ describe('solveWithAgentNode', () => {
       solution: '详细的解题过程，包含完整的推理步骤和计算步骤',
       answer: '正确答案',
       confidence: 0.9,
-      steps: [{ label: 'step1', content: '第一步' }, { label: 'step2', content: '第二步' }, { label: 'step3', content: '第三步' }],
+      steps: [
+        { label: 'step1', content: '第一步' },
+        { label: 'step2', content: '第二步' },
+        { label: 'step3', content: '第三步' },
+      ],
       knowledgePoints: [{ name: '知识点', description: '说明', difficulty: 'easy' as const }],
       similarQuestions: [],
     };
@@ -120,12 +126,30 @@ describe('solveWithAgentNode', () => {
 
   test('triggers fallback when primary confidence is low', async () => {
     // Primary: minimal response — validated confidence ~0.35 (answer 'b' is 1 char = +0.05, base 0.3)
-    const lowConf = { solution: '', answer: 'b', confidence: 0.5, steps: [], knowledgePoints: [], similarQuestions: [] };
+    const lowConf = {
+      solution: '',
+      answer: 'b',
+      confidence: 0.5,
+      steps: [],
+      knowledgePoints: [],
+      similarQuestions: [],
+    };
     // Secondary: full response — validated confidence ~0.85
-    const highConf = { solution: '详细的解题过程和完整的推理步骤', answer: '正确答案', confidence: 0.85, steps: [{ label: 's', content: '步骤' }, { label: 's2', content: 'c2' }, { label: 's3', content: 'c3' }], knowledgePoints: [{ name: 'k', description: 'd', difficulty: 'easy' as const }], similarQuestions: [] };
+    const highConf = {
+      solution: '详细的解题过程和完整的推理步骤',
+      answer: '正确答案',
+      confidence: 0.85,
+      steps: [
+        { label: 's', content: '步骤' },
+        { label: 's2', content: 'c2' },
+        { label: 's3', content: 'c3' },
+      ],
+      knowledgePoints: [{ name: 'k', description: 'd', difficulty: 'easy' as const }],
+      similarQuestions: [],
+    };
 
     (parseJsonResponse as any)
-      .mockReturnValueOnce(lowConf)  // primary returns low confidence
+      .mockReturnValueOnce(lowConf) // primary returns low confidence
       .mockReturnValueOnce(highConf); // secondary returns high confidence
     (callLLM as any)
       .mockResolvedValueOnce({ text: JSON.stringify(lowConf) })
@@ -138,10 +162,35 @@ describe('solveWithAgentNode', () => {
 
   test('falls through to tertiary when both primary and secondary are low', async () => {
     // All three have empty/short responses (low validated confidence)
-    const lowConf1 = { solution: '', answer: 'a', confidence: 0.3, steps: [], knowledgePoints: [], similarQuestions: [] };
-    const lowConf2 = { solution: '', answer: 'b', confidence: 0.4, steps: [], knowledgePoints: [], similarQuestions: [] };
+    const lowConf1 = {
+      solution: '',
+      answer: 'a',
+      confidence: 0.3,
+      steps: [],
+      knowledgePoints: [],
+      similarQuestions: [],
+    };
+    const lowConf2 = {
+      solution: '',
+      answer: 'b',
+      confidence: 0.4,
+      steps: [],
+      knowledgePoints: [],
+      similarQuestions: [],
+    };
     // Tertiary has full response
-    const highConf3 = { solution: '完整解答', answer: '最终答案', confidence: 0.75, steps: [{ label: 's', content: '步骤' }, { label: 's2', content: 'c2' }, { label: 's3', content: 'c3' }], knowledgePoints: [{ name: 'k', description: 'd', difficulty: 'easy' as const }], similarQuestions: [] };
+    const highConf3 = {
+      solution: '完整解答',
+      answer: '最终答案',
+      confidence: 0.75,
+      steps: [
+        { label: 's', content: '步骤' },
+        { label: 's2', content: 'c2' },
+        { label: 's3', content: 'c3' },
+      ],
+      knowledgePoints: [{ name: 'k', description: 'd', difficulty: 'easy' as const }],
+      similarQuestions: [],
+    };
 
     (parseJsonResponse as any)
       .mockReturnValueOnce(lowConf1)
@@ -161,7 +210,8 @@ describe('solveWithAgentNode', () => {
     (callLLM as any).mockResolvedValue({ text: 'not json' });
 
     const result = await solveWithAgentNode(makeState(), {} as any);
-    expect(callLLM).toHaveBeenCalledTimes(3);
+    // 3 initial + 3 strict re-prompts = 6 calls
+    expect(callLLM).toHaveBeenCalledTimes(6);
     expect(result.solution).toBe('');
   });
 });

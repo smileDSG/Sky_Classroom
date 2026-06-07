@@ -496,7 +496,7 @@ export default function HomePage() {const router = useRouter();
         phase: '正在提交...',
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        resultRoute: '/classroom/',
+        resultRoute: `/generation-progress?jobId=${jobId}`,
         jobId,
       });
 

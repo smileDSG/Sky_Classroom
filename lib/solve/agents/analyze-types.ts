@@ -1,10 +1,19 @@
 // lib/solve/agents/analyze-types.ts
 
+export type Subject =
+  | 'math' | 'physics' | 'chemistry' | 'biology'
+  | 'chinese' | 'english' | 'history' | 'geography' | 'politics'
+  | 'unknown';
+
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
+export type QuestionType = 'choice' | 'fill' | 'solve' | 'judge';
+
 export interface AnalysisResult {
-  subject: string;
+  subject: Subject;
   knowledgePoints: string[];
-  difficulty: 'easy' | 'medium' | 'hard';
-  questionType: 'choice' | 'fill' | 'solve' | 'judge';
+  difficulty: Difficulty;
+  questionType: QuestionType;
   confidence: number;
 }
 

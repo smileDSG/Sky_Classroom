@@ -1153,12 +1153,15 @@ export function getModel(config: ModelConfig): ModelWithInfo {
         let apiKeys: string[] = [];
         if (typeof window === 'undefined') {
           try {
-            const { resolveApiKeys: serverResolveApiKeys } = require('@/lib/server/provider-config');
-            // If client explicitly passes comma-separated keys, respect it.
+            const { resolveApiKeyPool } = require('@/lib/server/provider-config');
+            // If client explicitly passes comma-separated keys, split and respect them.
             // Otherwise let server-side env/YAML config (including key pool)
             // take precedence over a single fallback key.
-            const clientKeys = config.apiKey?.includes(',') ? config.apiKey : undefined;
-            apiKeys = serverResolveApiKeys(providerId, clientKeys);
+            if (config.apiKey?.includes(',')) {
+              apiKeys = config.apiKey.split(',').map((k: string) => k.trim()).filter(Boolean);
+            } else {
+              apiKeys = resolveApiKeyPool(providerId);
+            }
           } catch {
             apiKeys = config.apiKey ? [config.apiKey] : [];
           }

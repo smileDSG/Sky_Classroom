@@ -31,9 +31,46 @@ describe('correctAnswer', () => {
     expect(result!.answer).toBe('4');
   });
 
+  it('returns null when JSON is missing answer field', async () => {
+    const { callLLM } = await import('@/lib/ai/llm');
+    vi.mocked(callLLM).mockResolvedValueOnce({
+      text: JSON.stringify({
+        steps: [{ label: '修正', content: 'step' }],
+        // answer field missing
+      }),
+    } as any);
+
+    const result = await correctAnswer('problem', 'wrong', 'right', 'reason');
+    expect(result).toBeNull();
+  });
+
+  it('returns null when JSON is missing steps field', async () => {
+    const { callLLM } = await import('@/lib/ai/llm');
+    vi.mocked(callLLM).mockResolvedValueOnce({
+      text: JSON.stringify({
+        answer: '5',
+        // steps field missing
+      }),
+    } as any);
+
+    const result = await correctAnswer('problem', 'wrong', 'right', 'reason');
+    expect(result).toBeNull();
+  });
+
   it('returns null on failure', async () => {
     const { callLLM } = await import('@/lib/ai/llm');
     vi.mocked(callLLM).mockRejectedValueOnce(new Error('fail'));
+
+    const result = await correctAnswer('problem', 'wrong', 'right', 'reason');
+    expect(result).toBeNull();
+  });
+
+  it('returns null for invalid JSON from LLM', async () => {
+    const { callLLM } = await import('@/lib/ai/llm');
+    vi.mocked(callLLM).mockResolvedValueOnce({ text: 'not json at all' } as any);
+
+    const { parseJsonResponse } = await import('@/lib/generation/json-repair');
+    vi.mocked(parseJsonResponse).mockReturnValueOnce(null);
 
     const result = await correctAnswer('problem', 'wrong', 'right', 'reason');
     expect(result).toBeNull();

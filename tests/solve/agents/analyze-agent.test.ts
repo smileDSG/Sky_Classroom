@@ -29,11 +29,77 @@ describe('analyzeProblem', () => {
     } as any);
 
     const result = await analyzeProblem('已知二次函数y=x²-2x+3，求顶点坐标');
-    expect(result.subject).toBe('数学');
+    expect(result.subject).toBe('math');  // Chinese '数学' mapped to 'math'
     expect(result.knowledgePoints).toContain('二次函数');
     expect(result.difficulty).toBe('medium');
     expect(result.questionType).toBe('solve');
     expect(result.confidence).toBe(0.9);
+  });
+
+  it('maps English subject names correctly', async () => {
+    const { callLLM } = await import('@/lib/ai/llm');
+    vi.mocked(callLLM).mockResolvedValueOnce({
+      text: JSON.stringify({
+        subject: 'physics',
+        knowledgePoints: ['力学', '牛顿定律'],
+        difficulty: 'hard',
+        questionType: 'choice',
+        confidence: 0.85,
+      }),
+    } as any);
+
+    const result = await analyzeProblem('一个物体以10m/s速度运动');
+    expect(result.subject).toBe('physics');
+    expect(result.questionType).toBe('choice');
+  });
+
+  it('falls back to unknown for unrecognized subject', async () => {
+    const { callLLM } = await import('@/lib/ai/llm');
+    vi.mocked(callLLM).mockResolvedValueOnce({
+      text: JSON.stringify({
+        subject: 'music',
+        knowledgePoints: ['音阶'],
+        difficulty: 'easy',
+        questionType: 'fill',
+        confidence: 0.7,
+      }),
+    } as any);
+
+    const result = await analyzeProblem('some music problem');
+    expect(result.subject).toBe('unknown');
+  });
+
+  it('falls back to defaults for invalid difficulty/questionType', async () => {
+    const { callLLM } = await import('@/lib/ai/llm');
+    vi.mocked(callLLM).mockResolvedValueOnce({
+      text: JSON.stringify({
+        subject: 'math',
+        knowledgePoints: ['代数'],
+        difficulty: 'impossible',
+        questionType: 'essay',
+        confidence: 0.5,
+      }),
+    } as any);
+
+    const result = await analyzeProblem('problem');
+    expect(result.difficulty).toBe('medium');  // default fallback
+    expect(result.questionType).toBe('solve');  // default fallback
+  });
+
+  it('clamps confidence to 0-1 range', async () => {
+    const { callLLM } = await import('@/lib/ai/llm');
+    vi.mocked(callLLM).mockResolvedValueOnce({
+      text: JSON.stringify({
+        subject: 'math',
+        knowledgePoints: ['概率'],
+        difficulty: 'medium',
+        questionType: 'solve',
+        confidence: 1.5,  // > 1, should clamp
+      }),
+    } as any);
+
+    const result = await analyzeProblem('problem');
+    expect(result.confidence).toBe(1);
   });
 
   it('returns DEFAULT_ANALYSIS on LLM failure', async () => {

@@ -3,10 +3,26 @@ import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { resolveSolverModel } from '../solver-constants';
 import { ANALYZE_SYSTEM_PROMPT, buildAnalyzePrompt } from './analyze-prompts';
-import { DEFAULT_ANALYSIS, type AnalysisResult } from './analyze-types';
+import { DEFAULT_ANALYSIS, type AnalysisResult, type Subject } from './analyze-types';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('AnalyzeAgent');
+
+/** Map common Chinese subject names returned by LLMs to typed Subject values. */
+const SUBJECT_MAP: Record<string, Subject> = {
+  '数学': 'math', '物理': 'physics', '化学': 'chemistry', '生物': 'biology',
+  '语文': 'chinese', '英语': 'english', '历史': 'history', '地理': 'geography',
+  '政治': 'politics',
+  'math': 'math', 'physics': 'physics', 'chemistry': 'chemistry', 'biology': 'biology',
+  'chinese': 'chinese', 'english': 'english', 'history': 'history', 'geography': 'geography',
+  'politics': 'politics',
+};
+
+/** Validate and normalize subject name. */
+function toSubject(raw: unknown): Subject {
+  if (typeof raw === 'string' && SUBJECT_MAP[raw]) return SUBJECT_MAP[raw];
+  return 'unknown';
+}
 
 export async function analyzeProblem(problemText: string): Promise<AnalysisResult> {
   try {
@@ -32,11 +48,17 @@ export async function analyzeProblem(problemText: string): Promise<AnalysisResul
       return DEFAULT_ANALYSIS;
     }
 
+    const knowledgePoints = Array.isArray(parsed.knowledgePoints)
+      ? (parsed.knowledgePoints as string[]).slice(0, 4)
+      : DEFAULT_ANALYSIS.knowledgePoints;
+
+    if (knowledgePoints.length === 0) {
+      log.warn('analyzeProblem: LLM returned empty knowledgePoints array');
+    }
+
     const analysis: AnalysisResult = {
-      subject: typeof parsed.subject === 'string' ? parsed.subject : DEFAULT_ANALYSIS.subject,
-      knowledgePoints: Array.isArray(parsed.knowledgePoints)
-        ? (parsed.knowledgePoints as string[]).slice(0, 4)
-        : DEFAULT_ANALYSIS.knowledgePoints,
+      subject: toSubject(parsed.subject),
+      knowledgePoints,
       difficulty: ['easy', 'medium', 'hard'].includes(parsed.difficulty as string)
         ? (parsed.difficulty as AnalysisResult['difficulty'])
         : DEFAULT_ANALYSIS.difficulty,

@@ -12,21 +12,21 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
 const ROLE_MAP: Record<string, string> = {
-  guest: 'roleGuest',
-  user: 'roleUser',
-  admin: 'roleAdmin',
+  guest: '游客',
+  user: '用户',
+  admin: '管理员',
 };
 
 const STATUS_MAP: Record<string, { label: string; variant: 'default' | 'destructive' }> = {
-  active: { label: 'statusActive', variant: 'default' },
-  suspended: { label: 'statusSuspended', variant: 'destructive' },
+  active: { label: '正常', variant: 'default' },
+  suspended: { label: '已停用', variant: 'destructive' },
 };
 
 const PLAN_MAP: Record<string, string> = {
-  free: 'planFree',
-  basic: 'planBasic',
-  pro: 'planPro',
-  enterprise: 'planEnterprise',
+  free: '免费版',
+  basic: '基础版',
+  pro: '专业版',
+  enterprise: '企业版',
 };
 
 interface UsageData {
@@ -37,7 +37,8 @@ interface UsageData {
   resetAt: number;
 }
 
-export function AccountInfo() {const { user } = useAuth();
+export function AccountInfo() {
+  const { user } = useAuth();
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -67,12 +68,12 @@ export function AccountInfo() {const { user } = useAuth();
   const fields = [
     { label: '邮箱', value: user.email ?? '—' },
     { label: '用户名', value: user.username },
-    { label: '角色', value: t(`account.${ROLE_MAP[user.role] ?? user.role}`) },
+    { label: '角色', value: ROLE_MAP[user.role] ?? user.role },
     {
       label: '状态',
       value: (
         <Badge variant={statusInfo.variant} className="capitalize">
-          {t(`account.${statusInfo.label}`)}
+          {statusInfo.label}
         </Badge>
       ),
     },
@@ -85,7 +86,7 @@ export function AccountInfo() {const { user } = useAuth();
             user.planType !== 'free' && 'text-amber-600 dark:text-amber-400 font-medium',
           )}
         >
-          {t(`account.${PLAN_MAP[user.planType] ?? user.planType}`)}
+          {PLAN_MAP[user.planType] ?? user.planType}
         </span>
       ),
     },
@@ -121,7 +122,7 @@ export function AccountInfo() {const { user } = useAuth();
       {/* Usage Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{'使用额度' ?? '使用额度'}</CardTitle>
+          <CardTitle className="text-base">{'使用额度'}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading || !usage ? (

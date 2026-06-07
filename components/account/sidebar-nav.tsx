@@ -8,11 +8,11 @@ import { User, CreditCard, Shield, Sparkles, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SECTIONS = [
-  { key: 'profile', icon: User, labelKey: 'profileSection' },
-  { key: 'personalization', icon: Sparkles, labelKey: 'personalizationSection' },
-  { key: 'plan', icon: Crown, labelKey: 'planSection' },
-  { key: 'account', icon: CreditCard, labelKey: 'accountSection' },
-  { key: 'security', icon: Shield, labelKey: 'securitySection' },
+  { key: 'profile', icon: User, label: '个人资料' },
+  { key: 'personalization', icon: Sparkles, label: '个性化设置' },
+  { key: 'plan', icon: Crown, label: '订阅方案' },
+  { key: 'account', icon: CreditCard, label: '账户信息' },
+  { key: 'security', icon: Shield, label: '安全设置' },
 ] as const;
 
 export type AccountSection = (typeof SECTIONS)[number]['key'];
@@ -20,13 +20,12 @@ export type AccountSection = (typeof SECTIONS)[number]['key'];
 interface SidebarNavProps {
   active: AccountSection;
   onChange: (section: AccountSection) => void;
-  t: (key: string) => string;
 }
 
-export function SidebarNav({ active, onChange, t }: SidebarNavProps) {
+export function SidebarNav({ active, onChange }: SidebarNavProps) {
   return (
     <nav className="space-y-1">
-      {SECTIONS.map(({ key, icon: Icon, labelKey }) => (
+      {SECTIONS.map(({ key, icon: Icon, label }) => (
         <button
           key={key}
           onClick={() => onChange(key)}
@@ -38,7 +37,7 @@ export function SidebarNav({ active, onChange, t }: SidebarNavProps) {
           )}
         >
           <Icon className="size-4" />
-          <span>{t(`account.${labelKey}`)}</span>
+          <span>{label}</span>
         </button>
       ))}
     </nav>

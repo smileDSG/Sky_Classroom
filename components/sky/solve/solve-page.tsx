@@ -1,7 +1,18 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { Sparkles, AlertCircle, RotateCcw, Image as ImageIcon, Wand2, Clock, BookOpen, CheckCircle2, Plus, X } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import {
+  Sparkles,
+  AlertCircle,
+  RotateCcw,
+  Image as ImageIcon,
+  Wand2,
+  Clock,
+  BookOpen,
+  CheckCircle2,
+  Plus,
+  X,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +26,12 @@ import { SolutionSkeleton } from './solution-skeleton';
 import { MathRenderer } from './math-renderer';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { useTaskStore } from '@/lib/store/use-task-store';
-import type { GradeResult, FourPartOutput, GradedFourPartOutput, QuestionBankEntry } from '@/lib/solve/types';
+import type {
+  GradeResult,
+  FourPartOutput,
+  GradedFourPartOutput,
+  QuestionBankEntry,
+} from '@/lib/solve/types';
 
 type SolvePageState =
   | 'idle'
@@ -48,7 +64,11 @@ async function recognizeImage(file: File): Promise<{ text: string; latex: string
 }
 
 /** Call grade API */
-async function gradeProblem(problem: string, correctAnswer: string, userAnswer: string): Promise<GradeResult> {
+async function gradeProblem(
+  problem: string,
+  correctAnswer: string,
+  userAnswer: string,
+): Promise<GradeResult> {
   const res = await fetch('/api/sky/solve/grade', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -62,6 +82,7 @@ async function gradeProblem(problem: string, correctAnswer: string, userAnswer: 
 // ── Streaming explain — consumes SSE, builds solution incrementally ──
 
 interface StreamState {
+  solution: string;
   answer: string;
   steps: { label: string; content: string; keyPoints: string[] }[];
   knowledgePoints: { name: string; description: string; difficulty: string }[];
@@ -93,6 +114,7 @@ async function streamExplain(
   const decoder = new TextDecoder();
   let buffer = '';
   const accumulated: StreamState = {
+    solution: '',
     answer: '',
     steps: [],
     knowledgePoints: [],
@@ -121,12 +143,20 @@ async function streamExplain(
               onPhase(event.phase as StreamPhase);
               break;
 
+            case 'solution':
+              accumulated.solution = event.solution;
+              onUpdate({ solution: event.solution });
+              break;
+
             case 'step':
-              accumulated.steps = [...accumulated.steps, {
-                label: event.label,
-                content: event.content,
-                keyPoints: event.keyPoints || [],
-              }];
+              accumulated.steps = [
+                ...accumulated.steps,
+                {
+                  label: event.label,
+                  content: event.content,
+                  keyPoints: event.keyPoints || [],
+                },
+              ];
               onUpdate({
                 steps: accumulated.steps,
                 answer: accumulated.answer || event.content, // fallback
@@ -180,6 +210,7 @@ async function streamExplain(
 // ── Background job polling ────────────────────────────────────────
 
 interface JobState {
+  solution: string;
   answer: string;
   steps: { label: string; content: string; keyPoints: string[] }[];
   knowledgePoints: { name: string; description: string; difficulty: string }[];
@@ -228,10 +259,7 @@ async function pollSolveJob(
 }
 
 /** Submit a solve job and return jobId */
-async function submitSolveJob(
-  problem: string,
-  problemImage: string | null,
-): Promise<string> {
+async function submitSolveJob(problem: string, problemImage: string | null): Promise<string> {
   const res = await fetch('/api/sky/solve/jobs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -273,9 +301,10 @@ export function SolvePage() {
   const [streamPhase, setStreamPhase] = useState<StreamPhase>('checking');
   const [showHistory, setShowHistory] = useState(false);
   const [mistakeSaved, setMistakeSaved] = useState(false);
-  const [mistakeBookState, setMistakeBookState] = useState<'idle' | 'prompt' | 'saving' | 'saved' | 'dismissed'>('idle');
+  const [mistakeBookState, setMistakeBookState] = useState<
+    'idle' | 'prompt' | 'saving' | 'saved' | 'dismissed'
+  >('idle');
   const addMistake = useSkyClassroomStore((s) => s.addMistake);
-  const abortRefs = useRef<Map<string, AbortController>>(new Map());
 
   // ── Subscribe to the single active solve task ──────────────────────
 
@@ -283,6 +312,8 @@ export function SolvePage() {
   const tasks = useTaskStore((s) => s.tasks);
   const setActiveSolveTask = useTaskStore((s) => s.setActiveSolveTask);
   const updateTask = useTaskStore((s) => s.updateTask);
+  const registerAbortController = useTaskStore((s) => s.registerAbortController);
+  const abortTask = useTaskStore((s) => s.abortTask);
 
   // On mount: restore state from active task (survives navigation)
   useEffect(() => {
@@ -299,8 +330,11 @@ export function SolvePage() {
 
     if (task.status === 'running') {
       setStreamPhase(
-        task.phase?.includes('路由') ? 'routing' :
-        task.phase?.includes('查') ? 'checking' : 'solving'
+        task.phase?.includes('路由')
+          ? 'routing'
+          : task.phase?.includes('查')
+            ? 'checking'
+            : 'solving',
       );
       setState('solving');
     } else if (task.status === 'completed' && task.result) {
@@ -321,8 +355,11 @@ export function SolvePage() {
 
     if (task.status === 'running') {
       setStreamPhase(
-        task.phase?.includes('路由') ? 'routing' :
-        task.phase?.includes('查') ? 'checking' : 'solving'
+        task.phase?.includes('路由')
+          ? 'routing'
+          : task.phase?.includes('查')
+            ? 'checking'
+            : 'solving',
       );
       setState('solving');
     } else if (task.status === 'completed' && task.result) {
@@ -345,12 +382,13 @@ export function SolvePage() {
   ): Promise<void> {
     const store = useTaskStore.getState;
     const abortController = new AbortController();
-    abortRefs.current.set(taskId, abortController);
+    registerAbortController(taskId, abortController);
 
     try {
       const jobId = await submitSolveJob(problemText, problemImage);
 
       let latestPartial: Partial<{
+        solution: string;
         answer: string;
         steps: { label: string; content: string; keyPoints: string[] }[];
         knowledgePoints: { name: string; description: string; difficulty: string }[];
@@ -362,12 +400,25 @@ export function SolvePage() {
         jobId,
         (phase) => {
           const progress =
-            phase === 'checking' ? 15 : phase === 'routing' ? 35 : phase === 'solving' ? 70 : phase === 'done' ? 100 : 10;
+            phase === 'checking'
+              ? 15
+              : phase === 'routing'
+                ? 35
+                : phase === 'solving'
+                  ? 70
+                  : phase === 'done'
+                    ? 100
+                    : 10;
           const phaseLabel =
-            phase === 'checking' ? '正在查询题库...' :
-            phase === 'routing' ? '正在分析题目类型...' :
-            phase === 'solving' ? 'AI 正在解题中...' :
-            phase === 'done' ? '解题完成' : '处理中...';
+            phase === 'checking'
+              ? '正在查询题库...'
+              : phase === 'routing'
+                ? '正在分析题目类型...'
+                : phase === 'solving'
+                  ? 'AI 正在解题中...'
+                  : phase === 'done'
+                    ? '解题完成'
+                    : '处理中...';
           store().updateTask(taskId, { phase: phaseLabel, progress, jobId });
         },
         (partial) => {
@@ -379,6 +430,7 @@ export function SolvePage() {
 
       // Build SolveResult from polled data
       const solution: FourPartOutput = {
+        solution: latestPartial.solution || '',
         answer: latestPartial.answer || '',
         steps: latestPartial.steps || [],
         knowledgePoints: (latestPartial.knowledgePoints || []).map((k) => ({
@@ -415,17 +467,20 @@ export function SolvePage() {
         error: err instanceof Error ? err.message : '解题失败',
       });
     } finally {
-      abortRefs.current.delete(taskId);
+      useTaskStore.getState().abortControllers.delete(taskId);
     }
   }
 
   const handleSubmit = useCallback(
-    async (input: { type: 'image' | 'voice' | 'text'; content: string | File; previewUrl?: string }) => {
+    async (input: {
+      type: 'image' | 'voice' | 'text';
+      content: string | File;
+      previewUrl?: string;
+    }) => {
       // Cancel previous in-flight task
       const prevId = useTaskStore.getState().activeSolveTaskId;
       if (prevId) {
-        abortRefs.current.get(prevId)?.abort();
-        abortRefs.current.delete(prevId);
+        abortTask(prevId);
       }
 
       setError(null);
@@ -444,8 +499,8 @@ export function SolvePage() {
           previewUrl = input.previewUrl;
           const recognized = await recognizeImage(input.content as File);
           problemText = recognized.text || recognized.latex;
-          // Don't send image to solver when we already have text — saves bandwidth
-          problemImage = null;
+          // Always send image to solver — OCR may have errors, vision model can correct them
+          problemImage = input.previewUrl || null;
           setRecognizedText(problemText);
         } else if (input.type === 'text') {
           problemText = input.content as string;
@@ -483,7 +538,7 @@ export function SolvePage() {
         setState('error');
       }
     },
-    [setActiveSolveTask]
+    [setActiveSolveTask, abortTask],
   );
 
   const handleGrade = useCallback(
@@ -542,12 +597,13 @@ export function SolvePage() {
         setState('error');
       }
     },
-    [result]
+    [result],
   );
 
   const handleReset = useCallback(() => {
-    abortRefs.current.forEach((c) => c.abort());
-    abortRefs.current.clear();
+    const store = useTaskStore.getState();
+    store.abortControllers.forEach((c) => c.abort());
+    store.abortControllers.clear();
     setActiveSolveTask(null);
     setState('idle');
     setResult(null);
@@ -558,9 +614,12 @@ export function SolvePage() {
     setMistakeBookState('idle');
   }, [setActiveSolveTask]);
 
-  const handleSimilarQuestionClick = useCallback((problem: string) => {
-    handleSubmit({ type: 'text', content: problem });
-  }, [handleSubmit]);
+  const handleSimilarQuestionClick = useCallback(
+    (problem: string) => {
+      handleSubmit({ type: 'text', content: problem });
+    },
+    [handleSubmit],
+  );
 
   const handleSaveToMistakeBook = useCallback(async () => {
     if (!result) return;
@@ -587,6 +646,7 @@ export function SolvePage() {
 
   const handleLoadFromHistory = useCallback((entry: QuestionBankEntry) => {
     const solution: FourPartOutput = {
+      solution: entry.solution || '',
       answer: entry.answer,
       steps: entry.steps ?? [],
       knowledgePoints: (entry.knowledgePoints ?? []).map((kp) => ({
@@ -613,7 +673,9 @@ export function SolvePage() {
     <div className="mx-auto max-w-7xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">搜题批改</h1>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
+            搜题批改
+          </h1>
           <p className="text-sm text-muted-foreground">拍照、语音或输入题目，AI 帮你解答</p>
         </div>
         <div className="flex items-center gap-2">
@@ -621,12 +683,18 @@ export function SolvePage() {
             variant={showHistory ? 'default' : 'outline'}
             size="sm"
             className="gap-2"
-            onClick={() => { setShowHistory((v) => !v); if (!showHistory) setError(null); }}
+            onClick={() => {
+              setShowHistory((v) => !v);
+              if (!showHistory) setError(null);
+            }}
           >
             <Clock className="h-4 w-4" />
             历史记录
           </Button>
-          {(state === 'success' || state === 'graded' || state === 'error' || state === 'solving') && (
+          {(state === 'success' ||
+            state === 'graded' ||
+            state === 'error' ||
+            state === 'solving') && (
             <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>
               <RotateCcw className="h-4 w-4" />
               重新搜题
@@ -679,7 +747,9 @@ export function SolvePage() {
                   <ImageIcon className="h-6 w-6 text-sky-500" />
                 </div>
               </div>
-              <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">正在识别图片...</p>
+              <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">
+                正在识别图片...
+              </p>
               <p className="text-xs text-muted-foreground">请稍候</p>
             </div>
           )}
@@ -719,7 +789,10 @@ export function SolvePage() {
                   />
                 </div>
                 <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground">
-                  <span>查库</span><span>路由</span><span>解题</span><span>完成</span>
+                  <span>查库</span>
+                  <span>路由</span>
+                  <span>解题</span>
+                  <span>完成</span>
                 </div>
               </div>
             </div>
@@ -742,7 +815,8 @@ export function SolvePage() {
                 )}
                 {recognizedText && (
                   <div className="mb-2 text-sm text-muted-foreground">
-                    识别结果：<MathRenderer content={recognizedText} />
+                    识别结果：
+                    <MathRenderer content={recognizedText} />
                   </div>
                 )}
                 <MathRenderer content={result.problem} className="text-sm text-foreground" />
@@ -760,10 +834,7 @@ export function SolvePage() {
         {/* ── RIGHT COLUMN ── */}
         <div className="space-y-6">
           {showHistory ? (
-            <HistoryPanel
-              onLoad={handleLoadFromHistory}
-              onClose={() => setShowHistory(false)}
-            />
+            <HistoryPanel onLoad={handleLoadFromHistory} onClose={() => setShowHistory(false)} />
           ) : (
             <>
               {state === 'error' && error && (
@@ -811,8 +882,10 @@ export function SolvePage() {
                       )}
                       <Badge variant="secondary" className="text-xs">
                         前往
-                        <a href="/sky/learning" className="ml-1 underline">学习数据</a>
-                        {' '}查看
+                        <a href="/sky/learning" className="ml-1 underline">
+                          学习数据
+                        </a>{' '}
+                        查看
                       </Badge>
                     </div>
                   )}
@@ -820,45 +893,47 @@ export function SolvePage() {
               )}
 
               {/* Mistake book prompt — shown after solve completes */}
-              {state === 'success' && mistakeBookState !== 'idle' && mistakeBookState !== 'dismissed' && (
-                <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    <span className="text-sm text-amber-700 dark:text-amber-300">
-                      {mistakeBookState === 'saved' ? '已加入错题本' : '是否将此题加入错题本？'}
-                    </span>
+              {state === 'success' &&
+                mistakeBookState !== 'idle' &&
+                mistakeBookState !== 'dismissed' && (
+                  <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <span className="text-sm text-amber-700 dark:text-amber-300">
+                        {mistakeBookState === 'saved' ? '已加入错题本' : '是否将此题加入错题本？'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {mistakeBookState === 'prompt' && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="h-7 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
+                            onClick={handleSaveToMistakeBook}
+                          >
+                            <Plus className="h-3 w-3" />
+                            加入
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-muted-foreground"
+                            onClick={() => setMistakeBookState('dismissed')}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </>
+                      )}
+                      {mistakeBookState === 'saving' && (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+                      )}
+                      {mistakeBookState === 'saved' && (
+                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {mistakeBookState === 'prompt' && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="h-7 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
-                          onClick={handleSaveToMistakeBook}
-                        >
-                          <Plus className="h-3 w-3" />
-                          加入
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0 text-muted-foreground"
-                          onClick={() => setMistakeBookState('dismissed')}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </>
-                    )}
-                    {mistakeBookState === 'saving' && (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
-                    )}
-                    {mistakeBookState === 'saved' && (
-                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    )}
-                  </div>
-                </div>
-              )}
+                )}
 
               {(state === 'success' || state === 'graded') && result && (
                 <>

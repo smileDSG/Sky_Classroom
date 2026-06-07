@@ -21,7 +21,6 @@ describe('verifyAnswer', () => {
     vi.mocked(callLLM).mockResolvedValueOnce({
       text: JSON.stringify({
         yourAnswer: '3',
-        isCorrect: true,
         confidence: 0.95,
         reasoning: 'Both answers are 3',
       }),
@@ -56,5 +55,20 @@ describe('verifyAnswer', () => {
 
     const result = await verifyAnswer('problem', 'answer');
     expect(result).toEqual(DEFAULT_VERIFY);
+    // Default must be isCorrect=false so bad answers aren't silently accepted
+    expect(result.isCorrect).toBe(false);
+  });
+
+  it('returns DEFAULT_VERIFY on invalid JSON (parseJsonResponse returns null)', async () => {
+    const { callLLM } = await import('@/lib/ai/llm');
+    vi.mocked(callLLM).mockResolvedValueOnce({ text: 'not json' } as any);
+
+    const { parseJsonResponse } = await import('@/lib/generation/json-repair');
+    vi.mocked(parseJsonResponse).mockReturnValueOnce(null);
+
+    const result = await verifyAnswer('problem', 'answer');
+    expect(result).toEqual(DEFAULT_VERIFY);
+    expect(result.isCorrect).toBe(false);
   });
 });
+
