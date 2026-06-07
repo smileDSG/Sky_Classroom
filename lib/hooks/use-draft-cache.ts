@@ -32,12 +32,15 @@ export function useDraftCache<T>({
     try {
       const raw = localStorage.getItem(key);
       if (raw !== null) {
-        setCachedValue(JSON.parse(raw) as T);
+        const parsed = JSON.parse(raw) as T;
+        setCachedValue(parsed);
       } else {
         setCachedValue(undefined);
       }
     } catch {
-      /* ignore parse errors */
+      // Corrupted entry — clear it so it doesn't persist forever
+      try { localStorage.removeItem(key); } catch { /* ignore */ }
+      setCachedValue(undefined);
     }
   }, [key]);
   /* eslint-enable react-hooks/set-state-in-effect */

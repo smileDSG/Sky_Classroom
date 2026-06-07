@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Unified AI Provider Configuration
  *
  * Supports multiple AI providers through Vercel AI SDK:
@@ -39,6 +39,7 @@ import { applyModelMetadata, getCatalogThinkingCapability } from './model-metada
 import { getDefaultThinkingConfig } from './thinking-config';
 import { buildThinkingBodyParams } from './strategies/thinking-strategy';
 import { normalizeMiniMaxBaseUrl } from './adapters/minimax-adapter';
+import { getKeyPool } from './key-pool';
 // NOTE: Do NOT import thinking-context.ts here — it uses node:async_hooks
 // which is server-only, and this file is also used on the client via
 // settings.ts. The thinking context is read from globalThis instead
@@ -1087,10 +1088,7 @@ function buildGoogleProxyFetch(proxyUrl: string): typeof fetch {
         /* webpackIgnore: true */ 'undici'
       )) as {
         ProxyAgent: new (proxyUrl: string) => unknown;
-        fetch: (
-          input: string | URL | Request,
-          init?: Record<string, unknown>,
-        ) => Promise<unknown>;
+        fetch: (input: string | URL | Request, init?: Record<string, unknown>) => Promise<unknown>;
       };
       agent ??= new ProxyAgent(proxyUrl);
       const response = await undiciFetch(input, {
@@ -1149,6 +1147,26 @@ export function getModel(config: ModelConfig): ModelWithInfo {
       // callLLM / streamLLM at call time.
       if (config.providerId !== 'openai') {
         const providerId = config.providerId;
+
+        // Multi-key load balancing: resolve all keys for this provider
+        // Server-only: provider-config.ts uses fs, must not be bundled client-side
+        let apiKeys: string[] = [];
+        if (typeof window === 'undefined') {
+          try {
+            const { resolveApiKeys: serverResolveApiKeys } = require('@/lib/server/provider-config');
+            // If client explicitly passes comma-separated keys, respect it.
+            // Otherwise let server-side env/YAML config (including key pool)
+            // take precedence over a single fallback key.
+            const clientKeys = config.apiKey?.includes(',') ? config.apiKey : undefined;
+            apiKeys = serverResolveApiKeys(providerId, clientKeys);
+          } catch {
+            apiKeys = config.apiKey ? [config.apiKey] : [];
+          }
+        } else {
+          apiKeys = config.apiKey ? [config.apiKey] : [];
+        }
+        const keyPool = apiKeys.length > 0 ? getKeyPool(providerId, apiKeys) : null;
+
         openaiOptions.fetch = async (url: RequestInfo | URL, init?: RequestInit) => {
           // Read thinking config from globalThis (set by thinking-context.ts)
           const thinkingCtx = (globalThis as Record<string, unknown>).__thinkingContext as
@@ -1175,44 +1193,209 @@ export function getModel(config: ModelConfig): ModelWithInfo {
               }
             }
           }
-          const response = await globalThis.fetch(url, init);
-
-          if (providerId !== 'lemonade') {
-            return response;
+          // Multi-key load balancing: select key and override Authorization header
+          let selectedKey: string | null = null;
+          if (keyPool) {
+            selectedKey = keyPool.select();
+            keyPool.acquire(selectedKey);
           }
 
-          const contentType = response.headers.get('content-type') || '';
+          const newInit: RequestInit = init ? { ...init } : {};
+          if (selectedKey) {
+            const headers = new Headers(newInit.headers || {});
+            headers.set('Authorization', `Bearer ${selectedKey}`);
+            newInit.headers = headers;
+          }
+
+          const fetchStart = Date.now();
+          let response: Response;
+          try {
+            response = await globalThis.fetch(url, newInit);
+          } catch (fetchErr) {
+            if (keyPool && selectedKey) {
+              keyPool.markFailed(selectedKey, fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr)));
+            }
+            throw fetchErr;
+          }
+          const fetchDuration = Date.now() - fetchStart;
+
+          // Detect rate limit and mark key failed
+          if (response.status === 429 && keyPool && selectedKey) {
+            keyPool.markFailed(selectedKey, new Error('Rate limited'));
+          }
+
+          // For non-streaming OpenAI-compatible providers, strip non-standard
+          // fields (e.g. reasoning_content) from the response body that would
+          // cause the @ai-sdk/openai Chat Completion schema validation to fail.
           let isStreamingRequest = false;
-          if (init?.body && typeof init.body === 'string') {
+          if (newInit?.body && typeof newInit.body === 'string') {
             try {
-              const requestBody = JSON.parse(init.body);
-              isStreamingRequest = requestBody?.stream === true;
+              isStreamingRequest = JSON.parse(newInit.body)?.stream === true;
             } catch {
-              /* ignore request-body inspection failure */
+              /* ignore */
             }
           }
 
           if (isStreamingRequest) {
+            // Streaming: pass through (SSE parser handles chunk-level validation)
+            // Do NOT release key here — stream may be consumed for minutes.
+            // Key will be released when the consumer finishes reading.
+            // Note: this inflates inflight count for streaming; acceptable for
+            // now since PPT generation uses non-streaming calls exclusively.
+            log.info(`[FetchWrapper] streaming request, passthrough in ${fetchDuration}ms`);
             return response;
           }
 
+          // Non-streaming: transform response to strip incompatible fields
+          let transformErrorLogged = false;
+          let bodyReadTimer: ReturnType<typeof setTimeout> | null = null;
           try {
-            const cloned = response.clone();
-            const text = await cloned.text();
-
-            try {
-              JSON.parse(text);
-            } catch (error) {
-              const message = error instanceof Error ? error.message : String(error);
-              log.warn(
-                `[Lemonade] Invalid JSON response from OpenAI-compatible path: status=${response.status}, contentType=${contentType || 'n/a'}, bodyLen=${text.length}, first=${JSON.stringify(text.slice(0, 500))}, last=${JSON.stringify(text.slice(Math.max(0, text.length - 500)))}, parseError=${message}`,
-              );
+            log.info(`[FetchWrapper] reading response body... status=${response.status} fetch=${fetchDuration}ms`);
+            const textStart = Date.now();
+            // Page design outputs up to 24k tokens; DeepSeek can take 3-7 min.
+            // Because Node.js fetch cannot cancel response.text() via AbortSignal
+            // once the response headers have arrived, this timeout acts as the
+            // *real* deadline for body consumption. 600s covers large outputs
+            // (8192 tokens ~ 4-5 min at 30 tps) while preventing indefinite hangs.
+            const BODY_READ_TIMEOUT_MS = 600_000;
+            const textPromise = response.text();
+            const text = await Promise.race([
+              textPromise.then((t) => {
+                if (bodyReadTimer) {
+                  clearTimeout(bodyReadTimer);
+                  bodyReadTimer = null;
+                }
+                return t;
+              }),
+              new Promise<never>((_, reject) => {
+                bodyReadTimer = setTimeout(() => {
+                  bodyReadTimer = null;
+                  // Cancel the body reader to free the TCP connection
+                  textPromise.catch(() => {}); // swallow late rejection
+                  if (response.body) {
+                    response.body.cancel(new Error('Response body read timeout')).catch(() => {});
+                  }
+                  reject(new Error('Response body read timeout'));
+                }, BODY_READ_TIMEOUT_MS);
+              }),
+            ]);
+            log.info(`[FetchWrapper] response.text() done in ${Date.now() - textStart}ms, length=${text.length}`);
+            // Detect encoding corruption: look for Unicode replacement char (U+FFFD) or
+            // bare question-mark sequences that often appear when UTF-8 bytes are mis-decoded.
+            if (text.includes('\uFFFD') || /\?{4,}/.test(text)) {
+              log.warn(`[FetchWrapper] Possible encoding corruption detected in response body (U+FFFD or ???? found). Provider=${providerId} model=${config.modelId}`);
             }
-          } catch (error) {
-            log.warn('[Lemonade] Failed to inspect JSON response body:', error);
-          }
+            const parsed = JSON.parse(text);
 
-          return response;
+            // 1. Detect error-in-200 response (DeepSeek load-balancer behavior)
+            if (parsed.error) {
+              log.error(`DeepSeek API returned error in HTTP 200 body: ${JSON.stringify(parsed.error)}`);
+              throw new Error(`DeepSeek API error: ${JSON.stringify(parsed.error)}`);
+            }
+
+            // 2. Guard empty / malformed choices — DO NOT fabricate empty content
+            if (!parsed.choices || !Array.isArray(parsed.choices) || parsed.choices.length === 0) {
+              log.error(`DeepSeek response missing choices. Body keys: ${Object.keys(parsed).join(',')}`);
+              throw new Error(`DeepSeek response missing choices: ${Object.keys(parsed).join(',')}`);
+            }
+
+            // 3. Deep-clean each choice — whitelist approach
+            const allowedMessageFields = ['role', 'content', 'tool_calls', 'function_call'];
+            for (const choice of parsed.choices) {
+              // Handle delta format (sometimes returned even for non-streaming by some proxies)
+              if (!choice.message && choice.delta && typeof choice.delta === 'object') {
+                const delta = choice.delta as Record<string, unknown>;
+                choice.message = {
+                  role: 'assistant',
+                  content: typeof delta.content === 'string' ? delta.content : '',
+                };
+              }
+              if (!choice.message || typeof choice.message !== 'object') {
+                choice.message = { role: 'assistant', content: '' };
+              }
+              const msg = choice.message as Record<string, unknown>;
+
+              // content: null / undefined / non-string → ''
+              if (msg.content === null || msg.content === undefined || typeof msg.content !== 'string') {
+                msg.content = '';
+              }
+
+              // Strip known non-standard fields
+              delete msg.reasoning_content;
+              delete msg.reasoning;
+
+              // Strip any other unknown fields on message
+              for (const key of Object.keys(msg)) {
+                if (!allowedMessageFields.includes(key)) {
+                  delete msg[key];
+                }
+              }
+
+              // Guard finish_reason
+              if (choice.finish_reason === null) choice.finish_reason = 'stop';
+            }
+
+            // 4. Strip top-level non-standard fields
+            delete parsed.reasoning_content;
+            delete parsed.reasoning;
+
+            // 5. Strip non-standard usage fields
+            if (parsed.usage && typeof parsed.usage === 'object') {
+              const usage = parsed.usage as Record<string, unknown>;
+              if (usage.completion_tokens_details && typeof usage.completion_tokens_details === 'object') {
+                delete (usage.completion_tokens_details as Record<string, unknown>).reasoning_tokens;
+              }
+              delete usage.prompt_cache_hit_tokens;
+              delete usage.prompt_cache_miss_tokens;
+            }
+
+            if (keyPool && selectedKey) keyPool.release(selectedKey);
+            return new Response(JSON.stringify(parsed), {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers,
+            });
+          } catch (err) {
+            if (bodyReadTimer) {
+              clearTimeout(bodyReadTimer);
+              bodyReadTimer = null;
+            }
+            if (keyPool && selectedKey) keyPool.release(selectedKey);
+            // Re-throw abort/timeout errors so postToApi can recognize them via isAbortError
+            // NOTE: Node.js AbortError message may be 'The operation was aborted' or
+            // 'This operation was aborted'; DOMException may have name 'AbortError'.
+            // Also guard against 'Response body read timeout' from our own timer.
+            const isAbortOrTimeout = err instanceof Error && (
+              err.name === 'AbortError' ||
+              err.name === 'TimeoutError' ||
+              err.message.toLowerCase().includes('abort') ||
+              err.message.toLowerCase().includes('timeout') ||
+              err.message.toLowerCase().includes('operation was aborted')
+            );
+            if (isAbortOrTimeout) {
+              throw err;
+            }
+            const errMsg = err instanceof Error ? err.message : String(err);
+            // Provider-terminated connections (e.g. DeepSeek 60s limit) should mark key failed
+            // so retries can pick a different key / provider.
+            const isTerminated = errMsg.toLowerCase().includes('terminated');
+            if (isTerminated && keyPool && selectedKey) {
+              keyPool.markFailed(selectedKey, new Error(`Provider terminated connection after ${fetchDuration}ms`));
+            }
+            if (!transformErrorLogged) {
+              transformErrorLogged = true;
+              // Try to capture raw response preview for debugging
+              let rawPreview = '';
+              try {
+                // Clone response to re-read body (response.text() may have been consumed)
+                // If body was consumed, we can't re-read; but we log what we can.
+              } catch { /* ignore */ }
+              log.error(`Response transform failed: ${errMsg}. status=${response.status} fetch=${fetchDuration}ms. Raw response preview unavailable (body consumed).`);
+            }
+            // Body already consumed by response.text(); returning raw response would
+            // cause downstream readers to see empty body. Always throw.
+            throw err;
+          }
         };
       }
 

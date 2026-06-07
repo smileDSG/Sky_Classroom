@@ -5,7 +5,14 @@ build/
 *.zip
 *.tar.gz
 *.log
+logs/
+public/temp/
 .DS_Store
 .env
 .env.local
+server-providers.yml
 .cache/
+tsconfig.tsbuildinfo
+.kimi/
+.gstack/
+.superpowers/

@@ -1,14 +1,18 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eraser, History, Minimize2, PencilLine, RotateCcw } from 'lucide-react';
 import { WhiteboardCanvas } from './whiteboard-canvas';
 import type { WhiteboardCanvasHandle } from './whiteboard-canvas';
 import { WhiteboardHistory } from './whiteboard-history';
+import { WhiteboardToolbar } from './whiteboard-toolbar';
+import { DrawingCanvas } from './drawing-canvas';
+import { ScreenElement } from '@/components/slide-renderer/Editor/ScreenElement';
 import { useStageStore } from '@/lib/store';
 import { useCanvasStore } from '@/lib/store/canvas';
 import { useWhiteboardHistoryStore } from '@/lib/store/whiteboard-history';
+import { useUserWhiteboardStore } from '@/lib/store/whiteboard-user';
 import { createStageAPI } from '@/lib/api/stage-api';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/hooks/use-i18n';
@@ -36,6 +40,41 @@ export function Whiteboard({ isOpen, onClose }: WhiteboardProps) {
   const elementCount = whiteboard?.elements?.length || 0;
 
   const stageAPI = createStageAPI(useStageStore);
+
+  // Drawing state
+  const userElements = useUserWhiteboardStore.use.userElements();
+  const activeTool = useUserWhiteboardStore.use.activeTool();
+  const editingTextId = useUserWhiteboardStore.use.editingTextId();
+  const setEditingTextId = useUserWhiteboardStore.use.setEditingTextId();
+  const updateTextContent = useUserWhiteboardStore.use.updateTextContent();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        useUserWhiteboardStore.getState().undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        useUserWhiteboardStore.getState().redo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen]);
+
+  // Auto-focus textarea when entering text edit mode
+  useEffect(() => {
+    if (editingTextId && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [editingTextId]);
+
+  const DRAW_W = 1000;
+  const DRAW_H = 562.5;
 
   const handleClear = async () => {
     if (!whiteboard || elementCount === 0 || clearingRef.current) return;
@@ -168,8 +207,99 @@ export function Whiteboard({ isOpen, onClose }: WhiteboardProps) {
             </div>
 
             {/* Whiteboard Content Area */}
-            <div className="flex-1 relative bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#374151_1px,transparent_1px)] [background-size:24px_24px] overflow-hidden">
+            <div
+              className="flex-1 relative bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#374151_1px,transparent_1px)] [background-size:24px_24px] overflow-hidden"
+            >
               <WhiteboardCanvas ref={canvasRef} onViewModifiedChange={setViewModified} />
+
+              {/* DrawingCanvas overlay */}
+              <DrawingCanvas canvasWidth={DRAW_W} canvasHeight={DRAW_H} />
+
+              {/* User-drawn elements */}
+              <div className="absolute inset-0 z-[126] pointer-events-none" style={{ width: '100%', height: '100%' }}>
+                {/* Editing textarea overlay */}
+                {editingTextId && (() => {
+                  const editingEl = userElements.find((e) => e.id === editingTextId) as { id: string; left: number; top: number; width: number; height: number; content: string; defaultColor: string; defaultFontName: string } | undefined;
+                  if (!editingEl) return null;
+                  const fs = useUserWhiteboardStore.getState().fontSize;
+                  const handleCommit = () => {
+                    const el = document.getElementById(`whiteboard-textarea-${editingTextId}`) as HTMLTextAreaElement | null;
+                    if (el) {
+                      const text = el.value;
+                      if (text.trim()) {
+                        updateTextContent(editingTextId, text);
+                      } else {
+                        // Delete empty text element
+                        useUserWhiteboardStore.getState().deleteUserElement(editingTextId);
+                      }
+                    }
+                    setEditingTextId(null);
+                  };
+                  return (
+                    <textarea
+                      id={`whiteboard-textarea-${editingTextId}`}
+                      ref={textareaRef}
+                      className="absolute resize-none outline-none pointer-events-auto"
+                      style={{
+                        left: `${(editingEl.left / DRAW_W) * 100}%`,
+                        top: `${(editingEl.top / DRAW_H) * 100}%`,
+                        width: `${(editingEl.width / DRAW_W) * 100}%`,
+                        height: `${(editingEl.height / DRAW_H) * 100}%`,
+                        fontSize: `${fs}px`,
+                        color: editingEl.defaultColor,
+                        fontFamily: editingEl.defaultFontName,
+                        background: 'transparent',
+                        border: '1px solid #6366f1',
+                        borderRadius: '4px',
+                        padding: '8px',
+                        lineHeight: '1.5',
+                        overflow: 'auto',
+                      }}
+                      defaultValue={editingEl.content || ''}
+                      onBlur={handleCommit}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          e.preventDefault();
+                          handleCommit();
+                        }
+                      }}
+                    />
+                  );
+                })()}
+                {userElements.filter((e) => e.id !== editingTextId).map((element, index) => {
+                  // Calculate bounding box - lines use start/end, others use left/top/width/height
+                  const isLine = element.type === 'line';
+                  const lineEl = isLine ? (element as { left: number; top: number; start: [number, number]; end: [number, number] }) : null;
+                  const boxLeft = isLine && lineEl ? Math.min(lineEl.left + lineEl.start[0], lineEl.left + lineEl.end[0]) : ((element as { left: number }).left);
+                  const boxTop = isLine && lineEl ? Math.min(lineEl.top + lineEl.start[1], lineEl.top + lineEl.end[1]) : ((element as { top: number }).top);
+                  const boxW = isLine && lineEl ? Math.max(Math.abs(lineEl.end[0] - lineEl.start[0]), 24) : ((element as { width: number }).width);
+                  const boxH = isLine && lineEl ? Math.max(Math.abs(lineEl.end[1] - lineEl.start[1]), 24) : (('height' in element) ? (element as { height: number }).height : undefined);
+                  // Adjust internal coordinates relative to bounding box origin
+                  const positioned = isLine && lineEl
+                    ? { ...element, left: lineEl.left + lineEl.start[0] - boxLeft, top: lineEl.top + lineEl.start[1] - boxTop }
+                    : { ...element, left: 0, top: 0 };
+                  return (
+                    <div
+                      key={element.id}
+                      className="absolute"
+                      style={{
+                        left: `${(boxLeft / DRAW_W) * 100}%`,
+                        top: `${(boxTop / DRAW_H) * 100}%`,
+                        width: `${(boxW / DRAW_W) * 100}%`,
+                        ...(boxH != null ? { height: `${(boxH / DRAW_H) * 100}%` } : {}),
+                        pointerEvents: activeTool === 'select' ? 'auto' : 'none',
+                      }}
+                    >
+                      <div className="absolute inset-0">
+                        <ScreenElement elementInfo={positioned} elementIndex={index} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* WhiteboardToolbar */}
+              <WhiteboardToolbar />
             </div>
           </motion.div>
         )}

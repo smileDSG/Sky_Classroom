@@ -18,6 +18,7 @@ const log = createLogger('ServerProviderConfig');
 
 interface ServerProviderEntry {
   apiKey: string;
+  apiKeys?: string[];
   baseUrl?: string;
   models?: string[];
   proxy?: string;
@@ -213,8 +214,12 @@ function loadEnvSection(
 const DEFAULT_FILENAME = 'server-providers.yml';
 const OPENAI_IMAGE_PROVIDER_ID = 'openai-image';
 
-/** Cache keyed by YAML filename (empty string = default file). */
-const _configs: Map<string, ServerConfig> = new Map();
+/** Cache keyed by YAML filename (empty string = default file). Shared via globalThis. */
+const globalForConfigs = globalThis as unknown as {
+  _providerConfigs: Map<string, ServerConfig> | undefined;
+};
+const _configs: Map<string, ServerConfig> =
+  globalForConfigs._providerConfigs ?? (globalForConfigs._providerConfigs = new Map());
 
 function applyOpenAIImageFallback(
   imageConfig: Record<string, ServerProviderEntry>,
@@ -309,6 +314,53 @@ export function getServerProviders(): Record<string, { models?: string[]; baseUr
 export function resolveApiKey(providerId: string, clientKey?: string): string {
   if (clientKey) return clientKey;
   return getConfig().providers[providerId]?.apiKey || '';
+}
+
+function parseApiKeys(raw: string | string[] | undefined): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  return raw.split(',').map((k) => k.trim()).filter(Boolean);
+}
+
+/**
+ * Resolve multiple API keys for a provider.
+ * Priority:
+ *  1. Client-provided keys (comma-separated string or array)
+ *  2. Env var {PROVIDER}_API_KEYS (comma-separated)
+ *  3. Env var {PROVIDER}_API_KEY (single, backward compatible)
+ *  4. YAML config apiKeys array
+ *  5. YAML config apiKey single
+ */
+export function resolveApiKeys(providerId: string, clientKeys?: string | string[]): string[] {
+  // 1. Client-provided
+  if (clientKeys) {
+    const parsed = parseApiKeys(clientKeys);
+    if (parsed.length > 0) return parsed;
+  }
+
+  // 2. Multi-key env var
+  const envMulti = process.env[`${providerId.toUpperCase()}_API_KEYS`];
+  if (envMulti) {
+    const parsed = parseApiKeys(envMulti);
+    if (parsed.length > 0) return parsed;
+  }
+
+  // 3. Single-key env var (backward compatible)
+  const envSingle = process.env[`${providerId.toUpperCase()}_API_KEY`];
+  if (envSingle) {
+    return [envSingle];
+  }
+
+  // 4. YAML config
+  const cfg = getConfig().providers[providerId];
+  if (cfg?.apiKeys && Array.isArray(cfg.apiKeys) && cfg.apiKeys.length > 0) {
+    return cfg.apiKeys;
+  }
+  if (cfg?.apiKey) {
+    return [cfg.apiKey];
+  }
+
+  return [];
 }
 
 /** Resolve base URL: client > server > undefined */

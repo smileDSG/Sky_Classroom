@@ -131,7 +131,11 @@ export function deserializeScene(data: unknown): Scene {
   return {
     id: assertString(obj.id, 'Scene.id'),
     stageId: assertString(obj.stageId, 'Scene.stageId'),
-    type: assertEnum(obj.type, ['slide', 'quiz', 'interactive', 'pbl'], 'Scene.type') as Scene['type'],
+    type: assertEnum(
+      obj.type,
+      ['slide', 'quiz', 'interactive', 'pbl'],
+      'Scene.type',
+    ) as Scene['type'],
     title: assertString(obj.title, 'Scene.title'),
     order: assertNumber(obj.order, 'Scene.order'),
     content: obj.content as SceneContent,

@@ -15,7 +15,8 @@ import type { AgentTurnSummary, WhiteboardActionRecord } from './types';
 import { COMPRESSION_TARGET } from './config';
 import { compressMessageHistory } from './conversation-compression';
 
-type MessageLike = { role: string; content?: unknown };
+type MessageRole = 'user' | 'assistant' | 'system' | 'agent' | 'tool';
+type MessageLike = { role: MessageRole; content?: unknown };
 
 /**
  * LangGraph state annotation for the orchestration graph
@@ -107,9 +108,7 @@ export function buildInitialState(
  * Trim and compress message history when it grows too large.
  * Uses conversation summarization to keep context manageable.
  */
-export function maybeCompressHistory(
-  messages: MessageLike[],
-): MessageLike[] {
+export function maybeCompressHistory(messages: MessageLike[]): MessageLike[] {
   if (messages.length <= COMPRESSION_TARGET) {
     return messages;
   }

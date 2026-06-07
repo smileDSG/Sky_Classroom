@@ -733,7 +733,20 @@ function slideObjectToXml (slide: PresSlide | SlideLayout): string {
 				strSlideXml += ' <p:txBody>'
 				strSlideXml += '  <a:bodyPr wrap="square" rtlCol="0"><a:spAutoFit/></a:bodyPr>'
 				strSlideXml += '  <a:lstStyle/>'
-				strSlideXml += '  <a:p><a:r><a:rPr lang="en-US" dirty="0"/><a:t>[Formula]</a:t></a:r></a:p>'
+				// Extract plain text from OMML for fallback display
+				const ommlText = (slideItemObj.formula || '').replace(/<m:t[^>]*>/g, '\x01').replace(/<\/m:t>/g, '\x02').replace(/\x01\s*/g, '\x01').replace(/\s*\x02/g, '\x02')
+				let fallbackText = ''
+				const parts = ommlText.split('\x01')
+				for (let pi = 1; pi < parts.length; pi++) {
+					const endIdx = parts[pi].indexOf('\x02')
+					if (endIdx >= 0) fallbackText += parts[pi].substring(0, endIdx)
+				}
+				fallbackText = fallbackText.replace(/[\x00-\x08\x0b-\x0c\x0e-\x1f]/g, '').trim()
+				if (fallbackText) {
+					strSlideXml += `  <a:p><a:r><a:rPr lang="zh-CN" dirty="0"${fmtFontSz}/><a:t>${fallbackText}</a:t></a:r></a:p>`
+				} else {
+					strSlideXml += '  <a:p><a:r><a:rPr lang="en-US" dirty="0"/><a:t></a:t></a:r></a:p>'
+				}
 				strSlideXml += ' </p:txBody>'
 				strSlideXml += '</p:sp>'
 				strSlideXml += '</mc:Fallback>'

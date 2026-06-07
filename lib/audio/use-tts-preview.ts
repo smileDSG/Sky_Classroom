@@ -101,8 +101,6 @@ export function useTTSPreview() {
           ttsVoice: options.voice,
           ttsSpeed: options.speed,
         };
-        if (options.apiKey?.trim()) body.ttsApiKey = options.apiKey;
-        if (options.baseUrl?.trim()) body.ttsBaseUrl = options.baseUrl;
         if (options.providerOptions) body.ttsProviderOptions = options.providerOptions;
 
         const res = await fetch('/api/generate/tts', {

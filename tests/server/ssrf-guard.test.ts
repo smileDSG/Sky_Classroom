@@ -5,9 +5,8 @@ const { lookupMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('node:dns', () => ({
-  promises: {
-    lookup: lookupMock,
-  },
+  default: { promises: { lookup: lookupMock } },
+  promises: { lookup: lookupMock },
 }));
 
 describe('validateUrlForSSRF', () => {

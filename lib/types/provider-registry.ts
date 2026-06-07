@@ -66,7 +66,7 @@ export function listRegisteredProviders(): ProviderConfig[] {
  * Get providers filtered by type (openai / anthropic / google).
  */
 export function listProvidersByType(type: ProviderType): ProviderConfig[] {
-  return Array.from(registry.values()).filter(p => p.type === type);
+  return Array.from(registry.values()).filter((p) => p.type === type);
 }
 
 /**

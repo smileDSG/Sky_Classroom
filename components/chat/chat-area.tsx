@@ -8,11 +8,16 @@ import type { Action, SpeechAction, DiscussionAction } from '@/lib/types/action'
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store';
-import { PanelRightClose, BookOpen, MessageSquare } from 'lucide-react';
+import { PanelLeftClose, BookOpen, MessageSquare } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useChatSessions } from './use-chat-sessions';
 import { SessionList } from './session-list';
 import { LectureNotesView } from './lecture-notes-view';
+import {
+  MessageFilters,
+  type MessageFilterState,
+} from '@/components/classroom/message-filters';
+import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 
 interface ChatAreaProps {
   className?: string;
@@ -37,11 +42,14 @@ interface ChatAreaProps {
   /** When provided and returns true, StreamBuffer holds on the current text item after reveal. */
   shouldHoldAfterReveal?: () => { holding: boolean; segmentDone: number } | boolean;
   currentSceneId?: string | null;
+  /** Enable message type/agent filter bar above chat sessions. */
+  enableFilters?: boolean;
 }
 
 export interface ChatAreaRef {
   createSession: (type: SessionType, title: string) => Promise<string>;
   endSession: (sessionId: string) => Promise<void>;
+  deleteSession: (sessionId: string) => void;
   endActiveSession: () => Promise<void>;
   softPauseActiveSession: () => Promise<void>;
   resumeActiveSession: () => Promise<void>;
@@ -82,6 +90,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       onSegmentSealed,
       shouldHoldAfterReveal,
       currentSceneId,
+      enableFilters = false,
     },
     ref,
   ) => {
@@ -103,6 +112,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       addLectureMessage,
       toggleSessionExpand,
       getLectureMessageId,
+      deleteSession,
       pauseBuffer,
       resumeBuffer,
       pauseActiveLiveBuffer,
@@ -165,6 +175,42 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     // Filter out lecture sessions for the Chat tab
     const chatSessions = useMemo(() => sessions.filter((s) => s.type !== 'lecture'), [sessions]);
 
+    // Build scene lookup map from ALL scenes for session-scene association
+    const sceneTitleMap = useMemo(() => {
+      const map = new Map<string, { title: string; order: number }>();
+      for (let i = 0; i < scenes.length; i++) {
+        const scene = scenes[i];
+        map.set(scene.id, { title: scene.title, order: scene.order });
+      }
+      return map;
+    }, [scenes]);
+
+    // Message filter state (local)
+    const [messageFilters, setMessageFilters] = useState<MessageFilterState>({
+      types: new Set(),
+      agentIds: new Set(),
+    });
+
+    // Map session type to MessageFilter type key
+    const sessionTypeToFilterKey: Record<string, 'discussion' | 'lecture' | 'qa' | 'system'> = {
+      discussion: 'discussion',
+      qa: 'qa',
+      lecture: 'lecture',
+      system: 'system',
+    };
+
+    // Apply message type filters to chat sessions
+    const filteredChatSessions = useMemo(() => {
+      if (!enableFilters || messageFilters.types.size === 0) return chatSessions;
+      return chatSessions.filter((s) => messageFilters.types.has(sessionTypeToFilterKey[s.type] ?? 'system'));
+    }, [chatSessions, enableFilters, messageFilters.types]);
+
+    // Get available agents for filter badges
+    const availableAgents = useMemo(() => {
+      const registry = useAgentRegistry.getState();
+      return Object.entries(registry.agents).map(([id, cfg]) => ({ id, name: cfg.name ?? id }));
+    }, []);
+
     // Whether there's an active discussion/QA session (for amber dot on Chat tab)
     const hasActiveChatSession = useMemo(
       () => chatSessions.some((s) => s.status === 'active'),
@@ -180,6 +226,14 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       [endSession, onStopSession],
     );
 
+    const handleDeleteSession = useCallback(
+      (sessionId: string) => {
+        deleteSession(sessionId);
+        onStopSession?.();
+      },
+      [deleteSession, onStopSession],
+    );
+
     const switchToTab = useCallback((tab: 'lecture' | 'chat') => {
       setActiveTab(tab);
     }, []);
@@ -187,6 +241,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     useImperativeHandle(ref, () => ({
       createSession,
       endSession,
+      deleteSession,
       endActiveSession,
       softPauseActiveSession,
       resumeActiveSession,
@@ -214,7 +269,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
         const startWidth = width;
 
         const handleMouseMove = (me: MouseEvent) => {
-          const delta = startX - me.clientX;
+          const delta = me.clientX - startX;
           const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta));
           onWidthChange?.(newWidth);
         };
@@ -245,7 +300,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
           transition: isDragging ? 'none' : 'width 0.3s ease',
         }}
         className={cn(
-          'bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-l border-gray-100 dark:border-gray-800 shadow-[-2px_0_24px_rgba(0,0,0,0.02)] flex flex-col shrink-0 z-20 relative overflow-visible',
+          'bg-white dark:bg-slate-950 border-l border-sky-200/50 dark:border-slate-700',
+          'flex flex-col shrink-0 z-20 relative overflow-hidden h-full',
           className,
         )}
       >
@@ -253,9 +309,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
         {!collapsed && (
           <div
             onMouseDown={handleDragStart}
-            className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize z-50 group hover:bg-purple-400/30 dark:hover:bg-purple-600/30 active:bg-purple-500/40 dark:active:bg-purple-500/40 transition-colors"
+            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize z-50 group hover:bg-sky-400/50 dark:hover:bg-violet-500/50 active:bg-sky-500/70 dark:active:bg-violet-500/70 transition-colors"
           >
-            <div className="absolute left-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-purple-400 dark:group-hover:bg-purple-500 transition-colors" />
+            <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-sky-300 dark:bg-slate-700 group-hover:bg-sky-400 dark:group-hover:bg-violet-400 transition-colors" />
           </div>
         )}
 
@@ -265,32 +321,49 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
             onValueChange={(v) => setActiveTab(v as 'lecture' | 'chat')}
             className="flex flex-col h-full gap-0"
           >
-            {/* Tab header row */}
-            <div className="h-10 flex items-center gap-1 shrink-0 mt-3 mb-1 px-3">
-              <TabsList variant="line" className="h-full flex-1 w-0">
-                <TabsTrigger value="lecture" className="text-xs gap-1 flex-1">
+            {/* Redesigned tab header row */}
+            <div className="h-12 flex items-center gap-2 shrink-0 px-3 pt-2 pb-1">
+              <TabsList variant="line" className="h-9 flex-1 w-0 bg-slate-100/60 dark:bg-slate-800/60 rounded-xl p-1">
+                <TabsTrigger
+                  value="lecture"
+                  className="text-[13px] gap-1.5 flex-1 rounded-lg transition-all duration-200
+                    data-[state=active]:bg-gradient-to-r data-[state=active]:from-sky-400 data-[state=active]:to-indigo-400
+                    data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:shadow-sky-300/30
+                    data-[state=active]:dark:shadow-sky-500/20
+                    text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200
+                    border-0 after:absolute after:inset-x-0 after:bottom-[-5px] after:h-0.5 after:bg-gradient-to-r after:from-sky-400 after:to-indigo-400
+                    data-[state=active]:after:opacity-100 after:opacity-0"
+                >
                   <BookOpen className="w-3.5 h-3.5" />
                   {t('chat.tabs.lecture')}
                 </TabsTrigger>
-                <TabsTrigger value="chat" className="text-xs gap-1 flex-1 relative">
+                <TabsTrigger
+                  value="chat"
+                  className="text-[13px] gap-1.5 flex-1 rounded-lg transition-all duration-200 relative
+                    data-[state=active]:bg-gradient-to-r data-[state=active]:from-sky-400 data-[state=active]:to-indigo-400
+                    data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:shadow-sky-300/30
+                    data-[state=active]:dark:shadow-sky-500/20
+                    text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200
+                    border-0 after:absolute after:inset-x-0 after:bottom-[-5px] after:h-0.5 after:bg-gradient-to-r after:from-sky-400 after:to-indigo-400
+                    data-[state=active]:after:opacity-100 after:opacity-0"
+                >
                   <MessageSquare className="w-3.5 h-3.5" />
                   {t('chat.tabs.chat')}
-                  {/* Amber pulse dot when there's an active chat session and user is on Notes tab */}
-                  {hasActiveChatSession && activeTab === 'lecture' && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
-                    </span>
-                  )}
                 </TabsTrigger>
               </TabsList>
 
               {onCollapseChange && (
                 <button
                   onClick={() => onCollapseChange(true)}
-                  className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center bg-gray-100/80 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 ring-1 ring-black/[0.04] dark:ring-white/[0.06] hover:bg-gray-200/90 dark:hover:bg-gray-700/90 hover:text-gray-700 dark:hover:text-gray-200 active:scale-90 transition-all duration-200"
+                  aria-label={t('common.collapse')}
+                  title={t('common.collapse')}
+                  className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center
+                    text-slate-400 dark:text-slate-500
+                    hover:text-slate-600 dark:hover:text-slate-300
+                    hover:bg-slate-100 dark:hover:bg-slate-800
+                    active:scale-90 transition-all duration-200"
                 >
-                  <PanelRightClose className="w-4 h-4" />
+                  <PanelLeftClose className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -302,31 +375,40 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
 
             {/* Chat Tab */}
             <TabsContent value="chat" className="flex-1 overflow-hidden flex flex-col">
-              <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2 scrollbar-hide">
-                {chatSessions.length === 0 ? (
+              {enableFilters && (
+                <MessageFilters
+                  filters={messageFilters}
+                  onChange={setMessageFilters}
+                  availableAgents={availableAgents}
+                />
+              )}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
+                {filteredChatSessions.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-50">
-                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 text-gray-300 dark:text-gray-600">
+                    <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mb-3 text-slate-600">
                       <MessageSquare className="w-6 h-6" />
                     </div>
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <p className="text-sm font-medium text-slate-400">
                       {t('chat.noConversations')}
                     </p>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       {t('chat.startConversation')}
                     </p>
                   </div>
                 ) : (
-                  <>
+                  <div className="py-2">
                     <SessionList
-                      sessions={chatSessions}
+                      sessions={filteredChatSessions}
                       expandedSessionIds={expandedSessionIds}
                       isStreaming={isStreaming}
                       activeBubbleId={activeBubbleId}
+                      sceneTitleMap={sceneTitleMap}
                       onToggleExpand={toggleSessionExpand}
                       onEndSession={handleEndSession}
+                      onDeleteSession={handleDeleteSession}
                     />
                     <div ref={bottomRef} />
-                  </>
+                  </div>
                 )}
               </div>
             </TabsContent>

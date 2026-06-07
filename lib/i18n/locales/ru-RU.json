@@ -3,7 +3,8 @@
     "you": "Вы",
     "confirm": "Подтвердить",
     "cancel": "Отмена",
-    "loading": "Загрузка..."
+    "loading": "Загрузка...",
+    "send": "Отправить"
   },
   "home": {
     "slogan": "Generative Learning in Multi-Agent Interactive Classroom",
@@ -70,6 +71,7 @@
     "unknown": "Неизвестно",
     "stopDiscussion": "Завершить обсуждение",
     "endQA": "Завершить вопросы и ответы",
+    "deleteSession": "Удалить сессию",
     "tabs": {
       "lecture": "Заметки",
       "chat": "Чат"
@@ -78,7 +80,8 @@
       "empty": "Заметки появятся здесь после воспроизведения лекции",
       "emptyHint": "Нажмите воспроизведение для начала лекции",
       "pageLabel": "Страница {{n}}",
-      "currentPage": "Текущая"
+      "currentPage": "Текущая",
+      "noScene": "Не связано со слайдом"
     },
     "badge": {
       "qa": "Вопросы",
@@ -144,7 +147,9 @@
     "generatingNextPage": "Сцена генерируется, пожалуйста подождите...",
     "courseComplete": "Курс завершён",
     "fullscreen": "Полный экран",
-    "exitFullscreen": "Свернуть"
+    "exitFullscreen": "Свернуть",
+    "speakingToTeacher": "Вопрос учителю...",
+    "quickQuestions": "Быстрые вопросы"
   },
   "classroomComplete": {
     "title": "Курс завершён",
@@ -205,7 +210,9 @@
     "aiGrading": "AI проверяет...",
     "aiGradingWait": "Пожалуйста подождите, анализируем ваши ответы",
     "quizReport": "Результаты теста",
-    "retry": "Повторить"
+    "retry": "Повторить",
+    "knowledgePoints": "Ключевые知识点",
+    "knowledgePointsHint": "Повторите эти концепты для закрепления знаний"
   },
   "roundtable": {
     "teacher": "УЧИТЕЛЬ",
@@ -226,7 +233,9 @@
     "voiceInputDisabled": "Голосовой ввод отключён",
     "textInput": "Текстовый ввод",
     "stopRecording": "Остановить запись",
-    "startRecording": "Начать запись"
+    "startRecording": "Начать запись",
+    "askTeacher": "Спросить учителя",
+    "ask": "Спросить"
   },
   "pbl": {
     "legacyFormat": "Эта PBL-сцена использует устаревший формат. Пожалуйста, перегенерируйте курс.",
@@ -1054,5 +1063,50 @@
     "title": "Введите код доступа",
     "placeholder": "Код доступа",
     "error": "Неверный код доступа. Попробуйте ещё раз."
+  },
+  "account": {
+    "title": "Центр аккаунта",
+    "profileSection": "Профиль",
+    "accountSection": "Информация об аккаунте",
+    "securitySection": "Безопасность",
+    "planSection": "План и оплата",
+    "personalizationSection": "Персонализация",
+    "nickname": "Никнейм",
+    "nicknamePlaceholder": "Введите ваш никнейм",
+    "bio": "О себе",
+    "bioPlaceholder": "Расскажите о себе",
+    "email": "Электронная почта",
+    "username": "Имя пользователя",
+    "role": "Роль",
+    "status": "Статус",
+    "planType": "Тариф",
+    "userId": "ID пользователя",
+    "roleGuest": "Гость",
+    "roleUser": "Пользователь",
+    "roleAdmin": "Администратор",
+    "statusActive": "Активен",
+    "statusSuspended": "Приостановлен",
+    "planFree": "Бесплатный",
+    "planBasic": "Базовый",
+    "planPro": "Профессиональный",
+    "planEnterprise": "Корпоративный",
+    "changePassword": "Изменить пароль",
+    "currentPassword": "Текущий пароль",
+    "newPassword": "Новый пароль",
+    "confirmPassword": "Подтвердите пароль",
+    "passwordMismatch": "Пароли не совпадают",
+    "passwordTooShort": "Пароль должен быть не менее 6 символов",
+    "passwordChanged": "Пароль успешно изменён",
+    "saveSuccess": "Сохранено",
+    "backToHome": "На главную",
+    "unauthorized": "Пожалуйста, войдите для доступа"
+  },
+  "speech": {
+    "speaking": "Говорит...",
+    "role": {
+      "teacher": "Учитель",
+      "student": "Ученик",
+      "user": "Я"
+    }
   }
 }

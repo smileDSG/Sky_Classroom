@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/utils/lodash-replacements';
 import { useKeyboardStore, useCanvasStore } from '@/lib/store';
 import type { EditorView } from 'prosemirror-view';
 import { toggleMark, wrapIn, lift } from 'prosemirror-commands';
@@ -83,7 +83,7 @@ export const ProsemirrorEditor = forwardRef<ProsemirrorEditorRef, ProsemirrorEdi
     const handleInput = useMemo(
       () =>
         debounce(
-          (isHandleHistory = false) => {
+          (isHandleHistory: boolean = false) => {
             if (!editorView.current) return;
             if (
               value.replace(/ style=""/g, '') ===

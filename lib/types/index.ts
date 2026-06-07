@@ -139,7 +139,12 @@ export type {
 export type { DialogForExportTypes } from './export';
 export type { ParsedPdfContent, ParsePdfRequest, ParsePdfResponse } from './pdf';
 export type { SettingsSection, ProviderSettings, ProvidersConfig, EditingModel } from './settings';
-export type { ParticipantRole, Participant, MessageAction as RoundtableMessageAction, Message as RoundtableMessage } from './roundtable';
+export type {
+  ParticipantRole,
+  Participant,
+  MessageAction as RoundtableMessageAction,
+  Message as RoundtableMessage,
+} from './roundtable';
 export type { WebSearchSource, WebSearchResult } from './web-search';
 
 // ── Provider registry (runtime) ──
@@ -190,14 +195,9 @@ export {
   LemonadeStrategy,
 } from '@/lib/ai/strategies/thinking-strategy';
 
-export {
-  normalizeMiniMaxBaseUrl,
-} from '@/lib/ai/adapters/minimax-adapter';
+export { normalizeMiniMaxBaseUrl } from '@/lib/ai/adapters/minimax-adapter';
 
-export {
-  createProxyFetch,
-  resetProxyCache,
-} from '@/lib/ai/adapters/google-adapter';
+export { createProxyFetch, resetProxyCache } from '@/lib/ai/adapters/google-adapter';
 
 export {
   checkProviderHealth,

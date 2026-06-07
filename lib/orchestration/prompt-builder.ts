@@ -2,8 +2,11 @@
  * Prompt Builder for Stateless Generation
  *
  * Builds system prompts and converts messages for the LLM.
+ * Uses file-based role and persona templates from lib/prompts/roles/ and lib/prompts/student-personas/.
  */
 
+import fs from 'fs';
+import path from 'path';
 import type { StatelessChatRequest } from '@/lib/types/chat';
 import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import type { WhiteboardActionRecord, AgentTurnSummary } from './types';
@@ -13,10 +16,47 @@ import { buildVirtualWhiteboardContext } from './summarizers/whiteboard-ledger';
 import { buildPeerContextSection } from './summarizers/peer-context';
 import { formatAgentMemory } from './agent-memory';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
+import { createLogger } from '@/lib/logger';
 
-// ==================== Role Guidelines ====================
+const log = createLogger('PromptBuilder');
 
-const ROLE_GUIDELINES: Record<string, string> = {
+// ==================== Role & Persona Loader ====================
+
+const promptsDir = path.join(process.cwd(), 'lib', 'prompts');
+
+/**
+ * Load role content from the new modular templates (lib/prompts/roles/).
+ * Falls back to the legacy TS constants if the file doesn't exist yet.
+ */
+function loadRoleContent(role: string): string {
+  const rolePath = path.join(promptsDir, 'roles', `${role}.md`);
+  try {
+    return fs.readFileSync(rolePath, 'utf-8').trim();
+  } catch {
+    // Fall back to legacy constants during transition
+    log.warn(`Role template not found: ${rolePath}, using legacy fallback`);
+    return LEGACY_ROLE_GUIDELINES[role] || LEGACY_ROLE_GUIDELINES.student;
+  }
+}
+
+/**
+ * Load student persona content from the new modular templates (lib/prompts/student-personas/).
+ * Returns empty string if no specific persona is configured.
+ */
+function loadPersonaContent(personaType?: string): string {
+  if (!personaType) return '';
+  const personaPath = path.join(promptsDir, 'student-personas', `${personaType}.md`);
+  try {
+    return fs.readFileSync(personaPath, 'utf-8').trim();
+  } catch {
+    log.warn(`Persona template not found: ${personaPath}`);
+    return '';
+  }
+}
+
+// ==================== Legacy Fallback (to be removed after migration) ====================
+
+const LEGACY_ROLE_GUIDELINES: Record<string, string> = {
   teacher: `Your role in this classroom: LEAD TEACHER.
 You are responsible for:
 - Controlling the lesson flow, slides, and pacing
@@ -32,6 +72,7 @@ You are responsible for:
 - Rephrasing explanations in simpler terms when students are confused
 - Providing concrete examples and background context
 - Using the whiteboard sparingly to supplement (not duplicate) the teacher's content
+Keep your responses SHORT — 1-2 sentences max, around 50 characters. One key point per response.
 You play a supporting role — don't take over the lesson.`,
 
   student: `Your role in this classroom: STUDENT.
@@ -100,7 +141,7 @@ function buildDiscussionContextSection(
 Topic: "${discussionContext.topic}"
 ${discussionContext.prompt ? `Guiding prompt: ${discussionContext.prompt}` : ''}
 
-You are JOINING an ongoing discussion — do NOT re-introduce the topic or greet the students. The discussion has already started. Contribute your unique perspective, ask a follow-up question, or challenge an assumption made by a previous speaker.`;
+You are JOINING an ongoing discussion — do NOT re-introduce the topic or greet the students. The discussion has already started. Contribute your unique perspective: ask a follow-up question, challenge an assumption, or connect to something a peer just said.`;
   }
   return `
 
@@ -108,7 +149,7 @@ You are JOINING an ongoing discussion — do NOT re-introduce the topic or greet
 You are initiating a discussion on the following topic: "${discussionContext.topic}"
 ${discussionContext.prompt ? `Guiding prompt: ${discussionContext.prompt}` : ''}
 
-IMPORTANT: As you are starting this discussion, begin by introducing the topic naturally to the students. Engage them and invite their thoughts. Do not wait for user input - you speak first.`;
+IMPORTANT: As you are starting this discussion, introduce the topic naturally and invite students to share their thoughts. Be engaging and encourage active participation. Do not wait for user input - you speak first.`;
 }
 
 // ==================== System Prompt ====================
@@ -128,7 +169,10 @@ export function buildStructuredPrompt(
   whiteboardLedger?: WhiteboardActionRecord[],
   userProfile?: { nickname?: string; bio?: string },
   agentResponses?: AgentTurnSummary[],
-  memory?: { recentTurns: Array<{ contentPreview: string; actionNames: string[] }>; keyFacts: string[] },
+  memory?: {
+    recentTurns: Array<{ contentPreview: string; actionNames: string[] }>;
+    keyFacts: string[];
+  },
 ): string {
   // Determine current scene type for action filtering
   const currentScene = storeState.currentSceneId
@@ -139,12 +183,18 @@ export function buildStructuredPrompt(
   const hasSlideActions =
     effectiveActions.includes('spotlight') || effectiveActions.includes('laser');
 
+  // Load role content from new modular templates (with legacy fallback)
+  const roleContent = loadRoleContent(agentConfig.role);
+  const personaContent = agentConfig.role === 'student' ? loadPersonaContent(agentConfig.personaType) : '';
+  const combinedRoleGuideline = [roleContent, personaContent].filter(Boolean).join('\n\n');
+
   const vars = {
     agentName: agentConfig.name,
     persona: agentConfig.persona,
-    roleGuideline: ROLE_GUIDELINES[agentConfig.role] || ROLE_GUIDELINES.student,
+    roleGuideline: combinedRoleGuideline,
     studentProfileSection: buildStudentProfileSection(userProfile),
     peerContext: buildPeerContextSection(agentResponses, agentConfig.name),
+    hasStudentProfile: !!(userProfile?.nickname || userProfile?.bio),
     languageConstraint: buildLanguageConstraint(storeState.stage?.languageDirective),
     formatExample: hasSlideActions ? FORMAT_EXAMPLE_SLIDE : FORMAT_EXAMPLE_WB,
     orderingPrinciples: hasSlideActions ? ORDERING_SLIDE : ORDERING_WB,
@@ -154,8 +204,12 @@ export function buildStructuredPrompt(
     mutualExclusionNote: hasSlideActions ? MUTUAL_EXCLUSION_NOTE : '',
     stateContext: buildStateContext(storeState),
     virtualWhiteboardContext: buildVirtualWhiteboardContext(storeState, whiteboardLedger),
-    lengthGuidelines: buildLengthGuidelines(agentConfig.role),
-    whiteboardGuidelines: buildWhiteboardGuidelines(agentConfig.role),
+    lengthGuidelines: extractSection(roleContent, 'Length Constraint', 'Whiteboard Permissions')
+      || extractSection(roleContent, 'Length Constraint', '## Examples')
+      || '',
+    whiteboardGuidelines: extractSection(roleContent, 'Whiteboard Permissions', null)
+      || extractSection(roleContent, '## Whiteboard Permissions', null)
+      || '',
     discussionContextSection: buildDiscussionContextSection(discussionContext, agentResponses),
     memorySection: memory ? formatAgentMemory(memory) : '',
   };
@@ -167,58 +221,34 @@ export function buildStructuredPrompt(
   return prompt.system;
 }
 
-// ==================== Length Guidelines ====================
+// ==================== Markdown Section Extractor ====================
 
 /**
- * Build role-aware length and style guidelines.
- *
- * All agents should be concise and conversational. Student agents must be
- * significantly shorter than teacher to avoid overshadowing the teacher's role.
+ * Extract a named section from Markdown role content.
+ * Looks for a heading (## Section Name) and returns everything until the next heading or end.
  */
-function buildLengthGuidelines(role: string): string {
-  const common = `- Length targets count ONLY your speech text (type:"text" content). Actions (spotlight, whiteboard, etc.) do NOT count toward length. Use as many actions as needed — they don't make your speech "too long."
-- Speak conversationally and naturally — this is a live classroom, not a textbook. Use oral language, not written prose.`;
-
-  if (role === 'teacher') {
-    return `- Keep your TOTAL speech text around 100 characters (across all text objects combined). Prefer 2-3 short sentences over one long paragraph.
-${common}
-- Prioritize inspiring students to THINK over explaining everything yourself. Ask questions, pose challenges, give hints — don't just lecture.
-- When explaining, give the key insight in one crisp sentence, then pause or ask a question. Avoid exhaustive explanations.`;
+function extractSection(markdown: string, sectionName: string, stopAt: string | null): string {
+  const heading = `## ${sectionName}`;
+  const start = markdown.indexOf(heading);
+  if (start === -1) {
+    // Try alternative heading level
+    const altStart = markdown.indexOf(`# ${sectionName}`);
+    if (altStart === -1) return '';
+    return extractSectionAt(markdown, altStart, stopAt);
   }
-
-  if (role === 'assistant') {
-    return `- Keep your TOTAL speech text around 80 characters. You are a supporting role — be brief.
-${common}
-- One key point per response. Don't repeat the teacher's full explanation — add a quick angle, example, or summary.`;
-  }
-
-  // Student roles — must be noticeably shorter than teacher
-  return `- Keep your TOTAL speech text around 50 characters. 1-2 sentences max.
-${common}
-- You are a STUDENT, not a teacher. Your responses should be much shorter than the teacher's. If your response is as long as the teacher's, you are doing it wrong.
-- Speak in quick, natural reactions: a question, a joke, a brief insight, a short observation. Not paragraphs.
-- Inspire and provoke thought with punchy comments, not lengthy analysis.`;
+  return extractSectionAt(markdown, start, stopAt);
 }
 
-// ==================== Whiteboard Guidelines ====================
-
-/**
- * Build role-aware whiteboard guidelines.
- *
- * Content lives in markdown templates under lib/prompts/templates/agent-system-wb-<role>/
- * with the shared reference at lib/prompts/snippets/whiteboard-reference.md.
- */
-function buildWhiteboardGuidelines(role: string): string {
-  const templateId =
-    role === 'teacher'
-      ? PROMPT_IDS.AGENT_SYSTEM_WB_TEACHER
-      : role === 'assistant'
-        ? PROMPT_IDS.AGENT_SYSTEM_WB_ASSISTANT
-        : PROMPT_IDS.AGENT_SYSTEM_WB_STUDENT;
-
-  const prompt = buildPrompt(templateId, {});
-  if (!prompt) {
-    throw new Error(`${templateId} template not found`);
+function extractSectionAt(markdown: string, startIdx: number, stopAt: string | null): string {
+  let endIdx = markdown.length;
+  if (stopAt) {
+    const stopIdx = markdown.indexOf(`## ${stopAt}`, startIdx + 1);
+    if (stopIdx !== -1 && stopIdx < endIdx) endIdx = stopIdx;
   }
-  return prompt.system;
+  // Find next ## heading after the section
+  const nextHeading = markdown.indexOf('\n## ', startIdx + 1);
+  if (nextHeading !== -1 && nextHeading < endIdx) {
+    endIdx = nextHeading;
+  }
+  return markdown.slice(startIdx, endIdx).trim();
 }

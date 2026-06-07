@@ -3,7 +3,8 @@
     "you": "あなた",
     "confirm": "確認",
     "cancel": "キャンセル",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "send": "送信"
   },
   "home": {
     "slogan": "マルチエージェント対話型教室で生成的に学ぶ",
@@ -70,6 +71,7 @@
     "unknown": "不明",
     "stopDiscussion": "ディスカッションを終了",
     "endQA": "Q&Aを終了",
+    "deleteSession": "セッションを削除",
     "tabs": {
       "lecture": "ノート",
       "chat": "チャット"
@@ -78,7 +80,8 @@
       "empty": "講義の再生後にノートがここに表示されます",
       "emptyHint": "再生ボタンを押して講義を開始してください",
       "pageLabel": "ページ {{n}}",
-      "currentPage": "現在"
+      "currentPage": "現在",
+      "noScene": "スライド未関連"
     },
     "badge": {
       "qa": "Q&A",
@@ -144,7 +147,9 @@
     "generatingNextPage": "シーンを生成中です。お待ちください...",
     "courseComplete": "コース完了",
     "fullscreen": "全画面表示",
-    "exitFullscreen": "全画面表示を終了"
+    "exitFullscreen": "全画面表示を終了",
+    "speakingToTeacher": "先生に質問中...",
+    "quickQuestions": "クイック質問"
   },
   "classroomComplete": {
     "title": "コース完了",
@@ -205,7 +210,9 @@
     "aiGrading": "AIが採点中...",
     "aiGradingWait": "回答を分析しています。お待ちください",
     "quizReport": "クイズレポート",
-    "retry": "やり直す"
+    "retry": "やり直す",
+    "knowledgePoints": "重要ポイント",
+    "knowledgePointsHint": "これらの概念を復習して理解を深めましょう"
   },
   "roundtable": {
     "teacher": "教師",
@@ -226,7 +233,9 @@
     "voiceInputDisabled": "音声入力無効",
     "textInput": "テキスト入力",
     "stopRecording": "録音を停止",
-    "startRecording": "録音を開始"
+    "startRecording": "録音を開始",
+    "askTeacher": "先生に質問",
+    "ask": "質問"
   },
   "pbl": {
     "legacyFormat": "このPBLシーンは旧形式です。コースを再生成してください。",
@@ -1054,5 +1063,50 @@
     "title": "アクセスコードを入力",
     "placeholder": "アクセスコード",
     "error": "アクセスコードが正しくありません。もう一度お試しください。"
+  },
+  "account": {
+    "title": "アカウントセンター",
+    "profileSection": "プロフィール",
+    "accountSection": "アカウント情報",
+    "securitySection": "セキュリティ",
+    "planSection": "プラン & 請求",
+    "personalizationSection": "パーソナライゼーション",
+    "nickname": "ニックネーム",
+    "nicknamePlaceholder": "ニックネームを入力",
+    "bio": "自己紹介",
+    "bioPlaceholder": "あなたのことを教えてください",
+    "email": "メール",
+    "username": "ユーザー名",
+    "role": "ロール",
+    "status": "状態",
+    "planType": "プラン",
+    "userId": "ユーザーID",
+    "roleGuest": "ゲスト",
+    "roleUser": "ユーザー",
+    "roleAdmin": "管理者",
+    "statusActive": "アクティブ",
+    "statusSuspended": "停止中",
+    "planFree": "無料",
+    "planBasic": "ベーシック",
+    "planPro": "プロ",
+    "planEnterprise": "エンタープライズ",
+    "changePassword": "パスワード変更",
+    "currentPassword": "現在のパスワード",
+    "newPassword": "新しいパスワード",
+    "confirmPassword": "パスワード確認",
+    "passwordMismatch": "パスワードが一致しません",
+    "passwordTooShort": "パスワードは6文字以上",
+    "passwordChanged": "パスワードが変更されました",
+    "saveSuccess": "保存しました",
+    "backToHome": "ホームに戻る",
+    "unauthorized": "このページにアクセスするにはログインしてください"
+  },
+  "speech": {
+    "speaking": "話しています...",
+    "role": {
+      "teacher": "先生",
+      "student": "生徒",
+      "user": "私"
+    }
   }
 }

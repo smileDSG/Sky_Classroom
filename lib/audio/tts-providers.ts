@@ -831,10 +831,10 @@ async function generateDoubaoTTS(
   const appId = config.apiKey!.slice(0, colonIdx);
   const accessKey = config.apiKey!.slice(colonIdx + 1);
 
-  const baseUrl = config.baseUrl || TTS_PROVIDERS['doubao-tts'].defaultBaseUrl;
+  const baseUrl = config.baseUrl || TTS_PROVIDERS['doubao-tts'].defaultBaseUrl || 'https://openspeech.bytedance.com/api/v3/tts/unidirectional';
   const speechRate = Math.round(((config.speed || 1.0) - 1.0) * 100);
 
-  const response = await fetch(`${baseUrl}/unidirectional`, {
+  const response = await fetch(baseUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -273,10 +273,7 @@ export function buildThinkingBodyParams(
  * Pick the thinking budget from config, respecting the capability's budgetRange.
  * Mirrors the logic from thinking-config.ts pickThinkingBudget().
  */
-function pickBudget(
-  capability: ThinkingCapability,
-  config: ThinkingConfig,
-): number | undefined {
+function pickBudget(capability: ThinkingCapability, config: ThinkingConfig): number | undefined {
   const budget = config.budgetTokens;
   if (budget === undefined) return undefined;
 

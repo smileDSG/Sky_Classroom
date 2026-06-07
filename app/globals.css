@@ -45,6 +45,7 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --animate-fade-in-up: fade-in-up 0.35s ease-out;
 }
 
 :root {
@@ -80,6 +81,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Celestial Atelier — Sky Observatory Theme */
+  --celestial-void: #0B1021;
+  --celestial-horizon: #1A1F3A;
+  --celestial-haze: #2D3561;
+  --celestial-starlight: #F5E6C8;
+  --celestial-dawn: #FF8C69;
+  --celestial-nebula: #8B5CF6;
+  --celestial-zenith: #38BDF8;
 }
 
 .dark {
@@ -114,6 +124,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Celestial Atelier — Dark overrides */
+  --celestial-void: #0B1021;
+  --celestial-horizon: #131832;
+  --celestial-haze: #2D3561;
+  --celestial-starlight: #F5E6C8;
+  --celestial-dawn: #FF8C69;
+  --celestial-nebula: #A78BFA;
+  --celestial-zenith: #7DD3FC;
 }
 
 @layer base {
@@ -186,6 +205,42 @@
 }
 
 /* Hide scrollbar by default, show on hover */
+
+/* Custom horizontal scrollbar for timeline */
+.timeline-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.timeline-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.timeline-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.dark .timeline-scroll::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.timeline-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .timeline-scroll::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Firefox */
+.timeline-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.dark .timeline-scroll {
+  scrollbar-color: #475569 transparent;
+}
 @utility scrollbar-hide {
   &::-webkit-scrollbar {
     display: none;
@@ -215,4 +270,317 @@
     opacity: 0.7;
     transform: scale(1.08);
   }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes progress-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.progress-bar-animated {
+  background-size: 200% 100%;
+  animation: progress-shimmer 2s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Slides Page — Animation System
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes fade-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fade-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fade-in-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in-scale {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes soft-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 0.7; transform: scale(1.05); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes check-pop {
+  0%   { transform: scale(0) rotate(-45deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes ring-expand {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(30px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+@keyframes light-sweep {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Color Card Animations ─────────────────────────────── */
+@keyframes color-card-enter {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-100%) skewX(-12deg); }
+  100% { transform: translateX(200%) skewX(-12deg); }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 currentColor; }
+  50%      { box-shadow: 0 0 12px 3px currentColor; }
+}
+@keyframes badge-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  50%  { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-fade-in-left   { animation: fade-in-left 0.5s ease-out forwards; }
+.animate-fade-in-right  { animation: fade-in-right 0.5s ease-out 0.2s forwards; opacity: 0; }
+.animate-fade-in-down   { animation: fade-in-down 0.5s ease-out 0.1s forwards; opacity: 0; }
+.animate-fade-in-scale  { animation: fade-in-scale 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.animate-soft-pulse     { animation: soft-pulse 3s ease-in-out infinite; }
+.animate-floaty         { animation: floaty 3s ease-in-out infinite; }
+.animate-check-pop      { animation: check-pop 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.animate-ring-expand    { animation: ring-expand 1.5s ease-out infinite; }
+.animate-slide-up-fade  { animation: slide-up-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.animate-slide-up       { animation: slide-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.animate-gradient-x     { background-size: 200% 100%; animation: gradient-x 4s ease-in-out infinite; }
+.animate-fade-in        { animation: fade-in 0.3s ease-out forwards; }
+.animate-light-sweep    { animation: light-sweep 1.2s ease-in-out; }
+
+.animate-color-card-enter { animation: color-card-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity: 0; }
+.animate-badge-pop        { animation: badge-pop 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+/* Delayed entrance stagger */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.10s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.20s; }
+.stagger-5 { animation-delay: 0.25s; }
+
+/* Ripple pulse for loader */
+@keyframes ripple-pulse {
+  0%   { transform: scale(0.5); opacity: 0.6; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* Shimmer flow for progress bars */
+@keyframes shimmer-flow {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Stroke draw for SVG icons */
+@keyframes stroke-draw {
+  0%   { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* Node pulse for timeline */
+@keyframes node-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 currentColor; }
+  50%      { box-shadow: 0 0 0 8px transparent; }
+}
+
+/* Star Map Index — HUD scanline */
+@keyframes scan-sweep {
+  0%   { top: 0%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+.animate-scan-sweep { animation: scan-sweep 6s ease-in-out infinite; }
+
+/* Star Map Index — flowing constellation dash */
+@keyframes dash-flow {
+  0%   { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -252; }
+}
+.animate-dash-flow { animation: dash-flow 2.5s linear infinite; }
+
+/* Star Map Index — pulsing active line */
+@keyframes pulse-line {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.9; }
+}
+.animate-pulse-line { animation: pulse-line 1.8s ease-in-out infinite; }
+
+/* Subtle float */
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+/* ── Ambient Mesh Animations ─────────────────────────── */
+@keyframes mesh-drift-1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  25% { transform: translate(2%, -3%) rotate(2deg) scale(1.03); }
+  50% { transform: translate(-1%, 2%) rotate(-1deg) scale(0.97); }
+  75% { transform: translate(3%, 1%) rotate(1deg) scale(1.02); }
+}
+@keyframes mesh-drift-2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  25% { transform: translate(-2%, 2%) rotate(-2deg) scale(0.98); }
+  50% { transform: translate(1%, -3%) rotate(1deg) scale(1.04); }
+  75% { transform: translate(-3%, -1%) rotate(-1deg) scale(0.99); }
+}
+@keyframes mesh-breathe {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+}
+
+.animate-mesh-drift-1 { animation: mesh-drift-1 20s ease-in-out infinite; }
+.animate-mesh-drift-2 { animation: mesh-drift-2 25s ease-in-out infinite; }
+.animate-mesh-breathe   { animation: mesh-breathe 8s ease-in-out infinite; }
+
+/* ── Celestial Atelier Animations ──────────────────────── */
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
+
+@keyframes star-trail {
+  0% { stroke-dashoffset: 100; opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes horizon-glow {
+  0%, 100% { opacity: 0.06; transform: scaleX(1); }
+  50% { opacity: 0.12; transform: scaleX(1.05); }
+}
+
+@keyframes nebula-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+  50% { transform: translate(1.5%, -2%) scale(1.04); opacity: 0.45; }
+}
+
+@keyframes orbit-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbit-spin-medium {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes orbit-spin-fast {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes scan-line {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes warp-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes constellation-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 230, 200, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(245, 230, 200, 0); }
+}
+
+@keyframes nebula-breathe {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.04); }
+}
+
+@keyframes cross-flare {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Celestial utility classes */
+.animate-star-twinkle { animation: star-twinkle 3s ease-in-out infinite; }
+.animate-star-trail { animation: star-trail 1.5s ease-out forwards; }
+.animate-horizon-glow { animation: horizon-glow 6s ease-in-out infinite; }
+.animate-nebula-drift { animation: nebula-drift 45s ease-in-out infinite; }
+.animate-orbit-slow { animation: orbit-spin-slow 60s linear infinite; }
+.animate-orbit-medium { animation: orbit-spin-medium 40s linear infinite; }
+.animate-orbit-fast { animation: orbit-spin-fast 20s linear infinite; }
+.animate-scan-line { animation: scan-line 4s ease-in-out infinite; }
+.animate-warp-sweep {
+  background-size: 200% 100%;
+  animation: warp-sweep 1.5s ease-in-out infinite;
+}
+.animate-constellation-pulse { animation: constellation-pulse 2s ease-in-out infinite; }
+.animate-nebula-breathe { animation: nebula-breathe 14s ease-in-out infinite; }
+.animate-cross-flare { animation: cross-flare 2s ease-in-out infinite; }
+
+/* Glass panel base */
+.glass-panel {
+  @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/40 dark:border-white/10;
+  box-shadow: 0 8px 32px -8px rgba(0,0,0,0.12), inset 0 1px 0 0 rgba(255,255,255,0.4);
+}
+.dark .glass-panel {
+  box-shadow: 0 8px 32px -8px rgba(0,0,0,0.4), inset 0 1px 0 0 rgba(255,255,255,0.05);
+}
+
+/* Celestial dark panel — for slides states */
+.celestial-panel {
+  background: linear-gradient(180deg, rgba(11, 16, 33, 0.95) 0%, rgba(19, 24, 50, 0.98) 100%);
+  border: 1px solid rgba(45, 53, 97, 0.5);
+  box-shadow: inset 0 1px 0 0 rgba(245, 230, 200, 0.05), 0 4px 24px -4px rgba(0, 0, 0, 0.5);
+}
+
+/* Starfield grid overlay */
+.celestial-grid {
+  background-image:
+    linear-gradient(rgba(245, 230, 200, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 230, 200, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Text shimmer for titles */
+.text-shimmer {
+  background: linear-gradient(90deg, var(--celestial-starlight) 0%, var(--celestial-dawn) 50%, var(--celestial-starlight) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: warp-sweep 4s linear infinite;
 }

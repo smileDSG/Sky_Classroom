@@ -143,6 +143,7 @@ export interface GeneratedSlideContent {
  */
 export interface GeneratedQuizContent {
   questions: QuizQuestion[];
+  knowledgePoints?: string[];
 }
 
 // ==================== PBL Generation Types ====================

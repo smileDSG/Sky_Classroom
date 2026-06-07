@@ -108,17 +108,16 @@ export function summarizeHealth(report: HealthReport): {
   avgLatencyMs: number;
 } {
   const entries = Object.values(report);
-  const healthy = entries.filter(r => r.healthy);
-  const latencies = entries
-    .filter(r => r.latencyMs !== undefined)
-    .map(r => r.latencyMs!);
+  const healthy = entries.filter((r) => r.healthy);
+  const latencies = entries.filter((r) => r.latencyMs !== undefined).map((r) => r.latencyMs!);
 
   return {
     total: entries.length,
     healthy: healthy.length,
     unhealthy: entries.length - healthy.length,
-    avgLatencyMs: latencies.length > 0
-      ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)
-      : 0,
+    avgLatencyMs:
+      latencies.length > 0
+        ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)
+        : 0,
   };
 }

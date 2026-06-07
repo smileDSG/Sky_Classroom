@@ -16,11 +16,7 @@ import { getEffectiveActions } from './tool-schemas';
 import { convertMessagesToOpenAI } from './summarizers/message-converter';
 import { parseStructuredChunk, createParserState, finalizeParser } from './stateless-generate';
 import type { AgentTurnSummary, WhiteboardActionRecord } from './types';
-import {
-  CONTENT_PREVIEW_MAX_LENGTH,
-  EMPTY_HISTORY_PROMPT,
-  AGENT_TURN_PROMPT,
-} from './config';
+import { CONTENT_PREVIEW_MAX_LENGTH, EMPTY_HISTORY_PROMPT, AGENT_TURN_PROMPT } from './config';
 import { createLogger } from '@/lib/logger';
 import { getAgentMemory } from './agent-memory';
 
@@ -172,6 +168,20 @@ function buildAgentMessages(
     messages.push(new HumanMessage(EMPTY_HISTORY_PROMPT));
   } else if (lastMsg instanceof AIMessage) {
     messages.push(new HumanMessage(AGENT_TURN_PROMPT));
+  }
+
+  // Highlight the latest student message so the AI answers the CURRENT question
+  // Find the last HumanMessage and prepend a clear instruction
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i] instanceof HumanMessage) {
+      const content = (messages[i] as HumanMessage).content as string;
+      if (content && !content.startsWith('[LATEST STUDENT MESSAGE')) {
+        messages[i] = new HumanMessage(
+          `[LATEST STUDENT MESSAGE — ANSWER THIS DIRECTLY]:\n${content}`,
+        );
+      }
+      break;
+    }
   }
 
   return messages;

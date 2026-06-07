@@ -3,9 +3,10 @@ import { nanoid } from 'nanoid';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { type GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
-import { createClassroomGenerationJob } from '@/lib/server/classroom-job-store';
+import { createClassroomGenerationJobHybrid } from '@/lib/server/classroom-job-store-hybrid';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { createLogger } from '@/lib/logger';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('GenerateClassroom API');
 
@@ -14,7 +15,11 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   let requirementSnippet: string | undefined;
   try {
-    const rawBody = (await req.json()) as Partial<GenerateClassroomInput>;
+    const rawBody = (await req.json()) as Partial<GenerateClassroomInput> & {
+      modelString?: string;
+      apiKey?: string;
+      baseUrl?: string;
+    };
     requirementSnippet = rawBody.requirement?.substring(0, 60);
     const body: GenerateClassroomInput = {
       requirement: rawBody.requirement || '',
@@ -39,10 +44,25 @@ export async function POST(req: NextRequest) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: requirement');
     }
 
+    // Check billing quota before expensive work
+    const quota = await requireQuota('generationCount');
+    if ('error' in quota) return quota.error;
+
     const baseUrl = buildRequestOrigin(req);
     const jobId = nanoid(10);
-    const job = await createClassroomGenerationJob(jobId, body);
+
+    // Extract model config from request body (client passes its selected model)
+    const modelConfig = {
+      modelString: rawBody.modelString as string | undefined,
+      apiKey: rawBody.apiKey as string | undefined,
+      baseUrl: rawBody.baseUrl as string | undefined,
+    };
+
+    const job = await createClassroomGenerationJobHybrid(jobId, body, modelConfig);
     const pollUrl = `${baseUrl}/api/generate-classroom/${jobId}`;
+
+    // Record generation usage
+    await recordUsage(quota.userId, quota.planType, 'generationCount');
 
     after(() => runClassroomGenerationJob(jobId, body, baseUrl));
 

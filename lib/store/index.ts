@@ -4,6 +4,8 @@ import { useSnapshotStore } from './snapshot';
 import { useKeyboardStore } from './keyboard';
 import { useStageStore } from './stage';
 import { useSettingsStore } from './settings';
+import { useMediaGenerationStore } from './media-generation';
+import { useUserProfileStore } from './user-profile';
 
 export {
   // New architecture
@@ -12,6 +14,8 @@ export {
   useSnapshotStore,
   useKeyboardStore,
   useSettingsStore,
+  useMediaGenerationStore,
+  useUserProfileStore,
 };
 
 // Scene Context API (for extensible scene types)

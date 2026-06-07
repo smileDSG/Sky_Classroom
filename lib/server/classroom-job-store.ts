@@ -12,7 +12,9 @@ import {
   writeJsonFileAtomic,
 } from '@/lib/server/classroom-storage';
 
-export type ClassroomGenerationJobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+export type { ClassroomGenerationProgress, GenerateClassroomInput, GenerateClassroomResult } from '@/lib/server/classroom-generation';
+
+export type ClassroomGenerationJobStatus = 'queued' | 'running' | 'awaiting_review' | 'cancelled' | 'succeeded' | 'failed';
 
 export interface ClassroomGenerationJob {
   id: string;
@@ -30,8 +32,20 @@ export interface ClassroomGenerationJob {
     pdfTextLength: number;
     pdfImageCount: number;
   };
+  topicSummary?: string;
   scenesGenerated: number;
   totalScenes?: number;
+  outlines?: import('@/lib/types/generation').SceneOutline[];
+  outlinesMeta?: {
+    languageDirective: string;
+    totalScenes: number;
+  };
+  phaseOneResult?: Record<string, unknown>;
+  modelConfig?: {
+    modelString?: string;
+    apiKey?: string;
+    baseUrl?: string;
+  };
   result?: {
     classroomId: string;
     url: string;
@@ -76,6 +90,42 @@ async function withJobLock<T>(jobId: string, fn: () => Promise<T>): Promise<T> {
 /** Max age (ms) before a "running" job without an active runner is considered stale. */
 const STALE_JOB_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
+/** Max age (ms) to keep terminal-state job files before cleanup. */
+const TERMINAL_JOB_RETENTION_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+async function cleanupOldClassroomJobs(): Promise<void> {
+  try {
+    const files = await fs.readdir(CLASSROOM_JOBS_DIR);
+    const now = Date.now();
+    let removed = 0;
+
+    for (const file of files) {
+      if (!file.endsWith('.json')) continue;
+      const filePath = path.join(CLASSROOM_JOBS_DIR, file);
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const job = JSON.parse(content) as ClassroomGenerationJob;
+        const isTerminal = job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled';
+        if (!isTerminal) continue;
+
+        const completedAt = job.completedAt ? new Date(job.completedAt).getTime() : 0;
+        if (now - completedAt > TERMINAL_JOB_RETENTION_MS) {
+          await fs.unlink(filePath);
+          removed++;
+        }
+      } catch {
+        // Skip files that can't be read/parsed (corrupt, locked, etc.)
+      }
+    }
+
+    if (removed > 0) {
+      // Logging happens at call site; keep this function quiet
+    }
+  } catch {
+    // Directory may not exist yet
+  }
+}
+
 function markStaleIfNeeded(job: ClassroomGenerationJob): ClassroomGenerationJob {
   if (job.status !== 'running') return job;
   const updatedAt = new Date(job.updatedAt).getTime();
@@ -100,6 +150,11 @@ export function isValidClassroomJobId(jobId: string): boolean {
 export async function createClassroomGenerationJob(
   jobId: string,
   input: GenerateClassroomInput,
+  modelConfig?: {
+    modelString?: string;
+    apiKey?: string;
+    baseUrl?: string;
+  },
 ): Promise<ClassroomGenerationJob> {
   const now = new Date().toISOString();
   const job: ClassroomGenerationJob = {
@@ -112,10 +167,15 @@ export async function createClassroomGenerationJob(
     updatedAt: now,
     inputSummary: buildInputSummary(input),
     scenesGenerated: 0,
+    modelConfig,
   };
 
   await ensureClassroomJobsDir();
   await writeJsonFileAtomic(jobFilePath(jobId), job);
+
+  // Lazy cleanup: remove terminal jobs older than 24h (don't block)
+  cleanupOldClassroomJobs().catch(() => {});
+
   return job;
 }
 
@@ -210,6 +270,18 @@ export async function markClassroomGenerationJobSucceeded(
   });
 }
 
+export async function markClassroomGenerationJobCancelled(
+  jobId: string,
+): Promise<ClassroomGenerationJob> {
+  return updateClassroomGenerationJob(jobId, {
+    status: 'cancelled',
+    step: 'failed',
+    message: '课堂生成已取消',
+    completedAt: new Date().toISOString(),
+    error: '用户取消了生成',
+  });
+}
+
 export async function markClassroomGenerationJobFailed(
   jobId: string,
   error: string,
@@ -221,4 +293,40 @@ export async function markClassroomGenerationJobFailed(
     completedAt: new Date().toISOString(),
     error,
   });
+}
+
+export async function markClassroomGenerationJobAwaitingReview(
+  jobId: string,
+  outlines: import('@/lib/types/generation').SceneOutline[],
+  outlinesMeta: { languageDirective: string; totalScenes: number },
+  topicSummary?: string,
+): Promise<ClassroomGenerationJob> {
+  return updateClassroomGenerationJob(jobId, {
+    status: 'awaiting_review',
+    step: 'generating_outlines',
+    progress: 30,
+    message: '大纲已生成，等待审阅',
+    outlines,
+    outlinesMeta,
+    totalScenes: outlines.length,
+    topicSummary,
+  });
+}
+
+export async function markClassroomGenerationJobResumed(
+  jobId: string,
+): Promise<ClassroomGenerationJob> {
+  return updateClassroomGenerationJob(jobId, {
+    status: 'running',
+    step: 'generating_scenes',
+    progress: 30,
+    message: '大纲已审阅，继续生成场景',
+  });
+}
+
+export async function savePhaseOneResult(
+  jobId: string,
+  result: Record<string, unknown>,
+): Promise<ClassroomGenerationJob> {
+  return updateClassroomGenerationJob(jobId, { phaseOneResult: result });
 }

@@ -22,10 +22,34 @@ export async function writeJsonFileAtomic(filePath: string, data: unknown) {
   const dir = path.dirname(filePath);
   await ensureDir(dir);
 
-  const tempFilePath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
   const content = JSON.stringify(data, null, 2);
-  await fs.writeFile(tempFilePath, content, 'utf-8');
-  await fs.rename(tempFilePath, filePath);
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const tempFilePath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+    try {
+      await fs.writeFile(tempFilePath, content, 'utf-8');
+      await fs.rename(tempFilePath, filePath);
+      return;
+    } catch (error: unknown) {
+      lastError = error as Error;
+      // Clean up temp file on failure
+      try {
+        await fs.unlink(tempFilePath);
+      } catch {
+        // ignore cleanup failure
+      }
+      // Retry on Windows EPERM/EACCIS rename conflicts
+      const code = (error as NodeJS.ErrnoException).code;
+      if ((code === 'EPERM' || code === 'EACCES') && attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, 100 * attempt));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
 }
 
 export function buildRequestOrigin(req: NextRequest): string {

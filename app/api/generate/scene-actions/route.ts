@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
       userPrompt: string,
       images?: Array<{ id: string; src: string }>,
     ): Promise<string> => {
+      const retryOpts = { retries: 2 };
       if (images?.length && hasVision) {
         const result = await callLLM(
           {
@@ -111,7 +112,7 @@ export async function POST(req: NextRequest) {
             maxOutputTokens: modelInfo?.outputWindow,
           },
           'scene-actions',
-          undefined,
+          retryOpts,
           thinkingConfig,
         );
         return result.text;
@@ -124,7 +125,7 @@ export async function POST(req: NextRequest) {
           maxOutputTokens: modelInfo?.outputWindow,
         },
         'scene-actions',
-        undefined,
+        retryOpts,
         thinkingConfig,
       );
       return result.text;

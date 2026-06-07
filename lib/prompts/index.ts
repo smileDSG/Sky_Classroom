@@ -1,18 +1,40 @@
 /**
- * Prompt System - Simplified prompt management
+ * Prompt System — unified public API
  *
- * Features:
- * - File-based prompt storage in templates/
- * - Snippet composition via {{snippet:name}} syntax
- * - Conditional blocks via {{#if flag}}...{{/if}} syntax
- * - Variable interpolation via {{variable}} syntax
+ * Exports both the legacy template API (PROMPT_IDS, buildPrompt, loadPrompt)
+ * and the new modular composability API (PromptComposer, VersionManager).
+ * The two APIs coexist during the phased migration; consumers can adopt
+ * the new API incrementally.
  */
 
+// ═══════════════════════════════════════════════════════════════
 // Types
-import type { PromptId } from './types';
-export type { PromptId, SnippetId, LoadedPrompt } from './types';
+// ═══════════════════════════════════════════════════════════════
 
-// Loader functions
+import type { PromptId } from './types';
+export type {
+  // Legacy
+  PromptId,
+  SnippetId,
+  LoadedPrompt,
+  // New modular system
+  PromptFragment,
+  PromptFragmentCategory,
+  ComposeOptions,
+  ComposeResult,
+  ComposeMeta,
+  IPromptComposer,
+  PromptVersion,
+  PromptVersionMeta,
+  ABTestConfig,
+  ABTestMetrics,
+  IVersionManager,
+} from './types';
+
+// ═══════════════════════════════════════════════════════════════
+// Legacy API (backward-compatible)
+// ═══════════════════════════════════════════════════════════════
+
 export {
   loadPrompt,
   loadSnippet,
@@ -20,10 +42,36 @@ export {
   interpolateVariables,
   processSnippets,
   processConditionalBlocks,
+  enableCache,
+  disableCache,
+  clearCache,
+  getCacheStats,
+  startFileWatcher,
+  stopFileWatcher,
 } from './loader';
 
-// Prompt IDs constant
+// ═══════════════════════════════════════════════════════════════
+// New Modular API
+// ═══════════════════════════════════════════════════════════════
+
+export {
+  PromptComposer,
+  getPromptComposer,
+  resetPromptComposer,
+} from './composability';
+
+export {
+  VersionManager,
+  getVersionManager,
+  resetVersionManager,
+} from './version-manager';
+
+// ═══════════════════════════════════════════════════════════════
+// Prompt ID Constants (legacy — will be replaced by fragment IDs)
+// ═══════════════════════════════════════════════════════════════
+
 export const PROMPT_IDS = {
+  // Legacy templates
   REQUIREMENTS_TO_OUTLINES: 'requirements-to-outlines',
   INTERACTIVE_OUTLINES: 'interactive-outlines',
   WEB_SEARCH_QUERY_REWRITE: 'web-search-query-rewrite',
@@ -45,4 +93,23 @@ export const PROMPT_IDS = {
   AGENT_SYSTEM_WB_STUDENT: 'agent-system-wb-student',
   DIRECTOR: 'director',
   PBL_DESIGN: 'pbl-design',
+  // New modular generators (Phase 3+)
+  OUTLINE: 'generators/outline',
+  INTERACTIVE_OUTLINES_V2: 'generators/interactive-outlines',
+  SLIDE_CONTENT_V2: 'generators/slide-content',
+  SLIDE_ACTIONS_V2: 'generators/slide-actions',
+  QUIZ: 'generators/quiz',
+  QUIZ_ACTIONS_V2: 'generators/quiz-actions',
+  WIDGET_TEACHER_ACTIONS_V2: 'generators/widget-teacher-actions',
+  INTERACTIVE_ACTIONS_V2: 'generators/interactive-actions',
+  PBL_DESIGN_V2: 'generators/pbl-design',
+  PBL_ACTIONS_V2: 'generators/pbl-actions',
+  WEB_SEARCH_QUERY_REWRITE_V2: 'generators/web-search-query-rewrite',
+  AGENT_PROFILES: 'generators/agent-profiles',
+  // New modular generators — Ultra Mode widgets (Phase 4+)
+  SIMULATION_CONTENT_V2: 'generators/simulation-content',
+  DIAGRAM_CONTENT_V2: 'generators/diagram-content',
+  CODE_CONTENT_V2: 'generators/code-content',
+  GAME_CONTENT_V2: 'generators/game-content',
+  VISUALIZATION3D_CONTENT_V2: 'generators/visualization3d-content',
 } as const satisfies Record<string, PromptId>;

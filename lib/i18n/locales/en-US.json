@@ -3,7 +3,8 @@
     "you": "You",
     "confirm": "Confirm",
     "cancel": "Cancel",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "send": "Send"
   },
   "home": {
     "slogan": "Generative Learning in Multi-Agent Interactive Classroom",
@@ -70,6 +71,7 @@
     "unknown": "Unknown",
     "stopDiscussion": "Stop Discussion",
     "endQA": "End Q&A",
+    "deleteSession": "Delete Session",
     "tabs": {
       "lecture": "Notes",
       "chat": "Chat"
@@ -78,7 +80,8 @@
       "empty": "Notes will appear here after lecture playback",
       "emptyHint": "Press play to start the lecture",
       "pageLabel": "Page {{n}}",
-      "currentPage": "Current"
+      "currentPage": "Current",
+      "noScene": "Not linked to slide"
     },
     "badge": {
       "qa": "Q&A",
@@ -144,7 +147,9 @@
     "generatingNextPage": "Scene is being generated, please wait...",
     "courseComplete": "Course complete",
     "fullscreen": "Fullscreen",
-    "exitFullscreen": "Exit Fullscreen"
+    "exitFullscreen": "Exit Fullscreen",
+    "speakingToTeacher": "Asking the teacher...",
+    "quickQuestions": "Quick questions"
   },
   "classroomComplete": {
     "title": "Course complete",
@@ -205,7 +210,9 @@
     "aiGrading": "AI is grading...",
     "aiGradingWait": "Please wait, analyzing your answers",
     "quizReport": "Quiz Report",
-    "retry": "Retry"
+    "retry": "Retry",
+    "knowledgePoints": "Key Knowledge Points",
+    "knowledgePointsHint": "Review these concepts to strengthen your understanding"
   },
   "roundtable": {
     "teacher": "TEACHER",
@@ -226,7 +233,9 @@
     "voiceInputDisabled": "Voice input disabled",
     "textInput": "Text input",
     "stopRecording": "Stop recording",
-    "startRecording": "Start recording"
+    "startRecording": "Start recording",
+    "askTeacher": "Ask Teacher",
+    "ask": "Ask"
   },
   "pbl": {
     "legacyFormat": "This PBL scene uses a legacy format. Please regenerate the course.",
@@ -1054,5 +1063,50 @@
     "title": "Enter Access Code",
     "placeholder": "Access code",
     "error": "Invalid access code. Please try again."
+  },
+  "account": {
+    "title": "Account Center",
+    "profileSection": "Profile",
+    "accountSection": "Account Info",
+    "securitySection": "Security",
+    "planSection": "Plan & Billing",
+    "personalizationSection": "Personalization",
+    "nickname": "Nickname",
+    "nicknamePlaceholder": "Enter your nickname",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell us about yourself",
+    "email": "Email",
+    "username": "Username",
+    "role": "Role",
+    "status": "Status",
+    "planType": "Plan",
+    "userId": "User ID",
+    "roleGuest": "Guest",
+    "roleUser": "User",
+    "roleAdmin": "Admin",
+    "statusActive": "Active",
+    "statusSuspended": "Suspended",
+    "planFree": "Free",
+    "planBasic": "Basic",
+    "planPro": "Pro",
+    "planEnterprise": "Enterprise",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "passwordChanged": "Password changed successfully",
+    "saveSuccess": "Saved successfully",
+    "backToHome": "Back to Home",
+    "unauthorized": "Please log in to access this page"
+  },
+  "speech": {
+    "speaking": "Speaking...",
+    "role": {
+      "teacher": "Teacher",
+      "student": "Student",
+      "user": "Me"
+    }
   }
 }

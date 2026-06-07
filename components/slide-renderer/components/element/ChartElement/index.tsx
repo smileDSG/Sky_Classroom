@@ -2,7 +2,7 @@
 
 import type { PPTChartElement } from '@/lib/types/slides';
 import { ElementOutline } from '../ElementOutline';
-import { Chart } from './Chart';
+import { Chart } from './Chart.dynamic';
 
 export { BaseChartElement } from './BaseChartElement';
 

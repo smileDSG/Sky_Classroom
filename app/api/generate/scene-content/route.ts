@@ -18,6 +18,7 @@ import type { SceneOutline, PdfImage, ImageMapping } from '@/lib/types/generatio
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('Scene Content API');
 
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
       userPrompt: string,
       images?: Array<{ id: string; src: string }>,
     ): Promise<string> => {
+      const retryOpts = { retries: 2 };
       if (images?.length && hasVision) {
         const result = await callLLM(
           {
@@ -102,7 +104,7 @@ export async function POST(req: NextRequest) {
             maxOutputTokens: modelInfo?.outputWindow,
           },
           'scene-content',
-          undefined,
+          retryOpts,
           thinkingConfig,
         );
         return result.text;
@@ -115,7 +117,7 @@ export async function POST(req: NextRequest) {
           maxOutputTokens: modelInfo?.outputWindow,
         },
         'scene-content',
-        undefined,
+        retryOpts,
         thinkingConfig,
       );
       return result.text;
@@ -123,6 +125,10 @@ export async function POST(req: NextRequest) {
 
     // ── Apply fallbacks ──
     const effectiveOutline = applyOutlineFallbacks(outline, !!languageModel);
+
+    // Check billing quota before expensive LLM call
+    const quota = await requireQuota('generationCount');
+    if ('error' in quota) return quota.error;
 
     // ── Filter images assigned to this outline ──
     let assignedImages: PdfImage[] | undefined;
@@ -168,6 +174,9 @@ export async function POST(req: NextRequest) {
     }
 
     log.info(`Content generated successfully: "${effectiveOutline.title}"`);
+
+    // Record generation usage
+    await recordUsage(quota.userId, quota.planType, 'generationCount');
 
     return apiSuccess({ content, effectiveOutline });
   } catch (error) {

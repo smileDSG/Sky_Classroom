@@ -11,6 +11,7 @@ import { PROVIDERS } from './providers';
 import { thinkingContext } from './thinking-context';
 import { getModelMetadataKey } from './model-metadata';
 import type { ThinkingCapability, ThinkingConfig } from '@/lib/types/provider';
+import { getPerfMonitor } from '@/lib/monitoring/performance';
 import {
   getThinkingMode,
   pickThinkingBudget,
@@ -232,6 +233,11 @@ export interface LLMRetryOptions {
   /** Custom validation function. Return true to accept the result, false to retry.
    *  Default: checks that response text is non-empty. */
   validate?: (text: string) => boolean;
+  /** Timeout for each attempt in milliseconds (default: 90000 = 90s) */
+  timeoutMs?: number;
+  /** When true, throw error if all retries exhausted and validation still fails.
+   *  Default false (returns last result for backward compatibility). */
+  failOnValidationError?: boolean;
 }
 
 const DEFAULT_VALIDATE = (text: string) => text.trim().length > 0;
@@ -239,16 +245,20 @@ const DEFAULT_VALIDATE = (text: string) => text.trim().length > 0;
 /**
  * Unified wrapper around `generateText`.
  *
- * @param params - Same parameters as AI SDK's `generateText`
+ * @param params - Same parameters as AI SDK's `generateText` (messages, model, etc.)
  * @param source - A short label for log grouping (e.g. 'scene-stream', 'pbl-chat')
  * @param retryOptions - Optional retry-on-validation-failure settings
  * @param thinking - Optional per-call thinking config (overrides global LLM_THINKING_DISABLED)
+ * @param system - Optional system prompt. When provided, it overrides any system
+ *   message in the messages array. Required for providers like Anthropic that
+ *   require system messages as a separate parameter, not in the messages array.
  */
 export async function callLLM<T extends GenerateTextParams>(
   params: T,
   source: string,
   retryOptions?: LLMRetryOptions,
   thinking?: ThinkingConfig,
+  system?: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<GenerateTextResult<any, any>> {
   const maxAttempts = (retryOptions?.retries ?? 0) + 1;
@@ -258,18 +268,45 @@ export async function callLLM<T extends GenerateTextParams>(
   let lastResult: GenerateTextResult<any, any> | undefined;
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      // Resolve effective thinking config: per-call > global env > undefined
-      const effectiveThinking = thinking ?? getGlobalThinkingConfig();
-      const injectedParams = injectProviderOptions(params, effectiveThinking);
+  // If a separate system prompt is provided, merge it into params.
+  // Anthropic adapter requires system as a top-level field, not in messages.
+  const effectiveParams = system
+    ? { ...params, system } as T
+    : params;
 
+  // Resolve injected params once (thinking config is per-call stable)
+  const effectiveThinking = thinking ?? getGlobalThinkingConfig();
+  const injectedParams = injectProviderOptions(effectiveParams, effectiveThinking);
+
+  const timeoutMs = retryOptions?.timeoutMs ?? 90_000;
+  log.info(`[callLLM] source=${source} timeoutMs=${timeoutMs} maxAttempts=${maxAttempts}`);
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      log.warn(`[callLLM] ABORT triggered for source=${source} after ${timeoutMs}ms (attempt ${attempt})`);
+      abortController.abort(new Error('LLM call timeout'));
+    }, timeoutMs);
+    const startTime = performance.now();
+    try {
       // Wrap in thinkingContext so the custom fetch wrapper in providers.ts
       // can read the config and inject vendor-specific body params for
       // OpenAI-compatible providers.
       const result = await thinkingContext.run(effectiveThinking, () =>
-        generateText(injectedParams),
+        generateText({ ...injectedParams, abortSignal: abortController.signal }),
       );
+      clearTimeout(timeoutId);
+      const durationMs = Math.round(performance.now() - startTime);
+
+      // Record performance metrics
+      getPerfMonitor().recordLLMCall({
+        model: getModelId(injectedParams),
+        source,
+        durationMs,
+        promptTokens: (result.usage as unknown as Record<string, number> | undefined)?.promptTokens,
+        completionTokens: (result.usage as unknown as Record<string, number> | undefined)?.completionTokens,
+        success: true,
+      });
 
       // Validate result (only when retries are configured)
       if (validate && !validate(result.text)) {
@@ -277,22 +314,64 @@ export async function callLLM<T extends GenerateTextParams>(
           `[${source}] Validation failed (attempt ${attempt}/${maxAttempts}), ${attempt < maxAttempts ? 'retrying...' : 'giving up'}`,
         );
         lastResult = result;
+        if (attempt < maxAttempts) {
+          const backoffMs = 2000 * (attempt - 1);
+          if (backoffMs > 0) {
+            log.info(`[${source}] Backing off ${backoffMs}ms before retry ${attempt + 1}`);
+            await new Promise((r) => setTimeout(r, backoffMs));
+          }
+        }
         continue;
       }
 
       return result;
     } catch (error) {
+      clearTimeout(timeoutId);
       lastError = error;
+      const durationMs = Math.round(performance.now() - startTime);
+
+      // Record failed call with actual duration
+      getPerfMonitor().recordLLMCall({
+        model: getModelId(injectedParams),
+        source,
+        durationMs,
+        success: false,
+      });
+      log.warn(`[callLLM] source=${source} attempt=${attempt}/${maxAttempts} failed after ${durationMs}ms: ${error instanceof Error ? error.message : String(error)}`);
 
       if (attempt < maxAttempts) {
+        // Only retry on transient errors (network, timeout, 5xx, rate limit)
+        const isRetryable = !(error instanceof Error && (
+          error.message.includes('401') ||
+          error.message.includes('403') ||
+          error.message.includes('API key') ||
+          error.message.includes('invalid') ||
+          error.message.includes('bad request')
+        )) || (error instanceof Error && /terminated|aborted|ECONNRESET|ETIMEDOUT|timeout/i.test(error.message));
+        if (!isRetryable) {
+          log.warn(`[${source}] Non-retryable error (attempt ${attempt}/${maxAttempts}), giving up:`, error);
+          throw error;
+        }
         log.warn(`[${source}] Call failed (attempt ${attempt}/${maxAttempts}), retrying...`, error);
+        const backoffMs = 2000 * (attempt - 1);
+        if (backoffMs > 0) {
+          log.info(`[${source}] Backing off ${backoffMs}ms before retry ${attempt + 1}`);
+          await new Promise((r) => setTimeout(r, backoffMs));
+        }
         continue;
       }
     }
   }
 
   // All attempts exhausted — return last result or throw last error
-  if (lastResult) return lastResult;
+  if (lastResult) {
+    if (retryOptions?.failOnValidationError) {
+      throw new Error(
+        `[${source}] Validation failed after ${maxAttempts} attempts. Last response: ${lastResult.text.slice(0, 200)}`,
+      );
+    }
+    return lastResult;
+  }
   throw lastError;
 }
 

@@ -1,230 +1,147 @@
 /**
- * JSON parsing with fallback strategies for AI-generated responses.
+ * JSON repair and parsing for AI-generated responses.
+ *
+ * Now powered by a pluggable RepairPipeline. Each repair strategy
+ * is an independent module that can be tested, reordered, and
+ * tracked via telemetry.
+ *
+ * Public API (backward compatible):
+ *   parseJsonResponse<T>(response) → T | null
+ *   tryParseJson<T>(jsonStr)        → T | null
+ *
+ * New with Zod support:
+ *   parseWithSchema<T>(response, schema) → ZodParseResult<T>
  */
 
-import { jsonrepair } from 'jsonrepair';
+import type { ZodSchema } from 'zod';
+import type {
+  ParseResult,
+  ZodParseResult,
+  RepairStrategy,
+  ExtractionStrategy,
+} from './repair-strategies/types';
+import { RepairPipeline } from './repair-pipeline';
+import { repairTelemetry, annotateWithTelemetry } from './repair-telemetry';
 import { createLogger } from '@/lib/logger';
 const log = createLogger('Generation');
 
-function repairQuotedPropertyFragments(jsonStr: string): string {
-  return jsonStr.replace(
-    /([,{]\s*)"([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(true|false|null|[+-]?\d+(?:\.\d+)?)"(?=\s*[,}])/g,
-    (_match, prefix, key, value) => `${prefix}"${key}": ${value}`,
-  );
-}
+// ── Default pipeline instance ──
 
-function logJsonParseError(stage: string, jsonStr: string, error: unknown): void {
-  const message = error instanceof Error ? error.message : String(error);
-  const positionMatch = message.match(/position\s+(\d+)/i);
-  const position = positionMatch ? Number(positionMatch[1]) : undefined;
+let defaultPipeline: RepairPipeline;
 
-  if (typeof position === 'number' && Number.isFinite(position)) {
-    const start = Math.max(0, position - 120);
-    const end = Math.min(jsonStr.length, position + 120);
-    log.warn(
-      `${stage} parse error at position ${position}: ${message}. Context: ${jsonStr
-        .slice(start, end)
-        .replace(/\n/g, '\\n')}`,
-    );
-    return;
+function getPipeline(): RepairPipeline {
+  if (!defaultPipeline) {
+    defaultPipeline = new RepairPipeline();
   }
-
-  log.warn(`${stage} parse error: ${message}`);
+  return defaultPipeline;
 }
 
+// ── Public: backward-compatible API ──
+
+/**
+ * Parse AI response text into typed JSON.
+ * Tries code blocks first, then JSON windows, then raw text.
+ */
 export function parseJsonResponse<T>(response: string): T | null {
-  // Strategy 1: Try to extract JSON from markdown code blocks (may have multiple)
-  const codeBlockMatches = response.matchAll(/```(?:json)?\s*([\s\S]*?)```/g);
-  for (const match of codeBlockMatches) {
-    const extracted = match[1].trim();
-    // Only try if it looks like JSON (starts with { or [)
-    if (extracted.startsWith('{') || extracted.startsWith('[')) {
-      const result = tryParseJson<T>(extracted);
-      if (result !== null) {
-        log.debug('Successfully parsed JSON from code block');
-        return result;
-      }
+  const result = getPipeline().parse<T>(response);
+  if (result.success && result.data !== undefined) {
+    // Log repair chain for observability
+    if (result.repairChain.length > 0) {
+      log.debug(`JSON repair chain triggered: ${result.repairChain.join(' → ')}`);
     }
+    return result.data;
   }
-
-  // Strategy 2: Try to find JSON structure directly in response (no code block)
-  // Look for array or object start
-  const jsonStartArray = response.indexOf('[');
-  const jsonStartObject = response.indexOf('{');
-
-  if (jsonStartArray !== -1 || jsonStartObject !== -1) {
-    // Prefer the structure that appears first
-    const startIndex =
-      jsonStartArray === -1
-        ? jsonStartObject
-        : jsonStartObject === -1
-          ? jsonStartArray
-          : Math.min(jsonStartArray, jsonStartObject);
-
-    // Find the matching close bracket
-    let depth = 0;
-    let endIndex = -1;
-    let inString = false;
-    let escapeNext = false;
-
-    for (let i = startIndex; i < response.length; i++) {
-      const char = response[i];
-
-      if (escapeNext) {
-        escapeNext = false;
-        continue;
-      }
-
-      if (char === '\\' && inString) {
-        escapeNext = true;
-        continue;
-      }
-
-      if (char === '"' && !escapeNext) {
-        inString = !inString;
-        continue;
-      }
-
-      if (!inString) {
-        if (char === '[' || char === '{') depth++;
-        else if (char === ']' || char === '}') {
-          depth--;
-          if (depth === 0) {
-            endIndex = i;
-            break;
-          }
-        }
-      }
-    }
-
-    if (endIndex !== -1) {
-      const jsonStr = response.substring(startIndex, endIndex + 1);
-      const result = tryParseJson<T>(jsonStr);
-      if (result !== null) {
-        log.debug('Successfully parsed JSON from response body');
-        return result;
-      }
-    }
-  }
-
-  // Strategy 3: Last resort - try the whole response
-  const result = tryParseJson<T>(response.trim());
-  if (result !== null) {
-    log.debug('Successfully parsed raw response as JSON');
-    return result;
-  }
-
-  log.error('Failed to parse JSON from response');
-  log.error('Raw response (first 500 chars):', response.substring(0, 500));
-  log.error(
-    'Raw response (last 500 chars):',
-    response.substring(Math.max(0, response.length - 500)),
-  );
-
   return null;
 }
 
 /**
- * Try to parse JSON with various fixes for common AI response issues
+ * Try to parse a single JSON string with the repair chain.
+ * Used by callers that already have an extracted JSON string.
  */
 export function tryParseJson<T>(jsonStr: string): T | null {
-  // Attempt 1: Try parsing as-is
-  try {
-    return JSON.parse(jsonStr) as T;
-  } catch (error) {
-    logJsonParseError('Attempt 1', jsonStr, error);
-    // Continue to fix attempts
-  }
+  // Create a fresh pipeline that skips extraction (already done by caller)
+  const pipeline = new RepairPipeline({
+    extraction: [
+      {
+        name: 'provided',
+        extract: (_raw: string) => [jsonStr],
+      },
+    ],
+  });
 
-  // Attempt 2: Fix common JSON issues from AI responses
-  try {
-    let fixed = jsonStr;
-
-    // Fix 0: Recover malformed property fragments that were accidentally
-    // emitted as standalone strings inside an object, such as:
-    // `"height: 76"` -> `"height": 76`
-    // `"fixedRatio: false"` -> `"fixedRatio": false`
-    // The object-context prefix/suffix guards keep valid JSON strings intact.
-    fixed = repairQuotedPropertyFragments(fixed);
-
-    // Fix 1: Handle LaTeX-style escapes that break JSON (e.g., \frac, \left, \right, \times, etc.)
-    // These are common in math content and need to be double-escaped
-    // Match backslash followed by letters (LaTeX commands) inside strings,
-    // but skip valid JSON escape sequences (\b, \f, \n, \r, \t, \u)
-    fixed = fixed.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (_match, content) => {
-      // Double-escape backslash+letter ONLY for non-JSON-escape letters
-      const fixedContent = content.replace(/\\([a-zA-Z])/g, (_m: string, ch: string) => {
-        // Preserve valid JSON escape sequences
-        if ('bfnrtu'.includes(ch)) return `\\${ch}`;
-        return `\\\\${ch}`;
-      });
-      return `"${fixedContent}"`;
-    });
-
-    // Fix 2: Fix other invalid escape sequences (e.g., \S, \L, etc.)
-    // Valid JSON escapes: \", \\, \/, \b, \f, \n, \r, \t, \uXXXX
-    fixed = fixed.replace(/\\([^"\\\/bfnrtu\n\r])/g, (match, char) => {
-      // If it's a letter, it's likely a LaTeX command
-      if (/[a-zA-Z]/.test(char)) {
-        return '\\\\' + char;
-      }
-      return match;
-    });
-
-    // Fix 3: Try to fix truncated JSON arrays/objects
-    const trimmed = fixed.trim();
-    if (trimmed.startsWith('[') && !trimmed.endsWith(']')) {
-      const lastCompleteObj = fixed.lastIndexOf('}');
-      if (lastCompleteObj > 0) {
-        fixed = fixed.substring(0, lastCompleteObj + 1) + ']';
-        log.warn('Fixed truncated JSON array');
-      }
-    } else if (trimmed.startsWith('{') && !trimmed.endsWith('}')) {
-      // Try to close incomplete object
-      const openBraces = (fixed.match(/{/g) || []).length;
-      const closeBraces = (fixed.match(/}/g) || []).length;
-      if (openBraces > closeBraces) {
-        fixed += '}'.repeat(openBraces - closeBraces);
-        log.warn('Fixed truncated JSON object');
-      }
+  const result = pipeline.parse<T>(jsonStr);
+  if (result.success && result.data !== undefined) {
+    if (result.repairChain.length > 0) {
+      log.debug(`tryParseJson repair chain: ${result.repairChain.join(' → ')}`);
     }
-
-    return JSON.parse(fixed) as T;
-  } catch (error) {
-    logJsonParseError('Attempt 2', jsonStr, error);
-    // Continue to next attempt
+    return result.data;
   }
+  return null;
+}
 
-  // Attempt 3: Use jsonrepair to fix malformed JSON (e.g. unescaped quotes in Chinese text)
-  try {
-    const repaired = jsonrepair(jsonStr);
-    return JSON.parse(repaired) as T;
-  } catch (error) {
-    logJsonParseError('Attempt 3', jsonStr, error);
-    // Continue to next attempt
+// ── Public: Zod-validated API ──
+
+/**
+ * Parse + validate against a Zod schema.
+ * Returns the full ParseResult with zodErrors on schema mismatch.
+ */
+export function parseWithSchema<T>(response: string, schema: ZodSchema<T>): ZodParseResult<T> {
+  const pipeline = new RepairPipeline({ schema });
+  return pipeline.parseWithZod<T>(response);
+}
+
+/**
+ * Parse with schema using the global pipeline.
+ */
+export function parseJsonResponseWithSchema<T>(response: string, schema: ZodSchema<T>): T | null {
+  const result = parseWithSchema<T>(response, schema);
+  if (result.success && result.data !== undefined) {
+    return result.data;
   }
+  return null;
+}
 
-  // Attempt 4: More aggressive fixing - remove control characters
-  try {
-    let fixed = jsonStr;
+// ── Public: pipeline customization ──
 
-    // Remove or escape control characters
-    fixed = fixed.replace(/[\x00-\x1F\x7F]/g, (char) => {
-      switch (char) {
-        case '\n':
-          return '\\n';
-        case '\r':
-          return '\\r';
-        case '\t':
-          return '\\t';
-        default:
-          return '';
-      }
-    });
+/**
+ * Get the default (singleton) pipeline for inspection or modification.
+ */
+export function getDefaultPipeline(): RepairPipeline {
+  return getPipeline();
+}
 
-    return JSON.parse(fixed) as T;
-  } catch (error) {
-    logJsonParseError('Attempt 4', jsonStr, error);
-    return null;
-  }
+/**
+ * Add a custom repair strategy to the default pipeline.
+ */
+export function registerRepairStrategy(strategy: RepairStrategy): void {
+  getPipeline().addRepairStrategy(strategy);
+}
+
+/**
+ * Add a custom extraction strategy to the default pipeline.
+ */
+export function registerExtractionStrategy(strategy: ExtractionStrategy): void {
+  getPipeline().addExtractionStrategy(strategy);
+}
+
+/**
+ * Remove a strategy by name from the default pipeline.
+ */
+export function unregisterStrategy(name: string): void {
+  getPipeline().removeStrategy(name);
+}
+
+// ── Public: telemetry ──
+
+export { repairTelemetry } from './repair-telemetry';
+export type { TelemetrySnapshot, StrategyStats } from './repair-telemetry';
+
+/**
+ * Parse and annotate with telemetry snapshot for debugging.
+ */
+export function parseWithTelemetry<T>(
+  response: string,
+): ParseResult<T> & { telemetry: import('./repair-telemetry').TelemetrySnapshot } {
+  const result = getPipeline().parse<T>(response);
+  return annotateWithTelemetry(result);
 }

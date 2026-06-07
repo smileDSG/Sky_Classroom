@@ -172,7 +172,7 @@ export function getFailoverStats(): {
 
   return {
     registeredMappings: state.mapping.size,
-    providersInCooldown: [...state.cooldownUntil.keys()].filter(id => isInCooldown(id)),
+    providersInCooldown: [...state.cooldownUntil.keys()].filter((id) => isInCooldown(id)),
     failureCounts: failureCounts as Record<ProviderId, number>,
   };
 }

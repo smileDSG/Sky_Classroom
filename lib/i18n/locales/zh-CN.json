@@ -3,7 +3,9 @@
     "you": "你",
     "confirm": "确定",
     "cancel": "取消",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "send": "发送",
+    "fillRequired": "请填写必填项"
   },
   "home": {
     "slogan": "Generative Learning in Multi-Agent Interactive Classroom",
@@ -70,6 +72,7 @@
     "unknown": "未知",
     "stopDiscussion": "结束讨论",
     "endQA": "结束问答",
+    "deleteSession": "删除会话",
     "tabs": {
       "lecture": "笔记",
       "chat": "对话"
@@ -78,7 +81,8 @@
       "empty": "播放课程后，笔记将在此显示",
       "emptyHint": "点击播放按钮开始授课",
       "pageLabel": "第 {{n}} 页",
-      "currentPage": "当前页"
+      "currentPage": "当前页",
+      "noScene": "未关联幻灯片"
     },
     "badge": {
       "qa": "Q&A",
@@ -144,7 +148,9 @@
     "generatingNextPage": "场景正在生成，请稍候...",
     "courseComplete": "课程完成",
     "fullscreen": "全屏",
-    "exitFullscreen": "退出全屏"
+    "exitFullscreen": "退出全屏",
+    "speakingToTeacher": "正在向老师提问...",
+    "quickQuestions": "快速提问"
   },
   "classroomComplete": {
     "title": "课程完成",
@@ -205,7 +211,9 @@
     "aiGrading": "AI 正在批改中...",
     "aiGradingWait": "请稍候，正在分析你的答案",
     "quizReport": "答题报告",
-    "retry": "重新答题"
+    "retry": "重新答题",
+    "knowledgePoints": "知识点总结",
+    "knowledgePointsHint": "回顾以下知识点，巩固薄弱环节"
   },
   "roundtable": {
     "teacher": "教师",
@@ -226,7 +234,9 @@
     "voiceInputDisabled": "语音输入已禁用",
     "textInput": "文字输入",
     "stopRecording": "停止录音",
-    "startRecording": "开始录音"
+    "startRecording": "开始录音",
+    "askTeacher": "向老师提问",
+    "ask": "提问"
   },
   "pbl": {
     "legacyFormat": "此PBL场景使用旧格式，请重新生成课程",
@@ -1054,5 +1064,84 @@
     "title": "请输入访问码",
     "placeholder": "访问码",
     "error": "访问码错误，请重试。"
+  },
+  "account": {
+    "title": "账户中心",
+    "profileSection": "个人资料",
+    "accountSection": "账户信息",
+    "securitySection": "安全设置",
+    "planSection": "套餐与账单",
+    "personalizationSection": "个性化设置",
+    "nickname": "昵称",
+    "nicknamePlaceholder": "输入你的昵称",
+    "bio": "个人简介",
+    "bioPlaceholder": "介绍一下自己吧",
+    "email": "邮箱",
+    "username": "用户名",
+    "role": "角色",
+    "status": "状态",
+    "planType": "套餐类型",
+    "userId": "用户ID",
+    "roleGuest": "访客",
+    "roleUser": "用户",
+    "roleAdmin": "管理员",
+    "statusActive": "活跃",
+    "statusSuspended": "已停用",
+    "planFree": "免费版",
+    "planBasic": "基础版",
+    "planPro": "专业版",
+    "planEnterprise": "企业版",
+    "changePassword": "修改密码",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmPassword": "确认密码",
+    "passwordMismatch": "两次输入的密码不一致",
+    "passwordTooShort": "密码至少 6 位",
+    "passwordChanged": "密码修改成功",
+    "saveSuccess": "保存成功",
+    "backToHome": "返回首页",
+    "unauthorized": "请先登录后再访问",
+    "usageTitle": "使用额度"
+  },
+  "personalization": {
+    "title": "个性化设置",
+    "reset": "重置",
+    "resetConfirm": "确定要重置所有个性化设置吗？",
+    "resetSuccess": "已重置为默认设置",
+    "tabs": {
+      "profile": "个人资料",
+      "learning": "学习偏好",
+      "ai": "AI 个性",
+      "features": "功能设置"
+    },
+    "educationLevel": "教育阶段",
+    "grade": "年级",
+    "gradePlaceholder": "例如：初二、高一、大三",
+    "favoriteSubjects": "感兴趣的学科",
+    "learningStyle": "学习风格",
+    "learningStyleHint": "选择最适合你的学习方式，AI会据此调整讲解风格",
+    "detailLevel": "回答详细程度",
+    "preferredLanguage": "首选语言",
+    "aiName": "AI 助手名称",
+    "aiNamePlaceholder": "给你的AI助手起个名字",
+    "aiPersonality": "AI 性格风格",
+    "customInstructions": "自定义指令",
+    "customInstructionsPlaceholder": "告诉AI你的特殊需求，例如：我更喜欢用图示理解概念；请多用例子说明；我对编程感兴趣...",
+    "autoGenerateQuiz": "自动出题",
+    "autoGenerateQuizHint": "学习完成后自动生成练习题",
+    "showStepByStep": "分步解答",
+    "showStepByStepHint": "解题时显示详细步骤",
+    "enableMemory": "记忆功能",
+    "enableMemoryHint": "AI记住你的学习历史和偏好",
+    "enableRAG": "知识库增强",
+    "enableRAGHint": "使用上传的知识库辅助回答"
+  },
+  "speech": {
+    "speaking": "说话中...",
+    "role": {
+      "teacher": "老师",
+      "student": "学生",
+      "user": "我"
+    }
   }
 }

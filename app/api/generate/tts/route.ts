@@ -13,8 +13,8 @@ import { resolveTTSApiKey, resolveTTSBaseUrl } from '@/lib/server/provider-confi
 import type { TTSProviderId } from '@/lib/audio/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
-import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { VOXCPM_AUTO_VOICE_ID, VOXCPM_TTS_PROVIDER_ID } from '@/lib/audio/voxcpm';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('TTS API');
 
@@ -26,15 +26,13 @@ export async function POST(req: NextRequest) {
   let audioId: string | undefined;
   try {
     const body = await req.json();
-    const { text, ttsModelId, ttsSpeed, ttsApiKey, ttsBaseUrl, ttsProviderOptions } = body as {
+    const { text, ttsModelId, ttsSpeed, ttsProviderOptions } = body as {
       text: string;
       audioId: string;
       ttsProviderId: TTSProviderId;
       ttsModelId?: string;
       ttsVoice: string;
       ttsSpeed?: number;
-      ttsApiKey?: string;
-      ttsBaseUrl?: string;
       ttsProviderOptions?: Record<string, unknown>;
     };
     ttsProviderId = body.ttsProviderId;
@@ -69,20 +67,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const clientBaseUrl = ttsBaseUrl || undefined;
-    if (clientBaseUrl) {
-      const ssrfError = await validateUrlForSSRF(clientBaseUrl);
-      if (ssrfError) {
-        return apiError('INVALID_URL', 403, ssrfError);
-      }
-    }
-
-    const apiKey = clientBaseUrl
-      ? ttsApiKey || ''
-      : resolveTTSApiKey(ttsProviderId, ttsApiKey || undefined);
-    const baseUrl = clientBaseUrl
-      ? clientBaseUrl
-      : resolveTTSBaseUrl(ttsProviderId, ttsBaseUrl || undefined);
+    const apiKey = resolveTTSApiKey(ttsProviderId);
+    const baseUrl = resolveTTSBaseUrl(ttsProviderId);
 
     // Build TTS config
     const config = {
@@ -95,17 +81,36 @@ export async function POST(req: NextRequest) {
       providerOptions: ttsProviderOptions,
     };
 
+    // Check billing quota before TTS generation
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     log.info(
       `Generating TTS: provider=${ttsProviderId}, model=${ttsModelId || 'default'}, voice=${ttsVoice}, audioId=${audioId}, textLen=${text.length}`,
     );
 
-    // Generate audio
-    const { audio, format } = await generateTTS(config, text);
+    // Generate audio with retries (VoxCPM may be temporarily unreachable)
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const { audio, format } = await generateTTS(config, text);
+        const base64 = Buffer.from(audio).toString('base64');
 
-    // Convert to base64
-    const base64 = Buffer.from(audio).toString('base64');
+        // Record LLM usage
+        await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
-    return apiSuccess({ audioId, base64, format });
+        return apiSuccess({ audioId, base64, format });
+      } catch (error) {
+        lastError = error;
+        if (attempt < 3) {
+          log.warn(`TTS attempt ${attempt}/3 failed, retrying...`, error);
+          await new Promise((r) => setTimeout(r, 1000 * attempt));
+        }
+      }
+    }
+
+    // All attempts failed
+    throw lastError;
   } catch (error) {
     log.error(
       `TTS generation failed [provider=${ttsProviderId ?? 'unknown'}, voice=${ttsVoice ?? 'unknown'}, audioId=${audioId ?? 'unknown'}]:`,

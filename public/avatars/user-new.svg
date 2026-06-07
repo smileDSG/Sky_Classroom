@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" fill="none">
+  <defs>
+    <linearGradient id="bgGrad-skyuser" x1="0" y1="0" x2="280" y2="280">
+      <stop offset="0%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#475569" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="280" height="280" rx="140" fill="url(#bgGrad-skyuser)"/>
+
+  <!-- 身体 -->
+  <path d="M80 198c0-26 27-46 60-46s60 20 60 46v52H80v-52z" fill="#64748b"/>
+  <path d="M110 152h60v98H110z" fill="#475569"/>
+
+  <!-- 脖子 -->
+  <rect x="130" y="135" width="20" height="22" fill="#e2c4a6"/>
+
+  <!-- 头 -->
+  <ellipse cx="140" cy="108" rx="40" ry="46" fill="#e2c4a6"/>
+
+  <!-- 中性短发 -->
+  <ellipse cx="140" cy="75" rx="35" ry="18" fill="#475569"/>
+  <path d="M105 75c0-15 15-25 35-25s35 10 35 25v5c-5-10-20-15-35-15s-30 5-35 15z" fill="#475569"/>
+
+  <!-- 眼睛 -->
+  <circle cx="128" cy="105" r="4" fill="#374151"/>
+  <circle cx="152" cy="105" r="4" fill="#374151"/>
+
+  <!-- 中性嘴 -->
+  <line x1="132" y1="125" x2="148" y2="125" stroke="#374151" stroke-width="2" stroke-linecap="round"/>
+</svg>

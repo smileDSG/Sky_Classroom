@@ -82,7 +82,7 @@ export interface CreateCustomShapeData {
   start: [number, number];
   end: [number, number];
   path: string;
-  viewBox: [number, number];
+  viewBox: string;
   fill?: string;
   outline?: PPTElementOutline;
 }

@@ -65,7 +65,7 @@ export async function buildSearchQuery(
     return fallback;
   }
 
-  const prompts = buildPrompt(PROMPT_IDS.WEB_SEARCH_QUERY_REWRITE, {
+  const prompts = buildPrompt(PROMPT_IDS.WEB_SEARCH_QUERY_REWRITE_V2, {
     requirement: normalizedRequirement,
     pdfExcerpt: pdfExcerpt || 'None',
   });

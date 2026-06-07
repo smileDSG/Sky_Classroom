@@ -1,22 +1,19 @@
+/**
+ * Unified API Response Utilities
+ *
+ * All API route handlers should use `apiSuccess` / `apiError` for consistent
+ * response shape: `{ success, ...data }` or `{ success: false, errorCode, error, details? }`.
+ */
+
 import { NextResponse } from 'next/server';
+import {
+  API_ERROR_CODES,
+  type ApiErrorCode,
+  ERROR_CODE_MESSAGES,
+} from './api-error-codes';
 
-export const API_ERROR_CODES = {
-  MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
-  MISSING_API_KEY: 'MISSING_API_KEY',
-  INVALID_REQUEST: 'INVALID_REQUEST',
-  RATE_LIMITED: 'RATE_LIMITED',
-  VOXCPM_AUTO_VOICE_REQUIRES_CONTEXT: 'VOXCPM_AUTO_VOICE_REQUIRES_CONTEXT',
-  INVALID_URL: 'INVALID_URL',
-  REDIRECT_NOT_ALLOWED: 'REDIRECT_NOT_ALLOWED',
-  CONTENT_SENSITIVE: 'CONTENT_SENSITIVE',
-  UPSTREAM_ERROR: 'UPSTREAM_ERROR',
-  GENERATION_FAILED: 'GENERATION_FAILED',
-  TRANSCRIPTION_FAILED: 'TRANSCRIPTION_FAILED',
-  PARSE_FAILED: 'PARSE_FAILED',
-  INTERNAL_ERROR: 'INTERNAL_ERROR',
-} as const;
-
-export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
+export { API_ERROR_CODES, ERROR_CODE_MESSAGES } from './api-error-codes';
+export type { ApiErrorCode } from './api-error-codes';
 
 export interface ApiErrorBody {
   success: false;
@@ -25,6 +22,14 @@ export interface ApiErrorBody {
   details?: string;
 }
 
+/**
+ * Create a standardised error JSON response.
+ *
+ * @param code    – One of the defined API_ERROR_CODES
+ * @param status  – HTTP status code
+ * @param error   – Human-readable error message (overrides default)
+ * @param details – Optional detail string (validation errors, stack trace, etc.)
+ */
 export function apiError(
   code: ApiErrorCode,
   status: number,
@@ -42,6 +47,14 @@ export function apiError(
   );
 }
 
-export function apiSuccess<T extends Record<string, unknown>>(data: T, status = 200): NextResponse {
+/**
+ * Create a standardised success JSON response.
+ *
+ * The `data` object is spread at the top level alongside `success: true`.
+ */
+export function apiSuccess<T extends Record<string, unknown>>(
+  data: T,
+  status = 200,
+): NextResponse {
   return NextResponse.json({ success: true, ...data }, { status });
 }

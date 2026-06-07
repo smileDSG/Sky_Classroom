@@ -29,7 +29,15 @@ export const ProviderIdSchema = z.enum([
 ]) as z.ZodType<import('@/lib/types/provider').BuiltInProviderId>;
 
 export const ThinkingModeSchema = z.enum(['default', 'disabled', 'enabled', 'auto']);
-export const ThinkingEffortSchema = z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+export const ThinkingEffortSchema = z.enum([
+  'none',
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+  'max',
+]);
 export const ThinkingLevelSchema = z.enum(['minimal', 'low', 'medium', 'high']);
 
 export const ThinkingConfigSchema = z.object({
@@ -111,7 +119,9 @@ export const WidgetOutlineSchema = z.object({
   diagramType: z.enum(['flowchart', 'mindmap', 'hierarchy', 'system']).optional(),
   language: z.enum(['python', 'javascript', 'typescript', 'java', 'cpp']).optional(),
   gameType: z.enum(['quiz', 'puzzle', 'strategy', 'card', 'action']).optional(),
-  visualizationType: z.enum(['molecular', 'solar', 'anatomy', 'geometry', 'physics', 'custom']).optional(),
+  visualizationType: z
+    .enum(['molecular', 'solar', 'anatomy', 'geometry', 'physics', 'custom'])
+    .optional(),
   objects: z.array(z.string()).optional(),
   interactions: z.array(z.string()).optional(),
   challenge: z.string().optional(),
@@ -132,17 +142,21 @@ export const SceneOutlineSchema = z.object({
   languageNote: z.string().optional(),
   suggestedImageIds: z.array(z.string()).optional(),
   mediaGenerations: z.array(z.object({})).optional(),
-  quizConfig: z.object({
-    questionCount: z.number().int().min(1).max(50),
-    difficulty: z.enum(['easy', 'medium', 'hard']),
-    questionTypes: z.array(z.enum(['single', 'multiple', 'text'])).min(1),
-  }).optional(),
-  pblConfig: z.object({
-    projectTopic: z.string().min(1).max(500),
-    projectDescription: z.string().min(1).max(3000),
-    targetSkills: z.array(z.string()).min(1).max(20),
-    issueCount: z.number().int().min(1).max(10).optional(),
-  }).optional(),
+  quizConfig: z
+    .object({
+      questionCount: z.number().int().min(1).max(50),
+      difficulty: z.enum(['easy', 'medium', 'hard']),
+      questionTypes: z.array(z.enum(['single', 'multiple', 'text'])).min(1),
+    })
+    .optional(),
+  pblConfig: z
+    .object({
+      projectTopic: z.string().min(1).max(500),
+      projectDescription: z.string().min(1).max(3000),
+      targetSkills: z.array(z.string()).min(1).max(20),
+      issueCount: z.number().int().min(1).max(10).optional(),
+    })
+    .optional(),
   widgetType: z.string().optional(),
   widgetOutline: WidgetOutlineSchema.optional(),
 });
@@ -173,11 +187,13 @@ export const SceneSchema = z.object({
   content: z.object({}),
   actions: z.array(z.object({})).optional(),
   whiteboards: z.array(z.object({})).optional(),
-  multiAgent: z.object({
-    enabled: z.boolean(),
-    agentIds: z.array(z.string()).min(1),
-    directorPrompt: z.string().optional(),
-  }).optional(),
+  multiAgent: z
+    .object({
+      enabled: z.boolean(),
+      agentIds: z.array(z.string()).min(1),
+      directorPrompt: z.string().optional(),
+    })
+    .optional(),
   createdAt: z.number().int().nonnegative().optional(),
   updatedAt: z.number().int().nonnegative().optional(),
 });
@@ -195,13 +211,16 @@ export function validateInput<T>(schema: z.ZodType<T>, input: unknown): T {
 /**
  * Validate and parse input, returning a result object instead of throwing.
  */
-export function tryValidateInput<T>(schema: z.ZodType<T>, input: unknown): { success: true; data: T } | { success: false; errors: string[] } {
+export function tryValidateInput<T>(
+  schema: z.ZodType<T>,
+  input: unknown,
+): { success: true; data: T } | { success: false; errors: string[] } {
   const result = schema.safeParse(input);
   if (result.success) {
     return { success: true, data: result.data };
   }
   return {
     success: false,
-    errors: result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`),
+    errors: result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`),
   };
 }

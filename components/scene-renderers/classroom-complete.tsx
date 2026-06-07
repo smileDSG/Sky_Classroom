@@ -20,13 +20,13 @@ const SCENE_TYPE_ICONS: Record<SceneType, typeof FileText> = {
 const TYPE_ORDER: SceneType[] = ['slide', 'quiz', 'interactive', 'pbl'];
 
 const CONFETTI_COLORS = [
-  '#fbbf24',
-  '#f97316',
-  '#ef4444',
-  '#ec4899',
-  '#a855f7',
-  '#3b82f6',
-  '#10b981',
+  '#4A90D9', // Sky blue
+  '#60A5FA', // Light sky blue
+  '#3B82F6', // Blue
+  '#87CEEB', // Sky
+  '#93C5FD', // Light blue
+  '#1E40AF', // Dark blue
+  '#0EA5E9', // Cyan
 ];
 
 function encouragementKey(pct: number): 'high' | 'mid' | 'low' {
@@ -161,50 +161,50 @@ function TrophySvg({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 120 150" className={className} aria-hidden>
       <defs>
-        <linearGradient id="tc-gold" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#fef3c7" />
-          <stop offset="35%" stopColor="#fbbf24" />
-          <stop offset="75%" stopColor="#d97706" />
-          <stop offset="100%" stopColor="#92400e" />
+        <linearGradient id="tc-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#E0F2FE" />
+          <stop offset="35%" stopColor="#60A5FA" />
+          <stop offset="75%" stopColor="#3B82F6" />
+          <stop offset="100%" stopColor="#1E40AF" />
         </linearGradient>
-        <linearGradient id="tc-gold-light" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#fcd34d" />
-          <stop offset="50%" stopColor="#f59e0b" />
-          <stop offset="100%" stopColor="#b45309" />
+        <linearGradient id="tc-sky-light" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#93C5FD" />
+          <stop offset="50%" stopColor="#60A5FA" />
+          <stop offset="100%" stopColor="#2563EB" />
         </linearGradient>
         <linearGradient id="tc-shine" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#fffbeb" stopOpacity="0.85" />
-          <stop offset="100%" stopColor="#fffbeb" stopOpacity="0" />
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
       </defs>
       {/* Handles */}
       <path
         d="M 28 32 Q 6 32 8 60 Q 10 82 32 86"
         fill="none"
-        stroke="url(#tc-gold)"
+        stroke="url(#tc-sky)"
         strokeWidth="7"
         strokeLinecap="round"
       />
       <path
         d="M 92 32 Q 114 32 112 60 Q 110 82 88 86"
         fill="none"
-        stroke="url(#tc-gold)"
+        stroke="url(#tc-sky)"
         strokeWidth="7"
         strokeLinecap="round"
       />
       {/* Cup */}
-      <path d="M 25 18 L 95 18 L 95 50 Q 95 90 60 100 Q 25 90 25 50 Z" fill="url(#tc-gold)" />
+      <path d="M 25 18 L 95 18 L 95 50 Q 95 90 60 100 Q 25 90 25 50 Z" fill="url(#tc-sky)" />
       {/* Shine */}
       <path d="M 33 22 Q 32 60 42 88 L 38 88 Q 30 60 31 22 Z" fill="url(#tc-shine)" />
       {/* Rim */}
-      <ellipse cx="60" cy="19" rx="36" ry="4.5" fill="#fde68a" />
+      <ellipse cx="60" cy="19" rx="36" ry="4.5" fill="#BFDBFE" />
       <ellipse
         cx="60"
         cy="19"
         rx="36"
         ry="4.5"
         fill="none"
-        stroke="#b45309"
+        stroke="#1E40AF"
         strokeWidth="0.6"
         opacity="0.35"
       />
@@ -215,11 +215,11 @@ function TrophySvg({ className }: { className?: string }) {
         opacity="0.92"
       />
       {/* Stem */}
-      <path d="M 52 100 L 68 100 L 66 116 L 54 116 Z" fill="url(#tc-gold)" />
+      <path d="M 52 100 L 68 100 L 66 116 L 54 116 Z" fill="url(#tc-sky)" />
       {/* Base tiers */}
-      <rect x="40" y="116" width="40" height="7" rx="2" fill="url(#tc-gold-light)" />
-      <rect x="32" y="123" width="56" height="9" rx="2" fill="url(#tc-gold)" />
-      <rect x="28" y="132" width="64" height="6" rx="3" fill="url(#tc-gold-light)" />
+      <rect x="40" y="116" width="40" height="7" rx="2" fill="url(#tc-sky-light)" />
+      <rect x="32" y="123" width="56" height="9" rx="2" fill="url(#tc-sky)" />
+      <rect x="28" y="132" width="64" height="6" rx="3" fill="url(#tc-sky-light)" />
     </svg>
   );
 }
@@ -258,9 +258,9 @@ function QuizRing({ pct, delay = 0 }: { pct: number; delay?: number }) {
     <div className="relative shrink-0" style={{ width: 88, height: 88 }}>
       <svg viewBox="0 0 88 88" className="w-full h-full -rotate-90">
         <defs>
-          <linearGradient id="tc-ring-gold" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#fbbf24" />
-            <stop offset="100%" stopColor="#f97316" />
+          <linearGradient id="tc-ring-sky" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#60A5FA" />
+            <stop offset="100%" stopColor="#3B82F6" />
           </linearGradient>
         </defs>
         <circle
@@ -270,14 +270,14 @@ function QuizRing({ pct, delay = 0 }: { pct: number; delay?: number }) {
           fill="none"
           stroke="currentColor"
           strokeWidth="8"
-          className="text-amber-200/70 dark:text-amber-900/40"
+          className="text-sky-200/70 dark:text-sky-900/40"
         />
         <motion.circle
           cx="44"
           cy="44"
           r={radius}
           fill="none"
-          stroke="url(#tc-ring-gold)"
+          stroke="url(#tc-ring-sky)"
           strokeWidth="8"
           strokeLinecap="round"
           initial={{ strokeDashoffset: circumference }}
@@ -291,7 +291,7 @@ function QuizRing({ pct, delay = 0 }: { pct: number; delay?: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xl font-black text-amber-700 dark:text-amber-300">
+        <span className="text-xl font-black text-sky-700 dark:text-sky-300">
           <AnimatedCounter value={pct} delay={delay} duration={1.0} />
           <span className="text-sm font-bold">%</span>
         </span>
@@ -342,8 +342,8 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
         <span className="sr-only" role="status">
           {t('classroomComplete.title')}
         </span>
-        {/* Base background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-gray-900 dark:via-gray-900 dark:to-amber-950/30" />
+        {/* Base background - Sky Theme */}
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-900 dark:to-sky-950/30" />
         {/* Radial glow */}
         <motion.div
           aria-hidden
@@ -353,7 +353,7 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              'radial-gradient(circle at 50% 42%, rgba(251, 191, 36, 0.32), rgba(249, 115, 22, 0.12) 38%, transparent 68%)',
+              'radial-gradient(circle at 50% 42%, rgba(74, 144, 217, 0.32), rgba(59, 130, 246, 0.12) 38%, transparent 68%)',
           }}
         />
         {/* Confetti */}
@@ -377,7 +377,7 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
               className="absolute inset-0 rounded-full"
               style={{
                 background:
-                  'radial-gradient(circle, rgba(251, 191, 36, 0.5), rgba(249, 115, 22, 0.12) 55%, transparent 72%)',
+                  'radial-gradient(circle, rgba(74, 144, 217, 0.5), rgba(59, 130, 246, 0.12) 55%, transparent 72%)',
                 filter: 'blur(14px)',
               }}
             />
@@ -404,7 +404,7 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
             initial={{ opacity: 0, scale: 0.7, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ delay: 0.65, type: 'spring', stiffness: 280, damping: 18 }}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-500/30"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-sky-400 via-blue-400 to-sky-500 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-sky-500/30"
           >
             <Sparkle className="w-3 h-3" />
             {t('classroomComplete.title')}
@@ -418,10 +418,10 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
             transition={{ delay: 0.78, duration: 0.4, ease: 'easeOut' }}
             className="text-center space-y-1.5"
           >
-            <h2 className="text-3xl md:text-4xl font-black leading-tight bg-gradient-to-br from-amber-700 via-orange-600 to-amber-800 dark:from-amber-200 dark:via-orange-200 dark:to-amber-300 bg-clip-text text-transparent">
+            <h2 className="text-3xl md:text-4xl font-black leading-tight bg-gradient-to-br from-sky-600 via-blue-600 to-indigo-700 dark:from-sky-300 dark:via-blue-300 dark:to-indigo-300 bg-clip-text text-transparent">
               {title || t('classroomComplete.title')}
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{dateLabel}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{dateLabel}</p>
           </motion.div>
 
           {/* Stats cards */}
@@ -448,13 +448,13 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
                       stiffness: 260,
                       damping: 20,
                     }}
-                    className="rounded-2xl bg-white/90 dark:bg-gray-900/70 border border-amber-100 dark:border-amber-900/40 shadow-sm px-4 py-4 flex flex-col items-center gap-1.5 backdrop-blur-sm"
+                    className="rounded-2xl bg-white/90 dark:bg-slate-900/70 border border-sky-100 dark:border-sky-900/40 shadow-sm px-4 py-4 flex flex-col items-center gap-1.5 backdrop-blur-sm"
                   >
                     <Icon
-                      className="w-6 h-6 text-amber-500 dark:text-amber-400"
+                      className="w-6 h-6 text-sky-500 dark:text-sky-400"
                       strokeWidth={1.8}
                     />
-                    <div className="text-3xl font-black text-gray-900 dark:text-gray-100 leading-none">
+                    <div className="text-3xl font-black text-slate-900 dark:text-slate-100 leading-none">
                       <AnimatedCounter value={count} delay={cardDelay + 0.15} />
                     </div>
                     <div className="text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -472,18 +472,18 @@ export function ClassroomCompletePage({ scenes, title }: ClassroomCompletePagePr
               initial={{ opacity: 0, y: 14, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: 1.2, type: 'spring', stiffness: 220, damping: 20 }}
-              className="w-full rounded-2xl bg-gradient-to-br from-amber-100 via-orange-50 to-amber-100 dark:from-amber-950/50 dark:via-orange-950/30 dark:to-amber-950/50 border border-amber-200 dark:border-amber-900/50 px-6 py-5 shadow-md shadow-amber-200/30 dark:shadow-amber-950/20"
+              className="w-full rounded-2xl bg-gradient-to-br from-sky-100 via-blue-50 to-sky-100 dark:from-sky-950/50 dark:via-blue-950/30 dark:to-sky-950/50 border border-sky-200 dark:border-sky-900/50 px-6 py-5 shadow-md shadow-sky-200/30 dark:shadow-sky-950/20"
             >
               <div className="flex items-center gap-5">
                 <QuizRing pct={summary.quiz.pct} delay={1.3} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-base font-bold text-amber-700 dark:text-amber-300">
+                  <div className="text-base font-bold text-sky-700 dark:text-sky-300">
                     {t('classroomComplete.quizScoreLabel', {
                       correct: summary.quiz.correct,
                       total: summary.quiz.total,
                     })}
                   </div>
-                  <div className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
+                  <div className="mt-1 text-sm text-sky-700/80 dark:text-sky-300/80">
                     {t(`classroomComplete.encouragement.${encouragementKey(summary.quiz.pct)}`)}
                   </div>
                 </div>

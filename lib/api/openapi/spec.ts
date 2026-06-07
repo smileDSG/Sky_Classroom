@@ -65,9 +65,7 @@ export function generateOpenApiSpec(overrides?: {
       version: overrides?.version ?? '1.0.0',
       description: overrides?.description ?? 'OpenMAIC — Multi-Agent AI Classroom Platform API',
     },
-    servers: [
-      { url: '/api/v1', description: 'API v1' },
-    ],
+    servers: [{ url: '/api/v1', description: 'API v1' }],
     paths,
     components: {
       schemas: {
@@ -102,7 +100,8 @@ export function getPathCount(): number {
 // ── Register built-in API paths ──
 
 registerOpenApiPath('/chat', {
-  description: 'Stateless chat endpoint. Sends messages and receives SSE stream of generation events.',
+  description:
+    'Stateless chat endpoint. Sends messages and receives SSE stream of generation events.',
   method: 'post',
   summary: 'Send message and receive SSE stream',
   tags: ['chat'],
@@ -116,7 +115,10 @@ registerOpenApiPath('/chat', {
           properties: {
             messages: { type: 'array', items: { type: 'object' } },
             storeState: { type: 'object' },
-            config: { type: 'object', properties: { agentIds: { type: 'array', items: { type: 'string' } } } },
+            config: {
+              type: 'object',
+              properties: { agentIds: { type: 'array', items: { type: 'string' } } },
+            },
             model: { type: 'string' },
             apiKey: { type: 'string' },
             baseUrl: { type: 'string' },

@@ -2,8 +2,8 @@ import { type NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import {
   isValidClassroomJobId,
-  readClassroomGenerationJob,
-} from '@/lib/server/classroom-job-store';
+  readClassroomGenerationJobHybrid,
+} from '@/lib/server/classroom-job-store-hybrid';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { createLogger } from '@/lib/logger';
 
@@ -21,14 +21,16 @@ export async function GET(req: NextRequest, context: { params: Promise<{ jobId: 
       return apiError('INVALID_REQUEST', 400, 'Invalid classroom generation job id');
     }
 
-    const job = await readClassroomGenerationJob(jobId);
+    const job = await readClassroomGenerationJobHybrid(jobId);
     if (!job) {
       return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
     }
 
     const pollUrl = `${buildRequestOrigin(req)}/api/generate-classroom/${jobId}`;
 
-    return apiSuccess({
+    const isDone = job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled';
+
+    const response: Record<string, unknown> = {
       jobId: job.id,
       status: job.status,
       step: job.step,
@@ -40,8 +42,20 @@ export async function GET(req: NextRequest, context: { params: Promise<{ jobId: 
       totalScenes: job.totalScenes,
       result: job.result,
       error: job.error,
-      done: job.status === 'succeeded' || job.status === 'failed',
-    });
+      done: isDone,
+    };
+
+    // Include outlines whenever available (during review AND scene generation)
+    if (job.outlines && job.outlines.length > 0) {
+      response.outlines = job.outlines;
+      response.outlinesMeta = job.outlinesMeta;
+    }
+
+    if (job.topicSummary) {
+      response.topicSummary = job.topicSummary;
+    }
+
+    return apiSuccess(response);
   } catch (error) {
     log.error(`Classroom job retrieval failed [jobId=${resolvedJobId ?? 'unknown'}]:`, error);
     return apiError(

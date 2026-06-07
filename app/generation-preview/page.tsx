@@ -756,7 +756,11 @@ function GenerationPreviewContent() {
         // Preset mode — use selected agents (include persona)
         // Filter out stale generated agent IDs that may linger in settings
         const registry = useAgentRegistry.getState();
-        const presetAgentIds = settings.selectedAgentIds.filter((id) => {
+        // Use agentIds from session if available, otherwise fall back to settings
+        const agentIdsToUse = currentSession.agentIds && currentSession.agentIds.length > 0
+          ? currentSession.agentIds
+          : settings.selectedAgentIds;
+        const presetAgentIds = agentIdsToUse.filter((id) => {
           const a = registry.getAgent(id);
           return a && !a.isGenerated;
         });
@@ -898,12 +902,6 @@ function GenerationPreviewContent() {
                 ttsModelId: ttsProviderConfig?.modelId,
                 ttsVoice: settings.ttsVoice,
                 ttsSpeed: settings.ttsSpeed,
-                ttsApiKey: ttsProviderConfig?.apiKey || undefined,
-                ttsBaseUrl:
-                  ttsProviderConfig?.serverBaseUrl ||
-                  ttsProviderConfig?.baseUrl ||
-                  ttsProviderConfig?.customDefaultBaseUrl ||
-                  undefined,
                 ttsProviderOptions: providerOptions,
               }),
               signal,
@@ -1098,32 +1096,20 @@ function GenerationPreviewContent() {
     void startGeneration(confirmedSession);
   };
 
+  // Redirect to home when no valid session (old flow deprecated)
+  useEffect(() => {
+    if (sessionLoaded && !session) {
+      router.replace('/');
+    }
+  }, [sessionLoaded, session, router]);
+
   // Still loading session from sessionStorage
-  if (!sessionLoaded) {
+  if (!sessionLoaded || !session) {
     return (
       <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
         <div className="text-center text-muted-foreground">
           <div className="size-8 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
-      </div>
-    );
-  }
-
-  // No session found
-  if (!session) {
-    return (
-      <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
-        <Card className="p-8 max-w-md w-full">
-          <div className="text-center space-y-4">
-            <AlertCircle className="size-12 text-muted-foreground mx-auto" />
-            <h2 className="text-xl font-semibold">{t('generation.sessionNotFound')}</h2>
-            <p className="text-sm text-muted-foreground">{t('generation.sessionNotFoundDesc')}</p>
-            <Button onClick={() => router.push('/')} className="w-full">
-              <ArrowLeft className="size-4 mr-2" />
-              {t('generation.backToHome')}
-            </Button>
-          </div>
-        </Card>
       </div>
     );
   }

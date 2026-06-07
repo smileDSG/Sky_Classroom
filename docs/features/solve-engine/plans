@@ -1,0 +1,1264 @@
+# A-001 解题引擎 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Build a LangGraph StateGraph that orchestrates the solve pipeline: question-bank check → agent routing → solve → grade → four-part output.
+
+**Architecture:** A LangGraph `StateGraph` with 5 nodes (checkQuestionBank, routeToAgent, solveWithAgent, gradeAnswer, generateOutput). Uses `Annotation.Root()` for state, `callLLM()` from `lib/ai/llm.ts` for model calls, and a hybrid strategy (single model default, auto-fallback to multi-model voting when confidence < 0.7).
+
+**Tech Stack:** TypeScript, `@langchain/langgraph`, Vercel AI SDK (`callLLM`), `lib/ai/providers.ts`, `lib/generation/json-repair.ts`
+
+---
+
+## File Structure
+
+| Action | File | Responsibility |
+|--------|------|----------------|
+| Create | `lib/solve/solve-graph-state.ts` | LangGraph state annotation using `Annotation.Root()` |
+| Create | `lib/solve/solve-graph.ts` | StateGraph definition: nodes + edges + `createSolveGraph()` |
+| Create | `lib/solve/solver-agent.ts` | solveWithAgent node: LLM call, hybrid strategy, JSON parsing |
+| Create | `lib/solve/solver-prompts.ts` | System prompts for each solver agent type |
+| Modify | `lib/solve/index.ts` | Add barrel exports for new files |
+| Create | `tests/solve/solve-graph-state.test.ts` | State annotation tests |
+| Create | `tests/solve/solver-prompts.test.ts` | Prompt construction tests |
+| Create | `tests/solve/solve-graph.test.ts` | Graph topology + node tests (mock LLM) |
+| Create | `tests/solve/solver-agent.test.ts` | Solver agent + hybrid strategy tests |
+
+---
+
+### Task 1: Solve Graph State Annotation
+
+**Files:**
+- Create: `lib/solve/solve-graph-state.ts`
+- Test: `tests/solve/solve-graph-state.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+```typescript
+// tests/solve/solve-graph-state.test.ts
+import { describe, test, expect } from 'vitest';
+import { SolveGraphAnnotation } from '@/lib/solve/solve-graph-state';
+
+describe('SolveGraphAnnotation', () => {
+  test('state annotation is defined', () => {
+    expect(SolveGraphAnnotation).toBeDefined();
+  });
+
+  test('initial state has correct defaults', () => {
+    const state = SolveGraphAnnotation.spec;
+    expect(state).toHaveProperty('problemText');
+    expect(state).toHaveProperty('problemImage');
+    expect(state).toHaveProperty('userAnswer');
+    expect(state).toHaveProperty('agentId');
+    expect(state).toHaveProperty('solution');
+    expect(state).toHaveProperty('gradeResult');
+    expect(state).toHaveProperty('votingResults');
+    expect(state).toHaveProperty('fourPartOutput');
+    expect(state).toHaveProperty('fromQuestionBank');
+    expect(state).toHaveProperty('selectedAgentId');
+    expect(state).toHaveProperty('agentRoute');
+    expect(state).toHaveProperty('error');
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest tests/solve/solve-graph-state.test.ts --run`
+Expected: FAIL with "Cannot find module '@/lib/solve/solve-graph-state'"
+
+- [ ] **Step 3: Write the state annotation**
+
+```typescript
+// lib/solve/solve-graph-state.ts
+/**
+ * LangGraph State Annotation for the Solve Graph.
+ *
+ * Defines the state shape for the solve编排 pipeline:
+ *   checkQuestionBank → routeToAgent → solveWithAgent → gradeAnswer → generateOutput
+ */
+
+import { Annotation } from '@langchain/langgraph';
+import type {
+  GradeResult,
+  VotingResult,
+  FourPartOutput,
+  SolverAgentType,
+} from './types';
+
+/**
+ * LangGraph state annotation for the solve graph.
+ *
+ * Uses Annotation.Root() following the pattern in
+ * lib/orchestration/state-manager.ts.
+ */
+export const SolveGraphAnnotation = Annotation.Root({
+  // Input fields
+  problemText: Annotation<string>({
+    default: () => '',
+  }),
+  problemImage: Annotation<string | null>({
+    default: () => null,
+  }),
+  userAnswer: Annotation<string | null>({
+    default: () => null,
+  }),
+
+  // Routing
+  agentId: Annotation<string>({
+    default: () => 'universal',
+  }),
+  selectedAgentId: Annotation<string | null>({
+    default: () => null,
+  }),
+  agentRoute: Annotation<SolverAgentType | null>({
+    default: () => null,
+  }),
+
+  // Output fields
+  solution: Annotation<string | null>({
+    default: () => null,
+  }),
+  gradeResult: Annotation<GradeResult | null>({
+    default: () => null,
+  }),
+  votingResults: Annotation<VotingResult[]>({
+    reducer: (prev, update) => [...prev, ...update],
+    default: () => [],
+  }),
+  fourPartOutput: Annotation<FourPartOutput | null>({
+    default: () => null,
+  }),
+  fromQuestionBank: Annotation<boolean>({
+    default: () => false,
+  }),
+
+  // Error handling
+  error: Annotation<string | null>({
+    default: () => null,
+  }),
+});
+
+export type SolveGraphState = typeof SolveGraphAnnotation.State;
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx vitest tests/solve/solve-graph-state.test.ts --run`
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add lib/solve/solve-graph-state.ts tests/solve/solve-graph-state.test.ts
+git commit -m "feat(solve): add LangGraph state annotation for solve graph"
+```
+
+---
+
+### Task 2: Solver Agent Prompts
+
+**Files:**
+- Create: `lib/solve/solver-prompts.ts`
+- Test: `tests/solve/solver-prompts.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+```typescript
+// tests/solve/solver-prompts.test.ts
+import { describe, test, expect } from 'vitest';
+import { buildSolverPrompt } from '@/lib/solve/solver-prompts';
+
+describe('buildSolverPrompt', () => {
+  test('returns prompt for universal agent', () => {
+    const prompt = buildSolverPrompt('universal', '解方程: 2x + 3 = 7');
+    expect(prompt).toContain('解题');
+    expect(prompt).toContain('2x + 3 = 7');
+  });
+
+  test('returns prompt for science agent', () => {
+    const prompt = buildSolverPrompt('science', '计算物体自由落体时间');
+    expect(prompt).toContain('理科');
+    expect(prompt).toContain('自由落体');
+  });
+
+  test('returns prompt for humanities agent', () => {
+    const prompt = buildSolverPrompt('humanities', '分析《红楼梦》的主题思想');
+    expect(prompt).toContain('文科');
+    expect(prompt).toContain('红楼梦');
+  });
+
+  test('includes image context when problemImage is provided', () => {
+    const prompt = buildSolverPrompt(
+      'universal',
+      '这道题是什么？',
+      'data:image/png;base64,abc123',
+    );
+    expect(prompt).toContain('图片');
+  });
+
+  test('includes user answer for grade mode', () => {
+    const prompt = buildSolverPrompt(
+      'grading',
+      '2+2=?',
+      undefined,
+      '4',
+    );
+    expect(prompt).toContain('4');
+    expect(prompt).toContain('批改');
+  });
+
+  test('includes knowledge points context when provided', () => {
+    const prompt = buildSolverPrompt(
+      'universal',
+      '求导: f(x) = x^2',
+      undefined,
+      undefined,
+      ['微积分', '导数'],
+    );
+    expect(prompt).toContain('微积分');
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest tests/solve/solver-prompts.test.ts --run`
+Expected: FAIL with "Cannot find module '@/lib/solve/solver-prompts'"
+
+- [ ] **Step 3: Write the prompt builder**
+
+```typescript
+// lib/solve/solver-prompts.ts
+/**
+ * System prompts for solver agents.
+ *
+ * Each agent type gets a specialized prompt that instructs
+ * the LLM on how to approach the problem and format the output.
+ */
+
+import type { SolverAgentType } from './types';
+
+interface SolverPromptOptions {
+  problemText: string;
+  problemImage?: string;
+  userAnswer?: string;
+  knowledgePoints?: string[];
+}
+
+const AGENT_SYSTEM_PROMPTS: Record<SolverAgentType, string> = {
+  universal: `你是一个通用解题专家。请仔细分析题目，给出完整的解题过程和最终答案。
+
+输出格式要求（JSON）：
+{
+  "solution": "完整的解题过程",
+  "answer": "最终答案",
+  "confidence": 0.9,
+  "steps": [{"label": "步骤1", "content": "...", "keyPoints": ["..."]}],
+  "knowledgePoints": [{"name": "...", "description": "...", "difficulty": "easy"}],
+  "similarQuestions": [{"problem": "...", "difficulty": 0.6, "knowledgePoint": "..."}]
+}
+
+confidence 表示你对答案的自信程度（0-1）。低于0.7表示不确定。`,
+
+  science: `你是一个理科解题专家（数学、物理、化学、生物）。请用严谨的科学方法分析题目，给出详细的推导过程和最终答案。
+
+对于计算题，请逐步展示计算过程。
+对于证明题，请使用严谨的逻辑推理。
+
+输出格式要求（JSON）：
+{
+  "solution": "完整的解题过程",
+  "answer": "最终答案",
+  "confidence": 0.9,
+  "steps": [{"label": "步骤1", "content": "...", "keyPoints": ["..."]}],
+  "knowledgePoints": [{"name": "...", "description": "...", "difficulty": "easy"}],
+  "similarQuestions": [{"problem": "...", "difficulty": 0.6, "knowledgePoint": "..."}]
+}`,
+
+  humanities: `你是一个文科解题专家（语文、历史、政治、地理人文部分）。请深入分析题目背景，给出有深度的解答。
+
+输出格式要求（JSON）：
+{
+  "solution": "完整的分析过程",
+  "answer": "最终答案",
+  "confidence": 0.9,
+  "steps": [{"label": "步骤1", "content": "...", "keyPoints": ["..."]}],
+  "knowledgePoints": [{"name": "...", "description": "...", "difficulty": "easy"}],
+  "similarQuestions": [{"problem": "...", "difficulty": 0.6, "knowledgePoint": "..."}]
+}`,
+
+  grading: `你是一个作业批改专家。请对比标准答案和用户答案，判断对错并分析错因。
+
+错因类型：concept-unclear（概念不清）、calculation-error（计算失误）、misreading（审题错误）、method-wrong（方法错误）、careless（粗心）、format-error（格式错误）。
+
+输出格式要求（JSON）：
+{
+  "isCorrect": true,
+  "score": 85,
+  "errorAnalysis": "错因分析",
+  "cause": "calculation-error",
+  "partialCredit": [{"step": "...", "maxScore": 10, "earnedScore": 8, "comment": "..."}]
+}`,
+};
+
+/**
+ * Build the full system prompt for a solver agent.
+ */
+export function buildSolverPrompt(
+  agentType: SolverAgentType,
+  problemText: string,
+  problemImage?: string,
+  userAnswer?: string,
+  knowledgePoints?: string[],
+): string {
+  const basePrompt = AGENT_SYSTEM_PROMPTS[agentType];
+
+  const contextParts: string[] = [];
+
+  if (problemImage) {
+    contextParts.push('题目包含一张图片，请结合图片内容分析。');
+  }
+
+  if (knowledgePoints && knowledgePoints.length > 0) {
+    contextParts.push(`相关知识点：${knowledgePoints.join('、')}`);
+  }
+
+  const contextBlock = contextParts.length > 0
+    ? `\n\n附加信息：\n${contextParts.join('\n')}`
+    : '';
+
+  if (agentType === 'grading') {
+    return `${basePrompt}${contextBlock}\n\n题目：${problemText}\n标准答案：见题目描述\n用户答案：${userAnswer ?? '未提供'}`;
+  }
+
+  return `${basePrompt}${contextBlock}\n\n题目：${problemText}`;
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx vitest tests/solve/solver-prompts.test.ts --run`
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add lib/solve/solver-prompts.ts tests/solve/solver-prompts.test.ts
+git commit -m "feat(solve): add solver agent system prompts"
+```
+
+---
+
+### Task 3: Solver Agent Node Implementation
+
+**Files:**
+- Create: `lib/solve/solver-agent.ts`
+- Test: `tests/solve/solver-agent.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+```typescript
+// tests/solve/solver-agent.test.ts
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import { solveWithAgentNode, parseSolutionResponse } from '@/lib/solve/solver-agent';
+import type { SolveGraphState } from '@/lib/solve/solve-graph-state';
+
+// Mock callLLM
+vi.mock('@/lib/ai/llm', () => ({
+  callLLM: vi.fn(),
+}));
+
+vi.mock('@/lib/generation/json-repair', () => ({
+  parseJsonResponse: vi.fn(),
+}));
+
+vi.mock('@/lib/ai/providers', () => ({
+  getModel: vi.fn(),
+  PROVIDERS: {
+    deepseek: { id: 'deepseek', type: 'openai' },
+    glm: { id: 'glm', type: 'openai' },
+    qwen: { id: 'qwen', type: 'openai' },
+  },
+}));
+
+import { callLLM } from '@/lib/ai/llm';
+import { parseJsonResponse } from '@/lib/generation/json-repair';
+import { getModel } from '@/lib/ai/providers';
+
+const mockModel = { modelId: 'deepseek-chat', provider: 'deepseek' };
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  (getModel as any).mockReturnValue(mockModel);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe('parseSolutionResponse', () => {
+  test('parses valid solution JSON', () => {
+    const input = {
+      solution: '解：2x = 4, x = 2',
+      answer: 'x = 2',
+      confidence: 0.9,
+      steps: [{ label: '步骤1', content: '移项', keyPoints: ['等式两边同时减去3'] }],
+      knowledgePoints: [{ name: '一元一次方程', description: '基础代数', difficulty: 'easy' as const }],
+      similarQuestions: [{ problem: '3x+1=7', difficulty: 0.5, knowledgePoint: '一元一次方程' }],
+    };
+
+    const result = parseSolutionResponse(JSON.stringify(input));
+    expect(result).not.toBeNull();
+    expect(result?.answer).toBe('x = 2');
+    expect(result?.confidence).toBe(0.9);
+  });
+
+  test('returns null for malformed response', () => {
+    const result = parseSolutionResponse('not json');
+    expect(result).toBeNull();
+  });
+
+  test('returns null for missing required fields', () => {
+    const result = parseSolutionResponse('{}');
+    expect(result).toBeNull();
+  });
+});
+
+describe('solveWithAgentNode', () => {
+  test('calls LLM and returns solution update', async () => {
+    const mockSolution = {
+      solution: '解题过程',
+      answer: '答案',
+      confidence: 0.9,
+      steps: [],
+      knowledgePoints: [],
+      similarQuestions: [],
+    };
+    (parseJsonResponse as any).mockReturnValue(mockSolution);
+    (callLLM as any).mockResolvedValue({ text: JSON.stringify(mockSolution) });
+
+    const state: SolveGraphState = {
+      problemText: '2+2=?',
+      problemImage: null,
+      userAnswer: null,
+      agentId: 'universal',
+      selectedAgentId: 'universal',
+      agentRoute: 'universal',
+      solution: null,
+      gradeResult: null,
+      votingResults: [],
+      fourPartOutput: null,
+      fromQuestionBank: false,
+      error: null,
+    };
+
+    const result = await solveWithAgentNode(state, {} as any);
+    expect(result.solution).toBe('解题过程');
+  });
+
+  test('sets error on LLM failure', async () => {
+    (callLLM as any).mockRejectedValue(new Error('API timeout'));
+
+    const state: SolveGraphState = {
+      problemText: '2+2=?',
+      problemImage: null,
+      userAnswer: null,
+      agentId: 'universal',
+      selectedAgentId: 'universal',
+      agentRoute: 'universal',
+      solution: null,
+      gradeResult: null,
+      votingResults: [],
+      fourPartOutput: null,
+      fromQuestionBank: false,
+      error: null,
+    };
+
+    const result = await solveWithAgentNode(state, {} as any);
+    expect(result.error).toContain('API timeout');
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest tests/solve/solver-agent.test.ts --run`
+Expected: FAIL with "Cannot find module '@/lib/solve/solver-agent'"
+
+- [ ] **Step 3: Write the solver agent**
+
+```typescript
+// lib/solve/solver-agent.ts
+/**
+ * Solver Agent Node — LLM-based problem solving.
+ *
+ * This node:
+ * 1. Resolves the model based on agentRoute
+ * 2. Builds the system prompt
+ * 3. Calls the LLM via callLLM()
+ * 4. Parses the JSON response
+ * 5. Implements hybrid strategy: if confidence < 0.7, triggers fallback
+ */
+
+import type { LangGraphRunnableConfig } from '@langchain/langgraph';
+import type { SolveGraphState } from './solve-graph-state';
+import type { FourPartOutput, SolverAgentType } from './types';
+import { callLLM } from '@/lib/ai/llm';
+import { getModel } from '@/lib/ai/providers';
+import { parseJsonResponse } from '@/lib/generation/json-repair';
+import { buildSolverPrompt } from './solver-prompts';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('SolveGraph');
+
+/**
+ * Parsed solution from LLM response.
+ */
+interface ParsedSolution {
+  solution: string;
+  answer: string;
+  confidence: number;
+  steps: { label: string; content: string; keyPoints?: string[] }[];
+  knowledgePoints: { name: string; description: string; difficulty: 'easy' | 'medium' | 'hard' }[];
+  similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
+}
+
+/**
+ * Parse LLM response text into a structured solution.
+ * Uses json-repair for resilient parsing.
+ */
+export function parseSolutionResponse(text: string): ParsedSolution | null {
+  const parsed = parseJsonResponse<ParsedSolution>(text);
+  if (!parsed) return null;
+  if (!parsed.solution || !parsed.answer) return null;
+  if (typeof parsed.confidence !== 'number') parsed.confidence = 0.5;
+  return parsed;
+}
+
+/**
+ * Resolve the ModelConfig for a given solver agent type.
+ *
+ * Agent type → provider/model mapping:
+ *   universal   → deepseek / deepseek-v4-pro
+ *   science     → glm / glm-5.1
+ *   humanities  → qwen / qwen3.6-max-preview
+ *   grading     → deepseek / deepseek-v4-pro
+ *
+ * API key and base URL come from environment variables.
+ */
+function resolveSolverModel(agentType: SolverAgentType): Parameters<typeof getModel>[0] {
+  const envKey = (providerId: string) => {
+    const keyMap: Record<string, string> = {
+      deepseek: 'DEEPSEEK_API_KEY',
+      glm: 'GLM_API_KEY',
+      qwen: 'QWEN_API_KEY',
+    };
+    return process.env[keyMap[providerId] ?? ''] ?? '';
+  };
+
+  const envBaseUrl = (providerId: string) => {
+    const urlMap: Record<string, string> = {
+      deepseek: 'DEEPSEEK_BASE_URL',
+      glm: 'GLM_BASE_URL',
+      qwen: 'QWEN_BASE_URL',
+    };
+    const url = process.env[urlMap[providerId] ?? ''];
+    return url || undefined;
+  };
+
+  switch (agentType) {
+    case 'universal':
+    case 'grading':
+      return {
+        providerId: 'deepseek',
+        modelId: 'deepseek-v4-pro',
+        apiKey: envKey('deepseek'),
+        baseUrl: envBaseUrl('deepseek'),
+        providerType: 'openai',
+      };
+    case 'science':
+      return {
+        providerId: 'glm',
+        modelId: 'glm-5.1',
+        apiKey: envKey('glm'),
+        baseUrl: envBaseUrl('glm'),
+        providerType: 'openai',
+      };
+    case 'humanities':
+      return {
+        providerId: 'qwen',
+        modelId: 'qwen3.6-max-preview',
+        apiKey: envKey('qwen'),
+        baseUrl: envBaseUrl('qwen'),
+        providerType: 'openai',
+      };
+  }
+}
+
+/**
+ * Solve with a single agent (primary or fallback).
+ */
+async function solveOnce(
+  agentType: SolverAgentType,
+  problemText: string,
+  problemImage: string | null,
+): Promise<ParsedSolution | null> {
+  const modelConfig = resolveSolverModel(agentType);
+  const model = getModel(modelConfig);
+
+  const messages: Array<{ role: string; content: unknown }> = [
+    {
+      role: 'system',
+      content: buildSolverPrompt(agentType, problemText, problemImage ?? undefined),
+    },
+  ];
+
+  const result = await callLLM(
+    {
+      model,
+      messages: messages as any,
+      temperature: 0.3,
+      maxOutputTokens: 4096,
+    },
+    'solve-agent',
+    { retries: 1 },
+  );
+
+  return parseSolutionResponse(result.text);
+}
+
+/**
+ * Hybrid strategy: primary agent first, fallback if confidence low.
+ *
+ * 1. Call primary agent
+ * 2. If confidence >= 0.7, return immediately
+ * 3. If confidence < 0.7, call secondary agent
+ * 4. If answers differ significantly, call tertiary for voting
+ */
+async function solveWithHybrid(
+  primary: SolverAgentType,
+  problemText: string,
+  problemImage: string | null,
+): Promise<{ solution: ParsedSolution; usedAgents: SolverAgentType[] }> {
+  const CONFIDENCE_THRESHOLD = 0.7;
+
+  // Primary
+  const primaryResult = await solveOnce(primary, problemText, problemImage);
+  if (primaryResult && primaryResult.confidence >= CONFIDENCE_THRESHOLD) {
+    return { solution: primaryResult, usedAgents: [primary] };
+  }
+
+  // Secondary fallback
+  const fallbacks: SolverAgentType[] = ['science', 'humanities', 'universal'].filter(
+    (t) => t !== primary,
+  );
+
+  const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
+  if (secondaryResult && secondaryResult.confidence >= CONFIDENCE_THRESHOLD) {
+    return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
+  }
+
+  // Tertiary: last resort
+  if (fallbacks.length > 1) {
+    const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
+    if (tertiaryResult) {
+      return { solution: tertiaryResult, usedAgents: [primary, ...fallbacks] };
+    }
+  }
+
+  // All failed or low confidence — return whatever we have
+  return {
+    solution: primaryResult ?? secondaryResult ?? {
+      solution: '',
+      answer: '',
+      confidence: 0,
+      steps: [],
+      knowledgePoints: [],
+      similarQuestions: [],
+    },
+    usedAgents: [primary],
+  };
+}
+
+/**
+ * Solve agent node function.
+ *
+ * Input: problemText + agentRoute
+ * Output: solution (or error)
+ */
+export async function solveWithAgentNode(
+  state: SolveGraphState,
+  _config: LangGraphRunnableConfig,
+): Promise<Partial<SolveGraphState>> {
+  const { problemText, problemImage, agentRoute } = state;
+
+  if (!problemText) {
+    log.error('[SolveGraph] solveWithAgentNode: empty problemText');
+    return { error: 'Empty problem text' };
+  }
+
+  const agentType = agentRoute ?? 'universal';
+  log.info(`[SolveGraph] Solving with agent: ${agentType}`);
+
+  try {
+    const { solution, usedAgents } = await solveWithHybrid(agentType, problemText, problemImage);
+
+    return {
+      solution: solution.solution,
+      agentId: usedAgents[usedAgents.length - 1] ?? agentType,
+      error: null,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    log.error(`[SolveGraph] solveWithAgentNode failed: ${message}`);
+    return { error: message };
+  }
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx vitest tests/solve/solver-agent.test.ts --run`
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add lib/solve/solver-agent.ts tests/solve/solver-agent.test.ts
+git commit -m "feat(solve): implement solver agent node with hybrid strategy"
+```
+
+---
+
+### Task 4: Solve Graph Definition (Nodes + Edges)
+
+**Files:**
+- Create: `lib/solve/solve-graph.ts`
+- Test: `tests/solve/solve-graph.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+```typescript
+// tests/solve/solve-graph.test.ts
+import { describe, test, expect, vi, beforeEach } from 'vitest';
+
+// Mock dependencies before importing graph
+vi.mock('@/lib/ai/llm', () => ({
+  callLLM: vi.fn().mockResolvedValue({
+    text: JSON.stringify({
+      solution: '解题过程',
+      answer: '答案',
+      confidence: 0.9,
+      steps: [],
+      knowledgePoints: [],
+      similarQuestions: [],
+    }),
+  }),
+}));
+
+vi.mock('@/lib/generation/json-repair', () => ({
+  parseJsonResponse: vi.fn().mockImplementation((text) => {
+    try { return JSON.parse(text); } catch { return null; }
+  }),
+}));
+
+vi.mock('@/lib/ai/providers', () => ({
+  getModel: vi.fn().mockReturnValue({ modelId: 'test', provider: 'deepseek' }),
+  PROVIDERS: {
+    deepseek: { id: 'deepseek', type: 'openai' },
+    glm: { id: 'glm', type: 'openai' },
+    qwen: { id: 'qwen', type: 'openai' },
+  },
+}));
+
+import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
+
+describe('buildSolveInitialState', () => {
+  test('builds state from problem input', () => {
+    const state = buildSolveInitialState('2+2=?');
+    expect(state.problemText).toBe('2+2=?');
+    expect(state.problemImage).toBeNull();
+    expect(state.fromQuestionBank).toBe(false);
+  });
+
+  test('includes image when provided', () => {
+    const state = buildSolveInitialState('看图解题', 'data:image/png;base64,abc');
+    expect(state.problemImage).toBe('data:image/png;base64,abc');
+  });
+
+  test('includes user answer for grade mode', () => {
+    const state = buildSolveInitialState('2+2=?', null, '5');
+    expect(state.userAnswer).toBe('5');
+  });
+});
+
+describe('createSolveGraph', () => {
+  test('returns a compiled graph', () => {
+    const graph = createSolveGraph();
+    expect(graph).toBeDefined();
+    expect(typeof graph.invoke).toBe('function');
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest tests/solve/solve-graph.test.ts --run`
+Expected: FAIL with "Cannot find module '@/lib/solve/solve-graph'"
+
+- [ ] **Step 3: Write the graph definition**
+
+```typescript
+// lib/solve/solve-graph.ts
+/**
+ * Solve Graph — LangGraph StateGraph for the solve pipeline.
+ *
+ * Topology:
+ *   START → checkQuestionBank → routeToAgent → solveWithAgent → gradeAnswer → generateOutput → END
+ *                │(hit)
+ *                └──────────────────────────────────────────────────────┘
+ *
+ * Nodes:
+ *   - checkQuestionBank: Look up in question bank cache
+ *   - routeToAgent: Classify problem type and select agent
+ *   - solveWithAgent: Call LLM to solve (imported from solver-agent.ts)
+ *   - gradeAnswer: Compare user answer with solution (if provided)
+ *   - generateOutput: Format as four-part output
+ */
+
+import { StateGraph, START, END } from '@langchain/langgraph';
+import type { LangGraphRunnableConfig } from '@langchain/langgraph';
+import { SolveGraphAnnotation, type SolveGraphState } from './solve-graph-state';
+import { solveWithAgentNode } from './solver-agent';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('SolveGraph');
+
+// ── Node implementations ──
+
+/**
+ * checkQuestionBank node.
+ *
+ * Looks up the problem in the question bank. If found, returns
+ * the cached solution and skips to generateOutput.
+ *
+ * NOTE: Full implementation in A-004 (question-bank.ts).
+ * This node is a placeholder that always returns "not found"
+ * until A-004 is implemented.
+ */
+async function checkQuestionBankNode(
+  state: SolveGraphState,
+  _config: LangGraphRunnableConfig,
+): Promise<Partial<SolveGraphState>> {
+  log.info('[SolveGraph] checkQuestionBank: not yet implemented (A-004), skipping');
+  // TODO: Call question-bank.findSimilar() when A-004 is done
+  return { fromQuestionBank: false };
+}
+
+/**
+ * routeToAgent node.
+ *
+ * Classifies the problem and selects the appropriate agent type.
+ * Uses keyword heuristics for now (rule-based routing).
+ * Can be enhanced with LLM-based classification later.
+ *
+ * Science keywords: 物理, 化学, 数学, 力学, 微积分, 代数, 几何, 方程
+ * Humanities keywords: 语文, 历史, 政治, 地理, 文学, 作文, 阅读
+ */
+async function routeToAgentNode(
+  state: SolveGraphState,
+  _config: LangGraphRunnableConfig,
+): Promise<Partial<SolveGraphState>> {
+  const { problemText } = state;
+  const lower = problemText.toLowerCase();
+
+  const scienceKeywords = ['物理', '化学', '数学', '力学', '微积分', '代数', '几何', '方程', '计算', '求解', '证明'];
+  const humanitiesKeywords = ['语文', '历史', '政治', '地理', '文学', '作文', '阅读', '分析', '论述', '谈谈'];
+
+  let scienceScore = 0;
+  let humanitiesScore = 0;
+
+  for (const kw of scienceKeywords) {
+    if (lower.includes(kw.toLowerCase())) scienceScore++;
+  }
+  for (const kw of humanitiesKeywords) {
+    if (lower.includes(kw.toLowerCase())) humanitiesScore++;
+  }
+
+  let route: SolveGraphState['agentRoute'];
+  if (scienceScore > humanitiesScore) {
+    route = 'science';
+  } else if (humanitiesScore > scienceScore) {
+    route = 'humanities';
+  } else {
+    route = 'universal';
+  }
+
+  log.info(`[SolveGraph] routeToAgent: ${route} (science=${scienceScore}, humanities=${humanitiesScore})`);
+
+  return { agentRoute: route, selectedAgentId: route };
+}
+
+/**
+ * gradeAnswer node.
+ *
+ * If userAnswer is provided, compare with the solution and generate
+ * a GradeResult. Otherwise, skip grading.
+ *
+ * Full grading logic in A-002 (grader.ts).
+ * This node provides a placeholder grading.
+ */
+async function gradeAnswerNode(
+  state: SolveGraphState,
+  _config: LangGraphRunnableConfig,
+): Promise<Partial<SolveGraphState>> {
+  const { userAnswer, solution } = state;
+
+  if (!userAnswer) {
+    log.info('[SolveGraph] gradeAnswer: no user answer, skipping');
+    return {};
+  }
+
+  if (!solution) {
+    log.warn('[SolveGraph] gradeAnswer: no solution to compare against');
+    return { error: 'No solution available for grading' };
+  }
+
+  // Placeholder: TODO A-002 — implement full grading in grader.ts
+  // For now, do a simple string similarity check
+  const normalizedUser = userAnswer.trim().toLowerCase();
+  const normalizedSol = solution.trim().toLowerCase();
+  const isCorrect = normalizedSol.includes(normalizedUser) || normalizedUser.includes(normalizedSol.slice(0, 20));
+
+  log.info(`[SolveGraph] gradeAnswer: isCorrect=${isCorrect} (placeholder)`);
+
+  return {
+    gradeResult: {
+      isCorrect,
+      score: isCorrect ? 100 : 50,
+      correctAnswer: solution,
+      userAnswer,
+      errorAnalysis: isCorrect ? '答案正确' : '答案不完全匹配，请人工核对',
+      cause: isCorrect ? 'concept-unclear' : 'calculation-error',
+    },
+  };
+}
+
+/**
+ * generateOutput node.
+ *
+ * Format the solution into a FourPartOutput structure.
+ * Full formatting logic in A-003 (four-part-output.ts).
+ * This node constructs the output from available data.
+ */
+async function generateOutputNode(
+  state: SolveGraphState,
+  _config: LangGraphRunnableConfig,
+): Promise<Partial<SolveGraphState>> {
+  const { solution, gradeResult } = state;
+
+  if (!solution) {
+    log.error('[SolveGraph] generateOutput: no solution');
+    return {
+      fourPartOutput: {
+        answer: state.error ?? '解题失败',
+        steps: [],
+        knowledgePoints: [],
+        similarQuestions: [],
+      },
+    };
+  }
+
+  // Parse solution text to extract structured data
+  // TODO A-003 — use generateFourPartOutput() from four-part-output.ts
+  const fourPartOutput = {
+    answer: solution,
+    steps: [{ label: '解答', content: solution, keyPoints: [] }],
+    knowledgePoints: [] as FourPartOutput['knowledgePoints'],
+    similarQuestions: [] as FourPartOutput['similarQuestions'],
+  };
+
+  log.info('[SolveGraph] generateOutput: done');
+  return { fourPartOutput };
+}
+
+// ── Conditional edges ──
+
+/**
+ * After checkQuestionBank: if hit, skip to generateOutput.
+ */
+function afterCheckBank(state: SolveGraphState): 'routeToAgent' | 'generateOutput' {
+  return state.fromQuestionBank ? 'generateOutput' : 'routeToAgent';
+}
+
+// ── Graph factory ──
+
+/**
+ * Create the compiled SolveGraph.
+ */
+export function createSolveGraph() {
+  const graph = new StateGraph(SolveGraphAnnotation)
+    .addNode('checkQuestionBank', checkQuestionBankNode)
+    .addNode('routeToAgent', routeToAgentNode)
+    .addNode('solveWithAgent', solveWithAgentNode)
+    .addNode('gradeAnswer', gradeAnswerNode)
+    .addNode('generateOutput', generateOutputNode)
+    .addEdge(START, 'checkQuestionBank')
+    .addConditionalEdges('checkQuestionBank', afterCheckBank, {
+      routeToAgent: 'routeToAgent',
+      generateOutput: 'generateOutput',
+    })
+    .addEdge('routeToAgent', 'solveWithAgent')
+    .addEdge('solveWithAgent', 'gradeAnswer')
+    .addEdge('gradeAnswer', 'generateOutput')
+    .addEdge('generateOutput', END);
+
+  return graph.compile();
+}
+
+/**
+ * Build initial state for a solve request.
+ */
+export function buildSolveInitialState(
+  problemText: string,
+  problemImage?: string | null,
+  userAnswer?: string | null,
+): SolveGraphState {
+  return {
+    problemText,
+    problemImage: problemImage ?? null,
+    userAnswer: userAnswer ?? null,
+    agentId: 'universal',
+    selectedAgentId: null,
+    agentRoute: null,
+    solution: null,
+    gradeResult: null,
+    votingResults: [],
+    fourPartOutput: null,
+    fromQuestionBank: false,
+    error: null,
+  };
+}
+
+// Import type needed by generateOutputNode
+import type { FourPartOutput } from './types';
+```
+
+Wait — I have the `FourPartOutput` import at the bottom. Let me fix that — it should be at the top. The code above already has the import at the top in the file header section. Let me restructure:
+
+```typescript
+// lib/solve/solve-graph.ts
+/**
+ * Solve Graph — LangGraph StateGraph for the solve pipeline.
+ *
+ * Topology:
+ *   START → checkQuestionBank → routeToAgent → solveWithAgent → gradeAnswer → generateOutput → END
+ *                │(hit)
+ *                └──────────────────────────────────────────────────────┘
+ *
+ * Nodes:
+ *   - checkQuestionBank: Look up in question bank cache
+ *   - routeToAgent: Classify problem type and select agent
+ *   - solveWithAgent: Call LLM to solve (imported from solver-agent.ts)
+ *   - gradeAnswer: Compare user answer with solution (if provided)
+ *   - generateOutput: Format as four-part output
+ */
+
+import { StateGraph, START, END } from '@langchain/langgraph';
+import type { LangGraphRunnableConfig } from '@langchain/langgraph';
+import { SolveGraphAnnotation, type SolveGraphState } from './solve-graph-state';
+import { solveWithAgentNode } from './solver-agent';
+import type { FourPartOutput } from './types';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('SolveGraph');
+
+// ... (all node functions and graph definition as above)
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx vitest tests/solve/solve-graph.test.ts --run`
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add lib/solve/solve-graph.ts tests/solve/solve-graph.test.ts
+git commit -m "feat(solve): add LangGraph StateGraph definition with 5 nodes"
+```
+
+---
+
+### Task 5: Barrel Export Updates
+
+**Files:**
+- Modify: `lib/solve/index.ts`
+
+- [ ] **Step 1: Update barrel exports**
+
+Current content of `lib/solve/index.ts`:
+```typescript
+export type { ... } from './types';
+```
+
+Add the new exports:
+```typescript
+/**
+ * Sky Classroom solve module — barrel export.
+ */
+
+export type {
+  SolverAgentType,
+  SolveState,
+  MistakeCause,
+  GradeResult,
+  VotingResult,
+  VotingResolution,
+  FourPartOutput,
+  GradedFourPartOutput,
+  QuestionBankEntry,
+  ImageRecognitionResult,
+  RecognizedProblem,
+} from './types';
+
+export { SolveGraphAnnotation, type SolveGraphState } from './solve-graph-state';
+export { createSolveGraph, buildSolveInitialState } from './solve-graph';
+export { solveWithAgentNode, parseSolutionResponse } from './solver-agent';
+export { buildSolverPrompt } from './solver-prompts';
+```
+
+- [ ] **Step 2: Verify TypeScript compilation**
+
+Run: `npx tsc --noEmit`
+Expected: No errors
+
+- [ ] **Step 3: Run all solve tests**
+
+Run: `npx vitest tests/solve/ --run`
+Expected: All tests pass
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add lib/solve/index.ts
+git commit -m "chore(solve): update barrel exports for new solve graph modules"
+```
+
+---
+
+### Task 6: Integration Test — Full Solve Flow
+
+**Files:**
+- Create: `tests/solve/solve-flow.integration.test.ts`
+
+- [ ] **Step 1: Write the integration test**
+
+```typescript
+// tests/solve/solve-flow.integration.test.ts
+import { describe, test, expect, vi, beforeEach } from 'vitest';
+
+// Mock LLM layer
+vi.mock('@/lib/ai/llm', () => ({
+  callLLM: vi.fn().mockResolvedValue({
+    text: JSON.stringify({
+      solution: '解：设方程为 2x + 3 = 7\n2x = 7 - 3 = 4\nx = 2',
+      answer: 'x = 2',
+      confidence: 0.95,
+      steps: [
+        { label: '步骤1', content: '移项：2x = 7 - 3', keyPoints: ['等式性质'] },
+        { label: '步骤2', content: '计算：x = 2', keyPoints: [] },
+      ],
+      knowledgePoints: [{ name: '一元一次方程', description: '基础代数方程', difficulty: 'easy' }],
+      similarQuestions: [{ problem: '3x + 1 = 10', difficulty: 0.5, knowledgePoint: '一元一次方程' }],
+    }),
+  }),
+}));
+
+vi.mock('@/lib/generation/json-repair', () => ({
+  parseJsonResponse: vi.fn().mockImplementation((text) => {
+    try { return JSON.parse(text); } catch { return null; }
+  }),
+}));
+
+vi.mock('@/lib/ai/providers', () => ({
+  getModel: vi.fn().mockReturnValue({ modelId: 'deepseek-v4-pro', provider: 'deepseek' }),
+  PROVIDERS: {
+    deepseek: { id: 'deepseek', type: 'openai' },
+    glm: { id: 'glm', type: 'openai' },
+    qwen: { id: 'qwen', type: 'openai' },
+  },
+}));
+
+import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
+
+describe('Solve Graph — Integration', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  test('solve without user answer returns fourPartOutput', async () => {
+    const graph = createSolveGraph();
+    const initialState = buildSolveInitialState('解方程: 2x + 3 = 7');
+
+    const result = await graph.invoke(initialState);
+
+    expect(result.fourPartOutput).not.toBeNull();
+    expect(result.fourPartOutput?.answer).toBe('解：设方程为 2x + 3 = 7\n2x = 7 - 3 = 4\nx = 2');
+    expect(result.fromQuestionBank).toBe(false);
+    expect(result.error).toBeNull();
+    expect(result.gradeResult).toBeNull();
+  });
+
+  test('solve with user answer triggers grading', async () => {
+    const graph = createSolveGraph();
+    const initialState = buildSolveInitialState(
+      '解方程: 2x + 3 = 7',
+      null,
+      'x = 2',
+    );
+
+    const result = await graph.invoke(initialState);
+
+    expect(result.gradeResult).not.toBeNull();
+    expect(result.fourPartOutput).not.toBeNull();
+  });
+
+  test('keyword-based routing selects correct agent', async () => {
+    const graph = createSolveGraph();
+
+    // Science problem
+    const sciState = buildSolveInitialState('计算自由落体时间，g=9.8m/s²');
+    const sciResult = await graph.invoke(sciState);
+    expect(sciResult.agentRoute).toBe('science');
+
+    // Humanities problem
+    const humState = buildSolveInitialState('请论述《红楼梦》的文学价值');
+    const humResult = await graph.invoke(humState);
+    expect(humResult.agentRoute).toBe('humanities');
+
+    // Generic problem
+    const genState = buildSolveInitialState('今天天气怎么样');
+    const genResult = await graph.invoke(genState);
+    expect(genResult.agentRoute).toBe('universal');
+  });
+});
+```
+
+- [ ] **Step 2: Run integration test**
+
+Run: `npx vitest tests/solve/solve-flow.integration.test.ts --run`
+Expected: PASS
+
+- [ ] **Step 3: Run full test suite**
+
+Run: `npx vitest --run`
+Expected: All tests pass (no regressions)
+
+- [ ] **Step 4: Final commit**
+
+```bash
+git add tests/solve/solve-flow.integration.test.ts
+git commit -m "test(solve): add integration test for full solve graph flow"
+```

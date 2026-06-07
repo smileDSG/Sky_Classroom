@@ -1,0 +1,305 @@
+{
+  "id": "yRjizk2NK3",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-06T13:07:10.830Z",
+  "updatedAt": "2026-06-06T13:26:14.383Z",
+  "inputSummary": {
+    "requirementPreview": "给我讲讲python",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 5,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-06-06T13:07:11.220Z",
+  "totalScenes": 6,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "Python 简介",
+        "description": "介绍 Python 是什么，以及它的核心特点和设计哲学。",
+        "keyPoints": [
+          "Python 是一种解释型、高级、通用编程语言",
+          "由 Guido van Rossum 于 1991 年发布",
+          "强调代码可读性，使用简洁的语法",
+          "设计哲学“优雅、明确、简单”"
+        ],
+        "teachingObjective": "了解 Python 的基本背景和核心理念",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "为什么选择 Python？",
+        "description": "说明 Python 的流行原因及其主要应用领域。",
+        "keyPoints": [
+          "语法简单，适合初学者快速上手",
+          "拥有庞大的标准库和丰富的第三方库",
+          "应用领域广泛：Web 开发、数据科学、人工智能、自动化运维等",
+          "跨平台，开源免费"
+        ],
+        "teachingObjective": "激发学习兴趣，了解 Python 的实用价值",
+        "estimatedDuration": 150,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "动手写第一行 Python 代码",
+        "description": "通过一个内嵌的代码执行环境，体验输入并运行 print 语句。",
+        "keyPoints": [
+          "print() 函数用于输出文本",
+          "代码需要写在编辑器区域，点击运行查看结果",
+          "尝试修改引号内的文字，观察输出变化",
+          "感受 Python 的直接反馈"
+        ],
+        "teachingObjective": "初步体验编程，消除对代码的陌生感",
+        "estimatedDuration": 180,
+        "order": 3,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python",
+          "concept": "使用内置的 print 函数在控制台输出指定文字",
+          "starterCode": "print('你好，Python！')"
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "Python 基本语法预览",
+        "description": "快速浏览 Python 的变量、数据类型和注释写法。",
+        "keyPoints": [
+          "变量不需要声明类型，直接赋值即可（name = 'Alice'）",
+          "常用数据类型：数字（int/float）、字符串（str）、布尔值（bool）",
+          "单行注释使用 #，多行注释使用三个引号",
+          "代码块通过缩进而不是大括号来区分"
+        ],
+        "teachingObjective": "建立对 Python 语法的初步印象",
+        "estimatedDuration": 150,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "quiz",
+        "title": "小测验：检查你的理解",
+        "description": "通过几道简单的题目，回顾刚才学到的 Python 基础知识。",
+        "keyPoints": [
+          "测试 Python 的创建者、特点、print 函数和变量命名等",
+          "即时反馈正确与否，帮助巩固记忆"
+        ],
+        "teachingObjective": "评估学习效果，强化关键知识点",
+        "estimatedDuration": 120,
+        "order": 5,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "总结与下一步",
+        "description": "梳理本课内容，给出继续学习 Python 的建议路径。",
+        "keyPoints": [
+          "Python 是一门简单、强大的编程语言",
+          "你已经体验了 print 函数和基本语法",
+          "推荐下一步：学习条件判断、循环和函数",
+          "资源推荐：官方文档、在线练习平台"
+        ],
+        "teachingObjective": "形成知识闭环，指明进阶方向",
+        "estimatedDuration": 120,
+        "order": 6
+      }
+    ],
+    "languageDirective": "教学语言为中文，使用简体中文讲解 Python 编程概念，代码中的关键字、函数名、变量名等保持英文，专业术语在首次出现时给出中英文对照。",
+    "topicSummary": "Python基础入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "iZXsAtMB7H",
+      "name": "Python 简介",
+      "languageDirective": "教学语言为中文，使用简体中文讲解 Python 编程概念，代码中的关键字、函数名、变量名等保持英文，专业术语在首次出现时给出中英文对照。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780751267011,
+      "updatedAt": 1780751267011,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "给我讲讲python",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "Python 简介",
+      "description": "介绍 Python 是什么，以及它的核心特点和设计哲学。",
+      "keyPoints": [
+        "Python 是一种解释型、高级、通用编程语言",
+        "由 Guido van Rossum 于 1991 年发布",
+        "强调代码可读性，使用简洁的语法",
+        "设计哲学“优雅、明确、简单”"
+      ],
+      "teachingObjective": "了解 Python 的基本背景和核心理念",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "为什么选择 Python？",
+      "description": "说明 Python 的流行原因及其主要应用领域。",
+      "keyPoints": [
+        "语法简单，适合初学者快速上手",
+        "拥有庞大的标准库和丰富的第三方库",
+        "应用领域广泛：Web 开发、数据科学、人工智能、自动化运维等",
+        "跨平台，开源免费"
+      ],
+      "teachingObjective": "激发学习兴趣，了解 Python 的实用价值",
+      "estimatedDuration": 150,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "动手写第一行 Python 代码",
+      "description": "通过一个内嵌的代码执行环境，体验输入并运行 print 语句。",
+      "keyPoints": [
+        "print() 函数用于输出文本",
+        "代码需要写在编辑器区域，点击运行查看结果",
+        "尝试修改引号内的文字，观察输出变化",
+        "感受 Python 的直接反馈"
+      ],
+      "teachingObjective": "初步体验编程，消除对代码的陌生感",
+      "estimatedDuration": 180,
+      "order": 3,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python",
+        "concept": "使用内置的 print 函数在控制台输出指定文字",
+        "starterCode": "print('你好，Python！')"
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "Python 基本语法预览",
+      "description": "快速浏览 Python 的变量、数据类型和注释写法。",
+      "keyPoints": [
+        "变量不需要声明类型，直接赋值即可（name = 'Alice'）",
+        "常用数据类型：数字（int/float）、字符串（str）、布尔值（bool）",
+        "单行注释使用 #，多行注释使用三个引号",
+        "代码块通过缩进而不是大括号来区分"
+      ],
+      "teachingObjective": "建立对 Python 语法的初步印象",
+      "estimatedDuration": 150,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "quiz",
+      "title": "小测验：检查你的理解",
+      "description": "通过几道简单的题目，回顾刚才学到的 Python 基础知识。",
+      "keyPoints": [
+        "测试 Python 的创建者、特点、print 函数和变量命名等",
+        "即时反馈正确与否，帮助巩固记忆"
+      ],
+      "teachingObjective": "评估学习效果，强化关键知识点",
+      "estimatedDuration": 120,
+      "order": 5,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "总结与下一步",
+      "description": "梳理本课内容，给出继续学习 Python 的建议路径。",
+      "keyPoints": [
+        "Python 是一门简单、强大的编程语言",
+        "你已经体验了 print 函数和基本语法",
+        "推荐下一步：学习条件判断、循环和函数",
+        "资源推荐：官方文档、在线练习平台"
+      ],
+      "teachingObjective": "形成知识闭环，指明进阶方向",
+      "estimatedDuration": 120,
+      "order": 6
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "教学语言为中文，使用简体中文讲解 Python 编程概念，代码中的关键字、函数名、变量名等保持英文，专业术语在首次出现时给出中英文对照。",
+    "totalScenes": 6
+  },
+  "topicSummary": "Python基础入门",
+  "completedAt": "2026-06-06T13:26:14.383Z",
+  "result": {
+    "classroomId": "iZXsAtMB7H",
+    "url": "http://localhost:3000/classroom/iZXsAtMB7H",
+    "scenesCount": 5
+  }
+}

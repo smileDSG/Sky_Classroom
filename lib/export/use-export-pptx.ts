@@ -27,12 +27,12 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ExportPPTX');
 
-const DEFAULT_FONT_SIZE = 16;
-const DEFAULT_FONT_FAMILY = 'Microsoft YaHei';
+export const DEFAULT_FONT_SIZE = 16;
+export const DEFAULT_FONT_FAMILY = 'Microsoft YaHei';
 
 // ── Color formatting ──
 
-function formatColor(_color: string) {
+export function formatColor(_color: string) {
   if (!_color) {
     return { alpha: 0, color: '#000000' };
   }
@@ -46,7 +46,7 @@ type FormatColor = ReturnType<typeof formatColor>;
 
 // ── HTML → pptxgenjs TextProps ──
 
-function formatHTML(html: string, ratioPx2Pt: number) {
+export function formatHTML(html: string, ratioPx2Pt: number) {
   const ast = toAST(html);
   let bulletFlag = false;
   let indent = 0;
@@ -205,7 +205,7 @@ type Points = Array<
   | { close: true }
 >;
 
-function formatPoints(points: SvgPoints, ratioPx2Inch: number, scale = { x: 1, y: 1 }): Points {
+export function formatPoints(points: SvgPoints, ratioPx2Inch: number, scale = { x: 1, y: 1 }): Points {
   return points.map((point) => {
     if (point.close !== undefined) {
       return { close: true };
@@ -249,7 +249,7 @@ function formatPoints(points: SvgPoints, ratioPx2Inch: number, scale = { x: 1, y
 
 // ── Shadow config ──
 
-function getShadowOption(shadow: PPTElementShadow, ratioPx2Pt: number): pptxgen.ShadowProps {
+export function getShadowOption(shadow: PPTElementShadow, ratioPx2Pt: number): pptxgen.ShadowProps {
   const c = formatColor(shadow.color);
   const { h, v } = shadow;
 
@@ -307,7 +307,7 @@ const dashTypeMap: Record<string, string> = {
   dotted: 'sysDot',
 };
 
-function getOutlineOption(outline: PPTElementOutline, ratioPx2Pt: number): pptxgen.ShapeLineProps {
+export function getOutlineOption(outline: PPTElementOutline, ratioPx2Pt: number): pptxgen.ShapeLineProps {
   const c = formatColor(outline?.color || '#000000');
   return {
     color: c.color,
@@ -319,7 +319,7 @@ function getOutlineOption(outline: PPTElementOutline, ratioPx2Pt: number): pptxg
 
 // ── Link config ──
 
-function getLinkOption(link: PPTElementLink, slides: Slide[]): pptxgen.HyperlinkProps | null {
+export function getLinkOption(link: PPTElementLink, slides: Slide[]): pptxgen.HyperlinkProps | null {
   const { type, target } = link;
   if (type === 'web') return { url: target };
   if (type === 'slide') {
@@ -347,7 +347,7 @@ function isSVGImage(url: string) {
  * Extract speaker notes text from a scene's actions.
  * Concatenates speech text and action labels into plain text.
  */
-function buildSpeakerNotes(scene: Scene): string {
+export function buildSpeakerNotes(scene: Scene): string {
   if (!scene.actions || scene.actions.length === 0) return '';
 
   const parts: string[] = [];
@@ -583,9 +583,10 @@ async function buildPptxBlob(
           }
           pptxSlide.addImage(imgOptions);
         } else {
+          const vb = typeof el.viewBox === 'string' ? el.viewBox.split(' ').map(Number) : Array.isArray(el.viewBox) ? el.viewBox : [1, 1];
           const scale = {
-            x: el.width / el.viewBox[0],
-            y: el.height / el.viewBox[1],
+            x: el.width / ((vb[2] || vb[0]) || 1),
+            y: el.height / ((vb[3] || vb[1]) || 1),
           };
           const rawPoints = toPoints(el.path);
           if (!rawPoints.length) continue; // Malformed path — toPoints already logged.

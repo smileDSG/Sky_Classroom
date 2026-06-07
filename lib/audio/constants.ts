@@ -764,7 +764,7 @@ export const TTS_PROVIDERS: Record<BuiltInTTSProviderId, TTSProviderConfig> = {
     id: 'doubao-tts',
     name: '豆包 TTS 2.0（火山引擎）',
     requiresApiKey: true,
-    defaultBaseUrl: 'https://openspeech.bytedance.com/api/v3/tts',
+    defaultBaseUrl: 'https://openspeech.bytedance.com/api/v3/tts/unidirectional',
     icon: '/logos/doubao.svg',
     models: [],
     defaultModelId: '',

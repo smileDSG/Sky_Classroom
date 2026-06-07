@@ -119,7 +119,19 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
           modelId: ttsProvidersConfig[globalTtsProviderId]?.modelId,
         };
       }
+      // Students: same provider as teacher, but different voice by index
       const index = agentIndexMap.current.get(agentId) ?? 0;
+      const providerConfig = ttsProvidersConfig[globalTtsProviderId];
+      if (providerConfig) {
+        const voices = providers.find((p) => p.providerId === globalTtsProviderId)?.voices ?? [];
+        if (voices.length > 0) {
+          return {
+            providerId: globalTtsProviderId,
+            voiceId: voices[index % voices.length].id,
+            modelId: providerConfig.modelId,
+          };
+        }
+      }
       return resolveAgentVoice(agent, index, providers);
     },
     [agents, ttsProvidersConfig, voxcpmProfiles, globalTtsProviderId, globalTtsVoice],
@@ -175,17 +187,22 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
           ttsModelId: item.modelId || providerConfig?.modelId,
           ttsVoice: item.voiceId,
           ttsSpeed: ttsSpeed,
-          ttsApiKey: providerConfig?.apiKey,
-          ttsBaseUrl:
-            providerConfig?.serverBaseUrl ||
-            providerConfig?.baseUrl ||
-            providerConfig?.customDefaultBaseUrl,
           ttsProviderOptions: providerOptions,
         }),
         signal: controller.signal,
       });
 
-      if (!res.ok) throw new Error(`TTS API error: ${res.status}`);
+      if (!res.ok) {
+        // Try to get error details from response
+        let errorDetails = `Status ${res.status}`;
+        try {
+          const errorData = await res.json();
+          errorDetails = errorData.error || errorData.message || errorDetails;
+        } catch {
+          // Ignore JSON parse error
+        }
+        throw new Error(`TTS API error: ${errorDetails}`);
+      }
 
       const data = await res.json();
       if (!data.base64) throw new Error('No audio in response');
@@ -224,11 +241,33 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
       onAudioStateChangeRef.current?.(item.agentId, 'playing');
       await audio.play();
     } catch (err) {
-      if ((err as Error).name !== 'AbortError') {
-        console.error('[DiscussionTTS] TTS generation failed:', err);
+      if ((err as Error).name === 'AbortError') {
+        // User aborted, just clean up
+        audioRef.current = null;
+        isPlayingRef.current = false;
+        return;
       }
+
+      console.error('[DiscussionTTS] TTS generation failed:', err);
+
+      // Clear current state
       audioRef.current = null;
       isPlayingRef.current = false;
+
+      // Try fallback to browser native TTS if server TTS failed
+      if ((item.providerId as string) !== 'browser-native-tts') {
+        console.log('[DiscussionTTS] Falling back to browser native TTS');
+        try {
+          currentProviderRef.current = 'browser-native-tts';
+          onAudioStateChangeRef.current?.(item.agentId, 'playing');
+          browserSpeakRef.current(item.text, item.voiceId);
+          return;
+        } catch (fallbackErr) {
+          console.error('[DiscussionTTS] Browser TTS fallback also failed:', fallbackErr);
+        }
+      }
+
+      // Mark as done and continue queue
       segmentDoneCounterRef.current++;
       onAudioStateChangeRef.current?.(item.agentId, 'idle');
       if (!pausedRef.current) {

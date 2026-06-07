@@ -28,6 +28,8 @@ export interface GenerationSessionState {
   researchSources?: Array<{ title: string; url: string }>;
   // Language directive inferred from outline generation
   languageDirective?: string;
+  // Selected agents from homepage
+  agentIds?: string[];
 }
 
 export type GenerationStep = {

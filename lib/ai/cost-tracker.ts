@@ -30,11 +30,36 @@ const PRICING: Record<string, ModelPricing> = {
   'openai/*': { inputPerM: 2.5, outputPerM: 10 },
 
   // Anthropic
-  'anthropic/claude-opus-4-7': { inputPerM: 15, outputPerM: 75, cacheReadPerM: 1.5, cacheWritePerM: 18.75 },
-  'anthropic/claude-opus-4-6': { inputPerM: 15, outputPerM: 75, cacheReadPerM: 1.5, cacheWritePerM: 18.75 },
-  'anthropic/claude-sonnet-4-6': { inputPerM: 3, outputPerM: 15, cacheReadPerM: 0.3, cacheWritePerM: 3.75 },
-  'anthropic/claude-sonnet-4-5': { inputPerM: 3, outputPerM: 15, cacheReadPerM: 0.3, cacheWritePerM: 3.75 },
-  'anthropic/claude-haiku-4-5': { inputPerM: 0.8, outputPerM: 4, cacheReadPerM: 0.08, cacheWritePerM: 1 },
+  'anthropic/claude-opus-4-7': {
+    inputPerM: 15,
+    outputPerM: 75,
+    cacheReadPerM: 1.5,
+    cacheWritePerM: 18.75,
+  },
+  'anthropic/claude-opus-4-6': {
+    inputPerM: 15,
+    outputPerM: 75,
+    cacheReadPerM: 1.5,
+    cacheWritePerM: 18.75,
+  },
+  'anthropic/claude-sonnet-4-6': {
+    inputPerM: 3,
+    outputPerM: 15,
+    cacheReadPerM: 0.3,
+    cacheWritePerM: 3.75,
+  },
+  'anthropic/claude-sonnet-4-5': {
+    inputPerM: 3,
+    outputPerM: 15,
+    cacheReadPerM: 0.3,
+    cacheWritePerM: 3.75,
+  },
+  'anthropic/claude-haiku-4-5': {
+    inputPerM: 0.8,
+    outputPerM: 4,
+    cacheReadPerM: 0.08,
+    cacheWritePerM: 1,
+  },
   'anthropic/*': { inputPerM: 3, outputPerM: 15 },
 
   // Google
@@ -128,12 +153,14 @@ export function estimateCost(usage: TokenUsage): number {
 
   const inputCost = (usage.inputTokens / 1_000_000) * pricing.inputPerM;
   const outputCost = (usage.outputTokens / 1_000_000) * pricing.outputPerM;
-  const cacheReadCost = pricing.cacheReadPerM && usage.cacheReadTokens
-    ? (usage.cacheReadTokens / 1_000_000) * pricing.cacheReadPerM
-    : 0;
-  const cacheWriteCost = pricing.cacheWritePerM && usage.cacheWriteTokens
-    ? (usage.cacheWriteTokens / 1_000_000) * pricing.cacheWritePerM
-    : 0;
+  const cacheReadCost =
+    pricing.cacheReadPerM && usage.cacheReadTokens
+      ? (usage.cacheReadTokens / 1_000_000) * pricing.cacheReadPerM
+      : 0;
+  const cacheWriteCost =
+    pricing.cacheWritePerM && usage.cacheWriteTokens
+      ? (usage.cacheWriteTokens / 1_000_000) * pricing.cacheWritePerM
+      : 0;
 
   return inputCost + outputCost + cacheReadCost + cacheWriteCost;
 }
@@ -157,9 +184,7 @@ export function recordUsage(usage: TokenUsage): CostEntry {
  * Optionally filter by session ID.
  */
 export function getCostStats(sessionId?: string): CostStats {
-  const filtered = sessionId
-    ? entries.filter(e => e.sessionId === sessionId)
-    : entries;
+  const filtered = sessionId ? entries.filter((e) => e.sessionId === sessionId) : entries;
 
   const byProvider: Record<string, { tokens: number; costUsd: number }> = {};
   const bySession: Record<string, { tokens: number; costUsd: number }> = {};

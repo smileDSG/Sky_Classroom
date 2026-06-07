@@ -16,7 +16,7 @@ export interface PBLSystemPromptConfig {
 }
 
 export function buildPBLSystemPrompt(config: PBLSystemPromptConfig): string {
-  const prompt = buildPrompt(PROMPT_IDS.PBL_DESIGN, {
+  const prompt = buildPrompt(PROMPT_IDS.PBL_DESIGN_V2, {
     projectTopic: config.projectTopic,
     projectDescription: config.projectDescription,
     targetSkills: config.targetSkills.join(', '),

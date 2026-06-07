@@ -5,7 +5,7 @@ import { defaultTheme } from '../fixtures/test-data/scene-content';
 
 const TEST_STAGE_ID = 'e2e-test-stage';
 
-const SETTINGS_STORAGE = createSettingsStorage({ sidebarCollapsed: false });
+const SETTINGS_STORAGE = createSettingsStorage({ timelineCollapsed: false });
 
 /** Seed IndexedDB with stage + 3 scenes using raw IndexedDB API */
 async function seedDatabase(page: import('@playwright/test').Page) {

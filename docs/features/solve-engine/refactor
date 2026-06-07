@@ -1,0 +1,57 @@
+# B-001 幻灯片生成 — 开发日志
+
+> 任务编号: B-001 | 负责人: 队员2 | 完成日期: 2026-05-18
+
+---
+
+## 阶段1: 方案设计 ✅
+
+### 📋 PLAN — 2026-05-18
+- 探索现有 slide 生成管线（`lib/generation/scene-content/slide-generator.ts`）
+- 确认复用 `PROMPT_IDS.SLIDE_CONTENT_V2` 提示词模板
+- 设计依赖注入模式（`AICallFn` 参数化）
+- 方案审批通过
+
+---
+
+## 阶段2: 核心实现 ✅
+
+### 🔨 BUILD — 2026-05-18
+- **新建文件**:
+  - `lib/slides/slide-generator.ts` — `generateSlides()` 核心函数
+  - `tests/slides/slide-generator.test.ts` — 14 个测试用例
+- **修改文件**:
+  - `lib/slides/index.ts` — barrel export
+  - `app/api/sky/slides/generate/route.ts` — 替换 TODO 为实际实现
+  - `lib/store/use-sky-classroom-store.ts` — 补充 slides 状态字段
+
+### 🧪 TEST — 2026-05-18
+- **测试覆盖**: 14 个用例（成功路径/边界/错误处理/prompt 验证）
+- **测试结果**: 14/14 通过
+- **依赖注入模式**: `makeCapturingAiCall()` 回调 mock，不 mock 模块
+
+### ✅ CHECK — 2026-05-18
+- [x] `npx tsc --noEmit` 零错误
+- [x] 14/14 测试通过
+- [x] API 联调: DeepSeek 生成 8 张幻灯片成功（cover + 6 content + end）
+- [x] 结构正确: 深蓝封面、白色内容页、LaTeX 公式、文本定位
+
+---
+
+## 阶段3: 验收 ✅
+
+### 联调验证 — 2026-05-18
+```
+POST /api/sky/slides/generate
+{ "topic": "勾股定理", "difficulty": "junior", "slideCount": 4 }
+
+→ success: True
+→ slides: 4 (cover → content×2 → end)
+→ Slide 1 [cover]: bg=#0d3b66, 标题+副标题
+→ Slide 2 [content]: bg=#ffffff, 标题+下划线+定义+LaTeX公式 (10 elements)
+→ Slide 3 [content]: bg=#ffffff, 标题+例题+公式
+→ Slide 4 [end]: bg=#0d3b66, 总结+感谢
+```
+
+- [x] 所有检验标准通过
+- [x] 用户验收通过

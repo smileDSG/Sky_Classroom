@@ -2,16 +2,20 @@
  * Agent Profiles Generation API
  *
  * Generates agent profiles (teacher, assistant, student) for a course stage
- * based on stage info and scene outlines.
+ * based on stage info and scene outlines. Uses the B-001 prompt template system
+ * and B-002 AgentFactory for creation.
  */
 
 import { NextRequest } from 'next/server';
-import { nanoid } from 'nanoid';
 import { callLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
+import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
 import { AGENT_COLOR_PALETTE } from '@/lib/constants/agent-defaults';
+import { getAgentFactory } from '@/lib/orchestration/registry/factory';
+import { getRuleEngine } from '@/lib/orchestration/registry/combination-rules';
+import type { CourseInfo } from '@/lib/orchestration/registry/combination-rules';
 
 const log = createLogger('Agent Profiles API');
 
@@ -19,7 +23,7 @@ export const maxDuration = 120;
 
 interface RequestBody {
   stageInfo: { name: string; description?: string };
-  sceneOutlines?: { title: string; description?: string }[];
+  sceneOutlines?: { title: string; description?: string; type?: string }[];
   languageDirective: string;
   availableAvatars: string[];
   avatarDescriptions?: Array<{ path: string; desc: string }>;
@@ -33,7 +37,6 @@ interface RequestBody {
 
 function stripCodeFences(text: string): string {
   let cleaned = text.trim();
-  // Remove markdown code fences (```json ... ``` or ``` ... ```)
   if (cleaned.startsWith('```')) {
     cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
   }
@@ -55,7 +58,6 @@ export async function POST(req: NextRequest) {
     } = body;
     stageName = stageInfo?.name;
 
-    // ── Validate required fields ──
     if (!stageInfo?.name) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'stageInfo.name is required');
     }
@@ -64,97 +66,72 @@ export async function POST(req: NextRequest) {
     }
     if (!availableAvatars || availableAvatars.length === 0) {
       return apiError(
-        'MISSING_REQUIRED_FIELD',
-        400,
-        'availableAvatars is required and must not be empty',
+        'MISSING_REQUIRED_FIELD', 400, 'availableAvatars is required and must not be empty',
       );
     }
 
-    // ── Model resolution from request headers/body ──
-    const {
-      model: languageModel,
-      modelString: _modelString,
-      thinkingConfig,
-    } = await resolveModelFromRequest(req, body);
+    const { model: languageModel, modelString: _modelString, thinkingConfig } =
+      await resolveModelFromRequest(req, body);
     modelString = _modelString;
 
-    // ── Build prompt ──
+    // ── Build course info for combination rules ──
+    const sceneTypes = sceneOutlines?.map((s) => s.type).filter((t): t is string => !!t) ?? [];
+    const courseInfo: CourseInfo = {
+      name: stageInfo.name,
+      description: stageInfo.description,
+      sceneTypes,
+      sceneCount: sceneOutlines?.length ?? 0,
+      hasQuiz: sceneTypes.includes('quiz'),
+      hasPBL: sceneTypes.includes('pbl'),
+    };
+
+    // ── Recommendation for hinting ──
+    const engine = getRuleEngine();
+    const combo = engine.recommend(courseInfo);
+
+    // ── Build voice/avatar strings ──
+    const avatarEntries =
+      avatarDescriptions && avatarDescriptions.length > 0
+        ? avatarDescriptions.map((a) => ({ path: a.path, description: a.desc }))
+        : availableAvatars;
+    const voiceList = availableVoices?.length
+      ? availableVoices.map((v) => ({ id: `${v.providerId}::${v.voiceId}`, name: v.voiceName, language: v.voiceLanguage || 'unknown' }))
+      : [];
+
     const sceneSummary = sceneOutlines?.length
-      ? sceneOutlines
-          .map((s, i) => `${i + 1}. ${s.title}${s.description ? ` — ${s.description}` : ''}`)
-          .join('\n')
-      : null;
-
-    const systemPrompt = `You are an expert instructional designer. Generate agent profiles for a multi-agent classroom simulation. Decide the appropriate number of agents (typically 3-5) based on the course content and complexity. Return ONLY valid JSON, no markdown or explanation.`;
-
-    // Build voice list for prompt (if available)
-    const voiceListStr =
-      availableVoices && availableVoices.length > 0
-        ? JSON.stringify(
-            availableVoices.map((v) => ({
-              id: `${v.providerId}::${v.voiceId}`,
-              name: v.voiceName,
-              language: v.voiceLanguage || 'unknown',
-            })),
-          )
-        : '';
-
-    const voicePrompt = voiceListStr
-      ? `- Each agent should be assigned a voice that matches their persona from this list: ${voiceListStr}
-  - Prefer a voice whose language matches the course language directive
-  - Pick a voice that suits the agent's personality and role (e.g. authoritative voice for teacher, lively voice for energetic student)
-  - Try to use different voices for each agent`
+      ? sceneOutlines.map((s, i) => `${i + 1}. ${s.title}${s.description ? ` — ${s.description}` : ''}`).join('\n')
       : '';
 
-    const voiceJsonField = voiceListStr
-      ? ',\n      "voice": "string (voice id from available list, e.g. \'qwen-tts::Cherry\')"'
-      : '';
+    // ── Build prompt from template ──
+    const prompts = buildPrompt(PROMPT_IDS.AGENT_PROFILES, {
+      languageDirective,
+      courseName: stageInfo.name,
+      courseDescription: stageInfo.description || '',
+      sceneOutlines: sceneSummary,
+      availableAvatars: JSON.stringify(avatarEntries),
+      availableColors: JSON.stringify(AGENT_COLOR_PALETTE),
+      availableVoices: JSON.stringify(voiceList),
+      hasVoices: voiceList.length > 0,
+      recommendedCombo: JSON.stringify({
+        teacher: combo.teacher,
+        assistant: combo.assistant,
+        studentCount: combo.students.count,
+        preferredTypes: combo.students.preferredTypes.join(', '),
+      }),
+    });
 
-    const userPrompt = `Generate agent profiles for the following course:
-
-Course name: ${stageInfo.name}
-${stageInfo.description ? `Course description: ${stageInfo.description}` : ''}
-${sceneSummary ? `\nScene outlines:\n${sceneSummary}\n` : ''}
-Requirements:
-- Decide the appropriate number of agents based on the course content (typically 3-5)
-- Exactly 1 agent must have role "teacher", the rest can be "assistant" or "student"
-- Priority values: teacher=10 (highest), assistant=7, student=4-6
-- Each agent needs: name, role, persona (2-3 sentences describing personality and teaching/learning style)
-- Language directive for this course: ${languageDirective}
-  Agent names and personas must follow this language directive.
-- Each agent must be assigned one avatar from this list: ${JSON.stringify(avatarDescriptions && avatarDescriptions.length > 0 ? avatarDescriptions.map((a) => ({ path: a.path, description: a.desc })) : availableAvatars)}
-  - Pick an avatar that visually matches the agent's personality and role
-  - Try to use different avatars for each agent
-  - Use the "path" value as the avatar field in the output
-- Each agent must be assigned one color from this list: ${JSON.stringify(AGENT_COLOR_PALETTE)}
-  - Each agent must have a different color
-${voicePrompt}
-
-Return a JSON object with this exact structure:
-{
-  "agents": [
-    {
-      "name": "string",
-      "role": "teacher" | "assistant" | "student",
-      "persona": "string (2-3 sentences)",
-      "avatar": "string (from available list)",
-      "color": "string (hex color from palette)",
-      "priority": number (10 for teacher, 7 for assistant, 4-6 for student)${voiceJsonField}
+    if (!prompts) {
+      return apiError('INTERNAL_ERROR', 500, 'agent-profiles prompt template not found');
     }
-  ]
-}`;
 
     log.info(`Generating agent profiles for "${stageInfo.name}" [model=${modelString}]`);
 
+    // ── Call LLM with retries ──
     const rawResult = (
       await callLLM(
-        {
-          model: languageModel,
-          system: systemPrompt,
-          prompt: userPrompt,
-        },
+        { model: languageModel, system: prompts.system, prompt: prompts.user || prompts.system },
         'agent-profiles',
-        undefined,
+        { retries: 2 },
         thinkingConfig,
       )
     ).text;
@@ -163,74 +140,56 @@ Return a JSON object with this exact structure:
     const rawText = stripCodeFences(rawResult);
     let parsed: {
       agents: Array<{
-        name: string;
-        role: string;
-        persona: string;
-        avatar: string;
-        color: string;
-        priority: number;
-        voice?: string;
+        name: string; role: string; persona: string;
+        avatar: string; color: string; priority: number; voice?: string;
       }>;
     };
 
     try {
       parsed = JSON.parse(rawText);
     } catch {
-      log.error('Failed to parse LLM response as JSON:', rawText.substring(0, 500));
+      log.error('Failed to parse LLM response:', rawText.substring(0, 500));
       return apiError('PARSE_FAILED', 500, 'Failed to parse agent profiles from LLM response');
     }
 
-    // ── Validate parsed structure ──
     if (!parsed.agents || !Array.isArray(parsed.agents) || parsed.agents.length < 2) {
-      log.error(`Expected at least 2 agents, got ${parsed.agents?.length ?? 0}`);
-      return apiError(
-        'GENERATION_FAILED',
-        500,
-        `Expected at least 2 agents but LLM returned ${parsed.agents?.length ?? 0}`,
-      );
+      return apiError('GENERATION_FAILED', 500, `Expected at least 2 agents but got ${parsed.agents?.length ?? 0}`);
     }
 
     const teacherCount = parsed.agents.filter((a) => a.role === 'teacher').length;
     if (teacherCount !== 1) {
-      log.error(`Expected exactly 1 teacher, got ${teacherCount}`);
-      return apiError(
-        'GENERATION_FAILED',
-        500,
-        `Expected exactly 1 teacher but LLM returned ${teacherCount}`,
-      );
+      return apiError('GENERATION_FAILED', 500, `Expected exactly 1 teacher but got ${teacherCount}`);
     }
 
-    // ── Build output with IDs ──
+    // ── Create agents via factory ──
+    const factory = getAgentFactory();
     const agents = parsed.agents.map((agent, index) => {
-      // Parse voice "providerId::voiceId" format
       let voiceConfig: { providerId: string; voiceId: string } | undefined;
       if (agent.voice && agent.voice.includes('::')) {
         const [providerId, voiceId] = agent.voice.split('::');
-        if (providerId && voiceId) {
-          voiceConfig = { providerId, voiceId };
-        }
+        if (providerId && voiceId) voiceConfig = { providerId, voiceId };
       }
 
-      return {
-        id: `gen-${nanoid(8)}`,
-        name: agent.name,
-        role: agent.role,
-        persona: agent.persona,
-        avatar: agent.avatar || availableAvatars[index % availableAvatars.length],
-        color: agent.color || AGENT_COLOR_PALETTE[index % AGENT_COLOR_PALETTE.length],
-        priority:
-          agent.priority ?? (agent.role === 'teacher' ? 10 : agent.role === 'assistant' ? 7 : 5),
-        ...(voiceConfig ? { voiceConfig } : {}),
-      };
+      return factory.createFromLLM(
+        {
+          name: agent.name,
+          role: agent.role,
+          persona: agent.persona,
+          avatar: agent.avatar || availableAvatars[index % availableAvatars.length],
+          color: agent.color || AGENT_COLOR_PALETTE[index % AGENT_COLOR_PALETTE.length],
+          priority: agent.priority ?? (agent.role === 'teacher' ? 10 : agent.role === 'assistant' ? 7 : 5),
+          voiceConfig,
+        },
+        availableAvatars[index % availableAvatars.length],
+        AGENT_COLOR_PALETTE[index % AGENT_COLOR_PALETTE.length],
+      );
     });
 
     log.info(`Successfully generated ${agents.length} agent profiles for "${stageInfo.name}"`);
-
     return apiSuccess({ agents });
   } catch (error) {
     log.error(
-      `Agent profiles generation failed [stage="${stageName ?? 'unknown'}", model=${modelString ?? 'unknown'}]:`,
-      error,
+      `Agent profiles generation failed [stage="${stageName ?? 'unknown'}", model=${modelString ?? 'unknown'}]:`, error,
     );
     return apiError('INTERNAL_ERROR', 500, error instanceof Error ? error.message : String(error));
   }

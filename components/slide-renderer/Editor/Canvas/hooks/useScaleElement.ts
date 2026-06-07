@@ -498,7 +498,7 @@ export function useScaleElement(
               top,
               width,
               height,
-              viewBox: [width, height] as [number, number],
+              viewBox: `0 0 ${width} ${height}`,
               path,
             };
           }

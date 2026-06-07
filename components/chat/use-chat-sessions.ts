@@ -507,13 +507,26 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             return currentSession?.messages ?? requestTemplate.messages;
           },
 
-          fetchChat: (body, signal) =>
-            fetch('/api/chat', {
+          fetchChat: async (body, signal) => {
+            let res = await fetch('/api/chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
               signal,
-            }),
+            });
+            if (res.status === 401) {
+              const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+              if (refreshRes.ok) {
+                res = await fetch('/api/chat', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body),
+                  signal,
+                });
+              }
+            }
+            return res;
+          },
 
           onEvent: (event) => {
             // Create buffer on first event of each iteration
@@ -637,6 +650,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
   const createSession = useCallback(async (type: SessionType, title: string): Promise<string> => {
     const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const now = Date.now();
+    const currentSceneId = useStageStore.getState().currentSceneId;
 
     const newSession: ChatSession = {
       id: sessionId,
@@ -652,6 +666,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       },
       toolCalls: [],
       pendingToolCalls: [],
+      sceneId: currentSceneId ?? undefined,
       createdAt: now,
       updatedAt: now,
     };
@@ -660,7 +675,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     setActiveSessionId(sessionId);
     setExpandedSessionIds((prev) => new Set([...prev, sessionId]));
 
-    log.info(`[ChatArea] Created session: ${sessionId} (${type})`);
+    log.info(`[ChatArea] Created session: ${sessionId} (${type}, sceneId: ${currentSceneId})`);
     return sessionId;
   }, []);
 
@@ -751,6 +766,43 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     },
     [activeSessionId],
   );
+
+  /** Delete a session permanently from the list */
+  const deleteSession = useCallback((sessionId: string) => {
+    log.info(`[ChatArea] Deleting session: ${sessionId}`);
+
+    // Abort if currently streaming
+    if (abortControllerRef.current && streamingSessionIdRef.current === sessionId) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      streamingSessionIdRef.current = null;
+      setIsStreaming(false);
+    }
+
+    // Shutdown and remove buffer
+    const buf = buffersRef.current.get(sessionId);
+    if (buf) {
+      buf.shutdown();
+      buffersRef.current.delete(sessionId);
+    }
+    lectureMessageIds.current.delete(sessionId);
+    lectureLastActionIndexRef.current.delete(sessionId);
+
+    // Clear live state callbacks if deleting active session
+    if (activeSessionId === sessionId) {
+      setActiveSessionId(null);
+      onLiveSpeechRef.current?.(null, null);
+      onThinkingRef.current?.(null);
+    }
+
+    setExpandedSessionIds((prev) => {
+      const next = new Set(prev);
+      next.delete(sessionId);
+      return next;
+    });
+
+    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+  }, [activeSessionId]);
 
   /**
    * End the currently active QA/Discussion session (if any).
@@ -895,6 +947,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             config: {
               agentIds,
               sessionType: session.type,
+              triggerAgentId: 'default-2', // 恢复会话也让助教回答
             },
             userProfile: {
               nickname: userProfileState.nickname || undefined,
@@ -1012,7 +1065,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         for (const session of activeQAOrDiscussion) {
           await endSession(session.id);
         }
-        sessionId = await createSession('qa', 'Q&A');
+        sessionId = await createSession('qa', content.length > 30 ? content.slice(0, 30) + '...' : content);
       }
 
       const controller = new AbortController();
@@ -1042,26 +1095,38 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
 
       // Read current session data from ref (avoids stale closure AND keeps updater pure)
       const existingSession = sessionsRef.current.find((s) => s.id === sessionId);
+
+      // When transitioning from lecture to QA, inject lecture messages as context
+      // so the AI knows what was just taught and can answer questions about it.
+      let lectureContextMessages: UIMessage<ChatMessageMetadata>[] = [];
+      if (needNewSession && activeSession?.type === 'lecture' && activeSession.messages.length > 0) {
+        lectureContextMessages = activeSession.messages;
+      }
+
       const sessionMessages: UIMessage<ChatMessageMetadata>[] = existingSession
-        ? [...existingSession.messages, userMessage]
-        : [userMessage];
+        ? [...lectureContextMessages, ...existingSession.messages, userMessage]
+        : [...lectureContextMessages, userMessage];
       const sessionType: SessionType = existingSession?.type || 'qa';
 
       // Pure updater — no side effects
       setSessions((prev) => {
         const exists = prev.some((s) => s.id === sessionId);
         if (exists) {
-          return prev.map((s) =>
-            s.id === sessionId
-              ? {
-                  ...s,
-                  messages: [...s.messages, userMessage],
-                  status: 'active' as SessionStatus,
-                  updatedAt: now,
-                }
-              : s,
-          );
+          return prev.map((s) => {
+            if (s.id === sessionId) {
+              const sceneId = s.sceneId ?? useStageStore.getState().currentSceneId ?? undefined;
+              return {
+                ...s,
+                messages: [...s.messages, userMessage],
+                status: 'active' as SessionStatus,
+                sceneId,
+                updatedAt: now,
+              };
+            }
+            return s;
+          });
         } else {
+          const qaSceneId = useStageStore.getState().currentSceneId;
           const newSession: ChatSession = {
             id: sessionId!,
             type: 'qa',
@@ -1076,6 +1141,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             },
             toolCalls: [],
             pendingToolCalls: [],
+            sceneId: qaSceneId ?? undefined,
             createdAt: now,
             updatedAt: now,
           };
@@ -1107,6 +1173,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             config: {
               agentIds,
               sessionType,
+              triggerAgentId: 'default-2', // 用户提问后直接让 AI 助教回答
             },
             userProfile: {
               nickname: userProfileState.nickname || undefined,
@@ -1200,6 +1267,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       }
 
       // No pre-created assistant message — agent_start events create them dynamically
+      const currentSceneId = request.sceneId ?? useStageStore.getState().currentSceneId;
       const newSession: ChatSession = {
         id: sessionId,
         type: 'discussion',
@@ -1214,6 +1282,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         },
         toolCalls: [],
         pendingToolCalls: [],
+        sceneId: currentSceneId ?? undefined,
         createdAt: now,
         updatedAt: now,
       };
@@ -1507,6 +1576,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     isStreaming,
     createSession,
     endSession,
+    deleteSession,
     endActiveSession,
     softPauseActiveSession,
     resumeActiveSession,

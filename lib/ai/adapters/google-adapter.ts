@@ -12,14 +12,9 @@ let proxyAgentCache: unknown;
  * Uses undici ProxyAgent for connection pooling.
  */
 export async function createProxyFetch(proxyUrl: string): Promise<typeof fetch> {
-  const { ProxyAgent, fetch: undiciFetch } = (await import(
-    /* webpackIgnore: true */ 'undici'
-  )) as {
+  const { ProxyAgent, fetch: undiciFetch } = (await import(/* webpackIgnore: true */ 'undici')) as {
     ProxyAgent: new (proxyUrl: string) => unknown;
-    fetch: (
-      input: string | URL | Request,
-      init?: Record<string, unknown>,
-    ) => Promise<unknown>;
+    fetch: (input: string | URL | Request, init?: Record<string, unknown>) => Promise<unknown>;
   };
 
   const agent = new ProxyAgent(proxyUrl);

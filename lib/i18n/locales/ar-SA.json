@@ -3,7 +3,8 @@
     "you": "أنت",
     "confirm": "تأكيد",
     "cancel": "إلغاء",
-    "loading": "جارٍ التحميل..."
+    "loading": "جارٍ التحميل...",
+    "send": "إرسال"
   },
   "home": {
     "slogan": "التعلّم التوليدي في فصل تفاعلي متعدد الوكلاء",
@@ -70,6 +71,7 @@
     "unknown": "غير معروف",
     "stopDiscussion": "إيقاف النقاش",
     "endQA": "إنهاء الأسئلة والأجوبة",
+    "deleteSession": "حذف الجلسة",
     "tabs": {
       "lecture": "الملاحظات",
       "chat": "المحادثة"
@@ -78,7 +80,8 @@
       "empty": "ستظهر الملاحظات هنا بعد تشغيل المحاضرة",
       "emptyHint": "اضغط تشغيل لبدء المحاضرة",
       "pageLabel": "الصفحة {{n}}",
-      "currentPage": "الحالية"
+      "currentPage": "الحالية",
+      "noScene": "غير مرتبط بالشريحة"
     },
     "badge": {
       "qa": "أسئلة",
@@ -144,7 +147,9 @@
     "generatingNextPage": "جارٍ توليد المشهد، يرجى الانتظار...",
     "courseComplete": "اكتملت الدورة",
     "fullscreen": "ملء الشاشة",
-    "exitFullscreen": "الخروج من ملء الشاشة"
+    "exitFullscreen": "الخروج من ملء الشاشة",
+    "speakingToTeacher": "السؤال للمعلم...",
+    "quickQuestions": "أسئلة سريعة"
   },
   "classroomComplete": {
     "title": "اكتملت الدورة",
@@ -205,7 +210,9 @@
     "aiGrading": "الذكاء الاصطناعي يصحح...",
     "aiGradingWait": "يرجى الانتظار، جارٍ تحليل إجاباتك",
     "quizReport": "تقرير الاختبار",
-    "retry": "إعادة المحاولة"
+    "retry": "إعادة المحاولة",
+    "knowledgePoints": "النقاط المعرفية الأساسية",
+    "knowledgePointsHint": "راجع هذه المفاهيم لتعزيز فهمك"
   },
   "roundtable": {
     "teacher": "المعلم",
@@ -226,7 +233,9 @@
     "voiceInputDisabled": "الإدخال الصوتي معطّل",
     "textInput": "إدخال نصي",
     "stopRecording": "إيقاف التسجيل",
-    "startRecording": "بدء التسجيل"
+    "startRecording": "بدء التسجيل",
+    "askTeacher": "اسأل المعلم",
+    "ask": "اسأل"
   },
   "pbl": {
     "legacyFormat": "يستخدم مشهد التعلم القائم على المشاريع هذا تنسيقًا قديمًا. يرجى إعادة توليد المقرر.",
@@ -1054,5 +1063,50 @@
     "title": "أدخل رمز الوصول",
     "placeholder": "رمز الوصول",
     "error": "رمز الوصول غير صالح. يرجى المحاولة مرة أخرى."
+  },
+  "account": {
+    "title": "مركز الحساب",
+    "profileSection": "الملف الشخصي",
+    "accountSection": "معلومات الحساب",
+    "securitySection": "الأمان",
+    "planSection": "الخطة والفوترة",
+    "personalizationSection": "التخصيص",
+    "nickname": "اللقب",
+    "nicknamePlaceholder": "أدخل لقبك",
+    "bio": "نبذة",
+    "bioPlaceholder": "أخبرنا عن نفسك",
+    "email": "البريد الإلكتروني",
+    "username": "اسم المستخدم",
+    "role": "الدور",
+    "status": "الحالة",
+    "planType": "الخطة",
+    "userId": "معرف المستخدم",
+    "roleGuest": "ضيف",
+    "roleUser": "مستخدم",
+    "roleAdmin": "مدير",
+    "statusActive": "نشط",
+    "statusSuspended": "معلق",
+    "planFree": "مجاني",
+    "planBasic": "أساسي",
+    "planPro": "احترافي",
+    "planEnterprise": "مؤسسي",
+    "changePassword": "تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "passwordTooShort": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+    "passwordChanged": "تم تغيير كلمة المرور بنجاح",
+    "saveSuccess": "تم الحفظ بنجاح",
+    "backToHome": "العودة إلى الصفحة الرئيسية",
+    "unauthorized": "يرجى تسجيل الدخول للوصول إلى هذه الصفحة"
+  },
+  "speech": {
+    "speaking": "...يتكلم",
+    "role": {
+      "teacher": "معلم",
+      "student": "طالب",
+      "user": "أنا"
+    }
   }
 }

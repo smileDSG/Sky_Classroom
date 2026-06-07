@@ -3,14 +3,46 @@
  *
  * Constructs the system prompt for the director agent that decides
  * which agent should respond next in a multi-agent conversation.
+ *
+ * Routing rules are loaded from lib/prompts/core/director-base.md
+ * (new modular template system).
  */
 
+import fs from 'fs';
+import path from 'path';
 import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import { createLogger } from '@/lib/logger';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
 import type { WhiteboardActionRecord, AgentTurnSummary } from './types';
 
 const log = createLogger('DirectorPrompt');
+const promptsDir = path.join(process.cwd(), 'lib', 'prompts');
+
+/**
+ * Load the director base template from the new modular location.
+ * Falls back to the legacy template during transition.
+ */
+function loadDirectorBase(): string {
+  const newPath = path.join(promptsDir, 'core', 'director-base.md');
+  try {
+    return fs.readFileSync(newPath, 'utf-8').trim();
+  } catch {
+    // Fall back to legacy template
+    log.warn('New director-base.md not found, using legacy template');
+    const legacy = buildPrompt(PROMPT_IDS.DIRECTOR, {
+      agentList: '{{agentList}}',
+      respondedList: '{{respondedList}}',
+      conversationSummary: '{{conversationSummary}}',
+      discussionSection: '{{discussionSection}}',
+      whiteboardSection: '{{whiteboardSection}}',
+      studentProfileSection: '{{studentProfileSection}}',
+      rule1: '{{rule1}}',
+      turnCountPlusOne: '{{turnCountPlusOne}}',
+      whiteboardOpenText: '{{whiteboardOpenText}}',
+    });
+    return legacy?.system || '';
+  }
+}
 
 /**
  * Build the system prompt for the director agent
@@ -51,11 +83,11 @@ export function buildDirectorPrompt(
   const discussionSection = isDiscussion
     ? `\n# Discussion Mode
 Topic: "${discussionContext!.topic}"${discussionContext!.prompt ? `\nPrompt: "${discussionContext!.prompt}"` : ''}${triggerAgentId ? `\nInitiator: "${triggerAgentId}"` : ''}
-This is a student-initiated discussion, not a Q&A session.\n`
+This is a student-initiated discussion. After the initiator speaks, a student agent should respond first with their perspective, then the teacher guides, and other students add diverse viewpoints. Encourage active student participation throughout.\n`
     : '';
 
   const rule1 = isDiscussion
-    ? `1. The discussion initiator${triggerAgentId ? ` ("${triggerAgentId}")` : ''} should speak first to kick off the topic. Then the teacher responds to guide the discussion. After that, other students may add their perspectives.`
+    ? `1. The discussion initiator${triggerAgentId ? ` ("${triggerAgentId}")` : ''} should speak first to kick off the topic. Then a student agent shares their perspective. The teacher guides, and other students add their viewpoints.`
     : "1. The teacher (role: teacher, highest priority) should usually speak first to address the user's question or topic.";
 
   const studentProfileSection =
@@ -81,11 +113,29 @@ ${userProfile.bio ? `Background: ${userProfile.bio}` : ''}
       : 'CLOSED (slide canvas is visible)',
   };
 
-  const prompt = buildPrompt(PROMPT_IDS.DIRECTOR, vars);
-  if (!prompt) {
-    throw new Error('director prompt template failed to load');
+  // Try new modular template first, fall back to legacy
+  let systemPrompt: string;
+  try {
+    const template = loadDirectorBase();
+    if (template && template !== '') {
+      systemPrompt = template;
+    } else {
+      throw new Error('empty template');
+    }
+  } catch {
+    const prompt = buildPrompt(PROMPT_IDS.DIRECTOR, vars);
+    if (!prompt) {
+      throw new Error('director prompt template failed to load');
+    }
+    systemPrompt = prompt.system;
   }
-  return prompt.system;
+
+  // Interpolate variables into the template
+  return systemPrompt.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    const value = vars[key as keyof typeof vars];
+    if (value === undefined) return match;
+    return String(value);
+  });
 }
 
 /**

@@ -1,7 +1,10 @@
 # ---- Stage 1: Base ----
-FROM node:22-alpine AS base
+FROM node:22-slim AS base
 
-RUN apk add --no-cache libc6-compat
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN corepack enable && corepack prepare pnpm@10.28.0 --activate
 
 WORKDIR /app
@@ -10,7 +13,10 @@ WORKDIR /app
 FROM base AS deps
 
 # Native build tools for sharp, @napi-rs/canvas
-RUN apk add --no-cache python3 build-base g++ cairo-dev pango-dev jpeg-dev giflib-dev librsvg-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 build-essential g++ \
+    libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/ ./packages/
@@ -27,7 +33,7 @@ COPY . .
 RUN pnpm build
 
 # ---- Stage 4: Runner ----
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
 
 WORKDIR /app
 
@@ -35,10 +41,17 @@ ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
-RUN apk add --no-cache libc6-compat cairo pango jpeg giflib librsvg
+# Install runtime deps + LibreOffice (required for PPTX→PNG)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libreoffice \
+    libcairo2 libpango-1.0-0 libjpeg62-turbo libgif7 librsvg2-2 \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+# Verify LO is available
+RUN soffice --version || echo "LibreOffice install check skipped"
+
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

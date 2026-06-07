@@ -59,7 +59,12 @@ export class NotFoundError extends ApiError {
  */
 export class RateLimitError extends ApiError {
   constructor(retryAfter?: number) {
-    super('RATE_LIMITED', 429, 'Rate limit exceeded', retryAfter ? `Retry after ${retryAfter}s` : undefined);
+    super(
+      'RATE_LIMITED',
+      429,
+      'Rate limit exceeded',
+      retryAfter ? `Retry after ${retryAfter}s` : undefined,
+    );
     this.name = 'RateLimitError';
   }
 }

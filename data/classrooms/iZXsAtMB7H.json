@@ -1,0 +1,640 @@
+{
+  "id": "iZXsAtMB7H",
+  "stage": {
+    "id": "iZXsAtMB7H",
+    "name": "Python 简介",
+    "languageDirective": "教学语言为中文，使用简体中文讲解 Python 编程概念，代码中的关键字、函数名、变量名等保持英文，专业术语在首次出现时给出中英文对照。",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1780751267011,
+    "updatedAt": 1780751267011,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_TVF4n1llD8",
+      "stageId": "iZXsAtMB7H",
+      "type": "slide",
+      "title": "Python 简介",
+      "order": 1,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "EIjRvsdhnO16pMf4w-AwT",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "shape_sFtNciwJ",
+              "type": "shape",
+              "left": 50,
+              "top": 60,
+              "width": 8,
+              "height": 70,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#5b9bd5",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_LzHnyy-x",
+              "type": "text",
+              "left": 70,
+              "top": 60,
+              "width": 870,
+              "height": 70,
+              "content": "<p style=\"font-size:32px;\"><strong>Python 简介</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "shape_QXrRFKF9",
+              "type": "shape",
+              "left": 60,
+              "top": 155,
+              "width": 880,
+              "height": 182,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#f8f9fa",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_LGXQsS0R",
+              "type": "text",
+              "left": 80,
+              "top": 165,
+              "width": 840,
+              "height": 142,
+              "content": "<p style=\"font-size:20px;\"><strong>• Python 是一种解释型、高级、通用编程语言</strong></p><p style=\"font-size:20px;\"><strong>• 由 Guido van Rossum 于 1991 年发布</strong></p><p style=\"font-size:20px;\"><strong>• 强调代码可读性，使用简洁的语法</strong></p><p style=\"font-size:20px;\"><strong>• 设计哲学“优雅、明确、简单”</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action_K8d24Fgg",
+          "type": "speech",
+          "text": "大家好！欢迎来到 Python 编程课堂。我是星野老师，今天开始我们将一起学习 Python，这门语言优雅而简单，是很多程序员的心头好。"
+        },
+        {
+          "id": "action_qCxuuY0O",
+          "type": "spotlight",
+          "elementId": "text_LzHnyy-x"
+        },
+        {
+          "id": "action_WKsmzKJ7",
+          "type": "speech",
+          "text": "首先，我们来看一下 Python 的简介。"
+        },
+        {
+          "id": "action_GBqKeYrs",
+          "type": "spotlight",
+          "elementId": "text_LGXQsS0R"
+        },
+        {
+          "id": "action_I6PppZEE",
+          "type": "speech",
+          "text": "正如幻灯片所示，Python 是一种解释型（interpreted）、高级（high-level）、通用（general-purpose）的编程语言。这里的“解释型”意思是代码直接由解释器运行，不需要预先编译成机器码，这让开发过程非常灵活。“高级”意味着它隐藏了内存管理等底层细节，让程序员可以专注于解决问题。而“通用”则说明 Python 几乎能做任何事——从网站开发到数据分析，甚至人工智能。"
+        },
+        {
+          "id": "action_e4H-dZlO",
+          "type": "speech",
+          "text": "它是由 Guido van Rossum 在 1991 年发布的。Guido 的设计初衷是让编程变得有趣且容易理解，所以他给语言取名为 Python，灵感来自他喜欢的喜剧团体 Monty Python。"
+        },
+        {
+          "id": "action_5u4HoSNM",
+          "type": "speech",
+          "text": "Python 的设计哲学强调代码的可读性（readability）和简洁的语法，核心原则是“优雅、明确、简单”。比如，它用缩进（indentation）来组织代码块，而不是花括号，这让代码看起来整洁如诗。"
+        },
+        {
+          "id": "action_rCHQmxD5",
+          "type": "speech",
+          "text": "这种设计让 Python 成为理想的入门语言，也使得团队协作更高效。很多教育机构和企业都选择 Python 作为首选的编程工具。"
+        },
+        {
+          "id": "action_aUugBY5A",
+          "type": "speech",
+          "text": "那么，在接下来的课程中，我们将一步步深入，从基础语法到实际项目，感受 Python 的魅力。大家准备好了吗？让我们出发吧！"
+        }
+      ],
+      "createdAt": 1780752374368,
+      "updatedAt": 1780752374368
+    },
+    {
+      "id": "scene_27iTap0cNM",
+      "stageId": "iZXsAtMB7H",
+      "type": "slide",
+      "title": "为什么选择 Python？",
+      "order": 2,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "-DlK7Fzc2xcO783msfj_E",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_Op_aP-fo",
+              "type": "text",
+              "left": 60,
+              "top": 60,
+              "width": 880,
+              "height": 70,
+              "content": "<p style=\"font-size:32px;\"><strong>为什么选择 Python？</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "text_h4-Aay1p",
+              "type": "text",
+              "left": 60,
+              "top": 170,
+              "width": 880,
+              "height": 172,
+              "content": "<p style=\"font-size:20px;\">Python 是当前最流行的编程语言之一，其优势包括：</p><p style=\"font-size:20px;\">• 语法简单，适合初学者快速上手</p><p style=\"font-size:20px;\">• 拥有庞大的标准库和丰富的第三方库</p><p style=\"font-size:20px;\">• 应用领域广泛：Web 开发、数据科学、人工智能、自动化运维等</p><p style=\"font-size:20px;\">• 跨平台，开源免费</p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action_5aLyDRK8",
+          "type": "spotlight",
+          "elementId": "text_Op_aP-fo"
+        },
+        {
+          "id": "action_9QHhHbYn",
+          "type": "speech",
+          "text": "各位同学好呀，欢迎来到 Python 编程的世界！我是星野老师，今天这堂课，我们就从最根本的问题开始——为什么要学 Python 呢？"
+        },
+        {
+          "id": "action_uP8itfYx",
+          "type": "spotlight",
+          "elementId": "text_h4-Aay1p"
+        },
+        {
+          "id": "action_EdXhP4_Z",
+          "type": "speech",
+          "text": "Python 是现在最流行的编程语言之一。你看，它的语法非常简洁，像读自然语言一样，特别适合初学者快速上手。而且，它有一个庞大的标准库，还有数不清的第三方库，能让你轻松实现各种功能。"
+        },
+        {
+          "id": "action_yrfQ9T_k",
+          "type": "laser",
+          "elementId": "text_h4-Aay1p"
+        },
+        {
+          "id": "action_GDGfDf8g",
+          "type": "speech",
+          "text": "它的应用领域也非常广，像 Web 开发、数据科学、人工智能，甚至自动化运维，Python 都能大显身手。最棒的是，它跨平台、开源免费，无论你用的是 Windows、Mac 还是 Linux，都毫无障碍。"
+        },
+        {
+          "id": "action_7ReWue0l",
+          "type": "spotlight",
+          "elementId": "text_Op_aP-fo"
+        },
+        {
+          "id": "action_t4wNKljc",
+          "type": "speech",
+          "text": "所以，选择 Python，不只是学一门语言，更是打开一扇通往无数可能的大门。接下来，就让我们一起走进这个精彩的编程世界吧！"
+        }
+      ],
+      "createdAt": 1780752374369,
+      "updatedAt": 1780752374369
+    },
+    {
+      "id": "scene_UIvF51gjgP",
+      "stageId": "iZXsAtMB7H",
+      "type": "slide",
+      "title": "Python 基本语法预览",
+      "order": 4,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "R14JEFrgcRWdz_CUR5n0G",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_V4aWj0Ia",
+              "type": "text",
+              "left": 60,
+              "top": 60,
+              "width": 880,
+              "height": 76,
+              "content": "<p style=\"font-size:36px;\"><strong>Python 基本语法预览</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "text_jzVZu2ru",
+              "type": "text",
+              "left": 60,
+              "top": 176,
+              "width": 880,
+              "height": 238,
+              "content": "<p style=\"font-size:18px;\"><strong>变量声明</strong></p><p style=\"font-size:16px;\">变量无需类型声明，直接赋值，如 name = 'Alice'</p><p style=\"font-size:18px;\"><strong>常用数据类型</strong></p><p style=\"font-size:16px;\">数字 (int/float)、字符串 (str)、布尔值 (bool)</p><p style=\"font-size:18px;\"><strong>注释</strong></p><p style=\"font-size:16px;\">单行注释使用 #，多行注释使用三个引号</p><p style=\"font-size:18px;\"><strong>代码块</strong></p><p style=\"font-size:16px;\">通过缩进区分代码块，不使用大括号</p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action_8UweSg-9",
+          "type": "spotlight",
+          "elementId": "text_V4aWj0Ia"
+        },
+        {
+          "id": "action_ex2xGy-G",
+          "type": "speech",
+          "text": "我们来看一下 Python 的基本语法预览。"
+        },
+        {
+          "id": "action_X61ZnI5L",
+          "type": "spotlight",
+          "elementId": "text_jzVZu2ru"
+        },
+        {
+          "id": "action_RewDXTXj",
+          "type": "speech",
+          "text": "首先，变量。Python 的变量不需要声明类型，直接赋值即可，比如 name = 'Alice'。Python 会根据值自动判断类型。"
+        },
+        {
+          "id": "action_GOIfKP02",
+          "type": "laser",
+          "elementId": "text_jzVZu2ru"
+        },
+        {
+          "id": "action_nySmtYPW",
+          "type": "speech",
+          "text": "常用的数据类型包括数字，也就是 int 和 float，还有字符串 str，以及布尔值 bool。"
+        },
+        {
+          "id": "action_wtbThZT5",
+          "type": "laser",
+          "elementId": "text_jzVZu2ru"
+        },
+        {
+          "id": "action_BZmOKocN",
+          "type": "speech",
+          "text": "注释方面，单行注释用井号，多行注释用三个引号括起来。"
+        },
+        {
+          "id": "action_RH_19Dqv",
+          "type": "laser",
+          "elementId": "text_jzVZu2ru"
+        },
+        {
+          "id": "action_vBWNfpBr",
+          "type": "speech",
+          "text": "另外，代码块是通过缩进来区分的，不需要使用花括号。缩进的空格数必须保持一致。"
+        },
+        {
+          "id": "action_j8-cOYYd",
+          "type": "speech",
+          "text": "这就是 Python 语法的几个基础要点，接下来我们会详细展开每个部分。"
+        }
+      ],
+      "createdAt": 1780752374369,
+      "updatedAt": 1780752374369
+    },
+    {
+      "id": "scene_nV2vmShi8U",
+      "stageId": "iZXsAtMB7H",
+      "type": "quiz",
+      "title": "小测验：检查你的理解",
+      "order": 5,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "Python 这门编程语言是由谁创建的？",
+            "options": [
+              {
+                "value": "A",
+                "label": "Guido van Rossum"
+              },
+              {
+                "value": "B",
+                "label": "Dennis Ritchie"
+              },
+              {
+                "value": "C",
+                "label": "James Gosling"
+              },
+              {
+                "value": "D",
+                "label": "Bjarne Stroustrup"
+              }
+            ],
+            "answer": [
+              "A"
+            ],
+            "analysis": "Python 是由荷兰程序员 Guido van Rossum 在1989年圣诞节期间开始设计的，因此正确答案是 A。Dennis Ritchie 是 C 语言的创始人，James Gosling 是 Java 语言的主要设计者，Bjarne Stroustrup 是 C++ 的创始人。",
+            "points": 5,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "single",
+            "question": "下列关于 Python 语言特点的描述，哪一项是正确的？",
+            "options": [
+              {
+                "value": "A",
+                "label": "Python 是一种编译型语言"
+              },
+              {
+                "value": "B",
+                "label": "Python 的变量在使用前必须声明类型"
+              },
+              {
+                "value": "C",
+                "label": "Python 是一种解释型语言"
+              },
+              {
+                "value": "D",
+                "label": "Python 代码执行速度通常比 C 语言快"
+              }
+            ],
+            "answer": [
+              "C"
+            ],
+            "analysis": "Python 是一种解释型语言，代码在运行时由解释器逐行翻译执行，因此不需要事先编译。而选项 A 错误因为 Python 不是编译型；选项 B 错误因为 Python 是动态类型语言，变量无需声明类型；选项 D 错误因为 Python 的执行速度通常比 C 这样的编译型语言慢。",
+            "points": 5,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "short_answer",
+            "question": "请简要说明 Python 中 print() 函数的作用，并写一个例子演示如何用 print() 同时输出一个字符串和一个变量的值。",
+            "commentPrompt": "评分标准：(1) 准确描述 print() 函数的作用（用于将信息输出到控制台/标准输出）– 40%；(2) 给出正确的示例，包含字符串和变量的输出 – 40%；(3) 表达清晰，无拼写或语法错误 – 20%。",
+            "analysis": "print() 是 Python 的内置函数，主要用于将括号中的内容输出到控制台（标准输出），方便程序员查看程序运行结果或调试。示例：name = \"小明\"; print(\"你好，\", name) 会输出 “你好， 小明”。也可以使用字符串格式化的方法，如 print(f\"你好，{name}\")。只要示例能体现字符串和变量同时输出且语法正确即可。",
+            "points": 10,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "Python 由 Guido van Rossum 于1989年创建。",
+          "Python 是一种解释型、动态类型的高级编程语言。",
+          "print() 函数用于将信息输出到控制台。",
+          "Python 变量无需声明类型，可以直接赋值使用，命名需遵守标识符规则。",
+          "Python 代码逐行解释执行，开发效率高，但运行速度通常比编译型语言慢。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_fYMjRLUu",
+          "type": "speech",
+          "text": "同学们，刚才我们一起学习了 Python 的基础知识，包括它的起源、语言特点，还有 print 函数的用法。现在来做个小测验，检查一下掌握得怎么样吧。"
+        },
+        {
+          "id": "action_kimleSIk",
+          "type": "speech",
+          "text": "这里有三道题，前两题是选择题，第三题是简答题。请认真思考，独立完成哦。答完之后，我会马上给大家讲解，别紧张，就当是玩个小游戏。"
+        },
+        {
+          "id": "action_-GW1Lz4S",
+          "type": "speech",
+          "text": "好的，看来大家都完成啦。第一题，Python 的创建者是 Guido van Rossum，他让编程变得优雅又简单。第二题，Python 是一门解释型语言，代码一行一行地执行，这就是为什么我们能立刻看到结果。第三题，print() 函数就像一个小喇叭，帮我们把信息输出到屏幕上，比如 name = '小明'; print('你好', name) 就能打印出 '你好 小明'。大家都答对了吗？"
+        },
+        {
+          "id": "action_HMogaKIo",
+          "type": "discussion",
+          "topic": "这些题目考察了哪些 Python 基础知识？你觉得自己在哪些方面还需要加强？",
+          "prompt": "回顾一下你的答案，如果有错误，想想原因是什么。可以和大家分享一下你的思考过程吗？",
+          "agentId": "default-4"
+        }
+      ],
+      "createdAt": 1780752374370,
+      "updatedAt": 1780752374370
+    },
+    {
+      "id": "scene_arnSfRY1L5",
+      "stageId": "iZXsAtMB7H",
+      "type": "slide",
+      "title": "总结与下一步",
+      "order": 6,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "w7xaVxJnpPKym7D1CF42b",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_0N8rI8Cc",
+              "type": "text",
+              "left": 60,
+              "top": 60,
+              "width": 880,
+              "height": 76,
+              "content": "<p style=\"font-size: 32px;\"><strong>总结与下一步</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "text_Jt52BE8W",
+              "type": "text",
+              "left": 60,
+              "top": 171,
+              "width": 880,
+              "height": 262,
+              "content": "<p style=\"font-size: 20px;\"><strong>Python 的特点</strong></p><p style=\"font-size: 16px;\">Python 是一种简单、强大且广泛应用的编程语言，语法清晰易读。</p><p style=\"font-size: 20px;\"><strong>你已经学会的</strong></p><p style=\"font-size: 16px;\">体验了 <strong>print()</strong> 函数，掌握了基本语法，能够输出信息。</p><p style=\"font-size: 20px;\"><strong>下一步学习建议</strong></p><p style=\"font-size: 16px;\">建议学习条件判断、循环结构和函数定义，构建程序逻辑。</p><p style=\"font-size: 20px;\"><strong>推荐资源</strong></p><p style=\"font-size: 16px;\">Python 官方文档、LeetCode 等在线练习平台、经典的入门教程。</p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action_wlUzD4Y9",
+          "type": "spotlight",
+          "elementId": "text_0N8rI8Cc"
+        },
+        {
+          "id": "action_YHhrbnib",
+          "type": "speech",
+          "text": "同学们，让我们一起来回顾一下今天这节课的学习内容吧。"
+        },
+        {
+          "id": "action_O-lGF1sk",
+          "type": "spotlight",
+          "elementId": "text_Jt52BE8W"
+        },
+        {
+          "id": "action_BQP25Ul2",
+          "type": "speech",
+          "text": "Python 是一门简单、强大且应用广泛的编程语言，它的语法清晰易读，非常适合初学者。"
+        },
+        {
+          "id": "action_xH4Z5lMG",
+          "type": "laser",
+          "elementId": "text_Jt52BE8W"
+        },
+        {
+          "id": "action_D7g_WXnR",
+          "type": "speech",
+          "text": "在今天的课程中，我们已经体验了 print 函数和基本的语法，迈出了编程的第一步。"
+        },
+        {
+          "id": "action_J-gLrD0g",
+          "type": "speech",
+          "text": "接下来，我建议大家继续深入学习条件判断、循环和函数，这些都是构建程序的基石。"
+        },
+        {
+          "id": "action_mJBlPC0-",
+          "type": "speech",
+          "text": "另外，可以参考 Python 的官方文档和一些在线练习平台，多多动手实践，才能越来越熟练哦。"
+        },
+        {
+          "id": "action_O2wzaWSp",
+          "type": "speech",
+          "text": "如果大家有任何问题，随时都可以来问老师或者芽衣助教。这节课就到这里，我们下次再见！"
+        }
+      ],
+      "createdAt": 1780752374370,
+      "updatedAt": 1780752374370
+    }
+  ],
+  "createdAt": "2026-06-06T13:26:14.372Z"
+}

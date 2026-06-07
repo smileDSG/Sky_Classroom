@@ -143,20 +143,27 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
           };
 
           recognition.onerror = (event: { error: string }) => {
-            log.error('Speech recognition error:', event.error);
-            let errorMessage = '语音识别失败';
+            // 'aborted' is non-fatal — caused by our own cancel/stop logic or rapid toggle
+            if (event.error === 'aborted') {
+              busyRef.current = false;
+              setIsRecording(false);
+              setRecordingTime(0);
+              if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+              }
+              return;
+            }
 
+            // 'network' is a transient browser ASR issue — log as warning, not error
+            if (event.error === 'network') {
+              log.warn('Speech recognition network error (browser ASR, transient)');
+            } else {
+              log.error('Speech recognition error:', event.error);
+            }
+
+            let errorMessage = '语音识别失败';
             switch (event.error) {
-              case 'aborted':
-                // Non-fatal: caused by our own cancel/stop logic or rapid toggle
-                busyRef.current = false;
-                setIsRecording(false);
-                setRecordingTime(0);
-                if (timerRef.current) {
-                  clearInterval(timerRef.current);
-                  timerRef.current = null;
-                }
-                return;
               case 'no-speech':
                 errorMessage = '未检测到语音输入';
                 break;
@@ -167,7 +174,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
                 errorMessage = '麦克风权限被拒绝';
                 break;
               case 'network':
-                errorMessage = '网络错误';
+                errorMessage = '网络错误，语音识别需要网络连接';
                 break;
               default:
                 errorMessage = `语音识别错误: ${event.error}`;

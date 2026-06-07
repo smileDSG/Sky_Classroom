@@ -20,6 +20,14 @@ vi.mock('@/lib/server/resolve-model', () => ({
   resolveModelFromRequest: mocks.resolveModelFromRequest,
 }));
 
+vi.mock('@/lib/server/provider-config', () => ({
+  resolveWebSearchApiKey: (_providerId?: string, clientKey?: string) =>
+    clientKey ?? process.env.BOCHA_API_KEY ?? process.env.BRAVE_API_KEY ?? process.env.BAIDU_API_KEY ?? process.env.TAVILY_API_KEY ?? '',
+  resolveWebSearchBaseUrl: (_providerId?: string, clientBaseUrl?: string) =>
+    clientBaseUrl ?? process.env.BOCHA_BASE_URL ?? undefined,
+  getServerProviders: () => ({}) as Record<string, { models?: string[]; baseUrl?: string }>,
+}));
+
 vi.mock('@/lib/ai/llm', () => ({
   callLLM: vi.fn(),
 }));

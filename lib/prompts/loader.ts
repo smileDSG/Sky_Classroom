@@ -6,6 +6,8 @@
  * - Snippet inclusion via {{snippet:name}} syntax
  * - Conditional blocks via {{#if condition}}...{{/if}} syntax
  * - Variable interpolation via {{variable}} syntax
+ * - Optional in-memory caching with TTL + watcher-based invalidation
+ * - File watching for hot-reload (no restart needed)
  */
 
 import fs from 'fs';
@@ -13,6 +15,86 @@ import path from 'path';
 import type { PromptId, LoadedPrompt, SnippetId } from './types';
 import { createLogger } from '@/lib/logger';
 const log = createLogger('PromptLoader');
+
+// ==================== Cache Layer ====================
+
+interface CacheEntry<T> {
+  data: T;
+  loadedAt: number;
+}
+
+const cache = new Map<string, CacheEntry<LoadedPrompt>>();
+const snippetCache = new Map<string, CacheEntry<string>>();
+let cacheTTL = 0; // 0 = disabled by default (backward-compatible: read every time)
+let watchers: fs.FSWatcher[] = [];
+
+/**
+ * Enable in-memory caching with optional TTL.
+ * When TTL is 0, cache is disabled (default — disk read every call).
+ * When TTL > 0, entries are reused for that many ms before re-reading.
+ */
+export function enableCache(ttlMs: number = 60_000): void {
+  cacheTTL = ttlMs;
+  log.info(`Cache enabled with TTL=${ttlMs}ms`);
+}
+
+/** Disable caching and clear all cached entries. */
+export function disableCache(): void {
+  cacheTTL = 0;
+  cache.clear();
+  snippetCache.clear();
+  log.info('Cache disabled');
+}
+
+/** Clear all cached prompt and snippet entries. */
+export function clearCache(): void {
+  cache.clear();
+  snippetCache.clear();
+  log.info('Cache cleared');
+}
+
+/** Return cache statistics for monitoring. */
+export function getCacheStats(): { prompts: number; snippets: number; ttl: number } {
+  return { prompts: cache.size, snippets: snippetCache.size, ttl: cacheTTL };
+}
+
+// ==================== File Watching ====================
+
+/**
+ * Start watching the templates and snippets directories for changes.
+ * When a file is modified, the corresponding cache entry is invalidated.
+ */
+export function startFileWatcher(): void {
+  stopFileWatcher();
+  const promptsDir = getPromptsDir();
+
+  const dirs = ['templates', 'snippets'];
+  for (const dir of dirs) {
+    const fullPath = path.join(promptsDir, dir);
+    try {
+      const watcher = fs.watch(fullPath, { recursive: true }, (_event, filename) => {
+        if (!filename || !filename.endsWith('.md')) return;
+        log.info(`[hot-reload] Detected change: ${dir}/${filename}`);
+        // Invalidate all cache entries — granular invalidation would need
+        // mapping file paths to prompt IDs, which isn't worth the complexity
+        // given that prompt files are small and load time is negligible.
+        clearCache();
+      });
+      watchers.push(watcher);
+      log.info(`[hot-reload] Watching ${fullPath} for changes`);
+    } catch {
+      // Directory may not exist yet
+    }
+  }
+}
+
+/** Stop all file watchers. */
+export function stopFileWatcher(): void {
+  for (const w of watchers) {
+    w.close();
+  }
+  watchers = [];
+}
 
 /**
  * Get the prompts directory path
@@ -23,13 +105,26 @@ function getPromptsDir(): string {
 }
 
 /**
- * Load a snippet by ID
+ * Load a snippet by ID.
+ * Results are cached when cacheTTL > 0; cleared by file watcher on changes.
  */
 export function loadSnippet(snippetId: SnippetId): string {
+  // Check cache
+  if (cacheTTL > 0) {
+    const entry = snippetCache.get(snippetId);
+    if (entry && Date.now() - entry.loadedAt < cacheTTL) {
+      return entry.data;
+    }
+  }
+
   const snippetPath = path.join(getPromptsDir(), 'snippets', `${snippetId}.md`);
 
   try {
-    return fs.readFileSync(snippetPath, 'utf-8').trim();
+    const content = fs.readFileSync(snippetPath, 'utf-8').trim();
+    if (cacheTTL > 0) {
+      snippetCache.set(snippetId, { data: content, loadedAt: Date.now() });
+    }
+    return content;
   } catch {
     // Fail loud rather than silently shipping `{{snippet:foo}}` to the LLM.
     // A missing snippet is always a config/typo bug — surface at load time.
@@ -68,10 +163,46 @@ export function processConditionalBlocks(
 }
 
 /**
- * Load a prompt by ID
+ * Load a prompt by ID.
+ * Results are cached when cacheTTL > 0; cleared by file watcher on changes.
  */
 export function loadPrompt(promptId: PromptId): LoadedPrompt | null {
-  const promptDir = path.join(getPromptsDir(), 'templates', promptId);
+  // Check cache
+  if (cacheTTL > 0) {
+    const entry = cache.get(promptId);
+    if (entry && Date.now() - entry.loadedAt < cacheTTL) {
+      return entry.data;
+    }
+  }
+
+  const promptsDir = getPromptsDir();
+
+  // Phase 4: Support new generators/{id}.md single-file format
+  if (promptId.startsWith('generators/')) {
+    const filename = promptId.replace('generators/', '');
+    const genPath = path.join(promptsDir, 'generators', `${filename}.md`);
+    try {
+      let systemPrompt = fs.readFileSync(genPath, 'utf-8').trim();
+      systemPrompt = processSnippets(systemPrompt);
+
+      const result: LoadedPrompt = {
+        id: promptId,
+        systemPrompt,
+        userPromptTemplate: '',
+      };
+
+      if (cacheTTL > 0) {
+        cache.set(promptId, { data: result, loadedAt: Date.now() });
+      }
+      return result;
+    } catch (error) {
+      log.error(`Failed to load generator ${promptId}:`, error);
+      return null;
+    }
+  }
+
+  // Legacy: templates/{promptId}/system.md + user.md
+  const promptDir = path.join(promptsDir, 'templates', promptId);
 
   try {
     // Load system.md
@@ -89,11 +220,17 @@ export function loadPrompt(promptId: PromptId): LoadedPrompt | null {
       // user.md is optional
     }
 
-    return {
+    const result: LoadedPrompt = {
       id: promptId,
       systemPrompt,
       userPromptTemplate,
     };
+
+    if (cacheTTL > 0) {
+      cache.set(promptId, { data: result, loadedAt: Date.now() });
+    }
+
+    return result;
   } catch (error) {
     log.error(`Failed to load prompt ${promptId}:`, error);
     return null;
