@@ -5,7 +5,6 @@
  * Supports multiple sheets; each sheet is treated as an independent dataset.
  */
 
-import * as XLSX from 'xlsx';
 import type { QuestionBankInsert } from '@/lib/question-bank/types';
 import type { ImportOptions, ImportPipelineResult, Importer, ImportRowError } from './types';
 import { detectFieldMapping, applyFieldMapping } from './field-mapper';
@@ -22,7 +21,8 @@ export function createXlsxImporter(): Importer<Buffer | ArrayBuffer> {
     ],
 
     async parse(source, options): Promise<ImportPipelineResult> {
-      let workbook: XLSX.WorkBook;
+      const XLSX = await import('xlsx');
+      let workbook: import('xlsx').WorkBook;
 
       try {
         const buffer = source instanceof ArrayBuffer ? Buffer.from(source) : source;
@@ -57,7 +57,12 @@ export function createXlsxImporter(): Importer<Buffer | ArrayBuffer> {
 
         // If sheet name looks like a subject, use it as default
         const sheetDefaults: Partial<QuestionBankInsert> = {};
-        if (sheetName && !['sheet1', 'sheet2', 'sheet3', '工作表1', '工作表2', '工作表3'].includes(sheetName.toLowerCase())) {
+        if (
+          sheetName &&
+          !['sheet1', 'sheet2', 'sheet3', '工作表1', '工作表2', '工作表3'].includes(
+            sheetName.toLowerCase(),
+          )
+        ) {
           sheetDefaults.subject = sheetName;
         }
 

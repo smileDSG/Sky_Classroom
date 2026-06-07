@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : 'standalone',
   transpilePackages: ['mathml2omml', 'pptxgenjs'],
-  serverExternalPackages: [],
+  serverExternalPackages: ['better-sqlite3', '@napi-rs/canvas', 'mysql2'],
 
   // Image optimization: prefer AVIF/WebP for smaller payloads
   images: {

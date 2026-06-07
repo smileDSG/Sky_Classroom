@@ -3,7 +3,9 @@
 
 import Link from 'next/link';
 import type { MistakeRecord } from '@/lib/mistakes/types';
+import { buildKnowledgeGraph, getMasterySummary } from '@/lib/mistakes/knowledge-graph';
 import { useAnimatedNumber } from '@/lib/hooks/use-animated-number';
+import { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Search, BookOpen, BarChart3, Sparkles, Clock } from 'lucide-react';
 
@@ -12,18 +14,18 @@ import { Search, BookOpen, BarChart3, Sparkles, Clock } from 'lucide-react';
 const causeLabels: Record<string, string> = {
   'concept-unclear': '概念不清',
   'calculation-error': '计算失误',
-  'misreading': '审题错误',
+  misreading: '审题错误',
   'method-wrong': '方法错误',
-  'careless': '粗心',
+  careless: '粗心',
   'format-error': '格式错误',
 };
 
 const causeColors: Record<string, string> = {
   'concept-unclear': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   'calculation-error': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  'misreading': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  misreading: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   'method-wrong': 'bg-red-500/20 text-red-400 border-red-500/30',
-  'careless': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  careless: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   'format-error': 'bg-gray-500/20 text-gray-400 border-gray-500/30',
 };
 
@@ -45,14 +47,34 @@ function formatRelativeTime(date: Date): string {
 
 // ── RingProgress SVG ────────────────────────────────────────────────
 
-function RingProgress({ percent, size = 48, color = '#8B5CF6' }: { percent: number; size?: number; color?: string }) {
+function RingProgress({
+  percent,
+  size = 48,
+  color = '#8B5CF6',
+}: {
+  percent: number;
+  size?: number;
+  color?: string;
+}) {
   const r = 18;
   const circumference = 2 * Math.PI * r;
   return (
     <svg width={size} height={size} className="shrink-0">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth={3} />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        className="stroke-slate-300 dark:stroke-slate-600"
+        strokeWidth={3}
+      />
       <motion.circle
-        cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={3}
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth={3}
         strokeDasharray={circumference}
         initial={{ strokeDashoffset: circumference }}
         animate={{ strokeDashoffset: circumference - (percent / 100) * circumference }}
@@ -69,7 +91,11 @@ function RingProgress({ percent, size = 48, color = '#8B5CF6' }: { percent: numb
 function isToday(date: Date): boolean {
   const d = new Date(date);
   const today = new Date();
-  return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+  return (
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate()
+  );
 }
 
 interface StatCardsProps {
@@ -80,7 +106,13 @@ export function StatCards({ mistakes }: StatCardsProps) {
   const todayCount = mistakes.filter((m) => isToday(m.solvedAt)).length;
   const toReviewCount = mistakes.filter((m) => !m.reviewed).length;
   const reviewedCount = mistakes.filter((m) => m.reviewed).length;
-  const masteryPercent = mistakes.length > 0 ? Math.round((reviewedCount / mistakes.length) * 100) : 0;
+  const masterySummary = useMemo(() => {
+    if (mistakes.length === 0)
+      return { overallMastery: 0, weakCount: 0, masteredCount: 0, totalCount: 0 };
+    const graph = buildKnowledgeGraph(mistakes);
+    return getMasterySummary(graph);
+  }, [mistakes]);
+  const masteryPercent = masterySummary.overallMastery;
 
   const animToday = useAnimatedNumber(todayCount, { duration: 1200 });
   const animReview = useAnimatedNumber(toReviewCount, { duration: 1200 });
@@ -127,13 +159,16 @@ export function StatCards({ mistakes }: StatCardsProps) {
           className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm transition-shadow hover:shadow-lg hover:shadow-violet-500/10 dark:hover:shadow-violet-500/10"
         >
           {/* Glow on hover */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none"
-            style={{ backgroundImage: `linear-gradient(135deg, ${card.color}15, transparent)` }} />
+          <div
+            className="absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none"
+            style={{ backgroundImage: `linear-gradient(135deg, ${card.color}15, transparent)` }}
+          />
 
           <div className="flex items-start justify-between">
             <div>
               <div className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-                {card.value}{card.suffix || ''}
+                {card.value}
+                {card.suffix || ''}
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{card.label}</div>
             </div>
@@ -171,10 +206,34 @@ export function StatCards({ mistakes }: StatCardsProps) {
 // ── QuickActions ────────────────────────────────────────────────────
 
 const actions = [
-  { icon: Search, label: '拍照搜题', href: '/sky/solve', color: 'text-violet-400', bg: 'bg-violet-500/10 hover:bg-violet-500/20' },
-  { icon: BookOpen, label: '幻灯片讲解', href: '/sky/slides', color: 'text-cyan-400', bg: 'bg-cyan-500/10 hover:bg-cyan-500/20' },
-  { icon: BarChart3, label: '学习数据', href: '/sky/learning', color: 'text-emerald-400', bg: 'bg-emerald-500/10 hover:bg-emerald-500/20' },
-  { icon: Sparkles, label: 'AI 助手', href: '/sky/assistant', color: 'text-amber-400', bg: 'bg-amber-500/10 hover:bg-amber-500/20' },
+  {
+    icon: Search,
+    label: '拍照搜题',
+    href: '/sky/solve',
+    color: 'text-violet-400',
+    bg: 'bg-violet-500/10 hover:bg-violet-500/20',
+  },
+  {
+    icon: BookOpen,
+    label: '幻灯片讲解',
+    href: '/sky/slides',
+    color: 'text-cyan-400',
+    bg: 'bg-cyan-500/10 hover:bg-cyan-500/20',
+  },
+  {
+    icon: BarChart3,
+    label: '学习数据',
+    href: '/sky/learning',
+    color: 'text-emerald-400',
+    bg: 'bg-emerald-500/10 hover:bg-emerald-500/20',
+  },
+  {
+    icon: Sparkles,
+    label: 'AI 助手',
+    href: '/sky/assistant',
+    color: 'text-amber-400',
+    bg: 'bg-amber-500/10 hover:bg-amber-500/20',
+  },
 ];
 
 export function QuickActions() {
@@ -192,7 +251,9 @@ export function QuickActions() {
             className={`flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700/50 px-4 py-3 ${action.bg} backdrop-blur-sm transition-all hover:scale-[1.03] hover:border-slate-300 dark:hover:border-slate-600/50`}
           >
             <action.icon className={`w-5 h-5 ${action.color}`} />
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{action.label}</span>
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              {action.label}
+            </span>
           </Link>
         </motion.div>
       ))}
@@ -207,9 +268,17 @@ interface ActivityTimelineProps {
 }
 
 export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
-  const recentMistakes = [...mistakes]
-    .sort((a, b) => new Date(b.solvedAt).getTime() - new Date(a.solvedAt).getTime())
-    .slice(0, 5);
+  const recentMistakes = useMemo(() => {
+    const seen = new Set<string>();
+    return mistakes
+      .filter((m) => {
+        if (!m.id || seen.has(m.id)) return false;
+        seen.add(m.id);
+        return true;
+      })
+      .sort((a, b) => new Date(b.solvedAt).getTime() - new Date(a.solvedAt).getTime())
+      .slice(0, 5);
+  }, [mistakes]);
 
   if (recentMistakes.length === 0) {
     return (
@@ -237,29 +306,34 @@ export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
       </h3>
       <ul className="space-y-3">
         {recentMistakes.map((m, i) => (
-          <motion.li
-            key={m.id}
-            initial={{ opacity: 0, x: -15 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 + i * 0.08 }}
-            className="flex items-center gap-3 text-sm"
-          >
-            {/* Timeline dot + line */}
-            <div className="relative flex flex-col items-center">
-              <div className="w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-violet-500/20" />
-              {i < recentMistakes.length - 1 && <div className="w-px h-6 bg-slate-300 dark:bg-slate-700" />}
-            </div>
+          <li key={m.id || `timeline-${i}`}>
+            <motion.div
+              initial={{ opacity: 0, x: -15 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 + i * 0.08 }}
+              className="flex items-center gap-3 text-sm"
+            >
+              {/* Timeline dot + line */}
+              <div className="relative flex flex-col items-center">
+                <div className="w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-violet-500/20" />
+                {i < recentMistakes.length - 1 && (
+                  <div className="w-px h-6 bg-slate-300 dark:bg-slate-700" />
+                )}
+              </div>
 
-            <span className="shrink-0 w-16 text-right text-xs text-slate-500">
-              {formatRelativeTime(m.solvedAt)}
-            </span>
-            <span className="flex-1 truncate text-slate-700 dark:text-slate-300">
-              {m.problem.length > 60 ? m.problem.slice(0, 60) + '...' : m.problem}
-            </span>
-            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${causeColors[m.cause] ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'}`}>
-              {causeLabels[m.cause] ?? m.cause}
-            </span>
-          </motion.li>
+              <span className="shrink-0 w-16 text-right text-xs text-slate-500">
+                {formatRelativeTime(m.solvedAt)}
+              </span>
+              <span className="flex-1 truncate text-slate-700 dark:text-slate-300">
+                {m.problem.length > 60 ? m.problem.slice(0, 60) + '...' : m.problem}
+              </span>
+              <span
+                className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${causeColors[m.cause] ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'}`}
+              >
+                {causeLabels[m.cause] ?? m.cause}
+              </span>
+            </motion.div>
+          </li>
         ))}
       </ul>
     </motion.div>

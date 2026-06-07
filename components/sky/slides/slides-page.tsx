@@ -4,7 +4,19 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { Sparkles, Presentation, Wand2, Download, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Image as ImageIcon, Users, CheckCircle2 } from 'lucide-react';
+import {
+  Sparkles,
+  Presentation,
+  Wand2,
+  Download,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Image as ImageIcon,
+  Users,
+  CheckCircle2,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AvatarSpeechPlayer } from './avatar-speech-player';
@@ -17,6 +29,7 @@ import { SlidePreviewGallery } from './slide-preview-gallery';
 import { exportCourseToPPTX } from '@/lib/export/course-exporter';
 import { AVATAR_CONFIGS } from '@/lib/slides/avatar-config';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { useTaskStore } from '@/lib/store/use-task-store';
 import type { AvatarConfig } from '@/lib/slides/types';
 import { SkyBackground } from '@/components/sky/home/sky-background';
 
@@ -38,7 +51,9 @@ export default function SlidesPage() {
 
   // Defensive: localStorage may contain stale non-string values from old schema
   const topic = typeof generationOptions?.topic === 'string' ? generationOptions.topic : '';
-  const difficulty = ['junior', 'senior', 'college'].includes(generationOptions?.difficulty as string)
+  const difficulty = ['junior', 'senior', 'college'].includes(
+    generationOptions?.difficulty as string,
+  )
     ? generationOptions.difficulty
     : 'senior';
 
@@ -54,7 +69,9 @@ export default function SlidesPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   // ── Cover Gallery state ──
   const [coverLoading, setCoverLoading] = useState(false);
-  const [coverStage, setCoverStage] = useState<'idle' | 'analyzing' | 'designing' | 'rendering'>('idle');
+  const [coverStage, setCoverStage] = useState<'idle' | 'analyzing' | 'designing' | 'rendering'>(
+    'idle',
+  );
   const [coverCovers, setCoverCovers] = useState<CoverItem[]>([]);
   const [showCoverGallery, setShowCoverGallery] = useState(false);
   const coverCacheRef = useRef<Map<string, CoverItem[]>>(new Map());
@@ -75,48 +92,87 @@ export default function SlidesPage() {
     confirm,
   } = useCoverDraft();
   // ── Legacy ──
-  const [generatedPptx, setGeneratedPptx] = useState<{ url: string; fileName: string } | null>(null);
+  const [generatedPptx, setGeneratedPptx] = useState<{ url: string; fileName: string } | null>(
+    null,
+  );
   const [previewing, setPreviewing] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[] | null>(null);
   const [previewId, setPreviewId] = useState('');
   const [showPreview, setShowPreview] = useState(false);
-  const [genStage, setGenStage] = useState<'idle' | 'planning' | 'sections_generating' | 'pages_designing' | 'qa_reviewing' | 'repairing' | 'merging' | 'done'>('idle');
+  const [genStage, setGenStage] = useState<
+    | 'idle'
+    | 'planning'
+    | 'sections_generating'
+    | 'pages_designing'
+    | 'qa_reviewing'
+    | 'repairing'
+    | 'merging'
+    | 'done'
+  >('idle');
   const [genProgress, setGenProgress] = useState(0);
   const activeJobId = useSkyClassroomStore((s) => s.activeJobId);
   const setActiveJobId = useSkyClassroomStore((s) => s.setActiveJobId);
-  const [qaReport, setQaReport] = useState<{ totalScore: number; pass: boolean; issues: Array<{ pageNum: number; severity: string; type: string; layer: string; detail: string }> } | null>(null);
+  const [qaReport, setQaReport] = useState<{
+    totalScore: number;
+    pass: boolean;
+    issues: Array<{
+      pageNum: number;
+      severity: string;
+      type: string;
+      layer: string;
+      detail: string;
+    }>;
+  } | null>(null);
   const [showQaReport, setShowQaReport] = useState(false);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const startProgress = useCallback((stage: 'planning' | 'sections_generating' | 'pages_designing') => {
-    setGenStage(stage);
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+  const startProgress = useCallback(
+    (stage: 'planning' | 'sections_generating' | 'pages_designing') => {
+      setGenStage(stage);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
 
-    let target = 0;
-    let current = 0;
-    let step = 0;
-    let intervalMs = 500;
-    if (stage === 'planning') { current = 0; target = 8; step = (8 - 0) / 10; intervalMs = 300; }
-    if (stage === 'sections_generating') { current = 10; target = 90; step = (90 - 10) / 80; intervalMs = 600; }
-    if (stage === 'pages_designing') { current = 92; target = 98; step = (98 - 92) / 12; intervalMs = 400; }
-    setGenProgress(current);
+      let target = 0;
+      let current = 0;
+      let step = 0;
+      let intervalMs = 500;
+      if (stage === 'planning') {
+        current = 0;
+        target = 8;
+        step = (8 - 0) / 10;
+        intervalMs = 300;
+      }
+      if (stage === 'sections_generating') {
+        current = 10;
+        target = 90;
+        step = (90 - 10) / 80;
+        intervalMs = 600;
+      }
+      if (stage === 'pages_designing') {
+        current = 92;
+        target = 98;
+        step = (98 - 92) / 12;
+        intervalMs = 400;
+      }
+      setGenProgress(current);
 
-    progressIntervalRef.current = setInterval(() => {
-      setGenProgress((p) => {
-        if (p >= target) {
-          // 到达 target 后继续以极慢速度前进，避免"卡住"感
-          if (stage === 'sections_generating' && p < 95) {
-            return Math.min(p + 0.3, 95);
+      progressIntervalRef.current = setInterval(() => {
+        setGenProgress((p) => {
+          if (p >= target) {
+            // 到达 target 后继续以极慢速度前进，避免"卡住"感
+            if (stage === 'sections_generating' && p < 95) {
+              return Math.min(p + 0.3, 95);
+            }
+            if (stage === 'pages_designing' && p < 99) {
+              return Math.min(p + 0.2, 99);
+            }
+            return p;
           }
-          if (stage === 'pages_designing' && p < 99) {
-            return Math.min(p + 0.2, 99);
-          }
-          return p;
-        }
-        return Math.min(p + step, target);
-      });
-    }, intervalMs);
-  }, []);
+          return Math.min(p + step, target);
+        });
+      }, intervalMs);
+    },
+    [],
+  );
 
   const stopProgress = useCallback(() => {
     if (progressIntervalRef.current) {
@@ -126,57 +182,60 @@ export default function SlidesPage() {
   }, []);
 
   // ── Cover Gallery handlers ──
-  const handleGenerateCovers = useCallback(async (overrideTopic?: string) => {
-    const t = (overrideTopic ?? topic).trim();
-    if (!t) return;
+  const handleGenerateCovers = useCallback(
+    async (overrideTopic?: string) => {
+      const t = (overrideTopic ?? topic).trim();
+      if (!t) return;
 
-    // Prevent duplicate requests
-    if (coverLoading) return;
+      // Prevent duplicate requests
+      if (coverLoading) return;
 
-    // Check cache first
-    const cacheKey = `${t}_${difficulty}`;
-    const cached = coverCacheRef.current.get(cacheKey);
-    if (cached) {
-      setCoverCovers(cached);
-      setShowCoverGallery(true);
-      return;
-    }
-
-    setCoverLoading(true);
-    setCoverStage('analyzing');
-
-    try {
-      const res = await fetch('/api/sky/slides/generate-covers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: t, difficulty }),
-      });
-
-      if (!res.ok) {
-        setCoverLoading(false);
-        setStatus('封面生成失败，请重试');
-        setTimeout(() => setStatus(''), 3000);
+      // Check cache first
+      const cacheKey = `${t}_${difficulty}`;
+      const cached = coverCacheRef.current.get(cacheKey);
+      if (cached) {
+        setCoverCovers(cached);
+        setShowCoverGallery(true);
         return;
       }
 
-      const data = await res.json();
-      if (data.success && data.covers) {
-        coverCacheRef.current.set(cacheKey, data.covers);
-        setCoverCovers(data.covers);
+      setCoverLoading(true);
+      setCoverStage('analyzing');
+
+      try {
+        const res = await fetch('/api/sky/slides/generate-covers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: t, difficulty }),
+        });
+
+        if (!res.ok) {
+          setCoverLoading(false);
+          setStatus('封面生成失败，请重试');
+          setTimeout(() => setStatus(''), 3000);
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success && data.covers) {
+          coverCacheRef.current.set(cacheKey, data.covers);
+          setCoverCovers(data.covers);
+          setCoverLoading(false);
+          setCoverStage('idle');
+          setShowCoverGallery(true);
+        } else {
+          setCoverLoading(false);
+          setStatus(`封面生成失败: ${data.error || '请重试'}`);
+          setTimeout(() => setStatus(''), 3000);
+        }
+      } catch {
         setCoverLoading(false);
-        setCoverStage('idle');
-        setShowCoverGallery(true);
-      } else {
-        setCoverLoading(false);
-        setStatus(`封面生成失败: ${data.error || '请重试'}`);
+        setStatus('网络错误，请检查服务是否运行');
         setTimeout(() => setStatus(''), 3000);
       }
-    } catch {
-      setCoverLoading(false);
-      setStatus('网络错误，请检查服务是否运行');
-      setTimeout(() => setStatus(''), 3000);
-    }
-  }, [topic, difficulty]);
+    },
+    [topic, difficulty],
+  );
 
   const handleRefreshCovers = useCallback(async () => {
     const t = topic.trim();
@@ -189,131 +248,137 @@ export default function SlidesPage() {
     await handleGenerateCovers(t);
   }, [topic, difficulty, coverLoading, handleGenerateCovers]);
 
-  const onCoverSelected = useCallback(async (cover: CoverItem) => {
-    setShowCoverGallery(false);
-    setGenerating(true);
-    setGenStage('planning');
-    setGenProgress(0);
+  const onCoverSelected = useCallback(
+    async (cover: CoverItem) => {
+      setShowCoverGallery(false);
+      setGenerating(true);
+      setGenStage('planning');
+      setGenProgress(0);
 
-    try {
-      const res = await fetch('/api/sky/slides/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic,
-          difficulty,
-          designDNA: cover.designParams,
-        }),
-      });
-      const data = await res.json();
-      if (data.success && data.jobId) {
-        // Persist jobId so user can resume after navigation
-        setActiveJobId(data.jobId);
-        // Start polling
-        const jobId = data.jobId;
-        let pollErrors = 0;
-        const MAX_POLL_ERRORS = 5;
-        const poll = setInterval(async () => {
-          try {
-            const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${jobId}`);
-            const statusData = await statusRes.json();
-            if (statusData.success) {
-              pollErrors = 0;
-              const job = statusData.data || statusData.job;
-              setGenStage(job.stage);
-              setGenProgress(job.progress || 0);
-              setStatus(job.message || '');
+      try {
+        const res = await fetch('/api/sky/slides/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic,
+            difficulty,
+            designDNA: cover.designParams,
+          }),
+        });
+        const data = await res.json();
+        if (data.success && data.jobId) {
+          // Persist jobId so user can resume after navigation
+          setActiveJobId(data.jobId);
+          // Start polling
+          const jobId = data.jobId;
+          let pollErrors = 0;
+          const MAX_POLL_ERRORS = 5;
+          const poll = setInterval(async () => {
+            try {
+              const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${jobId}`);
+              const statusData = await statusRes.json();
+              if (statusData.success) {
+                pollErrors = 0;
+                const job = statusData.data || statusData.job;
+                setGenStage(job.stage);
+                setGenProgress(job.progress || 0);
+                setStatus(job.message || '');
 
-              if (job.stage === 'done') {
+                if (job.stage === 'done') {
+                  clearInterval(poll);
+                  setActiveJobId(null);
+                  if (job.pptxUrl) {
+                    setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
+                    setPreviewImages(job.previewImages || null);
+                    if (job.qaReport) setQaReport(job.qaReport);
+                    setStatus('');
+                    setGenStage('done');
+                    setGenProgress(100);
+                  } else if (job.error) {
+                    setStatus(`生成失败: ${job.error}`);
+                    setActiveJobId(null);
+                  }
+                  setGenerating(false);
+                }
+              } else if (statusRes.status === 404) {
                 clearInterval(poll);
                 setActiveJobId(null);
-                if (job.pptxUrl) {
-                  setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
-                  setPreviewImages(job.previewImages || null);
-                  if (job.qaReport) setQaReport(job.qaReport);
-                  setStatus('');
-                  setGenStage('done');
-                  setGenProgress(100);
-                } else if (job.error) {
-                  setStatus(`生成失败: ${job.error}`);
-                  setActiveJobId(null);
-                }
                 setGenerating(false);
+                setStatus('生成任务已过期，请重新生成');
               }
-            } else if (statusRes.status === 404) {
-              clearInterval(poll);
-              setActiveJobId(null);
-              setGenerating(false);
-              setStatus('生成任务已过期，请重新生成');
+            } catch {
+              pollErrors++;
+              if (pollErrors >= MAX_POLL_ERRORS) {
+                clearInterval(poll);
+                setActiveJobId(null);
+                setGenerating(false);
+                setStatus('状态查询失败，请检查网络或刷新页面后重试');
+              }
             }
-          } catch {
-            pollErrors++;
-            if (pollErrors >= MAX_POLL_ERRORS) {
-              clearInterval(poll);
-              setActiveJobId(null);
-              setGenerating(false);
-              setStatus('状态查询失败，请检查网络或刷新页面后重试');
-            }
-          }
-        }, 2000);
-      } else {
-        setStatus(`生成请求失败: ${data.error || '请重试'}`);
+          }, 2000);
+        } else {
+          setStatus(`生成请求失败: ${data.error || '请重试'}`);
+          setGenerating(false);
+        }
+      } catch {
+        setStatus('网络错误');
         setGenerating(false);
       }
-    } catch {
-      setStatus('网络错误');
-      setGenerating(false);
-    }
-  }, [topic, difficulty]);
+    },
+    [topic, difficulty],
+  );
 
   // ── Smart Cover handlers ──
-  const handleSuggestCover = useCallback(async (overrideTopic?: string) => {
-    const t = (overrideTopic ?? topic).trim();
-    if (!t) return;
+  const handleSuggestCover = useCallback(
+    async (overrideTopic?: string) => {
+      const t = (overrideTopic ?? topic).trim();
+      if (!t) return;
 
-    startSuggesting();
-    setShowSmartCover(true);
-    setShowStyleLab(false);
-    setSuggestProgress(0);
-    setSuggestStatus('AI 正在分析主题风格…');
-
-    const progressInterval = setInterval(() => {
-      setSuggestProgress((p) => {
-        if (p >= 85) return p;
-        return p + Math.random() * 3 + 1;
-      });
-    }, 300);
-
-    try {
-      const res = await fetch('/api/sky/slides/suggest-cover', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: t, difficulty }),
-      });
-
-      clearInterval(progressInterval);
-
-      if (!res.ok) {
-        setSuggestStatus('推荐失败，请重试');
-        setSuggestProgress(0);
-        return;
-      }
-
-      const data = await res.json();
-      if (data.success && data.cover) {
-        applySuggestion(data.cover.pngUrl, data.cover.designDNA);
-        setSuggestProgress(100);
-        setSuggestStatus('');
-      } else {
-        setSuggestStatus(`推荐失败: ${data.error || '请重试'}`);
-        setSuggestProgress(0);
-      }
-    } catch {
-      clearInterval(progressInterval);
-      setSuggestStatus('网络错误，请检查服务是否运行');
+      startSuggesting();
+      setShowSmartCover(true);
+      setShowStyleLab(false);
       setSuggestProgress(0);
-    }
-  }, [topic, difficulty, startSuggesting, applySuggestion]);
+      setSuggestStatus('AI 正在分析主题风格…');
+
+      const progressInterval = setInterval(() => {
+        setSuggestProgress((p) => {
+          if (p >= 85) return p;
+          return p + Math.random() * 3 + 1;
+        });
+      }, 300);
+
+      try {
+        const res = await fetch('/api/sky/slides/suggest-cover', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: t, difficulty }),
+        });
+
+        clearInterval(progressInterval);
+
+        if (!res.ok) {
+          setSuggestStatus('推荐失败，请重试');
+          setSuggestProgress(0);
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success && data.cover) {
+          applySuggestion(data.cover.pngUrl, data.cover.designDNA);
+          setSuggestProgress(100);
+          setSuggestStatus('');
+        } else {
+          setSuggestStatus(`推荐失败: ${data.error || '请重试'}`);
+          setSuggestProgress(0);
+        }
+      } catch {
+        clearInterval(progressInterval);
+        setSuggestStatus('网络错误，请检查服务是否运行');
+        setSuggestProgress(0);
+      }
+    },
+    [topic, difficulty, startSuggesting, applySuggestion],
+  );
 
   const handleConfirmSmartCover = useCallback(() => {
     const finalDNA = confirm();
@@ -394,9 +459,12 @@ export default function SlidesPage() {
       });
   }, [topic, difficulty, confirm, setActiveJobId]);
 
-  const handleGenerate = useCallback(async (overrideTopic?: string) => {
-    handleSuggestCover(overrideTopic);
-  }, [handleSuggestCover]);
+  const handleGenerate = useCallback(
+    async (overrideTopic?: string) => {
+      handleSuggestCover(overrideTopic);
+    },
+    [handleSuggestCover],
+  );
 
   const handleDownloadGenerated = useCallback(() => {
     if (!generatedPptx) return;
@@ -419,7 +487,7 @@ export default function SlidesPage() {
   useEffect(() => {
     const store = useTaskStore.getState();
     const tasks = Object.values(store.tasks).filter(
-      (t) => t.type === 'slides' && t.status !== 'failed'
+      (t) => t.type === 'slides' && t.status !== 'failed',
     );
     if (tasks.length === 0) return;
     const task = tasks[tasks.length - 1];
@@ -481,7 +549,12 @@ export default function SlidesPage() {
         }, 2000);
       }
     } else if (task.status === 'completed' && task.result) {
-      const result = task.result as { pptxUrl?: string; fileName?: string; previewImages?: string[]; qaReport?: unknown };
+      const result = task.result as {
+        pptxUrl?: string;
+        fileName?: string;
+        previewImages?: string[];
+        qaReport?: unknown;
+      };
       if (result.pptxUrl) {
         setGeneratedPptx({ url: result.pptxUrl, fileName: result.fileName || '课件.pptx' });
         setPreviewImages(result.previewImages || null);
@@ -495,7 +568,11 @@ export default function SlidesPage() {
   // ── Cover loading stage animation ──
   useEffect(() => {
     if (!coverLoading) return;
-    const stages: Array<'analyzing' | 'designing' | 'rendering'> = ['analyzing', 'designing', 'rendering'];
+    const stages: Array<'analyzing' | 'designing' | 'rendering'> = [
+      'analyzing',
+      'designing',
+      'rendering',
+    ];
     let idx = 0;
     const timer = setInterval(() => {
       idx++;
@@ -584,8 +661,6 @@ export default function SlidesPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [totalPages]);
 
-
-
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden relative">
       <SkyBackground />
@@ -600,7 +675,13 @@ export default function SlidesPage() {
             className="group flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-600 dark:hover:text-gray-200 hover:scale-105 active:scale-95"
             title="返回首页"
           >
-            <svg className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg
+              className="h-4 w-4 transition-transform group-hover:-translate-x-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
@@ -608,14 +689,28 @@ export default function SlidesPage() {
             {/* Breathing glow behind icon */}
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 animate-soft-pulse blur-md" />
             <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 text-white shadow-lg shadow-sky-500/25">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
               </svg>
             </div>
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold bg-gradient-to-r from-sky-500 via-blue-500 to-sky-500 bg-[length:200%_100%] bg-clip-text text-transparent tracking-tight animate-gradient-x">天空课堂</span>
-            <span className="text-[10px] font-medium text-slate-400 dark:text-gray-500 -mt-0.5">AI 互动课件</span>
+            <span className="text-sm font-bold bg-gradient-to-r from-sky-500 via-blue-500 to-sky-500 bg-[length:200%_100%] bg-clip-text text-transparent tracking-tight animate-gradient-x">
+              天空课堂
+            </span>
+            <span className="text-[10px] font-medium text-slate-400 dark:text-gray-500 -mt-0.5">
+              AI 互动课件
+            </span>
           </div>
           {hasContent && (
             <button
@@ -629,7 +724,12 @@ export default function SlidesPage() {
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
           )}
@@ -696,8 +796,19 @@ export default function SlidesPage() {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700" />
             {generating && (
               <svg className="relative h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
               </svg>
             )}
             <span className="relative">
@@ -737,7 +848,10 @@ export default function SlidesPage() {
           }`}
         >
           {/* Avatar selector */}
-          <div className="scrollbar-hide flex-shrink-0 overflow-y-auto px-4 pt-4" style={{ maxHeight: '35%', overscrollBehavior: 'contain' }}>
+          <div
+            className="scrollbar-hide flex-shrink-0 overflow-y-auto px-4 pt-4"
+            style={{ maxHeight: '35%', overscrollBehavior: 'contain' }}
+          >
             <AvatarSelector
               avatars={AVATAR_CONFIGS}
               selectedId={selectedAvatar.id}
@@ -754,11 +868,24 @@ export default function SlidesPage() {
           </div>
 
           {/* Thumbnails */}
-          <div className="scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-3" style={{ overscrollBehavior: 'contain' }}>
+          <div
+            className="scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-3"
+            style={{ overscrollBehavior: 'contain' }}
+          >
             <div className="mb-3 flex items-center justify-between px-1">
               <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-gray-500">
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                  />
                 </svg>
                 幻灯片
               </span>
@@ -767,63 +894,73 @@ export default function SlidesPage() {
               </span>
             </div>
             <div className="flex flex-col gap-1.5">
-              {previewImages ? (
-                previewImages.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveIndex(i)}
-                    className={`group relative flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-300 overflow-hidden ${
-                      i === activeIndex
-                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50/50 dark:from-blue-900/30 dark:to-indigo-900/20 ring-1 ring-blue-200/60 dark:ring-blue-800/40 shadow-sm shadow-blue-100/50 dark:shadow-blue-900/20'
-                        : 'hover:bg-slate-50/80 dark:hover:bg-gray-800/80 hover:shadow-sm hover:-translate-y-[1px]'
-                    }`}
-                  >
-                    {/* Active left accent bar */}
-                    {i === activeIndex && (
-                      <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-gradient-to-b from-sky-400 to-blue-500" />
-                    )}
-                    <div className="relative flex-shrink-0 ml-0.5">
-                      <img
-                        src={img}
-                        alt={`Thumb ${i + 1}`}
-                        className={`h-[56px] w-[100px] rounded-lg object-cover shadow-sm transition-all duration-300 ${
-                          i === activeIndex ? 'ring-2 ring-sky-400/40 shadow-md shadow-sky-500/15' : 'group-hover:scale-[1.04] group-hover:shadow-md'
-                        }`}
-                        draggable={false}
-                      />
-                      <span className={`absolute -left-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm transition-all duration-300 ${
+              {previewImages
+                ? previewImages.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveIndex(i)}
+                      className={`group relative flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-300 overflow-hidden ${
                         i === activeIndex
-                          ? 'bg-sky-500 text-white shadow-sky-200 scale-110'
-                          : 'bg-white dark:bg-gray-800 text-slate-400 dark:text-gray-500 shadow-sm ring-1 ring-slate-200 dark:ring-gray-600'
-                      }`}>
-                        {i + 1}
-                      </span>
-                    </div>
-                    <div className="flex min-w-0 flex-col">
-                      <span
-                        className={`text-[11px] font-semibold transition-colors ${
-                          i === activeIndex ? 'text-sky-700 dark:text-sky-300' : 'text-slate-500 dark:text-gray-400'
-                        }`}
-                      >
-                        {i === 0 ? '封面' : i === previewImages.length - 1 ? '封底' : `第 ${i + 1} 页`}
-                      </span>
-                      <span className="text-[10px] text-slate-400 dark:text-gray-500">
-                        {i === activeIndex ? (
-                          <span className="flex items-center gap-1 text-sky-500 dark:text-sky-400">
-                            <span className="relative flex h-1.5 w-1.5">
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
-                              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-500" />
+                          ? 'bg-gradient-to-r from-blue-50 to-indigo-50/50 dark:from-blue-900/30 dark:to-indigo-900/20 ring-1 ring-blue-200/60 dark:ring-blue-800/40 shadow-sm shadow-blue-100/50 dark:shadow-blue-900/20'
+                          : 'hover:bg-slate-50/80 dark:hover:bg-gray-800/80 hover:shadow-sm hover:-translate-y-[1px]'
+                      }`}
+                    >
+                      {/* Active left accent bar */}
+                      {i === activeIndex && (
+                        <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-gradient-to-b from-sky-400 to-blue-500" />
+                      )}
+                      <div className="relative flex-shrink-0 ml-0.5">
+                        <img
+                          src={img}
+                          alt={`Thumb ${i + 1}`}
+                          className={`h-[56px] w-[100px] rounded-lg object-cover shadow-sm transition-all duration-300 ${
+                            i === activeIndex
+                              ? 'ring-2 ring-sky-400/40 shadow-md shadow-sky-500/15'
+                              : 'group-hover:scale-[1.04] group-hover:shadow-md'
+                          }`}
+                          draggable={false}
+                        />
+                        <span
+                          className={`absolute -left-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm transition-all duration-300 ${
+                            i === activeIndex
+                              ? 'bg-sky-500 text-white shadow-sky-200 scale-110'
+                              : 'bg-white dark:bg-gray-800 text-slate-400 dark:text-gray-500 shadow-sm ring-1 ring-slate-200 dark:ring-gray-600'
+                          }`}
+                        >
+                          {i + 1}
+                        </span>
+                      </div>
+                      <div className="flex min-w-0 flex-col">
+                        <span
+                          className={`text-[11px] font-semibold transition-colors ${
+                            i === activeIndex
+                              ? 'text-sky-700 dark:text-sky-300'
+                              : 'text-slate-500 dark:text-gray-400'
+                          }`}
+                        >
+                          {i === 0
+                            ? '封面'
+                            : i === previewImages.length - 1
+                              ? '封底'
+                              : `第 ${i + 1} 页`}
+                        </span>
+                        <span className="text-[10px] text-slate-400 dark:text-gray-500">
+                          {i === activeIndex ? (
+                            <span className="flex items-center gap-1 text-sky-500 dark:text-sky-400">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-500" />
+                              </span>
+                              当前
                             </span>
-                            当前
-                          </span>
-                        ) : (
-                          ''
-                        )}
-                      </span>
-                    </div>
-                  </button>
-                ))
-              ) : null}
+                          ) : (
+                            ''
+                          )}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                : null}
             </div>
           </div>
         </aside>
@@ -851,7 +988,10 @@ export default function SlidesPage() {
               />
             ) : previewImages ? (
               <div className="flex h-full items-center justify-center bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm p-6 animate-fade-in-scale">
-                <div className="relative max-h-full max-w-full group" style={{ perspective: '1200px' }}>
+                <div
+                  className="relative max-h-full max-w-full group"
+                  style={{ perspective: '1200px' }}
+                >
                   {/* Ambient glow behind slide */}
                   <div className="absolute -inset-6 rounded-3xl bg-gradient-to-b from-sky-500/8 via-blue-500/4 to-transparent dark:from-sky-400/8 dark:via-blue-400/4 blur-2xl transition-opacity duration-500 group-hover:opacity-100 opacity-60" />
                   {/* 3D tilt container */}
@@ -924,25 +1064,48 @@ export default function SlidesPage() {
                   </p>
                   {/* Stage steps — refined dots */}
                   <div className="flex items-center gap-2">
-                    {(['planning', 'sections_generating', 'pages_designing', 'qa_reviewing', 'merging', 'done'] as const).map((stage, i) => {
-                      const stages = ['planning', 'sections_generating', 'pages_designing', 'qa_reviewing', 'merging', 'done'];
+                    {(
+                      [
+                        'planning',
+                        'sections_generating',
+                        'pages_designing',
+                        'qa_reviewing',
+                        'merging',
+                        'done',
+                      ] as const
+                    ).map((stage, i) => {
+                      const stages = [
+                        'planning',
+                        'sections_generating',
+                        'pages_designing',
+                        'qa_reviewing',
+                        'merging',
+                        'done',
+                      ];
                       const currentIdx = stages.indexOf(genStage);
-                      const state = i < currentIdx ? 'done' : i === currentIdx ? 'active' : 'pending';
+                      const state =
+                        i < currentIdx ? 'done' : i === currentIdx ? 'active' : 'pending';
                       return (
                         <div key={stage} className="flex items-center gap-2">
                           <motion.div
                             className={`h-[5px] w-[5px] rounded-full transition-colors duration-700 ${
-                              state === 'done' ? 'bg-slate-400' :
-                              state === 'active' ? 'bg-sky-500' :
-                              'bg-slate-200 dark:bg-slate-700'
+                              state === 'done'
+                                ? 'bg-slate-400'
+                                : state === 'active'
+                                  ? 'bg-sky-500'
+                                  : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                             animate={state === 'active' ? { scale: [1, 1.4, 1] } : {}}
                             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                           />
                           {i < stages.length - 1 && (
-                            <div className={`w-5 h-[1px] rounded-full transition-colors duration-700 ${
-                              state === 'done' ? 'bg-slate-300 dark:bg-slate-600' : 'bg-slate-100 dark:bg-slate-800'
-                            }`} />
+                            <div
+                              className={`w-5 h-[1px] rounded-full transition-colors duration-700 ${
+                                state === 'done'
+                                  ? 'bg-slate-300 dark:bg-slate-600'
+                                  : 'bg-slate-100 dark:bg-slate-800'
+                              }`}
+                            />
                           )}
                         </div>
                       );
@@ -956,7 +1119,9 @@ export default function SlidesPage() {
                       transition={{ duration: 0.8, ease: 'easeOut' }}
                     />
                   </div>
-                  <p className="text-[11px] text-slate-400 tabular-nums tracking-wide">{Math.round(genProgress || 2)}%</p>
+                  <p className="text-[11px] text-slate-400 tabular-nums tracking-wide">
+                    {Math.round(genProgress || 2)}%
+                  </p>
                 </div>
               </div>
             ) : generatedPptx ? (
@@ -969,13 +1134,25 @@ export default function SlidesPage() {
                   <div className="absolute h-24 w-24 rounded-full border border-dashed border-emerald-200/30 dark:border-emerald-500/15 animate-[spin_12s_linear_infinite]" />
                   <div className="absolute h-20 w-20 rounded-full border-2 border-emerald-300/40 animate-ring-expand" />
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/20 shadow-lg shadow-emerald-500/15 border border-emerald-100/60 dark:border-emerald-800/30">
-                    <svg className="h-8 w-8 text-emerald-500 animate-check-pop" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="h-8 w-8 text-emerald-500 animate-check-pop"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-1.5">
-                  <p className="text-base font-bold text-slate-800 dark:text-gray-100">课件生成成功</p>
+                  <p className="text-base font-bold text-slate-800 dark:text-gray-100">
+                    课件生成成功
+                  </p>
                   <p className="text-xs text-slate-400 dark:text-gray-500">文件已自动下载到本地</p>
                 </div>
                 <button
@@ -983,8 +1160,18 @@ export default function SlidesPage() {
                   className="relative inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-[0_8px_30px_-4px_rgba(16,185,129,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700" />
-                  <svg className="relative h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  <svg
+                    className="relative h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                    />
                   </svg>
                   重新下载课件
                 </button>
@@ -1023,7 +1210,9 @@ export default function SlidesPage() {
                       transition={{ duration: 0.5, ease: 'easeOut' }}
                     />
                   </div>
-                  <p className="text-[11px] text-slate-400 tabular-nums tracking-wide">{Math.round(Math.min(suggestProgress, 100))}%</p>
+                  <p className="text-[11px] text-slate-400 tabular-nums tracking-wide">
+                    {Math.round(Math.min(suggestProgress, 100))}%
+                  </p>
                 </div>
               </div>
             ) : (
@@ -1042,8 +1231,18 @@ export default function SlidesPage() {
                     transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
                     style={{ marginLeft: 0, marginTop: -8 }}
                   >
-                    <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    <svg
+                      className="h-5 w-5 text-slate-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                      />
                     </svg>
                   </motion.div>
                   <motion.div
@@ -1081,7 +1280,9 @@ export default function SlidesPage() {
                       className="group flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/70 dark:bg-gray-800/70 border border-slate-200/60 dark:border-gray-700/60 text-sm font-medium text-slate-600 dark:text-gray-300 hover:border-sky-300/60 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50/50 dark:hover:bg-sky-900/10 hover:shadow-lg hover:shadow-sky-500/10 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 animate-fade-in-up opacity-0"
                       style={{ animationDelay: `${0.25 + i * 0.08}s` }}
                     >
-                      <span className="text-base transition-transform duration-300 group-hover:scale-110">{item.icon}</span>
+                      <span className="text-base transition-transform duration-300 group-hover:scale-110">
+                        {item.icon}
+                      </span>
                       <span>{item.label}</span>
                     </button>
                   ))}
@@ -1106,7 +1307,13 @@ export default function SlidesPage() {
                     disabled={activeIndex === 0}
                     className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 dark:text-gray-400 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-700 dark:hover:text-gray-200 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100"
                   >
-                    <svg className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg
+                      className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                     </svg>
                     上一页
@@ -1114,7 +1321,9 @@ export default function SlidesPage() {
 
                   <div className="flex flex-col items-center gap-1">
                     <span className="min-w-[4rem] text-center text-xs tabular-nums text-slate-400 dark:text-gray-500">
-                      <span className="font-bold text-slate-700 dark:text-gray-200">{activeIndex + 1}</span>
+                      <span className="font-bold text-slate-700 dark:text-gray-200">
+                        {activeIndex + 1}
+                      </span>
                       <span className="mx-1 text-slate-300 dark:text-gray-600">/</span>
                       <span className="font-medium">{totalPages}</span>
                     </span>
@@ -1135,15 +1344,31 @@ export default function SlidesPage() {
                     className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 dark:text-gray-400 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-700 dark:hover:text-gray-200 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100"
                   >
                     下一页
-                    <svg className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg
+                      className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-gray-500">
-                  <svg className="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="h-4 w-4 text-emerald-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                   <span>课件已生成</span>
                 </div>
@@ -1155,7 +1380,9 @@ export default function SlidesPage() {
                     onClick={() => setShowQaReport(true)}
                     className="group rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 dark:text-gray-400 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-700 dark:hover:text-gray-200 hover:scale-105 active:scale-95"
                   >
-                    <span className="mr-1 inline-block transition-transform group-hover:scale-110">📋</span>
+                    <span className="mr-1 inline-block transition-transform group-hover:scale-110">
+                      📋
+                    </span>
                     查看质检报告
                   </button>
                 )}
@@ -1175,8 +1402,18 @@ export default function SlidesPage() {
                     className="relative inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-[0_8px_30px_-4px_rgba(16,185,129,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700" />
-                    <svg className="relative h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    <svg
+                      className="relative h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
                     </svg>
                     下载课件
                   </button>
@@ -1198,7 +1435,10 @@ export default function SlidesPage() {
       {/* QA Report Modal */}
       {showQaReport && qaReport && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-fade-in">
-          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" onClick={() => setShowQaReport(false)} />
+          <div
+            className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
+            onClick={() => setShowQaReport(false)}
+          />
           <div className="relative z-10 w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.4)] overflow-hidden animate-slide-up-fade border border-white/50 dark:border-white/5">
             <div className="absolute top-0 left-4 right-4 h-[2px] rounded-full bg-gradient-to-r from-transparent via-sky-400/50 to-transparent" />
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100/80 dark:border-gray-700/80">
@@ -1208,13 +1448,26 @@ export default function SlidesPage() {
                   总分: {qaReport.totalScore}/100 {qaReport.pass ? '✅ 通过' : '⚠️ 未通过'}
                 </p>
               </div>
-              <button onClick={() => setShowQaReport(false)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 hover:bg-slate-100 dark:hover:bg-gray-800">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              <button
+                onClick={() => setShowQaReport(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 hover:bg-slate-100 dark:hover:bg-gray-800"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
             <div className="p-4 max-h-96 overflow-y-auto">
               {qaReport.issues.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-gray-400 text-center py-4">无问题，课件质量良好</p>
+                <p className="text-sm text-slate-500 dark:text-gray-400 text-center py-4">
+                  无问题，课件质量良好
+                </p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {qaReport.issues.map((issue, idx) => (
@@ -1225,13 +1478,19 @@ export default function SlidesPage() {
                         setShowQaReport(false);
                       }}
                       className={`group flex items-start gap-2 rounded-xl p-2.5 text-left text-xs transition-all duration-200 hover:shadow-sm ${
-                        issue.severity === 'high' ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100/60 dark:hover:bg-red-900/30' :
-                        issue.severity === 'medium' ? 'bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100/60 dark:hover:bg-amber-900/30' :
-                        'bg-slate-50 dark:bg-gray-800/50 hover:bg-slate-100/60 dark:hover:bg-gray-800/80'
+                        issue.severity === 'high'
+                          ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100/60 dark:hover:bg-red-900/30'
+                          : issue.severity === 'medium'
+                            ? 'bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100/60 dark:hover:bg-amber-900/30'
+                            : 'bg-slate-50 dark:bg-gray-800/50 hover:bg-slate-100/60 dark:hover:bg-gray-800/80'
                       }`}
                     >
                       <span className="mt-0.5 flex-shrink-0">
-                        {issue.severity === 'high' ? '❌' : issue.severity === 'medium' ? '⚠️' : 'ℹ️'}
+                        {issue.severity === 'high'
+                          ? '❌'
+                          : issue.severity === 'medium'
+                            ? '⚠️'
+                            : 'ℹ️'}
                       </span>
                       <div className="min-w-0">
                         <span className="font-semibold text-slate-700 dark:text-gray-200">
@@ -1239,7 +1498,15 @@ export default function SlidesPage() {
                         </span>
                         <p className="text-slate-500 dark:text-gray-400 mt-0.5">{issue.detail}</p>
                       </div>
-                      <svg className="h-3 w-3 flex-shrink-0 mt-1 text-slate-300 dark:text-gray-600 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      <svg
+                        className="h-3 w-3 flex-shrink-0 mt-1 text-slate-300 dark:text-gray-600 transition-transform group-hover:translate-x-0.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
                     </button>
                   ))}
                 </div>
@@ -1273,16 +1540,30 @@ export default function SlidesPage() {
                 { key: 'designing', label: '搭配风格' },
                 { key: 'rendering', label: '渲染预览' },
               ].map((s, i) => {
-                const isDone = coverStage === 'rendering' || (coverStage === 'designing' && i < 2) || (coverStage === 'analyzing' && i < 1);
+                const isDone =
+                  coverStage === 'rendering' ||
+                  (coverStage === 'designing' && i < 2) ||
+                  (coverStage === 'analyzing' && i < 1);
                 const isActive = coverStage === s.key;
                 return (
                   <div key={s.key} className="flex items-center gap-2 flex-1">
-                    <div className={`relative flex items-center justify-center h-3.5 w-3.5 rounded-full transition-all duration-500 ${
-                      isActive ? 'bg-slate-700 dark:bg-slate-300' :
-                      isDone ? 'bg-slate-400 dark:bg-slate-500' : 'bg-slate-200 dark:bg-slate-700'
-                    }`}>
+                    <div
+                      className={`relative flex items-center justify-center h-3.5 w-3.5 rounded-full transition-all duration-500 ${
+                        isActive
+                          ? 'bg-slate-700 dark:bg-slate-300'
+                          : isDone
+                            ? 'bg-slate-400 dark:bg-slate-500'
+                            : 'bg-slate-200 dark:bg-slate-700'
+                      }`}
+                    >
                       {isDone && !isActive && (
-                        <svg className="h-2 w-2 text-white dark:text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <svg
+                          className="h-2 w-2 text-white dark:text-slate-900"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       )}
@@ -1294,13 +1575,25 @@ export default function SlidesPage() {
                         />
                       )}
                     </div>
-                    <span className={`text-[10px] font-medium whitespace-nowrap transition-colors ${
-                      isActive ? 'text-slate-700 dark:text-slate-200' : isDone ? 'text-slate-500 dark:text-slate-400' : 'text-slate-300 dark:text-slate-600'
-                    }`}>{s.label}</span>
+                    <span
+                      className={`text-[10px] font-medium whitespace-nowrap transition-colors ${
+                        isActive
+                          ? 'text-slate-700 dark:text-slate-200'
+                          : isDone
+                            ? 'text-slate-500 dark:text-slate-400'
+                            : 'text-slate-300 dark:text-slate-600'
+                      }`}
+                    >
+                      {s.label}
+                    </span>
                     {i < 2 && (
-                      <div className={`flex-1 h-[1px] rounded-full transition-all duration-500 ${
-                        isDone ? 'bg-slate-300 dark:bg-slate-600' : 'bg-slate-100 dark:bg-slate-800'
-                      }`} />
+                      <div
+                        className={`flex-1 h-[1px] rounded-full transition-all duration-500 ${
+                          isDone
+                            ? 'bg-slate-300 dark:bg-slate-600'
+                            : 'bg-slate-100 dark:bg-slate-800'
+                        }`}
+                      />
                     )}
                   </div>
                 );
@@ -1316,9 +1609,21 @@ export default function SlidesPage() {
 
             {/* Subtle loading indicator */}
             <div className="flex gap-1.5">
-              <motion.div className="h-1.5 w-1.5 rounded-full bg-slate-300" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0 }} />
-              <motion.div className="h-1.5 w-1.5 rounded-full bg-slate-300" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }} />
-              <motion.div className="h-1.5 w-1.5 rounded-full bg-slate-300" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }} />
+              <motion.div
+                className="h-1.5 w-1.5 rounded-full bg-slate-300"
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
+              />
+              <motion.div
+                className="h-1.5 w-1.5 rounded-full bg-slate-300"
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }}
+              />
+              <motion.div
+                className="h-1.5 w-1.5 rounded-full bg-slate-300"
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }}
+              />
             </div>
           </div>
         </div>

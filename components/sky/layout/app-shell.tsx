@@ -25,7 +25,7 @@ function AtmosphericBackground() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
       {/* Base warm paper tone */}
-      <div className="absolute inset-0 bg-[#FAFBFC] dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+      <div className="absolute inset-0 bg-[#FAFBFC] dark:bg-gradient-to-b dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
 
       {/* Soft watercolor washes */}
       <div className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] bg-sky-100/40 dark:bg-sky-900/10 rounded-full blur-[120px]" />
@@ -176,9 +176,7 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
           )}
           <HeaderControls />
           <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700/40" />
-          <FloatingUserCard
-            onUpgradeOpen={() => setUpgradeOpen(true)}
-          />
+          <FloatingUserCard onUpgradeOpen={() => setUpgradeOpen(true)} />
         </div>
       </header>
 

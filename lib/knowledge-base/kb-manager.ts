@@ -8,7 +8,12 @@
 import { createLogger } from '@/lib/logger';
 import { chunkDocument } from '@/lib/agents/rag/document-chunker';
 import type { KBType, KBChunk, KBWriteOptions, KBSearchOptions, KBSearchResult, KBStats } from './types';
-import * as dao from './kb-dao';
+
+let _dao: any = null;
+async function getDao() {
+  if (!_dao) _dao = await import('./kb-dao');
+  return _dao as typeof import('./kb-dao');
+}
 
 const log = createLogger('KB:Manager');
 
@@ -38,6 +43,7 @@ async function ensureLoaded(): Promise<void> {
 
 async function loadIndex(): Promise<void> {
   try {
+    const dao = await getDao();
     await dao.ensureTable();
     const types: KBType[] = ['solve', 'slides', 'cards', 'classroom'];
     for (const kbType of types) {
@@ -166,6 +172,7 @@ function addToIndex(kbType: KBType, chunks: KBChunk[]): void {
  * Splits content into chunks, persists to MySQL, and updates the in-memory index.
  */
 export async function write(opts: KBWriteOptions): Promise<{ docId: string; chunks: number }> {
+  const dao = await getDao();
   await ensureLoaded();
 
   const docId = `kb-${opts.kbType}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -199,6 +206,7 @@ export async function write(opts: KBWriteOptions): Promise<{ docId: string; chun
  * Search the knowledge base for relevant content.
  */
 export async function search(opts: KBSearchOptions): Promise<KBSearchResult[]> {
+  const dao = await getDao();
   await ensureLoaded();
 
   const { kbType, query, topK = 5, threshold = 0.01, verifiedOnly = false } = opts;
@@ -241,6 +249,7 @@ export async function search(opts: KBSearchOptions): Promise<KBSearchResult[]> {
  * Verify all chunks from a source (mark as trusted).
  */
 export async function verifySource(sourceId: string): Promise<void> {
+  const dao = await getDao();
   await dao.verifyBySource(sourceId);
   // Update in-memory index
   for (const [kbType, chunks] of _index) {
@@ -256,6 +265,7 @@ export async function verifySource(sourceId: string): Promise<void> {
  * Delete a document from the knowledge base.
  */
 export async function removeDocument(docId: string): Promise<void> {
+  const dao = await getDao();
   await dao.deleteDocument(docId);
   // Remove from in-memory index
   for (const [kbType, chunks] of _index) {
@@ -267,6 +277,7 @@ export async function removeDocument(docId: string): Promise<void> {
  * Clear all data for a kb_type.
  */
 export async function clearType(kbType: KBType): Promise<void> {
+  const dao = await getDao();
   await dao.deleteByType(kbType);
   _index.set(kbType, []);
   log.info(`KB[${kbType}] cleared`);
@@ -276,6 +287,7 @@ export async function clearType(kbType: KBType): Promise<void> {
  * Get stats for the knowledge base.
  */
 export async function stats(): Promise<KBStats> {
+  const dao = await getDao();
   await ensureLoaded();
   return dao.getStats();
 }
@@ -284,6 +296,7 @@ export async function stats(): Promise<KBStats> {
  * Check if a source already exists in the KB.
  */
 export async function hasSource(sourceId: string): Promise<boolean> {
+  const dao = await getDao();
   return dao.sourceExists(sourceId);
 }
 

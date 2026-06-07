@@ -5,16 +5,16 @@
  * Uses dedicated tables for core entities, falls back to storage_entries for others.
  */
 
-import mysql, { type Pool, type RowDataPacket } from 'mysql2/promise';
 import type { StorageProvider, StorageEntry } from './storage-types';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('Storage:MySQL');
 
-let _pool: Pool | null = null;
+let _pool: import('mysql2/promise').Pool | null = null;
 
-function getPool(): Pool {
+async function getPool(): Promise<import('mysql2/promise').Pool> {
   if (_pool) return _pool;
+  const mysql = await import('mysql2/promise');
   _pool = mysql.createPool({
     host: process.env.MYSQL_HOST || 'localhost',
     port: Number(process.env.MYSQL_PORT || 3306),
@@ -154,11 +154,11 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
   for (const { table, key } of tables) {
     try {
       // Check if dedicated table is empty
-      const [countRows] = await pool.query<RowDataPacket[]>(`SELECT COUNT(*) as cnt FROM ${table}`);
+      const [countRows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(`SELECT COUNT(*) as cnt FROM ${table}`);
       if (countRows[0].cnt > 0) continue;
 
       // Check if storage_entries has data for this table
-      const [oldRows] = await pool.query<RowDataPacket[]>(
+      const [oldRows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
         'SELECT * FROM storage_entries WHERE table_name = ?',
         [key],
       );
@@ -238,7 +238,7 @@ export class MySQLStorageProvider implements StorageProvider {
 
   async isAvailable(): Promise<boolean> {
     try {
-      const pool = getPool();
+      const pool = await getPool();
       const [rows] = await pool.query('SELECT 1');
       if (!Array.isArray(rows)) return false;
 
@@ -260,7 +260,7 @@ export class MySQLStorageProvider implements StorageProvider {
   // ── SET (upsert) ────────────────────────────────────────────────────
 
   async set<T>(table: string, entry: StorageEntry<T>): Promise<void> {
-    const pool = getPool();
+    const pool = await getPool();
     const data = entry.data as Record<string, unknown>;
 
     if (table === 'users') {
@@ -360,34 +360,34 @@ export class MySQLStorageProvider implements StorageProvider {
   // ── GET by id ───────────────────────────────────────────────────────
 
   async get<T>(table: string, id: string): Promise<StorageEntry<T> | null> {
-    const pool = getPool();
+    const pool = await getPool();
 
     if (table === 'users') {
-      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM users WHERE id = ?', [id]);
+      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM users WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToUserEntry(rows[0]) as StorageEntry<T>;
     }
 
     if (table === 'user_checkins') {
-      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM user_checkins WHERE id = ?', [id]);
+      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM user_checkins WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToCheckinEntry(rows[0]) as StorageEntry<T>;
     }
 
     if (table === 'user_stats') {
-      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM user_stats WHERE id = ?', [id]);
+      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM user_stats WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToStatsEntry(rows[0]) as StorageEntry<T>;
     }
 
     if (table === 'mistakes') {
-      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM mistakes WHERE id = ?', [id]);
+      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM mistakes WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToMistakeEntry(rows[0]) as StorageEntry<T>;
     }
 
     // Fallback
-    const [rows] = await pool.query<RowDataPacket[]>(
+    const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
       'SELECT * FROM storage_entries WHERE id = ? AND table_name = ?',
       [id, table],
     );
@@ -404,23 +404,23 @@ export class MySQLStorageProvider implements StorageProvider {
   // ── GET ALL ─────────────────────────────────────────────────────────
 
   async getAll<T>(table: string, filter?: (entry: StorageEntry<T>) => boolean): Promise<StorageEntry<T>[]> {
-    const pool = getPool();
+    const pool = await getPool();
     let entries: StorageEntry<T>[];
 
     if (table === 'users') {
-      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM users');
+      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM users');
       entries = rows.map((r) => rowToUserEntry(r) as StorageEntry<T>);
     } else if (table === 'user_checkins') {
-      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM user_checkins');
+      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM user_checkins');
       entries = rows.map((r) => rowToCheckinEntry(r) as StorageEntry<T>);
     } else if (table === 'user_stats') {
-      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM user_stats');
+      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM user_stats');
       entries = rows.map((r) => rowToStatsEntry(r) as StorageEntry<T>);
     } else if (table === 'mistakes') {
-      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM mistakes');
+      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM mistakes');
       entries = rows.map((r) => rowToMistakeEntry(r) as StorageEntry<T>);
     } else {
-      const [rows] = await pool.query<RowDataPacket[]>(
+      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
         'SELECT * FROM storage_entries WHERE table_name = ?',
         [table],
       );
@@ -438,7 +438,7 @@ export class MySQLStorageProvider implements StorageProvider {
   // ── DELETE ───────────────────────────────────────────────────────────
 
   async delete(table: string, id: string): Promise<boolean> {
-    const pool = getPool();
+    const pool = await getPool();
     const sqlMap: Record<string, string> = {
       users: 'DELETE FROM users WHERE id = ?',
       user_checkins: 'DELETE FROM user_checkins WHERE id = ?',
@@ -454,7 +454,7 @@ export class MySQLStorageProvider implements StorageProvider {
   // ── CLEAR ───────────────────────────────────────────────────────────
 
   async clear(table: string): Promise<void> {
-    const pool = getPool();
+    const pool = await getPool();
     if (isDedicatedTable(table)) {
       await pool.query(`DELETE FROM ${table}`);
     } else {
@@ -465,12 +465,12 @@ export class MySQLStorageProvider implements StorageProvider {
   // ── COUNT ───────────────────────────────────────────────────────────
 
   async count(table: string): Promise<number> {
-    const pool = getPool();
+    const pool = await getPool();
     if (isDedicatedTable(table)) {
-      const [rows] = await pool.query<RowDataPacket[]>(`SELECT COUNT(*) as cnt FROM ${table}`);
+      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(`SELECT COUNT(*) as cnt FROM ${table}`);
       return rows[0].cnt as number;
     }
-    const [rows] = await pool.query<RowDataPacket[]>(
+    const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
       'SELECT COUNT(*) as cnt FROM storage_entries WHERE table_name = ?',
       [table],
     );

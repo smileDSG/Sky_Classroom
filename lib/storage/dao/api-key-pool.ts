@@ -5,17 +5,17 @@
  * Uses the same connection config as mysql-provider.
  */
 
-import mysql, { type Pool, type RowDataPacket } from 'mysql2/promise';
 import { encrypt, decrypt, maskKey } from '@/lib/api-key-pool/crypto';
 import type { ApiKeyEntry, ApiKeyRow } from '@/lib/api-key-pool/types';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('DAO:ApiKeyPool');
 
-let _pool: Pool | null = null;
+let _pool: import('mysql2/promise').Pool | null = null;
 
-function getPool(): Pool {
+async function getPool(): Promise<import('mysql2/promise').Pool> {
   if (_pool) return _pool;
+  const mysql = await import('mysql2/promise');
   _pool = mysql.createPool({
     host: process.env.MYSQL_HOST || 'localhost',
     port: Number(process.env.MYSQL_PORT || 3306),
@@ -56,20 +56,20 @@ function toDatetime(ts: number): string {
 
 /** List keys (decrypted=false masks the key for display) */
 export async function listKeys(provider?: string, decrypted = false): Promise<ApiKeyEntry[]> {
-  const pool = getPool();
+  const pool = await getPool();
   const sql = provider
     ? 'SELECT * FROM api_keys WHERE provider = ? ORDER BY priority DESC, created_at ASC'
     : 'SELECT * FROM api_keys ORDER BY provider, priority DESC, created_at ASC';
   const params = provider ? [provider] : [];
-  const [rows] = await pool.query<RowDataPacket[]>(sql, params);
+  const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(sql, params);
   return (rows as ApiKeyRow[]).map((r) => rowToEntry(r, decrypted));
 }
 
 /** Get all active (non-rate-limited) keys for a provider, decrypted */
 export async function getActiveKeys(provider: string): Promise<ApiKeyEntry[]> {
-  const pool = getPool();
+  const pool = await getPool();
   const now = toDatetime(Date.now());
-  const [rows] = await pool.query<RowDataPacket[]>(
+  const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
     `SELECT * FROM api_keys
      WHERE provider = ? AND is_active = TRUE
        AND (rate_limited_until IS NULL OR rate_limited_until <= ?)
@@ -81,8 +81,8 @@ export async function getActiveKeys(provider: string): Promise<ApiKeyEntry[]> {
 
 /** Get a single key by id (decrypted) */
 export async function getKeyById(id: string): Promise<ApiKeyEntry | null> {
-  const pool = getPool();
-  const [rows] = await pool.query<RowDataPacket[]>(
+  const pool = await getPool();
+  const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
     'SELECT * FROM api_keys WHERE id = ?',
     [id],
   );
@@ -99,7 +99,7 @@ export async function createKey(entry: {
   label?: string;
   priority?: number;
 }): Promise<ApiKeyEntry> {
-  const pool = getPool();
+  const pool = await getPool();
   const encrypted = encrypt(entry.apiKey);
   const now = toDatetime(Date.now());
 
@@ -132,7 +132,7 @@ export async function updateKey(id: string, patch: {
   isActive?: boolean;
   priority?: number;
 }): Promise<ApiKeyEntry | null> {
-  const pool = getPool();
+  const pool = await getPool();
   const sets: string[] = [];
   const params: unknown[] = [];
 
@@ -173,14 +173,14 @@ export async function updateKey(id: string, patch: {
 
 /** Delete a key */
 export async function removeKey(id: string): Promise<boolean> {
-  const pool = getPool();
+  const pool = await getPool();
   const [result] = await pool.query('DELETE FROM api_keys WHERE id = ?', [id]);
   return (result as { affectedRows: number }).affectedRows > 0;
 }
 
 /** Increment request count and update last_used_at */
 export async function incrementUsage(id: string): Promise<void> {
-  const pool = getPool();
+  const pool = await getPool();
   await pool.query(
     `UPDATE api_keys
      SET request_count = request_count + 1, last_used_at = ?, updated_at = ?
@@ -191,7 +191,7 @@ export async function incrementUsage(id: string): Promise<void> {
 
 /** Increment error count and update last_error_at */
 export async function incrementError(id: string): Promise<void> {
-  const pool = getPool();
+  const pool = await getPool();
   await pool.query(
     `UPDATE api_keys
      SET error_count = error_count + 1, last_error_at = ?, updated_at = ?
@@ -202,7 +202,7 @@ export async function incrementError(id: string): Promise<void> {
 
 /** Mark a key as rate-limited until a specific time */
 export async function markRateLimited(id: string, until: Date): Promise<void> {
-  const pool = getPool();
+  const pool = await getPool();
   await pool.query(
     'UPDATE api_keys SET rate_limited_until = ?, updated_at = ? WHERE id = ?',
     [toDatetime(until.getTime()), toDatetime(Date.now()), id],
