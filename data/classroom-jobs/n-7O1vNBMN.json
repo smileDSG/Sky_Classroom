@@ -1,0 +1,183 @@
+{
+  "id": "n-7O1vNBMN",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-08T08:48:00.507Z",
+  "updatedAt": "2026-06-08T08:50:58.782Z",
+  "inputSummary": {
+    "requirementPreview": "python入门教学，我只要3页幻灯片",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 3,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-06-08T08:48:00.516Z",
+  "totalScenes": 3,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "什么是Python？",
+        "description": "介绍Python语言的特点、应用领域以及为何它适合初学者。",
+        "keyPoints": [
+          "Python是一种解释型、面向对象的高级编程语言",
+          "广泛应用于数据分析、人工智能、Web开发等领域",
+          "语法简洁、易读易写，特别适合编程入门"
+        ],
+        "teachingObjective": "了解Python的基本概念和主要应用场景",
+        "estimatedDuration": 90,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "Python基础语法",
+        "description": "讲解变量、基本数据类型和print()输出函数，为编写代码打基础。",
+        "keyPoints": [
+          "变量命名规则：大小写敏感，推荐小写字母+下划线",
+          "基本数据类型：整数int、浮点数float、字符串str",
+          "使用print()函数将信息输出到屏幕"
+        ],
+        "teachingObjective": "掌握Python变量声明、基本数据类型和输出方法",
+        "estimatedDuration": 120,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "编写你的第一个Python程序",
+        "description": "展示一个完整的入门程序，包含用户输入和个性化输出，并解释代码每一部分。",
+        "keyPoints": [
+          "使用input()函数获取用户输入（返回字符串）",
+          "将输入赋值给变量，再用print()组合输出",
+          "示例代码：name = input('请输入你的名字：'); print('你好，' + name + '！欢迎学习Python！')"
+        ],
+        "teachingObjective": "能独立阅读并编写一个带用户输入和简单输出的Python小程序",
+        "estimatedDuration": 120,
+        "order": 3
+      }
+    ],
+    "languageDirective": "本课程面向中文母语学习者，使用中文进行Python入门教学。编程语言关键字、函数名等保留英文形式（如print、input、int），同时用中文注释解释其含义。确保术语清晰易懂，对初学者友好。",
+    "topicSummary": "Python快速入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "kvNBYr9upy",
+      "name": "什么是Python？",
+      "languageDirective": "本课程面向中文母语学习者，使用中文进行Python入门教学。编程语言关键字、函数名等保留英文形式（如print、input、int），同时用中文注释解释其含义。确保术语清晰易懂，对初学者友好。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780908509997,
+      "updatedAt": 1780908509997,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python入门教学，我只要3页幻灯片",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "什么是Python？",
+      "description": "介绍Python语言的特点、应用领域以及为何它适合初学者。",
+      "keyPoints": [
+        "Python是一种解释型、面向对象的高级编程语言",
+        "广泛应用于数据分析、人工智能、Web开发等领域",
+        "语法简洁、易读易写，特别适合编程入门"
+      ],
+      "teachingObjective": "了解Python的基本概念和主要应用场景",
+      "estimatedDuration": 90,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "Python基础语法",
+      "description": "讲解变量、基本数据类型和print()输出函数，为编写代码打基础。",
+      "keyPoints": [
+        "变量命名规则：大小写敏感，推荐小写字母+下划线",
+        "基本数据类型：整数int、浮点数float、字符串str",
+        "使用print()函数将信息输出到屏幕"
+      ],
+      "teachingObjective": "掌握Python变量声明、基本数据类型和输出方法",
+      "estimatedDuration": 120,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "编写你的第一个Python程序",
+      "description": "展示一个完整的入门程序，包含用户输入和个性化输出，并解释代码每一部分。",
+      "keyPoints": [
+        "使用input()函数获取用户输入（返回字符串）",
+        "将输入赋值给变量，再用print()组合输出",
+        "示例代码：name = input('请输入你的名字：'); print('你好，' + name + '！欢迎学习Python！')"
+      ],
+      "teachingObjective": "能独立阅读并编写一个带用户输入和简单输出的Python小程序",
+      "estimatedDuration": 120,
+      "order": 3
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本课程面向中文母语学习者，使用中文进行Python入门教学。编程语言关键字、函数名等保留英文形式（如print、input、int），同时用中文注释解释其含义。确保术语清晰易懂，对初学者友好。",
+    "totalScenes": 3
+  },
+  "topicSummary": "Python快速入门",
+  "completedAt": "2026-06-08T08:50:58.782Z",
+  "result": {
+    "classroomId": "kvNBYr9upy",
+    "url": "http://localhost:3000/classroom/kvNBYr9upy",
+    "scenesCount": 3
+  }
+}

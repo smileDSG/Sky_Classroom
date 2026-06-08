@@ -58,6 +58,11 @@ export function cleanLatexContent(text: string): string {
 
   let s = text;
 
+  // 0. Normalize double backslashes from JSON escaping.
+  // The streaming parser extracts raw content between JSON quotes without
+  // JSON.parse, so \\frac remains as literal double backslash characters.
+  s = s.replace(/\\\\([a-zA-Z]+)/g, (_m: string, cmd: string) => `\\${cmd}`);
+
   // 1. /sum → \sum, /frac → \frac (LLM sometimes emits forward slash)
   s = s.replace(
     /\/(sum|prod|int|frac|sqrt|lim|sin|cos|tan|log|ln|exp|partial|nabla|infty|alpha|beta|gamma|delta|theta|lambda|mu|pi|sigma|phi|omega|cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|rightarrow|leftarrow|Rightarrow|Leftarrow|to|in|notin|subset|supset|subseteq|supseteq|cup|cap|forall|exists|neg|land|lor|emptyset)/g,
@@ -265,7 +270,11 @@ class StepStreamParser {
       }
     }
 
-    // "steps" not found — check for "solution" as a single-step fallback
+    // "steps" not found — check for "solution" as a fallback for the
+    // detailed derivation only. Do NOT push it into steps — that caused
+    // the solution text to appear twice (once in the solution block,
+    // once in the steps tab). Steps will be populated later from the
+    // actual "steps" array, or left empty so the UI shows a skeleton.
     const solIdx = this.buffer.indexOf('"solution"');
     if (solIdx !== -1) {
       const after = this.buffer.substring(solIdx + 10);
@@ -275,18 +284,9 @@ class StepStreamParser {
         const match = valuePart.match(/"([^"]*)"/);
         if (match) {
           const solutionText = cleanLatexContent(match[1]);
-          // Store as detailed solution
+          // Store as detailed solution only — do NOT duplicate into steps
           this.solution = solutionText;
           events.push({ type: 'solution', solution: solutionText });
-          // Also use as single step fallback
-          const step: StepEvent = {
-            type: 'step',
-            label: '解答',
-            content: solutionText,
-            keyPoints: [],
-          };
-          events.push(step);
-          this.steps.push(step);
         }
       }
     }

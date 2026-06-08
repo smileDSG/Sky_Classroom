@@ -10,10 +10,15 @@ const log = createLogger('SolveJobRunner');
 const globalForRunningJobs = globalThis as unknown as {
   _solveRunningJobs: Map<string, Promise<void>> | undefined;
 };
-const runningJobs: Map<string, Promise<void>> =
-  globalForRunningJobs._solveRunningJobs ?? (globalForRunningJobs._solveRunningJobs = new Map());
+const runningJobs: Map<string, Promise<void>> = globalForRunningJobs._solveRunningJobs ??
+(globalForRunningJobs._solveRunningJobs = new Map());
 
-export function runSolveJob(jobId: string, problemText: string, problemImage: string | null, userAnswer: string | null): Promise<void> {
+export function runSolveJob(
+  jobId: string,
+  problemText: string,
+  problemImage: string | null,
+  userAnswer: string | null,
+): Promise<void> {
   const existing = runningJobs.get(jobId);
   if (existing) return existing;
 
@@ -46,6 +51,7 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
 
       const output = finalState.fourPartOutput ?? {
         answer: finalState.solution ?? '',
+        solution: finalState.solution ?? '',
         steps: [],
         knowledgePoints: [],
         similarQuestions: [],
@@ -57,6 +63,7 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
         progress: 100,
         result: {
           answer: output.answer,
+          solution: output.solution ?? '',
           steps: output.steps,
           knowledgePoints: output.knowledgePoints,
           similarQuestions: output.similarQuestions,
@@ -77,7 +84,9 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
           await saveToSolveCache({
             problemText,
             problemHash: hashProblemText(problemText),
-            solution: output.answer,
+            solution: output.solution ?? output.answer,
+            answer: output.answer,
+            knowledgePoints: output.knowledgePoints,
             agentId: finalState.agentRoute ?? 'universal',
             solvedAt: Date.now(),
           });
@@ -91,8 +100,10 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
             await saveToQuestionBank({
               problemText,
               problemImage: problemImage ?? undefined,
+              solution: output.solution ?? output.answer,
+              steps: output.steps,
               answer: output.answer,
-              knowledgePoints: (output.knowledgePoints ?? []).map(kp => ({
+              knowledgePoints: (output.knowledgePoints ?? []).map((kp) => ({
                 name: kp.name,
                 description: kp.description,
                 difficulty: kp.difficulty,

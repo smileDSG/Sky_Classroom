@@ -42,6 +42,10 @@ export async function submitClassroomJob(body: Record<string, unknown>): Promise
     } catch {
       /* ignore */
     }
+    // Surface auth errors so callers can redirect to login
+    if (res.status === 401) {
+      throw new Error(detail || 'User not found');
+    }
     throw new Error(detail || '提交课堂生成作业失败');
   }
   const json = await res.json();

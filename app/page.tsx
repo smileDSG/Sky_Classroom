@@ -503,7 +503,14 @@ export default function HomePage() {const router = useRouter();
       startJobPolling(jobId, topic);
     } catch (err) {
       log.error('Error preparing generation:', err);
-      setError(err instanceof Error ? err.message : '生成课堂失败，请重试');
+      const msg = err instanceof Error ? err.message : '生成课堂失败，请重试';
+      // If user not found in DB (stale JWT after DB reset), redirect to login
+      if (msg === 'User not found' || msg.includes('Not authenticated')) {
+        toast.error('登录已过期，请重新登录');
+        router.push('/auth/login');
+        return;
+      }
+      setError(msg);
     }
   };
 

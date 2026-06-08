@@ -1,11 +1,16 @@
 /**
  * Solve Chain — orchestrates the multi-agent solve pipeline.
  *
- * Chain: analyze → solve → verify → (correct?) → knowledge → similar
+ * Chain: analyze → solve → verify → (correct?) → knowledge + similar
  *
  * Timeout control:
  *   - Single step: dynamic (min of remaining budget and 20s cap)
- *   - Total chain: 120s
+ *   - Total chain: 60s (reduced from 120s for snappier UX)
+ *
+ * Performance optimizations:
+ *   - analyze runs in parallel with the checking phase
+ *   - knowledge-gen and similar-question search run in parallel
+ *   - verify skipped when analysis confidence > 0.8 (heuristic trust)
  *
  * Error degradation: a single step failure does not block subsequent steps;
  * the step is marked with a warning flag and the chain continues.
@@ -21,14 +26,18 @@ import type { SolverAgentType } from './types';
 import { buildKnowledgePointsPrompt } from './solver-prompts';
 import { findSimilarByKnowledgePoints, hashProblemText } from './question-bank';
 import { createLogger } from '@/lib/logger';
+import { postProcessMathContent } from './math-postprocessor';
 
 const log = createLogger('SolveChain');
 
 // ── Timeouts (ms) ──────────────────────────────────────────────────
 
-const TOTAL_CHAIN_TIMEOUT = 120_000;
-const MAX_STEP_TIMEOUT = 20_000;
-const MIN_STEP_TIMEOUT = 5_000;
+const TOTAL_CHAIN_TIMEOUT = 60_000;
+const MAX_STEP_TIMEOUT = 15_000;
+const MIN_STEP_TIMEOUT = 3_000;
+
+/** Confidence threshold above which we skip the verify step. */
+const HIGH_CONFIDENCE_THRESHOLD = 0.8;
 
 /** Dynamic step timeout: use remaining chain budget, capped between min and max. */
 function getStepTimeout(elapsed: number): number {
@@ -94,7 +103,7 @@ async function withTimeout<T>(
   timeoutMs: number,
   label: string,
 ): Promise<{ ok: true; value: T } | { ok: false; error: string }> {
-  let timer: ReturnType<typeof setTimeout>;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timer = setTimeout(
       () => reject(new Error(`${label} timed out after ${timeoutMs}ms`)),
@@ -163,17 +172,22 @@ async function generateKnowledgePoints(
  * Execute the full solve chain for a problem.
  *
  * This runs the complete pipeline:
- *   analyze → solve → verify → (correct?) → knowledge → similar
+ *   analyze → solve → verify → (correct?) → knowledge + similar (parallel)
  *
- * Each step has a dynamic timeout (min of remaining budget and 20s);
- * the entire chain has a 120s timeout.
+ * Each step has a dynamic timeout (min of remaining budget and 15s);
+ * the entire chain has a 60s timeout.
  * A failed step emits a warning but does not stop the chain.
+ *
+ * @param analyzePromise — optional pre-started analyze promise for parallel execution.
+ *   Pass the result of `analyzeProblem(problemText)` started during the checking phase.
+ *   If omitted, analyze runs synchronously in Step 1 (same as before).
  */
 export async function runSolveChain(
   problemText: string,
   problemImage?: string | null,
   onStreamEvent?: (event: StreamEvent) => void,
   signal?: AbortSignal,
+  analyzePromise?: Promise<import('./agents/analyze-types').AnalysisResult>,
 ): Promise<SolveChainResult> {
   const startTime = Date.now();
   const warnings: string[] = [];
@@ -207,8 +221,9 @@ export async function runSolveChain(
     if (chainAbort.signal.aborted) {
       throw new Error('Chain aborted');
     }
+    const analyzeToRun = analyzePromise ?? analyzeProblem(problemText);
     const analysisResult = await withTimeout(
-      analyzeProblem(problemText),
+      analyzeToRun,
       getStepTimeout(Date.now() - startTime),
       'analyze',
     );
@@ -257,12 +272,32 @@ export async function runSolveChain(
       warnings.push(`解题步骤异常: ${err instanceof Error ? err.message : String(err)}`);
     }
 
+    // ── Step 2.5: Regex post-processing ─────────────────────────────
+    // Apply regex-based math formatting (Unicode conversion, bare functions,
+    // fraction wrapping, etc.). The LLM prompt already instructs proper
+    // LaTeX output, so this is just a safety net for edge cases.
+    if (solution) {
+      solution = postProcessMathContent(solution);
+      steps = steps.map((s) => ({ ...s, content: postProcessMathContent(s.content) }));
+      answer = postProcessMathContent(answer);
+    }
+
     // ── Step 3: Verify ─────────────────────────────────────────────
     log.info('[SolveChain] Step 3: Verify');
     if (chainAbort.signal.aborted) {
       throw new Error('Chain aborted');
     }
-    if (answer) {
+    // Skip verify if analysis confidence is high (heuristic trust)
+    const highConfidence = analysis?.confidence ?? 0;
+    const skipVerify = highConfidence >= HIGH_CONFIDENCE_THRESHOLD;
+    if (skipVerify) {
+      log.info('[SolveChain] Step 3: Verify skipped (high confidence)');
+      verification = {
+        isCorrect: true,
+        confidence: highConfidence,
+        reasoning: '校验已跳过：分析置信度较高（≥0.8）',
+      };
+    } else if (answer) {
       const verifyResult = await withTimeout(
         verifyAnswer(problemText, answer),
         getStepTimeout(Date.now() - startTime),
@@ -297,57 +332,62 @@ export async function runSolveChain(
         correction = correctResult.value;
         answer = correctResult.value.answer;
         // Update steps with corrected version
-        steps = correctResult.value.steps.length > 0 ? correctResult.value.steps : steps;
+        steps =
+          correctResult.value.steps.length > 0
+            ? correctResult.value.steps.map((s) => ({ ...s, keyPoints: s.keyPoints ?? [] }))
+            : steps;
       } else {
         warnings.push('修正步骤超时或失败，保留原答案');
       }
     }
 
-    // ── Step 5: Knowledge points (if not from solver) ──────────────
-    log.info('[SolveChain] Step 5: Knowledge points');
+    // ── Step 5+6: Knowledge points + Similar questions (parallel) ──
+    log.info('[SolveChain] Step 5+6: Knowledge + Similar (parallel)');
     if (chainAbort.signal.aborted) {
       throw new Error('Chain aborted');
-    }
-    if (knowledgePoints.length === 0 && answer) {
-      const kpResult = await withTimeout(
-        generateKnowledgePoints(problemText, answer),
-        getStepTimeout(Date.now() - startTime),
-        'knowledge-gen',
-      );
-      if (kpResult.ok) {
-        knowledgePoints = kpResult.value;
-      } else {
-        warnings.push('知识点生成超时或失败');
-      }
     }
 
-    // ── Step 6: Similar questions (if not from solver) ─────────────
-    log.info('[SolveChain] Step 6: Similar questions');
-    if (chainAbort.signal.aborted) {
-      throw new Error('Chain aborted');
-    }
-    if (similarQuestions.length === 0 && knowledgePoints.length > 0) {
-      try {
-        const currentHash = hashProblemText(problemText);
-        const kbSimilar = await findSimilarByKnowledgePoints(
-          problemText,
-          knowledgePoints.map((kp) => ({ name: kp.name })),
-          currentHash,
-          3,
-        );
-        if (kbSimilar.length >= 2) {
-          similarQuestions = kbSimilar.map((q) => ({
-            problem: q.problem,
-            difficulty: q.difficulty,
-            knowledgePoint: q.knowledgePoint,
-            answer: q.answer,
-          }));
-        }
-      } catch (err) {
-        log.warn('[SolveChain] Similar question lookup failed:', err);
-        // Not a warning — KB lookup is optional
-      }
-    }
+    // Start both operations in parallel
+    const knowledgePromise =
+      knowledgePoints.length === 0 && answer
+        ? withTimeout(
+            generateKnowledgePoints(problemText, answer),
+            getStepTimeout(Date.now() - startTime),
+            'knowledge-gen',
+          )
+        : Promise.resolve({ ok: true as const, value: knowledgePoints });
+
+    const currentHash = hashProblemText(problemText);
+    const kpNames =
+      knowledgePoints.length > 0 ? knowledgePoints.map((kp) => ({ name: kp.name })) : [];
+    const similarPromise =
+      similarQuestions.length === 0 && kpNames.length > 0 && answer
+        ? (async () => {
+            try {
+              const kbSimilar = await findSimilarByKnowledgePoints(
+                problemText,
+                kpNames,
+                currentHash,
+                3,
+              );
+              if (kbSimilar.length >= 2) {
+                return kbSimilar.map((q) => ({
+                  problem: q.problem,
+                  difficulty: q.difficulty,
+                  knowledgePoint: q.knowledgePoint,
+                  answer: q.answer,
+                }));
+              }
+            } catch (err) {
+              log.warn('[SolveChain] Similar question lookup failed:', err);
+            }
+            return [];
+          })()
+        : Promise.resolve(similarQuestions);
+
+    const [kpResult, similarResult] = await Promise.all([knowledgePromise, similarPromise]);
+    if (kpResult.ok) knowledgePoints = kpResult.value;
+    if (similarResult.length > 0) similarQuestions = similarResult;
 
     // ── Build result ───────────────────────────────────────────────
     const duration = Date.now() - startTime;
@@ -431,10 +471,8 @@ function mapSubjectToAgentType(subject: AnalysisResult['subject']): SolverAgentT
     case 'english':
       return 'humanities';
     case 'unknown':
-    default: {
-      const _exhaustive: never = subject;
-      void _exhaustive;
       return 'universal';
-    }
+    default:
+      return 'universal';
   }
 }

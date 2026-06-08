@@ -117,6 +117,8 @@ export interface QuestionBankEntry {
   problemText: string;
   problemImage?: string;
   solution?: string;
+  /** 对solution的概括简化步骤 */
+  steps?: { label: string; content: string; keyPoints?: string[] }[];
   answer: string;
   knowledgePoints: { name: string; description: string; difficulty: string }[];
   similarQuestions?: {

@@ -85,7 +85,7 @@ export function SimilarProblems({
                 key={index}
                 className={cn(
                   'group transition-colors',
-                  isCompleted ? 'bg-green-50/50 dark:bg-green-900/10' : 'hover:bg-muted/30'
+                  isCompleted ? 'bg-green-50/50 dark:bg-green-900/10' : 'hover:bg-muted/30',
                 )}
               >
                 <div className="p-4">
@@ -93,9 +93,7 @@ export function SimilarProblems({
                     <div
                       className={cn(
                         'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors',
-                        isCompleted
-                          ? 'bg-green-500 text-white'
-                          : 'bg-[#4A90D9]/10 text-[#4A90D9]'
+                        isCompleted ? 'bg-green-500 text-white' : 'bg-[#4A90D9]/10 text-[#4A90D9]',
                       )}
                     >
                       {isCompleted ? (
@@ -120,10 +118,10 @@ export function SimilarProblems({
                     <div className="flex-1 min-w-0">
                       <div
                         className={cn(
-                          'text-sm leading-relaxed cursor-pointer transition-colors',
+                          'text-sm leading-normal cursor-pointer transition-colors',
                           isCompleted
                             ? 'text-green-700 dark:text-green-300'
-                            : 'text-foreground hover:text-[#4A90D9]'
+                            : 'text-foreground hover:text-[#4A90D9]',
                         )}
                         onClick={() => handleQuestionClick(question.problem, index)}
                       >
@@ -139,7 +137,7 @@ export function SimilarProblems({
                             question.difficulty > 3 &&
                               question.difficulty <= 6 &&
                               'border-yellow-200 text-yellow-600',
-                            question.difficulty > 6 && 'border-red-200 text-red-600'
+                            question.difficulty > 6 && 'border-red-200 text-red-600',
                           )}
                         >
                           难度 {question.difficulty}/10
@@ -173,7 +171,7 @@ export function SimilarProblems({
                             'h-7 text-xs',
                             isCompleted
                               ? 'text-green-600 hover:bg-green-100 hover:text-green-700'
-                              : 'text-muted-foreground hover:text-[#4A90D9]'
+                              : 'text-muted-foreground hover:text-[#4A90D9]',
                           )}
                           onClick={() => toggleCompleted(index)}
                         >
@@ -195,7 +193,7 @@ export function SimilarProblems({
                         'h-5 w-5 shrink-0 transition-colors',
                         isCompleted
                           ? 'text-green-400'
-                          : 'text-muted-foreground group-hover:text-[#4A90D9]'
+                          : 'text-muted-foreground group-hover:text-[#4A90D9]',
                       )}
                     />
                   </div>
@@ -213,12 +211,7 @@ export function SimilarProblems({
                   ? '太棒了！所有同类练习都已完成'
                   : `还有 ${similarQuestions.length - completedQuestions.size} 道题目待练习`}
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={onPracticeClick}
-              >
+              <Button variant="outline" size="sm" className="gap-1" onClick={onPracticeClick}>
                 <BookOpen className="h-4 w-4" />
                 更多练习
               </Button>

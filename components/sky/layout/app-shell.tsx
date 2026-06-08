@@ -207,13 +207,11 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
           )}
           <HeaderControls />
           <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700/40" />
-          <FloatingUserCard
-            onUpgradeOpen={() => setUpgradeOpen(true)}
-          />
+          <FloatingUserCard onUpgradeOpen={() => setUpgradeOpen(true)} />
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto px-6 py-6">{children}</main>
+      <main className="flex-1 px-6 py-6">{children}</main>
 
       <BackgroundTasksIndicator />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />

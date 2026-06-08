@@ -1,0 +1,503 @@
+{
+  "id": "QCMrKFuxUt",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-08T06:43:11.303Z",
+  "updatedAt": "2026-06-08T06:52:08.766Z",
+  "inputSummary": {
+    "requirementPreview": "python入门教程",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 9,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-06-08T06:43:11.318Z",
+  "totalScenes": 13,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "课程简介",
+        "description": "介绍本课程的学习目标、内容概览及学习方法，激发学习兴趣。",
+        "keyPoints": [
+          "Python 是一种易学、强大的编程语言",
+          "课程将涵盖基础语法、变量、控制流、函数等",
+          "通过动手练习巩固知识，适合零基础"
+        ],
+        "teachingObjective": "了解课程结构，建立学习预期",
+        "estimatedDuration": 90,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "安装与环境配置",
+        "description": "指导学习者安装 Python 和选择合适的代码编辑器，为编程做准备。",
+        "keyPoints": [
+          "从官网下载对应操作系统的 Python 安装包",
+          "推荐使用 IDLE 或 Visual Studio Code",
+          "验证安装：在终端运行 python --version"
+        ],
+        "teachingObjective": "能够在自己的电脑上运行 Python 代码",
+        "estimatedDuration": 120,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "第一个程序：Hello, World!",
+        "description": "演示如何编写并运行最简单的 Python 程序，建立编程初步体验。",
+        "keyPoints": [
+          "使用 print() 函数输出文本",
+          "字符串需要用引号括起来",
+          "运行代码并查看结果"
+        ],
+        "teachingObjective": "掌握 print() 函数的基本用法",
+        "estimatedDuration": 90,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "基本语法规则",
+        "description": "讲解 Python 的注释、缩进、语句分隔等基础语法要素。",
+        "keyPoints": [
+          "用 # 添加单行注释",
+          "缩进（通常 4 个空格）定义代码块",
+          "一般一行一条语句，长语句可用反斜杠续行"
+        ],
+        "teachingObjective": "理解并写出符合 Python 语法规范的简单代码",
+        "estimatedDuration": 100,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "变量与数据类型",
+        "description": "介绍变量的概念以及 Python 中常见的基本数据类型。",
+        "keyPoints": [
+          "变量是存储数据的容器，无需声明类型",
+          "常见类型：int（整数）、float（浮点数）、str（字符串）、bool（布尔值）",
+          "使用 type() 函数查看变量的数据类型"
+        ],
+        "teachingObjective": "能够定义变量并识别不同数据类型",
+        "estimatedDuration": 120,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "interactive",
+        "title": "动手练习：变量与输出",
+        "description": "提供一个在线代码编辑环境，让学习者亲手创建变量并打印它们的值。",
+        "keyPoints": [
+          "创建几个不同数据类型的变量",
+          "使用 print() 输出变量内容",
+          "观察变量值的变化"
+        ],
+        "teachingObjective": "通过实践加深对变量和 print() 的理解",
+        "estimatedDuration": 180,
+        "order": 6,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python",
+          "concept": "变量赋值与输出"
+        }
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "小测验：变量与数据类型",
+        "description": "通过选择题检测对变量和数据类型知识的掌握情况。",
+        "keyPoints": [
+          "变量命名的规则",
+          "如何判断数据类型",
+          "类型之间的区别"
+        ],
+        "teachingObjective": "评估并巩固变量与数据类型的学习效果",
+        "estimatedDuration": 120,
+        "order": 7,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single"
+          ]
+        }
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "运算符",
+        "description": "讲解算术运算符、比较运算符和逻辑运算符的基本用法。",
+        "keyPoints": [
+          "算术：+ - * / // % **",
+          "比较：== != > < >= <=",
+          "逻辑：and, or, not"
+        ],
+        "teachingObjective": "能够在表达式中正确使用各种运算符",
+        "estimatedDuration": 100,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "条件判断",
+        "description": "介绍使用 if、elif、else 实现程序分支控制。",
+        "keyPoints": [
+          "if 语句的基本结构",
+          "elif 和 else 用于多分支判断",
+          "注意条件后的冒号和缩进"
+        ],
+        "teachingObjective": "能根据条件编写分支逻辑",
+        "estimatedDuration": 110,
+        "order": 9
+      },
+      {
+        "id": "scene_10",
+        "type": "slide",
+        "title": "循环结构",
+        "description": "展示 for 循环和 while 循环的用法，理解重复执行代码块。",
+        "keyPoints": [
+          "for 循环常与 range() 配合使用",
+          "while 循环在条件为真时重复执行",
+          "使用 break 和 continue 控制循环流程"
+        ],
+        "teachingObjective": "能够用循环处理重复性任务",
+        "estimatedDuration": 120,
+        "order": 10
+      },
+      {
+        "id": "scene_11",
+        "type": "quiz",
+        "title": "综合测验",
+        "description": "结合运算符、条件判断和循环进行综合考查。",
+        "keyPoints": [
+          "根据描述选择正确的代码片段",
+          "分析循环的执行次数",
+          "补全程序逻辑"
+        ],
+        "teachingObjective": "综合检验前半部分知识点的掌握程度",
+        "estimatedDuration": 150,
+        "order": 11,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_12",
+        "type": "slide",
+        "title": "函数基础",
+        "description": "引入函数的定义与调用，学习组织代码的基本方法。",
+        "keyPoints": [
+          "使用 def 关键字定义函数",
+          "函数名后跟括号和冒号",
+          "通过函数名加括号进行调用，可传递参数"
+        ],
+        "teachingObjective": "能够定义简单函数并调用它",
+        "estimatedDuration": 130,
+        "order": 12
+      },
+      {
+        "id": "scene_13",
+        "type": "slide",
+        "title": "总结与下一步",
+        "description": "回顾课程核心内容，提供后续学习资源和建议。",
+        "keyPoints": [
+          "已学习：变量、数据类型、运算符、控制流、函数",
+          "可尝试用 Python 解决小问题（如计算器）",
+          "推荐进一步学习：列表、字典、文件操作"
+        ],
+        "teachingObjective": "梳理知识体系，激发持续学习动力",
+        "estimatedDuration": 100,
+        "order": 13
+      }
+    ],
+    "languageDirective": "本教程使用简体中文教学。代码关键词、变量名等保留英文原样，编程术语首次出现时附注英文以帮助理解。教学语言应简洁、友好，适合零基础学习者，采用鼓励式语气。",
+    "topicSummary": "Python入门教程",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "Tb_vz5YaBh",
+      "name": "课程简介",
+      "languageDirective": "本教程使用简体中文教学。代码关键词、变量名等保留英文原样，编程术语首次出现时附注英文以帮助理解。教学语言应简洁、友好，适合零基础学习者，采用鼓励式语气。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780901045680,
+      "updatedAt": 1780901045680,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python入门教程",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "课程简介",
+      "description": "介绍本课程的学习目标、内容概览及学习方法，激发学习兴趣。",
+      "keyPoints": [
+        "Python 是一种易学、强大的编程语言",
+        "课程将涵盖基础语法、变量、控制流、函数等",
+        "通过动手练习巩固知识，适合零基础"
+      ],
+      "teachingObjective": "了解课程结构，建立学习预期",
+      "estimatedDuration": 90,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "安装与环境配置",
+      "description": "指导学习者安装 Python 和选择合适的代码编辑器，为编程做准备。",
+      "keyPoints": [
+        "从官网下载对应操作系统的 Python 安装包",
+        "推荐使用 IDLE 或 Visual Studio Code",
+        "验证安装：在终端运行 python --version"
+      ],
+      "teachingObjective": "能够在自己的电脑上运行 Python 代码",
+      "estimatedDuration": 120,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "第一个程序：Hello, World!",
+      "description": "演示如何编写并运行最简单的 Python 程序，建立编程初步体验。",
+      "keyPoints": [
+        "使用 print() 函数输出文本",
+        "字符串需要用引号括起来",
+        "运行代码并查看结果"
+      ],
+      "teachingObjective": "掌握 print() 函数的基本用法",
+      "estimatedDuration": 90,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "基本语法规则",
+      "description": "讲解 Python 的注释、缩进、语句分隔等基础语法要素。",
+      "keyPoints": [
+        "用 # 添加单行注释",
+        "缩进（通常 4 个空格）定义代码块",
+        "一般一行一条语句，长语句可用反斜杠续行"
+      ],
+      "teachingObjective": "理解并写出符合 Python 语法规范的简单代码",
+      "estimatedDuration": 100,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "变量与数据类型",
+      "description": "介绍变量的概念以及 Python 中常见的基本数据类型。",
+      "keyPoints": [
+        "变量是存储数据的容器，无需声明类型",
+        "常见类型：int（整数）、float（浮点数）、str（字符串）、bool（布尔值）",
+        "使用 type() 函数查看变量的数据类型"
+      ],
+      "teachingObjective": "能够定义变量并识别不同数据类型",
+      "estimatedDuration": 120,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "interactive",
+      "title": "动手练习：变量与输出",
+      "description": "提供一个在线代码编辑环境，让学习者亲手创建变量并打印它们的值。",
+      "keyPoints": [
+        "创建几个不同数据类型的变量",
+        "使用 print() 输出变量内容",
+        "观察变量值的变化"
+      ],
+      "teachingObjective": "通过实践加深对变量和 print() 的理解",
+      "estimatedDuration": 180,
+      "order": 6,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python",
+        "concept": "变量赋值与输出"
+      }
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "小测验：变量与数据类型",
+      "description": "通过选择题检测对变量和数据类型知识的掌握情况。",
+      "keyPoints": [
+        "变量命名的规则",
+        "如何判断数据类型",
+        "类型之间的区别"
+      ],
+      "teachingObjective": "评估并巩固变量与数据类型的学习效果",
+      "estimatedDuration": 120,
+      "order": 7,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single"
+        ]
+      }
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "运算符",
+      "description": "讲解算术运算符、比较运算符和逻辑运算符的基本用法。",
+      "keyPoints": [
+        "算术：+ - * / // % **",
+        "比较：== != > < >= <=",
+        "逻辑：and, or, not"
+      ],
+      "teachingObjective": "能够在表达式中正确使用各种运算符",
+      "estimatedDuration": 100,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "条件判断",
+      "description": "介绍使用 if、elif、else 实现程序分支控制。",
+      "keyPoints": [
+        "if 语句的基本结构",
+        "elif 和 else 用于多分支判断",
+        "注意条件后的冒号和缩进"
+      ],
+      "teachingObjective": "能根据条件编写分支逻辑",
+      "estimatedDuration": 110,
+      "order": 9
+    },
+    {
+      "id": "scene_10",
+      "type": "slide",
+      "title": "循环结构",
+      "description": "展示 for 循环和 while 循环的用法，理解重复执行代码块。",
+      "keyPoints": [
+        "for 循环常与 range() 配合使用",
+        "while 循环在条件为真时重复执行",
+        "使用 break 和 continue 控制循环流程"
+      ],
+      "teachingObjective": "能够用循环处理重复性任务",
+      "estimatedDuration": 120,
+      "order": 10
+    },
+    {
+      "id": "scene_11",
+      "type": "quiz",
+      "title": "综合测验",
+      "description": "结合运算符、条件判断和循环进行综合考查。",
+      "keyPoints": [
+        "根据描述选择正确的代码片段",
+        "分析循环的执行次数",
+        "补全程序逻辑"
+      ],
+      "teachingObjective": "综合检验前半部分知识点的掌握程度",
+      "estimatedDuration": 150,
+      "order": 11,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_12",
+      "type": "slide",
+      "title": "函数基础",
+      "description": "引入函数的定义与调用，学习组织代码的基本方法。",
+      "keyPoints": [
+        "使用 def 关键字定义函数",
+        "函数名后跟括号和冒号",
+        "通过函数名加括号进行调用，可传递参数"
+      ],
+      "teachingObjective": "能够定义简单函数并调用它",
+      "estimatedDuration": 130,
+      "order": 12
+    },
+    {
+      "id": "scene_13",
+      "type": "slide",
+      "title": "总结与下一步",
+      "description": "回顾课程核心内容，提供后续学习资源和建议。",
+      "keyPoints": [
+        "已学习：变量、数据类型、运算符、控制流、函数",
+        "可尝试用 Python 解决小问题（如计算器）",
+        "推荐进一步学习：列表、字典、文件操作"
+      ],
+      "teachingObjective": "梳理知识体系，激发持续学习动力",
+      "estimatedDuration": 100,
+      "order": 13
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本教程使用简体中文教学。代码关键词、变量名等保留英文原样，编程术语首次出现时附注英文以帮助理解。教学语言应简洁、友好，适合零基础学习者，采用鼓励式语气。",
+    "totalScenes": 13
+  },
+  "topicSummary": "Python入门教程",
+  "completedAt": "2026-06-08T06:52:08.766Z",
+  "result": {
+    "classroomId": "Tb_vz5YaBh",
+    "url": "http://localhost:3000/classroom/Tb_vz5YaBh",
+    "scenesCount": 9
+  }
+}

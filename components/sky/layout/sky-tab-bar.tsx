@@ -3,13 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import {
-  Star,
-  Brain,
-  TrendingUp,
-  Feather,
-  Globe,
-} from 'lucide-react';
+import { Star, Brain, TrendingUp, Feather, Globe, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -17,7 +11,8 @@ const NAV_ITEMS = [
   { label: '云端智囊', href: '/sky/cloud-mind', icon: Brain },
   { label: '天梯工坊', href: '/sky/learning', icon: TrendingUp },
   { label: '云翼助手', href: '/sky/assistant', icon: Feather },
-  { label: '天穹讲课', href: '/', icon: Globe },
+  { label: '学情分析', href: '/sky/student', icon: Globe },
+  { label: '智能授课', href: '/sky/teaching', icon: BookOpen },
 ];
 
 export function SkyTabBar() {
@@ -43,7 +38,7 @@ export function SkyTabBar() {
               'relative flex items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-medium transition-all duration-300 min-w-[96px] justify-center',
               isActive
                 ? 'text-slate-800 dark:text-slate-100'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200',
             )}
           >
             {isActive && (
@@ -55,7 +50,14 @@ export function SkyTabBar() {
             )}
             <span className="relative z-10 flex items-center gap-1.5">
               <div className="relative">
-                <Icon className={cn('w-[15px] h-[15px] transition-colors duration-300', isActive ? 'text-sky-600 dark:text-sky-400' : 'text-slate-400 dark:text-slate-500')} />
+                <Icon
+                  className={cn(
+                    'w-[15px] h-[15px] transition-colors duration-300',
+                    isActive
+                      ? 'text-sky-600 dark:text-sky-400'
+                      : 'text-slate-400 dark:text-slate-500',
+                  )}
+                />
                 {item.badge && (
                   <span className="absolute -top-1.5 -right-2 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 text-[8px] font-bold text-amber-900 shadow-sm">
                     {item.badge}

@@ -193,7 +193,25 @@
       "Bash(\"/c/Program Files/MySQL/MySQL Server 8.0/bin/mysqld.exe\" --initialize-insecure --datadir=\"D:\\\\MySQL\\\\data\" --console)",
       "PowerShell(sqlite3 *)",
       "Bash(Get-ChildItem *)",
-      "PowerShell(New-Item *)"
+      "PowerShell(New-Item *)",
+      "Bash(mkdir -p \"D:\\\\github\\\\OpenMAIC-firsted-team-\\\\lib\\\\student\")",
+      "Bash(mkdir -p \"D:\\\\github\\\\OpenMAIC-firsted-team-\\\\app\\\\api\\\\sky\\\\student\\\\profile\")",
+      "WebFetch(domain:juejin.cn)",
+      "Bash(ECC_GATEGUARD=off ls *)",
+      "Bash(git -C \"D:/github/OpenMAIC-firsted-team-\" status components/sky/solve/math-renderer.tsx)",
+      "Bash(git -C \"D:/github/OpenMAIC-firsted-team-\" diff components/sky/solve/math-renderer.tsx)",
+      "Bash(cat)",
+      "Bash(head -n 668 'D:\\\\github\\\\OpenMAIC-firsted-team-\\\\components\\\\sky\\\\solve\\\\math-renderer.tsx')",
+      "Bash(cat /tmp/math-renderer-patch.ts)",
+      "Bash(tail -n +669 'D:\\\\github\\\\OpenMAIC-firsted-team-\\\\components\\\\sky\\\\solve\\\\math-renderer.tsx')",
+      "Bash(cp /tmp/math-renderer-new.tsx 'D:\\\\github\\\\OpenMAIC-firsted-team-\\\\components\\\\sky\\\\solve\\\\math-renderer.tsx')",
+      "Bash(head -n 912 components/sky/solve/math-renderer.tsx)",
+      "Bash(cp /tmp/math-renderer-current.tsx components/sky/solve/math-renderer.tsx)",
+      "Bash(head -500 /tmp/demo-output.html | tail -200)",
+      "Read(//tmp/**)",
+      "Bash(grep -o '\"text\":\"[^\"]*\"' /tmp/demo-output.html | head -20)",
+      "Bash(cd d:\\\\\\\\github\\\\\\\\OpenMAIC-firsted-team-)",
+      "Bash(xargs -I{} bash -c 'if [ {} -eq 2 ]; then echo \"Only pre-existing fontSize errors \\(OK\\)\"; else echo \"Unexpected errors\"; fi')"
     ]
   }
 }

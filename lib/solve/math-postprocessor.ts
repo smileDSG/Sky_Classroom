@@ -63,6 +63,54 @@ function splitByMathBlocks(text: string): { parts: string[]; isMath: boolean[] }
   return { parts, isMath };
 }
 
+// ── Unicode math → LaTeX ──────────────────────────────────────────
+// Common Unicode symbols that LLMs output directly.
+// Only the most frequent ones — the client-side renderer handles the rest.
+
+const UNICODE_TO_LATEX: Array<[RegExp, string]> = [
+  // Greek lowercase
+  [/α/g, '\\alpha'], [/β/g, '\\beta'], [/γ/g, '\\gamma'], [/δ/g, '\\delta'],
+  [/ε/g, '\\epsilon'], [/ζ/g, '\\zeta'], [/η/g, '\\eta'], [/θ/g, '\\theta'],
+  [/ι/g, '\\iota'], [/κ/g, '\\kappa'], [/λ/g, '\\lambda'], [/μ/g, '\\mu'],
+  [/ν/g, '\\nu'], [/ξ/g, '\\xi'], [/π/g, '\\pi'], [/ρ/g, '\\rho'],
+  [/σ/g, '\\sigma'], [/τ/g, '\\tau'], [/υ/g, '\\upsilon'], [/φ/g, '\\phi'],
+  [/χ/g, '\\chi'], [/ψ/g, '\\psi'], [/ω/g, '\\omega'],
+  // Greek uppercase
+  [/Γ/g, '\\Gamma'], [/Δ/g, '\\Delta'], [/Θ/g, '\\Theta'], [/Λ/g, '\\Lambda'],
+  [/Σ/g, '\\Sigma'], [/Φ/g, '\\Phi'], [/Ψ/g, '\\Psi'], [/Ω/g, '\\Omega'],
+  // Operators
+  [/×/g, '\\times'], [/÷/g, '\\div'], [/±/g, '\\pm'], [/∓/g, '\\mp'],
+  [/⋅/g, '\\cdot'], [/∗/g, '\\ast'], [/∘/g, '\\circ'],
+  // Relations
+  [/≤/g, '\\leq'], [/≥/g, '\\geq'], [/≠/g, '\\neq'], [/≈/g, '\\approx'],
+  [/≡/g, '\\equiv'], [/∼/g, '\\sim'], [/∝/g, '\\propto'],
+  // Set theory
+  [/∈/g, '\\in'], [/∉/g, '\\notin'], [/⊂/g, '\\subset'], [/⊃/g, '\\supset'],
+  [/⊆/g, '\\subseteq'], [/⊇/g, '\\supseteq'], [/∪/g, '\\cup'], [/∩/g, '\\cap'],
+  [/∅/g, '\\emptyset'], [/∀/g, '\\forall'], [/∃/g, '\\exists'], [/¬/g, '\\neg'],
+  // Arrows
+  [/→/g, '\\rightarrow'], [/←/g, '\\leftarrow'], [/⇒/g, '\\Rightarrow'],
+  [/⇐/g, '\\Leftarrow'], [/⇔/g, '\\Leftrightarrow'], [/↔/g, '\\leftrightarrow'],
+  // Calculus
+  [/∂/g, '\\partial'], [/∇/g, '\\nabla'], [/∞/g, '\\infty'],
+  [/∫/g, '\\int'], [/∬/g, '\\iint'], [/∭/g, '\\iiint'], [/∮/g, '\\oint'],
+  // Big operators
+  [/∑/g, '\\sum'], [/∏/g, '\\prod'],
+  // Geometry
+  [/∠/g, '\\angle'], [/⊥/g, '\\perp'], [/∥/g, '\\parallel'],
+  // Other
+  [/√/g, '\\sqrt'], [/′/g, "'"], [/″/g, "''"], [/…/g, '\\cdots'],
+  [/ℓ/g, '\\ell'], [/ℏ/g, '\\hbar'],
+];
+
+function convertUnicodeMath(text: string): string {
+  let result = text;
+  for (const [pattern, replacement] of UNICODE_TO_LATEX) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
+}
+
 // ── Core text processing (applied to non-math segments only) ────────
 
 function processTextSegment(text: string): string {
@@ -71,39 +119,58 @@ function processTextSegment(text: string): string {
   // Step 1: Normalize Unicode superscripts
   result = normalizeUnicodeSuperscripts(result);
 
+  // Step 1.5: Convert Unicode math symbols to LaTeX
+  // e.g. α → \alpha, → → \rightarrow, √ → \sqrt, ∫ → \int
+  result = convertUnicodeMath(result);
+
   // Step 2: Wrap chained math expressions
   // Matches patterns like: 1/4·1/2kA^2=1/4E  or  A/2=B/4  or  3/4×2/3=1/2
   result = wrapChainedExpressions(result);
 
-  // Step 3: Wrap single fractions -- only in math contexts
+  // Step 3: Wrap single fractions — only in math contexts
   // Avoid wrapping when adjacent to Chinese characters (e.g. "3/4季度" is prose, not math)
+
+  // 3a: Parenthesized fractions: (expr)/(expr) → $\frac{expr}{expr}$
+  // e.g. (sin3x)/(tan5x), (a+b)/(c-d), (x^2+1)/(x-1)
+  result = result.replace(
+    /\(([^()]+)\)\/\(([^()]+)\)/g,
+    (_m, num: string, den: string) => `$\\frac{${num}}{${den}}$`,
+  );
+
+  // 3b: Simple numeric fractions: 3/5, 1/2
   result = result.replace(
     /(?<![一-鿿a-zA-Z])(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)(?![一-鿆a-zA-Z])/g,
     (_m, num: string, den: string) => `$\\frac{${num}}{${den}}$`,
   );
+
+  // 3c: Variable fractions: a/b, sin3x/tan5x, x^2/y
   result = result.replace(
     /(?<![一-鿿])([a-zA-Z][a-zA-Z0-9]*)\/(\d+(?:\.\d+)?|[a-zA-Z][a-zA-Z0-9]*)(?![一-鿆])/g,
     (_m, num: string, den: string) => `$\\frac{${num}}{${den}}$`,
   );
 
-  // Step 4: Wrap variables with primes: A', E'', f'''
-  // Match 1+ consecutive apostrophes after a letter
-  result = result.replace(/([A-Z])('+)(?!\w)/g, (_m, v: string, p: string) => `$${v}${p}$`);
+  // Step 3.5: Wrap bare trig/log functions that aren't backslashed
+  // LLMs often output: sin3x, cosθ, lnx, log2, lim(x→0)
+  // These need \sin, \cos, \ln, \log, \lim for KaTeX to render correctly.
+  // Must come AFTER fraction conversion so sin3x/tan5x → \frac{sin3x}{tan5x} first,
+  // then sin → \sin inside the fraction.
+  const BARE_FUNCTIONS = /(?<![a-zA-Z\\])(sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|sinh|cosh|tanh|ln|log|lim|exp|det|gcd)(?=[^a-zA-Z]|$)/g;
+  result = result.replace(BARE_FUNCTIONS, (_m, fn: string) => `\\${fn}`);
+
+  // Step 4: Wrap variables with primes: A', E'', f''', y'
+  // Match 1+ consecutive apostrophes after a letter (upper or lowercase)
+  result = result.replace(/([a-zA-Z])('+)(?!\w)/g, (_m, v: string, p: string) => `$${v}${p}$`);
 
   // Step 5: Wrap bare equations: variable = value
-  // Handles: A = B, E = 4E, x = 5, but avoids matching Chinese text
+  // Conservative: only match simple assignments, not long expressions.
+  // e.g. y = x, E = 4E, x = 5, N = mg, 4y = 2x
+  // Avoid matching inside longer expressions like "y = \sin2x".
   result = result.replace(
-    /(?<![a-zA-Z一-鿿])([a-zA-Z0-9')\]]\s*[=<>]\s*[a-zA-Z0-9(^'\[])(?![a-zA-Z一-鿿])/g,
+    /(?<![a-zA-Z一-鿿])(\d*[a-zA-Z]\s*[=<>≤≥≠]\s*[a-zA-Z0-9]+(?:\s*[+\-*/]\s*[a-zA-Z0-9]+)*)(?![a-zA-Z一-鿿(])/g,
     (m) => `$${m}$`,
   );
 
-  // Step 6: Wrap expressions with ^ superscripts that aren't yet wrapped
-  result = result.replace(
-    /(?<![a-zA-Z$\\])([a-zA-Z][a-zA-Z0-9]*)(\^\{[^}]+\}|\^[a-zA-Z0-9])(?![^$]*\$)/g,
-    (_m, base: string, sup: string) => `$${base}${sup}$`,
-  );
-
-  // Step 7: Wrap Unicode math operators that slipped through
+  // Step 6: Wrap Unicode math operators that slipped through
   // · × ÷ ± ∞ α β γ δ etc. when adjacent to other math
   result = result.replace(
     /([·×÷±∞αβγδεζηθικλμνξπρστυφχψω])\s*(?=[a-zA-Z0-9(^])/g,
@@ -160,7 +227,110 @@ function wrapChainedExpressions(text: string): string {
 export function postProcessMathContent(text: string): string {
   if (!text) return text;
 
-  const { parts, isMath } = splitByMathBlocks(text);
+  // Step 0: Normalize double backslashes from JSON escaping.
+  // The streaming parser extracts raw string content between JSON quotes
+  // without JSON.parse, so double backslashes (\\frac) remain as literal
+  // characters. We normalize them to single backslash here.
+  let result = text.replace(/\\\\([a-zA-Z]+)/g, (_m: string, cmd: string) => `\\${cmd}`);
+
+  // Step 0.5: Handle consecutive bare commands like \cos\phi, \sin\theta
+  // that aren't already inside $...$ delimiters. These slip through the
+  // individual command catch-all because the lookahead rejects \cos when
+  // followed by another \command.
+  result = result.replace(/\\([a-zA-Z]{2,})(\s*\\[a-zA-Z]+)+/g, (_m: string, firstCmd: string) => {
+    const knownCommands = new Set([
+      'sin',
+      'cos',
+      'tan',
+      'cot',
+      'sec',
+      'csc',
+      'arcsin',
+      'arccos',
+      'arctan',
+      'sinh',
+      'cosh',
+      'tanh',
+      'coth',
+      'ln',
+      'log',
+      'exp',
+      'lim',
+      'int',
+      'oint',
+      'sum',
+      'prod',
+      'sqrt',
+      'frac',
+      'dfrac',
+      'tfrac',
+      'binom',
+      'partial',
+      'nabla',
+      'infty',
+      'Sigma',
+      'Pi',
+      'Gamma',
+      'Delta',
+      'Theta',
+      'Lambda',
+      'Phi',
+      'Psi',
+      'Omega',
+      'alpha',
+      'beta',
+      'gamma',
+      'delta',
+      'epsilon',
+      'zeta',
+      'eta',
+      'theta',
+      'iota',
+      'kappa',
+      'lambda',
+      'mu',
+      'nu',
+      'xi',
+      'pi',
+      'rho',
+      'sigma',
+      'tau',
+      'upsilon',
+      'phi',
+      'chi',
+      'psi',
+      'omega',
+      'varphi',
+      'vartheta',
+      'varepsilon',
+      'varrho',
+      'varsigma',
+      'digamma',
+      'Rightarrow',
+      'Leftarrow',
+      'Longrightarrow',
+      'Longleftarrow',
+      'longmapsto',
+      'longrightarrow',
+      'longleftarrow',
+      'longleftrightarrow',
+      'leftarrow',
+      'rightarrow',
+      'uparrow',
+      'downarrow',
+      'leftrightarrow',
+      'hookrightarrow',
+      'hookleftarrow',
+      'nearrow',
+      'searrow',
+      'swarrow',
+      'nwarrow',
+    ]);
+    if (knownCommands.has(firstCmd)) return `$${_m}$`;
+    return _m;
+  });
+
+  const { parts, isMath } = splitByMathBlocks(result);
 
   const processed = parts.map((part, i) => {
     if (isMath[i]) return part;

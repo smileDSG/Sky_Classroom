@@ -14,15 +14,40 @@ const KNOWLEDGE_POINTS_INSTRUCTION = `
 【知识点 — 必须返回，严禁空数组】返回2-4个相关知识点，description包含：核心概念+应用场景+易错点。
 示例：{"name":"韦达定理","description":"ax²+bx+c=0两根之和x₁+x₂=-b/a，之积x₁·x₂=c/a。用于求根的和与积。注意Δ≥0且a≠0。","difficulty":"medium"}`;
 
-// LaTeX 格式规范（science/universal 共用，避免重复 ~400 tokens）
+// LaTeX 格式规范（science/universal 共用）
 const LATEX_RULES = `
-【LaTeX规范】
-- 数学表达式用$...$包裹，$内禁止换行，$必须成对
-- 分数$\\frac{a}{b}$，根号$\\sqrt{x}$，LaTeX命令必须\\开头
-- step.content/keyPoints中所有数学表达式必须$...$包裹，禁止裸符号
-- 错误：E'=1/4·1/2kA²  正确：$E'=\\frac{1}{4}\\cdot\\frac{1}{2}kA^2$`;
+【LaTeX规范 — 严格遵守，否则渲染失败】
+1. 所有数学表达式必须用 $...$ 包裹，$内禁止换行，$必须成对
+2. 独立公式（占一行的）用 $$...$$ 包裹
+3. 分数：$\\frac{分子}{分母}$  禁止写 a/b 形式
+4. 根号：$\\sqrt{x}$，$\\sqrt[3]{x}$  禁止写 √x
+5. 三角/对数函数：$\\sin x$、$\\cos\\theta$、$\\tan\\alpha$、$\\ln x$、$\\log_2 x$、$\\lim_{x\\to 0}$  禁止写 sin、cos、ln
+6. 导数：$f'(x)$、$y'$、$f''(x)$、$\\frac{dy}{dx}$、$\\frac{d^2y}{dx^2}$
+7. 积分：$\\int_a^b f(x)\\,dx$、$\\iint_D$、$\\oint$  禁止写 ∫
+8. 求和/积：$\\sum_{n=1}^{\\infty}$、$\\prod_{k=1}^{n}$
+9. 希腊字母：$\\alpha$、$\\beta$、$\\gamma$、$\\theta$、$\\omega$、$\\pi$、$\\lambda$、$\\mu$、$\\sigma$、$\\varphi$  禁止写 α、β、γ
+10. 矩阵/行列式：
+    矩阵 $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$
+    行列式 $\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}$
+11. 多行对齐用 $\\begin{aligned} ... \\end{aligned}$
+12. 运算符：$\\cdot$（点乘）、$\\times$（叉乘）、$\\div$、$\\pm$、$\\mp$
+13. 关系符：$\\leq$、$\\geq$、$\\neq$、$\\approx$、$\\equiv$、$\\sim$
+14. 箭头：$\\rightarrow$、$\\Rightarrow$、$\\leftarrow$、$\\leftrightarrow$
+15. 特殊符号：$\\infty$、$\\partial$、$\\nabla$、$\\in$、$\\subset$、$\\cup$、$\\cap$、$\\emptyset$
+16. 上标下标：$x^2$、$x^{n+1}$、$a_n$、$a_{n+1}$、$\\sum_{i=1}^{n}$
+17. 绝对值/范数：$|x|$、$\\|\\vec{a}\\|$
+18. 向量：$\\vec{a}$、$\\overrightarrow{AB}$
+19. 省略号：$\\cdots$（中）、$\\ldots$（底）、$\\vdots$（竖）、$\\ddots$（斜）
 
-const ANSWER_RULE = `answer字段【严禁】包含解释/推导/"所以"/"因此"等，只写最终结果如$3$、$\\frac{1}{2}$、$x=4$、A、B。confidence为0-1。`;
+示例：
+❌ 错误：sin2x + cos2x = 1  ✅ 正确：$\\sin^2 x + \\cos^2 x = 1$
+❌ 错误：lim(x→0) sinx/x = 1  ✅ 正确：$\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1$
+❌ 错误：∫₀¹ x² dx = 1/3  ✅ 正确：$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$
+❌ 错误：α + β = π  ✅ 正确：$\\alpha + \\beta = \\pi$
+`;
+
+const ANSWER_RULE = `answer字段【严禁】包含解释/推导/"所以"/"因此"等，只写最终结果，用$...$包裹。
+示例：$3$、$\\frac{1}{2}$、$x=4$、$y = C_1 e^{2x} + C_2 e^{3x}$、A、B。confidence为0-1。`;
 
 const AGENT_SYSTEM_PROMPTS: Record<SolverAgentType, string> = {
   universal: `你是解题专家。分析题目，给出解题过程和答案。

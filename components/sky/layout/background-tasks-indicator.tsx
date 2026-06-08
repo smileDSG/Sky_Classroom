@@ -24,30 +24,36 @@ import { useTaskStore, type BackgroundTask, type TaskType } from '@/lib/store/us
 const TASK_ICONS: Record<TaskType, React.ComponentType<{ className?: string }>> = {
   solve: Camera,
   slides: Presentation,
+  pptx: Presentation,
   quiz: FileQuestion,
   write: PenTool,
   translate: Languages,
   memory: Brain,
+  teaching: Brain,
   general: Zap,
 };
 
 const TASK_COLORS: Record<TaskType, string> = {
   solve: 'text-violet-500',
   slides: 'text-cyan-500',
+  pptx: 'text-cyan-500',
   quiz: 'text-amber-500',
   write: 'text-emerald-500',
   translate: 'text-indigo-500',
   memory: 'text-rose-500',
+  teaching: 'text-purple-500',
   general: 'text-sky-500',
 };
 
 const TASK_ROUTES: Record<TaskType, string> = {
   solve: '/sky/cloud-mind/solve',
   slides: '/sky/cloud-mind/slides',
+  pptx: '/sky/cloud-mind/slides',
   quiz: '/sky/cloud-mind/quiz',
   write: '/sky/cloud-mind/write',
   translate: '/sky/cloud-mind/translate',
   memory: '/sky/cloud-mind/memory',
+  teaching: '/sky/teaching',
   general: '/sky/cloud-mind',
 };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   BookOpen,
   Lightbulb,
@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronRight,
   CheckCircle2,
-  Sparkles,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,11 +22,61 @@ interface SolutionPanelProps {
   className?: string;
 }
 
+/**
+ * Strip math delimiters, whitespace and punctuation for rough comparison.
+ */
+function normalizeForCompare(text: string): string {
+  return text
+    .replace(/\$\$?/g, '')
+    .replace(/\\[a-zA-Z]+/g, '')
+    .replace(/[\s{}()（）、，。：；""''【】《》\-—·=+*/<>]/g, '')
+    .toLowerCase();
+}
+
+/**
+ * Remove steps whose content is largely duplicated in the solution text.
+ * This prevents the user from seeing the same derivation twice — once in
+ * the "解题详解" block and again in the "步骤" tab.
+ */
+function deduplicateSteps(
+  solution: string,
+  steps: { label: string; content: string; keyPoints?: string[] }[],
+): { label: string; content: string; keyPoints?: string[] }[] {
+  if (!solution || steps.length === 0) return steps;
+
+  const normSolution = normalizeForCompare(solution);
+  if (normSolution.length < 20) return steps; // too short to compare
+
+  return steps.filter((step) => {
+    const normStep = normalizeForCompare(step.content);
+    if (normStep.length < 10) return true; // keep very short steps
+
+    // Check bidirectional overlap:
+    // 1. Step content is a substring of solution
+    // 2. Solution is a substring of step content
+    // 3. 80%+ of step chars appear in solution (order-independent)
+    if (normSolution.includes(normStep)) return false;
+    if (normStep.includes(normSolution)) return false;
+
+    // Character overlap ratio
+    const overlap = [...normStep].filter((ch) => normSolution.includes(ch)).length;
+    if (overlap / normStep.length > 0.8) return false;
+
+    return true;
+  });
+}
+
 export function SolutionPanel({ output, className }: SolutionPanelProps) {
   const [activeTab, setActiveTab] = useState('steps');
 
   const isGraded = 'gradeResult' in output;
-  const { solution, answer, steps, knowledgePoints, similarQuestions } = output;
+  const { solution, answer, knowledgePoints, similarQuestions } = output;
+
+  // Deduplicate steps against the solution to avoid showing the same text twice
+  const steps = useMemo(
+    () => deduplicateSteps(solution, output.steps),
+    [solution, output.steps],
+  );
 
   const hasSteps = steps.length > 0;
   const isComplete = hasSteps && answer; // 解题完成 = 有步骤且有答案
@@ -56,31 +105,26 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
 
       {/* ── 答案栏：解题完成后直接显示在顶部 ── */}
       {isComplete && (
-        <div className="border-b bg-gradient-to-r from-green-50/80 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/10 px-5 py-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
-            <div className="flex-1 flex items-center gap-2">
-              <span className="text-xs font-medium text-green-700 dark:text-green-400">答案</span>
-              <span className="inline-flex items-center rounded-md bg-white/80 dark:bg-green-900/30 px-3 py-1 border border-green-200/50 dark:border-green-800/50">
-                <MathRenderer
-                  content={answer}
-                  className="text-sm font-semibold text-green-700 dark:text-green-300"
-                />
-              </span>
-            </div>
+        <div className="border-b bg-muted/30 px-5 py-2">
+          <div className="flex items-center justify-center gap-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0" />
+            <span className="text-xs font-medium text-muted-foreground">答案</span>
+            <span className="inline-flex items-center rounded-md bg-background px-3 py-0.5 border border-border">
+              <MathRenderer content={answer} className="text-sm font-semibold text-foreground" />
+            </span>
           </div>
         </div>
       )}
 
-      {/* ── 解题详解：详细推导过程，在步骤上方 ── */}
-      {/* 仅在没有结构化步骤、或只有一个笼统"解答"时显示，避免与步骤 tab 内容重复 */}
-      {solution && steps.length <= 1 && (
-        <div className="border-b bg-gradient-to-r from-blue-50/50 to-indigo-50/30 dark:from-blue-950/15 dark:to-indigo-950/10 px-5 py-4">
-          <div className="flex items-start gap-2 mb-2">
-            <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-            <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">解题详解</span>
+      {/* ─ 解题详解：详细推导过程 ─ */}
+      {solution && (
+        <div className="px-6 py-4">
+          <div className="mx-auto max-w-3xl">
+            <MathRenderer
+              content={solution}
+              className="text-sm leading-loose text-foreground whitespace-pre-wrap"
+            />
           </div>
-          <MathRenderer content={solution} className="text-sm leading-relaxed text-foreground" />
         </div>
       )}
 
@@ -114,20 +158,20 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
           <TabsContent value="steps" className="mt-0">
             <div className="divide-y">
               {steps.length === 0 && (
-                <div className="flex items-center justify-center gap-3 py-12">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#4A90D9] border-t-transparent" />
+                <div className="flex items-center justify-center gap-3 py-8">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#4A90D9] border-t-transparent" />
                   <span className="text-sm text-muted-foreground">正在生成解题步骤...</span>
                 </div>
               )}
               {steps.map((step, index) => (
                 <div key={index} className="px-5 py-4">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#4A90D9]/10 text-xs font-bold text-[#4A90D9] mt-0.5">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#4A90D9]/10 text-[10px] font-bold text-[#4A90D9] mt-0.5">
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm mb-1.5">{step.label}</div>
-                      <MathRenderer content={step.content} className="text-sm leading-relaxed" />
+                      <div className="font-medium text-sm mb-2">{step.label}</div>
+                      <MathRenderer content={step.content} className="text-sm leading-loose" />
                       {step.keyPoints && step.keyPoints.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {step.keyPoints.map((point, pidx) => (
@@ -150,20 +194,23 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
           </TabsContent>
 
           {/* ── 知识点栏：AI 总结的知识点 ── */}
-          <TabsContent value="knowledge" className="mt-0 p-6">
-            <div className="space-y-4">
+          <TabsContent value="knowledge" className="mt-0 p-4">
+            <div className="space-y-2.5">
               {knowledgePoints.length === 0 && (
-                <div className="text-center text-sm text-muted-foreground py-8">暂无知识点总结</div>
+                <div className="text-center text-sm text-muted-foreground py-6">
+                  <Lightbulb className="h-5 w-5 mx-auto mb-2 opacity-50" />
+                  暂无知识点总结
+                </div>
               )}
               {knowledgePoints.map((point, index) => (
                 <div
                   key={index}
-                  className="rounded-lg border border-border p-4 transition-colors hover:border-[#4A90D9]/30 hover:bg-[#4A90D9]/5"
+                  className="rounded-lg border border-border p-3 transition-colors hover:border-[#4A90D9]/30 hover:bg-[#4A90D9]/5"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">
+                        <h4 className="font-semibold text-sm">
                           <MathRenderer content={point.name} />
                         </h4>
                         <Badge
@@ -183,7 +230,7 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
                           {point.difficulty === 'hard' && '困难'}
                         </Badge>
                       </div>
-                      <div className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                      <div className="mt-1.5 text-xs text-muted-foreground leading-normal">
                         <MathRenderer content={point.description} />
                       </div>
                     </div>
@@ -194,20 +241,20 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
           </TabsContent>
 
           {/* ── 同类题栏 ── */}
-          <TabsContent value="similar" className="mt-0 p-6">
-            <div className="space-y-4">
+          <TabsContent value="similar" className="mt-0 p-4">
+            <div className="space-y-2.5">
               {similarQuestions.map((q, index) => (
                 <div
                   key={index}
-                  className="rounded-lg border border-border p-4 transition-colors hover:border-[#4A90D9]/30 hover:bg-[#4A90D9]/5 cursor-pointer"
+                  className="rounded-lg border border-border p-3 transition-colors hover:border-[#4A90D9]/30 hover:bg-[#4A90D9]/5 cursor-pointer"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#4A90D9]/10 text-xs font-bold text-[#4A90D9]">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#4A90D9]/10 text-[10px] font-bold text-[#4A90D9] mt-0.5">
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <MathRenderer content={q.problem} className="text-sm leading-relaxed" />
-                      <div className="mt-2 flex items-center gap-2">
+                      <MathRenderer content={q.problem} className="text-sm leading-normal" />
+                      <div className="mt-1.5 flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
                           难度: {q.difficulty}/10
                         </Badge>
@@ -221,14 +268,14 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
               ))}
             </div>
             {isGraded && (output as GradedFourPartOutput).recommendedPractice.length > 0 && (
-              <div className="mt-6 border-t pt-4">
-                <div className="mb-3 flex items-center gap-2 text-sm font-medium">
+              <div className="mt-4 border-t pt-3">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium">
                   <Lightbulb className="h-4 w-4 text-[#4A90D9]" />
                   推荐练习
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {(output as GradedFourPartOutput).recommendedPractice.map((rec, index) => (
-                    <div key={index} className="rounded-lg bg-muted/50 p-3">
+                    <div key={index} className="rounded-lg bg-muted/50 p-2.5">
                       <MathRenderer content={rec.problem} className="text-sm font-medium" />
                       <div className="text-xs text-muted-foreground">{rec.reason}</div>
                     </div>

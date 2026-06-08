@@ -19,7 +19,10 @@ vi.mock('@/lib/solve/streaming-solver', () => ({
   streamSolve: vi.fn(async function* () {
     yield { type: 'step', label: '步骤1', content: '解题过程', keyPoints: [] };
     yield { type: 'answer', answer: '3' };
-    yield { type: 'knowledge', points: [{ name: '代数', description: '基础代数', difficulty: 'medium' }] };
+    yield {
+      type: 'knowledge',
+      points: [{ name: '代数', description: '基础代数', difficulty: 'medium' }],
+    };
     yield { type: 'similar', questions: [] };
   }),
 }));
@@ -80,7 +83,7 @@ describe('runSolveChain', () => {
     expect(result.answer).toBe('3');
     expect(result.verification).not.toBeNull();
     expect(result.verification!.isCorrect).toBe(true);
-    expect(result.correction).toBeNull();  // no correction needed
+    expect(result.correction).toBeNull(); // no correction needed
     expect(result.metadata.hasCorrection).toBe(false);
     expect(result.warnings.length).toBe(0);
   });
@@ -92,7 +95,7 @@ describe('runSolveChain', () => {
       knowledgePoints: ['算术'],
       difficulty: 'easy',
       questionType: 'solve',
-      confidence: 0.9,
+      confidence: 0.5,
     });
 
     const { verifyAnswer } = await import('@/lib/solve/agents/verify-agent');
@@ -114,7 +117,7 @@ describe('runSolveChain', () => {
     expect(result.verification!.isCorrect).toBe(false);
     expect(result.correction).not.toBeNull();
     expect(result.correction!.answer).toBe('4');
-    expect(result.answer).toBe('4');  // answer was updated
+    expect(result.answer).toBe('4'); // answer was updated
     expect(result.metadata.hasCorrection).toBe(true);
   });
 
@@ -144,7 +147,7 @@ describe('runSolveChain', () => {
       knowledgePoints: ['代数'],
       difficulty: 'easy',
       questionType: 'solve',
-      confidence: 0.9,
+      confidence: 0.5,
     });
 
     const { verifyAnswer } = await import('@/lib/solve/agents/verify-agent');
@@ -156,7 +159,7 @@ describe('runSolveChain', () => {
     expect(result.warnings.some((w) => w.includes('校验'))).toBe(true);
     // No correction attempted (verify result is null)
     expect(result.correction).toBeNull();
-    expect(result.answer).toBe('3');  // original answer preserved
+    expect(result.answer).toBe('3'); // original answer preserved
   });
 
   it('generates knowledge points when solver does not return them', async () => {
@@ -240,7 +243,7 @@ describe('runSolveChain', () => {
       knowledgePoints: [],
       difficulty: 'easy',
       questionType: 'solve',
-      confidence: 0.9,
+      confidence: 0.5,
     });
 
     // Override streamSolve to return empty answer

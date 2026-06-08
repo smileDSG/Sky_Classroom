@@ -7,9 +7,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { validateImage } from '@/lib/recognition/image-validator';
+import { useAudioRecorder } from '@/lib/hooks/use-audio-recorder';
 
 interface MultimodalInputProps {
-  onSubmit: (input: { type: 'image' | 'voice' | 'text'; content: string | File; previewUrl?: string }) => void;
+  onSubmit: (input: {
+    type: 'image' | 'voice' | 'text';
+    content: string | File;
+    previewUrl?: string;
+  }) => void;
   onGrade?: (input: { problem: string; userAnswer: string }) => void;
   isLoading?: boolean;
   className?: string;
@@ -30,18 +35,21 @@ function dataUrlToFile(dataUrl: string, filename = 'photo.png'): File {
 
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp';
 
-export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initialPreviewUrl }: MultimodalInputProps) {
+export function MultimodalInput({
+  onSubmit,
+  onGrade,
+  isLoading,
+  className,
+  initialPreviewUrl,
+}: MultimodalInputProps) {
   const [activeTab, setActiveTab] = useState<'camera' | 'voice' | 'text'>('camera');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [textInput, setTextInput] = useState('');
   const [userAnswer, setUserAnswer] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasInitialized = useRef(false);
 
   // Restore image from parent after page navigation
@@ -78,11 +86,14 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initi
 
   // ── Click to upload ──
 
-  const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [processFile]);
+  const handleImageSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) processFile(file);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    },
+    [processFile],
+  );
 
   const triggerFileInput = useCallback(() => {
     fileInputRef.current?.click();
@@ -102,32 +113,38 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initi
     setIsDraggingOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingOver(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingOver(false);
 
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
-  }, [processFile]);
+      const file = e.dataTransfer.files?.[0];
+      if (file) processFile(file);
+    },
+    [processFile],
+  );
 
   // ── Clipboard paste (Ctrl+V) ──
 
-  const handlePaste = useCallback((e: ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
+  const handlePaste = useCallback(
+    (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
 
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        e.preventDefault();
-        const file = item.getAsFile();
-        if (file) {
-          processFile(file);
-          return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            processFile(file);
+            return;
+          }
         }
       }
-    }
-  }, [processFile]);
+    },
+    [processFile],
+  );
 
   useEffect(() => {
     document.addEventListener('paste', handlePaste);
@@ -143,24 +160,18 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initi
     }
   }, []);
 
-  const startRecording = useCallback(() => {
-    setIsRecording(true);
-    setRecordingTime(0);
-    recordingTimerRef.current = setInterval(() => {
-      setRecordingTime((prev) => prev + 1);
-    }, 1000);
-  }, []);
+  // ── Voice recording (useAudioRecorder hook) ──
 
-  const stopRecording = useCallback(() => {
-    setIsRecording(false);
-    if (recordingTimerRef.current) {
-      clearInterval(recordingTimerRef.current);
-      recordingTimerRef.current = null;
-    }
-    const mockTranscription = '请计算：3x + 5 = 20，求 x 的值';
-    setTextInput(mockTranscription);
-    setActiveTab('text');
-  }, []);
+  const { isRecording, isProcessing, recordingTime, startRecording, stopRecording } =
+    useAudioRecorder({
+      onTranscription: (text) => {
+        setTextInput(text);
+        setActiveTab('text');
+      },
+      onError: (error) => {
+        setImageError(error);
+      },
+    });
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -183,14 +194,13 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initi
   }, [textInput, userAnswer, onGrade]);
 
   const canSubmit =
-    (activeTab === 'camera' && selectedImage) ||
-    (activeTab === 'text' && textInput.trim());
+    (activeTab === 'camera' && selectedImage) || (activeTab === 'text' && textInput.trim());
 
   const canGrade = textInput.trim() && userAnswer.trim();
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as typeof activeTab); setImageError(null); }}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="camera" className="gap-2">
             <Camera className="h-4 w-4" />
@@ -206,6 +216,12 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initi
           </TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {imageError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 px-3 py-2 text-sm text-red-600 dark:text-red-400">
+          {imageError}
+        </div>
+      )}
 
       {activeTab === 'camera' && (
         <div className="space-y-3">
@@ -239,7 +255,9 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initi
                   <p className="font-medium text-foreground">
                     {isDraggingOver ? '松开放入图片' : '点击、拖拽或粘贴图片'}
                   </p>
-                  <p className="text-sm text-muted-foreground">支持 JPEG、PNG、WebP 格式，最大 10MB</p>
+                  <p className="text-sm text-muted-foreground">
+                    支持 JPEG、PNG、WebP 格式，最大 10MB
+                  </p>
                 </div>
                 <Button variant="outline" size="sm" className="mt-2 gap-2">
                   <Upload className="h-4 w-4" />
@@ -266,11 +284,6 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initi
             </div>
           )}
 
-          {imageError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 px-3 py-2 text-sm text-red-600 dark:text-red-400">
-              {imageError}
-            </div>
-          )}
         </div>
       )}
 
@@ -281,29 +294,38 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initi
               'flex flex-col items-center justify-center gap-4 rounded-xl border-2 p-8 transition-all',
               isRecording
                 ? 'border-red-400 bg-red-50 dark:border-red-900 dark:bg-red-900/20'
-                : 'border-[#4A90D9]/30 bg-[#4A90D9]/5'
+                : 'border-[#4A90D9]/30 bg-[#4A90D9]/5',
             )}
           >
             <button
               onClick={isRecording ? stopRecording : startRecording}
+              disabled={isProcessing}
               className={cn(
                 'flex h-20 w-20 items-center justify-center rounded-full transition-all',
-                isRecording
-                  ? 'animate-pulse bg-red-500 text-white'
-                  : 'bg-[#4A90D9] text-white hover:bg-[#4A90D9]/90'
+                isProcessing
+                  ? 'cursor-not-allowed bg-gray-400 text-white'
+                  : isRecording
+                    ? 'animate-pulse bg-red-500 text-white'
+                    : 'bg-[#4A90D9] text-white hover:bg-[#4A90D9]/90',
               )}
             >
-              {isRecording ? (
+              {isProcessing ? (
+                <Loader2 className="h-8 w-8 animate-spin" />
+              ) : isRecording ? (
                 <span className="text-2xl font-bold">{formatTime(recordingTime)}</span>
               ) : (
                 <Mic className="h-8 w-8" />
               )}
             </button>
             <p className="text-center font-medium text-foreground">
-              {isRecording ? '点击停止录音' : '点击开始录音'}
+              {isProcessing ? '正在识别...' : isRecording ? '点击停止录音' : '点击开始录音'}
             </p>
             <p className="text-center text-sm text-muted-foreground">
-              {isRecording ? '正在识别语音内容...' : '支持数学题目语音输入'}
+              {isProcessing
+                ? '正在将语音转换为文字，请稍候...'
+                : isRecording
+                  ? '录音中，再次点击停止并识别'
+                  : '支持数学题目语音输入'}
             </p>
           </div>
         </div>
@@ -321,7 +343,9 @@ export function MultimodalInput({ onSubmit, onGrade, isLoading, className, initi
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">你的答案（选填，用于批改）</label>
+            <label className="text-sm font-medium text-foreground">
+              你的答案（选填，用于批改）
+            </label>
             <Textarea
               placeholder="请输入你的答案..."
               value={userAnswer}

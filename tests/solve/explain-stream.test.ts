@@ -20,7 +20,12 @@ const chainMocks = vi.hoisted(() => ({
     },
     steps: [{ label: '步骤1', content: '解题过程', keyPoints: [] as string[] }],
     answer: '3',
-    verification: { isCorrect: true, confidence: 0.95, reasoning: 'verified' },
+    verification: {
+      isCorrect: true,
+      confidence: 0.95,
+      reasoning: 'verified',
+      suggestedAnswer: undefined as string | undefined,
+    },
     correction: null,
     knowledgePoints: [{ name: '二次函数', description: '核心概念', difficulty: 'medium' }],
     similarQuestions: [] as any[],
@@ -37,7 +42,10 @@ vi.mock('@/lib/solve/solve-chain', () => ({
       onEvent({ type: 'phase', phase: 'solving' });
       onEvent({ type: 'step', label: '步骤1', content: '解题过程', keyPoints: [] });
       onEvent({ type: 'answer', answer: '3' });
-      onEvent({ type: 'knowledge', points: [{ name: '二次函数', description: '核心概念', difficulty: 'medium' }] });
+      onEvent({
+        type: 'knowledge',
+        points: [{ name: '二次函数', description: '核心概念', difficulty: 'medium' }],
+      });
       onEvent({ type: 'similar', questions: [] });
     }
     return chainMocks.chainResult;
@@ -92,7 +100,7 @@ async function parseSSEEvents(response: Response): Promise<any[]> {
 
 describe('POST /api/sky/solve/explain-stream', () => {
   beforeEach(() => {
-    vi.clearAllMocks();  // clear call history but keep mock implementations
+    vi.clearAllMocks(); // clear call history but keep mock implementations
     chainMocks.chainResult = {
       analysis: {
         subject: 'math',
@@ -103,7 +111,12 @@ describe('POST /api/sky/solve/explain-stream', () => {
       },
       steps: [{ label: '步骤1', content: '解题过程', keyPoints: [] as string[] }],
       answer: '3',
-      verification: { isCorrect: true, confidence: 0.95, reasoning: 'verified' },
+      verification: {
+        isCorrect: true,
+        confidence: 0.95,
+        reasoning: 'verified',
+        suggestedAnswer: undefined as string | undefined,
+      },
       correction: null,
       knowledgePoints: [{ name: '二次函数', description: '核心概念', difficulty: 'medium' }],
       similarQuestions: [] as any[],
@@ -144,14 +157,14 @@ describe('POST /api/sky/solve/explain-stream', () => {
     const types = events.map((e) => e.type);
 
     // Core events must be present
-    expect(types).toContain('phase');      // checking
-    expect(types).toContain('step');       // from chain streaming
-    expect(types).toContain('answer');     // from chain streaming
-    expect(types).toContain('analysis');   // NEW: C-004
+    expect(types).toContain('phase'); // checking
+    expect(types).toContain('step'); // from chain streaming
+    expect(types).toContain('answer'); // from chain streaming
+    expect(types).toContain('analysis'); // NEW: C-004
     expect(types).toContain('verification'); // NEW: C-004
-    expect(types).toContain('knowledge');  // from chain
-    expect(types).toContain('similar');    // from chain
-    expect(types).toContain('done');       // final
+    expect(types).toContain('knowledge'); // from chain
+    expect(types).toContain('similar'); // from chain
+    expect(types).toContain('done'); // final
   });
 
   it('emits analysis event with correct structure', async () => {
@@ -194,16 +207,18 @@ describe('POST /api/sky/solve/explain-stream', () => {
 
   it('bank hit returns fast path without analysis/verification', async () => {
     const { findSimilarQuestions } = await import('@/lib/solve/question-bank');
-    vi.mocked(findSimilarQuestions).mockResolvedValueOnce([{
-      id: 'qb1',
-      problemHash: 'hash',
-      problemText: '1+1=?',
-      answer: '2',
-      knowledgePoints: [{ name: '加法', description: '基础', difficulty: 'easy' }],
-      agentId: 'universal',
-      solvedAt: Date.now(),
-      verified: true,
-    }]);
+    vi.mocked(findSimilarQuestions).mockResolvedValueOnce([
+      {
+        id: 'qb1',
+        problemHash: 'hash',
+        problemText: '1+1=?',
+        answer: '2',
+        knowledgePoints: [{ name: '加法', description: '基础', difficulty: 'easy' }],
+        agentId: 'universal',
+        solvedAt: Date.now(),
+        verified: true,
+      },
+    ]);
 
     const { POST } = await import('@/app/api/sky/solve/explain-stream/route');
     const req = new Request('http://localhost/api/sky/solve/explain-stream', {
@@ -230,13 +245,15 @@ describe('POST /api/sky/solve/explain-stream', () => {
 
   it('cache hit returns fast path', async () => {
     const { findSolveCacheMatches } = await import('@/lib/solve/solve-cache');
-    vi.mocked(findSolveCacheMatches).mockResolvedValueOnce([{
-      problemText: 'test',
-      problemHash: 'hash',
-      solution: '解题过程',
-      agentId: 'universal',
-      solvedAt: Date.now(),
-    }]);
+    vi.mocked(findSolveCacheMatches).mockResolvedValueOnce([
+      {
+        problemText: 'test',
+        problemHash: 'hash',
+        solution: '解题过程',
+        agentId: 'universal',
+        solvedAt: Date.now(),
+      },
+    ]);
 
     const { POST } = await import('@/app/api/sky/solve/explain-stream/route');
     const req = new Request('http://localhost/api/sky/solve/explain-stream', {

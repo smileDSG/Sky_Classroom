@@ -17,6 +17,7 @@ export interface SolveJob {
   problemPreview: string;
   result?: {
     answer: string;
+    solution: string;
     steps: { label: string; content: string; keyPoints?: string[] }[];
     knowledgePoints: { name: string; description: string; difficulty: string }[];
     similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];

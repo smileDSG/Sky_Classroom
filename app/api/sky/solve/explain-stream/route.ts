@@ -23,9 +23,43 @@ import { findSimilarQuestions } from '@/lib/solve/question-bank';
 import { findSolveCacheMatches } from '@/lib/solve/solve-cache';
 import { type StreamEvent } from '@/lib/solve/streaming-solver';
 import { runSolveChain } from '@/lib/solve/solve-chain';
+import { analyzeProblem } from '@/lib/solve/agents/analyze-agent';
 import { postProcessMathContent } from '@/lib/solve/math-postprocessor';
 
 const log = createLogger('API:ExplainStream');
+
+// ── Map analysis subject to solver agent type ──────────────────────
+
+function subjectToAgentId(
+  subject:
+    | 'math'
+    | 'physics'
+    | 'chemistry'
+    | 'biology'
+    | 'chinese'
+    | 'english'
+    | 'history'
+    | 'geography'
+    | 'politics'
+    | 'unknown'
+    | undefined,
+): 'universal' | 'science' | 'humanities' | 'grading' {
+  switch (subject) {
+    case 'math':
+    case 'physics':
+    case 'chemistry':
+    case 'biology':
+      return 'science';
+    case 'chinese':
+    case 'english':
+    case 'history':
+    case 'geography':
+    case 'politics':
+      return 'humanities';
+    default:
+      return 'universal';
+  }
+}
 
 // ── SSE formatting ──────────────────────────────────────────────────
 
@@ -128,14 +162,22 @@ export async function POST(req: Request) {
           log.info(`[ExplainStream] Question bank hit (${hit._similarity?.toFixed(2)})`);
 
           const processedAnswer = postProcessMathContent(hit.answer);
-          await write(formatSSEEvent('solution', { solution: processedAnswer }));
-          await write(
-            formatSSEEvent('step', {
-              label: '解答',
-              content: processedAnswer,
-              keyPoints: [],
-            }),
-          );
+          const processedSolution = hit.solution
+            ? postProcessMathContent(hit.solution)
+            : processedAnswer;
+          await write(formatSSEEvent('solution', { solution: processedSolution }));
+          // Emit actual steps from the bank entry if available (avoid duplicating solution)
+          if (hit.steps && hit.steps.length > 0) {
+            for (const step of hit.steps) {
+              await write(
+                formatSSEEvent('step', {
+                  label: step.label,
+                  content: postProcessMathContent(step.content),
+                  keyPoints: (step.keyPoints ?? []).map(postProcessMathContent),
+                }),
+              );
+            }
+          }
           await write(formatSSEEvent('answer', { answer: processedAnswer }));
 
           const kp =
@@ -167,13 +209,8 @@ export async function POST(req: Request) {
           const conciseAnswer = postProcessMathContent(hit.answer || hit.solution);
 
           await write(formatSSEEvent('solution', { solution: processedSolution }));
-          await write(
-            formatSSEEvent('step', {
-              label: '解答',
-              content: processedSolution,
-              keyPoints: [],
-            }),
-          );
+          // Don't emit a step duplicating the solution — the UI will show
+          // the solution block directly; steps come from the actual chain.
           await write(formatSSEEvent('answer', { answer: conciseAnswer }));
 
           // Use cached knowledge points if available, avoid LLM call
@@ -198,6 +235,9 @@ export async function POST(req: Request) {
         }
 
         // ── Main path: Run the full solve chain ──────────────────────
+        // Start analyze in parallel (it only needs problemText, no deps)
+        const analyzePromise = analyzeProblem(problem);
+
         const chainResult = await runSolveChain(
           problem,
           problemImage ?? null,
@@ -235,6 +275,7 @@ export async function POST(req: Request) {
             write(formatStreamEvent(processedEvent));
           },
           chainAbort.signal,
+          analyzePromise,
         );
 
         // ── Emit analysis event (NEW in C-004) ───────────────────────
@@ -303,10 +344,11 @@ export async function POST(req: Request) {
               problemText: problem,
               problemImage: problemImage ?? undefined,
               solution: chainResult.solution,
+              steps: chainResult.steps ?? [],
               answer: chainResult.answer,
               knowledgePoints: chainResult.knowledgePoints,
               similarQuestions: chainResult.similarQuestions,
-              agentId: chainResult.analysis?.subject ?? 'universal',
+              agentId: subjectToAgentId(chainResult.analysis?.subject),
               solvedAt: Date.now(),
               verified: chainResult.verification?.isCorrect ?? false,
             });
@@ -319,7 +361,7 @@ export async function POST(req: Request) {
               answer: chainResult.answer,
               knowledgePoints:
                 chainResult.knowledgePoints.length > 0 ? chainResult.knowledgePoints : undefined,
-              agentId: chainResult.analysis?.subject ?? 'universal',
+              agentId: subjectToAgentId(chainResult.analysis?.subject),
               solvedAt: Date.now(),
             });
           }

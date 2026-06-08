@@ -26,6 +26,8 @@ import { SolutionSkeleton } from './solution-skeleton';
 import { MathRenderer } from './math-renderer';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { useTaskStore } from '@/lib/store/use-task-store';
+import { useSearchHistoryStore } from '@/lib/store/search-history';
+import type { SearchRecord } from '@/lib/store/search-history';
 import type {
   GradeResult,
   FourPartOutput,
@@ -237,6 +239,7 @@ async function pollSolveJob(
 
     if (job.result) {
       onUpdate({
+        solution: job.result.solution,
         answer: job.result.answer,
         steps: job.result.steps,
         knowledgePoints: job.result.knowledgePoints,
@@ -300,6 +303,7 @@ export function SolvePage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [streamPhase, setStreamPhase] = useState<StreamPhase>('checking');
   const [showHistory, setShowHistory] = useState(false);
+  const [solveCompletedCount, setSolveCompletedCount] = useState(0);
   const [mistakeSaved, setMistakeSaved] = useState(false);
   const [mistakeBookState, setMistakeBookState] = useState<
     'idle' | 'prompt' | 'saving' | 'saved' | 'dismissed'
@@ -367,6 +371,7 @@ export function SolvePage() {
       setResult(r);
       setState('success');
       setMistakeBookState('prompt');
+      setSolveCompletedCount((c) => c + 1);
     } else if (task.status === 'failed') {
       setError(task.error || '解题失败');
       setState('error');
@@ -489,6 +494,14 @@ export function SolvePage() {
       setMistakeBookState('idle');
       setStreamPhase('checking');
 
+      // Extract query text for search record
+      const queryText =
+        input.type === 'text'
+          ? (input.content as string).trim()
+          : input.type === 'image'
+            ? `图片搜索${input.previewUrl ? '(已预览)' : ''}`
+            : '语音搜索';
+
       try {
         let problemText = '';
         let problemImage: string | null = null;
@@ -499,7 +512,6 @@ export function SolvePage() {
           previewUrl = input.previewUrl;
           const recognized = await recognizeImage(input.content as File);
           problemText = recognized.text || recognized.latex;
-          // Always send image to solver — OCR may have errors, vision model can correct them
           problemImage = input.previewUrl || null;
           setRecognizedText(problemText);
         } else if (input.type === 'text') {
@@ -510,6 +522,12 @@ export function SolvePage() {
         if (!problemText) {
           setError('未能识别到题目文字');
           setState('error');
+          useSearchHistoryStore.getState().addRecord({
+            type: input.type,
+            query: queryText,
+            status: 'failed',
+            error: '未能识别到题目文字',
+          });
           return;
         }
 
@@ -531,11 +549,26 @@ export function SolvePage() {
           recognizedText: problemText,
         });
 
+        // Record the search attempt
+        useSearchHistoryStore.getState().addRecord({
+          type: input.type,
+          query: problemText,
+          status: 'success',
+          problemImage: input.type === 'image' ? (problemImage ?? undefined) : undefined,
+        });
+
         startBackgroundPoll(taskId, problemText, problemImage);
         setState('solving');
       } catch (err) {
         setError(err instanceof Error ? err.message : '解题过程中出现错误');
         setState('error');
+        // Record failed search
+        useSearchHistoryStore.getState().addRecord({
+          type: input.type,
+          query: queryText,
+          status: 'failed',
+          error: err instanceof Error ? err.message : '解题失败',
+        });
       }
     },
     [setActiveSolveTask, abortTask],
@@ -644,24 +677,35 @@ export function SolvePage() {
     }
   }, [result]);
 
-  const handleLoadFromHistory = useCallback((entry: QuestionBankEntry) => {
+  const handleLoadFromHistory = useCallback((item: QuestionBankEntry | SearchRecord) => {
+    // Search-only records without a solution — populate query, restore image if available
+    if (!('problemText' in item)) {
+      setRecognizedText(item.query);
+      setPreviewImage(item.problemImage ?? null);
+      setState('idle');
+      setShowHistory(false);
+      return;
+    }
+    // Clear active task so the watcher effects don't overwrite our state
+    setActiveSolveTask(null);
     const solution: FourPartOutput = {
-      solution: entry.solution || '',
-      answer: entry.answer,
-      steps: entry.steps ?? [],
-      knowledgePoints: (entry.knowledgePoints ?? []).map((kp) => ({
+      solution: item.solution || '',
+      answer: item.answer,
+      steps: item.steps ?? [],
+      knowledgePoints: (item.knowledgePoints ?? []).map((kp) => ({
         name: kp.name,
         description: kp.description,
         difficulty: (kp.difficulty as 'easy' | 'medium' | 'hard') ?? 'medium',
       })),
-      similarQuestions: entry.similarQuestions ?? [],
+      similarQuestions: item.similarQuestions ?? [],
     };
     setResult({
-      problem: entry.problemText,
+      problem: item.problemText,
       solution,
       fromQuestionBank: true,
     });
-    setRecognizedText(entry.problemText);
+    setRecognizedText(item.problemText);
+    setPreviewImage(item.problemImage ?? null);
     setState('success');
     setMistakeBookState('idle');
     setShowHistory(false);
@@ -814,12 +858,15 @@ export function SolvePage() {
                   </div>
                 )}
                 {recognizedText && (
-                  <div className="mb-2 text-sm text-muted-foreground">
+                  <div className="mb-2 text-sm text-muted-foreground leading-normal">
                     识别结果：
                     <MathRenderer content={recognizedText} />
                   </div>
                 )}
-                <MathRenderer content={result.problem} className="text-sm text-foreground" />
+                <MathRenderer
+                  content={result.problem}
+                  className="text-sm leading-normal text-foreground"
+                />
                 {result.fromQuestionBank && (
                   <div className="mt-3 flex items-center gap-2 text-xs text-sky-600 dark:text-sky-400">
                     <Sparkles className="h-3 w-3" />
@@ -834,7 +881,11 @@ export function SolvePage() {
         {/* ── RIGHT COLUMN ── */}
         <div className="space-y-6">
           {showHistory ? (
-            <HistoryPanel onLoad={handleLoadFromHistory} onClose={() => setShowHistory(false)} />
+            <HistoryPanel
+              onLoad={handleLoadFromHistory}
+              onClose={() => setShowHistory(false)}
+              refreshKey={solveCompletedCount}
+            />
           ) : (
             <>
               {state === 'error' && error && (

@@ -8,7 +8,7 @@
 
 import { create } from 'zustand';
 
-export type TaskType = 'solve' | 'slides' | 'pptx' | 'general' | 'quiz' | 'write' | 'translate' | 'memory';
+export type TaskType = 'solve' | 'slides' | 'pptx' | 'general' | 'quiz' | 'write' | 'translate' | 'memory' | 'teaching';
 export type TaskStatus = 'running' | 'completed' | 'failed';
 
 export interface BackgroundTask {
