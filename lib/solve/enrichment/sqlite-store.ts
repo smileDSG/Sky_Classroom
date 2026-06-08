@@ -9,7 +9,6 @@
  * Dedup strategy: INSERT OR IGNORE on UNIQUE problem_hash column.
  */
 
-import Database from 'better-sqlite3';
 import { mkdirSync } from 'fs';
 import { createLogger } from '@/lib/logger';
 import type { SolverAgentType, QuestionBankEntry } from '../types';
@@ -25,7 +24,8 @@ const DB_DIR = '.data';
 
 // ── Lazy-initialised singleton ────────────────────────────────────────
 
-let db: Database.Database | null = null;
+type BetterSqlite3Database = import('better-sqlite3').Database;
+let db: BetterSqlite3Database | null = null;
 
 /** Shape of a row returned by better-sqlite3 queries. */
 interface DbRow {
@@ -47,16 +47,18 @@ interface DbRow {
 
 // ── Prepared statements (populated once at init) ──────────────────────
 
-let stInsert: Database.Statement | null = null;
-let stCount: Database.Statement | null = null;
-let stBySubject: Database.Statement | null = null;
-let stRecent: Database.Statement | null = null;
-let stHasProblem: Database.Statement | null = null;
-let stAllForStats: Database.Statement | null = null;
-let stFindByHash: Database.Statement | null = null;
+let stInsert: import('better-sqlite3').Statement | null = null;
+let stCount: import('better-sqlite3').Statement | null = null;
+let stBySubject: import('better-sqlite3').Statement | null = null;
+let stRecent: import('better-sqlite3').Statement | null = null;
+let stHasProblem: import('better-sqlite3').Statement | null = null;
+let stAllForStats: import('better-sqlite3').Statement | null = null;
+let stFindByHash: import('better-sqlite3').Statement | null = null;
 
-function ensureDb(): Database.Database {
+async function ensureDb(): Promise<BetterSqlite3Database> {
   if (db) return db;
+
+  const { default: Database } = await import('better-sqlite3');
 
   // Auto-create .data directory
   try {
@@ -165,13 +167,13 @@ export interface SqliteStoreEntry {
  * Dedup: if a row with the same `problem_hash` already exists, the insert
  * is silently ignored and the existing `QuestionBankEntry` is returned.
  */
-export function saveQuestion(entry: SqliteStoreEntry): QuestionBankEntry {
+export async function saveQuestion(entry: SqliteStoreEntry): Promise<QuestionBankEntry> {
   const problemHash = hashProblemText(entry.problemText);
   const now = Date.now();
   const id = `sqlite_${now}_${Math.random().toString(36).slice(2, 8)}`;
 
   try {
-    ensureDb();
+    await ensureDb();
 
     const result = stInsert!.run({
       id,
@@ -222,9 +224,9 @@ export function saveQuestion(entry: SqliteStoreEntry): QuestionBankEntry {
 }
 
 /** Return the total number of stored questions. */
-export function getCount(): number {
+export async function getCount(): Promise<number> {
   try {
-    ensureDb();
+    await ensureDb();
     const row = stCount!.get() as { count: number };
     return row.count;
   } catch (error) {
@@ -234,9 +236,9 @@ export function getCount(): number {
 }
 
 /** Return all stored questions for the given subject. */
-export function getBySubject(subject: string): QuestionBankEntry[] {
+export async function getBySubject(subject: string): Promise<QuestionBankEntry[]> {
   try {
-    ensureDb();
+    await ensureDb();
     const rows = stBySubject!.all(subject) as DbRow[];
     return rows.map(rowToEntry);
   } catch (error) {
@@ -246,9 +248,9 @@ export function getBySubject(subject: string): QuestionBankEntry[] {
 }
 
 /** Return the most recently stored questions. Defaults to 20. */
-export function getRecent(limit: number = 20): QuestionBankEntry[] {
+export async function getRecent(limit: number = 20): Promise<QuestionBankEntry[]> {
   try {
-    ensureDb();
+    await ensureDb();
     const rows = stRecent!.all(limit) as DbRow[];
     return rows.map(rowToEntry);
   } catch (error) {
@@ -258,9 +260,9 @@ export function getRecent(limit: number = 20): QuestionBankEntry[] {
 }
 
 /** Check whether a problem with the given text already exists (by hash). */
-export function hasProblem(problemText: string): boolean {
+export async function hasProblem(problemText: string): Promise<boolean> {
   try {
-    ensureDb();
+    await ensureDb();
     const problemHash = hashProblemText(problemText);
     const row = stHasProblem!.get(problemHash);
     return row !== undefined;
@@ -276,13 +278,13 @@ export function hasProblem(problemText: string): boolean {
  * Computed via a single lightweight query (subject + confidence only) so it
  * scales well past 5000 rows.
  */
-export function getStats(): {
+export async function getStats(): Promise<{
   total: number;
   bySubject: Record<string, number>;
   avgConfidence: number;
-} {
+}> {
   try {
-    ensureDb();
+    await ensureDb();
     const rows = stAllForStats!.all() as { subject: string; confidence: number }[];
 
     const bySubject: Record<string, number> = {};

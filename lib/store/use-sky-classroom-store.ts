@@ -15,7 +15,12 @@ import type {
   QuestionBankEntry,
   SolverAgentType,
 } from '@/lib/solve/types';
-import type { AvatarConfig, AvatarSpeech, SlideGenerationOptions, SlideGenerationResult } from '@/lib/slides/types';
+import type {
+  AvatarConfig,
+  AvatarSpeech,
+  SlideGenerationOptions,
+  SlideGenerationResult,
+} from '@/lib/slides/types';
 import type { MistakeRecord, KnowledgeGraph, MistakeFilter } from '@/lib/mistakes/types';
 import type { Slide } from '@/lib/types/slides';
 import { createLogger } from '@/lib/logger';
@@ -123,9 +128,9 @@ function causeToErrorType(cause: MistakeRecord['cause']): string {
   const map: Record<string, string> = {
     'concept-unclear': 'concept',
     'calculation-error': 'calculation',
-    'misreading': 'reading',
+    misreading: 'reading',
     'method-wrong': 'reasoning',
-    'careless': 'careless',
+    careless: 'careless',
     'format-error': 'careless',
   };
   return map[cause] ?? 'concept';
@@ -143,7 +148,9 @@ function syncAddToServer(m: MistakeRecord): void {
       errorType: causeToErrorType(m.cause),
       knowledgePoints: m.knowledgePoints,
     }),
-  }).catch(() => { /* ignore — local store is source of truth for UI */ });
+  }).catch(() => {
+    /* ignore — local store is source of truth for UI */
+  });
 }
 
 /** Fire-and-forget: PATCH mistake review on server */
@@ -173,7 +180,10 @@ interface MistakesSlice {
   mergeMistakes: (serverMistakes: MistakeRecord[]) => void;
 }
 
-const createMistakesSlice = (set: SetFn<MistakesSlice>, get: () => SkyClassroomStore): MistakesSlice => ({
+const createMistakesSlice = (
+  set: SetFn<MistakesSlice>,
+  get: () => SkyClassroomStore,
+): MistakesSlice => ({
   mistakes: [],
   knowledgeGraph: null,
   activeFilter: null,
@@ -185,7 +195,11 @@ const createMistakesSlice = (set: SetFn<MistakesSlice>, get: () => SkyClassroomS
     syncAddToServer(m);
   },
   markReviewed: (id) => {
-    set((s) => ({ mistakes: s.mistakes.map((m) => m.id === id ? { ...m, reviewed: true, reviewCount: m.reviewCount + 1 } : m) }));
+    set((s) => ({
+      mistakes: s.mistakes.map((m) =>
+        m.id === id ? { ...m, reviewed: true, reviewCount: m.reviewCount + 1 } : m,
+      ),
+    }));
     syncReviewToServer(id);
   },
   setFilter: (filter) => set({ activeFilter: filter }),
@@ -252,9 +266,13 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
     }),
     {
       name: 'sky-classroom-storage',
-      version: 1,
+      version: 2,
       migrate: (persistedState: unknown) => {
-        if (!persistedState || typeof persistedState !== 'object' || Array.isArray(persistedState)) {
+        if (
+          !persistedState ||
+          typeof persistedState !== 'object' ||
+          Array.isArray(persistedState)
+        ) {
           return {} as unknown as SkyClassroomStore;
         }
         const s = persistedState as Record<string, unknown>;
@@ -281,7 +299,11 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
       },
       onError: (error: unknown) => {
         console.error('[SkyClassroom] Hydration failed — clearing corrupted cache:', error);
-        try { localStorage.removeItem('sky-classroom-storage'); } catch { /* ignore */ }
+        try {
+          localStorage.removeItem('sky-classroom-storage');
+        } catch {
+          /* ignore */
+        }
       },
       partialize: (state) => ({
         selectedAvatarId: state.selectedAvatarId,

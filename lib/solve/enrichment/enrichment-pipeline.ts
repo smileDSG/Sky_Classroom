@@ -110,7 +110,7 @@ async function processOneQuestion(
       // Store in SQLite question bank if confidence is sufficient
       if (solution.confidence >= MIN_STORE_CONFIDENCE) {
         // Dedup already happened before solving, so this is always a fresh insert.
-        saveQuestion({
+        await saveQuestion({
           problemText: question.problemText,
           answer: solution.answer,
           solution: solution.solution,
@@ -376,7 +376,8 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
           job.stats.bySubject[subject].extracted += generated.length;
 
           // ② Dedup against SQLite
-          const newQuestions = generated.filter((q) => !hasProblem(q.problemText));
+          const dedupResults = await Promise.all(generated.map(async (q) => ({ q, exists: await hasProblem(q.problemText) })));
+          const newQuestions = dedupResults.filter(r => !r.exists).map(r => r.q);
           const dupedCount = generated.length - newQuestions.length;
 
           if (newQuestions.length === 0) {
