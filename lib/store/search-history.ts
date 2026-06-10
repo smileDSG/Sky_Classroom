@@ -23,8 +23,10 @@ interface SearchHistoryState {
   addRecord: (
     record: Omit<SearchRecord, 'id' | 'timestamp'> & { id?: string; timestamp?: number },
   ) => void;
-  clearRecords: () => void;
+  updateRecord: (id: string, updates: Partial<SearchRecord>) => void;
   deleteRecord: (id: string) => void;
+  deleteRecords: (ids: string[]) => void;
+  clearRecords: () => void;
 }
 
 export const useSearchHistoryStore = create<SearchHistoryState>()(
@@ -47,11 +49,19 @@ export const useSearchHistoryStore = create<SearchHistoryState>()(
           const updated = [newRecord, ...state.records].slice(0, 100);
           return { records: updated };
         }),
-      clearRecords: () => set({ records: [] }),
+      updateRecord: (id, updates) =>
+        set((state) => ({
+          records: state.records.map((r) => (r.id === id ? { ...r, ...updates } : r)),
+        })),
       deleteRecord: (id) =>
         set((state) => ({
           records: state.records.filter((r) => r.id !== id),
         })),
+      deleteRecords: (ids) =>
+        set((state) => ({
+          records: state.records.filter((r) => !ids.includes(r.id)),
+        })),
+      clearRecords: () => set({ records: [] }),
     }),
     {
       name: 'solve-search-history',

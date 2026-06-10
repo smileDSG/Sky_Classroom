@@ -11,6 +11,8 @@ import {
   Camera,
   CheckCircle2,
   AlertCircle as AlertCircleIcon,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,17 +59,22 @@ function formatTime(ts: number): string {
   return d.toLocaleDateString('zh-CN');
 }
 
+/** Get a stable key for a unified item */
+function getItemKey(item: UnifiedHistoryItem): string {
+  return item.kind === 'bank' ? `bank-${item.entry.id}` : `search-${item.record.id}`;
+}
+
 export function HistoryPanel({ onLoad, onClose, className, refreshKey }: HistoryPanelProps) {
   const [bankEntries, setBankEntries] = useState<QuestionBankEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [deleteKind, setDeleteKind] = useState<'bank' | 'search' | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
 
   const searchRecords = useSearchHistoryStore((s) => s.records);
-  const deleteSearchRecord = useSearchHistoryStore((s) => s.deleteRecord);
-  const clearSearchRecords = useSearchHistoryStore((s) => s.clearRecords);
+  const deleteSearchRecords = useSearchHistoryStore((s) => s.deleteRecords);
 
   const fetchEntries = useCallback(async () => {
     setLoading(true);
@@ -124,26 +131,58 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
       })
     : unifiedItems;
 
-  const handleDelete = useCallback(async () => {
-    if (!deleteTarget || !deleteKind) return;
+  const toggleSelect = (key: string) => {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
-    if (deleteKind === 'bank') {
+  const toggleSelectAll = () => {
+    if (selectedKeys.size === filteredItems.length) {
+      setSelectedKeys(new Set());
+    } else {
+      setSelectedKeys(new Set(filteredItems.map(getItemKey)));
+    }
+  };
+
+  const handleBatchDelete = useCallback(async () => {
+    const bankIds: string[] = [];
+    const searchIds: string[] = [];
+
+    for (const item of filteredItems) {
+      const key = getItemKey(item);
+      if (!selectedKeys.has(key)) continue;
+      if (item.kind === 'bank') bankIds.push(item.entry.id);
+      else searchIds.push(item.record.id);
+    }
+
+    // Delete bank entries via API
+    if (bankIds.length > 0) {
       try {
-        await fetch(`/api/sky/question-bank?id=${deleteTarget}`, { method: 'DELETE' });
-        setBankEntries((prev) => prev.filter((e) => e.id !== deleteTarget));
+        await fetch(`/api/sky/question-bank?ids=${bankIds.join(',')}`, { method: 'DELETE' });
+        setBankEntries((prev) => prev.filter((e) => !bankIds.includes(e.id)));
       } catch (e) {
         setError(e instanceof Error ? e.message : '删除失败');
       }
-    } else {
-      deleteSearchRecord(deleteTarget);
     }
-    setDeleteTarget(null);
-    setDeleteKind(null);
-  }, [deleteTarget, deleteKind, deleteSearchRecord]);
 
-  const handleClearAllSearch = useCallback(() => {
-    clearSearchRecords();
-  }, [clearSearchRecords]);
+    // Delete search records from store
+    if (searchIds.length > 0) {
+      deleteSearchRecords(searchIds);
+    }
+
+    setSelectedKeys(new Set());
+    setSelectMode(false);
+    setShowBatchDeleteConfirm(false);
+  }, [filteredItems, selectedKeys, deleteSearchRecords]);
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedKeys(new Set());
+  };
 
   return (
     <>
@@ -155,11 +194,34 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
                 <Clock className="h-5 w-5 text-sky-500" />
                 历史记录
               </CardTitle>
-              <CardDescription>所有拍照搜题记录，包含搜索结果与搜索尝试</CardDescription>
+              <CardDescription>所有拍照搜题记录</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              返回搜题
-            </Button>
+            <div className="flex items-center gap-2">
+              {selectMode ? (
+                <>
+                  <Button variant="ghost" size="sm" onClick={exitSelectMode}>
+                    取消
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={toggleSelectAll}>
+                    {selectedKeys.size === filteredItems.length ? '取消全选' : '全选'}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectMode(true)}
+                    disabled={filteredItems.length === 0}
+                  >
+                    多选
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={onClose}>
+                    返回搜题
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="mt-3">
@@ -207,54 +269,55 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
           ) : (
             <ScrollArea className="h-[400px]">
               <div className="divide-y">
-                {filteredItems.map((item) => (
-                  <HistoryItemRow
-                    key={
-                      item.kind === 'bank' ? `bank-${item.entry.id}` : `search-${item.record.id}`
-                    }
-                    item={item}
-                    onLoad={onLoad}
-                    onDelete={(kind, id) => {
-                      setDeleteTarget(id);
-                      setDeleteKind(kind);
-                    }}
-                  />
-                ))}
+                {filteredItems.map((item) => {
+                  const key = getItemKey(item);
+                  return (
+                    <HistoryItemRow
+                      key={key}
+                      item={item}
+                      selectMode={selectMode}
+                      selected={selectedKeys.has(key)}
+                      onToggleSelect={() => toggleSelect(key)}
+                      onLoad={onLoad}
+                    />
+                  );
+                })}
               </div>
             </ScrollArea>
           )}
 
-          {/* Clear search-only records button */}
-          {searchRecords.length > 0 && (
-            <div className="border-t p-2">
+          {/* Batch delete bar */}
+          {selectMode && selectedKeys.size > 0 && (
+            <div className="border-t p-3 flex items-center justify-between bg-muted/30">
+              <span className="text-sm text-muted-foreground">
+                已选 {selectedKeys.size} 项
+              </span>
               <Button
-                variant="ghost"
+                variant="destructive"
                 size="sm"
-                className="text-xs text-muted-foreground"
-                onClick={handleClearAllSearch}
+                onClick={() => setShowBatchDeleteConfirm(true)}
               >
-                <Trash2 className="mr-1 h-3 w-3" />
-                清空无结果的搜索记录
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                删除
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+      {/* Batch delete confirmation */}
+      <AlertDialog open={showBatchDeleteConfirm} onOpenChange={setShowBatchDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteKind === 'bank'
-                ? '删除后无法恢复，确定要删除这道题目吗？'
-                : '确定要删除这条搜索记录吗？'}
+              确定要删除选中的 {selectedKeys.size} 条记录吗？删除后无法恢复。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
+              onClick={handleBatchDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               删除
@@ -270,20 +333,33 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
 
 function HistoryItemRow({
   item,
+  selectMode,
+  selected,
+  onToggleSelect,
   onLoad,
-  onDelete,
 }: {
   item: UnifiedHistoryItem;
+  selectMode: boolean;
+  selected: boolean;
+  onToggleSelect: () => void;
   onLoad?: (entry: QuestionBankEntry | SearchRecord) => void;
-  onDelete: (kind: 'bank' | 'search', id: string) => void;
 }) {
   if (item.kind === 'bank') {
-    const { entry, matchedSearch } = item;
+    const { entry } = item;
     return (
       <div
         className="group flex items-start gap-3 px-4 py-2.5 transition-colors hover:bg-muted/30 cursor-pointer"
-        onClick={() => onLoad?.(entry)}
+        onClick={() => (selectMode ? onToggleSelect() : onLoad?.(entry))}
       >
+        {selectMode && (
+          <div className="mt-0.5 shrink-0" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
+            {selected ? (
+              <CheckSquare className="h-5 w-5 text-sky-500" />
+            ) : (
+              <Square className="h-5 w-5 text-muted-foreground" />
+            )}
+          </div>
+        )}
         <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
           <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
         </div>
@@ -317,32 +393,32 @@ function HistoryItemRow({
             <span>{formatTime(entry.solvedAt)}</span>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete('bank', entry.id);
-          }}
-        >
-          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-        </Button>
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        {!selectMode && (
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        )}
       </div>
     );
   }
 
   // search-only
-  const { record } = item;
+  const { record, matchedBank } = item;
   const isSuccess = record.status === 'success';
   const isFailed = record.status === 'failed';
 
   return (
     <div
       className="group flex items-start gap-3 px-4 py-2.5 transition-colors hover:bg-muted/30 cursor-pointer"
-      onClick={() => onLoad?.(record)}
+      onClick={() => (selectMode ? onToggleSelect() : onLoad?.(matchedBank ?? record))}
     >
+      {selectMode && (
+        <div className="mt-0.5 shrink-0" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
+          {selected ? (
+            <CheckSquare className="h-5 w-5 text-sky-500" />
+          ) : (
+            <Square className="h-5 w-5 text-muted-foreground" />
+          )}
+        </div>
+      )}
       <div
         className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
           isSuccess
@@ -390,17 +466,9 @@ function HistoryItemRow({
           )}
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete('search', record.id);
-        }}
-      >
-        <Trash2 className="h-3.5 w-3.5 text-destructive" />
-      </Button>
+      {!selectMode && (
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      )}
     </div>
   );
 }

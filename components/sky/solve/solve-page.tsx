@@ -384,6 +384,7 @@ export function SolvePage() {
     taskId: string,
     problemText: string,
     problemImage: string | null,
+    searchRecordId?: string,
   ): Promise<void> {
     const store = useTaskStore.getState;
     const abortController = new AbortController();
@@ -464,6 +465,11 @@ export function SolvePage() {
         phase: '解题完成',
         result: solveResult,
       });
+
+      // Mark search record as having a solution
+      if (searchRecordId) {
+        useSearchHistoryStore.getState().updateRecord(searchRecordId, { hasSolution: true });
+      }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       store().updateTask(taskId, {
@@ -551,14 +557,16 @@ export function SolvePage() {
         });
 
         // Record the search attempt
+        const searchRecordId = `search_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         useSearchHistoryStore.getState().addRecord({
+          id: searchRecordId,
           type: input.type,
           query: problemText,
           status: 'success',
           problemImage: input.type === 'image' ? (problemImage ?? undefined) : undefined,
         });
 
-        startBackgroundPoll(taskId, problemText, problemImage);
+        startBackgroundPoll(taskId, problemText, problemImage, searchRecordId);
         setState('solving');
       } catch (err) {
         setError(err instanceof Error ? err.message : '解题过程中出现错误');
