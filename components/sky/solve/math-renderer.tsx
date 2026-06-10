@@ -815,6 +815,13 @@ function fixCommonLatexErrors(text: string): string {
     /\\sqrt\}([a-zA-Z0-9]+)/g,
     (_m, content: string) => `\\sqrt{${content}}`,
   );
+  // Fix rac{...} → \frac{...} (LLM often drops \f from \frac)
+  // Only match after math operators/punctuation to avoid false positives
+  // with English words like "trace", "place", etc.
+  result = result.replace(
+    /(?<=[·×÷=+\-*/<>{}|^_\n\s])rac\{/g,
+    '\\frac{',
+  );
   result = result.replace(
     /\\(cdot|times|div|pm|mp|star|circ|bullet)([a-zA-Z])/g,
     (_m, cmd: string, ch: string) => `\\${cmd} ${ch}`,
