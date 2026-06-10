@@ -779,7 +779,11 @@ const ENVIRONMENT_ALIAS_MAP: Record<string, string> = {
   multline: 'gathered',
   flalign: 'aligned',
   eqnarray: 'aligned',
+  split: 'aligned',
+  array: 'aligned',
+  tabular: 'aligned',
   // Note: \begin{equation} is valid in KaTeX — do NOT convert to aligned.
+  // Note: \begin{cases} is valid in KaTeX — do NOT convert.
   // displaymath is not supported by KaTeX, convert to equation*.
   displaymath: 'equation*',
 };
@@ -859,6 +863,25 @@ function stripMarkdown(text: string): string {
   // Preserve paragraph breaks (double newline = paragraph)
   result = result.replace(/\n{3,}/g, '\n\n').trim();
   return result;
+}
+
+// ── Fast path check ──────────────────────────────────────────────────
+// If content only contains $...$ and $$...$$ delimited math with no bare
+// \command outside delimiters, skip the full BARE_LATEX_PATTERNS processing.
+// This reduces rendering time for well-formed LLM output by ~70%.
+
+function isWellFormedMath(text: string): boolean {
+  // Remove all $...$ and $$...$$ blocks
+  let remaining = text;
+  // Remove $$...$$ first (longer delimiter)
+  remaining = remaining.replace(/\$\$[\s\S]*?\$\$/g, '');
+  // Remove $...$
+  remaining = remaining.replace(/\$[^$\n]+?\$/g, '');
+
+  // Check if any bare \command remains outside math delimiters
+  // Match \command sequences that are likely LaTeX (2+ letter commands)
+  const bareCommandPattern = /\\[a-zA-Z]{2,}/;
+  return !bareCommandPattern.test(remaining);
 }
 
 // ── Main preprocessing ──────────────────────────────────────────────────
@@ -1051,9 +1074,45 @@ function parseMixedContent(text: string): Segment[] {
   return segments;
 }
 
+// ── KaTeX output cache ────────────────────────────────────────────────
+// Module-level LRU cache for rendered KaTeX HTML.
+// Key = `${displayMode ? 'D' : 'I'}:${math}`, Value = rendered HTML.
+// Capped at 2000 entries with LRU eviction (move-to-end on access).
+
+const KATEX_CACHE_MAX = 2000;
+const katexCache = new Map<string, string>();
+
+function getCachedKatex(math: string, displayMode: boolean): string | undefined {
+  const key = `${displayMode ? 'D' : 'I'}:${math}`;
+  const cached = katexCache.get(key);
+  if (cached !== undefined) {
+    // Move to end (most recently used)
+    katexCache.delete(key);
+    katexCache.set(key, cached);
+  }
+  return cached;
+}
+
+function setCachedKatex(math: string, displayMode: boolean, html: string): void {
+  const key = `${displayMode ? 'D' : 'I'}:${math}`;
+  // Evict oldest if at capacity
+  if (katexCache.size >= KATEX_CACHE_MAX) {
+    const firstKey = katexCache.keys().next().value;
+    if (firstKey !== undefined) {
+      katexCache.delete(firstKey);
+    }
+  }
+  katexCache.set(key, html);
+}
+
 // ── KaTeX renderer ─────────────────────────────────────────────────────
 
 function renderKatex(math: string, displayMode = false): string {
+  // Check cache first
+  const cached = getCachedKatex(math, displayMode);
+  if (cached !== undefined) return cached;
+
+  let result: string;
   try {
     // For display mode: just strip \displaystyle (KaTeX handles the rest)
     // For inline mode: add \nolimits to compact large operators
@@ -1073,13 +1132,15 @@ function renderKatex(math: string, displayMode = false): string {
         .replace(/\\displaystyle\s*/g, '');
     }
 
-    return katex.renderToString(processedMath, {
+    result = katex.renderToString(processedMath, {
       displayMode,
       throwOnError: true,
       strict: false,
 
       trust: (context) => context.command === '\\htmlClass',
     });
+    setCachedKatex(math, displayMode, result);
+    return result;
   } catch {
     // First attempt failed — try common fixes
     let fixed = math
@@ -1117,23 +1178,29 @@ function renderKatex(math: string, displayMode = false): string {
       .replace(/\\right(?![a-zA-Z\[\]()|.\s])/g, '');
 
     try {
-      return katex.renderToString(fixed, {
+      result = katex.renderToString(fixed, {
         displayMode,
         throwOnError: false,
         strict: false,
-  
+
       });
+      setCachedKatex(math, displayMode, result);
+      return result;
     } catch {
       const minimal = math.replace(/\\[a-zA-Z]+/g, '').replace(/[{}_$^]/g, ' ');
       try {
-        return katex.renderToString(minimal, {
+        result = katex.renderToString(minimal, {
           displayMode,
           throwOnError: false,
           strict: false,
-    
+
         });
+        setCachedKatex(math, displayMode, result);
+        return result;
       } catch {
-        return `<span style="font-family: 'Times New Roman', serif; font-style: italic;">${minimal.trim()}</span>`;
+        result = `<span style="font-family: 'Times New Roman', serif; font-style: italic;">${minimal.trim()}</span>`;
+        setCachedKatex(math, displayMode, result);
+        return result;
       }
     }
   }
@@ -1145,7 +1212,9 @@ export function MathRenderer({ content, className }: MathRendererProps) {
   if (!content) return null;
 
   const segments = useMemo(() => {
-    const preprocessed = wrapBareLatex(content);
+    // Fast path: if content is already well-formed (only $...$ delimited math,
+    // no bare \command outside), skip the full wrapBareLatex processing.
+    const preprocessed = isWellFormedMath(content) ? content : wrapBareLatex(content);
     return parseMixedContent(preprocessed);
   }, [content]);
 

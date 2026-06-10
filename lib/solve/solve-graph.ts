@@ -36,11 +36,12 @@ async function checkSolveCacheNode(
   state: SolveGraphState,
   _config: LangGraphRunnableConfig,
 ): Promise<Partial<SolveGraphState>> {
+  const t0 = Date.now();
   const { findSolveCacheMatches } = await import('./solve-cache');
   const matches = await findSolveCacheMatches(state.problemText, 0.7);
 
   if (matches.length > 0) {
-    log.info(`[SolveGraph] checkSolveCache: hit (similarity=${matches[0] ? 'found' : 'none'})`);
+    log.info(`[SolveGraph] checkSolveCache: hit in ${Date.now() - t0}ms`);
     const hit = matches[0];
     return {
       fromSolveCache: true,
@@ -52,6 +53,7 @@ async function checkSolveCacheNode(
     };
   }
 
+  log.info(`[SolveGraph] checkSolveCache: miss in ${Date.now() - t0}ms`);
   return { fromSolveCache: false };
 }
 
@@ -65,13 +67,12 @@ async function checkQuestionBankNode(
   state: SolveGraphState,
   _config: LangGraphRunnableConfig,
 ): Promise<Partial<SolveGraphState>> {
+  const t0 = Date.now();
   const { findSimilarQuestions } = await import('./question-bank');
   const matches = await findSimilarQuestions(state.problemText, 0.85);
 
   if (matches.length > 0) {
-    log.info(
-      `[SolveGraph] checkQuestionBank: hit (similarity=${matches[0]._similarity?.toFixed(2)})`,
-    );
+    log.info(`[SolveGraph] checkQuestionBank: hit in ${Date.now() - t0}ms (similarity=${matches[0]._similarity?.toFixed(2)})`);
     const hit = matches[0];
     return {
       fromQuestionBank: true,
@@ -87,7 +88,7 @@ async function checkQuestionBankNode(
     };
   }
 
-  log.info('[SolveGraph] checkQuestionBank: miss');
+  log.info(`[SolveGraph] checkQuestionBank: miss in ${Date.now() - t0}ms`);
   return { fromQuestionBank: false };
 }
 

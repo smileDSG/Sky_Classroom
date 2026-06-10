@@ -128,14 +128,16 @@ export default function CloudMindQuizPage() {
     setState('generating');
     setError(null);
     try {
-      const { listQuestionBankEntries } = await import('@/lib/solve/question-bank');
-      const entries = await listQuestionBankEntries(count);
+      const res = await fetch(`/api/sky/question-bank?limit=${count}`);
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      const entries = data.data?.questions ?? [];
       if (entries.length === 0) {
         setError('题库为空，先去做些题目吧');
         setState('idle');
         return;
       }
-      const bankQuestions: QuizQuestion[] = entries.slice(0, count).map((e, i) => ({
+      const bankQuestions: QuizQuestion[] = entries.slice(0, count).map((e: any, i: number) => ({
         id: i,
         question: e.problemText,
         options: [e.answer, '（干扰项 A）', '（干扰项 B）', '（干扰项 C）'],

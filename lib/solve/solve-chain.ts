@@ -37,7 +37,7 @@ const MAX_STEP_TIMEOUT = 15_000;
 const MIN_STEP_TIMEOUT = 3_000;
 
 /** Confidence threshold above which we skip the verify step. */
-const HIGH_CONFIDENCE_THRESHOLD = 0.8;
+const HIGH_CONFIDENCE_THRESHOLD = 0.7;
 
 /** Dynamic step timeout: use remaining chain budget, capped between min and max. */
 function getStepTimeout(elapsed: number): number {
@@ -216,60 +216,113 @@ export async function runSolveChain(
     let knowledgePoints: SolveChainResult['knowledgePoints'] = [];
     let similarQuestions: SolveChainResult['similarQuestions'] = [];
 
-    // ── Step 1: Analyze ────────────────────────────────────────────
-    log.info('[SolveChain] Step 1: Analyze');
+    // ── Step 1 & 2: Analyze + Solve in parallel ───────────────────
+    // Start solve immediately with universal model (fastest).
+    // Analyze runs in parallel — if it indicates a different agent type,
+    // we'll run a correction step after solve completes.
+    log.info('[SolveChain] Step 1+2: Analyze + Solve (parallel)');
     if (chainAbort.signal.aborted) {
       throw new Error('Chain aborted');
     }
+
     const analyzeToRun = analyzePromise ?? analyzeProblem(problemText);
-    const analysisResult = await withTimeout(
+    const t_analyze = Date.now();
+    const analyzePromiseWithTimeout = withTimeout(
       analyzeToRun,
       getStepTimeout(Date.now() - startTime),
       'analyze',
     );
+
+    // Start solve immediately with universal agent (fastest model)
+    const initialAgentType: SolverAgentType = 'universal';
+
+    // Run solve and analyze in parallel
+    const t_parallel = Date.now();
+    const [solveResultRaw, analysisResult] = await Promise.all([
+      (async () => {
+        const t_solve = Date.now();
+        try {
+          const solvePromise = solveStreamCollect(
+            initialAgentType,
+            problemText,
+            problemImage ?? null,
+            onStreamEvent,
+          );
+          const result = await withTimeout(
+            solvePromise,
+            getStepTimeout(Date.now() - startTime),
+            'solve',
+          );
+          log.info(`[SolveChain] Solve took ${Date.now() - t_solve}ms, ok=${result.ok}`);
+          return result;
+        } catch (err) {
+          log.info(`[SolveChain] Solve failed after ${Date.now() - t_solve}ms`);
+          return { ok: false as const, error: err instanceof Error ? err.message : String(err) };
+        }
+      })(),
+      analyzePromiseWithTimeout,
+    ]);
+    log.info(`[SolveChain] Parallel phase took ${Date.now() - t_parallel}ms`);
+
+    // Process analyze result
     if (analysisResult.ok) {
       analysis = analysisResult.value;
+      log.info(`[SolveChain] Analyze: subject=${analysis.subject}, confidence=${analysis.confidence}`);
     } else {
       warnings.push('分析步骤超时或失败，跳过');
     }
 
-    // ── Step 2: Solve (streaming) ─────────────────────────────────
-    log.info('[SolveChain] Step 2: Solve');
-    if (chainAbort.signal.aborted) {
-      throw new Error('Chain aborted');
-    }
-    const agentType = analysis
-      ? mapSubjectToAgentType(analysis.subject)
-      : classifyProblem(problemText);
-
-    try {
-      const solvePromise = solveStreamCollect(
-        agentType,
-        problemText,
-        problemImage ?? null,
-        onStreamEvent,
-      );
-      const solveResult = await withTimeout(
-        solvePromise,
-        getStepTimeout(Date.now() - startTime),
-        'solve',
-      );
-      if (solveResult.ok) {
-        solution = solveResult.value.solution || '';
-        steps = solveResult.value.steps;
-        answer = solveResult.value.answer;
-        // If solver already returned knowledge points, use them
-        if (solveResult.value.knowledgePoints.length > 0) {
-          knowledgePoints = solveResult.value.knowledgePoints;
-        }
-        if (solveResult.value.similarQuestions.length > 0) {
-          similarQuestions = solveResult.value.similarQuestions;
-        }
-      } else {
-        warnings.push('解题步骤超时或失败');
+    // Process solve result
+    if (solveResultRaw.ok) {
+      const solveResult = solveResultRaw.value;
+      solution = solveResult.solution || '';
+      steps = solveResult.steps;
+      answer = solveResult.answer;
+      if (solveResult.knowledgePoints.length > 0) {
+        knowledgePoints = solveResult.knowledgePoints;
       }
-    } catch (err) {
-      warnings.push(`解题步骤异常: ${err instanceof Error ? err.message : String(err)}`);
+      if (solveResult.similarQuestions.length > 0) {
+        similarQuestions = solveResult.similarQuestions;
+      }
+      log.info(`[SolveChain] Solve result: answer=${answer?.slice(0, 30) || 'none'}, steps=${steps.length}`);
+    } else {
+      warnings.push('解题步骤超时或失败');
+      log.warn(`[SolveChain] Solve failed: ${solveResultRaw.error}`);
+    }
+
+    // If analyze indicates a different agent type AND solve failed or produced no answer,
+    // try again with the correct agent type
+    if (analysis && !answer) {
+      const correctAgentType = mapSubjectToAgentType(analysis.subject);
+      if (correctAgentType !== initialAgentType) {
+        log.info(`[SolveChain] Retrying with correct agent type: ${correctAgentType}`);
+        try {
+          const retryPromise = solveStreamCollect(
+            correctAgentType,
+            problemText,
+            problemImage ?? null,
+            onStreamEvent,
+          );
+          const retryResult = await withTimeout(
+            retryPromise,
+            getStepTimeout(Date.now() - startTime),
+            'solve-retry',
+          );
+          if (retryResult.ok) {
+            solution = retryResult.value.solution || '';
+            steps = retryResult.value.steps;
+            answer = retryResult.value.answer;
+            if (retryResult.value.knowledgePoints.length > 0) {
+              knowledgePoints = retryResult.value.knowledgePoints;
+            }
+            if (retryResult.value.similarQuestions.length > 0) {
+              similarQuestions = retryResult.value.similarQuestions;
+            }
+          }
+        } catch (err) {
+          warnings.push(`重试解题异常: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
     }
 
     // ── Step 2.5: Regex post-processing ─────────────────────────────
@@ -287,15 +340,25 @@ export async function runSolveChain(
     if (chainAbort.signal.aborted) {
       throw new Error('Chain aborted');
     }
-    // Skip verify if analysis confidence is high (heuristic trust)
+    // Skip verify conditions:
+    // 1. High confidence from analysis (≥0.7)
+    // 2. Pure numeric answer (detected by regex)
+    // 3. Short problem (<50 chars) — likely simple
     const highConfidence = analysis?.confidence ?? 0;
-    const skipVerify = highConfidence >= HIGH_CONFIDENCE_THRESHOLD;
+    const isPureNumericAnswer = answer && /^[\d.,\s\-+*/()]+$/.test(answer.replace(/\s/g, ''));
+    const isShortProblem = problemText.length < 50;
+    const skipVerify = highConfidence >= HIGH_CONFIDENCE_THRESHOLD || isPureNumericAnswer || isShortProblem;
     if (skipVerify) {
-      log.info('[SolveChain] Step 3: Verify skipped (high confidence)');
+      const reason = highConfidence >= HIGH_CONFIDENCE_THRESHOLD
+        ? '分析置信度较高'
+        : isPureNumericAnswer
+          ? '纯数字答案'
+          : '短题目（<50字符）';
+      log.info(`[SolveChain] Step 3: Verify skipped (${reason})`);
       verification = {
         isCorrect: true,
-        confidence: highConfidence,
-        reasoning: '校验已跳过：分析置信度较高（≥0.8）',
+        confidence: highConfidence || 0.8,
+        reasoning: `校验已跳过：${reason}`,
       };
     } else if (answer) {
       const verifyResult = await withTimeout(

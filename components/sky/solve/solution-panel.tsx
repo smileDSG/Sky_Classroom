@@ -34,6 +34,23 @@ function normalizeForCompare(text: string): string {
 }
 
 /**
+ * Check if two texts are largely the same content.
+ */
+function isDuplicateContent(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const na = normalizeForCompare(a);
+  const nb = normalizeForCompare(b);
+  if (na.length < 10 || nb.length < 10) return false;
+  if (na === nb) return true;
+  if (na.includes(nb) || nb.includes(na)) return true;
+  // Character overlap ratio
+  const shorter = na.length < nb.length ? na : nb;
+  const longer = na.length < nb.length ? nb : na;
+  const overlap = [...shorter].filter((ch) => longer.includes(ch)).length;
+  return overlap / shorter.length > 0.7;
+}
+
+/**
  * Remove steps whose content is largely duplicated in the solution text.
  * This prevents the user from seeing the same derivation twice — once in
  * the "解题详解" block and again in the "步骤" tab.
@@ -81,6 +98,9 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
   const hasSteps = steps.length > 0;
   const isComplete = hasSteps && answer; // 解题完成 = 有步骤且有答案
 
+  // Hide solution block when it largely duplicates the answer
+  const showSolution = solution && !isDuplicateContent(solution, answer);
+
   return (
     <Card className={cn('overflow-hidden', className)}>
       <CardHeader className="border-b bg-gradient-to-r from-[#4A90D9]/5 to-transparent pb-4">
@@ -116,8 +136,8 @@ export function SolutionPanel({ output, className }: SolutionPanelProps) {
         </div>
       )}
 
-      {/* ─ 解题详解：详细推导过程 ─ */}
-      {solution && (
+      {/* ─ 解题详解：详细推导过程（仅当与答案不重复时显示） ─ */}
+      {showSolution && (
         <div className="px-6 py-4">
           <div className="mx-auto max-w-3xl">
             <MathRenderer

@@ -165,13 +165,18 @@ export interface PhaseEvent {
   phase: string;
 }
 
+export interface FirstTokenEvent {
+  type: 'first_token';
+}
+
 export type StreamEvent =
   | SolutionEvent
   | StepEvent
   | AnswerEvent
   | KnowledgeEvent
   | SimilarEvent
-  | PhaseEvent;
+  | PhaseEvent
+  | FirstTokenEvent;
 
 // ── Streaming JSON parser state machine ──────────────────────────────
 
@@ -596,16 +601,28 @@ export async function* streamSolve(
   );
 
   const parser = new StepStreamParser();
+  let firstTokenEmitted = false;
+  const t_start = Date.now();
+  let chunkCount = 0;
 
   try {
     for await (const chunk of result.textStream) {
+      chunkCount++;
+      // Emit first_token event on first chunk received
+      if (!firstTokenEmitted) {
+        yield { type: 'first_token' };
+        firstTokenEmitted = true;
+        log.info(`[StreamingSolver] First token after ${Date.now() - t_start}ms`);
+      }
+
       const events = parser.feed(chunk);
       for (const event of events) {
         yield event;
       }
     }
+    log.info(`[StreamingSolver] Stream complete: ${chunkCount} chunks, ${Date.now() - t_start}ms total`);
   } catch (err) {
-    log.error('Stream solve error:', err);
+    log.error(`[StreamingSolver] Stream error after ${Date.now() - t_start}ms:`, err);
     throw err;
   }
 

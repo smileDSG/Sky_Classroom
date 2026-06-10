@@ -116,38 +116,82 @@ function convertUnicodeMath(text: string): string {
 function processTextSegment(text: string): string {
   let result = text;
 
+  // Step 0.5: Handle consecutive bare commands like \cos\phi, \sin\theta
+  // These slip through the individual command catch-all because the lookahead
+  // rejects \cos when followed by another \command.
+  // IMPORTANT: This must run on non-math segments only (after splitByMathBlocks)
+  // to avoid corrupting $...$ delimiters around already-formatted math.
+  result = result.replace(/\\([a-zA-Z]{2,})(\s*\\[a-zA-Z]+)+/g, (_m: string, firstCmd: string) => {
+    const knownCommands = new Set([
+      'sin', 'cos', 'tan', 'cot', 'sec', 'csc',
+      'arcsin', 'arccos', 'arctan', 'sinh', 'cosh', 'tanh', 'coth',
+      'ln', 'log', 'exp', 'lim', 'int', 'oint', 'sum', 'prod', 'sqrt',
+      'frac', 'dfrac', 'tfrac', 'binom',
+      'partial', 'nabla', 'infty',
+      'Sigma', 'Pi', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Phi', 'Psi', 'Omega',
+      'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta',
+      'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma',
+      'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega',
+      'varphi', 'vartheta', 'varepsilon', 'varrho', 'varsigma', 'digamma',
+      'Rightarrow', 'Leftarrow', 'Longrightarrow', 'Longleftarrow', 'longmapsto',
+      'longrightarrow', 'longleftarrow', 'longleftrightarrow',
+      'leftarrow', 'rightarrow', 'uparrow', 'downarrow', 'leftrightarrow',
+      'hookrightarrow', 'hookleftarrow', 'nearrow', 'searrow', 'swarrow', 'nwarrow',
+    ]);
+    if (knownCommands.has(firstCmd)) return `$${_m}$`;
+    return _m;
+  });
+
   // Step 1: Normalize Unicode superscripts
   result = normalizeUnicodeSuperscripts(result);
 
-  // Step 1.5: Convert Unicode math symbols to LaTeX
-  // e.g. α → \alpha, → → \rightarrow, √ → \sqrt, ∫ → \int
-  result = convertUnicodeMath(result);
+  // Step 1.5: First fraction pass — catch bare fractions BEFORE Unicode conversion
+  // e.g. sinα/cosα → $\frac{sinα}{cosα}$ (while α is still Unicode, not \alpha)
+  // Without this, convertUnicodeMath would turn α → \alpha, breaking the [a-zA-Z] match.
 
-  // Step 2: Wrap chained math expressions
-  // Matches patterns like: 1/4·1/2kA^2=1/4E  or  A/2=B/4  or  3/4×2/3=1/2
-  result = wrapChainedExpressions(result);
-
-  // Step 3: Wrap single fractions — only in math contexts
-  // Avoid wrapping when adjacent to Chinese characters (e.g. "3/4季度" is prose, not math)
-
-  // 3a: Parenthesized fractions: (expr)/(expr) → $\frac{expr}{expr}$
-  // e.g. (sin3x)/(tan5x), (a+b)/(c-d), (x^2+1)/(x-1)
+  // 1.5a: Parenthesized fractions: (expr)/(expr)
   result = result.replace(
     /\(([^()]+)\)\/\(([^()]+)\)/g,
     (_m, num: string, den: string) => `$\\frac{${num}}{${den}}$`,
   );
 
-  // 3b: Simple numeric fractions: 3/5, 1/2
+  // 1.5b: Simple numeric fractions: 3/5, 1/2
   result = result.replace(
     /(?<![一-鿿a-zA-Z])(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)(?![一-鿆a-zA-Z])/g,
     (_m, num: string, den: string) => `$\\frac{${num}}{${den}}$`,
   );
 
-  // 3c: Variable fractions: a/b, sin3x/tan5x, x^2/y
+  // 1.5c: Variable fractions: a/b, sinα/cosα, x^2/y
   result = result.replace(
     /(?<![一-鿿])([a-zA-Z][a-zA-Z0-9]*)\/(\d+(?:\.\d+)?|[a-zA-Z][a-zA-Z0-9]*)(?![一-鿆])/g,
     (_m, num: string, den: string) => `$\\frac{${num}}{${den}}$`,
   );
+
+  // Step 1.6: Convert Unicode math symbols to LaTeX
+  // e.g. α → \alpha, → → \rightarrow, √ → \sqrt, ∫ → \int
+  result = convertUnicodeMath(result);
+
+  // Step 1.7: Second fraction pass — catch \command/... patterns AFTER Unicode conversion
+  // e.g. \sin\alpha/\cos\alpha → $\frac{\sin\alpha}{\cos\alpha}$
+  // Uses alternation (\\cmd|[a-zA-Z]) to match \command sequences atomically.
+  // Negative lookbehind (?<![\\]) prevents matching \frac from \frac{3}{5}.
+  const CMD_OR_LETTER = String.raw`(?:\\[a-zA-Z]+|[a-zA-Z])`;
+  const CMD_OR_LETTER_DEN = String.raw`(?:\\[a-zA-Z]+(?:\{[^}]*\})?|[a-zA-Z](?:[a-zA-Z0-9]*|\\[a-zA-Z]+)*)`;
+  result = result.replace(
+    new RegExp(
+      String.raw`(?<![一-鿿\\])` +
+      String.raw`(${CMD_OR_LETTER}(?:[a-zA-Z0-9]*|\\[a-zA-Z]+)*(?:\^[a-zA-Z0-9]+|\^\{[^}]*\}|_[a-zA-Z0-9]+|_\{[^}]*\})*)` +
+      String.raw`\/` +
+      String.raw`(\d+(?:\.\d+)?(?:[\^_][a-zA-Z0-9]+|[\^_]\{[^}]*\})*|${CMD_OR_LETTER_DEN}(?:[\^_][a-zA-Z0-9]+|[\^_]\{[^}]*\})*)` +
+      String.raw`(?![一-鿆])`,
+      'g',
+    ),
+    (_m, num: string, den: string) => `$\\frac{${num}}{${den}}$`,
+  );
+
+  // Step 2: Wrap chained math expressions
+  // Matches patterns like: 1/4·1/2kA^2=1/4E  or  A/2=B/4  or  3/4×2/3=1/2
+  result = wrapChainedExpressions(result);
 
   // Step 3.5: Wrap bare trig/log functions that aren't backslashed
   // LLMs often output: sin3x, cosθ, lnx, log2, lim(x→0)
@@ -221,132 +265,32 @@ function wrapChainedExpressions(text: string): string {
 // ── Public API ──────────────────────────────────────────────────────
 
 /**
- * Post-process math content to ensure all mathematical expressions
- * are properly wrapped in $...$ delimiters.
+ * Post-process math content — minimal server-side processing only.
+ *
+ * Performs:
+ * 1. Double-backslash normalization (JSON escape fix)
+ * 2. Unicode superscript normalization (² → ^2, etc.)
+ * 3. Unicode math symbol → LaTeX conversion (α → \alpha, × → \times, etc.)
+ *
+ * Does NOT wrap bare LaTeX in $...$ — that is handled client-side by
+ * MathRenderer.wrapBareLatex (single source of truth for wrapping).
  */
 export function postProcessMathContent(text: string): string {
   if (!text) return text;
 
-  // Step 0: Normalize double backslashes from JSON escaping.
+  // Step 1: Normalize double backslashes from JSON escaping.
   // The streaming parser extracts raw string content between JSON quotes
   // without JSON.parse, so double backslashes (\\frac) remain as literal
   // characters. We normalize them to single backslash here.
   let result = text.replace(/\\\\([a-zA-Z]+)/g, (_m: string, cmd: string) => `\\${cmd}`);
 
-  // Step 0.5: Handle consecutive bare commands like \cos\phi, \sin\theta
-  // that aren't already inside $...$ delimiters. These slip through the
-  // individual command catch-all because the lookahead rejects \cos when
-  // followed by another \command.
-  result = result.replace(/\\([a-zA-Z]{2,})(\s*\\[a-zA-Z]+)+/g, (_m: string, firstCmd: string) => {
-    const knownCommands = new Set([
-      'sin',
-      'cos',
-      'tan',
-      'cot',
-      'sec',
-      'csc',
-      'arcsin',
-      'arccos',
-      'arctan',
-      'sinh',
-      'cosh',
-      'tanh',
-      'coth',
-      'ln',
-      'log',
-      'exp',
-      'lim',
-      'int',
-      'oint',
-      'sum',
-      'prod',
-      'sqrt',
-      'frac',
-      'dfrac',
-      'tfrac',
-      'binom',
-      'partial',
-      'nabla',
-      'infty',
-      'Sigma',
-      'Pi',
-      'Gamma',
-      'Delta',
-      'Theta',
-      'Lambda',
-      'Phi',
-      'Psi',
-      'Omega',
-      'alpha',
-      'beta',
-      'gamma',
-      'delta',
-      'epsilon',
-      'zeta',
-      'eta',
-      'theta',
-      'iota',
-      'kappa',
-      'lambda',
-      'mu',
-      'nu',
-      'xi',
-      'pi',
-      'rho',
-      'sigma',
-      'tau',
-      'upsilon',
-      'phi',
-      'chi',
-      'psi',
-      'omega',
-      'varphi',
-      'vartheta',
-      'varepsilon',
-      'varrho',
-      'varsigma',
-      'digamma',
-      'Rightarrow',
-      'Leftarrow',
-      'Longrightarrow',
-      'Longleftarrow',
-      'longmapsto',
-      'longrightarrow',
-      'longleftarrow',
-      'longleftrightarrow',
-      'leftarrow',
-      'rightarrow',
-      'uparrow',
-      'downarrow',
-      'leftrightarrow',
-      'hookrightarrow',
-      'hookleftarrow',
-      'nearrow',
-      'searrow',
-      'swarrow',
-      'nwarrow',
-    ]);
-    if (knownCommands.has(firstCmd)) return `$${_m}$`;
-    return _m;
-  });
+  // Step 2: Normalize Unicode superscripts (² → ^2, ³ → ^3, etc.)
+  result = normalizeUnicodeSuperscripts(result);
 
-  const { parts, isMath } = splitByMathBlocks(result);
+  // Step 3: Convert Unicode math symbols to LaTeX (α → \alpha, × → \times, etc.)
+  result = convertUnicodeMath(result);
 
-  const processed = parts.map((part, i) => {
-    if (isMath[i]) return part;
-    // For math blocks, also normalize Unicode superscripts inside
-    const mathInner = part
-      .replace(/\$\$([\s\S]*?)\$\$/g, (_m, inner: string) => {
-        return '$$' + normalizeUnicodeSuperscripts(inner) + '$$';
-      })
-      .replace(/\$([^$\n]+?)\$/g, (_m, inner: string) => {
-        return '$' + normalizeUnicodeSuperscripts(inner) + '$';
-      });
-    if (isMath[i]) return mathInner;
-    return processTextSegment(part);
-  });
-
-  return processed.join('');
+  return result;
 }
 
 /**

@@ -151,20 +151,21 @@ export async function POST(req: Request) {
       try {
         // Phase 1: Check question bank and solve cache in parallel
         await write(formatSSEEvent('phase', { phase: 'checking' }));
+        const t0 = Date.now();
         const [bankMatches, cacheMatches] = await Promise.all([
           findSimilarQuestions(problem, 0.85),
           findSolveCacheMatches(problem, 0.8),
         ]);
+        log.info(`[ExplainStream] Phase 1 (checking) took ${Date.now() - t0}ms, bank=${bankMatches.length}, cache=${cacheMatches.length}`);
 
         // ── Fast path: Question bank hit ─────────────────────────────
+        // Cache hits bypass all post-processing — content is already pre-processed.
         if (bankMatches.length > 0) {
           const hit = bankMatches[0];
           log.info(`[ExplainStream] Question bank hit (${hit._similarity?.toFixed(2)})`);
 
-          const processedAnswer = postProcessMathContent(hit.answer);
-          const processedSolution = hit.solution
-            ? postProcessMathContent(hit.solution)
-            : processedAnswer;
+          const processedAnswer = hit.answer;
+          const processedSolution = hit.solution || processedAnswer;
           await write(formatSSEEvent('solution', { solution: processedSolution }));
           // Emit actual steps from the bank entry if available (avoid duplicating solution)
           if (hit.steps && hit.steps.length > 0) {
@@ -172,8 +173,8 @@ export async function POST(req: Request) {
               await write(
                 formatSSEEvent('step', {
                   label: step.label,
-                  content: postProcessMathContent(step.content),
-                  keyPoints: (step.keyPoints ?? []).map(postProcessMathContent),
+                  content: step.content,
+                  keyPoints: step.keyPoints ?? [],
                 }),
               );
             }
@@ -183,8 +184,8 @@ export async function POST(req: Request) {
           const kp =
             hit.knowledgePoints && hit.knowledgePoints.length > 0
               ? hit.knowledgePoints.map((k) => ({
-                  name: postProcessMathContent(k.name),
-                  description: postProcessMathContent(k.description),
+                  name: k.name,
+                  description: k.description,
                   difficulty: k.difficulty,
                 }))
               : await generateKnowledgePoints(problem, hit.answer);
@@ -201,24 +202,23 @@ export async function POST(req: Request) {
         }
 
         // ── Fast path: Solve cache hit ───────────────────────────────
+        // Cache hits bypass all post-processing — content is already pre-processed.
         if (cacheMatches.length > 0) {
           const hit = cacheMatches[0];
           log.info(`[ExplainStream] Solve cache hit`);
 
-          const processedSolution = postProcessMathContent(hit.solution);
-          const conciseAnswer = postProcessMathContent(hit.answer || hit.solution);
+          const processedSolution = hit.solution;
+          const conciseAnswer = hit.answer || hit.solution;
 
           await write(formatSSEEvent('solution', { solution: processedSolution }));
-          // Don't emit a step duplicating the solution — the UI will show
-          // the solution block directly; steps come from the actual chain.
           await write(formatSSEEvent('answer', { answer: conciseAnswer }));
 
           // Use cached knowledge points if available, avoid LLM call
           const kp =
             hit.knowledgePoints && hit.knowledgePoints.length > 0
               ? hit.knowledgePoints.map((k) => ({
-                  name: postProcessMathContent(k.name),
-                  description: postProcessMathContent(k.description),
+                  name: k.name,
+                  description: k.description,
                   difficulty: k.difficulty,
                 }))
               : await generateKnowledgePoints(problem, hit.solution);
@@ -236,6 +236,8 @@ export async function POST(req: Request) {
 
         // ── Main path: Run the full solve chain ──────────────────────
         // Start analyze in parallel (it only needs problemText, no deps)
+        await write(formatSSEEvent('phase', { phase: 'solving' }));
+        const t1 = Date.now();
         const analyzePromise = analyzeProblem(problem);
 
         const chainResult = await runSolveChain(
@@ -277,6 +279,7 @@ export async function POST(req: Request) {
           chainAbort.signal,
           analyzePromise,
         );
+        log.info(`[ExplainStream] Phase 2 (solving) took ${Date.now() - t1}ms, answer=${chainResult.answer?.slice(0, 30) || 'none'}`);
 
         // ── Emit analysis event (NEW in C-004) ───────────────────────
         if (chainResult.analysis) {
@@ -303,19 +306,9 @@ export async function POST(req: Request) {
           );
         }
 
-        // ── Fill in missing sections ─────────────────────────────────
-        // (The chain already handles this internally, but ensure all events are emitted)
+        // ── Emit answer if missing ───────────────────────────────────
         if (!chainResult.answer) {
           await write(formatSSEEvent('answer', { answer: '' }));
-        }
-        if (chainResult.knowledgePoints.length === 0 && chainResult.analysis) {
-          // Last resort: no knowledge points from any source
-          const kp = await generateKnowledgePoints(problem, chainResult.answer);
-          chainResult.knowledgePoints = kp;
-          await write(formatSSEEvent('knowledge', { points: kp }));
-        }
-        if (chainResult.similarQuestions.length === 0) {
-          await write(formatSSEEvent('similar', { questions: [] }));
         }
 
         // ── Warnings ─────────────────────────────────────────────────
@@ -323,7 +316,8 @@ export async function POST(req: Request) {
           await write(formatSSEEvent('error', { step: 'warning', message: warning }));
         }
 
-        // ── Done ─────────────────────────────────────────────────────
+        // ── Done — emit immediately after solve completes ─────────────
+        // Knowledge and similar will be emitted asynchronously after done.
         await write(
           formatSSEEvent('done', {
             fromQuestionBank: false,
@@ -333,43 +327,65 @@ export async function POST(req: Request) {
           }),
         );
 
-        // ── Auto-save ────────────────────────────────────────────────
-        try {
-          const { saveToQuestionBank, isProblemInBank, hashProblemText } =
-            await import('@/lib/solve/question-bank');
-          const { saveToSolveCache } = await import('@/lib/solve/solve-cache');
-          const alreadyInBank = await isProblemInBank(problem);
-          if (!alreadyInBank && chainResult.answer) {
-            await saveToQuestionBank({
-              problemText: problem,
-              problemImage: problemImage ?? undefined,
-              solution: chainResult.solution,
-              steps: chainResult.steps ?? [],
-              answer: chainResult.answer,
-              knowledgePoints: chainResult.knowledgePoints,
-              similarQuestions: chainResult.similarQuestions,
-              agentId: subjectToAgentId(chainResult.analysis?.subject),
-              solvedAt: Date.now(),
-              verified: chainResult.verification?.isCorrect ?? false,
-            });
-          }
-          if (chainResult.answer) {
-            await saveToSolveCache({
-              problemText: problem,
-              problemHash: hashProblemText(problem),
-              solution: chainResult.solution || chainResult.answer,
-              answer: chainResult.answer,
-              knowledgePoints:
-                chainResult.knowledgePoints.length > 0 ? chainResult.knowledgePoints : undefined,
-              agentId: subjectToAgentId(chainResult.analysis?.subject),
-              solvedAt: Date.now(),
-            });
-          }
-        } catch {
-          // ignore save errors
-        }
+        // ── Async: Knowledge + Similar + Auto-save ─────────────────────
+        // These run after `done` is emitted so the UI can show the answer
+        // immediately while knowledge/similar load in the background.
+        ;(async () => {
+          try {
+            // Generate knowledge points if missing
+            if (chainResult.knowledgePoints.length === 0 && chainResult.analysis) {
+              const kp = await generateKnowledgePoints(problem, chainResult.answer);
+              chainResult.knowledgePoints = kp;
+              await write(formatSSEEvent('knowledge', { points: kp }));
+            } else if (chainResult.knowledgePoints.length > 0) {
+              await write(formatSSEEvent('knowledge', { points: chainResult.knowledgePoints }));
+            }
 
-        await writer.close();
+            // Emit similar questions (empty if none)
+            await write(formatSSEEvent('similar', { questions: chainResult.similarQuestions }));
+
+            // Auto-save to question bank and solve cache
+            const { saveToQuestionBank, isProblemInBank, hashProblemText } =
+              await import('@/lib/solve/question-bank');
+            const { saveToSolveCache } = await import('@/lib/solve/solve-cache');
+            const problemHash = hashProblemText(problem);
+
+            if (chainResult.answer) {
+              saveToSolveCache({
+                problemText: problem,
+                problemHash,
+                solution: chainResult.solution || chainResult.answer,
+                answer: chainResult.answer,
+                knowledgePoints:
+                  chainResult.knowledgePoints.length > 0 ? chainResult.knowledgePoints : undefined,
+                agentId: subjectToAgentId(chainResult.analysis?.subject),
+                solvedAt: Date.now(),
+              }).catch(() => {});
+            }
+
+            if (chainResult.answer) {
+              const alreadyInBank = await isProblemInBank(problem);
+              if (!alreadyInBank) {
+                await saveToQuestionBank({
+                  problemText: problem,
+                  problemImage: problemImage ?? undefined,
+                  solution: chainResult.solution,
+                  steps: chainResult.steps ?? [],
+                  answer: chainResult.answer,
+                  knowledgePoints: chainResult.knowledgePoints,
+                  similarQuestions: chainResult.similarQuestions,
+                  agentId: subjectToAgentId(chainResult.analysis?.subject),
+                  solvedAt: Date.now(),
+                  verified: chainResult.verification?.isCorrect ?? false,
+                });
+              }
+            }
+          } catch {
+            // ignore async errors
+          } finally {
+            await writer.close();
+          }
+        })();
       } catch (err) {
         log.error('ExplainStream error:', err);
         try {

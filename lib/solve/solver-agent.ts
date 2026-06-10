@@ -61,6 +61,7 @@ async function solveOnce(
   problemText: string,
   problemImage: string | null,
 ): Promise<ParsedSolution | null> {
+  const t0 = Date.now();
   // Only use image if a vision model is actually available
   const visionAvailable = VISION_MODELS.some((vm) => !!process.env[ENV_KEY_MAP[vm.providerId]]);
   const hasImage = !!problemImage && visionAvailable;
@@ -85,14 +86,16 @@ async function solveOnce(
       maxOutputTokens: 4096,
     },
     'solve-agent',
-    { retries: 1 },
+    { retries: 1, timeoutMs: 60_000 },
   );
 
   let parsed = parseSolutionResponse(result.text);
+  log.info(`[SolveAgent] ${agentType} LLM call took ${Date.now() - t0}ms, parsed=${!!parsed}`);
 
   // Re-prompt with strict JSON constraint if parse failed
   if (!parsed) {
     log.warn('[SolveAgent] Initial parse failed, re-prompting with strict JSON prompt');
+    const t1 = Date.now();
 
     const strictSystemPrompt = `${systemPrompt}
 
@@ -108,10 +111,11 @@ JSON 必须包含：solution（字符串）、answer（字符串）、steps（�
         maxOutputTokens: 4096,
       },
       'solve-agent-strict',
-      { retries: 0 },
+      { retries: 0, timeoutMs: 45_000 },
     );
 
     parsed = parseSolutionResponse(strictResult.text);
+    log.info(`[SolveAgent] ${agentType} strict re-prompt took ${Date.now() - t1}ms, parsed=${!!parsed}`);
     if (!parsed) {
       log.warn('[SolveAgent] Strict re-prompt also failed, returning null');
     }
@@ -136,10 +140,12 @@ export async function solveWithHybrid(
   problemText: string,
   problemImage: string | null,
 ): Promise<{ solution: ParsedSolution; usedAgents: SolverAgentType[] }> {
+  const t0 = Date.now();
   // Primary
   const primaryResult = await solveOnce(primary, problemText, problemImage);
   if (primaryResult) {
     const validated = validateConfidence(primaryResult, primary);
+    log.info(`[SolveAgent] Primary (${primary}): confidence=${validated.toFixed(2)}, took ${Date.now() - t0}ms`);
     if (validated >= MIN_VALIDATED_CONFIDENCE) {
       return { solution: primaryResult, usedAgents: [primary] };
     }
@@ -249,7 +255,11 @@ export async function solveWithAgentNode(
   log.info(`[SolveGraph] Solving with agent: ${agentType}`);
 
   try {
-    const { solution, usedAgents } = await solveWithHybrid(agentType, problemText, problemImage);
+    const t0 = Date.now();
+    // Don't pass problemImage to solve — OCR already extracted the text.
+    // Passing image forces vision models which are slower and may timeout.
+    const { solution, usedAgents } = await solveWithHybrid(agentType, problemText, null);
+    log.info(`[SolveGraph] solveWithAgentNode completed in ${Date.now() - t0}ms, agents=${usedAgents.join(',')}`);
 
     return {
       solution: solution.solution,

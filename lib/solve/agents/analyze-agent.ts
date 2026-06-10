@@ -25,6 +25,7 @@ function toSubject(raw: unknown): Subject {
 }
 
 export async function analyzeProblem(problemText: string): Promise<AnalysisResult> {
+  const t0 = Date.now();
   try {
     const modelConfig = resolveSolverModel('universal');
     const { model } = getModel(modelConfig);
@@ -37,7 +38,7 @@ export async function analyzeProblem(problemText: string): Promise<AnalysisResul
         maxOutputTokens: 512,
       },
       'analyze-agent',
-      { retries: 1 },
+      { retries: 0, timeoutMs: 15_000 },
       undefined,
       ANALYZE_SYSTEM_PROMPT,
     );
@@ -70,10 +71,10 @@ export async function analyzeProblem(problemText: string): Promise<AnalysisResul
         : DEFAULT_ANALYSIS.confidence,
     };
 
-    log.info(`analyzeProblem: subject=${analysis.subject}, type=${analysis.questionType}, difficulty=${analysis.difficulty}`);
+    log.info(`[AnalyzeAgent] Done in ${Date.now() - t0}ms: subject=${analysis.subject}, type=${analysis.questionType}, difficulty=${analysis.difficulty}`);
     return analysis;
   } catch (err) {
-    log.warn('analyzeProblem failed, returning default:', err);
+    log.warn(`[AnalyzeAgent] Failed after ${Date.now() - t0}ms:`, err);
     return DEFAULT_ANALYSIS;
   }
 }

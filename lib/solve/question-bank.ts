@@ -5,6 +5,7 @@
  * load server-side code when actually called.
  */
 
+import 'server-only';
 import type { QuestionBankEntry } from './types';
 import { hashProblemText } from './question-bank-utils';
 import { createLogger } from '@/lib/logger';
