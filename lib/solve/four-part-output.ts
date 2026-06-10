@@ -111,7 +111,7 @@ function normalizeDifficulty(raw?: string): 'easy' | 'medium' | 'hard' {
 }
 
 function normalizeSimilarQuestions(
-  questions: { problem: string; difficulty?: number; knowledgePoint?: string }[] | undefined,
+  questions: { problem: string; difficulty?: number; knowledgePoint?: string; answer?: string }[] | undefined,
 ): FourPartOutput['similarQuestions'] {
   if (!questions || questions.length === 0) {
     return [];
@@ -121,6 +121,7 @@ function normalizeSimilarQuestions(
     problem: q.problem || '',
     difficulty: typeof q.difficulty === 'number' ? q.difficulty : 0.5,
     knowledgePoint: q.knowledgePoint || '综合',
+    ...(q.answer ? { answer: q.answer } : {}),
   }));
 }
 

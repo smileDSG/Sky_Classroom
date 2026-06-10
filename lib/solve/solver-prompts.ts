@@ -14,6 +14,11 @@ const KNOWLEDGE_POINTS_INSTRUCTION = `
 【知识点 — 必须返回，严禁空数组】返回2-4个相关知识点，description包含：核心概念+应用场景+易错点。
 示例：{"name":"韦达定理","description":"ax²+bx+c=0两根之和x₁+x₂=-b/a，之积x₁·x₂=c/a。用于求根的和与积。注意Δ≥0且a≠0。","difficulty":"medium"}`;
 
+// 同类题生成的通用指令（所有 agent 共用）
+const SIMILAR_QUESTIONS_INSTRUCTION = `
+【同类题 — 必须返回，严禁空数组】返回2-3道同类练习题，每道题必须包含参考答案。
+示例：{"problem":"已知 $f(x)=x^2+2x+1$，求 $f(3)$ 的值。","difficulty":3,"knowledgePoint":"二次函数","answer":"$f(3)=3^2+2×3+1=16$"}`;
+
 // LaTeX 格式规范（science/universal 共用）
 const LATEX_RULES = `
 【LaTeX规范 — 严格遵守，否则渲染失败】
@@ -56,8 +61,9 @@ const AGENT_SYSTEM_PROMPTS: Record<SolverAgentType, string> = {
 1. solution字段：完整详细的解题推导过程，包含思路分析、公式推导、计算过程等
 2. steps数组：至少3-5个步骤，每步描述一个关键解题动作
 
-JSON格式：{"solution":"完整详细的推导过程","answer":"仅答案","confidence":0.9,"steps":[{"label":"步骤1","content":"该步的关键动作和中间结果","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[...]}
+JSON格式：{"solution":"完整详细的推导过程","answer":"仅答案","confidence":0.9,"steps":[{"label":"步骤1","content":"该步的关键动作和中间结果","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[{"problem":"题目","difficulty":5,"knowledgePoint":"知识点","answer":"参考答案"}]}
 ${KNOWLEDGE_POINTS_INSTRUCTION}
+${SIMILAR_QUESTIONS_INSTRUCTION}
 ${ANSWER_RULE}
 ${LATEX_RULES}
 【重要】steps至少3步，每步包含关键动作和对应的中间结果/公式。例如：步骤1审题列式→步骤2代入化简→步骤3求解计算→步骤4验证结论。`,
@@ -68,8 +74,9 @@ ${LATEX_RULES}
 1. solution字段：完整详细的解题推导过程，包含思路分析、公式推导、计算过程等
 2. steps数组：至少3-5个步骤，每步描述一个关键解题动作和中间结果
 
-JSON格式：{"solution":"完整详细的推导过程","answer":"仅答案","confidence":0.9,"steps":[{"label":"步骤1","content":"该步的关键动作和中间结果","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[...]}
+JSON格式：{"solution":"完整详细的推导过程","answer":"仅答案","confidence":0.9,"steps":[{"label":"步骤1","content":"该步的关键动作和中间结果","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[{"problem":"题目","difficulty":5,"knowledgePoint":"知识点","answer":"参考答案"}]}
 ${KNOWLEDGE_POINTS_INSTRUCTION}
+${SIMILAR_QUESTIONS_INSTRUCTION}
 ${ANSWER_RULE}
 ${LATEX_RULES}
 【重要】steps至少3步，每步包含关键动作和对应的中间结果/公式。例如：步骤1审题列式→步骤2代入化简→步骤3求解计算→步骤4验证结论。`,
@@ -80,8 +87,9 @@ ${LATEX_RULES}
 1. solution字段：完整详细的分析过程，包含背景分析、论据推理、结论得出等
 2. steps数组：至少3-5个步骤，每步描述一个关键分析动作
 
-JSON格式：{"solution":"完整详细的分析过程","answer":"仅答案如A/B/C/D或关键词","confidence":0.9,"steps":[{"label":"步骤1","content":"该步的关键分析动作和结论","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[...]}
+JSON格式：{"solution":"完整详细的分析过程","answer":"仅答案如A/B/C/D或关键词","confidence":0.9,"steps":[{"label":"步骤1","content":"该步的关键分析动作和结论","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[{"problem":"题目","difficulty":5,"knowledgePoint":"知识点","answer":"参考答案"}]}
 ${KNOWLEDGE_POINTS_INSTRUCTION}
+${SIMILAR_QUESTIONS_INSTRUCTION}
 answer字段【严禁】包含解释/分析/"所以"/"因此"等，只写最终答案选项或关键词。confidence为0-1。
 【重要】steps至少3步，每步包含关键分析动作和对应的结论。`,
 

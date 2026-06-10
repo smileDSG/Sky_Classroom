@@ -88,7 +88,7 @@ interface StreamState {
   answer: string;
   steps: { label: string; content: string; keyPoints: string[] }[];
   knowledgePoints: { name: string; description: string; difficulty: string }[];
-  similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
+  similarQuestions: { problem: string; difficulty: number; knowledgePoint: string; answer?: string }[];
   fromQuestionBank: boolean;
 }
 
@@ -216,7 +216,7 @@ interface JobState {
   answer: string;
   steps: { label: string; content: string; keyPoints: string[] }[];
   knowledgePoints: { name: string; description: string; difficulty: string }[];
-  similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
+  similarQuestions: { problem: string; difficulty: number; knowledgePoint: string; answer?: string }[];
   fromQuestionBank: boolean;
   solvingTime: number;
 }
@@ -397,7 +397,7 @@ export function SolvePage() {
         answer: string;
         steps: { label: string; content: string; keyPoints: string[] }[];
         knowledgePoints: { name: string; description: string; difficulty: string }[];
-        similarQuestions: { problem: string; difficulty: number; knowledgePoint: string }[];
+        similarQuestions: { problem: string; difficulty: number; knowledgePoint: string; answer?: string }[];
         fromQuestionBank: boolean;
       }> = {};
 
@@ -447,6 +447,7 @@ export function SolvePage() {
           problem: q.problem,
           difficulty: q.difficulty,
           knowledgePoint: q.knowledgePoint,
+          ...(q.answer ? { answer: q.answer } : {}),
         })),
       };
 
@@ -649,6 +650,7 @@ export function SolvePage() {
 
   const handleSimilarQuestionClick = useCallback(
     (problem: string) => {
+      // Trigger a new solve with the similar question
       handleSubmit({ type: 'text', content: problem });
     },
     [handleSubmit],

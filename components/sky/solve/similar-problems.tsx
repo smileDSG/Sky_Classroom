@@ -49,11 +49,9 @@ export function SimilarProblems({
     });
   };
 
-  const handleQuestionClick = (problem: string, index: number) => {
-    if (onQuestionClick) {
-      onQuestionClick(problem);
-    }
-    toggleCompleted(index);
+  const handleQuestionClick = (_problem: string, index: number) => {
+    // Clicking the question text toggles the answer display
+    toggleAnswer(index);
   };
 
   return (
@@ -185,6 +183,17 @@ export function SimilarProblems({
                         >
                           {isShowingAnswer ? '收起答案' : '查看答案'}
                         </Button>
+                        {onQuestionClick && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-muted-foreground hover:text-[#4A90D9]"
+                            onClick={() => onQuestionClick(question.problem)}
+                          >
+                            <ChevronRight className="mr-1 h-3 w-3" />
+                            解题
+                          </Button>
+                        )}
                       </div>
                     </div>
 
