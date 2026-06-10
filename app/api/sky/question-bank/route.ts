@@ -68,13 +68,27 @@ export async function GET(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const url = new URL(req.url);
+    const idsParam = url.searchParams.get('ids');
     const id = url.searchParams.get('id');
-    if (!id) {
-      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing id parameter');
-    }
+
     const { deleteQuestionBankEntry } = await import('@/lib/solve/question-bank');
+
+    // Batch delete: ?ids=id1,id2,id3
+    if (idsParam) {
+      const ids = idsParam.split(',').filter(Boolean);
+      if (ids.length === 0) {
+        return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing ids parameter');
+      }
+      await Promise.all(ids.map((i) => deleteQuestionBankEntry(i)));
+      return apiSuccess({ deleted: ids.length });
+    }
+
+    // Single delete: ?id=xxx
+    if (!id) {
+      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing id or ids parameter');
+    }
     await deleteQuestionBankEntry(id);
-    return apiSuccess({ deleted: true });
+    return apiSuccess({ deleted: 1 });
   } catch (err) {
     log.error('Question bank DELETE error:', err);
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '题库删除失败');

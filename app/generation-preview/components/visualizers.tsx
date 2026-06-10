@@ -15,7 +15,6 @@ import {
   Play,
   Maximize2,
 } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { cn } from '@/lib/utils';
 import type { SceneOutline } from '@/lib/types/generation';
 
@@ -249,9 +248,7 @@ function StreamingOutlineVisualizer({
 }: {
   outlines: SceneOutline[];
   onExpand?: () => void;
-}) {
-  const { t } = useI18n();
-  const isInteractive = !!onExpand;
+}) {const isInteractive = !!onExpand;
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!isInteractive) return;
@@ -274,7 +271,7 @@ function StreamingOutlineVisualizer({
       whileTap={isInteractive ? { scale: 0.97, rotate: 0 } : undefined}
       role={isInteractive ? 'button' : undefined}
       tabIndex={isInteractive ? 0 : undefined}
-      aria-label={isInteractive ? t('generation.outlineExpandHint') : undefined}
+      aria-label={isInteractive ? '点击审阅' : undefined}
       onClick={onExpand}
       onKeyDown={handleKeyDown}
       style={{ transformOrigin: 'center center' }}
@@ -362,7 +359,7 @@ function StreamingOutlineVisualizer({
             transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
           >
             <Maximize2 className="size-3" />
-            {t('generation.outlineExpandHint')}
+            {'点击审阅'}
           </motion.span>
         </div>
       )}

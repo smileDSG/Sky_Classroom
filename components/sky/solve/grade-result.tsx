@@ -53,7 +53,12 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
 
   return (
     <Card className={cn('overflow-hidden', className)}>
-      <CardHeader className={cn('pb-4', isCorrect ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20')}>
+      <CardHeader
+        className={cn(
+          'pb-4',
+          isCorrect ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20',
+        )}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {isCorrect ? (
@@ -66,16 +71,19 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
               </div>
             )}
             <div>
-              <CardTitle className="text-lg">
-                {isCorrect ? '回答正确！' : '回答有误'}
-              </CardTitle>
+              <CardTitle className="text-lg">{isCorrect ? '回答正确！' : '回答有误'}</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {isCorrect ? '继续保持，你已经掌握了这个知识点' : '别担心，我们来看看错在哪里'}
               </p>
             </div>
           </div>
           <div className="text-right">
-            <div className={cn('text-3xl font-bold', isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>
+            <div
+              className={cn(
+                'text-3xl font-bold',
+                isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400',
+              )}
+            >
               {score}分
             </div>
             <div className="text-xs text-muted-foreground">满分100分</div>
@@ -91,10 +99,7 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
               {score >= 60 ? '及格' : '不及格'}
             </span>
           </div>
-          <Progress
-            value={score}
-            className="h-2"
-          />
+          <Progress value={score} className="h-2" />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -103,8 +108,23 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
               <Info className="h-4 w-4" />
               你的答案
             </label>
-            <div className={cn('rounded-lg border p-3', isCorrect ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20' : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20')}>
-              <MathRenderer content={userAnswer} className={cn('text-sm', isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')} />
+            <div
+              className={cn(
+                'rounded-lg border p-3',
+                isCorrect
+                  ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20'
+                  : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20',
+              )}
+            >
+              <MathRenderer
+                content={userAnswer}
+                className={cn(
+                  'text-sm leading-normal',
+                  isCorrect
+                    ? 'text-green-700 dark:text-green-300'
+                    : 'text-red-700 dark:text-red-300',
+                )}
+              />
             </div>
           </div>
           <div className="space-y-2">
@@ -113,7 +133,10 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
               正确答案
             </label>
             <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-900/20">
-              <MathRenderer content={correctAnswer} className="text-sm text-green-700 dark:text-green-300" />
+              <MathRenderer
+                content={correctAnswer}
+                className="text-sm leading-normal text-green-700 dark:text-green-300"
+              />
             </div>
           </div>
         </div>
@@ -159,7 +182,7 @@ export function GradeResultCard({ result, className }: GradeResultCardProps) {
                           ? 'text-green-600'
                           : step.earnedScore > 0
                             ? 'text-amber-600'
-                            : 'text-red-600'
+                            : 'text-red-600',
                       )}
                     >
                       {step.earnedScore}/{step.maxScore}

@@ -1,0 +1,307 @@
+{
+  "id": "Vl2wdkX960",
+  "status": "awaiting_review",
+  "step": "generating_outlines",
+  "progress": 30,
+  "message": "大纲已生成，等待审阅",
+  "createdAt": "2026-05-29T07:20:14.991Z",
+  "updatedAt": "2026-05-29T07:21:07.837Z",
+  "inputSummary": {
+    "requirementPreview": "python课程初学",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-29T07:20:14.999Z",
+  "totalScenes": 7,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "什么是Python？",
+        "description": "介绍Python语言的特点、应用领域以及为什么适合初学者学习。",
+        "keyPoints": [
+          "Python是一种解释型、易读易写的编程语言",
+          "应用领域广泛：网站开发、数据分析、人工智能等",
+          "社区活跃，学习资料丰富，适合编程入门"
+        ],
+        "teachingObjective": "了解Python的定位与优势，激发学习兴趣",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "环境准备",
+        "description": "说明如何下载安装Python以及使用IDLE或代码编辑器。",
+        "keyPoints": [
+          "从python.org下载最新版本的Python",
+          "安装过程中勾选“Add Python to PATH”",
+          "推荐使用IDLE或Visual Studio Code编写代码"
+        ],
+        "teachingObjective": "能够成功安装Python并启动交互环境",
+        "estimatedDuration": 90,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "你的第一行代码",
+        "description": "演示如何使用print()函数输出文本，并解释代码结构。",
+        "keyPoints": [
+          "语法：print('Hello, World!')",
+          "print是一个内置函数，括号内是需要输出的内容",
+          "字符串需要用单引号或双引号包裹"
+        ],
+        "teachingObjective": "掌握print函数的基本用法",
+        "estimatedDuration": 90,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "interactive",
+        "title": "动手试一试",
+        "description": "提供一个可运行的Python代码环境，让学习者尝试输出自己的内容。",
+        "keyPoints": [
+          "尝试输出不同的文本",
+          "尝试输出数字和简单计算",
+          "观察错误提示，理解语法要求"
+        ],
+        "teachingObjective": "通过实践巩固print函数的使用",
+        "estimatedDuration": 180,
+        "order": 4,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python",
+          "initialCode": "# 在下方写下你的print语句\nprint('你好，Python！')\n# 请修改上方文本"
+        }
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "变量与数据类型",
+        "description": "介绍变量的概念以及常见的数据类型（字符串、整数、浮点数）。",
+        "keyPoints": [
+          "变量是存储数据的容器",
+          "赋值操作：变量名 = 值",
+          "数据类型包括：str, int, float, bool",
+          "可以使用type()函数查看类型"
+        ],
+        "teachingObjective": "理解变量的作用并识别基本数据类型",
+        "estimatedDuration": 120,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "quiz",
+        "title": "小测验",
+        "description": "通过几道选择题检验前几个场景的学习效果。",
+        "keyPoints": [],
+        "teachingObjective": "评估对print函数和变量概念的理解",
+        "estimatedDuration": 120,
+        "order": 6,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single"
+          ]
+        }
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "本节总结",
+        "description": "回顾所学内容并给出下一步学习建议。",
+        "keyPoints": [
+          "Python是一种易学且功能强大的编程语言",
+          "你已经学会了输出语句和基本变量概念",
+          "接下来可以学习基本运算、条件判断和循环"
+        ],
+        "teachingObjective": "梳理知识框架，明确后续学习方向",
+        "estimatedDuration": 60,
+        "order": 7
+      }
+    ],
+    "languageDirective": "本课程使用中文进行教学。Python编程语言中的保留字和代码示例保持英文形式，但所有教学解释、概念讲解及界面文字均以中文呈现。对于无通行翻译的技术术语，将采用英文原文或中英对照方式。",
+    "topicSummary": "Python入门必备",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "AOM0G1NTxf",
+      "name": "什么是Python？",
+      "languageDirective": "本课程使用中文进行教学。Python编程语言中的保留字和代码示例保持英文形式，但所有教学解释、概念讲解及界面文字均以中文呈现。对于无通行翻译的技术术语，将采用英文原文或中英对照方式。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780039267836,
+      "updatedAt": 1780039267836,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python课程初学",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "什么是Python？",
+      "description": "介绍Python语言的特点、应用领域以及为什么适合初学者学习。",
+      "keyPoints": [
+        "Python是一种解释型、易读易写的编程语言",
+        "应用领域广泛：网站开发、数据分析、人工智能等",
+        "社区活跃，学习资料丰富，适合编程入门"
+      ],
+      "teachingObjective": "了解Python的定位与优势，激发学习兴趣",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "环境准备",
+      "description": "说明如何下载安装Python以及使用IDLE或代码编辑器。",
+      "keyPoints": [
+        "从python.org下载最新版本的Python",
+        "安装过程中勾选“Add Python to PATH”",
+        "推荐使用IDLE或Visual Studio Code编写代码"
+      ],
+      "teachingObjective": "能够成功安装Python并启动交互环境",
+      "estimatedDuration": 90,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "你的第一行代码",
+      "description": "演示如何使用print()函数输出文本，并解释代码结构。",
+      "keyPoints": [
+        "语法：print('Hello, World!')",
+        "print是一个内置函数，括号内是需要输出的内容",
+        "字符串需要用单引号或双引号包裹"
+      ],
+      "teachingObjective": "掌握print函数的基本用法",
+      "estimatedDuration": 90,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "interactive",
+      "title": "动手试一试",
+      "description": "提供一个可运行的Python代码环境，让学习者尝试输出自己的内容。",
+      "keyPoints": [
+        "尝试输出不同的文本",
+        "尝试输出数字和简单计算",
+        "观察错误提示，理解语法要求"
+      ],
+      "teachingObjective": "通过实践巩固print函数的使用",
+      "estimatedDuration": 180,
+      "order": 4,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python",
+        "initialCode": "# 在下方写下你的print语句\nprint('你好，Python！')\n# 请修改上方文本"
+      }
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "变量与数据类型",
+      "description": "介绍变量的概念以及常见的数据类型（字符串、整数、浮点数）。",
+      "keyPoints": [
+        "变量是存储数据的容器",
+        "赋值操作：变量名 = 值",
+        "数据类型包括：str, int, float, bool",
+        "可以使用type()函数查看类型"
+      ],
+      "teachingObjective": "理解变量的作用并识别基本数据类型",
+      "estimatedDuration": 120,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "quiz",
+      "title": "小测验",
+      "description": "通过几道选择题检验前几个场景的学习效果。",
+      "keyPoints": [],
+      "teachingObjective": "评估对print函数和变量概念的理解",
+      "estimatedDuration": 120,
+      "order": 6,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single"
+        ]
+      }
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "本节总结",
+      "description": "回顾所学内容并给出下一步学习建议。",
+      "keyPoints": [
+        "Python是一种易学且功能强大的编程语言",
+        "你已经学会了输出语句和基本变量概念",
+        "接下来可以学习基本运算、条件判断和循环"
+      ],
+      "teachingObjective": "梳理知识框架，明确后续学习方向",
+      "estimatedDuration": 60,
+      "order": 7
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本课程使用中文进行教学。Python编程语言中的保留字和代码示例保持英文形式，但所有教学解释、概念讲解及界面文字均以中文呈现。对于无通行翻译的技术术语，将采用英文原文或中英对照方式。",
+    "totalScenes": 7
+  },
+  "topicSummary": "Python入门必备"
+}

@@ -102,9 +102,6 @@
  *    case 'assemblyai-asr':
  *      return await transcribeAssemblyAIASR(config, audioBuffer);
  *
- * 5. Add i18n translations in lib/i18n.ts
- *    providerAssemblyAIASR: { zh: 'AssemblyAI 语音识别', en: 'AssemblyAI ASR' }
- *
  * Buffer/Blob Conversion Patterns:
  *
  * Pattern 1: Buffer to Blob (for FormData)

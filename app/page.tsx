@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { resolveLocale } from '@/lib/templates/types';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useUserProfileStore } from '@/lib/store/user-profile';
@@ -79,9 +78,7 @@ interface StageListItem {
   interactiveMode?: boolean;
 }
 
-export default function HomePage() {
-  const { t, locale } = useI18n();
-  const router = useRouter();
+export default function HomePage() {const router = useRouter();
   const { user } = useAuth();
 
   // 状态
@@ -162,17 +159,6 @@ export default function HomePage() {
 
         while (!abortController.signal.aborted) {
           const data = await fetchClassroomJob(jobId);
-          if (!data) {
-            // Job no longer exists (404) — clean up silently
-            removeActiveJobEntry(jobId);
-            abortRefs.current.delete(jobId);
-            setActiveJobs((prev) => {
-              const next = { ...prev };
-              delete next[jobId];
-              return next;
-            });
-            return;
-          }
           if (abortController.signal.aborted) return;
 
           if (data.status === 'cancelled' || data.status === 'failed') {
@@ -220,9 +206,18 @@ export default function HomePage() {
       } catch (err) {
         if (abortController.signal.aborted) return;
         if (err instanceof DOMException && err.name === 'AbortError') return;
-        log.error('Classroom poll error:', err);
-        setError(err instanceof Error ? err.message : '课堂生成失败');
+
+        // If job not found (404), silently clean up
+        const isNotFound = err instanceof Error && err.message.includes('not found');
+        if (isNotFound) {
+          log.info('Classroom job not found, cleaning up:', jobId);
+        } else {
+          log.error('Classroom poll error:', err);
+          setError(err instanceof Error ? err.message : '课堂生成失败');
+        }
+
         removeActiveJobEntry(jobId);
+        useTaskStore.getState().removeTask(jobId);
         abortRefs.current.delete(jobId);
         setActiveJobs((prev) => {
           const next = { ...prev };
@@ -286,15 +281,13 @@ export default function HomePage() {
       (async () => {
         try {
           const data = await fetchClassroomJob(entry.jobId);
-          if (!data) {
-            removeActiveJobEntry(entry.jobId);
-            return;
-          }
 
-          if (data.status === 'cancelled' || data.status === 'failed' || (data.done && data.status === 'succeeded')) {
+          if (data.status === 'cancelled' || data.status === 'failed') {
             removeActiveJobEntry(entry.jobId);
             return;
           }
+          // Don't remove completed entries here — let ClassroomJobPoller
+          // show a dialog on other pages. Home page handles via startJobPolling.
 
           const phase = data.status === 'awaiting_review'
             ? 'reviewing'
@@ -444,7 +437,7 @@ export default function HomePage() {
     }
 
     if (!requirement.trim()) {
-      setError(t('upload.requirementRequired'));
+      setError('请输入课程需求');
       return;
     }
 
@@ -503,14 +496,21 @@ export default function HomePage() {
         phase: '正在提交...',
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        resultRoute: '/classroom/',
+        resultRoute: `/generation-progress?jobId=${jobId}`,
         jobId,
       });
 
       startJobPolling(jobId, topic);
     } catch (err) {
       log.error('Error preparing generation:', err);
-      setError(err instanceof Error ? err.message : t('upload.generateFailed'));
+      const msg = err instanceof Error ? err.message : '生成课堂失败，请重试';
+      // If user not found in DB (stale JWT after DB reset), redirect to login
+      if (msg === 'User not found' || msg.includes('Not authenticated')) {
+        toast.error('登录已过期，请重新登录');
+        router.push('/auth/login');
+        return;
+      }
+      setError(msg);
     }
   };
 
@@ -520,7 +520,7 @@ export default function HomePage() {
     const outline = template.outline
       .map((s, i) => `第${i + 1}幕：${s.title} — ${s.description || ''}`)
       .join('\n');
-    const newRequirement = `${resolveLocale(template.name, locale)}\n\n课程目标：${resolveLocale(template.description, locale)}\n\n大纲：\n${outline}`;
+    const newRequirement = `${resolveLocale(template.name, 'zh-CN')}\n\n课程目标：${resolveLocale(template.description, 'zh-CN')}\n\n大纲：\n${outline}`;
     setRequirement(newRequirement);
     updateRequirementCache(newRequirement);
   };
@@ -558,11 +558,11 @@ export default function HomePage() {
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return t('classroom.today');
-    if (diffDays === 1) return t('classroom.yesterday');
-    if (diffDays < 7) return `${diffDays} ${t('classroom.daysAgo')}`;
+    if (diffDays === 0) return '今天';
+    if (diffDays === 1) return '昨天';
+    if (diffDays < 7) return `${diffDays} ${'天前'}`;
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-  }, [t]);
+  }, []);
 
   const canGenerate = !!requirement.trim();
 
@@ -870,8 +870,10 @@ export default function HomePage() {
           </p>
           <button
             onClick={() => {
-              sessionStorage.removeItem('introDone');
-              setIntroDone(false);
+              try {
+                localStorage.removeItem('skyIntroDone');
+                window.location.reload();
+              } catch { /* ignore */ }
             }}
             className="text-[10px] text-slate-400/50 hover:text-slate-500 dark:hover:text-slate-400 transition-colors mt-1"
           >

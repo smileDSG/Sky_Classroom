@@ -1,0 +1,163 @@
+{
+  "id": "DznMNsmymd",
+  "stage": {
+    "id": "DznMNsmymd",
+    "name": "课程简介与学习目标",
+    "languageDirective": "课程教学语言为中文，所有讲解、标题、知识点均使用简体中文。Python关键字、代码、库名等保留英文原文，必要时在示例代码中附中文注释帮助理解。遇到新兴技术词汇时，以中英双语呈现。",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1780040777541,
+    "updatedAt": 1780040777541,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_TeiL5Q5ZLW",
+      "stageId": "DznMNsmymd",
+      "type": "quiz",
+      "title": "知识点检测",
+      "order": 3,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "在Python中，执行以下代码后，变量c的值是多少？\na = 10\nb = 3\nc = a // b + a % b",
+            "options": [
+              {
+                "value": "A",
+                "label": "3"
+              },
+              {
+                "value": "B",
+                "label": "4"
+              },
+              {
+                "value": "C",
+                "label": "5"
+              },
+              {
+                "value": "D",
+                "label": "6"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "a // b 是整除操作，结果为3；a % b 是取余操作，结果为1；两者相加得4。因此选项B正确。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "single",
+            "question": "已知列表 lst = [10, 20, 30, 40, 50]，以下哪个表达式可以获取元素[30, 40]？",
+            "options": [
+              {
+                "value": "A",
+                "label": "lst[2:4]"
+              },
+              {
+                "value": "B",
+                "label": "lst[2:3]"
+              },
+              {
+                "value": "C",
+                "label": "lst[3:5]"
+              },
+              {
+                "value": "D",
+                "label": "lst[1:3]"
+              }
+            ],
+            "answer": [
+              "A"
+            ],
+            "analysis": "列表索引从0开始，lst[2]是30，lst[3]是40，切片[2:4]包含索引2和3，不包括4，得到[30,40]。A正确。B得到[30]，C得到[40,50]，D得到[20,30]。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "single",
+            "question": "执行以下代码后，变量result的值是什么？\nx = 15\ny = 20\nresult = 'A' if x > 10 and y < 25 else 'B'",
+            "options": [
+              {
+                "value": "A",
+                "label": "'A'"
+              },
+              {
+                "value": "B",
+                "label": "'B'"
+              },
+              {
+                "value": "C",
+                "label": "True"
+              },
+              {
+                "value": "D",
+                "label": "False"
+              }
+            ],
+            "answer": [
+              "A"
+            ],
+            "analysis": "条件 x > 10 为真，y < 25 为真，and 运算结果为真，因此 result 取 'A'。选项 A 正确。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q4",
+            "type": "short_answer",
+            "question": "请分析以下代码，指出循环体的执行次数，并说明原因。\n\ntotal = 0\nfor i in range(2, 10, 3):\n    total += i\nprint(total)",
+            "commentPrompt": "评分标准：(1) 正确指出循环执行次数（3次）得40% (2) 正确解释range(start, stop, step)参数的含义（从2开始，步长为3，不包含10）得30% (3) 正确写出循环变量i依次取值为2、5、8得30%",
+            "analysis": "参考回答：循环共执行3次。range(2,10,3)生成从2开始到10（不含）之前，步长为3的整数序列，即2,5,8。因此循环体执行3次，total最终值为15。",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "整数除法和取余运算：// 为整除，% 为取余，二者结合可用于多种算术场景",
+          "列表索引和切片：索引从0开始，切片语法 list[start:end] 包含start不包含end",
+          "条件表达式（三元表达式）：Python 中的 x if condition else y 可以简洁地根据条件赋值",
+          "循环中的 range 函数：range(start, stop, step) 生成整数序列，循环次数由序列长度决定"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_LwjKzQLo",
+          "type": "speech",
+          "text": "现在我们来检验一下前面学习的成果，完成这个知识点检测。这里有选择题和简答题，涵盖了变量运算、列表切片、条件表达式和循环分析。"
+        },
+        {
+          "id": "action_03B1Dige",
+          "type": "speech",
+          "text": "做选择题时，注意运算符的优先级，比如//是整除，%是取余；列表切片要记得左闭右开的区间规则；条件表达式会返回第一个满足条件的值。"
+        },
+        {
+          "id": "action_ot5TPzsF",
+          "type": "speech",
+          "text": "简答题需要你描述过程，不要只是给出答案，要解释每一步。例如循环的范围函数是如何工作的。"
+        },
+        {
+          "id": "action_ZdQ2ZcY2",
+          "type": "discussion",
+          "topic": "分析循环执行次数",
+          "prompt": "请思考range(2,10,3)会产生哪些值？循环体执行了几次？为什么？",
+          "agentId": "default-4"
+        }
+      ],
+      "createdAt": 1780041128988,
+      "updatedAt": 1780041128988
+    }
+  ],
+  "createdAt": "2026-05-29T07:52:08.989Z"
+}

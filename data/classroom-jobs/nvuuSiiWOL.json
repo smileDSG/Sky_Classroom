@@ -1,0 +1,355 @@
+{
+  "id": "nvuuSiiWOL",
+  "status": "awaiting_review",
+  "step": "generating_outlines",
+  "progress": 30,
+  "message": "大纲已生成，等待审阅",
+  "createdAt": "2026-06-04T13:52:20.042Z",
+  "updatedAt": "2026-06-04T13:53:06.362Z",
+  "inputSummary": {
+    "requirementPreview": "python入门教学",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-06-04T13:52:20.052Z",
+  "totalScenes": 8,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "课程简介",
+        "description": "介绍本课程的学习目标、内容和大致安排",
+        "keyPoints": [
+          "学习目标: 掌握Python编程基础",
+          "课程结构: 理论讲解、动手实践、小测验",
+          "适合人群: 编程零基础入门者",
+          "预计时长: 约20分钟"
+        ],
+        "teachingObjective": "了解课程全貌，建立学习预期",
+        "estimatedDuration": 60,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "Python语言简介",
+        "description": "介绍Python的特点和应用领域",
+        "keyPoints": [
+          "Python是一种解释型、高级编程语言",
+          "语法简洁易读，适合初学者",
+          "广泛应用于数据科学、Web开发、自动化脚本等",
+          "由Guido van Rossum创建，1991年首次发布"
+        ],
+        "teachingObjective": "理解Python是什么及其优势",
+        "estimatedDuration": 90,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "Python环境搭建",
+        "description": "指导安装Python和编写代码的工具",
+        "keyPoints": [
+          "下载并安装Python（官网python.org）",
+          "使用IDLE或VS Code作为编辑器",
+          "验证安装: 命令行输入python --version",
+          "推荐使用Jupyter Notebook进行交互式学习"
+        ],
+        "teachingObjective": "能够独立完成Python环境的安装与验证",
+        "estimatedDuration": 120,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "interactive",
+        "title": "你的第一个Python程序",
+        "description": "动手编写并运行经典的Hello, World!程序",
+        "keyPoints": [
+          "打开Python交互式环境或编辑器",
+          "输入 print('Hello, World!')",
+          "运行程序观察输出结果",
+          "理解print函数的作用"
+        ],
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python"
+        },
+        "teachingObjective": "体验编写和运行Python代码的过程",
+        "estimatedDuration": 180,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "变量与数据类型",
+        "description": "讲解Python中的变量命名和基本数据类型",
+        "keyPoints": [
+          "变量: 存储数据的容器，无需声明类型",
+          "基本类型: 整数(int)、浮点数(float)、字符串(str)、布尔值(bool)",
+          "动态类型: 变量类型可随时改变",
+          "使用type()函数查看类型"
+        ],
+        "teachingObjective": "掌握变量使用和常见数据类型",
+        "estimatedDuration": 150,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "输入与输出",
+        "description": "学习如何获取用户输入和输出信息",
+        "keyPoints": [
+          "输出: print()函数，可格式化输出",
+          "输入: input()函数，返回字符串",
+          "类型转换: int(), float(), str()",
+          "简单交互示例: name = input('你的名字?')"
+        ],
+        "teachingObjective": "实现基本的用户交互程序",
+        "estimatedDuration": 120,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "基础概念小测验",
+        "description": "通过几道题目巩固所学内容",
+        "keyPoints": [
+          "检查对Python环境、变量、输入输出的理解",
+          "及时反馈，查漏补缺"
+        ],
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        },
+        "teachingObjective": "评估学习效果，强化记忆",
+        "estimatedDuration": 180,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "总结与下一步",
+        "description": "回顾学习要点，指引后续学习方向",
+        "keyPoints": [
+          "回顾: Python基础、变量、输入输出",
+          "下一步: 学习控制流 (if/else)、循环",
+          "推荐资源: 官方文档、在线教程",
+          "鼓励: 多练习，动手写代码"
+        ],
+        "teachingObjective": "建立持续学习的信心和路径",
+        "estimatedDuration": 60,
+        "order": 8
+      }
+    ],
+    "languageDirective": "本课程使用中文授课。编程术语（如变量、数据类型等）保留英文原名，关键概念将使用中英双语呈现，以便学习者熟悉编程领域的常用表达。",
+    "topicSummary": "Python入门教学",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "SWi-VgmHFm",
+      "name": "课程简介",
+      "languageDirective": "本课程使用中文授课。编程术语（如变量、数据类型等）保留英文原名，关键概念将使用中英双语呈现，以便学习者熟悉编程领域的常用表达。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780581186361,
+      "updatedAt": 1780581186361,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python入门教学",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "课程简介",
+      "description": "介绍本课程的学习目标、内容和大致安排",
+      "keyPoints": [
+        "学习目标: 掌握Python编程基础",
+        "课程结构: 理论讲解、动手实践、小测验",
+        "适合人群: 编程零基础入门者",
+        "预计时长: 约20分钟"
+      ],
+      "teachingObjective": "了解课程全貌，建立学习预期",
+      "estimatedDuration": 60,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "Python语言简介",
+      "description": "介绍Python的特点和应用领域",
+      "keyPoints": [
+        "Python是一种解释型、高级编程语言",
+        "语法简洁易读，适合初学者",
+        "广泛应用于数据科学、Web开发、自动化脚本等",
+        "由Guido van Rossum创建，1991年首次发布"
+      ],
+      "teachingObjective": "理解Python是什么及其优势",
+      "estimatedDuration": 90,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "Python环境搭建",
+      "description": "指导安装Python和编写代码的工具",
+      "keyPoints": [
+        "下载并安装Python（官网python.org）",
+        "使用IDLE或VS Code作为编辑器",
+        "验证安装: 命令行输入python --version",
+        "推荐使用Jupyter Notebook进行交互式学习"
+      ],
+      "teachingObjective": "能够独立完成Python环境的安装与验证",
+      "estimatedDuration": 120,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "interactive",
+      "title": "你的第一个Python程序",
+      "description": "动手编写并运行经典的Hello, World!程序",
+      "keyPoints": [
+        "打开Python交互式环境或编辑器",
+        "输入 print('Hello, World!')",
+        "运行程序观察输出结果",
+        "理解print函数的作用"
+      ],
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python"
+      },
+      "teachingObjective": "体验编写和运行Python代码的过程",
+      "estimatedDuration": 180,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "变量与数据类型",
+      "description": "讲解Python中的变量命名和基本数据类型",
+      "keyPoints": [
+        "变量: 存储数据的容器，无需声明类型",
+        "基本类型: 整数(int)、浮点数(float)、字符串(str)、布尔值(bool)",
+        "动态类型: 变量类型可随时改变",
+        "使用type()函数查看类型"
+      ],
+      "teachingObjective": "掌握变量使用和常见数据类型",
+      "estimatedDuration": 150,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "输入与输出",
+      "description": "学习如何获取用户输入和输出信息",
+      "keyPoints": [
+        "输出: print()函数，可格式化输出",
+        "输入: input()函数，返回字符串",
+        "类型转换: int(), float(), str()",
+        "简单交互示例: name = input('你的名字?')"
+      ],
+      "teachingObjective": "实现基本的用户交互程序",
+      "estimatedDuration": 120,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "基础概念小测验",
+      "description": "通过几道题目巩固所学内容",
+      "keyPoints": [
+        "检查对Python环境、变量、输入输出的理解",
+        "及时反馈，查漏补缺"
+      ],
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      },
+      "teachingObjective": "评估学习效果，强化记忆",
+      "estimatedDuration": 180,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "总结与下一步",
+      "description": "回顾学习要点，指引后续学习方向",
+      "keyPoints": [
+        "回顾: Python基础、变量、输入输出",
+        "下一步: 学习控制流 (if/else)、循环",
+        "推荐资源: 官方文档、在线教程",
+        "鼓励: 多练习，动手写代码"
+      ],
+      "teachingObjective": "建立持续学习的信心和路径",
+      "estimatedDuration": 60,
+      "order": 8
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本课程使用中文授课。编程术语（如变量、数据类型等）保留英文原名，关键概念将使用中英双语呈现，以便学习者熟悉编程领域的常用表达。",
+    "totalScenes": 8
+  },
+  "topicSummary": "Python入门教学"
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '@/lib/hooks/use-theme';
 import { motion } from 'motion/react';
 import { HeaderControls } from '@/components/sky/home/header-controls';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
@@ -19,23 +20,53 @@ interface SkyAppShellProps {
 }
 
 /**
- * Atmospheric background — soft watercolor washes and drifting light
+ * Atmospheric background — soft watercolor washes and drifting light.
+ *
+ * Uses a mount-gate pattern to prevent SSR hydration mismatch:
+ * - SSR renders null (no HTML at all)
+ * - Client hydration also renders null → perfect match
+ * - After mount, renders real background with correct theme
  */
 function AtmosphericBackground() {
+  const { resolvedTheme, isMounted } = useTheme();
+
+  // During SSR and hydration: return null → no mismatch
+  if (!isMounted) return null;
+
+  const isDark = resolvedTheme === 'dark';
+
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-      {/* Base warm paper tone */}
-      <div className="absolute inset-0 bg-[#FAFBFC] dark:bg-gradient-to-b dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+      {/* Base tone */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: isDark
+            ? 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)'
+            : '#FAFBFC',
+        }}
+      />
 
       {/* Soft watercolor washes */}
-      <div className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] bg-sky-100/40 dark:bg-sky-900/10 rounded-full blur-[120px]" />
-      <div className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] bg-blue-50/50 dark:bg-blue-900/8 rounded-full blur-[100px]" />
-      <div className="absolute top-1/3 left-1/2 w-[400px] h-[400px] bg-indigo-50/30 dark:bg-indigo-900/5 rounded-full blur-[80px]" />
+      {isDark ? (
+        <>
+          <div className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] bg-sky-900/20 rounded-full blur-[120px]" />
+          <div className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] bg-blue-900/15 rounded-full blur-[100px]" />
+          <div className="absolute top-1/3 left-1/2 w-[400px] h-[400px] bg-indigo-900/10 rounded-full blur-[80px]" />
+        </>
+      ) : (
+        <>
+          <div className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] bg-sky-100/40 rounded-full blur-[120px]" />
+          <div className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-[100px]" />
+          <div className="absolute top-1/3 left-1/2 w-[400px] h-[400px] bg-indigo-50/30 rounded-full blur-[80px]" />
+        </>
+      )}
 
       {/* Subtle grain texture overlay */}
       <div
-        className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]"
+        className="absolute inset-0"
         style={{
+          opacity: isDark ? 0.03 : 0.015,
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
         }}
       />
@@ -180,7 +211,7 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto px-6 py-6">{children}</main>
+      <main className="flex-1 px-6 py-6">{children}</main>
 
       <BackgroundTasksIndicator />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />

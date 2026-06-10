@@ -44,21 +44,21 @@ export const WEB_SEARCH_PROVIDERS: Record<WebSearchProviderId, WebSearchProvider
 
 export const BAIDU_SUB_SOURCES: Record<
   keyof BaiduSubSources,
-  { labelKey: string; descriptionKey: string; docsUrl?: string }
+  { label: string; description: string; docsUrl?: string }
 > = {
   webSearch: {
-    labelKey: 'settings.baiduSubSourceWeb',
-    descriptionKey: 'settings.baiduSubSourceWebDescription',
+    label: '网页',
+    description: '百度 AI 搜索，覆盖全网信息',
     docsUrl: 'https://cloud.baidu.com/doc/qianfan/s/Mmh4sv6ec',
   },
   baike: {
-    labelKey: 'settings.baiduSubSourceBaike',
-    descriptionKey: 'settings.baiduSubSourceBaikeDescription',
+    label: '百科',
+    description: '百度百科，权威知识库',
     docsUrl: 'https://ai.baidu.com/ai-doc/AppBuilder/rmckc6mtu',
   },
   scholar: {
-    labelKey: 'settings.baiduSubSourceScholar',
-    descriptionKey: 'settings.baiduSubSourceScholarDescription',
+    label: '学术',
+    description: '百度学术，论文与学术资源',
     docsUrl: 'https://cloud.baidu.com/doc/qianfan/s/Amkw9qpzd',
   },
 };

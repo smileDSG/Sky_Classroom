@@ -1,0 +1,293 @@
+{
+  "id": "i4OmYiinZN",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-05-30T08:49:15.534Z",
+  "updatedAt": "2026-05-30T08:52:19.492Z",
+  "inputSummary": {
+    "requirementPreview": "python入门极简版",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 1,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-30T08:49:15.543Z",
+  "totalScenes": 6,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "认识 Python",
+        "description": "介绍 Python 语言的特点和使用场景",
+        "keyPoints": [
+          "Python 是一种解释型、面向对象的高级编程语言",
+          "语法简洁，易于学习",
+          "广泛应用于数据科学、Web 开发、自动化等领域"
+        ],
+        "teachingObjective": "了解 Python 的基本概念和应用领域",
+        "estimatedDuration": 60,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "Python 基础语法",
+        "description": "学习 print 函数、注释和代码缩进",
+        "keyPoints": [
+          "使用 print() 函数输出内容",
+          "单行注释使用 #，多行注释使用三重引号",
+          "Python 使用缩进（4 个空格）来定义代码块"
+        ],
+        "teachingObjective": "掌握 Python 的基本语法规则",
+        "estimatedDuration": 90,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "变量与数据类型",
+        "description": "介绍变量赋值和常用数据类型",
+        "keyPoints": [
+          "变量命名规则：字母、数字、下划线，不能以数字开头",
+          "常用数据类型：整数(int)、浮点数(float)、字符串(str)、布尔(bool)",
+          "[Table] 数据类型示例表格"
+        ],
+        "teachingObjective": "能够声明变量并使用基本数据类型",
+        "estimatedDuration": 120,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "interactive",
+        "title": "动手尝试：编写你的第一行代码",
+        "description": "在交互式环境中运行 Python 代码，体验 print 和变量",
+        "keyPoints": [
+          "使用 print() 输出 'Hello, Python!'",
+          "创建一个变量并打印",
+          "观察错误提示"
+        ],
+        "teachingObjective": "通过实践加深对基本语法的理解",
+        "estimatedDuration": 180,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python"
+        },
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "简单条件判断",
+        "description": "介绍 if 语句的基本用法",
+        "keyPoints": [
+          "if 语句用于根据条件执行不同代码",
+          "比较运算符：==, !=, >, <, >=, <=",
+          "示例：判断年龄是否成年"
+        ],
+        "teachingObjective": "理解条件判断的基本逻辑",
+        "estimatedDuration": 90,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "quiz",
+        "title": "小测验",
+        "description": "检测对 Python 入门知识的掌握情况",
+        "keyPoints": [
+          "Python 的基本语法",
+          "变量与数据类型",
+          "条件判断"
+        ],
+        "teachingObjective": "巩固所学知识",
+        "estimatedDuration": 120,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "single",
+            "single"
+          ]
+        },
+        "order": 6
+      }
+    ],
+    "languageDirective": "本课程使用简体中文教学，编程相关的关键字和函数名（如 print、if）保留英文，并在解释时给出中文说明。对于初学者，使用简单清晰的语言，避免复杂术语。",
+    "topicSummary": "Python入门极简版",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "lelmU0xwEj",
+      "name": "认识 Python",
+      "languageDirective": "本课程使用简体中文教学，编程相关的关键字和函数名（如 print、if）保留英文，并在解释时给出中文说明。对于初学者，使用简单清晰的语言，避免复杂术语。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780131001605,
+      "updatedAt": 1780131001605,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python入门极简版",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "认识 Python",
+      "description": "介绍 Python 语言的特点和使用场景",
+      "keyPoints": [
+        "Python 是一种解释型、面向对象的高级编程语言",
+        "语法简洁，易于学习",
+        "广泛应用于数据科学、Web 开发、自动化等领域"
+      ],
+      "teachingObjective": "了解 Python 的基本概念和应用领域",
+      "estimatedDuration": 60,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "Python 基础语法",
+      "description": "学习 print 函数、注释和代码缩进",
+      "keyPoints": [
+        "使用 print() 函数输出内容",
+        "单行注释使用 #，多行注释使用三重引号",
+        "Python 使用缩进（4 个空格）来定义代码块"
+      ],
+      "teachingObjective": "掌握 Python 的基本语法规则",
+      "estimatedDuration": 90,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "变量与数据类型",
+      "description": "介绍变量赋值和常用数据类型",
+      "keyPoints": [
+        "变量命名规则：字母、数字、下划线，不能以数字开头",
+        "常用数据类型：整数(int)、浮点数(float)、字符串(str)、布尔(bool)",
+        "[Table] 数据类型示例表格"
+      ],
+      "teachingObjective": "能够声明变量并使用基本数据类型",
+      "estimatedDuration": 120,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "interactive",
+      "title": "动手尝试：编写你的第一行代码",
+      "description": "在交互式环境中运行 Python 代码，体验 print 和变量",
+      "keyPoints": [
+        "使用 print() 输出 'Hello, Python!'",
+        "创建一个变量并打印",
+        "观察错误提示"
+      ],
+      "teachingObjective": "通过实践加深对基本语法的理解",
+      "estimatedDuration": 180,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python"
+      },
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "简单条件判断",
+      "description": "介绍 if 语句的基本用法",
+      "keyPoints": [
+        "if 语句用于根据条件执行不同代码",
+        "比较运算符：==, !=, >, <, >=, <=",
+        "示例：判断年龄是否成年"
+      ],
+      "teachingObjective": "理解条件判断的基本逻辑",
+      "estimatedDuration": 90,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "quiz",
+      "title": "小测验",
+      "description": "检测对 Python 入门知识的掌握情况",
+      "keyPoints": [
+        "Python 的基本语法",
+        "变量与数据类型",
+        "条件判断"
+      ],
+      "teachingObjective": "巩固所学知识",
+      "estimatedDuration": 120,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "single",
+          "single"
+        ]
+      },
+      "order": 6
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本课程使用简体中文教学，编程相关的关键字和函数名（如 print、if）保留英文，并在解释时给出中文说明。对于初学者，使用简单清晰的语言，避免复杂术语。",
+    "totalScenes": 6
+  },
+  "topicSummary": "Python入门极简版",
+  "completedAt": "2026-05-30T08:52:19.492Z",
+  "result": {
+    "classroomId": "lelmU0xwEj",
+    "url": "http://localhost:3000/classroom/lelmU0xwEj",
+    "scenesCount": 1
+  }
+}

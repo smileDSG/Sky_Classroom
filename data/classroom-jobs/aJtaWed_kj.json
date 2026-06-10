@@ -1,0 +1,449 @@
+{
+  "id": "aJtaWed_kj",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 30,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-05-31T03:09:09.350Z",
+  "updatedAt": "2026-05-31T03:10:10.422Z",
+  "inputSummary": {
+    "requirementPreview": "定积分入门",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-31T03:09:09.359Z",
+  "totalScenes": 10,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "引言：为什么要学定积分？",
+        "description": "介绍定积分的现实应用与学习意义，激发学习兴趣。",
+        "keyPoints": [
+          "不定积分与定积分的区别",
+          "定积分的常见应用场景（面积、位移、总量计算）",
+          "本课程学习路径概览"
+        ],
+        "teachingObjective": "了解定积分的背景和实用价值，建立初步学习动机。",
+        "estimatedDuration": 100,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "从面积问题引入",
+        "description": "通过求曲边梯形面积的问题，引出近似求和与逼近的思想。",
+        "keyPoints": [
+          "用矩形近似曲边梯形面积",
+          "分割区间、构造小矩形",
+          "求和得到面积近似值",
+          "分割越细，近似越准"
+        ],
+        "teachingObjective": "理解用矩形和逼近曲边图形面积的基本思路，为黎曼和做铺垫。",
+        "estimatedDuration": 120,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "探索黎曼和",
+        "description": "动手调整参数，观察矩形和如何逼近曲线下的面积，直观理解黎曼和。",
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "定积分的定义与黎曼和逼近",
+          "keyVariables": [
+            "函数表达式",
+            "积分下限",
+            "积分上限",
+            "矩形数量（分割数）",
+            "矩形取点方式（左端点/右端点/中点）"
+          ]
+        },
+        "keyPoints": [
+          "拖动滑块改变函数、区间与分割数",
+          "观察矩形面积和的变化",
+          "对比不同取点方式对逼近的影响",
+          "分割数足够大时矩形和趋近于精确面积"
+        ],
+        "teachingObjective": "通过交互操作直观体验黎曼和逼近过程，建立对定积分定义的几何直觉。",
+        "estimatedDuration": 180,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "定积分的定义",
+        "description": "给出黎曼和的极限形式定义，介绍符号和可积条件。",
+        "keyPoints": [
+          "分割与介点集的概念",
+          "黎曼和的定义式",
+          "定积分的极限定义：∫_a^b f(x)dx = lim Σ f(ξ_i)Δx_i",
+          "可积的充分条件（连续、分段单调等）"
+        ],
+        "teachingObjective": "掌握定积分的严格数学定义，理解极限过程。",
+        "estimatedDuration": 150,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "quiz",
+        "title": "概念小测",
+        "description": "检验对定积分定义和几何背景的理解。",
+        "keyPoints": [
+          "黎曼和的基本要素",
+          "定积分定义的理解",
+          "面积近似与分割数关系"
+        ],
+        "teachingObjective": "巩固定积分定义和黎曼和的概念。",
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        },
+        "estimatedDuration": 120,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "定积分的几何意义与符号",
+        "description": "解释定积分的几何含义、正负面积及符号规则。",
+        "keyPoints": [
+          "定积分表示带符号的面积",
+          "x轴上方面积为正，下方面积为负",
+          "∫_a^b f(x)dx = -∫_b^a f(x)dx",
+          "定积分的记法及各部分名称"
+        ],
+        "teachingObjective": "理解定积分的几何解释，能正确使用积分符号。",
+        "estimatedDuration": 120,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "定积分的基本性质",
+        "description": "介绍线性和区间可加性等常用运算性质，为计算打基础。",
+        "keyPoints": [
+          "线性性质：∫(k1 f + k2 g) = k1∫f + k2∫g",
+          "区间可加性：∫_a^b f + ∫_b^c f = ∫_a^c f",
+          "保序性：若 f ≥ g 则 ∫f ≥ ∫g",
+          "绝对值不等式：|∫f| ≤ ∫|f|"
+        ],
+        "teachingObjective": "掌握并能灵活运用定积分的线性性质和区间可加性。",
+        "estimatedDuration": 130,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "quiz",
+        "title": "性质应用测验",
+        "description": "通过题目练习运用定积分的性质化简和比较积分。",
+        "keyPoints": [
+          "利用线性性质分解积分",
+          "区间可加性的应用",
+          "运用保序性比较积分大小"
+        ],
+        "teachingObjective": "巩固对定积分基本性质的理解与应用。",
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        },
+        "estimatedDuration": 140,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "微积分基本定理初探",
+        "description": "简介积分上限函数及牛顿-莱布尼茨公式，联通微分与积分。",
+        "keyPoints": [
+          "积分上限函数 Ф(x) = ∫_a^x f(t)dt",
+          "Ф'(x) = f(x) 的直观解释",
+          "牛顿-莱布尼茨公式：∫_a^b f(x)dx = F(b)-F(a)",
+          "原函数与原函数族的认识"
+        ],
+        "teachingObjective": "初步认识微积分基本定理，理解定积分与原函数的联系。",
+        "estimatedDuration": 150,
+        "order": 9
+      },
+      {
+        "id": "scene_10",
+        "type": "slide",
+        "title": "总结与下一步",
+        "description": "回顾核心概念，指引后续不定积分与计算技巧的学习。",
+        "keyPoints": [
+          "定积分是从黎曼和极限定义出的累积量",
+          "几何上代表带符号的面积",
+          "基本性质简化了积分处理",
+          "微积分基本定理是计算的桥梁",
+          "下一步：学习不定积分与换元法、分部积分法"
+        ],
+        "teachingObjective": "系统总结所学内容，为后续积分计算课程做好准备。",
+        "estimatedDuration": 100,
+        "order": 10
+      }
+    ],
+    "languageDirective": "本课程使用中文教学，采用标准的中文数学术语。对于专有名词如'Riemann sum'，使用中文译名'黎曼和'，并在首次出现时附上英文原文。课程表述力求清晰易懂，适合中文数学学习者。",
+    "topicSummary": "定积分入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "37EXudkCdw",
+      "name": "引言：为什么要学定积分？",
+      "languageDirective": "本课程使用中文教学，采用标准的中文数学术语。对于专有名词如'Riemann sum'，使用中文译名'黎曼和'，并在首次出现时附上英文原文。课程表述力求清晰易懂，适合中文数学学习者。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780197008927,
+      "updatedAt": 1780197008927,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "定积分入门",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "引言：为什么要学定积分？",
+      "description": "介绍定积分的现实应用与学习意义，激发学习兴趣。",
+      "keyPoints": [
+        "不定积分与定积分的区别",
+        "定积分的常见应用场景（面积、位移、总量计算）",
+        "本课程学习路径概览"
+      ],
+      "teachingObjective": "了解定积分的背景和实用价值，建立初步学习动机。",
+      "estimatedDuration": 100,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "从面积问题引入",
+      "description": "通过求曲边梯形面积的问题，引出近似求和与逼近的思想。",
+      "keyPoints": [
+        "用矩形近似曲边梯形面积",
+        "分割区间、构造小矩形",
+        "求和得到面积近似值",
+        "分割越细，近似越准"
+      ],
+      "teachingObjective": "理解用矩形和逼近曲边图形面积的基本思路，为黎曼和做铺垫。",
+      "estimatedDuration": 120,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "探索黎曼和",
+      "description": "动手调整参数，观察矩形和如何逼近曲线下的面积，直观理解黎曼和。",
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "定积分的定义与黎曼和逼近",
+        "keyVariables": [
+          "函数表达式",
+          "积分下限",
+          "积分上限",
+          "矩形数量（分割数）",
+          "矩形取点方式（左端点/右端点/中点）"
+        ]
+      },
+      "keyPoints": [
+        "拖动滑块改变函数、区间与分割数",
+        "观察矩形面积和的变化",
+        "对比不同取点方式对逼近的影响",
+        "分割数足够大时矩形和趋近于精确面积"
+      ],
+      "teachingObjective": "通过交互操作直观体验黎曼和逼近过程，建立对定积分定义的几何直觉。",
+      "estimatedDuration": 180,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "定积分的定义",
+      "description": "给出黎曼和的极限形式定义，介绍符号和可积条件。",
+      "keyPoints": [
+        "分割与介点集的概念",
+        "黎曼和的定义式",
+        "定积分的极限定义：∫_a^b f(x)dx = lim Σ f(ξ_i)Δx_i",
+        "可积的充分条件（连续、分段单调等）"
+      ],
+      "teachingObjective": "掌握定积分的严格数学定义，理解极限过程。",
+      "estimatedDuration": 150,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "quiz",
+      "title": "概念小测",
+      "description": "检验对定积分定义和几何背景的理解。",
+      "keyPoints": [
+        "黎曼和的基本要素",
+        "定积分定义的理解",
+        "面积近似与分割数关系"
+      ],
+      "teachingObjective": "巩固定积分定义和黎曼和的概念。",
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      },
+      "estimatedDuration": 120,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "定积分的几何意义与符号",
+      "description": "解释定积分的几何含义、正负面积及符号规则。",
+      "keyPoints": [
+        "定积分表示带符号的面积",
+        "x轴上方面积为正，下方面积为负",
+        "∫_a^b f(x)dx = -∫_b^a f(x)dx",
+        "定积分的记法及各部分名称"
+      ],
+      "teachingObjective": "理解定积分的几何解释，能正确使用积分符号。",
+      "estimatedDuration": 120,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "定积分的基本性质",
+      "description": "介绍线性和区间可加性等常用运算性质，为计算打基础。",
+      "keyPoints": [
+        "线性性质：∫(k1 f + k2 g) = k1∫f + k2∫g",
+        "区间可加性：∫_a^b f + ∫_b^c f = ∫_a^c f",
+        "保序性：若 f ≥ g 则 ∫f ≥ ∫g",
+        "绝对值不等式：|∫f| ≤ ∫|f|"
+      ],
+      "teachingObjective": "掌握并能灵活运用定积分的线性性质和区间可加性。",
+      "estimatedDuration": 130,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "quiz",
+      "title": "性质应用测验",
+      "description": "通过题目练习运用定积分的性质化简和比较积分。",
+      "keyPoints": [
+        "利用线性性质分解积分",
+        "区间可加性的应用",
+        "运用保序性比较积分大小"
+      ],
+      "teachingObjective": "巩固对定积分基本性质的理解与应用。",
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      },
+      "estimatedDuration": 140,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "微积分基本定理初探",
+      "description": "简介积分上限函数及牛顿-莱布尼茨公式，联通微分与积分。",
+      "keyPoints": [
+        "积分上限函数 Ф(x) = ∫_a^x f(t)dt",
+        "Ф'(x) = f(x) 的直观解释",
+        "牛顿-莱布尼茨公式：∫_a^b f(x)dx = F(b)-F(a)",
+        "原函数与原函数族的认识"
+      ],
+      "teachingObjective": "初步认识微积分基本定理，理解定积分与原函数的联系。",
+      "estimatedDuration": 150,
+      "order": 9
+    },
+    {
+      "id": "scene_10",
+      "type": "slide",
+      "title": "总结与下一步",
+      "description": "回顾核心概念，指引后续不定积分与计算技巧的学习。",
+      "keyPoints": [
+        "定积分是从黎曼和极限定义出的累积量",
+        "几何上代表带符号的面积",
+        "基本性质简化了积分处理",
+        "微积分基本定理是计算的桥梁",
+        "下一步：学习不定积分与换元法、分部积分法"
+      ],
+      "teachingObjective": "系统总结所学内容，为后续积分计算课程做好准备。",
+      "estimatedDuration": 100,
+      "order": 10
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本课程使用中文教学，采用标准的中文数学术语。对于专有名词如'Riemann sum'，使用中文译名'黎曼和'，并在首次出现时附上英文原文。课程表述力求清晰易懂，适合中文数学学习者。",
+    "totalScenes": 10
+  },
+  "topicSummary": "定积分入门",
+  "completedAt": "2026-05-31T03:10:10.422Z",
+  "error": "用户取消了生成"
+}

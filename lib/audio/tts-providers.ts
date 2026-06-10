@@ -77,9 +77,6 @@
  *    case 'elevenlabs-tts':
  *      return await generateElevenLabsTTS(config, text);
  *
- * 5. Add i18n translations in lib/i18n.ts
- *    providerElevenLabsTTS: { zh: 'ElevenLabs TTS', en: 'ElevenLabs TTS' }
- *
  * Error Handling Patterns:
  * - Always validate API key if requiresApiKey is true
  * - Throw descriptive errors for API failures

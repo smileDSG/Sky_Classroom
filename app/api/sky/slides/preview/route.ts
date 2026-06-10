@@ -13,7 +13,7 @@ import { generatePreviewFromPptx } from '@/lib/slides/pptx-preview';
 const log = createLogger('API:SkySlidesPreview');
 
 const PREVIEW_BASE_DIR = path.join(process.cwd(), 'public', 'temp', 'preview');
-const PREVIEW_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const PREVIEW_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function scheduleCleanup(previewDir: string) {
   setTimeout(() => {

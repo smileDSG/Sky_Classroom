@@ -12,8 +12,6 @@ import { getVoxCPMProviderOptions, useVoxCPMVoiceProfiles } from '@/lib/audio/vo
 import type { AgentConfig } from '@/lib/orchestration/registry/types';
 import type { TTSProviderId } from '@/lib/audio/types';
 import type { AudioIndicatorState } from '@/components/roundtable/audio-indicator';
-import { useI18n } from '@/lib/hooks/use-i18n';
-
 interface DiscussionTTSOptions {
   enabled: boolean;
   agents: AgentConfig[];
@@ -31,7 +29,7 @@ interface QueueItem {
 }
 
 export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: DiscussionTTSOptions) {
-  const { locale } = useI18n();
+  const locale = 'zh-CN';
   const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
   const ttsSpeed = useSettingsStore((s) => s.ttsSpeed);
   const ttsMuted = useSettingsStore((s) => s.ttsMuted);

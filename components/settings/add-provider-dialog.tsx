@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { cn } from '@/lib/utils';
 
 export interface NewProviderData {
@@ -24,10 +23,7 @@ interface AddProviderDialogProps {
   onAdd: (provider: NewProviderData) => void;
 }
 
-export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDialogProps) {
-  const { t } = useI18n();
-
-  // Internal state
+export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDialogProps) {// Internal state
   const [name, setName] = useState('');
   const [type, setType] = useState<'openai' | 'anthropic' | 'google'>('openai');
   const [baseUrl, setBaseUrl] = useState('');
@@ -64,20 +60,20 @@ export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDial
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
-        <DialogTitle className="sr-only">{t('settings.addProviderDialog')}</DialogTitle>
+        <DialogTitle className="sr-only">{'添加模型提供方'}</DialogTitle>
         <DialogDescription className="sr-only">
-          {t('settings.addProviderDescription')}
+          {'添加自定义模型提供方以扩展可用的AI模型'}
         </DialogDescription>
         <div className="space-y-4">
           <div className="pb-3 border-b">
-            <h2 className="text-lg font-semibold">{t('settings.addProviderDialog')}</h2>
+            <h2 className="text-lg font-semibold">{'添加模型提供方'}</h2>
           </div>
 
           {/* Provider Name */}
           <div className="space-y-2">
-            <Label>{t('settings.providerName')}</Label>
+            <Label>{'名称'}</Label>
             <Input
-              placeholder={t('settings.providerNamePlaceholder')}
+              placeholder={'例如：我的OpenAI代理'}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -85,7 +81,7 @@ export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDial
 
           {/* API Mode */}
           <div className="space-y-2">
-            <Label>{t('settings.providerApiMode')}</Label>
+            <Label>{'API 模式'}</Label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setType('openai')}
@@ -96,7 +92,7 @@ export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDial
                     : 'hover:bg-muted/50 border-transparent',
                 )}
               >
-                {t('settings.apiModeOpenAI')}
+                {'OpenAI 协议'}
               </button>
               <button
                 onClick={() => setType('anthropic')}
@@ -107,7 +103,7 @@ export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDial
                     : 'hover:bg-muted/50 border-transparent',
                 )}
               >
-                {t('settings.apiModeAnthropic')}
+                {'Claude 协议'}
               </button>
               <button
                 onClick={() => setType('google')}
@@ -118,14 +114,14 @@ export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDial
                     : 'hover:bg-muted/50 border-transparent',
                 )}
               >
-                {t('settings.apiModeGoogle')}
+                {'Gemini 协议'}
               </button>
             </div>
           </div>
 
           {/* Default Base URL */}
           <div className="space-y-2">
-            <Label>{t('settings.defaultBaseUrl')}</Label>
+            <Label>{'默认 Base URL'}</Label>
             <Input
               type="url"
               placeholder="https://api.example.com/v1"
@@ -136,7 +132,7 @@ export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDial
 
           {/* Icon URL */}
           <div className="space-y-2">
-            <Label>{t('settings.providerIcon')}</Label>
+            <Label>{'Provider 图标 URL'}</Label>
             <Input
               type="url"
               placeholder="https://example.com/icon.svg"
@@ -153,18 +149,18 @@ export function AddProviderDialog({ open, onOpenChange, onAdd }: AddProviderDial
               onCheckedChange={(checked) => setRequiresApiKey(checked as boolean)}
             />
             <label htmlFor="requires-api-key" className="text-sm cursor-pointer">
-              {t('settings.requiresApiKey')}
+              {'需要 API 密钥'}
             </label>
           </div>
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-2 pt-3 border-t">
             <Button variant="outline" size="sm" onClick={handleClose}>
-              {t('settings.cancelEdit')}
+              {'取消'}
             </Button>
             <Button size="sm" onClick={handleAdd} className="gap-1.5">
               <Plus className="h-3.5 w-3.5" />
-              {t('settings.addProviderButton')}
+              {'添加'}
             </Button>
           </div>
         </div>

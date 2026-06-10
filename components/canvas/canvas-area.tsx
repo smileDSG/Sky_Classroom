@@ -10,7 +10,6 @@ import { Whiteboard } from '@/components/whiteboard';
 import { CanvasToolbar } from '@/components/canvas/canvas-toolbar';
 import type { CanvasToolbarProps } from '@/components/canvas/canvas-toolbar';
 import type { Scene, StageMode } from '@/lib/types/stage';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { ClassroomCompletePageConnected } from '@/components/scene-renderers/classroom-complete';
 
 interface CanvasAreaProps extends CanvasToolbarProps {
@@ -48,9 +47,7 @@ export function CanvasArea({
   isCourseComplete,
   isGenerationFailed,
   onRetryGeneration,
-}: CanvasAreaProps) {
-  const { t } = useI18n();
-  const showControls = mode === 'playback' && !whiteboardOpen;
+}: CanvasAreaProps) {const showControls = mode === 'playback' && !whiteboardOpen;
   const showPlayHint =
     showControls &&
     engineState !== 'playing' &&
@@ -202,14 +199,14 @@ export function CanvasArea({
                         </svg>
                       </div>
                       <span className="text-sm text-red-400 font-medium">
-                        {t('stage.generationFailed')}
+                        {'生成失败'}
                       </span>
                       {onRetryGeneration && (
                         <button
                           onClick={onRetryGeneration}
                           className="mt-1 px-4 py-1.5 text-xs font-medium rounded-full bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-colors active:scale-95"
                         >
-                          {t('generation.retryScene')}
+                          {'重试生成'}
                         </button>
                       )}
                     </div>
@@ -221,7 +218,7 @@ export function CanvasArea({
                         transition={{ delay: 0.2, duration: 0.3 }}
                         className="text-xs text-slate-400 font-medium"
                       >
-                        {t('stage.generatingNextPage')}
+                        {'场景正在生成，请稍候...'}
                       </motion.span>
                     </div>
                   )}

@@ -14,7 +14,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
 
@@ -107,10 +106,7 @@ function QuizCover({
   questionCount: number;
   totalPoints: number;
   onStart: () => void;
-}) {
-  const { t } = useI18n();
-
-  return (
+}) {return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-4 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-0 right-0 p-6 opacity-[0.03]">
@@ -135,8 +131,8 @@ function QuizCover({
         transition={{ delay: 0.1 }}
         className="text-center z-10"
       >
-        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('quiz.title')}</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('quiz.subtitle')}</p>
+        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">{'随堂测验'}</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{'检测你的学习成果'}</p>
       </motion.div>
 
       <motion.div
@@ -150,7 +146,7 @@ function QuizCover({
             <BookOpenText className="w-3.5 h-3.5 text-violet-500" />
           </div>
           <span>
-            {questionCount} {t('quiz.questionsCount')}
+            {questionCount} {'道题'}
           </span>
         </div>
         <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
@@ -158,7 +154,7 @@ function QuizCover({
             <PieChart className="w-3.5 h-3.5 text-violet-500" />
           </div>
           <span>
-            {t('quiz.totalPrefix')} {totalPoints} {t('quiz.pointsSuffix')}
+            {'共'} {totalPoints} {'分'}
           </span>
         </div>
       </motion.div>
@@ -172,7 +168,7 @@ function QuizCover({
         onClick={onStart}
         className="mt-1 px-8 py-2.5 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-full font-medium shadow-lg shadow-violet-200/50 dark:shadow-violet-900/50 hover:shadow-violet-300/50 transition-shadow z-10 flex items-center gap-2"
       >
-        {t('quiz.startQuiz')}
+        {'开始答题'}
         <ChevronRight className="w-4 h-4" />
       </motion.button>
     </div>
@@ -297,15 +293,11 @@ function MultipleChoiceQuestion({
     } else {
       onChange([...selected, optValue]);
     }
-  };
-
-  const { t } = useI18n();
-
-  return (
+  };return (
     <QuestionCard question={question} index={index} result={result}>
       {!isReview && (
         <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
-          {t('quiz.multipleChoiceHint')}
+          {'（多选题，请选择所有正确答案）'}
         </p>
       )}
       <div className="grid gap-2">
@@ -390,9 +382,7 @@ function ShortAnswerQuestion({
   disabled?: boolean;
   result?: QuestionResult;
 }) {
-  const isReview = !!result;
-  const { t } = useI18n();
-  // Ref to track latest value for voice transcription append
+  const isReview = !!result;// Ref to track latest value for voice transcription append
   const valueRef = useRef(value);
   useEffect(() => {
     valueRef.current = value;
@@ -406,7 +396,7 @@ function ShortAnswerQuestion({
             value={value ?? ''}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            placeholder={t('quiz.inputPlaceholder')}
+            placeholder={'请在此输入你的回答...'}
             className="w-full min-h-[100px] p-3 pb-10 rounded-xl border border-gray-200 dark:border-gray-600 text-sm resize-none focus:outline-none focus:border-violet-300 dark:focus:border-violet-600 focus:ring-2 focus:ring-violet-100 dark:focus:ring-violet-900/50 transition-all disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:bg-gray-800/50 dark:text-gray-200 dark:placeholder:text-gray-500"
           />
           <SpeechButton
@@ -419,16 +409,16 @@ function ShortAnswerQuestion({
             }}
           />
           <span className="absolute bottom-3 right-3 text-xs text-gray-300 dark:text-gray-600">
-            {(value ?? '').length} {t('quiz.charCount')}
+            {(value ?? '').length} {'字'}
           </span>
         </div>
       ) : (
         <div className="space-y-3">
           <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{t('quiz.yourAnswer')}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{'你的回答：'}</p>
             {value || (
               <span className="text-gray-400 dark:text-gray-500 italic">
-                {t('quiz.notAnswered')}
+                {'未作答'}
               </span>
             )}
           </div>
@@ -437,7 +427,7 @@ function ShortAnswerQuestion({
               <Sparkles className="w-4 h-4 text-violet-500 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-medium text-violet-600 dark:text-violet-400 mb-0.5">
-                  {t('quiz.aiComment')}
+                  {'AI 点评'}
                 </p>
                 <p className="text-xs text-violet-600/80 dark:text-violet-400/80">
                   {result.aiComment}
@@ -445,7 +435,7 @@ function ShortAnswerQuestion({
               </div>
               <span className="ml-auto text-xs font-bold text-violet-600 dark:text-violet-400 shrink-0">
                 {result.earned}/{question.points ?? 1}
-                {t('quiz.pointsSuffix')}
+                {'分'}
               </span>
             </div>
           )}
@@ -465,9 +455,7 @@ function QuestionCard({
   index: number;
   result?: QuestionResult;
   children: React.ReactNode;
-}) {
-  const { t } = useI18n();
-  const isReview = !!result;
+}) {const isReview = !!result;
   const pts = question.points ?? 1;
 
   return (
@@ -520,12 +508,12 @@ function QuestionCard({
             </p>
             <p className="text-xs text-gray-400 mt-0.5">
               {question.type === 'single'
-                ? t('quiz.singleChoice')
+                ? '单选'
                 : question.type === 'multiple'
-                  ? t('quiz.multipleChoice')
-                  : t('quiz.shortAnswer')}
+                  ? '多选'
+                  : '简答'}
               {' · '}
-              {pts} {t('quiz.pointsSuffix')}
+              {pts} {'分'}
             </p>
           </div>
         </div>
@@ -551,9 +539,7 @@ function ScoreBanner({
   score: number;
   total: number;
   results: QuestionResult[];
-}) {
-  const { t } = useI18n();
-  const pct = total > 0 ? Math.round((score / total) * 100) : 0;
+}) {const pct = total > 0 ? Math.round((score / total) * 100) : 0;
   const correctCount = results.filter((r) => r.status === 'correct').length;
   const incorrectCount = results.filter((r) => r.status === 'incorrect').length;
 
@@ -563,19 +549,19 @@ function ScoreBanner({
       bg: 'from-emerald-500 to-teal-500',
       shadow: 'shadow-emerald-200/50 dark:shadow-emerald-900/50',
       ring: 'bg-emerald-400/30',
-      text: t('quiz.excellent'),
+      text: '优秀！',
     },
     amber: {
       bg: 'from-amber-500 to-yellow-500',
       shadow: 'shadow-amber-200/50 dark:shadow-amber-900/50',
       ring: 'bg-amber-400/30',
-      text: t('quiz.keepGoing'),
+      text: '继续加油！',
     },
     red: {
       bg: 'from-red-500 to-rose-500',
       shadow: 'shadow-red-200/50 dark:shadow-red-900/50',
       ring: 'bg-red-400/30',
-      text: t('quiz.needsReview'),
+      text: '需要复习',
     },
   };
   const c = colorMap[color];
@@ -595,10 +581,10 @@ function ScoreBanner({
           </div>
           <div className="flex gap-3 mt-3 text-xs">
             <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> {correctCount} {t('quiz.correct')}
+              <CheckCircle2 className="w-3.5 h-3.5" /> {correctCount} {'正确'}
             </span>
             <span className="flex items-center gap-1">
-              <XCircle className="w-3.5 h-3.5" /> {incorrectCount} {t('quiz.incorrect')}
+              <XCircle className="w-3.5 h-3.5" /> {incorrectCount} {'错误'}
             </span>
           </div>
         </div>
@@ -639,10 +625,9 @@ function ScoreBanner({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export function QuizView({ questions, sceneId, knowledgePoints }: QuizViewProps) {
-  const { t, locale } = useI18n();
-
-  // Rehydrate submitted state from localStorage on first mount. Runs once.
+export function QuizView({
+  questions, sceneId, knowledgePoints }: QuizViewProps) {
+  const locale = 'zh-CN';// Rehydrate submitted state from localStorage on first mount. Runs once.
   const [initialSubmitted] = useState<SubmittedState>(() => readSubmittedState(sceneId));
 
   const [phase, setPhase] = useState<Phase>(() => {
@@ -798,7 +783,7 @@ export function QuizView({ questions, sceneId, knowledgePoints }: QuizViewProps)
               <div className="flex items-center gap-2">
                 <PieChart className="w-4 h-4 text-violet-500" />
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  {t('quiz.answering')}
+                  {'答题中'}
                 </span>
                 <span className="text-xs text-gray-400 ml-1">
                   {
@@ -821,7 +806,7 @@ export function QuizView({ questions, sceneId, knowledgePoints }: QuizViewProps)
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed',
                 )}
               >
-                {t('quiz.submitAnswers')}
+                {'提交答案'}
               </button>
             </div>
 
@@ -880,9 +865,9 @@ export function QuizView({ questions, sceneId, knowledgePoints }: QuizViewProps)
             </motion.div>
             <div className="text-center">
               <p className="text-base font-semibold text-gray-700 dark:text-gray-200">
-                {t('quiz.aiGrading')}
+                {'AI 正在批改中...'}
               </p>
-              <p className="text-sm text-gray-400 mt-1">{t('quiz.aiGradingWait')}</p>
+              <p className="text-sm text-gray-400 mt-1">{'请稍候，正在分析你的答案'}</p>
             </div>
             <div className="flex gap-1 mt-2">
               {[0, 1, 2].map((i) => (
@@ -913,7 +898,7 @@ export function QuizView({ questions, sceneId, knowledgePoints }: QuizViewProps)
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  {t('quiz.quizReport')}
+                  {'答题报告'}
                 </span>
               </div>
               <button
@@ -921,7 +906,7 @@ export function QuizView({ questions, sceneId, knowledgePoints }: QuizViewProps)
                 className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                {t('quiz.retry')}
+                {'重新答题'}
               </button>
             </div>
 
@@ -940,11 +925,11 @@ export function QuizView({ questions, sceneId, knowledgePoints }: QuizViewProps)
                   <div className="flex items-center gap-2 mb-3">
                     <BookOpenText className="w-5 h-5 text-violet-500" />
                     <h3 className="text-sm font-bold text-violet-700 dark:text-violet-300">
-                      {t('quiz.knowledgePoints')}
+                      {'知识点总结'}
                     </h3>
                   </div>
                   <p className="text-xs text-violet-600/70 dark:text-violet-400/70 mb-3">
-                    {t('quiz.knowledgePointsHint')}
+                    {'回顾以下知识点，巩固薄弱环节'}
                   </p>
                   <ul className="space-y-2">
                     {knowledgePoints.map((point, i) => (

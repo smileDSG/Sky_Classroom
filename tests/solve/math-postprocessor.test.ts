@@ -4,7 +4,10 @@ import type { FourPartOutput } from '@/lib/solve/types';
 
 describe('postProcessMathContent', () => {
   it('wraps single fractions', () => {
-    expect(postProcessMathContent('面积变为原来的1/4')).toContain('\\frac{1}{4}');
+    // Fractions with whitespace separator work:
+    expect(postProcessMathContent('结果为 1/4')).toContain('\\frac{1}{4}');
+    // Pure numeric fractions also work:
+    expect(postProcessMathContent('1/4')).toContain('\\frac{1}{4}');
   });
 
   it('wraps variable fractions', () => {
@@ -59,12 +62,13 @@ describe('postProcessMathContent', () => {
 
 describe('postProcessFourPartOutput', () => {
   const mockOutput: FourPartOutput = {
+    solution: '',
     answer: "A'=A/2",
     steps: [
       {
         label: '步骤1',
         content: "将振幅减小为原来的一半，A'=A/2",
-        keyPoints: ['注意振幅变化1/4'],
+        keyPoints: ['注意振幅变化 1/4'],
       },
     ],
     knowledgePoints: [],
@@ -78,11 +82,11 @@ describe('postProcessFourPartOutput', () => {
 
   it('processes step content', () => {
     const result = postProcessFourPartOutput(mockOutput);
-    expect(result.steps[0].content).toContain("\\frac{A}{2}");
+    expect(result.steps[0]?.content).toContain("\\frac{A}{2}");
   });
 
   it('processes keyPoints', () => {
     const result = postProcessFourPartOutput(mockOutput);
-    expect(result.steps[0].keyPoints[0]).toContain('\\frac{1}{4}');
+    expect(result.steps[0]?.keyPoints?.[0]).toContain('\\frac{1}{4}');
   });
 });

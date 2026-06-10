@@ -1,0 +1,367 @@
+{
+  "id": "BERTsVs-uL",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-08T07:16:03.511Z",
+  "updatedAt": "2026-06-08T07:26:04.437Z",
+  "inputSummary": {
+    "requirementPreview": "python入门课程学习，极简版",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 7,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-06-08T07:16:03.523Z",
+  "totalScenes": 9,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "欢迎来到 Python 世界",
+        "description": "认识 Python 是什么，为什么要学习它，以及本课程极简路线图。",
+        "keyPoints": [
+          "Python 是一门易学、强大的编程语言",
+          "本课程覆盖最核心的语句：print、变量、输入输出、条件、循环、列表",
+          "学习完即可编写简单程序"
+        ],
+        "teachingObjective": "激发学习兴趣，了解课程范围。",
+        "estimatedDuration": 45,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "第一个程序：print()",
+        "description": "学习使用 print() 函数在屏幕上输出文字。",
+        "keyPoints": [
+          "print() 用于显示内容",
+          "引号包裹的文字叫字符串",
+          "示例：print('Hello, 世界')"
+        ],
+        "teachingObjective": "能够编写并运行最简单的输出程序。",
+        "estimatedDuration": 60,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "变量与数据类型",
+        "description": "了解如何存储数据，以及常见的数据类型。",
+        "keyPoints": [
+          "变量就像带标签的盒子，可以存放数据",
+          "基本类型：整数 int、小数 float、字符串 str",
+          "用 = 给变量赋值，例如 name = '小明'"
+        ],
+        "teachingObjective": "理解变量的概念和基本数据类型。",
+        "estimatedDuration": 70,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "简单的数学运算",
+        "description": "使用 Python 进行加减乘除等基础运算。",
+        "keyPoints": [
+          "运算符：+、-、*、/",
+          "混合运算与括号的使用",
+          "运算结果可以直接用 print() 输出"
+        ],
+        "teachingObjective": "能够用 Python 进行算术计算并输出结果。",
+        "estimatedDuration": 60,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "从键盘获取输入：input()",
+        "description": "学会让程序接收用户的输入。",
+        "keyPoints": [
+          "input() 函数会等待用户输入文字",
+          "通常会把输入内容存入变量",
+          "示例：name = input('你的名字：')"
+        ],
+        "teachingObjective": "能编写与用户互动的简单程序。",
+        "estimatedDuration": 60,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "判断与选择：if 语句",
+        "description": "根据条件让程序做出不同的反应。",
+        "keyPoints": [
+          "if 关键字后面跟条件，冒号缩进写要执行的代码",
+          "可配合 else 处理条件不成立的情况",
+          "比较运算符：==、!=、>、<"
+        ],
+        "teachingObjective": "掌握条件判断的基本结构。",
+        "estimatedDuration": 70,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "重复执行：for 循环",
+        "description": "用循环批量处理数据或重复任务。",
+        "keyPoints": [
+          "for 变量 in 序列: 会依次取出序列中的每个元素",
+          "常用 range() 生成整数序列",
+          "循环内也要注意缩进"
+        ],
+        "teachingObjective": "能够使用 for 循环完成重复性工作。",
+        "estimatedDuration": 65,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "存储多个数据：列表",
+        "description": "用列表把相关数据组织在一起。",
+        "keyPoints": [
+          "列表用方括号 [] 定义，如 fruits = ['苹果', '香蕉']",
+          "可以通过索引访问元素，索引从 0 开始",
+          "列表常与 for 循环配合使用"
+        ],
+        "teachingObjective": "了解列表的基本创建与遍历。",
+        "estimatedDuration": 65,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "quiz",
+        "title": "极简版回顾考核",
+        "description": "通过几道选择题和简短回答，巩固 Python 入门核心知识点。",
+        "keyPoints": [
+          "检测 print、变量、input、if、for、列表等概念",
+          "错误选项会给出提示说明"
+        ],
+        "teachingObjective": "评估对极简课程核心内容的掌握程度。",
+        "estimatedDuration": 120,
+        "order": 9,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        }
+      }
+    ],
+    "languageDirective": "教学语言为中文。Python关键字和函数名保留英文原样，但会提供中文翻译和简要说明。面向零基础初学者，使用简单易懂的词汇和示例。",
+    "topicSummary": "Python极简入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "kA-yc31WJq",
+      "name": "欢迎来到 Python 世界",
+      "languageDirective": "教学语言为中文。Python关键字和函数名保留英文原样，但会提供中文翻译和简要说明。面向零基础初学者，使用简单易懂的词汇和示例。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780903002889,
+      "updatedAt": 1780903002889,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python入门课程学习，极简版",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "欢迎来到 Python 世界",
+      "description": "认识 Python 是什么，为什么要学习它，以及本课程极简路线图。",
+      "keyPoints": [
+        "Python 是一门易学、强大的编程语言",
+        "本课程覆盖最核心的语句：print、变量、输入输出、条件、循环、列表",
+        "学习完即可编写简单程序"
+      ],
+      "teachingObjective": "激发学习兴趣，了解课程范围。",
+      "estimatedDuration": 45,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "第一个程序：print()",
+      "description": "学习使用 print() 函数在屏幕上输出文字。",
+      "keyPoints": [
+        "print() 用于显示内容",
+        "引号包裹的文字叫字符串",
+        "示例：print('Hello, 世界')"
+      ],
+      "teachingObjective": "能够编写并运行最简单的输出程序。",
+      "estimatedDuration": 60,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "变量与数据类型",
+      "description": "了解如何存储数据，以及常见的数据类型。",
+      "keyPoints": [
+        "变量就像带标签的盒子，可以存放数据",
+        "基本类型：整数 int、小数 float、字符串 str",
+        "用 = 给变量赋值，例如 name = '小明'"
+      ],
+      "teachingObjective": "理解变量的概念和基本数据类型。",
+      "estimatedDuration": 70,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "简单的数学运算",
+      "description": "使用 Python 进行加减乘除等基础运算。",
+      "keyPoints": [
+        "运算符：+、-、*、/",
+        "混合运算与括号的使用",
+        "运算结果可以直接用 print() 输出"
+      ],
+      "teachingObjective": "能够用 Python 进行算术计算并输出结果。",
+      "estimatedDuration": 60,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "从键盘获取输入：input()",
+      "description": "学会让程序接收用户的输入。",
+      "keyPoints": [
+        "input() 函数会等待用户输入文字",
+        "通常会把输入内容存入变量",
+        "示例：name = input('你的名字：')"
+      ],
+      "teachingObjective": "能编写与用户互动的简单程序。",
+      "estimatedDuration": 60,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "判断与选择：if 语句",
+      "description": "根据条件让程序做出不同的反应。",
+      "keyPoints": [
+        "if 关键字后面跟条件，冒号缩进写要执行的代码",
+        "可配合 else 处理条件不成立的情况",
+        "比较运算符：==、!=、>、<"
+      ],
+      "teachingObjective": "掌握条件判断的基本结构。",
+      "estimatedDuration": 70,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "重复执行：for 循环",
+      "description": "用循环批量处理数据或重复任务。",
+      "keyPoints": [
+        "for 变量 in 序列: 会依次取出序列中的每个元素",
+        "常用 range() 生成整数序列",
+        "循环内也要注意缩进"
+      ],
+      "teachingObjective": "能够使用 for 循环完成重复性工作。",
+      "estimatedDuration": 65,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "存储多个数据：列表",
+      "description": "用列表把相关数据组织在一起。",
+      "keyPoints": [
+        "列表用方括号 [] 定义，如 fruits = ['苹果', '香蕉']",
+        "可以通过索引访问元素，索引从 0 开始",
+        "列表常与 for 循环配合使用"
+      ],
+      "teachingObjective": "了解列表的基本创建与遍历。",
+      "estimatedDuration": 65,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "quiz",
+      "title": "极简版回顾考核",
+      "description": "通过几道选择题和简短回答，巩固 Python 入门核心知识点。",
+      "keyPoints": [
+        "检测 print、变量、input、if、for、列表等概念",
+        "错误选项会给出提示说明"
+      ],
+      "teachingObjective": "评估对极简课程核心内容的掌握程度。",
+      "estimatedDuration": 120,
+      "order": 9,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      }
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "教学语言为中文。Python关键字和函数名保留英文原样，但会提供中文翻译和简要说明。面向零基础初学者，使用简单易懂的词汇和示例。",
+    "totalScenes": 9
+  },
+  "topicSummary": "Python极简入门",
+  "completedAt": "2026-06-08T07:26:04.437Z",
+  "result": {
+    "classroomId": "kA-yc31WJq",
+    "url": "http://localhost:3000/classroom/kA-yc31WJq",
+    "scenesCount": 7
+  }
+}

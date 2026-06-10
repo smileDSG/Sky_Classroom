@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { callLLM } from '@/lib/ai/llm';
+import { keyRotator } from '@/lib/ai/key-rotator';
 import { createStageAPI } from '@/lib/api/stage-api';
 import type { StageStore } from '@/lib/api/stage-api-types';
 import {
@@ -7,7 +8,7 @@ import {
   generateSceneOutlinesFromRequirements,
 } from '@/lib/generation/outline-generator';
 import pMap from 'p-map';
-import { GENERATION_CONCURRENCY } from '@/lib/constants/generation';
+import { resolveConcurrency } from '@/lib/constants/generation';
 import {
   createSceneWithActions,
   generateSceneActions,
@@ -242,8 +243,18 @@ export async function generateClassroom(
     modelString,
     providerId,
     apiKey,
+    keyPool,
   } = await resolveModel(options.modelConfig ?? {});
   log.info(`Using server-configured model: ${modelString}`);
+
+  // Register key pool for rotation (if multiple keys available)
+  if (keyPool.length > 1) {
+    keyRotator.register(providerId, keyPool);
+    log.info(`Key rotation enabled for "${providerId}": ${keyPool.length} keys`);
+  }
+
+  const concurrency = resolveConcurrency(keyPool.length);
+  log.info(`Generation concurrency: ${concurrency} (keys: ${keyPool.length})`);
 
   // Fail fast if the resolved provider has no API key configured
   if (isProviderKeyRequired(providerId) && !apiKey) {
@@ -456,7 +467,7 @@ export async function generateClassroom(
     };
   }
 
-  log.info(`Stage 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${GENERATION_CONCURRENCY})...`);
+  log.info(`Stage 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`);
 
   await options.onProgress?.({
     step: 'generating_scenes',
@@ -466,8 +477,8 @@ export async function generateClassroom(
     totalScenes: outlines.length,
   });
 
-  // Phase A: Generate all scene content + actions in parallel (LLM-bound)
-  const sceneResults = await pMap(
+  // Phase A: Generate all scene content in parallel
+  const contentResults = await pMap(
     outlines,
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
@@ -477,18 +488,33 @@ export async function generateClassroom(
           log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
           return null;
         }
-        const actions = await generateSceneActions(safeOutline, content, aiCall, {
-          agents,
-          languageDirective,
-        });
-        log.info(`Scene "${safeOutline.title}": ${actions.length} actions`);
-        return { outline: safeOutline, content, actions, index };
+        return { outline: safeOutline, content, index };
       } catch (err) {
-        log.error(`Scene "${safeOutline.title}" generation error:`, err);
+        log.error(`Scene "${safeOutline.title}" content generation error:`, err);
         return null;
       }
     },
-    { concurrency: GENERATION_CONCURRENCY },
+    { concurrency },
+  );
+
+  // Phase B: Generate all scene actions in parallel (content already available)
+  const sceneResults = await pMap(
+    contentResults,
+    async (result) => {
+      if (!result) return null;
+      try {
+        const actions = await generateSceneActions(result.outline, result.content, aiCall, {
+          agents,
+          languageDirective,
+        });
+        log.info(`Scene "${result.outline.title}": ${actions.length} actions`);
+        return { outline: result.outline, content: result.content, actions, index: result.index };
+      } catch (err) {
+        log.error(`Scene "${result.outline.title}" action generation error:`, err);
+        return null;
+      }
+    },
+    { concurrency },
   );
 
   // Phase B: Write to store sequentially (fast, avoids race conditions)
@@ -614,8 +640,18 @@ export async function generateClassroomContinue(
     modelString,
     providerId,
     apiKey,
+    keyPool,
   } = await resolveModel(options.modelConfig ?? {});
   log.info(`Phase 2 using model: ${modelString}`);
+
+  // Register key pool for rotation (if multiple keys available)
+  if (keyPool.length > 1) {
+    keyRotator.register(providerId, keyPool);
+    log.info(`Key rotation enabled for "${providerId}": ${keyPool.length} keys`);
+  }
+
+  const concurrency = resolveConcurrency(keyPool.length);
+  log.info(`Generation concurrency: ${concurrency} (keys: ${keyPool.length})`);
 
   if (isProviderKeyRequired(providerId) && !apiKey) {
     throw new Error(
@@ -642,7 +678,7 @@ export async function generateClassroomContinue(
   const store = createInMemoryStore(stage);
   const api = createStageAPI(store);
 
-  log.info(`Phase 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${GENERATION_CONCURRENCY})...`);
+  log.info(`Phase 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`);
 
   await options.onProgress?.({
     step: 'generating_scenes',
@@ -652,8 +688,8 @@ export async function generateClassroomContinue(
     totalScenes: outlines.length,
   });
 
-  // Phase A: Generate all scene content + actions in parallel (LLM-bound)
-  const sceneResults = await pMap(
+  // Phase A: Generate all scene content in parallel
+  const contentResults = await pMap(
     outlines,
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
@@ -663,17 +699,32 @@ export async function generateClassroomContinue(
           log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
           return null;
         }
-        const actions = await generateSceneActions(safeOutline, content, aiCall, {
-          agents,
-          languageDirective,
-        });
-        return { outline: safeOutline, content, actions, index };
+        return { outline: safeOutline, content, index };
       } catch (err) {
-        log.error(`Scene "${safeOutline.title}" generation error:`, err);
+        log.error(`Scene "${safeOutline.title}" content generation error:`, err);
         return null;
       }
     },
-    { concurrency: GENERATION_CONCURRENCY },
+    { concurrency },
+  );
+
+  // Phase B: Generate all scene actions in parallel (content already available)
+  const sceneResults = await pMap(
+    contentResults,
+    async (result) => {
+      if (!result) return null;
+      try {
+        const actions = await generateSceneActions(result.outline, result.content, aiCall, {
+          agents,
+          languageDirective,
+        });
+        return { outline: result.outline, content: result.content, actions, index: result.index };
+      } catch (err) {
+        log.error(`Scene "${result.outline.title}" action generation error:`, err);
+        return null;
+      }
+    },
+    { concurrency },
   );
 
   // Phase B: Write to store sequentially (fast, avoids race conditions)

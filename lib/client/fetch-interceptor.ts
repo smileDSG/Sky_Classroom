@@ -72,6 +72,8 @@ export function installFetchInterceptor() {
         const ok = await tryRefresh();
         if (ok) {
           cancelRedirect();
+          // Retry the original request with the refreshed token
+          return originalFetch(...args);
         } else {
           scheduleRedirect();
         }

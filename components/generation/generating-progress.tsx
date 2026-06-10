@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle2, XCircle, Circle } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
-
 interface GeneratingProgressProps {
   outlineReady: boolean; // Is outline generation complete?
   firstPageReady: boolean; // Is first page generated?
@@ -59,9 +57,7 @@ export function GeneratingProgress({
   firstPageReady,
   statusMessage,
   error,
-}: GeneratingProgressProps) {
-  const { t } = useI18n();
-  const [dots, setDots] = useState('');
+}: GeneratingProgressProps) {const [dots, setDots] = useState('');
 
   // Animated dots for loading state
   useEffect(() => {
@@ -81,17 +77,17 @@ export function GeneratingProgress({
             {error ? (
               <>
                 <XCircle className="size-5 text-destructive" />
-                {t('generation.generationFailed')}
+                {'生成失败'}
               </>
             ) : firstPageReady ? (
               <>
                 <CheckCircle2 className="size-5 text-green-500" />
-                {t('generation.openingClassroom')}
+                {'即将打开课堂...'}
               </>
             ) : (
               <>
                 <Loader2 className="size-5 animate-spin" />
-                {t('generation.generatingCourse')}
+                {'正在生成课程'}
                 {dots}
               </>
             )}
@@ -105,7 +101,7 @@ export function GeneratingProgress({
               inProgress={!outlineReady && !error}
               hasError={!outlineReady && !!error}
               label={
-                outlineReady ? t('generation.outlineReady') : t('generation.generatingOutlines')
+                outlineReady ? '课程大纲已生成' : '生成课程大纲'
               }
             />
             <StatusItem
@@ -114,8 +110,8 @@ export function GeneratingProgress({
               hasError={outlineReady && !firstPageReady && !!error}
               label={
                 firstPageReady
-                  ? t('generation.firstPageReady')
-                  : t('generation.generatingFirstPage')
+                  ? '首页已就绪！正在打开课堂...'
+                  : '首页内容生成中...'
               }
             />
           </div>

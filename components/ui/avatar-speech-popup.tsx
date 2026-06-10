@@ -5,8 +5,6 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
-
 export interface AvatarSpeechPopupProps {
   speakingAgentId: string | null | undefined;
   sourceText: string | null | undefined;
@@ -39,9 +37,7 @@ export function AvatarSpeechPopup({
   dismissed = false,
   onDismiss,
   container,
-}: AvatarSpeechPopupProps) {
-  const { t } = useI18n();
-  const [mounted, setMounted] = useState(false);
+}: AvatarSpeechPopupProps) {const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -105,7 +101,7 @@ export function AvatarSpeechPopup({
                     theme.badge,
                   )}
                 >
-                  {t(`speech.role.${speaker.role}`)}
+                  {speaker.role === 'teacher' ? '老师' : speaker.role === 'user' ? '你' : '学生'}
                 </span>
                 {/* Speaking dots */}
                 <span className="flex items-center gap-0.5 ml-1">

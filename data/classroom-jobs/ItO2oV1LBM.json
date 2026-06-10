@@ -1,0 +1,22 @@
+{
+  "id": "ItO2oV1LBM",
+  "status": "failed",
+  "step": "failed",
+  "progress": 28,
+  "message": "Classroom generation failed",
+  "createdAt": "2026-05-29T14:07:50.263Z",
+  "updatedAt": "2026-05-29T14:08:50.574Z",
+  "inputSummary": {
+    "requirementPreview": "定积分的意义",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-29T14:07:50.272Z",
+  "completedAt": "2026-05-29T14:08:50.574Z",
+  "error": "AI_APICallError: Failed to process successful response"
+}

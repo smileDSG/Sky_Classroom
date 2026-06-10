@@ -336,8 +336,8 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
     type: 'openai',
     defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
     alternateBaseUrls: [
-      { label: 'settings.baseUrlRegion.china', url: 'https://open.bigmodel.cn/api/paas/v4' },
-      { label: 'settings.baseUrlRegion.international', url: 'https://api.z.ai/api/paas/v4' },
+      { label: '国内', url: 'https://open.bigmodel.cn/api/paas/v4' },
+      { label: '国际', url: 'https://api.z.ai/api/paas/v4' },
     ],
     requiresApiKey: true,
     icon: '/logos/glm.svg',
@@ -596,8 +596,8 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
     type: 'openai',
     defaultBaseUrl: 'https://api.moonshot.cn/v1',
     alternateBaseUrls: [
-      { label: 'settings.baseUrlRegion.china', url: 'https://api.moonshot.cn/v1' },
-      { label: 'settings.baseUrlRegion.international', url: 'https://api.moonshot.ai/v1' },
+      { label: '国内', url: 'https://api.moonshot.cn/v1' },
+      { label: '国际', url: 'https://api.moonshot.ai/v1' },
     ],
     requiresApiKey: true,
     icon: '/logos/kimi.png',
@@ -660,8 +660,8 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
     type: 'anthropic',
     defaultBaseUrl: 'https://api.minimaxi.com/anthropic/v1',
     alternateBaseUrls: [
-      { label: 'settings.baseUrlRegion.china', url: 'https://api.minimaxi.com/anthropic/v1' },
-      { label: 'settings.baseUrlRegion.international', url: 'https://api.minimax.io/anthropic/v1' },
+      { label: '国内', url: 'https://api.minimaxi.com/anthropic/v1' },
+      { label: '国际', url: 'https://api.minimax.io/anthropic/v1' },
     ],
     requiresApiKey: true,
     icon: '/logos/minimax.svg',
@@ -890,9 +890,9 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
     type: 'openai',
     defaultBaseUrl: 'https://tokenhub.tencentmaas.com/v1',
     alternateBaseUrls: [
-      { label: 'settings.baseUrlRegion.china', url: 'https://tokenhub.tencentmaas.com/v1' },
+      { label: '国内', url: 'https://tokenhub.tencentmaas.com/v1' },
       {
-        label: 'settings.baseUrlRegion.international',
+        label: '国际',
         url: 'https://tokenhub-intl.tencentmaas.com/v1',
       },
     ],
@@ -1153,12 +1153,15 @@ export function getModel(config: ModelConfig): ModelWithInfo {
         let apiKeys: string[] = [];
         if (typeof window === 'undefined') {
           try {
-            const { resolveApiKeys: serverResolveApiKeys } = require('@/lib/server/provider-config');
-            // If client explicitly passes comma-separated keys, respect it.
+            const { resolveApiKeyPool } = require('@/lib/server/provider-config');
+            // If client explicitly passes comma-separated keys, split and respect them.
             // Otherwise let server-side env/YAML config (including key pool)
             // take precedence over a single fallback key.
-            const clientKeys = config.apiKey?.includes(',') ? config.apiKey : undefined;
-            apiKeys = serverResolveApiKeys(providerId, clientKeys);
+            if (config.apiKey?.includes(',')) {
+              apiKeys = config.apiKey.split(',').map((k: string) => k.trim()).filter(Boolean);
+            } else {
+              apiKeys = resolveApiKeyPool(providerId);
+            }
           } catch {
             apiKeys = config.apiKey ? [config.apiKey] : [];
           }

@@ -8,7 +8,7 @@
 import type { NextRequest } from 'next/server';
 import { getModel, parseModelString, type ModelWithInfo } from '@/lib/ai/providers';
 import type { ThinkingConfig } from '@/lib/types/provider';
-import { resolveApiKey, resolveBaseUrl, resolveProxy } from '@/lib/server/provider-config';
+import { resolveApiKey, resolveApiKeyPool, resolveBaseUrl, resolveProxy } from '@/lib/server/provider-config';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 
 export interface ResolvedModel extends ModelWithInfo {
@@ -22,6 +22,8 @@ export interface ResolvedModel extends ModelWithInfo {
   apiKey: string;
   /** Effective base URL after server/client resolution */
   baseUrl?: string;
+  /** Pool of available API keys for this provider (for key rotation) */
+  keyPool: string[];
   /** Optional per-request thinking configuration from the client. */
   thinkingConfig?: ThinkingConfig;
 }
@@ -55,6 +57,9 @@ export async function resolveModel(params: {
   const apiKey = clientBaseUrl
     ? params.apiKey || ''
     : resolveApiKey(providerId, params.apiKey || '');
+  const keyPool = clientBaseUrl
+    ? [apiKey]
+    : resolveApiKeyPool(providerId, params.apiKey || '');
   const baseUrl = clientBaseUrl ? clientBaseUrl : resolveBaseUrl(providerId, params.baseUrl);
   const proxy = resolveProxy(providerId);
   const { model, modelInfo } = getModel({
@@ -74,6 +79,7 @@ export async function resolveModel(params: {
     modelId,
     apiKey,
     baseUrl,
+    keyPool,
     thinkingConfig: params.thinkingConfig,
   };
 }

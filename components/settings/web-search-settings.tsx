@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { BAIDU_SUB_SOURCES, WEB_SEARCH_PROVIDERS } from '@/lib/web-search/constants';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
@@ -14,9 +13,7 @@ interface WebSearchSettingsProps {
   selectedProviderId: WebSearchProviderId;
 }
 
-export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps) {
-  const { t } = useI18n();
-  const [showApiKey, setShowApiKey] = useState(false);
+export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps) {const [showApiKey, setShowApiKey] = useState(false);
 
   const webSearchProvidersConfig = useSettingsStore((state) => state.webSearchProvidersConfig);
   const setWebSearchProviderConfig = useSettingsStore((state) => state.setWebSearchProviderConfig);
@@ -46,13 +43,13 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
       {/* Server-configured notice */}
       {isServerConfigured && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-3 text-sm text-blue-700 dark:text-blue-300">
-          {t('settings.serverConfiguredNotice')}
+          {'管理员已在服务端配置了此提供方的 API Key，可直接使用。也可输入自己的 Key 覆盖。'}
         </div>
       )}
 
       {!provider.requiresApiKey && !isServerConfigured && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-3 text-sm text-amber-700 dark:text-amber-300">
-          {t('settings.webSearchApiKeyOptional')}
+          {'API Key 为可选项。未填写时将通过公开页面抓取获取结果。'}
         </div>
       )}
 
@@ -61,7 +58,7 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
         <>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm">{t('settings.webSearchApiKey')}</Label>
+              <Label className="text-sm">{'搜索 API Key'}</Label>
               <div className="relative">
                 <Input
                   name={`web-search-api-key-${selectedProviderId}`}
@@ -72,10 +69,10 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
                   spellCheck={false}
                   placeholder={
                     isServerConfigured
-                      ? t('settings.optionalOverride')
+                      ? '可选，留空则使用服务端配置'
                       : !provider.requiresApiKey
-                        ? t('settings.optionalOverride')
-                        : t('settings.enterApiKey')
+                        ? '可选，留空则使用服务端配置'
+                        : '输入 API Key'
                   }
                   value={webSearchProvidersConfig[selectedProviderId]?.apiKey || ''}
                   onChange={(e) =>
@@ -93,11 +90,11 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
                   {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground">{t('settings.webSearchApiKeyHint')}</p>
+              <p className="text-xs text-muted-foreground">{'从所选搜索服务商获取 API Key，用于网络搜索'}</p>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm">{t('settings.webSearchBaseUrl')}</Label>
+              <Label className="text-sm">{'Base URL'}</Label>
               <Input
                 name={`web-search-base-url-${selectedProviderId}`}
                 autoComplete="off"
@@ -126,7 +123,7 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
             const fullUrl = buildRequestUrl(effectiveBaseUrl);
             return (
               <p className="text-xs text-muted-foreground break-all">
-                {t('settings.requestUrl')}: {fullUrl}
+                {'请求地址'}: {fullUrl}
               </p>
             );
           })()}
@@ -136,9 +133,9 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
       {selectedProviderId === 'baidu' && (
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label className="text-sm">{t('settings.baiduSubSources')}</Label>
+            <Label className="text-sm">{'百度搜索源'}</Label>
             <p className="text-xs text-muted-foreground">
-              {t('settings.baiduSubSourcesDescription')}
+              {'选择至少一个百度数据源参与搜索。'}
             </p>
           </div>
 
@@ -155,9 +152,9 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
                   className="flex items-center justify-between gap-4 rounded-md border px-3 py-2"
                 >
                   <div className="min-w-0 space-y-0.5">
-                    <div className="text-sm font-medium">{t(meta.labelKey)}</div>
+                    <div className="text-sm font-medium">{meta.label}</div>
                     <div className="text-xs text-muted-foreground">
-                      {t(meta.descriptionKey)}
+                      {meta.description}
                       {meta.docsUrl && (
                         <a
                           href={meta.docsUrl}
@@ -165,7 +162,7 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-0.5 ml-1.5 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
                         >
-                          {t('settings.viewDocs')}
+                          {'API 文档'}
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       )}
@@ -174,7 +171,7 @@ export function WebSearchSettings({ selectedProviderId }: WebSearchSettingsProps
                   <Switch
                     checked={enabled}
                     onCheckedChange={(checked) => setBaiduSubSources({ [key]: checked })}
-                    aria-label={t(meta.labelKey)}
+                    aria-label={meta.label}
                   />
                 </div>
               );

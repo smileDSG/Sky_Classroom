@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStageStore } from '@/lib/store';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { motion, AnimatePresence } from 'motion/react';
 
 export interface BottomToolbarProps {
@@ -114,9 +113,7 @@ export function BottomToolbar({
   playbackSpeed = 1,
   onCycleSpeed,
   onAskTeacher,
-}: BottomToolbarProps) {
-  const { t } = useI18n();
-  const canGoPrev = currentSceneIndex > 0;
+}: BottomToolbarProps) {const canGoPrev = currentSceneIndex > 0;
   const canGoNext = currentSceneIndex < scenesCount - 1;
   const showPlayPause = !isLiveSession;
 
@@ -143,7 +140,7 @@ export function BottomToolbar({
 
   // Effective volume for display
   const effectiveVolume = ttsMuted ? 0 : ttsVolume;
-  const presentationLabel = isPresenting ? t('stage.exitFullscreen') : t('stage.fullscreen');
+  const presentationLabel = isPresenting ? '退出全屏' : '全屏';
 
   // Progress percentage
   const progress = ((currentSceneIndex + 1) / scenesCount) * 100;

@@ -7,8 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
-
 export interface NewAudioProviderData {
   name: string;
   baseUrl: string;
@@ -28,10 +26,7 @@ export function AddAudioProviderDialog({
   onOpenChange,
   onAdd,
   type,
-}: AddAudioProviderDialogProps) {
-  const { t } = useI18n();
-
-  const [name, setName] = useState('');
+}: AddAudioProviderDialogProps) {const [name, setName] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
   const [defaultModel, setDefaultModel] = useState('');
   const [requiresApiKey, setRequiresApiKey] = useState(false);
@@ -59,26 +54,25 @@ export function AddAudioProviderDialog({
     onOpenChange(false);
   };
 
-  const titleKey =
-    type === 'tts' ? 'settings.addCustomTTSProvider' : 'settings.addCustomASRProvider';
+  const title = type === 'tts' ? '添加自定义 TTS 服务' : '添加自定义 ASR 服务';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
-        <DialogTitle className="sr-only">{t(titleKey)}</DialogTitle>
+        <DialogTitle className="sr-only">{title}</DialogTitle>
         <DialogDescription className="sr-only">
-          {t('settings.addCustomAudioProviderDescription')}
+          {'添加兼容 OpenAI 协议的音频服务'}
         </DialogDescription>
         <div className="space-y-4">
           <div className="pb-3 border-b">
-            <h2 className="text-lg font-semibold">{t(titleKey)}</h2>
+            <h2 className="text-lg font-semibold">{title}</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              {t('settings.addCustomAudioProviderDescription')}
+              {'添加兼容 OpenAI 协议的音频服务'}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>{t('settings.providerName')}</Label>
+            <Label>{'名称'}</Label>
             <Input
               placeholder={type === 'tts' ? 'My Local TTS' : 'My Local ASR'}
               value={name}
@@ -87,7 +81,7 @@ export function AddAudioProviderDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>{t('settings.defaultBaseUrl')}</Label>
+            <Label>{'默认 Base URL'}</Label>
             <Input
               type="url"
               placeholder="http://localhost:8000/v1"
@@ -99,13 +93,13 @@ export function AddAudioProviderDialog({
           {/* Default Model — TTS only (ASR models are managed in provider settings) */}
           {type === 'tts' && (
             <div className="space-y-2">
-              <Label>{t('settings.defaultModel')}</Label>
+              <Label>{'默认模型'}</Label>
               <Input
                 placeholder="tts-1"
                 value={defaultModel}
                 onChange={(e) => setDefaultModel(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">{t('settings.defaultModelHint')}</p>
+              <p className="text-xs text-muted-foreground">{'API 请求中的模型名（如 kokoro、tts-1）'}</p>
             </div>
           )}
 
@@ -116,13 +110,13 @@ export function AddAudioProviderDialog({
               onCheckedChange={(checked) => setRequiresApiKey(checked as boolean)}
             />
             <label htmlFor="audio-requires-api-key" className="text-sm cursor-pointer">
-              {t('settings.requiresApiKey')}
+              {'需要 API 密钥'}
             </label>
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t">
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-              {t('settings.cancelEdit')}
+              {'取消'}
             </Button>
             <Button
               size="sm"
@@ -131,7 +125,7 @@ export function AddAudioProviderDialog({
               className="gap-1.5"
             >
               <Plus className="h-3.5 w-3.5" />
-              {t('settings.addProviderButton')}
+              {'添加'}
             </Button>
           </div>
         </div>

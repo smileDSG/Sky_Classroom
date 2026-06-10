@@ -2,14 +2,16 @@
  * Knowledge Base — MySQL data access layer
  */
 
+import 'server-only';
 import { createLogger } from '@/lib/logger';
 import type { KBChunk, KBType } from './types';
+import type { Pool, RowDataPacket } from 'mysql2/promise';
 
 const log = createLogger('KB:DAO');
 
-let _pool: import('mysql2/promise').Pool | null = null;
+let _pool: Pool | null = null;
 
-async function getPool(): Promise<import('mysql2/promise').Pool> {
+async function getPool(): Promise<Pool> {
   if (_pool) return _pool;
   const mysql = await import('mysql2/promise');
   _pool = mysql.createPool({
@@ -21,11 +23,12 @@ async function getPool(): Promise<import('mysql2/promise').Pool> {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+    connectTimeout: 3000,
   });
   return _pool;
 }
 
-interface KBRow extends import('mysql2/promise').RowDataPacket {
+interface KBRow extends RowDataPacket {
   id: string;
   kb_type: string;
   doc_id: string;
@@ -193,11 +196,11 @@ export async function getStats(): Promise<{
 }> {
   const pool = await getPool();
 
-  const [totalRows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
+  const [totalRows] = await pool.query<RowDataPacket[]>(
     'SELECT COUNT(*) as chunks, COUNT(DISTINCT doc_id) as docs FROM knowledge_base',
   );
 
-  const [typeRows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
+  const [typeRows] = await pool.query<RowDataPacket[]>(
     'SELECT kb_type, COUNT(*) as chunks, COUNT(DISTINCT doc_id) as docs FROM knowledge_base GROUP BY kb_type',
   );
 
@@ -216,7 +219,7 @@ export async function getStats(): Promise<{
 /** Check if source already exists */
 export async function sourceExists(sourceId: string): Promise<boolean> {
   const pool = await getPool();
-  const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
+  const [rows] = await pool.query<RowDataPacket[]>(
     'SELECT 1 FROM knowledge_base WHERE source_id = ? LIMIT 1',
     [sourceId],
   );

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useVoicePreview } from './use-voice-preview';
 import { getFilteredModelGroups } from './voice-utils';
@@ -23,9 +22,7 @@ interface TeacherVoicePillProps {
 export function TeacherVoicePill({
   availableProviders,
   disabled,
-}: TeacherVoicePillProps) {
-  const { t } = useI18n();
-  const ttsProviderId = useSettingsStore((s) => s.ttsProviderId);
+}: TeacherVoicePillProps) {const ttsProviderId = useSettingsStore((s) => s.ttsProviderId);
   const ttsVoice = useSettingsStore((s) => s.ttsVoice);
   const setTTSProvider = useSettingsStore((s) => s.setTTSProvider);
   const setTTSVoice = useSettingsStore((s) => s.setTTSVoice);
@@ -55,11 +52,11 @@ export function TeacherVoicePill({
     for (const p of availableProviders) {
       if (p.providerId === ttsProviderId) {
         const v = p.voices.find((voice) => voice.id === ttsVoice);
-        if (v) return v.id === VOXCPM_AUTO_VOICE_ID ? t('settings.voxcpmAutoVoice') : v.name;
+        if (v) return v.id === VOXCPM_AUTO_VOICE_ID ? '自动音色' : v.name;
       }
     }
     return ttsVoice || 'default';
-  }, [availableProviders, ttsProviderId, ttsVoice, t]);
+  }, [availableProviders, ttsProviderId, ttsVoice]);
 
   const isActive = useCallback(
     (providerId: TTSProviderId, voiceId: string, modelId: string) => {

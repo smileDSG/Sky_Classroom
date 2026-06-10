@@ -18,7 +18,7 @@ const log = createLogger('ServerProviderConfig');
 
 interface ServerProviderEntry {
   apiKey: string;
-  apiKeys?: string[];
+  apiKeys?: string[];  // multiple keys for round-robin rotation
   baseUrl?: string;
   models?: string[];
   proxy?: string;
@@ -142,6 +142,13 @@ function loadYamlFile(filename: string): YamlData {
 // Env-var helpers
 // ---------------------------------------------------------------------------
 
+function parseCommaSeparatedKeys(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((k) => k.trim())
+    .filter((k) => k.length > 0);
+}
+
 function loadEnvSection(
   envMap: Record<string, string>,
   yamlSection: Record<string, Partial<ServerProviderEntry>> | undefined,
@@ -155,13 +162,20 @@ function loadEnvSection(
   // First, add everything from YAML as defaults
   if (yamlSection) {
     for (const [id, entry] of Object.entries(yamlSection)) {
+      const hasKeys = entry?.apiKeys?.length || entry?.apiKey;
       if (
         requiresBaseUrl
           ? !!entry?.baseUrl
-          : entry?.apiKey || (entry?.baseUrl && keylessProviders.has(id))
+          : hasKeys || (entry?.baseUrl && keylessProviders.has(id))
       ) {
+        const apiKeys = entry?.apiKeys?.length
+          ? entry.apiKeys
+          : entry?.apiKey
+            ? [entry.apiKey]
+            : [];
         result[id] = {
-          apiKey: entry.apiKey || '',
+          apiKey: apiKeys[0] || '',
+          apiKeys,
           baseUrl: entry.baseUrl,
           models: entry.models,
           proxy: entry.proxy,
@@ -176,15 +190,16 @@ function loadEnvSection(
     const envBaseUrl = process.env[`${prefix}_BASE_URL`] || undefined;
     const envModelsStr = process.env[`${prefix}_MODELS`];
     const envModels = envModelsStr
-      ? envModelsStr
-          .split(',')
-          .map((m) => m.trim())
-          .filter(Boolean)
+      ? envModelsStr.split(',').map((m) => m.trim()).filter(Boolean)
       : undefined;
 
     if (result[providerId]) {
       // YAML entry exists — env vars override individual fields
-      if (envApiKey) result[providerId].apiKey = envApiKey;
+      if (envApiKey) {
+        const parsed = parseCommaSeparatedKeys(envApiKey);
+        result[providerId].apiKey = parsed[0] || '';
+        result[providerId].apiKeys = parsed;
+      }
       if (envBaseUrl) result[providerId].baseUrl = envBaseUrl;
       if (envModels) result[providerId].models = envModels;
       continue;
@@ -197,8 +212,11 @@ function loadEnvSection(
         : !(envApiKey || (envBaseUrl && keylessProviders.has(providerId)))
     )
       continue;
+
+    const parsed = envApiKey ? parseCommaSeparatedKeys(envApiKey) : [];
     result[providerId] = {
-      apiKey: envApiKey || '',
+      apiKey: parsed[0] || '',
+      apiKeys: parsed,
       baseUrl: envBaseUrl,
       models: envModels,
     };
@@ -316,50 +334,17 @@ export function resolveApiKey(providerId: string, clientKey?: string): string {
   return getConfig().providers[providerId]?.apiKey || '';
 }
 
-function parseApiKeys(raw: string | string[] | undefined): string[] {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw.filter(Boolean);
-  return raw.split(',').map((k) => k.trim()).filter(Boolean);
-}
-
 /**
- * Resolve multiple API keys for a provider.
- * Priority:
- *  1. Client-provided keys (comma-separated string or array)
- *  2. Env var {PROVIDER}_API_KEYS (comma-separated)
- *  3. Env var {PROVIDER}_API_KEY (single, backward compatible)
- *  4. YAML config apiKeys array
- *  5. YAML config apiKey single
+ * Resolve API key pool: returns all available keys for a provider.
+ * Client key (single) takes priority over server pool.
+ * Returns array with at least one key if provider is configured, empty array otherwise.
  */
-export function resolveApiKeys(providerId: string, clientKeys?: string | string[]): string[] {
-  // 1. Client-provided
-  if (clientKeys) {
-    const parsed = parseApiKeys(clientKeys);
-    if (parsed.length > 0) return parsed;
-  }
-
-  // 2. Multi-key env var
-  const envMulti = process.env[`${providerId.toUpperCase()}_API_KEYS`];
-  if (envMulti) {
-    const parsed = parseApiKeys(envMulti);
-    if (parsed.length > 0) return parsed;
-  }
-
-  // 3. Single-key env var (backward compatible)
-  const envSingle = process.env[`${providerId.toUpperCase()}_API_KEY`];
-  if (envSingle) {
-    return [envSingle];
-  }
-
-  // 4. YAML config
-  const cfg = getConfig().providers[providerId];
-  if (cfg?.apiKeys && Array.isArray(cfg.apiKeys) && cfg.apiKeys.length > 0) {
-    return cfg.apiKeys;
-  }
-  if (cfg?.apiKey) {
-    return [cfg.apiKey];
-  }
-
+export function resolveApiKeyPool(providerId: string, clientKey?: string): string[] {
+  if (clientKey) return [clientKey];
+  const entry = getConfig().providers[providerId];
+  if (!entry) return [];
+  if (entry.apiKeys && entry.apiKeys.length > 0) return entry.apiKeys;
+  if (entry.apiKey) return [entry.apiKey];
   return [];
 }
 

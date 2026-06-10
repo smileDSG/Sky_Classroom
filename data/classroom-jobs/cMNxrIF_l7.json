@@ -1,0 +1,319 @@
+{
+  "id": "cMNxrIF_l7",
+  "status": "running",
+  "step": "generating_scenes",
+  "progress": 31,
+  "message": "Generating 7 scenes in parallel...",
+  "createdAt": "2026-05-31T03:06:36.188Z",
+  "updatedAt": "2026-05-31T03:07:47.157Z",
+  "inputSummary": {
+    "requirementPreview": "python教学课程",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-31T03:06:36.197Z",
+  "totalScenes": 7,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "Python 简介",
+        "description": "介绍 Python 编程语言的特点、应用领域，以及本课程的学习目标。",
+        "keyPoints": [
+          "Python 是一种简单易学的编程语言",
+          "广泛应用于 Web 开发、数据科学、人工智能等领域",
+          "本课程将带你写出第一行 Python 代码"
+        ],
+        "teachingObjective": "了解 Python 的定位与应用场景，激发学习兴趣。",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "输入与输出",
+        "description": "讲解如何使用 print() 输出信息，以及 input() 接收用户输入。",
+        "keyPoints": [
+          "print() 可以将内容显示在屏幕上",
+          "input() 等待用户输入并返回字符串",
+          "用 input() 和 print() 实现简单交互"
+        ],
+        "teachingObjective": "掌握基本的输入输出函数，能够编写交互式程序。",
+        "estimatedDuration": 150,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "变量与赋值",
+        "description": "引入变量的概念，演示如何创建变量并赋值。",
+        "keyPoints": [
+          "变量是存储数据的容器",
+          "赋值语句：变量名 = 值",
+          "变量名命名规则（字母、数字、下划线，不能以数字开头）"
+        ],
+        "teachingObjective": "理解变量概念，学会创建和赋值变量。",
+        "estimatedDuration": 180,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "基本数据类型",
+        "description": "介绍 Python 中的常见数据类型：整数、浮点数、字符串、布尔值。",
+        "keyPoints": [
+          "int（整数）、float（浮点数）、str（字符串）、bool（布尔值）",
+          "用 type() 查看数据类型",
+          "数据类型之间的转换：int()、str()、float()"
+        ],
+        "teachingObjective": "识别常用数据类型并理解基本类型转换。",
+        "estimatedDuration": 200,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "interactive",
+        "title": "动手试一试",
+        "description": "在代码编辑器中练习变量赋值和输出。尝试声明变量并打印。",
+        "keyPoints": [
+          "创建名为 name 的变量并赋值为你的名字",
+          "使用 print() 输出 'Hello, ' + name",
+          "观察输出结果是否正确"
+        ],
+        "teachingObjective": "通过实际编写代码巩固变量与输出知识。",
+        "estimatedDuration": 300,
+        "order": 5,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python",
+          "concept": "Python变量与输出练习"
+        }
+      },
+      {
+        "id": "scene_6",
+        "type": "quiz",
+        "title": "小测验",
+        "description": "检测对变量、数据类型和基本语法的理解。",
+        "keyPoints": [
+          "变量可否重新赋值？",
+          "1 + '2' 会报错吗？",
+          "print(type(3.14)) 的结果是什么？"
+        ],
+        "teachingObjective": "评估学习者对核心概念的掌握情况。",
+        "estimatedDuration": 180,
+        "order": 6,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "single",
+            "single"
+          ]
+        }
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "总结",
+        "description": "回顾本课程的关键知识点，推荐进一步学习资源。",
+        "keyPoints": [
+          "print() 与 input() 实现交互",
+          "变量存储数据，赋值使用 =",
+          "常用数据类型：int、float、str、bool",
+          "下一步可以学习运算符和条件判断"
+        ],
+        "teachingObjective": "梳理所学内容，建立整体知识框架，引导深入学习。",
+        "estimatedDuration": 120,
+        "order": 7
+      }
+    ],
+    "languageDirective": "本课程使用中文进行教学。Python代码中的关键字、函数名保持英文原样，如print、input等。专业术语如变量、数据类型等首次出现时给出中文翻译，后续直接使用英文术语或同时标注。确保学习者能跟随中文讲解理解编程概念。",
+    "topicSummary": "Python基础入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "c4oIjSWT2v",
+      "name": "Python 简介",
+      "languageDirective": "本课程使用中文进行教学。Python代码中的关键字、函数名保持英文原样，如print、input等。专业术语如变量、数据类型等首次出现时给出中文翻译，后续直接使用英文术语或同时标注。确保学习者能跟随中文讲解理解编程概念。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780196825684,
+      "updatedAt": 1780196825684,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python教学课程",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "Python 简介",
+      "description": "介绍 Python 编程语言的特点、应用领域，以及本课程的学习目标。",
+      "keyPoints": [
+        "Python 是一种简单易学的编程语言",
+        "广泛应用于 Web 开发、数据科学、人工智能等领域",
+        "本课程将带你写出第一行 Python 代码"
+      ],
+      "teachingObjective": "了解 Python 的定位与应用场景，激发学习兴趣。",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "输入与输出",
+      "description": "讲解如何使用 print() 输出信息，以及 input() 接收用户输入。",
+      "keyPoints": [
+        "print() 可以将内容显示在屏幕上",
+        "input() 等待用户输入并返回字符串",
+        "用 input() 和 print() 实现简单交互"
+      ],
+      "teachingObjective": "掌握基本的输入输出函数，能够编写交互式程序。",
+      "estimatedDuration": 150,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "变量与赋值",
+      "description": "引入变量的概念，演示如何创建变量并赋值。",
+      "keyPoints": [
+        "变量是存储数据的容器",
+        "赋值语句：变量名 = 值",
+        "变量名命名规则（字母、数字、下划线，不能以数字开头）"
+      ],
+      "teachingObjective": "理解变量概念，学会创建和赋值变量。",
+      "estimatedDuration": 180,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "基本数据类型",
+      "description": "介绍 Python 中的常见数据类型：整数、浮点数、字符串、布尔值。",
+      "keyPoints": [
+        "int（整数）、float（浮点数）、str（字符串）、bool（布尔值）",
+        "用 type() 查看数据类型",
+        "数据类型之间的转换：int()、str()、float()"
+      ],
+      "teachingObjective": "识别常用数据类型并理解基本类型转换。",
+      "estimatedDuration": 200,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "interactive",
+      "title": "动手试一试",
+      "description": "在代码编辑器中练习变量赋值和输出。尝试声明变量并打印。",
+      "keyPoints": [
+        "创建名为 name 的变量并赋值为你的名字",
+        "使用 print() 输出 'Hello, ' + name",
+        "观察输出结果是否正确"
+      ],
+      "teachingObjective": "通过实际编写代码巩固变量与输出知识。",
+      "estimatedDuration": 300,
+      "order": 5,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python",
+        "concept": "Python变量与输出练习"
+      }
+    },
+    {
+      "id": "scene_6",
+      "type": "quiz",
+      "title": "小测验",
+      "description": "检测对变量、数据类型和基本语法的理解。",
+      "keyPoints": [
+        "变量可否重新赋值？",
+        "1 + '2' 会报错吗？",
+        "print(type(3.14)) 的结果是什么？"
+      ],
+      "teachingObjective": "评估学习者对核心概念的掌握情况。",
+      "estimatedDuration": 180,
+      "order": 6,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "single",
+          "single"
+        ]
+      }
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "总结",
+      "description": "回顾本课程的关键知识点，推荐进一步学习资源。",
+      "keyPoints": [
+        "print() 与 input() 实现交互",
+        "变量存储数据，赋值使用 =",
+        "常用数据类型：int、float、str、bool",
+        "下一步可以学习运算符和条件判断"
+      ],
+      "teachingObjective": "梳理所学内容，建立整体知识框架，引导深入学习。",
+      "estimatedDuration": 120,
+      "order": 7
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本课程使用中文进行教学。Python代码中的关键字、函数名保持英文原样，如print、input等。专业术语如变量、数据类型等首次出现时给出中文翻译，后续直接使用英文术语或同时标注。确保学习者能跟随中文讲解理解编程概念。",
+    "totalScenes": 7
+  },
+  "topicSummary": "Python基础入门"
+}

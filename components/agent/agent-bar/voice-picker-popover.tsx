@@ -2,7 +2,6 @@
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { isNonPreviewableVoice } from './voice-utils';
 import { VOXCPM_AUTO_VOICE_ID } from '@/lib/audio/voxcpm';
 import { Search, ChevronDown, Volume2, VolumeX, Loader2 } from 'lucide-react';
@@ -40,10 +39,7 @@ export function VoicePickerPopover({
   previewingId,
   displayName,
   disabled,
-}: VoicePickerPopoverProps) {
-  const { t } = useI18n();
-
-  const handleOpenChange = (nextOpen: boolean) => {
+}: VoicePickerPopoverProps) {const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
     if (!nextOpen) {
       onVoiceQueryChange('');
@@ -92,8 +88,8 @@ export function VoicePickerPopover({
               value={voiceQuery}
               onChange={(e) => onVoiceQueryChange(e.target.value)}
               autoFocus
-              aria-label={t('agentBar.searchVoice')}
-              placeholder={t('agentBar.searchVoice')}
+              aria-label={'搜索音色'}
+              placeholder={'搜索音色'}
               className="h-8 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
             />
           </div>
@@ -101,7 +97,7 @@ export function VoicePickerPopover({
         <div className="max-h-80 overflow-y-auto p-1">
           {visibleProviderGroups.length === 0 && (
             <div className="px-3 py-6 text-center text-sm text-muted-foreground/60">
-              {t('agentBar.noMatchingVoices')}
+              {'没有匹配音色'}
             </div>
           )}
           {visibleProviderGroups.map(({ provider, groups }) =>
@@ -136,7 +132,7 @@ export function VoicePickerPopover({
                         )}
                       >
                         {voice.id === VOXCPM_AUTO_VOICE_ID
-                          ? t('settings.voxcpmAutoVoice')
+                          ? '自动音色'
                           : voice.name}
                       </button>
                       {canPreview && (

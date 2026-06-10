@@ -5,6 +5,7 @@
  * Uses TF-IDF in-memory indexing backed by MySQL persistence.
  */
 
+import 'server-only';
 import { createLogger } from '@/lib/logger';
 import { chunkDocument } from '@/lib/agents/rag/document-chunker';
 import type { KBType, KBChunk, KBWriteOptions, KBSearchOptions, KBSearchResult, KBStats } from './types';
@@ -26,37 +27,38 @@ interface IndexedChunk extends KBChunk {
 
 let _index: Map<KBType, IndexedChunk[]> = new Map();
 let _idf: Map<KBType, Map<string, number>> = new Map();
-let _loaded = false;
-let _loading: Promise<void> | null = null;
+const _loadedTypes = new Set<KBType>();
+const _loadingTypes = new Map<KBType, Promise<void>>();
 
-/** Ensure the index is loaded from MySQL */
-async function ensureLoaded(): Promise<void> {
-  if (_loaded) return;
-  if (_loading) {
-    await _loading;
+/** Ensure the index for a specific kbType is loaded from MySQL.
+ *  Only loads the requested type — avoids cold-start penalty for unused types. */
+async function ensureLoaded(kbType?: KBType): Promise<void> {
+  const target = kbType ?? 'solve';
+  if (_loadedTypes.has(target)) return;
+  if (_loadingTypes.has(target)) {
+    await _loadingTypes.get(target);
     return;
   }
-  _loading = loadIndex();
-  await _loading;
-  _loading = null;
+  const p = loadType(target);
+  _loadingTypes.set(target, p);
+  await p;
+  _loadingTypes.delete(target);
 }
 
-async function loadIndex(): Promise<void> {
+async function loadType(kbType: KBType): Promise<void> {
+  const t0 = Date.now();
   try {
     const dao = await getDao();
     await dao.ensureTable();
-    const types: KBType[] = ['solve', 'slides', 'cards', 'classroom'];
-    for (const kbType of types) {
-      const chunks = await dao.getChunksByType(kbType);
-      if (chunks.length > 0) {
-        indexChunks(kbType, chunks);
-      }
+    const chunks = await dao.getChunksByType(kbType);
+    if (chunks.length > 0) {
+      indexChunks(kbType, chunks);
     }
-    _loaded = true;
-    log.info(`KB index loaded: ${[..._index.values()].reduce((s, c) => s + c.length, 0)} total chunks`);
+    _loadedTypes.add(kbType);
+    log.info(`[KB:Manager] KB[${kbType}] loaded in ${Date.now() - t0}ms: ${(_index.get(kbType) || []).length} chunks`);
   } catch (err) {
-    log.error('Failed to load KB index:', err);
-    _loaded = true; // don't retry endlessly
+    log.error(`[KB:Manager] Failed to load KB[${kbType}] after ${Date.now() - t0}ms:`, err);
+    _loadedTypes.add(kbType); // don't retry endlessly
   }
 }
 
@@ -173,7 +175,7 @@ function addToIndex(kbType: KBType, chunks: KBChunk[]): void {
  */
 export async function write(opts: KBWriteOptions): Promise<{ docId: string; chunks: number }> {
   const dao = await getDao();
-  await ensureLoaded();
+  await ensureLoaded(opts.kbType);
 
   const docId = `kb-${opts.kbType}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const trimmed = opts.content.slice(0, 100000);
@@ -206,13 +208,17 @@ export async function write(opts: KBWriteOptions): Promise<{ docId: string; chun
  * Search the knowledge base for relevant content.
  */
 export async function search(opts: KBSearchOptions): Promise<KBSearchResult[]> {
+  const t0 = Date.now();
   const dao = await getDao();
-  await ensureLoaded();
+  await ensureLoaded(opts.kbType);
 
   const { kbType, query, topK = 5, threshold = 0.01, verifiedOnly = false } = opts;
   const chunks = _index.get(kbType) || [];
 
-  if (chunks.length === 0) return [];
+  if (chunks.length === 0) {
+    log.info(`[KB:Manager] Search[${kbType}] empty index, took ${Date.now() - t0}ms`);
+    return [];
+  }
 
   const queryTokens = tokenize(query);
   const queryTF = computeTF(queryTokens);
@@ -242,6 +248,7 @@ export async function search(opts: KBSearchOptions): Promise<KBSearchResult[]> {
     dao.incrementUsage(r.chunk.id).catch(() => {});
   }
 
+  log.info(`[KB:Manager] Search[${kbType}] found ${top.length}/${results.length} results in ${Date.now() - t0}ms (chunks=${chunks.length})`);
   return top;
 }
 
@@ -288,7 +295,8 @@ export async function clearType(kbType: KBType): Promise<void> {
  */
 export async function stats(): Promise<KBStats> {
   const dao = await getDao();
-  await ensureLoaded();
+  // Load all types for stats
+  await Promise.all((['solve', 'slides', 'cards', 'classroom'] as KBType[]).map(ensureLoaded));
   return dao.getStats();
 }
 

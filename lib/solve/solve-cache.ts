@@ -14,13 +14,17 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SolveCache');
 
-const SOLVE_CACHE_THRESHOLD = 0.70;
+const SOLVE_CACHE_THRESHOLD = 0.8;
 const MAX_CACHE_ENTRIES = 500;
 
 export interface SolveCacheEntry {
   problemText: string;
   problemHash: string;
   solution: string;
+  /** Concise final answer, separate from the full solution. */
+  answer?: string;
+  /** Knowledge points (cached to avoid LLM call on cache hit fast path). */
+  knowledgePoints?: { name: string; description: string; difficulty: string }[];
   agentId: string;
   solvedAt: number;
 }
@@ -71,7 +75,9 @@ export async function findSolveCacheMatches(
       .sort((a, b) => b.score - a.score);
 
     if (matches.length > 0) {
-      log.info(`[SolveCache] Found ${matches.length} matches (best=${matches[0].score.toFixed(2)})`);
+      log.info(
+        `[SolveCache] Found ${matches.length} matches (best=${matches[0].score.toFixed(2)})`,
+      );
     }
     return matches.map((m) => m.entry);
   } catch (error) {

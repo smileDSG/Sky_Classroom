@@ -2,7 +2,6 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useEffect, useRef, useState } from 'react';
 
 interface GlassDialogProps {

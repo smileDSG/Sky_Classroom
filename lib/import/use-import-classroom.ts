@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { db, mediaFileKey } from '@/lib/utils/database';
 import type { AudioFileRecord, MediaFileRecord, GeneratedAgentRecord } from '@/lib/utils/database';
 import type { ClassroomManifest, ManifestScene } from '@/lib/export/classroom-zip-types';
@@ -23,10 +22,7 @@ export type ImportPhase =
 export function useImportClassroom(onSuccess?: () => void) {
   const [importing, setImporting] = useState(false);
   const [phase, setPhase] = useState<ImportPhase>('idle');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { t } = useI18n();
-
-  const triggerFileSelect = useCallback(() => {
+  const fileInputRef = useRef<HTMLInputElement>(null);const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
@@ -40,7 +36,7 @@ export function useImportClassroom(onSuccess?: () => void) {
 
       setImporting(true);
       setPhase('parsing');
-      const toastId = toast.loading(t('import.parsing'));
+      const toastId = toast.loading('正在解析 ZIP...');
 
       try {
         // 0. Size check — warn for files over 200MB
@@ -55,25 +51,25 @@ export function useImportClassroom(onSuccess?: () => void) {
 
         const manifestFile = zip.file('manifest.json');
         if (!manifestFile) {
-          toast.error(t('import.error.invalidManifest'), { id: toastId });
+          toast.error('无效课堂文件：manifest.json 缺失或已损坏。', { id: toastId });
           return;
         }
 
         // 2. Validate
         setPhase('validating');
-        toast.loading(t('import.validating'), { id: toastId });
+        toast.loading('正在验证数据...', { id: toastId });
 
         const manifestText = await manifestFile.async('text');
         let manifest: ClassroomManifest;
         try {
           manifest = JSON.parse(manifestText);
         } catch {
-          toast.error(t('import.error.invalidManifest'), { id: toastId });
+          toast.error('无效课堂文件：manifest.json 缺失或已损坏。', { id: toastId });
           return;
         }
 
         if (!manifest.stage || !manifest.scenes || !Array.isArray(manifest.scenes)) {
-          toast.error(t('import.error.missingData'), { id: toastId });
+          toast.error('无效课堂文件：缺少必需的课程数据。', { id: toastId });
           return;
         }
 
@@ -114,7 +110,7 @@ export function useImportClassroom(onSuccess?: () => void) {
 
         // 4. Write media to IndexedDB
         setPhase('writingMedia');
-        toast.loading(t('import.writingMedia'), { id: toastId });
+        toast.loading('正在写入媒体文件...', { id: toastId });
 
         // Write audio files one at a time
         for (const [zipPath, newId] of Object.entries(audioRefToNewId)) {
@@ -164,7 +160,7 @@ export function useImportClassroom(onSuccess?: () => void) {
 
         // 5. Write course data
         setPhase('writingCourse');
-        toast.loading(t('import.writingCourse'), { id: toastId });
+        toast.loading('正在写入课程数据...', { id: toastId });
 
         // Write stage
         await db.stages.put({
@@ -234,12 +230,12 @@ export function useImportClassroom(onSuccess?: () => void) {
 
         // 6. Done
         setPhase('done');
-        toast.success(t('import.success'), { id: toastId });
+        toast.success('课堂导入成功', { id: toastId });
         onSuccess?.();
       } catch (error) {
         log.error('Classroom ZIP import failed:', error);
         const isQuotaError = error instanceof DOMException && error.name === 'QuotaExceededError';
-        toast.error(isQuotaError ? t('import.error.storageFull') : t('import.error.invalidZip'), {
+        toast.error(isQuotaError ? '导入失败：浏览器存储空间已满，请清理旧课堂后重试。' : '无效文件，请选择有效的 .maic.zip 文件。', {
           id: toastId,
         });
       } finally {
@@ -247,7 +243,7 @@ export function useImportClassroom(onSuccess?: () => void) {
         setPhase('idle');
       }
     },
-    [t, onSuccess],
+    [onSuccess],
   );
 
   return {

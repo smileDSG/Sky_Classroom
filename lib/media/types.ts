@@ -32,11 +32,7 @@
  *   - Implement API call logic for the new provider
  *   - For async task-based providers, implement MediaTaskAdapter
  *
- * Step 4: Add i18n translations
- *   - Add provider name translations in lib/i18n.ts
- *   - Format: `provider{ProviderName}Image` or `provider{ProviderName}Video`
- *
- * Step 5 (Optional): Add provider-specific options
+ * Step 4 (Optional): Add provider-specific options
  *   - Extend ImageGenerationOptions or VideoGenerationOptions as needed
  *   - Document provider-specific parameters in JSDoc
  *

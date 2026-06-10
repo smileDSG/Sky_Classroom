@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Loader2,
   CheckCircle2,
@@ -24,30 +24,36 @@ import { useTaskStore, type BackgroundTask, type TaskType } from '@/lib/store/us
 const TASK_ICONS: Record<TaskType, React.ComponentType<{ className?: string }>> = {
   solve: Camera,
   slides: Presentation,
+  pptx: Presentation,
   quiz: FileQuestion,
   write: PenTool,
   translate: Languages,
   memory: Brain,
+  teaching: Brain,
   general: Zap,
 };
 
 const TASK_COLORS: Record<TaskType, string> = {
   solve: 'text-violet-500',
   slides: 'text-cyan-500',
+  pptx: 'text-cyan-500',
   quiz: 'text-amber-500',
   write: 'text-emerald-500',
   translate: 'text-indigo-500',
   memory: 'text-rose-500',
+  teaching: 'text-purple-500',
   general: 'text-sky-500',
 };
 
 const TASK_ROUTES: Record<TaskType, string> = {
   solve: '/sky/cloud-mind/solve',
   slides: '/sky/cloud-mind/slides',
+  pptx: '/sky/cloud-mind/slides',
   quiz: '/sky/cloud-mind/quiz',
   write: '/sky/cloud-mind/write',
   translate: '/sky/cloud-mind/translate',
   memory: '/sky/cloud-mind/memory',
+  teaching: '/sky/teaching',
   general: '/sky/cloud-mind',
 };
 
@@ -56,12 +62,29 @@ function TaskItem({ task }: { task: BackgroundTask }) {
   const updateTask = useTaskStore((s) => s.updateTask);
   const removeTask = useTaskStore((s) => s.removeTask);
   const dismissTask = useTaskStore((s) => s.dismissTask);
+  const autoDismissTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const Icon = TASK_ICONS[task.type] || Zap;
   const color = TASK_COLORS[task.type] || 'text-slate-500';
   const isRunning = task.status === 'running';
   const isCompleted = task.status === 'completed';
   const isFailed = task.status === 'failed';
+
+  // Auto-dismiss completed tasks after 10 seconds
+  // Timer starts when the component mounts (when user sees the notification)
+  useEffect(() => {
+    if (isCompleted) {
+      autoDismissTimerRef.current = setTimeout(() => {
+        dismissTask(task.id);
+      }, 10000); // 10 seconds
+
+      return () => {
+        if (autoDismissTimerRef.current) {
+          clearTimeout(autoDismissTimerRef.current);
+        }
+      };
+    }
+  }, [isCompleted, task.id, dismissTask]);
 
   const handleClick = () => {
     if (isCompleted) {
@@ -73,6 +96,10 @@ function TaskItem({ task }: { task: BackgroundTask }) {
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Clear auto-dismiss timer if manually dismissed
+    if (autoDismissTimerRef.current) {
+      clearTimeout(autoDismissTimerRef.current);
+    }
     removeTask(task.id);
   };
 
@@ -141,9 +168,12 @@ export function BackgroundTasksIndicator() {
   const [expanded, setExpanded] = useState(true);
   const tasks = useTaskStore((s) => s.tasks);
   const dismissedIds = useTaskStore((s) => s.dismissedIds);
+  const pathname = usePathname();
 
+  // Hide tasks whose resultRoute matches the current page —
+  // those already have their own inline progress UI.
   const visibleTasks = Object.values(tasks).filter(
-    (t) => !dismissedIds.has(t.id)
+    (t) => !dismissedIds.has(t.id) && t.resultRoute !== pathname
   );
 
   if (visibleTasks.length === 0) return null;

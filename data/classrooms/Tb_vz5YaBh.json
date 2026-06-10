@@ -1,0 +1,1136 @@
+{
+  "id": "Tb_vz5YaBh",
+  "stage": {
+    "id": "Tb_vz5YaBh",
+    "name": "课程简介",
+    "languageDirective": "本教程使用简体中文教学。代码关键词、变量名等保留英文原样，编程术语首次出现时附注英文以帮助理解。教学语言应简洁、友好，适合零基础学习者，采用鼓励式语气。",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1780901045680,
+    "updatedAt": 1780901045680,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_ECZkm1BLAl",
+      "stageId": "Tb_vz5YaBh",
+      "type": "slide",
+      "title": "课程简介",
+      "order": 1,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "oTQiZ8VihVGRaP0d_cENC",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_xFCTwAHQ",
+              "type": "text",
+              "left": 60,
+              "top": 60,
+              "width": 880,
+              "height": 76,
+              "content": "<p style=\"font-size:36px;\"><strong>Python 编程入门</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "text_VZ92TItX",
+              "type": "text",
+              "left": 60,
+              "top": 176,
+              "width": 880,
+              "height": 142,
+              "content": "<p style=\"font-size:20px;\"><strong>课程简介</strong></p><p style=\"font-size:18px;\">• Python 是一种易学、强大的编程语言</p><p style=\"font-size:18px;\">• 课程涵盖基础语法、变量、控制流、函数等内容</p><p style=\"font-size:18px;\">• 通过动手练习巩固知识，适合零基础学习者</p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action_8AULyFEU",
+          "type": "spotlight",
+          "elementId": "text_xFCTwAHQ"
+        },
+        {
+          "id": "action_CYxk1l8E",
+          "type": "speech",
+          "text": "同学们好！欢迎来到《Python 编程入门》课堂。我是星野老师，在接下来的课程里，我会和芽衣助教一起陪伴大家探索编程的奇妙世界。首先，让我们看看这门课会带给我们什么吧～"
+        },
+        {
+          "id": "action_gVxHY5kL",
+          "type": "spotlight",
+          "elementId": "text_VZ92TItX"
+        },
+        {
+          "id": "action_Mz4dTGRy",
+          "type": "speech",
+          "text": "Python 是一门非常容易上手又功能强大的编程语言。它就像一把万能钥匙，能帮你打开数据分析、人工智能、网络开发等好多扇大门。大家放心，即使你完全没有编程基础，也能轻松学会哦。"
+        },
+        {
+          "id": "action_nqfG5Jq5",
+          "type": "laser",
+          "elementId": "text_VZ92TItX"
+        },
+        {
+          "id": "action_UfJxO-cK",
+          "type": "speech",
+          "text": "我们这门课会从最基础的语法讲起，学习变量、控制流、函数等核心知识。每一步都会有动手小练习，让大家一边学一边练，把知识牢牢掌握住。"
+        },
+        {
+          "id": "action_hyboX8K2",
+          "type": "spotlight",
+          "elementId": "text_VZ92TItX"
+        },
+        {
+          "id": "action_T_FMmwCE",
+          "type": "speech",
+          "text": "课程的最后，你就能用 Python 编写有趣的小程序啦！让我们满怀信心，一起踏上编程之旅吧。接下来，就请翻开第一章，开始我们的第一课！"
+        }
+      ],
+      "createdAt": 1780901528759,
+      "updatedAt": 1780901528759
+    },
+    {
+      "id": "scene__GyBRhPo_r",
+      "stageId": "Tb_vz5YaBh",
+      "type": "slide",
+      "title": "安装与环境配置",
+      "order": 2,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "LKIcZZTV7Y8ntKZbkFBrs",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_JuzsVcvv",
+              "type": "text",
+              "left": 60,
+              "top": 50,
+              "width": 880,
+              "height": 70,
+              "content": "<p style=\"font-size:32px;\"><strong>安装与环境配置</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "text_nrshY1Io",
+              "type": "text",
+              "left": 60,
+              "top": 140,
+              "width": 880,
+              "height": 320,
+              "content": "<p style=\"font-size:20px;\"><strong>1. 下载 Python 安装包</strong></p><p style=\"font-size:16px;\">从 Python 官网下载对应你操作系统（Windows/macOS）的安装包。</p><p style=\"font-size:20px;\"><strong>2. 选择代码编辑器</strong></p><p style=\"font-size:16px;\">推荐使用 IDLE（Python 自带）或 Visual Studio Code（免费且功能强大）。</p><p style=\"font-size:20px;\"><strong>3. 验证安装</strong></p><p style=\"font-size:16px;\">打开终端（命令提示符），输入命令：</p><p style=\"font-size:16px;\"><strong>python --version</strong></p><p style=\"font-size:16px;\">如显示 Python 版本号，表示安装成功！</p><p style=\"font-size:16px;\"><strong>提示：</strong>安装时记得勾选“Add Python to PATH”。</p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action_RQYovnUr",
+          "type": "spotlight",
+          "elementId": "text_JuzsVcvv"
+        },
+        {
+          "id": "action_ZmjCXPSb",
+          "type": "speech",
+          "text": "同学们好，欢迎来到 Python 零基础入门课程！我是你们的星野老师，今天我们将一起迈出编程的第一步——把 Python 安装到自己的电脑上，并配置一个舒适的编程环境。"
+        },
+        {
+          "id": "action_K4RGWE3Y",
+          "type": "spotlight",
+          "elementId": "text_nrshY1Io"
+        },
+        {
+          "id": "action_5wAhRhSC",
+          "type": "speech",
+          "text": "首先，让我们来到Python官方网站，根据你的操作系统——无论是Windows还是macOS，下载对应的安装包。这一步就像为你的电脑添加一个新工具，非常简单。"
+        },
+        {
+          "id": "action_Lfbj2o-3",
+          "type": "laser",
+          "elementId": "text_nrshY1Io"
+        },
+        {
+          "id": "action_-1Jkimv3",
+          "type": "speech",
+          "text": "下载完成后，运行安装包，记得在安装界面勾选“Add Python to PATH”这个选项哦，这样以后在任何位置都能轻松调用 Python 了。"
+        },
+        {
+          "id": "action_eutXeofu",
+          "type": "laser",
+          "elementId": "text_nrshY1Io"
+        },
+        {
+          "id": "action_L3OvwltY",
+          "type": "speech",
+          "text": "装好 Python 之后，我们还需要一个写代码的地方。推荐大家使用 IDLE（Python 自带的简易编辑器）或者功能更丰富的 Visual Studio Code。它们会让写代码变得像在精美的笔记本上书写一样愉快。"
+        },
+        {
+          "id": "action_IuRpvO7f",
+          "type": "laser",
+          "elementId": "text_nrshY1Io"
+        },
+        {
+          "id": "action_WTkwn0_F",
+          "type": "speech",
+          "text": "最后，为了确认安装成功，我们可以打开终端（Mac）或命令提示符（Windows），输入 python --version 并回车。如果显示出 Python 的版本号，就说明一切就绪啦！"
+        },
+        {
+          "id": "action_z2aKY-Zw",
+          "type": "speech",
+          "text": "安装过程中如果遇到任何问题，不用着急，随时可以暂停视频，或者问问身边的芽衣助教。那么，让我们开始动手吧！"
+        }
+      ],
+      "createdAt": 1780901528759,
+      "updatedAt": 1780901528759
+    },
+    {
+      "id": "scene_A_8XEna0rF",
+      "stageId": "Tb_vz5YaBh",
+      "type": "slide",
+      "title": "基本语法规则",
+      "order": 4,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "iwUMb17jzHzAEbqWcO7D-",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_J6eCttAe",
+              "type": "text",
+              "left": 60,
+              "top": 60,
+              "width": 880,
+              "height": 70,
+              "content": "<p style=\"font-size:32px;\"><strong>基本语法规则</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "text__He-OlWK",
+              "type": "text",
+              "left": 60,
+              "top": 170,
+              "width": 880,
+              "height": 292,
+              "content": "<p style=\"font-size:20px;\"><strong>注释</strong></p><p style=\"font-size:16px;\">使用 # 添加单行注释，注释内容会被解释器忽略。</p><p style=\"font-size:16px;\">多行注释常用多个 #，也可使用三引号。</p><p style=\"font-size:20px;\"><strong>缩进</strong></p><p style=\"font-size:16px;\">Python 用缩进表示代码块，通常使用 4 个空格。</p><p style=\"font-size:16px;\">同一代码块内的缩进量必须保持一致。</p><p style=\"font-size:20px;\"><strong>语句与续行</strong></p><p style=\"font-size:16px;\">一般一行写一条语句；长语句可用反斜杠 \\\\ 在行尾续行。</p><p style=\"font-size:16px;\">圆括号、方括号、花括号内的表达式可以自动跨行，无需反斜杠。</p><p style=\"font-size:16px;color:#888888;margin-top:15px;\">💡 养成写注释、规范缩进的习惯，让代码更易读易维护！</p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action_WUWQb1RR",
+          "type": "spotlight",
+          "elementId": "text_J6eCttAe"
+        },
+        {
+          "id": "action_ltuRZVYZ",
+          "type": "speech",
+          "text": "接下来，我们进入Python的基本语法规则学习。先看看页面上的三个核心要点：注释、缩进和语句分隔。"
+        },
+        {
+          "id": "action_o_mZTq1y",
+          "type": "spotlight",
+          "elementId": "text__He-OlWK"
+        },
+        {
+          "id": "action_zGaxMte3",
+          "type": "speech",
+          "text": "注释是编写代码时给自己和他人看的说明。在Python中，使用井号#来添加单行注释，从#开始到行尾的内容都会被解释器忽略。多行注释则可以用多个#，或者使用三引号括起来，非常灵活。"
+        },
+        {
+          "id": "action_yeAL6kAs",
+          "type": "spotlight",
+          "elementId": "text__He-OlWK"
+        },
+        {
+          "id": "action_0RuKLGGW",
+          "type": "speech",
+          "text": "接下来是缩进，这是Python最具特色的设计之一。缩进用来定义代码块，比如if语句、循环、函数定义等属于同一代码块的语句必须保持相同的缩进级别。一般推荐使用4个空格作为标准缩进，清晰又美观。"
+        },
+        {
+          "id": "action_7Qr1uVXu",
+          "type": "spotlight",
+          "elementId": "text__He-OlWK"
+        },
+        {
+          "id": "action_VpQvdY9m",
+          "type": "speech",
+          "text": "最后是语句分隔。通常一行写一条语句，如果语句太长，可以用反斜杠进行续行。当然，如果是在括号、方括号或花括号内，语句可以自然地跨越多行，不需要反斜杠。"
+        },
+        {
+          "id": "action_ZiAqXOwm",
+          "type": "speech",
+          "text": "掌握这些基本语法，是写好Python代码的第一步哦。大家在平时练习时，可以多注意缩进和注释的使用，养成好习惯。"
+        }
+      ],
+      "createdAt": 1780901528759,
+      "updatedAt": 1780901528759
+    },
+    {
+      "id": "scene_eaJaj2Bewu",
+      "stageId": "Tb_vz5YaBh",
+      "type": "slide",
+      "title": "变量与数据类型",
+      "order": 5,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "yEc3HGWRBhzuN-BjDo7X7",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_OasOL2_m",
+              "type": "text",
+              "left": 60,
+              "top": 60,
+              "width": 880,
+              "height": 70,
+              "content": "<p style=\"font-size: 32px;\"><strong>变量与数据类型</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "text_rmFbGXwW",
+              "type": "text",
+              "left": 60,
+              "top": 170,
+              "width": 880,
+              "height": 292,
+              "content": "<p style=\"font-size: 20px;\"><strong>什么是变量？</strong></p><p style=\"font-size: 16px;\">变量是存储数据的容器，在 Python 中无需声明类型，直接赋值即可。</p><p style=\"font-size: 20px;\"><strong>常见数据类型</strong></p><p style=\"font-size: 16px;\">• int（整数，如 10）</p><p style=\"font-size: 16px;\">• float（浮点数，如 3.14）</p><p style=\"font-size: 16px;\">• str（字符串，如 \"Hello\"）</p><p style=\"font-size: 16px;\">• bool（布尔值，True 或 False）</p><p style=\"font-size: 20px;\"><strong>查看数据类型</strong></p><p style=\"font-size: 16px;\">使用 <span style=\"font-family: 'Courier New'; font-size: 16px;\">type()</span> 函数查看变量的数据类型。</p><p style=\"font-size: 20px;\"><strong>示例</strong></p><p style=\"font-size: 16px;\"><span style=\"font-family: 'Courier New'; font-size: 16px;\">x = 10</span></p><p style=\"font-size: 16px;\"><span style=\"font-family: 'Courier New'; font-size: 16px;\">print(type(x))</span>  <span style=\"font-family: 'Courier New'; font-size: 16px;\"># 输出 <class 'int'></span></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action_8hFnbwXz",
+          "type": "spotlight",
+          "elementId": "text_OasOL2_m"
+        },
+        {
+          "id": "action_qpgC5tJq",
+          "type": "speech",
+          "text": "大家好！我是星野老师，欢迎来到Python编程课程。今天，我们从最基础也最重要的概念——变量（variable）与数据类型开始吧！"
+        },
+        {
+          "id": "action_AfhArXhM",
+          "type": "spotlight",
+          "elementId": "text_rmFbGXwW"
+        },
+        {
+          "id": "action_n39i7xLR",
+          "type": "speech",
+          "text": "什么是变量呢？简单来说，变量就是存储数据的容器。在Python中，我们不需要提前声明类型，直接赋值就好，非常方便。比如，x = 10，这就创建了一个整数变量。"
+        },
+        {
+          "id": "action_8bPRqAIG",
+          "type": "laser",
+          "elementId": "text_rmFbGXwW"
+        },
+        {
+          "id": "action_hSds9_Yi",
+          "type": "speech",
+          "text": "Python中有一些常见的数据类型：整数（int）、浮点数（float）、字符串（str）和布尔值（bool）。每种类型都有不同的用途，后面我们会慢慢认识它们。"
+        },
+        {
+          "id": "action_zNKA2mkr",
+          "type": "spotlight",
+          "elementId": "text_rmFbGXwW"
+        },
+        {
+          "id": "action_JNJzwXKw",
+          "type": "speech",
+          "text": "想知道变量是什么类型？用type()函数就可以啦！比如type(x)会返回int。大家可以在自己的电脑上试试看，会很有趣的哦！"
+        }
+      ],
+      "createdAt": 1780901528760,
+      "updatedAt": 1780901528760
+    },
+    {
+      "id": "scene_qPVD5EuP8a",
+      "stageId": "Tb_vz5YaBh",
+      "type": "quiz",
+      "title": "小测验：变量与数据类型",
+      "order": 7,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "以下哪个是合法的 Python 变量名？",
+            "options": [
+              {
+                "value": "A",
+                "label": "2name"
+              },
+              {
+                "value": "B",
+                "label": "my-var"
+              },
+              {
+                "value": "C",
+                "label": "_count"
+              },
+              {
+                "value": "D",
+                "label": "class"
+              }
+            ],
+            "answer": [
+              "C"
+            ],
+            "analysis": "正确答案是 C。在 Python 中，变量名可以包含字母、数字和下划线，但不能以数字开头（A 错误），不能包含连字符（B 错误），也不能使用 Python 的关键字，class 是关键字不能作为变量名（D 错误）。以下划线开头的变量名是合法的。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "single",
+            "question": "在 Python 中，想要知道一个变量保存的数据是什么类型，应该使用哪个函数？",
+            "options": [
+              {
+                "value": "A",
+                "label": "id()"
+              },
+              {
+                "value": "B",
+                "label": "type()"
+              },
+              {
+                "value": "C",
+                "label": "print()"
+              },
+              {
+                "value": "D",
+                "label": "len()"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "正确答案是 B。type() 函数会返回对象的类型，例如执行 type(123) 会返回 <class 'int'>。id() 返回对象的内存地址，print() 用于输出内容，len() 用于返回容器（如字符串、列表）的长度，它们都不能用于判断数据类型。",
+            "points": 10,
+            "hasAnswer": true
+          }
+        ],
+        "knowledgePoints": [
+          "变量命名需遵守规则：只能由字母、数字、下划线组成，不能以数字开头，不能使用 Python 保留关键字。",
+          "使用 type() 函数可以查看任意数据的数据类型，这是最直接的类型判断方式。",
+          "变量是存储数据的\"容器\"，在赋值时不需要声明类型，Python 会根据值自动确定类型。",
+          "常见的内置函数如 id()、print()、len() 各有不同用途，学习时应区分其主要功能。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_tVFyEsVW",
+          "type": "speech",
+          "text": "现在让我们通过一个小测验来检测一下大家对变量和数据类型的掌握情况。请认真思考每一道题，回想一下我们刚才讲过的内容。完成后我们一起来看答案。"
+        },
+        {
+          "id": "action_OjjGfnn7",
+          "type": "speech",
+          "text": "第一题考察的是变量名的合法规则。正确的选项是C：_count。因为Python变量名可以由字母、数字和下划线组成，但不能以数字开头，不能包含连字符，也不能使用关键字。像2name以数字开头、my-var包含连字符、class是关键字，它们都是不合法的。"
+        },
+        {
+          "id": "action_n7RWV7cb",
+          "type": "speech",
+          "text": "第二题考察如何判断数据类型。正确答案是B：type()函数。例如使用type(123)会返回<class 'int'>，告诉我们这是整数类型。print()用于输出内容，id()返回内存地址，len()返回长度，它们都不能直接告诉我们数据类型。"
+        },
+        {
+          "id": "action_XwhCdkfB",
+          "type": "discussion",
+          "topic": "Key concepts in this quiz",
+          "prompt": "Think about why following variable naming rules and knowing data types are important in actual programming.",
+          "agentId": "default-4"
+        }
+      ],
+      "createdAt": 1780901528760,
+      "updatedAt": 1780901528760
+    },
+    {
+      "id": "scene_dENIEstELs",
+      "stageId": "Tb_vz5YaBh",
+      "type": "slide",
+      "title": "循环结构",
+      "order": 10,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "X3OUqPmzFZcgakgzaKrdM",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_YnowFVK8",
+              "type": "text",
+              "left": 60,
+              "top": 50,
+              "width": 880,
+              "height": 70,
+              "content": "<p style=\"font-size: 32px;\"><strong>循环结构</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "table_Ri-qIcoB",
+              "type": "table",
+              "left": 100,
+              "top": 150,
+              "width": 800,
+              "height": 140,
+              "colWidths": [
+                0.15,
+                0.45,
+                0.4
+              ],
+              "data": [
+                [
+                  {
+                    "id": "h1",
+                    "text": "循环类型",
+                    "style": {
+                      "bold": true,
+                      "fontsize": 18
+                    }
+                  },
+                  {
+                    "id": "h2",
+                    "text": "语法格式",
+                    "style": {
+                      "bold": true,
+                      "fontsize": 18
+                    }
+                  },
+                  {
+                    "id": "h3",
+                    "text": "执行说明",
+                    "style": {
+                      "bold": true,
+                      "fontsize": 18
+                    }
+                  }
+                ],
+                [
+                  {
+                    "id": "c1",
+                    "text": "for 循环"
+                  },
+                  {
+                    "id": "c2",
+                    "text": "for i in range(5):"
+                  },
+                  {
+                    "id": "c3",
+                    "text": "重复执行固定次数"
+                  }
+                ],
+                [
+                  {
+                    "id": "c4",
+                    "text": "while 循环"
+                  },
+                  {
+                    "id": "c5",
+                    "text": "while count < 5:"
+                  },
+                  {
+                    "id": "c6",
+                    "text": "条件为 True 时重复"
+                  }
+                ]
+              ],
+              "outline": {
+                "width": 1,
+                "style": "solid",
+                "color": "#ddd"
+              },
+              "cellMinHeight": 40,
+              "theme": {
+                "rowHeader": {
+                  "backcolor": "#f5f5f5"
+                }
+              },
+              "rotate": 0
+            },
+            {
+              "id": "text_xheYX0TE",
+              "type": "text",
+              "left": 60,
+              "top": 310,
+              "width": 880,
+              "height": 70,
+              "content": "<p style=\"font-size:16px;\"><strong>流程控制</strong>：<strong>break</strong> 立即终止整个循环；<strong>continue</strong> 跳过当前迭代，进入下一轮</p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action__JDLKAuh",
+          "type": "spotlight",
+          "elementId": "text_YnowFVK8"
+        },
+        {
+          "id": "action_71wwNCox",
+          "type": "speech",
+          "text": "循环结构是编程中非常重要的概念，它让我们可以重复执行一段代码，直到满足某个条件为止。"
+        },
+        {
+          "id": "action_QLNwc4d9",
+          "type": "spotlight",
+          "elementId": "table_Ri-qIcoB"
+        },
+        {
+          "id": "action_y5cbl9r4",
+          "type": "speech",
+          "text": "先来看看两种最常用的循环：for 循环和 while 循环。for 循环通常和 range() 函数配合，用于明确知道遍历次数的情况；而 while 循环则是在条件为真时持续执行，适合不确定次数的场景。"
+        },
+        {
+          "id": "action_Cyhywu3K",
+          "type": "laser",
+          "elementId": "table_Ri-qIcoB"
+        },
+        {
+          "id": "action_dSVwsbSX",
+          "type": "speech",
+          "text": "这张表格清晰地列出了它们的语法结构和适用场景，大家可以对比一下。"
+        },
+        {
+          "id": "action_HFL3d9JA",
+          "type": "spotlight",
+          "elementId": "text_xheYX0TE"
+        },
+        {
+          "id": "action_Lt6jPwwV",
+          "type": "speech",
+          "text": "在循环中，我们还可以使用 break 和 continue 控制流程。break 会立即终止整个循环，而 continue 只是跳过当前这次迭代，直接进入下一轮。掌握这两个关键字，能让循环控制更加灵活。"
+        },
+        {
+          "id": "action_X13jjty6",
+          "type": "speech",
+          "text": "接下来，我们会通过实际的代码例子来感受一下它们的效果，让大家动手写一写。"
+        }
+      ],
+      "createdAt": 1780901528760,
+      "updatedAt": 1780901528760
+    },
+    {
+      "id": "scene_NogrW2lubL",
+      "stageId": "Tb_vz5YaBh",
+      "type": "quiz",
+      "title": "综合测验",
+      "order": 11,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "以下哪段代码能够正确计算 1 到 100 之间所有奇数的和？（提示：奇数是指不能被 2 整除的整数）",
+            "options": [
+              {
+                "value": "A",
+                "label": "A. sum = 0\nfor i in range(1, 101):\n    if i % 2 == 0:\n        sum += i"
+              },
+              {
+                "value": "B",
+                "label": "B. sum = 0\nfor i in range(1, 101):\n    if i % 2 != 0:\n        sum += i"
+              },
+              {
+                "value": "C",
+                "label": "C. sum = 0\nfor i in range(1, 101):\n    if i % 2 == 1:\n        sum = i"
+              },
+              {
+                "value": "D",
+                "label": "D. sum = 0\nfor i in range(1, 101):\n    if i % 2 != 1:\n        sum += i"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "选项 B 是正确答案。它使用 for 循环遍历 1 到 100，并用条件判断 `if i % 2 != 0` 筛选出奇数，然后累加到 sum 中。选项 A 累加的是偶数（i%2==0），选项 C 每次都把 sum 赋值为末尾的奇数而非累加，选项 D 的写法等效于累加偶数，因此均不正确。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "short_answer",
+            "question": "阅读下面的代码，补全横线处的表达式，使程序能输出一个高度为 5 的直角三角形（第 1 行 1 个星号，第 2 行 2 个星号，……，第 5 行 5 个星号）。\n\nfor i in range(1, 6):\n    print('*' * ______)\n\n请写出你填入的表达式，并简要解释为什么这样填写。",
+            "commentPrompt": "评分标准：(1) 填入正确的表达式 i - 40% (2) 解释清晰，说明循环变量 i 从 1 到 5，每行输出的星号数量与 i 的关系 - 60%",
+            "analysis": "参考解答：横线处应填入 `i`。因为循环变量 i 依次取值为 1, 2, 3, 4, 5，而 `'*' * i` 会产生重复 i 次的星号字符串，正好对应每行输出的星号数，从而依次打印出 1 到 5 个星号的直角三角形。",
+            "points": 15,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "使用求余运算符（%）可以判断一个数的奇偶性，i % 2 == 0 表示偶数，i % 2 != 0 表示奇数。",
+          "循环（for 循环）可以重复执行一段代码，常用于处理一系列数字或集合中的元素。",
+          "条件判断（if 语句）能够根据条件的真假执行不同的代码逻辑，与循环结合可实现筛选功能。",
+          "range(start, stop) 函数生成一个整数序列，通常与 for 循环配合使用来控制循环次数。",
+          "字符串与整数的乘法操作（'*' * n）可以重复生成指定长度的字符串。",
+          "编写代码时需要明确每一步的意图，累加（sum += i）与赋值（sum = i）会产生完全不同的结果。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_i1E1oxM1",
+          "type": "speech",
+          "text": "同学们，刚才我们一起学习了运算符、条件判断和循环的基础知识，现在来做一个综合小测验，看看大家掌握得怎么样。不要紧张，仔细读题，慢慢来哦～"
+        },
+        {
+          "id": "action_PHTLBQql",
+          "type": "speech",
+          "text": "我们先来看第一题：哪段代码能正确计算1到100之间所有奇数的和？注意，奇数就是不能被2整除的数，我们可以在if条件中用i % 2 != 0来判断。"
+        },
+        {
+          "id": "action_43OwIsSL",
+          "type": "speech",
+          "text": "四个选项中，A用了==0判断偶数，D用了!=1也是偶数条件～C虽然判对了奇数，但把sum直接赋值为i，没有累加，相当于每次都把之前的结果覆盖掉。只有B既正确判断了奇数，又用sum += i进行了累加，所以答案是B。"
+        },
+        {
+          "id": "action_5ZlcHZiE",
+          "type": "speech",
+          "text": "接下来是第二题，需要补全一个打印直角三角形的代码。仔细看循环：for i in range(1,6)会依次取1到5，每次打印一行星星。第i行就打印i个星号，所以横线处应该写上i。"
+        },
+        {
+          "id": "action_0nsyjWE2",
+          "type": "speech",
+          "text": "这个题的关键在于理解循环变量i的变化规律，以及字符串乘法的作用——'*' * i就能生成i个星号。很多同学可能会不小心写成range(0,5)或者别的表达式，记得看清题目要求的行数和每行个数哦。"
+        },
+        {
+          "id": "action_Qz97hed1",
+          "type": "discussion",
+          "topic": "如何避免循环和条件判断中的常见错误？",
+          "prompt": "回顾刚才两道题，想一想如果自己做错了，是在哪一步出了问题？是条件写反了，还是累加方式不对？和身边的同学讨论一下，也可以听听智也的分析。",
+          "agentId": "default-4"
+        }
+      ],
+      "createdAt": 1780901528760,
+      "updatedAt": 1780901528760
+    },
+    {
+      "id": "scene_UxBVlp7ggg",
+      "stageId": "Tb_vz5YaBh",
+      "type": "slide",
+      "title": "函数基础",
+      "order": 12,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "FbAX96AQAyFegDCgcOMmC",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_9vWARrc2",
+              "type": "text",
+              "left": 60,
+              "top": 60,
+              "width": 880,
+              "height": 70,
+              "content": "<p style=\"font-size: 32px;\"><strong>函数基础</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "shape_ho_31Cof",
+              "type": "shape",
+              "left": 60,
+              "top": 142,
+              "width": 200,
+              "height": 3,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#5b9bd5",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_E-NIVLkE",
+              "type": "text",
+              "left": 60,
+              "top": 160,
+              "width": 880,
+              "height": 320,
+              "content": "<p style=\"font-size:20px;\"><strong>函数定义 (def)</strong></p><p style=\"font-size:16px;\">使用 <strong>def</strong> 关键字，后跟函数名、括号和冒号。</p><p style=\"font-size:20px;\"><strong>函数调用</strong></p><p style=\"font-size:16px;\">通过 <strong>函数名+括号</strong> 调用，可以传递参数。</p><p style=\"font-size:20px;\"><strong>简单示例</strong></p><p style=\"font-size:16px;font-family:monospace;\">def greet(name):<br>&nbsp;&nbsp;&nbsp;&nbsp;print(\"你好，\" + name)<br>greet(\"小明\")</p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action_egs5gnXb",
+          "type": "spotlight",
+          "elementId": "text_9vWARrc2"
+        },
+        {
+          "id": "action_jgOIcVrF",
+          "type": "speech",
+          "text": "编程中，我们经常需要重复执行某些任务。这时候，函数（function）就派上用场啦！今天我们来学习Python函数的基础用法。"
+        },
+        {
+          "id": "action_XqZVh7Ee",
+          "type": "spotlight",
+          "elementId": "text_E-NIVLkE"
+        },
+        {
+          "id": "action_1UFXjfrH",
+          "type": "speech",
+          "text": "定义函数使用 def 关键字，后面跟上函数名、一对括号和一个冒号。比如 def greet():。调用函数时，只需写出函数名加括号，像 greet() 这样。如果需要传递数据，可以把参数放在括号里。"
+        },
+        {
+          "id": "action_ofNbkPaW",
+          "type": "laser",
+          "elementId": "text_E-NIVLkE"
+        },
+        {
+          "id": "action_JlUEHf6f",
+          "type": "speech",
+          "text": "注意，def 是 define 的缩写，函数名要符合命名规范，通常是小写字母加下划线。现在，试试看定义一个简单的函数吧！"
+        }
+      ],
+      "createdAt": 1780901528760,
+      "updatedAt": 1780901528760
+    },
+    {
+      "id": "scene_Zw00WJB-xp",
+      "stageId": "Tb_vz5YaBh",
+      "type": "slide",
+      "title": "总结与下一步",
+      "order": 13,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "kfcDMrt6RbAaxUyRHDLgM",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": [
+              "#5b9bd5",
+              "#ed7d31",
+              "#a5a5a5",
+              "#ffc000",
+              "#4472c4"
+            ],
+            "fontColor": "#333333",
+            "fontName": "Microsoft YaHei",
+            "outline": {
+              "color": "#d14424",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_aPIv2C05",
+              "type": "text",
+              "left": 60,
+              "top": 60,
+              "width": 880,
+              "height": 70,
+              "content": "<p style=\"font-size: 32px;\"><strong>总结与下一步</strong></p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#1a1a1a",
+              "rotate": 0
+            },
+            {
+              "id": "shape_hK4ErbMY",
+              "type": "shape",
+              "left": 60,
+              "top": 138,
+              "width": 200,
+              "height": 3,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#5b9bd5",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_j7bAuWQL",
+              "type": "text",
+              "left": 60,
+              "top": 160,
+              "width": 880,
+              "height": 346,
+              "content": "<p style=\"font-size:18px;\"><strong>已学知识</strong></p><p style=\"font-size:14px;\">• 变量与数据类型 (int, float, str, bool)</p><p style=\"font-size:14px;\">• 运算符：算术、比较、逻辑</p><p style=\"font-size:14px;\">• 控制流：if-elif-else、while、for</p><p style=\"font-size:14px;\">• 函数：定义、参数、返回值</p><p style=\"font-size:18px;\"><strong>实践建议</strong></p><p style=\"font-size:14px;\">• 尝试编写一个简易计算器小程序</p><p style=\"font-size:14px;\">• 练习：判断闰年、打印乘法表</p><p style=\"font-size:18px;\"><strong>下一步学习推荐</strong></p><p style=\"font-size:14px;\">• 学习列表 (list) 与字典 (dict)</p><p style=\"font-size:14px;\">• 文件操作：读取与写入文件</p><p style=\"font-size:14px;\">• 尝试更复杂的项目，如待办事项管理器</p>",
+              "defaultFontName": "Microsoft YaHei",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "action_jk8EMstY",
+          "type": "spotlight",
+          "elementId": "text_aPIv2C05"
+        },
+        {
+          "id": "action_eS-wXYNq",
+          "type": "speech",
+          "text": "同学们，不知不觉我们已经来到了课程的尾声，让我们一起回顾一下今天学到的知识吧~"
+        },
+        {
+          "id": "action_ulBU9WMf",
+          "type": "spotlight",
+          "elementId": "text_j7bAuWQL"
+        },
+        {
+          "id": "action_GDyf_JGp",
+          "type": "speech",
+          "text": "我们学习了变量与数据类型，比如 int、float、str、bool，还有算术、比较、逻辑运算符，以及控制流和函数。这些都是编程最核心的基础哦！"
+        },
+        {
+          "id": "action_ANT-TjP7",
+          "type": "laser",
+          "elementId": "text_j7bAuWQL"
+        },
+        {
+          "id": "action__kEB2BB0",
+          "type": "speech",
+          "text": "特别是控制流和函数，它们就像程序的骨架和肌肉，能让你的代码活起来。"
+        },
+        {
+          "id": "action_0nGvihVJ",
+          "type": "speech",
+          "text": "现在，大家已经可以用 Python 做一些有趣的小项目了，比如制作一个简单的计算器，或者一个猜数字游戏。动手实践是最好的学习方式！"
+        },
+        {
+          "id": "action_ObfpBQWB",
+          "type": "speech",
+          "text": "如果把这些基础掌握好了，老师推荐你继续挑战列表、字典和文件操作，这些会让你的程序能处理更丰富的数据，真正发挥 Python 的威力。"
+        },
+        {
+          "id": "action_aBpDGMgx",
+          "type": "speech",
+          "text": "课程虽然结束了，但编程世界的大门才刚刚开启。希望大家课后多多练习，像搭积木一样享受创造的乐趣。我们下次课再见啦！"
+        }
+      ],
+      "createdAt": 1780901528760,
+      "updatedAt": 1780901528760
+    }
+  ],
+  "createdAt": "2026-06-08T06:52:08.761Z"
+}

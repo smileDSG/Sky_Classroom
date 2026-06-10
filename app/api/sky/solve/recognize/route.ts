@@ -14,23 +14,17 @@ import { callLLM } from '@/lib/ai/llm';
 
 const log = createLogger('API:SkySolveRecognize');
 
-const OCR_PROMPT = `你是一个专业的数学题目识别助手。请仔细识别图片中的所有题目内容。
+const OCR_PROMPT = `你是一个专业的数学题目识别助手。请逐字逐句识别图片中的所有内容。
 
 要求：
-1. 逐题识别，保留题目编号（如 1.、①、(1) 等）
-2. 所有数学公式和符号**必须用 $...$ 包裹**，示例：
-   - 行内公式：求解 $x^2 + 2x + 1 = 0$
-   - 分数：$\frac{1}{2} + \frac{1}{3}$
-   - 根号：$\sqrt{x^2 + y^2}$
-   - 上下标：$a_n$、$x_1$、$2^{10}$
-   - 比较符：$a \leq b$、$x \geq 0$、$\neq$、$\approx$
-   - 希腊字母：$\alpha$、$\beta$、$\theta$、$\pi$
-3. 分数必须用 $\\frac{分子}{分母}$ 格式，不要写成 a/b
-4. 单独成行的公式用 $$...$$ 包裹
+1. 完整识别图片中的所有文字，不要遗漏任何一行
+2. 保留题目编号（如 1.、①、(1) 等）
+3. 所有数学公式和符号必须用 LaTeX 格式，用 $...$ 包裹行内公式，$$...$$ 包裹独立公式
+4. 分数用 \\frac{分子}{分母}，根号用 \\sqrt{}，上下标用 ^ 和 _
 5. 纯文字部分保持中文原文
-6. 如果图片中有多道题，每道题之间用空行分隔
+6. 多道题之间用空行分隔
 7. 无法看清的内容用 [?] 标记，不要猜测
-8. 只输出识别到的题目文字和公式，不要添加你的解释、评价或问候语`;
+8. 只输出识别到的题目文字和公式，不要添加解释或问候语`;
 
 interface VisionModelConfig {
   providerId: ProviderId;
@@ -116,68 +110,71 @@ export async function POST(req: Request) {
         role: 'user' as const,
         content: [
           { type: 'image' as const, image: buffer, mimeType },
-          { type: 'text' as const, text: '请逐字逐句识别图片中的所有文字和数学公式。特别注意：所有数学符号、公式、上下标、分数、求和符号(Σ)、积分符号(∫)、根号(√)等必须用 LaTeX 格式识别并用 $...$ 包裹。不要遗漏任何数学内容。' },
+          { type: 'text' as const, text: '请识别这张图片中的所有题目内容，包括文字和数学公式。' },
         ],
       },
     ];
 
-    const errors: string[] = [];
+    const MODEL_TIMEOUT = 25_000; // 25s per model — complex math images need more time
 
-    // Try each vision model in sequence — first success wins
-    for (const visionConfig of visionModels) {
-      try {
-        const modelWithInfo = getModel(visionConfig);
+    // Race all vision models in parallel — first success wins
+    const modelPromises = visionModels.map(async (visionConfig) => {
+      const modelWithInfo = getModel(visionConfig);
+      log.info(`[Recognize] Racing ${visionConfig.providerId}/${visionConfig.modelId}...`);
 
-        log.info(`[Recognize] Trying ${visionConfig.providerId}/${visionConfig.modelId}...`);
+      const llmPromise = callLLM(
+        {
+          model: modelWithInfo.model,
+          messages: messages as any,
+          temperature: 0.1,
+          maxOutputTokens: 8192,
+        },
+        'ocr-recognize',
+        { retries: 0 },
+        undefined,
+        OCR_PROMPT,
+      );
 
-        const result = await callLLM(
-          {
-            model: modelWithInfo.model,
-            messages: messages as any,
-            temperature: 0.1,
-            maxOutputTokens: 4096,
-          },
-          'ocr-recognize',
-          { retries: 0 },  // model-level fallback handles retries
-          undefined,         // thinking
-          OCR_PROMPT,
-        );
+      // Wrap with per-model timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error(`${visionConfig.providerId}/${visionConfig.modelId} timed out after ${MODEL_TIMEOUT}ms`)), MODEL_TIMEOUT);
+      });
 
-        const rawText = result.text || '';
-        if (!rawText.trim()) {
-          log.warn(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} returned empty text`);
-          errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: 返回空白内容`);
-          continue;
-        }
+      const result = await Promise.race([llmPromise, timeoutPromise]);
+      const rawText = result.text || '';
 
-        const { text: cleanedText, latex } = extractFormulas(rawText);
-
-        log.info(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} OK, text length=${cleanedText.length}`);
-
-        const base64ForResponse = buffer.toString('base64');
-        const dataUrl = `data:${mimeType};base64,${base64ForResponse}`;
-
-        return apiSuccess({
-          text: cleanedText,
-          latex,
-          problemCount: cleanedText ? 1 : 0,
-          problems: cleanedText ? [{ image: dataUrl, text: cleanedText, latex }] : [],
-          usedModel: `${visionConfig.providerId}/${visionConfig.modelId}`,
-        });
-      } catch (llmErr) {
-        const msg = llmErr instanceof Error ? llmErr.message : String(llmErr);
-        log.warn(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} failed: ${msg}`);
-        errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: ${msg}`);
+      if (!rawText.trim()) {
+        throw new Error(`${visionConfig.providerId}/${visionConfig.modelId}: 返回空白内容`);
       }
-    }
 
-    log.error(`[Recognize] All ${visionModels.length} vision models failed: ${errors.join('; ')}`);
-    return apiError(
-      API_ERROR_CODES.INTERNAL_ERROR,
-      500,
-      `所有视觉模型均识别失败（已尝试 ${visionModels.length} 个模型）`,
-      errors.join('; '),
-    );
+      const { text: cleanedText, latex } = extractFormulas(rawText);
+      log.info(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} OK, text length=${cleanedText.length}`);
+
+      return { visionConfig, cleanedText, latex };
+    });
+
+    try {
+      const winner = await Promise.any(modelPromises);
+      const base64ForResponse = buffer.toString('base64');
+      const dataUrl = `data:${mimeType};base64,${base64ForResponse}`;
+
+      return apiSuccess({
+        text: winner.cleanedText,
+        latex: winner.latex,
+        problemCount: winner.cleanedText ? 1 : 0,
+        problems: winner.cleanedText ? [{ image: dataUrl, text: winner.cleanedText, latex: winner.latex }] : [],
+        usedModel: `${winner.visionConfig.providerId}/${winner.visionConfig.modelId}`,
+      });
+    } catch (aggErr) {
+      const errors = (aggErr as AggregateError).errors?.map((e: Error) => e.message) || [String(aggErr)];
+      log.error(`[Recognize] All ${visionModels.length} vision models failed: ${errors.join('; ')}`);
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        `所有视觉模型均识别失败（已尝试 ${visionModels.length} 个模型）`,
+        errors.join('; '),
+      );
+    }
   } catch (err) {
     log.error('Recognize API error:', err);
     return apiError(
