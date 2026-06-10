@@ -21,6 +21,7 @@ import { applyOutlineFallbacks } from './outline-generator';
 import { generateSceneContent, generateSceneActions } from './scene-generator';
 import type { AgentInfo, SceneGenerationContext, AICallFn } from './pipeline-types';
 import { buildLanguageText } from './prompt-formatters';
+import { selectThemeForOutline, selectThemeForTemplate } from './classroom-design-dna';
 import { createLogger } from '@/lib/logger';
 const log = createLogger('Generation');
 
@@ -78,6 +79,8 @@ export async function buildSceneFromOutline(
   onPhaseChange?: (phase: 'content' | 'actions') => void,
   userProfile?: string,
   languageDirective?: string,
+  themeSelection?: import('./classroom-design-dna').ClassroomThemeSelection,
+  courseTemplate?: string,
 ): Promise<Scene | null> {
   // Apply type fallbacks
   outline = applyOutlineFallbacks(outline, !!languageModel);
@@ -102,6 +105,8 @@ export async function buildSceneFromOutline(
     visionEnabled,
     agents,
     languageDirective: langText,
+    themeSelection,
+    courseTemplate,
   });
   if (!content) {
     log.error(`Failed to generate content for: ${outline.title}`);
@@ -120,7 +125,7 @@ export async function buildSceneFromOutline(
   log.debug(`Generated ${actions.length} actions for: ${outline.title}`);
 
   // Build complete Scene object
-  return buildCompleteScene(outline, content, actions, stageId);
+  return buildCompleteScene(outline, content, actions, stageId, themeSelection);
 }
 
 /**
@@ -135,17 +140,31 @@ export function buildCompleteScene(
     | GeneratedPBLContent,
   actions: Action[],
   stageId: string,
+  themeSelection?: import('./classroom-design-dna').ClassroomThemeSelection,
 ): Scene | null {
   const sceneId = nanoid();
 
   if (outline.type === 'slide' && 'elements' in content) {
-    // Build Slide object
-    const defaultTheme: SlideTheme = {
-      backgroundColor: '#ffffff',
-      themeColors: ['#5b9bd5', '#ed7d31', '#a5a5a5', '#ffc000', '#4472c4'],
-      fontColor: '#333333',
-      fontName: 'Microsoft YaHei',
-      outline: { color: '#d14424', width: 2, style: 'solid' },
+    // Build Slide object with dynamic theme (use course-level theme if provided)
+    const slideContent = content as GeneratedSlideContent;
+    const theme = themeSelection ?? (
+      slideContent.templateData
+        ? selectThemeForTemplate(slideContent.templateData.templateName)
+        : selectThemeForOutline(outline)
+    );
+    const palette = theme.palette;
+    const slideTheme: SlideTheme = {
+      backgroundColor: `#${palette.contentBg}`,
+      themeColors: [
+        `#${palette.accent}`,
+        `#${palette.accentSecondary}`,
+        `#${palette.accentLight}`,
+        `#${palette.textPrimary}`,
+        `#${palette.textMuted}`,
+      ],
+      fontColor: `#${palette.textPrimary}`,
+      fontName: theme.fonts.heading,
+      outline: { color: `#${palette.accentSecondary}`, width: 2, style: 'solid' },
       shadow: { h: 0, v: 0, blur: 10, color: '#000000' },
     };
 
@@ -153,10 +172,14 @@ export function buildCompleteScene(
       id: nanoid(),
       viewportSize: 1000,
       viewportRatio: 0.5625,
-      theme: defaultTheme,
-      elements: content.elements,
-      background: content.background,
+      theme: slideTheme,
+      elements: slideContent.elements,
+      background: slideContent.background,
+      templateData: slideContent.templateData,
+      layoutVersion: slideContent.templateData ? 2 : 1,
     };
+
+    log.info(`[SceneBuilder] Slide built for "${outline.title}": layoutVersion=${slide.layoutVersion}, hasTemplateData=${!!slide.templateData}, legacyElements=${slide.elements.length}`);
 
     return {
       id: sceneId,

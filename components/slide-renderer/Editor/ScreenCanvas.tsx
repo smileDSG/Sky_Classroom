@@ -8,12 +8,14 @@ import { useSlideBackgroundStyle } from '@/lib/hooks/use-slide-background-style'
 import { useCanvasStore } from '@/lib/store';
 import { useSceneSelector } from '@/lib/contexts/scene-context';
 import { findElementGeometry } from '@/lib/utils/geometry';
-import type { SlideContent } from '@/lib/types/stage';
 import type { PPTElement, SlideBackground } from '@/lib/types/slides';
+import type { SlideContent } from '@/lib/types/stage';
 import type { PercentageGeometry } from '@/lib/types/action';
 import { useViewportSize } from './Canvas/hooks/useViewportSize';
 import { useRef, useMemo } from 'react';
 import { AnimatePresence } from 'motion/react';
+import { TemplateCanvas } from '../TemplateCanvas';
+import type { TemplateSlideData } from '@/lib/templates/pptd-types';
 
 export function ScreenCanvas() {
   const canvasScale = useCanvasStore.use.canvasScale();
@@ -30,6 +32,30 @@ export function ScreenCanvas() {
     (content) => content.canvas.background,
   );
   const { backgroundStyle } = useSlideBackgroundStyle(background);
+
+  const templateData = useSceneSelector<SlideContent, TemplateSlideData | undefined>(
+    (content) => content.canvas.templateData,
+  );
+
+  // Diagnostic logging for template rendering
+  const currentScene = useSceneSelector<SlideContent, string | undefined>(
+    (content) => content.canvas?.id,
+  );
+  useMemo(() => {
+    if (templateData) {
+      // eslint-disable-next-line no-console
+      console.log('[ScreenCanvas] Template rendering:', {
+        slideId: currentScene,
+        templateName: templateData.templateName,
+        pageName: templateData.pageName,
+        elementCount: templateData.page.elements.length,
+        bgType: templateData.page.background.type,
+      });
+    } else {
+      // eslint-disable-next-line no-console
+      console.log('[ScreenCanvas] Legacy rendering (no templateData), elements:', elements.length);
+    }
+  }, [templateData, currentScene, elements.length]);
 
   // Get visual effect state
   const laserElementId = useCanvasStore.use.laserElementId();
@@ -76,27 +102,37 @@ export function ScreenCanvas() {
         }}
       >
         {/* Background layer */}
-        <div
-          className="w-full h-full bg-position-center rounded-lg"
-          style={{ ...backgroundStyle }}
-        ></div>
+        {!templateData && (
+          <div
+            className="w-full h-full bg-position-center rounded-lg"
+            style={{ ...backgroundStyle }}
+          ></div>
+        )}
 
         {/* Content layer - scaled */}
-        <div
-          className="absolute top-0 left-0 origin-top-left"
-          style={{
-            width: `${viewportStyles.width}px`,
-            height: `${viewportStyles.height}px`,
-            transform: `scale(${canvasScale})`,
-          }}
-        >
-          {elements.map((element, index) => (
-            <ScreenElement key={element.id} elementInfo={element} elementIndex={index + 1} />
-          ))}
-
-          {/* Highlight overlay - stacked above elements */}
-          <HighlightOverlay />
-        </div>
+        {templateData ? (
+          <TemplateCanvas
+            page={templateData.page}
+            manifestTheme={templateData.theme}
+            canvasWidth={viewportStyles.width * canvasScale}
+            canvasHeight={viewportStyles.height * canvasScale}
+          />
+        ) : (
+          <div
+            className="absolute top-0 left-0 origin-top-left"
+            style={{
+              width: `${viewportStyles.width}px`,
+              height: `${viewportStyles.height}px`,
+              transform: `scale(${canvasScale})`,
+            }}
+          >
+            {elements.map((element, index) => (
+              <ScreenElement key={element.id} elementInfo={element} elementIndex={index + 1} />
+            ))}
+            {/* Highlight overlay - stacked above elements */}
+            <HighlightOverlay />
+          </div>
+        )}
 
         {/* Spotlight overlay - covers the entire slide, positioned via DOM measurement */}
         <SpotlightOverlay />

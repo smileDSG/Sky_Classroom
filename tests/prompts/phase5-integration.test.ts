@@ -54,8 +54,8 @@ describe('Phase 5: Language directive regression', () => {
     expect(content).toContain('{{description}}');
     expect(content).toContain('{{keyPoints}}');
     expect(content).toContain('{{languageDirective}}');
-    expect(content).toContain('{{canvas_width}}');
-    expect(content).toContain('{{canvas_height}}');
+    expect(content).toContain('{{theme_palette_name}}');
+    expect(content).toContain('{{mood}}');
   });
 
   test('slide-actions.md contains all scene variables', () => {
@@ -83,12 +83,14 @@ describe('Phase 5: Language directive regression', () => {
     const result = composer.compose({
       fragments: ['slide-content'],
       variables: {
-        canvas_width: 1000,
-        canvas_height: 562,
+        theme_palette_name: 'midnight-executive',
+        mood: '专业稳重',
         languageDirective: '讲中文 | Teach in Chinese only.',
         title: '测试标题',
         description: '测试描述',
         keyPoints: '1. 第一点\n2. 第二点',
+        teacherContext: '',
+        mediaElementEnabled: false,
       },
     });
 
@@ -289,7 +291,7 @@ describe('Phase 5: User overrides', () => {
 
       const result = composer.compose({
         fragments: ['slide-content'],
-        variables: { canvas_width: 1000, canvas_height: 562 },
+        variables: { theme_palette_name: 'midnight-executive', mood: '专业稳重', title: 'X', description: 'X', keyPoints: 'X', languageDirective: '讲中文', teacherContext: '', mediaElementEnabled: false },
       });
 
       expect(result.system).toContain('Custom user override from file');
@@ -418,16 +420,13 @@ describe('Phase 5: Full pipeline composition', () => {
     const result = composer.compose({
       fragments: ['slide-content'],
       variables: {
-        canvas_width: 1000,
-        canvas_height: 562,
+        theme_palette_name: 'midnight-executive',
+        mood: '专业稳重',
         title: '概率基础',
         description: '介绍概率的基本概念',
         keyPoints: '1. 随机现象\n2. 样本空间\n3. 事件',
         languageDirective: '使用中文授课。Use Chinese for all content.',
         teacherContext: '',
-        imageElementEnabled: false,
-        generatedImageEnabled: false,
-        generatedVideoEnabled: false,
         mediaElementEnabled: false,
       },
     });
@@ -500,7 +499,7 @@ describe('Phase 5: Full pipeline composition', () => {
 
   test('all 7 fixed templates interpolate language directive', () => {
     const templates = [
-      { id: 'slide-content', file: 'slide-content.md', vars: { canvas_width: 1000, canvas_height: 562, title: 'X', description: 'X', keyPoints: 'X', imageElementEnabled: false, generatedImageEnabled: false, generatedVideoEnabled: false, mediaElementEnabled: false, languageDirective: '讲中文', teacherContext: '' } },
+      { id: 'slide-content', file: 'slide-content.md', vars: { theme_palette_name: 'midnight-executive', mood: '专业稳重', title: 'X', description: 'X', keyPoints: 'X', mediaElementEnabled: false, languageDirective: '讲中文', teacherContext: '' } },
       { id: 'slide-actions', file: 'slide-actions.md', vars: { elements: 'x', title: 'X', keyPoints: 'X', description: 'X', languageDirective: '讲中文', courseContext: '', agents: '', userProfile: '' } },
       { id: 'quiz', file: 'quiz.md', vars: { title: 'X', description: 'X', keyPoints: 'X', questionCount: '1', difficulty: 'easy', questionTypes: 'single', languageDirective: '讲中文' } },
       { id: 'quiz-actions', file: 'quiz-actions.md', vars: { questions: 'x', title: 'X', keyPoints: 'X', description: 'X', languageDirective: '讲中文', courseContext: '', agents: '' } },

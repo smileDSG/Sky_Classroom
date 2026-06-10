@@ -199,72 +199,45 @@ describe('Phase 3: Generator templates', () => {
   describe('slide-content.md', () => {
     const content = loadGenerator('slide-content.md');
 
-    test('contains slide content philosophy', () => {
-      expect(content).toContain('visual aids');
-      expect(content).toContain('NOT lecture scripts');
+    test('contains structured content philosophy', () => {
+      expect(content).toContain('text only, no coordinates');
+      expect(content).toContain('layout engine');
     });
 
-    test('describes all element types', () => {
-      expect(content).toContain('TextElement');
-      expect(content).toContain('ShapeElement');
-      expect(content).toContain('LineElement');
-      expect(content).toContain('ChartElement');
-      expect(content).toContain('LatexElement');
-      expect(content).toContain('TableElement');
+    test('describes all content types', () => {
+      expect(content).toContain('concept');
+      expect(content).toContain('case');
+      expect(content).toContain('compare');
+      expect(content).toContain('process');
+      expect(content).toContain('summary');
+      expect(content).toContain('table');
+      expect(content).toContain('formula');
     });
 
-    test('includes text height lookup table', () => {
-      expect(content).toContain('Text Height Lookup Table');
-      expect(content).toContain('Font Size');
-      expect(content).toContain('1 line');
-      expect(content).toContain('14px');
-      expect(content).toContain('36px');
+    test('includes content density rules', () => {
+      expect(content).toContain('Content Density Rules');
+      expect(content).toContain('Minimum 3 cards');
+      expect(content).toContain('Minimum 4 keyPoints');
     });
 
-    test('includes canvas dimension variables', () => {
-      expect(content).toContain('{{canvas_width}}');
-      expect(content).toContain('{{canvas_height}}');
+    test('includes theme guidance', () => {
+      expect(content).toContain('Theme:');
+      expect(content).toContain('{{theme_palette_name}}');
+      expect(content).toContain('{{mood}}');
     });
 
-    test('specifies LineElement width is stroke thickness', () => {
-      expect(content).toContain('STROKE THICKNESS');
-      expect(content).toContain('NOT line length');
+    test('specifies formula rules', () => {
+      expect(content).toContain('Formula Rules');
+      expect(content).toContain('raw LaTeX');
     });
 
-    test('includes pre-output checklist with P0 and P1', () => {
-      expect(content).toContain('P0 — Critical');
-      expect(content).toContain('P1 — Serious');
-      expect(content).toContain('text-height');
-      expect(content).toContain('text-width');
-      expect(content).toContain('latex-fields');
-      expect(content).toContain('line-stroke');
+    test('includes output format requirements', () => {
+      expect(content).toContain('Output valid JSON only');
+      expect(content).toContain('No explanations');
     });
 
-    test('includes 8 design rules', () => {
-      expect(content).toContain('Rule 1');
-      expect(content).toContain('Rule 8');
-      expect(content).toContain('Text Width Calculation');
-      expect(content).toContain('Symmetry and Parallel Layout');
-      expect(content).toContain('Spacing Standards');
-      expect(content).toContain('Font Size Guidelines');
-    });
-
-    test('includes LatexElement height guide', () => {
-      expect(content).toContain('Height guide by formula category');
-      expect(content).toContain('Inline equations');
-      expect(content).toContain('Matrices');
-      expect(content).toContain('50-80');
-      expect(content).toContain('100-180');
-    });
-
-    test('forbids LaTeX in TextElement', () => {
-      expect(content).toMatch(/no.*latex.*text/i);
-    });
-
-    test('has conditional image/video blocks', () => {
-      expect(content).toContain('{{#if imageElementEnabled}}');
-      expect(content).toContain('{{#if generatedImageEnabled}}');
-      expect(content).toContain('{{#if generatedVideoEnabled}}');
+    test('has conditional media block', () => {
+      expect(content).toContain('{{#if mediaElementEnabled}}');
     });
   });
 
@@ -517,20 +490,20 @@ describe('Phase 3: Generator composition integration', () => {
     expect(result.system).not.toContain('video-instructions');
   });
 
-  test('slide-content generator interpolates canvas dimensions', () => {
+  test('slide-content generator interpolates theme and scene variables', () => {
     const composer = makeComposer();
     const content = loadGenerator('slide-content.md');
     registerFragment(composer, 'slide-content', content);
 
     const result = composer.compose({
       fragments: ['slide-content'],
-      variables: { canvas_width: 1280, canvas_height: 720 },
+      variables: { theme_palette_name: 'midnight-executive', mood: '专业稳重', title: '测试标题', description: '测试描述', keyPoints: '1. 第一点\n2. 第二点', languageDirective: '讲中文', teacherContext: '', mediaElementEnabled: false },
     });
 
-    expect(result.system).toContain('1280');
-    expect(result.system).toContain('720');
-    expect(result.system).not.toContain('{{canvas_width}}');
-    expect(result.system).not.toContain('{{canvas_height}}');
+    expect(result.system).toContain('midnight-executive');
+    expect(result.system).toContain('测试标题');
+    expect(result.system).not.toContain('{{theme_palette_name}}');
+    expect(result.system).not.toContain('{{title}}');
   });
 
   test('quiz generator resolves json-output-rules snippet', () => {
@@ -630,9 +603,7 @@ describe('Phase 3: Generator composition integration', () => {
         imageEnabled: false,
         videoEnabled: false,
         mediaEnabled: false,
-        imageElementEnabled: false,
-        generatedImageEnabled: false,
-        generatedVideoEnabled: false,
+        mediaElementEnabled: false,
         hasSourceImages: false,
         projectTopic: 'Test Project',
         projectDescription: 'A test project description',
@@ -664,9 +635,7 @@ describe('Phase 3: Generator composition integration', () => {
         canvas_height: 562,
         imageEnabled: false,
         videoEnabled: false,
-        imageElementEnabled: false,
-        generatedImageEnabled: false,
-        generatedVideoEnabled: false,
+        mediaElementEnabled: false,
         hasSourceImages: false,
       },
     });
@@ -711,14 +680,9 @@ describe('Phase 3: Generator composition integration', () => {
 });
 
 describe('Phase 3: File size validation', () => {
-  test('slide-content.md is the largest generator (most complex)', () => {
-    const sizes: [string, number][] = [];
-    for (const filename of GENERATOR_FILES) {
-      const content = loadGenerator(filename);
-      sizes.push([filename, content.length]);
-    }
-    const max = sizes.reduce((a, b) => (a[1] > b[1] ? a : b));
-    expect(max[0]).toBe('slide-content.md');
+  test('slide-content.md has substantial content', () => {
+    const content = loadGenerator('slide-content.md');
+    expect(content.length).toBeGreaterThan(1000);
   });
 
   test('all generators are between 500 and 12000 bytes', () => {

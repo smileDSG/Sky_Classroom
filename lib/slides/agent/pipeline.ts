@@ -6,6 +6,7 @@
  */
 import path from 'path';
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import pptxgen from 'pptxgenjs';
 import { planOutline, type Outline } from './planning-agent';
 import { generateSectionContent, type SectionOutput } from './section-agent';
@@ -38,6 +39,8 @@ export interface GenerateOptions {
   designDNA: DesignDNA;
   languageModel: LanguageModel;
   jobId: string;
+  /** Target audience education level from user personalization */
+  educationLevel?: string;
 }
 
 export type PipelineStage =
@@ -49,17 +52,41 @@ export type PipelineStage =
   | 'repairing'
   | 'done';
 
+export interface JobOutlinePage {
+  pageNum: number;
+  title: string;
+  type: string;
+}
+
+export interface StageTiming {
+  startAt: number;
+  endAt?: number;
+  durationMs?: number;
+}
+
 export interface JobState {
   jobId: string;
   stage: PipelineStage;
   message: string;
   progress: number;
   totalPages: number;
+  /** Full outline (available after planning stage) */
+  outline?: JobOutlinePage[];
+  /** Currently active page being designed */
+  currentPage?: JobOutlinePage;
+  /** Pages whose content has been generated (available after sections stage) */
+  completedSlides?: JobOutlinePage[];
   pptxUrl?: string;
   fileName?: string;
   previewImages?: string[];
   qaReport?: { totalScore: number; pass: boolean; issues: Array<{ pageNum: number; severity: string; type: string; layer: string; detail: string }> };
   error?: string;
+  /** Per-stage timing for accurate ETA estimation */
+  stageTimings?: Record<string, StageTiming>;
+  /** Overall pipeline start timestamp */
+  startedAt?: number;
+  /** Overall pipeline end timestamp */
+  finishedAt?: number;
 }
 
 // ── Job Manager ──────────────────────────────────────────────────────
@@ -72,12 +99,15 @@ const jobs = _global.__pptJobs as Map<string, JobState>;
 const _doneTimestamps = _global.__pptDoneTs as Map<string, number>;
 
 export function createJob(jobId: string, totalPages?: number): JobState {
+  const now = Date.now();
   const state: JobState = {
     jobId,
     stage: 'planning',
     message: '正在规划课程大纲...',
     progress: 0,
     totalPages: totalPages || 0,
+    startedAt: now,
+    stageTimings: { planning: { startAt: now } },
   };
   jobs.set(jobId, state);
   return state;
@@ -87,14 +117,68 @@ export function getJob(jobId: string): JobState | undefined {
   return jobs.get(jobId);
 }
 
-export function updateJob(jobId: string, update: Partial<JobState>) {
-  const job = jobs.get(jobId);
-  if (job) Object.assign(job, update);
+export function listAllJobs(): Array<JobState & { doneAt?: number }> {
+  const result: Array<JobState & { doneAt?: number }> = [];
+  for (const [id, job] of jobs) {
+    const clone = { ...job };
+    const doneAt = _doneTimestamps.get(id);
+    if (doneAt) (clone as Record<string, unknown>).doneAt = doneAt;
+    result.push(clone);
+  }
+  // Sort by most recent first
+  return result.sort((a, b) => {
+    const aTime = (a as unknown as { doneAt?: number }).doneAt || 0;
+    const bTime = (b as unknown as { doneAt?: number }).doneAt || 0;
+    return bTime - aTime;
+  });
 }
 
-// Background cleanup: remove jobs that have been done for > 10 min
+const DIAGNOSTIC_LOG_PATH = path.join(process.cwd(), 'logs', 'pipeline-diagnostic.log');
+function logToFile(level: string, tag: string, message: string) {
+  try {
+    const line = `[${new Date().toISOString()}] [${level}] [${tag}] ${message}\n`;
+    fsSync.appendFileSync(DIAGNOSTIC_LOG_PATH, line);
+  } catch { /* ignore */ }
+}
+
+export function updateJob(jobId: string, update: Partial<JobState>) {
+  const job = jobs.get(jobId);
+  if (!job) return;
+
+  // Auto-track stage timing when stage changes
+  const newStage = update.stage;
+  if (newStage && newStage !== job.stage && job.stageTimings) {
+    const now = Date.now();
+    // Close current stage
+    const currentTiming = job.stageTimings[job.stage];
+    if (currentTiming && !currentTiming.endAt) {
+      currentTiming.endAt = now;
+      currentTiming.durationMs = now - currentTiming.startAt;
+      logToFile('INFO', 'PipelineTiming', `${jobId} stage=${job.stage} duration=${currentTiming.durationMs}ms`);
+    }
+    // Open new stage
+    if (!job.stageTimings[newStage]) {
+      job.stageTimings[newStage] = { startAt: now };
+    }
+  }
+
+  Object.assign(job, update);
+}
+
+// Max concurrent pipeline jobs (safety valve against resource exhaustion)
+const MAX_CONCURRENT_JOBS = 5;
+
+export function getActiveJobCount(): number {
+  let count = 0;
+  for (const job of jobs.values()) {
+    if (job.stage !== 'done') count++;
+  }
+  return count;
+}
+
+// Background cleanup: remove jobs that have been done for > 2 hours
 setInterval(() => {
-  const cutoff = Date.now() - 10 * 60 * 1000;
+  const cutoff = Date.now() - 120 * 60 * 1000;
   for (const [id, job] of jobs) {
     if (job.stage === 'done') {
       const doneAt = _doneTimestamps.get(id);
@@ -117,103 +201,11 @@ setInterval(() => {
   }
 }, 60_000);
 
-// ── Fallback content builder ────────────────────────────────────────
-
-export function buildFallbackContent(
-  pageType: string,
-  title: string,
-  outline: { focus: string; keyConcepts?: string[]; notes?: string },
-): Record<string, unknown> {
-  const concepts = outline?.keyConcepts ?? [];
-  switch (pageType) {
-    case 'cover':
-      return { title, subtitle: outline?.focus ?? '', tagline: '' };
-    case 'toc':
-      return { title: '目录', items: concepts.map((c, i) => ({ num: String(i + 1).padStart(2, '0'), title: c.slice(0, 8), desc: c.slice(0, 20) })) };
-    case 'end':
-      return { slogan: outline?.focus?.slice(0, 15) ?? '谢谢', subtitle: outline?.notes?.slice(0, 30) ?? '' };
-    case 'chapter':
-      return { num: title.slice(0, 2) || '01', title, subtitle: outline?.focus ?? '' };
-    case 'concept':
-      return {
-        title,
-        cards: concepts.map((c) => ({ title: c.slice(0, 8), desc: outline?.notes?.slice(0, 100) ?? '详见教材相关章节' })),
-        summary: outline?.focus?.slice(0, 120) ?? '本节介绍了核心概念，更多细节请参考教材。',
-      };
-    case 'case':
-      return {
-        title,
-        scenarios: [{ problem: outline?.focus ?? '请参考教材例题', solution: outline?.notes?.slice(0, 250) ?? '解题思路详见教材' }],
-        highlight: concepts[0]?.slice(0, 40) ?? '',
-      };
-    case 'compare':
-      return {
-        title,
-        left: { title: concepts[0]?.slice(0, 10) ?? '特性A', items: concepts.slice(0, 3) },
-        right: { title: concepts[1]?.slice(0, 10) ?? '特性B', items: concepts.slice(3, 6) },
-        conclusion: outline?.focus?.slice(0, 120) ?? '两者各有特点，需根据具体场景选择。',
-      };
-    case 'process':
-      return {
-        title,
-        steps: concepts.map((c, i) => ({ num: String(i + 1), title: c.slice(0, 10), desc: outline?.notes?.slice(0, 120) ?? `步骤 ${i + 1} 的详细说明` })),
-      };
-    case 'table':
-      return {
-        title,
-        headers: concepts.slice(0, 4),
-        rows: [[outline?.focus?.slice(0, 40) ?? '数据', ...concepts.slice(0, 3)]],
-        summary: outline?.notes?.slice(0, 100) ?? '表格数据来源详见教材。',
-      };
-    case 'formula':
-      return {
-        title,
-        mainFormula: outline?.focus ?? '',
-        derivation: outline?.notes?.slice(0, 300) ?? '推导过程详见教材',
-        application: '',
-      };
-    case 'timeline':
-      return {
-        title,
-        events: concepts.map((c, i) => ({ date: String(i + 1), content: c.slice(0, 80) })),
-      };
-    case 'summary':
-      return {
-        title: title || '本章总结',
-        keyPoints: concepts.length > 0 ? concepts : [outline?.focus ?? '回顾本章核心内容'],
-        preview: outline?.notes?.slice(0, 60) ?? '',
-      };
-    case 'quiz':
-      return {
-        title,
-        questions: [{ q: outline?.focus?.slice(0, 150) ?? '请回答以下问题', options: concepts.slice(0, 4), answer: 'A' }],
-      };
-    default:
-      return { title, fallback: true, notes: outline?.focus ?? '' };
-  }
-}
-
-function buildFallbackSection(section: import('./planning-agent').SectionPlan): SectionOutput {
-  return {
-    sectionId: section.sectionId,
-    pages: section.pages.map((page) => ({
-      pageNum: page.pageNum,
-      pageType: page.type,
-      content: buildFallbackContent(page.type, page.title, {
-        focus: page.contentOutline?.focus ?? page.title,
-        keyConcepts: page.contentOutline?.keyConcepts ?? [],
-        notes: page.contentOutline?.notes ?? '',
-      }),
-    })),
-  };
-}
-
-// ── Concurrency limiter (imported from ./concurrency) ───────────────
 
 // ── Pipeline ─────────────────────────────────────────────────────────
 
 export async function runPipeline(options: GenerateOptions): Promise<void> {
-  const { topic, difficulty, minPages, maxPages, designDNA, languageModel, jobId } = options;
+  const { topic, difficulty, minPages, maxPages, designDNA, languageModel, jobId, educationLevel } = options;
 
   // Initialize audit
   createAudit(jobId, topic, difficulty);
@@ -236,7 +228,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
           updateJob(jobId, { progress: job.progress + 1 });
         }
       }, 10000); // +1% every 10s, up to 30%
-      planResult = await planOutline(topic, difficulty, minPages, maxPages, designDNA, languageModel);
+      planResult = await planOutline(topic, difficulty, minPages, maxPages, designDNA, languageModel, educationLevel);
       // Record planning LLM call (approximate from no direct access — logged in planning-agent)
       clearInterval(planningHeartbeat);
       planningHeartbeat = null;
@@ -254,7 +246,18 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
     endStep(jobId, 'planning', { totalPages: planResult.totalPages, sections: planResult.outline.sections.length });
 
     const outline = planResult.outline;
-    updateJob(jobId, { stage: 'planning', message: `大纲规划完成，共 ${outline.sections.length} 章节 ${planResult.totalPages} 页`, progress: 15, totalPages: planResult.totalPages });
+    const outlinePages = outline.sections.flatMap((s) =>
+      s.pages.map((p) => ({ pageNum: p.pageNum, title: p.title, type: p.type })),
+    );
+    // eslint-disable-next-line no-console
+    console.log(`[Pipeline:${jobId}] Planning done. outlinePages count=${outlinePages.length}, totalPages=${planResult.totalPages}`);
+    updateJob(jobId, {
+      stage: 'planning',
+      message: `大纲规划完成，共 ${outline.sections.length} 章节 ${planResult.totalPages} 页`,
+      progress: 15,
+      totalPages: planResult.totalPages,
+      outline: outlinePages,
+    });
 
     // ══ Step 2: Section Agents (concurrent, capped) ══
     startStep(jobId, 'sections', { sectionCount: outline.sections.length });
@@ -271,67 +274,115 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
 
       const sectionResults = await withConcurrencyLimit(
         outline.sections,
-        12,
+        4, // Reduced from 12 to avoid provider-side connection saturation / termination
         async (section, idx) => {
-          const result = await generateSectionContent(section, topic, difficulty, designDNA, languageModel);
+          const nextSectionTitle = outline.sections[idx + 1]?.title;
+          let result = await generateSectionContent(section, topic, difficulty, designDNA, languageModel, nextSectionTitle, educationLevel);
+          // Retry once on transient connection errors (terminated / timeout)
+          if (!result.success && result.error && /terminated|timeout|aborted|ECONNRESET|ETIMEDOUT/i.test(result.error)) {
+            log.warn(`[Pipeline:${jobId}] Section ${idx} "${section.title}" failed with "${result.error}", retrying once...`);
+            await new Promise((r) => setTimeout(r, 3000));
+            result = await generateSectionContent(section, topic, difficulty, designDNA, languageModel, nextSectionTitle, educationLevel);
+          }
           completedSections++;
+          const sectionPages = section.pages.map((p) => ({
+            pageNum: p.pageNum,
+            title: p.title || `第 ${p.pageNum} 页`,
+            type: p.type,
+          }));
+          const job = getJob(jobId);
+          const baseSlides = job?.completedSlides || [];
+          const sectionPageNums = new Set(sectionPages.map((s) => s.pageNum));
+          const mergedSlides = baseSlides.filter((s) => !sectionPageNums.has(s.pageNum)).concat(sectionPages);
+          mergedSlides.sort((a, b) => a.pageNum - b.pageNum);
+
           updateJob(jobId, {
             message: `章节内容：${completedSections}/${outline.sections.length} — 第 ${idx + 1} 章「${section.title}」${result.success ? '✓' : '✗ 降级'} `,
             progress: 20 + Math.round(completedSections / outline.sections.length * 20),
+            completedSlides: mergedSlides,
           });
           return result;
         },
-        600_000,
-        150,
+        900_000,
+        300, // Stagger start by 300ms to smooth out connection spikes
       );
 
       clearInterval(sectionsHeartbeat);
       sectionsHeartbeat = null;
       endStep(jobId, 'sections', { completedSections, totalSections: outline.sections.length });
 
-      // Allow failed sections to fall back to minimal content
+      // Strict: no fallback allowed — either all sections succeed or fail the pipeline
       const allContent: SectionOutput[] = [];
-      const fallbackSections: Array<{ index: number; title: string }> = [];
       for (let i = 0; i < sectionResults.length; i++) {
         const result = sectionResults[i];
-        if (result.success && result.output) {
-          allContent.push(result.output);
-        } else {
-          log.warn(`[Pipeline:${jobId}] Section ${i} "${outline.sections[i].title}" failed, using fallback`);
-          fallbackSections.push({ index: i, title: outline.sections[i].title });
-          allContent.push(buildFallbackSection(outline.sections[i]));
+        if (!result.success || !result.output) {
+          throw new Error(
+            `Section ${i} "${outline.sections[i].title}" failed: ${result.error || 'unknown error'}`,
+          );
         }
+        allContent.push(result.output);
       }
 
       // Flatten all pages
       const allPages = allContent.flatMap((s) => s.pages).sort((a, b) => a.pageNum - b.pageNum);
 
-      updateJob(jobId, { stage: 'pages_designing', message: `正在设计 ${allPages.length} 页幻灯片排版...`, progress: 42 });
+      updateJob(jobId, {
+        stage: 'pages_designing',
+        message: `正在设计 ${allPages.length} 页幻灯片排版...`,
+        progress: 42,
+        completedSlides: [],
+      });
 
       // ══ Step 3: Page Design Agents (concurrent, capped) ══
       startStep(jobId, 'page_design', { pageCount: allPages.length });
       // Track per-page completion for real progress feedback
       let designedPages = 0;
-      log.info(`[Pipeline:${jobId}] Starting page design for ${allPages.length} pages with concurrency=8 stagger=150ms`);
+      log.info(`[Pipeline:${jobId}] Starting page design for ${allPages.length} pages with concurrency=12 stagger=100ms`);
       const designResults = await withConcurrencyLimit(
         allPages,
-        8,
+        12,
         async (page) => {
+          // Mark current page being designed
+          updateJob(jobId, {
+            currentPage: {
+              pageNum: page.pageNum,
+              title: (page.content?.title as string) || `第 ${page.pageNum} 页`,
+              type: page.pageType,
+            },
+          });
+
           const designStart = Date.now();
           log.info(`[Pipeline:${jobId}] Designing page ${page.pageNum} (${page.pageType})`);
-          const result = await designPage(page.pageNum, page.pageType, page.content, allPages.length, designDNA, languageModel);
+          const result = await designPage(page.pageNum, page.pageType, page.content, allPages.length, designDNA, languageModel, educationLevel);
           const designDuration = Date.now() - designStart;
           log.info(`[Pipeline:${jobId}] Page ${page.pageNum} design done in ${designDuration}ms, success=${result.success}`);
           // Note: token info not directly available from designPage; would need to pass through
           recordLLMCall(jobId, `page_design_${page.pageNum}`, 'design-page', designDuration);
           designedPages++;
+
+          // Build completed slides up to this point
+          const job = getJob(jobId);
+          const baseSlides = job?.completedSlides || [];
+          const alreadyIn = new Set(baseSlides.map((s) => s.pageNum));
+          const newSlides = baseSlides.slice();
+          if (!alreadyIn.has(page.pageNum)) {
+            newSlides.push({
+              pageNum: page.pageNum,
+              title: (page.content?.title as string) || `第 ${page.pageNum} 页`,
+              type: page.pageType,
+            });
+            newSlides.sort((a, b) => a.pageNum - b.pageNum);
+          }
+
           updateJob(jobId, {
             message: `页面排版：${designedPages}/${allPages.length} — 第 ${page.pageNum} 页 (${page.pageType}) ${result.success ? '✓' : '✗ 降级'}`,
             progress: 42 + Math.round(designedPages / allPages.length * 28),
+            completedSlides: newSlides,
+            currentPage: undefined,
           });
           return { pageNum: page.pageNum, result };
         },
-        600_000,
+        900_000,
         150,
       );
       log.info(`[Pipeline:${jobId}] All page design completed. Failed: ${designResults.filter((dr) => !dr.result.success).length}`);
@@ -342,7 +393,10 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         const fallbackPages = fallbackDesigns.map((dr) => `第${dr.pageNum}页`).join(', ');
         log.warn(`[Pipeline:${jobId}] Pages using fallback layout: ${fallbackPages}`);
       }
-      const instructions: PageInstructions[] = designResults.map((dr) => dr.result.pageInstructions!);
+      // Safety: designPage should always return pageInstructions, but guard against future changes
+      const instructions: PageInstructions[] = designResults
+        .filter((dr) => dr.result.pageInstructions)
+        .map((dr) => dr.result.pageInstructions!);
 
       endStep(jobId, 'page_design', { designedPages, totalPages: allPages.length });
       updateJob(jobId, { stage: 'qa_reviewing', message: '正在质检：结构检查...', progress: 72 });
@@ -357,6 +411,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         allPages.length,
         languageModel,
         instructions,
+        educationLevel,
       );
 
       endStep(jobId, 'qa', { score: qaReport.totalScore, passed: qaReport.pass, issueCount: qaReport.issues.length });
@@ -400,26 +455,59 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
               });
             }
           } else if (issue.type === 'missing_formula') {
-            // Inject fallback formula into content and instructions
+            // Only inject formulas for page types that actually support them
             const page = allPages.find((p) => p.pageNum === issue.pageNum);
-            if (page) {
+            const formulaEligibleTypes = ['concept', 'case', 'formula', 'process'];
+            if (page && formulaEligibleTypes.includes(page.pageType)) {
               const content = page.content as Record<string, unknown>;
+              const fallbackLatex = (content.focus as string) || (content.notes as string) || '\\text{待补充公式}';
               if (!content.formulas && page.pageType !== 'formula') {
-                content.formulas = [{ label: '相关方程式', latex: '\\text{详见教材}' }];
+                content.formulas = [{ label: '相关方程式', latex: `\\text{${String(fallbackLatex).slice(0, 60)}}` }];
               }
               if (page.pageType === 'formula' && !content.mainFormula) {
-                content.mainFormula = '\\text{公式内容详见教材}';
+                content.mainFormula = `\\text{${String(fallbackLatex).slice(0, 60)}}`;
+              }
+              if (idx >= 0) {
+                // Inject a placeholder formula rendering into existing instructions
+                instructions[idx].instructions.push({
+                  op: 'addText',
+                  params: { text: '相关方程式', x: 1, y: 4.5, w: 11.3, h: 0.5, fontSize: 14, fontFace: designDNA.fonts.heading, color: designDNA.colors.textMuted, bold: true, align: 'left' },
+                });
+                instructions[idx].instructions.push({
+                  op: 'addFormula',
+                  params: { latex: '\\text{待补充公式}', x: 1, y: 5, w: 11.3, h: 1, fontSize: 16, color: designDNA.colors.textBody, align: 'center' },
+                });
               }
             }
+          } else if (issue.type === 'missing_title') {
+            const page = allPages.find((p) => p.pageNum === issue.pageNum);
+            const titleText = (page?.content?.title as string) || (page?.content?.slogan as string) || `第 ${issue.pageNum} 页`;
             if (idx >= 0) {
-              // Inject a placeholder formula rendering into existing instructions
-              instructions[idx].instructions.push({
-                op: 'addText',
-                params: { text: '相关方程式', x: 1, y: 4.5, w: 11.3, h: 0.5, fontSize: 14, fontFace: designDNA.fonts.heading, color: designDNA.colors.textMuted, bold: true, align: 'left' },
-              });
-              instructions[idx].instructions.push({
-                op: 'addFormula',
-                params: { latex: '\\text{详见教材}', x: 1, y: 5, w: 11.3, h: 1, fontSize: 16, color: designDNA.colors.textBody, align: 'center' },
+              const hasTitle = instructions[idx].instructions.some((inst) => inst.op === 'addText' && (inst.params as Record<string, unknown>)?.y === 0.5);
+              if (!hasTitle) {
+                instructions[idx].instructions.unshift({
+                  op: 'addText',
+                  params: { text: titleText, x: 1, y: 0.5, w: 11.3, h: 0.7, fontSize: 28, fontFace: designDNA.fonts.heading, color: designDNA.colors.textPrimary, bold: true, align: 'left', valign: 'middle' },
+                });
+              }
+            }
+          } else if (issue.type === 'orphan_instructions') {
+            // Remove instructions for pages that no longer exist in the outline
+            const orphanIdx = instructions.findIndex((x) => x.pageNum === issue.pageNum);
+            if (orphanIdx >= 0) {
+              log.warn(`Removing orphan instructions for page ${issue.pageNum}`);
+              instructions.splice(orphanIdx, 1);
+            }
+          } else if (issue.type === 'duplicate_card_desc') {
+            // Deduplicate cards in content (best-effort)
+            const page = allPages.find((p) => p.pageNum === issue.pageNum);
+            if (page && Array.isArray(page.content.cards)) {
+              const seen = new Set<string>();
+              page.content.cards = (page.content.cards as Array<{ desc?: string }>).filter((c) => {
+                const key = c.desc?.trim() || '';
+                if (!key || seen.has(key)) return false;
+                seen.add(key);
+                return true;
               });
             }
           }
@@ -439,9 +527,13 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
       pres.title = topic;
 
       const sortedInstructions = instructions.sort((a, b) => a.pageNum - b.pageNum);
+      const allFormulas: Array<NonNullable<import('./instruction-executor').ExecutionResult['formulas']>[number]> = [];
       for (const page of sortedInstructions) {
         const slide = pres.addSlide();
-        instructionExecutor.execute(slide, pres, page.instructions, page.pageNum);
+        const result = await instructionExecutor.execute(slide, pres, page.instructions, page.pageNum);
+        if (result.formulas && result.formulas.length > 0) {
+          allFormulas.push(...result.formulas);
+        }
       }
 
       const safeTopic = topic.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '_').slice(0, 20);
@@ -455,15 +547,21 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         throw new Error(`PPTX 文件写入失败: ${writeMsg}`);
       }
 
+      // Write sidecar JSON for formula preview synthesis
+      const sidecarPath = pptxPath.replace('.pptx', '.sidecar.json');
+      if (allFormulas.length > 0) {
+        await fs.writeFile(sidecarPath, JSON.stringify({ formulas: allFormulas }, null, 2));
+      }
+
       const pptxUrl = `/temp/pptx/${fileName}`;
 
-      endStep(jobId, 'merge_render', { fileName, pageCount: instructions.length });
+      endStep(jobId, 'merge_render', { fileName, pageCount: instructions.length, formulaCount: allFormulas.length });
 
       // ══ Step 5: Preview PNGs — per-slide via python-pptx + LibreOffice ══
       startStep(jobId, 'preview_png');
       updateJob(jobId, { stage: 'merging', message: '正在生成预览图...', progress: 85 });
 
-      const previewResult = await generatePreviewFromPptx(pptxUrl);
+      const previewResult = await generatePreviewFromPptx(pptxUrl, undefined, sidecarPath);
       const previewImages: string[] = previewResult.success ? previewResult.slideImages : [];
 
       endStep(jobId, 'preview_png', { previewCount: previewImages.length });
@@ -484,6 +582,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         fileName,
         previewImages: previewImages.length > 0 ? previewImages : undefined,
         qaReport,
+        finishedAt: Date.now(),
       });
 
       log.info(`[Pipeline:${jobId}] complete: ${pptxUrl} (${instructions.length} pages)`);
@@ -493,10 +592,19 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
 
 
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const rawMsg = err instanceof Error ? err.message : String(err);
+    // Friendly error message for common failure modes
+    const msg = rawMsg.includes('Section') && rawMsg.includes('failed')
+      ? rawMsg
+      : rawMsg.includes('timeout') || rawMsg.includes('超时')
+        ? '生成超时，请稍后重试。如果问题持续，请减少页数或选择较简单的主题。'
+        : rawMsg.includes('PPTX')
+          ? rawMsg
+          : `生成失败: ${rawMsg}`;
     errorStep(jobId, 'pipeline', msg);
     finalizeAudit(jobId, 'error', { error: msg, designDNA: { styleName: designDNA.styleName, mood: designDNA.mood, density: designDNA.decoration.density, layoutType: designDNA.layoutType } });
     log.error(`[Pipeline:${jobId}] failed: ${msg}`);
+    logToFile('ERROR', 'Pipeline', `[${jobId}] failed: ${msg}`);
     updateJob(jobId, { stage: 'done', progress: 0, error: msg });
   }
 }

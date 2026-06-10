@@ -1,6 +1,6 @@
 'use client';
 
-import { ElementTypes, type PPTElement } from '@/lib/types/slides';
+import { ElementTypes, type PPTElement, type PPTLineElement } from '@/lib/types/slides';
 import { useMemo } from 'react';
 
 import { BaseImageElement } from '../components/element/ImageElement/BaseImageElement';
@@ -56,14 +56,46 @@ export function ScreenElement({ elementInfo, elementIndex, animate }: ScreenElem
     return null;
   }
 
+  const isAnimating = animate;
+
+  const elevationShadow = useMemo(() => {
+    switch (elementInfo.type) {
+      case ElementTypes.TEXT:
+        return '0 1px 3px rgba(0,0,0,0.08)';
+      case ElementTypes.IMAGE:
+      case ElementTypes.SHAPE:
+      case ElementTypes.CHART:
+      case ElementTypes.TABLE:
+        return '0 4px 12px rgba(0,0,0,0.12)';
+      case ElementTypes.VIDEO:
+        return '0 8px 24px rgba(0,0,0,0.16)';
+      case ElementTypes.LINE:
+        return undefined;
+      default:
+        return undefined;
+    }
+  }, [elementInfo.type]);
+
+  const gpuTransform = elementInfo.type === ElementTypes.VIDEO || elementInfo.type === ElementTypes.CHART
+    ? 'translateZ(0)'
+    : undefined;
+
   return (
     <div
-      className="screen-element"
+      className={`screen-element absolute ${isAnimating ? 'animate-fade-in-up' : ''}`}
       id={`screen-element-${elementInfo.id}`}
       style={{
         zIndex: elementIndex,
+        left: `${elementInfo.left}px`,
+        top: `${elementInfo.top}px`,
+        width: `${elementInfo.width}px`,
+        height: `${'height' in elementInfo ? elementInfo.height : Math.abs((elementInfo as PPTLineElement).end[1] - (elementInfo as PPTLineElement).start[1]) || 24}px`,
         color: theme.fontColor,
         fontFamily: theme.fontName,
+        animationDelay: isAnimating ? `${elementIndex * 80}ms` : undefined,
+        boxShadow: elevationShadow,
+        willChange: isAnimating ? 'transform' : undefined,
+        transform: gpuTransform,
       }}
     >
       <CurrentElementComponent elementInfo={elementInfo} animate={animate} />
