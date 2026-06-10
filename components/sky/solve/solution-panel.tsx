@@ -54,6 +54,7 @@ function isDuplicateContent(a: string, b: string): boolean {
  * Remove steps whose content is largely duplicated in the solution text.
  * This prevents the user from seeing the same derivation twice — once in
  * the "解题详解" block and again in the "步骤" tab.
+ * Always keeps at least the first step so the tab is never empty.
  */
 function deduplicateSteps(
   solution: string,
@@ -64,14 +65,14 @@ function deduplicateSteps(
   const normSolution = normalizeForCompare(solution);
   if (normSolution.length < 20) return steps; // too short to compare
 
-  return steps.filter((step) => {
+  const kept = steps.filter((step, index) => {
+    // Always keep the first step — never leave the tab empty
+    if (index === 0) return true;
+
     const normStep = normalizeForCompare(step.content);
     if (normStep.length < 10) return true; // keep very short steps
 
     // Check bidirectional overlap:
-    // 1. Step content is a substring of solution
-    // 2. Solution is a substring of step content
-    // 3. 80%+ of step chars appear in solution (order-independent)
     if (normSolution.includes(normStep)) return false;
     if (normStep.includes(normSolution)) return false;
 
@@ -81,6 +82,8 @@ function deduplicateSteps(
 
     return true;
   });
+
+  return kept;
 }
 
 export function SolutionPanel({ output, className }: SolutionPanelProps) {

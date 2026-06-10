@@ -54,36 +54,36 @@ const AGENT_SYSTEM_PROMPTS: Record<SolverAgentType, string> = {
 
 输出分为两部分：
 1. solution字段：完整详细的解题推导过程，包含思路分析、公式推导、计算过程等
-2. steps数组：对solution的概括简化，每步用一句话总结关键动作，不要复述solution的细节
+2. steps数组：至少3-5个步骤，每步描述一个关键解题动作
 
-JSON格式：{"solution":"完整详细的推导过程","answer":"仅答案","confidence":0.9,"steps":[{"label":"步骤1","content":"一句话概括该步关键动作","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[...]}
+JSON格式：{"solution":"完整详细的推导过程","answer":"仅答案","confidence":0.9,"steps":[{"label":"步骤1","content":"该步的关键动作和中间结果","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[...]}
 ${KNOWLEDGE_POINTS_INSTRUCTION}
 ${ANSWER_RULE}
 ${LATEX_RULES}
-【重要】steps是对solution的概括，每步content要简洁，不能照抄solution内容。例如solution详细推导了方程求解，steps只需写"列出方程"→"化简方程"→"求解得x=3"。`,
+【重要】steps至少3步，每步包含关键动作和对应的中间结果/公式。例如：步骤1审题列式→步骤2代入化简→步骤3求解计算→步骤4验证结论。`,
 
   science: `你是理科解题专家（数学/物理/化学/生物）。用严谨科学方法分析，逐步推导。
 
 输出分为两部分：
 1. solution字段：完整详细的解题推导过程，包含思路分析、公式推导、计算过程等
-2. steps数组：对solution的概括简化，每步用一句话总结关键动作，不要复述solution的细节
+2. steps数组：至少3-5个步骤，每步描述一个关键解题动作和中间结果
 
-JSON格式：{"solution":"完整详细的推导过程","answer":"仅答案","confidence":0.9,"steps":[{"label":"步骤1","content":"一句话概括该步关键动作","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[...]}
+JSON格式：{"solution":"完整详细的推导过程","answer":"仅答案","confidence":0.9,"steps":[{"label":"步骤1","content":"该步的关键动作和中间结果","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[...]}
 ${KNOWLEDGE_POINTS_INSTRUCTION}
 ${ANSWER_RULE}
 ${LATEX_RULES}
-【重要】steps是对solution的概括，每步content要简洁，不能照抄solution内容。例如solution详细推导了方程求解，steps只需写"列出方程"→"化简方程"→"求解得x=3"。`,
+【重要】steps至少3步，每步包含关键动作和对应的中间结果/公式。例如：步骤1审题列式→步骤2代入化简→步骤3求解计算→步骤4验证结论。`,
 
   humanities: `你是文科解题专家（语文/历史/政治/地理）。深入分析题目背景，给出有深度的解答。
 
 输出分为两部分：
 1. solution字段：完整详细的分析过程，包含背景分析、论据推理、结论得出等
-2. steps数组：对solution的概括简化，每步用一句话总结关键动作，不要复述solution的细节
+2. steps数组：至少3-5个步骤，每步描述一个关键分析动作
 
-JSON格式：{"solution":"完整详细的分析过程","answer":"仅答案如A/B/C/D或关键词","confidence":0.9,"steps":[{"label":"步骤1","content":"一句话概括该步关键动作","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[...]}
+JSON格式：{"solution":"完整详细的分析过程","answer":"仅答案如A/B/C/D或关键词","confidence":0.9,"steps":[{"label":"步骤1","content":"该步的关键分析动作和结论","keyPoints":["..."]}],"knowledgePoints":[...],"similarQuestions":[...]}
 ${KNOWLEDGE_POINTS_INSTRUCTION}
 answer字段【严禁】包含解释/分析/"所以"/"因此"等，只写最终答案选项或关键词。confidence为0-1。
-【重要】steps是对solution的概括，每步content要简洁，不能照抄solution内容。`,
+【重要】steps至少3步，每步包含关键分析动作和对应的结论。`,
 
   grading: `你是一个作业批改专家。请对比标准答案和用户答案，判断对错并分析错因。
 

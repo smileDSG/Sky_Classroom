@@ -800,9 +800,20 @@ function normalizeEnvironments(text: string): string {
 function fixCommonLatexErrors(text: string): string {
   let result = text;
   result = normalizeEnvironments(result);
+  // Fix \sqrt followed by letters: \sqrt14x → \sqrt{14x}
   result = result.replace(
     /\\sqrt(?![\[{])([a-zA-Z]+)/g,
     (_m, letters: string) => `\\sqrt{${letters}}`,
+  );
+  // Fix \sqrt followed by digits: \sqrt14 → \sqrt{14}
+  result = result.replace(
+    /\\sqrt(?![\[{])(\d+(?:\.\d+)?)/g,
+    (_m, digits: string) => `\\sqrt{${digits}}`,
+  );
+  // Fix \sqrt}... (misplaced brace from enclosing \frac etc.): \sqrt}14 → \sqrt{14}
+  result = result.replace(
+    /\\sqrt\}([a-zA-Z0-9]+)/g,
+    (_m, content: string) => `\\sqrt{${content}}`,
   );
   result = result.replace(
     /\\(cdot|times|div|pm|mp|star|circ|bullet)([a-zA-Z])/g,
