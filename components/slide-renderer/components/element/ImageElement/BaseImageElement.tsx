@@ -51,12 +51,11 @@ export function BaseImageElement({ elementInfo }: BaseImageElementProps) {
 
   return (
     <div
-      className="element-content absolute"
+      className="element-content w-full h-full overflow-hidden"
       style={{
-        top: `${elementInfo.top}px`,
-        left: `${elementInfo.left}px`,
         width: `${elementInfo.width}px`,
         height: `${elementInfo.height}px`,
+        borderRadius: '8px',
       }}
     >
       <div className="w-full h-full" style={{ transform: `rotate(${elementInfo.rotate}deg)` }}>

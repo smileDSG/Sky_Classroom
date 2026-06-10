@@ -18,6 +18,7 @@ import type {
 } from '@/lib/types/slides';
 import type { Scene, SlideContent } from '@/lib/types/stage';
 import type { SpeechAction } from '@/lib/types/action';
+import type { TemplateSlideData, TemplateElement, PPTDManifest } from '@/lib/templates/pptd-types';
 import { getElementRange, getLineElementPath, getTableSubThemeColor } from '@/lib/utils/element';
 import { type AST, toAST } from '@/lib/export/html-parser';
 import { type SvgPoints, toPoints, getSvgPathRange } from '@/lib/export/svg-path-parser';
@@ -374,6 +375,7 @@ async function buildPptxBlob(
   else if (viewportRatio === 0.75) pptx.layout = 'LAYOUT_4x3';
   else pptx.layout = 'LAYOUT_16x9';
 
+  log.info(`[PPTX Export] Starting export of ${slides.length} slides`);
   for (let slideIdx = 0; slideIdx < slides.length; slideIdx++) {
     const slide = slides[slideIdx];
     const pptxSlide = pptx.addSlide();
@@ -421,9 +423,34 @@ async function buildPptxBlob(
       }
     }
 
+    // ── Template-driven rendering ──
+    if (slide.templateData) {
+      log.info(`[PPTX Export] Slide ${slideIdx + 1}: template-driven (${slide.templateData.templateName}/${slide.templateData.pageName}), ${slide.templateData.page.elements.length} elements`);
+      applyTemplateBackground(pptxSlide, slide.templateData);
+      let convertedCount = 0;
+      let skippedCount = 0;
+      for (const el of slide.templateData.page.elements) {
+        try {
+          const result = convertTemplateElement(pptxSlide, el, slide.templateData.theme);
+          if (result === undefined) {
+            skippedCount++;
+            log.info(`[PPTX Export]   Skipped element ${el.elementId} (${el.elementType}) - no content`);
+          } else {
+            convertedCount++;
+          }
+        } catch (err) {
+          skippedCount++;
+          log.warn(`[PPTX Export]   Error element ${el.elementId} (${el.elementType}):`, err);
+        }
+      }
+      log.info(`[PPTX Export] Slide ${slideIdx + 1}: converted=${convertedCount}, skipped=${skippedCount}`);
+      continue;
+    }
+
+    log.info(`[PPTX Export] Slide ${slideIdx + 1}: legacy path, elements=${slide.elements?.length ?? 0}`);
     if (!slide.elements) continue;
 
-    // ── Elements ──
+    // ── Legacy Elements ──
     for (const el of slide.elements) {
       // ── TEXT ──
       if (el.type === 'text') {
@@ -1203,4 +1230,197 @@ export function useExportPPTX() {
   ]);
 
   return { exporting, exportPPTX, exportResourcePack };
+}
+
+// ── Template-to-PPTX helpers (mirrors course-exporter.ts) ──
+
+const TEMPLATE_SCALE = 128; // 1280px = 10inch → 1px = 1/128 inch
+
+function resolveTemplateColor(
+  color: string | undefined,
+  theme: PPTDManifest['theme'] | undefined,
+  fallback: string,
+): FormatColor {
+  let resolved = fallback;
+  if (color) {
+    if (color.startsWith('$')) {
+      const key = color.slice(1);
+      resolved = theme?.colors?.[key] || fallback;
+    } else {
+      resolved = color;
+    }
+  }
+  return formatColor(resolved);
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .trim();
+}
+
+function applyTemplateBackground(
+  pptxSlide: pptxgen.Slide,
+  templateData: TemplateSlideData,
+) {
+  const bg = templateData.page.background;
+  if (!bg) return;
+
+  if (bg.type === 'solid' && bg.color) {
+    const c = resolveTemplateColor(bg.color, templateData.theme, '#FFFFFF');
+    pptxSlide.background = { color: c.color, transparency: (1 - c.alpha) * 100 };
+  } else if (bg.type === 'gradient' && bg.stops && bg.stops.length > 0) {
+    // pptxgenjs slide bg doesn't support gradients; use first stop as fallback
+    const c = resolveTemplateColor(bg.stops[0].color, templateData.theme, '#FFFFFF');
+    pptxSlide.background = { color: c.color, transparency: (1 - c.alpha) * 100 };
+  }
+}
+
+function convertTemplateElement(
+  pptxSlide: pptxgen.Slide,
+  el: TemplateElement,
+  theme: PPTDManifest['theme'],
+): 'converted' | undefined {
+  const [x, y, w, h] = el.bounds;
+  const inchX = x / TEMPLATE_SCALE;
+  const inchY = y / TEMPLATE_SCALE;
+  const inchW = w / TEMPLATE_SCALE;
+  const inchH = h / TEMPLATE_SCALE;
+
+  switch (el.elementType) {
+    case 'text': {
+      const rawText = el.content?.text || '';
+      const text = stripHtml(rawText);
+      if (!text) return undefined;
+
+      const colorC = resolveTemplateColor(el.content?.color, theme, '#333333');
+      const align = (el.content?.align?.[0] as 'left' | 'center' | 'right') || 'left';
+      const valign = (el.content?.align?.[1] as 'top' | 'middle' | 'bottom') || 'top';
+
+      let fontSize = 14;
+      const styleRef = el.content?.style;
+      if (styleRef && styleRef.startsWith('$') && theme?.textStyles) {
+        const styleName = styleRef.slice(1);
+        const style = theme.textStyles[styleName];
+        if (style) {
+          fontSize = style.fontSize ? Math.round(style.fontSize * 0.6) : 14;
+        }
+      }
+
+      pptxSlide.addText(text, {
+        x: inchX,
+        y: inchY,
+        w: inchW,
+        h: inchH,
+        fontSize,
+        fontFace: DEFAULT_FONT_FAMILY,
+        color: colorC.color,
+        align,
+        valign,
+        wrap: el.content?.wrap !== false,
+      });
+      return 'converted';
+    }
+
+    case 'shape': {
+      const shapeType =
+        el.shapeName === 'ellipse'
+          ? 'ellipse'
+          : el.shapeName === 'roundRect'
+            ? 'roundRect'
+            : 'rect';
+      const fillC = resolveTemplateColor(el.fill?.color, theme, '#5b9bd5');
+      const lineC = el.border
+        ? resolveTemplateColor(el.border.color, theme, '#cccccc')
+        : undefined;
+      const shadowC = el.shadow
+        ? resolveTemplateColor(el.shadow.color, theme, '#000000')
+        : undefined;
+
+      const shapeOpts: pptxgen.ShapeProps = {
+        x: inchX,
+        y: inchY,
+        w: inchW,
+        h: inchH,
+        fill: { color: fillC.color, transparency: (1 - fillC.alpha) * 100 },
+      };
+      if (el.border && lineC) {
+        shapeOpts.line = {
+          color: lineC.color,
+          transparency: (1 - lineC.alpha) * 100,
+          width: el.border.width / TEMPLATE_SCALE,
+        };
+      }
+      if (el.shadow && shadowC) {
+        shapeOpts.shadow = {
+          type: 'outer',
+          blur: el.shadow.blur / TEMPLATE_SCALE,
+          color: shadowC.color,
+          opacity: shadowC.alpha,
+          offset: el.shadow.offset[0] / TEMPLATE_SCALE,
+          angle: 45,
+        };
+      }
+
+      pptxSlide.addShape(shapeType as never, shapeOpts as never);
+      return 'converted';
+    }
+
+    case 'line': {
+      const lineC = el.border
+        ? resolveTemplateColor(el.border.color, theme, '#333333')
+        : formatColor('#333333');
+      pptxSlide.addShape('line' as never, {
+        x: inchX,
+        y: inchY,
+        w: inchW,
+        h: inchH,
+        line: {
+          color: lineC.color,
+          transparency: (1 - lineC.alpha) * 100,
+          width: el.border ? el.border.width / TEMPLATE_SCALE : 1,
+        },
+      } as never);
+      return 'converted';
+    }
+
+    case 'image': {
+      if (el.src && !el.src.startsWith('placeholder:')) {
+        pptxSlide.addImage({
+          path: el.src,
+          x: inchX,
+          y: inchY,
+          w: inchW,
+          h: inchH,
+        });
+        return 'converted';
+      }
+      return undefined;
+    }
+
+    case 'icon': {
+      if (el.iconName) {
+        const iconC = resolveTemplateColor(el.fill?.color, theme, '#94a3b8');
+        pptxSlide.addText(`[${el.iconName}]`, {
+          x: inchX,
+          y: inchY,
+          w: inchW,
+          h: inchH,
+          fontSize: 10,
+          fontFace: DEFAULT_FONT_FAMILY,
+          color: iconC.color,
+          align: 'center',
+          valign: 'middle',
+        });
+        return 'converted';
+      }
+      return undefined;
+    }
+
+    default:
+      log.warn(`Unsupported template element type: ${(el as { elementType: string }).elementType}`);
+      return undefined;
+  }
 }

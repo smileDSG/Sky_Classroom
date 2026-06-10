@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Slide } from '@/lib/types/slides';
 import { useSlideBackgroundStyle } from '@/lib/hooks/use-slide-background-style';
 import { ThumbnailElement } from './ThumbnailElement';
+import { TemplateRenderer } from '../../TemplateRenderer';
 
 interface ThumbnailSlideProps {
   /** Slide data */
@@ -59,22 +60,40 @@ export function ThumbnailSlide({
         height: `${size * viewportRatio}px`,
       }}
     >
-      <div
-        className="elements origin-top-left"
-        style={{
-          width: `${viewportSize}px`,
-          height: `${viewportSize * viewportRatio}px`,
-          transform: `scale(${scale})`,
-        }}
-      >
-        {/* Background */}
-        <div className="background w-full h-full bg-center absolute" style={backgroundStyle} />
+      {slide.templateData ? (
+        <div
+          className="elements relative origin-top-left"
+          style={{
+            width: `${size}px`,
+            height: `${size * viewportRatio}px`,
+            transform: `scale(${size / 1280})`,
+            transformOrigin: 'top left',
+          }}
+        >
+          <TemplateRenderer
+            page={slide.templateData.page}
+            manifestTheme={slide.templateData.theme}
+            scale={size / 1280}
+          />
+        </div>
+      ) : (
+        <div
+          className="elements relative origin-top-left"
+          style={{
+            width: `${viewportSize}px`,
+            height: `${viewportSize * viewportRatio}px`,
+            transform: `scale(${scale})`,
+          }}
+        >
+          {/* Background */}
+          <div className="background w-full h-full bg-center absolute" style={backgroundStyle} />
 
-        {/* Render all elements */}
-        {slide.elements.map((element, index) => (
-          <ThumbnailElement key={element.id} elementInfo={element} elementIndex={index + 1} />
-        ))}
-      </div>
+          {/* Render all elements */}
+          {slide.elements.map((element, index) => (
+            <ThumbnailElement key={element.id} elementInfo={element} elementIndex={index + 1} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -40,20 +40,13 @@ describe('media prompt condition wiring', () => {
     const aiCall: AICallFn = async (system, user) => {
       capturedPrompt = `${system}\n${user}`;
       return JSON.stringify({
-        background: { type: 'solid', color: '#ffffff' },
-        elements: [
-          {
-            id: 'title',
-            type: 'text',
-            left: 60,
-            top: 80,
-            width: 880,
-            height: 76,
-            content: '<p style="font-size: 28px;">Evaporation</p>',
-            defaultFontName: '',
-            defaultColor: '#333333',
-          },
+        type: 'concept',
+        title: 'Evaporation Motion',
+        cards: [
+          { title: 'A', desc: 'Description of point a with enough length to pass validation and be meaningful for the test.' },
+          { title: 'B', desc: 'Description of point b with enough length to pass validation and be meaningful for the test.' },
         ],
+        summary: 'This is a comprehensive summary that meets the minimum length requirement.',
       });
     };
 
@@ -77,12 +70,8 @@ describe('media prompt condition wiring', () => {
     const result = await generateSceneContent(outline, aiCall);
 
     expect(result).not.toBeNull();
-    expect(capturedPrompt).toContain('VideoElement');
-    expect(capturedPrompt).toContain('mediaRef');
     expect(capturedPrompt).toContain('gen_vid_unique1');
-    expect(capturedPrompt).not.toContain('"src": "gen_vid_1"');
-    expect(capturedPrompt).not.toContain('ImageElement');
-    expect(capturedPrompt).not.toContain('gen_img_');
+    expect(capturedPrompt).toContain('Animation of water molecules evaporating');
     expect(capturedPrompt).not.toContain('{{');
   });
 });

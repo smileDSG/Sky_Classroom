@@ -49,6 +49,8 @@ export interface SlideGenerationOptions {
   personaPrompt?: string;
   /** Selected theme for the generated deck */
   themeId?: PptxThemeId;
+  /** Target audience education level from user personalization settings */
+  educationLevel?: string;
 }
 
 export interface SlideGenerationResult {

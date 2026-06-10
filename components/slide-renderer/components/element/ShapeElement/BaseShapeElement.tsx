@@ -37,8 +37,9 @@ export function BaseShapeElement({ elementInfo }: BaseShapeElementProps) {
         style={{ transform: `rotate(${elementInfo.rotate}deg)` }}
       >
         <div
-          className="element-content relative w-full h-full"
+          className="element-content relative w-full h-full overflow-hidden"
           style={{
+            borderRadius: '8px',
             opacity: elementInfo.opacity,
             filter: shadowStyle ? `drop-shadow(${shadowStyle})` : '',
             transform: flipStyle,

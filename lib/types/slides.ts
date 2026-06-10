@@ -1,3 +1,5 @@
+import type { TemplateSlideData } from '@/lib/templates/pptd-types';
+
 export const enum ShapePathFormulasKeys {
   ROUND_RECT = 'roundRect',
   ROUND_RECT_DIAGONAL = 'roundRectDiagonal',
@@ -820,6 +822,8 @@ export interface Slide {
   turningMode?: TurningMode;
   sectionTag?: SectionTag;
   type?: SlideType;
+  templateData?: TemplateSlideData;
+  layoutVersion?: 1 | 2;
 }
 
 /**

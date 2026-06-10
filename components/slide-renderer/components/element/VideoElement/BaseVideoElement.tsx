@@ -111,13 +111,12 @@ export function BaseVideoElement({ elementInfo }: BaseVideoElementProps) {
 
   return (
     <div
-      className="element-content absolute"
+      className="element-content w-full h-full"
       data-video-element
       style={{
-        top: `${elementInfo.top}px`,
-        left: `${elementInfo.left}px`,
         width: `${elementInfo.width}px`,
         height: `${elementInfo.height}px`,
+        borderRadius: '8px',
       }}
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
