@@ -211,7 +211,19 @@
       "Read(//tmp/**)",
       "Bash(grep -o '\"text\":\"[^\"]*\"' /tmp/demo-output.html | head -20)",
       "Bash(cd d:\\\\\\\\github\\\\\\\\OpenMAIC-firsted-team-)",
-      "Bash(xargs -I{} bash -c 'if [ {} -eq 2 ]; then echo \"Only pre-existing fontSize errors \\(OK\\)\"; else echo \"Unexpected errors\"; fi')"
+      "Bash(xargs -I{} bash -c 'if [ {} -eq 2 ]; then echo \"Only pre-existing fontSize errors \\(OK\\)\"; else echo \"Unexpected errors\"; fi')",
+      "Bash(Select-String *)",
+      "Bash(Select-Object -First 25)",
+      "Bash(corepack --version)",
+      "Bash(cat C:\\\\\\\\Users\\\\\\\\lenovo\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\E--01-Work-sky-classroom\\\\\\\\7f48bb6f-3391-4979-8713-9e3d63a54f07\\\\\\\\tasks\\\\\\\\b3kl6e7lp.output)",
+      "Bash(findstr :3000)",
+      "Bash(findstr LISTENING)",
+      "Bash(findstr :3001)",
+      "Bash(npm list *)",
+      "mcp__plugin_ecc_playwright__browser_navigate",
+      "Bash(timeout 5)",
+      "Bash(findstr \":3001\")",
+      "Bash(findstr \"300[01]\")"
     ]
   }
 }

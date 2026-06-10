@@ -83,7 +83,7 @@ export const ProsemirrorEditor = forwardRef<ProsemirrorEditorRef, ProsemirrorEdi
     const handleInput = useMemo(
       () =>
         debounce(
-          (isHandleHistory = false) => {
+          (isHandleHistory: boolean = false) => {
             if (!editorView.current) return;
             if (
               value.replace(/ style=""/g, '') ===

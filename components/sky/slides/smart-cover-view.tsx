@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback } from 'react';
-import type { DesignDNA } from '@/lib/slides/agent/design-dna';
+import type { DesignDNA, LayoutType } from '@/lib/slides/agent/design-dna';
 import type { Density } from '@/lib/slides/hooks/use-cover-draft';
 import CoverSVGRenderer from './cover-svg-renderer';
 import { StyleLabPanel } from './style-lab-panel';
@@ -16,7 +16,7 @@ interface SmartCoverViewProps {
   onRefresh: () => void;
   onShowGallery: () => void;
   onUpdatePalette: (paletteId: string) => void;
-  onUpdateLayout: (layoutType: DesignDNA['layoutType']) => void;
+  onUpdateLayout: (layoutType: LayoutType) => void;
   onUpdateFont: (fontId: string) => void;
   onUpdateDensity: (density: Density) => void;
 }
@@ -97,7 +97,8 @@ export function SmartCoverView({
             <div
               className="absolute inset-0 z-20 pointer-events-none animate-light-sweep"
               style={{
-                backgroundImage: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)',
+                backgroundImage:
+                  'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)',
                 backgroundSize: '200% 100%',
               }}
             />
@@ -128,7 +129,12 @@ export function SmartCoverView({
             {draftDNA.styleName}
           </span>
           <span className="text-xs text-slate-400 dark:text-gray-500">
-            {draftDNA.mood} · {draftDNA.decoration.density === 'sparse' ? '简约' : draftDNA.decoration.density === 'moderate' ? '标准' : '丰富'}
+            {draftDNA.mood} ·{' '}
+            {draftDNA.decoration.density === 'sparse'
+              ? '简约'
+              : draftDNA.decoration.density === 'moderate'
+                ? '标准'
+                : '丰富'}
           </span>
         </div>
       </div>
@@ -136,29 +142,53 @@ export function SmartCoverView({
       {/* Action buttons */}
       <div className="mt-6 flex items-center gap-3">
         <GlowButton onClick={onConfirm} accent={accentColor}>
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
           确认生成课件
         </GlowButton>
 
         <OutlineButton onClick={onRefresh}>
-          <svg className="h-4 w-4 transition-transform duration-500 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <svg
+            className="h-4 w-4 transition-transform duration-500 group-hover:rotate-180"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
           换一换
         </OutlineButton>
 
         <OutlineButton onClick={onToggleStyleLab} active={showStyleLab}>
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+            />
           </svg>
           {showStyleLab ? '收起调整' : '手动调整'}
         </OutlineButton>
 
-        <GhostButton onClick={onShowGallery}>
-          查看更多风格
-        </GhostButton>
+        <GhostButton onClick={onShowGallery}>查看更多风格</GhostButton>
       </div>
 
       {/* StyleLab Panel */}
@@ -173,13 +203,20 @@ export function SmartCoverView({
           onCancel={onToggleStyleLab}
         />
       )}
-
     </div>
   );
 }
 
 /** Primary CTA with dynamic glow */
-function GlowButton({ children, onClick, accent }: { children: React.ReactNode; onClick: () => void; accent: string }) {
+function GlowButton({
+  children,
+  onClick,
+  accent,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  accent: string;
+}) {
   return (
     <button
       onClick={onClick}
@@ -196,7 +233,15 @@ function GlowButton({ children, onClick, accent }: { children: React.ReactNode; 
 }
 
 /** Secondary outline button */
-function OutlineButton({ children, onClick, active }: { children: React.ReactNode; onClick: () => void; active?: boolean }) {
+function OutlineButton({
+  children,
+  onClick,
+  active,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  active?: boolean;
+}) {
   return (
     <button
       onClick={onClick}

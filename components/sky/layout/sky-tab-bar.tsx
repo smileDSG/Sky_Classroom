@@ -3,16 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Star, Brain, TrendingUp, Feather, Globe, BookOpen } from 'lucide-react';
+import { Star, Brain, TrendingUp, Feather, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { label: string; href: string; icon: typeof Star; badge?: number }[] = [
+  { label: '天穹授课', href: '/', icon: GraduationCap },
   { label: '摘星锦囊', href: '/sky', icon: Star },
   { label: '云端智囊', href: '/sky/cloud-mind', icon: Brain },
   { label: '天梯工坊', href: '/sky/learning', icon: TrendingUp },
   { label: '云翼助手', href: '/sky/assistant', icon: Feather },
-  { label: '学情分析', href: '/sky/student', icon: Globe },
-  { label: '智能授课', href: '/sky/teaching', icon: BookOpen },
 ];
 
 export function SkyTabBar() {
@@ -22,7 +21,9 @@ export function SkyTabBar() {
     <nav className="relative flex items-center rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-1.5 border border-slate-200/40 dark:border-slate-700/30 shadow-[0_2px_16px_-4px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_16px_-4px_rgba(0,0,0,0.2)]">
       {NAV_ITEMS.map((item) => {
         let isActive: boolean;
-        if (item.href === '/sky') {
+        if (item.href === '/') {
+          isActive = pathname === '/';
+        } else if (item.href === '/sky') {
           isActive = pathname === '/sky';
         } else {
           isActive = pathname.startsWith(item.href);

@@ -54,7 +54,7 @@ export default function SlidesPage() {
   const difficulty = ['junior', 'senior', 'college'].includes(
     generationOptions?.difficulty as string,
   )
-    ? generationOptions.difficulty
+    ? generationOptions.difficulty!
     : 'senior';
 
   // Ephemeral UI state

@@ -1,0 +1,425 @@
+{
+  "id": "8xJzdhafke",
+  "status": "awaiting_review",
+  "step": "generating_outlines",
+  "progress": 30,
+  "message": "大纲已生成，等待审阅",
+  "createdAt": "2026-06-10T13:47:08.915Z",
+  "updatedAt": "2026-06-10T13:47:33.709Z",
+  "inputSummary": {
+    "requirementPreview": "fastapi\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-10T13:47:08.931Z",
+  "totalScenes": 9,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "FastAPI 简介",
+        "description": "概述 FastAPI 框架是什么、它的核心优势以及适用场景，帮助学习者建立初步认知。",
+        "keyPoints": [
+          "FastAPI 是一个用于构建 Web API 的现代、高性能 Python 框架",
+          "基于 Python 3.6+ 的类型提示（Type Hints）自动生成 API 文档",
+          "核心优势：高性能（媲美 Node.js/Go）、自动校验、自动文档、异步支持",
+          "适合构建 RESTful API、微服务以及需要高性能 API 的应用场景"
+        ],
+        "teachingObjective": "了解 FastAPI 的定位和核心特性",
+        "estimatedDuration": 150,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "环境准备与第一个应用",
+        "description": "指导学习者安装 FastAPI 和 Uvicorn，并编写第一个 Hello World API 程序。",
+        "keyPoints": [
+          "使用 pip install fastapi uvicorn 安装必要库",
+          "创建一个 main.py 文件，导入 FastAPI 模块",
+          "实例化 FastAPI 应用并定义根路径的 GET 端点",
+          "使用 uvicorn main:app --reload 启动服务器并访问 / 查看结果"
+        ],
+        "teachingObjective": "掌握 FastAPI 开发环境的搭建和基本应用的创建",
+        "estimatedDuration": 200,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "交互式路径参数",
+        "description": "通过交互式代码编辑器，让学习者亲手修改并测试 FastAPI 中的路径参数和查询参数。",
+        "keyPoints": [
+          "路径参数（Path Parameters）：在 URL 路径中定义的动态参数",
+          "查询参数（Query Parameters）：跟在 ? 号后的 key-value 参数",
+          "类型提示自动实现参数校验和类型转换",
+          "参数顺序不重要，FastAPI 会根据名称自动匹配"
+        ],
+        "teachingObjective": "理解并掌握路径参数和查询参数的定义与使用",
+        "estimatedDuration": 240,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python",
+          "initialCode": "from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/items/{item_id}\")\nasync def read_item(item_id: int, q: str = None):\n    return {\"item_id\": item_id, \"q\": q}",
+          "instructions": "修改代码，新增一个查询参数 'limit'，要求类型为 int，默认值为 10，然后运行并测试访问 /items/5?q=hello&limit=20"
+        },
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "quiz",
+        "title": "基础知识小测验",
+        "description": "通过几个简单问题检验学生对 FastAPI 基础知识、安装以及路径/查询参数的理解。",
+        "keyPoints": [
+          "FastAPI 基于哪个 Python 特性实现自动校验？",
+          "路径参数和查询参数的根本区别是什么？",
+          "启动命令 uvicorn main:app --reload 中 --reload 的作用是什么？"
+        ],
+        "teachingObjective": "评估学习者对前面所学要点的掌握程度",
+        "estimatedDuration": 120,
+        "order": 4,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "single"
+          ]
+        }
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "请求体与数据模型",
+        "description": "讲解如何使用 Pydantic 模型来定义请求（Request）和响应（Response）的数据结构，并实现自动校验。",
+        "keyPoints": [
+          "使用 Pydantic 的 BaseModel 创建数据模型类",
+          "在 endpoint 中将模型类作为参数，FastAPI 自动从请求体读取 JSON",
+          "自动进行数据校验并返回清晰的错误信息",
+          "响应模型使用 response_model 进行控制，实现数据过滤与安全"
+        ],
+        "teachingObjective": "学会使用 Pydantic 模型处理 POST 请求和响应数据",
+        "estimatedDuration": 200,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "interactive",
+        "title": "交互式 CRUD 操作",
+        "description": "通过交互式界面，让学习者基于一个物品列表实现简单的 创建(Create)、读取(Read)、更新(Update)、删除(Delete) API。",
+        "keyPoints": [
+          "利用 Python 列表模拟数据库，实现前端数据持久化",
+          "GET：获取所有物品列表或单个物品详情",
+          "POST：创建新物品并验证必填字段",
+          "PUT：根据 ID 更新现有物品信息",
+          "DELETE：根据 ID 删除物品"
+        ],
+        "teachingObjective": "通过实践掌握 FastAPI 实现基础 CRUD 的完整流程",
+        "estimatedDuration": 360,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python",
+          "initialCode": "# 模拟的数据库（列表）\nitems_db = [\n    {\"id\": 1, \"name\": \"Item A\", \"price\": 10.0},\n    {\"id\": 2, \"name\": \"Item B\", \"price\": 20.0}\n]\n\n@app.get(\"/items\")\nasync def get_items():\n    return items_db\n\n@app.delete(\"/items/{item_id}\")\nasync def delete_item(item_id: int):\n    # 实现删除逻辑\n    pass",
+          "instructions": "补全 DELETE endpoint 的逻辑：遍历 items_db 找到对应 item_id，将其移除并返回 {'message': 'Item deleted'}。如果未找到，返回 {'error': 'Not found'}"
+        },
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "依赖注入 (Dependency Injection)",
+        "description": "介绍 FastAPI 强大的依赖注入系统，以及如何用它来复用逻辑、处理认证和数据库会话。",
+        "keyPoints": [
+          "Depends 函数是依赖注入的核心工具",
+          "常见用途：数据库会话管理、获取请求头中的 token、参数校验",
+          "子依赖：依赖可以依赖其他依赖，形成依赖树",
+          "类作为依赖：利用 __init__ 和 __call__ 编写带状态的依赖"
+        ],
+        "teachingObjective": "理解依赖注入的概念并掌握其基本用法",
+        "estimatedDuration": 200,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "pbl",
+        "title": "实战项目：构建一个待办事项 (Todo) API",
+        "description": "综合运用前几节所学，从零搭建一个完整的 TODO API 服务，涵盖 CRUD、依赖注入和文档配置。",
+        "keyPoints": [
+          "项目规划：定义数据模型、路由分组、错误处理",
+          "使用 Pydantic 模型设计待办项的数据结构",
+          "使用依赖注入实现简单的用户认证（固定 Token）",
+          "编写完整的 CRUD 路由",
+          "测试并验证自动生成的交互式文档（Swagger UI）"
+        ],
+        "teachingObjective": "能够综合运用 FastAPI 核心功能独立构建一个小型 Web API",
+        "estimatedDuration": 900,
+        "order": 8,
+        "pblConfig": {
+          "projectTopic": "待办事项 (Todo) API",
+          "projectDescription": "设计并实现一个简单的待办事项管理 API，支持创建、查看、更新、删除任务，并要求通过请求头中的 Token 进行简单认证。",
+          "targetSkills": [
+            "FastAPI 路由设计",
+            "Pydantic 数据建模",
+            "依赖注入",
+            "错误处理"
+          ],
+          "issueCount": 4
+        }
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "课程总结与拓展资源",
+        "description": "回顾本课程的核心知识点，并提供进一步学习 FastAPI 的路径和资源推荐。",
+        "keyPoints": [
+          "核心要点快速复盘：路由、参数、模型、依赖注入、自动文档",
+          "进阶方向：异步任务 (BackgroundTasks)、WebSocket、数据库 (SQLAlchemy)、单元测试",
+          "推荐资源：FastAPI 官方文档、Real Python 教程、GitHub 上优秀的 FastAPI 项目"
+        ],
+        "teachingObjective": "巩固所学知识并指明后续学习方向",
+        "estimatedDuration": 120,
+        "order": 9
+      }
+    ],
+    "languageDirective": "Teach the course in Chinese (Simplified), as the user requirement 'fastapi' is a technical term but the surrounding instructional context and interaction are in Chinese. All explanations, scene titles, descriptions, and key points should be in Chinese. Technical terms like 'FastAPI', 'API', 'endpoint', 'path operation', 'dependency injection', and 'ASGI' should be kept in English. When introducing a new technical term for the first time, provide a brief Chinese parenthetical explanation (e.g., 'endpoint（端点）'). For code examples, all code comments and string literals can be in English to match typical programming practice, but explanatory text around the code must be in Chinese.",
+    "topicSummary": "FastAPI 入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "puR4pcePVs",
+      "name": "FastAPI 简介",
+      "languageDirective": "Teach the course in Chinese (Simplified), as the user requirement 'fastapi' is a technical term but the surrounding instructional context and interaction are in Chinese. All explanations, scene titles, descriptions, and key points should be in Chinese. Technical terms like 'FastAPI', 'API', 'endpoint', 'path operation', 'dependency injection', and 'ASGI' should be kept in English. When introducing a new technical term for the first time, provide a brief Chinese parenthetical explanation (e.g., 'endpoint（端点）'). For code examples, all code comments and string literals can be in English to match typical programming practice, but explanatory text around the code must be in Chinese.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1781099253709,
+      "updatedAt": 1781099253709,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "fastapi\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "FastAPI 简介",
+      "description": "概述 FastAPI 框架是什么、它的核心优势以及适用场景，帮助学习者建立初步认知。",
+      "keyPoints": [
+        "FastAPI 是一个用于构建 Web API 的现代、高性能 Python 框架",
+        "基于 Python 3.6+ 的类型提示（Type Hints）自动生成 API 文档",
+        "核心优势：高性能（媲美 Node.js/Go）、自动校验、自动文档、异步支持",
+        "适合构建 RESTful API、微服务以及需要高性能 API 的应用场景"
+      ],
+      "teachingObjective": "了解 FastAPI 的定位和核心特性",
+      "estimatedDuration": 150,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "环境准备与第一个应用",
+      "description": "指导学习者安装 FastAPI 和 Uvicorn，并编写第一个 Hello World API 程序。",
+      "keyPoints": [
+        "使用 pip install fastapi uvicorn 安装必要库",
+        "创建一个 main.py 文件，导入 FastAPI 模块",
+        "实例化 FastAPI 应用并定义根路径的 GET 端点",
+        "使用 uvicorn main:app --reload 启动服务器并访问 / 查看结果"
+      ],
+      "teachingObjective": "掌握 FastAPI 开发环境的搭建和基本应用的创建",
+      "estimatedDuration": 200,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "交互式路径参数",
+      "description": "通过交互式代码编辑器，让学习者亲手修改并测试 FastAPI 中的路径参数和查询参数。",
+      "keyPoints": [
+        "路径参数（Path Parameters）：在 URL 路径中定义的动态参数",
+        "查询参数（Query Parameters）：跟在 ? 号后的 key-value 参数",
+        "类型提示自动实现参数校验和类型转换",
+        "参数顺序不重要，FastAPI 会根据名称自动匹配"
+      ],
+      "teachingObjective": "理解并掌握路径参数和查询参数的定义与使用",
+      "estimatedDuration": 240,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python",
+        "initialCode": "from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/items/{item_id}\")\nasync def read_item(item_id: int, q: str = None):\n    return {\"item_id\": item_id, \"q\": q}",
+        "instructions": "修改代码，新增一个查询参数 'limit'，要求类型为 int，默认值为 10，然后运行并测试访问 /items/5?q=hello&limit=20"
+      },
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "quiz",
+      "title": "基础知识小测验",
+      "description": "通过几个简单问题检验学生对 FastAPI 基础知识、安装以及路径/查询参数的理解。",
+      "keyPoints": [
+        "FastAPI 基于哪个 Python 特性实现自动校验？",
+        "路径参数和查询参数的根本区别是什么？",
+        "启动命令 uvicorn main:app --reload 中 --reload 的作用是什么？"
+      ],
+      "teachingObjective": "评估学习者对前面所学要点的掌握程度",
+      "estimatedDuration": 120,
+      "order": 4,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "single"
+        ]
+      }
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "请求体与数据模型",
+      "description": "讲解如何使用 Pydantic 模型来定义请求（Request）和响应（Response）的数据结构，并实现自动校验。",
+      "keyPoints": [
+        "使用 Pydantic 的 BaseModel 创建数据模型类",
+        "在 endpoint 中将模型类作为参数，FastAPI 自动从请求体读取 JSON",
+        "自动进行数据校验并返回清晰的错误信息",
+        "响应模型使用 response_model 进行控制，实现数据过滤与安全"
+      ],
+      "teachingObjective": "学会使用 Pydantic 模型处理 POST 请求和响应数据",
+      "estimatedDuration": 200,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "interactive",
+      "title": "交互式 CRUD 操作",
+      "description": "通过交互式界面，让学习者基于一个物品列表实现简单的 创建(Create)、读取(Read)、更新(Update)、删除(Delete) API。",
+      "keyPoints": [
+        "利用 Python 列表模拟数据库，实现前端数据持久化",
+        "GET：获取所有物品列表或单个物品详情",
+        "POST：创建新物品并验证必填字段",
+        "PUT：根据 ID 更新现有物品信息",
+        "DELETE：根据 ID 删除物品"
+      ],
+      "teachingObjective": "通过实践掌握 FastAPI 实现基础 CRUD 的完整流程",
+      "estimatedDuration": 360,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python",
+        "initialCode": "# 模拟的数据库（列表）\nitems_db = [\n    {\"id\": 1, \"name\": \"Item A\", \"price\": 10.0},\n    {\"id\": 2, \"name\": \"Item B\", \"price\": 20.0}\n]\n\n@app.get(\"/items\")\nasync def get_items():\n    return items_db\n\n@app.delete(\"/items/{item_id}\")\nasync def delete_item(item_id: int):\n    # 实现删除逻辑\n    pass",
+        "instructions": "补全 DELETE endpoint 的逻辑：遍历 items_db 找到对应 item_id，将其移除并返回 {'message': 'Item deleted'}。如果未找到，返回 {'error': 'Not found'}"
+      },
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "依赖注入 (Dependency Injection)",
+      "description": "介绍 FastAPI 强大的依赖注入系统，以及如何用它来复用逻辑、处理认证和数据库会话。",
+      "keyPoints": [
+        "Depends 函数是依赖注入的核心工具",
+        "常见用途：数据库会话管理、获取请求头中的 token、参数校验",
+        "子依赖：依赖可以依赖其他依赖，形成依赖树",
+        "类作为依赖：利用 __init__ 和 __call__ 编写带状态的依赖"
+      ],
+      "teachingObjective": "理解依赖注入的概念并掌握其基本用法",
+      "estimatedDuration": 200,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "pbl",
+      "title": "实战项目：构建一个待办事项 (Todo) API",
+      "description": "综合运用前几节所学，从零搭建一个完整的 TODO API 服务，涵盖 CRUD、依赖注入和文档配置。",
+      "keyPoints": [
+        "项目规划：定义数据模型、路由分组、错误处理",
+        "使用 Pydantic 模型设计待办项的数据结构",
+        "使用依赖注入实现简单的用户认证（固定 Token）",
+        "编写完整的 CRUD 路由",
+        "测试并验证自动生成的交互式文档（Swagger UI）"
+      ],
+      "teachingObjective": "能够综合运用 FastAPI 核心功能独立构建一个小型 Web API",
+      "estimatedDuration": 900,
+      "order": 8,
+      "pblConfig": {
+        "projectTopic": "待办事项 (Todo) API",
+        "projectDescription": "设计并实现一个简单的待办事项管理 API，支持创建、查看、更新、删除任务，并要求通过请求头中的 Token 进行简单认证。",
+        "targetSkills": [
+          "FastAPI 路由设计",
+          "Pydantic 数据建模",
+          "依赖注入",
+          "错误处理"
+        ],
+        "issueCount": 4
+      }
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "课程总结与拓展资源",
+      "description": "回顾本课程的核心知识点，并提供进一步学习 FastAPI 的路径和资源推荐。",
+      "keyPoints": [
+        "核心要点快速复盘：路由、参数、模型、依赖注入、自动文档",
+        "进阶方向：异步任务 (BackgroundTasks)、WebSocket、数据库 (SQLAlchemy)、单元测试",
+        "推荐资源：FastAPI 官方文档、Real Python 教程、GitHub 上优秀的 FastAPI 项目"
+      ],
+      "teachingObjective": "巩固所学知识并指明后续学习方向",
+      "estimatedDuration": 120,
+      "order": 9
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "Teach the course in Chinese (Simplified), as the user requirement 'fastapi' is a technical term but the surrounding instructional context and interaction are in Chinese. All explanations, scene titles, descriptions, and key points should be in Chinese. Technical terms like 'FastAPI', 'API', 'endpoint', 'path operation', 'dependency injection', and 'ASGI' should be kept in English. When introducing a new technical term for the first time, provide a brief Chinese parenthetical explanation (e.g., 'endpoint（端点）'). For code examples, all code comments and string literals can be in English to match typical programming practice, but explanatory text around the code must be in Chinese.",
+    "totalScenes": 9
+  },
+  "topicSummary": "FastAPI 入门"
+}

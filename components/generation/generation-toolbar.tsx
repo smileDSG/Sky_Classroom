@@ -145,7 +145,6 @@ export function GenerationToolbar({
           onThinkingChange={(config) =>
             setThinkingConfig(currentProviderId, currentModelId, config)
           }
-          t={t}
         />
       ) : (
         <Tooltip>
@@ -308,7 +307,7 @@ export function GenerationToolbar({
                 {webSearch && (
                   <span>
                     {WEB_SEARCH_PROVIDERS[webSearchProviderId]
-                      ? getWebSearchProviderDisplayName(webSearchProviderId, t)
+                      ? getWebSearchProviderDisplayName(webSearchProviderId)
                       : 'Search'}
                   </span>
                 )}
@@ -367,7 +366,7 @@ export function GenerationToolbar({
                           <div
                             className={cn('flex items-center gap-1.5', !available && 'opacity-50')}
                           >
-                            {getWebSearchProviderDisplayName(provider.id, t)}
+                            {getWebSearchProviderDisplayName(provider.id)}
                             {cfg?.isServerConfigured && (
                               <span className="text-[9px] px-1 py-0 rounded border text-muted-foreground">
                                 {'服务端'}
@@ -433,7 +432,7 @@ function InlineThinkingControl({
   model?: ModelInfo;
   config?: ThinkingConfig;
   onChange: (config: ThinkingConfig | undefined) => void;
-  t: (key: string) => string;
+  t?: (key: string) => string;
 }) {
   const thinking = model?.capabilities?.thinking;
   if (!supportsConfigurableThinking(thinking)) return null;
@@ -668,7 +667,7 @@ function ModelSettingsPopover({
   setModel: (providerId: ProviderId, modelId: string) => void;
   thinkingConfig?: ThinkingConfig;
   onThinkingChange: (config: ThinkingConfig | undefined) => void;
-  t: (key: string) => string;
+  t?: (key: string) => string;
 }) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [activeProviderId, setActiveProviderId] = useState<ProviderId>(currentProviderId);

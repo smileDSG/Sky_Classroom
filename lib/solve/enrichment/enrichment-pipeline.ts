@@ -54,7 +54,9 @@ function loadCheckpoint(): EnrichmentCheckpoint | null {
     const fs = require('fs');
     const data = fs.readFileSync(CHECKPOINT_PATH, 'utf-8');
     const cp = JSON.parse(data) as EnrichmentCheckpoint;
-    log.info(`[Checkpoint] Loaded: subject=${cp.lastSubject}, grade=${cp.lastGradeLevel}, stored=${cp.totalStored}`);
+    log.info(
+      `[Checkpoint] Loaded: subject=${cp.lastSubject}, grade=${cp.lastGradeLevel}, stored=${cp.totalStored}`,
+    );
     return cp;
   } catch {
     return null;
@@ -65,7 +67,11 @@ function saveCheckpoint(cp: EnrichmentCheckpoint): void {
   try {
     const fs = require('fs');
     const dir = '.data';
-    try { fs.mkdirSync(dir, { recursive: true }); } catch { /* exists */ }
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {
+      /* exists */
+    }
     fs.writeFileSync(CHECKPOINT_PATH, JSON.stringify(cp, null, 2), 'utf-8');
   } catch (err) {
     log.warn(`[Checkpoint] Failed to save: ${err}`);
@@ -130,7 +136,12 @@ async function processOneQuestion(
         stats.totalStored++;
         if (!stats.bySubject[question.subject]) {
           stats.bySubject[question.subject] = {
-            searched: 0, fetched: 0, extracted: 0, solved: 0, stored: 0, failed: 0,
+            searched: 0,
+            fetched: 0,
+            extracted: 0,
+            solved: 0,
+            stored: 0,
+            failed: 0,
           };
         }
         stats.bySubject[question.subject].stored++;
@@ -261,7 +272,9 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
       }
       job.stats.totalStored = cp.totalStored;
       job.stats.totalFailed = cp.totalFailed;
-      log.info(`[Pipeline] Resuming from ${cp.lastSubject}/${cp.lastGradeLevel} (${cp.totalStored} already stored)`);
+      log.info(
+        `[Pipeline] Resuming from ${cp.lastSubject}/${cp.lastGradeLevel} (${cp.totalStored} already stored)`,
+      );
     }
   }
 
@@ -291,18 +304,51 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
         // Initialize per-subject stats
         if (!job.stats.bySubject[subject]) {
           job.stats.bySubject[subject] = {
-            searched: 0, fetched: 0, extracted: 0, solved: 0, stored: 0, failed: 0,
+            searched: 0,
+            fetched: 0,
+            extracted: 0,
+            solved: 0,
+            stored: 0,
+            failed: 0,
           };
         }
 
-        log.info(`[Pipeline] Processing ${subject}/${gradeLevel} (stored: ${job.stats.totalStored}/${maxQuestions})`);
+        log.info(
+          `[Pipeline] Processing ${subject}/${gradeLevel} (stored: ${job.stats.totalStored}/${maxQuestions})`,
+        );
 
         // ① Load questions from local datasets — only for the current subject
-        const subjectDatasets: Record<SubjectId, Array<{ files: string[]; format: 'tal-scq5k' | 'agieval'; agievalSubject?: SubjectId }>> = {
-          math: [{ files: ['.data/tal-scq5k-train.jsonl', '.data/tal-scq5k-test.jsonl'], format: 'tal-scq5k' }],
-          physics: [{ files: ['.data/agieval-gaokao-physics.jsonl'], format: 'agieval', agievalSubject: 'physics' as SubjectId }],
-          chemistry: [{ files: ['.data/agieval-gaokao-chemistry.jsonl'], format: 'agieval', agievalSubject: 'chemistry' as SubjectId }],
-          biology: [{ files: ['.data/agieval-gaokao-biology.jsonl'], format: 'agieval', agievalSubject: 'biology' as SubjectId }],
+        const subjectDatasets: Record<
+          SubjectId,
+          Array<{ files: string[]; format: 'tal-scq5k' | 'agieval'; agievalSubject?: SubjectId }>
+        > = {
+          math: [
+            {
+              files: ['.data/tal-scq5k-train.jsonl', '.data/tal-scq5k-test.jsonl'],
+              format: 'tal-scq5k',
+            },
+          ],
+          physics: [
+            {
+              files: ['.data/agieval-gaokao-physics.jsonl'],
+              format: 'agieval',
+              agievalSubject: 'physics' as SubjectId,
+            },
+          ],
+          chemistry: [
+            {
+              files: ['.data/agieval-gaokao-chemistry.jsonl'],
+              format: 'agieval',
+              agievalSubject: 'chemistry' as SubjectId,
+            },
+          ],
+          biology: [
+            {
+              files: ['.data/agieval-gaokao-biology.jsonl'],
+              format: 'agieval',
+              agievalSubject: 'biology' as SubjectId,
+            },
+          ],
           chinese: [],
           english: [],
           history: [],
@@ -363,7 +409,9 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
 
           if (generated.length === 0) {
             consecutiveEmptyBatches++;
-            log.warn(`[Pipeline] Empty batch for ${subject}/${gradeLevel} (${consecutiveEmptyBatches} consecutive)`);
+            log.warn(
+              `[Pipeline] Empty batch for ${subject}/${gradeLevel} (${consecutiveEmptyBatches} consecutive)`,
+            );
             if (consecutiveEmptyBatches >= 3) {
               log.warn(`[Pipeline] Too many empty batches, moving to next grade/subject`);
               break;
@@ -376,8 +424,10 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
           job.stats.bySubject[subject].extracted += generated.length;
 
           // ② Dedup against SQLite
-          const dedupResults = await Promise.all(generated.map(async (q) => ({ q, exists: await hasProblem(q.problemText) })));
-          const newQuestions = dedupResults.filter(r => !r.exists).map(r => r.q);
+          const dedupResults = await Promise.all(
+            generated.map(async (q) => ({ q, exists: await hasProblem(q.problemText) })),
+          );
+          const newQuestions = dedupResults.filter((r) => !r.exists).map((r) => r.q);
           const dupedCount = generated.length - newQuestions.length;
 
           if (newQuestions.length === 0) {
@@ -395,8 +445,8 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
           const subjectStats = job.stats.bySubject[subject];
           log.info(
             `[${subject}] Batch ${batchCount}: ${generated.length} generated → ${dupedCount} duped → ` +
-            `${newQuestions.length} new → ${job.stats.totalStored} total stored ` +
-            `(${job.stats.totalFailed} failed)`,
+              `${newQuestions.length} new → ${job.stats.totalStored} total stored ` +
+              `(${job.stats.totalFailed} failed)`,
           );
 
           // ⑤ Save checkpoint every 5 batches
@@ -408,7 +458,9 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
               totalFailed: job.stats.totalFailed,
               timestamp: Date.now(),
             });
-            log.info(`[Checkpoint] Saved: ${job.stats.totalStored} stored, ${job.stats.totalFailed} failed`);
+            log.info(
+              `[Checkpoint] Saved: ${job.stats.totalStored} stored, ${job.stats.totalFailed} failed`,
+            );
           }
 
           // ⑥ Brief pause between batches to let LLM breathe
@@ -427,7 +479,9 @@ export async function runEnrichment(opts: RunEnrichmentOptions = {}): Promise<En
     try {
       const fs = require('fs');
       fs.unlinkSync(CHECKPOINT_PATH);
-    } catch { /* no checkpoint to clear */ }
+    } catch {
+      /* no checkpoint to clear */
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.error(`[Pipeline] Job ${job.id} failed: ${msg}`);
@@ -512,7 +566,12 @@ export async function runEnrichmentParallel(opts: RunEnrichmentOptions = {}): Pr
       for (const [subj, subStats] of Object.entries(job.stats.bySubject)) {
         if (!aggregatedJob.stats.bySubject[subj]) {
           aggregatedJob.stats.bySubject[subj] = {
-            searched: 0, fetched: 0, extracted: 0, solved: 0, stored: 0, failed: 0,
+            searched: 0,
+            fetched: 0,
+            extracted: 0,
+            solved: 0,
+            stored: 0,
+            failed: 0,
           };
         }
         const agg = aggregatedJob.stats.bySubject[subj];

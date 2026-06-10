@@ -55,6 +55,19 @@ export async function POST(request: Request) {
       avatar: null,
       nickname: null,
       bio: null,
+      educationLevel: null,
+      grade: null,
+      favoriteSubjects: null,
+      learningStyle: null,
+      detailLevel: null,
+      preferredLanguage: null,
+      aiPersonality: null,
+      aiName: null,
+      customInstructions: null,
+      autoGenerateQuiz: null,
+      showStepByStep: null,
+      enableMemory: null,
+      enableRAG: null,
       emailVerified: !email, // auto-verify if no email provided
       emailVerifyToken: verifyToken,
       resetToken: null,
@@ -69,22 +82,29 @@ export async function POST(request: Request) {
     }
 
     // Auto-login: generate tokens
-    const accessToken = await signAccessToken({ id: user.id, email: user.email ?? undefined, role: user.role });
+    const accessToken = await signAccessToken({
+      id: user.id,
+      email: user.email ?? undefined,
+      role: user.role,
+    });
     const sessionId = crypto.randomUUID();
     const refreshToken = await signRefreshToken(user.id, sessionId);
 
-    return NextResponse.json({
-      success: true,
-      user: { id: user.id, email: user.email, username: user.username, role: user.role },
-    }, {
-      status: 201,
-      headers: {
-        'Set-Cookie': [
-          `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${60 * 60}`,
-          `refresh_token=${refreshToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`,
-        ].join(', '),
+    return NextResponse.json(
+      {
+        success: true,
+        user: { id: user.id, email: user.email, username: user.username, role: user.role },
       },
-    });
+      {
+        status: 201,
+        headers: {
+          'Set-Cookie': [
+            `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${60 * 60}`,
+            `refresh_token=${refreshToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`,
+          ].join(', '),
+        },
+      },
+    );
   } catch (err) {
     return apiError('INTERNAL_ERROR', 500, 'Registration failed');
   }

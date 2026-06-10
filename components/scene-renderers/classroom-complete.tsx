@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { animate, motion, MotionConfig, useReducedMotion } from 'motion/react';
 import { FileText, HelpCircle, Gamepad2, Puzzle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store';
 import type { Scene, SceneType } from '@/lib/types/stage';
 import { summarizeScenes } from '@/lib/classroom/complete-summary';
@@ -306,7 +307,9 @@ interface ClassroomCompletePageProps {
 
 export function ClassroomCompletePage({
   scenes, title }: ClassroomCompletePageProps) {
-  const locale = 'zh-CN';const prefersReducedMotion = useReducedMotion();
+  const { t } = useI18n();
+  const locale = 'zh-CN';
+  const prefersReducedMotion = useReducedMotion();
 
   // Computed once on mount: re-grading on every render would be wasteful and
   // the underlying localStorage values only change when the user revisits a

@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { playBrowserTTSPreview } from '@/lib/audio/browser-tts-preview';
 import { getVoxCPMProviderOptions } from '@/lib/audio/voxcpm-voices';
@@ -18,7 +17,7 @@ export function useVoicePreview(opts: {
   agentRole?: string;
   agentPersona?: string;
 }) {
-  const { t, locale } = useI18n();
+  const locale = 'zh-CN';
   const ttsProvidersConfig = useSettingsStore((s) => s.ttsProvidersConfig);
 
   const [previewingId, setPreviewingId] = useState<string | null>(null);
@@ -49,7 +48,7 @@ export function useVoicePreview(opts: {
       stopPreview();
       setPreviewingId(key);
 
-      const previewText = t('settings.ttsTestTextDefault');
+      const previewText = '你好，这是一段测试语音。';
 
       if (providerId === 'browser-native-tts') {
         const { promise, cancel } = playBrowserTTSPreview({ text: previewText, voice: voiceId });
@@ -114,7 +113,6 @@ export function useVoicePreview(opts: {
       locale,
       previewingId,
       stopPreview,
-      t,
       ttsProvidersConfig,
     ],
   );

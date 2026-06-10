@@ -24,8 +24,6 @@ import {
 } from '../prompt-formatters';
 import { fixElementDefaults, processLatexElements } from '../element-fixer';
 import { resolveImageIds, normalizeGeneratedVideoRefs } from '../media-resolver';
-import { postProcessSlideContent } from './slide-content-post-processor';
-import { applyFallbackLayout, MIN_CONTENT_ELEMENTS } from './fallback-layouts';
 import {
   selectThemeForTemplate,
   type ClassroomThemeSelection,

@@ -1145,7 +1145,7 @@ export function useExportPPTX() {
           await action();
         } catch (err) {
           log.error('Export failed:', err);
-          toast.error(t('export.exportFailed'));
+          toast.error('导出失败');
         } finally {
           exportingRef.current = false;
           setExporting(false);
@@ -1168,7 +1168,7 @@ export function useExportPPTX() {
         ratioPx2Pt,
       );
       saveAs(blob, `${fileName}.pptx`);
-      toast.success(t('export.exportSuccess'));
+      toast.success('导出成功');
     });
   }, [
     withExportGuard,
@@ -1214,7 +1214,7 @@ export function useExportPPTX() {
       // 3. Download ZIP
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       saveAs(zipBlob, `${fileName}.zip`);
-      toast.success(t('export.exportSuccess'));
+      toast.success('导出成功');
     });
   }, [
     withExportGuard,

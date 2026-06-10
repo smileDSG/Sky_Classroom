@@ -48,7 +48,7 @@ function postProcessOmml(omml: string, szHundredths?: number): string {
 
   // Strip <w:rPr> elements (WordprocessingML run properties, invalid in PPTX)
   // mathml2omml sometimes injects these even though we're targeting presentationML
-  result = result.replace(/<w:rPr\b[^>]*>.*?<\/w:rPr>/gs, '');
+  result = result.replace(/<w:rPr\b[^>]*>[\s\S]*?<\/w:rPr>/g, '');
   result = result.replace(/<w:rPr\b[^>]*\/>/g, '');
 
   // Insert <a:rPr> before <m:t> inside <m:r> (only if not already present)

@@ -62,7 +62,9 @@ function getPaletteMood(id: string): string {
 
 function buildSystemPrompt(): string {
   const palettes = Object.entries(COLOR_PALETTES)
-    .map(([id, p]) => `- ${id}: 封面背景#${p.coverBg}, 强调色#${p.accent}, 氛围${getPaletteMood(id)}`)
+    .map(
+      ([id, p]) => `- ${id}: 封面背景#${p.coverBg}, 强调色#${p.accent}, 氛围${getPaletteMood(id)}`,
+    )
     .join('\n');
 
   const fonts = Object.entries(FONT_PAIRS)
@@ -127,13 +129,16 @@ function buildDesignDNA(
   const palette = COLOR_PALETTES[paletteId] ?? COLOR_PALETTES['midnight-executive'];
   const fonts = FONT_PAIRS[fontId] ?? FONT_PAIRS['georgia-calibri'];
 
-  const safeMotif = ALLOWED_MOTIFS.includes(motif as typeof ALLOWED_MOTIFS[number])
-    ? motif : 'geometric-lines';
+  const safeMotif = ALLOWED_MOTIFS.includes(motif as (typeof ALLOWED_MOTIFS)[number])
+    ? motif
+    : 'geometric-lines';
 
   const cardStyle: DesignDNA['components']['cardStyle'] =
-    safeMotif === 'chinese-seal' ? 'accent-left-bar' :
-    safeMotif === 'ink-wash' ? 'shadow-only' :
-    'accent-left-bar';
+    safeMotif === 'chinese-seal'
+      ? 'accent-left-bar'
+      : safeMotif === 'ink-wash'
+        ? 'shadow-only'
+        : 'accent-left-bar';
 
   const bulletStyle: DesignDNA['components']['bulletStyle'] =
     safeMotif === 'chinese-seal' || safeMotif === 'ink-wash' ? 'chinese-brush' : 'dot';
@@ -179,17 +184,25 @@ export async function suggestCoverStyle(
     const result = await callLLM(
       { model: languageModel, system, prompt: user, maxOutputTokens: 4096, temperature: 0.7 },
       'suggest-cover-agent',
-      { retries: 1, timeoutMs: 25000, validate: (text) => text.trim().length > 200 && text.includes('paletteId') },
+      {
+        retries: 1,
+        timeoutMs: 25000,
+        validate: (text) => text.trim().length > 200 && text.includes('paletteId'),
+      },
     );
     const llmDuration = Date.now() - llmStart;
-    log.info(`[suggestCoverStyle] LLM done in ${llmDuration}ms, tokens=${(result.usage as Record<string, number> | undefined)?.completionTokens ?? '?'}`);
+    log.info(
+      `[suggestCoverStyle] LLM done in ${llmDuration}ms, tokens=${(result.usage as unknown as Record<string, number> | undefined)?.completionTokens ?? '?'}`,
+    );
 
     const jsonText = cleanJsonText(result.text);
     let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(jsonText);
     } catch (parseErr) {
-      log.error(`[suggestCoverStyle] JSON parse failed: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
+      log.error(
+        `[suggestCoverStyle] JSON parse failed: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`,
+      );
       return { success: false, error: '风格推荐解析失败' };
     }
 
@@ -199,32 +212,49 @@ export async function suggestCoverStyle(
     const density = (parsed.density || 'moderate') as 'sparse' | 'moderate' | 'rich';
     const mood = String(parsed.mood || '专业学术');
     const styleName = String(parsed.styleName || '智能推荐');
-    const bestFor = Array.isArray(parsed.bestFor) ? parsed.bestFor.map(String) : [topic.slice(0, 10)];
+    const bestFor = Array.isArray(parsed.bestFor)
+      ? parsed.bestFor.map(String)
+      : [topic.slice(0, 10)];
 
     // Infer motif from topic (same logic as cover-agent)
     const motifs = getMotifsForTopic(topic);
     const motif = motifs[0] || 'geometric-lines';
 
-    const designDNA = buildDesignDNA(paletteId, fontId, layoutType, density, mood, styleName, bestFor, motif);
+    const designDNA = buildDesignDNA(
+      paletteId,
+      fontId,
+      layoutType,
+      density,
+      mood,
+      styleName,
+      bestFor,
+      motif,
+    );
 
-    log.info(`[suggestCoverStyle] recommended: palette=${paletteId}, font=${fontId}, layout=${layoutType}, density=${density}, mood=${mood}, motif=${motif}`);
+    log.info(
+      `[suggestCoverStyle] recommended: palette=${paletteId}, font=${fontId}, layout=${layoutType}, density=${density}, mood=${mood}, motif=${motif}`,
+    );
 
     // Build alternatives
     const rawAlternatives = Array.isArray(parsed.alternatives) ? parsed.alternatives : [];
-    const alternatives: AlternativeDirection[] = rawAlternatives.slice(0, 3).map((a: Record<string, unknown>, idx: number) => {
-      const altMotif = motifs[idx + 1] || motifs[0] || 'geometric-lines';
-      return {
-        paletteId: String(a.paletteId || paletteId),
-        fontId: String(a.fontId || fontId),
-        layoutType: String(a.layoutType || layoutType) as LayoutType,
-        density: (a.density || density) as 'sparse' | 'moderate' | 'rich',
-        mood: String(a.mood || mood),
-        styleName: String(a.styleName || `${styleName}·变体${idx + 1}`),
-      };
-    });
+    const alternatives: AlternativeDirection[] = rawAlternatives
+      .slice(0, 3)
+      .map((a: Record<string, unknown>, idx: number) => {
+        const altMotif = motifs[idx + 1] || motifs[0] || 'geometric-lines';
+        return {
+          paletteId: String(a.paletteId || paletteId),
+          fontId: String(a.fontId || fontId),
+          layoutType: String(a.layoutType || layoutType) as LayoutType,
+          density: (a.density || density) as 'sparse' | 'moderate' | 'rich',
+          mood: String(a.mood || mood),
+          styleName: String(a.styleName || `${styleName}·变体${idx + 1}`),
+        };
+      });
 
     const totalDuration = Date.now() - startTime;
-    log.info(`[suggestCoverStyle] complete in ${totalDuration}ms, alternatives=${alternatives.length}`);
+    log.info(
+      `[suggestCoverStyle] complete in ${totalDuration}ms, alternatives=${alternatives.length}`,
+    );
 
     return { success: true, designDNA, alternatives };
   } catch (err) {

@@ -1123,7 +1123,7 @@ export function Stage({
             <Header
               currentSceneTitle={
                 currentScene?.title ||
-                (isCourseComplete && isPendingScene ? t('stage.courseComplete') : '')
+                (isCourseComplete && isPendingScene ? '课程完成' : '')
               }
               timelineCollapsed={timelineCollapsed}
               onTimelineCollapseChange={setTimelineCollapsed}
@@ -1328,7 +1328,7 @@ export function Stage({
                     >
                       <img
                         src={userAvatar}
-                        alt={t('roundtable.you')}
+                        alt={'你'}
                         className="w-full h-full object-cover"
                       />
                     </motion.div>
@@ -1336,10 +1336,10 @@ export function Stage({
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {t('roundtable.askTeacher')}
+                      {'向老师提问'}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {t('stage.speakingToTeacher')}
+                      {'正在向老师提问...'}
                     </p>
                   </div>
                   <button
@@ -1363,7 +1363,7 @@ export function Stage({
                       value={askInputValue}
                       onChange={(e) => setAskInputValue(e.target.value)}
                       onKeyDown={handleAskInputKeyDown}
-                      placeholder={t('roundtable.inputPlaceholder')}
+                      placeholder={'输入你的消息...'}
                       rows={1}
                       className="w-full resize-none bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 pl-4 pr-12 py-3.5 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500/50 transition-all"
                       style={{ fieldSizing: 'content', minHeight: '52px', maxHeight: '120px' } as Record<string, string>}
@@ -1396,13 +1396,13 @@ export function Stage({
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                         </svg>
-                        {t('roundtable.voiceInput')}
+                        {'语音输入'}
                       </button>
                     </div>
 
                     {/* Hint Text */}
                     <p className="text-xs text-slate-400 dark:text-slate-500">
-                      Enter {t('common.send')} · Esc {t('common.cancel')}
+                      Enter {'发送'} · Esc {'取消'}
                     </p>
                   </div>
                 </div>
@@ -1410,7 +1410,7 @@ export function Stage({
                 {/* Quick Suggestions - Optional */}
                 <div className="px-4 pb-4">
                   <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    <span className="text-xs text-slate-400 whitespace-nowrap">{t('stage.quickQuestions')}:</span>
+                    <span className="text-xs text-slate-400 whitespace-nowrap">{'快速提问'}:</span>
                     {['这个知识点能再解释一下吗？', '可以举个例子吗？', '我没听明白', '这和之前学的有什么联系？'].map((q, i) => (
                       <button
                         key={i}
@@ -1443,7 +1443,7 @@ export function Stage({
           className="max-w-sm rounded-2xl p-0 overflow-hidden border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.5)]"
         >
           <VisuallyHidden.Root>
-            <AlertDialogTitle>{t('stage.confirmSwitchTitle')}</AlertDialogTitle>
+            <AlertDialogTitle>{'切换页面'}</AlertDialogTitle>
           </VisuallyHidden.Root>
           {/* Top accent bar */}
           <div className="h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-red-400" />
@@ -1455,23 +1455,23 @@ export function Stage({
             </div>
             {/* Title */}
             <h3 className="text-base font-bold text-slate-100 mb-1.5">
-              {t('stage.confirmSwitchTitle')}
+              {'切换页面'}
             </h3>
             {/* Description */}
             <p className="text-sm text-slate-400 leading-relaxed">
-              {t('stage.confirmSwitchMessage')}
+              {'当前话题正在进行中，切换页面将结束当前话题。确定要切换吗？'}
             </p>
           </div>
 
           <AlertDialogFooter className="px-6 pb-5 pt-3 flex-row gap-3 border-t border-white/5">
             <AlertDialogCancel onClick={cancelSceneSwitch} className="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border-white/10">
-              {t('common.cancel')}
+              {'取消'}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmSceneSwitch}
               className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shadow-lg shadow-amber-500/20"
             >
-              {t('common.confirm')}
+              {'确定'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

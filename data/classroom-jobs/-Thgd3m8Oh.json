@@ -1,0 +1,483 @@
+{
+  "id": "-Thgd3m8Oh",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-10T11:23:09.826Z",
+  "updatedAt": "2026-06-10T11:24:33.155Z",
+  "inputSummary": {
+    "requirementPreview": "python\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 3,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-10T11:23:09.874Z",
+  "totalScenes": 11,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "Introduction to Python",
+        "description": "Welcome learners to the world of Python and explain why it's a great first programming language.",
+        "keyPoints": [
+          "Python is a high-level, interpreted programming language.",
+          "It is known for its readability and simplicity.",
+          "Used in web development, data science, AI, and automation."
+        ],
+        "teachingObjective": "Introduce Python and its applications.",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "Setting Up Your Environment",
+        "description": "Guide learners on how to install Python and set up a code editor.",
+        "keyPoints": [
+          "Download Python from python.org.",
+          "Install a code editor like VS Code or use an online REPL.",
+          "Run your first command: print('Hello, World!')"
+        ],
+        "teachingObjective": "Enable learners to set up their Python development environment.",
+        "estimatedDuration": 180,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "quiz",
+        "title": "Check Your Understanding: Basics",
+        "description": "Quick quiz to reinforce what was covered in the introduction.",
+        "keyPoints": [
+          "Recall key features of Python.",
+          "Understand what an interpreter does.",
+          "Remember the first program command."
+        ],
+        "teachingObjective": "Assess comprehension of introductory concepts.",
+        "estimatedDuration": 120,
+        "order": 3,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "Variables and Data Types",
+        "description": "Teach learners how to store and manage data using variables.",
+        "keyPoints": [
+          "Variables are containers for storing data values.",
+          "Common data types: int, float, string, boolean.",
+          "Python is dynamically typed; no need to declare type."
+        ],
+        "teachingObjective": "Understand variables and basic data types in Python.",
+        "estimatedDuration": 180,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "interactive",
+        "title": "Experiment with Variables",
+        "description": "Interactive code environment for learners to create and manipulate variables.",
+        "keyPoints": [
+          "Create variables of different types.",
+          "Perform simple operations like addition and concatenation.",
+          "See immediate results of code execution."
+        ],
+        "teachingObjective": "Practice variable creation and type interaction.",
+        "estimatedDuration": 240,
+        "order": 5,
+        "widgetType": "code",
+        "widgetOutline": {
+          "diagramType": "code",
+          "language": "python",
+          "concept": "Variables and Data Types",
+          "keyVariables": [
+            "name (string)",
+            "age (int)",
+            "height (float)"
+          ]
+        }
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "Control Flow: If-Else Statements",
+        "description": "Explain how to make decisions in code using conditionals.",
+        "keyPoints": [
+          "Use 'if' to execute code based on a condition.",
+          "'else' and 'elif' provide alternative paths.",
+          "Indentation is crucial in Python to define blocks."
+        ],
+        "teachingObjective": "Understand conditional statements for decision making.",
+        "estimatedDuration": 200,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "Control Flow Quiz",
+        "description": "Test understanding of if-else statements and Boolean conditions.",
+        "keyPoints": [
+          "Identify correct syntax for if-else.",
+          "Evaluate simple Boolean expressions.",
+          "Understand code output based on conditions."
+        ],
+        "teachingObjective": "Assess knowledge of control flow structures.",
+        "estimatedDuration": 150,
+        "order": 7,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "multiple"
+          ]
+        }
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "Loops: For and While",
+        "description": "Teach repetition in code using loops to automate tasks.",
+        "keyPoints": [
+          "For loops iterate over a sequence (list, string, range).",
+          "While loops run as long as a condition is true.",
+          "Use 'break' and 'continue' to control loop flow."
+        ],
+        "teachingObjective": "Understand and use loops for iteration.",
+        "estimatedDuration": 200,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "Functions: Reusable Code Blocks",
+        "description": "Explain how to define and call functions to organize code.",
+        "keyPoints": [
+          "Functions are defined using 'def'.",
+          "They can take parameters and return values.",
+          "Functions promote code reuse and modularity."
+        ],
+        "teachingObjective": "Learn to create and use functions.",
+        "estimatedDuration": 200,
+        "order": 9
+      },
+      {
+        "id": "scene_10",
+        "type": "pbl",
+        "title": "Mini Project: Simple Calculator",
+        "description": "Apply all learned concepts to build a simple command-line calculator in a project-based learning scenario.",
+        "keyPoints": [
+          "Use functions for add, subtract, multiply, divide.",
+          "Implement a simple menu with if-elif-else.",
+          "Handle user input and loop until exit."
+        ],
+        "teachingObjective": "Integrate variables, conditionals, loops, and functions into a single project.",
+        "estimatedDuration": 900,
+        "order": 10,
+        "pblConfig": {
+          "projectTopic": "Simple Calculator",
+          "projectDescription": "Build a command-line calculator that can perform basic arithmetic operations. The program should present a menu, take user input, perform the calculation, and display the result. It should run in a loop until the user chooses to exit.",
+          "targetSkills": [
+            "Variable assignment",
+            "If-else conditional logic",
+            "While loop for program flow",
+            "Function definition and invocation"
+          ],
+          "issueCount": 3
+        }
+      },
+      {
+        "id": "scene_11",
+        "type": "slide",
+        "title": "Summary and Next Steps",
+        "description": "Recap key takeaways from the course and suggest resources for further learning.",
+        "keyPoints": [
+          "You learned Python basics: syntax, variables, conditionals, loops, and functions.",
+          "Practice is key: try small projects or coding challenges.",
+          "Explore libraries for specific interests (e.g., pandas for data, pygame for games)."
+        ],
+        "teachingObjective": "Consolidate learning and encourage independent exploration.",
+        "estimatedDuration": 120,
+        "order": 11
+      }
+    ],
+    "languageDirective": "This course will be taught in Python, as the user's requirement is a single word 'python'. The teaching language will be English, as Python is a programming language and the default assumption for general learners is English. All technical terms like 'Python', 'variable', 'function', and 'loop' will be kept in English. For emerging tech terms, display bilingually if necessary, but the primary instruction will be in English with simple and clear vocabulary suitable for general learners.",
+    "topicSummary": "Python Fundamentals",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "Di2g81UobE",
+      "name": "Introduction to Python",
+      "languageDirective": "This course will be taught in Python, as the user's requirement is a single word 'python'. The teaching language will be English, as Python is a programming language and the default assumption for general learners is English. All technical terms like 'Python', 'variable', 'function', and 'loop' will be kept in English. For emerging tech terms, display bilingually if necessary, but the primary instruction will be in English with simple and clear vocabulary suitable for general learners.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1781090610136,
+      "updatedAt": 1781090610136,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "Introduction to Python",
+      "description": "Welcome learners to the world of Python and explain why it's a great first programming language.",
+      "keyPoints": [
+        "Python is a high-level, interpreted programming language.",
+        "It is known for its readability and simplicity.",
+        "Used in web development, data science, AI, and automation."
+      ],
+      "teachingObjective": "Introduce Python and its applications.",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "Setting Up Your Environment",
+      "description": "Guide learners on how to install Python and set up a code editor.",
+      "keyPoints": [
+        "Download Python from python.org.",
+        "Install a code editor like VS Code or use an online REPL.",
+        "Run your first command: print('Hello, World!')"
+      ],
+      "teachingObjective": "Enable learners to set up their Python development environment.",
+      "estimatedDuration": 180,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "quiz",
+      "title": "Check Your Understanding: Basics",
+      "description": "Quick quiz to reinforce what was covered in the introduction.",
+      "keyPoints": [
+        "Recall key features of Python.",
+        "Understand what an interpreter does.",
+        "Remember the first program command."
+      ],
+      "teachingObjective": "Assess comprehension of introductory concepts.",
+      "estimatedDuration": 120,
+      "order": 3,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "Variables and Data Types",
+      "description": "Teach learners how to store and manage data using variables.",
+      "keyPoints": [
+        "Variables are containers for storing data values.",
+        "Common data types: int, float, string, boolean.",
+        "Python is dynamically typed; no need to declare type."
+      ],
+      "teachingObjective": "Understand variables and basic data types in Python.",
+      "estimatedDuration": 180,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "interactive",
+      "title": "Experiment with Variables",
+      "description": "Interactive code environment for learners to create and manipulate variables.",
+      "keyPoints": [
+        "Create variables of different types.",
+        "Perform simple operations like addition and concatenation.",
+        "See immediate results of code execution."
+      ],
+      "teachingObjective": "Practice variable creation and type interaction.",
+      "estimatedDuration": 240,
+      "order": 5,
+      "widgetType": "code",
+      "widgetOutline": {
+        "diagramType": "code",
+        "language": "python",
+        "concept": "Variables and Data Types",
+        "keyVariables": [
+          "name (string)",
+          "age (int)",
+          "height (float)"
+        ]
+      }
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "Control Flow: If-Else Statements",
+      "description": "Explain how to make decisions in code using conditionals.",
+      "keyPoints": [
+        "Use 'if' to execute code based on a condition.",
+        "'else' and 'elif' provide alternative paths.",
+        "Indentation is crucial in Python to define blocks."
+      ],
+      "teachingObjective": "Understand conditional statements for decision making.",
+      "estimatedDuration": 200,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "Control Flow Quiz",
+      "description": "Test understanding of if-else statements and Boolean conditions.",
+      "keyPoints": [
+        "Identify correct syntax for if-else.",
+        "Evaluate simple Boolean expressions.",
+        "Understand code output based on conditions."
+      ],
+      "teachingObjective": "Assess knowledge of control flow structures.",
+      "estimatedDuration": 150,
+      "order": 7,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "multiple"
+        ]
+      }
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "Loops: For and While",
+      "description": "Teach repetition in code using loops to automate tasks.",
+      "keyPoints": [
+        "For loops iterate over a sequence (list, string, range).",
+        "While loops run as long as a condition is true.",
+        "Use 'break' and 'continue' to control loop flow."
+      ],
+      "teachingObjective": "Understand and use loops for iteration.",
+      "estimatedDuration": 200,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "Functions: Reusable Code Blocks",
+      "description": "Explain how to define and call functions to organize code.",
+      "keyPoints": [
+        "Functions are defined using 'def'.",
+        "They can take parameters and return values.",
+        "Functions promote code reuse and modularity."
+      ],
+      "teachingObjective": "Learn to create and use functions.",
+      "estimatedDuration": 200,
+      "order": 9
+    },
+    {
+      "id": "scene_10",
+      "type": "pbl",
+      "title": "Mini Project: Simple Calculator",
+      "description": "Apply all learned concepts to build a simple command-line calculator in a project-based learning scenario.",
+      "keyPoints": [
+        "Use functions for add, subtract, multiply, divide.",
+        "Implement a simple menu with if-elif-else.",
+        "Handle user input and loop until exit."
+      ],
+      "teachingObjective": "Integrate variables, conditionals, loops, and functions into a single project.",
+      "estimatedDuration": 900,
+      "order": 10,
+      "pblConfig": {
+        "projectTopic": "Simple Calculator",
+        "projectDescription": "Build a command-line calculator that can perform basic arithmetic operations. The program should present a menu, take user input, perform the calculation, and display the result. It should run in a loop until the user chooses to exit.",
+        "targetSkills": [
+          "Variable assignment",
+          "If-else conditional logic",
+          "While loop for program flow",
+          "Function definition and invocation"
+        ],
+        "issueCount": 3
+      }
+    },
+    {
+      "id": "scene_11",
+      "type": "slide",
+      "title": "Summary and Next Steps",
+      "description": "Recap key takeaways from the course and suggest resources for further learning.",
+      "keyPoints": [
+        "You learned Python basics: syntax, variables, conditionals, loops, and functions.",
+        "Practice is key: try small projects or coding challenges.",
+        "Explore libraries for specific interests (e.g., pandas for data, pygame for games)."
+      ],
+      "teachingObjective": "Consolidate learning and encourage independent exploration.",
+      "estimatedDuration": 120,
+      "order": 11
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "This course will be taught in Python, as the user's requirement is a single word 'python'. The teaching language will be English, as Python is a programming language and the default assumption for general learners is English. All technical terms like 'Python', 'variable', 'function', and 'loop' will be kept in English. For emerging tech terms, display bilingually if necessary, but the primary instruction will be in English with simple and clear vocabulary suitable for general learners.",
+    "totalScenes": 11
+  },
+  "topicSummary": "Python Fundamentals",
+  "completedAt": "2026-06-10T11:24:33.155Z",
+  "result": {
+    "classroomId": "Di2g81UobE",
+    "url": "http://localhost:3001/classroom/Di2g81UobE",
+    "scenesCount": 3
+  }
+}

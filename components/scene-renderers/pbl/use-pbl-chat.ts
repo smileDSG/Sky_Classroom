@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import type { PBLProjectConfig, PBLChatMessage, PBLAgent, PBLIssue } from '@/lib/pbl/types';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
@@ -17,7 +18,9 @@ interface UsePBLChatOptions {
   onConfigUpdate: (config: PBLProjectConfig) => void;
 }
 
-export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLChatOptions) {const [isLoading, setIsLoading] = useState(false);
+export function usePBLChat({ projectConfig, userRole, onConfigUpdate }: UsePBLChatOptions) {
+  const { t } = useI18n();
+  const [isLoading, setIsLoading] = useState(false);
 
   const messages = projectConfig.chat.messages;
 

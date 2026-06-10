@@ -126,7 +126,6 @@ export function ClassroomJobPoller() {
             const data = await fetchClassroomJob(entry.jobId);
             if (!data) {
               removeActiveJobEntry(entry.jobId);
-              navigatedJobsRef.current.delete(entry.jobId);
               continue;
             }
 
