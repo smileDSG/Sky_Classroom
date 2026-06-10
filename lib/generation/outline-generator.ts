@@ -152,6 +152,8 @@ export async function generateSceneOutlinesFromRequirements(
     // Replace sequential gen_img_N/gen_vid_N with globally unique IDs
     const result = uniquifyMediaElementIds(enriched);
 
+    log.info(`[OutlineGen] Generated ${result.length} outlines. Titles: ${result.map((o) => `"${o.title}"[${o.type}]`).join(', ')}`);
+
     callbacks?.onProgress?.({
       currentStage: 1,
       overallProgress: 50,

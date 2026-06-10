@@ -14,10 +14,8 @@ export interface BaseTableElementProps {
 export function BaseTableElement({ elementInfo, target }: BaseTableElementProps) {
   return (
     <div
-      className={`base-element-table absolute ${target === 'thumbnail' ? 'pointer-events-none' : ''}`}
+      className={`base-element-table w-full h-full ${target === 'thumbnail' ? 'pointer-events-none' : ''}`}
       style={{
-        top: `${elementInfo.top}px`,
-        left: `${elementInfo.left}px`,
         width: `${elementInfo.width}px`,
         height: `${elementInfo.height}px`,
       }}
@@ -26,7 +24,7 @@ export function BaseTableElement({ elementInfo, target }: BaseTableElementProps)
         className="rotate-wrapper w-full h-full"
         style={{ transform: `rotate(${elementInfo.rotate}deg)` }}
       >
-        <div className="element-content w-full h-full">
+        <div className="element-content w-full h-full overflow-hidden" style={{ borderRadius: '8px' }}>
           <StaticTable elementInfo={elementInfo} />
         </div>
       </div>

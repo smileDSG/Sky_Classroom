@@ -39,6 +39,12 @@ function orderedStringify(value: unknown): string {
   );
 }
 
+/**
+ * Prompt version bump invalidates old cached results when the prompt
+ * changes significantly (e.g., new density rules, layout templates).
+ */
+const PROMPT_VERSION = 3;
+
 function hashInput(input: unknown): string {
   const json = orderedStringify(input);
   // djb2a hash with murmur3 finalizer for better distribution
@@ -61,7 +67,7 @@ export class GenerationCache {
 
   buildKey(outline: SceneOutline, options?: Record<string, unknown>): string {
     const { id, order, ...outlineData } = outline;
-    return hashInput({ outline: outlineData, options: options ?? {} });
+    return hashInput({ v: PROMPT_VERSION, outline: outlineData, options: options ?? {} });
   }
 
   get<T>(key: string): T | undefined {

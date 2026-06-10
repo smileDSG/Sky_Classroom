@@ -58,7 +58,15 @@ describe('scene-generator language directive threading (issue #472)', () => {
   describe('content generation', () => {
     it('threads languageDirective into slide content prompt', async () => {
       const { aiCall, lastUser, lastSystem } = makeCapturingAiCall(
-        JSON.stringify({ elements: [], background: null, remark: '' }),
+        JSON.stringify({
+          type: 'concept',
+          title: 'Test Scene',
+          cards: [
+            { title: 'A', desc: 'Description of point a with enough length to pass validation and be meaningful for the test.' },
+            { title: 'B', desc: 'Description of point b with enough length to pass validation and be meaningful for the test.' },
+          ],
+          summary: 'This is a comprehensive summary that meets the minimum length requirement.',
+        }),
       );
 
       await generateSceneContent(baseOutline({ type: 'slide' }), aiCall, {
@@ -234,9 +242,17 @@ describe('scene-generator language directive threading (issue #472)', () => {
       // so we check the combined system + user content.
       const aiCall: AICallFn = async (system, user) => {
         captured.push(system + user);
-        // First call is content (expects JSON); second is actions (expects array)
+        // First call is content (expects structured content JSON); second is actions (expects array)
         return captured.length === 1
-          ? JSON.stringify({ elements: [], background: null, remark: '' })
+          ? JSON.stringify({
+              type: 'concept',
+              title: 'Test Scene',
+              cards: [
+                { title: 'A', desc: 'Description of point a with enough length to pass validation and be meaningful for the test.' },
+                { title: 'B', desc: 'Description of point b with enough length to pass validation and be meaningful for the test.' },
+              ],
+              summary: 'This is a comprehensive summary that meets the minimum length requirement.',
+            })
           : '[]';
       };
 

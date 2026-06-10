@@ -35,6 +35,19 @@ export function toPptxColor(color: string): PptxColor {
     return transparency > 0 ? { color: hex, transparency } : { color: hex };
   }
 
+  // #RRGGBBAA
+  const hex8Match = trimmed.match(/^#([0-9a-fA-F]{8})$/);
+  if (hex8Match) {
+    const hex = hex8Match[1];
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const a = parseInt(hex.slice(6, 8), 16) / 255;
+    const color = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    const transparency = Math.round((1 - Math.min(1, Math.max(0, a))) * 100);
+    return transparency > 0 ? { color, transparency } : { color };
+  }
+
   // #RRGGBB or #RGB
   const hexMatch = trimmed.match(/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/);
   if (hexMatch) {

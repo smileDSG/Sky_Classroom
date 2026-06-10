@@ -1,54 +1,40 @@
 /**
- * Course template types.
+ * Course template types (legacy).
+ * For PPTD template types, see ./pptd-types.ts.
  */
 
-export interface SceneOutlineItem {
-  id: string;
-  title: string;
-  type: 'slide' | 'quiz' | 'interactive' | 'pbl';
-  description?: string;
-}
-
-/** Localized string — values keyed by locale code. */
-export type LocalizedString = {
-  'zh-CN': string;
-  'en-US': string;
-};
-
-/** Resolve a LocalizedString to a plain string for the given locale. */
-export function resolveLocale(str: LocalizedString, locale: string): string {
-  return (
-    str[locale as keyof LocalizedString] ??
-    str['zh-CN'] ??
-    Object.values(str)[0] ??
-    ''
-  );
-}
+export type LocalizedString = Record<string, string>;
 
 export type CourseTemplateSubject =
   | 'math'
   | 'physics'
   | 'chemistry'
   | 'english'
-  | 'biology'
-  | 'history'
   | 'ai'
   | 'programming'
   | 'anime'
   | 'gaming'
   | 'custom';
 
+export interface CourseTemplateOutlineItem {
+  id: string;
+  title: string;
+  type: 'slide' | 'quiz' | 'interactive' | 'pbl';
+  description?: string;
+}
+
 export interface CourseTemplate {
   id: string;
   name: LocalizedString;
   subject: CourseTemplateSubject;
-  grade?: string;
   description: LocalizedString;
-  outline: SceneOutlineItem[];
-  suggestedSettings: {
-    teacherAgent?: string;
-    difficulty?: 'easy' | 'medium' | 'hard';
-  };
-  isBuiltIn: boolean;
-  icon: string;
+  icon?: string;
+  isBuiltIn?: boolean;
+  grade?: string;
+  suggestedSettings?: Record<string, unknown>;
+  outline: CourseTemplateOutlineItem[];
+}
+
+export function resolveLocale(ls: LocalizedString, locale = 'zh-CN'): string {
+  return ls[locale] ?? ls['en-US'] ?? ls['zh-CN'] ?? Object.values(ls)[0] ?? '';
 }

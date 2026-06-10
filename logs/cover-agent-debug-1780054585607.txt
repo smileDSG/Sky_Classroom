@@ -1,7 +1,0 @@
-TOPIC: test
-LENGTH: 1076
-
---- RAW OUTPUT ---
-[{"styleName":"Test 0","paletteId":"midnight-executive","fontId":"georgia-calibri","motif":"geometric-lines","density":"moderate","recommended":true,"mood":"test","bestFor":["test"]},{"styleName":"Test 1","paletteId":"forest-moss","fontId":"georgia-calibri","motif":"geometric-lines","density":"moderate","recommended":false,"mood":"test","bestFor":["test"]},{"styleName":"Test 2","paletteId":"coral-energy","fontId":"georgia-calibri","motif":"geometric-lines","density":"moderate","recommended":false,"mood":"test","bestFor":["test"]},{"styleName":"Test 3","paletteId":"warm-terracotta","fontId":"georgia-calibri","motif":"geometric-lines","density":"moderate","recommended":false,"mood":"test","bestFor":["test"]},{"styleName":"Test 4","paletteId":"ocean-gradient","fontId":"georgia-calibri","motif":"geometric-lines","density":"moderate","recommended":false,"mood":"test","bestFor":["test"]},{"styleName":"Test 5","paletteId":"charcoal-minimal","fontId":"georgia-calibri","motif":"geometric-lines","density":"moderate","recommended":false,"mood":"test","bestFor":["test"]}]
-
---- END ---

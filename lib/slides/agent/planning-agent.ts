@@ -35,7 +35,7 @@ const pagePlanSchema = z.object({
     'concept', 'case', 'compare', 'process', 'table', 'formula', 'timeline',
     'summary', 'quiz',
   ]),
-  title: z.string().max(20),
+  title: z.string().max(28),
   contentOutline: contentOutlineSchema,
 });
 
@@ -69,10 +69,11 @@ export interface PlanningSkeleton {
   totalPages: number;
 }
 
-function buildLayer1SystemPrompt(
+export function buildLayer1SystemPrompt(
   pageTypes: string[],
   preference: string,
   designDNA?: import('./design-dna').DesignDNA,
+  educationLevel?: string,
 ): string {
   const pageTypeList = buildPageTypeList(pageTypes);
 
@@ -96,6 +97,10 @@ function buildLayer1SystemPrompt(
 `;
   }
 
+  const audienceHint = educationLevel
+    ? `\n## 目标受众\n本课件面向${educationLevel}学生设计，章节结构、页数分配和页型选择必须匹配该学段的认知水平和学习节奏。\n`
+    : '';
+
   return `## 角色
 你是一位教学设计师，为课程规划章节结构和页数分配。
 
@@ -108,21 +113,22 @@ ${pageTypeList}
 - 当内容涉及3个及以上并列对比项时，该章节必须分配 table 页型
 - concept 必须在 case 之前
 - 同一章节内避免连续3页以上相同页型
-
+${audienceHint}
 ## 页型选择偏好
 ${preference}${styleInjection}
 
 ## 输出格式（纯JSON）`;
 }
 
-function buildLayer1UserPrompt(
+export function buildLayer1UserPrompt(
   topic: string,
   difficulty: string,
   minPages: number,
   maxPages: number,
+  educationLevel?: string,
 ): string {
   return `主题：${topic}
-学段：${difficulty}
+内容难度：${difficulty}${educationLevel ? `\n目标受众：${educationLevel}` : ''}
 页数范围：${minPages}-${maxPages} 页
 
 请规划章节结构。输出每个章节的标题、核心主题、建议页数和页型序列。
@@ -155,11 +161,12 @@ export async function planSections(
   maxPages: number,
   designDNA: DesignDNA,
   languageModel: LanguageModel,
+  educationLevel?: string,
 ): Promise<SectionSkeletonResult> {
   try {
     const subjectCtx = getSubjectContext(topic);
-    const system = buildLayer1SystemPrompt(subjectCtx.pageTypes, subjectCtx.preference, designDNA);
-    const user = buildLayer1UserPrompt(topic, difficulty, minPages, maxPages);
+    const system = buildLayer1SystemPrompt(subjectCtx.pageTypes, subjectCtx.preference, designDNA, educationLevel);
+    const user = buildLayer1UserPrompt(topic, difficulty, minPages, maxPages, educationLevel);
 
     log.info(`[Layer1] Planning sections for "${topic}" [${minPages}-${maxPages}p]`);
 
@@ -215,9 +222,40 @@ function buildLayer2SystemPrompt(): string {
 - 第一页必须是 chapter 类型（章节封面页）
 - 最后一页必须是 summary 类型（章节总结页）
 - 中间页根据主题自然展开，页型必须在允许列表内
-- 每页必须包含完整的 contentOutline：focus（核心内容，≤80字）、keyConcepts（关键概念，≤4个，每个≤15字）、notes（创作指引，≤120字）
-- 页面标题字数严格限制：≤20字
+- 每页必须包含完整的 contentOutline：
+  - focus（核心内容，40-80字，必须足够具体，不能只有一句话概述）
+  - keyConcepts（关键概念，至少2个、最多4个，每个≤15字）
+  - notes（创作指引，≤120字）
+- 页面标题字数约束：12-20字最佳，最多不超过28字
+  - 标题要像演讲标题一样简洁有力，避免堆砌关键词
+  - 正例：✅"Spring AI 核心架构"(12字) ✅"向量数据库选型与性能对比"(14字)
+  - 反例：❌"Spring AI 核心概念与架构设计原理概述及应用场景分析"(太长，信息过载)
 - 当 focus 或 keyConcepts 中出现"反应式"、"方程式"、"公式"、"化学式"、"总反应"等关键词时，必须在对应页面输出完整的 LaTeX 方程式。禁止只用文字描述代替公式。
+
+## 页型选择指南（必须严格遵守）
+- concept：用于概念讲解、知识梳理、多维度分析。每页至少3个卡片或要点，内容必须充实。
+- process：用于步骤流程、反应机理、时间线展示。
+- compare：用于对比分析、异同比较。
+- table：用于数据对比、参数汇总、分类整理。
+- formula：用于公式推导、数学证明、方程展示。
+- timeline：用于历史演进、发展脉络。
+- **case：仅用于真实案例分析、计算题、应用场景。严禁将概念讲解页分配为 case 类型（概念讲解应使用 concept 或 process）。**
+- quiz：用于课堂测验、互动问答。
+- summary：用于章节总结、知识回顾。
+
+## 内容密度要求
+- concept 页面：focus 必须包含至少3个具体知识点，keyConcepts 至少2个
+- summary 页面：keyPoints 至少4个要点，覆盖本章全部核心内容
+- 严禁生成内容空洞的页面（如只有标题+一句话概述）
+
+## 单页内容量上限（硬规则，违反会导致页面排版溢出）
+- concept 页面：每个 card.desc 不超过 160 字，summary 不超过 150 字
+- case 页面：每个 scenario 的 problem 不超过 200 字，solution 不超过 200 字，problem+solution 合计不超过 400 字
+- process 页面：每个 step.desc 不超过 140 字，steps 最多 6 个
+- compare 页面：left.items 和 right.items 各最多 6 条，每条不超过 100 字，conclusion 不超过 150 字
+- table 页面：rows 最多 8 行，summary 不超过 150 字
+- summary 页面：keyPoints 最多 6 个，每个不超过 120 字，preview 不超过 80 字
+- 通用规则：如果内容超出上限，优先精简冗余表述，保留核心知识点和关键例子，而不是无限扩展。
 
 ## 输出格式（纯JSON数组）
 [
@@ -230,9 +268,10 @@ function buildLayer2UserPrompt(
   topic: string,
   difficulty: string,
   startPageNum: number,
+  educationLevel?: string,
 ): string {
   return `主题：${topic}
-学段：${difficulty}
+内容难度：${difficulty}${educationLevel ? `\n目标受众：${educationLevel}` : ''}
 章节：${skeleton.title}
 本章 focus：${skeleton.focus}
 建议页型序列：${skeleton.pageTypeHints.join(' → ')}
@@ -255,10 +294,11 @@ export async function planSectionPages(
   designDNA: DesignDNA,
   languageModel: LanguageModel,
   startPageNum: number,
+  educationLevel?: string,
 ): Promise<SectionPagesResult> {
   try {
     const system = buildLayer2SystemPrompt();
-    const user = buildLayer2UserPrompt(skeleton, topic, difficulty, startPageNum);
+    const user = buildLayer2UserPrompt(skeleton, topic, difficulty, startPageNum, educationLevel);
 
     log.info(`[Layer2] Planning pages for section ${skeleton.sectionId} "${skeleton.title}" [${skeleton.suggestedPages} pages, start=${startPageNum}]`);
 
@@ -266,7 +306,11 @@ export async function planSectionPages(
       try {
         const parsed = JSON.parse(cleanJsonText(text));
         if (!Array.isArray(parsed)) return false;
-        if (parsed.length !== skeleton.suggestedPages) return false;
+        // Allow ±2 page deviation — LLMs often miss by 1-2 pages.
+        // Rigid exact-match causes callLLM to waste retries on trivial count errors.
+        if (parsed.length < skeleton.suggestedPages - 2 || parsed.length > skeleton.suggestedPages + 2) {
+          return false;
+        }
         return parsed.every((page: { pageNum?: number; type?: string; title?: string; contentOutline?: unknown }) => {
           return typeof page.pageNum === 'number' &&
                  typeof page.type === 'string' &&
@@ -283,16 +327,67 @@ export async function planSectionPages(
     const result = await callLLM(
       { model: languageModel, system, prompt: user, maxOutputTokens: maxTokens, temperature: 0.7 },
       `planning-layer2-sec${skeleton.sectionId}`,
-      { retries: 2, timeoutMs: 180000, validate: validatePages },
+      { retries: 2, timeoutMs: 300_000, validate: validatePages },
       { mode: 'disabled', enabled: false },
     );
 
-    const pages = JSON.parse(cleanJsonText(result.text)) as PagePlan[];
+    let pages = JSON.parse(cleanJsonText(result.text)) as PagePlan[];
 
-    // Post-validation: callLLM returns lastResult even when all validate retries failed
+    // ── Adaptive repair: tolerate ±2 page deviation ──
     if (pages.length !== skeleton.suggestedPages) {
-      return { success: false, error: `页数不匹配: 期望 ${skeleton.suggestedPages}, 实际 ${pages.length}` };
+      const diff = pages.length - skeleton.suggestedPages;
+      if (Math.abs(diff) <= 2) {
+        if (diff > 0) {
+          // Too many pages: truncate from the middle, never chapter/summary
+          log.warn(`[Layer2] Section ${skeleton.sectionId} 页数过多 (${pages.length} vs ${skeleton.suggestedPages})，截断 ${diff} 页`);
+          let toRemove = diff;
+          while (toRemove > 0) {
+            let removeIdx = -1;
+            for (let j = pages.length - 2; j > 0; j--) {
+              if (pages[j].type !== 'chapter' && pages[j].type !== 'summary') {
+                removeIdx = j;
+                break;
+              }
+            }
+            if (removeIdx === -1) removeIdx = pages.length - 2;
+            pages.splice(removeIdx, 1);
+            toRemove--;
+          }
+        } else {
+          // Too few pages: pad with a generic concept page derived from neighbour
+          log.warn(`[Layer2] Section ${skeleton.sectionId} 页数过少 (${pages.length} vs ${skeleton.suggestedPages})，补充 ${-diff} 页`);
+          let toAdd = -diff;
+          while (toAdd > 0) {
+            const insertPos = Math.max(1, pages.length - 1);
+            const refPage = pages[insertPos - 1] || pages[0];
+            const suffix = '（续）';
+            const maxTitleLen = 28 - suffix.length;
+            const baseTitle = refPage.title.length > maxTitleLen
+              ? refPage.title.slice(0, maxTitleLen - 1) + '…'
+              : refPage.title;
+            pages.splice(insertPos, 0, {
+              pageNum: -1,
+              type: 'concept',
+              title: baseTitle + suffix,
+              contentOutline: {
+                focus: `${refPage.contentOutline.focus} 的延伸与补充`,
+                keyConcepts: ['补充要点'],
+                notes: '由系统自动补充的页面',
+              },
+            });
+            toAdd--;
+          }
+        }
+        // Renumber sequentially
+        for (let i = 0; i < pages.length; i++) {
+          pages[i].pageNum = startPageNum + i;
+        }
+      } else {
+        return { success: false, error: `页数偏差过大: 期望 ${skeleton.suggestedPages}, 实际 ${pages.length}` };
+      }
     }
+
+    // Final focus check
     for (const page of pages) {
       if (!page.contentOutline?.focus) {
         return { success: false, error: `页面 "${page.title}" 缺少 contentOutline.focus` };
@@ -302,7 +397,12 @@ export async function planSectionPages(
     log.info(`[Layer2] Section ${skeleton.sectionId} planned: ${pages.length} pages`);
     return { success: true, pages };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const rawMsg = err instanceof Error ? err.message : String(err);
+    const msg = rawMsg.includes('Failed to process successful response')
+      ? 'LLM 响应处理失败（可能是响应过大或格式异常），请重试'
+      : rawMsg.includes('timeout') || rawMsg.includes('超时')
+        ? 'LLM 调用超时，请稍后重试'
+        : rawMsg;
     log.error(`[Layer2] Section ${skeleton.sectionId} failed: ${msg}`);
     return { success: false, error: msg };
   }
@@ -390,10 +490,11 @@ export async function planOutline(
   maxPages: number,
   designDNA: DesignDNA,
   languageModel: LanguageModel,
+  educationLevel?: string,
 ): Promise<PlanningResult> {
   try {
     // ══ Step 1: Layer 1 — Section Skeleton ══
-    const skeletonResult = await planSections(topic, difficulty, minPages, maxPages, designDNA, languageModel);
+    const skeletonResult = await planSections(topic, difficulty, minPages, maxPages, designDNA, languageModel, educationLevel);
     if (!skeletonResult.success || !skeletonResult.skeleton) {
       return { success: false, error: skeletonResult.error || '大纲骨架规划失败' };
     }
@@ -443,9 +544,10 @@ export async function planOutline(
           designDNA,
           languageModel,
           skeleton.startPageNum!,
+          educationLevel,
         );
       },
-      600_000,
+      900_000,
       150,
     );
 
@@ -459,6 +561,34 @@ export async function planOutline(
 
     // ══ Step 5: Merge into full outline ══
     const outline = mergeOutline(sectionSkeletons, sectionResults, topic);
+
+    // Auto-fix: smart-truncate any title exceeding 28 chars before validation
+    // LLM sometimes ignores the length rule; we'd rather smart-truncate than fail.
+    const REDUNDANT_SUFFIXES = ['及应用场景分析', '原理概述', '概述及', '概述', '及分析', '与分析', '分析', '探讨', '详解', '方法总结', '总结', '介绍', '的原理', '的设计'];
+    let truncatedCount = 0;
+    for (const section of outline.sections) {
+      for (const page of section.pages) {
+        if (page.title.length > 28) {
+          let t = page.title;
+          // Try removing redundant suffixes first
+          for (const suffix of REDUNDANT_SUFFIXES) {
+            if (t.endsWith(suffix) && t.length - suffix.length >= 8) {
+              t = t.slice(0, t.length - suffix.length);
+              break;
+            }
+          }
+          // Hard truncate if still too long
+          if (t.length > 28) {
+            t = t.slice(0, 27) + '…';
+          }
+          page.title = t;
+          truncatedCount++;
+        }
+      }
+    }
+    if (truncatedCount > 0) {
+      log.warn(`[Planning] Auto-truncated ${truncatedCount} page title(s) exceeding 28 chars`);
+    }
 
     // ══ Step 6: Validate ══
     const validated = outlineSchema.safeParse(outline);
@@ -475,7 +605,12 @@ export async function planOutline(
     log.info(`[Planning] Outline complete: ${validated.data.sections.length} sections, ${actualTotalPages} pages`);
     return { success: true, outline: validated.data, totalPages: actualTotalPages };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const rawMsg = err instanceof Error ? err.message : String(err);
+    const msg = rawMsg.includes('Failed to process successful response')
+      ? '大纲规划失败：LLM 响应处理异常，请重试'
+      : rawMsg.includes('timeout') || rawMsg.includes('超时')
+        ? '大纲规划超时，请稍后重试'
+        : rawMsg;
     log.error(`[Planning] Failed: ${msg}`);
     return { success: false, error: msg };
   }

@@ -28,15 +28,17 @@ export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
           className="element-content relative p-[10px] leading-[1.5] break-words"
           style={{
             width: elementInfo.vertical ? 'auto' : '100%',
-            height: elementInfo.vertical ? `${elementInfo.height}px` : 'auto',
+            height: elementInfo.vertical ? `${elementInfo.height}px` : `${elementInfo.height}px`,
             backgroundColor: elementInfo.fill,
             opacity: elementInfo.opacity,
             textShadow: shadowStyle,
-            lineHeight: elementInfo.lineHeight,
+            lineHeight: elementInfo.lineHeight || 1.5,
             letterSpacing: `${elementInfo.wordSpace || 0}px`,
             color: elementInfo.defaultColor,
             fontFamily: elementInfo.defaultFontName,
             writingMode: elementInfo.vertical ? 'vertical-rl' : 'horizontal-tb',
+            textRendering: 'optimizeLegibility',
+            WebkitFontSmoothing: 'antialiased',
             // @ts-expect-error - CSS custom property
             '--paragraphSpace': `${elementInfo.paragraphSpace === undefined ? 5 : elementInfo.paragraphSpace}px`,
           }}
