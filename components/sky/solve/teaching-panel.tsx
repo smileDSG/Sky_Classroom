@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'motion/react';
-import { BookOpen, Loader2, Sparkles, AlertCircle, RefreshCw, Send, X, Brain, CheckCircle2 } from 'lucide-react';
+import { BookOpen, Loader2, Sparkles, AlertCircle, RefreshCw, Send, X, Brain, CheckCircle2, ThumbsUp, ThumbsDown, MessageCircle, Star, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from './math-renderer';
+import { QuizInteraction } from './quiz-interaction';
+import { TeachingChat } from './teaching-chat';
+import { TTSButton } from './tts-button';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useAuth } from '@/components/auth/auth-provider';
 import { toast } from 'sonner';
@@ -17,6 +20,10 @@ import {
   fetchTeachingJob,
   pollTeachingJob,
   cancelTeachingJob,
+  retrySection,
+  streamTeachingJob,
+  toggleTeachingFavorite,
+  shareTeachingJob,
   type TeachingJobState,
 } from '@/lib/teaching/teaching-job-client';
 import {
@@ -26,6 +33,7 @@ import {
 } from '@/lib/teaching/teaching-session';
 import type { LessonPlan, LessonSection } from '@/lib/teaching/lesson-types';
 import type { ContentChunk } from '@/lib/teaching/content-types';
+import { HOT_TOPICS, searchTopics } from '@/configs/teaching-topics';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -51,14 +59,23 @@ const TYPE_COLORS: Record<string, string> = {
 
 // ── Section Renderer ───────────────────────────────────────────────
 
-function SectionCard({
-  section,
-  chunks,
-}: {
+interface SectionCardProps {
   section: LessonSection;
   chunks: ContentChunk[];
-}) {
+  jobId?: string;
+  onRetry?: (sectionId: string) => void;
+  onAskQuestion?: (sectionId: string, sectionTitle: string) => void;
+}
+
+const SectionCard = React.memo(function SectionCard({
+  section,
+  chunks,
+  jobId,
+  onRetry,
+  onAskQuestion,
+}: SectionCardProps) {
   const sortedChunks = [...chunks].sort((a, b) => a.order - b.order);
+  const hasFailed = sortedChunks.some((c) => c.failed);
 
   const typeLabel: Record<string, string> = {
     text: '讲解',
@@ -68,13 +85,22 @@ function SectionCard({
     diagram: '图表',
   };
 
+  const handleRetry = () => {
+    if (onRetry) {
+      onRetry(section.id);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-sky-200/50 dark:border-sky-800/30">
+      <Card className={cn(
+        'bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-sky-200/50 dark:border-sky-800/30',
+        hasFailed && 'border-red-200 dark:border-red-800/50',
+      )}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
@@ -128,6 +154,7 @@ function SectionCard({
                 chunk.type === 'diagram' &&
                   'bg-cyan-50/50 dark:bg-cyan-900/10 border border-cyan-100 dark:border-cyan-800/30',
                 chunk.type === 'text' && 'bg-white/40 dark:bg-slate-700/20',
+                chunk.failed && 'bg-red-50/50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30',
               )}
             >
               {chunk.type === 'example' && (
@@ -154,16 +181,87 @@ function SectionCard({
                   核心公式
                 </Badge>
               )}
-              <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-100">
-                <MathRenderer content={chunk.content} />
+              {chunk.failed && (
+                <Badge
+                  variant="secondary"
+                  className="mb-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                >
+                  生成失败
+                </Badge>
+              )}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1">
+              {chunk.type === 'quiz' && chunk.options && chunk.options.length > 0 ? (
+                <QuizInteraction chunk={chunk} />
+              ) : (
+                <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-100">
+                  <MathRenderer content={chunk.content} />
+                </div>
+              )}
+                </div>
+                <TTSButton text={chunk.content} className="shrink-0 mt-1" />
               </div>
             </div>
           ))}
+          {hasFailed && onRetry && (
+            <div className="flex justify-end pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetry}
+                className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                重新生成
+              </Button>
+            </div>
+          )}
+
+          {/* Learning feedback buttons */}
+          {!hasFailed && (
+            <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-700">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onAskQuestion?.(section.id, section.title)}
+                className="text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-900/20"
+              >
+                <MessageCircle className="h-3 w-3 mr-1" />
+                提问
+              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    toast.success('已标记为「已掌握」');
+                    // TODO: Call feedback API
+                  }}
+                  className="text-green-600 dark:text-green-400 border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-900/20"
+                >
+                  <ThumbsUp className="h-3 w-3 mr-1" />
+                  已掌握
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    toast.success('已标记为「需复习」');
+                    // TODO: Call feedback API
+                  }}
+                  className="text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                >
+                  <ThumbsDown className="h-3 w-3 mr-1" />
+                  需复习
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>
   );
-}
+});
 
 // ── Loading Skeleton ───────────────────────────────────────────────
 
@@ -215,8 +313,67 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
   const [done, setDone] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [message, setMessage] = useState<string>('');
+  const [recommendedTopics, setRecommendedTopics] = useState<string[]>([]);
+  const [hasProfile, setHasProfile] = useState(false);
+  const [chatSection, setChatSection] = useState<{ id: string; title: string } | null>(null);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+
+  // ── Fetch recommended topics on mount ──
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/student/profile', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data) {
+            const { weakPoints, hasProfile: profileExists } = data.data;
+            setHasProfile(profileExists);
+
+            if (profileExists && weakPoints.length > 0) {
+              // Use weak points as recommendations
+              setRecommendedTopics(weakPoints.slice(0, 5));
+            } else {
+              // Cold start: use hot topics from math
+              const mathTopics = HOT_TOPICS.find((c) => c.subject === 'math');
+              setRecommendedTopics(mathTopics?.topics.slice(0, 5) ?? []);
+            }
+          }
+        }
+      } catch {
+        // Silently fail, use default topics
+        const mathTopics = HOT_TOPICS.find((c) => c.subject === 'math');
+        setRecommendedTopics(mathTopics?.topics.slice(0, 5) ?? []);
+      }
+    })();
+  }, []);
+
+  // ── Search suggestions ──
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const handleTopicChange = (value: string) => {
+    setTopic(value);
+    if (value.trim().length > 0) {
+      const results = searchTopics(value.trim());
+      setSuggestions(results.slice(0, 5));
+      setShowSuggestions(results.length > 0);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion: string) => {
+    setTopic(suggestion);
+    setShowSuggestions(false);
+  };
+
+  const handleSelectRecommended = (recommended: string) => {
+    setTopic(recommended);
+  };
 
   // ── View history item ──
   useEffect(() => {
@@ -273,7 +430,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Polling logic ──
+  // ── Polling logic (SSE with fallback) ──
   const resumePolling = useCallback((jobId: string, jobTopic: string) => {
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -281,13 +438,22 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
 
     (async () => {
       try {
-        const result = await pollTeachingJob(
+        const result = await streamTeachingJob(
           jobId,
           (data) => {
             if (controller.signal.aborted) return;
             setPlan(data.plan ?? null);
             setSections(data.sections ?? []);
             setMessage(data.message || '');
+          },
+          (sectionIndex, section, chunks) => {
+            if (controller.signal.aborted) return;
+            // Update sections as they arrive via SSE
+            setSections((prev) => {
+              const updated = [...prev];
+              updated[sectionIndex] = { section, chunks };
+              return updated;
+            });
           },
           controller.signal,
         );
@@ -370,8 +536,19 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     } catch (err) {
       const msg = err instanceof Error ? err.message : '教案生成失败';
       if (msg === 'User not found' || msg.includes('Not authenticated')) {
-        toast.error('登录已过期，请重新登录');
-        window.location.href = '/auth/login';
+        toast.error('登录已过期，请重新登录', {
+          duration: 5000,
+          action: {
+            label: '稍后登录',
+            onClick: () => {
+              // Keep current content, don't redirect
+            },
+          },
+        });
+        // Delay redirect to allow user to see the toast
+        setTimeout(() => {
+          window.location.href = '/auth/login';
+        }, 5000);
         return;
       }
       setError(msg);
@@ -399,6 +576,64 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     setError(null);
   }, [currentJobId]);
 
+  // ── Retry Section ──
+  const handleRetrySection = useCallback(async (sectionId: string) => {
+    if (!currentJobId) return;
+
+    try {
+      toast.info('正在重新生成...');
+      const result = await retrySection(currentJobId, sectionId);
+
+      if (result) {
+        // Update sections state
+        setSections((prev) => {
+          const idx = prev.findIndex((s) => s.section.id === sectionId);
+          if (idx >= 0) {
+            const updated = [...prev];
+            updated[idx] = result;
+            return updated;
+          }
+          return [...prev, result];
+        });
+        toast.success('重新生成完成');
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '重新生成失败';
+      toast.error(msg);
+    }
+  }, [currentJobId]);
+
+  // ── Favorite ──
+  const handleToggleFavorite = useCallback(async () => {
+    if (!currentJobId) return;
+
+    try {
+      const result = await toggleTeachingFavorite(currentJobId);
+      setIsFavorited(result);
+      toast.success(result ? '已收藏' : '已取消收藏');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '操作失败';
+      toast.error(msg);
+    }
+  }, [currentJobId]);
+
+  // ── Share ──
+  const handleShare = useCallback(async () => {
+    if (!currentJobId) return;
+
+    try {
+      const result = await shareTeachingJob(currentJobId);
+      setShareUrl(result.shareUrl);
+
+      // Copy to clipboard
+      await navigator.clipboard.writeText(result.shareUrl);
+      toast.success('分享链接已复制到剪贴板');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '分享失败';
+      toast.error(msg);
+    }
+  }, [currentJobId]);
+
   const progress = plan
     ? Math.round((sections.length / plan.sections.length) * 100)
     : 0;
@@ -420,16 +655,39 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         </CardHeader>
         <CardContent>
           <div className="flex gap-3">
-            <Input
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="输入授课主题，例如：二次函数、牛顿定律..."
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && canSubmit) handleStart();
-              }}
-              disabled={loading}
-              className="flex-1"
-            />
+            <div className="flex-1 relative">
+              <Input
+                value={topic}
+                onChange={(e) => handleTopicChange(e.target.value)}
+                placeholder="输入授课主题，例如：二次函数、牛顿定律..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && canSubmit) handleStart();
+                }}
+                disabled={loading}
+                className="flex-1"
+                onFocus={() => {
+                  if (suggestions.length > 0) setShowSuggestions(true);
+                }}
+                onBlur={() => {
+                  // Delay hide to allow click on suggestion
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+              />
+              {/* Search suggestions dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg">
+                  {suggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                      onMouseDown={() => handleSelectSuggestion(suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {loading ? (
               <Button
                 onClick={handleCancel}
@@ -450,6 +708,28 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
               </Button>
             )}
           </div>
+
+          {/* Recommended topics */}
+          {recommendedTopics.length > 0 && !loading && !done && (
+            <div className="mt-3">
+              <p className="text-xs text-muted-foreground mb-2">
+                {hasProfile ? '根据你的学习情况推荐：' : '热门推荐：'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {recommendedTopics.map((t) => (
+                  <Badge
+                    key={t}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                    onClick={() => handleSelectRecommended(t)}
+                  >
+                    {t}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!user && (
             <p className="text-xs text-amber-500 mt-2">
               请先登录后再使用授课功能
@@ -617,6 +897,9 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
           key={s.section.id}
           section={s.section}
           chunks={s.chunks}
+          jobId={currentJobId ?? undefined}
+          onRetry={handleRetrySection}
+          onAskQuestion={(sectionId, sectionTitle) => setChatSection({ id: sectionId, title: sectionTitle })}
         />
       ))}
 
@@ -624,11 +907,38 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
       {done && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
           <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200/50 dark:border-green-800/30">
-            <CardContent className="flex items-center gap-3 py-4">
-              <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <span className="font-medium text-green-700 dark:text-green-300">
-                授课完成！共 {sections.length} 个章节，{plan?.estimatedDuration} 分钟
-              </span>
+            <CardContent className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-3">
+                <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <span className="font-medium text-green-700 dark:text-green-300">
+                  授课完成！共 {sections.length} 个章节，{plan?.estimatedDuration} 分钟
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleToggleFavorite}
+                  className={cn(
+                    'border-green-200 dark:border-green-800',
+                    isFavorited
+                      ? 'text-amber-500 hover:text-amber-600'
+                      : 'text-green-600 dark:text-green-400 hover:text-green-700',
+                  )}
+                >
+                  <Star className={cn('h-3 w-3 mr-1', isFavorited && 'fill-current')} />
+                  {isFavorited ? '已收藏' : '收藏'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShare}
+                  className="text-green-600 dark:text-green-400 border-green-200 dark:border-green-800 hover:text-green-700"
+                >
+                  <Share2 className="h-3 w-3 mr-1" />
+                  分享
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -653,6 +963,15 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* Teaching Chat */}
+      {currentJobId && (
+        <TeachingChat
+          jobId={currentJobId}
+          sectionId={chatSection?.id}
+          sectionTitle={chatSection?.title}
+        />
       )}
     </div>
   );

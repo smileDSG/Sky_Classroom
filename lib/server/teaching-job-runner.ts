@@ -5,11 +5,13 @@
  * updating job progress as each section completes.
  */
 
+import { EventEmitter } from 'events';
 import { createLogger } from '@/lib/logger';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { planLesson } from '@/lib/teaching/lesson-planner';
-import { generateSectionContent } from '@/lib/teaching/content-generator';
+import { generateSectionContent, generateLessonConcurrent, extractContentSummary } from '@/lib/teaching/content-generator';
 import type { GeneratedSectionData } from './teaching-job-store';
+import type { PrecedingSection } from '@/lib/teaching/content-types';
 import {
   readTeachingJob,
   markTeachingJobRunning,
@@ -19,6 +21,14 @@ import {
 } from './teaching-job-store';
 
 const log = createLogger('TeachingJobRunner');
+
+// EventEmitter for SSE streaming
+const teachingEvents = new EventEmitter();
+teachingEvents.setMaxListeners(100); // Allow many SSE connections
+
+export function getTeachingEvents(): EventEmitter {
+  return teachingEvents;
+}
 
 const runningJobs = new Map<string, Promise<void>>();
 
@@ -30,7 +40,7 @@ async function assertNotCancelled(jobId: string): Promise<void> {
 }
 
 /**
- * Run a teaching job: plan lesson → generate content section by section.
+ * Run a teaching job: plan lesson → generate content concurrently.
  * Each completed section is persisted to the job store immediately.
  */
 export function runTeachingJob(
@@ -70,34 +80,37 @@ export function runTeachingJob(
         sectionsCompleted: 0,
       });
 
-      // Phase 2: Generate content for each section
-      for (let i = 0; i < plan.sections.length; i++) {
+      // Phase 2: Generate content concurrently
+      let completedCount = 0;
+      for await (const { section, chunks } of generateLessonConcurrent(plan)) {
         await assertNotCancelled(jobId);
-
-        const section = plan.sections[i];
-        const sectionProgress = Math.round(10 + (i / totalSections) * 85);
-
-        await updateTeachingJobProgress(jobId, {
-          step: 'generating_content',
-          progress: sectionProgress,
-          message: `正在生成第 ${i + 1}/${totalSections} 章节：${section.title}`,
-          sectionsCompleted: i,
-        });
-
-        log.info(`[${jobId}] Generating content for section ${i + 1}/${totalSections}: ${section.title}`);
-        const chunks = await generateSectionContent(section);
-
-        await assertNotCancelled(jobId);
+        completedCount++;
 
         const sectionData: GeneratedSectionData = { section, chunks };
         await updateTeachingJobProgress(jobId, {
           step: 'generating_content',
-          progress: Math.round(10 + ((i + 1) / totalSections) * 85),
-          message: `第 ${i + 1}/${totalSections} 章节完成：${section.title}`,
-          sectionsCompleted: i + 1,
+          progress: Math.round(10 + (completedCount / totalSections) * 85),
+          message: `第 ${completedCount}/${totalSections} 章节完成：${section.title}`,
+          sectionsCompleted: completedCount,
           section: sectionData,
         });
+
+        // Emit SSE event for this section
+        teachingEvents.emit(`job:${jobId}`, {
+          type: 'section_done',
+          sectionIndex: completedCount - 1,
+          section,
+          chunks,
+        });
+
+        log.info(`[${jobId}] Section ${completedCount}/${totalSections} completed: ${section.title}`);
       }
+
+      // Emit job done event
+      teachingEvents.emit(`job:${jobId}`, {
+        type: 'job_done',
+        jobId,
+      });
 
       // Done
       await markTeachingJobSucceeded(jobId);
@@ -121,4 +134,60 @@ export function runTeachingJob(
 
   runningJobs.set(jobId, jobPromise);
   return jobPromise;
+}
+
+/**
+ * Retry a single section: regenerate content and replace in job store.
+ */
+export async function retrySection(
+  jobId: string,
+  sectionId: string,
+): Promise<GeneratedSectionData | null> {
+  const job = await readTeachingJob(jobId);
+  if (!job || !job.plan) {
+    throw new Error('Job or plan not found');
+  }
+
+  const section = job.plan.sections.find((s) => s.id === sectionId);
+  if (!section) {
+    throw new Error(`Section ${sectionId} not found in plan`);
+  }
+
+  // Find preceding sections for context
+  const sectionIndex = job.plan.sections.findIndex((s) => s.id === sectionId);
+  const precedingSections: PrecedingSection[] = [];
+  if (job.sections) {
+    for (let i = 0; i < sectionIndex; i++) {
+      const prevData = job.sections.find((s) => s.section.id === job.plan!.sections[i].id);
+      if (prevData) {
+        precedingSections.push({
+          title: prevData.section.title,
+          knowledgePoints: prevData.section.knowledgePoints,
+          depth: prevData.section.depth,
+          contentSummary: extractContentSummary(prevData.chunks),
+        });
+      }
+    }
+  }
+
+  // Regenerate
+  const chunks = await generateSectionContent(section, precedingSections);
+  const sectionData: GeneratedSectionData = { section, chunks };
+
+  // Replace in job store
+  if (job.sections) {
+    const idx = job.sections.findIndex((s) => s.section.id === sectionId);
+    if (idx >= 0) {
+      job.sections[idx] = sectionData;
+    } else {
+      job.sections.push(sectionData);
+    }
+    await updateTeachingJobProgress(jobId, {
+      step: job.step,
+      progress: job.progress,
+      message: job.message,
+    });
+  }
+
+  return sectionData;
 }

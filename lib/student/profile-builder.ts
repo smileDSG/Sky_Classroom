@@ -6,7 +6,7 @@
  * - Mistake data via buildKnowledgeGraph (knowledge mastery, weakPoints)
  * - Error pattern analysis from mistake records
  *
- * Includes a 5-minute in-memory cache that invalidates on answer submission.
+ * Includes disk-based cache with 30-minute TTL for persistence across restarts.
  */
 
 import { getServerStorage } from '@/lib/server/server-storage';
@@ -17,11 +17,13 @@ import type { MistakeCause } from '@/lib/solve/types';
 import type { Subject } from '@/lib/solve/agents/analyze-types';
 import type { StudentProfile, ErrorPattern, ProfileCacheEntry } from './profile-types';
 import { createLogger } from '@/lib/logger';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 const log = createLogger('StudentProfile');
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const cache = new Map<string, ProfileCacheEntry>();
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_DIR = path.join(process.cwd(), 'data', 'student-profiles');
 
 // ── Error type mapping ────────────────────────────────────────────
 
@@ -59,22 +61,62 @@ function inferSubject(kp: string): Subject {
 
 // ── Cache helpers ─────────────────────────────────────────────────
 
-function getCached(userId: string): StudentProfile | null {
-  const entry = cache.get(userId);
-  if (!entry) return null;
-  if (Date.now() - entry.cachedAt > CACHE_TTL_MS) {
-    cache.delete(userId);
+async function ensureCacheDir() {
+  try {
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+  } catch {
+    // Directory already exists
+  }
+}
+
+function getCachePath(userId: string): string {
+  // Sanitize userId for filename
+  const safeId = userId.replace(/[^a-zA-Z0-9_-]/g, '_');
+  return path.join(CACHE_DIR, `${safeId}.json`);
+}
+
+async function getCached(userId: string): Promise<StudentProfile | null> {
+  try {
+    const cachePath = getCachePath(userId);
+    const data = await fs.readFile(cachePath, 'utf-8');
+    const entry: ProfileCacheEntry = JSON.parse(data);
+
+    if (Date.now() - entry.cachedAt > CACHE_TTL_MS) {
+      // Cache expired, delete file
+      await fs.unlink(cachePath).catch(() => {});
+      return null;
+    }
+
+    // Restore Date objects
+    entry.profile.lastUpdated = new Date(entry.profile.lastUpdated);
+    for (const pattern of entry.profile.errorPatterns) {
+      pattern.lastOccurrence = new Date(pattern.lastOccurrence);
+    }
+
+    return entry.profile;
+  } catch {
     return null;
   }
-  return entry.profile;
 }
 
-function setCached(userId: string, profile: StudentProfile) {
-  cache.set(userId, { profile, cachedAt: Date.now() });
+async function setCached(userId: string, profile: StudentProfile) {
+  try {
+    await ensureCacheDir();
+    const cachePath = getCachePath(userId);
+    const entry: ProfileCacheEntry = { profile, cachedAt: Date.now() };
+    await fs.writeFile(cachePath, JSON.stringify(entry, null, 2), 'utf-8');
+  } catch (err) {
+    log.warn('Failed to write profile cache:', err);
+  }
 }
 
-export function invalidateProfileCache(userId: string) {
-  cache.delete(userId);
+export async function invalidateProfileCache(userId: string) {
+  try {
+    const cachePath = getCachePath(userId);
+    await fs.unlink(cachePath).catch(() => {});
+  } catch {
+    // Ignore
+  }
 }
 
 // ── Profile builder ───────────────────────────────────────────────
@@ -84,9 +126,13 @@ export function invalidateProfileCache(userId: string) {
  * Uses the unified storage (MySQL/Supabase/memory) on the server side.
  */
 export async function buildStudentProfile(userId: string): Promise<StudentProfile> {
-  const cached = getCached(userId);
-  if (cached) return cached;
+  const cached = await getCached(userId);
+  if (cached) {
+    log.info(`Profile cache hit for ${userId}`);
+    return cached;
+  }
 
+  log.info(`Profile cache miss for ${userId}, building...`);
   const storage = await getServerStorage();
   const mistakeDAO = createMistakeBookDAO(storage);
 
@@ -189,6 +235,6 @@ export async function buildStudentProfile(userId: string): Promise<StudentProfil
     lastUpdated: new Date(),
   };
 
-  setCached(userId, profile);
+  await setCached(userId, profile);
   return profile;
 }
