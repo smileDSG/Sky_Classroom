@@ -1,10 +1,11 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, X, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import type { KnowledgeNode, KnowledgeGraph as KnowledgeGraphType } from '@/lib/mistakes/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph, recommendLearningPath } from '@/lib/mistakes/knowledge-graph';
 
 // ── Internal types ────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ const MAX_ZOOM = 3;
 // ── Component ─────────────────────────────────────────────────────────
 
 export function KnowledgeGraphView() {
+  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<LayoutData | null>(null);
@@ -69,6 +71,15 @@ export function KnowledgeGraphView() {
     if (mistakes.length === 0) return null;
     return buildKnowledgeGraph(mistakes);
   }, [mistakes]);
+
+  const learningPath = useMemo(() => {
+    if (!knowledgeGraph) return null;
+    return recommendLearningPath(knowledgeGraph);
+  }, [knowledgeGraph]);
+
+  const pathNodeIds = useMemo(() => {
+    return new Set(learningPath?.nodes ?? []);
+  }, [learningPath]);
 
   useEffect(() => {
     if (knowledgeGraph) setKnowledgeGraph(knowledgeGraph);
@@ -237,19 +248,30 @@ export function KnowledgeGraphView() {
       ctx.scale(scale, scale);
 
       // Edges
+      const hasPath = pathNodeIds.size > 0;
+      // Build set of consecutive path edge pairs for highlighting
+      const pathEdgePairs = new Set<string>();
+      if (learningPath && learningPath.nodes.length > 1) {
+        for (let i = 0; i < learningPath.nodes.length - 1; i++) {
+          pathEdgePairs.add(`${learningPath.nodes[i]}→${learningPath.nodes[i + 1]}`);
+          pathEdgePairs.add(`${learningPath.nodes[i + 1]}→${learningPath.nodes[i]}`);
+        }
+      }
+
       for (const edge of edges) {
         const from = layout.nodeMap.get(edge.from);
         const to = layout.nodeMap.get(edge.to);
         if (!from || !to) continue;
         const bothMatch =
           !isFiltering || (matchingNodeIds!.has(edge.from) && matchingNodeIds!.has(edge.to));
+        const isPathEdge = hasPath && pathEdgePairs.has(`${edge.from}→${edge.to}`);
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
         ctx.lineTo(to.x, to.y);
-        ctx.globalAlpha = bothMatch ? 1 : 0.1;
-        ctx.strokeStyle = bothMatch ? '#D1D5DB' : '#E5E7EB';
-        ctx.lineWidth = edge.relation === 'prerequisite' ? 1.5 : 1;
-        ctx.setLineDash(edge.relation === 'related' ? [4, 4] : []);
+        ctx.globalAlpha = isPathEdge ? 1 : bothMatch ? 0.6 : 0.1;
+        ctx.strokeStyle = isPathEdge ? '#3B82F6' : bothMatch ? '#D1D5DB' : '#E5E7EB';
+        ctx.lineWidth = isPathEdge ? 2.5 : edge.relation === 'prerequisite' ? 1.5 : 1;
+        ctx.setLineDash(edge.relation === 'related' && !isPathEdge ? [4, 4] : []);
         ctx.stroke();
       }
       ctx.setLineDash([]);
@@ -259,7 +281,8 @@ export function KnowledgeGraphView() {
       const weakSet = new Set(weakPoints);
       for (const ln of layout.layoutNodes) {
         const node = nodes.find((n) => n.id === ln.id)!;
-        const radius = MIN_RADIUS + node.mastery / 10;
+        const isOnPath = hasPath && pathNodeIds.has(node.id);
+        const radius = MIN_RADIUS + node.mastery / 10 + (isOnPath ? 3 : 0);
         const isMatch = !isFiltering || matchingNodeIds!.has(node.id);
 
         let color: string;
@@ -267,14 +290,26 @@ export function KnowledgeGraphView() {
         else if (node.mastery >= 50) color = '#F59E0B';
         else color = '#EF4444';
 
-        ctx.globalAlpha = isMatch ? 1 : 0.15;
+        ctx.globalAlpha = isMatch || isOnPath ? 1 : 0.15;
 
         ctx.beginPath();
         ctx.arc(ln.x, ln.y, radius, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.fill();
 
-        if (weakSet.has(node.id) && isMatch) {
+        // Path node highlight (white dashed border)
+        if (isOnPath && isMatch) {
+          ctx.beginPath();
+          ctx.arc(ln.x, ln.y, radius + 3, 0, Math.PI * 2);
+          ctx.strokeStyle = '#3B82F6';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Weak point highlight
+        if (weakSet.has(node.id) && isMatch && !isOnPath) {
           ctx.beginPath();
           ctx.arc(ln.x, ln.y, radius + 3, 0, Math.PI * 2);
           ctx.strokeStyle = '#EF4444';
@@ -299,7 +334,7 @@ export function KnowledgeGraphView() {
 
     drawRef.current = draw;
     draw();
-  }, [knowledgeGraph, containerWidth, matchingNodeIds]);
+  }, [knowledgeGraph, containerWidth, matchingNodeIds, pathNodeIds, learningPath]);
 
   // ── Coordinate helpers ──────────────────────────────────────────────
 
@@ -636,9 +671,33 @@ export function KnowledgeGraphView() {
             <div className="mt-1 space-y-0.5 text-xs text-gray-500 dark:text-slate-400">
               <div>类别：{tooltip.node.category}</div>
               <div>掌握度：{tooltip.node.mastery}%</div>
+              <div>复习进度：{Math.round(tooltip.node.reviewProgress * 100)}%</div>
               <div>题量：{tooltip.node.problemCount}</div>
               <div>错题数：{tooltip.node.mistakeCount}</div>
             </div>
+            {/* Action buttons for weak points */}
+            {tooltip.node.mastery < 50 && (
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => {
+                    handleCloseTooltip();
+                    router.push(`/sky/cloud-mind/quiz?topic=${encodeURIComponent(tooltip.node.name)}`);
+                  }}
+                  className="rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm hover:shadow-md transition-all"
+                >
+                  生成同类题
+                </button>
+                <button
+                  onClick={() => {
+                    handleCloseTooltip();
+                    router.push(`/sky/cloud-mind/memory?topic=${encodeURIComponent(tooltip.node.name)}&content=${encodeURIComponent(`知识点：${tooltip.node.name}`)}`);
+                  }}
+                  className="rounded-lg bg-gradient-to-r from-rose-500 to-pink-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm hover:shadow-md transition-all"
+                >
+                  记忆卡片
+                </button>
+              </div>
+            )}
             <button
               onClick={handleCloseTooltip}
               className="mt-2 text-xs text-[#4A90D9] hover:underline"
@@ -668,11 +727,69 @@ export function KnowledgeGraphView() {
             <span className="inline-block h-3 w-3 rounded-full border-2 border-dashed border-[#EF4444] bg-transparent" />
             虚线边框 = 薄弱点
           </span>
+          {pathNodeIds.size > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-3 w-3 rounded-full border-2 border-dashed border-[#3B82F6] bg-transparent" />
+              蓝色虚线 = 推荐路径
+            </span>
+          )}
         </div>
         <span className="text-[10px] text-gray-400 dark:text-slate-500">
           滚轮缩放 · 拖拽平移 · 拖拽节点
         </span>
       </div>
+
+      {/* Learning path card */}
+      {learningPath && learningPath.nodes.length > 1 && (
+        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-800/50 dark:bg-blue-900/10">
+          <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">
+            推荐学习路径
+          </h4>
+          <div className="flex flex-wrap items-center gap-1">
+            {learningPath.nodes.map((nodeId, i) => {
+              const node = knowledgeGraph?.nodes.find((n) => n.id === nodeId);
+              return (
+                <span key={nodeId} className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      // Focus on this node in the canvas
+                      const layout = layoutRef.current;
+                      if (!layout) return;
+                      const ln = layout.nodeMap.get(nodeId);
+                      if (!ln) return;
+                      const canvas = canvasRef.current;
+                      if (!canvas) return;
+                      const rect = canvas.getBoundingClientRect();
+                      const targetScale = 1.5;
+                      scaleRef.current = targetScale;
+                      offsetRef.current = {
+                        x: rect.width / 2 - ln.x * targetScale,
+                        y: rect.height / 2 - ln.y * targetScale,
+                      };
+                      drawRef.current();
+                      forceRedraw((n) => n + 1);
+                    }}
+                    className="rounded px-1.5 py-0.5 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
+                  >
+                    {node?.name ?? nodeId}
+                    {node && (
+                      <span className="ml-1 text-[10px] text-blue-400">
+                        {node.mastery}%
+                      </span>
+                    )}
+                  </button>
+                  {i < learningPath.nodes.length - 1 && (
+                    <span className="text-blue-300 dark:text-blue-600 text-xs">→</span>
+                  )}
+                </span>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-[11px] text-blue-500 dark:text-blue-400">
+            {learningPath.reason}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

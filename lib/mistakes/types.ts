@@ -47,6 +47,8 @@ export interface KnowledgeNode {
   problemCount: number;
   mistakeCount: number;
   children: string[];         // 子知识点 ID
+  /** Average review progress (0-1), for tooltip display */
+  reviewProgress: number;
 }
 
 export interface KnowledgeEdge {

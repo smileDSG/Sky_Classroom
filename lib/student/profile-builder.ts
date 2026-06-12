@@ -12,6 +12,7 @@
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildKnowledgeGraph, getMasterySummary } from '@/lib/mistakes/knowledge-graph';
+import { inferSubject } from '@/lib/mistakes/subject-inference';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import type { MistakeCause } from '@/lib/solve/types';
 import type { Subject } from '@/lib/solve/agents/analyze-types';
@@ -40,21 +41,6 @@ function mistakeCauseFromErrorType(
     case 'careless':
       return 'careless';
   }
-}
-
-// ── Subject inference from knowledge point name ───────────────────
-
-function inferSubject(kp: string): Subject {
-  if (/方程|函数|代数|几何|三角|概率|统计|微积分|数列/.test(kp)) return 'math';
-  if (/力|电|磁|光|热|原子|牛顿|能量|动量|速度|加速度/.test(kp)) return 'physics';
-  if (/元素|反应|化学键|摩尔|氧化还原|离子|溶液|有机/.test(kp)) return 'chemistry';
-  if (/细胞|基因|生态|遗传|酶|蛋白质|DNA|进化/.test(kp)) return 'biology';
-  if (/诗|词|文言|修辞|作文|标点|病句/.test(kp)) return 'chinese';
-  if (/语法|时态|从句|单词|阅读.*英/.test(kp)) return 'english';
-  if (/朝代|事件|人物|革命|战争|条约/.test(kp)) return 'history';
-  if (/地形|气候|洋流|人口|城市|资源/.test(kp)) return 'geography';
-  if (/政治|经济|哲学|法律|文化|社会/.test(kp)) return 'politics';
-  return 'unknown';
 }
 
 // ── Cache helpers ─────────────────────────────────────────────────

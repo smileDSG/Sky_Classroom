@@ -58,6 +58,7 @@ export default function LearningPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>('mistakes');
   const mistakes = useSkyClassroomStore((s) => s.mistakes);
+  const prioritizeReview = useSkyClassroomStore((s) => s.prioritizeReview);
 
   const weakPoints = useMemo(() => {
     if (mistakes.length === 0) return [];
@@ -249,6 +250,12 @@ export default function LearningPage() {
                       className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-amber-500/25 hover:shadow-xl transition-all hover:-translate-y-0.5"
                     >
                       针对出题
+                    </button>
+                    <button
+                      onClick={() => prioritizeReview(weakPoints)}
+                      className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-blue-500/25 hover:shadow-xl transition-all hover:-translate-y-0.5"
+                    >
+                      全部加入复习
                     </button>
                   </div>
                 </div>

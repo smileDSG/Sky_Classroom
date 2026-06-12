@@ -14,6 +14,8 @@ export interface GraphNode {
   problemCount: number;
   mistakeCount: number;
   children: string[];     // child knowledge-point IDs
+  /** Average review progress (0-1), for tooltip display */
+  reviewProgress: number;
 }
 
 /** An edge connecting two knowledge points */

@@ -13,14 +13,46 @@ import type {
   KnowledgeEdge,
   LearningPath,
 } from './types';
+import { KNOWLEDGE_RELATIONS } from './knowledge-relations';
 
 // ── Helpers ──────────────────────────────────────────────────────────
+
+const EBBINGHAUS_MAX_ROUNDS = 6;
 
 function inferCategory(name: string): string {
   if (/方程|函数|代数/.test(name)) return '代数';
   if (/几何|三角|圆/.test(name)) return '几何';
   if (/概率|统计/.test(name)) return '概率';
   return '综合';
+}
+
+/**
+ * Calculate mastery for a knowledge point based on its associated mistakes.
+ * Factors in: mistake count (penalty), review progress (bonus), and time decay.
+ */
+function calcNodeMastery(mistakesForKP: MistakeRecord[]): number {
+  const count = mistakesForKP.length;
+  if (count === 0) return 100;
+
+  // Penalty: 10 per mistake (softer than old 20)
+  const penalty = count * 10;
+
+  // Review bonus: average reviewCount/6 across mistakes, scaled to 60 points
+  const avgReviewProgress = mistakesForKP.reduce((sum, m) => {
+    return sum + Math.min(m.reviewCount / EBBINGHAUS_MAX_ROUNDS, 1);
+  }, 0) / count;
+  const reviewBonus = avgReviewProgress * 60;
+
+  // Time decay: mistakes not reviewed in 7+ days (excluding mastered ones)
+  const now = Date.now();
+  const staleCount = mistakesForKP.filter((m) => {
+    if (m.reviewed) return false;
+    if (!m.lastReview) return false;
+    return (now - m.lastReview) > 7 * 86400000;
+  }).length;
+  const decay = staleCount * 5;
+
+  return Math.max(0, Math.min(100, Math.round(100 - penalty + reviewBonus - decay)));
 }
 
 // ── Build ────────────────────────────────────────────────────────────
@@ -32,6 +64,7 @@ export function buildKnowledgeGraph(
   const kpSet = new Set<string>();
   const kpMistakeIds = new Map<string, Set<string>>(); // KP → mistake ids
   const kpProblemCount = new Map<string, number>(); // KP → total appearances
+  const kpMistakes = new Map<string, MistakeRecord[]>(); // KP → full mistake records
 
   for (const m of mistakes) {
     // Dedupe within one record (defensive)
@@ -41,8 +74,10 @@ export function buildKnowledgeGraph(
       kpProblemCount.set(kp, (kpProblemCount.get(kp) ?? 0) + 1);
       if (!kpMistakeIds.has(kp)) {
         kpMistakeIds.set(kp, new Set());
+        kpMistakes.set(kp, []);
       }
       kpMistakeIds.get(kp)!.add(m.id);
+      kpMistakes.get(kp)!.push(m);
     }
   }
 
@@ -50,14 +85,19 @@ export function buildKnowledgeGraph(
   const nodes: KnowledgeNode[] = [];
   for (const kp of kpSet) {
     const mistakeCount = kpMistakeIds.get(kp)?.size ?? 0;
+    const relatedMistakes = kpMistakes.get(kp) ?? [];
+    const reviewProgress = relatedMistakes.length > 0
+      ? relatedMistakes.reduce((sum, m) => sum + Math.min(m.reviewCount / EBBINGHAUS_MAX_ROUNDS, 1), 0) / relatedMistakes.length
+      : 0;
     nodes.push({
       id: kp,
       name: kp,
       category: inferCategory(kp),
-      mastery: Math.max(0, 100 - mistakeCount * 20),
+      mastery: calcNodeMastery(relatedMistakes),
       problemCount: kpProblemCount.get(kp) ?? 0,
       mistakeCount,
       children: [],
+      reviewProgress,
     });
   }
 
@@ -97,6 +137,17 @@ export function buildKnowledgeGraph(
       if (a !== b && b.startsWith(a)) {
         addEdge(a, b, 'prerequisite');
       }
+    }
+  }
+
+  // 3c. Mapping table edges — from the knowledge relations table
+  for (const [kp, rels] of Object.entries(KNOWLEDGE_RELATIONS)) {
+    if (!kpSet.has(kp)) continue;
+    for (const prereq of rels.prereqs ?? []) {
+      if (kpSet.has(prereq)) addEdge(prereq, kp, 'prerequisite');
+    }
+    for (const related of rels.related ?? []) {
+      if (kpSet.has(related)) addEdge(kp, related, 'related');
     }
   }
 
