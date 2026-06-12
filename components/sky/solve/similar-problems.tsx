@@ -55,17 +55,19 @@ export function SimilarProblems({
   };
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
-      <CardHeader className="border-b bg-gradient-to-r from-[#4A90D9]/5 to-transparent">
+    <Card className={cn('overflow-hidden probe-panel', className)}>
+      <CardHeader className="probe-header-gradient">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <RotateCcw className="h-5 w-5 text-[#4A90D9]" />
-              同类练习
+            <CardTitle className="flex items-center gap-2 text-lg text-[var(--probe-text)]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--probe-warm)]/25 to-[var(--probe-primary)]/15 border border-[var(--probe-warm)]/20 shadow-[0_0_8px_rgba(251,146,60,0.2)]">
+                <RotateCcw className="h-4 w-4 text-[var(--probe-warm)]" />
+              </div>
+              同类星题
             </CardTitle>
-            <CardDescription>巩固知识，多做同类题目加深理解</CardDescription>
+            <CardDescription className="mt-1 text-[var(--probe-muted)]">巩固知识，多做同类题目加深理解</CardDescription>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm font-medium text-[var(--probe-primary-bright)]">
             <Target className="h-4 w-4" />
             {completedQuestions.size}/{similarQuestions.length} 已完成
           </div>
@@ -73,7 +75,7 @@ export function SimilarProblems({
       </CardHeader>
 
       <CardContent className="p-0">
-        <div className="divide-y">
+        <div className="divide-y divide-[var(--probe-border)]">
           {similarQuestions.map((question, index) => {
             const isCompleted = completedQuestions.has(index);
             const isShowingAnswer = showingAnswer.has(index);
@@ -82,16 +84,20 @@ export function SimilarProblems({
               <div
                 key={index}
                 className={cn(
-                  'group transition-colors',
-                  isCompleted ? 'bg-green-50/50 dark:bg-green-900/10' : 'hover:bg-muted/30',
+                  'group transition-all',
+                  isCompleted
+                    ? 'bg-[var(--probe-success)]/5 shadow-[inset_0_0_16px_rgba(52,211,153,0.05)]'
+                    : 'hover:bg-[var(--probe-primary)]/8 hover:shadow-[inset_0_0_12px_var(--probe-glow)]',
                 )}
               >
                 <div className="p-4">
                   <div className="flex items-start gap-3">
                     <div
                       className={cn(
-                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors',
-                        isCompleted ? 'bg-green-500 text-white' : 'bg-[#4A90D9]/10 text-[#4A90D9]',
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all border',
+                        isCompleted
+                          ? 'bg-gradient-to-br from-[var(--probe-success)] to-emerald-400 text-white border-[var(--probe-success)]/40 shadow-[0_0_10px_rgba(52,211,153,0.35)]'
+                          : 'bg-gradient-to-br from-[var(--probe-primary)]/20 to-[var(--probe-primary)]/10 text-[var(--probe-primary-bright)] border-[var(--probe-primary)]/30',
                       )}
                     >
                       {isCompleted ? (
@@ -118,8 +124,8 @@ export function SimilarProblems({
                         className={cn(
                           'text-sm leading-normal cursor-pointer transition-colors',
                           isCompleted
-                            ? 'text-green-700 dark:text-green-300'
-                            : 'text-foreground hover:text-[#4A90D9]',
+                            ? 'text-[var(--probe-success)]'
+                            : 'text-[var(--probe-text)] hover:text-[var(--probe-primary)]',
                         )}
                         onClick={() => handleQuestionClick(question.problem, index)}
                       >
@@ -131,27 +137,29 @@ export function SimilarProblems({
                           variant="outline"
                           className={cn(
                             'text-xs',
-                            question.difficulty <= 3 && 'border-green-200 text-green-600',
+                            question.difficulty <= 3 && 'border-green-500/30 text-green-400',
                             question.difficulty > 3 &&
                               question.difficulty <= 6 &&
-                              'border-yellow-200 text-yellow-600',
-                            question.difficulty > 6 && 'border-red-200 text-red-600',
+                              'border-yellow-500/30 text-yellow-400',
+                            question.difficulty > 6 && 'border-red-500/30 text-red-400',
                           )}
                         >
                           难度 {question.difficulty}/10
                         </Badge>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs bg-[var(--probe-primary)]/10 text-[var(--probe-primary)] border border-[var(--probe-primary)]/20">
                           {question.knowledgePoint}
                         </Badge>
                       </div>
 
                       {isShowingAnswer && (
-                        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-900/20">
-                          <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-300">
-                            <Lightbulb className="h-4 w-4" />
+                        <div className="mt-3 probe-panel-elevated rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-[var(--probe-primary-bright)]">
+                            <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[var(--probe-primary)]/20">
+                              <Lightbulb className="h-3 w-3" />
+                            </div>
                             参考答案
                           </div>
-                          <div className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                          <div className="mt-2 text-sm text-[var(--probe-text)]">
                             {question.answer ? (
                               <MathRenderer content={question.answer} />
                             ) : (
@@ -168,8 +176,8 @@ export function SimilarProblems({
                           className={cn(
                             'h-7 text-xs',
                             isCompleted
-                              ? 'text-green-600 hover:bg-green-100 hover:text-green-700'
-                              : 'text-muted-foreground hover:text-[#4A90D9]',
+                              ? 'text-[var(--probe-success)] hover:bg-[var(--probe-success)]/10'
+                              : 'text-[var(--probe-muted)] hover:text-[var(--probe-primary)] hover:bg-[var(--probe-primary)]/10',
                           )}
                           onClick={() => toggleCompleted(index)}
                         >
@@ -178,7 +186,7 @@ export function SimilarProblems({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 text-xs text-muted-foreground hover:text-[#4A90D9]"
+                          className="h-7 text-xs text-[var(--probe-muted)] hover:text-[var(--probe-primary)] hover:bg-[var(--probe-primary)]/10"
                           onClick={() => toggleAnswer(index)}
                         >
                           {isShowingAnswer ? '收起答案' : '查看答案'}
@@ -187,7 +195,7 @@ export function SimilarProblems({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-xs text-muted-foreground hover:text-[#4A90D9]"
+                            className="h-7 text-xs text-[var(--probe-muted)] hover:text-[var(--probe-primary)] hover:bg-[var(--probe-primary)]/10"
                             onClick={() => onQuestionClick(question.problem)}
                           >
                             <ChevronRight className="mr-1 h-3 w-3" />
@@ -201,8 +209,8 @@ export function SimilarProblems({
                       className={cn(
                         'h-5 w-5 shrink-0 transition-colors',
                         isCompleted
-                          ? 'text-green-400'
-                          : 'text-muted-foreground group-hover:text-[#4A90D9]',
+                          ? 'text-[var(--probe-success)]'
+                          : 'text-[var(--probe-muted)] group-hover:text-[var(--probe-primary)]',
                       )}
                     />
                   </div>
@@ -213,14 +221,19 @@ export function SimilarProblems({
         </div>
 
         {similarQuestions.length > 0 && (
-          <div className="border-t p-4">
+          <div className="border-t border-[var(--probe-border)] p-4 bg-gradient-to-r from-[var(--probe-primary)]/5 to-transparent">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm font-medium text-[var(--probe-primary-bright)]">
                 {completedQuestions.size === similarQuestions.length
-                  ? '太棒了！所有同类练习都已完成'
+                  ? '✦ 所有星题已完成！'
                   : `还有 ${similarQuestions.length - completedQuestions.size} 道题目待练习`}
               </div>
-              <Button variant="outline" size="sm" className="gap-1" onClick={onPracticeClick}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1 border-[var(--probe-border-strong)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-primary)] hover:shadow-[0_0_8px_var(--probe-glow)]"
+                onClick={onPracticeClick}
+              >
                 <BookOpen className="h-4 w-4" />
                 更多练习
               </Button>
@@ -230,11 +243,11 @@ export function SimilarProblems({
 
         {similarQuestions.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <BookOpen className="h-6 w-6 text-muted-foreground" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--probe-primary)]/15 to-[var(--probe-accent)]/10 border border-[var(--probe-border)]">
+              <BookOpen className="h-6 w-6 text-[var(--probe-muted)]" />
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">暂无同类练习推荐</p>
-            <p className="text-xs text-muted-foreground">完成题目后将自动推荐相似题目</p>
+            <p className="mt-4 text-sm text-[var(--probe-muted)]">暂无同类星题推荐</p>
+            <p className="text-xs text-[var(--probe-muted)]">完成题目后将自动推荐相似题目</p>
           </div>
         )}
       </CardContent>

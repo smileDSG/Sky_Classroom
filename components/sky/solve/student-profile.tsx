@@ -81,7 +81,7 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm p-4 flex items-center gap-4">
+    <div className="rounded-xl border bg-slate-800/60 backdrop-blur-sm p-4 flex items-center gap-4">
       <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', color)}>
         {icon}
       </div>
@@ -154,32 +154,32 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
           label="总做题数"
           value={totalQuestions}
           icon={<BookOpen className="h-5 w-5 text-blue-600" />}
-          color="bg-blue-100 dark:bg-blue-900/30"
+          color="bg-blue-900/30"
         />
         <StatCard
           label="正确数"
           value={totalCorrect}
           icon={<CheckCircle2 className="h-5 w-5 text-green-600" />}
-          color="bg-green-100 dark:bg-green-900/30"
+          color="bg-green-900/30"
         />
         <StatCard
           label="正确率"
           value={`${accuracy}%`}
           icon={<Target className="h-5 w-5 text-amber-600" />}
-          color="bg-amber-100 dark:bg-amber-900/30"
+          color="bg-amber-900/30"
         />
         <StatCard
           label="错误模式数"
           value={errorPatterns?.length ?? 0}
           icon={<AlertCircle className="h-5 w-5 text-rose-600" />}
-          color="bg-rose-100 dark:bg-rose-900/30"
+          color="bg-rose-900/30"
         />
       </div>
 
       {/* Two column layout: Subjects + Knowledge */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Subject Mastery */}
-        <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm">
+        <Card className="bg-slate-800/60 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-blue-500" />
@@ -198,7 +198,7 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
         </Card>
 
         {/* Knowledge Point Mastery */}
-        <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm">
+        <Card className="bg-slate-800/60 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Zap className="h-4 w-4 text-amber-500" />
@@ -222,9 +222,9 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
       {/* Weak & Strong Points */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Weak Points */}
-        <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-red-200/50 dark:border-red-900/30">
+        <Card className="bg-slate-800/60 backdrop-blur-sm border-red-900/30">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2 text-red-600 dark:text-red-400">
+            <CardTitle className="text-base flex items-center gap-2 text-red-400">
               <TrendingDown className="h-4 w-4" />
               薄弱知识点（需要加强）
             </CardTitle>
@@ -236,7 +236,7 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
                   <Badge
                     key={kp}
                     variant="secondary"
-                    className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-800/30"
+                    className="bg-red-900/20 text-red-400 border-red-800/30"
                   >
                     {kp}
                   </Badge>
@@ -249,9 +249,9 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
         </Card>
 
         {/* Strong Points */}
-        <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-green-200/50 dark:border-green-900/30">
+        <Card className="bg-slate-800/60 backdrop-blur-sm border-green-900/30">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2 text-green-600 dark:text-green-400">
+            <CardTitle className="text-base flex items-center gap-2 text-green-400">
               <CheckCircle2 className="h-4 w-4" />
               强势知识点（已掌握）
             </CardTitle>
@@ -263,7 +263,7 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
                   <Badge
                     key={kp}
                     variant="secondary"
-                    className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200/50 dark:border-green-800/30"
+                    className="bg-green-900/20 text-green-400 border-green-800/30"
                   >
                     {kp}
                   </Badge>
@@ -277,7 +277,7 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
       </div>
 
       {/* Error Patterns */}
-      <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm">
+      <Card className="bg-slate-800/60 backdrop-blur-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-orange-500" />
@@ -290,10 +290,10 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
               {sortedErrors.map((ep, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between rounded-lg border border-border/50 p-3 bg-white/40 dark:bg-slate-700/30"
+                  className="flex items-center justify-between rounded-lg border border-border/50 p-3 bg-slate-700/30"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30 text-xs font-bold text-orange-600 dark:text-orange-400">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-900/30 text-xs font-bold text-orange-400">
                       {i + 1}
                     </div>
                     <div>
@@ -307,7 +307,7 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
                   </div>
                   <Badge
                     variant="secondary"
-                    className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"
+                    className="bg-orange-900/20 text-orange-400"
                   >
                     出现 {ep.frequency} 次
                   </Badge>

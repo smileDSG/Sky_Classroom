@@ -4,6 +4,9 @@ import { useState, useMemo, useCallback } from 'react';
 import type { MistakeCause } from '@/lib/solve/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 
+/** Must match the Ebbinghaus intervals in storage/dao/mistakes.ts */
+const EBBINGHAUS_INTERVALS_LENGTH = 6;
+
 // ── Cause label & colour maps ────────────────────────────────────────
 
 const causeLabels: Record<MistakeCause, string> = {
@@ -284,11 +287,16 @@ export function MistakeBook() {
                 <div className="flex shrink-0 flex-col gap-2">
                   {!m.reviewed && (
                     <button
-                      onClick={() => markReviewed(m.id)}
+                      onClick={() => markReviewed(m.id, true)}
                       className="whitespace-nowrap rounded-lg bg-[#10B981] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-600"
                     >
-                      已掌握
+                      复习一次 {m.reviewCount}/{EBBINGHAUS_INTERVALS_LENGTH}
                     </button>
+                  )}
+                  {m.reviewed && (
+                    <span className="whitespace-nowrap rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                      已掌握
+                    </span>
                   )}
                   <button
                     onClick={() => deleteMistake(m.id)}

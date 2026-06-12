@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Sky Classroom Store
  *
  * Centralized Zustand store for all Sky Classroom modules.
@@ -123,7 +123,7 @@ const createSlidesSlice = (set: SetFn<SlidesSlice>): SlidesSlice => ({
 
 // ── Mistakes Slice ─────────────────────────────────────────────────
 
-/** Map client MistakeCause → server ErrorType */
+/** Map client MistakeCause →server ErrorType */
 function causeToErrorType(cause: MistakeRecord['cause']): string {
   const map: Record<string, string> = {
     'concept-unclear': 'concept',
@@ -149,16 +149,19 @@ function syncAddToServer(m: MistakeRecord): void {
       knowledgePoints: m.knowledgePoints,
     }),
   }).catch(() => {
-    /* ignore — local store is source of truth for UI */
+    /* ignore 'local store is source of truth for UI */
   });
 }
 
+/** Ebbinghaus intervals 'must match lib/storage/dao/mistakes.ts */
+const EBBINGHAUS_INTERVALS = [1, 2, 4, 7, 15, 30] as const;
+
 /** Fire-and-forget: PATCH mistake review on server */
-function syncReviewToServer(id: string): void {
+function syncReviewToServer(id: string, correct: boolean): void {
   fetch('/api/sky/mistakes', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id }),
+    body: JSON.stringify({ id, correct }),
   }).catch(() => {});
 }
 
@@ -173,10 +176,11 @@ interface MistakesSlice {
   activeFilter: MistakeFilter | null;
 
   addMistake: (mistake: MistakeRecord) => void;
-  markReviewed: (id: string) => void;
+  markReviewed: (id: string, correct: boolean) => void;
   setFilter: (filter: MistakeFilter | null) => void;
   setKnowledgeGraph: (graph: KnowledgeGraph) => void;
   deleteMistake: (id: string) => void;
+  clearMistakes: () => void;
   mergeMistakes: (serverMistakes: MistakeRecord[]) => void;
 }
 
@@ -194,19 +198,48 @@ const createMistakesSlice = (
     });
     syncAddToServer(m);
   },
-  markReviewed: (id) => {
+  markReviewed: (id, correct = true) => {
     set((s) => ({
-      mistakes: s.mistakes.map((m) =>
-        m.id === id ? { ...m, reviewed: true, reviewCount: m.reviewCount + 1 } : m,
-      ),
+      mistakes: s.mistakes.map((m) => {
+        if (m.id !== id) return m;
+        if (correct) {
+          const newCount = m.reviewCount + 1;
+          const mastered = newCount >= EBBINGHAUS_INTERVALS.length;
+          const intervalIdx = Math.min(newCount, EBBINGHAUS_INTERVALS.length - 1);
+          const nextReview = mastered
+            ? undefined
+            : Date.now() + EBBINGHAUS_INTERVALS[intervalIdx] * 86400000;
+          return {
+            ...m,
+            reviewCount: newCount,
+            lastReview: Date.now(),
+            nextReview,
+            masteryLevel: newCount,
+            reviewed: mastered,
+          };
+        }
+        // Wrong answer 'reset review count, start over
+        return {
+          ...m,
+          reviewCount: 0,
+          lastReview: Date.now(),
+          nextReview: Date.now() + EBBINGHAUS_INTERVALS[0] * 86400000,
+          masteryLevel: 0,
+          reviewed: false,
+        };
+      }),
     }));
-    syncReviewToServer(id);
+    syncReviewToServer(id, correct);
   },
   setFilter: (filter) => set({ activeFilter: filter }),
   setKnowledgeGraph: (graph) => set({ knowledgeGraph: graph }),
   deleteMistake: (id) => {
     set((s) => ({ mistakes: s.mistakes.filter((m) => m.id !== id) }));
     syncDeleteToServer(id);
+  },
+  clearMistakes: () => {
+    set({ mistakes: [] });
+    fetch('/api/sky/mistakes?all=true', { method: 'DELETE' }).catch(() => {});
   },
   mergeMistakes: (serverMistakes) => {
     const local = get().mistakes;
@@ -298,7 +331,7 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
         return s as unknown as SkyClassroomStore;
       },
       onError: (error: unknown) => {
-        console.error('[SkyClassroom] Hydration failed — clearing corrupted cache:', error);
+        console.error('[SkyClassroom] Hydration failed, clearing corrupted cache:', error);
         try {
           localStorage.removeItem('sky-classroom-storage');
         } catch {

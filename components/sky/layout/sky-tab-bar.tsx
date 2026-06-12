@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
@@ -16,6 +17,8 @@ const NAV_ITEMS: { label: string; href: string; icon: typeof Star; badge?: numbe
 
 export function SkyTabBar() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   return (
     <nav className="relative flex items-center rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-1.5 border border-slate-200/40 dark:border-slate-700/30 shadow-[0_2px_16px_-4px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_16px_-4px_rgba(0,0,0,0.2)]">
@@ -42,7 +45,7 @@ export function SkyTabBar() {
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200',
             )}
           >
-            {isActive && (
+            {isActive && mounted && (
               <motion.div
                 layoutId="activeTab"
                 className="absolute inset-0 rounded-xl bg-white/90 dark:bg-slate-800/80 shadow-sm border border-slate-200/60 dark:border-slate-600/30"
@@ -67,7 +70,7 @@ export function SkyTabBar() {
               </div>
               <span>{item.label}</span>
             </span>
-            {isActive && (
+            {isActive && mounted && (
               <motion.div
                 layoutId="activeTabIndicator"
                 className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-[2px] w-8 rounded-full bg-gradient-to-r from-sky-400 to-blue-500"

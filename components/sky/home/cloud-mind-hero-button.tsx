@@ -9,6 +9,10 @@ const tools = [
     icon: Presentation,
     label: 'PPT 课件',
     desc: '一键生成精美课件',
+    iconColor: 'text-sky-300',
+    iconBg: 'bg-sky-400/20 group-hover/item:bg-sky-400/30',
+    cardBg: 'bg-sky-500/15 hover:bg-sky-500/25',
+    cardBorder: 'border-sky-400/20 hover:border-sky-400/35',
     dot: 'bg-sky-400',
     href: '/sky/slides',
   },
@@ -16,6 +20,10 @@ const tools = [
     icon: Search,
     label: '拍照搜题',
     desc: '拍照秒出解析答案',
+    iconColor: 'text-amber-300',
+    iconBg: 'bg-amber-400/20 group-hover/item:bg-amber-400/30',
+    cardBg: 'bg-amber-500/15 hover:bg-amber-500/25',
+    cardBorder: 'border-amber-400/20 hover:border-amber-400/35',
     dot: 'bg-amber-400',
     href: '/sky/solve',
   },
@@ -23,6 +31,10 @@ const tools = [
     icon: MessageSquare,
     label: '互动课堂',
     desc: '沉浸式 AI 教学',
+    iconColor: 'text-emerald-300',
+    iconBg: 'bg-emerald-400/20 group-hover/item:bg-emerald-400/30',
+    cardBg: 'bg-emerald-500/15 hover:bg-emerald-500/25',
+    cardBorder: 'border-emerald-400/20 hover:border-emerald-400/35',
     dot: 'bg-emerald-400',
     href: '/sky/assistant',
   },
@@ -88,13 +100,13 @@ export function CloudMindHeroButton() {
                   whileHover={{ y: -3 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => router.push(tool.href)}
-                  className="
+                  className={`
                     group/item relative flex flex-col items-center gap-2.5
-                    rounded-xl bg-white/[0.08] hover:bg-white/[0.14]
+                    rounded-xl ${tool.cardBg}
                     backdrop-blur-sm cursor-pointer
                     p-4 md:p-5 transition-all duration-300
-                    border border-white/[0.06] hover:border-white/[0.15]
-                  "
+                    border ${tool.cardBorder}
+                  `}
                 >
                   <div className="relative flex flex-col items-center gap-2">
                     {/* Colored dot + icon */}
@@ -102,8 +114,8 @@ export function CloudMindHeroButton() {
                       <div
                         className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${tool.dot}`}
                       />
-                      <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-xl bg-white/10 group-hover/item:bg-white/15 transition-all duration-300">
-                        <Icon className="h-5 w-5 text-white/90" />
+                      <div className={`flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-xl ${tool.iconBg} transition-all duration-300`}>
+                        <Icon className={`h-5 w-5 ${tool.iconColor}`} />
                       </div>
                     </div>
                     <div className="text-center min-w-0">

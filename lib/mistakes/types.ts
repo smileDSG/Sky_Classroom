@@ -16,6 +16,12 @@ export interface MistakeRecord {
   reviewed: boolean;
   reviewCount: number;
   knowledgePoints: string[];
+  /** Timestamp of the most recent review */
+  lastReview?: number;
+  /** Computed next review timestamp (ms epoch) */
+  nextReview?: number;
+  /** Mastery level = reviewCount, capped at EBBINGHAUS_INTERVALS.length */
+  masteryLevel?: number;
 }
 
 export type MistakeFilter =

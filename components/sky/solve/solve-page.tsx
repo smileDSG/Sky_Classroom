@@ -24,6 +24,7 @@ import { SimilarProblems } from './similar-problems';
 import { HistoryPanel } from './history-panel';
 import { SolutionSkeleton } from './solution-skeleton';
 import { MathRenderer } from './math-renderer';
+import { cn } from '@/lib/utils';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useSearchHistoryStore } from '@/lib/store/search-history';
@@ -724,49 +725,64 @@ export function SolvePage() {
   const isLoading = state === 'recognizing' || state === 'solving' || state === 'grading';
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="relative mx-auto max-w-7xl">
+      {/* Ambient violet glow orbs */}
+      <div className="pointer-events-none absolute -top-32 -left-32 h-64 w-64 rounded-full bg-[var(--probe-primary)]/8 blur-[100px]" />
+      <div className="pointer-events-none absolute top-1/3 -right-20 h-48 w-48 rounded-full bg-[var(--probe-accent)]/6 blur-[80px]" />
+      <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-[var(--probe-primary)]/5 blur-[90px]" />
+
+      <div className="relative z-10 mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
-            搜题批改
+          <h1 className="text-2xl font-bold text-[var(--probe-primary-bright)] probe-glow-text flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--probe-primary)]/30 to-[var(--probe-accent)]/20 border border-[var(--probe-border)] shadow-[0_0_16px_var(--probe-glow)]">
+              🔎
+            </span>
+            深空探测站
           </h1>
-          <p className="text-sm text-muted-foreground">拍照、语音或输入题目，AI 帮你解答</p>
+          <p className="mt-1 text-sm text-[var(--probe-muted)]">捕获信号，AI 为你解码每一道题</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant={showHistory ? 'default' : 'outline'}
             size="sm"
-            className="gap-2"
+            className={cn(
+              'gap-2 transition-all',
+              showHistory
+                ? 'bg-[var(--probe-primary)]/30 border border-[var(--probe-border-strong)] text-[var(--probe-primary-bright)] shadow-[0_0_12px_var(--probe-glow)]'
+                : 'border-[var(--probe-border)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-border-strong)]',
+            )}
             onClick={() => {
               setShowHistory((v) => !v);
               if (!showHistory) setError(null);
             }}
           >
             <Clock className="h-4 w-4" />
-            历史记录
+            历史星图
           </Button>
           {(state === 'success' ||
             state === 'graded' ||
             state === 'error' ||
             state === 'solving') && (
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>
+            <Button variant="outline" size="sm" className="gap-2 border-[var(--probe-border)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-border-strong)]" onClick={handleReset}>
               <RotateCcw className="h-4 w-4" />
-              重新搜题
+              重新探测
             </Button>
           )}
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
+      <div className="relative z-10 grid gap-6 lg:grid-cols-[400px_1fr]">
         {/* ── LEFT COLUMN ── */}
         <div className="space-y-6">
-          <Card className="overflow-hidden border-sky-200/50 dark:border-sky-800/40 shadow-md shadow-sky-100/50 dark:shadow-sky-900/20">
-            <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-transparent dark:from-sky-950/30 dark:to-transparent">
-              <CardTitle className="flex items-center gap-2 text-base text-sky-700 dark:text-sky-300">
-                <ImageIcon className="h-4 w-4 text-sky-500" />
-                题目输入
+          <Card className="overflow-hidden probe-panel">
+            <CardHeader className="probe-header-gradient">
+              <CardTitle className="flex items-center gap-2 text-base text-[var(--probe-primary-bright)]">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--probe-primary)]/20 border border-[var(--probe-primary)]/30">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                </div>
+                信号输入
               </CardTitle>
-              <CardDescription>支持拍照、语音和文字输入</CardDescription>
+              <CardDescription className="text-[var(--probe-muted)]">支持拍照、语音和文字信号捕获</CardDescription>
             </CardHeader>
             <CardContent className="p-4">
               <MultimodalInput
@@ -779,70 +795,72 @@ export function SolvePage() {
           </Card>
 
           {state === 'idle' && (
-            <div className="rounded-lg border border-sky-200/40 dark:border-sky-800/30 bg-sky-50/50 dark:bg-sky-950/20 p-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-sky-600 dark:text-sky-400">
-                <Sparkles className="h-4 w-4" />
-                使用技巧
+            <div className="probe-panel rounded-lg p-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-[var(--probe-accent)]">
+                <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[var(--probe-accent)]/15">
+                  <Sparkles className="h-3 w-3" />
+                </div>
+                探测指南
               </div>
-              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                <li>• 拍照时尽量保持光线充足、文字清晰</li>
-                <li>• 语音输入支持数学公式朗读</li>
-                <li>• 输入答案后可获得 AI 批改</li>
-                <li>• 系统会自动推荐相似题目</li>
+              <ul className="mt-3 space-y-2 text-xs text-[var(--probe-muted)]">
+                <li className="flex items-center gap-2"><span className="text-[var(--probe-primary)]">✦</span> 拍照时尽量保持光线充足、文字清晰</li>
+                <li className="flex items-center gap-2"><span className="text-[var(--probe-accent)]">✦</span> 语音输入支持数学公式朗读</li>
+                <li className="flex items-center gap-2"><span className="text-[var(--probe-success)]">✦</span> 输入答案后可获得 AI 批改</li>
+                <li className="flex items-center gap-2"><span className="text-[var(--probe-warm)]">✦</span> 系统会自动推荐相似题目</li>
               </ul>
             </div>
           )}
 
           {state === 'recognizing' && (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-sky-200/40 dark:border-sky-800/30 bg-sky-50/50 dark:bg-sky-950/20 p-8">
+            <div className="probe-panel-elevated flex flex-col items-center justify-center rounded-xl p-8">
               <div className="relative">
-                <div className="h-12 w-12 animate-pulse rounded-full bg-sky-200/50 dark:bg-sky-800/50" />
+                <div className="h-14 w-14 animate-signal-pulse rounded-full bg-gradient-to-br from-[var(--probe-primary)]/30 to-[var(--probe-accent)]/20" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <ImageIcon className="h-6 w-6 text-sky-500" />
+                  <ImageIcon className="h-7 w-7 text-[var(--probe-primary-bright)]" />
                 </div>
               </div>
-              <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">
-                正在识别图片...
+              <p className="mt-4 text-sm font-semibold text-[var(--probe-primary-bright)]">
+                正在识别信号...
               </p>
-              <p className="text-xs text-muted-foreground">请稍候</p>
+              <p className="text-xs text-[var(--probe-muted)]">请稍候</p>
             </div>
           )}
 
           {(state === 'solving' || state === 'grading') && (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-sky-200/40 dark:border-sky-800/30 bg-sky-50/50 dark:bg-sky-950/20 p-8">
+            <div className="probe-panel-elevated flex flex-col items-center justify-center rounded-xl p-8">
               {previewImage && (
                 <img
                   src={previewImage}
                   alt="题目图片"
-                  className="mb-4 max-h-32 rounded-md border object-contain"
+                  className="mb-4 max-h-32 rounded-lg border border-[var(--probe-border)] object-contain shadow-[0_0_12px_var(--probe-glow)]"
                 />
               )}
               <div className="relative">
-                <div className="h-12 w-12 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
+                <div className="h-14 w-14 animate-spin rounded-full border-2 border-[var(--probe-primary)] border-t-transparent shadow-[0_0_16px_var(--probe-glow)]" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Wand2 className="h-5 w-5 text-sky-500" />
+                  <Wand2 className="h-6 w-6 text-[var(--probe-primary-bright)]" />
                 </div>
               </div>
-              <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">
+              <p className="mt-4 text-sm font-semibold text-[var(--probe-primary-bright)]">
                 {state === 'grading' ? '正在批改...' : phaseLabel(streamPhase)}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {state === 'grading' ? 'AI 正在分析你的答案' : '后台处理中，结果即将呈现'}
+              <p className="text-xs text-[var(--probe-muted)]">
+                {state === 'grading' ? 'AI 正在分析你的答案' : '信号解码中，结果即将呈现'}
               </p>
               {recognizedText && (
-                <p className="mt-2 text-xs text-muted-foreground max-w-[280px] truncate">
+                <p className="mt-2 text-xs text-[var(--probe-muted)] max-w-[280px] truncate">
                   识别：{recognizedText}
                 </p>
               )}
               {/* Progress bar */}
               <div className="mt-4 w-full max-w-[200px]">
-                <div className="h-1.5 rounded-full bg-sky-200 dark:bg-sky-800 overflow-hidden">
+                <div className="h-2 rounded-full bg-[var(--probe-primary)]/15 overflow-hidden shadow-inner">
                   <div
-                    className="h-full rounded-full bg-sky-500 transition-all duration-700 ease-in-out"
+                    className="h-full rounded-full bg-gradient-to-r from-[var(--probe-primary)] via-[var(--probe-accent)] to-[var(--probe-primary)] bg-[length:200%_100%] animate-gradient-x transition-all duration-700 ease-in-out"
                     style={{ width: phaseProgress(streamPhase) }}
                   />
                 </div>
-                <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground">
+                <div className="mt-2 flex justify-between text-[10px] text-[var(--probe-muted)]">
                   <span>查库</span>
                   <span>路由</span>
                   <span>解题</span>
@@ -853,9 +871,14 @@ export function SolvePage() {
           )}
 
           {(state === 'success' || state === 'graded') && result && (
-            <Card className="overflow-hidden border-sky-200/50 dark:border-sky-800/40">
-              <CardHeader className="border-b bg-muted/30">
-                <CardTitle className="text-sm font-medium">题目预览</CardTitle>
+            <Card className="overflow-hidden probe-panel">
+              <CardHeader className="probe-header-gradient">
+                <CardTitle className="flex items-center gap-2 text-sm font-medium text-[var(--probe-text)]">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[var(--probe-primary)]/20">
+                    <BookOpen className="h-3 w-3 text-[var(--probe-primary)]" />
+                  </div>
+                  信号预览
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-4">
                 {previewImage && (
@@ -863,22 +886,22 @@ export function SolvePage() {
                     <img
                       src={previewImage}
                       alt="题目图片"
-                      className="max-h-40 rounded-md border object-contain"
+                      className="max-h-40 rounded-lg border border-[var(--probe-border)] object-contain shadow-[0_0_8px_var(--probe-glow)]"
                     />
                   </div>
                 )}
                 {recognizedText && (
-                  <div className="mb-2 text-sm text-muted-foreground leading-normal">
+                  <div className="mb-2 text-sm text-[var(--probe-muted)] leading-normal">
                     识别结果：
                     <MathRenderer content={recognizedText} />
                   </div>
                 )}
                 <MathRenderer
                   content={result.problem}
-                  className="text-sm leading-normal text-foreground"
+                  className="text-sm leading-normal text-[var(--probe-text)]"
                 />
                 {result.fromQuestionBank && (
-                  <div className="mt-3 flex items-center gap-2 text-xs text-sky-600 dark:text-sky-400">
+                  <div className="mt-3 flex items-center gap-2 text-xs text-[var(--probe-accent)]">
                     <Sparkles className="h-3 w-3" />
                     来自题库，秒速响应
                   </div>
@@ -899,21 +922,24 @@ export function SolvePage() {
           ) : (
             <>
               {state === 'error' && error && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="border-[var(--probe-error)]/40 bg-[var(--probe-error)]/15 shadow-[0_0_16px_rgba(248,113,113,0.15)]">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>出错了</AlertTitle>
+                  <AlertTitle>信号异常</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
 
               {state === 'idle' && (
-                <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-sky-200/40 dark:border-sky-800/30 bg-sky-50/30 dark:bg-sky-950/10 py-20">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/40">
-                    <Sparkles className="h-8 w-8 text-sky-500" />
+                <div className="probe-panel flex flex-col items-center justify-center rounded-xl py-24">
+                  <div className="relative">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--probe-primary)]/20 to-[var(--probe-accent)]/10 border border-[var(--probe-border)] shadow-[0_0_24px_var(--probe-glow)]">
+                      <Sparkles className="h-10 w-10 text-[var(--probe-primary-bright)]" />
+                    </div>
+                    <div className="absolute -inset-3 rounded-3xl border border-[var(--probe-primary)]/10 animate-pulse" />
                   </div>
-                  <h3 className="mt-4 text-lg font-medium text-foreground">开始搜题</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    在左侧输入题目，AI 将为你提供详细的解题步骤
+                  <h3 className="mt-6 text-lg font-semibold text-[var(--probe-text)]">等待信号输入</h3>
+                  <p className="mt-2 text-sm text-[var(--probe-muted)]">
+                    在左侧输入题目，AI 将为你解码详细的解题步骤
                   </p>
                 </div>
               )}
@@ -927,21 +953,23 @@ export function SolvePage() {
                 <>
                   <GradeResultCard result={result.gradeResult} />
                   {!result.gradeResult.isCorrect && (
-                    <div className="flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20">
-                      {mistakeSaved ? (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                          <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                            已加入错题本
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <BookOpen className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">正在加入错题本...</span>
-                        </>
-                      )}
-                      <Badge variant="secondary" className="text-xs">
+                    <div className="flex items-center justify-between gap-2 probe-panel rounded-lg p-3 border-[var(--probe-success)]/30">
+                      <div className="flex items-center gap-2">
+                        {mistakeSaved ? (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 text-[var(--probe-success)]" />
+                            <span className="text-sm font-medium text-[var(--probe-success)]">
+                              已归档至错题本
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <BookOpen className="h-4 w-4 text-[var(--probe-muted)]" />
+                            <span className="text-sm text-[var(--probe-muted)]">正在归档至错题本...</span>
+                          </>
+                        )}
+                      </div>
+                      <Badge variant="secondary" className="text-xs border border-[var(--probe-primary)]/30 bg-[var(--probe-primary)]/10 text-[var(--probe-primary-bright)]">
                         前往
                         <a href="/sky/learning" className="ml-1 underline">
                           学习数据
@@ -957,11 +985,13 @@ export function SolvePage() {
               {state === 'success' &&
                 mistakeBookState !== 'idle' &&
                 mistakeBookState !== 'dismissed' && (
-                  <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                      <span className="text-sm text-amber-700 dark:text-amber-300">
-                        {mistakeBookState === 'saved' ? '已加入错题本' : '是否将此题加入错题本？'}
+                  <div className="probe-panel-elevated flex items-center justify-between rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--probe-primary)]/20 border border-[var(--probe-primary)]/30 shadow-[0_0_8px_var(--probe-glow)]">
+                        <BookOpen className="h-4 w-4 text-[var(--probe-primary-bright)]" />
+                      </div>
+                      <span className="text-sm text-[var(--probe-text)]">
+                        {mistakeBookState === 'saved' ? '已归档至错题本' : '是否将此题归档至错题本？'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -970,16 +1000,16 @@ export function SolvePage() {
                           <Button
                             size="sm"
                             variant="default"
-                            className="h-7 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
+                            className="h-8 gap-1 probe-button-primary text-[var(--probe-primary-bright)]"
                             onClick={handleSaveToMistakeBook}
                           >
                             <Plus className="h-3 w-3" />
-                            加入
+                            归档
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0 text-muted-foreground"
+                            className="h-8 w-8 p-0 text-[var(--probe-muted)] hover:text-[var(--probe-text)]"
                             onClick={() => setMistakeBookState('dismissed')}
                           >
                             <X className="h-3 w-3" />
@@ -987,10 +1017,10 @@ export function SolvePage() {
                         </>
                       )}
                       {mistakeBookState === 'saving' && (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--probe-primary)] border-t-transparent" />
                       )}
                       {mistakeBookState === 'saved' && (
-                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <CheckCircle2 className="h-5 w-5 text-[var(--probe-success)]" />
                       )}
                     </div>
                   </div>
@@ -1015,18 +1045,22 @@ export function SolvePage() {
 
 export function SolvePageSkeleton() {
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="mb-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-sky-100 dark:bg-sky-900/30" />
-        <div className="mt-2 h-4 w-64 animate-pulse rounded bg-sky-50 dark:bg-sky-900/20" />
+    <div className="relative mx-auto max-w-7xl">
+      {/* Ambient glow hints */}
+      <div className="pointer-events-none absolute -top-32 -left-32 h-64 w-64 rounded-full bg-[var(--probe-primary)]/8 blur-[100px]" />
+      <div className="pointer-events-none absolute top-1/3 -right-20 h-48 w-48 rounded-full bg-[var(--probe-accent)]/6 blur-[80px]" />
+
+      <div className="relative z-10 mb-6">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-[var(--probe-primary)]/20 border border-[var(--probe-border)]" />
+        <div className="mt-2 h-4 w-64 animate-pulse rounded bg-[var(--probe-primary)]/10" />
       </div>
-      <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
+      <div className="relative z-10 grid gap-6 lg:grid-cols-[400px_1fr]">
         <div className="space-y-6">
-          <div className="h-[400px] animate-pulse rounded-xl bg-sky-50 dark:bg-sky-900/20" />
+          <div className="h-[400px] animate-pulse rounded-xl probe-panel" />
         </div>
         <div className="space-y-6">
-          <div className="h-[300px] animate-pulse rounded-xl bg-sky-50 dark:bg-sky-900/20" />
-          <div className="h-[200px] animate-pulse rounded-xl bg-sky-50 dark:bg-sky-900/20" />
+          <div className="h-[300px] animate-pulse rounded-xl probe-panel" />
+          <div className="h-[200px] animate-pulse rounded-xl probe-panel" />
         </div>
       </div>
     </div>

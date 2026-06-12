@@ -1,10 +1,5 @@
-import { SkyAppShell } from '@/components/sky/layout/app-shell';
-import { TeachingPage } from './teaching-page';
+import { redirect } from 'next/navigation';
 
 export default function TeachingRoute() {
-  return (
-    <SkyAppShell>
-      <TeachingPage />
-    </SkyAppShell>
-  );
+  redirect('/sky/cloud-mind/teaching');
 }

@@ -13,6 +13,7 @@ import { SkyClassroomEntry } from '@/components/sky-classroom-entry';
 import { KagamiPanel } from '@/components/ai/kagami-panel';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { ClassroomJobPoller } from '@/components/classroom-job-poller';
+import { SlidesJobPoller } from '@/components/slides-job-poller';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -46,6 +47,7 @@ export default function RootLayout({
             <SkyClassroomEntry />
             <KagamiPanel />
             <ClassroomJobPoller />
+            <SlidesJobPoller />
             <AccessCodeGuard>{children}</AccessCodeGuard>
             <Toaster position="top-center" />
           </AuthProvider>

@@ -68,32 +68,35 @@ export function ChainProgress({ phase, className }: ChainProgressProps) {
     <div className={cn('space-y-2', className)}>
       {/* Animated spinner + label */}
       <div className="flex items-center gap-3">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
-        <span className="text-sm font-medium text-sky-600 dark:text-sky-400">
+        <div className="relative h-5 w-5">
+          <div className="absolute inset-0 animate-spin rounded-full border-2 border-[var(--probe-primary)] border-t-transparent shadow-[0_0_8px_var(--probe-glow)]" />
+          <div className="absolute inset-1 animate-spin rounded-full border border-[var(--probe-accent)] border-b-transparent" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+        </div>
+        <span className="text-sm font-semibold text-[var(--probe-primary-bright)]">
           {config.label}
         </span>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress bar with gradient and shimmer */}
       <div className="w-full">
-        <div className="h-1.5 rounded-full bg-sky-200 dark:bg-sky-800 overflow-hidden">
+        <div className="h-2 rounded-full bg-[var(--probe-primary)]/15 overflow-hidden shadow-inner">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-500 transition-all duration-700 ease-in-out"
+            className="h-full rounded-full bg-gradient-to-r from-[var(--probe-primary)] via-[var(--probe-accent)] to-[var(--probe-primary)] bg-[length:200%_100%] animate-gradient-x transition-all duration-700 ease-in-out shadow-[0_0_8px_var(--probe-glow)]"
             style={{ width: progress }}
           />
         </div>
       </div>
 
       {/* Phase steps */}
-      <div className="flex justify-between text-[10px] text-muted-foreground">
+      <div className="flex justify-between text-[10px] text-[var(--probe-muted)]">
         {orderedPhases.map((p, i) => (
           <span
             key={p}
             className={cn(
-              'transition-colors',
+              'transition-all',
               i <= currentIdx
-                ? 'text-sky-600 dark:text-sky-400 font-medium'
-                : 'text-muted-foreground/50',
+                ? 'text-[var(--probe-primary-bright)] font-semibold drop-shadow-[0_0_4px_var(--probe-glow)]'
+                : 'text-[var(--probe-muted)]/50',
             )}
           >
             {PHASE_CONFIG[p].shortLabel}

@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import Link from 'next/link';
-import { Camera, Presentation, Brain, ArrowRight, Sparkles, Zap, BookOpen } from 'lucide-react';
+import { Camera, Presentation, Brain, ArrowRight, Sparkles, Zap, BookOpen, FileQuestion } from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 
 const TOOLS = [
@@ -27,6 +27,16 @@ const TOOLS = [
     badge: '推荐',
   },
   {
+    id: 'quiz',
+    label: '智能出题',
+    description: '选择学科与难度，AI 量身定制练习题',
+    href: '/sky/cloud-mind/quiz',
+    icon: FileQuestion,
+    gradient: 'from-amber-500 to-yellow-500',
+    stats: '6 大学科覆盖',
+    badge: '新',
+  },
+  {
     id: 'memory',
     label: '记忆卡片',
     description: 'AI 生成记忆卡片，艾宾浩斯高效复习',
@@ -39,7 +49,7 @@ const TOOLS = [
     id: 'teaching',
     label: '智能授课',
     description: 'AI 辅助课堂讲解，智能生成教学方案',
-    href: '/sky/teaching',
+    href: '/sky/cloud-mind/teaching',
     icon: BookOpen,
     gradient: 'from-amber-500 to-orange-600',
     stats: 'AI 教学助手',

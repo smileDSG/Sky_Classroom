@@ -47,8 +47,8 @@ const TASK_COLORS: Record<TaskType, string> = {
 
 const TASK_ROUTES: Record<TaskType, string> = {
   solve: '/sky/cloud-mind/solve',
-  slides: '/sky/cloud-mind/slides',
-  pptx: '/sky/cloud-mind/slides',
+  slides: '/sky/cloud-mind',
+  pptx: '/sky/cloud-mind',
   quiz: '/sky/cloud-mind/quiz',
   write: '/sky/cloud-mind/write',
   translate: '/sky/cloud-mind/translate',

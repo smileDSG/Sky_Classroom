@@ -22,6 +22,7 @@ import {
   Leaf,
   Globe,
 } from 'lucide-react';
+import { StudentProfilePage } from '@/app/sky/student/student-profile-page';
 
 /** Map server ErrorType → client MistakeCause */
 function errorTypeToCause(errorType: string): MistakeCause {
@@ -40,6 +41,7 @@ const TABS = [
   { key: 'review', label: '复习计划', icon: CalendarCheck, desc: '艾宾浩斯曲线' },
   { key: 'graph', label: '知识图谱', icon: Network, desc: '能力可视化' },
   { key: 'stats', label: '学习统计', icon: BarChart3, desc: '数据洞察' },
+  { key: 'profile', label: '学情分析', icon: Globe, desc: '多维度洞察' },
 ] as const;
 
 const containerVariants = {
@@ -149,40 +151,12 @@ export default function LearningPage() {
           </div>
         </motion.div>
 
-        {/* 学情分析入口 */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          <button
-            onClick={() => router.push('/sky/student')}
-            className="w-full flex items-center gap-4 rounded-2xl bg-white/60 dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-4 hover:bg-white/80 dark:hover:bg-slate-800/60 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300 cursor-pointer group"
-          >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-md">
-              <Globe className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">学情分析</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">多维度学习数据洞察</p>
-            </div>
-            <svg
-              className="h-4 w-4 text-slate-300 dark:text-slate-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all duration-300"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </motion.div>
-
         {/* Tab Bar — 森林风格 */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-2 md:grid-cols-4 gap-3"
+          className="grid grid-cols-2 md:grid-cols-5 gap-3"
         >
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -282,6 +256,7 @@ export default function LearningPage() {
             </div>
           )}
           {activeTab === 'stats' && <LearningStats />}
+          {activeTab === 'profile' && <StudentProfilePage />}
         </motion.div>
       </div>
     </SkyAppShell>

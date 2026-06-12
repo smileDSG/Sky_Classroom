@@ -122,6 +122,7 @@ export function syncMistakesFromQuizzes(): void {
         solvedAt: new Date(),
         reviewed: false,
         reviewCount: 0,
+        masteryLevel: 0,
         knowledgePoints: guessKnowledgePoints(q.question),
       };
 

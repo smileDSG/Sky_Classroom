@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { BookOpen, Clock } from 'lucide-react';
+import { Clock, GraduationCap } from 'lucide-react';
 import { TeachingPanel } from '@/components/sky/solve/teaching-panel';
 import { TeachingHistoryPanel } from '@/components/sky/solve/teaching-history-panel';
-import { Button } from '@/components/ui/button';
 import type { TeachingHistoryItem } from '@/lib/teaching/teaching-job-client';
 import type { LessonPlan, LessonSection } from '@/lib/teaching/lesson-types';
 import type { ContentChunk } from '@/lib/teaching/content-types';
@@ -32,29 +31,33 @@ export function TeachingPage() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-4xl">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+    <div className="mx-auto max-w-4xl space-y-6">
+      {/* Header — "授课控制台" */}
+      <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/20">
-            <BookOpen className="h-5 w-5" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--teaching-primary)]/25 to-[var(--teaching-warm)]/15 border border-[var(--teaching-primary)]/25 shadow-[0_0_12px_var(--teaching-glow)]">
+            <GraduationCap className="h-6 w-6 text-[var(--teaching-primary-bright)]" />
           </div>
           <div>
-            <h2 className="text-xl font-bold">AI 智能授课</h2>
-            <p className="text-sm text-muted-foreground">
-              输入授课主题，AI 将根据学情自动生成个性化教案，后台持续运行
+            <h2 className="text-xl font-bold text-[var(--teaching-text)] teaching-glow-text">
+              星际讲堂
+            </h2>
+            <p className="text-sm text-[var(--teaching-muted)]">
+              AI 导师为你规划教案，逐段讲解知识点
             </p>
           </div>
         </div>
-        <Button
-          variant={showHistory ? 'default' : 'outline'}
-          size="sm"
+        <button
           onClick={() => setShowHistory((v) => !v)}
-          className={showHistory ? 'bg-sky-500 hover:bg-sky-600' : ''}
+          className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+            showHistory
+              ? 'teaching-button-primary text-[var(--teaching-text)]'
+              : 'border border-[var(--teaching-border)] text-[var(--teaching-muted)] hover:text-[var(--teaching-primary-bright)] hover:border-[var(--teaching-primary)]/50 hover:bg-[var(--teaching-primary)]/10'
+          }`}
         >
-          <Clock className="h-4 w-4 mr-1.5" />
-          历史记录
-        </Button>
+          <Clock className="h-4 w-4" />
+          历史星图
+        </button>
       </div>
 
       {/* History Panel (toggle) */}
@@ -68,10 +71,7 @@ export function TeachingPage() {
         </div>
       )}
 
-      <TeachingPanel
-        viewHistoryItem={historyItem}
-        onViewedHistory={handleViewedHistory}
-      />
+      <TeachingPanel viewHistoryItem={historyItem} onViewedHistory={handleViewedHistory} />
     </div>
   );
 }
