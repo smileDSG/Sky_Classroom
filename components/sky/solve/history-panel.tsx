@@ -5,7 +5,6 @@ import {
   BookOpen,
   ChevronRight,
   AlertCircle,
-  Loader2,
   Search,
   XCircle,
   Camera,
@@ -19,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MathRenderer } from './math-renderer';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -186,23 +186,25 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
 
   return (
     <>
-      <Card className={className}>
-        <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-transparent dark:from-sky-950/30 dark:to-transparent">
+      <Card className={cn('probe-panel overflow-hidden', className)}>
+        <CardHeader className="probe-header-gradient">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Clock className="h-5 w-5 text-sky-500" />
-                历史记录
+              <CardTitle className="flex items-center gap-2 text-lg text-[var(--probe-text)]">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--probe-primary)]/25 to-[var(--probe-accent)]/15 border border-[var(--probe-border)] shadow-[0_0_8px_var(--probe-glow)]">
+                  <Clock className="h-4 w-4 text-[var(--probe-primary-bright)]" />
+                </div>
+                历史星图
               </CardTitle>
-              <CardDescription>所有拍照搜题记录</CardDescription>
+              <CardDescription className="mt-1 text-[var(--probe-muted)]">所有探测记录</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               {selectMode ? (
                 <>
-                  <Button variant="ghost" size="sm" onClick={exitSelectMode}>
+                  <Button variant="ghost" size="sm" onClick={exitSelectMode} className="text-[var(--probe-muted)] hover:text-[var(--probe-text)]">
                     取消
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={toggleSelectAll}>
+                  <Button variant="ghost" size="sm" onClick={toggleSelectAll} className="text-[var(--probe-primary-bright)] hover:bg-[var(--probe-primary)]/15">
                     {selectedKeys.size === filteredItems.length ? '取消全选' : '全选'}
                   </Button>
                 </>
@@ -213,10 +215,11 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
                     size="sm"
                     onClick={() => setSelectMode(true)}
                     disabled={filteredItems.length === 0}
+                    className="text-[var(--probe-muted)] hover:text-[var(--probe-primary-bright)] hover:bg-[var(--probe-primary)]/15"
                   >
                     多选
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={onClose}>
+                  <Button variant="ghost" size="sm" onClick={onClose} className="text-[var(--probe-muted)] hover:text-[var(--probe-text)]">
                     返回搜题
                   </Button>
                 </>
@@ -226,16 +229,16 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
 
           <div className="mt-3">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--probe-muted)]" />
               <Input
-                placeholder="搜索历史记录..."
+                placeholder="搜索探测记录..."
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                className="pl-8 text-sm"
+                className="pl-8 text-sm probe-panel border-[var(--probe-border)] text-[var(--probe-text)] placeholder:text-[var(--probe-muted)] focus-visible:ring-[var(--probe-glow)] focus-visible:border-[var(--probe-primary)] focus-visible:shadow-[0_0_8px_var(--probe-glow)]"
               />
               {searchFilter && (
                 <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--probe-muted)] hover:text-[var(--probe-text)]"
                   onClick={() => setSearchFilter('')}
                 >
                   <XCircle className="h-4 w-4" />
@@ -248,27 +251,32 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <div className="relative h-8 w-8">
+                <div className="absolute inset-0 animate-spin rounded-full border-2 border-[var(--probe-primary)] border-t-transparent shadow-[0_0_12px_var(--probe-glow)]" />
+              </div>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-sm text-destructive">{error}</p>
-              <Button variant="outline" size="sm" onClick={fetchEntries}>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--probe-error)]/15 border border-[var(--probe-error)]/25">
+                <AlertCircle className="h-6 w-6 text-[var(--probe-error)]" />
+              </div>
+              <p className="text-sm text-[var(--probe-error)]">{error}</p>
+              <Button variant="outline" size="sm" onClick={fetchEntries}
+                className="border-[var(--probe-border-strong)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-primary)]">
                 重试
               </Button>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                <BookOpen className="h-8 w-8 text-muted-foreground" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--probe-primary)]/15 to-[var(--probe-accent)]/10 border border-[var(--probe-border)]">
+                <BookOpen className="h-8 w-8 text-[var(--probe-muted)]" />
               </div>
-              <p className="mt-4 text-sm text-muted-foreground">暂无历史记录</p>
-              <p className="text-xs text-muted-foreground">拍照搜题后会自动保存记录</p>
+              <p className="mt-4 text-sm text-[var(--probe-muted)]">暂无探测记录</p>
+              <p className="text-xs text-[var(--probe-muted)]">探测信号后会自动保存记录</p>
             </div>
           ) : (
             <ScrollArea className="h-[400px]">
-              <div className="divide-y">
+              <div className="divide-y divide-[var(--probe-border)]">
                 {filteredItems.map((item) => {
                   const key = getItemKey(item);
                   return (
@@ -288,14 +296,15 @@ export function HistoryPanel({ onLoad, onClose, className, refreshKey }: History
 
           {/* Batch delete bar */}
           {selectMode && selectedKeys.size > 0 && (
-            <div className="border-t p-3 flex items-center justify-between bg-muted/30">
-              <span className="text-sm text-muted-foreground">
+            <div className="border-t border-[var(--probe-border)] p-3 flex items-center justify-between bg-gradient-to-r from-[var(--probe-primary)]/10 to-transparent">
+              <span className="text-sm font-medium text-[var(--probe-primary-bright)]">
                 已选 {selectedKeys.size} 项
               </span>
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => setShowBatchDeleteConfirm(true)}
+                className="shadow-[0_0_8px_rgba(248,113,113,0.3)]"
               >
                 <Trash2 className="mr-1 h-3.5 w-3.5" />
                 删除
@@ -348,38 +357,38 @@ function HistoryItemRow({
     const { entry } = item;
     return (
       <div
-        className="group flex items-start gap-3 px-4 py-2.5 transition-colors hover:bg-muted/30 cursor-pointer"
+        className="group flex items-start gap-3 px-4 py-2.5 transition-all hover:bg-[var(--probe-primary)]/10 hover:shadow-[inset_0_0_12px_var(--probe-glow)] cursor-pointer"
         onClick={() => (selectMode ? onToggleSelect() : onLoad?.(entry))}
       >
         {selectMode && (
           <div className="mt-0.5 shrink-0" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
             {selected ? (
-              <CheckSquare className="h-5 w-5 text-sky-500" />
+              <CheckSquare className="h-5 w-5 text-[var(--probe-primary-bright)] drop-shadow-[0_0_4px_var(--probe-glow)]" />
             ) : (
-              <Square className="h-5 w-5 text-muted-foreground" />
+              <Square className="h-5 w-5 text-[var(--probe-muted)]" />
             )}
           </div>
         )}
-        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
-          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--probe-success)]/20 to-[var(--probe-success)]/10 border border-[var(--probe-success)]/25 shadow-[0_0_6px_rgba(52,211,153,0.2)]">
+          <CheckCircle2 className="h-4 w-4 text-[var(--probe-success)]" />
         </div>
         {entry.problemImage && (
           <img
             src={entry.problemImage}
             alt="题目图片"
-            className="h-10 w-10 shrink-0 rounded-md border object-cover"
+            className="h-10 w-10 shrink-0 rounded-lg border border-[var(--probe-border)] object-cover shadow-[0_0_4px_var(--probe-glow)]"
           />
         )}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium leading-normal line-clamp-1">
+          <p className="text-sm font-medium leading-normal line-clamp-1 text-[var(--probe-text)]">
             <MathRenderer content={entry.problemText} />
           </p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline" className="h-4 px-1 text-[10px]">
+          <div className="flex items-center gap-2 text-xs text-[var(--probe-muted)]">
+            <Badge variant="outline" className="h-4 px-1 text-[10px] border-[var(--probe-success)]/30 text-[var(--probe-success)]">
               已解答
             </Badge>
             {entry.agentId && (
-              <span className="text-[10px] px-1.5 py-0 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300">
+              <span className="text-[10px] px-1.5 py-0 rounded bg-[var(--probe-primary)]/15 text-[var(--probe-primary-bright)] border border-[var(--probe-primary)]/25">
                 {entry.agentId === 'universal'
                   ? '通用'
                   : entry.agentId === 'science'
@@ -394,7 +403,7 @@ function HistoryItemRow({
           </div>
         </div>
         {!selectMode && (
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-[var(--probe-muted)] group-hover:text-[var(--probe-primary-bright)] transition-colors" />
         )}
       </div>
     );
@@ -407,45 +416,45 @@ function HistoryItemRow({
 
   return (
     <div
-      className="group flex items-start gap-3 px-4 py-2.5 transition-colors hover:bg-muted/30 cursor-pointer"
+      className="group flex items-start gap-3 px-4 py-2.5 transition-all hover:bg-[var(--probe-primary)]/10 hover:shadow-[inset_0_0_12px_var(--probe-glow)] cursor-pointer"
       onClick={() => (selectMode ? onToggleSelect() : onLoad?.(matchedBank ?? record))}
     >
       {selectMode && (
         <div className="mt-0.5 shrink-0" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
           {selected ? (
-            <CheckSquare className="h-5 w-5 text-sky-500" />
+            <CheckSquare className="h-5 w-5 text-[var(--probe-primary-bright)] drop-shadow-[0_0_4px_var(--probe-glow)]" />
           ) : (
-            <Square className="h-5 w-5 text-muted-foreground" />
+            <Square className="h-5 w-5 text-[var(--probe-muted)]" />
           )}
         </div>
       )}
       <div
-        className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+        className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
           isSuccess
-            ? 'bg-green-100 dark:bg-green-900/40'
+            ? 'bg-gradient-to-br from-[var(--probe-success)]/20 to-[var(--probe-success)]/10 border-[var(--probe-success)]/25 shadow-[0_0_6px_rgba(52,211,153,0.2)]'
             : isFailed
-              ? 'bg-red-100 dark:bg-red-900/40'
-              : 'bg-gray-100 dark:bg-gray-800'
+              ? 'bg-gradient-to-br from-[var(--probe-error)]/20 to-[var(--probe-error)]/10 border-[var(--probe-error)]/25 shadow-[0_0_6px_rgba(248,113,113,0.2)]'
+              : 'bg-[var(--probe-primary)]/15 border-[var(--probe-primary)]/25'
         }`}
       >
         {isSuccess ? (
-          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <CheckCircle2 className="h-4 w-4 text-[var(--probe-success)]" />
         ) : isFailed ? (
-          <AlertCircleIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
+          <AlertCircleIcon className="h-4 w-4 text-[var(--probe-error)]" />
         ) : (
-          <Clock className="h-4 w-4 text-muted-foreground" />
+          <Clock className="h-4 w-4 text-[var(--probe-muted)]" />
         )}
       </div>
       {record.problemImage && (
         <img
           src={record.problemImage}
           alt="题目图片"
-          className="h-10 w-10 shrink-0 rounded-md border object-cover"
+          className="h-10 w-10 shrink-0 rounded-lg border border-[var(--probe-border)] object-cover"
         />
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm leading-normal line-clamp-1 truncate">{record.query}</p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <p className="text-sm leading-normal line-clamp-1 truncate text-[var(--probe-text)]">{record.query}</p>
+        <div className="flex items-center gap-2 text-xs text-[var(--probe-muted)]">
           <span className="flex items-center gap-0.5">
             {record.type === 'image' ? (
               <Camera className="h-3 w-3" />
@@ -461,13 +470,13 @@ function HistoryItemRow({
           {record.error && (
             <>
               <span>·</span>
-              <span className="text-destructive">{record.error}</span>
+              <span className="text-[var(--probe-error)]">{record.error}</span>
             </>
           )}
         </div>
       </div>
       {!selectMode && (
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <ChevronRight className="h-4 w-4 shrink-0 text-[var(--probe-muted)] group-hover:text-[var(--probe-primary-bright)] transition-colors" />
       )}
     </div>
   );

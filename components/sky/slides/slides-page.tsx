@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { motion } from 'motion/react';
+import { useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
   Presentation,
@@ -20,18 +19,26 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AvatarSpeechPlayer } from './avatar-speech-player';
-import { AvatarSelector } from './avatar-selector';
 import { CoverGallery, type CoverItem } from './cover-gallery';
 import { SmartCoverView } from './smart-cover-view';
 import { useCoverDraft } from '@/lib/slides/hooks/use-cover-draft';
-import { SlideThumbnail } from './slide-thumbnail';
 import { SlidePreviewGallery } from './slide-preview-gallery';
+import { SlideViewer } from './slide-viewer';
 import { exportCourseToPPTX } from '@/lib/export/course-exporter';
 import { AVATAR_CONFIGS } from '@/lib/slides/avatar-config';
+import type { AvatarConfig } from '@/lib/slides/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { useTaskStore } from '@/lib/store/use-task-store';
-import type { AvatarConfig } from '@/lib/slides/types';
-import { SkyBackground } from '@/components/sky/home/sky-background';
+import { EmptyState } from './states/empty-state';
+import { GeneratingState } from './states/generating-state';
+import { SuccessState } from './states/success-state';
+import { SuggestingState } from './states/suggesting-state';
+import { RegeneratePrompt } from './regenerate-prompt';
+import { QaReportModalLight } from './qa-report-modal-light';
+import {
+  addActiveSlidesJobEntry,
+  getActiveSlidesJobEntries,
+} from '@/lib/slides/slides-session';
 
 const DIFFICULTIES = [
   { value: 'junior', label: '初中' },
@@ -51,10 +58,10 @@ export default function SlidesPage() {
 
   // Defensive: localStorage may contain stale non-string values from old schema
   const topic = typeof generationOptions?.topic === 'string' ? generationOptions.topic : '';
-  const difficulty = ['junior', 'senior', 'college'].includes(
+  const difficulty: 'junior' | 'senior' | 'college' = ['junior', 'senior', 'college'].includes(
     generationOptions?.difficulty as string,
   )
-    ? generationOptions.difficulty
+    ? (generationOptions.difficulty as 'junior' | 'senior' | 'college')
     : 'senior';
 
   // Ephemeral UI state
@@ -66,7 +73,7 @@ export default function SlidesPage() {
   );
   const [status, setStatus] = useState('');
   const [exporting, setExporting] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   // ── Cover Gallery state ──
   const [coverLoading, setCoverLoading] = useState(false);
   const [coverStage, setCoverStage] = useState<'idle' | 'analyzing' | 'designing' | 'rendering'>(
@@ -75,6 +82,8 @@ export default function SlidesPage() {
   const [coverCovers, setCoverCovers] = useState<CoverItem[]>([]);
   const [showCoverGallery, setShowCoverGallery] = useState(false);
   const coverCacheRef = useRef<Map<string, CoverItem[]>>(new Map());
+  // Track current slides job ID for task subscription filtering
+  const currentSlidesJobIdRef = useRef<string | null>(null);
   // ── Smart Cover View state ──
   const [showSmartCover, setShowSmartCover] = useState(false);
   const [showStyleLab, setShowStyleLab] = useState(false);
@@ -110,8 +119,26 @@ export default function SlidesPage() {
     | 'done'
   >('idle');
   const [genProgress, setGenProgress] = useState(0);
-  const activeJobId = useSkyClassroomStore((s) => s.activeJobId);
-  const setActiveJobId = useSkyClassroomStore((s) => s.setActiveJobId);
+  const [genTotalPages, setGenTotalPages] = useState(0);
+  const [genOutline, setGenOutline] = useState<Array<{
+    pageNum: number;
+    title: string;
+    type: string;
+  }> | null>(null);
+  const [genCompletedSlides, setGenCompletedSlides] = useState<Array<{
+    pageNum: number;
+    title: string;
+    type: string;
+  }> | null>(null);
+  const [genCurrentPage, setGenCurrentPage] = useState<{
+    pageNum: number;
+    title: string;
+    type: string;
+  } | null>(null);
+  const [genStageTimings, setGenStageTimings] = useState<
+    Record<string, { startAt: number; endAt?: number; durationMs?: number }> | undefined
+  >(undefined);
+  const [genStartedAt, setGenStartedAt] = useState<number | undefined>(undefined);
   const [qaReport, setQaReport] = useState<{
     totalScore: number;
     pass: boolean;
@@ -124,62 +151,32 @@ export default function SlidesPage() {
     }>;
   } | null>(null);
   const [showQaReport, setShowQaReport] = useState(false);
-  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [showRegeneratePrompt, setShowRegeneratePrompt] = useState(false);
 
-  const startProgress = useCallback(
-    (stage: 'planning' | 'sections_generating' | 'pages_designing') => {
-      setGenStage(stage);
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+  // ── Register slides job in task store & sessionStorage ──
+  // The global SlidesJobPoller handles all polling from here on.
+  const registerSlidesJob = useCallback((jobId: string) => {
+    // Remove any stale slides tasks to prevent restore conflicts
+    const allTasks = useTaskStore.getState().tasks;
+    Object.values(allTasks)
+      .filter((t) => t.type === 'slides')
+      .forEach((t) => useTaskStore.getState().removeTask(t.id));
 
-      let target = 0;
-      let current = 0;
-      let step = 0;
-      let intervalMs = 500;
-      if (stage === 'planning') {
-        current = 0;
-        target = 8;
-        step = (8 - 0) / 10;
-        intervalMs = 300;
-      }
-      if (stage === 'sections_generating') {
-        current = 10;
-        target = 90;
-        step = (90 - 10) / 80;
-        intervalMs = 600;
-      }
-      if (stage === 'pages_designing') {
-        current = 92;
-        target = 98;
-        step = (98 - 92) / 12;
-        intervalMs = 400;
-      }
-      setGenProgress(current);
+    currentSlidesJobIdRef.current = jobId;
+    addActiveSlidesJobEntry({ jobId, topic, difficulty });
 
-      progressIntervalRef.current = setInterval(() => {
-        setGenProgress((p) => {
-          if (p >= target) {
-            // 到达 target 后继续以极慢速度前进，避免"卡住"感
-            if (stage === 'sections_generating' && p < 95) {
-              return Math.min(p + 0.3, 95);
-            }
-            if (stage === 'pages_designing' && p < 99) {
-              return Math.min(p + 0.2, 99);
-            }
-            return p;
-          }
-          return Math.min(p + step, target);
-        });
-      }, intervalMs);
-    },
-    [],
-  );
-
-  const stopProgress = useCallback(() => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-  }, []);
+    useTaskStore.getState().addTask({
+      id: jobId,
+      type: 'slides',
+      label: `课件: ${topic.slice(0, 20)}${topic.length > 20 ? '...' : ''}`,
+      status: 'running',
+      progress: 5,
+      phase: '正在启动生成引擎...',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      jobId,
+    });
+  }, [topic, difficulty]);
 
   // ── Cover Gallery handlers ──
   const handleGenerateCovers = useCallback(
@@ -208,6 +205,13 @@ export default function SlidesPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ topic: t, difficulty }),
         });
+
+        if (res.status === 401) {
+          setCoverLoading(false);
+          setStatus('登录已过期，正在刷新…');
+          window.location.reload();
+          return;
+        }
 
         if (!res.ok) {
           setCoverLoading(false);
@@ -254,6 +258,8 @@ export default function SlidesPage() {
       setGenerating(true);
       setGenStage('planning');
       setGenProgress(0);
+      setGenStageTimings(undefined);
+      setGenStartedAt(undefined);
 
       try {
         const res = await fetch('/api/sky/slides/generate', {
@@ -265,57 +271,16 @@ export default function SlidesPage() {
             designDNA: cover.designParams,
           }),
         });
+        if (res.status === 401) {
+          setStatus('登录已过期，请重新登录');
+          setGenerating(false);
+          window.location.reload();
+          return;
+        }
+
         const data = await res.json();
         if (data.success && data.jobId) {
-          // Persist jobId so user can resume after navigation
-          setActiveJobId(data.jobId);
-          // Start polling
-          const jobId = data.jobId;
-          let pollErrors = 0;
-          const MAX_POLL_ERRORS = 5;
-          const poll = setInterval(async () => {
-            try {
-              const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${jobId}`);
-              const statusData = await statusRes.json();
-              if (statusData.success) {
-                pollErrors = 0;
-                const job = statusData.data || statusData.job;
-                setGenStage(job.stage);
-                setGenProgress(job.progress || 0);
-                setStatus(job.message || '');
-
-                if (job.stage === 'done') {
-                  clearInterval(poll);
-                  setActiveJobId(null);
-                  if (job.pptxUrl) {
-                    setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
-                    setPreviewImages(job.previewImages || null);
-                    if (job.qaReport) setQaReport(job.qaReport);
-                    setStatus('');
-                    setGenStage('done');
-                    setGenProgress(100);
-                  } else if (job.error) {
-                    setStatus(`生成失败: ${job.error}`);
-                    setActiveJobId(null);
-                  }
-                  setGenerating(false);
-                }
-              } else if (statusRes.status === 404) {
-                clearInterval(poll);
-                setActiveJobId(null);
-                setGenerating(false);
-                setStatus('生成任务已过期，请重新生成');
-              }
-            } catch {
-              pollErrors++;
-              if (pollErrors >= MAX_POLL_ERRORS) {
-                clearInterval(poll);
-                setActiveJobId(null);
-                setGenerating(false);
-                setStatus('状态查询失败，请检查网络或刷新页面后重试');
-              }
-            }
-          }, 2000);
+          registerSlidesJob(data.jobId);
         } else {
           setStatus(`生成请求失败: ${data.error || '请重试'}`);
           setGenerating(false);
@@ -325,13 +290,14 @@ export default function SlidesPage() {
         setGenerating(false);
       }
     },
-    [topic, difficulty],
+    [topic, difficulty, registerSlidesJob],
   );
 
   // ── Smart Cover handlers ──
   const handleSuggestCover = useCallback(
-    async (overrideTopic?: string) => {
-      const t = (overrideTopic ?? topic).trim();
+    async (overrideTopic?: unknown) => {
+      const rawTopic = typeof overrideTopic === 'string' ? overrideTopic : topic;
+      const t = rawTopic.trim();
       if (!t) return;
 
       startSuggesting();
@@ -356,21 +322,32 @@ export default function SlidesPage() {
 
         clearInterval(progressInterval);
 
-        if (!res.ok) {
-          setSuggestStatus('推荐失败，请重试');
+        if (res.status === 401) {
+          setSuggestStatus('登录已过期，请重新登录');
+          setSuggestProgress(0);
+          window.location.reload();
+          return;
+        }
+
+        const data = await res.json().catch(() => ({ success: false, error: '无法解析服务响应' }));
+
+        if (!res.ok || !data.success || !data.cover) {
+          const serverError =
+            data.error ||
+            data.details ||
+            (res.status === 500 ? '服务端异常' : `请求失败 (${res.status})`);
+          setSuggestStatus(`推荐失败: ${serverError}`);
           setSuggestProgress(0);
           return;
         }
 
-        const data = await res.json();
-        if (data.success && data.cover) {
-          applySuggestion(data.cover.pngUrl, data.cover.designDNA);
-          setSuggestProgress(100);
-          setSuggestStatus('');
-        } else {
-          setSuggestStatus(`推荐失败: ${data.error || '请重试'}`);
-          setSuggestProgress(0);
-        }
+        // Completion beat: let progress animate to 100 with a visual flourish
+        // before swapping to the cover preview.
+        setSuggestProgress(100);
+        setSuggestStatus('风格匹配完成');
+        await new Promise((r) => setTimeout(r, 700));
+        applySuggestion(data.cover.pngUrl, data.cover.designDNA);
+        setSuggestStatus('');
       } catch {
         clearInterval(progressInterval);
         setSuggestStatus('网络错误，请检查服务是否运行');
@@ -389,6 +366,8 @@ export default function SlidesPage() {
     setGenerating(true);
     setGenStage('planning');
     setGenProgress(0);
+    setGenStageTimings(undefined);
+    setGenStartedAt(undefined);
 
     fetch('/api/sky/slides/generate', {
       method: 'POST',
@@ -399,55 +378,18 @@ export default function SlidesPage() {
         designDNA: finalDNA,
       }),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) {
+          setStatus('登录已过期，请重新登录');
+          setGenerating(false);
+          window.location.reload();
+          throw new Error('401');
+        }
+        return res.json();
+      })
       .then((data) => {
         if (data.success && data.jobId) {
-          setActiveJobId(data.jobId);
-          const jobId = data.jobId;
-          let pollErrors = 0;
-          const MAX_POLL_ERRORS = 5;
-          const poll = setInterval(async () => {
-            try {
-              const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${jobId}`);
-              const statusData = await statusRes.json();
-              if (statusData.success) {
-                pollErrors = 0;
-                const job = statusData.data || statusData.job;
-                setGenStage(job.stage);
-                setGenProgress(job.progress || 0);
-                setStatus(job.message || '');
-                if (job.stage === 'done') {
-                  clearInterval(poll);
-                  setActiveJobId(null);
-                  if (job.pptxUrl) {
-                    setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
-                    setPreviewImages(job.previewImages || null);
-                    if (job.qaReport) setQaReport(job.qaReport);
-                    setStatus('');
-                    setGenStage('done');
-                    setGenProgress(100);
-                  } else if (job.error) {
-                    setStatus(`生成失败: ${job.error}`);
-                    setActiveJobId(null);
-                  }
-                  setGenerating(false);
-                }
-              } else if (statusRes.status === 404) {
-                clearInterval(poll);
-                setActiveJobId(null);
-                setGenerating(false);
-                setStatus('生成任务已过期，请重新生成');
-              }
-            } catch {
-              pollErrors++;
-              if (pollErrors >= MAX_POLL_ERRORS) {
-                clearInterval(poll);
-                setActiveJobId(null);
-                setGenerating(false);
-                setStatus('状态查询失败，请检查网络或刷新页面后重试');
-              }
-            }
-          }, 2000);
+          registerSlidesJob(data.jobId);
         } else {
           setStatus(`生成请求失败: ${data.error || '请重试'}`);
           setGenerating(false);
@@ -457,10 +399,10 @@ export default function SlidesPage() {
         setStatus('网络错误');
         setGenerating(false);
       });
-  }, [topic, difficulty, confirm, setActiveJobId]);
+  }, [topic, difficulty, confirm, registerSlidesJob]);
 
   const handleGenerate = useCallback(
-    async (overrideTopic?: string) => {
+    async (overrideTopic?: unknown) => {
       handleSuggestCover(overrideTopic);
     },
     [handleSuggestCover],
@@ -481,88 +423,141 @@ export default function SlidesPage() {
     setGenProgress(0);
     setStatus('');
     setQaReport(null);
+    setGenStageTimings(undefined);
+    setGenStartedAt(undefined);
   }, []);
 
-  // ── Restore state from background task on mount ──
+  // ── Subscribe to task store for slides generation progress ──
+  // SlidesJobPoller (global) handles the actual polling via sessionStorage.
+  // This subscription syncs the floating task store updates to local UI state.
   useEffect(() => {
-    const store = useTaskStore.getState();
-    const tasks = Object.values(store.tasks).filter(
-      (t) => t.type === 'slides' && t.status !== 'failed',
-    );
-    if (tasks.length === 0) return;
-    const task = tasks[tasks.length - 1];
+    const unsub = useTaskStore.subscribe((state) => {
+      const currentJobId = currentSlidesJobIdRef.current;
+      const slidesTask = Object.values(state.tasks).find(
+        (t) => t.type === 'slides' && (currentJobId ? t.jobId === currentJobId : true),
+      );
+      if (!slidesTask) return;
+
+      // Avoid stale task overwriting active generation
+      if (currentJobId && slidesTask.jobId !== currentJobId) return;
+
+      if (slidesTask.status === 'running') {
+        setGenerating(true);
+        const phase = slidesTask.phase || '';
+        const stage = phase.includes('规划')
+          ? 'planning'
+          : phase.includes('生成')
+            ? 'sections_generating'
+            : phase.includes('设计') || phase.includes('排版')
+              ? 'pages_designing'
+              : phase.includes('QA') || phase.includes('质检')
+                ? 'qa_reviewing'
+                : phase.includes('修复')
+                  ? 'repairing'
+                  : phase.includes('合并')
+                    ? 'merging'
+                    : 'planning';
+        setGenStage(stage);
+        setGenProgress(slidesTask.progress || 0);
+        setStatus(phase);
+        const result = slidesTask.result as {
+          outline?: Array<{ pageNum: number; title: string; type: string }>;
+          completedSlides?: Array<{ pageNum: number; title: string; type: string }>;
+          currentPage?: { pageNum: number; title: string; type: string };
+          totalPages?: number;
+          stageTimings?: Record<string, { startAt: number; endAt?: number; durationMs?: number }>;
+          startedAt?: number;
+        } | undefined;
+        if (result) {
+          setGenOutline(result.outline ?? null);
+          setGenCompletedSlides(result.completedSlides ?? null);
+          setGenCurrentPage(result.currentPage ?? null);
+          setGenTotalPages(result.totalPages ?? 0);
+          setGenStageTimings(result.stageTimings);
+          setGenStartedAt(result.startedAt);
+        }
+      } else if (slidesTask.status === 'completed') {
+        const result = slidesTask.result as {
+          pptxUrl: string;
+          fileName: string;
+          previewImages: string[] | null;
+          qaReport?: {
+            totalScore: number;
+            pass: boolean;
+            issues: Array<{
+              pageNum: number;
+              severity: string;
+              type: string;
+              layer: string;
+              detail: string;
+            }>;
+          };
+        };
+        setGenerating(false);
+        setGenStage('done');
+        setGenProgress(100);
+        setGeneratedPptx({ url: result.pptxUrl, fileName: result.fileName });
+        setPreviewImages(result.previewImages);
+        if (result.qaReport) setQaReport(result.qaReport);
+        setStatus('');
+      } else if (slidesTask.status === 'failed') {
+        setGenerating(false);
+        setStatus(slidesTask.error || '生成失败');
+      }
+    });
+    return unsub;
+  }, []);
+
+  // ── Restore active slides task on mount ──
+  // Check sessionStorage for active job, then sync from task store (populated by SlidesJobPoller).
+  useEffect(() => {
+    const entries = getActiveSlidesJobEntries();
+    if (entries.length === 0) return;
+
+    const entry = entries[entries.length - 1];
+    currentSlidesJobIdRef.current = entry.jobId;
+
+    const task = useTaskStore.getState().tasks[entry.jobId];
+    if (!task) {
+      // SlidesJobPoller hasn't registered it yet — show pending state.
+      // The subscription above will sync once the task appears.
+      setGenerating(true);
+      setGenStage('planning');
+      setGenProgress(5);
+      return;
+    }
 
     if (task.status === 'running') {
       setGenerating(true);
-      setGenProgress(task.progress || 0);
-      setStatus(task.phase || '生成中...');
-      if (task.jobId) {
-        const poll = setInterval(async () => {
-          try {
-            const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${task.jobId}`);
-            const statusData = await statusRes.json();
-            if (statusData.success) {
-              const job = statusData.data || statusData.job;
-              setGenStage(job.stage as never);
-              setGenProgress(job.progress || 0);
-              setStatus(job.message || '');
-
-              useTaskStore.getState().updateTask(task.jobId!, {
-                progress: job.progress || 0,
-                phase: job.message || job.stage || '',
-              });
-
-              if (job.stage === 'done') {
-                clearInterval(poll);
-                if (job.pptxUrl) {
-                  setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
-                  setPreviewImages(job.previewImages || null);
-                  if (job.qaReport) setQaReport(job.qaReport);
-                  setStatus('');
-                  setGenStage('done');
-                  setGenProgress(100);
-
-                  useTaskStore.getState().updateTask(task.jobId!, {
-                    status: 'completed',
-                    progress: 100,
-                    phase: 'PPT生成完成',
-                    result: {
-                      pptxUrl: job.pptxUrl,
-                      fileName: job.fileName || '课件.pptx',
-                      previewImages: job.previewImages,
-                      qaReport: job.qaReport,
-                    },
-                  });
-                } else if (job.error) {
-                  setStatus(`生成失败: ${job.error}`);
-                  useTaskStore.getState().updateTask(task.jobId!, {
-                    status: 'failed',
-                    error: job.error,
-                  });
-                }
-                setGenerating(false);
-              }
-            }
-          } catch {
-            // Polling error, ignore
-          }
-        }, 2000);
-      }
+      setGenStage('planning');
+      setGenProgress(task.progress || 10);
+      setStatus(task.phase || '正在恢复进度…');
     } else if (task.status === 'completed' && task.result) {
       const result = task.result as {
-        pptxUrl?: string;
-        fileName?: string;
-        previewImages?: string[];
-        qaReport?: unknown;
+        pptxUrl: string;
+        fileName: string;
+        previewImages: string[] | null;
+        qaReport?: {
+          totalScore: number;
+          pass: boolean;
+          issues: Array<{
+            pageNum: number;
+            severity: string;
+            type: string;
+            layer: string;
+            detail: string;
+          }>;
+        };
       };
-      if (result.pptxUrl) {
-        setGeneratedPptx({ url: result.pptxUrl, fileName: result.fileName || '课件.pptx' });
-        setPreviewImages(result.previewImages || null);
-        if (result.qaReport) setQaReport(result.qaReport as never);
-        setGenStage('done');
-        setGenProgress(100);
-      }
-      store.removeTask(task.id);
+      setGeneratedPptx({ url: result.pptxUrl, fileName: result.fileName });
+      setPreviewImages(result.previewImages);
+      if (result.qaReport) setQaReport(result.qaReport);
+      setGenStage('done');
+      setGenProgress(100);
+      setGenerating(false);
+    } else if (task.status === 'failed') {
+      setGenerating(false);
+      setStatus(task.error || '生成失败');
     }
   }, []);
   // ── Cover loading stage animation ──
@@ -584,61 +579,6 @@ export default function SlidesPage() {
     }, 4000);
     return () => clearInterval(timer);
   }, [coverLoading]);
-
-  // Auto-resume job polling on mount (survives navigation)
-  useEffect(() => {
-    if (!activeJobId || generating) return;
-    setGenerating(true);
-    setGenStage('planning');
-    setGenProgress(5);
-    let pollErrors = 0;
-    const MAX_POLL_ERRORS = 5;
-    const poll = setInterval(async () => {
-      try {
-        const statusRes = await fetch(`/api/sky/slides/generate/status?jobId=${activeJobId}`);
-        const statusData = await statusRes.json();
-        if (statusData.success) {
-          pollErrors = 0;
-          const job = statusData.data || statusData.job;
-          if (!job) return;
-          setGenStage(job.stage);
-          setGenProgress(job.progress || 0);
-          setStatus(job.message || '');
-          if (job.stage === 'done') {
-            clearInterval(poll);
-            setActiveJobId(null);
-            if (job.pptxUrl) {
-              setGeneratedPptx({ url: job.pptxUrl, fileName: job.fileName || '课件.pptx' });
-              setPreviewImages(job.previewImages || null);
-              if (job.qaReport) setQaReport(job.qaReport);
-              setStatus('');
-              setGenStage('done');
-              setGenProgress(100);
-            } else if (job.error) {
-              setStatus(`生成失败: ${job.error}`);
-              setActiveJobId(null);
-            }
-            setGenerating(false);
-          }
-        } else if (statusRes.status === 404) {
-          // Job expired, stop polling
-          clearInterval(poll);
-          setActiveJobId(null);
-          setGenerating(false);
-          setStatus('生成任务已过期，请重新生成');
-        }
-      } catch {
-        pollErrors++;
-        if (pollErrors >= MAX_POLL_ERRORS) {
-          clearInterval(poll);
-          setActiveJobId(null);
-          setGenerating(false);
-          setStatus('状态查询失败，请检查网络或刷新页面后重试');
-        }
-      }
-    }, 2000);
-    return () => clearInterval(poll);
-  }, [activeJobId]);
 
   // Auto-trigger generation from URL ?topic=xxx
   useEffect(() => {
@@ -662,21 +602,26 @@ export default function SlidesPage() {
   }, [totalPages]);
 
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden relative">
-      <SkyBackground />
-
+    <div
+      className="flex h-screen w-full flex-col overflow-hidden relative"
+      style={{
+        background:
+          'linear-gradient(180deg, var(--celestial-void) 0%, var(--celestial-horizon) 100%)',
+      }}
+    >
       {/* Top bar */}
-      <header className="relative z-10 flex flex-shrink-0 items-center border-b border-slate-200/50 dark:border-gray-700/50 bg-white/70 dark:bg-gray-900/70 px-6 py-3 backdrop-blur-2xl">
-        <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-sky-300/30 dark:via-sky-500/20 to-transparent" />
+      <header
+        className="relative z-10 flex flex-shrink-0 items-center border-b border-[var(--celestial-haze)]/10 px-5 h-14 backdrop-blur-2xl"
+        style={{ background: 'rgba(11, 16, 33, 0.6)' }}
+      >
         {/* Left: back + brand */}
-        <div className="flex w-48 flex-shrink-0 items-center gap-2 animate-fade-in-left">
-          <Link
-            href="/sky"
-            className="group flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-600 dark:hover:text-gray-200 hover:scale-105 active:scale-95"
-            title="返回首页"
+        <div className="flex flex-shrink-0 items-center gap-3">
+          <a
+            href="/sky/cloud-mind"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[var(--celestial-starlight)]/50 transition-all hover:bg-[var(--celestial-starlight)]/[0.08] hover:text-[var(--celestial-starlight)]"
           >
             <svg
-              className="h-4 w-4 transition-transform group-hover:-translate-x-0.5"
+              className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -684,153 +629,59 @@ export default function SlidesPage() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-          </Link>
-          <div className="relative">
-            {/* Breathing glow behind icon */}
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 animate-soft-pulse blur-md" />
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 text-white shadow-lg shadow-sky-500/25">
+            <span className="text-sm font-medium">返回</span>
+          </a>
+          <div className="h-5 w-px bg-[var(--celestial-haze)]/20" />
+          <div className="flex items-center gap-2">
+            <div
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-white"
+              style={{
+                background: 'linear-gradient(135deg, rgba(139,92,246,0.35), rgba(56,189,248,0.25))',
+                boxShadow: '0 0 10px rgba(139,92,246,0.25), inset 0 0 0 1px rgba(255,255,255,0.08)',
+              }}
+            >
               <svg
-                className="h-5 w-5"
+                className="h-4 w-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={2}
+                strokeWidth={1.5}
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"
                 />
               </svg>
             </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-[var(--celestial-starlight)]/90">
+                深空工坊
+              </span>
+              <span className="text-[9px] font-mono tracking-widest text-[var(--celestial-starlight)]/25">
+                CELESTIAL ATELIER
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold bg-gradient-to-r from-sky-500 via-blue-500 to-sky-500 bg-[length:200%_100%] bg-clip-text text-transparent tracking-tight animate-gradient-x">
-              天空课堂
+        </div>
+
+        {/* Center: file name or empty */}
+        <div className="flex flex-1 items-center justify-center">
+          {previewImages && generatedPptx?.fileName && (
+            <span className="max-w-xs truncate text-sm text-[var(--celestial-starlight)]/40">
+              {generatedPptx.fileName}
             </span>
-            <span className="text-[10px] font-medium text-slate-400 dark:text-gray-500 -mt-0.5">
-              AI 互动课件
-            </span>
-          </div>
-          {hasContent && (
-            <button
-              onClick={() => setSidebarOpen((v) => !v)}
-              className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-600 dark:hover:text-gray-200 hover:scale-105 active:scale-95"
-              title={sidebarOpen ? '收起讲解栏' : '展开讲解栏'}
-            >
-              <svg
-                className={`h-4 w-4 transition-transform duration-300 ${sidebarOpen ? '' : 'rotate-180'}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
           )}
         </div>
 
-        {/* Center: input + controls */}
-        <div className="flex flex-1 items-center justify-center gap-3 animate-fade-in-down">
-          <div className="relative w-full max-w-md group">
-            <input
-              value={topic}
-              onChange={(e) => setGenerationOptions({ topic: e.target.value, difficulty })}
-              onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-              placeholder="输入教学主题，如：勾股定理、牛顿定律…"
-              className="w-full rounded-xl border border-slate-200/80 dark:border-gray-700/80 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-4 py-2.5 pl-10 text-sm text-slate-700 dark:text-gray-200 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:border-sky-400 focus:bg-white dark:focus:bg-gray-800 focus:outline-none focus:ring-[3px] focus:ring-sky-100/80 dark:focus:ring-sky-900/40 transition-all duration-300 shadow-sm group-hover:shadow-md group-hover:border-slate-300/80 dark:group-hover:border-gray-600/80"
-            />
-            <svg
-              className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500 transition-colors duration-300 group-focus-within:text-sky-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            {/* Focus glow ring */}
-            <div className="absolute -inset-[1px] rounded-xl bg-gradient-to-r from-sky-400/0 via-sky-400/0 to-blue-400/0 group-focus-within:from-sky-400/20 group-focus-within:via-blue-400/20 group-focus-within:to-sky-400/20 blur-sm transition-all duration-500 -z-10" />
-          </div>
-
-          <div className="relative inline-flex flex-shrink-0 rounded-xl border border-slate-200/80 dark:border-gray-700/80 bg-white/60 dark:bg-gray-900/60 p-[3px] shadow-sm backdrop-blur-sm overflow-hidden">
-            {/* Sliding active background */}
-            <div
-              className="absolute top-[3px] bottom-[3px] rounded-[9px] bg-gradient-to-r from-sky-500 to-blue-500 shadow-md shadow-sky-200/50 transition-all duration-300 ease-out"
-              style={{
-                width: `${100 / DIFFICULTIES.length}%`,
-                left: `${DIFFICULTIES.findIndex((d) => d.value === difficulty) * (100 / DIFFICULTIES.length)}%`,
-              }}
-            />
-            {DIFFICULTIES.map((d) => (
-              <button
-                key={d.value}
-                type="button"
-                onClick={() => setGenerationOptions({ topic, difficulty: d.value })}
-                className={`relative z-10 rounded-[9px] px-3.5 py-2 text-sm font-semibold transition-colors duration-300 ${
-                  d.value === difficulty
-                    ? 'text-white'
-                    : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200'
-                }`}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => handleGenerate()}
-            disabled={generating || !topic.trim()}
-            className="relative inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-sky-500/25 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(14,165,233,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0 overflow-hidden"
-          >
-            {/* Button hover shine */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700" />
-            {generating && (
-              <svg className="relative h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
-              </svg>
-            )}
-            <span className="relative">
-              {generating ? '生成中' : '生成幻灯片'}
-              {!generating && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-60" />
-                  <span className="relative inline-flex h-full w-full rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/30" />
-                </span>
-              )}
-            </span>
-          </button>
-        </div>
-
-        {/* Right: status + template */}
-        <div className="flex w-48 flex-shrink-0 items-center justify-end gap-2 animate-fade-in-right">
+        {/* Right: status only */}
+        <div className="flex flex-shrink-0 items-center gap-2">
           {status && (
             <span
-              className={`text-xs font-medium animate-fade-in-up ${
+              className={`text-xs font-medium ${
                 status.includes('失败') || status.includes('错误')
                   ? 'text-red-500'
-                  : 'text-slate-500 dark:text-gray-400'
+                  : 'text-[var(--celestial-starlight)]/30'
               }`}
             >
               {status}
@@ -841,454 +692,87 @@ export default function SlidesPage() {
 
       {/* Main content */}
       <div className="relative z-10 flex flex-1 overflow-hidden">
-        {/* Left panel */}
-        <aside
-          className={`flex min-h-0 flex-shrink-0 flex-col overflow-hidden border-r border-slate-200/50 dark:border-gray-700/50 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl transition-all duration-300 ${
-            sidebarOpen ? 'w-64' : 'w-0 border-r-0'
-          }`}
-        >
-          {/* Avatar selector */}
-          <div
-            className="scrollbar-hide flex-shrink-0 overflow-y-auto px-4 pt-4"
-            style={{ maxHeight: '35%', overscrollBehavior: 'contain' }}
-          >
-            <AvatarSelector
-              avatars={AVATAR_CONFIGS}
-              selectedId={selectedAvatar.id}
-              onSelect={(id) => {
-                const a = AVATAR_CONFIGS.find((av) => av.id === id) || AVATAR_CONFIGS[0];
-                setSelectedAvatar(a);
-                setSelectedAvatarId(a.id);
-              }}
-            />
-          </div>
-
-          <div className="mx-4 h-px flex-shrink-0 bg-gradient-to-r from-transparent via-slate-200/60 dark:via-gray-700/60 to-transparent relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-sky-400/0 via-sky-400/10 to-sky-400/0 opacity-0 transition-opacity duration-500 hover:opacity-100" />
-          </div>
-
-          {/* Thumbnails */}
-          <div
-            className="scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-3"
-            style={{ overscrollBehavior: 'contain' }}
-          >
-            <div className="mb-3 flex items-center justify-between px-1">
-              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-gray-500">
-                <svg
-                  className="h-3.5 w-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                  />
-                </svg>
-                幻灯片
-              </span>
-              <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-slate-100 dark:bg-gray-800 px-1.5 text-[10px] font-bold tabular-nums text-slate-500 dark:text-gray-400">
-                {totalPages}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              {previewImages
-                ? previewImages.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveIndex(i)}
-                      className={`group relative flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-300 overflow-hidden ${
-                        i === activeIndex
-                          ? 'bg-gradient-to-r from-blue-50 to-indigo-50/50 dark:from-blue-900/30 dark:to-indigo-900/20 ring-1 ring-blue-200/60 dark:ring-blue-800/40 shadow-sm shadow-blue-100/50 dark:shadow-blue-900/20'
-                          : 'hover:bg-slate-50/80 dark:hover:bg-gray-800/80 hover:shadow-sm hover:-translate-y-[1px]'
-                      }`}
-                    >
-                      {/* Active left accent bar */}
-                      {i === activeIndex && (
-                        <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-gradient-to-b from-sky-400 to-blue-500" />
-                      )}
-                      <div className="relative flex-shrink-0 ml-0.5">
-                        <img
-                          src={img}
-                          alt={`Thumb ${i + 1}`}
-                          className={`h-[56px] w-[100px] rounded-lg object-cover shadow-sm transition-all duration-300 ${
-                            i === activeIndex
-                              ? 'ring-2 ring-sky-400/40 shadow-md shadow-sky-500/15'
-                              : 'group-hover:scale-[1.04] group-hover:shadow-md'
-                          }`}
-                          draggable={false}
-                        />
-                        <span
-                          className={`absolute -left-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm transition-all duration-300 ${
-                            i === activeIndex
-                              ? 'bg-sky-500 text-white shadow-sky-200 scale-110'
-                              : 'bg-white dark:bg-gray-800 text-slate-400 dark:text-gray-500 shadow-sm ring-1 ring-slate-200 dark:ring-gray-600'
-                          }`}
-                        >
-                          {i + 1}
-                        </span>
-                      </div>
-                      <div className="flex min-w-0 flex-col">
-                        <span
-                          className={`text-[11px] font-semibold transition-colors ${
-                            i === activeIndex
-                              ? 'text-sky-700 dark:text-sky-300'
-                              : 'text-slate-500 dark:text-gray-400'
-                          }`}
-                        >
-                          {i === 0
-                            ? '封面'
-                            : i === previewImages.length - 1
-                              ? '封底'
-                              : `第 ${i + 1} 页`}
-                        </span>
-                        <span className="text-[10px] text-slate-400 dark:text-gray-500">
-                          {i === activeIndex ? (
-                            <span className="flex items-center gap-1 text-sky-500 dark:text-sky-400">
-                              <span className="relative flex h-1.5 w-1.5">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
-                                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-500" />
-                              </span>
-                              当前
-                            </span>
-                          ) : (
-                            ''
-                          )}
-                        </span>
-                      </div>
-                    </button>
-                  ))
-                : null}
-            </div>
-          </div>
-        </aside>
-
-        {/* Right: slide display */}
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="relative min-h-0 flex-1">
-            {showSmartCover && draftDNA ? (
-              <SmartCoverView
-                topic={topic}
-                difficulty={difficulty}
-                draftDNA={draftDNA}
-                showStyleLab={showStyleLab}
-                onToggleStyleLab={() => setShowStyleLab((v) => !v)}
-                onConfirm={handleConfirmSmartCover}
-                onRefresh={() => handleSuggestCover(topic)}
-                onShowGallery={() => {
-                  setShowSmartCover(false);
-                  handleGenerateCovers(topic);
-                }}
-                onUpdatePalette={updatePalette}
-                onUpdateLayout={updateLayout}
-                onUpdateFont={updateFont}
-                onUpdateDensity={updateDensity}
-              />
-            ) : previewImages ? (
-              <div className="flex h-full items-center justify-center bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm p-6 animate-fade-in-scale">
-                <div
-                  className="relative max-h-full max-w-full group"
-                  style={{ perspective: '1200px' }}
+          <div className="relative min-h-0 flex-1 flex flex-col">
+            <AnimatePresence mode="wait">
+              {showSmartCover && draftDNA ? (
+                <motion.div
+                  key="smart-cover"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.35, ease: 'easeOut' }}
+                  className="relative min-h-0 flex-1 flex flex-col"
                 >
-                  {/* Ambient glow behind slide */}
-                  <div className="absolute -inset-6 rounded-3xl bg-gradient-to-b from-sky-500/8 via-blue-500/4 to-transparent dark:from-sky-400/8 dark:via-blue-400/4 blur-2xl transition-opacity duration-500 group-hover:opacity-100 opacity-60" />
-                  {/* 3D tilt container */}
-                  <div
-                    className="relative transition-transform duration-500 ease-out will-change-transform group-hover:scale-[1.01]"
-                    style={{ transformStyle: 'preserve-3d' }}
-                  >
-                    <img
-                      src={previewImages[activeIndex]}
-                      alt={`Slide ${activeIndex + 1}`}
-                      className="relative max-h-full max-w-full rounded-xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] object-contain border border-white/20 dark:border-white/5 transition-shadow duration-500 group-hover:shadow-[0_35px_70px_-15px_rgba(14,165,233,0.2)]"
-                      draggable={false}
-                    />
-                    {/* Corner accents */}
-                    <div className="absolute top-0 left-0 w-6 h-6 pointer-events-none">
-                      <div className="absolute top-2 left-2 w-3 h-[1.5px] bg-white/20 rounded-full" />
-                      <div className="absolute top-2 left-2 w-[1.5px] h-3 bg-white/20 rounded-full" />
-                    </div>
-                    <div className="absolute bottom-0 right-0 w-6 h-6 pointer-events-none">
-                      <div className="absolute bottom-2 right-2 w-3 h-[1.5px] bg-white/20 rounded-full" />
-                      <div className="absolute bottom-2 right-2 w-[1.5px] h-3 bg-white/20 rounded-full" />
-                    </div>
-                  </div>
-                  {/* Dot indicators */}
-                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-                    {previewImages.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setActiveIndex(i)}
-                        className={`h-1 rounded-full transition-all duration-300 ${
-                          i === activeIndex
-                            ? 'w-5 bg-sky-400 shadow-sm shadow-sky-400/30'
-                            : 'w-1.5 bg-slate-300/60 dark:bg-gray-600/60 hover:bg-slate-400 dark:hover:bg-gray-500'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : generating ? (
-              <div className="flex h-full flex-col items-center justify-center gap-8 animate-fade-in-scale">
-                {/* Workshop metaphor — layered composition cards */}
-                <div className="relative flex items-center justify-center h-32 w-32">
-                  <motion.div
-                    className="absolute h-[72px] w-[52px] rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/30 shadow-sm"
-                    animate={{ y: [-2, 2, -2], rotate: [-4, -2, -4] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                  <SmartCoverView
+                    topic={topic}
+                    difficulty={difficulty}
+                    draftDNA={draftDNA}
+                    showStyleLab={showStyleLab}
+                    onToggleStyleLab={() => setShowStyleLab((v) => !v)}
+                    onConfirm={handleConfirmSmartCover}
+                    onRefresh={() => handleSuggestCover(topic)}
+                    onShowGallery={() => {
+                      setShowSmartCover(false);
+                      handleGenerateCovers(topic);
+                    }}
+                    onUpdatePalette={updatePalette}
+                    onUpdateLayout={(layoutType) => layoutType && updateLayout(layoutType)}
+                    onUpdateFont={updateFont}
+                    onUpdateDensity={updateDensity}
                   />
-                  <motion.div
-                    className="absolute h-[72px] w-[52px] rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/50 shadow-md"
-                    animate={{ y: [-1, 3, -1], rotate: [1, 3, 1] }}
-                    transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
-                    style={{ marginLeft: 5, marginTop: -7 }}
-                  />
-                  <motion.div
-                    className="absolute h-[72px] w-[52px] rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-lg flex flex-col items-center justify-center gap-1"
-                    animate={{ y: [0, -2, 0], rotate: [-1, 1, -1] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
-                    style={{ marginLeft: 10, marginTop: -14 }}
-                  >
-                    <div className="w-8 h-1 rounded-full bg-slate-200 dark:bg-slate-500" />
-                    <div className="w-6 h-[3px] rounded-full bg-slate-150 dark:bg-slate-550" />
-                    <div className="w-5 h-[3px] rounded-full bg-slate-150 dark:bg-slate-550" />
-                  </motion.div>
-                </div>
-
-                <div className="flex flex-col items-center gap-4 w-80">
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300 text-center">
-                    {status || '准备素材中...'}
-                  </p>
-                  {/* Stage steps — refined dots */}
-                  <div className="flex items-center gap-2">
-                    {(
-                      [
-                        'planning',
-                        'sections_generating',
-                        'pages_designing',
-                        'qa_reviewing',
-                        'merging',
-                        'done',
-                      ] as const
-                    ).map((stage, i) => {
-                      const stages = [
-                        'planning',
-                        'sections_generating',
-                        'pages_designing',
-                        'qa_reviewing',
-                        'merging',
-                        'done',
-                      ];
-                      const currentIdx = stages.indexOf(genStage);
-                      const state =
-                        i < currentIdx ? 'done' : i === currentIdx ? 'active' : 'pending';
-                      return (
-                        <div key={stage} className="flex items-center gap-2">
-                          <motion.div
-                            className={`h-[5px] w-[5px] rounded-full transition-colors duration-700 ${
-                              state === 'done'
-                                ? 'bg-slate-400'
-                                : state === 'active'
-                                  ? 'bg-sky-500'
-                                  : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
-                            animate={state === 'active' ? { scale: [1, 1.4, 1] } : {}}
-                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                          />
-                          {i < stages.length - 1 && (
-                            <div
-                              className={`w-5 h-[1px] rounded-full transition-colors duration-700 ${
-                                state === 'done'
-                                  ? 'bg-slate-300 dark:bg-slate-600'
-                                  : 'bg-slate-100 dark:bg-slate-800'
-                              }`}
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {/* Refined progress bar */}
-                  <div className="w-full h-[3px] rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full bg-slate-700 dark:bg-slate-300"
-                      animate={{ width: `${genProgress || 2}%` }}
-                      transition={{ duration: 0.8, ease: 'easeOut' }}
-                    />
-                  </div>
-                  <p className="text-[11px] text-slate-400 tabular-nums tracking-wide">
-                    {Math.round(genProgress || 2)}%
-                  </p>
-                </div>
-              </div>
-            ) : generatedPptx ? (
-              <div className="flex h-full flex-col items-center justify-center bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm gap-5 animate-slide-up-fade">
-                {/* Success ring animation */}
-                <div className="relative flex items-center justify-center">
-                  {/* Ambient glow */}
-                  <div className="absolute h-32 w-32 rounded-full bg-emerald-400/10 dark:bg-emerald-400/5 blur-2xl animate-soft-pulse" />
-                  {/* Orbital ring */}
-                  <div className="absolute h-24 w-24 rounded-full border border-dashed border-emerald-200/30 dark:border-emerald-500/15 animate-[spin_12s_linear_infinite]" />
-                  <div className="absolute h-20 w-20 rounded-full border-2 border-emerald-300/40 animate-ring-expand" />
-                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/20 shadow-lg shadow-emerald-500/15 border border-emerald-100/60 dark:border-emerald-800/30">
-                    <svg
-                      className="h-8 w-8 text-emerald-500 animate-check-pop"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex flex-col items-center gap-1.5">
-                  <p className="text-base font-bold text-slate-800 dark:text-gray-100">
-                    课件生成成功
-                  </p>
-                  <p className="text-xs text-slate-400 dark:text-gray-500">文件已自动下载到本地</p>
-                </div>
-                <button
-                  onClick={handleDownloadGenerated}
-                  className="relative inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-[0_8px_30px_-4px_rgba(16,185,129,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] overflow-hidden"
+                </motion.div>
+              ) : previewImages ? (
+                <SlideViewer
+                  images={previewImages}
+                  activeIndex={activeIndex}
+                  onIndexChange={setActiveIndex}
+                  fileName={generatedPptx?.fileName}
+                  onDownload={handleDownloadGenerated}
+                  onRegenerate={() => setShowRegeneratePrompt(true)}
+                  onShowQaReport={() => setShowQaReport(true)}
+                  hasQaReport={!!qaReport}
+                />
+              ) : generating ? (
+                <GeneratingState
+                  stage={genStage}
+                  progress={genProgress}
+                  status={status}
+                  totalPages={genTotalPages}
+                  outline={genOutline || undefined}
+                  completedSlides={genCompletedSlides || undefined}
+                  currentPage={genCurrentPage || undefined}
+                  stageTimings={genStageTimings}
+                  startedAt={genStartedAt}
+                />
+              ) : generatedPptx ? (
+                <SuccessState
+                  fileName={generatedPptx.fileName}
+                  onDownload={handleDownloadGenerated}
+                  onRegenerate={() => setShowRegeneratePrompt(true)}
+                />
+              ) : isSuggesting ? (
+                <motion.div
+                  key="suggesting"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeIn' }}
+                  className="relative min-h-0 flex-1 flex flex-col"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700" />
-                  <svg
-                    className="relative h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
-                  </svg>
-                  重新下载课件
-                </button>
-              </div>
-            ) : isSuggesting ? (
-              <div className="flex h-full flex-col items-center justify-center gap-8 animate-fade-in-scale">
-                {/* Style exploration metaphor — color swatches */}
-                <div className="relative flex items-center justify-center h-28 w-32">
-                  <motion.div
-                    className="absolute h-14 w-11 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/30"
-                    animate={{ rotate: [-6, -2, -6], y: [0, -3, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{ marginLeft: -14 }}
-                  />
-                  <motion.div
-                    className="absolute h-14 w-11 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-md"
-                    animate={{ rotate: [2, 6, 2], y: [0, -5, 0] }}
-                    transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-                    style={{ marginLeft: 2, marginTop: -6 }}
-                  />
-                  <motion.div
-                    className="absolute h-14 w-11 rounded-md bg-sky-50 dark:bg-sky-900/20 border border-sky-200/40 dark:border-sky-700/30 shadow-sm"
-                    animate={{ rotate: [8, 12, 8], y: [0, -2, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
-                    style={{ marginLeft: 18, marginTop: -3 }}
-                  />
-                </div>
-                <div className="flex flex-col items-center gap-3.5 w-80">
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300 text-center">
-                    {suggestStatus || '浏览风格参考中...'}
-                  </p>
-                  <div className="w-full h-[3px] rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full bg-slate-700 dark:bg-slate-300"
-                      animate={{ width: `${Math.min(suggestProgress, 100)}%` }}
-                      transition={{ duration: 0.5, ease: 'easeOut' }}
-                    />
-                  </div>
-                  <p className="text-[11px] text-slate-400 tabular-nums tracking-wide">
-                    {Math.round(Math.min(suggestProgress, 100))}%
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-8 animate-fade-in-scale">
-                {/* Refined illustration — stacked composition cards */}
-                <div className="relative flex items-center justify-center h-28 w-32">
-                  <motion.div
-                    className="absolute h-16 w-12 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/30 shadow-sm"
-                    animate={{ y: [0, 2, 0], rotate: [-4, -2, -4] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{ marginLeft: -14 }}
-                  />
-                  <motion.div
-                    className="absolute h-16 w-12 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-md flex flex-col items-center justify-center gap-1"
-                    animate={{ y: [0, -3, 0], rotate: [2, 5, 2] }}
-                    transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-                    style={{ marginLeft: 0, marginTop: -8 }}
-                  >
-                    <svg
-                      className="h-5 w-5 text-slate-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-                      />
-                    </svg>
-                  </motion.div>
-                  <motion.div
-                    className="absolute h-16 w-12 rounded-lg bg-sky-50 dark:bg-sky-900/20 border border-sky-200/40 dark:border-sky-700/30 shadow-sm"
-                    animate={{ y: [0, 1, 0], rotate: [8, 10, 8] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
-                    style={{ marginLeft: 16, marginTop: -2 }}
-                  />
-                </div>
-
-                {/* Typography */}
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
-                    输入教学主题，开始制作课件
-                  </h2>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 max-w-xs leading-relaxed">
-                    分析学科特点，生成精美幻灯片
-                  </p>
-                </div>
-
-                {/* Quick topic chips */}
-                <div className="flex flex-wrap items-center justify-center gap-2.5 max-w-md">
-                  {[
-                    { label: '勾股定理', icon: '📐' },
-                    { label: '牛顿定律', icon: '🍎' },
-                    { label: '光合作用', icon: '🌿' },
-                    { label: '唐诗宋词', icon: '📜' },
-                  ].map((item, i) => (
-                    <button
-                      key={item.label}
-                      onClick={() => {
-                        setGenerationOptions({ topic: item.label, difficulty });
-                        setTimeout(() => handleGenerate(), 50);
-                      }}
-                      className="group flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/70 dark:bg-gray-800/70 border border-slate-200/60 dark:border-gray-700/60 text-sm font-medium text-slate-600 dark:text-gray-300 hover:border-sky-300/60 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50/50 dark:hover:bg-sky-900/10 hover:shadow-lg hover:shadow-sky-500/10 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 animate-fade-in-up opacity-0"
-                      style={{ animationDelay: `${0.25 + i * 0.08}s` }}
-                    >
-                      <span className="text-base transition-transform duration-300 group-hover:scale-110">
-                        {item.icon}
-                      </span>
-                      <span>{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+                  <SuggestingState progress={suggestProgress} status={suggestStatus} />
+                </motion.div>
+              ) : (
+                <EmptyState
+                  topic={topic}
+                  difficulty={difficulty}
+                  generating={generating}
+                  onTopicChange={(t) => setGenerationOptions({ topic: t, difficulty })}
+                  onDifficultyChange={(d) => setGenerationOptions({ topic, difficulty: d })}
+                  onGenerate={handleGenerate}
+                />
+              )}
+            </AnimatePresence>
             <AvatarSpeechPlayer
               avatar={hasContent ? selectedAvatar : null}
               speech={null}
@@ -1296,131 +780,6 @@ export default function SlidesPage() {
               totalSlides={totalPages}
             />
           </div>
-
-          {generatedPptx && (
-            <footer className="relative flex flex-shrink-0 items-center justify-between border-t border-slate-200/50 dark:border-gray-700/50 bg-white/60 dark:bg-gray-900/60 px-6 py-2.5 backdrop-blur-2xl">
-              <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-sky-300/30 dark:via-sky-500/20 to-transparent" />
-              {previewImages && previewImages.length > 0 ? (
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
-                    disabled={activeIndex === 0}
-                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 dark:text-gray-400 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-700 dark:hover:text-gray-200 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100"
-                  >
-                    <svg
-                      className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
-                    上一页
-                  </button>
-
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="min-w-[4rem] text-center text-xs tabular-nums text-slate-400 dark:text-gray-500">
-                      <span className="font-bold text-slate-700 dark:text-gray-200">
-                        {activeIndex + 1}
-                      </span>
-                      <span className="mx-1 text-slate-300 dark:text-gray-600">/</span>
-                      <span className="font-medium">{totalPages}</span>
-                    </span>
-                    {/* Progress bar */}
-                    <div className="h-1.5 w-28 overflow-hidden rounded-full bg-slate-100 dark:bg-gray-800">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-500 transition-all duration-500 relative overflow-hidden"
-                        style={{ width: `${((activeIndex + 1) / totalPages) * 100}%` }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-shimmer" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setActiveIndex((i) => Math.min(totalPages - 1, i + 1))}
-                    disabled={activeIndex === totalPages - 1}
-                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 dark:text-gray-400 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-700 dark:hover:text-gray-200 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:scale-100"
-                  >
-                    下一页
-                    <svg
-                      className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-gray-500">
-                  <svg
-                    className="h-4 w-4 text-emerald-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span>课件已生成</span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                {qaReport && (
-                  <button
-                    onClick={() => setShowQaReport(true)}
-                    className="group rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 dark:text-gray-400 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-700 dark:hover:text-gray-200 hover:scale-105 active:scale-95"
-                  >
-                    <span className="mr-1 inline-block transition-transform group-hover:scale-110">
-                      📋
-                    </span>
-                    查看质检报告
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    setGeneratedPptx(null);
-                    handleGenerate();
-                  }}
-                  disabled={generating}
-                  className="rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 dark:text-gray-400 transition-all hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-700 dark:hover:text-gray-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-                >
-                  重新生成
-                </button>
-                {generatedPptx && (
-                  <button
-                    onClick={handleDownloadGenerated}
-                    className="relative inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-[0_8px_30px_-4px_rgba(16,185,129,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] overflow-hidden"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700" />
-                    <svg
-                      className="relative h-3.5 w-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                      />
-                    </svg>
-                    下载课件
-                  </button>
-                )}
-              </div>
-            </footer>
-          )}
         </main>
       </div>
 
@@ -1434,86 +793,29 @@ export default function SlidesPage() {
 
       {/* QA Report Modal */}
       {showQaReport && qaReport && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-fade-in">
-          <div
-            className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
-            onClick={() => setShowQaReport(false)}
-          />
-          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.4)] overflow-hidden animate-slide-up-fade border border-white/50 dark:border-white/5">
-            <div className="absolute top-0 left-4 right-4 h-[2px] rounded-full bg-gradient-to-r from-transparent via-sky-400/50 to-transparent" />
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100/80 dark:border-gray-700/80">
-              <div>
-                <h2 className="text-base font-bold text-slate-800 dark:text-gray-100">质检报告</h2>
-                <p className="text-xs text-slate-400 dark:text-gray-500">
-                  总分: {qaReport.totalScore}/100 {qaReport.pass ? '✅ 通过' : '⚠️ 未通过'}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowQaReport(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 hover:bg-slate-100 dark:hover:bg-gray-800"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4 max-h-96 overflow-y-auto">
-              {qaReport.issues.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-gray-400 text-center py-4">
-                  无问题，课件质量良好
-                </p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {qaReport.issues.map((issue, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        setActiveIndex(issue.pageNum - 1);
-                        setShowQaReport(false);
-                      }}
-                      className={`group flex items-start gap-2 rounded-xl p-2.5 text-left text-xs transition-all duration-200 hover:shadow-sm ${
-                        issue.severity === 'high'
-                          ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100/60 dark:hover:bg-red-900/30'
-                          : issue.severity === 'medium'
-                            ? 'bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100/60 dark:hover:bg-amber-900/30'
-                            : 'bg-slate-50 dark:bg-gray-800/50 hover:bg-slate-100/60 dark:hover:bg-gray-800/80'
-                      }`}
-                    >
-                      <span className="mt-0.5 flex-shrink-0">
-                        {issue.severity === 'high'
-                          ? '❌'
-                          : issue.severity === 'medium'
-                            ? '⚠️'
-                            : 'ℹ️'}
-                      </span>
-                      <div className="min-w-0">
-                        <span className="font-semibold text-slate-700 dark:text-gray-200">
-                          第 {issue.pageNum} 页 — {issue.type}
-                        </span>
-                        <p className="text-slate-500 dark:text-gray-400 mt-0.5">{issue.detail}</p>
-                      </div>
-                      <svg
-                        className="h-3 w-3 flex-shrink-0 mt-1 text-slate-300 dark:text-gray-600 transition-transform group-hover:translate-x-0.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <QaReportModalLight
+          report={qaReport}
+          onClose={() => setShowQaReport(false)}
+          onNavigate={(pageNum) => {
+            setActiveIndex(pageNum - 1);
+            setShowQaReport(false);
+          }}
+        />
+      )}
+
+      {/* Regenerate Prompt */}
+      {showRegeneratePrompt && (
+        <RegeneratePrompt
+          currentTopic={topic || undefined}
+          onGenerate={(newTopic) => {
+            setShowRegeneratePrompt(false);
+            setGeneratedPptx(null);
+            setPreviewImages(null);
+            setGenerationOptions({ topic: newTopic, difficulty });
+            handleGenerate(newTopic);
+          }}
+          onClose={() => setShowRegeneratePrompt(false)}
+        />
       )}
 
       {/* Cover Gallery */}

@@ -2,10 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { Search, X, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
-import type {
-  KnowledgeNode,
-  KnowledgeGraph as KnowledgeGraphType,
-} from '@/lib/mistakes/types';
+import type { KnowledgeNode, KnowledgeGraph as KnowledgeGraphType } from '@/lib/mistakes/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
 
@@ -54,7 +51,16 @@ export function KnowledgeGraphView() {
   const scaleRef = useRef(1);
   const offsetRef = useRef({ x: 0, y: 0 });
   // Drag state
-  const dragRef = useRef<{ type: 'pan' | 'node'; nodeId?: string; startX: number; startY: number; origOffsetX: number; origOffsetY: number; origNodeX: number; origNodeY: number } | null>(null);
+  const dragRef = useRef<{
+    type: 'pan' | 'node';
+    nodeId?: string;
+    startX: number;
+    startY: number;
+    origOffsetX: number;
+    origOffsetY: number;
+    origNodeX: number;
+    origNodeY: number;
+  } | null>(null);
   const isDraggingRef = useRef(false);
 
   const { mistakes, setKnowledgeGraph } = useSkyClassroomStore();
@@ -97,7 +103,8 @@ export function KnowledgeGraphView() {
   const toggleCategory = useCallback((cat: string) => {
     setSelectedCategories((prev) => {
       const next = new Set(prev);
-      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
       return next;
     });
   }, []);
@@ -130,7 +137,7 @@ export function KnowledgeGraphView() {
     const { nodes, edges, weakPoints } = knowledgeGraph;
     const w = containerWidth;
     const h = CANVAS_HEIGHT;
-    if (w === 0 || h === 0) return;
+    if (w === 0) return;
 
     const dpr = window.devicePixelRatio || 1;
     canvas.width = w * dpr;
@@ -144,7 +151,9 @@ export function KnowledgeGraphView() {
       const categories = [...new Set(nodes.map((n) => n.category))];
       const catColumns: Record<string, number> = {};
       const colWidth = w / categories.length;
-      categories.forEach((cat, i) => { catColumns[cat] = colWidth * i + colWidth / 2; });
+      categories.forEach((cat, i) => {
+        catColumns[cat] = colWidth * i + colWidth / 2;
+      });
 
       const layoutNodes: NodeLayout[] = nodes.map((n) => {
         const catCenterX = catColumns[n.category] ?? w / 2;
@@ -155,7 +164,8 @@ export function KnowledgeGraphView() {
           id: n.id,
           x: catCenterX + (Math.random() - 0.5) * 80,
           y: spacing * (catIndex + 1) + (Math.random() - 0.5) * 40,
-          vx: 0, vy: 0,
+          vx: 0,
+          vy: 0,
         };
       });
       const nodeMap = new Map(layoutNodes.map((ln) => [ln.id, ln]));
@@ -165,28 +175,42 @@ export function KnowledgeGraphView() {
       for (let iter = 0; iter < ITERATIONS; iter++) {
         for (let i = 0; i < layoutNodes.length; i++) {
           for (let j = i + 1; j < layoutNodes.length; j++) {
-            const a = layoutNodes[i], b = layoutNodes[j];
-            const dx = a.x - b.x, dy = a.y - b.y;
+            const a = layoutNodes[i],
+              b = layoutNodes[j];
+            const dx = a.x - b.x,
+              dy = a.y - b.y;
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
             const force = (REPULSION / (dist * dist)) * alpha.value;
-            const fx = (dx / dist) * force, fy = (dy / dist) * force;
-            a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+            const fx = (dx / dist) * force,
+              fy = (dy / dist) * force;
+            a.vx += fx;
+            a.vy += fy;
+            b.vx -= fx;
+            b.vy -= fy;
           }
         }
         for (const edge of edges) {
-          const from = nodeMap.get(edge.from), to = nodeMap.get(edge.to);
+          const from = nodeMap.get(edge.from),
+            to = nodeMap.get(edge.to);
           if (!from || !to) continue;
-          const dx = to.x - from.x, dy = to.y - from.y;
+          const dx = to.x - from.x,
+            dy = to.y - from.y;
           const dist = Math.sqrt(dx * dx + dy * dy) || 1;
           const force = dist * ATTRACTION * alpha.value;
-          const fx = (dx / dist) * force, fy = (dy / dist) * force;
-          from.vx += fx; from.vy += fy; to.vx -= fx; to.vy -= fy;
+          const fx = (dx / dist) * force,
+            fy = (dy / dist) * force;
+          from.vx += fx;
+          from.vy += fy;
+          to.vx -= fx;
+          to.vy -= fy;
         }
         for (const ln of layoutNodes) {
           ln.vx += (w / 2 - ln.x) * 0.001;
           ln.vy += (h / 2 - ln.y) * 0.001;
-          ln.vx *= DAMPING; ln.vy *= DAMPING;
-          ln.x += ln.vx; ln.y += ln.vy;
+          ln.vx *= DAMPING;
+          ln.vy *= DAMPING;
+          ln.x += ln.vx;
+          ln.y += ln.vy;
           ln.x = Math.max(MAX_RADIUS + 5, Math.min(w - MAX_RADIUS - 5, ln.x));
           ln.y = Math.max(MAX_RADIUS + 5, Math.min(h - MAX_RADIUS - 5, ln.y));
         }
@@ -217,7 +241,8 @@ export function KnowledgeGraphView() {
         const from = layout.nodeMap.get(edge.from);
         const to = layout.nodeMap.get(edge.to);
         if (!from || !to) continue;
-        const bothMatch = !isFiltering || (matchingNodeIds!.has(edge.from) && matchingNodeIds!.has(edge.to));
+        const bothMatch =
+          !isFiltering || (matchingNodeIds!.has(edge.from) && matchingNodeIds!.has(edge.to));
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
         ctx.lineTo(to.x, to.y);
@@ -296,7 +321,8 @@ export function KnowledgeGraphView() {
       const node = layout.nodes.find((n) => n.id === ln.id);
       if (!node) continue;
       const radius = MIN_RADIUS + node.mastery / 10;
-      const dx = gx - ln.x, dy = gy - ln.y;
+      const dx = gx - ln.x,
+        dy = gy - ln.y;
       if (dx * dx + dy * dy <= (radius + 6) ** 2) return ln;
     }
     return null;
@@ -304,38 +330,41 @@ export function KnowledgeGraphView() {
 
   // ── Mouse handlers ──────────────────────────────────────────────────
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const graph = screenToGraph(e.clientX, e.clientY);
-    const hitNode = hitTestNode(graph.x, graph.y);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      e.preventDefault();
+      const graph = screenToGraph(e.clientX, e.clientY);
+      const hitNode = hitTestNode(graph.x, graph.y);
 
-    if (hitNode) {
-      // Start dragging a node
-      dragRef.current = {
-        type: 'node',
-        nodeId: hitNode.id,
-        startX: e.clientX,
-        startY: e.clientY,
-        origOffsetX: offsetRef.current.x,
-        origOffsetY: offsetRef.current.y,
-        origNodeX: hitNode.x,
-        origNodeY: hitNode.y,
-      };
-    } else {
-      // Start panning
-      dragRef.current = {
-        type: 'pan',
-        startX: e.clientX,
-        startY: e.clientY,
-        origOffsetX: offsetRef.current.x,
-        origOffsetY: offsetRef.current.y,
-        origNodeX: 0,
-        origNodeY: 0,
-      };
-    }
-    isDraggingRef.current = false;
-    setTooltip(null);
-  }, [screenToGraph, hitTestNode]);
+      if (hitNode) {
+        // Start dragging a node
+        dragRef.current = {
+          type: 'node',
+          nodeId: hitNode.id,
+          startX: e.clientX,
+          startY: e.clientY,
+          origOffsetX: offsetRef.current.x,
+          origOffsetY: offsetRef.current.y,
+          origNodeX: hitNode.x,
+          origNodeY: hitNode.y,
+        };
+      } else {
+        // Start panning
+        dragRef.current = {
+          type: 'pan',
+          startX: e.clientX,
+          startY: e.clientY,
+          origOffsetX: offsetRef.current.x,
+          origOffsetY: offsetRef.current.y,
+          origNodeX: 0,
+          origNodeY: 0,
+        };
+      }
+      isDraggingRef.current = false;
+      setTooltip(null);
+    },
+    [screenToGraph, hitTestNode],
+  );
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const drag = dragRef.current;
@@ -367,27 +396,30 @@ export function KnowledgeGraphView() {
     drawRef.current();
   }, []);
 
-  const handleMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const wasDragging = isDraggingRef.current;
-    dragRef.current = null;
-    isDraggingRef.current = false;
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const wasDragging = isDraggingRef.current;
+      dragRef.current = null;
+      isDraggingRef.current = false;
 
-    // If it was a click (not a drag), handle tooltip
-    if (!wasDragging) {
-      const graph = screenToGraph(e.clientX, e.clientY);
-      const hitNode = hitTestNode(graph.x, graph.y);
-      if (hitNode) {
-        const layout = layoutRef.current;
-        const node = layout?.nodes.find((n) => n.id === hitNode.id);
-        if (node) {
-          const rect = canvasRef.current!.getBoundingClientRect();
-          setTooltip({ node, x: e.clientX - rect.left, y: e.clientY - rect.top });
+      // If it was a click (not a drag), handle tooltip
+      if (!wasDragging) {
+        const graph = screenToGraph(e.clientX, e.clientY);
+        const hitNode = hitTestNode(graph.x, graph.y);
+        if (hitNode) {
+          const layout = layoutRef.current;
+          const node = layout?.nodes.find((n) => n.id === hitNode.id);
+          if (node) {
+            const rect = canvasRef.current!.getBoundingClientRect();
+            setTooltip({ node, x: e.clientX - rect.left, y: e.clientY - rect.top });
+          }
+        } else {
+          setTooltip(null);
         }
-      } else {
-        setTooltip(null);
       }
-    }
-  }, [screenToGraph, hitTestNode]);
+    },
+    [screenToGraph, hitTestNode],
+  );
 
   const handleWheelNative = useCallback((e: WheelEvent) => {
     e.preventDefault();
@@ -426,7 +458,8 @@ export function KnowledgeGraphView() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const cx = rect.width / 2, cy = rect.height / 2;
+    const cx = rect.width / 2,
+      cy = rect.height / 2;
     const oldScale = scaleRef.current;
     const newScale = Math.min(MAX_ZOOM, oldScale * 1.3);
     const ratio = newScale / oldScale;
@@ -443,7 +476,8 @@ export function KnowledgeGraphView() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const cx = rect.width / 2, cy = rect.height / 2;
+    const cx = rect.width / 2,
+      cy = rect.height / 2;
     const oldScale = scaleRef.current;
     const newScale = Math.max(MIN_ZOOM, oldScale / 1.3);
     const ratio = newScale / oldScale;
@@ -474,9 +508,7 @@ export function KnowledgeGraphView() {
         <h3 className="mt-4 text-lg font-semibold text-gray-700 dark:text-slate-200">
           暂无知识图谱数据
         </h3>
-        <p className="mt-2 text-sm text-gray-400 dark:text-slate-400">
-          完成一些练习后自动生成
-        </p>
+        <p className="mt-2 text-sm text-gray-400 dark:text-slate-400">完成一些练习后自动生成</p>
       </div>
     );
   }
@@ -510,7 +542,10 @@ export function KnowledgeGraphView() {
             className="w-full rounded-lg border border-input bg-background py-1.5 pl-8 pr-8 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
           />
           {(searchQuery || selectedCategories.size > 0) && (
-            <button onClick={clearFilters} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted">
+            <button
+              onClick={clearFilters}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted"
+            >
               <X className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           )}
@@ -542,11 +577,22 @@ export function KnowledgeGraphView() {
         <canvas
           ref={canvasRef}
           className="w-full rounded border border-gray-100 dark:border-slate-700"
-          style={{ height: CANVAS_HEIGHT, cursor: dragRef.current?.type === 'node' ? 'grabbing' : dragRef.current?.type === 'pan' ? 'grabbing' : 'grab' }}
+          style={{
+            height: CANVAS_HEIGHT,
+            cursor:
+              dragRef.current?.type === 'node'
+                ? 'grabbing'
+                : dragRef.current?.type === 'pan'
+                  ? 'grabbing'
+                  : 'grab',
+          }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={() => { dragRef.current = null; isDraggingRef.current = false; }}
+          onMouseLeave={() => {
+            dragRef.current = null;
+            isDraggingRef.current = false;
+          }}
         />
 
         {/* Zoom controls */}
@@ -593,7 +639,10 @@ export function KnowledgeGraphView() {
               <div>题量：{tooltip.node.problemCount}</div>
               <div>错题数：{tooltip.node.mistakeCount}</div>
             </div>
-            <button onClick={handleCloseTooltip} className="mt-2 text-xs text-[#4A90D9] hover:underline">
+            <button
+              onClick={handleCloseTooltip}
+              className="mt-2 text-xs text-[#4A90D9] hover:underline"
+            >
               关闭
             </button>
           </div>

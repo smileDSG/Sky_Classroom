@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/lib/hooks/use-i18n';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,9 @@ interface PDFSettingsProps {
   selectedProviderId: PDFProviderId;
 }
 
-export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {const [showApiKey, setShowApiKey] = useState(false);
+export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
+  const { t } = useI18n();
+  const [showApiKey, setShowApiKey] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
 

@@ -20,12 +20,11 @@ const log = createLogger('QB:DAO');
 
 // ── Connection pool (lazy) ──────────────────────────────────────────
 
-import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
+let _pool: any = null;
 
-let _pool: Pool | null = null;
-
-function getPool(): Pool {
+async function getPool(): Promise<any> {
   if (_pool) return _pool;
+  const mysql = await import('mysql2/promise');
   _pool = mysql.createPool({
     host: process.env.MYSQL_HOST || 'localhost',
     port: Number(process.env.MYSQL_PORT || 3306),
@@ -41,7 +40,7 @@ function getPool(): Pool {
 
 // ── Row mapping ─────────────────────────────────────────────────────
 
-interface QBRow extends RowDataPacket {
+interface QBRow {
   id: string;
   subject: string;
   grade: string;
@@ -50,11 +49,11 @@ interface QBRow extends RowDataPacket {
   content: string;
   answer: string;
   explanation: string;
-  knowledge_points: string;   // JSON
+  knowledge_points: string; // JSON
   image: string | null;
-  options: string | null;     // JSON
+  options: string | null; // JSON
   source: string | null;
-  tags: string;               // JSON
+  tags: string; // JSON
   problem_hash: string;
   verified: number;
   created_at: Date;
@@ -85,7 +84,11 @@ function toRow(r: QBRow): QuestionBankRow {
 
 function safeParseJson<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
-  try { return JSON.parse(raw) as T; } catch { return fallback; }
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 // ── Ensure table exists ─────────────────────────────────────────────
@@ -94,7 +97,7 @@ let _tableEnsured = false;
 
 export async function ensureTable(): Promise<void> {
   if (_tableEnsured) return;
-  const pool = getPool();
+  const pool = await getPool();
   await pool.query(`
     CREATE TABLE IF NOT EXISTS question_bank (
       id               VARCHAR(64)  PRIMARY KEY,
@@ -136,7 +139,7 @@ function genId(): string {
 
 export async function insertOne(entry: QuestionBankInsert): Promise<QuestionBankRow> {
   await ensureTable();
-  const pool = getPool();
+  const pool = await getPool();
 
   const id = entry.id ?? genId();
   const problemHash = hashProblemText(entry.content);
@@ -197,7 +200,7 @@ export async function insertOne(entry: QuestionBankInsert): Promise<QuestionBank
  */
 export async function insertBatch(entries: QuestionBankInsert[]): Promise<ImportResult> {
   await ensureTable();
-  const pool = getPool();
+  const pool = await getPool();
 
   const result: ImportResult = { total: entries.length, inserted: 0, duplicates: 0, errors: [] };
 
@@ -244,7 +247,7 @@ export async function insertBatch(entries: QuestionBankInsert[]): Promise<Import
     if (placeholders.length === 0) continue;
 
     try {
-      const [res] = await pool.query<ResultSetHeader>(
+      const [res] = await pool.query(
         `INSERT IGNORE INTO question_bank
           (id, subject, grade, difficulty, question_type, content, answer,
            explanation, knowledge_points, image, options, source, tags,
@@ -252,7 +255,7 @@ export async function insertBatch(entries: QuestionBankInsert[]): Promise<Import
          VALUES ${placeholders.join(', ')}`,
         values,
       );
-      const affected = res.affectedRows ?? 0;
+      const affected = (res as any).affectedRows ?? 0;
       const skipped = placeholders.length - affected;
       result.inserted += affected;
       result.duplicates += skipped;
@@ -264,27 +267,25 @@ export async function insertBatch(entries: QuestionBankInsert[]): Promise<Import
     }
   }
 
-  log.info(`Batch insert: ${result.inserted} inserted, ${result.duplicates} dupes, ${result.errors.length} errors`);
+  log.info(
+    `Batch insert: ${result.inserted} inserted, ${result.duplicates} dupes, ${result.errors.length} errors`,
+  );
   return result;
 }
 
 export async function findById(id: string): Promise<QuestionBankRow | null> {
   await ensureTable();
-  const pool = getPool();
-  const [rows] = await pool.query<QBRow[]>(
-    'SELECT * FROM question_bank WHERE id = ? LIMIT 1',
-    [id],
-  );
+  const pool = await getPool();
+  const [rows] = await pool.query('SELECT * FROM question_bank WHERE id = ? LIMIT 1', [id]);
   return rows.length > 0 ? toRow(rows[0]) : null;
 }
 
 export async function findByHash(problemHash: string): Promise<QuestionBankRow | null> {
   await ensureTable();
-  const pool = getPool();
-  const [rows] = await pool.query<QBRow[]>(
-    'SELECT * FROM question_bank WHERE problem_hash = ? LIMIT 1',
-    [problemHash],
-  );
+  const pool = await getPool();
+  const [rows] = await pool.query('SELECT * FROM question_bank WHERE problem_hash = ? LIMIT 1', [
+    problemHash,
+  ]);
   return rows.length > 0 ? toRow(rows[0]) : null;
 }
 
@@ -296,7 +297,7 @@ export async function findByHash(problemHash: string): Promise<QuestionBankRow |
  */
 export async function search(filter: QuestionBankFilter = {}): Promise<QuestionBankRow[]> {
   await ensureTable();
-  const pool = getPool();
+  const pool = await getPool();
 
   const conditions: string[] = [];
   const params: any[] = [];
@@ -336,7 +337,7 @@ export async function search(filter: QuestionBankFilter = {}): Promise<QuestionB
   const limit = filter.limit ?? 100;
   const offset = filter.offset ?? 0;
 
-  const [rows] = await pool.query<QBRow[]>(
+  const [rows] = await pool.query(
     `SELECT * FROM question_bank ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [...params, limit, offset],
   );
@@ -346,15 +347,27 @@ export async function search(filter: QuestionBankFilter = {}): Promise<QuestionB
 
 export async function update(id: string, patch: QuestionBankUpdate): Promise<boolean> {
   await ensureTable();
-  const pool = getPool();
+  const pool = await getPool();
 
   const sets: string[] = [];
   const params: any[] = [];
 
-  if (patch.subject !== undefined) { sets.push('subject = ?'); params.push(patch.subject); }
-  if (patch.grade !== undefined) { sets.push('grade = ?'); params.push(patch.grade); }
-  if (patch.difficulty !== undefined) { sets.push('difficulty = ?'); params.push(patch.difficulty); }
-  if (patch.questionType !== undefined) { sets.push('question_type = ?'); params.push(patch.questionType); }
+  if (patch.subject !== undefined) {
+    sets.push('subject = ?');
+    params.push(patch.subject);
+  }
+  if (patch.grade !== undefined) {
+    sets.push('grade = ?');
+    params.push(patch.grade);
+  }
+  if (patch.difficulty !== undefined) {
+    sets.push('difficulty = ?');
+    params.push(patch.difficulty);
+  }
+  if (patch.questionType !== undefined) {
+    sets.push('question_type = ?');
+    params.push(patch.questionType);
+  }
   if (patch.content !== undefined) {
     sets.push('content = ?');
     params.push(patch.content);
@@ -362,59 +375,97 @@ export async function update(id: string, patch: QuestionBankUpdate): Promise<boo
     sets.push('problem_hash = ?');
     params.push(hashProblemText(patch.content));
   }
-  if (patch.answer !== undefined) { sets.push('answer = ?'); params.push(patch.answer); }
-  if (patch.explanation !== undefined) { sets.push('explanation = ?'); params.push(patch.explanation); }
-  if (patch.knowledgePoints !== undefined) { sets.push('knowledge_points = ?'); params.push(JSON.stringify(patch.knowledgePoints)); }
-  if (patch.image !== undefined) { sets.push('image = ?'); params.push(patch.image); }
-  if (patch.options !== undefined) { sets.push('options = ?'); params.push(JSON.stringify(patch.options)); }
-  if (patch.source !== undefined) { sets.push('source = ?'); params.push(patch.source); }
-  if (patch.tags !== undefined) { sets.push('tags = ?'); params.push(JSON.stringify(patch.tags)); }
-  if (patch.verified !== undefined) { sets.push('verified = ?'); params.push(patch.verified ? 1 : 0); }
+  if (patch.answer !== undefined) {
+    sets.push('answer = ?');
+    params.push(patch.answer);
+  }
+  if (patch.explanation !== undefined) {
+    sets.push('explanation = ?');
+    params.push(patch.explanation);
+  }
+  if (patch.knowledgePoints !== undefined) {
+    sets.push('knowledge_points = ?');
+    params.push(JSON.stringify(patch.knowledgePoints));
+  }
+  if (patch.image !== undefined) {
+    sets.push('image = ?');
+    params.push(patch.image);
+  }
+  if (patch.options !== undefined) {
+    sets.push('options = ?');
+    params.push(JSON.stringify(patch.options));
+  }
+  if (patch.source !== undefined) {
+    sets.push('source = ?');
+    params.push(patch.source);
+  }
+  if (patch.tags !== undefined) {
+    sets.push('tags = ?');
+    params.push(JSON.stringify(patch.tags));
+  }
+  if (patch.verified !== undefined) {
+    sets.push('verified = ?');
+    params.push(patch.verified ? 1 : 0);
+  }
 
   if (sets.length === 0) return false;
 
-  const [res] = await pool.query<ResultSetHeader>(
-    `UPDATE question_bank SET ${sets.join(', ')} WHERE id = ?`,
-    [...params, id],
-  );
-  return (res.affectedRows ?? 0) > 0;
+  const [res] = await pool.query(`UPDATE question_bank SET ${sets.join(', ')} WHERE id = ?`, [
+    ...params,
+    id,
+  ]);
+  return ((res as any).affectedRows ?? 0) > 0;
 }
 
 export async function deleteById(id: string): Promise<boolean> {
   await ensureTable();
-  const pool = getPool();
-  const [res] = await pool.query<ResultSetHeader>(
-    'DELETE FROM question_bank WHERE id = ?',
-    [id],
-  );
-  return (res.affectedRows ?? 0) > 0;
+  const pool = await getPool();
+  const [res] = await pool.query('DELETE FROM question_bank WHERE id = ?', [id]);
+  return ((res as any).affectedRows ?? 0) > 0;
 }
 
-export async function count(filter: Pick<QuestionBankFilter, 'subject' | 'difficulty' | 'grade' | 'questionType' | 'verified'> = {}): Promise<number> {
+export async function count(
+  filter: Pick<
+    QuestionBankFilter,
+    'subject' | 'difficulty' | 'grade' | 'questionType' | 'verified'
+  > = {},
+): Promise<number> {
   await ensureTable();
-  const pool = getPool();
+  const pool = await getPool();
 
   const conditions: string[] = [];
   const params: any[] = [];
 
-  if (filter.subject) { conditions.push('subject = ?'); params.push(filter.subject); }
-  if (filter.grade) { conditions.push('grade = ?'); params.push(filter.grade); }
-  if (filter.difficulty) { conditions.push('difficulty = ?'); params.push(filter.difficulty); }
-  if (filter.questionType) { conditions.push('question_type = ?'); params.push(filter.questionType); }
-  if (filter.verified !== undefined) { conditions.push('verified = ?'); params.push(filter.verified ? 1 : 0); }
+  if (filter.subject) {
+    conditions.push('subject = ?');
+    params.push(filter.subject);
+  }
+  if (filter.grade) {
+    conditions.push('grade = ?');
+    params.push(filter.grade);
+  }
+  if (filter.difficulty) {
+    conditions.push('difficulty = ?');
+    params.push(filter.difficulty);
+  }
+  if (filter.questionType) {
+    conditions.push('question_type = ?');
+    params.push(filter.questionType);
+  }
+  if (filter.verified !== undefined) {
+    conditions.push('verified = ?');
+    params.push(filter.verified ? 1 : 0);
+  }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT COUNT(*) as cnt FROM question_bank ${where}`,
-    params,
-  );
+  const [rows] = await pool.query(`SELECT COUNT(*) as cnt FROM question_bank ${where}`, params);
   return rows[0]?.cnt ?? 0;
 }
 
 export async function list(limit: number = 100, offset: number = 0): Promise<QuestionBankRow[]> {
   await ensureTable();
-  const pool = getPool();
-  const [rows] = await pool.query<QBRow[]>(
+  const pool = await getPool();
+  const [rows] = await pool.query(
     'SELECT * FROM question_bank ORDER BY created_at DESC LIMIT ? OFFSET ?',
     [limit, offset],
   );

@@ -201,25 +201,34 @@ export function MultimodalInput({
   return (
     <div className={cn('flex flex-col gap-4', className)}>
       <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as typeof activeTab); setImageError(null); }}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="camera" className="gap-2">
+        <TabsList className="grid w-full grid-cols-3 probe-panel border-[var(--probe-border)] p-1 gap-1">
+          <TabsTrigger
+            value="camera"
+            className="gap-2 data-[state=active]:bg-gradient-to-b data-[state=active]:from-[var(--probe-primary)]/30 data-[state=active]:to-[var(--probe-primary)]/15 data-[state=active]:text-[var(--probe-primary-bright)] data-[state=active]:shadow-[0_0_12px_var(--probe-glow)] data-[state=active]:border data-[state=active]:border-[var(--probe-border-strong)]"
+          >
             <Camera className="h-4 w-4" />
-            <span className="hidden sm:inline">拍照</span>
+            <span className="hidden sm:inline">捕获</span>
           </TabsTrigger>
-          <TabsTrigger value="voice" className="gap-2">
+          <TabsTrigger
+            value="voice"
+            className="gap-2 data-[state=active]:bg-gradient-to-b data-[state=active]:from-[var(--probe-primary)]/30 data-[state=active]:to-[var(--probe-primary)]/15 data-[state=active]:text-[var(--probe-primary-bright)] data-[state=active]:shadow-[0_0_12px_var(--probe-glow)] data-[state=active]:border data-[state=active]:border-[var(--probe-border-strong)]"
+          >
             <Mic className="h-4 w-4" />
-            <span className="hidden sm:inline">语音</span>
+            <span className="hidden sm:inline">声纳</span>
           </TabsTrigger>
-          <TabsTrigger value="text" className="gap-2">
+          <TabsTrigger
+            value="text"
+            className="gap-2 data-[state=active]:bg-gradient-to-b data-[state=active]:from-[var(--probe-primary)]/30 data-[state=active]:to-[var(--probe-primary)]/15 data-[state=active]:text-[var(--probe-primary-bright)] data-[state=active]:shadow-[0_0_12px_var(--probe-glow)] data-[state=active]:border data-[state=active]:border-[var(--probe-border-strong)]"
+          >
             <Type className="h-4 w-4" />
-            <span className="hidden sm:inline">文字</span>
+            <span className="hidden sm:inline">手输</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>
 
       {imageError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 px-3 py-2 text-sm text-red-600 dark:text-red-400">
-          {imageError}
+        <div className="rounded-lg border border-[var(--probe-error)]/30 bg-[var(--probe-error)]/10 px-3 py-2 text-sm text-[var(--probe-error)]">
+          ⚠ {imageError}
         </div>
       )}
 
@@ -232,36 +241,50 @@ export function MultimodalInput({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={cn(
-                'cursor-pointer rounded-xl border-2 border-dashed p-8 transition-all',
+                'cursor-pointer relative rounded-xl border-2 border-dashed p-8 transition-all overflow-hidden',
                 isDraggingOver
-                  ? 'border-[#4A90D9] bg-[#4A90D9]/10 scale-[1.02]'
-                  : 'border-[#4A90D9]/30 bg-[#4A90D9]/5 hover:border-[#4A90D9]/50 hover:bg-[#4A90D9]/10',
+                  ? 'border-[var(--probe-primary)] bg-gradient-to-br from-[var(--probe-primary)]/15 to-[var(--probe-accent)]/10 scale-[1.02] shadow-[0_0_24px_var(--probe-glow)]'
+                  : 'border-[var(--probe-border-strong)] bg-gradient-to-br from-[var(--probe-primary)]/5 to-transparent hover:border-[var(--probe-primary)] hover:bg-[var(--probe-primary)]/10 hover:shadow-[0_0_12px_var(--probe-glow)]',
               )}
             >
+              {/* Scan-frame corner markers — thicker and more visible */}
+              <div className="pointer-events-none absolute inset-3">
+                <div className="absolute left-0 top-0 h-6 w-6 border-l-[3px] border-t-[3px] border-[var(--probe-primary-bright)] rounded-tl-sm shadow-[0_0_6px_var(--probe-glow)]" />
+                <div className="absolute right-0 top-0 h-6 w-6 border-r-[3px] border-t-[3px] border-[var(--probe-primary-bright)] rounded-tr-sm shadow-[0_0_6px_var(--probe-glow)]" />
+                <div className="absolute left-0 bottom-0 h-6 w-6 border-l-[3px] border-b-[3px] border-[var(--probe-primary-bright)] rounded-bl-sm shadow-[0_0_6px_var(--probe-glow)]" />
+                <div className="absolute right-0 bottom-0 h-6 w-6 border-r-[3px] border-b-[3px] border-[var(--probe-primary-bright)] rounded-br-sm shadow-[0_0_6px_var(--probe-glow)]" />
+              </div>
+
               <div className="flex flex-col items-center gap-3 text-center pointer-events-none">
                 <div
                   className={cn(
-                    'flex h-16 w-16 items-center justify-center rounded-full transition-colors',
-                    isDraggingOver ? 'bg-[#4A90D9]/20' : 'bg-[#4A90D9]/10',
+                    'flex h-16 w-16 items-center justify-center rounded-2xl transition-all border',
+                    isDraggingOver
+                      ? 'bg-gradient-to-br from-[var(--probe-primary)]/30 to-[var(--probe-accent)]/20 border-[var(--probe-border-strong)] shadow-[0_0_16px_var(--probe-glow)]'
+                      : 'bg-gradient-to-br from-[var(--probe-primary)]/15 to-[var(--probe-primary)]/5 border-[var(--probe-border)]',
                   )}
                 >
                   {isDraggingOver ? (
-                    <ImagePlus className="h-8 w-8 text-[#4A90D9] animate-bounce" />
+                    <ImagePlus className="h-8 w-8 text-[var(--probe-primary-bright)] animate-bounce" />
                   ) : (
-                    <Camera className="h-8 w-8 text-[#4A90D9]" />
+                    <Camera className="h-8 w-8 text-[var(--probe-primary-bright)]" />
                   )}
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">
-                    {isDraggingOver ? '松开放入图片' : '点击、拖拽或粘贴图片'}
+                  <p className="font-medium text-[var(--probe-text)]">
+                    {isDraggingOver ? '松开放入信号源' : '点击、拖拽或粘贴信号图片'}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-[var(--probe-muted)]">
                     支持 JPEG、PNG、WebP 格式，最大 10MB
                   </p>
                 </div>
-                <Button variant="outline" size="sm" className="mt-2 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 gap-2 border-[var(--probe-border-strong)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-primary)] hover:shadow-[0_0_8px_var(--probe-glow)]"
+                >
                   <Upload className="h-4 w-4" />
-                  选择文件
+                  选择信号源
                 </Button>
               </div>
               <input
@@ -273,11 +296,11 @@ export function MultimodalInput({
               />
             </div>
           ) : (
-            <div className="relative overflow-hidden rounded-xl border border-border">
+            <div className="relative overflow-hidden rounded-xl border border-[var(--probe-border-strong)] bg-[var(--probe-surface)] shadow-[0_0_12px_var(--probe-glow)]">
               <img src={selectedImage} alt="Selected problem" className="w-full object-contain" />
               <button
                 onClick={clearImage}
-                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-opacity hover:bg-black/70"
+                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition-all hover:bg-[var(--probe-error)]/80 hover:shadow-[0_0_8px_rgba(248,113,113,0.3)]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -291,24 +314,32 @@ export function MultimodalInput({
         <div className="space-y-4">
           <div
             className={cn(
-              'flex flex-col items-center justify-center gap-4 rounded-xl border-2 p-8 transition-all',
+              'flex flex-col items-center justify-center gap-4 rounded-xl border-2 p-8 transition-all probe-panel',
               isRecording
-                ? 'border-red-400 bg-red-50 dark:border-red-900 dark:bg-red-900/20'
-                : 'border-[#4A90D9]/30 bg-[#4A90D9]/5',
+                ? 'border-[var(--probe-primary)] shadow-[0_0_24px_var(--probe-glow-strong)]'
+                : '',
             )}
           >
             <button
               onClick={isRecording ? stopRecording : startRecording}
               disabled={isProcessing}
               className={cn(
-                'flex h-20 w-20 items-center justify-center rounded-full transition-all',
+                'relative flex h-20 w-20 items-center justify-center rounded-full transition-all',
                 isProcessing
-                  ? 'cursor-not-allowed bg-gray-400 text-white'
+                  ? 'cursor-not-allowed bg-[var(--probe-surface-elevated)] text-[var(--probe-muted)] border border-[var(--probe-border)]'
                   : isRecording
-                    ? 'animate-pulse bg-red-500 text-white'
-                    : 'bg-[#4A90D9] text-white hover:bg-[#4A90D9]/90',
+                    ? 'bg-gradient-to-br from-[var(--probe-primary)] to-[#8B5CF6] text-white animate-signal-pulse shadow-[0_0_24px_var(--probe-glow-strong)]'
+                    : 'bg-gradient-to-br from-[var(--probe-primary)]/25 to-[var(--probe-primary)]/10 text-[var(--probe-primary-bright)] border-2 border-[var(--probe-border-strong)] hover:from-[var(--probe-primary)]/35 hover:to-[var(--probe-primary)]/20 hover:shadow-[0_0_16px_var(--probe-glow)]',
               )}
             >
+              {/* Outer pulse rings when recording */}
+              {isRecording && (
+                <>
+                  <span className="absolute inset-0 rounded-full border-2 border-[var(--probe-primary)] animate-ping opacity-25" />
+                  <span className="absolute -inset-3 rounded-full border border-[var(--probe-primary)]/30 animate-pulse" />
+                  <span className="absolute -inset-6 rounded-full border border-[var(--probe-primary)]/15 animate-pulse" style={{ animationDelay: '0.5s' }} />
+                </>
+              )}
               {isProcessing ? (
                 <Loader2 className="h-8 w-8 animate-spin" />
               ) : isRecording ? (
@@ -317,15 +348,15 @@ export function MultimodalInput({
                 <Mic className="h-8 w-8" />
               )}
             </button>
-            <p className="text-center font-medium text-foreground">
-              {isProcessing ? '正在识别...' : isRecording ? '点击停止录音' : '点击开始录音'}
+            <p className="text-center font-medium text-[var(--probe-text)]">
+              {isProcessing ? '正在解码声纳信号...' : isRecording ? '点击停止声纳捕获' : '点击启动声纳捕获'}
             </p>
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-[var(--probe-muted)]">
               {isProcessing
-                ? '正在将语音转换为文字，请稍候...'
+                ? '正在将声纳信号转换为文字...'
                 : isRecording
-                  ? '录音中，再次点击停止并识别'
-                  : '支持数学题目语音输入'}
+                  ? '声纳捕获中，再次点击停止并解码'
+                  : '语音转文字声纳输入'}
             </p>
           </div>
         </div>
@@ -334,23 +365,23 @@ export function MultimodalInput({
       {activeTab === 'text' && (
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">题目内容</label>
+            <label className="text-sm font-medium text-[var(--probe-primary-bright)]">题目信号内容</label>
             <Textarea
               placeholder="请输入题目内容，支持数学公式（如：$x^2 + 2x + 1 = 0$）..."
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
-              className="min-h-[120px] resize-none"
+              className="min-h-[120px] resize-none probe-panel border-[var(--probe-border)] text-[var(--probe-text)] placeholder:text-[var(--probe-muted)] focus-visible:ring-[var(--probe-glow)] focus-visible:border-[var(--probe-primary)] focus-visible:shadow-[0_0_12px_var(--probe-glow)]"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              你的答案（选填，用于批改）
+            <label className="text-sm font-medium text-[var(--probe-primary-bright)]">
+              你的答案（选填，用于批改校验）
             </label>
             <Textarea
               placeholder="请输入你的答案..."
               value={userAnswer}
               onChange={(e) => setUserAnswer(e.target.value)}
-              className="min-h-[80px] resize-none"
+              className="min-h-[80px] resize-none probe-panel border-[var(--probe-border)] text-[var(--probe-text)] placeholder:text-[var(--probe-muted)] focus-visible:ring-[var(--probe-glow)] focus-visible:border-[var(--probe-primary)] focus-visible:shadow-[0_0_12px_var(--probe-glow)]"
             />
           </div>
         </div>
@@ -360,17 +391,17 @@ export function MultimodalInput({
         <Button
           onClick={handleSubmit}
           disabled={!canSubmit || isLoading}
-          className="w-full gap-2 bg-[#4A90D9] hover:bg-[#4A90D9]/90"
+          className="w-full gap-2 probe-button-primary text-[var(--probe-primary-bright)] font-medium h-11"
         >
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              正在识别...
+              信号解码中...
             </>
           ) : (
             <>
               <Camera className="h-4 w-4" />
-              搜题讲解
+              启动探测
             </>
           )}
         </Button>
@@ -379,15 +410,15 @@ export function MultimodalInput({
             variant="outline"
             onClick={handleGrade}
             disabled={!canGrade || isLoading}
-            className="w-full gap-2"
+            className="w-full gap-2 border-[var(--probe-border-strong)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-primary)] hover:shadow-[0_0_8px_var(--probe-glow)]"
           >
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                正在批改...
+                批改校验中...
               </>
             ) : (
-              <>批改答案</>
+              <>批改校验</>
             )}
           </Button>
         )}

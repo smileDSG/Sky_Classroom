@@ -1,28 +1,32 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Star, Brain, TrendingUp, Feather, Globe, BookOpen } from 'lucide-react';
+import { Star, Brain, TrendingUp, Feather, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { label: string; href: string; icon: typeof Star; badge?: number }[] = [
+  { label: '天穹授课', href: '/', icon: GraduationCap },
   { label: '摘星锦囊', href: '/sky', icon: Star },
   { label: '云端智囊', href: '/sky/cloud-mind', icon: Brain },
   { label: '天梯工坊', href: '/sky/learning', icon: TrendingUp },
   { label: '云翼助手', href: '/sky/assistant', icon: Feather },
-  { label: '学情分析', href: '/sky/student', icon: Globe },
-  { label: '智能授课', href: '/sky/teaching', icon: BookOpen },
 ];
 
 export function SkyTabBar() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   return (
     <nav className="relative flex items-center rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-1.5 border border-slate-200/40 dark:border-slate-700/30 shadow-[0_2px_16px_-4px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_16px_-4px_rgba(0,0,0,0.2)]">
       {NAV_ITEMS.map((item) => {
         let isActive: boolean;
-        if (item.href === '/sky') {
+        if (item.href === '/') {
+          isActive = pathname === '/';
+        } else if (item.href === '/sky') {
           isActive = pathname === '/sky';
         } else {
           isActive = pathname.startsWith(item.href);
@@ -41,7 +45,7 @@ export function SkyTabBar() {
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200',
             )}
           >
-            {isActive && (
+            {isActive && mounted && (
               <motion.div
                 layoutId="activeTab"
                 className="absolute inset-0 rounded-xl bg-white/90 dark:bg-slate-800/80 shadow-sm border border-slate-200/60 dark:border-slate-600/30"
@@ -66,7 +70,7 @@ export function SkyTabBar() {
               </div>
               <span>{item.label}</span>
             </span>
-            {isActive && (
+            {isActive && mounted && (
               <motion.div
                 layoutId="activeTabIndicator"
                 className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-[2px] w-8 rounded-full bg-gradient-to-r from-sky-400 to-blue-500"

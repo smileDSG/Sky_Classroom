@@ -230,6 +230,8 @@ function GenerationPreviewContent() {
     setCurrentStepIndex(0);
     deletedOutlineIdsRef.current.clear();
 
+    let stageId: string | null = null;
+
     try {
       // Compute active steps for this session (recomputed after session mutations)
       let activeSteps = getActiveSteps(currentSession);
@@ -443,7 +445,7 @@ function GenerationPreviewContent() {
       }
 
       // Create stage client-side
-      const stageId = nanoid(10);
+      stageId = nanoid(10);
       const stage: Stage = {
         id: stageId,
         name: extractTopicFromRequirement(currentSession.requirements.requirement),
@@ -977,11 +979,11 @@ function GenerationPreviewContent() {
       // AbortError is expected when navigating away — don't show as error
       if (err instanceof DOMException && err.name === 'AbortError') {
         log.info('[GenerationPreview] Generation aborted');
-        removeActiveJobEntry(stage.id);
+        if (stageId) removeActiveJobEntry(stageId);
         return;
       }
       sessionStorage.removeItem('generationSession');
-      removeActiveJobEntry(stage.id);
+      if (stageId) removeActiveJobEntry(stageId);
       setError(err instanceof Error ? err.message : String(err));
     }
   };

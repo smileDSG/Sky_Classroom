@@ -12,12 +12,18 @@ import {
   writeJsonFileAtomic,
 } from '@/lib/server/classroom-storage';
 
-export type ClassroomGenerationJobStatus = 'queued' | 'running' | 'awaiting_review' | 'cancelled' | 'succeeded' | 'failed';
+export type ClassroomGenerationJobStatus =
+  | 'initializing'
+  | 'running'
+  | 'awaiting_review'
+  | 'cancelled'
+  | 'succeeded'
+  | 'failed';
 
 export interface ClassroomGenerationJob {
   id: string;
   status: ClassroomGenerationJobStatus;
-  step: ClassroomGenerationStep | 'queued' | 'failed';
+  step: ClassroomGenerationStep | 'initializing' | 'failed';
   progress: number;
   message: string;
   createdAt: string;
@@ -103,7 +109,8 @@ async function cleanupOldClassroomJobs(): Promise<void> {
       try {
         const content = await fs.readFile(filePath, 'utf-8');
         const job = JSON.parse(content) as ClassroomGenerationJob;
-        const isTerminal = job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled';
+        const isTerminal =
+          job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled';
         if (!isTerminal) continue;
 
         const completedAt = job.completedAt ? new Date(job.completedAt).getTime() : 0;
@@ -157,8 +164,8 @@ export async function createClassroomGenerationJob(
   const now = new Date().toISOString();
   const job: ClassroomGenerationJob = {
     id: jobId,
-    status: 'queued',
-    step: 'queued',
+    status: 'initializing',
+    step: 'initializing',
     progress: 0,
     message: 'Classroom generation job queued',
     createdAt: now,

@@ -89,26 +89,45 @@ export async function PATCH(req: NextRequest) {
     const dao = await getDAO();
     const body = await req.json();
     const id = body.id as string;
+    const correct = body.correct !== false; // default true
 
     if (!id) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '缺少 id 参数');
     }
 
-    await dao.recordReview(id);
-    log.info('Mistake reviewed:', id);
-    return apiSuccess({ reviewed: true, id });
+    if (correct) {
+      await dao.recordReview(id);
+      log.info('Mistake reviewed (correct):', id);
+      return apiSuccess({ reviewed: true, id });
+    } else {
+      // Wrong answer — reset review count
+      await dao.resetReview(id);
+      log.info('Mistake review reset (wrong):', id);
+      return apiSuccess({ reviewed: false, id });
+    }
   } catch (err) {
     log.error('Mistakes PATCH error:', err);
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '标记复习失败');
   }
 }
 
-// ── DELETE — remove a mistake ────────────────────────────────────────
+// ── DELETE — remove a mistake (or all if ?all=true) ──────────────────
 
 export async function DELETE(req: NextRequest) {
   try {
     const dao = await getDAO();
     const url = new URL(req.url);
+
+    // Bulk delete: ?all=true
+    if (url.searchParams.get('all') === 'true') {
+      const { items } = await dao.list({ page: 1, pageSize: 99999 });
+      for (const item of items) {
+        await dao.delete(item.id);
+      }
+      log.info(`Bulk deleted ${items.length} mistakes`);
+      return apiSuccess({ deleted: items.length });
+    }
+
     const id = url.pathname.split('/').pop();
 
     if (!id) {

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { EBBINGHAUS_INTERVALS } from '@/lib/storage/dao/mistakes';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import {
   buildReviewSchedule,
   getMasteryProgress,
@@ -38,48 +39,74 @@ export function ReviewPlan() {
   const [source, setSource] = useState<DataSource>('local');
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const markReviewed = useSkyClassroomStore((s) => s.markReviewed);
+  const initialLoaded = useRef(false);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2000);
+  };
 
   const loadData = useCallback(async () => {
-    setLoading(true);
+    // Only show skeleton on first load; subsequent refreshes update in place
+    if (!initialLoaded.current) setLoading(true);
     setErrorMsg(null);
 
-    // Try API first
-    try {
-      const res = await fetch('/api/sky/review/due');
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data) {
-          setSchedule({
-            today: json.data.dueToday?.length
-              ? { date: new Date().toISOString().slice(0, 10), dayLabel: '今天', items: json.data.dueToday, count: json.data.dueCount }
-              : null,
-            upcoming: json.data.upcoming ?? [],
-            overdue: json.data.overdue ?? 0,
-            completed: json.data.completed ?? 0,
-            total: json.data.total ?? 0,
-          });
-          setProgress(json.data.progress ?? null);
-          setUrgentItems(json.data.dueToday?.slice(0, 5) ?? []);
-          setSource('api');
-          setLoading(false);
-          return;
-        }
-      }
-    } catch { /* fall through */ }
-
-    // Fallback: Zustand store
+    // Always use local store as primary data source
     try {
       const { useSkyClassroomStore } = await import('@/lib/store/use-sky-classroom-store');
       const mistakes = useSkyClassroomStore.getState().mistakes;
       if (mistakes.length === 0) {
+        // Try API as fallback for server-only data
+        try {
+          const res = await fetch('/api/sky/review/due');
+          if (res.ok) {
+            const json = await res.json();
+            const d = json.data;
+            if (d && d.total > 0) {
+              const dueToday: MistakeBookEntry[] = d.dueToday ?? [];
+              setSchedule({
+                today: dueToday.length
+                  ? { date: new Date().toISOString().slice(0, 10), dayLabel: '今天', items: dueToday, count: d.dueCount ?? dueToday.length }
+                  : null,
+                upcoming: d.upcoming ?? [],
+                overdue: d.overdue ?? 0,
+                completed: d.completed ?? 0,
+                total: d.total ?? 0,
+              });
+              setProgress(d.progress ?? null);
+              setUrgentItems(dueToday.slice(0, 5));
+              setSource('api');
+              initialLoaded.current = true;
+              setLoading(false);
+              return;
+            }
+          }
+        } catch { /* ignore */ }
+
+        initialLoaded.current = true;
         setLoading(false);
         return;
       }
+
       const now = Date.now();
       const entries = mistakes.map((m) => {
-        const solvedTs = m.solvedAt instanceof Date ? m.solvedAt.getTime() : new Date(m.solvedAt).getTime();
-        const intervalIdx = Math.min(m.reviewCount, EBBINGHAUS_INTERVALS.length - 1);
-        const days = EBBINGHAUS_INTERVALS[intervalIdx];
+        let nextReview: number;
+        if (m.reviewed) {
+          nextReview = Number.MAX_SAFE_INTEGER;
+        } else if (m.nextReview !== undefined) {
+          // Use persisted nextReview from markReviewed (authoritative)
+          nextReview = m.nextReview;
+        } else if (m.reviewCount === 0) {
+          nextReview = 0;
+        } else {
+          // Fallback: recalculate from lastReview if available, otherwise now
+          const base = m.lastReview ?? now;
+          const intervalIdx = Math.min(m.reviewCount, EBBINGHAUS_INTERVALS.length - 1);
+          nextReview = base + EBBINGHAUS_INTERVALS[intervalIdx] * 86400000;
+        }
         return {
           id: m.id,
           problemText: m.problem,
@@ -88,11 +115,9 @@ export function ReviewPlan() {
           errorType: causeToErrorType(m.cause),
           knowledgePoints: m.knowledgePoints,
           reviewCount: m.reviewCount,
-          lastReview: m.reviewed ? now - days * 12 * 60 * 60 * 1000 : undefined,
-          nextReview: m.reviewed
-            ? now + EBBINGHAUS_INTERVALS[Math.min(m.reviewCount, EBBINGHAUS_INTERVALS.length - 1)] * 86400000
-            : solvedTs + days * 86400000 + m.reviewCount * 86400000,
-          masteryLevel: m.reviewed ? m.reviewCount : 0,
+          lastReview: m.lastReview ?? (m.reviewCount > 0 ? now : undefined),
+          nextReview,
+          masteryLevel: m.masteryLevel ?? m.reviewCount,
           reviewed: m.reviewed,
         } as MistakeBookEntry;
       });
@@ -104,6 +129,7 @@ export function ReviewPlan() {
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : '加载失败');
     }
+    initialLoaded.current = true;
     setLoading(false);
   }, []);
 
@@ -147,6 +173,12 @@ export function ReviewPlan() {
 
   return (
     <div className="space-y-5">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 rounded-xl bg-slate-800 dark:bg-slate-200 px-5 py-2.5 text-sm font-medium text-white dark:text-slate-800 shadow-lg animate-[fadeInUp_0.3s_ease-out]">
+          {toast}
+        </div>
+      )}
       {/* ── 1. Forgetting Curve ── */}
       <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
         <h3 className="mb-1 text-sm font-semibold text-gray-700 dark:text-slate-200">📉 艾宾浩斯遗忘曲线</h3>
@@ -209,7 +241,17 @@ export function ReviewPlan() {
       <div className="grid grid-cols-3 gap-4">
         <StatCard
           label="掌握进度" value={`${progress?.percentComplete ?? 0}%`} color="#4A90D9"
-          footer={<>{progress?.masteredCount ?? 0}/{progress?.totalCount ?? 0} 已掌握</>}
+          footer={
+            <>
+              {progress?.masteredCount ?? 0}/{progress?.totalCount ?? 0} 已掌握
+              {progress && progress.totalRounds > 0 && (
+                <span className="text-gray-300 dark:text-slate-600"> · </span>
+              )}
+              {progress && progress.totalRounds > 0 && (
+                <span>{progress.completedRounds}/{progress.totalRounds} 轮</span>
+              )}
+            </>
+          }
         >
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-slate-700">
             <div className="h-full rounded-full bg-gradient-to-r from-[#4A90D9] to-[#10B981] transition-all duration-700"
@@ -233,8 +275,8 @@ export function ReviewPlan() {
       {urgentItems.length > 0 && (
         <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
           <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-slate-200 flex items-center gap-2">
-            🔔 今日待复习
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{urgentItems.length} 题</span>
+            <span>🔔 今日待复习</span>
+            <span key="badge" className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{urgentItems.length} 题</span>
           </h3>
           <div className="space-y-2">
             {urgentItems.map((item) => (
@@ -244,8 +286,64 @@ export function ReviewPlan() {
                   <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-400">
                     复习 {item.reviewCount} 次 · 掌握度 {'⭐'.repeat(Math.min(item.masteryLevel, 6)) || '—'}
                   </p>
+                  {/* Expanded review mode */}
+                  {reviewingId === item.id && (
+                    <div className="mt-3 space-y-2">
+                      <div className="rounded-lg bg-white/80 dark:bg-slate-700/50 p-3">
+                        <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">题目：</p>
+                        <p className="text-sm text-gray-800 dark:text-slate-100">{item.problemText}</p>
+                        <p className="text-xs text-red-500 dark:text-red-400 mt-2">我的答案：{item.userAnswer}</p>
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400">正确答案：{item.correctAnswer}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            const item_ = item;
+                            markReviewed(item_.id, true);
+                            setReviewingId(null);
+                            if (item_.reviewCount + 1 >= EBBINGHAUS_INTERVALS.length) {
+                              showToast('已掌握！🎉');
+                            } else {
+                              showToast(`答对了！下次复习：${EBBINGHAUS_INTERVALS[Math.min(item_.reviewCount + 1, EBBINGHAUS_INTERVALS.length - 1)]}天后`);
+                            }
+                            loadData();
+                          }}
+                          className="flex-1 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-600 transition-colors"
+                        >
+                          答对了 ✓
+                        </button>
+                        <button
+                          onClick={() => {
+                            markReviewed(item.id, false);
+                            setReviewingId(null);
+                            showToast('答错了，复习进度重置');
+                            loadData();
+                          }}
+                          className="flex-1 rounded-lg bg-red-500 px-3 py-2 text-xs font-medium text-white hover:bg-red-600 transition-colors"
+                        >
+                          还是错了 ✗
+                        </button>
+                        <button
+                          onClick={() => setReviewingId(null)}
+                          className="rounded-lg bg-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-300 dark:bg-slate-600 dark:text-slate-300 transition-colors"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <span className="shrink-0 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-800 dark:text-amber-200">第{item.reviewCount + 1}次</span>
+                {reviewingId !== item.id && (
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-800 dark:text-amber-200">第{item.reviewCount + 1}次</span>
+                    <button
+                      onClick={() => setReviewingId(item.id)}
+                      className="rounded-lg bg-[#10B981] px-3 py-1.5 text-xs font-medium text-white hover:bg-green-600 transition-colors"
+                    >
+                      开始复习
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

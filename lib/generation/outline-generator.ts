@@ -25,8 +25,7 @@ const log = createLogger('Generation');
  * still need *something* that steers the model toward the requirement's
  * language rather than defaulting to the training-distribution prior.
  */
-export const DEFAULT_LANGUAGE_DIRECTIVE =
-  'Teach in the language that matches the user requirement.';
+export const DEFAULT_LANGUAGE_DIRECTIVE = '使用中文进行教学。所有内容、标题、说明均使用中文输出。';
 
 /**
  * Generate scene outlines from user requirements
@@ -152,7 +151,9 @@ export async function generateSceneOutlinesFromRequirements(
     // Replace sequential gen_img_N/gen_vid_N with globally unique IDs
     const result = uniquifyMediaElementIds(enriched);
 
-    log.info(`[OutlineGen] Generated ${result.length} outlines. Titles: ${result.map((o) => `"${o.title}"[${o.type}]`).join(', ')}`);
+    log.info(
+      `[OutlineGen] Generated ${result.length} outlines. Titles: ${result.map((o) => `"${o.title}"[${o.type}]`).join(', ')}`,
+    );
 
     callbacks?.onProgress?.({
       currentStage: 1,

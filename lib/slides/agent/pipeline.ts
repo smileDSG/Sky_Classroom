@@ -41,6 +41,10 @@ export interface GenerateOptions {
   jobId: string;
   /** Target audience education level from user personalization */
   educationLevel?: string;
+  /** Progress callback */
+  onProgress?: (progress: { stage: PipelineStage; progress: number; message: string }) => Promise<void>;
+  /** Completion callback */
+  onComplete?: (result: { pptxUrl: string; fileName: string; previewImages?: string[] }) => Promise<void>;
 }
 
 export type PipelineStage =
@@ -561,7 +565,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
       startStep(jobId, 'preview_png');
       updateJob(jobId, { stage: 'merging', message: '正在生成预览图...', progress: 85 });
 
-      const previewResult = await generatePreviewFromPptx(pptxUrl, undefined, sidecarPath);
+      const previewResult = await generatePreviewFromPptx(pptxUrl, undefined);
       const previewImages: string[] = previewResult.success ? previewResult.slideImages : [];
 
       endStep(jobId, 'preview_png', { previewCount: previewImages.length });

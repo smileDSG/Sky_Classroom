@@ -81,9 +81,74 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Celestial Atelier — Sky Observatory Theme */
+  --celestial-void: #0B1021;
+  --celestial-horizon: #1A1F3A;
+  --celestial-haze: #2D3561;
+  --celestial-starlight: #F5E6C8;
+  --celestial-dawn: #FF8C69;
+  --celestial-nebula: #8B5CF6;
+  --celestial-zenith: #38BDF8;
+
+  /* Deep Space Probe — Solve Page Theme (light = "天光学院") */
+  --probe-void: #EFF6FF;
+  --probe-surface: rgba(224, 242, 254, 0.85);
+  --probe-surface-elevated: rgba(224, 242, 254, 0.95);
+  --probe-border: rgba(14, 165, 233, 0.18);
+  --probe-border-strong: rgba(14, 165, 233, 0.35);
+  --probe-primary: #0284C7;
+  --probe-primary-bright: #0369A1;
+  --probe-glow: rgba(2, 132, 199, 0.12);
+  --probe-glow-strong: rgba(2, 132, 199, 0.2);
+  --probe-text: #0C4A6E;
+  --probe-muted: rgba(14, 116, 144, 0.6);
+  --probe-success: #059669;
+  --probe-error: #DC2626;
+  --probe-accent: #7C3AED;
+  --probe-accent-glow: rgba(124, 58, 237, 0.12);
+  --probe-warm: #EA580C;
+
+  /* Stardust Collector — Memory Page Theme (Light: "玫瑰学院 Rose Academy") */
+  --memory-void: #FDF8FA;
+  --memory-surface: rgba(255, 255, 255, 0.9);
+  --memory-surface-elevated: rgba(255, 255, 255, 0.96);
+  --memory-border: rgba(100, 80, 200, 0.15);
+  --memory-border-strong: rgba(100, 80, 200, 0.3);
+  --memory-primary: #E11D48;
+  --memory-primary-bright: #BE123C;
+  --memory-glow: rgba(225, 29, 55, 0.1);
+  --memory-glow-strong: rgba(225, 29, 55, 0.2);
+  --memory-text: #1a1a2e;
+  --memory-muted: rgba(100, 100, 140, 0.55);
+  --memory-collected: #059669;
+  --memory-collected-glow: rgba(5, 150, 105, 0.2);
+  --memory-accent: #7C3AED;
+  --memory-accent-glow: rgba(124, 58, 237, 0.12);
+  --memory-indigo: #4F46E5;
+  --memory-indigo-glow: rgba(79, 70, 229, 0.12);
+  --memory-warm: #D97706;
+  --memory-warm-glow: rgba(217, 119, 6, 0.12);
+
+  /* Stardust Lecture Hall — Teaching Page Theme (light mode) */
+  --teaching-void: #FFFBEB;
+  --teaching-surface: rgba(254, 243, 199, 0.88);
+  --teaching-surface-elevated: rgba(253, 230, 138, 0.85);
+  --teaching-border: rgba(180, 83, 9, 0.15);
+  --teaching-border-strong: rgba(180, 83, 9, 0.3);
+  --teaching-primary: #B45309;
+  --teaching-primary-bright: #92400E;
+  --teaching-glow: rgba(180, 83, 9, 0.1);
+  --teaching-glow-strong: rgba(180, 83, 9, 0.18);
+  --teaching-text: #451A03;
+  --teaching-muted: rgba(146, 64, 14, 0.5);
+  --teaching-accent: #0284C7;
+  --teaching-success: #059669;
+  --teaching-warm: #EA580C;
+  --teaching-holo: rgba(180, 83, 9, 0.04);
 }
 
-.dark {
+html.dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -115,6 +180,71 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Celestial Atelier — Dark overrides */
+  --celestial-void: #0B1021;
+  --celestial-horizon: #131832;
+  --celestial-haze: #2D3561;
+  --celestial-starlight: #F5E6C8;
+  --celestial-dawn: #FF8C69;
+  --celestial-nebula: #A78BFA;
+  --celestial-zenith: #7DD3FC;
+
+  /* Deep Space Probe — Dark overrides */
+  --probe-void: #070914;
+  --probe-surface: rgba(15, 18, 40, 0.95);
+  --probe-surface-elevated: rgba(22, 26, 55, 0.97);
+  --probe-border: rgba(167, 139, 250, 0.3);
+  --probe-border-strong: rgba(167, 139, 250, 0.5);
+  --probe-primary: #C4B5FD;
+  --probe-primary-bright: #DDD6FE;
+  --probe-glow: rgba(196, 181, 253, 0.45);
+  --probe-glow-strong: rgba(196, 181, 253, 0.65);
+  --probe-text: #F5F0FF;
+  --probe-muted: rgba(196, 181, 253, 0.6);
+  --probe-success: #34D399;
+  --probe-error: #F87171;
+  --probe-accent: #38BDF8;
+  --probe-accent-glow: rgba(56, 189, 248, 0.3);
+  --probe-warm: #FB923C;
+
+  /* Stardust Collector — Memory Page Dark Overrides */
+  --memory-void: #070914;
+  --memory-surface: rgba(22, 10, 18, 0.95);
+  --memory-surface-elevated: rgba(32, 15, 25, 0.97);
+  --memory-border: rgba(251, 113, 133, 0.3);
+  --memory-border-strong: rgba(251, 113, 133, 0.5);
+  --memory-primary: #FDA4AF;
+  --memory-primary-bright: #FECDD3;
+  --memory-glow: rgba(253, 164, 175, 0.45);
+  --memory-glow-strong: rgba(253, 164, 175, 0.65);
+  --memory-text: #FFF5F7;
+  --memory-muted: rgba(200, 200, 230, 0.55);
+  --memory-collected: #34D399;
+  --memory-collected-glow: rgba(52, 211, 153, 0.4);
+  --memory-accent: #C084FC;
+  --memory-accent-glow: rgba(192, 132, 252, 0.3);
+  --memory-indigo: #818CF8;
+  --memory-indigo-glow: rgba(129, 140, 248, 0.3);
+  --memory-warm: #FBBF24;
+  --memory-warm-glow: rgba(251, 191, 36, 0.3);
+
+  /* Stardust Lecture Hall — Teaching Page Dark Overrides */
+  --teaching-void: #070914;
+  --teaching-surface: rgba(20, 16, 8, 0.95);
+  --teaching-surface-elevated: rgba(28, 22, 12, 0.97);
+  --teaching-border: rgba(251, 191, 36, 0.3);
+  --teaching-border-strong: rgba(251, 191, 36, 0.5);
+  --teaching-primary: #FDE68A;
+  --teaching-primary-bright: #FEF3C7;
+  --teaching-glow: rgba(253, 230, 138, 0.45);
+  --teaching-glow-strong: rgba(253, 230, 138, 0.65);
+  --teaching-text: #FFFEF5;
+  --teaching-muted: rgba(253, 230, 138, 0.6);
+  --teaching-accent: #38BDF8;
+  --teaching-success: #34D399;
+  --teaching-warm: #FB923C;
+  --teaching-holo: rgba(251, 191, 36, 0.05);
 }
 
 @layer base {
@@ -383,4 +513,283 @@
 }
 .dark .glass-panel {
   box-shadow: 0 8px 32px -8px rgba(0,0,0,0.4), inset 0 1px 0 0 rgba(255,255,255,0.05);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Celestial Campus — Deep Space Theme Animations
+   ═══════════════════════════════════════════════════════════ */
+
+/* Scan line — horizontal sweep from top to bottom */
+@keyframes scan-line {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Signal pulse — concentric ring expand */
+@keyframes signal-pulse {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Float card — gentle vertical bob */
+@keyframes float-card {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+/* Holo flicker — subtle opacity fluctuation */
+@keyframes holo-flicker {
+  0%, 100% { opacity: 1; }
+  33%      { opacity: 0.95; }
+  66%      { opacity: 0.98; }
+}
+
+/* Project scan — horizontal light sweep */
+@keyframes project-scan {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Amber breathe — slow glow breathing */
+@keyframes amber-breathe {
+  0%, 100% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.2); }
+  50%      { box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+}
+
+/* Collect fill — star brightening */
+@keyframes collect-fill {
+  0%   { opacity: 0.2; filter: grayscale(1); }
+  100% { opacity: 1; filter: grayscale(0); }
+}
+
+/* Shimmer border — border glow rotation */
+@keyframes shimmer-border {
+  0%   { background-position: 0% 50%; }
+  50%   { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Section appear — slide up + fade */
+@keyframes section-appear {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Celestial panel base — deep space surface */
+.celestial-panel {
+  background: rgba(15, 18, 40, 0.85);
+  border: 1px solid rgba(167, 139, 250, 0.12);
+  backdrop-filter: blur(16px);
+  border-radius: 16px;
+}
+.celestial-panel:hover {
+  border-color: rgba(167, 139, 250, 0.25);
+}
+
+/* Solve probe panel */
+.probe-panel {
+  background: var(--probe-surface);
+  border: 1px solid var(--probe-border);
+  backdrop-filter: blur(16px);
+  border-radius: 16px;
+}
+
+/* Probe panel elevated */
+.probe-panel-elevated {
+  background: var(--probe-surface-elevated);
+  border: 1px solid var(--probe-border);
+  backdrop-filter: blur(16px);
+  border-radius: 16px;
+  box-shadow: 0 0 24px -8px var(--probe-glow);
+}
+
+/* Probe card header gradient */
+.probe-header-gradient {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.08) 0%, transparent 60%);
+  border-bottom: 1px solid var(--probe-border);
+}
+
+/* Probe primary button */
+.probe-button-primary {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(167, 139, 250, 0.08) 100%);
+  border: 1px solid var(--probe-border-strong);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s;
+}
+.probe-button-primary:hover {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.3) 0%, rgba(167, 139, 250, 0.15) 100%);
+  box-shadow: 0 0 16px var(--probe-glow);
+}
+
+/* Signal pulse animation */
+@keyframes signal-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--probe-glow-strong); }
+  70%  { box-shadow: 0 0 0 12px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.animate-signal-pulse {
+  animation: signal-pulse 1.5s ease-in-out infinite;
+}
+
+/* Teaching glow text */
+.teaching-glow-text {
+  text-shadow: 0 0 20px var(--teaching-glow-strong), 0 0 40px var(--teaching-glow);
+}
+
+/* Teaching button primary */
+.teaching-button-primary {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  backdrop-filter: blur(8px);
+}
+
+/* Teaching section appear animation */
+.teaching-section-appear {
+  animation: section-appear 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+/* Teaching input glow */
+.teaching-input-glow {
+  position: relative;
+}
+.teaching-input-glow::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--teaching-primary), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.teaching-input-glow:focus-within::after {
+  opacity: 1;
+  box-shadow: 0 2px 12px var(--teaching-glow);
+}
+
+/* Teaching button sweep — light sweep on hover */
+.teaching-button-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.teaching-button-sweep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.15), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+.teaching-button-sweep:hover::after {
+  transform: translateX(100%);
+}
+
+/* Teaching project scan — horizontal light sweep */
+.teaching-project-scan::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.15), transparent);
+  animation: project-scan 2.5s ease-in-out infinite;
+}
+
+/* Teaching holographic flicker */
+.teaching-holo-flicker {
+  animation: holo-flicker 4s ease-in-out infinite;
+}
+
+/* Memory glow text */
+.memory-glow-text {
+  text-shadow: 0 0 20px var(--memory-glow-strong), 0 0 40px var(--memory-glow);
+}
+
+/* Solve glow text */
+.solve-glow-text {
+  text-shadow: 0 0 20px var(--probe-glow-strong), 0 0 40px var(--probe-glow);
+}
+
+/* Bottom line input — celestial style */
+.celestial-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+  padding: 8px 0;
+  color: var(--probe-text);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  outline: none;
+}
+.celestial-input:focus {
+  border-bottom-color: var(--probe-primary);
+  box-shadow: 0 1px 0 0 var(--probe-primary), 0 4px 12px -4px var(--probe-glow);
+}
+.celestial-input::placeholder {
+  color: var(--probe-muted);
+}
+
+/* Border button — celestial style */
+.celestial-button {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--probe-border-strong);
+  background: transparent;
+  color: var(--probe-primary-bright);
+  border-radius: 12px;
+  padding: 10px 24px;
+  font-weight: 500;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.celestial-button:hover {
+  border-color: var(--probe-primary);
+  background: var(--probe-glow);
+  box-shadow: 0 0 16px var(--probe-glow);
+}
+.celestial-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+.celestial-button:hover::after {
+  transform: translateX(100%);
+}
+
+/* Scan line overlay */
+.scan-line-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(167, 139, 250, 0.06) 50%, transparent 100%);
+  animation: scan-line 3s linear infinite;
+  pointer-events: none;
+}
+
+/* Star breadcrumb */
+.star-breadcrumb {
+  color: rgba(245, 230, 200, 0.4);
+  font-size: 0.875rem;
+  transition: color 0.3s;
+}
+.star-breadcrumb:hover {
+  color: rgba(245, 230, 200, 0.8);
+  text-shadow: 0 0 8px rgba(245, 230, 200, 0.3);
+}
+
+/* Deep space skeleton pulse */
+@keyframes star-pulse {
+  0%, 100% { opacity: 0.15; }
+  50%      { opacity: 0.35; }
+}
+.skeleton-star {
+  animation: star-pulse 2s ease-in-out infinite;
+  background: linear-gradient(90deg, rgba(167, 139, 250, 0.08), rgba(167, 139, 250, 0.2), rgba(167, 139, 250, 0.08));
+  background-size: 200% 100%;
+  border-radius: 8px;
 }

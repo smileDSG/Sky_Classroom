@@ -11,9 +11,9 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('DAO:ApiKeyPool');
 
-let _pool: import('mysql2/promise').Pool | null = null;
+let _pool: any = null;
 
-async function getPool(): Promise<import('mysql2/promise').Pool> {
+async function getPool(): Promise<any> {
   if (_pool) return _pool;
   const mysql = await import('mysql2/promise');
   _pool = mysql.createPool({
@@ -61,7 +61,7 @@ export async function listKeys(provider?: string, decrypted = false): Promise<Ap
     ? 'SELECT * FROM api_keys WHERE provider = ? ORDER BY priority DESC, created_at ASC'
     : 'SELECT * FROM api_keys ORDER BY provider, priority DESC, created_at ASC';
   const params = provider ? [provider] : [];
-  const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(sql, params);
+  const [rows] = await pool.query(sql, params);
   return (rows as ApiKeyRow[]).map((r) => rowToEntry(r, decrypted));
 }
 
@@ -69,7 +69,7 @@ export async function listKeys(provider?: string, decrypted = false): Promise<Ap
 export async function getActiveKeys(provider: string): Promise<ApiKeyEntry[]> {
   const pool = await getPool();
   const now = toDatetime(Date.now());
-  const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
+  const [rows] = await pool.query(
     `SELECT * FROM api_keys
      WHERE provider = ? AND is_active = TRUE
        AND (rate_limited_until IS NULL OR rate_limited_until <= ?)
@@ -82,10 +82,7 @@ export async function getActiveKeys(provider: string): Promise<ApiKeyEntry[]> {
 /** Get a single key by id (decrypted) */
 export async function getKeyById(id: string): Promise<ApiKeyEntry | null> {
   const pool = await getPool();
-  const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
-    'SELECT * FROM api_keys WHERE id = ?',
-    [id],
-  );
+  const [rows] = await pool.query('SELECT * FROM api_keys WHERE id = ?', [id]);
   if (rows.length === 0) return null;
   return rowToEntry(rows[0] as ApiKeyRow, true);
 }
@@ -106,7 +103,16 @@ export async function createKey(entry: {
   await pool.query(
     `INSERT INTO api_keys (id, provider, api_key, base_url, label, is_active, priority, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, TRUE, ?, ?, ?)`,
-    [entry.id, entry.provider, encrypted, entry.baseUrl ?? null, entry.label ?? null, entry.priority ?? 0, now, now],
+    [
+      entry.id,
+      entry.provider,
+      encrypted,
+      entry.baseUrl ?? null,
+      entry.label ?? null,
+      entry.priority ?? 0,
+      now,
+      now,
+    ],
   );
 
   return {
@@ -125,13 +131,16 @@ export async function createKey(entry: {
 }
 
 /** Update a key (partial patch) */
-export async function updateKey(id: string, patch: {
-  apiKey?: string;
-  baseUrl?: string;
-  label?: string;
-  isActive?: boolean;
-  priority?: number;
-}): Promise<ApiKeyEntry | null> {
+export async function updateKey(
+  id: string,
+  patch: {
+    apiKey?: string;
+    baseUrl?: string;
+    label?: string;
+    isActive?: boolean;
+    priority?: number;
+  },
+): Promise<ApiKeyEntry | null> {
   const pool = await getPool();
   const sets: string[] = [];
   const params: unknown[] = [];
@@ -163,10 +172,7 @@ export async function updateKey(id: string, patch: {
   params.push(toDatetime(Date.now()));
   params.push(id);
 
-  await pool.query(
-    `UPDATE api_keys SET ${sets.join(', ')} WHERE id = ?`,
-    params,
-  );
+  await pool.query(`UPDATE api_keys SET ${sets.join(', ')} WHERE id = ?`, params);
 
   return getKeyById(id);
 }
@@ -203,8 +209,9 @@ export async function incrementError(id: string): Promise<void> {
 /** Mark a key as rate-limited until a specific time */
 export async function markRateLimited(id: string, until: Date): Promise<void> {
   const pool = await getPool();
-  await pool.query(
-    'UPDATE api_keys SET rate_limited_until = ?, updated_at = ? WHERE id = ?',
-    [toDatetime(until.getTime()), toDatetime(Date.now()), id],
-  );
+  await pool.query('UPDATE api_keys SET rate_limited_until = ?, updated_at = ? WHERE id = ?', [
+    toDatetime(until.getTime()),
+    toDatetime(Date.now()),
+    id,
+  ]);
 }

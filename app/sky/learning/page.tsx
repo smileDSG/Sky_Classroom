@@ -20,7 +20,9 @@ import {
   TreePine,
   TrendingUp,
   Leaf,
+  Globe,
 } from 'lucide-react';
+import { StudentProfilePage } from '@/app/sky/student/student-profile-page';
 
 /** Map server ErrorType → client MistakeCause */
 function errorTypeToCause(errorType: string): MistakeCause {
@@ -39,6 +41,7 @@ const TABS = [
   { key: 'review', label: '复习计划', icon: CalendarCheck, desc: '艾宾浩斯曲线' },
   { key: 'graph', label: '知识图谱', icon: Network, desc: '能力可视化' },
   { key: 'stats', label: '学习统计', icon: BarChart3, desc: '数据洞察' },
+  { key: 'profile', label: '学情分析', icon: Globe, desc: '多维度洞察' },
 ] as const;
 
 const containerVariants = {
@@ -85,7 +88,9 @@ export default function LearningPage() {
           useSkyClassroomStore.getState().mergeMistakes(serverMistakes);
         }
       })
-      .catch(() => { /* ignore — local data is fallback */ });
+      .catch(() => {
+        /* ignore — local data is fallback */
+      });
   }, []);
 
   return (
@@ -114,9 +119,7 @@ export default function LearningPage() {
                   成长之路
                 </span>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                天梯工坊
-              </h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">天梯工坊</h1>
               <p className="text-emerald-100 text-base max-w-md leading-relaxed">
                 每一步都是向上的阶梯，记录错题、规划复习、构建知识图谱，让成长有迹可循。
               </p>
@@ -153,7 +156,7 @@ export default function LearningPage() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-2 md:grid-cols-4 gap-3"
+          className="grid grid-cols-2 md:grid-cols-5 gap-3"
         >
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -213,23 +216,36 @@ export default function LearningPage() {
               <KnowledgeGraphView />
               {weakPoints.length > 0 && (
                 <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
-                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">薄弱知识点针对性复习</h3>
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
+                    薄弱知识点针对性复习
+                  </h3>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {weakPoints.map((kp) => (
-                      <span key={kp} className="inline-flex items-center rounded-full bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50 dark:border-rose-700/30 px-3 py-1 text-xs font-medium text-rose-600 dark:text-rose-400">
+                      <span
+                        key={kp}
+                        className="inline-flex items-center rounded-full bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50 dark:border-rose-700/30 px-3 py-1 text-xs font-medium text-rose-600 dark:text-rose-400"
+                      >
                         {kp}
                       </span>
                     ))}
                   </div>
                   <div className="flex gap-3">
                     <button
-                      onClick={() => router.push(`/sky/cloud-mind/memory?topic=${encodeURIComponent(weakPoints.join('、'))}&content=${encodeURIComponent(weakPoints.map(kp => `知识点：${kp}`).join('\n'))}`)}
+                      onClick={() =>
+                        router.push(
+                          `/sky/cloud-mind/memory?topic=${encodeURIComponent(weakPoints.join('、'))}&content=${encodeURIComponent(weakPoints.map((kp) => `知识点：${kp}`).join('\n'))}`,
+                        )
+                      }
                       className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-rose-500/25 hover:shadow-xl transition-all hover:-translate-y-0.5"
                     >
                       生成记忆卡片
                     </button>
                     <button
-                      onClick={() => router.push(`/sky/cloud-mind/quiz?topic=${encodeURIComponent(weakPoints.join('、'))}`)}
+                      onClick={() =>
+                        router.push(
+                          `/sky/cloud-mind/quiz?topic=${encodeURIComponent(weakPoints.join('、'))}`,
+                        )
+                      }
                       className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-amber-500/25 hover:shadow-xl transition-all hover:-translate-y-0.5"
                     >
                       针对出题
@@ -240,6 +256,7 @@ export default function LearningPage() {
             </div>
           )}
           {activeTab === 'stats' && <LearningStats />}
+          {activeTab === 'profile' && <StudentProfilePage />}
         </motion.div>
       </div>
     </SkyAppShell>

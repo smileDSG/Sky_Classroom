@@ -12,10 +12,12 @@
 import type {
   ClassroomGenerationJob,
   ClassroomGenerationJobStatus,
+} from '@/lib/server/classroom-job-store';
+import type {
   ClassroomGenerationProgress,
   GenerateClassroomInput,
   GenerateClassroomResult,
-} from '@/lib/server/classroom-job-store';
+} from '@/lib/server/classroom-generation';
 import {
   CLASSROOM_JOBS_DIR,
   ensureClassroomJobsDir,
@@ -112,15 +114,17 @@ export async function createClassroomGenerationJobHybrid(
   const now = new Date().toISOString();
   const job: ClassroomGenerationJob = {
     id: jobId,
-    status: 'queued',
-    step: 'queued',
+    status: 'initializing',
+    step: 'initializing',
     progress: 0,
     message: 'Classroom generation job queued',
     createdAt: now,
     updatedAt: now,
     inputSummary: {
       requirementPreview:
-        input.requirement.length > 200 ? `${input.requirement.slice(0, 197)}...` : input.requirement,
+        input.requirement.length > 200
+          ? `${input.requirement.slice(0, 197)}...`
+          : input.requirement,
       hasPdf: !!input.pdfContent,
       pdfTextLength: input.pdfContent?.text.length || 0,
       pdfImageCount: input.pdfContent?.images.length || 0,

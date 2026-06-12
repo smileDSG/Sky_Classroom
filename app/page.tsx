@@ -38,16 +38,28 @@ import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { HeroInput } from '@/components/sky/home/hero-input';
 import { ClassroomGrid } from '@/components/sky/home/classroom-grid';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
-import { QuickAccessGrid } from '@/components/sky/home/quick-access-grid';
+import { CloudMindHeroButton } from '@/components/sky/home/cloud-mind-hero-button';
 import { FeaturedSection } from '@/components/sky/home/featured-section';
 import type { SettingsSection } from '@/lib/types/settings';
 
 // 重型组件 — 懒加载
-const SettingsDialog = dynamic(() => import('@/components/settings').then(m => ({ default: m.SettingsDialog })));
-const TemplatePicker = dynamic(() => import('@/components/templates/template-picker').then(m => ({ default: m.TemplatePicker })));
-const UpgradeDialog = dynamic(() => import('@/components/billing/upgrade-dialog').then(m => ({ default: m.UpgradeDialog })));
-const IntroSequence = dynamic(() => import('@/components/sky/home/intro-sequence').then(m => ({ default: m.IntroSequence })));
-const FloatingParticles = dynamic(() => import('@/components/sky/home/floating-particles').then(m => ({ default: m.FloatingParticles })));
+const SettingsDialog = dynamic(() =>
+  import('@/components/settings').then((m) => ({ default: m.SettingsDialog })),
+);
+const TemplatePicker = dynamic(() =>
+  import('@/components/templates/template-picker').then((m) => ({ default: m.TemplatePicker })),
+);
+const UpgradeDialog = dynamic(() =>
+  import('@/components/billing/upgrade-dialog').then((m) => ({ default: m.UpgradeDialog })),
+);
+const IntroSequence = dynamic(() =>
+  import('@/components/sky/home/intro-sequence').then((m) => ({ default: m.IntroSequence })),
+);
+const FloatingParticles = dynamic(() =>
+  import('@/components/sky/home/floating-particles').then((m) => ({
+    default: m.FloatingParticles,
+  })),
+);
 
 const log = createLogger('Home');
 
@@ -78,7 +90,8 @@ interface StageListItem {
   interactiveMode?: boolean;
 }
 
-export default function HomePage() {const router = useRouter();
+export default function HomePage() {
+  const router = useRouter();
   const { user } = useAuth();
 
   // 状态
@@ -145,88 +158,92 @@ export default function HomePage() {const router = useRouter();
   }, []);
 
   // ── Poll a single job continuously and update its card state ──
-  const startJobPolling = useCallback((jobId: string, topic: string) => {
-    abortRefs.current.get(jobId)?.abort();
-    const abortController = new AbortController();
-    abortRefs.current.set(jobId, abortController);
+  const startJobPolling = useCallback(
+    (jobId: string, topic: string) => {
+      abortRefs.current.get(jobId)?.abort();
+      const abortController = new AbortController();
+      abortRefs.current.set(jobId, abortController);
 
-    (async () => {
-      try {
-        setActiveJobs((prev) => ({
-          ...prev,
-          [jobId]: { jobId, topic, phase: 'generating_outline', step: '', progress: 0 },
-        }));
+      (async () => {
+        try {
+          setActiveJobs((prev) => ({
+            ...prev,
+            [jobId]: { jobId, topic, phase: 'generating_outline', step: '', progress: 0 },
+          }));
 
-        while (!abortController.signal.aborted) {
-          const data = await fetchClassroomJob(jobId);
-          if (abortController.signal.aborted) return;
+          while (!abortController.signal.aborted) {
+            const data = await fetchClassroomJob(jobId);
+            if (abortController.signal.aborted) return;
+            if (!data) return;
 
-          if (data.status === 'cancelled' || data.status === 'failed') {
-            useTaskStore.getState().removeTask(jobId);
-            removeActiveJobEntry(jobId);
-            abortRefs.current.delete(jobId);
+            if (data.status === 'cancelled' || data.status === 'failed') {
+              useTaskStore.getState().removeTask(jobId);
+              removeActiveJobEntry(jobId);
+              abortRefs.current.delete(jobId);
+              setActiveJobs((prev) => {
+                const next = { ...prev };
+                delete next[jobId];
+                return next;
+              });
+              return;
+            }
+
+            if (data.done && data.status === 'succeeded' && data.result) {
+              handleClassroomComplete(data.result, jobId);
+              return;
+            }
+
+            const phase = jobStatusToPhase(data);
             setActiveJobs((prev) => {
-              const next = { ...prev };
-              delete next[jobId];
-              return next;
+              const existing = prev[jobId];
+              if (!existing) return prev;
+              return {
+                ...prev,
+                [jobId]: {
+                  ...existing,
+                  phase,
+                  step: data.step,
+                  progress: data.progress,
+                  outlines: data.outlines ?? existing.outlines,
+                  outlinesMeta: data.outlinesMeta ?? existing.outlinesMeta,
+                  topicSummary: data.topicSummary ?? existing.topicSummary,
+                },
+              };
             });
-            return;
+
+            useTaskStore.getState().updateTask(useTaskStore.getState().tasks[jobId]?.id ?? '', {
+              progress: data.progress,
+              phase: data.message,
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        } catch (err) {
+          if (abortController.signal.aborted) return;
+          if (err instanceof DOMException && err.name === 'AbortError') return;
+
+          // If job not found (404), silently clean up
+          const isNotFound = err instanceof Error && err.message.includes('not found');
+          if (isNotFound) {
+            log.info('Classroom job not found, cleaning up:', jobId);
+          } else {
+            log.error('Classroom poll error:', err);
+            setError(err instanceof Error ? err.message : '课堂生成失败');
           }
 
-          if (data.done && data.status === 'succeeded' && data.result) {
-            handleClassroomComplete(data.result, jobId);
-            return;
-          }
-
-          const phase = jobStatusToPhase(data);
+          removeActiveJobEntry(jobId);
+          useTaskStore.getState().removeTask(jobId);
+          abortRefs.current.delete(jobId);
           setActiveJobs((prev) => {
-            const existing = prev[jobId];
-            if (!existing) return prev;
-            return {
-              ...prev,
-              [jobId]: {
-                ...existing,
-                phase,
-                step: data.step,
-                progress: data.progress,
-                outlines: data.outlines ?? existing.outlines,
-                outlinesMeta: data.outlinesMeta ?? existing.outlinesMeta,
-                topicSummary: data.topicSummary ?? existing.topicSummary,
-              },
-            };
+            const next = { ...prev };
+            delete next[jobId];
+            return next;
           });
-
-          useTaskStore.getState().updateTask(
-            useTaskStore.getState().tasks[jobId]?.id ?? '',
-            { progress: data.progress, phase: data.message },
-          );
-
-          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
-      } catch (err) {
-        if (abortController.signal.aborted) return;
-        if (err instanceof DOMException && err.name === 'AbortError') return;
-
-        // If job not found (404), silently clean up
-        const isNotFound = err instanceof Error && err.message.includes('not found');
-        if (isNotFound) {
-          log.info('Classroom job not found, cleaning up:', jobId);
-        } else {
-          log.error('Classroom poll error:', err);
-          setError(err instanceof Error ? err.message : '课堂生成失败');
-        }
-
-        removeActiveJobEntry(jobId);
-        useTaskStore.getState().removeTask(jobId);
-        abortRefs.current.delete(jobId);
-        setActiveJobs((prev) => {
-          const next = { ...prev };
-          delete next[jobId];
-          return next;
-        });
-      }
-    })();
-  }, [jobStatusToPhase, handleClassroomComplete]);
+      })();
+    },
+    [jobStatusToPhase, handleClassroomComplete],
+  );
 
   // ── Navigation restoration: restore classroom generation state from task store ──
   useEffect(() => {
@@ -254,7 +271,11 @@ export default function HomePage() {const router = useRouter();
         [jobId]: {
           jobId,
           topic,
-          phase: isReviewing ? 'reviewing' : task.phase?.includes('大纲') ? 'generating_outline' : 'generating_slides',
+          phase: isReviewing
+            ? 'reviewing'
+            : task.phase?.includes('大纲')
+              ? 'generating_outline'
+              : 'generating_slides',
           step: task.phase ?? '',
           progress: task.progress ?? 0,
         },
@@ -281,6 +302,7 @@ export default function HomePage() {const router = useRouter();
       (async () => {
         try {
           const data = await fetchClassroomJob(entry.jobId);
+          if (!data) return;
 
           if (data.status === 'cancelled' || data.status === 'failed') {
             removeActiveJobEntry(entry.jobId);
@@ -289,11 +311,12 @@ export default function HomePage() {const router = useRouter();
           // Don't remove completed entries here — let ClassroomJobPoller
           // show a dialog on other pages. Home page handles via startJobPolling.
 
-          const phase = data.status === 'awaiting_review'
-            ? 'reviewing'
-            : data.step === 'generating_outlines'
-              ? 'generating_outline'
-              : 'generating_slides';
+          const phase =
+            data.status === 'awaiting_review'
+              ? 'reviewing'
+              : data.step === 'generating_outlines'
+                ? 'generating_outline'
+                : 'generating_slides';
 
           setActiveJobs((prev) => ({
             ...prev,
@@ -319,7 +342,11 @@ export default function HomePage() {const router = useRouter();
 
   // 老师和学生选择状态
   const [selectedTeacherId, setSelectedTeacherId] = useState('default-1');
-  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>(['default-3', 'default-4', 'default-5']);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([
+    'default-3',
+    'default-4',
+    'default-5',
+  ]);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection | undefined>();
@@ -334,8 +361,9 @@ export default function HomePage() {const router = useRouter();
   const { cachedValue: cachedRequirement, updateCache: updateRequirementCache } =
     useDraftCache<string>({ key: 'requirementDraft' });
 
-  const { importing, fileInputRef, triggerFileSelect, handleFileChange } =
-    useImportClassroom(() => loadClassrooms());
+  const { importing, fileInputRef, triggerFileSelect, handleFileChange } = useImportClassroom(() =>
+    loadClassrooms(),
+  );
 
   // 草稿恢复
   const draftRestoredRef = useRef(false);
@@ -345,7 +373,6 @@ export default function HomePage() {const router = useRouter();
     draftRestoredRef.current = true;
     setRequirement(cachedRequirement);
   }, [cachedRequirement]);
-
 
   // 加载设置
   useEffect(() => {
@@ -425,7 +452,7 @@ export default function HomePage() {const router = useRouter();
       setRequirement(value);
       updateRequirementCache(value);
     },
-    [updateRequirementCache]
+    [updateRequirementCache],
   );
 
   // 生成
@@ -443,9 +470,8 @@ export default function HomePage() {const router = useRouter();
 
     setError(null);
 
-    const topic = requirement.trim().length > 40
-      ? `${requirement.trim().slice(0, 37)}...`
-      : requirement.trim();
+    const topic =
+      requirement.trim().length > 40 ? `${requirement.trim().slice(0, 37)}...` : requirement.trim();
 
     try {
       // Sync agent selections
@@ -453,9 +479,10 @@ export default function HomePage() {const router = useRouter();
 
       // Build job body with model config from client settings
       const settings = useSettingsStore.getState();
-      const modelString = settings.providerId && settings.modelId
-        ? `${settings.providerId}:${settings.modelId}`
-        : settings.modelId || undefined;
+      const modelString =
+        settings.providerId && settings.modelId
+          ? `${settings.providerId}:${settings.modelId}`
+          : settings.modelId || undefined;
       const body: Record<string, unknown> = {
         requirement,
         enableWebSearch: webSearch,
@@ -541,9 +568,7 @@ export default function HomePage() {const router = useRouter();
   const handleRename = async (id: string, newName: string) => {
     try {
       await renameStage(id, newName);
-      setClassrooms((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, name: newName } : c))
-      );
+      setClassrooms((prev) => prev.map((c) => (c.id === id ? { ...c, name: newName } : c)));
       toast.success('重命名成功');
     } catch (err) {
       log.error('Failed to rename classroom:', err);
@@ -568,10 +593,12 @@ export default function HomePage() {const router = useRouter();
 
   if (!introDone) {
     return (
-      <IntroSequence onComplete={() => {
-        sessionStorage.setItem('introDone', 'true');
-        setIntroDone(true);
-      }} />
+      <IntroSequence
+        onComplete={() => {
+          sessionStorage.setItem('introDone', 'true');
+          setIntroDone(true);
+        }}
+      />
     );
   }
 
@@ -594,11 +621,7 @@ export default function HomePage() {const router = useRouter();
 
       {/* 导航栏 */}
       <MinimalNavbar
-        userSection={
-          <FloatingUserCard
-            onUpgradeOpen={() => setUpgradeDialogOpen(true)}
-          />
-        }
+        userSection={<FloatingUserCard onUpgradeOpen={() => setUpgradeDialogOpen(true)} />}
       />
 
       {/* 对话框 */}
@@ -652,7 +675,13 @@ export default function HomePage() {const router = useRouter();
                   className="w-1.5 h-1.5 rounded-full bg-sky-400"
                 />
                 <div className="w-10 h-px bg-gradient-to-r from-transparent to-sky-300 dark:to-sky-600" />
-                <svg className="w-5 h-5 text-sky-400/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg
+                  className="w-5 h-5 text-sky-400/70"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
                   <path d="M12 2L2 7l10 5 10-5-10-5z" />
                   <path d="M2 17l10 5 10-5" />
                   <path d="M2 12l10 5 10-5" />
@@ -673,7 +702,13 @@ export default function HomePage() {const router = useRouter();
 
               {/* 右侧装饰 */}
               <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-indigo-400/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg
+                  className="w-5 h-5 text-indigo-400/70"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
                   <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
                   <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
                 </svg>
@@ -716,10 +751,8 @@ export default function HomePage() {const router = useRouter();
             />
           </div>
 
-          {/* 快捷入口 */}
-          <div className="w-full">
-            <QuickAccessGrid />
-          </div>
+          {/* 云端智囊 */}
+          <CloudMindHeroButton />
 
           {/* ── Classroom generation progress (multi-job) ── */}
           <AnimatePresence>
@@ -740,8 +773,18 @@ export default function HomePage() {const router = useRouter();
                     <div className="relative flex-shrink-0">
                       {job.phase === 'reviewing' ? (
                         <div className="h-9 w-9 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                          <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <svg
+                            className="h-5 w-5 text-green-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
                           </svg>
                         </div>
                       ) : (
@@ -768,9 +811,21 @@ export default function HomePage() {const router = useRouter();
                       </p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-lg font-bold text-sky-600 tabular-nums">{job.progress}%</span>
-                      <svg className="h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      <span className="text-lg font-bold text-sky-600 tabular-nums">
+                        {job.progress}%
+                      </span>
+                      <svg
+                        className="h-4 w-4 text-sky-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -825,8 +880,6 @@ export default function HomePage() {const router = useRouter();
             </motion.div>
           )}
 
-
-
           {/* 最近课堂 */}
           {classrooms.length > 0 && (
             <section>
@@ -873,7 +926,9 @@ export default function HomePage() {const router = useRouter();
               try {
                 localStorage.removeItem('skyIntroDone');
                 window.location.reload();
-              } catch { /* ignore */ }
+              } catch {
+                /* ignore */
+              }
             }}
             className="text-[10px] text-slate-400/50 hover:text-slate-500 dark:hover:text-slate-400 transition-colors mt-1"
           >

@@ -24,9 +24,9 @@ const SUBJECT_LABELS: Record<string, string> = {
 };
 
 const DIFFICULTY_CONFIG: Record<string, { label: string; badge: string; icon: string }> = {
-  easy:   { label: '基础', badge: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300', icon: '🟢' },
-  medium: { label: '中等', badge: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300', icon: '🟡' },
-  hard:   { label: '困难', badge: 'border-red-200 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-950/50 dark:text-red-300', icon: '🔴' },
+  easy:   { label: '基础', badge: 'border-emerald-700 bg-emerald-950/50 text-emerald-300', icon: '🟢' },
+  medium: { label: '中等', badge: 'border-amber-700 bg-amber-950/50 text-amber-300', icon: '🟡' },
+  hard:   { label: '困难', badge: 'border-red-700 bg-red-950/50 text-red-300', icon: '🔴' },
 };
 
 const QUESTION_TYPE_LABELS: Record<string, string> = {
@@ -46,18 +46,20 @@ export function AnalysisCard({ analysis, className }: AnalysisCardProps) {
   const typeLabel = QUESTION_TYPE_LABELS[analysis.questionType] ?? analysis.questionType;
 
   return (
-    <Card className={cn('overflow-hidden border-sky-200/50 dark:border-sky-800/40 shadow-md shadow-sky-100/50 dark:shadow-sky-900/20', className)}>
-      <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-transparent dark:from-sky-950/30 dark:to-transparent pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm text-sky-700 dark:text-sky-300">
-          <Lightbulb className="h-4 w-4" />
-          题目分析
+    <Card className={cn('overflow-hidden probe-panel', className)}>
+      <CardHeader className="probe-header-gradient pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm text-[var(--probe-primary-bright)]">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--probe-primary)]/20 border border-[var(--probe-primary)]/30">
+            <Lightbulb className="h-3.5 w-3.5" />
+          </div>
+          信号分析
         </CardTitle>
       </CardHeader>
 
       <CardContent className="p-4 space-y-3">
         {/* Subject + Difficulty + Type row */}
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="text-xs font-medium">
+          <Badge variant="outline" className="text-xs font-medium border-[var(--probe-primary)]/30 text-[var(--probe-primary-bright)] bg-[var(--probe-primary)]/10">
             <BookOpen className="h-3 w-3 mr-1" />
             {subjectLabel}
           </Badge>
@@ -66,12 +68,12 @@ export function AnalysisCard({ analysis, className }: AnalysisCardProps) {
             {difficulty.icon} {difficulty.label}
           </Badge>
 
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-xs bg-[var(--probe-accent)]/15 text-[var(--probe-accent)] border border-[var(--probe-accent)]/25">
             <Target className="h-3 w-3 mr-1" />
             {typeLabel}
           </Badge>
 
-          <Badge variant="outline" className="text-xs text-muted-foreground">
+          <Badge variant="outline" className="text-xs border-[var(--probe-border-strong)] text-[var(--probe-muted)]">
             <Zap className="h-3 w-3 mr-1" />
             置信度 {Math.round(analysis.confidence * 100)}%
           </Badge>
@@ -80,12 +82,12 @@ export function AnalysisCard({ analysis, className }: AnalysisCardProps) {
         {/* Knowledge points */}
         {analysis.knowledgePoints.length > 0 && (
           <div>
-            <div className="text-xs text-muted-foreground mb-1.5">知识点</div>
+            <div className="text-xs text-[var(--probe-muted)] mb-1.5">知识点</div>
             <div className="flex flex-wrap gap-1.5">
               {analysis.knowledgePoints.map((kp, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center rounded-md bg-sky-50 dark:bg-sky-950/20 px-2 py-1 text-xs font-medium text-sky-700 dark:text-sky-300 border border-sky-100 dark:border-sky-800/30"
+                  className="inline-flex items-center rounded-md bg-[var(--probe-primary)]/15 px-2 py-1 text-xs font-medium text-[var(--probe-primary-bright)] border border-[var(--probe-primary)]/30 shadow-[0_0_4px_var(--probe-glow)]"
                 >
                   {kp}
                 </span>

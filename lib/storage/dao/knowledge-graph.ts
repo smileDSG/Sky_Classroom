@@ -82,18 +82,23 @@ export function createKnowledgeGraphDAO(storage: StorageProvider) {
     },
 
     /** Build a knowledge graph from question bank and mistake data */
-    buildGraph(
-      questions: QuestionBankEntry[],
-      mistakes: MistakeBookEntry[],
-    ): KnowledgeGraphData {
+    buildGraph(questions: QuestionBankEntry[], mistakes: MistakeBookEntry[]): KnowledgeGraphData {
       // Collect all knowledge points
-      const pointMap = new Map<string, { name: string; questions: number; mistakes: number; masterySum: number }>();
+      const pointMap = new Map<
+        string,
+        { name: string; questions: number; mistakes: number; masterySum: number }
+      >();
 
       // From question bank
       for (const q of questions) {
         for (const kp of q.knowledgePoints) {
-          const key = kp.toLowerCase();
-          const existing = pointMap.get(key) ?? { name: kp, questions: 0, mistakes: 0, masterySum: 0 };
+          const key = kp.name.toLowerCase();
+          const existing = pointMap.get(key) ?? {
+            name: kp.name,
+            questions: 0,
+            mistakes: 0,
+            masterySum: 0,
+          };
           existing.questions += 1;
           pointMap.set(key, existing);
         }
@@ -102,11 +107,16 @@ export function createKnowledgeGraphDAO(storage: StorageProvider) {
       // From mistakes
       for (const m of mistakes) {
         for (const kp of m.knowledgePoints) {
-          const key = kp.toLowerCase();
-          const existing = pointMap.get(key) ?? { name: kp, questions: 0, mistakes: 0, masterySum: 0 };
+          const key = kp.name.toLowerCase();
+          const existing = pointMap.get(key) ?? {
+            name: kp.name,
+            questions: 0,
+            mistakes: 0,
+            masterySum: 0,
+          };
           existing.mistakes += 1;
           // Mastery from mistake's masteryLevel (inverted — more mistakes = lower mastery)
-          existing.masterySum += (6 - m.masteryLevel);
+          existing.masterySum += 6 - m.masteryLevel;
           pointMap.set(key, existing);
         }
       }
@@ -118,9 +128,8 @@ export function createKnowledgeGraphDAO(storage: StorageProvider) {
         category: guessCategory(key),
         questionCount: data.questions,
         mistakeCount: data.mistakes,
-        avgMastery: data.mistakes > 0
-          ? Math.round((data.masterySum / data.mistakes) * 100) / 100
-          : 6,
+        avgMastery:
+          data.mistakes > 0 ? Math.round((data.masterySum / data.mistakes) * 100) / 100 : 6,
       }));
 
       // Build edges — co-occurrence based
@@ -167,9 +176,10 @@ export function createKnowledgeGraphDAO(storage: StorageProvider) {
         .filter((n) => n.avgMastery < MASTERY_THRESHOLD && n.mistakeCount > 0)
         .map((n) => n.id);
 
-      const overallMastery = nodes.length > 0
-        ? Math.round((nodes.reduce((s, n) => s + n.avgMastery, 0) / nodes.length) * 100) / 100
-        : 0;
+      const overallMastery =
+        nodes.length > 0
+          ? Math.round((nodes.reduce((s, n) => s + n.avgMastery, 0) / nodes.length) * 100) / 100
+          : 0;
 
       return { nodes, edges, weakPoints, overallMastery };
     },
@@ -191,16 +201,18 @@ export function createKnowledgeGraphDAO(storage: StorageProvider) {
 function guessCategory(name: string): string {
   const n = name.toLowerCase();
 
-  if (/equation|algebra|function|derivative|integral|matrix|trigonometr|calculus|geometry|probability|statistics/.test(n))
+  if (
+    /equation|algebra|function|derivative|integral|matrix|trigonometr|calculus|geometry|probability|statistics/.test(
+      n,
+    )
+  )
     return 'math';
   if (/force|energy|wave|electric|magnet|thermodynam|kinemat|optics|momentum|acceleration/.test(n))
     return 'physics';
   if (/atom|molecule|reaction|acid|base|organic|inorganic|element|bond|oxidation/.test(n))
     return 'chemistry';
-  if (/grammar|vocabulary|sentence|verb|noun|adjective|pronoun|tense/.test(n))
-    return 'language';
-  if (/dynasty|revolution|war|treaty|empire|civilization|government/.test(n))
-    return 'history';
+  if (/grammar|vocabulary|sentence|verb|noun|adjective|pronoun|tense/.test(n)) return 'language';
+  if (/dynasty|revolution|war|treaty|empire|civilization|government/.test(n)) return 'history';
 
   return 'general';
 }

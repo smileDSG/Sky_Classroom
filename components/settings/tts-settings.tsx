@@ -74,7 +74,8 @@ interface TTSSettingsProps {
 
 export function TTSSettings({
   selectedProviderId }: TTSSettingsProps) {
-  const locale = 'zh-CN';const ttsVoice = useSettingsStore((state) => state.ttsVoice);
+  const locale = 'zh-CN';
+  const ttsVoice = useSettingsStore((state) => state.ttsVoice);
   const ttsSpeed = useSettingsStore((state) => state.ttsSpeed);
   const ttsProvidersConfig = useSettingsStore((state) => state.ttsProvidersConfig);
   const setTTSProviderConfig = useSettingsStore((state) => state.setTTSProviderConfig);
@@ -775,6 +776,7 @@ function VoxCPMVoiceManager() {const { profiles, addPromptVoice, addCloneVoice,
       return;
     }
 
+    const locale = 'zh-CN';
     const providerConfig = ttsProvidersConfig[VOXCPM_TTS_PROVIDER_ID];
     const baseUrl =
       providerConfig?.serverBaseUrl ||

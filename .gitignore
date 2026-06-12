@@ -17,3 +17,8 @@ tsconfig.tsbuildinfo
 .gstack/
 .superpowers/
 .data
+tmp/
+__pycache__/
+*.pyc
+cookies.txt
+*.pptx

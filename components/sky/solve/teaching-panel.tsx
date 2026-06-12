@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, Loader2, Sparkles, AlertCircle, RefreshCw, Send, X, Brain, CheckCircle2, ThumbsUp, ThumbsDown, MessageCircle, Star, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from './math-renderer';
 import { QuizInteraction } from './quiz-interaction';
@@ -43,18 +43,63 @@ const DEPTH_LABELS: Record<string, string> = {
   advanced: '拓展提升',
 };
 
-const TYPE_ICONS: Record<string, React.ReactNode> = {
-  explanation: <BookOpen className="h-4 w-4" />,
-  example: <Sparkles className="h-4 w-4" />,
-  diagram: <BookOpen className="h-4 w-4" />,
-  quiz: <Send className="h-4 w-4" />,
+const DEPTH_STAR_COLORS: Record<string, string> = {
+  basic: 'text-emerald-400',
+  intermediate: 'text-amber-400',
+  advanced: 'text-rose-400',
 };
 
-const TYPE_COLORS: Record<string, string> = {
-  explanation: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-  example: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-  diagram: 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400',
-  quiz: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  explanation: <BookOpen className="h-3.5 w-3.5" />,
+  example: <Sparkles className="h-3.5 w-3.5" />,
+  diagram: <BookOpen className="h-3.5 w-3.5" />,
+  quiz: <Send className="h-3.5 w-3.5" />,
+};
+
+/* 投射类型 — 星际色彩 */
+const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
+  explanation: {
+    label: '讲解',
+    cls: 'bg-sky-900/20 text-sky-300 border border-sky-500/20',
+  },
+  example: {
+    label: '例题',
+    cls: 'bg-emerald-900/20 text-emerald-300 border border-emerald-500/20',
+  },
+  diagram: {
+    label: '图表',
+    cls: 'bg-violet-900/20 text-violet-300 border border-violet-500/20',
+  },
+  quiz: {
+    label: '测验',
+    cls: 'bg-orange-900/20 text-orange-300 border border-orange-500/20',
+  },
+};
+
+/* 内容块左边框色 */
+const CHUNK_BORDER: Record<string, string> = {
+  formula: 'border-l-2 border-l-amber-400/60',
+  example: 'border-l-2 border-l-emerald-400/60',
+  quiz: 'border-l-2 border-l-orange-400/60',
+  diagram: 'border-l-2 border-l-violet-400/60',
+  text: '',
+};
+
+const CHUNK_BADGE: Record<string, { label: string; cls: string } | null> = {
+  formula: {
+    label: '核心公式',
+    cls: 'bg-amber-900/30 text-amber-300 border border-amber-500/20',
+  },
+  example: {
+    label: '例题',
+    cls: 'bg-emerald-900/30 text-emerald-300 border border-emerald-500/20',
+  },
+  quiz: {
+    label: '随堂测验',
+    cls: 'bg-orange-900/30 text-orange-300 border border-orange-500/20',
+  },
+  diagram: null,
+  text: null,
 };
 
 // ── Section Renderer ───────────────────────────────────────────────
@@ -62,6 +107,7 @@ const TYPE_COLORS: Record<string, string> = {
 interface SectionCardProps {
   section: LessonSection;
   chunks: ContentChunk[];
+  index: number;
   jobId?: string;
   onRetry?: (sectionId: string) => void;
   onAskQuestion?: (sectionId: string, sectionTitle: string) => void;
@@ -70,12 +116,14 @@ interface SectionCardProps {
 const SectionCard = React.memo(function SectionCard({
   section,
   chunks,
+  index,
   jobId,
   onRetry,
   onAskQuestion,
 }: SectionCardProps) {
   const sortedChunks = [...chunks].sort((a, b) => a.order - b.order);
   const hasFailed = sortedChunks.some((c) => c.failed);
+  const typeBadge = TYPE_BADGE[section.contentType] ?? TYPE_BADGE.explanation;
 
   const typeLabel: Record<string, string> = {
     text: '讲解',
@@ -93,9 +141,11 @@ const SectionCard = React.memo(function SectionCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.45, delay: index * 0.08, ease: 'easeOut' }}
+      className="teaching-section-appear"
+      style={{ animationDelay: `${index * 80}ms` }}
     >
       <Card className={cn(
         'bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-sky-200/50 dark:border-sky-800/30',
@@ -103,38 +153,48 @@ const SectionCard = React.memo(function SectionCard({
       )}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Badge variant="secondary" className={cn(TYPE_COLORS[section.contentType])}>
+            <div className="flex items-center gap-2.5">
+              <Badge variant="secondary" className={cn('text-[11px]', typeBadge.cls)}>
                 {TYPE_ICONS[section.contentType]}
-                <span className="ml-1">
-                  {section.contentType === 'quiz'
-                    ? '随堂测验'
-                    : section.contentType === 'example'
-                      ? '例题讲解'
-                      : '知识讲解'}
-                </span>
+                <span className="ml-1">{typeBadge.label}</span>
               </Badge>
-              {section.title}
-            </CardTitle>
+              <h3
+                className="text-sm font-semibold"
+                style={{ color: 'var(--teaching-text)' }}
+              >
+                {section.title}
+              </h3>
+            </div>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs">
+              <Badge
+                variant="outline"
+                className={cn(
+                  'text-[11px] border-[var(--teaching-border)]',
+                  DEPTH_STAR_COLORS[section.depth],
+                )}
+              >
+                <Star className="h-3 w-3 mr-0.5 fill-current" />
                 {DEPTH_LABELS[section.depth]}
               </Badge>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs" style={{ color: 'var(--teaching-muted)' }}>
                 {section.estimatedDuration}分钟
               </span>
             </div>
           </div>
           {section.knowledgePoints.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
               {section.knowledgePoints.map((kp) => (
-                <Badge
+                <span
                   key={kp}
-                  variant="outline"
-                  className="text-[11px] border-sky-200/50 dark:border-sky-700/30 text-sky-700 dark:text-sky-300"
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px]"
+                  style={{
+                    background: 'rgba(251, 191, 36, 0.08)',
+                    border: '1px solid rgba(251, 191, 36, 0.2)',
+                    color: 'var(--teaching-primary)',
+                  }}
                 >
                   {kp}
-                </Badge>
+                </span>
               ))}
             </div>
           )}
@@ -267,25 +327,50 @@ const SectionCard = React.memo(function SectionCard({
 
 function SectionSkeleton() {
   return (
-    <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm animate-pulse">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="h-6 w-32 rounded bg-slate-200 dark:bg-slate-700" />
-          <div className="flex gap-2">
-            <div className="h-5 w-16 rounded bg-slate-200 dark:bg-slate-700" />
-            <div className="h-5 w-12 rounded bg-slate-200 dark:bg-slate-700" />
-          </div>
+    <div
+      className="rounded-xl border p-5 animate-pulse"
+      style={{
+        background: 'var(--teaching-surface)',
+        borderColor: 'var(--teaching-border)',
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <div
+          className="h-6 w-36 rounded"
+          style={{ background: 'rgba(251, 191, 36, 0.08)' }}
+        />
+        <div className="flex gap-2">
+          <div
+            className="h-5 w-16 rounded"
+            style={{ background: 'rgba(251, 191, 36, 0.06)' }}
+          />
+          <div
+            className="h-5 w-12 rounded"
+            style={{ background: 'rgba(251, 191, 36, 0.06)' }}
+          />
         </div>
-        <div className="flex gap-1.5 mt-2">
-          <div className="h-5 w-20 rounded bg-slate-200 dark:bg-slate-700" />
-          <div className="h-5 w-16 rounded bg-slate-200 dark:bg-slate-700" />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="h-24 rounded-lg bg-slate-200 dark:bg-slate-700" />
-        <div className="h-16 rounded-lg bg-slate-200 dark:bg-slate-700" />
-      </CardContent>
-    </Card>
+      </div>
+      <div className="flex gap-1.5 mt-3">
+        <div
+          className="h-5 w-20 rounded-full"
+          style={{ background: 'rgba(251, 191, 36, 0.06)' }}
+        />
+        <div
+          className="h-5 w-16 rounded-full"
+          style={{ background: 'rgba(251, 191, 36, 0.06)' }}
+        />
+      </div>
+      <div className="space-y-3 mt-4">
+        <div
+          className="h-24 rounded-lg"
+          style={{ background: 'rgba(251, 191, 36, 0.04)' }}
+        />
+        <div
+          className="h-16 rounded-lg"
+          style={{ background: 'rgba(251, 191, 36, 0.04)' }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -306,9 +391,9 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<LessonPlan | null>(null);
-  const [sections, setSections] = useState<
-    { section: LessonSection; chunks: ContentChunk[] }[]
-  >([]);
+  const [sections, setSections] = useState<{ section: LessonSection; chunks: ContentChunk[] }[]>(
+    [],
+  );
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
@@ -393,7 +478,6 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     const entries = getActiveTeachingJobEntries();
     if (entries.length === 0) return;
 
-    // Pick the most recent active job
     const entry = entries[entries.length - 1];
 
     (async () => {
@@ -405,7 +489,6 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         }
 
         if (data.done && data.status === 'succeeded') {
-          // Job already completed
           setPlan(data.plan ?? null);
           setSections(data.sections ?? []);
           setDone(true);
@@ -414,7 +497,6 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
           return;
         }
 
-        // Still running — resume polling
         setTopic(entry.topic);
         setCurrentJobId(entry.jobId);
         setLoading(true);
@@ -460,14 +542,12 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
 
         if (controller.signal.aborted) return;
 
-        // Done
         setPlan(result.plan ?? null);
         setSections(result.sections ?? []);
         setDone(true);
         setLoading(false);
         removeActiveTeachingJobEntry(jobId);
 
-        // Update task store
         useTaskStore.getState().updateTask(jobId, {
           status: 'completed',
           progress: 100,
@@ -513,11 +593,8 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
 
       setCurrentJobId(jobId);
 
-      // Persist to sessionStorage
       addActiveTeachingJobEntry({ jobId, topic: topic.trim() });
 
-      // Register in task store for global task bar
-      // resultRoute = '/sky/teaching' so the notification is hidden on the teaching page itself
       useTaskStore.getState().addTask({
         id: jobId,
         type: 'teaching',
@@ -531,7 +608,6 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         resultRoute: '/sky/teaching',
       });
 
-      // Start polling
       resumePolling(jobId, topic.trim());
     } catch (err) {
       const msg = err instanceof Error ? err.message : '教案生成失败';
@@ -637,23 +713,41 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
   const progress = plan
     ? Math.round((sections.length / plan.sections.length) * 100)
     : 0;
-
   const canSubmit = !loading && topic.trim().length > 0;
 
   return (
     <div className="space-y-6">
-      {/* Input Area */}
-      <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-sky-200/50 dark:border-sky-800/30">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-sky-500" />
-            智能授课
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            输入授课主题，AI 将根据你的学习情况自动生成个性化教案并流式推送
+      {/* ═══ 教学指令台 ═══ */}
+      <div
+        className="rounded-xl border backdrop-blur-sm overflow-hidden"
+        style={{
+          background: 'var(--teaching-surface)',
+          borderColor: 'var(--teaching-border)',
+          boxShadow: '0 0 24px -6px rgba(251, 191, 36, 0.08)',
+        }}
+      >
+        <div
+          className="px-5 pt-4 pb-3"
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, transparent 100%)',
+            borderBottom: '1px solid var(--teaching-border)',
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-[var(--teaching-primary)]" />
+            <h3
+              className="text-base font-semibold"
+              style={{ color: 'var(--teaching-text)' }}
+            >
+              教学指令台
+            </h3>
+          </div>
+          <p className="text-sm mt-1" style={{ color: 'var(--teaching-muted)' }}>
+            输入授课主题，AI 导师将根据你的学习情况生成个性化教案并流式推送
           </p>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="px-5 py-4">
           <div className="flex gap-3">
             <div className="flex-1 relative">
               <Input
@@ -692,20 +786,20 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
               <Button
                 onClick={handleCancel}
                 variant="outline"
-                className="min-w-[100px] border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400"
+                className="min-w-[100px] h-10 border-red-500/30 text-red-400 hover:bg-red-900/20 hover:border-red-500/50"
               >
                 <X className="h-4 w-4 mr-2" />
                 取消
               </Button>
             ) : (
-              <Button
+              <button
                 onClick={handleStart}
                 disabled={!canSubmit}
-                className="min-w-[100px] bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700"
+                className="teaching-button-primary teaching-button-sweep min-w-[120px] h-10 rounded-lg px-4 text-sm font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <Sparkles className="h-4 w-4 mr-2" />
-                开始授课
-              </Button>
+                <Sparkles className="h-4 w-4" />
+                启动授课
+              </button>
             )}
           </div>
 
@@ -731,172 +825,264 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
           )}
 
           {!user && (
-            <p className="text-xs text-amber-500 mt-2">
+            <p className="text-xs mt-2" style={{ color: 'var(--teaching-warm)' }}>
               请先登录后再使用授课功能
             </p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Progress Card */}
-      {loading && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Card className="overflow-hidden border-sky-200/60 dark:border-sky-800/40 bg-gradient-to-br from-white via-sky-50/30 to-blue-50/20 dark:from-slate-900 dark:via-sky-950/20 dark:to-blue-950/10">
-            <CardContent className="p-5 space-y-4">
-              {/* Header */}
-              <div className="flex items-center gap-3">
+      {/* ═══ 全息教案投射 — 备课进度 ═══ */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div
+              className="rounded-xl border backdrop-blur-sm overflow-hidden"
+              style={{
+                background: 'var(--teaching-surface)',
+                borderColor: 'var(--teaching-border)',
+              }}
+            >
+              <div className="p-5 space-y-4">
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div
+                      className="h-10 w-10 rounded-xl flex items-center justify-center"
+                      style={{
+                        background:
+                          'linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.15))',
+                        border: '1px solid rgba(251, 191, 36, 0.3)',
+                        boxShadow: '0 0 12px rgba(251, 191, 36, 0.2)',
+                      }}
+                    >
+                      <Sparkles className="h-5 w-5 text-[var(--teaching-primary)] animate-pulse" />
+                    </div>
+                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-[var(--teaching-surface)] flex items-center justify-center">
+                      <div className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-sm font-semibold truncate"
+                      style={{ color: 'var(--teaching-text)' }}
+                    >
+                      {plan ? plan.title : '正在分析学情...'}
+                    </p>
+                    <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--teaching-muted)' }}>
+                      {message || '正在准备...'}
+                    </p>
+                  </div>
+                  <span
+                    className="text-lg font-bold font-mono teaching-glow-text"
+                    style={{ color: 'var(--teaching-primary)' }}
+                  >
+                    {progress}%
+                  </span>
+                </div>
+
+                {/* Progress Bar with scan effect */}
                 <div className="relative">
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-500/25">
-                    <Sparkles className="h-5 w-5 text-white animate-pulse" />
+                  <div
+                    className="h-2.5 rounded-full overflow-hidden relative"
+                    style={{ background: 'rgba(251, 191, 36, 0.08)' }}
+                  >
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{
+                        background:
+                          'linear-gradient(90deg, rgba(251, 191, 36, 0.6), rgba(245, 158, 11, 0.9))',
+                        boxShadow: '0 0 8px rgba(251, 191, 36, 0.4)',
+                      }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progress}%` }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                    />
                   </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center">
-                    <div className="h-2 w-2 rounded-full bg-green-400 animate-ping" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    {plan ? plan.title : '正在分析学情...'}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                    {message || '正在准备...'}
-                  </p>
-                </div>
-                <span className="text-lg font-bold bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
-                  {progress}%
-                </span>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="relative">
-                <div className="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  {/* Scanning light overlay */}
+                  <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none teaching-project-scan" />
+                  {/* Glow */}
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500"
+                    className="absolute top-0 h-2.5 rounded-full blur-sm pointer-events-none"
+                    style={{
+                      background:
+                        'linear-gradient(90deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.5))',
+                    }}
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.5, ease: 'easeOut' }}
                   />
                 </div>
-                {/* Glow effect */}
-                <motion.div
-                  className="absolute top-0 h-2.5 rounded-full bg-gradient-to-r from-sky-400/40 via-blue-500/40 to-indigo-500/40 blur-sm"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                />
-              </div>
 
-              {/* Section Dots */}
-              {plan && plan.sections.length > 0 && (
-                <div className="flex items-center gap-1.5">
-                  {plan.sections.map((sec, i) => {
-                    const isCompleted = i < sections.length;
-                    const isCurrent = i === sections.length && loading;
-                    return (
-                      <div
-                        key={sec.id}
-                        className="group relative flex-1"
-                        title={sec.title}
-                      >
-                        <div
-                          className={cn(
-                            'h-1.5 rounded-full transition-all duration-500',
-                            isCompleted
-                              ? 'bg-gradient-to-r from-sky-400 to-blue-500'
-                              : isCurrent
-                                ? 'bg-sky-200 dark:bg-sky-800 animate-pulse'
-                                : 'bg-slate-200 dark:bg-slate-700',
-                          )}
-                        />
-                        {/* Tooltip */}
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                          <div className="px-2 py-1 rounded bg-slate-800 dark:bg-slate-700 text-[10px] text-white whitespace-nowrap">
-                            {sec.title}
+                {/* Section Nodes — 星座连线风格 */}
+                {plan && plan.sections.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    {plan.sections.map((sec, i) => {
+                      const isCompleted = i < sections.length;
+                      const isCurrent = i === sections.length && loading;
+                      return (
+                        <div key={sec.id} className="group relative flex-1" title={sec.title}>
+                          <div
+                            className={cn(
+                              'h-1.5 rounded-full transition-all duration-500',
+                              isCompleted
+                                ? ''
+                                : isCurrent
+                                  ? 'teaching-amber-breathe'
+                                  : '',
+                            )}
+                            style={{
+                              background: isCompleted
+                                ? 'linear-gradient(90deg, rgba(251, 191, 36, 0.7), rgba(245, 158, 11, 0.9))'
+                                : isCurrent
+                                  ? 'rgba(251, 191, 36, 0.3)'
+                                  : 'rgba(251, 191, 36, 0.08)',
+                              boxShadow: isCompleted
+                                ? '0 0 6px rgba(251, 191, 36, 0.3)'
+                                : 'none',
+                            }}
+                          />
+                          {/* Tooltip */}
+                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                            <div
+                              className="px-2 py-1 rounded text-[10px] whitespace-nowrap"
+                              style={{
+                                background: 'var(--teaching-surface-elevated)',
+                                color: 'var(--teaching-text)',
+                                border: '1px solid var(--teaching-border)',
+                              }}
+                            >
+                              {sec.title}
+                            </div>
                           </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Phase Steps */}
+                <div className="flex items-center gap-2 text-xs">
+                  {[
+                    { key: 'planning', label: '分析学情', icon: Brain },
+                    { key: 'generating_content', label: '生成教案', icon: BookOpen },
+                  ].map((step) => {
+                    const isActive =
+                      loading &&
+                      ((step.key === 'planning' && !plan) ||
+                        (step.key === 'generating_content' && !!plan));
+                    const isDone = step.key === 'planning' && !!plan;
+                    return (
+                      <div
+                        key={step.key}
+                        className={cn(
+                          'flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all',
+                          isActive
+                            ? 'font-medium'
+                            : '',
+                        )}
+                        style={{
+                          background: isActive
+                            ? 'rgba(251, 191, 36, 0.12)'
+                            : 'transparent',
+                          color: isDone
+                            ? 'var(--teaching-success)'
+                            : isActive
+                              ? 'var(--teaching-primary)'
+                              : 'var(--teaching-muted)',
+                          border: isActive
+                            ? '1px solid rgba(251, 191, 36, 0.25)'
+                            : '1px solid transparent',
+                        }}
+                      >
+                        {isDone ? (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        ) : isActive ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <step.icon className="h-3.5 w-3.5" />
+                        )}
+                        <span>{step.label}</span>
                       </div>
                     );
                   })}
                 </div>
-              )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-              {/* Phase Steps */}
-              <div className="flex items-center gap-2 text-xs">
-                {[
-                  { key: 'planning', label: '分析学情', icon: Brain },
-                  { key: 'generating_content', label: '生成教案', icon: BookOpen },
-                ].map((step, i) => {
-                  const isActive = loading && (
-                    (step.key === 'planning' && !plan) ||
-                    (step.key === 'generating_content' && !!plan)
-                  );
-                  const isDone = step.key === 'planning' && !!plan;
-                  return (
-                    <div
-                      key={step.key}
-                      className={cn(
-                        'flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all',
-                        isActive
-                          ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 font-medium'
-                          : isDone
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-muted-foreground',
-                      )}
-                    >
-                      {isDone ? (
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                      ) : isActive ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <step.icon className="h-3.5 w-3.5" />
-                      )}
-                      <span>{step.label}</span>
+      {/* ═══ 全息投影卡 — 教案摘要 ═══ */}
+      <AnimatePresence>
+        {plan && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div
+              className="rounded-xl border backdrop-blur-sm overflow-hidden teaching-holo-flicker"
+              style={{
+                background: 'rgba(251, 191, 36, 0.04)',
+                borderColor: 'rgba(251, 191, 36, 0.25)',
+                boxShadow: '0 0 20px -4px rgba(251, 191, 36, 0.12)',
+              }}
+            >
+              <div className="px-5 py-4">
+                <h3
+                  className="text-lg font-bold teaching-glow-text mb-2"
+                  style={{ color: 'var(--teaching-primary)' }}
+                >
+                  {plan.title}
+                </h3>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                  <span style={{ color: 'var(--teaching-muted)' }}>
+                    预计 {plan.estimatedDuration} 分钟
+                  </span>
+                  <span style={{ color: 'var(--teaching-muted)' }}>
+                    {plan.sections.length} 个章节
+                  </span>
+                  {plan.focusPoints.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span style={{ color: 'var(--teaching-muted)' }}>重点：</span>
+                      {plan.focusPoints.map((fp) => (
+                        <span
+                          key={fp}
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px]"
+                          style={{
+                            background: 'rgba(251, 191, 36, 0.08)',
+                            border: '1px solid rgba(251, 191, 36, 0.2)',
+                            color: 'var(--teaching-primary)',
+                          }}
+                        >
+                          {fp}
+                        </span>
+                      ))}
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
-
-      {/* Lesson Plan Summary */}
-      {plan && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm border-dashed">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">{plan.title}</CardTitle>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>预计 {plan.estimatedDuration} 分钟</span>
-                <span>{plan.sections.length} 个章节</span>
-                {plan.focusPoints.length > 0 && (
-                  <div className="flex gap-1.5">
-                    <span>重点：</span>
-                    {plan.focusPoints.map((fp) => (
-                      <Badge key={fp} variant="outline" className="text-[11px]">
-                        {fp}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-          </Card>
-        </motion.div>
-      )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Loading Skeletons */}
       {loading && sections.length < (plan?.sections.length ?? 0) && <SectionSkeleton />}
 
       {/* Generated Sections */}
-      {sections.map((s) => (
+      {sections.map((s, i) => (
         <SectionCard
           key={s.section.id}
           section={s.section}
           chunks={s.chunks}
+          index={i}
           jobId={currentJobId ?? undefined}
           onRetry={handleRetrySection}
           onAskQuestion={(sectionId, sectionTitle) => setChatSection({ id: sectionId, title: sectionTitle })}
@@ -945,25 +1131,35 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
       )}
 
       {/* Error */}
-      {error && (
-        <Card className="bg-red-50 dark:bg-red-900/20 border-red-200/50 dark:border-red-800/30">
-          <CardContent className="flex items-center gap-3 py-4">
-            <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
-            <span className="text-sm text-red-600 dark:text-red-400 flex-1">
-              {error}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleStart}
-              className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="rounded-xl border flex items-center gap-3 px-5 py-4"
+              style={{
+                background: 'rgba(239, 68, 68, 0.06)',
+                borderColor: 'rgba(239, 68, 68, 0.2)',
+              }}
             >
-              <RefreshCw className="h-3 w-3 mr-1" />
-              重试
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+              <AlertCircle className="h-5 w-5 text-red-400 shrink-0" />
+              <span className="text-sm text-red-300 flex-1">{error}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStart}
+                className="text-red-400 border-red-500/30 hover:bg-red-900/20 hover:border-red-500/50"
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                重试
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Teaching Chat */}
       {currentJobId && (

@@ -30,27 +30,27 @@ const STATUS_CONFIG = {
   verified: {
     icon: CheckCircle2,
     label: '已验证',
-    color: 'text-emerald-700 dark:text-emerald-300',
+    color: 'text-emerald-300',
     // Border + background: match existing green badge pattern from solve-page
-    bg: 'border-emerald-200 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/50',
+    bg: 'border-emerald-700 bg-emerald-950/50',
   },
   corrected: {
     icon: RotateCcw,
     label: '修正后正确',
-    color: 'text-blue-700 dark:text-blue-300',
-    bg: 'border-blue-200 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/50',
+    color: 'text-blue-300',
+    bg: 'border-blue-700 bg-blue-950/50',
   },
   uncertain: {
     icon: AlertTriangle,
     label: '答案存疑',
-    color: 'text-amber-700 dark:text-amber-300',
-    bg: 'border-amber-200 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/50',
+    color: 'text-amber-300',
+    bg: 'border-amber-700 bg-amber-950/50',
   },
   failed: {
     icon: XCircle,
     label: '校验失败',
-    color: 'text-red-700 dark:text-red-300',
-    bg: 'border-red-200 bg-red-50 dark:border-red-700 dark:bg-red-950/50',
+    color: 'text-red-300',
+    bg: 'border-red-700 bg-red-950/50',
   },
 };
 

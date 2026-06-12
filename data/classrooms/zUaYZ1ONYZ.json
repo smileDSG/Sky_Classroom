@@ -1,0 +1,560 @@
+{
+  "id": "zUaYZ1ONYZ",
+  "stage": {
+    "id": "zUaYZ1ONYZ",
+    "name": "What is Python?",
+    "languageDirective": "Since the user's requirement is simply 'python' with no explicit language request, and the default rule applies (requirement language = teaching language), the course will be taught in English. The content will focus on Python programming concepts. For programming terms like 'variable', 'function', 'loop', and 'library', keep them in their original English form. For general explanation text, use clear and concise English suitable for learners with basic programming concepts.",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1781098399316,
+    "updatedAt": 1781098399316,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_0p0B2csUOR",
+      "stageId": "zUaYZ1ONYZ",
+      "type": "quiz",
+      "title": "Quick Check: Basics",
+      "order": 4,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "Which of the following is the correct way to assign the value 10 to a variable named 'count' in Python?",
+            "options": [
+              {
+                "value": "A",
+                "label": "count = 10"
+              },
+              {
+                "value": "B",
+                "label": "count == 10"
+              },
+              {
+                "value": "C",
+                "label": "int count = 10"
+              },
+              {
+                "value": "D",
+                "label": "let count = 10"
+              }
+            ],
+            "answer": [
+              "A"
+            ],
+            "analysis": "In Python, the assignment operator is '=', so 'count = 10' stores the value 10 in the variable 'count'. Option B uses '==', which is the equality comparison operator. Option C uses C/Java-style type declaration, which is not valid in Python. Option D uses JavaScript-style 'let', which also causes a syntax error in Python.",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "multiple",
+            "question": "Select all of the following that are valid Python variable names:",
+            "options": [
+              {
+                "value": "A",
+                "label": "my_var"
+              },
+              {
+                "value": "B",
+                "label": "2things"
+              },
+              {
+                "value": "C",
+                "label": "_count"
+              },
+              {
+                "value": "D",
+                "label": "for"
+              }
+            ],
+            "answer": [
+              "A",
+              "C"
+            ],
+            "analysis": "Python variable names must start with a letter or underscore, and can contain letters, digits, and underscores. 'my_var' starts with a letter and uses an underscore. '_count' starts with an underscore, which is allowed. '2things' starts with a digit, which is invalid. 'for' is a Python keyword (reserved word), so it cannot be used as a variable name.",
+            "points": 15,
+            "hasAnswer": true
+          }
+        ],
+        "knowledgePoints": [
+          "Python uses the '=' operator for variable assignment, not '==' which is for comparison.",
+          "Variable names must start with a letter or underscore, followed by letters, digits, or underscores.",
+          "Python keywords (like 'for', 'if', 'while') cannot be used as variable names."
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_yGIuzsDv",
+          "type": "speech",
+          "text": "Great job getting through those concepts! Now let’s put your understanding to the test with a quick quiz on Python basics."
+        },
+        {
+          "id": "action_QN-zrcMC",
+          "type": "speech",
+          "text": "Here’s the first question: Which of the following is the correct way to assign the value 10 to a variable named 'count' in Python? The options are: A. count = 10, B. count == 10, C. int count = 10, and D. let count = 10. Take a moment to think about it."
+        },
+        {
+          "id": "action_yDbqkjLw",
+          "type": "speech",
+          "text": "For the second question, select all the valid Python variable names from this list: A. my_var, B. 2things, C. _count, and D. for. Remember, Python has specific rules about naming variables."
+        },
+        {
+          "id": "action_Uhauwlde",
+          "type": "speech",
+          "text": "Once you’ve answered both questions, let’s review. For question one, the correct answer is A: count = 10. Python uses a simple equals sign for assignment, not double equals (that’s for comparison), and it doesn’t use keywords like 'int' or 'let'."
+        },
+        {
+          "id": "action_fyavumvO",
+          "type": "speech",
+          "text": "For question two, the valid names are A: my_var and C: _count. B: 2things starts with a number, which is not allowed, and D: 'for' is a reserved keyword in Python, so it can’t be used as a variable name. Great job if you got those right!"
+        },
+        {
+          "id": "action_f8eFxOx-",
+          "type": "speech",
+          "text": "Keep up the good work! These basics are the foundation for everything we’ll build on next."
+        }
+      ],
+      "createdAt": 1781098481661,
+      "updatedAt": 1781098481661
+    },
+    {
+      "id": "scene_KuUu1QbGIo",
+      "stageId": "zUaYZ1ONYZ",
+      "type": "interactive",
+      "title": "Interactive: Loop Visualization",
+      "order": 7,
+      "content": {
+        "type": "interactive",
+        "url": "",
+        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">\n    <title>For Loop Iteration Simulator</title>\n    <style>\n        * {\n            box-sizing: border-box;\n            margin: 0;\n            padding: 0;\n        }\n        body {\n            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;\n            background: #f0f5ff;\n            display: flex;\n            justify-content: center;\n            align-items: flex-start;\n            min-height: 100vh;\n            padding: 12px;\n            touch-action: manipulation;\n        }\n        .simulator {\n            max-width: 900px;\n            width: 100%;\n            background: white;\n            border-radius: 24px;\n            box-shadow: 0 12px 40px rgba(0,0,0,0.1);\n            padding: 20px 20px 28px;\n            display: flex;\n            flex-direction: column;\n        }\n        h1 {\n            font-size: 1.8rem;\n            font-weight: 600;\n            color: #1e293b;\n            margin-bottom: 8px;\n            display: flex;\n            align-items: center;\n            gap: 10px;\n            flex-wrap: wrap;\n        }\n        h1 small {\n            font-size: 1rem;\n            font-weight: 400;\n            color: #64748b;\n            margin-left: auto;\n            background: #eef2ff;\n            padding: 4px 14px;\n            border-radius: 20px;\n        }\n        .canvas-wrapper {\n            position: relative;\n            background: #f8fafc;\n            border-radius: 20px;\n            border: 2px solid #e2e8f0;\n            width: 100%;\n            aspect-ratio: 16 / 9;\n            min-height: 200px;\n            overflow: hidden;\n            margin: 12px 0;\n        }\n        canvas {\n            display: block;\n            width: 100%;\n            height: 100%;\n            background: white;\n            touch-action: manipulation;\n        }\n        .controls {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 16px 20px;\n            background: #ffffff;\n            padding: 16px 12px;\n            border-radius: 20px;\n            border: 1px solid #e2e8f0;\n            margin-top: 8px;\n        }\n        .control-group {\n            flex: 1 1 180px;\n            min-width: 140px;\n        }\n        .control-group label {\n            display: flex;\n            justify-content: space-between;\n            font-weight: 500;\n            font-size: 0.9rem;\n            color: #1e293b;\n            margin-bottom: 6px;\n        }\n        .control-group label span {\n            font-weight: 600;\n            color: #0f172a;\n            background: #eef2ff;\n            padding: 0 10px;\n            border-radius: 12px;\n            min-width: 44px;\n            text-align: center;\n        }\n        input[type=\"range\"] {\n            width: 100%;\n            height: 6px;\n            -webkit-appearance: none;\n            appearance: none;\n            background: #d1d5db;\n            border-radius: 4px;\n            outline: none;\n            touch-action: manipulation;\n        }\n        input[type=\"range\"]::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 26px;\n            height: 26px;\n            border-radius: 50%;\n            background: #4f46e5;\n            cursor: pointer;\n            border: 3px solid white;\n            box-shadow: 0 2px 8px rgba(79,70,229,0.3);\n        }\n        input[type=\"range\"]::-moz-range-thumb {\n            width: 26px;\n            height: 26px;\n            border-radius: 50%;\n            background: #4f46e5;\n            cursor: pointer;\n            border: 3px solid white;\n        }\n        .action-buttons {\n            display: flex;\n            gap: 12px;\n            flex-wrap: wrap;\n            align-items: center;\n            margin: 6px 0 10px;\n        }\n        .btn {\n            padding: 10px 24px;\n            border: none;\n            border-radius: 40px;\n            font-weight: 600;\n            font-size: 1rem;\n            background: #e2e8f0;\n            color: #1e293b;\n            cursor: pointer;\n            transition: all 0.2s;\n            touch-action: manipulation;\n            min-height: 48px;\n            min-width: 80px;\n            display: inline-flex;\n            align-items: center;\n            justify-content: center;\n            gap: 6px;\n        }\n        .btn-primary {\n            background: #4f46e5;\n            color: white;\n            box-shadow: 0 4px 12px rgba(79,70,229,0.25);\n        }\n        .btn-primary:hover { background: #4338ca; }\n        .btn-secondary {\n            background: #f1f5f9;\n            color: #1e293b;\n        }\n        .btn-secondary:hover { background: #e2e8f0; }\n        .btn-danger {\n            background: #fef2f2;\n            color: #b91c1c;\n        }\n        .btn-danger:hover { background: #fee2e2; }\n        .btn:active { transform: scale(0.96); }\n        .presets {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 10px;\n            margin: 4px 0 2px;\n        }\n        .preset-btn {\n            padding: 6px 18px;\n            border-radius: 30px;\n            border: 1px solid #cbd5e1;\n            background: #f8fafc;\n            font-size: 0.85rem;\n            cursor: pointer;\n            transition: all 0.15s;\n            min-height: 44px;\n            display: flex;\n            align-items: center;\n            touch-action: manipulation;\n        }\n        .preset-btn:hover { background: #eef2ff; border-color: #818cf8; }\n        .status-badge {\n            background: #f1f5f9;\n            padding: 8px 16px;\n            border-radius: 30px;\n            font-size: 0.9rem;\n            font-weight: 500;\n            color: #334155;\n        }\n        .status-badge.running { background: #dcfce7; color: #166534; }\n        .status-badge.paused { background: #ffedd5; color: #9a3412; }\n        .status-badge.ended { background: #e2e8f0; color: #475569; }\n        .mono {\n            font-family: 'SF Mono', 'Fira Code', monospace;\n        }\n        .footer-note {\n            margin-top: 12px;\n            font-size: 0.8rem;\n            color: #94a3b8;\n            text-align: center;\n        }\n        /* mobile adjustments */\n        @media (max-width: 600px) {\n            .simulator { padding: 12px; }\n            h1 { font-size: 1.4rem; }\n            .controls { padding: 12px 8px; gap: 12px; }\n            .control-group { flex: 1 1 100%; min-width: 0; }\n            .action-buttons { flex-direction: column; }\n            .btn { width: 100%; }\n            .presets { flex-direction: column; }\n            .preset-btn { width: 100%; justify-content: center; }\n        }\n        /* annotation tooltip */\n        .teacher-annotation {\n            position: fixed;\n            background: rgba(79,70,229,0.95);\n            color: white;\n            padding: 8px 14px;\n            border-radius: 12px;\n            font-size: 14px;\n            z-index: 1000;\n            max-width: 240px;\n            box-shadow: 0 4px 16px rgba(0,0,0,0.2);\n            pointer-events: none;\n        }\n        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }\n        @keyframes pulse-highlight {\n            0%, 100% { outline-color: rgba(139, 92, 246, 0.8); }\n            50% { outline-color: rgba(139, 92, 246, 0.3); }\n        }\n    </style>\n\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css\">\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js\"></script>\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js\"></script>\n<script>\ndocument.addEventListener(\"DOMContentLoaded\", function() {\n    const katexOptions = {\n        delimiters: [\n            {left: '\\\\[', right: '\\\\]', display: true},\n            {left: '\\\\(', right: '\\\\)', display: false},\n            {left: '$$', right: '$$', display: true},\n            {left: '$', right: '$', display: false}\n        ],\n        throwOnError: false,\n        strict: false,\n        trust: true\n    };\n\n    let renderTimeout;\n    function safeRender() {\n        if (renderTimeout) clearTimeout(renderTimeout);\n        renderTimeout = setTimeout(() => {\n            renderMathInElement(document.body, katexOptions);\n        }, 100);\n    }\n\n    renderMathInElement(document.body, katexOptions);\n\n    const observer = new MutationObserver((mutations) => {\n        let shouldRender = false;\n        mutations.forEach((mutation) => {\n            if (mutation.target &&\n                mutation.target.className &&\n                typeof mutation.target.className === 'string' &&\n                mutation.target.className.includes('katex')) {\n                return;\n            }\n            shouldRender = true;\n        });\n\n        if (shouldRender) {\n            safeRender();\n        }\n    });\n\n    observer.observe(document.body, {\n        childList: true,\n        subtree: true,\n        characterData: true\n    });\n\n    setInterval(() => {\n        const text = document.body.innerText;\n        if (text.includes('\\\\(') || text.includes('$$')) {\n            safeRender();\n        }\n    }, 2000);\n});\n</script>\n</head>\n<body>\n<div class=\"simulator\">\n    <h1>\n        🔁 For Loop: Iterating a List\n        <small>Python</small>\n    </h1>\n\n    <div class=\"canvas-wrapper\">\n        <canvas id=\"simCanvas\" width=\"800\" height=\"450\"></canvas>\n    </div>\n\n    <!-- Status + controls -->\n    <div class=\"status-badge\" id=\"statusBadge\">⏸️ Idle</div>\n\n    <div class=\"controls\" id=\"controlsPanel\">\n        <div class=\"control-group\">\n            <label for=\"list-length-slider\">List Length <span id=\"list-length-display\">3</span></label>\n            <input type=\"range\" id=\"list-length-slider\" min=\"2\" max=\"8\" value=\"3\" step=\"1\" aria-label=\"Number of items in list\">\n        </div>\n        <div class=\"control-group\">\n            <label for=\"delay-slider\">Speed (ms) <span id=\"delay-display\">800</span></label>\n            <input type=\"range\" id=\"delay-slider\" min=\"200\" max=\"2000\" value=\"800\" step=\"50\" aria-label=\"Iteration delay in milliseconds\">\n        </div>\n    </div>\n\n    <div class=\"action-buttons\">\n        <button class=\"btn btn-primary\" id=\"start-btn\">▶️ Start</button>\n        <button class=\"btn btn-secondary\" id=\"pause-btn\">⏸️ Pause</button>\n        <button class=\"btn btn-danger\" id=\"reset-btn\">↺ Reset</button>\n        <span class=\"mono\" style=\"margin-left:auto; background:#f1f5f9; padding:6px 16px; border-radius:30px; font-size:0.9rem;\">\n            Iteration: <span id=\"iteration-display\">0</span>/<span id=\"total-display\">3</span>\n        </span>\n    </div>\n\n    <div class=\"presets\">\n        <button class=\"preset-btn\" data-preset=\"3\">🍎 3 items (simple)</button>\n        <button class=\"preset-btn\" data-preset=\"5\">📦 5 items (medium)</button>\n        <button class=\"preset-btn\" data-preset=\"7\">🧩 7 items (long)</button>\n    </div>\n\n    <div class=\"footer-note\">\n        Each box represents one iteration. Watch the variable <code>item</code> change.\n    </div>\n</div>\n\n<!-- Widget Config -->\n<script type=\"application/json\" id=\"widget-config\">\n{\n  \"type\": \"simulation\",\n  \"concept\": \"for_loop_iteration_list\",\n  \"description\": \"Visual step-by-step simulation of a for loop iterating through a list. Shows current item, index, and loop body execution.\",\n  \"variables\": [\n    { \"name\": \"list_length\", \"label\": \"List Length\", \"min\": 2, \"max\": 8, \"default\": 3, \"unit\": \"items\" },\n    { \"name\": \"delay\", \"label\": \"Speed\", \"min\": 200, \"max\": 2000, \"default\": 800, \"unit\": \"ms\" }\n  ],\n  \"presets\": [\n    { \"name\": \"3 items (simple)\", \"variables\": { \"list_length\": 3, \"delay\": 800 } },\n    { \"name\": \"5 items (medium)\", \"variables\": { \"list_length\": 5, \"delay\": 600 } },\n    { \"name\": \"7 items (long)\", \"variables\": { \"list_length\": 7, \"delay\": 400 } }\n  ]\n}\n</script>\n\n<script>\n    (function() {\n        // ----- DOM refs -----\n        const canvas = document.getElementById('simCanvas');\n        const ctx = canvas.getContext('2d');\n        const lengthSlider = document.getElementById('list-length-slider');\n        const lengthDisplay = document.getElementById('list-length-display');\n        const delaySlider = document.getElementById('delay-slider');\n        const delayDisplay = document.getElementById('delay-display');\n        const startBtn = document.getElementById('start-btn');\n        const pauseBtn = document.getElementById('pause-btn');\n        const resetBtn = document.getElementById('reset-btn');\n        const statusBadge = document.getElementById('statusBadge');\n        const iterationDisplay = document.getElementById('iteration-display');\n        const totalDisplay = document.getElementById('total-display');\n\n        // ----- State -----\n        let listLength = 3;\n        let delayMs = 800;\n\n        let currentIndex = -1;          // -1 = before start, 0..listLength-1 = active, listLength = done\n        let running = false;\n        let paused = false;\n        let ended = false;\n        let animFrameId = null;\n        let timerId = null;\n        let lastTimestamp = 0;\n        let accumulated = 0;\n\n        // For smooth visual: store item list\n        let items = [];\n        function generateItems(n) {\n            const names = ['🍎', '🍊', '🍋', '🍇', '🍓', '🍑', '🍒', '🥝'];\n            return Array.from({ length: n }, (_, i) => names[i % names.length] + (i+1));\n        }\n\n        // ----- Canvas sizing (responsive) -----\n        function resizeCanvas() {\n            const wrapper = canvas.parentElement;\n            const rect = wrapper.getBoundingClientRect();\n            const w = rect.width;\n            const h = Math.max(180, w * 9 / 16);\n            canvas.width = w;\n            canvas.height = h;\n            drawScene();\n        }\n\n        // ----- Drawing -----\n        function drawScene() {\n            const w = canvas.width, h = canvas.height;\n            ctx.clearRect(0, 0, w, h);\n\n            // background\n            ctx.fillStyle = '#f8fafc';\n            ctx.fillRect(0, 0, w, h);\n\n            // Title area\n            ctx.fillStyle = '#1e293b';\n            ctx.font = 'bold 16px system-ui, sans-serif';\n            ctx.fillText('for item in my_list:', 20, 30);\n\n            // Layout constants\n            const boxSize = Math.min(56, (w - 60) / (listLength || 3) - 12);\n            const startX = 40;\n            const yBase = 90;\n            const activeColor = '#4f46e5';\n            const doneColor = '#10b981';\n            const futureColor = '#e2e8f0';\n\n            // Draw boxes (list items)\n            for (let i = 0; i < listLength; i++) {\n                const x = startX + i * (boxSize + 14);\n                const y = yBase;\n                const label = items[i] || `item${i+1}`;\n\n                // highlight\n                if (i === currentIndex && running && !ended) {\n                    ctx.shadowColor = 'rgba(79,70,229,0.4)';\n                    ctx.shadowBlur = 16;\n                    ctx.fillStyle = activeColor;\n                } else if (i < currentIndex || ended) {\n                    ctx.shadowColor = 'transparent';\n                    ctx.shadowBlur = 0;\n                    ctx.fillStyle = doneColor;\n                } else {\n                    ctx.shadowColor = 'transparent';\n                    ctx.shadowBlur = 0;\n                    ctx.fillStyle = futureColor;\n                }\n\n                // rounded rect\n                const radius = 10;\n                ctx.beginPath();\n                ctx.roundRect(x, y, boxSize, boxSize, radius);\n                ctx.fill();\n\n                // border\n                ctx.shadowBlur = 0;\n                ctx.strokeStyle = '#94a3b8';\n                ctx.lineWidth = 1.5;\n                if (i === currentIndex && running && !ended) {\n                    ctx.strokeStyle = '#4f46e5';\n                    ctx.lineWidth = 3;\n                }\n                ctx.stroke();\n\n                // text\n                ctx.fillStyle = (i <= currentIndex && (running || ended)) ? 'white' : '#475569';\n                ctx.font = 'bold 14px system-ui, sans-serif';\n                ctx.textAlign = 'center';\n                ctx.textBaseline = 'middle';\n                ctx.fillText(label, x + boxSize/2, y + boxSize/2);\n\n                // index label below\n                ctx.fillStyle = '#64748b';\n                ctx.font = '12px monospace';\n                ctx.fillText(`[${i}]`, x + boxSize/2, y + boxSize + 20);\n            }\n\n            // ---- Code display ----\n            ctx.textAlign = 'left';\n            ctx.textBaseline = 'top';\n            const codeY = yBase + boxSize + 50;\n            ctx.fillStyle = '#1e293b';\n            ctx.font = '14px \"SF Mono\", \"Fira Code\", monospace';\n\n            if (ended) {\n                ctx.fillStyle = '#10b981';\n                ctx.font = 'bold 16px system-ui, sans-serif';\n                ctx.fillText('✓ Loop finished!', 20, codeY);\n            } else if (currentIndex >= 0 && currentIndex < listLength) {\n                ctx.fillStyle = '#4f46e5';\n                ctx.fillText(`→ iteration ${currentIndex + 1} of ${listLength}`, 20, codeY);\n                ctx.fillStyle = '#0f172a';\n                ctx.font = '15px \"SF Mono\", \"Fira Code\", monospace';\n                ctx.fillText(`   item = \"${items[currentIndex]}\"`, 20, codeY + 28);\n            } else if (currentIndex === -1) {\n                ctx.fillStyle = '#64748b';\n                ctx.fillText('Press Start to begin', 20, codeY);\n            }\n\n            // current status on canvas\n            ctx.textAlign = 'right';\n            ctx.textBaseline = 'top';\n            ctx.fillStyle = '#334155';\n            ctx.font = '13px monospace';\n            const statusText = running ? (paused ? '⏸️ PAUSED' : '▶️ RUNNING') : (ended ? '✅ DONE' : '⏹️ IDLE');\n            ctx.fillText(statusText, w - 20, 12);\n        }\n\n        // helper roundRect\n        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {\n            if (w < 2 * r) r = w / 2;\n            if (h < 2 * r) r = h / 2;\n            this.moveTo(x + r, y);\n            this.lineTo(x + w - r, y);\n            this.quadraticCurveTo(x + w, y, x + w, y + r);\n            this.lineTo(x + w, y + h - r);\n            this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);\n            this.lineTo(x + r, y + h);\n            this.quadraticCurveTo(x, y + h, x, y + h - r);\n            this.lineTo(x, y + r);\n            this.quadraticCurveTo(x, y, x + r, y);\n            this.closePath();\n            return this;\n        };\n\n        // ----- Logic -----\n        function resetSim() {\n            running = false;\n            paused = false;\n            ended = false;\n            currentIndex = -1;\n            if (timerId) { clearTimeout(timerId); timerId = null; }\n            if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }\n            updateUI();\n            drawScene();\n            statusBadge.textContent = '⏹️ Idle';\n            statusBadge.className = 'status-badge';\n        }\n\n        function startSim() {\n            if (ended) resetSim();\n            if (!running) {\n                if (currentIndex === -1) {\n                    // fresh start\n                    currentIndex = 0;\n                }\n                running = true;\n                paused = false;\n                ended = false;\n                statusBadge.textContent = '▶️ Running';\n                statusBadge.className = 'status-badge running';\n                updateUI();\n                drawScene();\n                scheduleNextStep();\n            } else if (paused) {\n                // resume\n                paused = false;\n                statusBadge.textContent = '▶️ Running';\n                statusBadge.className = 'status-badge running';\n                updateUI();\n                drawScene();\n                scheduleNextStep();\n            }\n        }\n\n        function pauseSim() {\n            if (running && !paused && !ended) {\n                paused = true;\n                if (timerId) { clearTimeout(timerId); timerId = null; }\n                statusBadge.textContent = '⏸️ Paused';\n                statusBadge.className = 'status-badge paused';\n                updateUI();\n                drawScene();\n            }\n        }\n\n        function scheduleNextStep() {\n            if (!running || paused || ended) return;\n            if (currentIndex >= listLength) {\n                // finished\n                ended = true;\n                running = false;\n                paused = false;\n                statusBadge.textContent = '✅ Completed';\n                statusBadge.className = 'status-badge ended';\n                updateUI();\n                drawScene();\n                return;\n            }\n\n            timerId = setTimeout(() => {\n                timerId = null;\n                // advance\n                currentIndex++;\n                if (currentIndex >= listLength) {\n                    ended = true;\n                    running = false;\n                    paused = false;\n                    statusBadge.textContent = '✅ Completed';\n                    statusBadge.className = 'status-badge ended';\n                    updateUI();\n                    drawScene();\n                    return;\n                }\n                // still within list\n                updateUI();\n                drawScene();\n                if (running && !paused) {\n                    scheduleNextStep();\n                }\n            }, delayMs);\n        }\n\n        function updateUI() {\n            const total = listLength;\n            const cur = (currentIndex >= 0 && currentIndex < total) ? currentIndex + 1 : (ended ? total : (currentIndex === -1 ? 0 : total));\n            iterationDisplay.textContent = cur;\n            totalDisplay.textContent = total;\n            // buttons\n            startBtn.textContent = (running && !paused && !ended) ? '▶️ Running' : (paused ? '▶️ Resume' : (ended ? '🔄 Restart' : '▶️ Start'));\n            pauseBtn.textContent = (running && !paused && !ended) ? '⏸️ Pause' : '⏸️ Pause';\n        }\n\n        // ----- Slider handlers -----\n        function onLengthChange() {\n            listLength = parseInt(lengthSlider.value, 10);\n            lengthDisplay.textContent = listLength;\n            items = generateItems(listLength);\n            if (!running || ended) {\n                resetSim();\n            } else {\n                // if running, reset is safer\n                resetSim();\n                drawScene();\n            }\n            totalDisplay.textContent = listLength;\n            drawScene();\n        }\n\n        function onDelayChange() {\n            delayMs = parseInt(delaySlider.value, 10);\n            delayDisplay.textContent = delayMs;\n            if (running && !paused && !ended) {\n                // reschedule with new delay\n                if (timerId) { clearTimeout(timerId); timerId = null; }\n                scheduleNextStep();\n            }\n            drawScene();\n        }\n\n        lengthSlider.addEventListener('input', onLengthChange);\n        delaySlider.addEventListener('input', onDelayChange);\n\n        startBtn.addEventListener('click', startSim);\n        pauseBtn.addEventListener('click', pauseSim);\n        resetBtn.addEventListener('click', function() {\n            resetSim();\n            drawScene();\n        });\n\n        // ----- Presets -----\n        document.querySelectorAll('.preset-btn').forEach(btn => {\n            btn.addEventListener('click', function() {\n                const preset = this.dataset.preset;\n                const val = parseInt(preset, 10);\n                if (val >= 2 && val <= 8) {\n                    lengthSlider.value = val;\n                    onLengthChange();\n                }\n                // adjust speed based on length\n                if (val <= 3) delaySlider.value = 800;\n                else if (val <= 5) delaySlider.value = 600;\n                else delaySlider.value = 400;\n                onDelayChange();\n                resetSim();\n                drawScene();\n            });\n        });\n\n        // ----- Keyboard -----\n        document.addEventListener('keydown', function(e) {\n            if (e.key === ' ' || e.key === 'Space') {\n                e.preventDefault();\n                if (running && !paused && !ended) pauseSim();\n                else startSim();\n            }\n            if (e.key === 'r' || e.key === 'R') {\n                e.preventDefault();\n                resetSim();\n                drawScene();\n            }\n        });\n\n        // ----- Resize observer -----\n        const resizeObserver = new ResizeObserver(() => resizeCanvas());\n        resizeObserver.observe(canvas.parentElement);\n        window.addEventListener('resize', resizeCanvas);\n\n        // Init\n        items = generateItems(3);\n        totalDisplay.textContent = 3;\n        iterationDisplay.textContent = 0;\n        statusBadge.className = 'status-badge';\n        resizeCanvas();\n\n        // ---- postMessage listener (REQUIRED) ----\n        window.addEventListener('message', function(event) {\n            const { type, target, state, content } = event.data || {};\n            switch (type) {\n                case 'SET_WIDGET_STATE': {\n                    if (state) {\n                        Object.entries(state).forEach(([key, value]) => {\n                            const slider = document.getElementById(key + '-slider');\n                            if (slider) {\n                                slider.value = value;\n                                slider.dispatchEvent(new Event('input', { bubbles: true }));\n                            }\n                        });\n                    }\n                    break;\n                }\n                case 'HIGHLIGHT_ELEMENT': {\n                    const el = document.querySelector(target);\n                    if (el) {\n                        el.style.outline = '3px solid rgba(139, 92, 246, 0.8)';\n                        el.style.outlineOffset = '4px';\n                        el.style.animation = 'pulse-highlight 2s infinite';\n                        setTimeout(() => {\n                            el.style.outline = '';\n                            el.style.animation = '';\n                        }, 3000);\n                    }\n                    break;\n                }\n                case 'ANNOTATE_ELEMENT': {\n                    const el = document.querySelector(target);\n                    if (el && content) {\n                        const rect = el.getBoundingClientRect();\n                        const tooltip = document.createElement('div');\n                        tooltip.className = 'teacher-annotation';\n                        tooltip.style.cssText = 'position:fixed; top:' + (rect.top - 40) + 'px; left:' + rect.left + 'px; background:rgba(139,92,246,0.95); color:white; padding:8px 12px; border-radius:8px; font-size:14px; z-index:1000; animation:fadeIn 0.3s;';\n                        tooltip.textContent = content;\n                        document.body.appendChild(tooltip);\n                        setTimeout(() => tooltip.remove(), 4000);\n                    }\n                    break;\n                }\n                case 'REVEAL_ELEMENT': {\n                    const el = document.querySelector(target);\n                    if (el) {\n                        el.style.display = '';\n                        el.style.opacity = '1';\n                    }\n                    break;\n                }\n            }\n        });\n    })();\n</script>\n</body>\n</html>",
+        "widgetType": "simulation",
+        "widgetConfig": {
+          "type": "simulation",
+          "concept": "for_loop_iteration_list",
+          "description": "Visual step-by-step simulation of a for loop iterating through a list. Shows current item, index, and loop body execution.",
+          "variables": [
+            {
+              "name": "list_length",
+              "label": "List Length",
+              "min": 2,
+              "max": 8,
+              "default": 3,
+              "unit": "items"
+            },
+            {
+              "name": "delay",
+              "label": "Speed",
+              "min": 200,
+              "max": 2000,
+              "default": 800,
+              "unit": "ms"
+            }
+          ],
+          "presets": [
+            {
+              "name": "3 items (simple)",
+              "variables": {
+                "list_length": 3,
+                "delay": 800
+              }
+            },
+            {
+              "name": "5 items (medium)",
+              "variables": {
+                "list_length": 5,
+                "delay": 600
+              }
+            },
+            {
+              "name": "7 items (long)",
+              "variables": {
+                "list_length": 7,
+                "delay": 400
+              }
+            }
+          ]
+        },
+        "teacherActions": [
+          {
+            "id": "intro",
+            "type": "speech",
+            "content": "Let's see how a for loop iterates through a list. We'll walk through each step visually.",
+            "label": "Start"
+          },
+          {
+            "id": "highlight_length_slider",
+            "type": "highlight",
+            "target": "#list_length-slider",
+            "content": "This slider controls how many items are in the list. You can adjust it from 2 to 8 items.",
+            "label": "List length slider"
+          },
+          {
+            "id": "set_length_5",
+            "type": "setState",
+            "state": {
+              "list_length": 5,
+              "delay": 800
+            },
+            "content": "Let's use 5 items for a medium-sized example.",
+            "label": "Set to 5 items"
+          },
+          {
+            "id": "highlight_speed_slider",
+            "type": "highlight",
+            "target": "#delay-slider",
+            "content": "This slider controls the animation speed. Slower speeds help you see each step clearly.",
+            "label": "Speed slider"
+          },
+          {
+            "id": "demo_loop_start",
+            "type": "setState",
+            "state": {
+              "list_length": 5,
+              "delay": 1000
+            },
+            "content": "We'll slow it down to observe each iteration in detail.",
+            "label": "Set delay to 1000ms"
+          },
+          {
+            "id": "explain_loop_body",
+            "type": "annotation",
+            "target": "#n1",
+            "content": "This node represents the first iteration. The loop will take the first item from the list, assign it to the variable 'item', and execute the loop body.",
+            "label": "First iteration node"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_-4Ozl4tw",
+          "title": "Start",
+          "type": "speech",
+          "text": "Let's see how a for loop iterates through a list. We'll walk through each step visually."
+        },
+        {
+          "id": "action_-xKBjHio",
+          "title": "List length slider",
+          "type": "widget_highlight",
+          "target": "#list_length-slider"
+        },
+        {
+          "id": "action_-xKBjHio_speech",
+          "type": "speech",
+          "text": "This slider controls how many items are in the list. You can adjust it from 2 to 8 items.",
+          "title": "List length slider"
+        },
+        {
+          "id": "action_g28SJdsq",
+          "title": "Set to 5 items",
+          "type": "widget_setState",
+          "state": {
+            "list_length": 5,
+            "delay": 800
+          }
+        },
+        {
+          "id": "action_g28SJdsq_speech",
+          "type": "speech",
+          "text": "Let's use 5 items for a medium-sized example.",
+          "title": "Set to 5 items"
+        },
+        {
+          "id": "action_ZRBNbmsb",
+          "title": "Speed slider",
+          "type": "widget_highlight",
+          "target": "#delay-slider"
+        },
+        {
+          "id": "action_ZRBNbmsb_speech",
+          "type": "speech",
+          "text": "This slider controls the animation speed. Slower speeds help you see each step clearly.",
+          "title": "Speed slider"
+        },
+        {
+          "id": "action_dkW0Bu32",
+          "title": "Set delay to 1000ms",
+          "type": "widget_setState",
+          "state": {
+            "list_length": 5,
+            "delay": 1000
+          }
+        },
+        {
+          "id": "action_dkW0Bu32_speech",
+          "type": "speech",
+          "text": "We'll slow it down to observe each iteration in detail.",
+          "title": "Set delay to 1000ms"
+        },
+        {
+          "id": "action_R05cshds",
+          "title": "First iteration node",
+          "type": "widget_annotation",
+          "target": "#n1"
+        },
+        {
+          "id": "action_R05cshds_speech",
+          "type": "speech",
+          "text": "This node represents the first iteration. The loop will take the first item from the list, assign it to the variable 'item', and execute the loop body.",
+          "title": "First iteration node"
+        }
+      ],
+      "createdAt": 1781098481661,
+      "updatedAt": 1781098481661
+    },
+    {
+      "id": "scene_0o6WofOaM5",
+      "stageId": "zUaYZ1ONYZ",
+      "type": "quiz",
+      "title": "Mid-Course Quiz",
+      "order": 9,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "What will the following code print?\n\nx = 10\nif x > 15:\n    print('A')\nelif x > 5:\n    print('B')\nelse:\n    print('C')",
+            "options": [
+              {
+                "value": "A",
+                "label": "A"
+              },
+              {
+                "value": "B",
+                "label": "B"
+              },
+              {
+                "value": "C",
+                "label": "C"
+              },
+              {
+                "value": "D",
+                "label": "Nothing"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "The condition x > 15 is False (10 is not greater than 15), so the elif branch is checked. x > 5 is True (10 > 5), so it prints 'B'. The else block is not executed because a condition was satisfied.",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "multiple",
+            "question": "Which of the following code snippets correctly use a for loop to calculate the sum of all numbers from 1 to 10? (Select all that apply.)",
+            "options": [
+              {
+                "value": "A",
+                "label": "total = 0\nfor i in range(1, 11):\n    total += i"
+              },
+              {
+                "value": "B",
+                "label": "total = 0\nfor i in range(10):\n    total += i"
+              },
+              {
+                "value": "C",
+                "label": "total = sum(range(1, 11))"
+              },
+              {
+                "value": "D",
+                "label": "total = 0\nfor i in range(1, 10):\n    total += i"
+              }
+            ],
+            "answer": [
+              "A",
+              "C"
+            ],
+            "analysis": "Option A correctly loops from 1 to 10 (inclusive) and adds each number. Option C uses Python's built-in sum function with the correct range(1, 11). Option B adds numbers 0-9, missing 10 and including 0 incorrectly. Option D loops from 1 to 9, missing 10.",
+            "points": 15,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "short_answer",
+            "question": "Trace the following code and write the output (one number per line, in order). Then, briefly explain how the function and loop work together to produce that output.\n\ndef mystery(n):\n    result = 1\n    for i in range(1, n+1):\n        result = result * i\n    return result\n\nfor x in range(1, 4):\n    print(mystery(x))",
+            "commentPrompt": "Rubric: (1) Correct output (three numbers, each on a new line, in the right order) - 40% (2) Explanation of the function: it calculates factorial by multiplying from 1 to n - 30% (3) Explanation of the loop calling the function with x=1,2,3 - 30%",
+            "analysis": "The function 'mystery' calculates the factorial of n (n!). The loop calls mystery with x = 1, 2, 3. Thus the output is: 1 (1! = 1), 2 (2! = 2), 6 (3! = 6). Each value is printed on its own line.",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "If-elif-else statements evaluate conditions in order and execute only the first matching block.",
+          "The range(start, stop) function generates numbers from start up to but not including stop; range(1, 11) gives 1-10.",
+          "Python's built-in sum() function can compute totals over iterable ranges efficiently.",
+          "A function can be defined with def and called multiple times within loops to reuse logic.",
+          "Factorial (n!) is the product of all positive integers from 1 to n; loops are a common way to compute it."
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_UG-016sB",
+          "type": "speech",
+          "text": "Now let's check what we've learned so far with a mid-course quiz! We'll review conditionals, loops, and functions — all key building blocks for writing solid Python code. Don't worry if you make mistakes, that's how we learn best."
+        },
+        {
+          "id": "action_66jIeVJq",
+          "type": "speech",
+          "text": "Here's the first question: What will this code print? We check the condition `x > 15` — x is 10, so it's false. Then we check `elif x > 5` — that's true. So it prints 'B'. The answer is B. Many beginners might pick 'A' or 'C' because they forget the order of evaluation, or think `else` runs when none of the earlier conditions match."
+        },
+        {
+          "id": "action_ilgNpVb4",
+          "type": "speech",
+          "text": "Now for the multiple-select question on for loops. Option A is correct: `range(1, 11)` gives numbers 1 through 10, and we sum them. Option C is also correct — it uses `sum()` with the same range, a cleaner approach. Option B is wrong because `range(10)` gives 0 to 9, missing 10. Option D is wrong because `range(1, 10)` stops at 9, missing 10. So the correct answers are A and C."
+        },
+        {
+          "id": "action_eeHMK-Zx",
+          "type": "speech",
+          "text": "Finally, the short-answer question. The function `mystery(n)` calculates the factorial of n — it multiplies 1 by all numbers from 1 to n. The loop calls it with x=1, 2, 3. So the output is: 1 (1!), 2 (2! = 1×2), and 6 (3! = 1×2×3). Each result is printed on a new line. If you wrote that and explained the factorial logic, you have a solid grasp of functions and loops working together."
+        },
+        {
+          "id": "action_pDVJaMJ2",
+          "type": "speech",
+          "text": "Great work on the quiz! Keep practicing these fundamentals — they'll be the foundation for everything more advanced. If you got something wrong, review the key points and try again. See you in the next part!"
+        }
+      ],
+      "createdAt": 1781098481661,
+      "updatedAt": 1781098481661
+    },
+    {
+      "id": "scene_oR59OmQnGH",
+      "stageId": "zUaYZ1ONYZ",
+      "type": "quiz",
+      "title": "Final Assessment",
+      "order": 12,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "Given the list `my_list = [10, 20, 30, 40, 50]`, what is the value of `my_list[-2]`?",
+            "options": [
+              {
+                "value": "A",
+                "label": "30"
+              },
+              {
+                "value": "B",
+                "label": "40"
+              },
+              {
+                "value": "C",
+                "label": "20"
+              },
+              {
+                "value": "D",
+                "label": "50"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "In Python, negative indexing starts at the end of the list, with -1 referring to the last element. So my_list[-1] is 50, and my_list[-2] is 40. Option A (30) is the third-to-last element, option C (20) is the fourth-to-last, and option D (50) is the last.",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "multiple",
+            "question": "Which of the following expressions correctly return the value associated with the key `'name'` from the dictionary `person = {'name': 'Alice', 'age': 30, 'city': 'New York'}`? (Select all that apply)",
+            "options": [
+              {
+                "value": "A",
+                "label": "person['name']"
+              },
+              {
+                "value": "B",
+                "label": "person.get('name')"
+              },
+              {
+                "value": "C",
+                "label": "person.key('name')"
+              },
+              {
+                "value": "D",
+                "label": "person['Name']"
+              }
+            ],
+            "answer": [
+              "A",
+              "B"
+            ],
+            "analysis": "Both person['name'] and person.get('name') correctly retrieve the value 'Alice' from the dictionary. person.key('name') is not a valid Python method. person['Name'] would raise a KeyError because dictionary keys are case-sensitive, so 'Name' is not the same as 'name'.",
+            "points": 15,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "short_answer",
+            "question": "Define a function named `multiply_elements` that takes a list of numbers as a parameter and returns a new list where each element is multiplied by 2. Use a loop inside the function. Then, provide a brief explanation of Python's scope rules that apply to variables defined inside the function.",
+            "commentPrompt": "Rubric: (1) Correct function definition with parameter - 30% (2) Correct loop that multiplies each element by 2 and returns new list - 30% (3) Explanation of local vs global scope and variable lifetime - 40%",
+            "analysis": "Reference answer: def multiply_elements(numbers):\\n    result = []\\n    for num in numbers:\\n        result.append(num * 2)\\n    return result\\nExplanation: Variables defined inside a function (like 'result' and 'num') are local to that function. They are created each time the function is called and destroyed when the function returns. They cannot be accessed from outside the function. In contrast, variables defined outside any function are global and can be accessed (but not reassigned by default) inside functions.",
+            "points": 20,
+            "hasAnswer": false
+          },
+          {
+            "id": "q4",
+            "type": "short_answer",
+            "question": "Describe your high-level approach to building a simple calculator in Python. What data structures or functions would you use to handle operations like addition, subtraction, multiplication, and division? Mention at least one potential challenge and how you would address it.",
+            "commentPrompt": "Rubric: (1) Clear overall plan (e.g., using a loop for user input, function per operation) - 30% (2) Correct choice of functions and data structures (e.g., using a dictionary to map operator symbols to functions) - 40% (3) Identifies a valid challenge (e.g., division by zero) and suggests a solution (e.g., use try/except or conditional check) - 30%",
+            "analysis": "Reference answer: I would create a main loop that repeatedly asks the user for two numbers and an operator. For each operation (+, -, *, /), I would write a separate function (e.g., add(a,b), subtract(a,b), etc.). Then I would store these functions in a dictionary with the operator symbol as the key (e.g., {'+': add, '-': subtract}). In the main loop, I'd look up the chosen operator in the dictionary and call the corresponding function. A challenge is division by zero; I would guard against it by checking if the second operand is zero before calling the division function, or by using a try/except block inside the division function to return an error message.",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "Lists support negative indexing to access elements from the end of the list.",
+          "Dictionaries allow retrieval of values using either bracket notation or the .get() method.",
+          "Variables defined inside a function are local and not accessible outside that function.",
+          "A dictionary can map operator symbols to function references to implement a simple calculator dispatch system.",
+          "Division by zero is a common runtime error that can be handled with conditional checks or exception handling."
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_PEu7GT83",
+          "type": "speech",
+          "text": "Alright everyone, let's put everything we've learned today to the test with our final assessment! This quiz covers lists, dictionaries, functions, and your approach to the calculator project—all key topics we've explored together."
+        },
+        {
+          "id": "action_gzcAmbAi",
+          "type": "speech",
+          "text": "Let's start with questions on lists and dictionaries. For the first question, remember that negative indexing in Python starts from the end of the list, so `my_list[-2]` gives you the second-to-last element. For the second question, think carefully about the correct syntax for accessing dictionary values—both bracket notation and the `.get()` method are valid."
+        },
+        {
+          "id": "action_nXqd3Ts7",
+          "type": "speech",
+          "text": "For the short-answer questions, I want you to demonstrate your understanding of function definitions and scope. When writing your `multiply_elements` function, pay attention to how variables defined inside the function are local to it—they don't affect the outside world unless returned. For the calculator question, think about structuring your code cleanly, perhaps using a dictionary to map operator symbols to functions."
+        },
+        {
+          "id": "action_PLKxQ_QP",
+          "type": "speech",
+          "text": "Take your time with each question, and don't hesitate to apply the concepts we just covered. Once you've finished, we'll briefly discuss any interesting approaches or challenges you encountered!"
+        },
+        {
+          "id": "action_nLDnMAYd",
+          "type": "discussion",
+          "topic": "How did you approach structuring the calculator? What challenges did you anticipate for handling division by zero or invalid inputs?",
+          "prompt": "Share your design thinking and any edge cases you considered.",
+          "agentId": "default-4"
+        }
+      ],
+      "createdAt": 1781098481661,
+      "updatedAt": 1781098481661
+    }
+  ],
+  "createdAt": "2026-06-10T13:34:41.661Z"
+}

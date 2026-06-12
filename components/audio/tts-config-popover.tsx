@@ -120,7 +120,6 @@ export function TtsConfigPopover() {
     canPreview,
     startPreview,
     stopPreview,
-    t,
     locale,
     ttsProviderId,
     ttsProvidersConfig,

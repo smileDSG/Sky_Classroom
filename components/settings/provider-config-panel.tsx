@@ -111,7 +111,7 @@ export function ProviderConfigPanel({
 
     if (availableModels.length === 0) {
       setTestStatus('error');
-      setTestMessage('没有可用于测试的模型' || 'No models available for testing');
+      setTestMessage('没有可用于测试的模型');
       return;
     }
 

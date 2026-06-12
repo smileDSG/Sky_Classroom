@@ -1,0 +1,417 @@
+{
+  "id": "9B-SFDhmyW",
+  "status": "awaiting_review",
+  "step": "generating_outlines",
+  "progress": 30,
+  "message": "大纲已生成，等待审阅",
+  "createdAt": "2026-06-10T13:59:20.371Z",
+  "updatedAt": "2026-06-10T13:59:42.199Z",
+  "inputSummary": {
+    "requirementPreview": "fastapi\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-10T13:59:20.390Z",
+  "totalScenes": 9,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "FastAPI 课程介绍",
+        "description": "介绍课程主题、学习目标和适合人群，激发学习兴趣。",
+        "keyPoints": [
+          "FastAPI 是一个现代、快速（高性能）的 Web 框架，用于构建 API",
+          "课程目标：掌握 FastAPI 核心概念，能独立开发 RESTful API",
+          "适合人群：有 Python 基础，希望学习 Web 开发的开发者",
+          "学习方式：通过理论与实践相结合的方式逐步深入"
+        ],
+        "teachingObjective": "了解 FastAPI 的基本概念和课程整体安排",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "环境搭建与第一个应用",
+        "description": "指导学习者搭建 FastAPI 开发环境，并创建第一个 Hello World 应用。",
+        "keyPoints": [
+          "使用 pip 安装 FastAPI 和 uvicorn",
+          "创建 main.py 文件并编写基础应用代码",
+          "使用 uvicorn 启动服务器并访问 API",
+          "理解自动生成的交互式 API 文档 (Swagger UI)"
+        ],
+        "teachingObjective": "掌握 FastAPI 开发环境搭建及基本项目结构",
+        "estimatedDuration": 180,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "路径参数与查询参数",
+        "description": "通过互动代码编辑器，学习者可以即时修改路径参数和查询参数，并观察 API 响应的变化。",
+        "keyPoints": [
+          "路径参数：在 URL 路径中定义动态参数",
+          "查询参数：在 URL 问号后定义可选或必填参数",
+          "参数类型声明：使用 Python 类型提示自动进行数据校验",
+          "默认值设置：为查询参数提供默认值"
+        ],
+        "teachingObjective": "理解并掌握 FastAPI 中路径参数和查询参数的定义与使用",
+        "estimatedDuration": 240,
+        "order": 3,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python",
+          "concept": "路径参数与查询参数",
+          "codeSnippet": "from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/items/{item_id}\")\nasync def read_item(item_id: int, q: str = None):\n    return {\"item_id\": item_id, \"q\": q}",
+          "interaction": "允许学习者修改 item_id 的类型、q 参数的默认值，并实时看到 API 文档的更新和接口响应"
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "请求体与响应模型",
+        "description": "讲解如何使用 Pydantic 模型定义请求体和响应模型，以及数据验证功能。",
+        "keyPoints": [
+          "Pydantic 模型：定义数据结构并进行数据校验",
+          "请求体：使用 POST 方法接收客户端发送的 JSON 数据",
+          "响应模型：定义 API 返回的数据结构，自动过滤和转换",
+          "数据验证：利用类型提示实现自动数据校验与错误提示"
+        ],
+        "teachingObjective": "掌握使用 Pydantic 模型处理请求体和响应模型的方法",
+        "estimatedDuration": 240,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "quiz",
+        "title": "FastAPI 基础概念测验",
+        "description": "通过测验，巩固对 FastAPI 路径参数、查询参数、请求体等基础概念的理解。",
+        "keyPoints": [
+          "路径参数与查询参数的区别",
+          "Pydantic 模型的作用",
+          "数据校验的原理",
+          "RESTful API 的设计思想"
+        ],
+        "teachingObjective": "检验学习者对 FastAPI 基础概念的掌握程度",
+        "estimatedDuration": 180,
+        "order": 5,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple"
+          ]
+        }
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "依赖注入系统",
+        "description": "介绍 FastAPI 强大的依赖注入 (Dependency Injection) 系统，及其在代码复用和模块化中的应用。",
+        "keyPoints": [
+          "依赖注入的概念：将依赖项作为函数参数传入",
+          "创建简单的依赖项函数（如数据库连接、认证）",
+          "在路径操作函数中声明依赖项",
+          "依赖项的共享作用域 (Depends) 和可重用性"
+        ],
+        "teachingObjective": "理解并掌握 FastAPI 依赖注入系统的基本用法",
+        "estimatedDuration": 300,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "数据库操作与 ORM",
+        "description": "讲解如何在 FastAPI 中集成 SQLAlchemy 等 ORM 实现数据库的增删改查操作。",
+        "keyPoints": [
+          "安装 SQLAlchemy 和数据库驱动",
+          "创建数据库模型 (Model)",
+          "创建数据库引擎和会话",
+          "实现 CRUD 操作的 API 端点"
+        ],
+        "teachingObjective": "掌握在 FastAPI 中集成 SQLAlchemy 进行数据库操作的方法",
+        "estimatedDuration": 300,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "pbl",
+        "title": "项目实战：待办事项 API",
+        "description": "通过一个完整的待办事项 (Todo) 项目实战，综合运用 FastAPI、Pydantic、依赖注入和数据库操作等核心知识。",
+        "keyPoints": [
+          "项目需求分析：用户认证、增删改查待办事项",
+          "架构设计：路由、模型、数据库层分离",
+          "功能实现：逐步实现所有 API 端点",
+          "测试与部署：使用 Uvicorn 部署服务并测试 API"
+        ],
+        "teachingObjective": "能够综合运用 FastAPI 核心知识独立完成一个完整项目的开发",
+        "estimatedDuration": 900,
+        "order": 8,
+        "pblConfig": {
+          "projectTopic": "待办事项 API (Todo API)",
+          "projectDescription": "设计并实现一个功能完整的待办事项管理 API，支持用户注册、登录、创建、查看、更新和删除待办事项。项目将涉及用户认证（JWT）、数据库操作（SQLite）和 API 文档自动生成。",
+          "targetSkills": [
+            "FastAPI 路由设计",
+            "Pydantic 数据模型与数据校验",
+            "SQLAlchemy 数据库集成",
+            "依赖注入应用",
+            "JWT 用户认证实现"
+          ],
+          "issueCount": 4
+        }
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "课程总结与进阶方向",
+        "description": "回顾课程核心内容，总结关键知识点，并提供后续学习建议。",
+        "keyPoints": [
+          "复习 FastAPI 核心功能：参数、请求体、依赖注入、数据库",
+          "进阶学习方向：WebSocket、异步任务、测试、部署",
+          "推荐学习资源：官方文档、社区、开源项目",
+          "鼓励将所学知识应用到实际项目中"
+        ],
+        "teachingObjective": "巩固课程所学知识，明确后续学习路径",
+        "estimatedDuration": 180,
+        "order": 9
+      }
+    ],
+    "languageDirective": "This course will be taught in Chinese, as the user's requirement is written in Chinese. All teaching content, explanations, and assessments will be delivered in Chinese. Technical programming terms like 'FastAPI' and 'API' will be kept in English, as they are standard in the field. For emerging technical concepts, both English and Chinese terms will be provided for clarity.",
+    "topicSummary": "FastAPI基础",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "peddlk_wBk",
+      "name": "FastAPI 课程介绍",
+      "languageDirective": "This course will be taught in Chinese, as the user's requirement is written in Chinese. All teaching content, explanations, and assessments will be delivered in Chinese. Technical programming terms like 'FastAPI' and 'API' will be kept in English, as they are standard in the field. For emerging technical concepts, both English and Chinese terms will be provided for clarity.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1781099982198,
+      "updatedAt": 1781099982198,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "fastapi\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "FastAPI 课程介绍",
+      "description": "介绍课程主题、学习目标和适合人群，激发学习兴趣。",
+      "keyPoints": [
+        "FastAPI 是一个现代、快速（高性能）的 Web 框架，用于构建 API",
+        "课程目标：掌握 FastAPI 核心概念，能独立开发 RESTful API",
+        "适合人群：有 Python 基础，希望学习 Web 开发的开发者",
+        "学习方式：通过理论与实践相结合的方式逐步深入"
+      ],
+      "teachingObjective": "了解 FastAPI 的基本概念和课程整体安排",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "环境搭建与第一个应用",
+      "description": "指导学习者搭建 FastAPI 开发环境，并创建第一个 Hello World 应用。",
+      "keyPoints": [
+        "使用 pip 安装 FastAPI 和 uvicorn",
+        "创建 main.py 文件并编写基础应用代码",
+        "使用 uvicorn 启动服务器并访问 API",
+        "理解自动生成的交互式 API 文档 (Swagger UI)"
+      ],
+      "teachingObjective": "掌握 FastAPI 开发环境搭建及基本项目结构",
+      "estimatedDuration": 180,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "路径参数与查询参数",
+      "description": "通过互动代码编辑器，学习者可以即时修改路径参数和查询参数，并观察 API 响应的变化。",
+      "keyPoints": [
+        "路径参数：在 URL 路径中定义动态参数",
+        "查询参数：在 URL 问号后定义可选或必填参数",
+        "参数类型声明：使用 Python 类型提示自动进行数据校验",
+        "默认值设置：为查询参数提供默认值"
+      ],
+      "teachingObjective": "理解并掌握 FastAPI 中路径参数和查询参数的定义与使用",
+      "estimatedDuration": 240,
+      "order": 3,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python",
+        "concept": "路径参数与查询参数",
+        "codeSnippet": "from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/items/{item_id}\")\nasync def read_item(item_id: int, q: str = None):\n    return {\"item_id\": item_id, \"q\": q}",
+        "interaction": "允许学习者修改 item_id 的类型、q 参数的默认值，并实时看到 API 文档的更新和接口响应"
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "请求体与响应模型",
+      "description": "讲解如何使用 Pydantic 模型定义请求体和响应模型，以及数据验证功能。",
+      "keyPoints": [
+        "Pydantic 模型：定义数据结构并进行数据校验",
+        "请求体：使用 POST 方法接收客户端发送的 JSON 数据",
+        "响应模型：定义 API 返回的数据结构，自动过滤和转换",
+        "数据验证：利用类型提示实现自动数据校验与错误提示"
+      ],
+      "teachingObjective": "掌握使用 Pydantic 模型处理请求体和响应模型的方法",
+      "estimatedDuration": 240,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "quiz",
+      "title": "FastAPI 基础概念测验",
+      "description": "通过测验，巩固对 FastAPI 路径参数、查询参数、请求体等基础概念的理解。",
+      "keyPoints": [
+        "路径参数与查询参数的区别",
+        "Pydantic 模型的作用",
+        "数据校验的原理",
+        "RESTful API 的设计思想"
+      ],
+      "teachingObjective": "检验学习者对 FastAPI 基础概念的掌握程度",
+      "estimatedDuration": 180,
+      "order": 5,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple"
+        ]
+      }
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "依赖注入系统",
+      "description": "介绍 FastAPI 强大的依赖注入 (Dependency Injection) 系统，及其在代码复用和模块化中的应用。",
+      "keyPoints": [
+        "依赖注入的概念：将依赖项作为函数参数传入",
+        "创建简单的依赖项函数（如数据库连接、认证）",
+        "在路径操作函数中声明依赖项",
+        "依赖项的共享作用域 (Depends) 和可重用性"
+      ],
+      "teachingObjective": "理解并掌握 FastAPI 依赖注入系统的基本用法",
+      "estimatedDuration": 300,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "数据库操作与 ORM",
+      "description": "讲解如何在 FastAPI 中集成 SQLAlchemy 等 ORM 实现数据库的增删改查操作。",
+      "keyPoints": [
+        "安装 SQLAlchemy 和数据库驱动",
+        "创建数据库模型 (Model)",
+        "创建数据库引擎和会话",
+        "实现 CRUD 操作的 API 端点"
+      ],
+      "teachingObjective": "掌握在 FastAPI 中集成 SQLAlchemy 进行数据库操作的方法",
+      "estimatedDuration": 300,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "pbl",
+      "title": "项目实战：待办事项 API",
+      "description": "通过一个完整的待办事项 (Todo) 项目实战，综合运用 FastAPI、Pydantic、依赖注入和数据库操作等核心知识。",
+      "keyPoints": [
+        "项目需求分析：用户认证、增删改查待办事项",
+        "架构设计：路由、模型、数据库层分离",
+        "功能实现：逐步实现所有 API 端点",
+        "测试与部署：使用 Uvicorn 部署服务并测试 API"
+      ],
+      "teachingObjective": "能够综合运用 FastAPI 核心知识独立完成一个完整项目的开发",
+      "estimatedDuration": 900,
+      "order": 8,
+      "pblConfig": {
+        "projectTopic": "待办事项 API (Todo API)",
+        "projectDescription": "设计并实现一个功能完整的待办事项管理 API，支持用户注册、登录、创建、查看、更新和删除待办事项。项目将涉及用户认证（JWT）、数据库操作（SQLite）和 API 文档自动生成。",
+        "targetSkills": [
+          "FastAPI 路由设计",
+          "Pydantic 数据模型与数据校验",
+          "SQLAlchemy 数据库集成",
+          "依赖注入应用",
+          "JWT 用户认证实现"
+        ],
+        "issueCount": 4
+      }
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "课程总结与进阶方向",
+      "description": "回顾课程核心内容，总结关键知识点，并提供后续学习建议。",
+      "keyPoints": [
+        "复习 FastAPI 核心功能：参数、请求体、依赖注入、数据库",
+        "进阶学习方向：WebSocket、异步任务、测试、部署",
+        "推荐学习资源：官方文档、社区、开源项目",
+        "鼓励将所学知识应用到实际项目中"
+      ],
+      "teachingObjective": "巩固课程所学知识，明确后续学习路径",
+      "estimatedDuration": 180,
+      "order": 9
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "This course will be taught in Chinese, as the user's requirement is written in Chinese. All teaching content, explanations, and assessments will be delivered in Chinese. Technical programming terms like 'FastAPI' and 'API' will be kept in English, as they are standard in the field. For emerging technical concepts, both English and Chinese terms will be provided for clarity.",
+    "totalScenes": 9
+  },
+  "topicSummary": "FastAPI基础"
+}

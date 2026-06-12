@@ -10,9 +10,9 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('Storage:MySQL');
 
-let _pool: import('mysql2/promise').Pool | null = null;
+let _pool: any = null;
 
-async function getPool(): Promise<import('mysql2/promise').Pool> {
+async function getPool(): Promise<any> {
   if (_pool) return _pool;
   const mysql = await import('mysql2/promise');
   _pool = mysql.createPool({
@@ -143,7 +143,7 @@ const CREATE_TABLES_SQL = [
 
 // ── Data migration from storage_entries ─────────────────────────────
 
-async function migrateFromStorageEntries(pool: Pool): Promise<void> {
+async function migrateFromStorageEntries(pool: any): Promise<void> {
   const tables = [
     { table: 'users', key: 'users' },
     { table: 'user_checkins', key: 'user_checkins' },
@@ -154,22 +154,23 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
   for (const { table, key } of tables) {
     try {
       // Check if dedicated table is empty
-      const [countRows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(`SELECT COUNT(*) as cnt FROM ${table}`);
+      const [countRows] = await pool.query(`SELECT COUNT(*) as cnt FROM ${table}`);
       if (countRows[0].cnt > 0) continue;
 
       // Check if storage_entries has data for this table
-      const [oldRows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
-        'SELECT * FROM storage_entries WHERE table_name = ?',
-        [key],
-      );
+      const [oldRows] = await pool.query('SELECT * FROM storage_entries WHERE table_name = ?', [
+        key,
+      ]);
       if (oldRows.length === 0) continue;
 
       log.info(`Migrating ${oldRows.length} rows from storage_entries.${key} → ${table}`);
 
       for (const row of oldRows) {
         const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-        const createdAt = typeof row.created_at === 'string' ? row.created_at : toDatetime(row.created_at);
-        const updatedAt = typeof row.updated_at === 'string' ? row.updated_at : toDatetime(row.updated_at);
+        const createdAt =
+          typeof row.created_at === 'string' ? row.created_at : toDatetime(row.created_at);
+        const updatedAt =
+          typeof row.updated_at === 'string' ? row.updated_at : toDatetime(row.updated_at);
 
         if (table === 'users') {
           await pool.query(
@@ -181,15 +182,35 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
               created_at, updated_at, last_login_at)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             [
-              row.id, data.email ?? null, data.username, data.passwordHash ?? null,
-              data.role ?? 'user', data.status ?? 'active', data.guestId ?? null, data.planType ?? 'free',
-              data.avatar ?? null, data.nickname ?? null, data.bio ?? null,
-              data.educationLevel ?? null, data.grade ?? null, data.learningStyle ?? null, data.detailLevel ?? null,
-              data.preferredLanguage ?? null, data.aiPersonality ?? null, data.aiName ?? null, data.customInstructions ?? null,
-              data.autoGenerateQuiz ?? false, data.showStepByStep ?? true, data.enableMemory ?? true, data.enableRAG ?? true,
-              data.emailVerified ?? false, data.emailVerifyToken ?? null, data.resetToken ?? null,
+              row.id,
+              data.email ?? null,
+              data.username,
+              data.passwordHash ?? null,
+              data.role ?? 'user',
+              data.status ?? 'active',
+              data.guestId ?? null,
+              data.planType ?? 'free',
+              data.avatar ?? null,
+              data.nickname ?? null,
+              data.bio ?? null,
+              data.educationLevel ?? null,
+              data.grade ?? null,
+              data.learningStyle ?? null,
+              data.detailLevel ?? null,
+              data.preferredLanguage ?? null,
+              data.aiPersonality ?? null,
+              data.aiName ?? null,
+              data.customInstructions ?? null,
+              data.autoGenerateQuiz ?? false,
+              data.showStepByStep ?? true,
+              data.enableMemory ?? true,
+              data.enableRAG ?? true,
+              data.emailVerified ?? false,
+              data.emailVerifyToken ?? null,
+              data.resetToken ?? null,
               data.resetTokenExpiry ? toDatetime(data.resetTokenExpiry) : null,
-              createdAt, updatedAt,
+              createdAt,
+              updatedAt,
               data.lastLoginAt ? toDatetime(data.lastLoginAt) : null,
             ],
           );
@@ -204,9 +225,18 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
               mastery_score, problems_attempted, problems_correct, scenes_completed, last_active_at, created_at, updated_at)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
             [
-              row.id, data.userId, data.date, data.studySeconds ?? 0, data.checkinStreak ?? 0,
-              data.masteryScore ?? 0, data.problemsAttempted ?? 0, data.problemsCorrect ?? 0,
-              data.scenesCompleted ?? 0, data.lastActiveAt ?? Date.now(), createdAt, updatedAt,
+              row.id,
+              data.userId,
+              data.date,
+              data.studySeconds ?? 0,
+              data.checkinStreak ?? 0,
+              data.masteryScore ?? 0,
+              data.problemsAttempted ?? 0,
+              data.problemsCorrect ?? 0,
+              data.scenesCompleted ?? 0,
+              data.lastActiveAt ?? Date.now(),
+              createdAt,
+              updatedAt,
             ],
           );
         } else if (table === 'mistakes') {
@@ -216,12 +246,22 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
               mastery_level, reviewed, source_session_id, created_at, updated_at)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             [
-              row.id, data.problemText ?? '', data.problemImage ?? null, data.userAnswer ?? '', data.correctAnswer ?? '',
-              data.errorType ?? 'concept', data.errorExplanation ?? null,
+              row.id,
+              data.problemText ?? '',
+              data.problemImage ?? null,
+              data.userAnswer ?? '',
+              data.correctAnswer ?? '',
+              data.errorType ?? 'concept',
+              data.errorExplanation ?? null,
               JSON.stringify(data.knowledgePoints ?? []),
-              data.reviewCount ?? 0, data.lastReview ?? null, data.nextReview ?? null,
-              data.masteryLevel ?? 0, data.reviewed ?? false, data.sourceSessionId ?? null,
-              createdAt, updatedAt,
+              data.reviewCount ?? 0,
+              data.lastReview ?? null,
+              data.nextReview ?? null,
+              data.masteryLevel ?? 0,
+              data.reviewed ?? false,
+              data.sourceSessionId ?? null,
+              createdAt,
+              updatedAt,
             ],
           );
         }
@@ -235,7 +275,6 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
 // ── Provider ────────────────────────────────────────────────────────
 
 export class MySQLStorageProvider implements StorageProvider {
-
   async isAvailable(): Promise<boolean> {
     try {
       const pool = await getPool();
@@ -285,15 +324,35 @@ export class MySQLStorageProvider implements StorageProvider {
           reset_token=VALUES(reset_token), reset_token_expiry=VALUES(reset_token_expiry),
           updated_at=VALUES(updated_at), last_login_at=VALUES(last_login_at)`,
         [
-          entry.id, data.email ?? null, data.username, data.passwordHash ?? null,
-          data.role ?? 'user', data.status ?? 'active', data.guestId ?? null, data.planType ?? 'free',
-          data.avatar ?? null, data.nickname ?? null, data.bio ?? null,
-          data.educationLevel ?? null, data.grade ?? null, data.learningStyle ?? null, data.detailLevel ?? null,
-          data.preferredLanguage ?? null, data.aiPersonality ?? null, data.aiName ?? null, data.customInstructions ?? null,
-          data.autoGenerateQuiz ?? false, data.showStepByStep ?? true, data.enableMemory ?? true, data.enableRAG ?? true,
-          data.emailVerified ?? false, data.emailVerifyToken ?? null, data.resetToken ?? null,
+          entry.id,
+          data.email ?? null,
+          data.username,
+          data.passwordHash ?? null,
+          data.role ?? 'user',
+          data.status ?? 'active',
+          data.guestId ?? null,
+          data.planType ?? 'free',
+          data.avatar ?? null,
+          data.nickname ?? null,
+          data.bio ?? null,
+          data.educationLevel ?? null,
+          data.grade ?? null,
+          data.learningStyle ?? null,
+          data.detailLevel ?? null,
+          data.preferredLanguage ?? null,
+          data.aiPersonality ?? null,
+          data.aiName ?? null,
+          data.customInstructions ?? null,
+          data.autoGenerateQuiz ?? false,
+          data.showStepByStep ?? true,
+          data.enableMemory ?? true,
+          data.enableRAG ?? true,
+          data.emailVerified ?? false,
+          data.emailVerifyToken ?? null,
+          data.resetToken ?? null,
           data.resetTokenExpiry ? toDatetime(data.resetTokenExpiry) : null,
-          toDatetime(entry.createdAt), toDatetime(entry.updatedAt),
+          toDatetime(entry.createdAt),
+          toDatetime(entry.updatedAt),
           data.lastLoginAt ? toDatetime(data.lastLoginAt as number) : null,
         ],
       );
@@ -316,10 +375,18 @@ export class MySQLStorageProvider implements StorageProvider {
           problems_correct=VALUES(problems_correct), scenes_completed=VALUES(scenes_completed),
           last_active_at=VALUES(last_active_at), updated_at=VALUES(updated_at)`,
         [
-          entry.id, data.userId, data.date, data.studySeconds ?? 0, data.checkinStreak ?? 0,
-          data.masteryScore ?? 0, data.problemsAttempted ?? 0, data.problemsCorrect ?? 0,
-          data.scenesCompleted ?? 0, data.lastActiveAt ?? Date.now(),
-          toDatetime(entry.createdAt), toDatetime(entry.updatedAt),
+          entry.id,
+          data.userId,
+          data.date,
+          data.studySeconds ?? 0,
+          data.checkinStreak ?? 0,
+          data.masteryScore ?? 0,
+          data.problemsAttempted ?? 0,
+          data.problemsCorrect ?? 0,
+          data.scenesCompleted ?? 0,
+          data.lastActiveAt ?? Date.now(),
+          toDatetime(entry.createdAt),
+          toDatetime(entry.updatedAt),
         ],
       );
     } else if (table === 'mistakes') {
@@ -337,13 +404,22 @@ export class MySQLStorageProvider implements StorageProvider {
           mastery_level=VALUES(mastery_level), reviewed=VALUES(reviewed),
           source_session_id=VALUES(source_session_id), updated_at=VALUES(updated_at)`,
         [
-          entry.id, data.problemText ?? '', data.problemImage ?? null,
-          data.userAnswer ?? '', data.correctAnswer ?? '',
-          data.errorType ?? 'concept', data.errorExplanation ?? null,
+          entry.id,
+          data.problemText ?? '',
+          data.problemImage ?? null,
+          data.userAnswer ?? '',
+          data.correctAnswer ?? '',
+          data.errorType ?? 'concept',
+          data.errorExplanation ?? null,
           JSON.stringify(data.knowledgePoints ?? []),
-          data.reviewCount ?? 0, data.lastReview ?? null, data.nextReview ?? null,
-          data.masteryLevel ?? 0, data.reviewed ?? false, data.sourceSessionId ?? null,
-          toDatetime(entry.createdAt), toDatetime(entry.updatedAt),
+          data.reviewCount ?? 0,
+          data.lastReview ?? null,
+          data.nextReview ?? null,
+          data.masteryLevel ?? 0,
+          data.reviewed ?? false,
+          data.sourceSessionId ?? null,
+          toDatetime(entry.createdAt),
+          toDatetime(entry.updatedAt),
         ],
       );
     } else {
@@ -352,7 +428,13 @@ export class MySQLStorageProvider implements StorageProvider {
         `INSERT INTO storage_entries (id, table_name, data, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE data = VALUES(data), updated_at = VALUES(updated_at)`,
-        [entry.id, table, JSON.stringify(entry.data), toDatetime(entry.createdAt), toDatetime(entry.updatedAt)],
+        [
+          entry.id,
+          table,
+          JSON.stringify(entry.data),
+          toDatetime(entry.createdAt),
+          toDatetime(entry.updatedAt),
+        ],
       );
     }
   }
@@ -363,31 +445,31 @@ export class MySQLStorageProvider implements StorageProvider {
     const pool = await getPool();
 
     if (table === 'users') {
-      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM users WHERE id = ?', [id]);
+      const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToUserEntry(rows[0]) as StorageEntry<T>;
     }
 
     if (table === 'user_checkins') {
-      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM user_checkins WHERE id = ?', [id]);
+      const [rows] = await pool.query('SELECT * FROM user_checkins WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToCheckinEntry(rows[0]) as StorageEntry<T>;
     }
 
     if (table === 'user_stats') {
-      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM user_stats WHERE id = ?', [id]);
+      const [rows] = await pool.query('SELECT * FROM user_stats WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToStatsEntry(rows[0]) as StorageEntry<T>;
     }
 
     if (table === 'mistakes') {
-      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM mistakes WHERE id = ?', [id]);
+      const [rows] = await pool.query('SELECT * FROM mistakes WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToMistakeEntry(rows[0]) as StorageEntry<T>;
     }
 
     // Fallback
-    const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
+    const [rows] = await pool.query(
       'SELECT * FROM storage_entries WHERE id = ? AND table_name = ?',
       [id, table],
     );
@@ -403,27 +485,29 @@ export class MySQLStorageProvider implements StorageProvider {
 
   // ── GET ALL ─────────────────────────────────────────────────────────
 
-  async getAll<T>(table: string, filter?: (entry: StorageEntry<T>) => boolean): Promise<StorageEntry<T>[]> {
+  async getAll<T>(
+    table: string,
+    filter?: (entry: StorageEntry<T>) => boolean,
+  ): Promise<StorageEntry<T>[]> {
     const pool = await getPool();
     let entries: StorageEntry<T>[];
 
     if (table === 'users') {
-      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM users');
+      const [rows] = await pool.query('SELECT * FROM users');
       entries = rows.map((r) => rowToUserEntry(r) as StorageEntry<T>);
     } else if (table === 'user_checkins') {
-      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM user_checkins');
+      const [rows] = await pool.query('SELECT * FROM user_checkins');
       entries = rows.map((r) => rowToCheckinEntry(r) as StorageEntry<T>);
     } else if (table === 'user_stats') {
-      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM user_stats');
+      const [rows] = await pool.query('SELECT * FROM user_stats');
       entries = rows.map((r) => rowToStatsEntry(r) as StorageEntry<T>);
     } else if (table === 'mistakes') {
-      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>('SELECT * FROM mistakes');
+      const [rows] = await pool.query('SELECT * FROM mistakes');
       entries = rows.map((r) => rowToMistakeEntry(r) as StorageEntry<T>);
     } else {
-      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
-        'SELECT * FROM storage_entries WHERE table_name = ?',
-        [table],
-      );
+      const [rows] = await pool.query('SELECT * FROM storage_entries WHERE table_name = ?', [
+        table,
+      ]);
       entries = rows.map((row) => ({
         id: row.id as string,
         data: typeof row.data === 'string' ? JSON.parse(row.data) : row.data,
@@ -467,10 +551,10 @@ export class MySQLStorageProvider implements StorageProvider {
   async count(table: string): Promise<number> {
     const pool = await getPool();
     if (isDedicatedTable(table)) {
-      const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(`SELECT COUNT(*) as cnt FROM ${table}`);
+      const [rows] = await pool.query(`SELECT COUNT(*) as cnt FROM ${table}`);
       return rows[0].cnt as number;
     }
-    const [rows] = await pool.query<import('mysql2/promise').RowDataPacket[]>(
+    const [rows] = await pool.query(
       'SELECT COUNT(*) as cnt FROM storage_entries WHERE table_name = ?',
       [table],
     );
@@ -531,9 +615,10 @@ function rowToCheckinEntry(row: RowDataPacket): StorageEntry {
     id: row.id as string,
     data: {
       userId: row.user_id,
-      date: row.checkin_date instanceof Date
-        ? row.checkin_date.toISOString().slice(0, 10)
-        : String(row.checkin_date).slice(0, 10),
+      date:
+        row.checkin_date instanceof Date
+          ? row.checkin_date.toISOString().slice(0, 10)
+          : String(row.checkin_date).slice(0, 10),
       timestamp: Number(row.timestamp),
     },
     createdAt: parseDatetime(row.created_at),
@@ -546,9 +631,10 @@ function rowToStatsEntry(row: RowDataPacket): StorageEntry {
     id: row.id as string,
     data: {
       userId: row.user_id,
-      date: row.stat_date instanceof Date
-        ? row.stat_date.toISOString().slice(0, 10)
-        : String(row.stat_date).slice(0, 10),
+      date:
+        row.stat_date instanceof Date
+          ? row.stat_date.toISOString().slice(0, 10)
+          : String(row.stat_date).slice(0, 10),
       studySeconds: row.study_seconds,
       checkinStreak: row.checkin_streak,
       masteryScore: row.mastery_score,
@@ -572,9 +658,10 @@ function rowToMistakeEntry(row: RowDataPacket): StorageEntry {
       correctAnswer: row.correct_answer,
       errorType: row.error_type,
       errorExplanation: row.error_explanation,
-      knowledgePoints: typeof row.knowledge_points === 'string'
-        ? JSON.parse(row.knowledge_points)
-        : (row.knowledge_points ?? []),
+      knowledgePoints:
+        typeof row.knowledge_points === 'string'
+          ? JSON.parse(row.knowledge_points)
+          : (row.knowledge_points ?? []),
       reviewCount: row.review_count,
       lastReview: row.last_review ? Number(row.last_review) : undefined,
       nextReview: row.next_review ? Number(row.next_review) : undefined,

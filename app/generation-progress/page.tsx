@@ -3,7 +3,18 @@
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Sparkles, CheckCircle2, Loader2, FileText, Search, Clapperboard, Image, Volume2, Save } from 'lucide-react';
+import {
+  ArrowLeft,
+  Sparkles,
+  CheckCircle2,
+  Loader2,
+  FileText,
+  Search,
+  Clapperboard,
+  Image,
+  Volume2,
+  Save,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { OutlinesEditor } from '@/components/generation/outlines-editor';
@@ -22,7 +33,6 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('GenerationProgress');
 
 const PHASE_LABELS: Record<string, string> = {
-  queued: '排队中',
   initializing: '初始化',
   researching: '搜索资料',
   generating_outlines: '生成大纲',
@@ -39,7 +49,9 @@ function GenerationProgressContent() {
   const searchParams = useSearchParams();
   const jobId = searchParams.get('jobId');
 
-  const [phase, setPhase] = useState<'loading' | 'generating' | 'reviewing' | 'generating_slides' | 'done'>('loading');
+  const [phase, setPhase] = useState<
+    'loading' | 'generating' | 'reviewing' | 'generating_slides' | 'done'
+  >('loading');
   const [step, setStep] = useState('');
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState('');
@@ -78,7 +90,10 @@ function GenerationProgressContent() {
         // Check current state first
         const current = await fetchClassroomJob(jobId);
         if (cancelled || abortController.signal.aborted) return;
-        if (!current) { setError('课堂生成任务不存在'); return; }
+        if (!current) {
+          setError('课堂生成任务不存在');
+          return;
+        }
         updateFromJob(current);
 
         if (current.status === 'awaiting_review') {
@@ -112,7 +127,10 @@ function GenerationProgressContent() {
         // Check final state after polling
         const final = await fetchClassroomJob(jobId);
         if (cancelled || abortController.signal.aborted) return;
-        if (!final) { setError('课堂生成任务不存在'); return; }
+        if (!final) {
+          setError('课堂生成任务不存在');
+          return;
+        }
         updateFromJob(final);
 
         if (final.status === 'awaiting_review') {
@@ -137,46 +155,49 @@ function GenerationProgressContent() {
     };
   }, [jobId]);
 
-  const updateFromJob = useCallback((data: ClassroomJobState) => {
-    if (data.status === 'cancelled') {
-      removeActiveJobEntry(jobId!);
-      toast.info('课堂生成已取消');
-      router.push('/');
-      return;
-    }
-
-    setStep(data.step);
-    setProgress(data.progress);
-    setMessage(data.message);
-    if (data.outlines) setOutlines(data.outlines);
-    if (data.outlinesMeta) setOutlinesMeta(data.outlinesMeta);
-    if (data.scenesGenerated != null) setScenesGenerated(data.scenesGenerated);
-    if (data.totalScenes != null) setTotalScenes(data.totalScenes);
-    if (data.result) {
-      setResult(data.result);
-      // Don't remove active job entry here — let ClassroomJobPoller show
-      // a dialog if the user navigates away before clicking "进入课堂".
-      // Entry is removed in handleGoToClassroom and handleCancel instead.
-    }
-
-    // Update task store for multi-task tracking
-    const task = useTaskStore.getState().tasks[jobId ?? ''];
-    if (task) {
-      const update: Record<string, unknown> = {
-        progress: data.progress,
-        phase: data.message,
-      };
-
-      // When outline is ready for review, mark task as completed
-      if (data.status === 'awaiting_review') {
-        update.status = 'completed';
-        update.progress = 100;
-        update.phase = '大纲已生成，等待审阅';
+  const updateFromJob = useCallback(
+    (data: ClassroomJobState) => {
+      if (data.status === 'cancelled') {
+        removeActiveJobEntry(jobId!);
+        toast.info('课堂生成已取消');
+        router.push('/');
+        return;
       }
 
-      useTaskStore.getState().updateTask(task.id, update);
-    }
-  }, [jobId, router]);
+      setStep(data.step);
+      setProgress(data.progress);
+      setMessage(data.message);
+      if (data.outlines) setOutlines(data.outlines);
+      if (data.outlinesMeta) setOutlinesMeta(data.outlinesMeta);
+      if (data.scenesGenerated != null) setScenesGenerated(data.scenesGenerated);
+      if (data.totalScenes != null) setTotalScenes(data.totalScenes);
+      if (data.result) {
+        setResult(data.result);
+        // Don't remove active job entry here — let ClassroomJobPoller show
+        // a dialog if the user navigates away before clicking "进入课堂".
+        // Entry is removed in handleGoToClassroom and handleCancel instead.
+      }
+
+      // Update task store for multi-task tracking
+      const task = useTaskStore.getState().tasks[jobId ?? ''];
+      if (task) {
+        const update: Record<string, unknown> = {
+          progress: data.progress,
+          phase: data.message,
+        };
+
+        // When outline is ready for review, mark task as completed
+        if (data.status === 'awaiting_review') {
+          update.status = 'completed';
+          update.progress = 100;
+          update.phase = '大纲已生成，等待审阅';
+        }
+
+        useTaskStore.getState().updateTask(task.id, update);
+      }
+    },
+    [jobId, router],
+  );
 
   const handleApproveOutline = useCallback(async () => {
     if (!jobId) return;
@@ -211,7 +232,10 @@ function GenerationProgressContent() {
 
       const final = await fetchClassroomJob(jobId);
       if (signal?.aborted) return;
-      if (!final) { setError('课堂生成任务不存在'); return; }
+      if (!final) {
+        setError('课堂生成任务不存在');
+        return;
+      }
       if (final.status === 'awaiting_review') {
         if (final.outlines) setOutlines(final.outlines);
         if (final.outlinesMeta) setOutlinesMeta(final.outlinesMeta);
@@ -287,9 +311,7 @@ function GenerationProgressContent() {
               <CheckCircle2 className="h-10 w-10 text-green-600" />
             </div>
             <h2 className="text-2xl font-bold mb-2">课堂生成完成！</h2>
-            <p className="text-muted-foreground mb-6">
-              共 {result.scenesCount} 个场景
-            </p>
+            <p className="text-muted-foreground mb-6">共 {result.scenesCount} 个场景</p>
             <button
               onClick={handleGoToClassroom}
               className="rounded-xl bg-sky-500 px-6 py-3 text-white font-medium hover:bg-sky-600 transition-colors"
@@ -301,10 +323,7 @@ function GenerationProgressContent() {
 
         {/* Outline review */}
         {phase === 'reviewing' && outlines && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="rounded-2xl border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 shadow-lg p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-5 w-5 text-sky-500" />
@@ -363,7 +382,9 @@ function GenerationProgressContent() {
                 <div className="h-2 rounded-full bg-sky-100 dark:bg-sky-900 overflow-hidden">
                   <motion.div
                     className={`h-full rounded-full bg-gradient-to-r from-sky-400 via-sky-300 to-sky-400 ${
-                      phase === 'generating' || phase === 'generating_slides' ? 'progress-bar-animated' : 'to-sky-600'
+                      phase === 'generating' || phase === 'generating_slides'
+                        ? 'progress-bar-animated'
+                        : 'to-sky-600'
                     }`}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.7, ease: 'easeInOut' }}
@@ -381,10 +402,31 @@ function GenerationProgressContent() {
                 ].map(({ key, icon: Icon, label }) => {
                   const isActive = step === key;
                   const isDone =
-                    (key === 'researching' && ['generating_outlines', 'awaiting_review', 'generating_scenes', 'generating_media', 'generating_tts', 'persisting', 'completed'].includes(step)) ||
-                    (key === 'generating_outlines' && ['awaiting_review', 'generating_scenes', 'generating_media', 'generating_tts', 'persisting', 'completed'].includes(step)) ||
-                    (key === 'generating_scenes' && ['generating_media', 'generating_tts', 'persisting', 'completed'].includes(step)) ||
-                    (key === 'generating_media' && ['generating_tts', 'persisting', 'completed'].includes(step)) ||
+                    (key === 'researching' &&
+                      [
+                        'generating_outlines',
+                        'awaiting_review',
+                        'generating_scenes',
+                        'generating_media',
+                        'generating_tts',
+                        'persisting',
+                        'completed',
+                      ].includes(step)) ||
+                    (key === 'generating_outlines' &&
+                      [
+                        'awaiting_review',
+                        'generating_scenes',
+                        'generating_media',
+                        'generating_tts',
+                        'persisting',
+                        'completed',
+                      ].includes(step)) ||
+                    (key === 'generating_scenes' &&
+                      ['generating_media', 'generating_tts', 'persisting', 'completed'].includes(
+                        step,
+                      )) ||
+                    (key === 'generating_media' &&
+                      ['generating_tts', 'persisting', 'completed'].includes(step)) ||
                     (key === 'persisting' && ['completed'].includes(step));
 
                   return (
@@ -398,14 +440,22 @@ function GenerationProgressContent() {
                             : 'text-muted-foreground/30'
                       }`}
                     >
-                      <div className={`flex h-7 w-7 items-center justify-center rounded-full ${
-                        isDone
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600'
-                          : isActive
-                            ? 'bg-sky-200 dark:bg-sky-800 text-sky-700'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-400'
-                      }`}>
-                        {isDone ? <CheckCircle2 className="h-4 w-4" /> : isActive ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-3.5 w-3.5" />}
+                      <div
+                        className={`flex h-7 w-7 items-center justify-center rounded-full ${
+                          isDone
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600'
+                            : isActive
+                              ? 'bg-sky-200 dark:bg-sky-800 text-sky-700'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-400'
+                        }`}
+                      >
+                        {isDone ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : isActive ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Icon className="h-3.5 w-3.5" />
+                        )}
                       </div>
                       <span className={`text-sm ${isActive ? 'font-medium' : ''}`}>{label}</span>
                       {isActive && (
@@ -457,7 +507,9 @@ function GenerationProgressContent() {
                     <Search className="h-4 w-4 text-amber-500" />
                     <div>
                       <p className="text-sm font-medium">正在搜索相关资料</p>
-                      <p className="text-xs text-muted-foreground">{message || '收集背景信息...'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {message || '收集背景信息...'}
+                      </p>
                     </div>
                     <Loader2 className="h-4 w-4 animate-spin ml-auto text-amber-500" />
                   </div>
@@ -471,7 +523,9 @@ function GenerationProgressContent() {
                     <FileText className="h-4 w-4 text-purple-500" />
                     <div>
                       <p className="text-sm font-medium">正在规划课堂结构</p>
-                      <p className="text-xs text-muted-foreground">{message || '分析知识体系，构建场景大纲...'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {message || '分析知识体系，构建场景大纲...'}
+                      </p>
                     </div>
                     <Loader2 className="h-4 w-4 animate-spin ml-auto text-purple-500" />
                   </div>
@@ -481,67 +535,85 @@ function GenerationProgressContent() {
                     <div className="h-3 animate-pulse rounded bg-purple-100 dark:bg-purple-900/20 w-5/6" />
                     <div className="h-3 animate-pulse rounded bg-purple-100 dark:bg-purple-900/20 w-2/3" />
                   </div>
-                  <p className="text-xs text-muted-foreground text-center">正在分析您的需求，构建场景大纲...</p>
+                  <p className="text-xs text-muted-foreground text-center">
+                    正在分析您的需求，构建场景大纲...
+                  </p>
                 </div>
               )}
 
               {/* Phase: generating_scenes — show outlines with progress */}
-              {(step === 'generating_scenes' || (step === 'awaiting_review' && outlines)) && outlines && outlines.length > 0 && (
-                <div className="space-y-2">
-                  {outlines.map((outline, i) => {
-                    const isSceneDone = scenesGenerated > i;
-                    const isCurrentScene = scenesGenerated === i;
-                    return (
-                      <div
-                        key={outline.id || i}
-                        className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors ${
-                          isCurrentScene
-                            ? 'bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800'
-                            : isSceneDone
-                              ? 'bg-green-50/50 dark:bg-green-900/5'
-                              : 'bg-gray-50/50 dark:bg-gray-900/5'
-                        }`}
-                      >
-                        <div className={`flex h-7 w-7 items-center justify-center rounded-full flex-shrink-0 ${
-                          isSceneDone
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600'
-                            : isCurrentScene
-                              ? 'bg-sky-200 dark:bg-sky-800 text-sky-700'
-                              : 'bg-gray-200 dark:bg-gray-800 text-gray-400'
-                        }`}>
-                          {isSceneDone ? (
-                            <CheckCircle2 className="h-4 w-4" />
-                          ) : isCurrentScene ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <span className="text-xs">{i + 1}</span>
+              {(step === 'generating_scenes' || (step === 'awaiting_review' && outlines)) &&
+                outlines &&
+                outlines.length > 0 && (
+                  <div className="space-y-2">
+                    {outlines.map((outline, i) => {
+                      const isSceneDone = scenesGenerated > i;
+                      const isCurrentScene = scenesGenerated === i;
+                      return (
+                        <div
+                          key={outline.id || i}
+                          className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors ${
+                            isCurrentScene
+                              ? 'bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800'
+                              : isSceneDone
+                                ? 'bg-green-50/50 dark:bg-green-900/5'
+                                : 'bg-gray-50/50 dark:bg-gray-900/5'
+                          }`}
+                        >
+                          <div
+                            className={`flex h-7 w-7 items-center justify-center rounded-full flex-shrink-0 ${
+                              isSceneDone
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600'
+                                : isCurrentScene
+                                  ? 'bg-sky-200 dark:bg-sky-800 text-sky-700'
+                                  : 'bg-gray-200 dark:bg-gray-800 text-gray-400'
+                            }`}
+                          >
+                            {isSceneDone ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : isCurrentScene ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <span className="text-xs">{i + 1}</span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className={`text-sm truncate ${isCurrentScene ? 'font-medium text-sky-700 dark:text-sky-300' : isSceneDone ? 'text-foreground/70' : 'text-muted-foreground/40'}`}
+                            >
+                              {outline.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {outline.type === 'slide'
+                                ? '幻灯片'
+                                : outline.type === 'quiz'
+                                  ? '测验'
+                                  : outline.type === 'interactive'
+                                    ? '互动'
+                                    : 'PBL'}
+                              {outline.keyPoints?.length
+                                ? ` · ${outline.keyPoints.length} 个要点`
+                                : ''}
+                            </p>
+                          </div>
+                          {isCurrentScene && (
+                            <span className="text-xs text-sky-500 font-medium flex-shrink-0">
+                              生成中
+                            </span>
+                          )}
+                          {isSceneDone && (
+                            <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm truncate ${isCurrentScene ? 'font-medium text-sky-700 dark:text-sky-300' : isSceneDone ? 'text-foreground/70' : 'text-muted-foreground/40'}`}>
-                            {outline.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {outline.type === 'slide' ? '幻灯片' : outline.type === 'quiz' ? '测验' : outline.type === 'interactive' ? '互动' : 'PBL'}
-                            {outline.keyPoints?.length ? ` · ${outline.keyPoints.length} 个要点` : ''}
-                          </p>
-                        </div>
-                        {isCurrentScene && (
-                          <span className="text-xs text-sky-500 font-medium flex-shrink-0">生成中</span>
-                        )}
-                        {isSceneDone && (
-                          <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                        )}
-                      </div>
-                    );
-                  })}
-                  {scenesGenerated < outlines.length && (
-                    <p className="text-xs text-muted-foreground text-center pt-2">
-                      {scenesGenerated}/{outlines.length} 个场景已完成
-                    </p>
-                  )}
-                </div>
-              )}
+                      );
+                    })}
+                    {scenesGenerated < outlines.length && (
+                      <p className="text-xs text-muted-foreground text-center pt-2">
+                        {scenesGenerated}/{outlines.length} 个场景已完成
+                      </p>
+                    )}
+                  </div>
+                )}
 
               {/* Phase: generating_scenes but no outlines yet */}
               {step === 'generating_scenes' && (!outlines || outlines.length === 0) && (
@@ -558,20 +630,29 @@ function GenerationProgressContent() {
                     <Image className="h-4 w-4 text-pink-500" />
                     <div>
                       <p className="text-sm font-medium">正在生成媒体文件</p>
-                      <p className="text-xs text-muted-foreground">{message || '图片、视频生成中...'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {message || '图片、视频生成中...'}
+                      </p>
                     </div>
                     <Loader2 className="h-4 w-4 animate-spin ml-auto text-pink-500" />
                   </div>
                   {outlines && outlines.length > 0 && (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
                       {outlines.map((outline, i) => (
-                        <div key={outline.id || i} className={`flex items-center gap-2 rounded px-3 py-2 text-sm ${
-                          i < scenesGenerated ? 'text-foreground/70' : 'text-muted-foreground/40'
-                        }`}>
-                          <CheckCircle2 className={`h-3.5 w-3.5 flex-shrink-0 ${i < scenesGenerated ? 'text-green-500' : 'text-gray-300'}`} />
+                        <div
+                          key={outline.id || i}
+                          className={`flex items-center gap-2 rounded px-3 py-2 text-sm ${
+                            i < scenesGenerated ? 'text-foreground/70' : 'text-muted-foreground/40'
+                          }`}
+                        >
+                          <CheckCircle2
+                            className={`h-3.5 w-3.5 flex-shrink-0 ${i < scenesGenerated ? 'text-green-500' : 'text-gray-300'}`}
+                          />
                           <span className="truncate">{outline.title}</span>
                           {i < scenesGenerated && outline.mediaGenerations?.length ? (
-                            <span className="text-xs text-pink-500 ml-auto flex-shrink-0">{outline.mediaGenerations.length} 个媒体</span>
+                            <span className="text-xs text-pink-500 ml-auto flex-shrink-0">
+                              {outline.mediaGenerations.length} 个媒体
+                            </span>
                           ) : null}
                         </div>
                       ))}
@@ -586,7 +667,9 @@ function GenerationProgressContent() {
                   <Volume2 className="h-4 w-4 text-indigo-500" />
                   <div>
                     <p className="text-sm font-medium">正在生成语音</p>
-                    <p className="text-xs text-muted-foreground">{message || 'TTS 音频生成中...'}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {message || 'TTS 音频生成中...'}
+                    </p>
                   </div>
                   <Loader2 className="h-4 w-4 animate-spin ml-auto text-indigo-500" />
                 </div>
@@ -605,7 +688,14 @@ function GenerationProgressContent() {
               )}
 
               {/* Initial/fallback */}
-              {!['researching', 'generating_outlines', 'generating_scenes', 'generating_media', 'generating_tts', 'persisting'].includes(step) && (
+              {![
+                'researching',
+                'generating_outlines',
+                'generating_scenes',
+                'generating_media',
+                'generating_tts',
+                'persisting',
+              ].includes(step) && (
                 <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                   <Loader2 className="h-6 w-6 animate-spin mb-3" />
                   <span className="text-sm">{message || '准备中...'}</span>
@@ -621,11 +711,13 @@ function GenerationProgressContent() {
 
 export default function GenerationProgressPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
+        </div>
+      }
+    >
       <GenerationProgressContent />
     </Suspense>
   );

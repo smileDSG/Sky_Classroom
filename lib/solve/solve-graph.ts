@@ -72,13 +72,15 @@ async function checkQuestionBankNode(
   const matches = await findSimilarQuestions(state.problemText, 0.85);
 
   if (matches.length > 0) {
-    log.info(`[SolveGraph] checkQuestionBank: hit in ${Date.now() - t0}ms (similarity=${matches[0]._similarity?.toFixed(2)})`);
+    log.info(
+      `[SolveGraph] checkQuestionBank: hit in ${Date.now() - t0}ms (similarity=${matches[0]._similarity?.toFixed(2)})`,
+    );
     const hit = matches[0];
     return {
       fromQuestionBank: true,
       solution: hit.answer,
       agentId: hit.agentId,
-      parsedSteps: hit.steps ?? [],
+      parsedSteps: [],
       parsedKnowledgePoints: (hit.knowledgePoints ?? []).map((k) => ({
         name: k.name,
         description: k.description,
@@ -239,6 +241,7 @@ async function generateOutputNode(
     log.error('[SolveGraph] generateOutput: no solution');
     return {
       fourPartOutput: {
+        solution: '解题失败',
         answer: '解题失败',
         steps: [],
         knowledgePoints: [],

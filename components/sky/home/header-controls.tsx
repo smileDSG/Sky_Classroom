@@ -13,8 +13,11 @@ type Theme = 'light' | 'dark' | 'system';
  * Shared between MinimalNavbar (home) and SkyAppShell (/sky pages).
  */
 export function HeaderControls() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, forceDark } = useTheme();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+
+  // When forceDark is active (e.g. on solve/teaching/memory pages), hide the theme switcher
+  if (forceDark) return null;
 
   return (
     <div className="relative">
