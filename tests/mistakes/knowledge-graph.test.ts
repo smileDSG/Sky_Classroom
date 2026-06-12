@@ -99,13 +99,13 @@ describe('buildKnowledgeGraph', () => {
   });
 
   // ── 2. 单个知识点 ──────────────────────────────────────────────
-  it('单个知识点：1 个 node、0 条 edge、mastery = 80（1 个错题）', () => {
+  it('单个知识点：1 个 node、0 条 edge、mastery = 90（1 个错题，未复习）', () => {
     const graph = buildKnowledgeGraph([makeTestMistakes()[0]]);
 
     expect(graph.nodes).toHaveLength(1);
     const node = graph.nodes[0];
     expect(node.id).toBe('一元二次方程');
-    expect(node.mastery).toBe(80); // 100 - 1 * 20
+    expect(node.mastery).toBe(90); // 100 - 1*10 + 0(reviewBonus) - 0(decay)
     expect(node.mistakeCount).toBe(1);
     expect(node.problemCount).toBe(1);
     expect(node.category).toBe('代数');
@@ -159,10 +159,10 @@ describe('buildKnowledgeGraph', () => {
 
   // ── 5. weakPoints 检测 ──────────────────────────────────────────
   it('mastery < 50 的节点应出现在 weakPoints 中', () => {
-    // 5 个错题都指向同一个知识点 → mastery = 100 - 5*20 = 0 → 弱点
+    // 6 个错题，全部未复习 → mastery = 100 - 6*10 = 40 → 弱点
     const template = makeTestMistakes()[0];
     const repeatedMistakes: MistakeRecord[] = Array.from(
-      { length: 5 },
+      { length: 6 },
       (_, i) => ({
         ...template,
         id: `weak-${i}`,
@@ -176,16 +176,16 @@ describe('buildKnowledgeGraph', () => {
   });
 
   it('mastery >= 50 的节点不出现在 weakPoints 中', () => {
-    const graph = buildKnowledgeGraph([makeTestMistakes()[0]]); // mastery=80
-    expect(graph.nodes[0].mastery).toBe(80);
+    const graph = buildKnowledgeGraph([makeTestMistakes()[0]]); // mastery=90
+    expect(graph.nodes[0].mastery).toBe(90);
     expect(graph.weakPoints).not.toContain('一元二次方程');
   });
 
   // ── 6. mastery 计算（底线 0）───────────────────────────────────
-  it('5 个错题 → mastery = 0（100 - 5*20 = 0，不低于 0）', () => {
+  it('10 个错题 → mastery = 0（100 - 10*10 = 0，不低于 0）', () => {
     const template = makeTestMistakes()[0];
     const repeatedMistakes: MistakeRecord[] = Array.from(
-      { length: 5 },
+      { length: 10 },
       (_, i) => ({
         ...template,
         id: `mastery-floor-${i}`,
@@ -196,10 +196,10 @@ describe('buildKnowledgeGraph', () => {
     expect(graph.nodes[0].mastery).toBe(0);
   });
 
-  it('超过 5 个错题时 mastery 仍为 0（不会降至负数）', () => {
+  it('超过 10 个错题时 mastery 仍为 0（不会降至负数）', () => {
     const template = makeTestMistakes()[0];
     const repeatedMistakes: MistakeRecord[] = Array.from(
-      { length: 7 },
+      { length: 15 },
       (_, i) => ({
         ...template,
         id: `mastery-neg-${i}`,
@@ -209,6 +209,29 @@ describe('buildKnowledgeGraph', () => {
     const graph = buildKnowledgeGraph(repeatedMistakes);
     expect(graph.nodes[0].mastery).toBe(0);
     expect(graph.nodes[0].mastery).not.toBeLessThan(0);
+  });
+
+  // ── 7. 复习加分 ───────────────────────────────────────────────
+  it('已复习 3 次的错题应有复习加分（mastery > 90）', () => {
+    const graph = buildKnowledgeGraph([
+      makeMistake({ id: 'r1', knowledgePoints: ['复习测试'], reviewCount: 3 }),
+    ]);
+    // 100 - 10 + (3/6)*60 = 120 → clamp to 100
+    expect(graph.nodes[0].mastery).toBe(100);
+  });
+
+  it('已掌握（reviewCount=6, reviewed=true）的错题 mastery 应 >= 80', () => {
+    const graph = buildKnowledgeGraph([
+      makeMistake({
+        id: 'm1',
+        knowledgePoints: ['已掌握测试'],
+        reviewCount: 6,
+        reviewed: true,
+      }),
+    ]);
+    // 100 - 10 + (6/6)*60 = 150 → clamp to 100
+    expect(graph.nodes[0].mastery).toBe(100);
+    expect(graph.nodes[0].mastery).toBeGreaterThanOrEqual(80);
   });
 });
 
@@ -228,7 +251,7 @@ describe('getMasterySummary', () => {
   });
 
   it('overallMastery 为所有节点 mastery 的平均值（四舍五入）', () => {
-    // 代数 1 次错题 → mastery=80，统计 3 次错题 → mastery=40
+    // 代数 1 次错题 → mastery=90，统计 3 次错题 → mastery=70
     const records: MistakeRecord[] = [
       makeMistake({ id: 's1', knowledgePoints: ['代数'] }),
       makeMistake({ id: 's2', knowledgePoints: ['统计'] }),
@@ -239,9 +262,9 @@ describe('getMasterySummary', () => {
     const summary = getMasterySummary(graph);
 
     expect(summary.totalCount).toBe(2);
-    expect(summary.overallMastery).toBe(60); // (80 + 40) / 2
+    expect(summary.overallMastery).toBe(80); // (90 + 70) / 2
     expect(summary.masteredCount).toBe(1);   // 代数 >= 80
-    expect(summary.weakCount).toBe(1);        // 统计 < 50
+    expect(summary.weakCount).toBe(0);        // 统计=70, not < 50
   });
 
   it('所有节点均 mastered 时 masteredCount 等于 totalCount', () => {
@@ -249,7 +272,7 @@ describe('getMasterySummary', () => {
     const summary = getMasterySummary(graph);
 
     expect(summary.totalCount).toBe(5);
-    expect(summary.overallMastery).toBe(80);
+    expect(summary.overallMastery).toBe(90); // each node: 100 - 10 = 90
     expect(summary.masteredCount).toBe(5);
     expect(summary.weakCount).toBe(0);
   });
@@ -290,10 +313,10 @@ describe('recommendLearningPath', () => {
     const graph = buildKnowledgeGraph(records);
     const path = recommendLearningPath(graph);
 
-    expect(path.startNode).toBe('统计'); // mastery 40 是最弱的
+    expect(path.startNode).toBe('统计'); // mastery 70 是最弱的
     expect(path.nodes[0]).toBe('统计');
     expect(path.reason).toContain('统计');
-    expect(path.reason).toContain('mastery 40%');
+    expect(path.reason).toContain('mastery 70%');
   });
 
   it('路径中包含前置知识点（prerequisite 拓扑排序）', () => {

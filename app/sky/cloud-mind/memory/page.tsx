@@ -201,18 +201,13 @@ export default function CloudMindMemoryPage() {
         next.add(currentCard);
         return next;
       });
-      try {
-        const key = 'memory-progress';
-        const raw = localStorage.getItem(key);
-        const progress = raw ? JSON.parse(raw) : { totalFlipped: 0, topics: {} };
-        progress.totalFlipped = (progress.totalFlipped || 0) + 1;
-        const topicKey = deck.topic || 'unknown';
-        progress.topics[topicKey] = (progress.topics[topicKey] || 0) + 1;
-        progress.lastStudied = Date.now();
-        localStorage.setItem(key, JSON.stringify(progress));
-      } catch {
-        /* ignore */
-      }
+      // Update Zustand store
+      const store = useSkyClassroomStore.getState();
+      store.updateMemoryProgress({
+        totalFlipped: store.memoryProgress.totalFlipped + 1,
+        topicCount: new Set([...studiedCards, currentCard]).size,
+        lastStudied: Date.now(),
+      });
     }
   };
   const prevCard = () => {

@@ -50,6 +50,10 @@ export interface MistakeBookEntry {
   sourceSessionId?: string;
   /** Source category of the mistake entry */
   source?: 'classroom-quiz' | 'solve' | 'manual' | 'review';
+  /** Step-by-step solution process (AI-generated) */
+  solutionSteps?: string[];
+  /** Tiered hints: [思路方向, 关键公式, 详细计算] */
+  hints?: string[];
 }
 
 const TABLE = 'mistakes';

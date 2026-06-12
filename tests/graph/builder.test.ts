@@ -96,7 +96,7 @@ describe('buildGraphFromMistakes', () => {
   });
 
   it('nodes with mastery < 50 are weak points', () => {
-    const entries = Array.from({ length: 4 }, (_, i) =>
+    const entries = Array.from({ length: 8 }, (_, i) =>
       makeEntry({ id: `m${i}`, knowledgePoints: ['弱项'] }),
     );
     const result = buildGraphFromMistakes(entries);
@@ -110,11 +110,11 @@ describe('buildGraphFromMistakes', () => {
     expect(result.weakPoints).not.toContain('强项');
   });
 
-  it('category inference: 代数 keywords', () => {
+  it('category inference: 函数 keywords', () => {
     const result = buildGraphFromMistakes([
       makeEntry({ knowledgePoints: ['二次函数'] }),
     ]);
-    expect(result.nodes[0].category).toBe('代数');
+    expect(result.nodes[0].category).toBe('函数');
   });
 
   it('category inference: 几何 keywords', () => {

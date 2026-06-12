@@ -5,8 +5,8 @@ import Link from 'next/link';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import { buildKnowledgeGraph, getMasterySummary } from '@/lib/mistakes/knowledge-graph';
 import { useAnimatedNumber } from '@/lib/hooks/use-animated-number';
-import { useMemo } from 'react';
-import { motion } from 'motion/react';
+import { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Search, BookOpen, BarChart3, Sparkles, Clock } from 'lucide-react';
 
 // ── Cause label map ─────────────────────────────────────────────────
@@ -268,6 +268,8 @@ interface ActivityTimelineProps {
 }
 
 export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   const recentMistakes = useMemo(() => {
     const seen = new Set<string>();
     return mistakes
@@ -304,37 +306,82 @@ export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
         <Clock className="w-4 h-4 text-slate-400" />
         最近活动
       </h3>
-      <ul className="space-y-3">
-        {recentMistakes.map((m, i) => (
-          <li key={m.id || `timeline-${i}`}>
-            <motion.div
-              initial={{ opacity: 0, x: -15 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 + i * 0.08 }}
-              className="flex items-center gap-3 text-sm"
-            >
-              {/* Timeline dot + line */}
-              <div className="relative flex flex-col items-center">
-                <div className="w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-violet-500/20" />
-                {i < recentMistakes.length - 1 && (
-                  <div className="w-px h-6 bg-slate-300 dark:bg-slate-700" />
-                )}
+      <ul className="space-y-2">
+        {recentMistakes.map((m, i) => {
+          const isExpanded = expandedId === m.id;
+          return (
+            <li key={m.id || `timeline-${i}`}>
+              <div
+                className="flex items-center gap-3 text-sm cursor-pointer rounded-lg px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                onClick={() => setExpandedId(isExpanded ? null : m.id)}
+              >
+                {/* Timeline dot + line */}
+                <div className="relative flex flex-col items-center shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-violet-500/20" />
+                  {i < recentMistakes.length - 1 && (
+                    <div className="w-px h-6 bg-slate-300 dark:bg-slate-700" />
+                  )}
+                </div>
+
+                <span className="shrink-0 w-16 text-right text-xs text-slate-500">
+                  {formatRelativeTime(m.solvedAt)}
+                </span>
+                <span className="flex-1 truncate text-slate-700 dark:text-slate-300">
+                  {m.problem.length > 60 ? m.problem.slice(0, 60) + '...' : m.problem}
+                </span>
+                <span
+                  className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${causeColors[m.cause] ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'}`}
+                >
+                  {causeLabels[m.cause] ?? m.cause}
+                </span>
               </div>
 
-              <span className="shrink-0 w-16 text-right text-xs text-slate-500">
-                {formatRelativeTime(m.solvedAt)}
-              </span>
-              <span className="flex-1 truncate text-slate-700 dark:text-slate-300">
-                {m.problem.length > 60 ? m.problem.slice(0, 60) + '...' : m.problem}
-              </span>
-              <span
-                className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${causeColors[m.cause] ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'}`}
-              >
-                {causeLabels[m.cause] ?? m.cause}
-              </span>
-            </motion.div>
-          </li>
-        ))}
+              {/* Expanded details */}
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden ml-10"
+                  >
+                    <div className="mt-2 mb-1 rounded-lg border border-slate-200 dark:border-slate-700/50 bg-slate-50/80 dark:bg-slate-800/50 p-3 text-xs space-y-2">
+                      <div className="text-slate-700 dark:text-slate-300">
+                        <span className="text-slate-500">题目：</span>
+                        {m.problem.length > 120 ? m.problem.slice(0, 120) + '...' : m.problem}
+                      </div>
+                      <div className="flex gap-4">
+                        <div>
+                          <span className="text-slate-500">我的答案：</span>
+                          <span className="text-red-500 dark:text-red-400">{m.userAnswer || '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500">正确答案：</span>
+                          <span className="text-emerald-600 dark:text-emerald-400">{m.correctAnswer || '—'}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <Link
+                          href={`/sky/learning?tab=review&highlight=${m.id}`}
+                          className="rounded-md bg-violet-500/10 hover:bg-violet-500/20 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-400 transition-colors"
+                        >
+                          去复习
+                        </Link>
+                        <Link
+                          href={`/sky/learning?tab=mistakes&highlight=${m.id}`}
+                          className="rounded-md bg-slate-500/10 hover:bg-slate-500/20 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 transition-colors"
+                        >
+                          查看详情
+                        </Link>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </li>
+          );
+        })}
       </ul>
     </motion.div>
   );

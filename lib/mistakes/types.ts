@@ -26,6 +26,12 @@ export interface MistakeRecord {
   source?: 'classroom-quiz' | 'solve' | 'manual' | 'review';
   /** Session ID (stageId or solve session) that produced this mistake */
   sourceSessionId?: string;
+  /** Step-by-step solution process (AI-generated or manually entered) */
+  solutionSteps?: string[];
+  /** Tiered hints: [思路方向, 关键公式, 详细计算] */
+  hints?: string[];
+  /** Detailed explanation of why the user's answer was wrong */
+  errorExplanation?: string;
 }
 
 export type MistakeFilter =
@@ -51,6 +57,8 @@ export interface KnowledgeNode {
   problemCount: number;
   mistakeCount: number;
   children: string[];         // 子知识点 ID
+  /** Average review progress (0-1), for tooltip display */
+  reviewProgress: number;
 }
 
 export interface KnowledgeEdge {

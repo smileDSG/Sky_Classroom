@@ -180,6 +180,10 @@ interface MistakesSlice {
   setKnowledgeGraph: (graph: KnowledgeGraph) => void;
   deleteMistake: (id: string) => void;
   mergeMistakes: (serverMistakes: MistakeRecord[]) => void;
+  /** Set nextReview=now for all mistakes matching the given knowledge points */
+  prioritizeReview: (knowledgePoints: string[]) => void;
+  /** Cache AI-generated solution data for a mistake */
+  updateMistakeSolution: (id: string, data: { solutionSteps?: string[]; hints?: string[]; errorExplanation?: string }) => void;
 }
 
 const createMistakesSlice = (
@@ -223,6 +227,24 @@ const createMistakesSlice = (
       set({ mistakes: [...dedupedLocal, ...newFromServer] });
     }
   },
+  prioritizeReview: (knowledgePoints) => {
+    const kpSet = new Set(knowledgePoints);
+    set((s) => ({
+      mistakes: s.mistakes.map((m) => {
+        if (m.reviewed) return m;
+        const matches = m.knowledgePoints.some((kp) => kpSet.has(kp));
+        if (!matches) return m;
+        return { ...m, nextReview: Date.now() };
+      }),
+    }));
+  },
+  updateMistakeSolution: (id, data) => {
+    set((s) => ({
+      mistakes: s.mistakes.map((m) =>
+        m.id === id ? { ...m, ...data } : m,
+      ),
+    }));
+  },
 });
 
 // ── Assistant Slice ────────────────────────────────────────────────
@@ -250,9 +272,32 @@ const createAssistantSlice = (set: SetFn<AssistantSlice>): AssistantSlice => ({
   setDifficulty: (difficulty) => set({ difficulty }),
 });
 
+// ── Memory Slice ──────────────────────────────────────────────────
+
+interface MemorySlice {
+  memoryProgress: {
+    totalFlipped: number;
+    topicCount: number;
+    lastStudied: number | null;
+  };
+  updateMemoryProgress: (data: Partial<MemorySlice['memoryProgress']>) => void;
+}
+
+const createMemorySlice = (set: SetFn<MemorySlice>): MemorySlice => ({
+  memoryProgress: {
+    totalFlipped: 0,
+    topicCount: 0,
+    lastStudied: null,
+  },
+  updateMemoryProgress: (data) =>
+    set((s) => ({
+      memoryProgress: { ...s.memoryProgress, ...data },
+    })),
+});
+
 // ── Combined Store ─────────────────────────────────────────────────
 
-export type SkyClassroomStore = SolveSlice & SlidesSlice & MistakesSlice & AssistantSlice;
+export type SkyClassroomStore = SolveSlice & SlidesSlice & MistakesSlice & AssistantSlice & MemorySlice;
 
 export const useSkyClassroomStore = create<SkyClassroomStore>()(
   persist(
@@ -265,6 +310,8 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
       ...createMistakesSlice(set, get),
       // Assistant
       ...createAssistantSlice(set),
+      // Memory
+      ...createMemorySlice(set),
     }),
     {
       name: 'sky-classroom-storage',
