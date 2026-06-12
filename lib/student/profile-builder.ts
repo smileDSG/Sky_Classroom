@@ -16,6 +16,7 @@ import type { MistakeRecord } from '@/lib/mistakes/types';
 import type { MistakeCause } from '@/lib/solve/types';
 import type { Subject } from '@/lib/solve/agents/analyze-types';
 import type { StudentProfile, ErrorPattern, ProfileCacheEntry } from './profile-types';
+import { analyzeQuizPerformance } from './quiz-performance-analyzer';
 import { createLogger } from '@/lib/logger';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -223,6 +224,14 @@ export async function buildStudentProfile(userId: string): Promise<StudentProfil
   const totalQuestions = graph.nodes.reduce((sum, n) => sum + n.problemCount, 0);
   const totalCorrect = Math.max(0, totalQuestions - mistakes.length);
 
+  // Build recent quiz performance summary (async, non-blocking on failure)
+  let recentQuizPerformance: StudentProfile['recentQuizPerformance'];
+  try {
+    recentQuizPerformance = await analyzeQuizPerformance(userId, { recentDays: 7 });
+  } catch {
+    recentQuizPerformance = undefined;
+  }
+
   const profile: StudentProfile = {
     userId,
     masteryBySubject,
@@ -233,6 +242,7 @@ export async function buildStudentProfile(userId: string): Promise<StudentProfil
     totalQuestions,
     totalCorrect,
     lastUpdated: new Date(),
+    recentQuizPerformance,
   };
 
   await setCached(userId, profile);

@@ -76,7 +76,7 @@ export function createQuestionBankDAO(storage: StorageProvider) {
       const matches = all
         .filter((e) =>
           e.data.knowledgePoints.some(
-            (kp) => kp.toLowerCase().includes(point.toLowerCase()),
+            (kp) => kp.name.toLowerCase().includes(point.toLowerCase()),
           ),
         )
         .slice(0, limit);

@@ -22,6 +22,7 @@ import {
   Star,
 } from 'lucide-react';
 import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial-canvas';
+import { deriveQuizParamsFromProfile } from '@/lib/student/quiz-param-deriver';
 
 const SUBJECTS = [
   { id: 'math', label: '数学', dot: 'bg-violet-400' },
@@ -64,9 +65,42 @@ export default function CloudMindQuizPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 
+  // Load parameters from URL query (classroom review-quiz redirect)
   useEffect(() => {
+    const qSubject = searchParams.get('subject');
+    const qDifficulty = searchParams.get('difficulty');
     const qTopic = searchParams.get('topic');
+    const qCount = searchParams.get('count');
+    if (qSubject) setSubject(qSubject);
+    if (qDifficulty) setDifficulty(qDifficulty);
     if (qTopic) setTopic(qTopic);
+    if (qCount) setCount(Number(qCount));
+  }, [searchParams]);
+
+  // Auto-fill from student profile when no URL params are present
+  useEffect(() => {
+    const hasUrlParams =
+      searchParams.get('subject') ||
+      searchParams.get('difficulty') ||
+      searchParams.get('topic');
+    if (hasUrlParams) return;
+
+    async function loadAutoParams() {
+      try {
+        const res = await fetch('/api/student/profile');
+        if (!res.ok) return;
+        const profile = await res.json();
+        if (!profile) return;
+        const params = deriveQuizParamsFromProfile(profile);
+        setSubject(params.subject);
+        setDifficulty(params.difficulty);
+        setTopic(params.topic);
+        setCount(params.count);
+      } catch {
+        // Ignore auto-fill errors; keep manual defaults
+      }
+    }
+    loadAutoParams();
   }, [searchParams]);
 
   useEffect(() => {

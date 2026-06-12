@@ -22,6 +22,10 @@ export interface MistakeRecord {
   nextReview?: number;
   /** Mastery level = reviewCount, capped at EBBINGHAUS_INTERVALS.length */
   masteryLevel?: number;
+  /** Source of the mistake entry */
+  source?: 'classroom-quiz' | 'solve' | 'manual' | 'review';
+  /** Session ID (stageId or solve session) that produced this mistake */
+  sourceSessionId?: string;
 }
 
 export type MistakeFilter =

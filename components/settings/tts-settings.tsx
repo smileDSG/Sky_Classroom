@@ -643,7 +643,9 @@ export function TTSSettings({
   );
 }
 
-function VoxCPMVoiceManager() {const { profiles, addPromptVoice, addCloneVoice, deleteVoice } = useVoxCPMVoiceProfiles();
+function VoxCPMVoiceManager() {
+  const locale = 'zh-CN';
+  const { profiles, addPromptVoice, addCloneVoice, deleteVoice } = useVoxCPMVoiceProfiles();
   const ttsSpeed = useSettingsStore((state) => state.ttsSpeed);
   const ttsProvidersConfig = useSettingsStore((state) => state.ttsProvidersConfig);
   const { previewing, startPreview, stopPreview } = useTTSPreview();

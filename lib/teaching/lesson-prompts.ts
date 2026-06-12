@@ -13,6 +13,12 @@ export function buildLessonPlannerPrompt(
     errorPatterns: { knowledgePoint: string; errorType: string; frequency: number }[];
     totalQuestions: number;
     totalCorrect: number;
+    recentQuizPerformance?: {
+      overallAccuracy: number;
+      accuracyByKnowledge: Record<string, number>;
+      topErrorCauses: string[];
+      recommendedDepthShift: 'deeper' | 'shallower' | 'maintain';
+    };
   },
   topic: string,
 ): string {
@@ -34,6 +40,10 @@ export function buildLessonPlannerPrompt(
       ? `\n高频错误模式：\n${topErrors.map((e) => `  - ${e.knowledgePoint}：${e.errorType}（${e.frequency}次）`).join('\n')}`
       : '\n无明显错误模式';
 
+  const recentPerformanceInfo = profile.recentQuizPerformance
+    ? `\n近期答题表现（最近7天）：\n  - 整体正确率：${profile.recentQuizPerformance.overallAccuracy}%\n  - 高频错因：${profile.recentQuizPerformance.topErrorCauses.join('、') || '无'}\n  - 建议深度调整：${profile.recentQuizPerformance.recommendedDepthShift === 'shallower' ? '降低（学生近期表现较弱，需夯实基础）' : profile.recentQuizPerformance.recommendedDepthShift === 'deeper' ? '提升（学生近期表现优秀，可适当拔高）' : '保持'}`
+    : '';
+
   const overallAccuracy =
     profile.totalQuestions > 0
       ? Math.round((profile.totalCorrect / profile.totalQuestions) * 100)
@@ -47,7 +57,7 @@ export function buildLessonPlannerPrompt(
 - 本题目主题掌握度：${masteryForTopic}%
 ${weakInfo}
 ${strongInfo}
-${errorInfo}
+${errorInfo}${recentPerformanceInfo}
 
 ## 内容深度策略
 根据掌握度调整每个知识点的深度：

@@ -48,6 +48,8 @@ export interface MistakeBookEntry {
   reviewed: boolean;
   /** Source: which solve session this came from */
   sourceSessionId?: string;
+  /** Source category of the mistake entry */
+  source?: 'classroom-quiz' | 'solve' | 'manual' | 'review';
 }
 
 const TABLE = 'mistakes';

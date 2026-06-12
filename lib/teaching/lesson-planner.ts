@@ -16,15 +16,31 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('LessonPlanner');
 
+function adjustDepth(
+  baseDepth: 'basic' | 'intermediate' | 'advanced',
+  shift: 'deeper' | 'shallower' | 'maintain',
+): 'basic' | 'intermediate' | 'advanced' {
+  const order = ['basic', 'intermediate', 'advanced'] as const;
+  const idx = order.indexOf(baseDepth);
+  if (shift === 'deeper') return order[Math.min(idx + 1, 2)];
+  if (shift === 'shallower') return order[Math.max(idx - 1, 0)];
+  return baseDepth;
+}
+
 /** Fallback plan generated without LLM */
 function fallbackPlan(topic: string, profile: StudentProfile): LessonPlan {
   const weakKps = profile.weakPoints.slice(0, 3);
+  const shift = profile.recentQuizPerformance?.recommendedDepthShift ?? 'maintain';
+
+  const baseDepth = weakKps.length > 0 ? 'basic' : 'intermediate';
+  const adjustedDepth = adjustDepth(baseDepth, shift);
+
   const sections: LessonSection[] = [
     {
       id: 'section-1',
       title: `${topic} 基础讲解`,
       contentType: 'explanation',
-      depth: weakKps.length > 0 ? 'basic' : 'intermediate',
+      depth: adjustedDepth,
       knowledgePoints: weakKps.length > 0 ? weakKps : [topic],
       estimatedDuration: 10,
       hasQuiz: true,
@@ -33,7 +49,7 @@ function fallbackPlan(topic: string, profile: StudentProfile): LessonPlan {
       id: 'section-2',
       title: `${topic} 例题讲解`,
       contentType: 'example',
-      depth: 'intermediate',
+      depth: adjustDepth('intermediate', shift),
       knowledgePoints: [topic],
       estimatedDuration: 10,
       hasQuiz: false,
@@ -42,7 +58,7 @@ function fallbackPlan(topic: string, profile: StudentProfile): LessonPlan {
       id: 'section-3',
       title: `${topic} 随堂检测`,
       contentType: 'quiz',
-      depth: 'intermediate',
+      depth: adjustDepth('intermediate', shift),
       knowledgePoints: [topic],
       estimatedDuration: 5,
       hasQuiz: true,

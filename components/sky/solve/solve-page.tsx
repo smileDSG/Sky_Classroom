@@ -632,6 +632,7 @@ export function SolvePage() {
             reviewed: false,
             reviewCount: 0,
             knowledgePoints: result?.solution.knowledgePoints?.map((kp) => kp.name) ?? [],
+            source: 'solve',
           });
           setMistakeSaved(true);
         }

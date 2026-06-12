@@ -62,11 +62,6 @@ export function SkyTabBar() {
                       : 'text-slate-400 dark:text-slate-500',
                   )}
                 />
-                {item.badge && (
-                  <span className="absolute -top-1.5 -right-2 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 text-[8px] font-bold text-amber-900 shadow-sm">
-                    {item.badge}
-                  </span>
-                )}
               </div>
               <span>{item.label}</span>
             </span>
