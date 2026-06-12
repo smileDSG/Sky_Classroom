@@ -48,6 +48,10 @@ export interface MistakeBookEntry {
   reviewed: boolean;
   /** Source: which solve session this came from */
   sourceSessionId?: string;
+  /** Step-by-step solution process (AI-generated) */
+  solutionSteps?: string[];
+  /** Tiered hints: [思路方向, 关键公式, 详细计算] */
+  hints?: string[];
 }
 
 const TABLE = 'mistakes';

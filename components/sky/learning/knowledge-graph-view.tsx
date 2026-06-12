@@ -608,7 +608,7 @@ export function KnowledgeGraphView() {
       </div>
 
       {/* Canvas */}
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <canvas
           ref={canvasRef}
           className="w-full rounded border border-gray-100 dark:border-slate-700"
@@ -681,7 +681,9 @@ export function KnowledgeGraphView() {
                 <button
                   onClick={() => {
                     handleCloseTooltip();
-                    router.push(`/sky/cloud-mind/quiz?topic=${encodeURIComponent(tooltip.node.name)}`);
+                    router.push(
+                      `/sky/cloud-mind/quiz?topic=${encodeURIComponent(tooltip.node.name)}`,
+                    );
                   }}
                   className="rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm hover:shadow-md transition-all"
                 >
@@ -690,7 +692,9 @@ export function KnowledgeGraphView() {
                 <button
                   onClick={() => {
                     handleCloseTooltip();
-                    router.push(`/sky/cloud-mind/memory?topic=${encodeURIComponent(tooltip.node.name)}&content=${encodeURIComponent(`知识点：${tooltip.node.name}`)}`);
+                    router.push(
+                      `/sky/cloud-mind/memory?topic=${encodeURIComponent(tooltip.node.name)}&content=${encodeURIComponent(`知识点：${tooltip.node.name}`)}`,
+                    );
                   }}
                   className="rounded-lg bg-gradient-to-r from-rose-500 to-pink-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm hover:shadow-md transition-all"
                 >
@@ -773,9 +777,7 @@ export function KnowledgeGraphView() {
                   >
                     {node?.name ?? nodeId}
                     {node && (
-                      <span className="ml-1 text-[10px] text-blue-400">
-                        {node.mastery}%
-                      </span>
+                      <span className="ml-1 text-[10px] text-blue-400">{node.mastery}%</span>
                     )}
                   </button>
                   {i < learningPath.nodes.length - 1 && (

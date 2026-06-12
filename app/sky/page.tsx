@@ -4,9 +4,10 @@ import { useMemo, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
-import { StatCards, QuickActions, ActivityTimeline } from '@/components/sky/dashboard/stat-cards';
+import { StatCards, ActivityTimeline } from '@/components/sky/dashboard/stat-cards';
 import { LearningTrendChart } from '@/components/sky/dashboard/learning-trend-chart';
 import { AbilityRadar } from '@/components/sky/dashboard/ability-radar';
+import { DailySuggestCard } from '@/components/sky/dashboard/daily-suggest-card';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
@@ -19,6 +20,7 @@ import {
   Sparkles,
   ArrowRight,
   Zap,
+  TrendingUp,
 } from 'lucide-react';
 
 const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -102,7 +104,7 @@ function CloudMindMiniCard() {
   );
 }
 
-// ── Quick Stats Row ───────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────
 
 interface LearningStats {
   todayStudyMinutes: number;
@@ -117,106 +119,66 @@ function formatStudyTime(minutes: number): string {
   return m > 0 ? `${h}h${m}m` : `${h}h`;
 }
 
-function QuickStatsRow() {
+export default function SkyDashboardPage() {
+  const { resolvedTheme } = useTheme();
   const { user } = useAuth();
+  const mistakes = useSkyClassroomStore((s) => s.mistakes);
+  const greeting = useMemo(() => getGreeting(resolvedTheme === 'dark'), [resolvedTheme]);
+  const greetingEmoji = useMemo(() => getGreetingEmoji(resolvedTheme === 'dark'), [resolvedTheme]);
+
+  // ── Fetch learning stats ──────────────────────────────────────
   const [stats, setStats] = useState<LearningStats>({
     todayStudyMinutes: 0,
     streakDays: 0,
     masteryPercent: 0,
   });
 
-  // Fetch real stats from user_stats table
+  useEffect(() => {
+    syncMistakesFromQuizzes();
+  }, []);
+
   useEffect(() => {
     if (!user) return;
-
     const fetchStats = () => {
       fetch('/api/sky/learning-stats', { credentials: 'include' })
         .then((r) => r.json())
-        .then((j) => {
-          if (j.success) setStats(j);
-        })
+        .then((j) => { if (j.success) setStats(j); })
         .catch(() => {});
     };
-
     fetchStats();
     const interval = setInterval(fetchStats, 60_000);
     return () => clearInterval(interval);
   }, [user]);
 
-  // Don't show stats if not logged in
-  if (!user) return null;
-
-  const dynamicStats = [
-    { label: '今日学习', value: formatStudyTime(stats.todayStudyMinutes), icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: '连续打卡', value: stats.streakDays > 0 ? `${stats.streakDays} 天` : '—', icon: Sparkles, color: 'text-rose-500', bg: 'bg-rose-500/10' },
-    { label: '知识掌握', value: stats.masteryPercent > 0 ? `${stats.masteryPercent}%` : '—', icon: Brain, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  ];
-
-  return (
-    <div className="grid grid-cols-3 gap-3">
-      {dynamicStats.map((stat) => {
-        const Icon = stat.icon;
-        return (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center gap-3 rounded-xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-4"
-          >
-            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.bg}`}>
-              <Icon className={`h-5 w-5 ${stat.color}`} />
-            </div>
-            <div>
-              <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{stat.value}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</div>
-            </div>
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-}
-
-export default function SkyDashboardPage() {
-  const { resolvedTheme } = useTheme();
-  const mistakes = useSkyClassroomStore((s) => s.mistakes);
-  const greeting = useMemo(() => getGreeting(resolvedTheme === 'dark'), [resolvedTheme]);
-  const greetingEmoji = useMemo(() => getGreetingEmoji(resolvedTheme === 'dark'), [resolvedTheme]);
-
-  useEffect(() => {
-    syncMistakesFromQuizzes();
-  }, []);
-
-  const now = new Date();
-
+  // ── Computed data ─────────────────────────────────────────────
   const trendData = useMemo(() => {
-    const days = Array.from({ length: 7 }).map((_, i) => {
+    const now = new Date();
+    const days = Array.from({ length: 14 }).map((_, i) => {
       const d = new Date(now);
-      d.setDate(d.getDate() - (6 - i));
-      return { date: d, day: DAY_NAMES[d.getDay()], count: 0 };
+      d.setDate(d.getDate() - (13 - i));
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      return { day: DAY_NAMES[d.getDay()], dayStart, total: 0, reviewed: 0 };
     });
     for (const m of mistakes) {
-      const mDate = new Date(m.solvedAt);
-      const diffDays = Math.floor((now.getTime() - mDate.getTime()) / 86400000);
-      if (diffDays >= 0 && diffDays < 7) {
-        days[6 - diffDays].count++;
+      const mTime = new Date(m.solvedAt).getTime();
+      for (const slot of days) {
+        if (mTime >= slot.dayStart && mTime < slot.dayStart + 86400000) {
+          slot.total++;
+          if (m.reviewed) slot.reviewed++;
+          break;
+        }
       }
     }
-    return days;
+    return days.map(({ day, total, reviewed }) => ({ day, total, reviewed }));
   }, [mistakes]);
 
+  const DEFAULT_DIMENSIONS = ['代数', '函数', '几何', '概率', '统计'];
+
   const radarData = useMemo(() => {
-    if (mistakes.length === 0) {
-      return [
-        { name: '代数', value: 0 },
-        { name: '几何', value: 0 },
-        { name: '函数', value: 0 },
-        { name: '概率', value: 0 },
-        { name: '统计', value: 0 },
-      ];
-    }
     const graph = buildKnowledgeGraph(mistakes);
+    if (graph.nodes.length === 0) {
+      return DEFAULT_DIMENSIONS.map((name) => ({ name, value: 0 }));
+    }
     const categoryMastery = new Map<string, { total: number; count: number }>();
     for (const node of graph.nodes) {
       const existing = categoryMastery.get(node.category) ?? { total: 0, count: 0 };
@@ -224,17 +186,30 @@ export default function SkyDashboardPage() {
       existing.count++;
       categoryMastery.set(node.category, existing);
     }
-    const dimensions = ['代数', '几何', '函数', '概率', '统计'];
-    return dimensions.map((name) => {
-      const cat = categoryMastery.get(name);
-      return { name, value: cat ? Math.round(cat.total / cat.count) : 0 };
-    });
+    const sorted = [...categoryMastery.entries()]
+      .sort(([, a], [, b]) => b.count - a.count)
+      .slice(0, 5)
+      .map(([name, data]) => ({ name, value: Math.round(data.total / data.count) }));
+    if (sorted.length < 5) {
+      const used = new Set(sorted.map((d) => d.name));
+      for (const name of DEFAULT_DIMENSIONS) {
+        if (sorted.length >= 5) break;
+        if (!used.has(name)) sorted.push({ name, value: 0 });
+      }
+    }
+    return sorted;
   }, [mistakes]);
+
+  // ── Milestone helpers ─────────────────────────────────────────
+  const MILESTONES = [3, 7, 14, 30, 60, 100];
+  const MILESTONE_NAMES: Record<number, string> = { 3: '铜星', 7: '银星', 14: '金星', 30: '白金', 60: '钻石', 100: '传奇' };
+  const nextMilestone = MILESTONES.find((m) => m > stats.streakDays);
+  const maxMilestone = MILESTONES[MILESTONES.length - 1];
 
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-6xl space-y-6">
-        {/* Greeting */}
+        {/* ── Greeting ─────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -259,30 +234,161 @@ export default function SkyDashboardPage() {
           </div>
         </motion.div>
 
-        {/* Quick Stats */}
-        <QuickStatsRow />
+        {/* ── Daily Suggestions ────────────────────────────────── */}
+        <DailySuggestCard mistakes={mistakes} />
 
-        {/* Cloud Mind Card + Stat Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-1">
-            <CloudMindMiniCard />
-          </div>
-          <div className="lg:col-span-2">
-            <StatCards mistakes={mistakes} />
-          </div>
-        </div>
+        {mistakes.length === 0 ? (
+          /* ── Empty state onboarding ─────────────────────────── */
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-600 bg-white/50 dark:bg-slate-900/50 p-12 text-center"
+          >
+            <div className="text-5xl mb-4">⭐</div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+              欢迎来到摘星锦囊
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+              这里是你的学习驾驶舱。开始使用后，会展示学习数据统计、知识掌握趋势、能力雷达图和最近学习活动。
+            </p>
+            <div className="flex gap-3">
+              <Link
+                href="/sky/solve"
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.03]"
+              >
+                <Camera className="h-4 w-4" />
+                拍照搜题开始学习
+              </Link>
+              <Link
+                href="/sky/cloud-mind"
+                className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 px-5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-all"
+              >
+                <Brain className="h-4 w-4" />
+                探索 AI 工具集
+              </Link>
+            </div>
+          </motion.div>
+        ) : (
+          <>
+            {/* ── Zone 1: Overview Stats + Streak (merged) ─────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              {/* Left: 3 stat cards stacked */}
+              <div className="lg:col-span-2">
+                <StatCards mistakes={mistakes} />
+              </div>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <LearningTrendChart data={trendData} />
-          <AbilityRadar data={radarData} />
-        </div>
+              {/* Right: Streak + Quick Actions combined */}
+              <div className="lg:col-span-1 space-y-4">
+                {/* Inline streak card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="rounded-2xl border border-slate-200/60 dark:border-slate-700/40 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-500/15">
+                      <Sparkles className="h-3.5 w-3.5 text-orange-500" />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      连续打卡
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5 mb-2">
+                    <span className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+                      {stats.streakDays}
+                    </span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">天</span>
+                    {nextMilestone && (
+                      <span className="ml-auto text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                        距{MILESTONE_NAMES[nextMilestone]}还差 {nextMilestone - stats.streakDays} 天
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative h-2 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
+                    <motion.div
+                      className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-orange-400 to-amber-500"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(stats.streakDays / maxMilestone, 1) * 100}%` }}
+                      transition={{ duration: 1, ease: 'easeOut' }}
+                    />
+                  </div>
+                  <div className="flex justify-between">
+                    {MILESTONES.map((d) => {
+                      const achieved = stats.streakDays >= d;
+                      const isNext = nextMilestone === d;
+                      return (
+                        <span
+                          key={d}
+                          className={`text-[10px] ${
+                            achieved
+                              ? 'text-amber-600 dark:text-amber-400 font-medium'
+                              : isNext
+                                ? 'text-slate-500 dark:text-slate-400 font-medium'
+                                : 'text-slate-400 dark:text-slate-500'
+                          }`}
+                        >
+                          {MILESTONE_NAMES[d]}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  {stats.streakDays === 0 && (
+                    <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
+                      今天开始你的第一天打卡吧！
+                    </p>
+                  )}
+                </motion.div>
 
-        {/* Quick Actions */}
-        <QuickActions />
+                {/* Quick actions compact */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="grid grid-cols-2 gap-2"
+                >
+                  {[
+                    { icon: Camera, label: '拍照搜题', href: '/sky/solve', color: 'text-violet-500', bg: 'bg-violet-500/10 hover:bg-violet-500/20' },
+                    { icon: Presentation, label: '幻灯片', href: '/sky/slides', color: 'text-cyan-500', bg: 'bg-cyan-500/10 hover:bg-cyan-500/20' },
+                    { icon: TrendingUp, label: '学习数据', href: '/sky/learning', color: 'text-emerald-500', bg: 'bg-emerald-500/10 hover:bg-emerald-500/20' },
+                    { icon: Brain, label: 'AI 助手', href: '/sky/assistant', color: 'text-amber-500', bg: 'bg-amber-500/10 hover:bg-amber-500/20' },
+                  ].map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <Link
+                        key={action.label}
+                        href={action.href}
+                        className={`flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700/50 px-3 py-2.5 ${action.bg} backdrop-blur-sm transition-all hover:scale-[1.03]`}
+                      >
+                        <Icon className={`w-4 h-4 ${action.color}`} />
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                          {action.label}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </motion.div>
+              </div>
+            </div>
 
-        {/* Activity Timeline */}
-        <ActivityTimeline mistakes={mistakes} />
+            {/* ── Zone 2: AI Tools + Charts ────────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              {/* Left: Cloud Mind Card */}
+              <div className="lg:col-span-1">
+                <CloudMindMiniCard />
+              </div>
+              {/* Right: Charts side by side */}
+              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+                <LearningTrendChart data={trendData} />
+                <AbilityRadar data={radarData} />
+              </div>
+            </div>
+
+            {/* ── Zone 3: Activity ─────────────────────────────── */}
+            <ActivityTimeline mistakes={mistakes} />
+          </>
+        )}
       </div>
     </SkyAppShell>
   );

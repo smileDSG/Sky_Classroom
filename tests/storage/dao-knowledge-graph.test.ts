@@ -15,7 +15,7 @@ function makeQuestion(hash: string, kps: string[]): QuestionBankEntry {
     problemText: `Question ${hash}`,
     answer: '42',
     steps: ['step1'],
-    knowledgePoints: kps,
+    knowledgePoints: kps.map((name) => ({ name, description: '', difficulty: 'medium' })),
     agentId: 'test-agent',
     verified: false,
   };

@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import type { MistakeCause } from '@/lib/solve/types';
+import type { MistakeRecord } from '@/lib/mistakes/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { ReviewSession } from './review-session';
 
 /** Must match the Ebbinghaus intervals in storage/dao/mistakes.ts */
 const EBBINGHAUS_INTERVALS_LENGTH = 6;
@@ -48,6 +50,7 @@ function formatDate(date: Date): string {
 export function MistakeBook() {
   const { mistakes, markReviewed, setFilter, deleteMistake } =
     useSkyClassroomStore();
+  const [sessionItems, setSessionItems] = useState<MistakeRecord[] | null>(null);
 
   // Compound local filter state (store only holds a single union filter)
   const [causeFilter, setCauseFilter] = useState<MistakeCause | null>(null);
@@ -127,6 +130,12 @@ export function MistakeBook() {
     setFilter(null);
   };
 
+  // ── Session management ──────────────────────────────────────────────
+
+  const closeSession = useCallback(() => {
+    setSessionItems(null);
+  }, []);
+
   // ── Empty state ─────────────────────────────────────────────────────
 
   if (mistakes.length === 0) {
@@ -147,6 +156,10 @@ export function MistakeBook() {
 
   return (
     <div className="space-y-4">
+      {/* Immersive Review Session */}
+      {sessionItems && (
+        <ReviewSession items={sessionItems} onClose={closeSession} />
+      )}
       {/* ── Filter bar ── */}
       <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
         <div className="flex flex-wrap items-center gap-3">
@@ -223,6 +236,16 @@ export function MistakeBook() {
           <span className="ml-auto text-xs text-gray-400 dark:text-slate-400">
             {filtered.length} / {mistakes.length} 条
           </span>
+
+          {/* Batch review button */}
+          {filtered.filter((m) => !m.reviewed).length > 0 && (
+            <button
+              onClick={() => setSessionItems(filtered.filter((m) => !m.reviewed))}
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+            >
+              🎯 全部沉浸复习
+            </button>
+          )}
         </div>
       </div>
 
@@ -286,12 +309,20 @@ export function MistakeBook() {
                 {/* Action buttons */}
                 <div className="flex shrink-0 flex-col gap-2">
                   {!m.reviewed && (
-                    <button
-                      onClick={() => markReviewed(m.id, true)}
-                      className="whitespace-nowrap rounded-lg bg-[#10B981] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-600"
-                    >
-                      复习一次 {m.reviewCount}/{EBBINGHAUS_INTERVALS_LENGTH}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => markReviewed(m.id, true)}
+                        className="whitespace-nowrap rounded-lg bg-[#10B981] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-600"
+                      >
+                        快速复习 {m.reviewCount}/{EBBINGHAUS_INTERVALS_LENGTH}
+                      </button>
+                      <button
+                        onClick={() => setSessionItems([m])}
+                        className="whitespace-nowrap rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:from-violet-700 hover:to-indigo-700"
+                      >
+                        沉浸复习
+                      </button>
+                    </>
                   )}
                   {m.reviewed && (
                     <span className="whitespace-nowrap rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-600 dark:bg-green-900/30 dark:text-green-400">

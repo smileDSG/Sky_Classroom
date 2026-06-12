@@ -184,6 +184,8 @@ interface MistakesSlice {
   mergeMistakes: (serverMistakes: MistakeRecord[]) => void;
   /** Set nextReview=now for all mistakes matching the given knowledge points */
   prioritizeReview: (knowledgePoints: string[]) => void;
+  /** Cache AI-generated solution data for a mistake */
+  updateMistakeSolution: (id: string, data: { solutionSteps?: string[]; hints?: string[]; errorExplanation?: string }) => void;
 }
 
 const createMistakesSlice = (
@@ -265,6 +267,13 @@ const createMistakesSlice = (
         if (!matches) return m;
         return { ...m, nextReview: Date.now() };
       }),
+    }));
+  },
+  updateMistakeSolution: (id, data) => {
+    set((s) => ({
+      mistakes: s.mistakes.map((m) =>
+        m.id === id ? { ...m, ...data } : m,
+      ),
     }));
   },
 });

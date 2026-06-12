@@ -20,9 +20,14 @@ import { KNOWLEDGE_RELATIONS } from './knowledge-relations';
 const EBBINGHAUS_MAX_ROUNDS = 6;
 
 function inferCategory(name: string): string {
-  if (/方程|函数|代数/.test(name)) return '代数';
-  if (/几何|三角|圆/.test(name)) return '几何';
-  if (/概率|统计/.test(name)) return '概率';
+  if (/方程|不等式|多项式|因式|整式|分式|根式|指数|对数|代数/.test(name)) return '代数';
+  if (/函数|映射|单调|奇偶|周期|反函数|一次|二次|幂|指对/.test(name)) return '函数';
+  if (/几何|三角|圆|向量|直线|平面|立体|棱|球|柱|锥|角|平行|垂直|相似|全等/.test(name)) return '几何';
+  if (/概率|随机|期望|方差|分布|频率|事件/.test(name)) return '概率';
+  if (/统计|样本|总体|回归|相关|抽样|频率分布|中位|众数|平均/.test(name)) return '统计';
+  if (/数列|等差|等比|通项|求和|递推/.test(name)) return '数列';
+  if (/导数|微分|极限|积分|连续|可导/.test(name)) return '微积分';
+  if (/集合|逻辑|充要|命题|子集|交集|并集|补集/.test(name)) return '集合与逻辑';
   return '综合';
 }
 
@@ -130,17 +135,7 @@ export function buildKnowledgeGraph(
     }
   }
 
-  // 3b. Prerequisite edges — A is a prefix of B (e.g. "二次函数" → "二次函数图像")
-  const kpList = [...kpSet];
-  for (const a of kpList) {
-    for (const b of kpList) {
-      if (a !== b && b.startsWith(a)) {
-        addEdge(a, b, 'prerequisite');
-      }
-    }
-  }
-
-  // 3c. Mapping table edges — from the knowledge relations table
+  // 3b. Mapping table edges — from the knowledge relations table
   for (const [kp, rels] of Object.entries(KNOWLEDGE_RELATIONS)) {
     if (!kpSet.has(kp)) continue;
     for (const prereq of rels.prereqs ?? []) {
@@ -152,9 +147,10 @@ export function buildKnowledgeGraph(
   }
 
   // ── 4. Populate children from prerequisite edges ──────────────
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
   for (const edge of edges) {
     if (edge.relation === 'prerequisite') {
-      const parent = nodes.find((n) => n.id === edge.from);
+      const parent = nodeMap.get(edge.from);
       if (parent && !parent.children.includes(edge.to)) {
         parent.children.push(edge.to);
       }
@@ -202,10 +198,12 @@ export function recommendLearningPath(graph: KnowledgeGraph): LearningPath {
   // Topological DFS to collect prerequisites (reverse traversal)
   const prereqsInOrder: string[] = [];
   const visited = new Set<string>();
+  const inStack = new Set<string>(); // cycle detection
 
   function dfs(nodeId: string) {
     if (visited.has(nodeId)) return;
-    visited.add(nodeId);
+    if (inStack.has(nodeId)) return; // cycle detected, skip
+    inStack.add(nodeId);
 
     const parents = incoming.get(nodeId) ?? [];
     // Sort for deterministic output
@@ -213,6 +211,8 @@ export function recommendLearningPath(graph: KnowledgeGraph): LearningPath {
       dfs(parent);
     }
 
+    inStack.delete(nodeId);
+    visited.add(nodeId);
     prereqsInOrder.push(nodeId);
   }
   dfs(weakest.id);

@@ -64,11 +64,9 @@ describe('P6-001: mistakes ↔ knowledge graph integration', () => {
   });
 
   test('recommendations generated for weak points', () => {
-    const mistakes = [
-      makeMistake('m1', 'method-wrong', ['三角函数']),
-      makeMistake('m2', 'concept-unclear', ['三角函数']),
-      makeMistake('m3', 'calculation-error', ['三角函数']),
-    ];
+    const mistakes = Array.from({ length: 6 }, (_, i) =>
+      makeMistake(`m${i}`, 'method-wrong', ['三角函数']),
+    );
 
     const graph = buildKnowledgeGraph(mistakes);
 
@@ -200,14 +198,47 @@ describe('P6-001: solve → mistakes → graph end-to-end', () => {
         reviewCount: 0,
         knowledgePoints: ['代数'],
       },
+      {
+        id: 'acc-4',
+        problem: '3x = 9',
+        userAnswer: 'x = 2',
+        correctAnswer: 'x = 3',
+        cause: 'calculation-error',
+        solvedAt: new Date(2026, 3, 1),
+        reviewed: false,
+        reviewCount: 0,
+        knowledgePoints: ['代数'],
+      },
+      {
+        id: 'acc-5',
+        problem: '7x = 21',
+        userAnswer: 'x = 4',
+        correctAnswer: 'x = 3',
+        cause: 'calculation-error',
+        solvedAt: new Date(2026, 4, 1),
+        reviewed: false,
+        reviewCount: 0,
+        knowledgePoints: ['代数'],
+      },
+      {
+        id: 'acc-6',
+        problem: '9x = 27',
+        userAnswer: 'x = 2',
+        correctAnswer: 'x = 3',
+        cause: 'calculation-error',
+        solvedAt: new Date(2026, 5, 1),
+        reviewed: false,
+        reviewCount: 0,
+        knowledgePoints: ['代数'],
+      },
     ];
 
     const graph = buildKnowledgeGraph(mistakes);
 
     const algebraNode = graph.nodes.find((n) => n.name === '代数')!;
-    expect(algebraNode.mistakeCount).toBe(3);
+    expect(algebraNode.mistakeCount).toBe(6);
 
-    // With 3 mistakes, the node should be flagged as weak
+    // With 6 mistakes and no reviews, the node should be flagged as weak
     expect(graph.weakPoints).toContain('代数');
   });
 

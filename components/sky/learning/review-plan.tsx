@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { EBBINGHAUS_INTERVALS } from '@/lib/storage/dao/mistakes';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import {
@@ -11,6 +11,9 @@ import {
   type MasteryProgress,
 } from '@/lib/schedule/review-scheduler';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
+import type { MistakeRecord } from '@/lib/mistakes/types';
+import type { MistakeCause } from '@/lib/solve/types';
+import { ReviewSession } from './review-session';
 
 const INTERVAL_META: Record<number, { label: string; color: string }> = {
   1:  { label: '1天后',  color: '#EF4444' },
@@ -43,6 +46,7 @@ export function ReviewPlan() {
   const [toast, setToast] = useState<string | null>(null);
   const markReviewed = useSkyClassroomStore((s) => s.markReviewed);
   const initialLoaded = useRef(false);
+  const [sessionItems, setSessionItems] = useState<MistakeRecord[] | null>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -135,6 +139,26 @@ export function ReviewPlan() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // ── Session management ──────────────────────────────────────────────
+
+  // Convert urgentItems to MistakeRecord for ReviewSession
+  const urgentRecords = useMemo(
+    () => urgentItems.map(entryToRecord),
+    [urgentItems],
+  );
+
+  const startSession = useCallback(
+    (items: MistakeRecord[]) => {
+      setSessionItems(items);
+    },
+    [],
+  );
+
+  const closeSession = useCallback(() => {
+    setSessionItems(null);
+    loadData();
+  }, [loadData]);
+
   // ── States ──────────────────────────────────────────────────────────
 
   if (loading) {
@@ -178,6 +202,11 @@ export function ReviewPlan() {
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 rounded-xl bg-slate-800 dark:bg-slate-200 px-5 py-2.5 text-sm font-medium text-white dark:text-slate-800 shadow-lg animate-[fadeInUp_0.3s_ease-out]">
           {toast}
         </div>
+      )}
+
+      {/* Immersive Review Session */}
+      {sessionItems && (
+        <ReviewSession items={sessionItems} onClose={closeSession} />
       )}
       {/* ── 1. Forgetting Curve ── */}
       <div className="rounded-xl bg-white p-5 shadow-sm dark:bg-slate-800">
@@ -277,10 +306,16 @@ export function ReviewPlan() {
           <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-slate-200 flex items-center gap-2">
             <span>🔔 今日待复习</span>
             <span key="badge" className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{urgentItems.length} 题</span>
+            <button
+              onClick={() => startSession(urgentRecords)}
+              className="ml-auto flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+            >
+              🎯 全部沉浸复习
+            </button>
           </h3>
           <div className="space-y-2">
-            {urgentItems.map((item) => (
-              <div key={item.id} className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-3 dark:border-amber-900/50 dark:bg-amber-900/20">
+            {urgentItems.map((item, idx) => (
+              <div key={`${item.id}-${idx}`} className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-3 dark:border-amber-900/50 dark:bg-amber-900/20">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-800 dark:text-slate-100 line-clamp-1">{item.problemText}</p>
                   <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-400">
@@ -340,7 +375,13 @@ export function ReviewPlan() {
                       onClick={() => setReviewingId(item.id)}
                       className="rounded-lg bg-[#10B981] px-3 py-1.5 text-xs font-medium text-white hover:bg-green-600 transition-colors"
                     >
-                      开始复习
+                      快速复习
+                    </button>
+                    <button
+                      onClick={() => startSession([entryToRecord(item)])}
+                      className="rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:from-violet-700 hover:to-indigo-700 transition-colors"
+                    >
+                      沉浸
                     </button>
                   </div>
                 )}
@@ -429,4 +470,34 @@ function causeToErrorType(cause: string): import('@/lib/storage/dao/mistakes').E
     'careless': 'careless',
   };
   return map[cause] ?? 'calculation';
+}
+
+function errorTypeToCause(errorType: string): MistakeCause {
+  const map: Record<string, MistakeCause> = {
+    concept: 'concept-unclear',
+    calculation: 'calculation-error',
+    reading: 'misreading',
+    reasoning: 'method-wrong',
+    careless: 'careless',
+  };
+  return map[errorType] ?? 'concept-unclear';
+}
+
+/** Convert MistakeBookEntry → MistakeRecord for ReviewSession */
+function entryToRecord(entry: MistakeBookEntry): MistakeRecord {
+  return {
+    id: entry.id,
+    problem: entry.problemText,
+    userAnswer: entry.userAnswer,
+    correctAnswer: entry.correctAnswer,
+    cause: errorTypeToCause(entry.errorType),
+    solvedAt: new Date(entry.lastReview ?? Date.now()),
+    reviewed: entry.reviewed,
+    reviewCount: entry.reviewCount,
+    knowledgePoints: entry.knowledgePoints,
+    masteryLevel: entry.masteryLevel,
+    solutionSteps: entry.solutionSteps,
+    hints: entry.hints,
+    errorExplanation: entry.errorExplanation,
+  };
 }

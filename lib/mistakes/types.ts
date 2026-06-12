@@ -22,6 +22,12 @@ export interface MistakeRecord {
   nextReview?: number;
   /** Mastery level = reviewCount, capped at EBBINGHAUS_INTERVALS.length */
   masteryLevel?: number;
+  /** Step-by-step solution process (AI-generated or manually entered) */
+  solutionSteps?: string[];
+  /** Tiered hints: [思路方向, 关键公式, 详细计算] */
+  hints?: string[];
+  /** Detailed explanation of why the user's answer was wrong */
+  errorExplanation?: string;
 }
 
 export type MistakeFilter =
