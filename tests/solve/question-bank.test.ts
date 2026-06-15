@@ -26,7 +26,7 @@ vi.mock('@/lib/knowledge-base/kb-manager', () => ({
       content: opts.content,
       tags: opts.tags || [],
       sourceId: opts.sourceId || null,
-      verified: opts.verified || false,
+      verified: opts.verified ?? true,
       usageCount: 0,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -170,12 +170,11 @@ describe('saveToQuestionBank', () => {
       knowledgePoints: [{ name: '一元一次方程', description: '', difficulty: 'medium' }],
       agentId: 'science',
       solvedAt: Date.now(),
-      verified: false,
     });
 
     expect(entry.problemHash).toBe(hashProblemText('解方程 2x+3=7'));
     expect(entry.answer).toBe('x = 2');
-    expect(entry.verified).toBe(false);
+    expect(entry.verified).toBe(true);
   });
 
   test('uses provided problemHash', async () => {
@@ -186,7 +185,6 @@ describe('saveToQuestionBank', () => {
       knowledgePoints: [],
       agentId: 'universal',
       solvedAt: Date.now(),
-      verified: false,
     });
 
     expect(entry.problemHash).toBe('custom_hash');
@@ -200,7 +198,6 @@ describe('saveToQuestionBank', () => {
       knowledgePoints: [],
       agentId: 'science',
       solvedAt: Date.now(),
-      verified: false,
     });
 
     // Second save with same problem — should be deduplicated
@@ -212,7 +209,6 @@ describe('saveToQuestionBank', () => {
       knowledgePoints: [],
       agentId: 'science',
       solvedAt: Date.now(),
-      verified: false,
     });
 
     // write should only be called once due to dedup
@@ -230,7 +226,6 @@ describe('isProblemInBank', () => {
       knowledgePoints: [],
       agentId: 'science',
       solvedAt: Date.now(),
-      verified: false,
     });
 
     const exists = await isProblemInBank('解方程 2x+3=7');

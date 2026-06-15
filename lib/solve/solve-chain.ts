@@ -32,9 +32,9 @@ const log = createLogger('SolveChain');
 
 // ── Timeouts (ms) ──────────────────────────────────────────────────
 
-const TOTAL_CHAIN_TIMEOUT = 60_000;
-const MAX_STEP_TIMEOUT = 15_000;
-const MIN_STEP_TIMEOUT = 3_000;
+const TOTAL_CHAIN_TIMEOUT = 120_000;
+const MAX_STEP_TIMEOUT = 30_000;
+const MIN_STEP_TIMEOUT = 5_000;
 
 /** Confidence threshold above which we skip the verify step. */
 const HIGH_CONFIDENCE_THRESHOLD = 0.7;

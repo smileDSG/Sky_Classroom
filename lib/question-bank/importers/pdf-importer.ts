@@ -4,8 +4,7 @@
  * Orchestrates the full PDF import pipeline:
  *   parse PDF → split questions → extract structure → filter by confidence → insert
  *
- * High-confidence (≥0.8) questions are inserted with verified=true.
- * Low-confidence questions are inserted with verified=false for manual review.
+ * Extracted questions are inserted directly after structure validation.
  */
 
 import { createLogger } from '@/lib/logger';
@@ -20,6 +19,7 @@ import { extractStructure, type ExtractedQuestion } from './pdf-structure-extrac
 import { postProcessEntries } from './post-processor';
 
 const log = createLogger('QB:PDF:Import');
+type LLMParams = Parameters<typeof callLLM>[0];
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -30,9 +30,7 @@ export interface PdfImportDeps {
   insertBatch?: typeof defaultInsertBatch;
 }
 
-export interface PdfImportResult extends ImportResult {
-  pendingReview: number;
-}
+export type PdfImportResult = ImportResult;
 
 // ── Default deps (production) ───────────────────────────────────────
 
@@ -45,12 +43,12 @@ export function createDefaultPdfDeps(pdfConfig?: PDFParserConfig): PdfImportDeps
     },
     splitQuestions: async (text: string) => {
       return splitQuestions(text, {
-        callLLM: async (params, source) => callLLM(params as any, source),
+        callLLM: async (params, source) => callLLM(params as LLMParams, source),
       });
     },
     extractStructure: async (text: string) => {
       return extractStructure(text, {
-        callLLM: async (params, source) => callLLM(params as any, source),
+        callLLM: async (params, source) => callLLM(params as LLMParams, source),
       });
     },
   };
@@ -75,12 +73,13 @@ async function runPdfPipeline(
   try {
     const parsed = await deps.parsePdf(pdfBuffer);
     text = parsed.text;
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : '未知错误';
     log.error('PDF parsing failed:', err);
     return {
       highConfidence: [],
       lowConfidence: [],
-      errors: [{ row: 0, reason: `PDF 解析失败: ${err.message ?? '未知错误'}` }],
+      errors: [{ row: 0, reason: `PDF 解析失败: ${message}` }],
       totalSegments: 0,
     };
   }
@@ -129,7 +128,7 @@ async function runPdfPipeline(
     if (extracted.confidence >= CONFIDENCE_THRESHOLD) {
       highConfidence.push({ ...entry, verified: true });
     } else {
-      lowConfidence.push({ ...entry, verified: false });
+      lowConfidence.push({ ...entry, verified: true });
     }
   }
 
@@ -169,18 +168,20 @@ export async function importFromPdf(
   if (pipeline.highConfidence.length > 0) {
     try {
       highResult = await doInsert(pipeline.highConfidence);
-    } catch (err: any) {
-      highResult.errors.push({ row: 0, reason: `入库失败: ${err.message ?? '未知错误'}` });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '未知错误';
+      highResult.errors.push({ row: 0, reason: `入库失败: ${message}` });
     }
   }
 
-  // Step 5: Insert low-confidence questions (pending review)
+  // Step 5: Insert low-confidence questions
   let lowResult: ImportResult = { total: pipeline.lowConfidence.length, inserted: 0, duplicates: 0, errors: [] };
   if (pipeline.lowConfidence.length > 0) {
     try {
       lowResult = await doInsert(pipeline.lowConfidence);
-    } catch (err: any) {
-      lowResult.errors.push({ row: 0, reason: `审核队列入库失败: ${err.message ?? '未知错误'}` });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '未知错误';
+      lowResult.errors.push({ row: 0, reason: `入库失败: ${message}` });
     }
   }
 
@@ -189,10 +190,9 @@ export async function importFromPdf(
     inserted: highResult.inserted + lowResult.inserted,
     duplicates: highResult.duplicates + lowResult.duplicates,
     errors: [...pipeline.errors, ...highResult.errors, ...lowResult.errors],
-    pendingReview: pipeline.lowConfidence.length,
   };
 
-  log.info(`PDF import complete: ${result.inserted} inserted, ${result.pendingReview} pending review, ${result.errors.length} errors`);
+  log.info(`PDF import complete: ${result.inserted} inserted, ${result.errors.length} errors`);
   return result;
 }
 

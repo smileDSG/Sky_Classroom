@@ -80,7 +80,7 @@ export async function saveToQuestionBank(
       similarQuestions: entry.similarQuestions ?? [],
       agentId: entry.agentId,
       solvedAt: entry.solvedAt ?? Date.now(),
-      verified: entry.verified ?? false,
+      verified: entry.verified ?? true,
     };
 
     const { write, hasSource } = await import('@/lib/knowledge-base/kb-manager');

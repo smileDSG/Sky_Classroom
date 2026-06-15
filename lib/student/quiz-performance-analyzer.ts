@@ -7,6 +7,7 @@
 
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
+import { createQuizAttemptDAO } from './quiz-attempts';
 
 export interface QuizPerformanceSummary {
   /** Overall accuracy across recent attempts (0-100) */
@@ -30,15 +31,19 @@ export async function analyzeQuizPerformance(
 
   const storage = await getServerStorage();
   const dao = createMistakeBookDAO(storage);
+  const quizAttemptDAO = createQuizAttemptDAO(storage);
 
-  // Fetch recent mistakes (both newly added and reviewed)
-  const { items: allMistakes } = await dao.list({ pageSize: 9999 });
+  // Fetch recent mistakes and direct quiz attempts
+  const [{ items: allMistakes }, recentAttempts] = await Promise.all([
+    dao.list({ pageSize: 9999 }),
+    quizAttemptDAO.list({ userId, recentDays }),
+  ]);
   const recentMistakes = allMistakes.filter(
     (m) => (m.lastReview ?? 0) >= cutoff || (m.nextReview ?? 0) >= cutoff,
   );
 
   // If no recent data, return neutral summary
-  if (recentMistakes.length === 0) {
+  if (recentMistakes.length === 0 && recentAttempts.length === 0) {
     return {
       overallAccuracy: 50,
       accuracyByKnowledge: {},
@@ -54,6 +59,22 @@ export async function analyzeQuizPerformance(
   >();
 
   const causeCounts = new Map<string, number>();
+
+  for (const attempt of recentAttempts) {
+    for (const question of attempt.questions) {
+      const points = question.knowledgePoints.length > 0
+        ? question.knowledgePoints
+        : attempt.topic
+          ? [attempt.topic]
+          : ['综合练习'];
+      for (const kp of points) {
+        const stat = kpStats.get(kp) ?? { attempts: 0, correct: 0 };
+        stat.attempts += 1;
+        if (question.isCorrect) stat.correct += 1;
+        kpStats.set(kp, stat);
+      }
+    }
+  }
 
   for (const m of recentMistakes) {
     for (const kp of m.knowledgePoints) {

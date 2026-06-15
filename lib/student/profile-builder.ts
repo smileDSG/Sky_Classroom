@@ -11,8 +11,9 @@
 
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
-import { buildKnowledgeGraph, getMasterySummary } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
 import { inferSubject } from '@/lib/mistakes/subject-inference';
+import { createQuizAttemptDAO } from './quiz-attempts';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import type { MistakeCause } from '@/lib/solve/types';
 import type { Subject } from '@/lib/solve/agents/analyze-types';
@@ -44,6 +45,21 @@ function mistakeCauseFromErrorType(
     case 'careless':
       return 'careless';
   }
+}
+
+function addMasterySample<K extends string>(
+  target: Map<K, { correct: number; total: number }>,
+  key: K,
+  isCorrect: boolean,
+): void {
+  const entry = target.get(key) ?? { correct: 0, total: 0 };
+  entry.total += 1;
+  if (isCorrect) entry.correct += 1;
+  target.set(key, entry);
+}
+
+function mergeMastery(existing: number | undefined, quizMastery: number): number {
+  return existing === undefined ? quizMastery : Math.round(existing * 0.6 + quizMastery * 0.4);
 }
 
 // ── Cache helpers ─────────────────────────────────────────────────
@@ -122,10 +138,14 @@ export async function buildStudentProfile(userId: string): Promise<StudentProfil
   log.info(`Profile cache miss for ${userId}, building...`);
   const storage = await getServerStorage();
   const mistakeDAO = createMistakeBookDAO(storage);
+  const quizAttemptDAO = createQuizAttemptDAO(storage);
 
-  // Fetch all mistakes
-  const { items: mistakes } = await mistakeDAO.list({ pageSize: 9999 });
-  log.info(`Building profile for ${userId}: ${mistakes.length} mistakes loaded`);
+  // Fetch all learning signals
+  const [{ items: mistakes }, quizAttempts] = await Promise.all([
+    mistakeDAO.list({ pageSize: 9999 }),
+    quizAttemptDAO.list({ userId }),
+  ]);
+  log.info(`Building profile for ${userId}: ${mistakes.length} mistakes, ${quizAttempts.length} quiz attempts loaded`);
 
   // Build knowledge graph from mistakes
   const kgMistakes: MistakeRecord[] = mistakes.map((m) => ({
@@ -141,15 +161,34 @@ export async function buildStudentProfile(userId: string): Promise<StudentProfil
   }));
 
   const graph = buildKnowledgeGraph(kgMistakes);
-  const masterySummary = getMasterySummary(graph);
 
-  // Build masteryByKnowledge from graph nodes
+  const quizKnowledgeStats = new Map<string, { correct: number; total: number }>();
+  const quizSubjectStats = new Map<Subject, { correct: number; total: number }>();
+  for (const attempt of quizAttempts) {
+    for (const question of attempt.questions) {
+      addMasterySample(quizSubjectStats, attempt.subject, question.isCorrect);
+      const points = question.knowledgePoints.length > 0
+        ? question.knowledgePoints
+        : attempt.topic
+          ? [attempt.topic]
+          : ['综合练习'];
+      for (const point of points) {
+        addMasterySample(quizKnowledgeStats, point, question.isCorrect);
+      }
+    }
+  }
+
+  // Build masteryByKnowledge from graph nodes and quiz attempts
   const masteryByKnowledge: Record<string, number> = {};
   for (const node of graph.nodes) {
     masteryByKnowledge[node.name] = node.mastery;
   }
+  for (const [point, stat] of quizKnowledgeStats) {
+    const quizMastery = Math.round((stat.correct / stat.total) * 100);
+    masteryByKnowledge[point] = mergeMastery(masteryByKnowledge[point], quizMastery);
+  }
 
-  // Build masteryBySubject by grouping knowledge points
+  // Build masteryBySubject by grouping knowledge points and quiz attempts
   const subjectTotals = new Map<Subject, { sum: number; count: number }>();
   for (const node of graph.nodes) {
     const subject = inferSubject(node.name);
@@ -158,6 +197,14 @@ export async function buildStudentProfile(userId: string): Promise<StudentProfil
     }
     const entry = subjectTotals.get(subject)!;
     entry.sum += node.mastery;
+    entry.count += 1;
+  }
+  for (const [subject, stat] of quizSubjectStats) {
+    if (!subjectTotals.has(subject)) {
+      subjectTotals.set(subject, { sum: 0, count: 0 });
+    }
+    const entry = subjectTotals.get(subject)!;
+    entry.sum += Math.round((stat.correct / stat.total) * 100);
     entry.count += 1;
   }
   const masteryBySubject: Record<Subject, number> = {} as Record<Subject, number>;
@@ -177,9 +224,13 @@ export async function buildStudentProfile(userId: string): Promise<StudentProfil
     masteryBySubject[subj] = data ? Math.round(data.sum / data.count) : 0;
   }
 
-  // Weak/strong points from graph
-  const weakPoints = graph.nodes.filter((n) => n.mastery < 30).map((n) => n.id);
-  const strongPoints = graph.nodes.filter((n) => n.mastery > 80).map((n) => n.id);
+  // Weak/strong points from graph and quiz attempts
+  const weakPoints = Object.entries(masteryByKnowledge)
+    .filter(([, mastery]) => mastery < 30)
+    .map(([point]) => point);
+  const strongPoints = Object.entries(masteryByKnowledge)
+    .filter(([, mastery]) => mastery > 80)
+    .map(([point]) => point);
 
   // Error patterns: group by (knowledgePoint, cause)
   const errorPatternMap = new Map<string, ErrorPattern>();
@@ -207,8 +258,11 @@ export async function buildStudentProfile(userId: string): Promise<StudentProfil
   const errorPatterns = Array.from(errorPatternMap.values());
 
   // Aggregate totals
-  const totalQuestions = graph.nodes.reduce((sum, n) => sum + n.problemCount, 0);
-  const totalCorrect = Math.max(0, totalQuestions - mistakes.length);
+  const mistakeQuestionTotal = graph.nodes.reduce((sum, n) => sum + n.problemCount, 0);
+  const quizQuestionTotal = quizAttempts.reduce((sum, attempt) => sum + attempt.total, 0);
+  const quizCorrectTotal = quizAttempts.reduce((sum, attempt) => sum + attempt.correct, 0);
+  const totalQuestions = mistakeQuestionTotal + quizQuestionTotal;
+  const totalCorrect = Math.max(0, mistakeQuestionTotal - mistakes.length) + quizCorrectTotal;
 
   // Build recent quiz performance summary (async, non-blocking on failure)
   let recentQuizPerformance: StudentProfile['recentQuizPerformance'];

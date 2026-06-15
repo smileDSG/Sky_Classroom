@@ -1,17 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X, Plus, Eye, PenLine } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import type { QuestionBankRow } from '@/lib/question-bank/types';
-import katex from 'katex';
 
 interface QuestionFormProps {
   initialData?: Partial<QuestionBankRow>;
@@ -20,34 +18,8 @@ interface QuestionFormProps {
   submitting?: boolean;
 }
 
-function renderLatex(text: string): string {
-  if (!text) return '';
-  try {
-    return katex.renderToString(text, { throwOnError: false, displayMode: false });
-  } catch {
-    return text;
-  }
-}
-
-function LatexPreview({ text, label }: { text: string; label?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.innerHTML = renderLatex(text);
-    }
-  }, [text]);
-  if (!text) return null;
-  return (
-    <div className="mt-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border p-3">
-      {label && <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{label}</span>}
-      <div ref={ref} className="text-sm mt-1" />
-    </div>
-  );
-}
-
 export function QuestionForm({ initialData, onSubmit, onCancel, submitting }: QuestionFormProps) {
   const [subject, setSubject] = useState(initialData?.subject ?? '');
-  const [grade, setGrade] = useState(initialData?.grade ?? '');
   const [difficulty, setDifficulty] = useState(initialData?.difficulty ?? 'medium');
   const [questionType, setQuestionType] = useState(initialData?.questionType ?? 'solve');
   const [content, setContent] = useState(initialData?.content ?? '');
@@ -58,17 +30,12 @@ export function QuestionForm({ initialData, onSubmit, onCancel, submitting }: Qu
   const [source, setSource] = useState(initialData?.source ?? '');
   const [kpInput, setKpInput] = useState('');
 
-  const [previewMode, setPreviewMode] = useState(false);
-
   const isChoice = questionType === 'choice';
 
-  useEffect(() => {
-    if (!isChoice) {
-      setOptions([]);
-    } else if (options.length === 0) {
-      setOptions(['', '', '', '']);
-    }
-  }, [isChoice]);
+  const handleQuestionTypeChange = (value: 'choice' | 'fill' | 'solve' | 'judge') => {
+    setQuestionType(value);
+    setOptions(value === 'choice' ? (options.length > 0 ? options : ['', '', '', '']) : []);
+  };
 
   const handleSubmit = () => {
     if (!content.trim() || !answer.trim()) {
@@ -86,15 +53,15 @@ export function QuestionForm({ initialData, onSubmit, onCancel, submitting }: Qu
     }
     onSubmit({
       subject: subject || '未知学科',
-      grade,
-      difficulty: difficulty as any,
-      questionType: questionType as any,
+      difficulty,
+      questionType,
       content: content.trim(),
       answer: answer.trim(),
       explanation: explanation.trim(),
       options: isChoice ? options.filter((o) => o.trim()) : undefined,
       knowledgePoints,
       source: source || undefined,
+      verified: true,
     });
   };
 
@@ -117,14 +84,10 @@ export function QuestionForm({ initialData, onSubmit, onCancel, submitting }: Qu
   return (
     <Card>
       <CardContent className="pt-6 space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label className="text-xs">学科 *</Label>
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="如：数学" />
-          </div>
-          <div>
-            <Label className="text-xs">年级</Label>
-            <Input value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="如：高一" />
           </div>
           <div>
             <Label className="text-xs">难度</Label>
@@ -141,7 +104,7 @@ export function QuestionForm({ initialData, onSubmit, onCancel, submitting }: Qu
           </div>
           <div>
             <Label className="text-xs">题型</Label>
-            <Select value={questionType} onValueChange={(v) => setQuestionType(v as 'choice' | 'fill' | 'solve' | 'judge')}>
+            <Select value={questionType} onValueChange={(v) => handleQuestionTypeChange(v as 'choice' | 'fill' | 'solve' | 'judge')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -155,36 +118,14 @@ export function QuestionForm({ initialData, onSubmit, onCancel, submitting }: Qu
           </div>
         </div>
 
-        {/* Content with LaTeX preview */}
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <Label className="text-xs">题目内容 *</Label>
-            <Tabs value={previewMode ? 'preview' : 'edit'} onValueChange={(v) => setPreviewMode(v === 'preview')} className="w-auto">
-              <TabsList className="h-7">
-                <TabsTrigger value="edit" className="text-xs px-2 py-0.5 h-6">
-                  <PenLine className="w-3 h-3 mr-1" />
-                  编辑
-                </TabsTrigger>
-                <TabsTrigger value="preview" className="text-xs px-2 py-0.5 h-6">
-                  <Eye className="w-3 h-3 mr-1" />
-                  预览
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-          {previewMode ? (
-            <LatexPreview text={content} label="预览" />
-          ) : (
-            <>
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="输入题目内容，支持 LaTeX 公式如 $x^2 + y^2 = 1$..."
-                rows={4}
-              />
-              <LatexPreview text={content} label="实时预览" />
-            </>
-          )}
+          <Label className="text-xs">题目内容 *</Label>
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="输入题目内容"
+            rows={4}
+          />
         </div>
 
         {isChoice && (
@@ -204,7 +145,6 @@ export function QuestionForm({ initialData, onSubmit, onCancel, submitting }: Qu
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
-                  <LatexPreview text={opt} />
                 </div>
               ))}
               <Button variant="outline" size="sm" onClick={addOption}>
@@ -215,23 +155,19 @@ export function QuestionForm({ initialData, onSubmit, onCancel, submitting }: Qu
           </div>
         )}
 
-        {/* Answer with LaTeX preview */}
         <div>
           <Label className="text-xs">答案 *</Label>
           <Input value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="输入标准答案" />
-          <LatexPreview text={answer} />
         </div>
 
-        {/* Explanation with LaTeX preview */}
         <div>
           <Label className="text-xs">解析</Label>
           <Textarea
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
-            placeholder="输入答案解析（可选），支持 LaTeX..."
+            placeholder="输入答案解析（可选）"
             rows={3}
           />
-          <LatexPreview text={explanation} />
         </div>
 
         <div>

@@ -86,7 +86,7 @@ async function solveOnce(
       maxOutputTokens: 4096,
     },
     'solve-agent',
-    { retries: 1, timeoutMs: 60_000 },
+    { retries: 1, timeoutMs: 90_000 },
   );
 
   let parsed = parseSolutionResponse(result.text);
@@ -111,7 +111,7 @@ JSON 必须包含：solution（字符串）、answer（字符串）、steps（�
         maxOutputTokens: 4096,
       },
       'solve-agent-strict',
-      { retries: 0, timeoutMs: 45_000 },
+      { retries: 0, timeoutMs: 60_000 },
     );
 
     parsed = parseSolutionResponse(strictResult.text);

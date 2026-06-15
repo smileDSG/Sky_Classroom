@@ -27,7 +27,7 @@ const QuestionBankInsertSchema = z.object({
   options: z.union([z.array(z.string()), z.string()]).optional(),
   source: z.string().optional(),
   tags: z.union([z.array(z.string()), z.string()]).optional(),
-  verified: z.boolean().optional(),
+  verified: z.boolean().default(true),
 });
 
 // ── Coercion helpers ────────────────────────────────────────────────

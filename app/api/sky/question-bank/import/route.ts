@@ -19,7 +19,6 @@ import {
   createJsonImporter,
   createCsvImporter,
   createXlsxImporter,
-  createPdfImporter,
   importFromPdf,
 } from '@/lib/question-bank/importers';
 import type { ImportOptions, ImportPipelineResult } from '@/lib/question-bank/importers';
@@ -67,6 +66,10 @@ function formatEvent(type: string, data: Record<string, unknown>): string {
   return `data: ${JSON.stringify({ type, ...data })}
 
 `;
+}
+
+function errorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error ? err.message : fallback;
 }
 
 // ── POST handler ────────────────────────────────────────────────────
@@ -165,9 +168,9 @@ export async function POST(req: NextRequest) {
 
             write(formatEvent('complete', { result }));
             controller.close();
-          } catch (err: any) {
+          } catch (err: unknown) {
             log.error('Import stream error:', err);
-            write(formatEvent('error', { message: err.message ?? '导入失败' }));
+            write(formatEvent('error', { message: errorMessage(err, '导入失败') }));
             controller.close();
           }
         },
@@ -198,9 +201,9 @@ export async function POST(req: NextRequest) {
 
           write(formatEvent('complete', { result: pdfResult }));
           controller.close();
-        } catch (err: any) {
+        } catch (err: unknown) {
           log.error('PDF import stream error:', err);
-          write(formatEvent('error', { message: err.message ?? 'PDF 导入失败' }));
+          write(formatEvent('error', { message: errorMessage(err, 'PDF 导入失败') }));
           controller.close();
         }
       },
@@ -213,8 +216,8 @@ export async function POST(req: NextRequest) {
         Connection: 'keep-alive',
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     log.error('Import API error:', err);
-    return apiError('INTERNAL_ERROR', 500, '导入处理失败', err.message);
+    return apiError('INTERNAL_ERROR', 500, '导入处理失败', errorMessage(err, '导入处理失败'));
   }
 }

@@ -223,7 +223,15 @@
       "mcp__plugin_ecc_playwright__browser_navigate",
       "Bash(timeout 5)",
       "Bash(findstr \":3001\")",
-      "Bash(findstr \"300[01]\")"
+      "Bash(findstr \"300[01]\")",
+      "Bash(pnpm lint *)",
+      "Bash(pnpm exec *)",
+      "Bash(pnpm test *)",
+      "Skill(agent-browser)",
+      "Bash(./node_modules/.bin/tsx *)",
+      "Bash(pnpm vitest *)",
+      "Bash(pnpm eslint *)",
+      "Bash(npm i *)"
     ]
   }
 }

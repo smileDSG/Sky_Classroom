@@ -38,7 +38,7 @@ export async function analyzeProblem(problemText: string): Promise<AnalysisResul
         maxOutputTokens: 512,
       },
       'analyze-agent',
-      { retries: 0, timeoutMs: 15_000 },
+      { retries: 0, timeoutMs: 20_000 },
       undefined,
       ANALYZE_SYSTEM_PROMPT,
     );

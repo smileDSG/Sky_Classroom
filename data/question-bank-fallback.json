@@ -1,0 +1,110 @@
+[
+  {
+    "id": "qb_mqf3sjqw_17dvfy",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "一元二次方程 2x² - 3x - 2 = 0 的两个根之和为？",
+    "answer": "A",
+    "explanation": "本题考查一元二次方程根与系数的关系（韦达定理）。对于一元二次方程 ax²+bx+c=0，两根之和为 -b/a。此处 a=2，b=-3，所以两根之和为 -(-3)/2 = 3/2 = 1.5。因此选A。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "1.5",
+      "-1.5",
+      "2",
+      "-2"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_bhrtqa",
+    "verified": true,
+    "createdAt": "2026-06-15T11:01:54.296Z",
+    "updatedAt": "2026-06-15T11:01:54.296Z"
+  },
+  {
+    "id": "qb_mqdgdi0a_4filgs",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "一个长方形的长是 8 厘米，宽是 5 厘米，它的面积是多少平方厘米？",
+    "answer": "C",
+    "explanation": "长方形的面积等于长乘以宽。S = 长 × 宽 = 8 厘米 × 5 厘米 = 40 平方厘米。因此正确答案是 40。此题考查长方形面积公式 S = a × b 的直接应用。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "13",
+      "26",
+      "40",
+      "80"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_yfupco",
+    "verified": true,
+    "createdAt": "2026-06-14T07:18:34.858Z",
+    "updatedAt": "2026-06-14T07:33:18.182Z"
+  },
+  {
+    "id": "qb_mqdgdh28_zqupv4",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "计算 (-3) + (-5) 的结果是多少？",
+    "answer": "A",
+    "explanation": "两个负数相加，取相同的负号，并把绝对值相加。(-3) + (-5) = -(3+5) = -8。因此正确答案是 -8。此题考查有理数加法法则，特别是同号两数相加的规则。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "-8",
+      "8",
+      "-2",
+      "2"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_fl19fw",
+    "verified": false,
+    "createdAt": "2026-06-14T07:18:33.631Z",
+    "updatedAt": "2026-06-14T07:18:33.631Z"
+  },
+  {
+    "id": "qb_mqdgdg78_lqj2il",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "解方程 3x + 5 = 20，x 的值是多少？",
+    "answer": "A",
+    "explanation": "解方程 3x + 5 = 20，首先移项得 3x = 20 - 5 = 15，然后系数化为1，x = 15 ÷ 3 = 5。因此正确答案是 x = 5。此题考查一元一次方程的基本解法：移项和系数化为1。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "x = 5",
+      "x = 6",
+      "x = 7",
+      "x = 8"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_1dj2tfx",
+    "verified": false,
+    "createdAt": "2026-06-14T07:18:32.516Z",
+    "updatedAt": "2026-06-14T07:18:32.516Z"
+  }
+]

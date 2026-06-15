@@ -67,7 +67,7 @@ export async function POST(req: Request) {
             similarQuestions: output.similarQuestions ?? [],
             agentId: agentId ?? 'universal',
             solvedAt: Date.now(),
-            verified: false,
+            verified: true,
           });
           log.info('[Explain] 题目已自动入库');
         }

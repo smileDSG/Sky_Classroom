@@ -40,6 +40,7 @@ interface TaskStore {
   updateTask: (id: string, update: Partial<BackgroundTask>) => void;
   removeTask: (id: string) => void;
   dismissTask: (id: string) => void;
+  dismissCompletedTasks: () => void;
   setActiveSolveTask: (id: string | null) => void;
   getTask: (id: string) => BackgroundTask | undefined;
   registerAbortController: (id: string, controller: AbortController) => void;
@@ -92,6 +93,17 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     set((s) => {
       const dismissed = new Set(s.dismissedIds);
       dismissed.add(id);
+      return { dismissedIds: dismissed };
+    }),
+
+  dismissCompletedTasks: () =>
+    set((s) => {
+      const dismissed = new Set(s.dismissedIds);
+      for (const task of Object.values(s.tasks)) {
+        if (task.status === 'completed' || task.status === 'failed') {
+          dismissed.add(task.id);
+        }
+      }
       return { dismissedIds: dismissed };
     }),
 

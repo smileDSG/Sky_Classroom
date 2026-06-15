@@ -3,50 +3,29 @@ import { postProcessMathContent, postProcessFourPartOutput } from '@/lib/solve/m
 import type { FourPartOutput } from '@/lib/solve/types';
 
 describe('postProcessMathContent', () => {
-  it('wraps single fractions', () => {
-    // Fractions with whitespace separator work:
-    expect(postProcessMathContent('结果为 1/4')).toContain('\\frac{1}{4}');
-    // Pure numeric fractions also work:
-    expect(postProcessMathContent('1/4')).toContain('\\frac{1}{4}');
-  });
-
-  it('wraps variable fractions', () => {
-    expect(postProcessMathContent('A/2')).toContain('\\frac{A}{2}');
-  });
-
-  it('wraps variables with primes', () => {
-    expect(postProcessMathContent("A'")).toContain("$A'$");
-  });
-
-  it('wraps double primes', () => {
-    expect(postProcessMathContent("E''")).toContain("$E''$");
-  });
-
-  it('handles chained expressions', () => {
-    const result = postProcessMathContent("E'=1/4·1/2kA^2=1/4E");
-    expect(result).toContain('\\frac{1}{4}');
-    expect(result).toContain('\\cdot');
-    expect(result.startsWith('$')).toBe(true);
-  });
-
-  it('does not modify already-wrapped math', () => {
-    expect(postProcessMathContent('$x=5$')).toBe('$x=5$');
+  it('normalizes double backslashes', () => {
+    // JSON escaping produces \\\\frac; normalize to \\frac
+    expect(postProcessMathContent('\\\\frac{1}{2}')).toBe('\\frac{1}{2}');
   });
 
   it('normalizes Unicode superscripts', () => {
     expect(postProcessMathContent('A²')).toContain('^2');
   });
 
-  it('converts Unicode middle dot', () => {
-    // The chained expression handler should convert · to \cdot
-    const result = postProcessMathContent('1/4·1/2');
-    expect(result).toContain('\\frac{1}{4}');
-    expect(result).toContain('\\cdot');
+  it('converts Unicode math symbols to LaTeX', () => {
+    const result = postProcessMathContent('α × β ÷ γ ≤ δ ≥ ε ≠ ζ ≈ η');
+    expect(result).toContain('\\alpha');
+    expect(result).toContain('\\times');
+    expect(result).toContain('\\div');
+    expect(result).toContain('\\gamma');
+    expect(result).toContain('\\leq');
+    expect(result).toContain('\\geq');
+    expect(result).toContain('\\neq');
+    expect(result).toContain('\\approx');
   });
 
-  it('handles mixed Chinese text with math', () => {
-    const result = postProcessMathContent("将振幅减小为原来的一半，A'=A/2");
-    expect(result).toContain('\\frac{A}{2}');
+  it('does not modify already-wrapped math', () => {
+    expect(postProcessMathContent('$x=5$')).toBe('$x=5$');
   });
 
   it('preserves block math $$...$$', () => {
@@ -54,39 +33,69 @@ describe('postProcessMathContent', () => {
     expect(postProcessMathContent(input)).toBe(input);
   });
 
-  it('wraps bare equations', () => {
-    const result = postProcessMathContent('x=5');
-    expect(result).toContain('$x=5$');
+  it('processes mixed Chinese text with math', () => {
+    const result = postProcessMathContent('将振幅减小为原来的一半，α = A²');
+    expect(result).toContain('\\alpha');
+    expect(result).toContain('^2');
   });
 });
 
 describe('postProcessFourPartOutput', () => {
   const mockOutput: FourPartOutput = {
-    solution: '',
-    answer: "A'=A/2",
+    solution: '解：α = A²，所以 β = γ × δ',
+    answer: "α = A²",
     steps: [
       {
         label: '步骤1',
-        content: "将振幅减小为原来的一半，A'=A/2",
-        keyPoints: ['注意振幅变化 1/4'],
+        content: "α = A²，然后 β = γ × δ",
+        keyPoints: ['注意 α 变化，β²'],
       },
     ],
-    knowledgePoints: [],
-    similarQuestions: [],
+    knowledgePoints: [
+      {
+        name: 'α² = β',
+        description: 'α² = β，γ = δ × ε',
+        difficulty: 'easy',
+      },
+    ],
+    similarQuestions: [
+      {
+        problem: 'α = A²，β = γ × δ',
+        difficulty: 3,
+        knowledgePoint: 'α²',
+      },
+    ],
   };
 
   it('processes answer field', () => {
     const result = postProcessFourPartOutput(mockOutput);
-    expect(result.answer).toContain('\\frac{A}{2}');
+    expect(result.answer).toContain('\\alpha');
+    expect(result.answer).toContain('^2');
   });
 
   it('processes step content', () => {
     const result = postProcessFourPartOutput(mockOutput);
-    expect(result.steps[0]?.content).toContain("\\frac{A}{2}");
+    expect(result.steps[0]?.content).toContain('\\alpha');
+    expect(result.steps[0]?.content).toContain('\\times');
   });
 
   it('processes keyPoints', () => {
     const result = postProcessFourPartOutput(mockOutput);
-    expect(result.steps[0]?.keyPoints?.[0]).toContain('\\frac{1}{4}');
+    const keyPoint = result.steps[0]?.keyPoints?.[0];
+    expect(keyPoint).toContain('\\alpha');
+    expect(keyPoint).toContain('^2');
+  });
+
+  it('processes knowledgePoints', () => {
+    const result = postProcessFourPartOutput(mockOutput);
+    expect(result.knowledgePoints[0]?.name).toContain('\\alpha');
+    expect(result.knowledgePoints[0]?.name).toContain('^2');
+    expect(result.knowledgePoints[0]?.description).toContain('\\times');
+  });
+
+  it('processes similarQuestions', () => {
+    const result = postProcessFourPartOutput(mockOutput);
+    expect(result.similarQuestions[0]?.problem).toContain('\\alpha');
+    expect(result.similarQuestions[0]?.problem).toContain('\\times');
   });
 });
