@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Loader2, Sparkles, AlertCircle, RefreshCw, Send, X, Brain, CheckCircle2, ThumbsUp, ThumbsDown, MessageCircle, Star, Share2 } from 'lucide-react';
+import { BookOpen, Loader2, Sparkles, AlertCircle, RefreshCw, Send, X, Brain, CheckCircle2, ThumbsUp, ThumbsDown, MessageCircle, Star, Share2, Pencil, FileText, Presentation, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { MathRenderer } from './math-renderer';
 import { QuizInteraction } from './quiz-interaction';
 import { TeachingChat } from './teaching-chat';
+import { StudyGroupPanel } from './study-group-panel';
 import { TTSButton } from './tts-button';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -33,6 +34,9 @@ import {
 } from '@/lib/teaching/teaching-session';
 import type { LessonPlan, LessonSection } from '@/lib/teaching/lesson-types';
 import type { ContentChunk } from '@/lib/teaching/content-types';
+import { analyzeHighlights } from '@/lib/teaching/personalized-highlighter';
+import type { StudentProfile } from '@/lib/student/profile-types';
+import type { LearningPath } from '@/lib/teaching/learning-path-types';
 import { HOT_TOPICS, searchTopics } from '@/configs/teaching-topics';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -45,7 +49,7 @@ const DEPTH_LABELS: Record<string, string> = {
 
 const DEPTH_STAR_COLORS: Record<string, string> = {
   basic: 'text-emerald-400',
-  intermediate: 'text-amber-400',
+  intermediate: 'text-teal-400',
   advanced: 'text-rose-400',
 };
 
@@ -78,7 +82,7 @@ const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
 
 /* 内容块左边框色 */
 const CHUNK_BORDER: Record<string, string> = {
-  formula: 'border-l-2 border-l-amber-400/60',
+  formula: 'border-l-2 border-l-teal-400/60',
   example: 'border-l-2 border-l-emerald-400/60',
   quiz: 'border-l-2 border-l-orange-400/60',
   diagram: 'border-l-2 border-l-violet-400/60',
@@ -88,7 +92,7 @@ const CHUNK_BORDER: Record<string, string> = {
 const CHUNK_BADGE: Record<string, { label: string; cls: string } | null> = {
   formula: {
     label: '核心公式',
-    cls: 'bg-amber-900/30 text-amber-300 border border-amber-500/20',
+    cls: 'bg-teal-900/30 text-teal-300 border border-teal-500/20',
   },
   example: {
     label: '例题',
@@ -109,8 +113,10 @@ interface SectionCardProps {
   chunks: ContentChunk[];
   index: number;
   jobId?: string;
+  profile?: StudentProfile | null;
   onRetry?: (sectionId: string) => void;
   onAskQuestion?: (sectionId: string, sectionTitle: string) => void;
+  onFeedback?: (type: 'mastered' | 'needs_review') => void;
 }
 
 const SectionCard = React.memo(function SectionCard({
@@ -118,8 +124,10 @@ const SectionCard = React.memo(function SectionCard({
   chunks,
   index,
   jobId,
+  profile,
   onRetry,
   onAskQuestion,
+  onFeedback,
 }: SectionCardProps) {
   const sortedChunks = [...chunks].sort((a, b) => a.order - b.order);
   const hasFailed = sortedChunks.some((c) => c.failed);
@@ -188,8 +196,8 @@ const SectionCard = React.memo(function SectionCard({
                   key={kp}
                   className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px]"
                   style={{
-                    background: 'rgba(251, 191, 36, 0.08)',
-                    border: '1px solid rgba(251, 191, 36, 0.2)',
+                    background: 'rgba(45, 212, 191, 0.08)',
+                    border: '1px solid rgba(45, 212, 191, 0.2)',
                     color: 'var(--teaching-primary)',
                   }}
                 >
@@ -210,11 +218,12 @@ const SectionCard = React.memo(function SectionCard({
                 chunk.type === 'example' &&
                   'bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800/30',
                 chunk.type === 'quiz' &&
-                  'bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30',
+                  'bg-teal-50/50 dark:bg-teal-900/10 border border-teal-100 dark:border-teal-800/30',
                 chunk.type === 'diagram' &&
                   'bg-cyan-50/50 dark:bg-cyan-900/10 border border-cyan-100 dark:border-cyan-800/30',
                 chunk.type === 'text' && 'bg-white/40 dark:bg-slate-700/20',
                 chunk.failed && 'bg-red-50/50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30',
+                chunk.isFollowUp && 'ml-4 border-l-2 border-l-sky-400/40 bg-sky-50/20 dark:bg-sky-900/5',
               )}
             >
               {chunk.type === 'example' && (
@@ -228,7 +237,7 @@ const SectionCard = React.memo(function SectionCard({
               {chunk.type === 'quiz' && (
                 <Badge
                   variant="secondary"
-                  className="mb-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                  className="mb-2 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
                 >
                   随堂测验
                 </Badge>
@@ -249,13 +258,24 @@ const SectionCard = React.memo(function SectionCard({
                   生成失败
                 </Badge>
               )}
+              {chunk.isFollowUp && (
+                <Badge
+                  variant="secondary"
+                  className="mb-2 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400"
+                >
+                  追问补充
+                </Badge>
+              )}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1">
               {chunk.type === 'quiz' && chunk.options && chunk.options.length > 0 ? (
-                <QuizInteraction chunk={chunk} />
+                <QuizInteraction chunk={chunk} jobId={jobId} />
               ) : (
                 <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-100">
-                  <MathRenderer content={chunk.content} />
+                  <MathRenderer
+                    content={chunk.content}
+                    highlights={profile ? analyzeHighlights(chunk.content, profile) : undefined}
+                  />
                 </div>
               )}
                 </div>
@@ -293,9 +313,24 @@ const SectionCard = React.memo(function SectionCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
+                  onClick={async () => {
+                    if (jobId) {
+                      try {
+                        await fetch('/api/sky/teaching/feedback', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            jobId,
+                            sectionId: section.id,
+                            feedbackType: 'mastered',
+                          }),
+                        });
+                      } catch {
+                        // ignore network errors
+                      }
+                    }
                     toast.success('已标记为「已掌握」');
-                    // TODO: Call feedback API
+                    onFeedback?.('mastered');
                   }}
                   className="text-green-600 dark:text-green-400 border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-900/20"
                 >
@@ -305,11 +340,26 @@ const SectionCard = React.memo(function SectionCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
+                  onClick={async () => {
+                    if (jobId) {
+                      try {
+                        await fetch('/api/sky/teaching/feedback', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            jobId,
+                            sectionId: section.id,
+                            feedbackType: 'needs_review',
+                          }),
+                        });
+                      } catch {
+                        // ignore network errors
+                      }
+                    }
                     toast.success('已标记为「需复习」');
-                    // TODO: Call feedback API
+                    onFeedback?.('needs_review');
                   }}
-                  className="text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                  className="text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-900/20"
                 >
                   <ThumbsDown className="h-3 w-3 mr-1" />
                   需复习
@@ -337,37 +387,37 @@ function SectionSkeleton() {
       <div className="flex items-center justify-between">
         <div
           className="h-6 w-36 rounded"
-          style={{ background: 'rgba(251, 191, 36, 0.08)' }}
+          style={{ background: 'rgba(45, 212, 191, 0.08)' }}
         />
         <div className="flex gap-2">
           <div
             className="h-5 w-16 rounded"
-            style={{ background: 'rgba(251, 191, 36, 0.06)' }}
+            style={{ background: 'rgba(45, 212, 191, 0.06)' }}
           />
           <div
             className="h-5 w-12 rounded"
-            style={{ background: 'rgba(251, 191, 36, 0.06)' }}
+            style={{ background: 'rgba(45, 212, 191, 0.06)' }}
           />
         </div>
       </div>
       <div className="flex gap-1.5 mt-3">
         <div
           className="h-5 w-20 rounded-full"
-          style={{ background: 'rgba(251, 191, 36, 0.06)' }}
+          style={{ background: 'rgba(45, 212, 191, 0.06)' }}
         />
         <div
           className="h-5 w-16 rounded-full"
-          style={{ background: 'rgba(251, 191, 36, 0.06)' }}
+          style={{ background: 'rgba(45, 212, 191, 0.06)' }}
         />
       </div>
       <div className="space-y-3 mt-4">
         <div
           className="h-24 rounded-lg"
-          style={{ background: 'rgba(251, 191, 36, 0.04)' }}
+          style={{ background: 'rgba(45, 212, 191, 0.04)' }}
         />
         <div
           className="h-16 rounded-lg"
-          style={{ background: 'rgba(251, 191, 36, 0.04)' }}
+          style={{ background: 'rgba(45, 212, 191, 0.04)' }}
         />
       </div>
     </div>
@@ -400,9 +450,55 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
   const [message, setMessage] = useState<string>('');
   const [recommendedTopics, setRecommendedTopics] = useState<string[]>([]);
   const [hasProfile, setHasProfile] = useState(false);
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [chatSection, setChatSection] = useState<{ id: string; title: string } | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+
+  // Homework state
+  const [homework, setHomework] = useState<{
+    title: string;
+    description: string;
+    questions: Array<{
+      id: number;
+      question: string;
+      options: string[];
+      answer: number;
+      explanation: string;
+      knowledgePoint: string;
+      source: string;
+    }>;
+    weakKnowledgePoints: string[];
+    estimatedDuration: number;
+  } | null>(null);
+  const [homeworkLoading, setHomeworkLoading] = useState(false);
+  const [showHomework, setShowHomework] = useState(false);
+  const [toClassroomLoading, setToClassroomLoading] = useState(false);
+  const [learningPath, setLearningPath] = useState<LearningPath | null>(null);
+  const [showStudyGroup, setShowStudyGroup] = useState(false);
+
+  // Chapter-by-chapter reading state (-1 = not started)
+  const [displayIndex, setDisplayIndex] = useState(-1);
+
+  // Learning progress tracking
+  const [feedbackStats, setFeedbackStats] = useState<{ mastered: number; needsReview: number }>({ mastered: 0, needsReview: 0 });
+
+  // Diagnostic state
+  const [diagnosticStep, setDiagnosticStep] = useState<'idle' | 'loading' | 'ready' | 'done'>('idle');
+  const [diagnosticSessionId, setDiagnosticSessionId] = useState<string | null>(null);
+  const [diagnosticQuestions, setDiagnosticQuestions] = useState<Array<{
+    id: number;
+    question: string;
+    options: string[];
+    knowledgePoint: string;
+  }>>([]);
+  const [diagnosticAnswers, setDiagnosticAnswers] = useState<Record<number, number>>({});
+  const [diagnosticResult, setDiagnosticResult] = useState<{
+    accuracy: number;
+    weakPrerequisites: string[];
+    recommendedDepth: string;
+    canProceed: boolean;
+  } | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -414,8 +510,24 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.data) {
-            const { weakPoints, hasProfile: profileExists } = data.data;
+            const { weakPoints, hasProfile: profileExists, masteryByKnowledge, errorPatterns } = data.data;
             setHasProfile(profileExists);
+
+            if (profileExists && masteryByKnowledge) {
+              setProfile({
+                userId: user?.id || 'default-user',
+                masteryBySubject: {} as Record<string, number>,
+                masteryByKnowledge: masteryByKnowledge || {},
+                weakPoints: weakPoints || [],
+                strongPoints: Object.entries(masteryByKnowledge || {})
+                  .filter(([, m]) => (m as number) > 80)
+                  .map(([k]) => k),
+                errorPatterns: errorPatterns || [],
+                totalQuestions: 0,
+                totalCorrect: 0,
+                lastUpdated: new Date(),
+              });
+            }
 
             if (profileExists && weakPoints.length > 0) {
               // Use weak points as recommendations
@@ -469,9 +581,17 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
       setLoading(false);
       setError(null);
       setTopic(viewHistoryItem.topic);
+      setDisplayIndex(0);
       onViewedHistory?.();
     }
   }, [viewHistoryItem, onViewedHistory]);
+
+  // ── Auto-show first section when it arrives ──
+  useEffect(() => {
+    if (sections.length > 0 && displayIndex === -1) {
+      setDisplayIndex(0);
+    }
+  }, [sections.length, displayIndex]);
 
   // ── Restore active job from sessionStorage on mount ──
   useEffect(() => {
@@ -525,17 +645,31 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
           (data) => {
             if (controller.signal.aborted) return;
             setPlan(data.plan ?? null);
-            setSections(data.sections ?? []);
+            if (data.sections !== undefined) {
+              setSections(data.sections);
+            }
             setMessage(data.message || '');
           },
-          (sectionIndex, section, chunks) => {
-            if (controller.signal.aborted) return;
-            // Update sections as they arrive via SSE
-            setSections((prev) => {
-              const updated = [...prev];
-              updated[sectionIndex] = { section, chunks };
-              return updated;
-            });
+          {
+            onSectionDone: (sectionIndex, section, chunks) => {
+              if (controller.signal.aborted) return;
+              setSections((prev) => {
+                const updated = [...prev];
+                updated[sectionIndex] = { section, chunks };
+                return updated;
+              });
+            },
+            onPlanAdjusted: (adjustedPlan, reason) => {
+              if (controller.signal.aborted) return;
+              setPlan(adjustedPlan);
+              setMessage(reason);
+              toast.info(reason, { duration: 5000 });
+            },
+            onSupplementSection: (_sectionIndex, section, chunks, _reason) => {
+              if (controller.signal.aborted) return;
+              setSections((prev) => [...prev, { section, chunks }]);
+              toast.success(`已补充强化内容：${section.title}`, { duration: 4000 });
+            },
           },
           controller.signal,
         );
@@ -559,7 +693,18 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         if (controller.signal.aborted) return;
         const msg = err instanceof Error ? err.message : '教案生成失败';
         if (msg === 'User not found' || msg.includes('Not authenticated')) {
-          toast.error('登录已过期，请重新登录');
+          toast.error('登录已过期，请重新登录', {
+            duration: 5000,
+            action: {
+              label: '稍后登录',
+              onClick: () => {
+                // Keep current content, don't redirect
+              },
+            },
+          });
+          setTimeout(() => {
+            window.location.href = '/auth/login';
+          }, 5000);
           return;
         }
         setError(msg);
@@ -570,6 +715,22 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     })();
   }, []);
 
+  // ── Fetch learning path when job completes ──
+  useEffect(() => {
+    if (!done) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/sky/learning-path', { credentials: 'include' });
+        const data = await res.json();
+        if (data.success && data.data.path) {
+          setLearningPath(data.data.path);
+        }
+      } catch {
+        // Non-fatal: learning path is optional
+      }
+    })();
+  }, [done]);
+
   // ── Cleanup on unmount ──
   useEffect(() => {
     return () => {
@@ -577,9 +738,10 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     };
   }, []);
 
-  // ── Submit new teaching job ──
-  const handleStart = useCallback(async () => {
-    if (!topic.trim()) return;
+  // ── Actually start the teaching job (after diagnostic if any) ──
+  const startTeachingJob = useCallback(async (overrideTopic?: string) => {
+    const t = overrideTopic || topic;
+    if (!t.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -587,18 +749,23 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     setSections([]);
     setDone(false);
     setMessage('正在提交...');
+    setDiagnosticStep('idle');
+    setDiagnosticSessionId(null);
+    setFeedbackStats({ mastered: 0, needsReview: 0 });
+    setLearningPath(null);
+    setDisplayIndex(-1);
 
     try {
-      const jobId = await submitTeachingJob(topic.trim());
+      const jobId = await submitTeachingJob(t.trim());
 
       setCurrentJobId(jobId);
 
-      addActiveTeachingJobEntry({ jobId, topic: topic.trim() });
+      addActiveTeachingJobEntry({ jobId, topic: t.trim() });
 
       useTaskStore.getState().addTask({
         id: jobId,
         type: 'teaching',
-        label: `授课: ${topic.trim().length > 20 ? topic.trim().slice(0, 17) + '...' : topic.trim()}`,
+        label: `授课: ${t.trim().length > 20 ? t.trim().slice(0, 17) + '...' : t.trim()}`,
         status: 'running',
         progress: 0,
         phase: '正在提交...',
@@ -608,7 +775,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         resultRoute: '/sky/teaching',
       });
 
-      resumePolling(jobId, topic.trim());
+      resumePolling(jobId, t.trim());
     } catch (err) {
       const msg = err instanceof Error ? err.message : '教案生成失败';
       if (msg === 'User not found' || msg.includes('Not authenticated')) {
@@ -631,6 +798,83 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
       setLoading(false);
     }
   }, [topic, resumePolling]);
+
+  // ── Start with diagnostic ──
+  const handleStart = useCallback(async () => {
+    if (!topic.trim()) return;
+
+    // Skip diagnostic if no profile
+    if (!hasProfile) {
+      await startTeachingJob();
+      return;
+    }
+
+    setDiagnosticStep('loading');
+    setDiagnosticSessionId(null);
+    setDiagnosticAnswers({});
+    setDiagnosticResult(null);
+
+    try {
+      const res = await fetch('/api/sky/teaching/diagnostic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topic.trim(), subject: 'math' }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        toast.error(data.error || '诊断生成失败');
+        setDiagnosticStep('idle');
+        setDiagnosticSessionId(null);
+        return;
+      }
+
+      if (data.data.hasPrerequisites === false) {
+        // No prerequisites to test, start directly
+        await startTeachingJob();
+        return;
+      }
+
+      setDiagnosticSessionId(data.data.sessionId);
+      setDiagnosticQuestions(data.data.questions);
+      setDiagnosticStep('ready');
+    } catch {
+      toast.error('诊断生成失败，直接开始授课');
+      await startTeachingJob();
+    }
+  }, [topic, hasProfile, startTeachingJob]);
+
+  // ── Submit diagnostic answers ──
+  const submitDiagnostic = useCallback(async () => {
+    if (!diagnosticSessionId) {
+      toast.error('诊断会话已过期，请重新开始');
+      setDiagnosticStep('idle');
+      return;
+    }
+
+    const answers = diagnosticQuestions.map((q) => ({
+      questionId: q.id,
+      selectedOption: diagnosticAnswers[q.id] ?? -1,
+    }));
+
+    try {
+      const res = await fetch('/api/sky/teaching/diagnostic/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: diagnosticSessionId, answers, topic: topic.trim() }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setDiagnosticResult(data.data);
+        setDiagnosticStep('done');
+      } else {
+        toast.error(data.error || '提交失败');
+      }
+    } catch {
+      toast.error('提交失败');
+    }
+  }, [diagnosticQuestions, diagnosticAnswers, topic, diagnosticSessionId]);
 
   // ── Cancel ──
   const handleCancel = useCallback(async () => {
@@ -710,6 +954,73 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     }
   }, [currentJobId]);
 
+  // ── Convert to Classroom ──
+  const handleToClassroom = useCallback(async () => {
+    if (!currentJobId) return;
+    setToClassroomLoading(true);
+    try {
+      const res = await fetch(`/api/sky/teaching/${currentJobId}/to-classroom`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('已转换为课堂模式');
+        window.open(data.data.redirectUrl, '_blank');
+      } else {
+        toast.error(data.error || '转换失败');
+      }
+    } catch {
+      toast.error('转换失败');
+    } finally {
+      setToClassroomLoading(false);
+    }
+  }, [currentJobId]);
+
+  // ── Next Lesson from Learning Path ──
+  const handleNextLesson = useCallback(() => {
+    const next = learningPath?.nodes.find(
+      (n) => n.status === 'pending' || n.status === 'in_progress',
+    );
+    if (!next) {
+      toast.info('学习路径已全部完成');
+      return;
+    }
+    setTopic(next.topic);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    startTeachingJob(next.topic);
+  }, [learningPath, startTeachingJob]);
+
+  // ── Homework ──
+  const handleFetchHomework = useCallback(async () => {
+    if (!currentJobId) return;
+
+    if (homework) {
+      setShowHomework((prev) => !prev);
+      return;
+    }
+
+    setHomeworkLoading(true);
+    try {
+      const res = await fetch(`/api/sky/teaching/${currentJobId}/homework`, {
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setHomework(data.data);
+        setShowHomework(true);
+        toast.success('个性化作业已生成');
+      } else {
+        toast.error(data.error || '作业生成失败');
+      }
+    } catch {
+      toast.error('作业生成失败');
+    } finally {
+      setHomeworkLoading(false);
+    }
+  }, [currentJobId, homework]);
+
   const progress = plan
     ? Math.round((sections.length / plan.sections.length) * 100)
     : 0;
@@ -723,14 +1034,14 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         style={{
           background: 'var(--teaching-surface)',
           borderColor: 'var(--teaching-border)',
-          boxShadow: '0 0 24px -6px rgba(251, 191, 36, 0.08)',
+          boxShadow: '0 0 24px -6px rgba(45, 212, 191, 0.08)',
         }}
       >
         <div
           className="px-5 pt-4 pb-3"
           style={{
             background:
-              'linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, transparent 100%)',
+              'linear-gradient(135deg, rgba(45, 212, 191, 0.08) 0%, transparent 100%)',
             borderBottom: '1px solid var(--teaching-border)',
           }}
         >
@@ -856,9 +1167,9 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                       className="h-10 w-10 rounded-xl flex items-center justify-center"
                       style={{
                         background:
-                          'linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.15))',
-                        border: '1px solid rgba(251, 191, 36, 0.3)',
-                        boxShadow: '0 0 12px rgba(251, 191, 36, 0.2)',
+                          'linear-gradient(135deg, rgba(45, 212, 191, 0.25), rgba(20, 184, 166, 0.15))',
+                        border: '1px solid rgba(45, 212, 191, 0.3)',
+                        boxShadow: '0 0 12px rgba(45, 212, 191, 0.2)',
                       }}
                     >
                       <Sparkles className="h-5 w-5 text-[var(--teaching-primary)] animate-pulse" />
@@ -890,14 +1201,14 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                 <div className="relative">
                   <div
                     className="h-2.5 rounded-full overflow-hidden relative"
-                    style={{ background: 'rgba(251, 191, 36, 0.08)' }}
+                    style={{ background: 'rgba(45, 212, 191, 0.08)' }}
                   >
                     <motion.div
                       className="h-full rounded-full"
                       style={{
                         background:
-                          'linear-gradient(90deg, rgba(251, 191, 36, 0.6), rgba(245, 158, 11, 0.9))',
-                        boxShadow: '0 0 8px rgba(251, 191, 36, 0.4)',
+                          'linear-gradient(90deg, rgba(45, 212, 191, 0.6), rgba(20, 184, 166, 0.9))',
+                        boxShadow: '0 0 8px rgba(45, 212, 191, 0.4)',
                       }}
                       initial={{ width: 0 }}
                       animate={{ width: `${progress}%` }}
@@ -911,7 +1222,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                     className="absolute top-0 h-2.5 rounded-full blur-sm pointer-events-none"
                     style={{
                       background:
-                        'linear-gradient(90deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.5))',
+                        'linear-gradient(90deg, rgba(45, 212, 191, 0.3), rgba(20, 184, 166, 0.5))',
                     }}
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
@@ -933,17 +1244,17 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                               isCompleted
                                 ? ''
                                 : isCurrent
-                                  ? 'teaching-amber-breathe'
+                                  ? 'teaching-teal-breathe'
                                   : '',
                             )}
                             style={{
                               background: isCompleted
-                                ? 'linear-gradient(90deg, rgba(251, 191, 36, 0.7), rgba(245, 158, 11, 0.9))'
+                                ? 'linear-gradient(90deg, rgba(45, 212, 191, 0.7), rgba(20, 184, 166, 0.9))'
                                 : isCurrent
-                                  ? 'rgba(251, 191, 36, 0.3)'
-                                  : 'rgba(251, 191, 36, 0.08)',
+                                  ? 'rgba(45, 212, 191, 0.3)'
+                                  : 'rgba(45, 212, 191, 0.08)',
                               boxShadow: isCompleted
-                                ? '0 0 6px rgba(251, 191, 36, 0.3)'
+                                ? '0 0 6px rgba(45, 212, 191, 0.3)'
                                 : 'none',
                             }}
                           />
@@ -988,7 +1299,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                         )}
                         style={{
                           background: isActive
-                            ? 'rgba(251, 191, 36, 0.12)'
+                            ? 'rgba(45, 212, 191, 0.12)'
                             : 'transparent',
                           color: isDone
                             ? 'var(--teaching-success)'
@@ -996,7 +1307,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                               ? 'var(--teaching-primary)'
                               : 'var(--teaching-muted)',
                           border: isActive
-                            ? '1px solid rgba(251, 191, 36, 0.25)'
+                            ? '1px solid rgba(45, 212, 191, 0.25)'
                             : '1px solid transparent',
                         }}
                       >
@@ -1029,9 +1340,9 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
             <div
               className="rounded-xl border backdrop-blur-sm overflow-hidden teaching-holo-flicker"
               style={{
-                background: 'rgba(251, 191, 36, 0.04)',
-                borderColor: 'rgba(251, 191, 36, 0.25)',
-                boxShadow: '0 0 20px -4px rgba(251, 191, 36, 0.12)',
+                background: 'rgba(45, 212, 191, 0.04)',
+                borderColor: 'rgba(45, 212, 191, 0.25)',
+                boxShadow: '0 0 20px -4px rgba(45, 212, 191, 0.12)',
               }}
             >
               <div className="px-5 py-4">
@@ -1056,8 +1367,8 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                           key={fp}
                           className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px]"
                           style={{
-                            background: 'rgba(251, 191, 36, 0.08)',
-                            border: '1px solid rgba(251, 191, 36, 0.2)',
+                            background: 'rgba(45, 212, 191, 0.08)',
+                            border: '1px solid rgba(45, 212, 191, 0.2)',
                             color: 'var(--teaching-primary)',
                           }}
                         >
@@ -1073,21 +1384,172 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         )}
       </AnimatePresence>
 
+      {/* Diagnostic Quiz Modal */}
+      {diagnosticStep !== 'idle' && diagnosticStep !== 'done' && (
+        <Card className="border-teal-200/50 dark:border-teal-800/30 bg-teal-50/30 dark:bg-teal-900/10">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-teal-500" />
+              <h3 className="text-base font-semibold">星际课前诊断</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {diagnosticStep === 'loading' ? '正在生成前置知识检测题...' : '请完成以下前置知识检测，我们将根据结果调整授课重点'}
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {diagnosticStep === 'loading' && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
+              </div>
+            )}
+            {diagnosticStep === 'ready' && diagnosticQuestions.map((q, idx) => (
+              <div key={q.id} className="space-y-2">
+                <p className="text-sm font-medium">{idx + 1}. {q.question}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {q.options.map((opt, optIdx) => (
+                    <Button
+                      key={optIdx}
+                      variant={diagnosticAnswers[q.id] === optIdx ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDiagnosticAnswers((prev) => ({ ...prev, [q.id]: optIdx }))}
+                      className="justify-start text-left h-auto py-2"
+                    >
+                      {String.fromCharCode(65 + optIdx)}. {opt}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {diagnosticStep === 'ready' && diagnosticQuestions.length > 0 && (
+              <div className="flex gap-2 pt-2">
+                <Button onClick={submitDiagnostic} className="bg-teal-500 hover:bg-teal-600">
+                  提交诊断
+                </Button>
+                <Button variant="outline" onClick={() => { setDiagnosticStep('idle'); setDiagnosticSessionId(null); startTeachingJob(); }}>
+                  跳过诊断，直接授课
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Diagnostic Result */}
+      {diagnosticStep === 'done' && diagnosticResult && (
+        <Card className={cn(
+          diagnosticResult.accuracy >= 80 ? 'border-green-200 bg-green-50/30' :
+          diagnosticResult.accuracy >= 50 ? 'border-teal-200 bg-teal-50/30' :
+          'border-red-200 bg-red-50/30'
+        )}>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              {diagnosticResult.accuracy >= 80 ? <CheckCircle2 className="h-5 w-5 text-green-500" /> :
+               diagnosticResult.accuracy >= 50 ? <Brain className="h-5 w-5 text-teal-500" /> :
+               <AlertCircle className="h-5 w-5 text-red-500" />}
+              <h3 className="text-base font-semibold">诊断报告</h3>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm">
+              前置知识检测正确率：<span className="font-bold">{diagnosticResult.accuracy}%</span>
+            </p>
+            {diagnosticResult.weakPrerequisites.length > 0 && (
+              <div className="text-sm">
+                <p className="text-muted-foreground mb-1">薄弱前置知识点：</p>
+                <div className="flex flex-wrap gap-1">
+                  {diagnosticResult.weakPrerequisites.map((wp) => (
+                    <Badge key={wp} variant="outline" className="text-xs">{wp}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex gap-2 pt-2">
+              <Button onClick={() => { setDiagnosticStep('idle'); setDiagnosticSessionId(null); startTeachingJob(); }}
+                className={diagnosticResult.accuracy >= 50 ? 'bg-green-500 hover:bg-green-600' : 'bg-teal-500 hover:bg-teal-600'}
+              >
+                {diagnosticResult.canProceed ? '开始授课' : '先开始授课，注意薄弱环节'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Loading Skeletons */}
       {loading && sections.length < (plan?.sections.length ?? 0) && <SectionSkeleton />}
 
-      {/* Generated Sections */}
-      {sections.map((s, i) => (
+      {/* Generated Sections — show one at a time */}
+      {sections[displayIndex] && (
         <SectionCard
-          key={s.section.id}
-          section={s.section}
-          chunks={s.chunks}
-          index={i}
+          key={sections[displayIndex].section.id}
+          section={sections[displayIndex].section}
+          chunks={sections[displayIndex].chunks}
+          index={displayIndex}
           jobId={currentJobId ?? undefined}
+          profile={profile}
           onRetry={handleRetrySection}
           onAskQuestion={(sectionId, sectionTitle) => setChatSection({ id: sectionId, title: sectionTitle })}
+          onFeedback={(type) =>
+            setFeedbackStats((prev) => ({
+              ...prev,
+              mastered: type === 'mastered' ? prev.mastered + 1 : prev.mastered,
+              needsReview: type === 'needs_review' ? prev.needsReview + 1 : prev.needsReview,
+            }))
+          }
         />
-      ))}
+      )}
+
+      {/* Chapter Navigation */}
+      {displayIndex >= 0 && sections.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setDisplayIndex((i) => {
+                const next = Math.max(0, i - 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return next;
+              });
+            }}
+            disabled={displayIndex <= 0}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            上一章
+          </Button>
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {displayIndex + 1} / {plan?.sections.length ?? sections.length}
+          </span>
+          {displayIndex < sections.length - 1 ? (
+            <Button
+              size="sm"
+              onClick={() => {
+                setDisplayIndex((i) => {
+                  const next = i + 1;
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  return next;
+                });
+              }}
+            >
+              下一章
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          ) : loading ? (
+            <Button size="sm" disabled>
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              正在生成下一章...
+            </Button>
+          ) : done ? null : (
+            <Button size="sm" disabled>
+              <ChevronRight className="h-4 w-4 ml-1" />
+              下一章
+            </Button>
+          )}
+        </motion.div>
+      )}
 
       {/* Done Banner */}
       {done && (
@@ -1104,11 +1566,69 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={handleToClassroom}
+                  disabled={toClassroomLoading}
+                  className="text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800 hover:text-violet-700"
+                >
+                  {toClassroomLoading ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Presentation className="h-3 w-3 mr-1" />
+                  )}
+                  转为课堂模式
+                </Button>
+                {learningPath?.nodes.some(
+                  (n) => n.status === 'pending' || n.status === 'in_progress',
+                ) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextLesson}
+                    disabled={loading}
+                    className="text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:text-indigo-700"
+                  >
+                    {loading ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <BookOpen className="h-3 w-3 mr-1" />
+                    )}
+                    下一课：
+                    {learningPath.nodes.find(
+                      (n) => n.status === 'pending' || n.status === 'in_progress',
+                    )?.topic}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowStudyGroup((prev) => !prev)}
+                  className="text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:text-indigo-700"
+                >
+                  <Users className="h-3 w-3 mr-1" />
+                  {showStudyGroup ? '收起学习小组' : 'AI 学习小组'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFetchHomework}
+                  disabled={homeworkLoading}
+                  className="text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800 hover:text-sky-700"
+                >
+                  {homeworkLoading ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Pencil className="h-3 w-3 mr-1" />
+                  )}
+                  {homework ? (showHomework ? '收起作业' : '查看作业') : '个性化作业'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleToggleFavorite}
                   className={cn(
                     'border-green-200 dark:border-green-800',
                     isFavorited
-                      ? 'text-amber-500 hover:text-amber-600'
+                      ? 'text-teal-500 hover:text-teal-600'
                       : 'text-green-600 dark:text-green-400 hover:text-green-700',
                   )}
                 >
@@ -1129,6 +1649,110 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
           </Card>
         </motion.div>
       )}
+
+      {/* Learning Summary */}
+      {done && (feedbackStats.mastered > 0 || feedbackStats.needsReview > 0) && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <Card className="border-blue-200/50 dark:border-blue-800/30 bg-blue-50/30 dark:bg-blue-900/10">
+            <CardContent className="py-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                    已完成 <strong>{sections.length}</strong> 节
+                  </span>
+                </div>
+                {feedbackStats.mastered > 0 && (
+                  <div className="flex items-center gap-2">
+                    <ThumbsUp className="h-4 w-4 text-green-500" />
+                    <span className="text-sm text-green-700 dark:text-green-300">
+                      标记掌握 <strong>{feedbackStats.mastered}</strong> 个知识点
+                    </span>
+                  </div>
+                )}
+                {feedbackStats.needsReview > 0 && (
+                  <div className="flex items-center gap-2">
+                    <ThumbsDown className="h-4 w-4 text-teal-500" />
+                    <span className="text-sm text-teal-700 dark:text-teal-300">
+                      建议复习 <strong>{feedbackStats.needsReview}</strong> 个知识点
+                    </span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Homework Card */}
+      <AnimatePresence>
+        {showHomework && homework && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="border-sky-200/50 dark:border-sky-800/30 bg-sky-50/30 dark:bg-sky-900/10">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-sky-500" />
+                  <h3 className="text-base font-semibold">{homework.title}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">{homework.description}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>预计 {homework.estimatedDuration} 分钟</span>
+                  <span>·</span>
+                  <span>{homework.questions.length} 道题</span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {homework.questions.map((q, idx) => (
+                  <div key={q.id} className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="text-sm font-medium text-sky-600 dark:text-sky-400 shrink-0">{idx + 1}.</span>
+                      <div className="text-sm leading-relaxed">
+                        <MathRenderer content={q.question} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-6">
+                      {q.options.map((opt, optIdx) => (
+                        <div
+                          key={optIdx}
+                          className="text-sm px-3 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                        >
+                          <span className="font-medium text-slate-500 mr-1">{String.fromCharCode(65 + optIdx)}.</span>
+                          <MathRenderer content={opt} />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 pl-6">
+                      <Badge variant="outline" className="text-[11px]">
+                        {q.knowledgePoint}
+                      </Badge>
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          'text-[11px]',
+                          q.source === 'question-bank'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+                        )}
+                      >
+                        {q.source === 'question-bank' ? '题库' : 'AI生成'}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Error */}
       <AnimatePresence>
@@ -1167,7 +1791,23 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
           jobId={currentJobId}
           sectionId={chatSection?.id}
           sectionTitle={chatSection?.title}
+          onReply={async () => {
+            // Refresh job data to show newly appended follow-up chunks
+            try {
+              const data = await fetchTeachingJob(currentJobId);
+              if (data && data.sections) {
+                setSections(data.sections);
+              }
+            } catch {
+              // ignore refresh errors
+            }
+          }}
         />
+      )}
+
+      {/* Study Group */}
+      {showStudyGroup && currentJobId && (
+        <StudyGroupPanel jobId={currentJobId} />
       )}
     </div>
   );

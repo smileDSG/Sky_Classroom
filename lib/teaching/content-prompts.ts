@@ -59,10 +59,14 @@ export function buildContentPrompt(section: {
   "type": "quiz",
   "question": "题目文本",
   "options": ["选项A", "选项B", "选项C", "选项D"],
+  "correctAnswer": 0,
   "content": "参考答案和解析",
   "order": N
 }
-注意：options 数组包含所有选项，content 字段包含答案和详细解析。`
+注意：
+- options 数组包含所有选项
+- correctAnswer 为正确选项的索引（0=A, 1=B, 2=C, 3=D）
+- content 字段包含答案和详细解析`
     : '';
 
   return `请为以下教学环节生成内容。

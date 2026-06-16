@@ -72,6 +72,9 @@ export async function generateSectionContent(
           if (Array.isArray(c.options)) {
             chunk.options = c.options.filter((o): o is string => typeof o === 'string');
           }
+          if (typeof c.correctAnswer === 'number') {
+            chunk.correctAnswer = c.correctAnswer;
+          }
         }
 
         return chunk;

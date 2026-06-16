@@ -21,6 +21,7 @@ export function buildLessonPlannerPrompt(
     };
   },
   topic: string,
+  diagnosticResult?: { accuracy: number; weakPrerequisites: string[]; recommendedDepth: string },
 ): string {
   const weakKps = profile.weakPoints.slice(0, 5);
   const strongKps = profile.strongPoints.slice(0, 5);
@@ -49,7 +50,11 @@ export function buildLessonPlannerPrompt(
       ? Math.round((profile.totalCorrect / profile.totalQuestions) * 100)
       : 0;
 
-  return `请为以下学生生成关于「${topic}」的授课计划。
+  const diagnosticInfo = diagnosticResult
+    ? `\n\n## 课前诊断结果\n- 前置知识检测正确率：${diagnosticResult.accuracy}%\n- 薄弱前置知识点：${diagnosticResult.weakPrerequisites.join('、') || '无'}\n- 建议授课深度：${diagnosticResult.recommendedDepth === 'basic' ? '基础（前置知识薄弱，需先回顾基础）' : diagnosticResult.recommendedDepth === 'advanced' ? '进阶（前置知识扎实，可直接深入）' : '标准'}\n\n请在授课计划的首个 section 增加「前置知识回顾」，针对上述薄弱前置知识点进行快速回顾。`
+    : '';
+
+  return `请为以下学生生成关于「${topic}」的授课计划。${diagnosticInfo}
 
 ## 学生学情
 - 总做题数：${profile.totalQuestions}

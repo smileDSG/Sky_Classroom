@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readTeachingJob } from '@/lib/server/teaching-job-store';
+import { readTeachingJob, updateTeachingJob } from '@/lib/server/teaching-job-store';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { resolveSolverModel } from '@/lib/solve/solver-constants';
 import { createLogger } from '@/lib/logger';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
+import type { ContentChunk } from '@/lib/teaching/content-types';
 
 const log = createLogger('TeachingChatAPI');
 
@@ -157,6 +158,28 @@ ${message}
     );
 
     const reply = result.text || '抱歉，我无法回答这个问题。请尝试重新表述你的问题。';
+
+    // Append follow-up chunk to the section if sectionId is provided
+    if (sectionId) {
+      try {
+        const sectionData = job.sections?.find((s) => s.section.id === sectionId);
+        if (sectionData && job.sections) {
+          const maxOrder = sectionData.chunks.reduce((max, c) => Math.max(max, c.order), 0);
+          const followUpChunk: ContentChunk = {
+            sectionId,
+            type: 'text',
+            content: reply,
+            order: maxOrder + 1,
+            isFollowUp: true,
+          };
+          sectionData.chunks.push(followUpChunk);
+          await updateTeachingJob(jobId, { sections: job.sections });
+        }
+      } catch (appendErr) {
+        log.warn('Failed to append follow-up chunk:', appendErr);
+        // Non-critical: reply is still returned to client
+      }
+    }
 
     return NextResponse.json({
       success: true,

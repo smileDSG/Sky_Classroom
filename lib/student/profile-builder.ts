@@ -11,7 +11,7 @@
 
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
-import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { inferSubject } from '@/lib/mistakes/subject-inference';
 import { createQuizAttemptDAO } from './quiz-attempts';
 import type { MistakeRecord } from '@/lib/mistakes/types';
@@ -22,6 +22,8 @@ import { analyzeQuizPerformance } from './quiz-performance-analyzer';
 import { createLogger } from '@/lib/logger';
 import { promises as fs } from 'fs';
 import path from 'path';
+
+export { inferSubject };
 
 const log = createLogger('StudentProfile');
 

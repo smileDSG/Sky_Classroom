@@ -49,6 +49,7 @@ export async function GET() {
         weakPoints: profile.weakPoints,
         knowledgePoints,
         masteryByKnowledge: profile.masteryByKnowledge,
+        errorPatterns: profile.errorPatterns,
       },
     });
   } catch (error) {

@@ -6,7 +6,7 @@ import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import {
   buildKnowledgeGraph,
   getMasterySummary,
-} from '@/lib/mistakes/knowledge-graph';
+} from '@/lib/knowledge-graph';
 import { inferSubject, getSubjectLabel } from '@/lib/mistakes/subject-inference';
 import type { Subject } from '@/lib/mistakes/subject-inference';
 

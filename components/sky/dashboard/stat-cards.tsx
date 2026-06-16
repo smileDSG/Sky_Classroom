@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import type { MistakeRecord } from '@/lib/mistakes/types';
-import { buildKnowledgeGraph, getMasterySummary } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph, getMasterySummary } from '@/lib/knowledge-graph';
 import { useAnimatedNumber } from '@/lib/hooks/use-animated-number';
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';

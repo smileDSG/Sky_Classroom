@@ -8,16 +8,17 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from './math-renderer';
-import { sendTeachingChat, type ChatMessage } from '@/lib/teaching/teaching-job-client';
+import { sendTeachingChat, type ChatMessage, type TeachingChatReply } from '@/lib/teaching/teaching-job-client';
 import { toast } from 'sonner';
 
 interface TeachingChatProps {
   jobId: string;
   sectionId?: string;
   sectionTitle?: string;
+  onReply?: (reply: TeachingChatReply) => void;
 }
 
-export function TeachingChat({ jobId, sectionId, sectionTitle }: TeachingChatProps) {
+export function TeachingChat({ jobId, sectionId, sectionTitle, onReply }: TeachingChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -49,11 +50,14 @@ export function TeachingChat({ jobId, sectionId, sectionTitle }: TeachingChatPro
     setIsLoading(true);
 
     try {
-      const reply = await sendTeachingChat(jobId, trimmed, sectionId, messages);
+      const result = await sendTeachingChat(jobId, trimmed, sectionId, messages);
 
       // Add assistant message
-      const assistantMessage: ChatMessage = { role: 'assistant', content: reply };
+      const assistantMessage: ChatMessage = { role: 'assistant', content: result.reply };
       setMessages((prev) => [...prev, assistantMessage]);
+
+      // Notify parent component so it can refresh sections to show follow-up chunk
+      onReply?.(result);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '对话失败';
       toast.error(msg);

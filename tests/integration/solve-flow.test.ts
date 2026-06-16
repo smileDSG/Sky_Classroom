@@ -72,7 +72,7 @@ vi.mock('@/lib/utils/database', () => ({
 
 import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
 import { analyzeMistakeCause } from '@/lib/mistakes/cause-analyzer';
-import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import type { MistakeRecord, MistakeCause } from '@/lib/mistakes/types';
 
 beforeEach(() => {

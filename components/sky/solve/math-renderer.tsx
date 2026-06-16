@@ -2,10 +2,18 @@
 
 import { Fragment, useMemo } from 'react';
 import katex from 'katex';
+import type { KnowledgePointHighlight } from '@/lib/teaching/personalized-highlighter';
+import {
+  HIGHLIGHT_STYLES,
+  getHighlightTooltip,
+  splitHighlightedText,
+} from '@/lib/teaching/personalized-highlighter';
+import { cn } from '@/lib/utils';
 
 interface MathRendererProps {
   content: string;
   className?: string;
+  highlights?: KnowledgePointHighlight[];
 }
 
 // ── Known LaTeX commands ────────────────────────────────────────────────
@@ -1226,13 +1234,15 @@ function renderKatex(math: string, displayMode = false): string {
 
 // ── Component ───────────────────────────────────────────────────────────
 
-export function MathRenderer({ content, className }: MathRendererProps) {
+export function MathRenderer({ content, className, highlights }: MathRendererProps) {
   if (!content) return null;
 
   const segments = useMemo(() => {
-    // Fast path: if content is already well-formed (only $...$ delimited math,
+    // Step 1: Always strip markdown formatting (LLM often outputs **bold**, --- separators, etc.)
+    const cleaned = stripMarkdown(content);
+    // Step 2: Fast path: if content is already well-formed (only $...$ delimited math,
     // no bare \command outside), skip the full wrapBareLatex processing.
-    const preprocessed = isWellFormedMath(content) ? content : wrapBareLatex(content);
+    const preprocessed = isWellFormedMath(cleaned) ? cleaned : wrapBareLatex(cleaned);
     return parseMixedContent(preprocessed);
   }, [content]);
 
@@ -1240,7 +1250,28 @@ export function MathRenderer({ content, className }: MathRendererProps) {
     <span className={className}>
       {segments.map((seg, i) => {
         if (seg.type === 'text') {
-          return <Fragment key={i}>{seg.value}</Fragment>;
+          if (!highlights || highlights.length === 0) {
+            return <Fragment key={i}>{seg.value}</Fragment>;
+          }
+          const parts = splitHighlightedText(seg.value, highlights);
+          return (
+            <Fragment key={i}>
+              {parts.map((part, j) => {
+                if (!part.highlight || part.highlight.level === 'normal') {
+                  return <span key={j}>{part.text}</span>;
+                }
+                return (
+                  <span
+                    key={j}
+                    className={cn(HIGHLIGHT_STYLES[part.highlight.level])}
+                    title={getHighlightTooltip(part.highlight)}
+                  >
+                    {part.text}
+                  </span>
+                );
+              })}
+            </Fragment>
+          );
         }
         if (seg.type === 'block-math') {
           // Display-mode math: centered block, larger rendering

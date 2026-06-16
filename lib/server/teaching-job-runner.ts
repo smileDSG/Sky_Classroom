@@ -10,14 +10,20 @@ import { createLogger } from '@/lib/logger';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { planLesson } from '@/lib/teaching/lesson-planner';
 import { generateSectionContent, generateLessonConcurrent, extractContentSummary } from '@/lib/teaching/content-generator';
+import { decideAdaptiveAdjustment } from '@/lib/teaching/adaptive-engine';
+import { updatePathAfterJob } from '@/lib/teaching/learning-path-engine';
+import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
+import { getServerStorage } from '@/lib/server/server-storage';
 import type { GeneratedSectionData } from './teaching-job-store';
 import type { PrecedingSection } from '@/lib/teaching/content-types';
+import type { LessonSection } from '@/lib/teaching/lesson-types';
 import {
   readTeachingJob,
   markTeachingJobRunning,
   markTeachingJobSucceeded,
   markTeachingJobFailed,
   updateTeachingJobProgress,
+  updateTeachingJob,
 } from './teaching-job-store';
 
 const log = createLogger('TeachingJobRunner');
@@ -71,13 +77,25 @@ export function runTeachingJob(
 
       await assertNotCancelled(jobId);
       const totalSections = plan.sections.length;
-      await updateTeachingJobProgress(jobId, {
+      const jobAfterPlan = await updateTeachingJobProgress(jobId, {
         step: 'generating_content',
         progress: 10,
         message: `教案计划已生成，共 ${totalSections} 个章节，开始生成内容...`,
         plan,
         totalSections,
         sectionsCompleted: 0,
+      });
+
+      // Emit progress so frontend knows plan is ready
+      teachingEvents.emit(`job:${jobId}`, {
+        type: 'progress',
+        step: jobAfterPlan.step,
+        progress: jobAfterPlan.progress,
+        message: jobAfterPlan.message,
+        plan: jobAfterPlan.plan,
+        sectionsCompleted: jobAfterPlan.sectionsCompleted ?? 0,
+        totalSections: jobAfterPlan.totalSections ?? totalSections,
+        done: false,
       });
 
       // Phase 2: Generate content concurrently
@@ -87,7 +105,7 @@ export function runTeachingJob(
         completedCount++;
 
         const sectionData: GeneratedSectionData = { section, chunks };
-        await updateTeachingJobProgress(jobId, {
+        const jobAfterSection = await updateTeachingJobProgress(jobId, {
           step: 'generating_content',
           progress: Math.round(10 + (completedCount / totalSections) * 85),
           message: `第 ${completedCount}/${totalSections} 章节完成：${section.title}`,
@@ -103,7 +121,117 @@ export function runTeachingJob(
           chunks,
         });
 
+        // Emit progress update so frontend syncs plan/sections/message state
+        teachingEvents.emit(`job:${jobId}`, {
+          type: 'progress',
+          step: jobAfterSection.step,
+          progress: jobAfterSection.progress,
+          message: jobAfterSection.message,
+          plan: jobAfterSection.plan,
+          sectionsCompleted: jobAfterSection.sectionsCompleted ?? completedCount,
+          totalSections: jobAfterSection.totalSections ?? totalSections,
+          done: false,
+        });
+
         log.info(`[${jobId}] Section ${completedCount}/${totalSections} completed: ${section.title}`);
+      }
+
+      // Phase 3: Adaptive supplementation based on feedback/quiz results
+      try {
+        const jobAfterContent = await readTeachingJob(jobId);
+        if (jobAfterContent) {
+          const decision = decideAdaptiveAdjustment(
+            jobAfterContent.sectionFeedbacks ?? [],
+            jobAfterContent.quizResults ?? [],
+            jobAfterContent.plan?.sections ?? [],
+          );
+
+          if (decision.shouldSupplement && decision.supplementalSections.length > 0) {
+            log.info(`[${jobId}] Generating ${decision.supplementalSections.length} supplemental sections`);
+
+            // Update plan with supplemental sections
+            const currentPlan = jobAfterContent.plan;
+            if (currentPlan) {
+              const updatedSections = [...currentPlan.sections, ...decision.supplementalSections];
+              const updatedPlan = {
+                ...currentPlan,
+                sections: updatedSections,
+                estimatedDuration: updatedSections.reduce((s, sec) => s + sec.estimatedDuration, 0),
+              };
+              await updateTeachingJob(jobId, { plan: updatedPlan });
+
+              // Emit plan adjustment event so frontend updates total section count
+              teachingEvents.emit(`job:${jobId}`, {
+                type: 'plan_adjusted',
+                jobId,
+                plan: updatedPlan,
+                reason: `检测到薄弱知识点：${decision.weakKnowledgePoints.join('、')}，正在补充强化内容`,
+              });
+
+              // Generate supplemental sections sequentially
+              const precedingSections: PrecedingSection[] = [];
+              if (jobAfterContent.sections) {
+                for (const s of jobAfterContent.sections) {
+                  precedingSections.push({
+                    title: s.section.title,
+                    knowledgePoints: s.section.knowledgePoints,
+                    depth: s.section.depth,
+                    contentSummary: extractContentSummary(s.chunks),
+                  });
+                }
+              }
+
+              for (let i = 0; i < decision.supplementalSections.length; i++) {
+                await assertNotCancelled(jobId);
+                const supSection = decision.supplementalSections[i];
+                const chunks = await generateSectionContent(supSection, precedingSections);
+                const sectionData: GeneratedSectionData = { section: supSection, chunks };
+
+                const jobAfterSupplement = await updateTeachingJobProgress(jobId, {
+                  step: 'generating_content',
+                  progress: Math.round(95 + ((i + 1) / decision.supplementalSections.length) * 4),
+                  message: `补充强化内容：${supSection.title}`,
+                  sectionsCompleted: (jobAfterContent.sections?.length ?? 0) + i + 1,
+                  section: sectionData,
+                });
+
+                // Update preceding sections for next supplement
+                precedingSections.push({
+                  title: supSection.title,
+                  knowledgePoints: supSection.knowledgePoints,
+                  depth: supSection.depth,
+                  contentSummary: extractContentSummary(chunks),
+                });
+
+                // Emit SSE event
+                teachingEvents.emit(`job:${jobId}`, {
+                  type: 'supplement_section',
+                  sectionIndex: updatedSections.length - decision.supplementalSections.length + i,
+                  section: supSection,
+                  chunks,
+                  reason: decision.weakKnowledgePoints.join('、'),
+                });
+
+                // Emit progress update
+                teachingEvents.emit(`job:${jobId}`, {
+                  type: 'progress',
+                  step: jobAfterSupplement.step,
+                  progress: jobAfterSupplement.progress,
+                  message: jobAfterSupplement.message,
+                  plan: jobAfterSupplement.plan,
+                  sectionsCompleted: jobAfterSupplement.sectionsCompleted ?? (jobAfterContent.sections?.length ?? 0) + i + 1,
+                  totalSections: jobAfterSupplement.totalSections ?? updatedSections.length,
+                  done: false,
+                });
+
+                log.info(`[${jobId}] Supplemental section completed: ${supSection.title}`);
+              }
+            }
+          }
+        }
+      } catch (adaptiveErr) {
+        log.warn(`[${jobId}] Adaptive supplementation failed:`, adaptiveErr);
+        // Non-fatal: continue to mark job as succeeded
       }
 
       // Emit job done event
@@ -115,6 +243,26 @@ export function runTeachingJob(
       // Done
       await markTeachingJobSucceeded(jobId);
       log.info(`[${jobId}] Teaching job completed successfully`);
+
+      // Async: update active learning path if exists
+      (async () => {
+        try {
+          const storage = await getServerStorage();
+          const pathDAO = createLearningPathDAO(storage);
+          const activePath = await pathDAO.getActiveByUser(userId);
+          if (activePath) {
+            const profile = await buildStudentProfile(userId);
+            const job = await readTeachingJob(jobId);
+            if (job) {
+              const updated = updatePathAfterJob(activePath, job, profile);
+              await pathDAO.update(activePath.id, updated);
+              log.info(`[${jobId}] Updated learning path ${activePath.id}`);
+            }
+          }
+        } catch (pathErr) {
+          log.warn(`[${jobId}] Failed to update learning path:`, pathErr);
+        }
+      })();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (message === 'Job was cancelled') {

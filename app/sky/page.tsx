@@ -8,8 +8,9 @@ import { StatCards, ActivityTimeline } from '@/components/sky/dashboard/stat-car
 import { LearningTrendChart } from '@/components/sky/dashboard/learning-trend-chart';
 import { AbilityRadar } from '@/components/sky/dashboard/ability-radar';
 import { DailySuggestCard } from '@/components/sky/dashboard/daily-suggest-card';
+import { LearningPathCard } from '@/components/sky/dashboard/learning-path-card';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -278,8 +279,14 @@ export default function SkyDashboardPage() {
                 <StatCards mistakes={mistakes} />
               </div>
 
-              {/* Right: Streak + Quick Actions combined */}
+              {/* Right: Learning Path + Streak + Quick Actions combined */}
               <div className="lg:col-span-1 space-y-4">
+                <LearningPathCard
+                  onStartTopic={(topic) => {
+                    window.location.href = `/sky/teaching?topic=${encodeURIComponent(topic)}`;
+                  }}
+                />
+
                 {/* Inline streak card */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}

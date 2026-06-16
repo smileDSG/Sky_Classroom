@@ -15,7 +15,7 @@ import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { createLogger } from '@/lib/logger';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
-import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 
 const log = createLogger('API:LearningStats');
 

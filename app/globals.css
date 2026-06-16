@@ -130,22 +130,22 @@
   --memory-warm: #D97706;
   --memory-warm-glow: rgba(217, 119, 6, 0.12);
 
-  /* Stardust Lecture Hall — Teaching Page Theme (light mode) */
-  --teaching-void: #FFFBEB;
-  --teaching-surface: rgba(254, 243, 199, 0.88);
-  --teaching-surface-elevated: rgba(253, 230, 138, 0.85);
-  --teaching-border: rgba(180, 83, 9, 0.15);
-  --teaching-border-strong: rgba(180, 83, 9, 0.3);
-  --teaching-primary: #B45309;
-  --teaching-primary-bright: #92400E;
-  --teaching-glow: rgba(180, 83, 9, 0.1);
-  --teaching-glow-strong: rgba(180, 83, 9, 0.18);
-  --teaching-text: #451A03;
-  --teaching-muted: rgba(146, 64, 14, 0.5);
+  /* Aurora Lecture Hall — Teaching Page Theme (light mode) */
+  --teaching-void: #F0FDFA;
+  --teaching-surface: rgba(204, 251, 241, 0.88);
+  --teaching-surface-elevated: rgba(153, 246, 228, 0.85);
+  --teaching-border: rgba(13, 148, 136, 0.15);
+  --teaching-border-strong: rgba(13, 148, 136, 0.3);
+  --teaching-primary: #0D9488;
+  --teaching-primary-bright: #115E59;
+  --teaching-glow: rgba(13, 148, 136, 0.1);
+  --teaching-glow-strong: rgba(13, 148, 136, 0.18);
+  --teaching-text: #042F2E;
+  --teaching-muted: rgba(17, 94, 89, 0.5);
   --teaching-accent: #0284C7;
   --teaching-success: #059669;
-  --teaching-warm: #EA580C;
-  --teaching-holo: rgba(180, 83, 9, 0.04);
+  --teaching-warm: #14B8A6;
+  --teaching-holo: rgba(13, 148, 136, 0.04);
 }
 
 html.dark {
@@ -229,22 +229,22 @@ html.dark {
   --memory-warm: #FBBF24;
   --memory-warm-glow: rgba(251, 191, 36, 0.3);
 
-  /* Stardust Lecture Hall — Teaching Page Dark Overrides */
-  --teaching-void: #070914;
-  --teaching-surface: rgba(20, 16, 8, 0.95);
-  --teaching-surface-elevated: rgba(28, 22, 12, 0.97);
-  --teaching-border: rgba(251, 191, 36, 0.3);
-  --teaching-border-strong: rgba(251, 191, 36, 0.5);
-  --teaching-primary: #FDE68A;
-  --teaching-primary-bright: #FEF3C7;
-  --teaching-glow: rgba(253, 230, 138, 0.45);
-  --teaching-glow-strong: rgba(253, 230, 138, 0.65);
-  --teaching-text: #FFFEF5;
-  --teaching-muted: rgba(253, 230, 138, 0.6);
+  /* Aurora Lecture Hall — Teaching Page Dark Overrides */
+  --teaching-void: #070E0C;
+  --teaching-surface: rgba(8, 20, 18, 0.95);
+  --teaching-surface-elevated: rgba(12, 28, 24, 0.97);
+  --teaching-border: rgba(45, 212, 191, 0.3);
+  --teaching-border-strong: rgba(45, 212, 191, 0.5);
+  --teaching-primary: #2DD4BF;
+  --teaching-primary-bright: #5EEAD4;
+  --teaching-glow: rgba(45, 212, 191, 0.45);
+  --teaching-glow-strong: rgba(45, 212, 191, 0.65);
+  --teaching-text: #F0FDFA;
+  --teaching-muted: rgba(94, 234, 212, 0.6);
   --teaching-accent: #38BDF8;
   --teaching-success: #34D399;
-  --teaching-warm: #FB923C;
-  --teaching-holo: rgba(251, 191, 36, 0.05);
+  --teaching-warm: #2DD4BF;
+  --teaching-holo: rgba(45, 212, 191, 0.05);
 }
 
 @layer base {
@@ -550,10 +550,10 @@ html.dark {
   100% { transform: translateX(100%); }
 }
 
-/* Amber breathe — slow glow breathing */
-@keyframes amber-breathe {
-  0%, 100% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.2); }
-  50%      { box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+/* Teal breathe — slow glow breathing */
+@keyframes teal-breathe {
+  0%, 100% { box-shadow: 0 0 8px rgba(45, 212, 191, 0.2); }
+  50%      { box-shadow: 0 0 20px rgba(45, 212, 191, 0.5); }
 }
 
 /* Collect fill — star brightening */
@@ -638,8 +638,8 @@ html.dark {
 
 /* Teaching button primary */
 .teaching-button-primary {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.15) 0%, rgba(45, 212, 191, 0.05) 100%);
+  border: 1px solid rgba(45, 212, 191, 0.3);
   backdrop-filter: blur(8px);
 }
 
@@ -678,7 +678,7 @@ html.dark {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.15), transparent);
   transform: translateX(-100%);
   transition: transform 0.6s;
 }
@@ -694,7 +694,7 @@ html.dark {
   left: 0;
   width: 40%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.15), transparent);
   animation: project-scan 2.5s ease-in-out infinite;
 }
 

@@ -22,7 +22,7 @@ const TYPE_COLORS: Record<string, string> = {
   explanation: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
   example: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
   diagram: 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400',
-  quiz: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+  quiz: 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400',
 };
 
 const DEPTH_LABELS: Record<string, string> = {

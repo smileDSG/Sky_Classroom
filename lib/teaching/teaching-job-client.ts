@@ -162,26 +162,40 @@ export async function cancelTeachingJob(jobId: string): Promise<void> {
 // ── SSE Stream ───────────────────────────────────────────────────
 
 export interface TeachingStreamEvent {
-  type: 'connected' | 'section_done' | 'job_done' | 'error';
+  type: 'connected' | 'section_done' | 'plan_adjusted' | 'supplement_section' | 'progress' | 'job_done' | 'error';
   jobId?: string;
   sectionIndex?: number;
   section?: LessonSection;
   chunks?: ContentChunk[];
+  plan?: LessonPlan;
+  reason?: string;
+  step?: string;
+  progress?: number;
+  message?: string;
+  sectionsCompleted?: number;
+  totalSections?: number;
+  done?: boolean;
 }
 
 /**
  * Stream teaching job progress via SSE.
  * Falls back to polling if SSE fails.
  */
+export interface StreamCallbacks {
+  onSectionDone?: (sectionIndex: number, section: LessonSection, chunks: ContentChunk[]) => void;
+  onPlanAdjusted?: (plan: LessonPlan, reason: string) => void;
+  onSupplementSection?: (sectionIndex: number, section: LessonSection, chunks: ContentChunk[], reason: string) => void;
+}
+
 export async function streamTeachingJob(
   jobId: string,
   onUpdate: (data: TeachingJobState) => void,
-  onSectionDone?: (sectionIndex: number, section: LessonSection, chunks: ContentChunk[]) => void,
+  callbacks?: StreamCallbacks,
   signal?: AbortSignal,
 ): Promise<TeachingJobState> {
   // Try SSE first
   try {
-    return await streamViaSSE(jobId, onUpdate, onSectionDone, signal);
+    return await streamViaSSE(jobId, onUpdate, callbacks, signal);
   } catch (err) {
     log.warn('SSE failed, falling back to polling:', err);
     // Fall back to polling
@@ -192,7 +206,7 @@ export async function streamTeachingJob(
 function streamViaSSE(
   jobId: string,
   onUpdate: (data: TeachingJobState) => void,
-  onSectionDone?: (sectionIndex: number, section: LessonSection, chunks: ContentChunk[]) => void,
+  callbacks?: StreamCallbacks,
   signal?: AbortSignal,
 ): Promise<TeachingJobState> {
   return new Promise((resolve, reject) => {
@@ -208,8 +222,37 @@ function streamViaSSE(
           return;
         }
 
+        if (data.type === 'progress') {
+          const state: TeachingJobState = {
+            id: jobId,
+            topic: '',
+            status: 'running',
+            step: data.step || 'generating_content',
+            progress: data.progress ?? 0,
+            message: data.message || '',
+            plan: data.plan,
+            sectionsCompleted: data.sectionsCompleted ?? 0,
+            totalSections: data.totalSections ?? 0,
+            done: data.done ?? false,
+            createdAt: '',
+            updatedAt: '',
+          };
+          onUpdate(state);
+          return;
+        }
+
         if (data.type === 'section_done' && data.section && data.chunks) {
-          onSectionDone?.(data.sectionIndex!, data.section, data.chunks);
+          callbacks?.onSectionDone?.(data.sectionIndex!, data.section, data.chunks);
+          return;
+        }
+
+        if (data.type === 'plan_adjusted' && data.plan) {
+          callbacks?.onPlanAdjusted?.(data.plan, data.reason || '教案已调整');
+          return;
+        }
+
+        if (data.type === 'supplement_section' && data.section && data.chunks) {
+          callbacks?.onSupplementSection?.(data.sectionIndex!, data.section, data.chunks, data.reason || '');
           return;
         }
 
@@ -333,12 +376,17 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface TeachingChatReply {
+  reply: string;
+  sectionId?: string;
+}
+
 export async function sendTeachingChat(
   jobId: string,
   message: string,
   sectionId?: string,
   history: ChatMessage[] = [],
-): Promise<string> {
+): Promise<TeachingChatReply> {
   const res = await fetch(`/api/sky/teaching/${jobId}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -358,7 +406,7 @@ export async function sendTeachingChat(
   }
 
   const json = await res.json();
-  return json.data?.reply ?? '';
+  return json.data ?? { reply: '' };
 }
 
 // ── Favorite ──────────────────────────────────────────────────────

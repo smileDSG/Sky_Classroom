@@ -172,8 +172,15 @@ export default function ImportPage() {
     setPreview(null);
     setResult(null);
 
-    // PDF goes directly; others try local preview first
-    if (file.name.toLowerCase().endsWith('.pdf')) {
+    const lowerName = file.name.toLowerCase();
+    // PDF, images, and Word go directly; others try local preview first
+    if (
+      lowerName.endsWith('.pdf') ||
+      lowerName.endsWith('.png') ||
+      lowerName.endsWith('.jpg') ||
+      lowerName.endsWith('.jpeg') ||
+      lowerName.endsWith('.docx')
+    ) {
       uploadFile(file);
       return;
     }
@@ -244,12 +251,12 @@ export default function ImportPage() {
           >
             <Upload className="w-10 h-10 text-muted-foreground mb-4" />
             <p className="text-sm font-medium mb-1">点击或拖拽文件到此处</p>
-            <p className="text-xs text-muted-foreground">支持 JSON、CSV、Excel、PDF 格式，单个文件最大 50MB</p>
+            <p className="text-xs text-muted-foreground">支持 JSON、CSV、Excel、PDF、图片、Word 格式，单个文件最大 50MB</p>
             <input
               id="file-input"
               type="file"
               className="hidden"
-              accept=".json,.csv,.xlsx,.xls,.pdf"
+              accept=".json,.csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) handleFile(file);

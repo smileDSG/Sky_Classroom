@@ -9,7 +9,8 @@ import type { Scene, SceneType } from '@/lib/types/stage';
 import { summarizeScenes } from '@/lib/classroom/complete-summary';
 import { readAnswersForSummary } from '@/lib/quiz/persistence';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-import type { MistakeRecord, MistakeCause } from '@/lib/mistakes/types';
+import type { MistakeRecord } from '@/lib/mistakes/types';
+import type { MistakeCause } from '@/lib/solve/types';
 import { deriveReviewQuizParams } from '@/lib/classroom/review-quiz-params';
 
 const SCENE_TYPE_ICONS: Record<SceneType, typeof FileText> = {
@@ -316,9 +317,10 @@ function QuizRing({ pct, delay = 0 }: { pct: number; delay?: number }) {
 interface ClassroomCompletePageProps {
   readonly scenes: Scene[];
   readonly title: string;
+  readonly stageId: string;
 }
 export function ClassroomCompletePage({
-  scenes, title }: ClassroomCompletePageProps) {
+  scenes, title, stageId }: ClassroomCompletePageProps) {
   const locale = 'zh-CN';
   const t = (key: string) => key;
   const prefersReducedMotion = useReducedMotion();
@@ -342,15 +344,15 @@ export function ClassroomCompletePage({
 
   // Sync classroom quiz mistakes to the mistake book on mount
   useEffect(() => {
-    if (!stage?.id || summary.quizDetails.length === 0) return;
-    const syncKey = `classroom-mistakes-synced:${stage.id}`;
+    if (!stageId || summary.quizDetails.length === 0) return;
+    const syncKey = `classroom-mistakes-synced:${stageId}`;
     if (localStorage.getItem(syncKey)) return;
 
     const { addMistake } = useSkyClassroomStore.getState();
     for (const detail of summary.quizDetails) {
       const cause: MistakeCause = inferCauseFromAnalysis(detail.analysis);
       const mistake: MistakeRecord = {
-        id: `classroom-${stage.id}-${detail.questionId}`,
+        id: `classroom-${stageId}-${detail.questionId}`,
         problem: detail.question,
         userAnswer: detail.userAnswer.join(', '),
         correctAnswer: detail.correctAnswer.join(', '),
@@ -360,12 +362,60 @@ export function ClassroomCompletePage({
         reviewCount: 0,
         knowledgePoints: detail.knowledgePoints ?? [],
         source: 'classroom-quiz',
-        sourceSessionId: stage.id,
+        sourceSessionId: stageId,
       };
       addMistake(mistake);
     }
     localStorage.setItem(syncKey, 'true');
-  }, [stage?.id, summary.quizDetails]);
+  }, [stageId, summary.quizDetails]);
+
+  // Reflow classroom results to Teaching module (quiz attempts + profile invalidation)
+  useEffect(() => {
+    if (!stageId || summary.allQuizResults.length === 0) return;
+    const reflowKey = `classroom-reflowed:${stageId}`;
+    if (localStorage.getItem(reflowKey)) return;
+
+    const questions = summary.allQuizResults.map((r) => ({
+      question: r.question,
+      options: r.options,
+      answer: typeof r.correctAnswer === 'number'
+        ? r.correctAnswer
+        : Array.isArray(r.correctAnswer)
+          ? r.correctAnswer[0]
+            ? parseInt(r.correctAnswer[0], 10)
+            : 0
+          : typeof r.correctAnswer === 'string'
+            ? parseInt(r.correctAnswer, 10)
+            : 0,
+      userAnswer: typeof r.userAnswer === 'number'
+        ? r.userAnswer
+        : Array.isArray(r.userAnswer)
+          ? r.userAnswer[0]
+            ? parseInt(r.userAnswer[0], 10)
+            : null
+          : r.userAnswer
+            ? parseInt(r.userAnswer, 10)
+            : null,
+      isCorrect: r.isCorrect,
+      knowledgePoints: r.knowledgePoints,
+      explanation: r.explanation,
+    }));
+
+    fetch('/api/sky/classroom/result-reflow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        stageId,
+        subject: 'math',
+        topic: title,
+        questions,
+      }),
+    }).catch(() => {
+      // Silent fail — local mistake book is source of truth
+    });
+
+    localStorage.setItem(reflowKey, 'true');
+  }, [stageId, summary.allQuizResults, title]);
 
   const dateLabel = useMemo(() => {
     try {
@@ -566,5 +616,11 @@ export function ClassroomCompletePage({
 export function ClassroomCompletePageConnected() {
   const stage = useStageStore((s) => s.stage);
   const scenes = useStageStore((s) => s.scenes);
-  return <ClassroomCompletePage scenes={scenes} title={stage?.name ?? ''} />;
+  return (
+    <ClassroomCompletePage
+      scenes={scenes}
+      title={stage?.name ?? ''}
+      stageId={stage?.id ?? ''}
+    />
+  );
 }

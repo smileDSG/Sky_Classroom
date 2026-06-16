@@ -25,3 +25,10 @@ export function getDepthForMastery(mastery: number): 'basic' | 'intermediate' | 
   if (mastery <= 70) return 'intermediate';
   return 'advanced';
 }
+
+/** Diagnostic result used to adjust lesson plan before teaching */
+export interface DiagnosticResult {
+  accuracy: number;
+  weakPrerequisites: string[];
+  recommendedDepth: 'basic' | 'normal' | 'advanced';
+}

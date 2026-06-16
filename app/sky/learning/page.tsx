@@ -10,7 +10,7 @@ import { LearningStats } from '@/components/sky/learning/learning-stats';
 import { ReviewPlan } from '@/components/sky/learning/review-plan';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
-import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import type { MistakeCause } from '@/lib/solve/types';
 import {
   BookOpen,

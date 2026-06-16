@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
+import { shareTokens } from '@/app/api/sky/teaching/[jobId]/share/route';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('TeachingSharedAPI');
-
-// Import share tokens from share route
-// In production, this should be stored in a database
-const shareTokens = new Map<string, { jobId: string; userId: string; createdAt: number }>();
 
 /**
  * GET /api/sky/teaching/shared/[token]

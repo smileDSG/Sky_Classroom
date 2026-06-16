@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search, X, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import type { KnowledgeNode, KnowledgeGraph as KnowledgeGraphType } from '@/lib/mistakes/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-import { buildKnowledgeGraph, recommendLearningPath } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph, recommendLearningPath } from '@/lib/knowledge-graph';
 
 // ── Internal types ────────────────────────────────────────────────────
 

@@ -11,10 +11,11 @@ import type { ContentChunk } from '@/lib/teaching/content-types';
 
 interface QuizInteractionProps {
   chunk: ContentChunk;
+  jobId?: string;
   onAnswer?: (correct: boolean) => void;
 }
 
-export function QuizInteraction({ chunk, onAnswer }: QuizInteractionProps) {
+export function QuizInteraction({ chunk, jobId, onAnswer }: QuizInteractionProps) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -31,15 +32,31 @@ export function QuizInteraction({ chunk, onAnswer }: QuizInteractionProps) {
   const handleSubmit = async () => {
     if (selectedOption === null) return;
 
-    // For now, we show the answer after submission
-    // In a full implementation, we would call the quiz-answer API to verify
-    setShowAnswer(true);
+    // Verify answer via API for server-side tracking
+    try {
+      const response = await fetch('/api/sky/teaching/quiz-answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sectionId: chunk.sectionId,
+          chunkOrder: chunk.order,
+          selectedOption,
+          correctAnswer: chunk.correctAnswer,
+          jobId,
+        }),
+      });
+      const result = await response.json();
+      const correct = result.data?.correct ?? selectedOption === (chunk.correctAnswer ?? 0);
+      setIsCorrect(correct);
+      onAnswer?.(correct);
+    } catch {
+      // Fallback to client-side verification
+      const correct = selectedOption === (chunk.correctAnswer ?? 0);
+      setIsCorrect(correct);
+      onAnswer?.(correct);
+    }
 
-    // Determine if correct (simplified: first option is correct for now)
-    // In production, this would be verified via API
-    const correct = selectedOption === 0;
-    setIsCorrect(correct);
-    onAnswer?.(correct);
+    setShowAnswer(true);
   };
 
   const handleShowAnswer = () => {
@@ -68,7 +85,7 @@ export function QuizInteraction({ chunk, onAnswer }: QuizInteractionProps) {
       <div className="space-y-2">
         {options.map((option, index) => {
           const isSelected = selectedOption === index;
-          const isCorrectOption = index === 0; // First option is correct
+          const isCorrectOption = index === (chunk.correctAnswer ?? 0);
           const showResult = showAnswer;
 
           return (

@@ -12,10 +12,24 @@ export interface QuizDetail {
   analysis?: string;
 }
 
+export interface QuizResultItem {
+  sceneId: string;
+  questionId: string;
+  question: string;
+  options: string[];
+  userAnswer: string | string[];
+  correctAnswer: string | string[];
+  isCorrect: boolean;
+  knowledgePoints: string[];
+  explanation?: string;
+}
+
 export interface CompleteSummary {
   countsByType: Partial<Record<SceneType, number>>;
   quiz: { correct: number; total: number; pct: number } | null;
   quizDetails: QuizDetail[];
+  /** All quiz results (including correct ones) for result reflow to Teaching module */
+  allQuizResults: QuizResultItem[];
 }
 
 export type AnswerReader = (sceneId: string) => Record<string, string | string[]>;
@@ -29,6 +43,7 @@ export function summarizeScenes(scenes: Scene[], readAnswers: AnswerReader): Com
   let correct = 0;
   let total = 0;
   const quizDetails: QuizDetail[] = [];
+  const allQuizResults: QuizResultItem[] = [];
 
   for (const scene of scenes) {
     if (scene.type !== 'quiz') continue;
@@ -42,7 +57,8 @@ export function summarizeScenes(scenes: Scene[], readAnswers: AnswerReader): Com
       const r = results[i];
       if (!r) continue;
       total += 1;
-      if (r.correct === true) {
+      const isCorrect = r.correct === true;
+      if (isCorrect) {
         correct += 1;
       } else {
         quizDetails.push({
@@ -56,10 +72,22 @@ export function summarizeScenes(scenes: Scene[], readAnswers: AnswerReader): Com
           analysis: q.analysis,
         });
       }
+
+      allQuizResults.push({
+        sceneId: scene.id,
+        questionId: q.id,
+        question: q.question,
+        options: (q.options ?? []).map((o) => o.label || o.value),
+        userAnswer: answers[q.id] ?? '',
+        correctAnswer: q.answer ?? [],
+        isCorrect,
+        knowledgePoints: quizContent.knowledgePoints ?? [],
+        explanation: q.analysis,
+      });
     }
   }
 
   const quiz = total > 0 ? { correct, total, pct: Math.round((correct / total) * 100) } : null;
 
-  return { countsByType, quiz, quizDetails };
+  return { countsByType, quiz, quizDetails, allQuizResults };
 }

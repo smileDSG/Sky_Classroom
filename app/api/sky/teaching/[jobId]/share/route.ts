@@ -3,7 +3,7 @@ import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { createLogger } from '@/lib/logger';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const log = createLogger('TeachingShareAPI');
 
@@ -51,7 +51,7 @@ export async function POST(
     }
 
     // Generate share token
-    const token = uuidv4().replace(/-/g, '').slice(0, 12);
+    const token = randomUUID().replace(/-/g, '').slice(0, 12);
     shareTokens.set(token, {
       jobId,
       userId,

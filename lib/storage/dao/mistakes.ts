@@ -49,7 +49,7 @@ export interface MistakeBookEntry {
   /** Source: which solve session this came from */
   sourceSessionId?: string;
   /** Source category of the mistake entry */
-  source?: 'classroom-quiz' | 'solve' | 'manual' | 'review';
+  source?: 'classroom-quiz' | 'solve' | 'manual' | 'review' | 'classroom-diagnostic';
   /** Step-by-step solution process (AI-generated) */
   solutionSteps?: string[];
   /** Tiered hints: [思路方向, 关键公式, 详细计算] */

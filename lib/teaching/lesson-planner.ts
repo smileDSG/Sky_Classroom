@@ -10,7 +10,7 @@ import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { resolveSolverModel } from '@/lib/solve/solver-constants';
 import type { StudentProfile } from '@/lib/student/profile-types';
-import type { LessonPlan, LessonSection } from './lesson-types';
+import type { LessonPlan, LessonSection, DiagnosticResult } from './lesson-types';
 import { LESSON_SYSTEM_PROMPT, buildLessonPlannerPrompt } from './lesson-prompts';
 import { createLogger } from '@/lib/logger';
 
@@ -28,16 +28,35 @@ function adjustDepth(
 }
 
 /** Fallback plan generated without LLM */
-function fallbackPlan(topic: string, profile: StudentProfile): LessonPlan {
+function fallbackPlan(
+  topic: string,
+  profile: StudentProfile,
+  diagnosticResult?: DiagnosticResult,
+): LessonPlan {
   const weakKps = profile.weakPoints.slice(0, 3);
   const shift = profile.recentQuizPerformance?.recommendedDepthShift ?? 'maintain';
 
   const baseDepth = weakKps.length > 0 ? 'basic' : 'intermediate';
   const adjustedDepth = adjustDepth(baseDepth, shift);
 
-  const sections: LessonSection[] = [
+  // If diagnostic result indicates weak prerequisites, add a review section
+  const sections: LessonSection[] = [];
+
+  if (diagnosticResult?.weakPrerequisites.length ?? 0 > 0) {
+    sections.push({
+      id: 'section-0',
+      title: '前置知识回顾',
+      contentType: 'explanation',
+      depth: 'basic',
+      knowledgePoints: diagnosticResult!.weakPrerequisites,
+      estimatedDuration: 5,
+      hasQuiz: true,
+    });
+  }
+
+  sections.push(
     {
-      id: 'section-1',
+      id: `section-${sections.length + 1}`,
       title: `${topic} 基础讲解`,
       contentType: 'explanation',
       depth: adjustedDepth,
@@ -46,7 +65,7 @@ function fallbackPlan(topic: string, profile: StudentProfile): LessonPlan {
       hasQuiz: true,
     },
     {
-      id: 'section-2',
+      id: `section-${sections.length + 2}`,
       title: `${topic} 例题讲解`,
       contentType: 'example',
       depth: adjustDepth('intermediate', shift),
@@ -55,7 +74,7 @@ function fallbackPlan(topic: string, profile: StudentProfile): LessonPlan {
       hasQuiz: false,
     },
     {
-      id: 'section-3',
+      id: `section-${sections.length + 3}`,
       title: `${topic} 随堂检测`,
       contentType: 'quiz',
       depth: adjustDepth('intermediate', shift),
@@ -63,22 +82,28 @@ function fallbackPlan(topic: string, profile: StudentProfile): LessonPlan {
       estimatedDuration: 5,
       hasQuiz: true,
     },
-  ];
+  );
 
   return {
     title: `${topic} 授课计划`,
     sections,
     estimatedDuration: sections.reduce((s, sec) => s + sec.estimatedDuration, 0),
-    focusPoints: weakKps,
+    focusPoints: diagnosticResult?.weakPrerequisites.length ?? 0 > 0
+      ? [...diagnosticResult!.weakPrerequisites, ...weakKps].slice(0, 5)
+      : weakKps,
   };
 }
 
-export async function planLesson(profile: StudentProfile, topic: string): Promise<LessonPlan> {
+export async function planLesson(
+  profile: StudentProfile,
+  topic: string,
+  diagnosticResult?: DiagnosticResult,
+): Promise<LessonPlan> {
   try {
     const modelConfig = resolveSolverModel('universal');
     const { model } = getModel(modelConfig);
 
-    const prompt = buildLessonPlannerPrompt(profile, topic);
+    const prompt = buildLessonPlannerPrompt(profile, topic, diagnosticResult);
 
     const result = await callLLM(
       {
@@ -96,7 +121,7 @@ export async function planLesson(profile: StudentProfile, topic: string): Promis
     const parsed = parseJsonResponse<Record<string, unknown>>(result.text || '');
     if (!parsed) {
       log.warn('planLesson: LLM returned invalid JSON, using fallback');
-      return fallbackPlan(topic, profile);
+      return fallbackPlan(topic, profile, diagnosticResult);
     }
 
     // Validate and build LessonPlan
@@ -106,7 +131,7 @@ export async function planLesson(profile: StudentProfile, topic: string): Promis
       : [];
     if (rawSections.length === 0) {
       log.warn('planLesson: LLM returned empty sections, using fallback');
-      return fallbackPlan(topic, profile);
+      return fallbackPlan(topic, profile, diagnosticResult);
     }
 
     const sections: LessonSection[] = rawSections.map((s, i) => ({
@@ -145,6 +170,6 @@ export async function planLesson(profile: StudentProfile, topic: string): Promis
     return plan;
   } catch (err) {
     log.warn('planLesson failed, using fallback:', err);
-    return fallbackPlan(topic, profile);
+    return fallbackPlan(topic, profile, diagnosticResult);
   }
 }
