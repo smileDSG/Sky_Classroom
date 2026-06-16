@@ -96,7 +96,7 @@ export function TeachingHistoryPanel({
         style={{
           background: 'var(--teaching-surface)',
           borderColor: 'var(--teaching-border)',
-          boxShadow: '0 0 20px -6px rgba(251, 191, 36, 0.08)',
+          boxShadow: '0 0 20px -6px rgba(45, 212, 191, 0.08)',
         }}
       >
         {/* Header */}
@@ -104,7 +104,7 @@ export function TeachingHistoryPanel({
           className="px-5 pt-4 pb-3"
           style={{
             background:
-              'linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, transparent 100%)',
+              'linear-gradient(135deg, rgba(45, 212, 191, 0.08) 0%, transparent 100%)',
             borderBottom: '1px solid var(--teaching-border)',
           }}
         >
@@ -169,17 +169,17 @@ export function TeachingHistoryPanel({
                     key={item.id}
                     className="group relative flex items-center gap-3 rounded-lg p-3 cursor-pointer transition-all duration-200"
                     style={{
-                      background: 'rgba(251, 191, 36, 0.02)',
+                      background: 'rgba(45, 212, 191, 0.02)',
                       borderLeft: '2px solid transparent',
                     }}
                     onClick={() => onSelect?.(item)}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(251, 191, 36, 0.06)';
-                      e.currentTarget.style.borderLeftColor = 'rgba(251, 191, 36, 0.6)';
-                      e.currentTarget.style.boxShadow = 'inset 0 0 12px rgba(251, 191, 36, 0.06)';
+                      e.currentTarget.style.background = 'rgba(45, 212, 191, 0.06)';
+                      e.currentTarget.style.borderLeftColor = 'rgba(45, 212, 191, 0.6)';
+                      e.currentTarget.style.boxShadow = 'inset 0 0 12px rgba(45, 212, 191, 0.06)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(251, 191, 36, 0.02)';
+                      e.currentTarget.style.background = 'rgba(45, 212, 191, 0.02)';
                       e.currentTarget.style.borderLeftColor = 'transparent';
                       e.currentTarget.style.boxShadow = 'none';
                     }}
@@ -187,8 +187,8 @@ export function TeachingHistoryPanel({
                     <div
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
                       style={{
-                        background: 'rgba(251, 191, 36, 0.1)',
-                        border: '1px solid rgba(251, 191, 36, 0.15)',
+                        background: 'rgba(45, 212, 191, 0.1)',
+                        border: '1px solid rgba(45, 212, 191, 0.15)',
                       }}
                     >
                       <BookOpen

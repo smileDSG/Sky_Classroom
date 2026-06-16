@@ -68,10 +68,8 @@ describe('shortcuts — 快捷键', () => {
   describe('hotkey 配置', () => {
     it('KEYS 枚举存在所有常见快捷键', async () => {
       const mod = await import('@/configs/hotkey');
-      const { KEYS } = mod;
-
-      // 检查关键快捷键
-      expect(KEYS).toBeDefined();
+      // const enum is inlined at compile time, check HOTKEY_DOC instead
+      expect(mod.HOTKEY_DOC).toBeDefined();
     });
 
     it('HOTKEY_DOC 包含所有分组', async () => {

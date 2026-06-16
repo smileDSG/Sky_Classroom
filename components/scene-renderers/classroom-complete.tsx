@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { animate, motion, MotionConfig, useReducedMotion } from 'motion/react';
 import { FileText, HelpCircle, Gamepad2, Puzzle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useStageStore } from '@/lib/store';
 import type { Scene, SceneType } from '@/lib/types/stage';
 import { summarizeScenes } from '@/lib/classroom/complete-summary';
 import { readAnswersForSummary } from '@/lib/quiz/persistence';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import type { MistakeRecord } from '@/lib/mistakes/types';
+import type { MistakeCause } from '@/lib/solve/types';
+import { deriveReviewQuizParams } from '@/lib/classroom/review-quiz-params';
 
 const SCENE_TYPE_ICONS: Record<SceneType, typeof FileText> = {
   slide: FileText,
@@ -28,6 +31,17 @@ const CONFETTI_COLORS = [
   '#1E40AF', // Dark blue
   '#0EA5E9', // Cyan
 ];
+
+function inferCauseFromAnalysis(analysis: string | undefined): MistakeCause {
+  if (!analysis) return 'concept-unclear';
+  const a = analysis.toLowerCase();
+  if (/计算|算错|运算|加减|乘除|数值/.test(a)) return 'calculation-error';
+  if (/粗心|漏看|笔误|抄写/.test(a)) return 'careless';
+  if (/审题|读题|理解题意|条件/.test(a)) return 'misreading';
+  if (/方法|思路|技巧|策略/.test(a)) return 'method-wrong';
+  if (/格式|步骤|书写/.test(a)) return 'format-error';
+  return 'concept-unclear';
+}
 
 function encouragementKey(pct: number): 'high' | 'mid' | 'low' {
   if (pct >= 90) return 'high';
@@ -303,18 +317,105 @@ function QuizRing({ pct, delay = 0 }: { pct: number; delay?: number }) {
 interface ClassroomCompletePageProps {
   readonly scenes: Scene[];
   readonly title: string;
+  readonly stageId: string;
 }
-
 export function ClassroomCompletePage({
-  scenes, title }: ClassroomCompletePageProps) {
-  const { t } = useI18n();
+  scenes, title, stageId }: ClassroomCompletePageProps) {
   const locale = 'zh-CN';
+  const t = (key: string) => key;
   const prefersReducedMotion = useReducedMotion();
 
   // Computed once on mount: re-grading on every render would be wasteful and
   // the underlying localStorage values only change when the user revisits a
   // quiz scene (which unmounts this page).
   const summary = useMemo(() => summarizeScenes(scenes, readAnswersForSummary), [scenes]);
+
+  const handleStartReviewQuiz = useCallback(() => {
+    if (!summary.quiz || summary.quizDetails.length === 0) return;
+    const params = deriveReviewQuizParams(summary.quizDetails, summary.quiz.pct);
+    const qs = new URLSearchParams();
+    qs.set('subject', params.subject);
+    qs.set('difficulty', params.difficulty);
+    qs.set('topic', params.topic);
+    qs.set('count', String(params.count));
+    qs.set('mode', 'review');
+    window.location.href = `/sky/cloud-mind/quiz?${qs.toString()}`;
+  }, [summary]);
+
+  // Sync classroom quiz mistakes to the mistake book on mount
+  useEffect(() => {
+    if (!stageId || summary.quizDetails.length === 0) return;
+    const syncKey = `classroom-mistakes-synced:${stageId}`;
+    if (localStorage.getItem(syncKey)) return;
+
+    const { addMistake } = useSkyClassroomStore.getState();
+    for (const detail of summary.quizDetails) {
+      const cause: MistakeCause = inferCauseFromAnalysis(detail.analysis);
+      const mistake: MistakeRecord = {
+        id: `classroom-${stageId}-${detail.questionId}`,
+        problem: detail.question,
+        userAnswer: detail.userAnswer.join(', '),
+        correctAnswer: detail.correctAnswer.join(', '),
+        cause,
+        solvedAt: new Date(),
+        reviewed: false,
+        reviewCount: 0,
+        knowledgePoints: detail.knowledgePoints ?? [],
+        source: 'classroom-quiz',
+        sourceSessionId: stageId,
+      };
+      addMistake(mistake);
+    }
+    localStorage.setItem(syncKey, 'true');
+  }, [stageId, summary.quizDetails]);
+
+  // Reflow classroom results to Teaching module (quiz attempts + profile invalidation)
+  useEffect(() => {
+    if (!stageId || summary.allQuizResults.length === 0) return;
+    const reflowKey = `classroom-reflowed:${stageId}`;
+    if (localStorage.getItem(reflowKey)) return;
+
+    const questions = summary.allQuizResults.map((r) => ({
+      question: r.question,
+      options: r.options,
+      answer: typeof r.correctAnswer === 'number'
+        ? r.correctAnswer
+        : Array.isArray(r.correctAnswer)
+          ? r.correctAnswer[0]
+            ? parseInt(r.correctAnswer[0], 10)
+            : 0
+          : typeof r.correctAnswer === 'string'
+            ? parseInt(r.correctAnswer, 10)
+            : 0,
+      userAnswer: typeof r.userAnswer === 'number'
+        ? r.userAnswer
+        : Array.isArray(r.userAnswer)
+          ? r.userAnswer[0]
+            ? parseInt(r.userAnswer[0], 10)
+            : null
+          : r.userAnswer
+            ? parseInt(r.userAnswer, 10)
+            : null,
+      isCorrect: r.isCorrect,
+      knowledgePoints: r.knowledgePoints,
+      explanation: r.explanation,
+    }));
+
+    fetch('/api/sky/classroom/result-reflow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        stageId,
+        subject: 'math',
+        topic: title,
+        questions,
+      }),
+    }).catch(() => {
+      // Silent fail — local mistake book is source of truth
+    });
+
+    localStorage.setItem(reflowKey, 'true');
+  }, [stageId, summary.allQuizResults, title]);
 
   const dateLabel = useMemo(() => {
     try {
@@ -489,6 +590,23 @@ export function ClassroomCompletePage({
               </div>
             </motion.div>
           )}
+
+          {/* Review quiz button */}
+          {summary.quizDetails.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 1.35, type: 'spring', stiffness: 220, damping: 20 }}
+              className="w-full"
+            >
+              <button
+                onClick={handleStartReviewQuiz}
+                className="w-full rounded-2xl bg-gradient-to-r from-sky-500 to-blue-500 text-white font-bold px-6 py-4 shadow-lg shadow-sky-500/30 hover:shadow-sky-500/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                针对薄弱点巩固练习 →
+              </button>
+            </motion.div>
+          )}
         </div>
       </section>
     </MotionConfig>
@@ -498,5 +616,11 @@ export function ClassroomCompletePage({
 export function ClassroomCompletePageConnected() {
   const stage = useStageStore((s) => s.stage);
   const scenes = useStageStore((s) => s.scenes);
-  return <ClassroomCompletePage scenes={scenes} title={stage?.name ?? ''} />;
+  return (
+    <ClassroomCompletePage
+      scenes={scenes}
+      title={stage?.name ?? ''}
+      stageId={stage?.id ?? ''}
+    />
+  );
 }

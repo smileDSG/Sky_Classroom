@@ -25,7 +25,6 @@ const TRANSLATIONS: Record<string, string> = {
   'roundtable.ask': '提问',
   'roundtable.voiceInput': '语音输入',
   'roundtable.voiceInputDisabled': '语音输入未启用',
-
   // stage
   'stage.courseComplete': '课程完成',
   'stage.speakingToTeacher': '正在与老师对话',
@@ -40,34 +39,6 @@ const TRANSLATIONS: Record<string, string> = {
 
   // settings
   'settings.agentRoles.student': '学生',
-
-  // classroomComplete
-  'classroomComplete.title': '课程完成',
-  'classroomComplete.trailLabels.slide': '页',
-  'classroomComplete.trailLabels.quiz': '小测',
-  'classroomComplete.trailLabels.interactive': '互动',
-  'classroomComplete.trailLabels.pbl': '项目',
-  'classroomComplete.quizScoreLabel': '答对 {{correct}} / {{total}}',
-  'classroomComplete.encouragement.high': '太棒了，完美发挥！',
-  'classroomComplete.encouragement.mid': '表现不错，继续加油！',
-  'classroomComplete.encouragement.low': '万事开头难，回去再练练吧。',
-
-  // toolbar
-  'toolbar.default': '默认',
-  'toolbar.on': '开启',
-  'toolbar.off': '关闭',
-  'toolbar.auto': '自动',
-  'toolbar.dynamic': '动态',
-
-  // export
-  'export.exportFailed': '导出失败',
-  'export.exportSuccess': '导出成功',
-
-  // settings
-  'settings.mediaGenerationDisabled': '已在设置中关闭生成',
-  'settings.mediaContentSensitive': '抱歉，该内容触发了安全检查',
-  'settings.mediaRetry': '重试',
-  'settings.ttsTestTextDefault': '你好，这是一段测试语音。',
 };
 
 function t(key: string): string {

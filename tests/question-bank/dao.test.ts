@@ -39,7 +39,7 @@ beforeEach(async () => {
 
 // ── Helper: build a mock row ────────────────────────────────────────
 
-function makeRow(overrides: Record<string, any> = {}) {
+function makeRow(overrides: Record<string, unknown> = {}) {
   return {
     id: 'qb_test_001',
     subject: '数学',
@@ -87,10 +87,11 @@ describe('QuestionBank DAO', () => {
     expect(row.problemHash).toMatch(/^qb_/);
     expect(row.subject).toBe('数学');
     expect(row.content).toBe('1 + 1 = ?');
-    // Verify INSERT was called
+    expect(row.verified).toBe(true);
     expect(mockQuery).toHaveBeenCalledTimes(2); // ensureTable + INSERT
     const insertCall = mockQuery.mock.calls[1];
     expect(insertCall[0]).toContain('INSERT INTO question_bank');
+    expect(insertCall[1][14]).toBe(true);
   });
 
   test('insertBatch: handles bulk insert with INSERT IGNORE', async () => {
@@ -186,7 +187,7 @@ describe('QuestionBank DAO', () => {
     expect(sql).toContain('LIMIT ?');
   });
 
-  test('search: keyword triggers FULLTEXT', async () => {
+  test('search: keyword triggers LIKE query', async () => {
     mockQuery.mockResolvedValueOnce([{}, []]); // ensureTable
     mockQuery.mockResolvedValueOnce([[makeRow()], []]);
 
@@ -196,7 +197,8 @@ describe('QuestionBank DAO', () => {
 
     const searchCall = mockQuery.mock.calls[1];
     const sql = searchCall[0] as string;
-    expect(sql).toContain('MATCH(content, explanation) AGAINST');
+    expect(sql).toContain('content LIKE ?');
+    expect(sql).toContain('explanation LIKE ?');
   });
 
   test('update: only updates provided fields', async () => {

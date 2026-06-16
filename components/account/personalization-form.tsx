@@ -121,7 +121,7 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
         <div className="space-y-6">
           {/* Education Level */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{'教育阶段'}</label>
+            <label className="text-sm font-medium">{'教育阶段' || '教育阶段'}</label>
             <div className="flex flex-wrap gap-2">
               {EDUCATION_LEVELS.map((level) => (
                 <button
@@ -142,19 +142,19 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
 
           {/* Grade */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{'年级'}</label>
+            <label className="text-sm font-medium">{'年级' || '年级'}</label>
             <input
               type="text"
               value={grade}
               onChange={(e) => setGrade(e.target.value)}
-              placeholder={'例如：初二、高一、大三'}
+              placeholder={'例如：初二、高一、大三' || '例如：初二、高一、大三'}
               className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
             />
           </Card>
 
           {/* Favorite Subjects */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{'感兴趣的学科'}</label>
+            <label className="text-sm font-medium">{'感兴趣的学科' || '感兴趣的学科'}</label>
             <div className="flex flex-wrap gap-2">
               {(favoriteSubjects.length > 0 ? favoriteSubjects : DEFAULT_SUBJECTS).map((subject) => (
                 <button
@@ -180,7 +180,7 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
         <div className="space-y-6">
           {/* Learning Style */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{'学习风格'}</label>
+            <label className="text-sm font-medium">{'学习风格' || '学习风格'}</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {LEARNING_STYLES.map((style) => (
                 <button
@@ -198,13 +198,13 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              {'选择最适合你的学习方式，AI会据此调整讲解风格'}
+              {'选择最适合你的学习方式，AI会据此调整讲解风格' || '选择最适合你的学习方式，AI会据此调整讲解风格'}
             </p>
           </Card>
 
           {/* Detail Level */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{'回答详细程度'}</label>
+            <label className="text-sm font-medium">{'回答详细程度' || '回答详细程度'}</label>
             <div className="flex flex-wrap gap-2">
               {DETAIL_LEVELS.map((level) => (
                 <button
@@ -225,7 +225,7 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
 
           {/* Preferred Language */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{'首选语言'}</label>
+            <label className="text-sm font-medium">{'首选语言' || '首选语言'}</label>
             <div className="flex gap-2">
               {[
                 { value: 'zh', label: '中文' },
@@ -254,12 +254,12 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
         <div className="space-y-6">
           {/* AI Name */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{'AI 助手名称'}</label>
+            <label className="text-sm font-medium">{'AI 助手名称' || 'AI 助手名称'}</label>
             <input
               type="text"
               value={aiName}
               onChange={(e) => setAIName(e.target.value)}
-              placeholder={'给你的AI助手起个名字'}
+              placeholder={'给你的AI助手起个名字' || '给你的AI助手起个名字'}
               maxLength={20}
               className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
             />
@@ -267,7 +267,7 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
 
           {/* AI Personality */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{'AI 性格风格'}</label>
+            <label className="text-sm font-medium">{'AI 性格风格' || 'AI 性格风格'}</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {AI_PERSONALITIES.map((personality) => (
                 <button
@@ -288,11 +288,11 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
 
           {/* Custom Instructions */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{'自定义指令'}</label>
+            <label className="text-sm font-medium">{'自定义指令' || '自定义指令'}</label>
             <Textarea
               value={customInstructions}
               onChange={(e) => setCustomInstructions(e.target.value)}
-              placeholder={'告诉AI你的特殊需求，例如：我更喜欢用图示理解概念；请多用例子说明；我对编程感兴趣...'}
+              placeholder={'告诉AI你的特殊需求，例如：我更喜欢用图示理解概念；请多用例子说明；我对编程感兴趣...' || '告诉AI你的特殊需求，例如：我更喜欢用图示理解概念；请多用例子说明；我对编程感兴趣...'}
               maxLength={500}
               rows={4}
               className="resize-none"
@@ -308,8 +308,8 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <label className="text-sm font-medium">{'自动出题'}</label>
-                <p className="text-xs text-muted-foreground">{'学习完成后自动生成练习题'}</p>
+                <label className="text-sm font-medium">{'自动出题' || '自动出题'}</label>
+                <p className="text-xs text-muted-foreground">{'学习完成后自动生成练习题' || '学习完成后自动生成练习题'}</p>
               </div>
               <Switch checked={autoGenerateQuiz} onCheckedChange={setAutoGenerateQuiz} />
             </div>
@@ -318,8 +318,8 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <label className="text-sm font-medium">{'分步解答'}</label>
-                <p className="text-xs text-muted-foreground">{'解题时显示详细步骤'}</p>
+                <label className="text-sm font-medium">{'分步解答' || '分步解答'}</label>
+                <p className="text-xs text-muted-foreground">{'解题时显示详细步骤' || '解题时显示详细步骤'}</p>
               </div>
               <Switch checked={showStepByStep} onCheckedChange={setShowStepByStep} />
             </div>
@@ -328,8 +328,8 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <label className="text-sm font-medium">{'记忆功能'}</label>
-                <p className="text-xs text-muted-foreground">{'AI记住你的学习历史和偏好'}</p>
+                <label className="text-sm font-medium">{'记忆功能' || '记忆功能'}</label>
+                <p className="text-xs text-muted-foreground">{'AI记住你的学习历史和偏好' || 'AI记住你的学习历史和偏好'}</p>
               </div>
               <Switch checked={enableMemory} onCheckedChange={setEnableMemory} />
             </div>
@@ -338,8 +338,8 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <label className="text-sm font-medium">{'知识库增强'}</label>
-                <p className="text-xs text-muted-foreground">{'使用上传的知识库辅助回答'}</p>
+                <label className="text-sm font-medium">{'知识库增强' || '知识库增强'}</label>
+                <p className="text-xs text-muted-foreground">{'使用上传的知识库辅助回答' || '使用上传的知识库辅助回答'}</p>
               </div>
               <Switch checked={enableRAG} onCheckedChange={setEnableRAG} />
             </div>

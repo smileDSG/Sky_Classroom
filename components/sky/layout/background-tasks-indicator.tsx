@@ -168,6 +168,7 @@ export function BackgroundTasksIndicator() {
   const [expanded, setExpanded] = useState(true);
   const tasks = useTaskStore((s) => s.tasks);
   const dismissedIds = useTaskStore((s) => s.dismissedIds);
+  const dismissCompletedTasks = useTaskStore((s) => s.dismissCompletedTasks);
   const pathname = usePathname();
 
   // Hide tasks whose resultRoute matches the current page —
@@ -179,7 +180,7 @@ export function BackgroundTasksIndicator() {
   if (visibleTasks.length === 0) return null;
 
   const runningCount = visibleTasks.filter((t) => t.status === 'running').length;
-  const completedCount = visibleTasks.filter((t) => t.status === 'completed').length;
+  const completedCount = visibleTasks.filter((t) => t.status === 'completed' || t.status === 'failed').length;
 
   return (
     <motion.div
@@ -209,11 +210,24 @@ export function BackgroundTasksIndicator() {
             </span>
           )}
         </div>
-        {expanded ? (
-          <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-        ) : (
-          <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
-        )}
+        <div className="flex items-center gap-1">
+          {completedCount > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                dismissCompletedTasks();
+              }}
+              className="rounded px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-600/50 transition-colors"
+            >
+              清除已完成
+            </button>
+          )}
+          {expanded ? (
+            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+          ) : (
+            <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+          )}
+        </div>
       </button>
 
       {/* Task List */}

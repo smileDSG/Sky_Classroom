@@ -1,0 +1,34 @@
+{
+  "profile": {
+    "userId": "default-user",
+    "masteryBySubject": {
+      "math": 67,
+      "physics": 0,
+      "chemistry": 0,
+      "biology": 0,
+      "chinese": 0,
+      "english": 0,
+      "history": 0,
+      "geography": 0,
+      "politics": 0
+    },
+    "masteryByKnowledge": {
+      "综合练习": 67
+    },
+    "weakPoints": [],
+    "strongPoints": [],
+    "errorPatterns": [],
+    "totalQuestions": 3,
+    "totalCorrect": 2,
+    "lastUpdated": "2026-06-16T06:51:22.471Z",
+    "recentQuizPerformance": {
+      "overallAccuracy": 67,
+      "accuracyByKnowledge": {
+        "综合练习": 67
+      },
+      "topErrorCauses": [],
+      "recommendedDepthShift": "maintain"
+    }
+  },
+  "cachedAt": 1781592682471
+}

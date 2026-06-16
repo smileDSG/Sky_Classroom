@@ -72,6 +72,7 @@ export interface QuestionBankFilter {
   questionType?: 'choice' | 'fill' | 'solve' | 'judge';
   verified?: boolean;
   keyword?: string;              // FULLTEXT search on content
+  knowledgePoint?: string;       // match knowledge_points
   tags?: string[];               // match any tag
   limit?: number;
   offset?: number;

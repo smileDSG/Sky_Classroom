@@ -58,7 +58,9 @@ export function GenerationToolbar({
   pdfFile,
   onPdfFileChange,
   onPdfError,
-}: GenerationToolbarProps) {const currentProviderId = useSettingsStore((s) => s.providerId);
+}: GenerationToolbarProps) {
+  const t = (key: string) => key;
+const currentProviderId = useSettingsStore((s) => s.providerId);
   const currentModelId = useSettingsStore((s) => s.modelId);
   const providersConfig = useSettingsStore((s) => s.providersConfig);
   const setModel = useSettingsStore((s) => s.setModel);
@@ -145,6 +147,7 @@ export function GenerationToolbar({
           onThinkingChange={(config) =>
             setThinkingConfig(currentProviderId, currentModelId, config)
           }
+          t={t}
         />
       ) : (
         <Tooltip>
@@ -307,7 +310,7 @@ export function GenerationToolbar({
                 {webSearch && (
                   <span>
                     {WEB_SEARCH_PROVIDERS[webSearchProviderId]
-                      ? getWebSearchProviderDisplayName(webSearchProviderId)
+                      ? getWebSearchProviderDisplayName(webSearchProviderId, t)
                       : 'Search'}
                   </span>
                 )}
@@ -366,7 +369,7 @@ export function GenerationToolbar({
                           <div
                             className={cn('flex items-center gap-1.5', !available && 'opacity-50')}
                           >
-                            {getWebSearchProviderDisplayName(provider.id)}
+                            {getWebSearchProviderDisplayName(provider.id, t)}
                             {cfg?.isServerConfigured && (
                               <span className="text-[9px] px-1 py-0 rounded border text-muted-foreground">
                                 {'服务端'}
@@ -432,7 +435,7 @@ function InlineThinkingControl({
   model?: ModelInfo;
   config?: ThinkingConfig;
   onChange: (config: ThinkingConfig | undefined) => void;
-  t?: (key: string) => string;
+  t: (key: string) => string;
 }) {
   const thinking = model?.capabilities?.thinking;
   if (!supportsConfigurableThinking(thinking)) return null;
@@ -667,7 +670,7 @@ function ModelSettingsPopover({
   setModel: (providerId: ProviderId, modelId: string) => void;
   thinkingConfig?: ThinkingConfig;
   onThinkingChange: (config: ThinkingConfig | undefined) => void;
-  t?: (key: string) => string;
+  t: (key: string) => string;
 }) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [activeProviderId, setActiveProviderId] = useState<ProviderId>(currentProviderId);

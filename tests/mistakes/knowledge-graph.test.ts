@@ -15,7 +15,7 @@ import {
   buildKnowledgeGraph,
   recommendLearningPath,
   getMasterySummary,
-} from '@/lib/mistakes/knowledge-graph';
+} from '@/lib/knowledge-graph';
 import type {
   MistakeRecord,
   KnowledgeGraph,

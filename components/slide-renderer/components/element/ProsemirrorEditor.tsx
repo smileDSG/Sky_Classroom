@@ -92,7 +92,7 @@ export const ProsemirrorEditor = forwardRef<ProsemirrorEditorRef, ProsemirrorEdi
               return;
             onUpdate?.({
               value: editorView.current.dom.innerHTML,
-              ignore: isHandleHistory,
+              ignore: !!isHandleHistory,
             });
           },
           300,

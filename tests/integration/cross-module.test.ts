@@ -11,7 +11,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
 import { analyzeMistakeCause } from '@/lib/mistakes/cause-analyzer';
-import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 
 beforeEach(() => {

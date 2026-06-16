@@ -4,6 +4,7 @@
 
 import type { Subject } from '@/lib/solve/agents/analyze-types';
 import type { MistakeCause } from '@/lib/solve/types';
+import type { QuizPerformanceSummary } from './quiz-performance-analyzer';
 
 export interface StudentProfile {
   userId: string;
@@ -15,6 +16,8 @@ export interface StudentProfile {
   totalQuestions: number;
   totalCorrect: number;
   lastUpdated: Date;
+  /** Recent quiz performance summary for adaptive depth tuning */
+  recentQuizPerformance?: QuizPerformanceSummary;
 }
 
 export interface ErrorPattern {

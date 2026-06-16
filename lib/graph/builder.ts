@@ -6,7 +6,7 @@
  */
 import type { GraphResponse } from './types';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
-import { buildKnowledgeGraph } from '@/lib/mistakes/knowledge-graph';
+import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 
 export function buildGraphFromMistakes(mistakes: MistakeBookEntry[]): GraphResponse {
   const graph = buildKnowledgeGraph(mistakes as any);

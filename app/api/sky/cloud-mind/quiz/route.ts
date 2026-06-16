@@ -13,6 +13,26 @@ const log = createLogger('API:CloudMindQuiz');
 
 export const maxDuration = 60;
 
+const SUBJECT_LABELS: Record<string, string> = {
+  math: '数学',
+  physics: '物理',
+  chemistry: '化学',
+  biology: '生物',
+  chinese: '语文',
+  english: '英语',
+  history: '历史',
+  politics: '政治',
+  geography: '地理',
+};
+
+const DIFFICULTIES = new Set(['easy', 'medium', 'hard']);
+
+type QuizDifficulty = 'easy' | 'medium' | 'hard';
+
+function normalizeDifficulty(value: string): QuizDifficulty {
+  return DIFFICULTIES.has(value) ? (value as QuizDifficulty) : 'medium';
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -32,12 +52,18 @@ export async function POST(req: NextRequest) {
     }
 
     const questionCount = Math.min(Math.max(count || 5, 1), 20);
-
     const result = await generateQuiz(subject, difficulty, topic || '', questionCount);
 
     log.info(`Quiz generated: ${result.questions.length} questions for ${subject}`);
 
-    return Response.json({ success: true, data: result });
+    return Response.json({
+      success: true,
+      data: {
+        ...result,
+        subject: SUBJECT_LABELS[subject] || result.subject,
+        difficulty: normalizeDifficulty(difficulty),
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Quiz generation failed:', message);

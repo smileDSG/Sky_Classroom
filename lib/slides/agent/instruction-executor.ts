@@ -6,6 +6,7 @@
  * and handles errors gracefully (single instruction failure does not crash the page).
  */
 import pptxgen from 'pptxgenjs';
+type PresSlide = PptxGenJS.PresSlide;
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 import { latexToOmml } from '@/lib/export/latex-to-omml';
@@ -18,10 +19,7 @@ const log = createLogger('InstructionExecutor');
 const setBackgroundSchema = z.object({
   op: z.literal('setBackground'),
   params: z.object({
-    color: z
-      .string()
-      .regex(/^#?[0-9A-Fa-f]{6}$/)
-      .optional(),
+    color: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     path: z.string().optional(),
   }),
 });
@@ -30,16 +28,10 @@ const addTextSchema = z.object({
   op: z.literal('addText'),
   params: z.object({
     text: z.string(),
-    x: z.number(),
-    y: z.number(),
-    w: z.number(),
-    h: z.number(),
+    x: z.number(), y: z.number(), w: z.number(), h: z.number(),
     fontSize: z.number().optional(),
     fontFace: z.string().optional(),
-    color: z
-      .string()
-      .regex(/^#?[0-9A-Fa-f]{6}$/)
-      .optional(),
+    color: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     bold: z.boolean().optional(),
     italic: z.boolean().optional(),
     align: z.enum(['left', 'center', 'right']).optional(),
@@ -53,32 +45,18 @@ const addShapeSchema = z.object({
   op: z.literal('addShape'),
   params: z.object({
     type: z.enum(['RECTANGLE', 'OVAL', 'LINE', 'ROUNDED_RECTANGLE']),
-    x: z.number(),
-    y: z.number(),
-    w: z.number(),
-    h: z.number(),
-    fillColor: z
-      .string()
-      .regex(/^#?[0-9A-Fa-f]{6}$/)
-      .optional(),
+    x: z.number(), y: z.number(), w: z.number(), h: z.number(),
+    fillColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     fillTransparency: z.number().min(0).max(100).optional(),
-    lineColor: z
-      .string()
-      .regex(/^#?[0-9A-Fa-f]{6}$/)
-      .optional(),
+    lineColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     lineWidth: z.number().optional(),
     rotate: z.number().optional(),
     rectRadius: z.number().optional(),
-    shadow: z
-      .object({
-        type: z.enum(['outer', 'inner']),
-        color: z.string().regex(/^#?[0-9A-Fa-f]{6}$/),
-        blur: z.number(),
-        offset: z.number(),
-        angle: z.number(),
-        opacity: z.number(),
-      })
-      .optional(),
+    shadow: z.object({
+      type: z.enum(['outer', 'inner']),
+      color: z.string().regex(/^#?[0-9A-Fa-f]{6}$/),
+      blur: z.number(), offset: z.number(), angle: z.number(), opacity: z.number(),
+    }).optional(),
   }),
 });
 
@@ -87,10 +65,7 @@ const addImageSchema = z.object({
   params: z.object({
     data: z.string().optional(),
     path: z.string().optional(),
-    x: z.number(),
-    y: z.number(),
-    w: z.number(),
-    h: z.number(),
+    x: z.number(), y: z.number(), w: z.number(), h: z.number(),
     transparency: z.number().min(0).max(100).optional(),
     rounding: z.boolean().optional(),
   }),
@@ -101,31 +76,14 @@ const addTableSchema = z.object({
   params: z.object({
     headers: z.array(z.string()),
     rows: z.array(z.array(z.string())),
-    x: z.number(),
-    y: z.number(),
-    w: z.number(),
-    headerColor: z
-      .string()
-      .regex(/^#?[0-9A-Fa-f]{6}$/)
-      .optional(),
-    headerBgColor: z
-      .string()
-      .regex(/^#?[0-9A-Fa-f]{6}$/)
-      .optional(),
-    borderColor: z
-      .string()
-      .regex(/^#?[0-9A-Fa-f]{6}$/)
-      .optional(),
-    altRowBgColor: z
-      .string()
-      .regex(/^#?[0-9A-Fa-f]{6}$/)
-      .optional(),
+    x: z.number(), y: z.number(), w: z.number(),
+    headerColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
+    headerBgColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
+    borderColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
+    altRowBgColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     fontSize: z.number().optional(),
     fontFace: z.string().optional(),
-    textColor: z
-      .string()
-      .regex(/^#?[0-9A-Fa-f]{6}$/)
-      .optional(),
+    textColor: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
   }),
 });
 
@@ -133,15 +91,9 @@ const addFormulaSchema = z.object({
   op: z.literal('addFormula'),
   params: z.object({
     latex: z.string(),
-    x: z.number(),
-    y: z.number(),
-    w: z.number(),
-    h: z.number(),
+    x: z.number(), y: z.number(), w: z.number(), h: z.number(),
     fontSize: z.number().optional(),
-    color: z
-      .string()
-      .regex(/^#?[0-9A-Fa-f]{6}$/)
-      .optional(),
+    color: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).optional(),
     align: z.enum(['left', 'center', 'right']).optional(),
   }),
 });
@@ -150,17 +102,12 @@ const addChartSchema = z.object({
   op: z.literal('addChart'),
   params: z.object({
     chartType: z.enum(['BAR', 'LINE', 'PIE']),
-    data: z.array(
-      z.object({
-        name: z.string(),
-        labels: z.array(z.string()),
-        values: z.array(z.number()),
-      }),
-    ),
-    x: z.number(),
-    y: z.number(),
-    w: z.number(),
-    h: z.number(),
+    data: z.array(z.object({
+      name: z.string(),
+      labels: z.array(z.string()),
+      values: z.array(z.number()),
+    })),
+    x: z.number(), y: z.number(), w: z.number(), h: z.number(),
     barDir: z.enum(['col', 'bar']).optional(),
     showTitle: z.boolean().optional(),
     title: z.string().optional(),
@@ -194,7 +141,7 @@ export interface ExecutionResult {
   success: boolean;
   errors: Array<{ opIndex: number; op: string; error: string }>;
   slideIndex: number;
-  formulas?: Array<unknown>;
+  formulas?: Array<{ latex: string; omml: string; x: number; y: number; w: number; h: number; pageNum: number }>;
 }
 
 function hex(c: string): string {
@@ -207,59 +154,21 @@ function hex(c: string): string {
  */
 function sanitizePlainTextLatex(text: string): string {
   const latexCmdMap: Record<string, string> = {
-    '\\Delta': 'Δ',
-    '\\delta': 'δ',
-    '\\alpha': 'α',
-    '\\beta': 'β',
-    '\\gamma': 'γ',
-    '\\Gamma': 'Γ',
-    '\\pi': 'π',
-    '\\theta': 'θ',
-    '\\lambda': 'λ',
-    '\\mu': 'μ',
-    '\\sigma': 'σ',
-    '\\Sigma': 'Σ',
-    '\\omega': 'ω',
-    '\\Omega': 'Ω',
-    '\\phi': 'φ',
-    '\\Phi': 'Φ',
-    '\\psi': 'ψ',
-    '\\Psi': 'Ψ',
-    '\\rho': 'ρ',
-    '\\tau': 'τ',
-    '\\eta': 'η',
-    '\\epsilon': 'ε',
-    '\\varepsilon': 'ε',
-    '\\kappa': 'κ',
-    '\\chi': 'χ',
-    '\\nu': 'ν',
-    '\\xi': 'ξ',
-    '\\zeta': 'ζ',
-    '\\approx': '≈',
-    '\\rightarrow': '→',
-    '\\to': '→',
-    '\\leftarrow': '←',
-    '\\leftrightarrow': '↔',
-    '\\leq': '≤',
-    '\\geq': '≥',
-    '\\pm': '±',
-    '\\times': '×',
-    '\\div': '÷',
-    '\\cdot': '·',
-    '\\infty': '∞',
-    '\\partial': '∂',
-    '\\nabla': '∇',
-    '\\sqrt': '√',
-    '\\int': '∫',
-    '\\sum': '∑',
-    '\\prod': '∏',
-    '\\ln': 'ln',
-    '\\log': 'log',
-    '\\sin': 'sin',
-    '\\cos': 'cos',
-    '\\tan': 'tan',
-    '\\circ': '°',
-    '\\degree': '°',
+    '\\Delta': 'Δ', '\\delta': 'δ', '\\alpha': 'α', '\\beta': 'β',
+    '\\gamma': 'γ', '\\Gamma': 'Γ', '\\pi': 'π', '\\theta': 'θ',
+    '\\lambda': 'λ', '\\mu': 'μ', '\\sigma': 'σ', '\\Sigma': 'Σ',
+    '\\omega': 'ω', '\\Omega': 'Ω', '\\phi': 'φ', '\\Phi': 'Φ',
+    '\\psi': 'ψ', '\\Psi': 'Ψ', '\\rho': 'ρ', '\\tau': 'τ',
+    '\\eta': 'η', '\\epsilon': 'ε', '\\varepsilon': 'ε',
+    '\\kappa': 'κ', '\\chi': 'χ', '\\nu': 'ν', '\\xi': 'ξ', '\\zeta': 'ζ',
+    '\\approx': '≈', '\\rightarrow': '→', '\\to': '→',
+    '\\leftarrow': '←', '\\leftrightarrow': '↔',
+    '\\leq': '≤', '\\geq': '≥', '\\pm': '±',
+    '\\times': '×', '\\div': '÷', '\\cdot': '·',
+    '\\infty': '∞', '\\partial': '∂', '\\nabla': '∇',
+    '\\sqrt': '√', '\\int': '∫', '\\sum': '∑', '\\prod': '∏',
+    '\\ln': 'ln', '\\log': 'log', '\\sin': 'sin', '\\cos': 'cos', '\\tan': 'tan',
+    '\\circ': '°', '\\degree': '°',
   };
 
   let result = text;
@@ -286,7 +195,7 @@ function isSafePath(p: string): boolean {
 
 export class InstructionExecutor {
   execute(
-    slide: any,
+    slide: PresSlide,
     pres: pptxgen,
     instructions: Instruction[],
     pageNum: number,
@@ -299,11 +208,7 @@ export class InstructionExecutor {
         // Validate
         const parsed = instructionSchema.safeParse(inst);
         if (!parsed.success) {
-          errors.push({
-            opIndex: i,
-            op: String(inst.op || 'unknown'),
-            error: `Schema: ${parsed.error.message.slice(0, 100)}`,
-          });
+          errors.push({ opIndex: i, op: String(inst.op || 'unknown'), error: `Schema: ${parsed.error.message.slice(0, 100)}` });
           continue;
         }
 
@@ -314,11 +219,7 @@ export class InstructionExecutor {
             if (params.color) slide.background = { color: hex(params.color) };
             else if (params.path) {
               if (!isSafePath(params.path)) {
-                errors.push({
-                  opIndex: i,
-                  op: 'setBackground',
-                  error: 'Invalid path (traversal or unsafe protocol)',
-                });
+                errors.push({ opIndex: i, op: 'setBackground', error: 'Invalid path (traversal or unsafe protocol)' });
                 break;
               }
               slide.background = { path: params.path };
@@ -328,13 +229,7 @@ export class InstructionExecutor {
           case 'addText': {
             const trimmed = params.text.trim();
             // Filter out orphaned arrow symbols (process step connectors without labels)
-            if (
-              trimmed === '→' ||
-              trimmed === '->' ||
-              trimmed === '←' ||
-              trimmed === '<-' ||
-              trimmed === '↔'
-            ) {
+            if (trimmed === '→' || trimmed === '->' || trimmed === '←' || trimmed === '<-' || trimmed === '↔') {
               log.warn(`Filtered orphaned arrow at instruction ${i} (page ${pageNum})`);
               break;
             }
@@ -354,9 +249,7 @@ export class InstructionExecutor {
             let isDesignHint = false;
             for (const pattern of designHintPatterns) {
               if (pattern.test(trimmed)) {
-                log.warn(
-                  `Filtered design hint text at instruction ${i} (page ${pageNum}): ${trimmed.slice(0, 50)}...`,
-                );
+                log.warn(`Filtered design hint text at instruction ${i} (page ${pageNum}): ${trimmed.slice(0, 50)}...`);
                 isDesignHint = true;
                 break;
               }
@@ -366,10 +259,7 @@ export class InstructionExecutor {
             let displayText = convertInlineLatexToUnicode(params.text);
             displayText = sanitizePlainTextLatex(displayText);
             slide.addText(displayText, {
-              x: params.x,
-              y: params.y,
-              w: params.w,
-              h: params.h,
+              x: params.x, y: params.y, w: params.w, h: params.h,
               fontSize: params.fontSize ?? 14,
               fontFace: params.fontFace ?? 'Microsoft YaHei',
               color: params.color ? hex(params.color) : '475569',
@@ -384,70 +274,41 @@ export class InstructionExecutor {
           }
           case 'addShape': {
             const shapeOpts: Record<string, unknown> = {
-              x: params.x,
-              y: params.y,
-              w: params.w,
-              h: params.h,
+              x: params.x, y: params.y, w: params.w, h: params.h,
             };
             if (params.fillColor) {
-              shapeOpts.fill = {
-                color: hex(params.fillColor),
-                transparency: params.fillTransparency ?? 0,
-              };
+              shapeOpts.fill = { color: hex(params.fillColor), transparency: params.fillTransparency ?? 0 };
             }
             if (params.lineColor) {
               shapeOpts.line = { color: hex(params.lineColor), width: params.lineWidth ?? 1 };
             }
             if (params.rotate !== undefined) shapeOpts.rotate = params.rotate;
-            if (params.type === 'ROUNDED_RECTANGLE')
-              shapeOpts.rectRadius = params.rectRadius ?? 0.1;
+            if (params.type === 'ROUNDED_RECTANGLE') shapeOpts.rectRadius = params.rectRadius ?? 0.1;
             if (params.shadow) shapeOpts.shadow = params.shadow;
 
-            slide.addShape(
-              (pres as unknown as { shapes: Record<string, unknown> }).shapes[params.type] as never,
-              shapeOpts as never,
-            );
+            slide.addShape((pres as unknown as { shapes: Record<string, unknown> }).shapes[params.type] as never, shapeOpts as never);
             break;
           }
           case 'addImage': {
             const imgOpts: Record<string, unknown> = {
-              x: params.x,
-              y: params.y,
-              w: params.w,
-              h: params.h,
+              x: params.x, y: params.y, w: params.w, h: params.h,
               transparency: params.transparency,
               rounding: params.rounding,
             };
             if (params.data) imgOpts.data = params.data;
             else if (params.path) {
               if (!isSafePath(params.path)) {
-                errors.push({
-                  opIndex: i,
-                  op: 'addImage',
-                  error: 'Invalid path (traversal or unsafe protocol)',
-                });
+                errors.push({ opIndex: i, op: 'addImage', error: 'Invalid path (traversal or unsafe protocol)' });
                 break;
               }
               imgOpts.path = params.path;
-            } else break;
+            }
+            else break;
             slide.addImage(imgOpts as never);
             break;
           }
           case 'addTable': {
-            const {
-              headers,
-              rows,
-              x,
-              y,
-              w,
-              headerColor,
-              headerBgColor,
-              borderColor,
-              altRowBgColor,
-              fontSize,
-              fontFace,
-              textColor,
-            } = params;
+            const { headers, rows, x, y, w, headerColor, headerBgColor, borderColor, altRowBgColor, fontSize, fontFace, textColor } = params;
             const headerBg = headerBgColor ?? '1E293B';
             const headerTxt = headerColor ?? 'FFFFFF';
             const borderC = borderColor ?? 'E2E8F0';
@@ -478,25 +339,20 @@ export class InstructionExecutor {
                   align: 'center' as const,
                   valign: 'middle' as const,
                 },
-              })),
+              }))
             );
 
             const colCount = Math.max(headers.length, ...rows.map((r) => r.length));
             const colW = w / colCount;
             const rowH = 0.4;
 
-            slide.addTable(
-              [headerRow, ...dataRows] as never,
-              {
-                x,
-                y,
-                w,
-                colW: Array.from({ length: colCount }, () => colW),
-                rowH: Array.from({ length: rows.length + 1 }, () => rowH),
-                border: { pt: 0.5, color: hex(borderC) },
-                autoPage: false,
-              } as never,
-            );
+            slide.addTable([headerRow, ...dataRows] as never, {
+              x, y, w,
+              colW: Array.from({ length: colCount }, () => colW),
+              rowH: Array.from({ length: rows.length + 1 }, () => rowH),
+              border: { pt: 0.5, color: hex(borderC) },
+              autoPage: false,
+            } as never);
             break;
           }
           case 'addChart': {
@@ -506,36 +362,22 @@ export class InstructionExecutor {
               values: d.values,
             }));
 
-            slide.addChart(
-              (pres as unknown as { charts: Record<string, unknown> }).charts[
-                params.chartType
-              ] as never,
-              chartData as never,
-              {
-                x: params.x,
-                y: params.y,
-                w: params.w,
-                h: params.h,
-                barDir: params.barDir ?? 'col',
-                showTitle: params.showTitle,
-                title: params.title,
-                showLegend: params.showLegend,
-                chartColors: params.chartColors,
-              } as never,
-            );
+            slide.addChart((pres as unknown as { charts: Record<string, unknown> }).charts[params.chartType] as never, chartData as never, {
+              x: params.x, y: params.y, w: params.w, h: params.h,
+              barDir: params.barDir ?? 'col',
+              showTitle: params.showTitle,
+              title: params.title,
+              showLegend: params.showLegend,
+              chartColors: params.chartColors,
+            } as never);
             break;
           }
           case 'addFormula': {
             try {
               const omml = latexToOmml(params.latex, params.fontSize ?? 14);
               if (omml) {
-                (
-                  slide as unknown as { addFormula: (opts: Record<string, unknown>) => void }
-                ).addFormula({
-                  x: params.x,
-                  y: params.y,
-                  w: params.w,
-                  h: params.h,
+                (slide as unknown as { addFormula: (opts: Record<string, unknown>) => void }).addFormula({
+                  x: params.x, y: params.y, w: params.w, h: params.h,
                   omml,
                   fontSize: params.fontSize ?? 14,
                   color: params.color ? hex(params.color) : '1E293B',
@@ -543,14 +385,9 @@ export class InstructionExecutor {
                 });
               } else {
                 // Fallback: convert LaTeX to Unicode plain text
-                const fallbackText = sanitizePlainTextLatex(
-                  convertInlineLatexToUnicode(params.latex),
-                );
+                const fallbackText = sanitizePlainTextLatex(convertInlineLatexToUnicode(params.latex));
                 slide.addText(fallbackText, {
-                  x: params.x,
-                  y: params.y,
-                  w: params.w,
-                  h: params.h,
+                  x: params.x, y: params.y, w: params.w, h: params.h,
                   fontSize: params.fontSize ?? 14,
                   fontFace: 'KaTeX_Main, Times New Roman, serif',
                   color: params.color ? hex(params.color) : '1E293B',
@@ -558,20 +395,11 @@ export class InstructionExecutor {
                 });
               }
             } catch (err) {
-              log.warn(
-                `Formula render failed on page ${pageNum}: ${err instanceof Error ? err.message : String(err)}`,
-              );
-              const fallbackText = sanitizePlainTextLatex(
-                convertInlineLatexToUnicode(params.latex),
-              );
+              log.warn(`Formula render failed on page ${pageNum}: ${err instanceof Error ? err.message : String(err)}`);
+              const fallbackText = sanitizePlainTextLatex(convertInlineLatexToUnicode(params.latex));
               slide.addText(fallbackText, {
-                x: params.x,
-                y: params.y,
-                w: params.w,
-                h: params.h,
-                fontSize: params.fontSize ?? 14,
-                color: '1E293B',
-                align: 'center',
+                x: params.x, y: params.y, w: params.w, h: params.h,
+                fontSize: params.fontSize ?? 14, color: '1E293B', align: 'center',
               });
             }
             break;

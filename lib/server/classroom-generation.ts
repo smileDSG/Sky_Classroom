@@ -352,14 +352,12 @@ export async function generateClassroom(
   const heartbeat = options.onProgress
     ? setInterval(() => {
         outlineProgress = Math.min(outlineProgress + 2, 28);
-        Promise.resolve(
-          options.onProgress!({
-            step: 'generating_outlines',
-            progress: outlineProgress,
-            message: 'AI is thinking...',
-            scenesGenerated: 0,
-          }),
-        ).catch(() => {});
+        Promise.resolve(options.onProgress!({
+          step: 'generating_outlines',
+          progress: outlineProgress,
+          message: 'AI is thinking...',
+          scenesGenerated: 0,
+        })).catch(() => {});
       }, 2000)
     : null;
 
@@ -469,9 +467,7 @@ export async function generateClassroom(
     };
   }
 
-  log.info(
-    `Stage 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`,
-  );
+  log.info(`Stage 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`);
 
   await options.onProgress?.({
     step: 'generating_scenes',
@@ -487,10 +483,7 @@ export async function generateClassroom(
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
       try {
-        const content = await generateSceneContent(safeOutline, aiCall, {
-          agents,
-          languageDirective,
-        });
+        const content = await generateSceneContent(safeOutline, aiCall, { agents, languageDirective });
         if (!content) {
           log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
           return null;
@@ -534,7 +527,7 @@ export async function generateClassroom(
       continue;
     }
     generatedScenes += 1;
-    const progressEnd = 30 + Math.floor((generatedScenes / Math.max(outlines.length, 1)) * 60);
+    const progressEnd = 30 + Math.floor(((generatedScenes) / Math.max(outlines.length, 1)) * 60);
     await options.onProgress?.({
       step: 'generating_scenes',
       progress: Math.min(progressEnd, 90),
@@ -560,7 +553,10 @@ export async function generateClassroom(
     totalScenes: outlines.length,
   });
 
-  const persisted = await persistClassroom({ id: stageId, stage, scenes }, options.baseUrl);
+  const persisted = await persistClassroom(
+    { id: stageId, stage, scenes },
+    options.baseUrl,
+  );
 
   log.info(`Classroom persisted: ${persisted.id}, URL: ${persisted.url}`);
 
@@ -636,8 +632,7 @@ export async function generateClassroomContinue(
     onProgress?: (progress: ClassroomGenerationProgress) => Promise<void> | void;
   },
 ): Promise<GenerateClassroomResult> {
-  const { outlines, languageDirective, agents, stage, requirement, pdfText, researchContext } =
-    saved;
+  const { outlines, languageDirective, agents, stage, requirement, pdfText, researchContext } = saved;
 
   const {
     model: languageModel,
@@ -683,9 +678,7 @@ export async function generateClassroomContinue(
   const store = createInMemoryStore(stage);
   const api = createStageAPI(store);
 
-  log.info(
-    `Phase 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`,
-  );
+  log.info(`Phase 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`);
 
   await options.onProgress?.({
     step: 'generating_scenes',
@@ -701,10 +694,7 @@ export async function generateClassroomContinue(
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
       try {
-        const content = await generateSceneContent(safeOutline, aiCall, {
-          agents,
-          languageDirective,
-        });
+        const content = await generateSceneContent(safeOutline, aiCall, { agents, languageDirective });
         if (!content) {
           log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
           return null;
@@ -747,7 +737,7 @@ export async function generateClassroomContinue(
       continue;
     }
     generatedScenes += 1;
-    const progressEnd = 30 + Math.floor((generatedScenes / Math.max(outlines.length, 1)) * 60);
+    const progressEnd = 30 + Math.floor(((generatedScenes) / Math.max(outlines.length, 1)) * 60);
     await options.onProgress?.({
       step: 'generating_scenes',
       progress: Math.min(progressEnd, 90),

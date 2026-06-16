@@ -19,13 +19,13 @@ export default function CloudMindTeachingRoute() {
   return (
     <div
       className="relative min-h-screen dark"
-      style={{ background: 'linear-gradient(180deg, #0B0D1A 0%, #121008 50%, #0B0D1A 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #070E0C 0%, #0D1A17 50%, #070E0C 100%)' }}
     >
       {/* Deep space starfield */}
       <div className="pointer-events-none fixed inset-0 z-0">
-        <CelestialCanvas starCount={100} parallax={false} nebula grid={false} horizonGlow />
+        <CelestialCanvas starCount={100} parallax={false} nebula grid={false} />
       </div>
-      {/* Amber ambient glow overlays */}
+      {/* Aurora ambient glow overlays */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute top-0 left-1/3 h-[500px] w-[500px] rounded-full bg-[var(--teaching-primary)]/4 blur-[150px]" />
         <div className="absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-[var(--teaching-accent)]/3 blur-[120px]" />

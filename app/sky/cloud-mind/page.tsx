@@ -33,7 +33,7 @@ const TOOLS = [
     href: '/sky/cloud-mind/quiz',
     icon: FileQuestion,
     gradient: 'from-amber-500 to-yellow-500',
-    stats: '6 大学科覆盖',
+    stats: '9 大学科覆盖',
     badge: '新',
   },
   {

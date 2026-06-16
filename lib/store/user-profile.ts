@@ -105,10 +105,6 @@ export const useUserProfileStore = create<UserProfileState>()(
     }),
     {
       name: 'user-profile-storage',
-      onError: (error: unknown) => {
-        console.error('[UserProfile] Hydration failed — clearing corrupted cache:', error);
-        try { localStorage.removeItem('user-profile-storage'); } catch { /* ignore */ }
-      },
     },
   ),
 );

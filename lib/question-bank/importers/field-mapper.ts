@@ -5,7 +5,6 @@
  * QuestionBankInsert field names.
  */
 
-import type { QuestionBankInsert } from '@/lib/question-bank/types';
 import type { FieldMappingResult, ImportOptions } from './types';
 import { extractMultiColumnOptions } from './post-processor';
 
@@ -26,7 +25,6 @@ const FIELD_ALIASES: Record<string, string[]> = {
   options: ['options', '选项', 'choices', '备选答案', 'choice'],
   source: ['source', '来源', '出处', '试卷来源'],
   tags: ['tags', '标签', '标记'],
-  verified: ['verified', '已验证', '验证状态', '是否验证'],
 };
 
 const CANONICAL_FIELDS = Object.keys(FIELD_ALIASES);

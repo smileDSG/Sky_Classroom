@@ -7,7 +7,7 @@ import { render, screen } from '@testing-library/react';
 import { ErrorBoundary } from '@/components/error-boundary';
 
 // 故意抛错的组件
-function Bomb({ msg = 'Boom!' }: { msg?: string }) {
+function Bomb({ msg = 'Boom!' }: { msg?: string }): React.ReactNode {
   throw new Error(msg);
 }
 

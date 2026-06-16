@@ -1,98 +1,112 @@
+/**
+ * Classroom Complete Summary — Tests
+ */
+
 import { describe, it, expect } from 'vitest';
 import { summarizeScenes } from '@/lib/classroom/complete-summary';
-import type { Scene, QuizQuestion } from '@/lib/types/stage';
+import type { Scene, QuizContent } from '@/lib/types/stage';
 
-function slide(id: string, order: number): Scene {
+function makeQuizScene(id: string, questions: QuizContent['questions'], knowledgePoints?: string[]): Scene {
   return {
     id,
-    stageId: 's1',
-    type: 'slide',
-    title: id,
-    order,
-    content: { type: 'slide', canvas: {} as never },
-  };
-}
-
-function quizScene(id: string, order: number, questions: QuizQuestion[]): Scene {
-  return {
-    id,
-    stageId: 's1',
     type: 'quiz',
-    title: id,
-    order,
-    content: { type: 'quiz', questions },
+    name: 'Quiz',
+    content: {
+      type: 'quiz',
+      questions,
+      knowledgePoints,
+    } as QuizContent,
   };
 }
 
-function interactive(id: string, order: number): Scene {
+function makeSlideScene(id: string): Scene {
   return {
     id,
-    stageId: 's1',
-    type: 'interactive',
-    title: id,
-    order,
-    content: { type: 'interactive', url: 'about:blank' },
+    type: 'slide',
+    name: 'Slide',
+    content: { type: 'slide', blocks: [] },
   };
 }
-
-const choiceQ = (id: string, answer: string[]): QuizQuestion => ({
-  id,
-  type: 'single',
-  question: id,
-  options: [
-    { value: 'a', label: 'A' },
-    { value: 'b', label: 'B' },
-  ],
-  answer,
-  hasAnswer: true,
-  points: 1,
-});
 
 describe('summarizeScenes', () => {
-  it('counts scenes by type and omits zeros', () => {
-    const scenes = [slide('s1', 0), slide('s2', 1), interactive('i1', 2)];
-    const result = summarizeScenes(scenes, () => ({}));
-    expect(result.countsByType).toEqual({ slide: 2, interactive: 1 });
-    expect(result.quiz).toBeNull();
+  it('returns empty summary for no scenes', () => {
+    const summary = summarizeScenes([], () => ({}));
+    expect(summary.countsByType).toEqual({});
+    expect(summary.quiz).toBeNull();
+    expect(summary.quizDetails).toEqual([]);
+    expect(summary.allQuizResults).toEqual([]);
   });
 
-  it('returns null quiz when no quiz scenes exist', () => {
-    const result = summarizeScenes([slide('s1', 0)], () => ({}));
-    expect(result.quiz).toBeNull();
+  it('counts scene types correctly', () => {
+    const scenes = [makeSlideScene('s1'), makeSlideScene('s2'), makeQuizScene('q1', [])];
+    const summary = summarizeScenes(scenes, () => ({}));
+    expect(summary.countsByType).toEqual({ slide: 2, quiz: 1 });
   });
 
-  it('aggregates quiz answers across multiple quiz scenes', () => {
-    const scenes = [
-      quizScene('q1', 0, [choiceQ('qa', ['a']), choiceQ('qb', ['b'])]),
-      quizScene('q2', 1, [choiceQ('qc', ['a'])]),
-    ];
-    const answers: Record<string, Record<string, string | string[]>> = {
-      q1: { qa: 'a', qb: 'a' },
-      q2: { qc: 'a' },
-    };
-    const result = summarizeScenes(scenes, (sceneId) => answers[sceneId] ?? {});
-    expect(result.quiz).toEqual({ correct: 2, total: 3, pct: Math.round((2 / 3) * 100) });
-    expect(result.countsByType.quiz).toBe(2);
-  });
-
-  it('returns null quiz when quiz scenes exist but have no gradeable questions', () => {
-    const saOnly = quizScene('q1', 0, [
+  it('records correct answers only in allQuizResults, not quizDetails', () => {
+    const questions: QuizContent['questions'] = [
       {
-        id: 'sa',
-        type: 'short_answer',
-        question: 'x',
-        answer: [],
-        hasAnswer: false,
+        id: 'q1',
+        type: 'single',
+        question: '2+2=?',
+        options: [{ label: '3', value: 'A' }, { label: '4', value: 'B' }],
+        answer: ['B'],
       },
-    ]);
-    const result = summarizeScenes([saOnly], () => ({}));
-    expect(result.quiz).toBeNull();
-    expect(result.countsByType.quiz).toBe(1);
+    ];
+    const scenes = [makeQuizScene('s1', questions, ['算术'])];
+    const summary = summarizeScenes(scenes, () => ({ q1: 'B' }));
+
+    expect(summary.quiz).toEqual({ correct: 1, total: 1, pct: 100 });
+    expect(summary.quizDetails).toEqual([]);
+    expect(summary.allQuizResults).toHaveLength(1);
+    expect(summary.allQuizResults[0].isCorrect).toBe(true);
+    expect(summary.allQuizResults[0].knowledgePoints).toEqual(['算术']);
   });
 
-  it('treats missing answers as incorrect (not skipped)', () => {
-    const scenes = [quizScene('q1', 0, [choiceQ('qa', ['a']), choiceQ('qb', ['b'])])];
-    const result = summarizeScenes(scenes, () => ({}));
-    expect(result.quiz).toEqual({ correct: 0, total: 2, pct: 0 });
+  it('records wrong answers in both quizDetails and allQuizResults', () => {
+    const questions: QuizContent['questions'] = [
+      {
+        id: 'q1',
+        type: 'single',
+        question: '2+2=?',
+        options: [{ label: '3', value: 'A' }, { label: '4', value: 'B' }],
+        answer: ['B'],
+      },
+    ];
+    const scenes = [makeQuizScene('s1', questions)];
+    const summary = summarizeScenes(scenes, () => ({ q1: 'A' }));
+
+    expect(summary.quiz).toEqual({ correct: 0, total: 1, pct: 0 });
+    expect(summary.quizDetails).toHaveLength(1);
+    expect(summary.allQuizResults).toHaveLength(1);
+    expect(summary.allQuizResults[0].isCorrect).toBe(false);
+  });
+
+  it('maps options to string labels', () => {
+    const questions: QuizContent['questions'] = [
+      {
+        id: 'q1',
+        type: 'single',
+        question: 'What is the capital of France?',
+        options: [{ label: 'Paris', value: 'A' }, { label: 'London', value: 'B' }],
+        answer: ['A'],
+      },
+    ];
+    const scenes = [makeQuizScene('s1', questions)];
+    const summary = summarizeScenes(scenes, () => ({ q1: 'A' }));
+
+    expect(summary.allQuizResults[0].options).toEqual(['Paris', 'London']);
+  });
+
+  it('calculates accuracy percentage', () => {
+    const questions: QuizContent['questions'] = [
+      { id: 'q1', type: 'single', question: 'Q1', options: [{ label: 'A', value: 'A' }, { label: 'B', value: 'B' }], answer: ['A'] },
+      { id: 'q2', type: 'single', question: 'Q2', options: [{ label: 'A', value: 'A' }, { label: 'B', value: 'B' }], answer: ['B'] },
+      { id: 'q3', type: 'single', question: 'Q3', options: [{ label: 'A', value: 'A' }, { label: 'B', value: 'B' }], answer: ['A'] },
+    ];
+    const scenes = [makeQuizScene('s1', questions)];
+    const summary = summarizeScenes(scenes, () => ({ q1: 'A', q2: 'A', q3: 'A' }));
+
+    expect(summary.quiz).toEqual({ correct: 2, total: 3, pct: 67 });
   });
 });

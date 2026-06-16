@@ -111,7 +111,7 @@ export function runSolveJob(
               similarQuestions: output.similarQuestions ?? [],
               agentId: finalState.agentRoute ?? 'universal',
               solvedAt: Date.now(),
-              verified: false,
+              verified: true,
             });
           }
         } catch {

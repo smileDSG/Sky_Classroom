@@ -15,18 +15,11 @@ import { createXlsxImporter } from '@/lib/question-bank/importers/xlsx-importer'
 import type { ImportPipelineResult, ImportRowError } from '@/lib/question-bank/importers/types';
 import type { QuestionBankInsert } from '@/lib/question-bank/types';
 import {
-  Upload, FileJson, FileSpreadsheet, FileText, ArrowLeft,
+  Upload, FileText, ArrowLeft,
   CheckCircle, AlertCircle, XCircle, X,
 } from 'lucide-react';
 
 const log = createLogger('QB:ImportPage');
-
-const FORMAT_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
-  json: { label: 'JSON', icon: <FileJson className="w-4 h-4" /> },
-  csv: { label: 'CSV', icon: <FileText className="w-4 h-4" /> },
-  xlsx: { label: 'Excel', icon: <FileSpreadsheet className="w-4 h-4" /> },
-  pdf: { label: 'PDF', icon: <FileText className="w-4 h-4" /> },
-};
 
 type PreviewState = {
   entries: QuestionBankInsert[];
@@ -39,10 +32,8 @@ export default function ImportPage() {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<PreviewState>(null);
   const [progress, setProgress] = useState<{ stage: string; processed: number; total: number } | null>(null);
-  const [result, setResult] = useState<{ total: number; inserted: number; duplicates: number; errors: Array<{ row: number; reason: string }>; pendingReview?: number } | null>(null);
+  const [result, setResult] = useState<{ total: number; inserted: number; duplicates: number; errors: Array<{ row: number; reason: string }> } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  const [lastFileName, setLastFileName] = useState('');
 
   // Import history (localStorage)
   const [history, setHistory] = useState<Array<{ date: string; fileName: string; total: number; inserted: number; duplicates: number; errors: number }>>([]);
@@ -81,9 +72,10 @@ export default function ImportPage() {
         return createXlsxImporter().parse(Buffer.from(arrayBuffer));
       }
       return null; // PDF or unknown: no local preview
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '无法解析该文件，请检查格式';
       log.error('Preview parse failed:', err);
-      toast.error('文件解析失败', { description: err.message || '无法解析该文件，请检查格式' });
+      toast.error('文件解析失败', { description: message });
       return null;
     }
   }, []);
@@ -95,7 +87,6 @@ export default function ImportPage() {
     setUploading(true);
     setResult(null);
     setProgress(null);
-    setLastFileName(file.name);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -136,11 +127,11 @@ export default function ImportPage() {
               setProgress({ stage: event.stage, processed: event.processed, total: event.total });
             } else if (event.type === 'complete') {
               setResult(event.result);
-              const { total, inserted, duplicates, errors, pendingReview } = event.result;
-              addHistory(lastFileName || '未知文件', total, inserted, duplicates, errors.length);
+              const { total, inserted, duplicates, errors } = event.result;
+              addHistory(file.name || '未知文件', total, inserted, duplicates, errors.length);
               if (errors.length === 0) {
                 toast.success('导入完成', {
-                  description: `成功导入 ${inserted} 道题${duplicates > 0 ? `，跳过 ${duplicates} 道重复` : ''}${pendingReview ? `，${pendingReview} 道待审核` : ''}`,
+                  description: `成功导入 ${inserted} 道题${duplicates > 0 ? `，跳过 ${duplicates} 道重复` : ''}`,
                 });
               } else if (inserted > 0) {
                 toast.warning('导入部分成功', {
@@ -159,14 +150,15 @@ export default function ImportPage() {
           }
         }
       }
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '请检查文件格式后重试';
+      if (err instanceof Error && err.name === 'AbortError') {
         log.info('Import aborted');
         toast.info('导入已取消');
       } else {
         log.error('Import failed:', err);
-        toast.error('导入失败', { description: err.message || '请检查文件格式后重试' });
-        setResult({ total: 0, inserted: 0, duplicates: 0, errors: [{ row: 0, reason: err.message }] });
+        toast.error('导入失败', { description: message });
+        setResult({ total: 0, inserted: 0, duplicates: 0, errors: [{ row: 0, reason: message }] });
       }
     } finally {
       setUploading(false);
@@ -180,8 +172,15 @@ export default function ImportPage() {
     setPreview(null);
     setResult(null);
 
-    // PDF goes directly; others try local preview first
-    if (file.name.toLowerCase().endsWith('.pdf')) {
+    const lowerName = file.name.toLowerCase();
+    // PDF, images, and Word go directly; others try local preview first
+    if (
+      lowerName.endsWith('.pdf') ||
+      lowerName.endsWith('.png') ||
+      lowerName.endsWith('.jpg') ||
+      lowerName.endsWith('.jpeg') ||
+      lowerName.endsWith('.docx')
+    ) {
       uploadFile(file);
       return;
     }
@@ -252,12 +251,12 @@ export default function ImportPage() {
           >
             <Upload className="w-10 h-10 text-muted-foreground mb-4" />
             <p className="text-sm font-medium mb-1">点击或拖拽文件到此处</p>
-            <p className="text-xs text-muted-foreground">支持 JSON、CSV、Excel、PDF 格式，单个文件最大 50MB</p>
+            <p className="text-xs text-muted-foreground">支持 JSON、CSV、Excel、PDF、图片、Word 格式，单个文件最大 50MB</p>
             <input
               id="file-input"
               type="file"
               className="hidden"
-              accept=".json,.csv,.xlsx,.xls,.pdf"
+              accept=".json,.csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) handleFile(file);
@@ -324,9 +323,6 @@ export default function ImportPage() {
               <Badge variant="secondary">总计: {result.total}</Badge>
               <Badge variant="default" className="bg-green-600">成功: {result.inserted}</Badge>
               {result.duplicates > 0 && <Badge variant="outline">重复: {result.duplicates}</Badge>}
-              {result.pendingReview ? (
-                <Badge variant="outline" className="text-yellow-600 border-yellow-600">待审核: {result.pendingReview}</Badge>
-              ) : null}
               {result.errors.length > 0 && <Badge variant="destructive">失败: {result.errors.length}</Badge>}
             </div>
 
@@ -347,11 +343,6 @@ export default function ImportPage() {
               <Link href="/sky/question-bank">
                 <Button>查看题库</Button>
               </Link>
-              {result.pendingReview ? (
-                <Link href="/sky/question-bank?verified=false">
-                  <Button variant="outline">去审核</Button>
-                </Link>
-              ) : null}
             </div>
           </CardContent>
         </Card>

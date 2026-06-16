@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -14,8 +14,9 @@ import type { QuestionBankRow } from '@/lib/question-bank/types';
 import { QuestionForm } from '@/components/sky/question-bank/question-form';
 import { ConfirmDialog } from '@/components/sky/question-bank/confirm-dialog';
 import { QuestionDetailSkeleton } from '@/components/sky/question-bank/question-skeleton';
-import { getSubjectTheme, DIFFICULTY_STARS, DIFFICULTY_META } from '@/components/sky/question-bank/subject-theme';
-import { ArrowLeft, Edit2, Trash2, CheckCircle, BookOpen, Tag, FileText, Lightbulb, Layers, ChevronLeft, ChevronRight, Link2 } from 'lucide-react';
+import { DIFFICULTY_STARS, DIFFICULTY_META } from '@/components/sky/question-bank/subject-theme';
+import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial-canvas';
+import { ArrowLeft, Edit2, Trash2, BookOpen, Tag, FileText, Lightbulb, Layers, ChevronLeft, ChevronRight, Link2 } from 'lucide-react';
 import katex from 'katex';
 
 const log = createLogger('QB:DetailPage');
@@ -26,6 +27,9 @@ const TYPE_LABELS: Record<string, string> = {
   solve: '解答题',
   judge: '判断题',
 };
+
+const DETAIL_CARD_CLASS = 'border-amber-500/20 bg-slate-950/70 text-amber-50 shadow-xl shadow-amber-950/10 backdrop-blur-xl';
+const DETAIL_LABEL_CLASS = 'text-sm font-medium text-amber-100';
 
 function renderLatex(text: string): string {
   if (!text) return '';
@@ -60,7 +64,6 @@ export default function QuestionDetailPage() {
   const [saving, setSaving] = useState(false);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Adjacent navigation
   const [prevId, setPrevId] = useState<string | null>(null);
@@ -76,16 +79,10 @@ export default function QuestionDetailPage() {
     if (qp.get('grade')) ctx.set('grade', qp.get('grade')!);
     if (qp.get('difficulty')) ctx.set('difficulty', qp.get('difficulty')!);
     if (qp.get('type')) ctx.set('questionType', qp.get('type')!);
-    if (qp.get('unverified') === '1') ctx.set('verified', 'false');
     return ctx.toString();
   };
 
-  useEffect(() => {
-    if (!id) return;
-    fetchQuestion();
-  }, [id]);
-
-  const fetchQuestion = async () => {
+  const fetchQuestion = useCallback(async () => {
     setLoading(true);
     try {
       const [detailRes, adjacentRes] = await Promise.all([
@@ -105,13 +102,18 @@ export default function QuestionDetailPage() {
         setPrevId(adjacentData.prevId);
         setNextId(adjacentData.nextId);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       log.error('Fetch question failed:', err);
       toast.error('加载失败', { description: '网络错误，请稍后重试' });
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    fetchQuestion();
+  }, [fetchQuestion, id]);
 
   const handleSave = async (data: Partial<QuestionBankRow>) => {
     if (!id) return;
@@ -130,7 +132,7 @@ export default function QuestionDetailPage() {
       } else {
         toast.error('保存失败', { description: result.error || '请检查输入内容' });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       log.error('Update question failed:', err);
       toast.error('保存失败', { description: '网络错误，请稍后重试' });
     } finally {
@@ -140,7 +142,6 @@ export default function QuestionDetailPage() {
 
   const handleDelete = async () => {
     if (!id) return;
-    setDeleteLoading(true);
     try {
       const res = await fetch(`/api/sky/question-bank?id=${id}`, { method: 'DELETE' });
       const data = await res.json();
@@ -150,152 +151,140 @@ export default function QuestionDetailPage() {
       } else {
         toast.error('删除失败', { description: data.error || '请稍后重试' });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       log.error('Delete question failed:', err);
       toast.error('删除失败', { description: '网络错误，请稍后重试' });
     } finally {
-      setDeleteLoading(false);
       setDeleteOpen(false);
-    }
-  };
-
-  const handleVerify = async () => {
-    if (!id) return;
-    try {
-      const res = await fetch('/api/sky/question-bank/review', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve', id }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success('审核通过');
-        fetchQuestion();
-      } else {
-        toast.error('审核失败', { description: data.error || '请稍后重试' });
-      }
-    } catch (err: any) {
-      log.error('Verify question failed:', err);
-      toast.error('审核失败', { description: '网络错误，请稍后重试' });
     }
   };
 
   if (loading) {
     return (
-      <div className="container mx-auto py-6 px-4 max-w-3xl">
-        <QuestionDetailSkeleton />
+      <div className="relative min-h-screen" style={{ background: 'linear-gradient(180deg, #0B0D1A 0%, #121008 50%, #0B0D1A 100%)' }}>
+        <div className="pointer-events-none fixed inset-0 z-0">
+          <CelestialCanvas starCount={120} parallax={false} nebula grid={false} horizonGlow />
+        </div>
+        <div className="relative z-10 mx-auto max-w-3xl px-4 py-6 text-amber-50">
+          <QuestionDetailSkeleton />
+        </div>
       </div>
     );
   }
 
   if (!question) {
     return (
-      <div className="container mx-auto py-6 px-4 max-w-3xl">
-        <div className="text-center py-12">
-          <div className="h-16 w-16 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="h-8 w-8 text-slate-400" />
+      <div className="relative min-h-screen" style={{ background: 'linear-gradient(180deg, #0B0D1A 0%, #121008 50%, #0B0D1A 100%)' }}>
+        <div className="pointer-events-none fixed inset-0 z-0">
+          <CelestialCanvas starCount={120} parallax={false} nebula grid={false} horizonGlow />
+        </div>
+        <div className="relative z-10 mx-auto max-w-3xl px-4 py-6 text-amber-50">
+          <div className="rounded-3xl border border-amber-500/20 bg-slate-950/70 py-12 text-center shadow-2xl shadow-amber-950/20 backdrop-blur-xl">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10">
+              <BookOpen className="h-8 w-8 text-amber-300" />
+            </div>
+            <p className="mb-4 text-lg text-amber-100/70">题目不存在或已被删除</p>
+            <Link href="/sky/question-bank">
+              <Button variant="ghost" className="text-amber-200/70 hover:bg-amber-500/10 hover:text-amber-300">返回题库</Button>
+            </Link>
           </div>
-          <p className="text-muted-foreground text-lg mb-4">题目不存在或已被删除</p>
-          <Link href="/sky/question-bank">
-            <Button variant="link" className="px-0">返回题库</Button>
-          </Link>
         </div>
       </div>
     );
   }
 
-  const theme = getSubjectTheme(question.subject);
   const diffMeta = DIFFICULTY_META[question.difficulty] ?? DIFFICULTY_META.medium;
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-3xl">
-      {/* ── Hero Header ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className={`relative overflow-hidden rounded-2xl ${theme.bg} border ${theme.border} p-6 mb-6`}
-      >
-        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${theme.bar} rounded-l-2xl`} />
-        <div className="pl-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge className={`${theme.bg} ${theme.text} ${theme.border} border font-semibold`}>
-                {question.subject}
-              </Badge>
-              <Badge variant="outline">{TYPE_LABELS[question.questionType]}</Badge>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${diffMeta.bg} ${diffMeta.color} font-medium`}>
-                {DIFFICULTY_STARS[question.difficulty]} {diffMeta.label}
-              </span>
-              {question.grade && (
-                <Badge variant="outline" className="text-muted-foreground">
-                  {question.grade}
-                </Badge>
-              )}
-              {!question.verified && (
-                <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
-                  待审核
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              {!question.verified && (
-                <Button variant="outline" size="sm" onClick={handleVerify}>
-                  <CheckCircle className="w-4 h-4 mr-1" />
-                  通过审核
-                </Button>
-              )}
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing((v) => !v)}>
-                <Edit2 className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-red-50" onClick={() => setDeleteOpen(true)}>
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-          <h1 className="text-xl font-bold text-foreground leading-relaxed">
-            <LatexText text={question.content} />
-          </h1>
-        </div>
-      </motion.div>
-
-      {/* Back link + Navigation */}
-      <div className="mb-4 flex items-center justify-between">
-        <Link href="/sky/question-bank">
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            返回题库
-          </Button>
-        </Link>
-        <div className="flex items-center gap-2">
-          {prevId && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const qp = new URLSearchParams(window.location.search);
-                router.push(`/sky/question-bank/${prevId}?${qp.toString()}`);
-              }}
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              上一题
-            </Button>
-          )}
-          {nextId && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const qp = new URLSearchParams(window.location.search);
-                router.push(`/sky/question-bank/${nextId}?${qp.toString()}`);
-              }}
-            >
-              下一题
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          )}
-        </div>
+    <div className="relative min-h-screen" style={{ background: 'linear-gradient(180deg, #0B0D1A 0%, #121008 50%, #0B0D1A 100%)' }}>
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <CelestialCanvas starCount={120} parallax={false} nebula grid={false} horizonGlow />
       </div>
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute top-0 left-1/3 h-[500px] w-[500px] rounded-full bg-amber-500/5 blur-[150px]" />
+        <div className="absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-sky-500/4 blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-3xl px-4 py-6 text-amber-50">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <Link href="/sky/question-bank">
+            <Button variant="ghost" size="sm" className="text-amber-200/60 hover:bg-amber-500/10 hover:text-amber-300">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              返回题库
+            </Button>
+          </Link>
+          <div className="flex items-center gap-2">
+            {prevId && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-amber-500/20 bg-slate-950/40 text-amber-200/70 hover:border-amber-400/40 hover:bg-amber-500/10 hover:text-amber-300"
+                onClick={() => {
+                  const qp = new URLSearchParams(window.location.search);
+                  router.push(`/sky/question-bank/${prevId}?${qp.toString()}`);
+                }}
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                上一题
+              </Button>
+            )}
+            {nextId && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-amber-500/20 bg-slate-950/40 text-amber-200/70 hover:border-amber-400/40 hover:bg-amber-500/10 hover:text-amber-300"
+                onClick={() => {
+                  const qp = new URLSearchParams(window.location.search);
+                  router.push(`/sky/question-bank/${nextId}?${qp.toString()}`);
+                }}
+              >
+                下一题
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="relative mb-6 overflow-hidden rounded-3xl border border-amber-500/20 bg-slate-950/70 p-6 shadow-2xl shadow-amber-950/20 backdrop-blur-xl"
+        >
+          <div className="absolute top-0 right-0 h-56 w-56 rounded-full bg-amber-400/10 blur-3xl -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-3xl bg-gradient-to-b from-amber-300 via-amber-500 to-sky-400" />
+          <div className="relative z-10 pl-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="border border-amber-400/30 bg-amber-500/10 text-amber-100">
+                  {question.subject}
+                </Badge>
+                <Badge variant="outline" className="border-amber-500/20 text-amber-100/70">
+                  {TYPE_LABELS[question.questionType]}
+                </Badge>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${diffMeta.bg} ${diffMeta.color}`}>
+                  {DIFFICULTY_STARS[question.difficulty]} {diffMeta.label}
+                </span>
+                {question.grade && (
+                  <Badge variant="outline" className="border-amber-500/20 text-amber-100/60">
+                    {question.grade}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-100/70 hover:bg-amber-500/10 hover:text-amber-200" onClick={() => setEditing((v) => !v)}>
+                  <Edit2 className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-300/80 hover:bg-red-500/10 hover:text-red-200" onClick={() => setDeleteOpen(true)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <h1 className="text-xl font-bold leading-relaxed text-amber-50">
+              <LatexText text={question.content} />
+            </h1>
+          </div>
+        </motion.div>
 
       {editing ? (
         <QuestionForm
@@ -313,22 +302,22 @@ export default function QuestionDetailPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <Card>
+              <Card className={DETAIL_CARD_CLASS}>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <Layers className="w-4 h-4 text-muted-foreground" />
-                    <Label className="text-sm font-medium">选项</Label>
+                    <Layers className="w-4 h-4 text-amber-300/80" />
+                    <Label className={DETAIL_LABEL_CLASS}>选项</Label>
                   </div>
                   <div className="space-y-2">
                     {question.options.map((opt, idx) => (
                       <div
                         key={idx}
-                        className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50"
+                        className="flex items-start gap-3 rounded-xl border border-amber-500/10 bg-amber-500/5 p-3"
                       >
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 text-xs font-medium border">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-400/30 bg-slate-950/80 text-xs font-medium text-amber-200">
                           {String.fromCharCode(65 + idx)}
                         </span>
-                        <span className="text-sm mt-0.5">
+                        <span className="mt-0.5 text-sm text-amber-50/90">
                           <LatexText text={opt} />
                         </span>
                       </div>
@@ -345,14 +334,14 @@ export default function QuestionDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
           >
-            <Card>
+            <Card className={DETAIL_CARD_CLASS}>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-3">
-                  <FileText className="w-4 h-4 text-muted-foreground" />
-                  <Label className="text-sm font-medium">答案</Label>
+                  <FileText className="w-4 h-4 text-amber-300/80" />
+                  <Label className={DETAIL_LABEL_CLASS}>答案</Label>
                 </div>
-                <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900">
-                  <p className="text-base font-semibold text-green-800 dark:text-green-300">
+                <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                  <p className="text-base font-semibold text-emerald-200">
                     <LatexText text={question.answer} />
                   </p>
                 </div>
@@ -367,13 +356,13 @@ export default function QuestionDetailPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Card>
+              <Card className={DETAIL_CARD_CLASS}>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <Lightbulb className="w-4 h-4 text-muted-foreground" />
-                    <Label className="text-sm font-medium">解析</Label>
+                    <Lightbulb className="w-4 h-4 text-amber-300/80" />
+                    <Label className={DETAIL_LABEL_CLASS}>解析</Label>
                   </div>
-                  <div className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed text-amber-100/70">
                     <LatexText text={question.explanation} />
                   </div>
                 </CardContent>
@@ -388,18 +377,18 @@ export default function QuestionDetailPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
             >
-              <Card>
+              <Card className={DETAIL_CARD_CLASS}>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <Tag className="w-4 h-4 text-muted-foreground" />
-                    <Label className="text-sm font-medium">知识点</Label>
+                    <Tag className="w-4 h-4 text-amber-300/80" />
+                    <Label className={DETAIL_LABEL_CLASS}>知识点</Label>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {question.knowledgePoints.map((kp, idx) => (
                       <Badge
                         key={idx}
                         variant="secondary"
-                        className="text-xs px-3 py-1"
+                        className="border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs text-amber-100/80"
                       >
                         {kp}
                       </Badge>
@@ -417,13 +406,13 @@ export default function QuestionDetailPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <Card>
+              <Card className={DETAIL_CARD_CLASS}>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2 mb-1">
-                    <BookOpen className="w-4 h-4 text-muted-foreground" />
-                    <Label className="text-sm font-medium">来源</Label>
+                    <BookOpen className="w-4 h-4 text-amber-300/80" />
+                    <Label className={DETAIL_LABEL_CLASS}>来源</Label>
                   </div>
-                  <p className="text-sm text-muted-foreground">{question.source}</p>
+                  <p className="text-sm text-amber-100/60">{question.source}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -435,15 +424,16 @@ export default function QuestionDetailPage() {
       )}
 
       {/* Delete Confirm */}
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title="确认删除题目"
-        description={`即将删除题目："${question.content.slice(0, 60)}${question.content.length > 60 ? '...' : ''}"，此操作不可撤销。`}
-        variant="destructive"
-        confirmLabel="删除"
-        onConfirm={handleDelete}
-      />
+        <ConfirmDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title="确认删除题目"
+          description={`即将删除题目："${question.content.slice(0, 60)}${question.content.length > 60 ? '...' : ''}"，此操作不可撤销。`}
+          variant="destructive"
+          confirmLabel="删除"
+          onConfirm={handleDelete}
+        />
+      </div>
     </div>
   );
 }
@@ -464,7 +454,7 @@ function RelatedQuestions({ currentId, content, subject }: { currentId: string; 
         if (data.success) {
           setRelated(data.questions.filter((q: QuestionBankRow) => q.id !== currentId).slice(0, 5));
         }
-      } catch (err) {
+      } catch {
         // Silently fail - related questions are non-critical
       } finally {
         setLoading(false);
@@ -475,15 +465,15 @@ function RelatedQuestions({ currentId, content, subject }: { currentId: string; 
 
   if (loading) {
     return (
-      <Card>
+      <Card className={DETAIL_CARD_CLASS}>
         <CardContent className="pt-6">
           <div className="flex items-center gap-2 mb-3">
-            <Link2 className="w-4 h-4 text-muted-foreground" />
-            <Label className="text-sm font-medium">相关题目</Label>
+            <Link2 className="w-4 h-4 text-amber-300/80" />
+            <Label className={DETAIL_LABEL_CLASS}>相关题目</Label>
           </div>
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-8 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+              <div key={i} className="h-8 animate-pulse rounded bg-amber-500/10" />
             ))}
           </div>
         </CardContent>
@@ -499,37 +489,34 @@ function RelatedQuestions({ currentId, content, subject }: { currentId: string; 
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.35 }}
     >
-      <Card>
+      <Card className={DETAIL_CARD_CLASS}>
         <CardContent className="pt-6">
           <div className="flex items-center gap-2 mb-3">
-            <Link2 className="w-4 h-4 text-muted-foreground" />
-            <Label className="text-sm font-medium">相关题目</Label>
+            <Link2 className="w-4 h-4 text-amber-300/80" />
+            <Label className={DETAIL_LABEL_CLASS}>相关题目</Label>
           </div>
           <div className="space-y-2">
-            {related.map((q) => {
-              const theme = getSubjectTheme(q.subject);
-              return (
-                <div
-                  key={q.id}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
-                  onClick={() => router.push(`/sky/question-bank/${q.id}`)}
-                >
-                  <div className={`w-1 h-8 rounded-full ${theme.bar}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{q.content}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge className={`${theme.bg} ${theme.text} ${theme.border} border text-[10px]`}>
-                        {q.subject}
-                      </Badge>
-                      <span className="text-[10px] text-muted-foreground">
-                        {DIFFICULTY_STARS[q.difficulty]} {DIFFICULTY_META[q.difficulty]?.label}
-                      </span>
-                    </div>
+            {related.map((q) => (
+              <div
+                key={q.id}
+                className="flex cursor-pointer items-center gap-3 rounded-xl border border-amber-500/10 bg-amber-500/5 p-3 transition-colors hover:border-amber-400/30 hover:bg-amber-500/10"
+                onClick={() => router.push(`/sky/question-bank/${q.id}`)}
+              >
+                <div className="h-8 w-1 rounded-full bg-gradient-to-b from-amber-300 to-sky-400" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-amber-50/90">{q.content}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Badge className="border border-amber-400/30 bg-amber-500/10 text-[10px] text-amber-100">
+                      {q.subject}
+                    </Badge>
+                    <span className="text-[10px] text-amber-100/50">
+                      {DIFFICULTY_STARS[q.difficulty]} {DIFFICULTY_META[q.difficulty]?.label}
+                    </span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                 </div>
-              );
-            })}
+                <ChevronRight className="w-4 h-4 shrink-0 text-amber-200/50" />
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

@@ -10,6 +10,7 @@ import path from 'path';
 import { writeJsonFileAtomic } from '@/lib/server/classroom-storage';
 import type { LessonPlan, LessonSection } from '@/lib/teaching/lesson-types';
 import type { ContentChunk } from '@/lib/teaching/content-types';
+import type { SectionFeedback, QuizResult } from '@/lib/teaching/adaptive-engine';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('TeachingJobStore');
@@ -56,6 +57,14 @@ export interface TeachingJob {
   sectionsCompleted?: number;
   /** Total number of sections in the plan */
   totalSections?: number;
+  /** Whether the job is favorited by the user */
+  isFavorited?: boolean;
+
+  /** Section-level feedback collected during teaching */
+  sectionFeedbacks?: SectionFeedback[];
+
+  /** Quiz results collected during teaching */
+  quizResults?: QuizResult[];
 
   error?: string;
 }
@@ -240,6 +249,7 @@ export async function updateTeachingJobProgress(
     sectionsCompleted?: number;
     totalSections?: number;
     section?: GeneratedSectionData;
+    isFavorited?: boolean;
   },
 ): Promise<TeachingJob> {
   const patch: Partial<TeachingJob> = {
@@ -252,6 +262,7 @@ export async function updateTeachingJobProgress(
   if (progress.plan) patch.plan = progress.plan;
   if (progress.sectionsCompleted !== undefined) patch.sectionsCompleted = progress.sectionsCompleted;
   if (progress.totalSections !== undefined) patch.totalSections = progress.totalSections;
+  if (progress.isFavorited !== undefined) patch.isFavorited = progress.isFavorited;
 
   // Accumulate completed sections
   if (progress.section) {

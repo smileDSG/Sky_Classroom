@@ -41,10 +41,8 @@ export interface GenerateOptions {
   jobId: string;
   /** Target audience education level from user personalization */
   educationLevel?: string;
-  /** Progress callback */
-  onProgress?: (progress: { stage: PipelineStage; progress: number; message: string }) => Promise<void>;
-  /** Completion callback */
-  onComplete?: (result: { pptxUrl: string; fileName: string; previewImages?: string[] }) => Promise<void>;
+  onProgress?: (progress: { stage: PipelineStage; progress: number; message: string; totalPages?: number }) => Promise<void>;
+  onComplete?: (result: { pptxUrl: string; fileName: string; previewImages?: string[]; qaReport?: QAReport }) => Promise<void>;
 }
 
 export type PipelineStage =

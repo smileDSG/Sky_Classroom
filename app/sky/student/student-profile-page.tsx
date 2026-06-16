@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader2, AlertCircle, RefreshCw, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,31 +30,34 @@ export function StudentProfilePage() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
-  const fetchProfile = async (force = false) => {
+  const fetchProfile = useCallback(async (force = false) => {
     setLoading(true);
     setError(null);
 
     try {
-      const url = `/api/sky/student/profile?force=${force}`;
+      const shouldForce = force || !hasLoadedRef.current;
+      const url = `/api/sky/student/profile?force=${shouldForce}`;
       const res = await fetch(url);
       const data = await res.json();
 
       if (data?.success && data.profile) {
+        hasLoadedRef.current = true;
         setProfile(data.profile);
       } else {
         setError(data?.error ?? '获取学情数据失败');
       }
-    } catch (err: any) {
-      setError(err.message ?? '网络请求失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '网络请求失败');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    void fetchProfile();
+  }, [fetchProfile]);
 
   return (
     <div className="mx-auto max-w-5xl">

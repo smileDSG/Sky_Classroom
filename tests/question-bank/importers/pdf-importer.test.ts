@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { importFromPdf, createDefaultPdfDeps, type PdfImportDeps } from '@/lib/question-bank/importers/pdf-importer';
-import type { QuestionSegment, ExtractedQuestion } from '@/lib/question-bank/importers';
+import { importFromPdf, type PdfImportDeps } from '@/lib/question-bank/importers/pdf-importer';
 
 describe('importFromPdf', () => {
   it('imports high-confidence questions directly', async () => {
@@ -19,11 +18,12 @@ describe('importFromPdf', () => {
 
     const result = await importFromPdf(Buffer.from('pdf'), {}, deps);
     expect(result.total).toBe(2);
-    expect(result.pendingReview).toBe(0);
+    expect(result.inserted).toBe(2);
     expect(result.errors).toHaveLength(0);
   });
 
-  it('sends low-confidence questions to review queue', async () => {
+  it('imports low-confidence questions directly', async () => {
+    const insertBatch = vi.fn().mockResolvedValue({ total: 1, inserted: 1, duplicates: 0, errors: [] });
     const deps: PdfImportDeps = {
       parsePdf: vi.fn().mockResolvedValue({ text: '题目1' }),
       splitQuestions: vi.fn().mockResolvedValue([{ text: '题1', confidence: 0.7 }]),
@@ -31,11 +31,15 @@ describe('importFromPdf', () => {
         data: { subject: '数学', content: '1+1=?', answer: '2' },
         confidence: 0.6,
       }),
+      insertBatch,
     };
 
     const result = await importFromPdf(Buffer.from('pdf'), {}, deps);
     expect(result.total).toBe(1);
-    expect(result.pendingReview).toBe(1);
+    expect(result.inserted).toBe(1);
+    expect(insertBatch).toHaveBeenCalledWith([
+      expect.objectContaining({ verified: true }),
+    ]);
   });
 
   it('handles extraction failures gracefully', async () => {

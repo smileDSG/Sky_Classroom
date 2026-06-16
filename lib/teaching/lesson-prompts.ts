@@ -13,8 +13,15 @@ export function buildLessonPlannerPrompt(
     errorPatterns: { knowledgePoint: string; errorType: string; frequency: number }[];
     totalQuestions: number;
     totalCorrect: number;
+    recentQuizPerformance?: {
+      overallAccuracy: number;
+      accuracyByKnowledge: Record<string, number>;
+      topErrorCauses: string[];
+      recommendedDepthShift: 'deeper' | 'shallower' | 'maintain';
+    };
   },
   topic: string,
+  diagnosticResult?: { accuracy: number; weakPrerequisites: string[]; recommendedDepth: string },
 ): string {
   const weakKps = profile.weakPoints.slice(0, 5);
   const strongKps = profile.strongPoints.slice(0, 5);
@@ -34,12 +41,20 @@ export function buildLessonPlannerPrompt(
       ? `\n高频错误模式：\n${topErrors.map((e) => `  - ${e.knowledgePoint}：${e.errorType}（${e.frequency}次）`).join('\n')}`
       : '\n无明显错误模式';
 
+  const recentPerformanceInfo = profile.recentQuizPerformance
+    ? `\n近期答题表现（最近7天）：\n  - 整体正确率：${profile.recentQuizPerformance.overallAccuracy}%\n  - 高频错因：${profile.recentQuizPerformance.topErrorCauses.join('、') || '无'}\n  - 建议深度调整：${profile.recentQuizPerformance.recommendedDepthShift === 'shallower' ? '降低（学生近期表现较弱，需夯实基础）' : profile.recentQuizPerformance.recommendedDepthShift === 'deeper' ? '提升（学生近期表现优秀，可适当拔高）' : '保持'}`
+    : '';
+
   const overallAccuracy =
     profile.totalQuestions > 0
       ? Math.round((profile.totalCorrect / profile.totalQuestions) * 100)
       : 0;
 
-  return `请为以下学生生成关于「${topic}」的授课计划。
+  const diagnosticInfo = diagnosticResult
+    ? `\n\n## 课前诊断结果\n- 前置知识检测正确率：${diagnosticResult.accuracy}%\n- 薄弱前置知识点：${diagnosticResult.weakPrerequisites.join('、') || '无'}\n- 建议授课深度：${diagnosticResult.recommendedDepth === 'basic' ? '基础（前置知识薄弱，需先回顾基础）' : diagnosticResult.recommendedDepth === 'advanced' ? '进阶（前置知识扎实，可直接深入）' : '标准'}\n\n请在授课计划的首个 section 增加「前置知识回顾」，针对上述薄弱前置知识点进行快速回顾。`
+    : '';
+
+  return `请为以下学生生成关于「${topic}」的授课计划。${diagnosticInfo}
 
 ## 学生学情
 - 总做题数：${profile.totalQuestions}
@@ -47,7 +62,7 @@ export function buildLessonPlannerPrompt(
 - 本题目主题掌握度：${masteryForTopic}%
 ${weakInfo}
 ${strongInfo}
-${errorInfo}
+${errorInfo}${recentPerformanceInfo}
 
 ## 内容深度策略
 根据掌握度调整每个知识点的深度：
