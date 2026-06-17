@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useAnimatedNumber } from '@/lib/hooks/use-animated-number';
 
 interface DayData {
@@ -78,26 +79,53 @@ export function LearningTrendChart({ data }: LearningTrendChartProps) {
 
   if (data.length === 0 || data.every((d) => d.total === 0)) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm">
-        <p className="text-slate-500">暂无数据，去搜题页开始练习</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="group relative overflow-hidden rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-gradient-to-br from-violet-50/40 via-white/50 to-cyan-50/25 dark:from-slate-900/40 dark:via-slate-900/40 dark:to-slate-800/40 backdrop-blur-sm"
+      >
+        {/* Decorative background */}
+        <div className="absolute top-0 right-0 w-28 h-28 bg-violet-400/8 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-cyan-400/8 rounded-full blur-xl translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative z-10 flex flex-col items-center justify-center p-5">
+          {/* Animated chart icon */}
+          <div className="mb-3 relative">
+            <div className="absolute inset-0 rounded-xl bg-violet-500/15 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/8 ring-1 ring-violet-400/20">
+              <TrendingUp className="h-6 w-6 text-violet-500" />
+            </div>
+          </div>
+          <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">学习趋势即将呈现</h4>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center max-w-[180px]">
+            完成搜题后，这里会展示近14天的学习曲线
+          </p>
+          <Link
+            href="/sky/solve"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-violet-500/8 hover:bg-violet-500/15 px-3 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 transition-all hover:scale-[1.02]"
+          >
+            <Search className="h-3 w-3" />
+            开始搜题
+          </Link>
+        </div>
+      </motion.div>
     );
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm"
+      transition={{ duration: 0.4 }}
+      className="rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/50 dark:bg-slate-900/40 px-4 py-3 backdrop-blur-sm"
     >
       {/* Header */}
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">近14天学习趋势</h3>
+      <div className="mb-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <TrendingUp className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400" />
+          <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">近14天学习趋势</h3>
         </div>
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-2.5 text-[10px]">
           <span className="text-slate-500 dark:text-slate-400">
             错题 <span className="text-violet-500 dark:text-violet-400 font-bold">{Math.round(totalCount.value)}</span>
           </span>

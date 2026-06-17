@@ -71,16 +71,16 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
   if (loading) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm"
+        className="rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/50 dark:bg-slate-900/40 px-3.5 py-3 backdrop-blur-sm"
       >
-        <div className="flex items-center gap-2 mb-3">
-          <Route className="h-4 w-4 text-indigo-500" />
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">学习路径</span>
+        <div className="flex items-center gap-1.5 mb-2.5">
+          <Route className="h-3.5 w-3.5 text-indigo-500" />
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">学习路径</span>
         </div>
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+        <div className="flex items-center justify-center py-3">
+          <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
         </div>
       </motion.div>
     );
@@ -89,27 +89,27 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
   if (!path) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm"
+        className="rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/50 dark:bg-slate-900/40 px-3.5 py-3 backdrop-blur-sm"
       >
-        <div className="flex items-center gap-2 mb-3">
-          <Route className="h-4 w-4 text-indigo-500" />
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">学习路径</span>
+        <div className="flex items-center gap-1.5 mb-2.5">
+          <Route className="h-3.5 w-3.5 text-indigo-500" />
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">学习路径</span>
         </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2.5">
           还没有学习路径，让 AI 为你规划一条个性化学习路线吧。
         </p>
         <Button
           size="sm"
           onClick={handleCreate}
           disabled={creating}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-7 px-2.5"
         >
           {creating ? (
-            <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
           ) : (
-            <Route className="h-3.5 w-3.5 mr-1" />
+            <Route className="h-3 w-3 mr-1" />
           )}
           生成学习路径
         </Button>
@@ -125,40 +125,40 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm"
+      className="rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/50 dark:bg-slate-900/40 px-3.5 py-3 backdrop-blur-sm"
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Route className="h-4 w-4 text-indigo-500" />
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{path.title}</span>
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-1.5">
+          <Route className="h-3.5 w-3.5 text-indigo-500" />
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{path.title}</span>
         </div>
-        <span className="text-xs text-slate-400 dark:text-slate-500">
-          {completed}/{total} 完成
+        <span className="text-[9px] text-slate-400 dark:text-slate-500">
+          {completed}/{total}
         </span>
       </div>
 
       {/* Progress bar */}
-      <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 mb-3">
         <motion.div
           className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
-          transition={{ duration: 1, ease: 'easeOut' }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
         />
       </div>
 
       {/* Node list */}
-      <div className="space-y-2 mb-4 max-h-[160px] overflow-y-auto pr-1">
-        {path.nodes.slice(0, 6).map((node, idx) => (
+      <div className="space-y-1.5 mb-3 max-h-[140px] overflow-y-auto pr-0.5">
+        {path.nodes.slice(0, 5).map((node, idx) => (
           <div
             key={node.id}
             className={cn(
-              'flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm',
+              'flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs',
               node.status === 'in_progress'
-                ? 'bg-indigo-50 dark:bg-indigo-900/20'
-                : 'hover:bg-slate-50 dark:hover:bg-slate-800/50',
+                ? 'bg-indigo-50/60 dark:bg-indigo-900/15'
+                : 'hover:bg-slate-50/60 dark:hover:bg-slate-800/40',
             )}
           >
             <div className="shrink-0">{getNodeStatusIcon(node)}</div>
@@ -175,14 +175,14 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
               {node.topic}
             </span>
             {node.masteryAfter !== undefined && (
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">
-                掌握度 {node.masteryAfter}%
+              <span className="text-[8px] text-slate-400 dark:text-slate-500 shrink-0">
+                {node.masteryAfter}%
               </span>
             )}
           </div>
         ))}
-        {path.nodes.length > 6 && (
-          <p className="text-xs text-slate-400 text-center">还有 {path.nodes.length - 6} 个节点...</p>
+        {path.nodes.length > 5 && (
+          <p className="text-[9px] text-slate-400 text-center">+{path.nodes.length - 5} 更多...</p>
         )}
       </div>
 
@@ -192,10 +192,10 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
           size="sm"
           variant="outline"
           onClick={() => onStartTopic(nextNode.topic)}
-          className="w-full text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:text-indigo-700"
+          className="w-full text-indigo-600 dark:text-indigo-400 border-indigo-200/60 dark:border-indigo-800/60 hover:text-indigo-700 text-xs h-7"
         >
-          <ArrowRight className="h-3.5 w-3.5 mr-1" />
-          {currentNode ? `继续学习：${currentNode.topic}` : `开始学习：${nextNode.topic}`}
+          <ArrowRight className="h-3 w-3 mr-1" />
+          {currentNode ? `继续：${currentNode.topic}` : `开始：${nextNode.topic}`}
         </Button>
       )}
     </motion.div>
