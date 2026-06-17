@@ -1,0 +1,318 @@
+{
+  "id": "9kDJT5duh9",
+  "userId": "admin-default",
+  "topic": "二次函数",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "教案生成完成",
+  "createdAt": "2026-06-17T00:19:25.645Z",
+  "updatedAt": "2026-06-17T00:20:32.235Z",
+  "sectionsCompleted": 4,
+  "totalSections": 4,
+  "startedAt": "2026-06-17T00:19:25.659Z",
+  "plan": {
+    "title": "二次函数基础精讲",
+    "sections": [
+      {
+        "id": "section-1",
+        "title": "二次函数的概念与定义",
+        "contentType": "explanation",
+        "depth": "basic",
+        "knowledgePoints": [
+          "函数定义",
+          "二次函数形式",
+          "系数识别"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-2",
+        "title": "二次函数的图像与性质",
+        "contentType": "diagram",
+        "depth": "basic",
+        "knowledgePoints": [
+          "开口方向",
+          "顶点坐标",
+          "对称轴"
+        ],
+        "estimatedDuration": 10,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-3",
+        "title": "二次函数的解析式求法",
+        "contentType": "example",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "待定系数法",
+          "一般式与顶点式",
+          "代数运算"
+        ],
+        "estimatedDuration": 12,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-4",
+        "title": "二次函数与一元二次方程的关系",
+        "contentType": "explanation",
+        "depth": "basic",
+        "knowledgePoints": [
+          "与x轴交点",
+          "判别式",
+          "根与系数的关系"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      }
+    ],
+    "estimatedDuration": 38,
+    "focusPoints": [
+      "二次函数的图像与性质",
+      "二次函数的解析式求法",
+      "二次函数与一元二次方程的关系",
+      "代数运算准确性"
+    ]
+  },
+  "sections": [
+    {
+      "section": {
+        "id": "section-1",
+        "title": "二次函数的概念与定义",
+        "contentType": "explanation",
+        "depth": "basic",
+        "knowledgePoints": [
+          "函数定义",
+          "二次函数形式",
+          "系数识别"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      "chunks": [
+        {
+          "sectionId": "section-1",
+          "type": "text",
+          "content": "## 函数与二次函数的概念\n\n### 函数是什么？\n函数描述了两个变量之间的依赖关系。就像一台“果汁机”：你放入一个苹果（输入 $x$），机器就榨出苹果汁（输出 $y$）。每个输入有且只有一个输出。数学上，记作 $y = f(x)$。\n\n### 二次函数的定义\n形如 $y = ax^2 + bx + c$（其中 $a \\neq 0$）的函数叫做**二次函数**。它的图像是一条抛物线。就像投掷篮球时篮球飞行的轨迹。\n\n### 类比：一次函数 vs 二次函数\n- 一次函数：$y = kx + b$（直线）——好比匀速直线运动。\n- 二次函数：$y = ax^2 + bx + c$（抛物线）——好比匀加速运动（如自由落体）。\n\n### 二次函数的形式与系数\n- 一般式：$y = ax^2 + bx + c$（$a \\neq 0$）\n- 系数：\n  - $a$：二次项系数，决定抛物线开口方向和大小（$a>0$ 开口向上，$a<0$ 开口向下，$|a|$ 越大开口越窄）。\n  - $b$：一次项系数，影响对称轴位置。\n  - $c$：常数项，是抛物线与 $y$ 轴交点的纵坐标。\n\n### 识别系数示例\n对于 $y = -3x^2 + 5x - 2$：\n- $a = -3$，$b = 5$，$c = -2$\n- 开口向下（$a<0$），与 $y$ 轴交于点 $(0, -2)$。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-1",
+          "type": "formula",
+          "content": "二次函数的一般形式：\n$$y = ax^2 + bx + c \\quad (a \\neq 0)$$",
+          "order": 2
+        },
+        {
+          "sectionId": "section-1",
+          "type": "example",
+          "content": "## 例题：判断是否为二次函数并求系数\n\n**题目**：下列函数中，哪些是二次函数？如果是，指出 $a, b, c$ 的值。\n1. $y = 2x^2 - 3x + 1$\n2. $y = x^2 + \\frac{1}{x}$\n3. $y = (x-1)^2 - x^2$\n4. $y = -5x^2$\n\n**解题步骤**：\n\n**第一步**：回忆定义——形如 $y = ax^2 + bx + c$（$a \\neq 0$），且自变量 $x$ 的最高次数为 2，分母不能含 $x$。\n\n**第二步**：逐一判断。\n- 函数1：$y = 2x^2 - 3x + 1$ 符合一般式，$a=2$，$b=-3$，$c=1$。**是二次函数**。\n- 函数2：$y = x^2 + \\frac{1}{x}$ 含有 $\\frac{1}{x}$，不是整式，**不是二次函数**。\n- 函数3：$y = (x-1)^2 - x^2$ 展开得 $y = x^2 - 2x + 1 - x^2 = -2x + 1$，最高次为1，**不是二次函数**。\n- 函数4：$y = -5x^2$ 可以写成 $y = -5x^2 + 0x + 0$，$a=-5$，$b=0$，$c=0$，**是二次函数**。\n\n**第三步**：得出结论。\n- 是二次函数的有：函数1和函数4。",
+          "order": 3
+        },
+        {
+          "sectionId": "section-1",
+          "type": "quiz",
+          "content": "正确答案：C，即 $y = -x^2 + 4x$。解析：二次函数必须满足最高次数为2且 $a \\neq 0$。选项A是一次函数，选项B分母含有 $x^2$ 不是整式，选项D是三次函数。选项C符合形式 $y = ax^2 + bx + c$，其中 $a=-1$，$b=4$，$c=0$。",
+          "order": 4,
+          "question": "下列哪个函数是二次函数？",
+          "options": [
+            "$y = 3x + 2$",
+            "$y = \\frac{1}{x^2}$",
+            "$y = -x^2 + 4x$",
+            "$y = x^3 - x$"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "sectionId": "section-1",
+          "type": "quiz",
+          "content": "正确答案：B，即 $a=2$, $b=-3$, $c=5$。解析：对照一般式 $y=ax^2+bx+c$，$x^2$ 系数是2，所以 $a=2$；$x$ 系数是-3，所以 $b=-3$；常数项是5，所以 $c=5$。注意 $b$ 包含符号。",
+          "order": 5,
+          "question": "二次函数 $y = 2x^2 - 3x + 5$ 中，二次项系数 $a$、一次项系数 $b$、常数项 $c$ 分别是多少？",
+          "options": [
+            "$a=2, b=3, c=5$",
+            "$a=2, b=-3, c=5$",
+            "$a=-3, b=2, c=5$",
+            "$a=5, b=-3, c=2$"
+          ],
+          "correctAnswer": 1
+        }
+      ]
+    },
+    {
+      "section": {
+        "id": "section-2",
+        "title": "二次函数的图像与性质",
+        "contentType": "diagram",
+        "depth": "basic",
+        "knowledgePoints": [
+          "开口方向",
+          "顶点坐标",
+          "对称轴"
+        ],
+        "estimatedDuration": 10,
+        "hasQuiz": true
+      },
+      "chunks": [
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "继续以篮球为例，当我们投掷篮球时，篮球在空中划过的轨迹就是一条抛物线，这正是二次函数的图像。现在我们来深入探索这条抛物线的结构特征。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "二次函数 $y = ax^2 + bx + c$（$a \\neq 0$）的图像是一条抛物线。它有三个关键特征：**开口方向**、**顶点坐标**和**对称轴**。",
+          "order": 2
+        },
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "## 开口方向\n开口方向由二次项系数 $a$ 决定：\n- 当 $a > 0$ 时，抛物线开口**向上**，像碗口朝上的碗，最低点是顶点。\n- 当 $a < 0$ 时，抛物线开口**向下**，像倒扣的碗，最高点是顶点。\n\n例如，$y = 2x^2$ 开口向上，$y = -3x^2$ 开口向下。",
+          "order": 3
+        },
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "## 顶点坐标与对称轴\n抛物线是轴对称图形，对称轴是一条垂直于 $x$ 轴的直线，顶点是抛物线与对称轴的交点。\n\n我们可以通过**配方法**将一般式化为顶点式 $y = a(x - h)^2 + k$，其中 $(h, k)$ 就是顶点坐标，对称轴为直线 $x = h$。",
+          "order": 4
+        },
+        {
+          "sectionId": "section-2",
+          "type": "formula",
+          "content": "### 顶点公式推导\n对 $y = ax^2 + bx + c$ 配方：\n\n$$\n\\begin{aligned}\ny &= a\\left(x^2 + \\frac{b}{a}x\\right) + c \\\\\n&= a\\left[x^2 + \\frac{b}{a}x + \\left(\\frac{b}{2a}\\right)^2 - \\left(\\frac{b}{2a}\\right)^2\\right] + c \\\\\n&= a\\left(x + \\frac{b}{2a}\\right)^2 - a \\cdot \\frac{b^2}{4a^2} + c \\\\\n&= a\\left(x - \\left(-\\frac{b}{2a}\\right)\\right)^2 + \\frac{4ac - b^2}{4a}\n\\end{aligned}\n$$\n\n因此，顶点坐标为 $\\left(-\\frac{b}{2a},\\; \\frac{4ac - b^2}{4a}\\right)$，对称轴为 $x = -\\frac{b}{2a}$。",
+          "order": 5
+        },
+        {
+          "sectionId": "section-2",
+          "type": "example",
+          "content": "**例题**：求二次函数 $y = 2x^2 - 4x + 1$ 的开口方向、顶点坐标和对称轴。\n\n**解**：\n1. **开口方向**：$a = 2 > 0$，所以开口向上。\n2. **顶点坐标**：利用公式 $h = -\\frac{b}{2a}$，$k = \\frac{4ac - b^2}{4a}$。\n   - $h = -\\frac{-4}{2 \\times 2} = \\frac{4}{4} = 1$\n   - $k = \\frac{4 \\times 2 \\times 1 - (-4)^2}{4 \\times 2} = \\frac{8 - 16}{8} = \\frac{-8}{8} = -1$\n   - 顶点为 $(1, -1)$。\n3. **对称轴**：直线 $x = 1$。\n\n（也可通过配方法验证：$y = 2(x^2 - 2x) + 1 = 2[(x-1)^2 -1] + 1 = 2(x-1)^2 -1$，结果一致。）",
+          "order": 6
+        },
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "## 图像描述\n现在，让我们用文字描述这个抛物线的大致形状：\n- 开口向上，像一个“U”形。\n- 顶点 $(1, -1)$ 是最低点。\n- 对称轴 $x = 1$ 将它分成左右对称的两部分。\n- 当 $x < 1$ 时，$y$ 随 $x$ 增大而减小；当 $x > 1$ 时，$y$ 随 $x$ 增大而增大。",
+          "order": 7
+        },
+        {
+          "sectionId": "section-2",
+          "type": "quiz",
+          "content": "正确答案：B。因为 $a = -1 < 0$，所以开口向下。",
+          "order": 8,
+          "question": "二次函数 $y = -x^2 + 2x - 3$ 的开口方向是？",
+          "options": [
+            "向上",
+            "向下",
+            "向左",
+            "向右"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "sectionId": "section-2",
+          "type": "quiz",
+          "content": "正确答案：A。对称轴公式 $x = -\\frac{b}{2a} = -\\frac{6}{2 \\times 3} = -1$，即 $x = -1$。",
+          "order": 9,
+          "question": "抛物线 $y = 3x^2 + 6x + 1$ 的对称轴是？",
+          "options": [
+            "$x = -1$",
+            "$x = 1$",
+            "$y = -1$",
+            "$y = 1$"
+          ],
+          "correctAnswer": 0
+        }
+      ]
+    },
+    {
+      "section": {
+        "id": "section-3",
+        "title": "二次函数的解析式求法",
+        "contentType": "example",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "待定系数法",
+          "一般式与顶点式",
+          "代数运算"
+        ],
+        "estimatedDuration": 12,
+        "hasQuiz": true
+      },
+      "chunks": [
+        {
+          "sectionId": "section-3",
+          "type": "text",
+          "content": "### 二次函数解析式的求法——待定系数法\n\n在前一节中，我们认识了二次函数的一般形式 $y = ax^2 + bx + c$（$a \\neq 0$）。实际解题时，常常需要根据已知条件求出 $a, b, c$（或顶点式中的 $a, h, k$）的值，从而确定函数解析式。这种通过设未知数、列方程（组）求解的方法叫做**待定系数法**。\n\n常用的两种形式：\n- **一般式**：$y = ax^2 + bx + c$（适用于已知图像上三个一般点）\n- **顶点式**：$y = a(x - h)^2 + k$（适用于已知顶点坐标 $(h, k)$ 及另一个点）\n\n下面通过例题学习如何灵活选择形式并准确计算。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-3",
+          "type": "example",
+          "content": "## 例题 1（一般式）\n\n**题目**：已知二次函数图像经过点 $A(0,1)$，$B(1,4)$，$C(2,9)$，求该二次函数的解析式。\n\n**解题步骤**：\n\n1. 设二次函数解析式为 $y = ax^2 + bx + c$（$a \\neq 0$）。\n2. 将三点坐标代入，得到方程组：\n   - 代入 $A(0,1)$：$1 = a \\cdot 0^2 + b \\cdot 0 + c$ → $c = 1$。\n   - 代入 $B(1,4)$：$4 = a \\cdot 1^2 + b \\cdot 1 + c$ → $a + b + c = 4$。\n   - 代入 $C(2,9)$：$9 = a \\cdot 2^2 + b \\cdot 2 + c$ → $4a + 2b + c = 9$。\n\n3. 将 $c = 1$ 代入后两个方程，得：\n   $$\\begin{cases} a + b + 1 = 4 \\\\ 4a + 2b + 1 = 9 \\end{cases}$$ \n   化简：\n   $$\\begin{cases} a + b = 3 \\\\ 4a + 2b = 8 \\end{cases}$$\n\n4. 解方程组：\n   由第一个方程得 $b = 3 - a$，代入第二个方程：\n   $$4a + 2(3 - a) = 8 \\Rightarrow 4a + 6 - 2a = 8 \\Rightarrow 2a = 2 \\Rightarrow a = 1$$\n   则 $b = 3 - 1 = 2$。\n\n5. 所以解析式为 $y = x^2 + 2x + 1$。\n\n**答案**：$y = x^2 + 2x + 1$。\n\n**易错点提示**：\n- 代入时注意符号，特别是 $c$ 的值应直接由 $x=0$ 的点得到，避免后续代错。\n- 解二元一次方程组时，推荐用代入消元法或加减消元法，注意运算准确。",
+          "order": 2
+        },
+        {
+          "sectionId": "section-3",
+          "type": "example",
+          "content": "## 例题 2（顶点式）\n\n**题目**：已知二次函数的顶点为 $P(2, -3)$，且经过点 $Q(4, 5)$，求该二次函数的解析式。\n\n**解题步骤**：\n\n1. 设顶点式：$y = a(x - h)^2 + k$，其中顶点 $(h, k) = (2, -3)$，\n   得 $y = a(x - 2)^2 - 3$。\n\n2. 代入点 $Q(4, 5)$：\n   $$5 = a(4 - 2)^2 - 3 \\Rightarrow 5 = a \\cdot 2^2 - 3 \\Rightarrow 5 = 4a - 3$$\n\n3. 解方程：$4a = 8$ → $a = 2$。\n\n4. 所以解析式为 $y = 2(x - 2)^2 - 3$。\n   若需化为一般式，展开：$y = 2(x^2 - 4x + 4) - 3 = 2x^2 - 8x + 8 - 3 = 2x^2 - 8x + 5$。\n\n**答案**：$y = 2(x - 2)^2 - 3$（或 $y = 2x^2 - 8x + 5$）。\n\n**易错点提示**：\n- 顶点式中的符号：$y = a(x - h)^2 + k$，顶点 $(h, k)$，注意 $x$ 减的是 $h$，不要弄错。\n- 代入计算时，先求 $(x-h)$ 的平方，再乘以 $a$，最后加上 $k$。",
+          "order": 3
+        },
+        {
+          "sectionId": "section-3",
+          "type": "quiz",
+          "content": "**参考答案：A**\n\n解析：设 $y = ax^2 + bx + c$，代入三点：\n$\\begin{cases} a + b + c = 2 \\\\ 4a + 2b + c = 3 \\\\ 9a + 3b + c = 6 \\end{cases}$\n解得 $a = 1, b = -2, c = 3$，即 $y = x^2 - 2x + 3$。故选 A。\n\n易错：注意用加减消元法时系数要乘对。",
+          "order": 4,
+          "question": "已知二次函数图像经过点 $(1, 2)$、$(2, 3)$ 和 $(3, 6)$，则其解析式应为？",
+          "options": [
+            "$y = x^2 - 2x + 3$",
+            "$y = x^2 - 2x + 1$",
+            "$y = x^2 + 2x - 1$",
+            "$y = 2x^2 - 3x + 1$"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "sectionId": "section-3",
+          "type": "quiz",
+          "content": "**参考答案：A**\n\n解析：设顶点式 $y = a(x - h)^2 + k$，其中 $h = -1, k = 4$，得 $y = a(x + 1)^2 + 4$。\n代入 $(0,0)$：$0 = a(0+1)^2 + 4 \\Rightarrow a = -4$。\n所以 $y = -4(x+1)^2 + 4$。故选 A。\n\n易错：注意顶点式中 $x - h$ 的符号：$h=-1$ 时 $x - (-1) = x+1$。",
+          "order": 5,
+          "question": "某二次函数图像的顶点为 $( -1, 4 )$，且经过原点 $(0, 0)$，则该函数的解析式为？",
+          "options": [
+            "$y = -4(x + 1)^2 + 4$",
+            "$y = 4(x - 1)^2 + 4$",
+            "$y = -4(x - 1)^2 + 4$",
+            "$y = 4(x + 1)^2 - 4$"
+          ],
+          "correctAnswer": 0
+        }
+      ]
+    },
+    {
+      "section": {
+        "id": "section-4",
+        "title": "二次函数与一元二次方程的关系",
+        "contentType": "explanation",
+        "depth": "basic",
+        "knowledgePoints": [
+          "与x轴交点",
+          "判别式",
+          "根与系数的关系"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      "chunks": [
+        {
+          "sectionId": "section-4",
+          "type": "text",
+          "content": "## 二次函数与一元二次方程的关系\n\n本环节知识点：与x轴交点、判别式、根与系数的关系\n\n内容生成失败，请点击重试",
+          "order": 1,
+          "failed": true
+        }
+      ]
+    }
+  ],
+  "completedAt": "2026-06-17T00:20:32.235Z"
+}

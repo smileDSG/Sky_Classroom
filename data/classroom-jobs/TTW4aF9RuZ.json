@@ -1,0 +1,427 @@
+{
+  "id": "TTW4aF9RuZ",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-17T00:50:34.603Z",
+  "updatedAt": "2026-06-17T00:52:09.415Z",
+  "inputSummary": {
+    "requirementPreview": "动漫鉴赏\n\n课程目标：从经典作品到现代动画，学习动漫的艺术风格与叙事技巧\n\n大纲：\n第1幕：动漫发展简史 — \n第2幕：经典作品赏析 — \n第3幕：角色设计风格 — \n第4幕：分镜与叙事技巧 — \n第5幕：作品讨论 — \n第6幕：小测验 — ",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 3,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-17T00:50:34.619Z",
+  "totalScenes": 10,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "动漫发展简史",
+        "description": "概述从早期日本动画到现代动漫产业的发展历程，建立历史背景框架。",
+        "keyPoints": [
+          "日本动画的起源：1910年代至1960年代的先驱作品",
+          "电视动画时代：手冢治虫与‘铁臂阿童木’的里程碑意义",
+          "黄金时期：1980至1990年代，宫崎骏与吉卜力工作室的崛起",
+          "现代发展：2000年至今，数字技术、全球传播与题材多元化"
+        ],
+        "teachingObjective": "了解动漫发展的关键历史节点和代表人物。",
+        "estimatedDuration": 150,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "经典作品赏析（一）：叙事与主题",
+        "description": "深入分析一部经典作品在叙事结构和主题表达上的特点。",
+        "keyPoints": [
+          "案例选择：《千与千寻》——成长、迷失与自我认知",
+          "叙事结构：起承转合与象征性场景分析",
+          "主题表达：日本神道文化、消费主义批判与当代社会隐喻"
+        ],
+        "teachingObjective": "理解经典作品如何通过叙事传达深层主题。",
+        "estimatedDuration": 180,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "经典作品赏析（二）：视觉风格与美学",
+        "description": "从视觉语言角度分析另一部经典作品，学习其独特艺术风格。",
+        "keyPoints": [
+          "案例选择：《攻壳机动队》（1995）——赛博朋克的视觉美学",
+          "视觉元素：城市夜景、光学迷彩、机械义体设计的细节表现",
+          "美学影响：对未来主义与反乌托邦视觉风格的启示"
+        ],
+        "teachingObjective": "识别并分析动漫作品中的核心视觉风格元素。",
+        "estimatedDuration": 180,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "quiz",
+        "title": "知识回顾：动漫历史与经典作品",
+        "description": "通过小测验巩固对前两幕内容的理解。",
+        "keyPoints": [
+          "检验对关键历史节点的掌握",
+          "测试对经典作品叙事和风格的理解",
+          "题型结合单选与多选，覆盖核心概念"
+        ],
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple"
+          ]
+        },
+        "estimatedDuration": 120,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "角色设计风格",
+        "description": "介绍不同风格流派下角色设计的核心原则与表现手法。",
+        "keyPoints": [
+          "角色设计要素：头身比例、眼睛风格、发型与服饰",
+          "风格流派：萌系、写实系、少年漫风格的特征对比",
+          "案例展示：从《鬼灭之刃》到《星际牛仔》的角色设计差异"
+        ],
+        "teachingObjective": "能够区分并描述至少三种不同的角色设计风格。",
+        "estimatedDuration": 180,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "分镜与叙事技巧",
+        "description": "讲解漫画和动画中如何运用分镜控制节奏、引导情绪和增强叙事。",
+        "keyPoints": [
+          "[Table] 分镜类型与功能：广角镜（建立环境）、特写（强调情绪）、过肩镜头（推进对话）",
+          "分格与节奏：宽格用于静态描述，窄格加速动作",
+          "案例演示：追逐戏、情感戏、对话戏的分镜对比分析"
+        ],
+        "teachingObjective": "理解分镜选择对叙事节奏和情感表达的具体影响。",
+        "estimatedDuration": 180,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "interactive",
+        "title": "互动练习：分镜创作基础",
+        "description": "提供一个简易画布，让学习者尝试安排一组分镜顺序来表达一个简单故事。",
+        "keyPoints": [
+          "通过拖拽排序，理解分镜逻辑关系",
+          "尝试调整镜头角度，观察叙事效果变化",
+          "培养基础的分镜构思与视觉叙事能力"
+        ],
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "分镜叙事的基础逻辑",
+          "keyVariables": [
+            "镜头类型（广角、中景、特写）",
+            "分格顺序",
+            "动作方向"
+          ]
+        },
+        "teachingObjective": "通过动手实践初步掌握分镜排序和镜头选择的基本原理。",
+        "estimatedDuration": 240,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "作品讨论引导",
+        "description": "提供讨论框架和关键议题，鼓励学习者就一部热门或经典作品进行结构化探讨。",
+        "keyPoints": [
+          "推荐讨论作品：《进击的巨人》（主题：自由、牺牲与循环历史）",
+          "讨论结构：从叙事、角色、视觉到主题的四步分析框架",
+          "引导思考：哪些设计让你印象深刻？它们服务于什么主题？"
+        ],
+        "teachingObjective": "运用前面学到的分析框架，对一部作品进行初步的结构化讨论。",
+        "estimatedDuration": 240,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "quiz",
+        "title": "综合小测验",
+        "description": "覆盖角色设计、分镜技巧和作品讨论要点的综合性测验。",
+        "keyPoints": [
+          "检验角色设计风格的知识",
+          "评估分镜技巧的实际应用理解",
+          "要求短答，简析分镜在特定场景中的作用"
+        ],
+        "quizConfig": {
+          "questionCount": 4,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        },
+        "estimatedDuration": 180,
+        "order": 9
+      },
+      {
+        "id": "scene_10",
+        "type": "slide",
+        "title": "课程总结与延伸",
+        "description": "回顾本次课程的核心知识点，并提供进一步的深入学习资源。",
+        "keyPoints": [
+          "核心回顾：历史脉络、经典赏析、角色风格、分镜与叙事",
+          "延伸资源推荐：推荐书单（《理解漫画》）、经典动漫清单、在线课程平台",
+          "课后挑战：选择一部新作品，运用课程框架完成一份分析报告"
+        ],
+        "teachingObjective": "总结课程所学，并为后续自主学习指明方向。",
+        "estimatedDuration": 90,
+        "order": 10
+      }
+    ],
+    "languageDirective": "The course should be delivered in Chinese, as the user's requirement is written in Chinese. All teaching content, explanations, and assessments should be in Chinese. Key terms like 'anime', 'manga', or specific anime titles (e.g., 'Spirited Away', 'Attack on Titan') can be kept in their original English or Japanese form with Chinese translations provided in parentheses on first use. This approach ensures clarity and accessibility for general learners.",
+    "topicSummary": "动漫鉴赏入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "TyX6iEc3q7",
+      "name": "动漫发展简史",
+      "languageDirective": "The course should be delivered in Chinese, as the user's requirement is written in Chinese. All teaching content, explanations, and assessments should be in Chinese. Key terms like 'anime', 'manga', or specific anime titles (e.g., 'Spirited Away', 'Attack on Titan') can be kept in their original English or Japanese form with Chinese translations provided in parentheses on first use. This approach ensures clarity and accessibility for general learners.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1781657450879,
+      "updatedAt": 1781657450879,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "动漫鉴赏\n\n课程目标：从经典作品到现代动画，学习动漫的艺术风格与叙事技巧\n\n大纲：\n第1幕：动漫发展简史 — \n第2幕：经典作品赏析 — \n第3幕：角色设计风格 — \n第4幕：分镜与叙事技巧 — \n第5幕：作品讨论 — \n第6幕：小测验 — ",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "动漫发展简史",
+      "description": "概述从早期日本动画到现代动漫产业的发展历程，建立历史背景框架。",
+      "keyPoints": [
+        "日本动画的起源：1910年代至1960年代的先驱作品",
+        "电视动画时代：手冢治虫与‘铁臂阿童木’的里程碑意义",
+        "黄金时期：1980至1990年代，宫崎骏与吉卜力工作室的崛起",
+        "现代发展：2000年至今，数字技术、全球传播与题材多元化"
+      ],
+      "teachingObjective": "了解动漫发展的关键历史节点和代表人物。",
+      "estimatedDuration": 150,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "经典作品赏析（一）：叙事与主题",
+      "description": "深入分析一部经典作品在叙事结构和主题表达上的特点。",
+      "keyPoints": [
+        "案例选择：《千与千寻》——成长、迷失与自我认知",
+        "叙事结构：起承转合与象征性场景分析",
+        "主题表达：日本神道文化、消费主义批判与当代社会隐喻"
+      ],
+      "teachingObjective": "理解经典作品如何通过叙事传达深层主题。",
+      "estimatedDuration": 180,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "经典作品赏析（二）：视觉风格与美学",
+      "description": "从视觉语言角度分析另一部经典作品，学习其独特艺术风格。",
+      "keyPoints": [
+        "案例选择：《攻壳机动队》（1995）——赛博朋克的视觉美学",
+        "视觉元素：城市夜景、光学迷彩、机械义体设计的细节表现",
+        "美学影响：对未来主义与反乌托邦视觉风格的启示"
+      ],
+      "teachingObjective": "识别并分析动漫作品中的核心视觉风格元素。",
+      "estimatedDuration": 180,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "quiz",
+      "title": "知识回顾：动漫历史与经典作品",
+      "description": "通过小测验巩固对前两幕内容的理解。",
+      "keyPoints": [
+        "检验对关键历史节点的掌握",
+        "测试对经典作品叙事和风格的理解",
+        "题型结合单选与多选，覆盖核心概念"
+      ],
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple"
+        ]
+      },
+      "estimatedDuration": 120,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "角色设计风格",
+      "description": "介绍不同风格流派下角色设计的核心原则与表现手法。",
+      "keyPoints": [
+        "角色设计要素：头身比例、眼睛风格、发型与服饰",
+        "风格流派：萌系、写实系、少年漫风格的特征对比",
+        "案例展示：从《鬼灭之刃》到《星际牛仔》的角色设计差异"
+      ],
+      "teachingObjective": "能够区分并描述至少三种不同的角色设计风格。",
+      "estimatedDuration": 180,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "分镜与叙事技巧",
+      "description": "讲解漫画和动画中如何运用分镜控制节奏、引导情绪和增强叙事。",
+      "keyPoints": [
+        "[Table] 分镜类型与功能：广角镜（建立环境）、特写（强调情绪）、过肩镜头（推进对话）",
+        "分格与节奏：宽格用于静态描述，窄格加速动作",
+        "案例演示：追逐戏、情感戏、对话戏的分镜对比分析"
+      ],
+      "teachingObjective": "理解分镜选择对叙事节奏和情感表达的具体影响。",
+      "estimatedDuration": 180,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "interactive",
+      "title": "互动练习：分镜创作基础",
+      "description": "提供一个简易画布，让学习者尝试安排一组分镜顺序来表达一个简单故事。",
+      "keyPoints": [
+        "通过拖拽排序，理解分镜逻辑关系",
+        "尝试调整镜头角度，观察叙事效果变化",
+        "培养基础的分镜构思与视觉叙事能力"
+      ],
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "分镜叙事的基础逻辑",
+        "keyVariables": [
+          "镜头类型（广角、中景、特写）",
+          "分格顺序",
+          "动作方向"
+        ]
+      },
+      "teachingObjective": "通过动手实践初步掌握分镜排序和镜头选择的基本原理。",
+      "estimatedDuration": 240,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "作品讨论引导",
+      "description": "提供讨论框架和关键议题，鼓励学习者就一部热门或经典作品进行结构化探讨。",
+      "keyPoints": [
+        "推荐讨论作品：《进击的巨人》（主题：自由、牺牲与循环历史）",
+        "讨论结构：从叙事、角色、视觉到主题的四步分析框架",
+        "引导思考：哪些设计让你印象深刻？它们服务于什么主题？"
+      ],
+      "teachingObjective": "运用前面学到的分析框架，对一部作品进行初步的结构化讨论。",
+      "estimatedDuration": 240,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "quiz",
+      "title": "综合小测验",
+      "description": "覆盖角色设计、分镜技巧和作品讨论要点的综合性测验。",
+      "keyPoints": [
+        "检验角色设计风格的知识",
+        "评估分镜技巧的实际应用理解",
+        "要求短答，简析分镜在特定场景中的作用"
+      ],
+      "quizConfig": {
+        "questionCount": 4,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      },
+      "estimatedDuration": 180,
+      "order": 9
+    },
+    {
+      "id": "scene_10",
+      "type": "slide",
+      "title": "课程总结与延伸",
+      "description": "回顾本次课程的核心知识点，并提供进一步的深入学习资源。",
+      "keyPoints": [
+        "核心回顾：历史脉络、经典赏析、角色风格、分镜与叙事",
+        "延伸资源推荐：推荐书单（《理解漫画》）、经典动漫清单、在线课程平台",
+        "课后挑战：选择一部新作品，运用课程框架完成一份分析报告"
+      ],
+      "teachingObjective": "总结课程所学，并为后续自主学习指明方向。",
+      "estimatedDuration": 90,
+      "order": 10
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "The course should be delivered in Chinese, as the user's requirement is written in Chinese. All teaching content, explanations, and assessments should be in Chinese. Key terms like 'anime', 'manga', or specific anime titles (e.g., 'Spirited Away', 'Attack on Titan') can be kept in their original English or Japanese form with Chinese translations provided in parentheses on first use. This approach ensures clarity and accessibility for general learners.",
+    "totalScenes": 10
+  },
+  "topicSummary": "动漫鉴赏入门",
+  "completedAt": "2026-06-17T00:52:09.415Z",
+  "result": {
+    "classroomId": "TyX6iEc3q7",
+    "url": "http://localhost:3001/classroom/TyX6iEc3q7",
+    "scenesCount": 3
+  }
+}

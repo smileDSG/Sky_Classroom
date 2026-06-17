@@ -90,8 +90,8 @@ describe('PPT Fixes — Instruction Executor', () => {
     const executor = new InstructionExecutor();
 
     const instructions = [
-      { op: 'addShape' as const, params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1 } },
-      { op: 'addShape' as const, params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1, fillColor: '#FF0000' } },
+      { op: 'addShape', params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1 } },
+      { op: 'addShape', params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1, fillColor: '#FF0000' } },
     ];
 
     const result = await executor.execute(slide, pres, instructions, 1);
@@ -107,7 +107,7 @@ describe('PPT Fixes — Instruction Executor', () => {
     const executor = new InstructionExecutor();
 
     const instructions = [
-      { op: 'addShape' as const, params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1, lineColor: '#000000' } },
+      { op: 'addShape', params: { type: 'RECTANGLE', x: 0, y: 0, w: 1, h: 1, lineColor: '#000000' } },
     ];
 
     const result = await executor.execute(slide, pres, instructions, 1);

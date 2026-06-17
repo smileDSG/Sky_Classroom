@@ -12,7 +12,7 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('PPTXPreview');
 
 const PREVIEW_BASE_DIR = path.join(process.cwd(), 'public', 'temp', 'preview');
-const PREVIEW_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const PREVIEW_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 const PYTHON_PATHS = [
   path.join(os.homedir(), 'AppData', 'Local', 'hermes', 'hermes-agent', 'venv', 'Scripts', 'python.exe'),
@@ -70,38 +70,6 @@ export interface PptxPreviewResult {
 }
 
 /**
- * Strip Windows duplicate-file markers like "(2)", "(3)" from a filename.
- * e.g. "file(2).pptx" → "file.pptx"
- */
-function stripWindowsDuplicateMarker(filePath: string): string {
-  return filePath.replace(/\(\d+\)(\.[^.]+)$/i, '$1');
-}
-
-/**
- * Resolve the actual PPTX file path, handling Windows duplicate markers.
- * If the exact path doesn't exist, try stripping "(N)" suffixes.
- */
-function resolvePptxPath(pptxUrl: string): string {
-  const publicDir = path.join(process.cwd(), 'public');
-  const relPath = pptxUrl.replace(/^\//, '');
-  const absPath = path.join(publicDir, relPath);
-
-  if (fs.existsSync(absPath)) return absPath;
-
-  // Try stripping Windows duplicate marker: "file(2).pptx" → "file.pptx"
-  const normalized = stripWindowsDuplicateMarker(relPath);
-  if (normalized !== relPath) {
-    const normalizedAbs = path.join(publicDir, normalized);
-    if (fs.existsSync(normalizedAbs)) {
-      log.info(`Resolved duplicate marker: ${relPath} → ${normalized}`);
-      return normalizedAbs;
-    }
-  }
-
-  return absPath; // Return original; caller will report "not found"
-}
-
-/**
  * Convert an existing PPTX file to preview PNG images.
  * @param pptxUrl - Public URL path, e.g. "/temp/pptx/xxx.pptx"
  * @param existingPreviewId - Optional: reuse existing preview directory
@@ -111,9 +79,9 @@ export async function generatePreviewFromPptx(
   existingPreviewId?: string,
 ): Promise<PptxPreviewResult> {
   try {
-    const absPptxPath = resolvePptxPath(pptxUrl);
-    // Security: validate resolved path is under public dir and is a .pptx file
+    // Validate pptxUrl: must be under public/temp/pptx/
     const publicDir = path.resolve(process.cwd(), 'public');
+    const absPptxPath = path.resolve(publicDir, pptxUrl.replace(/^\//, ''));
     if (!absPptxPath.startsWith(publicDir) || !absPptxPath.endsWith('.pptx')) {
       return { success: false, previewId: '', slideImages: [], error: 'Invalid pptxUrl' };
     }

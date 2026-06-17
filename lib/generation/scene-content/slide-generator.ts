@@ -15,19 +15,11 @@ import type {
   ImageMapping,
   GeneratedSlideContent,
 } from '@/lib/types/generation';
-import type { PPTElement, SlideBackground } from '@/lib/types/slides';
-import type { AgentInfo, AICallFn, GeneratedSlideData } from '../pipeline-types';
-import {
-  formatImageDescription,
-  formatImagePlaceholder,
-  formatTeacherPersonaForPrompt,
-} from '../prompt-formatters';
-import { fixElementDefaults, processLatexElements } from '../element-fixer';
-import { resolveImageIds, normalizeGeneratedVideoRefs } from '../media-resolver';
-import {
-  selectThemeForTemplate,
-  type ClassroomThemeSelection,
-} from '../classroom-design-dna';
+import type { PPTElement } from '@/lib/types/slides';
+import type { AgentInfo, AICallFn } from '../pipeline-types';
+import { formatImageDescription, formatImagePlaceholder } from '../prompt-formatters';
+import { resolveImageIds } from '../media-resolver';
+import { selectThemeForTemplate, type ClassroomThemeSelection } from '../classroom-design-dna';
 import { generateStructuredContent } from '../classroom-content-agent';
 import {
   layoutContentWithTemplate,
@@ -53,10 +45,17 @@ export async function generateSlideContent(
   // ── Unified theme selection: template drives everything ──
   const selectedTemplate = courseTemplate || selectTemplateForOutline(outline.title);
   const theme = themeSelection ?? selectThemeForTemplate(selectedTemplate);
-  log.info(`[SlideGen] Theme selected: ${theme.paletteName} (${theme.styleName}) [template=${selectedTemplate}] for "${outline.title}"`);
+  log.info(
+    `[SlideGen] Theme selected: ${theme.paletteName} (${theme.styleName}) [template=${selectedTemplate}] for "${outline.title}"`,
+  );
 
   // ── Phase 1: Content Generation (LLM) ──
-  const assignedImagesText = buildAssignedImagesText(outline, assignedImages, imageMapping, visionEnabled);
+  const assignedImagesText = buildAssignedImagesText(
+    outline,
+    assignedImages,
+    imageMapping,
+    visionEnabled,
+  );
   const mediaElementEnabled =
     (assignedImages?.length ?? 0) > 0 || (outline.mediaGenerations?.length ?? 0) > 0;
 
@@ -68,7 +67,8 @@ export async function generateSlideContent(
     languageDirective,
     assignedImages: assignedImagesText,
     mediaElementEnabled,
-    teacherContext: agents && agents.length > 0 ? agents.map((a) => `${a.name} (${a.role})`).join(', ') : '',
+    teacherContext:
+      agents && agents.length > 0 ? agents.map((a) => `${a.name} (${a.role})`).join(', ') : '',
     themePaletteName: theme.paletteName,
     mood: theme.mood,
     palette: theme.palette,
@@ -81,11 +81,15 @@ export async function generateSlideContent(
   }
 
   const structuredContent = contentResult.data;
-  log.info(`[SlideGen] Content Agent produced type=${structuredContent.type} for: ${outline.title}`);
+  log.info(
+    `[SlideGen] Content Agent produced type=${structuredContent.type} for: ${outline.title}`,
+  );
 
   // ── Phase 2: Layout Generation (Template-Driven) ──
   const templateData = await layoutContentWithTemplate(structuredContent, selectedTemplate);
-  log.info(`[SlideGen] Template layout ready: ${templateData.templateName}/${templateData.pageName} with ${templateData.page.elements.length} elements for "${outline.title}"`);
+  log.info(
+    `[SlideGen] Template layout ready: ${templateData.templateName}/${templateData.pageName} with ${templateData.page.elements.length} elements for "${outline.title}"`,
+  );
 
   // ── Phase 3: Post-Processing ──
   // Legacy elements path kept for backward compatibility
@@ -112,7 +116,9 @@ export async function generateSlideContent(
     }
 
     if (mediaElements.length > 0) {
-      log.info(`[SlideGen] Resolving ${mediaElements.length} media placeholders for "${outline.title}"`);
+      log.info(
+        `[SlideGen] Resolving ${mediaElements.length} media placeholders for "${outline.title}"`,
+      );
       const resolved = resolveImageIds(
         mediaElements as unknown as GeneratedSlideData['elements'],
         imageMapping,
@@ -121,9 +127,7 @@ export async function generateSlideContent(
 
       // Update template data with resolved image URLs
       for (const resolvedEl of resolved) {
-        const templateEl = templateData.page.elements.find(
-          (e) => e.elementId === resolvedEl.id
-        );
+        const templateEl = templateData.page.elements.find((e) => e.elementId === resolvedEl.id);
         if (templateEl && resolvedEl.type === 'image') {
           templateEl.src = resolvedEl.src;
         }
@@ -131,7 +135,9 @@ export async function generateSlideContent(
     }
   }
 
-  log.info(`[SlideGen] Completed for "${outline.title}": templateData=${templateData.templateName}/${templateData.pageName}, elements=${elements.length}, hasBackground=${!!templateData.page.background}`);
+  log.info(
+    `[SlideGen] Completed for "${outline.title}": templateData=${templateData.templateName}/${templateData.pageName}, elements=${elements.length}, hasBackground=${!!templateData.page.background}`,
+  );
 
   return {
     elements,

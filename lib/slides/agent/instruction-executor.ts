@@ -5,8 +5,7 @@
  * This executor validates params, translates ops to pptxgenjs calls,
  * and handles errors gracefully (single instruction failure does not crash the page).
  */
-import pptxgen from 'pptxgenjs';
-type PresSlide = PptxGenJS.PresSlide;
+import pptxgen, { PresSlide } from 'pptxgenjs';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 import { latexToOmml } from '@/lib/export/latex-to-omml';
@@ -141,7 +140,6 @@ export interface ExecutionResult {
   success: boolean;
   errors: Array<{ opIndex: number; op: string; error: string }>;
   slideIndex: number;
-  formulas?: Array<{ latex: string; omml: string; x: number; y: number; w: number; h: number; pageNum: number }>;
 }
 
 function hex(c: string): string {

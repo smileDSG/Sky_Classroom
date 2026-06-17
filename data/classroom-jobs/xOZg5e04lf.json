@@ -1,0 +1,447 @@
+{
+  "id": "xOZg5e04lf",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-17T01:26:43.782Z",
+  "updatedAt": "2026-06-17T01:28:06.937Z",
+  "inputSummary": {
+    "requirementPreview": "游戏设计基础\n\n课程目标：学习游戏设计的核心原则：机制、关卡设计与玩家体验\n\n大纲：\n第1幕：什么是好的游戏设计？ — \n第2幕：核心游戏机制 — \n第3幕：关卡设计原则 — \n第4幕：玩家心理学 — \n第5幕：游戏分析练习 — \n第6幕：小测验 — ",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 2,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-17T01:26:43.797Z",
+  "totalScenes": 10,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "什么是好的游戏设计？",
+        "description": "引入课程主题，通过对比分析帮助学习者建立对“好设计”的直观认知。",
+        "keyPoints": [
+          "讨论：一个“好游戏”应该具备哪些特征？（沉浸感、挑战性、趣味性）",
+          "案例对比：分析《超级马力欧兄弟》与一个设计不佳的游戏，找出关键差异",
+          "核心概念引出：MDA框架（机制、动态、体验）的介绍与初步理解"
+        ],
+        "teachingObjective": "能够用自己的语言描述“好的游戏设计”的三个核心要素。",
+        "estimatedDuration": 150,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "核心游戏机制",
+        "description": "深入讲解游戏机制的定义和构成要素，并通过拆解经典游戏进行说明。",
+        "keyPoints": [
+          "定义：游戏机制是玩家与游戏世界互动的基本规则和行动集合",
+          "分析《俄罗斯方块》的核心机制：放置、旋转、消除",
+          "构建机制组合：一个游戏如何由多个小机制协同运作（如《塞尔达传说：旷野之息》）"
+        ],
+        "teachingObjective": "能够识别并描述一款经典游戏的核心机制。",
+        "estimatedDuration": 180,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "机制沙盒：构建你的小游戏",
+        "description": "通过一个简化的互动沙盒，让学习者尝试组合不同的核心机制，观察其产生的玩家体验。",
+        "keyPoints": [
+          "从三个基础机制库中选择：移动（行走/飞行）、得分（收集/击杀）、目标（到达/生存）",
+          "组合任意两个机制，并预测会产生哪种核心体验（探索/竞争/挑战）",
+          "对比不同组合的结果，理解机制如何塑造体验"
+        ],
+        "teachingObjective": "能够通过实验理解不同游戏机制组合对玩家体验的影响。",
+        "estimatedDuration": 240,
+        "order": 3,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "游戏机制组合对玩家体验的影响",
+          "keyVariables": [
+            "移动方式：行走、跳跃、飞行",
+            "得分方式：收集物品、击败敌人、时间生存",
+            "目标类型：到达终点、击败Boss、获得最高分"
+          ]
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "关卡设计原则",
+        "description": "介绍优秀的关卡设计如何引导玩家，控制节奏和难度。",
+        "keyPoints": [
+          "核心原则：引导而不说教、循序渐进、进退有据",
+          "节奏控制：利用“安全区-挑战区-Boss区”的经典结构分析《黑帝斯》的关卡设计",
+          "动线设计：如何利用视觉线索（光线、颜色、地形）引导玩家走向目标"
+        ],
+        "teachingObjective": "能够解释关卡设计中引导、节奏和动线的基本概念。",
+        "estimatedDuration": 180,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "quiz",
+        "title": "知识巩固：机制与关卡",
+        "description": "通过小测验检验对前两幕核心概念（游戏机制、关卡设计）的理解。",
+        "keyPoints": [
+          "检验对核心机制概念的掌握",
+          "测试识别关卡设计原则的能力",
+          "题型结合单选与多选，覆盖核心概念"
+        ],
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple"
+          ]
+        },
+        "estimatedDuration": 120,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "玩家心理学",
+        "description": "讲解驱动玩家行为的核心心理动机，提升对玩家体验设计的理解。",
+        "keyPoints": [
+          "内在动机：好奇心、成就感、掌控感、社交需求",
+          "心流理论介绍：挑战与技能的平衡是沉浸体验的关键",
+          "讨论：《魔兽世界》如何利用“升级-装备-社交”的循环持续吸引玩家"
+        ],
+        "teachingObjective": "能够识别并举例说明游戏中常见的三种核心玩家动机。",
+        "estimatedDuration": 180,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "游戏分析练习",
+        "description": "学习者将运用前三幕学到的知识，对一个指定游戏进行结构化分析。",
+        "keyPoints": [
+          "分析目标游戏：《星露谷物语》",
+          "分析框架：核心机制、关卡设计特点、玩家动机分析",
+          "引导问题：它的关卡如何引导玩家？哪些机制激发了长期玩家的留存？"
+        ],
+        "teachingObjective": "能够应用MDA框架和玩家心理学知识对一款游戏进行初步分析。",
+        "estimatedDuration": 180,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "pbl",
+        "title": "项目：设计一个游戏概念",
+        "description": "学习者分组协作，运用课程所学，为一个模拟的游戏设计提案构思核心创意。",
+        "keyPoints": [
+          "角色分配：游戏设计师、叙事设计师",
+          "任务：为一个“奇幻探索”主题游戏设计核心机制与一个关卡概念",
+          "产出：一份包含核心机制说明、玩家动机分析和一个关卡草图的提案"
+        ],
+        "teachingObjective": "能够综合运用课程知识，进行团队协作，完成一个游戏设计概念提案。",
+        "estimatedDuration": 900,
+        "order": 8,
+        "pblConfig": {
+          "projectTopic": "奇幻探索游戏设计概念",
+          "projectDescription": "为一家游戏公司设计一个以“奇幻探索”为核心的主题的游戏概念。你需要定义其核心机制、分析目标玩家的核心动机，并设计一个展示关卡概念的简单草图。",
+          "targetSkills": [
+            "游戏机制设计",
+            "玩家心理分析",
+            "团队协作与沟通",
+            "创意思维与可视化表达"
+          ],
+          "issueCount": 4
+        }
+      },
+      {
+        "id": "scene_9",
+        "type": "quiz",
+        "title": "综合小测验",
+        "description": "覆盖游戏机制、关卡设计、玩家心理学和游戏分析的综合性测验。",
+        "keyPoints": [
+          "检验对游戏设计核心原则的综合理解",
+          "评估运用所学知识分析游戏的能力",
+          "题型结合单选与短答，验证深度理解"
+        ],
+        "quizConfig": {
+          "questionCount": 4,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        },
+        "estimatedDuration": 180,
+        "order": 9
+      },
+      {
+        "id": "scene_10",
+        "type": "slide",
+        "title": "课程总结与延伸",
+        "description": "回顾课程核心知识点，并提供进一步学习和实践的资源。",
+        "keyPoints": [
+          "核心回顾：MDA框架、核心机制、关卡设计、玩家心理学",
+          "延伸资源推荐：书籍《游戏设计艺术》(The Art of Game Design)、GDC（游戏开发者大会）演讲、在线课程平台",
+          "课后挑战：选择一个你喜欢的游戏，用课程框架完成一份完整的分析报告"
+        ],
+        "teachingObjective": "总结课程所学，并为后续的自主学习和实践指明方向。",
+        "estimatedDuration": 120,
+        "order": 10
+      }
+    ],
+    "languageDirective": "This course is conducted in Chinese, as inferred from the user's requirement text. All course content, including scene titles, descriptions, key points, quiz questions, and interactive instructions, must be written in Chinese. Technical terms and established English names (e.g., 'MDA Framework', 'Flow State') can be kept in their original English form, but should be accompanied by a Chinese translation or explanation on first mention. No other languages are used.",
+    "topicSummary": "游戏设计基础",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "N3dk2krGtq",
+      "name": "什么是好的游戏设计？",
+      "languageDirective": "This course is conducted in Chinese, as inferred from the user's requirement text. All course content, including scene titles, descriptions, key points, quiz questions, and interactive instructions, must be written in Chinese. Technical terms and established English names (e.g., 'MDA Framework', 'Flow State') can be kept in their original English form, but should be accompanied by a Chinese translation or explanation on first mention. No other languages are used.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1781659623453,
+      "updatedAt": 1781659623453,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "游戏设计基础\n\n课程目标：学习游戏设计的核心原则：机制、关卡设计与玩家体验\n\n大纲：\n第1幕：什么是好的游戏设计？ — \n第2幕：核心游戏机制 — \n第3幕：关卡设计原则 — \n第4幕：玩家心理学 — \n第5幕：游戏分析练习 — \n第6幕：小测验 — \n\n【参考已有课堂模板】\n\":\"知识回顾：动漫历史与经典作品\",\"description\":\"通过小测验巩固对前两幕内容的理解。\",\"keyPoints\":[\"检验对关键历史节点的掌握\",\"测试对经典作品叙事和风格的理解\",\"题型结合单选与多选，覆盖核心概念\"],\"quizConfig\":{\"questionCount\":3,\"difficulty\":\"easy\",\"questionTypes\":[\"single\",\"multiple\"]},\"estimatedDuration\":120,\"order\":4},{\"id\":\"scene_5\",\"type\":\"slide\",\"title\":\"角色设计风格\",\"description\":\"介绍不同风格流派下角色设计的核心原则与表现手法。\",\"keyPoints\":[\"角色设计要素：头身比例、眼睛风格、发型与服饰\",\"风格流派：萌系、写实系、少年漫风格的特征对比\",\"案例展示：从《鬼灭之刃》到《星际牛仔》的角色设计差异\"],\"teachingObjective\":\"能够区分并描述至少三种不同的角色设计风格\n---\ne\":\"综合小测验\",\"description\":\"覆盖角色设计、分镜技巧和作品讨论要点的综合性测验。\",\"keyPoints\":[\"检验角色设计风格的知识\",\"评估分镜技巧的实际应用理解\",\"要求短答，简析分镜在特定场景中的作用\"],\"quizConfig\":{\"questionCount\":4,\"difficulty\":\"medium\",\"questionTypes\":[\"single\",\"short_answer\"]},\"estimatedDuration\":180,\"order\":9},{\"id\":\"scene_10\",\"type\":\"slide\",\"title\":\"课程总结与延伸\",\"description\":\"回顾本次课程的核心知识点，并提供进一步的深入学习资源。\",\"keyPoints\":[\"核心回顾：历史脉络、经典赏析、角色风格、分镜与叙事\",\"延伸资源推荐：推荐书单（《理解漫画》）、经典动漫清单、在线课程平台\",\"课后挑战：选择一部新作品，运用课程框架完成一份分析报告\"],\"teachingObjective\":\"总结课程所学，并为后续自主学习指明方向。\",\"estimatedDuration\":90,\"order\":10}],\"sceneCount\":3}",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "什么是好的游戏设计？",
+      "description": "引入课程主题，通过对比分析帮助学习者建立对“好设计”的直观认知。",
+      "keyPoints": [
+        "讨论：一个“好游戏”应该具备哪些特征？（沉浸感、挑战性、趣味性）",
+        "案例对比：分析《超级马力欧兄弟》与一个设计不佳的游戏，找出关键差异",
+        "核心概念引出：MDA框架（机制、动态、体验）的介绍与初步理解"
+      ],
+      "teachingObjective": "能够用自己的语言描述“好的游戏设计”的三个核心要素。",
+      "estimatedDuration": 150,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "核心游戏机制",
+      "description": "深入讲解游戏机制的定义和构成要素，并通过拆解经典游戏进行说明。",
+      "keyPoints": [
+        "定义：游戏机制是玩家与游戏世界互动的基本规则和行动集合",
+        "分析《俄罗斯方块》的核心机制：放置、旋转、消除",
+        "构建机制组合：一个游戏如何由多个小机制协同运作（如《塞尔达传说：旷野之息》）"
+      ],
+      "teachingObjective": "能够识别并描述一款经典游戏的核心机制。",
+      "estimatedDuration": 180,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "机制沙盒：构建你的小游戏",
+      "description": "通过一个简化的互动沙盒，让学习者尝试组合不同的核心机制，观察其产生的玩家体验。",
+      "keyPoints": [
+        "从三个基础机制库中选择：移动（行走/飞行）、得分（收集/击杀）、目标（到达/生存）",
+        "组合任意两个机制，并预测会产生哪种核心体验（探索/竞争/挑战）",
+        "对比不同组合的结果，理解机制如何塑造体验"
+      ],
+      "teachingObjective": "能够通过实验理解不同游戏机制组合对玩家体验的影响。",
+      "estimatedDuration": 240,
+      "order": 3,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "游戏机制组合对玩家体验的影响",
+        "keyVariables": [
+          "移动方式：行走、跳跃、飞行",
+          "得分方式：收集物品、击败敌人、时间生存",
+          "目标类型：到达终点、击败Boss、获得最高分"
+        ]
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "关卡设计原则",
+      "description": "介绍优秀的关卡设计如何引导玩家，控制节奏和难度。",
+      "keyPoints": [
+        "核心原则：引导而不说教、循序渐进、进退有据",
+        "节奏控制：利用“安全区-挑战区-Boss区”的经典结构分析《黑帝斯》的关卡设计",
+        "动线设计：如何利用视觉线索（光线、颜色、地形）引导玩家走向目标"
+      ],
+      "teachingObjective": "能够解释关卡设计中引导、节奏和动线的基本概念。",
+      "estimatedDuration": 180,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "quiz",
+      "title": "知识巩固：机制与关卡",
+      "description": "通过小测验检验对前两幕核心概念（游戏机制、关卡设计）的理解。",
+      "keyPoints": [
+        "检验对核心机制概念的掌握",
+        "测试识别关卡设计原则的能力",
+        "题型结合单选与多选，覆盖核心概念"
+      ],
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple"
+        ]
+      },
+      "estimatedDuration": 120,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "玩家心理学",
+      "description": "讲解驱动玩家行为的核心心理动机，提升对玩家体验设计的理解。",
+      "keyPoints": [
+        "内在动机：好奇心、成就感、掌控感、社交需求",
+        "心流理论介绍：挑战与技能的平衡是沉浸体验的关键",
+        "讨论：《魔兽世界》如何利用“升级-装备-社交”的循环持续吸引玩家"
+      ],
+      "teachingObjective": "能够识别并举例说明游戏中常见的三种核心玩家动机。",
+      "estimatedDuration": 180,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "游戏分析练习",
+      "description": "学习者将运用前三幕学到的知识，对一个指定游戏进行结构化分析。",
+      "keyPoints": [
+        "分析目标游戏：《星露谷物语》",
+        "分析框架：核心机制、关卡设计特点、玩家动机分析",
+        "引导问题：它的关卡如何引导玩家？哪些机制激发了长期玩家的留存？"
+      ],
+      "teachingObjective": "能够应用MDA框架和玩家心理学知识对一款游戏进行初步分析。",
+      "estimatedDuration": 180,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "pbl",
+      "title": "项目：设计一个游戏概念",
+      "description": "学习者分组协作，运用课程所学，为一个模拟的游戏设计提案构思核心创意。",
+      "keyPoints": [
+        "角色分配：游戏设计师、叙事设计师",
+        "任务：为一个“奇幻探索”主题游戏设计核心机制与一个关卡概念",
+        "产出：一份包含核心机制说明、玩家动机分析和一个关卡草图的提案"
+      ],
+      "teachingObjective": "能够综合运用课程知识，进行团队协作，完成一个游戏设计概念提案。",
+      "estimatedDuration": 900,
+      "order": 8,
+      "pblConfig": {
+        "projectTopic": "奇幻探索游戏设计概念",
+        "projectDescription": "为一家游戏公司设计一个以“奇幻探索”为核心的主题的游戏概念。你需要定义其核心机制、分析目标玩家的核心动机，并设计一个展示关卡概念的简单草图。",
+        "targetSkills": [
+          "游戏机制设计",
+          "玩家心理分析",
+          "团队协作与沟通",
+          "创意思维与可视化表达"
+        ],
+        "issueCount": 4
+      }
+    },
+    {
+      "id": "scene_9",
+      "type": "quiz",
+      "title": "综合小测验",
+      "description": "覆盖游戏机制、关卡设计、玩家心理学和游戏分析的综合性测验。",
+      "keyPoints": [
+        "检验对游戏设计核心原则的综合理解",
+        "评估运用所学知识分析游戏的能力",
+        "题型结合单选与短答，验证深度理解"
+      ],
+      "quizConfig": {
+        "questionCount": 4,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      },
+      "estimatedDuration": 180,
+      "order": 9
+    },
+    {
+      "id": "scene_10",
+      "type": "slide",
+      "title": "课程总结与延伸",
+      "description": "回顾课程核心知识点，并提供进一步学习和实践的资源。",
+      "keyPoints": [
+        "核心回顾：MDA框架、核心机制、关卡设计、玩家心理学",
+        "延伸资源推荐：书籍《游戏设计艺术》(The Art of Game Design)、GDC（游戏开发者大会）演讲、在线课程平台",
+        "课后挑战：选择一个你喜欢的游戏，用课程框架完成一份完整的分析报告"
+      ],
+      "teachingObjective": "总结课程所学，并为后续的自主学习和实践指明方向。",
+      "estimatedDuration": 120,
+      "order": 10
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "This course is conducted in Chinese, as inferred from the user's requirement text. All course content, including scene titles, descriptions, key points, quiz questions, and interactive instructions, must be written in Chinese. Technical terms and established English names (e.g., 'MDA Framework', 'Flow State') can be kept in their original English form, but should be accompanied by a Chinese translation or explanation on first mention. No other languages are used.",
+    "totalScenes": 10
+  },
+  "topicSummary": "游戏设计基础",
+  "completedAt": "2026-06-17T01:28:06.937Z",
+  "result": {
+    "classroomId": "N3dk2krGtq",
+    "url": "http://localhost:3001/classroom/N3dk2krGtq",
+    "scenesCount": 2
+  }
+}

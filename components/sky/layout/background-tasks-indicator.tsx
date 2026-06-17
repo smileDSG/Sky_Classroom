@@ -146,12 +146,8 @@ function TaskItem({ task }: { task: BackgroundTask }) {
             <p className="text-[10px] text-slate-400 mt-0.5">{task.phase}</p>
           </div>
         )}
-        {isCompleted && (
-          <p className="text-[10px] text-emerald-500 mt-0.5">点击查看详情</p>
-        )}
-        {isFailed && (
-          <p className="text-[10px] text-rose-500 mt-0.5">{task.error || '任务失败'}</p>
-        )}
+        {isCompleted && <p className="text-[10px] text-emerald-500 mt-0.5">点击查看详情</p>}
+        {isFailed && <p className="text-[10px] text-rose-500 mt-0.5">{task.error || '任务失败'}</p>}
       </div>
 
       <button
@@ -174,13 +170,15 @@ export function BackgroundTasksIndicator() {
   // Hide tasks whose resultRoute matches the current page —
   // those already have their own inline progress UI.
   const visibleTasks = Object.values(tasks).filter(
-    (t) => !dismissedIds.has(t.id) && t.resultRoute !== pathname
+    (t) => !dismissedIds.has(t.id) && t.resultRoute !== pathname,
   );
 
   if (visibleTasks.length === 0) return null;
 
   const runningCount = visibleTasks.filter((t) => t.status === 'running').length;
-  const completedCount = visibleTasks.filter((t) => t.status === 'completed' || t.status === 'failed').length;
+  const completedCount = visibleTasks.filter(
+    (t) => t.status === 'completed' || t.status === 'failed',
+  ).length;
 
   return (
     <motion.div
@@ -195,9 +193,7 @@ export function BackgroundTasksIndicator() {
       >
         <div className="flex items-center gap-2">
           <Zap className="h-3.5 w-3.5 text-sky-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-            后台任务
-          </span>
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">后台任务</span>
           {runningCount > 0 && (
             <span className="flex items-center gap-1 rounded-full bg-sky-100 dark:bg-sky-900/30 px-1.5 py-0.5 text-[10px] font-medium text-sky-600 dark:text-sky-400">
               <Loader2 className="h-2.5 w-2.5 animate-spin" />
@@ -212,15 +208,23 @@ export function BackgroundTasksIndicator() {
         </div>
         <div className="flex items-center gap-1">
           {completedCount > 0 && (
-            <button
+            <span
+              role="button"
+              tabIndex={0}
               onClick={(e) => {
                 e.stopPropagation();
                 dismissCompletedTasks();
               }}
-              className="rounded px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-600/50 transition-colors"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                  dismissCompletedTasks();
+                }
+              }}
+              className="cursor-pointer rounded px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-600/50 transition-colors"
             >
               清除已完成
-            </button>
+            </span>
           )}
           {expanded ? (
             <ChevronDown className="h-3.5 w-3.5 text-slate-400" />

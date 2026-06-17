@@ -24,6 +24,10 @@ import type {
 } from '@/lib/types/stage';
 import type { TeachingJob, GeneratedSectionData } from '@/lib/server/teaching-job-store';
 import type { ContentChunk } from '@/lib/teaching/content-types';
+import {
+  layoutContentWithTemplate,
+  selectTemplateForOutline,
+} from '@/lib/generation/classroom-template-layout-agent';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('TeachingToClassroom');
@@ -138,7 +142,10 @@ function chunkContentToHtml(content: string): string {
   // Italic: *text*
   html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
   // Inline code: `text`
-  html = html.replace(/`(.+?)`/g, '<code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-family:monospace;">$1</code>');
+  html = html.replace(
+    /`(.+?)`/g,
+    '<code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-family:monospace;">$1</code>',
+  );
 
   // Wrap in paragraph
   const lines = html.split('\n').filter((l) => l.trim() !== '');
@@ -366,36 +373,104 @@ function convertSectionToQuizScene(
   };
 }
 
+// ── Layout Agent helpers ─────────────────────────────────────────
+
+/** Convert StructuredContent into a Slide using the Layout Agent */
+async function structuredToSlide(
+  structured: import('@/lib/generation/classroom-content-agent').StructuredContent,
+  sectionTitle: string,
+): Promise<Slide | null> {
+  try {
+    const templateName = selectTemplateForOutline(sectionTitle);
+    const templateData = await layoutContentWithTemplate(structured, templateName);
+    return {
+      id: createId('slide'),
+      viewportSize: CANVAS_W,
+      viewportRatio: CANVAS_H / CANVAS_W,
+      theme: DEFAULT_THEME,
+      elements: templateData.page.elements as PPTElement[],
+      background: (templateData.page.background as SlideBackground) ?? DEFAULT_BACKGROUND,
+      type: 'content',
+    };
+  } catch (err) {
+    log.warn(`[ToClassroom] Layout Agent failed for "${sectionTitle}":`, err);
+    return null;
+  }
+}
+
 /**
  * Convert a single GeneratedSectionData into one or more Scenes.
  * Returns an array because long text sections may be paginated into multiple slide scenes.
  */
-export function convertSectionToScenes(
+export async function convertSectionToScenes(
   sectionData: GeneratedSectionData,
   stageId: string,
   order: number,
-): Scene[] {
-  const { section, chunks } = sectionData;
-
-  // If section is explicitly a quiz or has quiz chunks, create quiz scene(s)
-  if (section.contentType === 'quiz') {
-    const quizScene = convertSectionToQuizScene(sectionData, stageId, order);
-    return quizScene ? [quizScene] : [];
-  }
-
-  // Check if there are quiz chunks mixed in
-  const hasQuizChunks = chunks.some((c) => c.type === 'quiz');
-  const nonQuizChunks = chunks.filter((c) => c.type !== 'quiz');
-
+): Promise<Scene[]> {
+  const { section, chunks, structured } = sectionData;
   const scenes: Scene[] = [];
 
-  if (nonQuizChunks.length > 0) {
-    const slideScenes = chunksToSlides(
-      { section, chunks: nonQuizChunks },
-      stageId,
-      order,
-    );
+  const nonQuizChunks = chunks.filter((c) => c.type !== 'quiz');
+  const hasQuizChunks = chunks.some((c) => c.type === 'quiz');
+  const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
+
+  // ── Path 1: Structured content → Layout Agent (rich template slides) ──
+  if (structured && !isTestEnv) {
+    const slide = await structuredToSlide(structured, section.title);
+    if (slide) {
+      scenes.push({
+        id: createId('scene'),
+        stageId,
+        type: 'slide',
+        title: section.title,
+        order,
+        content: { type: 'slide', canvas: slide },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      log.info(`[ToClassroom] Layout Agent produced rich slide for: ${section.title}`);
+    }
+  }
+
+  // ── Path 2: Fallback to text-based slides ──
+  if (scenes.length === 0 && nonQuizChunks.length > 0) {
+    const slideScenes = chunksToSlides({ section, chunks: nonQuizChunks }, stageId, order);
     scenes.push(...slideScenes);
+  }
+
+  // ── Path 3: Quiz-only section — create a summary slide ──
+  if (scenes.length === 0 && nonQuizChunks.length === 0) {
+    const summaryElements: PPTElement[] = [createTitleElement(section.title)];
+    const kpStr = section.knowledgePoints.join('、');
+    summaryElements.push(createBodyElement(`<p>本节重点：${escapeHtml(kpStr)}</p>`, 120, 100));
+    if (section.hasQuiz) {
+      summaryElements.push(
+        createBodyElement(
+          `<p style="color:#64748b;">请完成下方随堂测验，检验学习成果。</p>`,
+          240,
+          50,
+        ),
+      );
+    }
+    const summarySlide: Slide = {
+      id: createId('slide'),
+      viewportSize: CANVAS_W,
+      viewportRatio: CANVAS_H / CANVAS_W,
+      theme: DEFAULT_THEME,
+      elements: summaryElements,
+      background: DEFAULT_BACKGROUND,
+      type: 'content',
+    };
+    scenes.push({
+      id: createId('scene'),
+      stageId,
+      type: 'slide',
+      title: section.title,
+      order,
+      content: { type: 'slide', canvas: summarySlide },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   }
 
   if (hasQuizChunks) {
@@ -409,7 +484,9 @@ export function convertSectionToScenes(
 /**
  * Convert a completed TeachingJob into a Stage + Scene[] for Classroom playback.
  */
-export function convertTeachingJobToStage(job: TeachingJob): { stage: Stage; scenes: Scene[] } {
+export async function convertTeachingJobToStage(
+  job: TeachingJob,
+): Promise<{ stage: Stage; scenes: Scene[] }> {
   const stageId = createId('stage');
   const now = Date.now();
 
@@ -457,7 +534,7 @@ export function convertTeachingJobToStage(job: TeachingJob): { stage: Stage; sce
   // Convert each section
   const sectionDatas = job.sections ?? [];
   for (const sectionData of sectionDatas) {
-    const sectionScenes = convertSectionToScenes(sectionData, stageId, order);
+    const sectionScenes = await convertSectionToScenes(sectionData, stageId, order);
     scenes.push(...sectionScenes);
     order += sectionScenes.length;
   }
