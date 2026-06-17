@@ -46,7 +46,7 @@ export async function POST(
     return apiSuccess({
       stageId: stage.id,
       sceneCount: scenes.length,
-      redirectUrl: `/sky/classroom?stageId=${stage.id}`,
+      redirectUrl: `/classroom/${stage.id}`,
     }, 201);
   } catch (err) {
     log.error('Teaching to classroom conversion failed:', err);
