@@ -500,6 +500,10 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     canProceed: boolean;
   } | null>(null);
 
+  // Server-pushed progress (0-100). 优先于本地 sections 比例计算，使进度条紧跟
+  // 后端实际生成/重试进度，避免 Phase 2.5 重试期间卡在 100%。
+  const [serverProgress, setServerProgress] = useState<number | null>(null);
+
   const abortRef = useRef<AbortController | null>(null);
 
   // ── Fetch recommended topics on mount ──
@@ -622,6 +626,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         setLoading(true);
         setPlan(data.plan ?? null);
         setSections(data.sections ?? []);
+        setServerProgress(typeof data.progress === 'number' ? data.progress : null);
         setMessage(data.message || '');
 
         resumePolling(entry.jobId, entry.topic);
@@ -647,6 +652,9 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
             setPlan(data.plan ?? null);
             if (data.sections !== undefined) {
               setSections(data.sections);
+            }
+            if (typeof data.progress === 'number') {
+              setServerProgress(data.progress);
             }
             setMessage(data.message || '');
           },
@@ -748,6 +756,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     setPlan(null);
     setSections([]);
     setDone(false);
+    setServerProgress(null);
     setMessage('正在提交...');
     setDiagnosticStep('idle');
     setDiagnosticSessionId(null);
@@ -1021,9 +1030,10 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     }
   }, [currentJobId, homework]);
 
-  const progress = plan
-    ? Math.round((sections.length / plan.sections.length) * 100)
-    : 0;
+  // 优先使用服务端推送的进度（紧跟实际生成/重试进度，避免重试期间卡在 100%）；
+  // 服务端未推送时回退到本地 sections 完成比例。
+  const sectionsRatio = plan ? Math.round((sections.length / plan.sections.length) * 100) : 0;
+  const progress = serverProgress ?? sectionsRatio;
   const canSubmit = !loading && topic.trim().length > 0;
 
   return (

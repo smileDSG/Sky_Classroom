@@ -27,6 +27,8 @@ export interface GeneratedSection {
   section: LessonSection;
   chunks: ContentChunk[];
   structured?: StructuredContent;
+  /** 该 section 在 plan.sections 中的真实索引（由 generateLessonConcurrent 填充） */
+  index?: number;
 }
 
 /** Generate content for a single section — tries structured first, falls back to chunks */
@@ -110,6 +112,21 @@ async function generateChunksContent(
 
     const parsed = parseJsonResponse<Record<string, unknown>>(result.text || '');
     if (!parsed || !Array.isArray(parsed.chunks)) {
+      // LLM 返回了内容但无法解析为 JSON chunks —— 用原文兜底展示，避免直接降级为"生成失败"
+      const rawText = (result.text || '').trim();
+      if (rawText) {
+        log.warn(
+          `[ContentGen] Unparseable chunks for ${section.id}, using raw LLM text as fallback`,
+        );
+        return [
+          {
+            sectionId: section.id,
+            type: 'text',
+            content: rawText,
+            order: 1,
+          },
+        ];
+      }
       return fallbackContent(section);
     }
 
@@ -209,7 +226,12 @@ export async function* generateLessonConcurrent(
 
   // Section 0: generate alone
   const firstResult = await generateSectionContent(sections[0]);
-  yield { section: sections[0], chunks: firstResult.chunks, structured: firstResult.structured };
+  yield {
+    section: sections[0],
+    chunks: firstResult.chunks,
+    structured: firstResult.structured,
+    index: 0,
+  };
 
   if (sections.length === 1) return;
 
@@ -242,19 +264,36 @@ export async function* generateLessonConcurrent(
       }),
     );
 
-    // Yield completed sections and update preceding map
-    for (const result of results) {
+    // Yield completed sections and update preceding map.
+    // 关键：rejected 的章节也必须 yield（用 fallbackContent 占位），
+    // 否则 sections 数组会比 plan 短、且后续 sectionIndex 会错位，
+    // 导致前端翻页出现章节缺失/顺序混乱。占位章节带真实 plan 索引。
+    for (let k = 0; k < results.length; k++) {
+      const section = batch[k];
+      const index = batchStart + k;
+      const result = results[k];
       if (result.status === 'fulfilled') {
-        const { section, chunks, structured } = result.value;
+        const { chunks, structured } = result.value;
         precedingMap.set(section.id, {
           title: section.title,
           knowledgePoints: section.knowledgePoints,
           depth: section.depth,
           contentSummary: extractContentSummary(chunks),
         });
-        yield { section, chunks, structured };
+        yield { section, chunks, structured, index };
       } else {
-        log.error('Parallel section generation failed:', result.reason);
+        log.error(
+          `Parallel section generation failed (index=${index}, id=${section.id}):`,
+          result.reason,
+        );
+        const chunks = fallbackContent(section);
+        precedingMap.set(section.id, {
+          title: section.title,
+          knowledgePoints: section.knowledgePoints,
+          depth: section.depth,
+          contentSummary: extractContentSummary(chunks),
+        });
+        yield { section, chunks, index };
       }
     }
   }
