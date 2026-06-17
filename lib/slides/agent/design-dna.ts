@@ -356,7 +356,7 @@ export function validateDesignDNA(raw: unknown): ValidationResult {
     ...d,
     colors: cleanColors as DesignDNA['colors'],
     fonts: cleanFonts,
-    decoration: { motif: decResult.motif as DesignDNA['decoration']['motif'], density: decResult.density as DesignDNA['decoration']['density'], cornerWeight: decResult.cornerWeight as string },
+    decoration: { motif: decResult.motif as DesignDNA['decoration']['motif'], density: decResult.density as DesignDNA['decoration']['density'], cornerWeight: decResult.cornerWeight },
     components: cleanComponents as DesignDNA['components'],
   };
 

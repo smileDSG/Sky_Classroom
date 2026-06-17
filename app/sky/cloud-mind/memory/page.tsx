@@ -977,9 +977,9 @@ function MistakePicker({
             暂无错题记录，先去做些练习吧
           </div>
         ) : (
-          mistakes.map((m) => (
+          mistakes.map((m, i) => (
             <button
-              key={m.id}
+              key={`${m.id}-${i}`}
               onClick={() => onSelect(m)}
               className="w-full text-left px-4 py-3 transition-colors group"
               style={{ borderBottom: '1px solid var(--memory-border)' }}

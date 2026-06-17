@@ -1,0 +1,389 @@
+{
+  "id": "ivZVOpwn_0",
+  "stage": {
+    "id": "ivZVOpwn_0",
+    "name": "什么是二次函数？",
+    "languageDirective": "The user's requirement is written in Chinese. Therefore, the course will be taught entirely in Chinese, using standard mathematical terminology (e.g., 二次函数, 抛物线, 顶点, 对称轴). All explanations, examples, and assessments will be delivered in Chinese.",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1781658549701,
+    "updatedAt": 1781658549701,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_aYZz7KLa0I",
+      "stageId": "ivZVOpwn_0",
+      "type": "interactive",
+      "title": "探索二次函数参数",
+      "order": 3,
+      "content": {
+        "type": "interactive",
+        "url": "",
+        "html": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">\n    <title>二次函数 · 参数探索</title>\n    <style>\n        * {\n            box-sizing: border-box;\n            margin: 0;\n            padding: 0;\n        }\n        body {\n            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n            background: #f8fafc;\n            display: flex;\n            flex-direction: column;\n            align-items: center;\n            min-height: 100vh;\n            touch-action: manipulation;\n            padding: 12px 12px 0 12px;\n        }\n        .sim-container {\n            max-width: 960px;\n            width: 100%;\n            background: white;\n            border-radius: 28px;\n            box-shadow: 0 12px 30px rgba(0,0,0,0.08);\n            overflow: hidden;\n            display: flex;\n            flex-direction: column;\n            margin-bottom: 10px;\n        }\n        .sim-header {\n            padding: 18px 20px 6px 20px;\n            text-align: center;\n        }\n        .sim-header h1 {\n            font-size: 1.5rem;\n            font-weight: 600;\n            letter-spacing: -0.02em;\n            background: linear-gradient(135deg, #1e293b, #3b82f6);\n            -webkit-background-clip: text;\n            -webkit-text-fill-color: transparent;\n            background-clip: text;\n        }\n        .sim-header p {\n            font-size: 0.9rem;\n            color: #475569;\n            margin-top: 2px;\n        }\n        .canvas-wrapper {\n            position: relative;\n            width: 100%;\n            background: #ffffff;\n            border-radius: 20px;\n            margin: 4px 0 8px 0;\n            padding: 0 8px;\n            touch-action: none;\n        }\n        canvas {\n            display: block;\n            width: 100%;\n            height: auto;\n            background: #fcfdff;\n            border-radius: 18px;\n            box-shadow: inset 0 1px 4px rgba(0,0,0,0.04);\n            touch-action: none;\n            min-height: 280px;\n            max-height: 500px;\n            aspect-ratio: 16 / 9;\n            object-fit: contain;\n        }\n        .state-badge {\n            position: absolute;\n            top: 12px;\n            left: 16px;\n            background: rgba(15, 23, 42, 0.7);\n            backdrop-filter: blur(6px);\n            color: white;\n            padding: 4px 14px;\n            border-radius: 40px;\n            font-size: 0.75rem;\n            font-weight: 500;\n            letter-spacing: 0.3px;\n            pointer-events: none;\n            border: 1px solid rgba(255,255,255,0.15);\n            box-shadow: 0 2px 6px rgba(0,0,0,0.1);\n        }\n        .data-panel {\n            position: absolute;\n            top: 12px;\n            right: 16px;\n            background: rgba(255,255,255,0.85);\n            backdrop-filter: blur(8px);\n            border-radius: 14px;\n            padding: 8px 14px;\n            font-size: 0.8rem;\n            font-family: 'SF Mono', 'JetBrains Mono', monospace;\n            color: #1e293b;\n            box-shadow: 0 2px 10px rgba(0,0,0,0.06);\n            border: 1px solid rgba(148, 163, 184, 0.2);\n            line-height: 1.6;\n            pointer-events: none;\n            text-align: right;\n            min-width: 110px;\n        }\n        .data-panel span {\n            display: inline-block;\n            min-width: 48px;\n            font-weight: 500;\n            color: #0f172a;\n        }\n        .controls {\n            padding: 8px 20px 18px 20px;\n            display: flex;\n            flex-direction: column;\n            gap: 12px;\n        }\n        .slider-group {\n            display: flex;\n            flex-direction: column;\n            gap: 2px;\n        }\n        .slider-label {\n            display: flex;\n            justify-content: space-between;\n            font-size: 0.9rem;\n            font-weight: 500;\n            color: #1e293b;\n            align-items: baseline;\n        }\n        .slider-label .val {\n            font-family: 'SF Mono', monospace;\n            background: #eef2f6;\n            padding: 0 10px;\n            border-radius: 24px;\n            font-size: 0.8rem;\n            color: #0f172a;\n        }\n        input[type=range] {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 100%;\n            height: 6px;\n            background: #d1d9e6;\n            border-radius: 10px;\n            outline: none;\n            transition: background 0.2s;\n            touch-action: manipulation;\n        }\n        input[type=range]::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 24px;\n            height: 24px;\n            background: #3b82f6;\n            border-radius: 30px;\n            cursor: pointer;\n            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);\n            border: 2px solid white;\n            transition: 0.1s;\n        }\n        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.08); }\n        input[type=range]::-moz-range-thumb {\n            width: 24px; height: 24px;\n            background: #3b82f6;\n            border-radius: 30px;\n            border: 2px solid white;\n            cursor: pointer;\n        }\n        .btn-row {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 8px;\n            margin-top: 4px;\n            align-items: center;\n        }\n        .btn {\n            background: #eef2f6;\n            border: none;\n            padding: 10px 20px;\n            border-radius: 48px;\n            font-weight: 600;\n            font-size: 0.9rem;\n            color: #1e293b;\n            cursor: pointer;\n            touch-action: manipulation;\n            min-height: 48px;\n            min-width: 56px;\n            display: inline-flex;\n            align-items: center;\n            justify-content: center;\n            gap: 6px;\n            box-shadow: 0 1px 3px rgba(0,0,0,0.02);\n            transition: 0.15s;\n            flex: 0 0 auto;\n            border: 1px solid transparent;\n        }\n        .btn-primary {\n            background: #3b82f6;\n            color: white;\n            box-shadow: 0 4px 8px rgba(59,130,246,0.2);\n        }\n        .btn-primary:active { background: #2563eb; transform: scale(0.97); }\n        .btn-outline {\n            background: transparent;\n            border: 1px solid #cbd5e1;\n        }\n        .btn-outline:active { background: #f1f5f9; }\n        .btn-reset {\n            background: #f1f5f9;\n            color: #475569;\n        }\n        .btn-reset:active { background: #e2e8f0; }\n        .preset-group {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 6px;\n            margin-top: 2px;\n        }\n        .preset-chip {\n            background: #f1f5f9;\n            border: 1px solid #e2e8f0;\n            border-radius: 40px;\n            padding: 6px 16px;\n            font-size: 0.75rem;\n            font-weight: 500;\n            color: #1e293b;\n            cursor: pointer;\n            min-height: 40px;\n            display: flex;\n            align-items: center;\n            transition: 0.1s;\n            touch-action: manipulation;\n        }\n        .preset-chip:active { background: #e2e8f0; transform: scale(0.96); }\n        .legend-note {\n            font-size: 0.7rem;\n            color: #64748b;\n            text-align: center;\n            padding: 6px 0 2px;\n            border-top: 1px solid #edf2f7;\n            margin-top: 6px;\n        }\n        @media (max-width: 600px) {\n            .sim-header h1 { font-size: 1.2rem; }\n            .controls { padding: 6px 12px 14px; gap: 10px; }\n            .data-panel { font-size: 0.7rem; padding: 6px 10px; min-width: 80px; top: 8px; right: 8px; }\n            .state-badge { font-size: 0.65rem; top: 8px; left: 8px; padding: 2px 12px; }\n            .btn { padding: 8px 14px; min-height: 44px; font-size: 0.8rem; }\n            .preset-chip { font-size: 0.7rem; padding: 4px 12px; min-height: 36px; }\n        }\n        @media (max-width: 420px) {\n            canvas { min-height: 200px; }\n            .sim-header h1 { font-size: 1.1rem; }\n        }\n        .teacher-annotation {\n            position: fixed;\n            z-index: 1000;\n            background: rgba(139,92,246,0.94);\n            color: white;\n            padding: 8px 16px;\n            border-radius: 30px;\n            font-size: 0.9rem;\n            backdrop-filter: blur(4px);\n            box-shadow: 0 8px 20px rgba(0,0,0,0.2);\n            pointer-events: none;\n            animation: fadeIn 0.25s ease-out;\n        }\n        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }\n        @keyframes pulse-highlight {\n            0%, 100% { outline-color: rgba(139, 92, 246, 0.8); }\n            50% { outline-color: rgba(139, 92, 246, 0.3); }\n        }\n    </style>\n\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css\">\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js\"></script>\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js\"></script>\n<script>\ndocument.addEventListener(\"DOMContentLoaded\", function() {\n    const katexOptions = {\n        delimiters: [\n            {left: '\\\\[', right: '\\\\]', display: true},\n            {left: '\\\\(', right: '\\\\)', display: false},\n            {left: '$$', right: '$$', display: true},\n            {left: '$', right: '$', display: false}\n        ],\n        throwOnError: false,\n        strict: false,\n        trust: true\n    };\n\n    let renderTimeout;\n    function safeRender() {\n        if (renderTimeout) clearTimeout(renderTimeout);\n        renderTimeout = setTimeout(() => {\n            renderMathInElement(document.body, katexOptions);\n        }, 100);\n    }\n\n    renderMathInElement(document.body, katexOptions);\n\n    const observer = new MutationObserver((mutations) => {\n        let shouldRender = false;\n        mutations.forEach((mutation) => {\n            if (mutation.target &&\n                mutation.target.className &&\n                typeof mutation.target.className === 'string' &&\n                mutation.target.className.includes('katex')) {\n                return;\n            }\n            shouldRender = true;\n        });\n\n        if (shouldRender) {\n            safeRender();\n        }\n    });\n\n    observer.observe(document.body, {\n        childList: true,\n        subtree: true,\n        characterData: true\n    });\n\n    setInterval(() => {\n        const text = document.body.innerText;\n        if (text.includes('\\\\(') || text.includes('$$')) {\n            safeRender();\n        }\n    }, 2000);\n});\n</script>\n</head>\n<body>\n    <div class=\"sim-container\" role=\"application\" aria-label=\"二次函数参数模拟器\">\n        <div class=\"sim-header\">\n            <h1>📈 y = ax² + bx + c</h1>\n            <p>拖动滑块 · 观察抛物线变化</p>\n        </div>\n        <div class=\"canvas-wrapper\">\n            <canvas id=\"graphCanvas\" width=\"800\" height=\"450\" tabindex=\"0\" aria-label=\"抛物线图像画布\"></canvas>\n            <div class=\"state-badge\" id=\"state-badge\" aria-live=\"polite\">⏸ 就绪</div>\n            <div class=\"data-panel\" id=\"data-panel\" aria-live=\"polite\">\n                <div>顶点 <span id=\"vertex-display\">(0.00, 0.00)</span></div>\n                <div>对称轴 x = <span id=\"axis-display\">0.00</span></div>\n            </div>\n        </div>\n\n        <div class=\"controls\">\n            <!-- 滑块 a -->\n            <div class=\"slider-group\" data-var=\"a\">\n                <div class=\"slider-label\">\n                    <span>a <span style=\"font-weight:400; color:#475569;\">（开口方向/大小）</span></span>\n                    <span class=\"val\" id=\"a-display\">1.0</span>\n                </div>\n                <input type=\"range\" id=\"a-slider\" min=\"-4\" max=\"4\" step=\"0.05\" value=\"1.0\" aria-label=\"参数 a, 当前值 1.0\">\n            </div>\n            <!-- 滑块 b -->\n            <div class=\"slider-group\" data-var=\"b\">\n                <div class=\"slider-label\">\n                    <span>b <span style=\"font-weight:400; color:#475569;\">（对称轴偏移）</span></span>\n                    <span class=\"val\" id=\"b-display\">0.0</span>\n                </div>\n                <input type=\"range\" id=\"b-slider\" min=\"-6\" max=\"6\" step=\"0.1\" value=\"0.0\" aria-label=\"参数 b, 当前值 0.0\">\n            </div>\n            <!-- 滑块 c -->\n            <div class=\"slider-group\" data-var=\"c\">\n                <div class=\"slider-label\">\n                    <span>c <span style=\"font-weight:400; color:#475569;\">（上下平移）</span></span>\n                    <span class=\"val\" id=\"c-display\">0.0</span>\n                </div>\n                <input type=\"range\" id=\"c-slider\" min=\"-6\" max=\"6\" step=\"0.1\" value=\"0.0\" aria-label=\"参数 c, 当前值 0.0\">\n            </div>\n\n            <div class=\"btn-row\">\n                <button class=\"btn btn-primary\" id=\"animate-btn\" aria-label=\"开始动画\">▶ 描点演示</button>\n                <button class=\"btn btn-reset\" id=\"reset-btn\" aria-label=\"重置\">⟲ 重置</button>\n            </div>\n\n            <div class=\"preset-group\">\n                <div class=\"preset-chip\" data-preset='{\"a\":1,\"b\":0,\"c\":0}'>🌱 基础抛物线</div>\n                <div class=\"preset-chip\" data-preset='{\"a\":-1.5,\"b\":0,\"c\":3}'>🔽 开口向下</div>\n                <div class=\"preset-chip\" data-preset='{\"a\":0.5,\"b\":-3,\"c\":1}'>↗ 对称轴右移</div>\n                <div class=\"preset-chip\" data-preset='{\"a\":2,\"b\":4,\"c\":-2}'>⬆ 窄 & 上移</div>\n            </div>\n            <div class=\"legend-note\">🎯 顶点 · 对称轴 · 开口方向随参数变化</div>\n        </div>\n    </div>\n\n    <!-- widget config -->\n    <script type=\"application/json\" id=\"widget-config\">\n    {\n        \"type\": \"simulation\",\n        \"concept\": \"quadratic_function_abc\",\n        \"description\": \"二次函数 y = ax² + bx + c 参数探索：调整 a, b, c 观察抛物线开口、顶点与对称轴变化。\",\n        \"variables\": [\n            { \"name\": \"a\", \"label\": \"a (开口)\", \"min\": -4, \"max\": 4, \"default\": 1, \"step\": 0.05 },\n            { \"name\": \"b\", \"label\": \"b (对称轴)\", \"min\": -6, \"max\": 6, \"default\": 0, \"step\": 0.1 },\n            { \"name\": \"c\", \"label\": \"c (平移)\", \"min\": -6, \"max\": 6, \"default\": 0, \"step\": 0.1 }\n        ],\n        \"presets\": [\n            { \"name\": \"基础抛物线\", \"variables\": { \"a\": 1, \"b\": 0, \"c\": 0 } },\n            { \"name\": \"开口向下\", \"variables\": { \"a\": -1.5, \"b\": 0, \"c\": 3 } },\n            { \"name\": \"对称轴右移\", \"variables\": { \"a\": 0.5, \"b\": -3, \"c\": 1 } },\n            { \"name\": \"窄 & 上移\", \"variables\": { \"a\": 2, \"b\": 4, \"c\": -2 } }\n        ]\n    }\n    </script>\n\n    <script>\n        (function(){\n            \"use strict\";\n\n            const canvas = document.getElementById('graphCanvas');\n            const ctx = canvas.getContext('2d');\n\n            // 控件\n            const sliderA = document.getElementById('a-slider');\n            const sliderB = document.getElementById('b-slider');\n            const sliderC = document.getElementById('c-slider');\n            const displayA = document.getElementById('a-display');\n            const displayB = document.getElementById('b-display');\n            const displayC = document.getElementById('c-display');\n            const vertexDisplay = document.getElementById('vertex-display');\n            const axisDisplay = document.getElementById('axis-display');\n            const stateBadge = document.getElementById('state-badge');\n            const animateBtn = document.getElementById('animate-btn');\n            const resetBtn = document.getElementById('reset-btn');\n\n            // 状态\n            let a = 1.0, b = 0.0, c = 0.0;\n            let isAnimating = false;      // 是否正在描点动画\n            let animationPhase = 0;       // 0=就绪, 1=正在描点\n            let t = 0;                    // 描点进度 0~1\n            const ANIMATION_DURATION = 2000; // ms\n\n            // 画布参数\n            const W = 800, H = 450;\n            let dpr = 1;\n            // 坐标系映射：x范围 -6 ~ 6，y范围 -6 ~ 6\n            const xMin = -6, xMax = 6, yMin = -6, yMax = 6;\n            \n            function mapX(x) { return ((x - xMin) / (xMax - xMin)) * W; }\n            function mapY(y) { return H - ((y - yMin) / (yMax - yMin)) * H; } // 翻转\n\n            // ---------- 绘图 ----------\n            function drawGrid() {\n                ctx.save();\n                ctx.strokeStyle = '#dce3ed';\n                ctx.lineWidth = 0.8;\n                // 网格\n                for (let i = -6; i <= 6; i++) {\n                    if (i === 0) continue;\n                    const xPos = mapX(i);\n                    ctx.beginPath();\n                    ctx.moveTo(xPos, 0);\n                    ctx.lineTo(xPos, H);\n                    ctx.strokeStyle = '#e6edf5';\n                    ctx.stroke();\n                    const yPos = mapY(i);\n                    ctx.beginPath();\n                    ctx.moveTo(0, yPos);\n                    ctx.lineTo(W, yPos);\n                    ctx.strokeStyle = '#e6edf5';\n                    ctx.stroke();\n                }\n                // 坐标轴\n                ctx.strokeStyle = '#1e293b';\n                ctx.lineWidth = 2;\n                ctx.beginPath();\n                ctx.moveTo(0, mapY(0));\n                ctx.lineTo(W, mapY(0));\n                ctx.stroke();\n                ctx.beginPath();\n                ctx.moveTo(mapX(0), 0);\n                ctx.lineTo(mapX(0), H);\n                ctx.stroke();\n\n                // 箭头\n                ctx.fillStyle = '#1e293b';\n                ctx.beginPath();\n                ctx.moveTo(W-8, mapY(0)-5);\n                ctx.lineTo(W-8, mapY(0)+5);\n                ctx.lineTo(W-2, mapY(0));\n                ctx.fill();\n                ctx.beginPath();\n                ctx.moveTo(mapX(0)-5, 8);\n                ctx.lineTo(mapX(0)+5, 8);\n                ctx.lineTo(mapX(0), 2);\n                ctx.fill();\n\n                // 刻度标签\n                ctx.font = '11px system-ui, sans-serif';\n                ctx.fillStyle = '#475569';\n                ctx.textAlign = 'center';\n                ctx.textBaseline = 'top';\n                for (let i = -5; i <= 5; i++) {\n                    if (i === 0) continue;\n                    const xPos = mapX(i);\n                    ctx.fillText(i, xPos, mapY(0)+4);\n                }\n                ctx.textAlign = 'right';\n                ctx.textBaseline = 'middle';\n                for (let i = -5; i <= 5; i++) {\n                    if (i === 0) continue;\n                    const yPos = mapY(i);\n                    ctx.fillText(i, mapX(0)-6, yPos);\n                }\n                ctx.restore();\n            }\n\n            // 计算抛物线点 (y = ax² + bx + c)\n            function quadratic(x) {\n                return a * x * x + b * x + c;\n            }\n\n            // 绘制抛物线 (完整或部分)\n            function drawCurve(progress = 1) {\n                if (progress <= 0) return;\n                const totalPoints = 180;\n                const drawCount = Math.floor(totalPoints * Math.min(progress, 1));\n                if (drawCount < 2) return;\n\n                ctx.save();\n                ctx.lineWidth = 3.5;\n                ctx.strokeStyle = '#3b82f6';\n                ctx.shadowColor = 'rgba(59,130,246,0.3)';\n                ctx.shadowBlur = 8;\n                ctx.beginPath();\n                const step = (xMax - xMin) / totalPoints;\n                let started = false;\n                for (let i = 0; i <= drawCount; i++) {\n                    const x = xMin + i * step;\n                    const y = quadratic(x);\n                    const px = mapX(x);\n                    const py = mapY(y);\n                    if (!started) {\n                        ctx.moveTo(px, py);\n                        started = true;\n                    } else {\n                        ctx.lineTo(px, py);\n                    }\n                }\n                ctx.stroke();\n                ctx.shadowBlur = 0;\n                ctx.restore();\n            }\n\n            // 绘制顶点 + 对称轴\n            function drawVertexAndAxis() {\n                const vertexX = -b / (2 * a);\n                const vertexY = quadratic(vertexX);\n                const axisX = vertexX;\n\n                // 对称轴 (虚线)\n                ctx.save();\n                ctx.setLineDash([6, 6]);\n                ctx.strokeStyle = '#a78bfa';\n                ctx.lineWidth = 1.8;\n                ctx.beginPath();\n                const xPx = mapX(axisX);\n                ctx.moveTo(xPx, 0);\n                ctx.lineTo(xPx, H);\n                ctx.stroke();\n                ctx.setLineDash([]);\n                ctx.restore();\n\n                // 绘制顶点圆\n                const vx = mapX(vertexX);\n                const vy = mapY(vertexY);\n                ctx.beginPath();\n                ctx.arc(vx, vy, 8, 0, 2*Math.PI);\n                ctx.fillStyle = '#f97316';\n                ctx.shadowColor = 'rgba(249,115,22,0.5)';\n                ctx.shadowBlur = 12;\n                ctx.fill();\n                ctx.shadowBlur = 0;\n                ctx.strokeStyle = 'white';\n                ctx.lineWidth = 2.5;\n                ctx.stroke();\n\n                // 顶点标签\n                ctx.font = 'bold 14px system-ui';\n                ctx.fillStyle = '#0f172a';\n                ctx.textAlign = 'left';\n                ctx.textBaseline = 'bottom';\n                const label = `(${vertexX.toFixed(2)}, ${vertexY.toFixed(2)})`;\n                ctx.fillText('顶点 ' + label, vx + 12, vy - 4);\n\n                // 更新数据面板\n                vertexDisplay.textContent = `(${vertexX.toFixed(2)}, ${vertexY.toFixed(2)})`;\n                axisDisplay.textContent = axisX.toFixed(2);\n            }\n\n            // 标记特殊点 (显示几个点)\n            function drawSamplePoints(progress) {\n                if (progress <= 0) return;\n                const count = 8;\n                const step = (xMax - xMin) / count;\n                ctx.save();\n                for (let i = 0; i <= count; i++) {\n                    const x = xMin + i * step;\n                    if (x > xMin + (xMax - xMin) * progress) break;\n                    const y = quadratic(x);\n                    const px = mapX(x);\n                    const py = mapY(y);\n                    ctx.beginPath();\n                    ctx.arc(px, py, 4, 0, 2 * Math.PI);\n                    ctx.fillStyle = '#3b82f6';\n                    ctx.shadowColor = 'rgba(59,130,246,0.3)';\n                    ctx.shadowBlur = 6;\n                    ctx.fill();\n                }\n                ctx.restore();\n            }\n\n            function render(progress = 1) {\n                ctx.clearRect(0, 0, W, H);\n                drawGrid();\n                drawCurve(progress);\n                if (progress >= 1) {\n                    drawVertexAndAxis();\n                }\n                if (isAnimating && progress < 1) {\n                    drawSamplePoints(progress);\n                }\n                // 更新state-badge\n                if (isAnimating) {\n                    stateBadge.textContent = '✏️ 描点中 ' + Math.round(progress * 100) + '%';\n                } else {\n                    stateBadge.textContent = progress >= 1 ? '✅ 完成' : '⏸ 就绪';\n                }\n            }\n\n            // 重置所有状态\n            function fullReset() {\n                isAnimating = false;\n                animationPhase = 0;\n                t = 0;\n                if (animateBtn) animateBtn.textContent = '▶ 描点演示';\n                render(1);\n                stateBadge.textContent = '⏸ 就绪';\n                // 更新数据\n                updateVertexAxis();\n            }\n\n            // 更新顶点/轴显示 (不绘图)\n            function updateVertexAxis() {\n                if (a === 0) {\n                    vertexDisplay.textContent = '(—, —)';\n                    axisDisplay.textContent = '—';\n                    return;\n                }\n                const vertexX = -b / (2 * a);\n                const vertexY = quadratic(vertexX);\n                vertexDisplay.textContent = `(${vertexX.toFixed(2)}, ${vertexY.toFixed(2)})`;\n                axisDisplay.textContent = vertexX.toFixed(2);\n            }\n\n            // 从滑块读取参数\n            function readSliders() {\n                a = parseFloat(sliderA.value);\n                b = parseFloat(sliderB.value);\n                c = parseFloat(sliderC.value);\n                displayA.textContent = a.toFixed(2);\n                displayB.textContent = b.toFixed(1);\n                displayC.textContent = c.toFixed(1);\n                // 更新滑块aria-label\n                sliderA.setAttribute('aria-label', `参数 a, 当前值 ${a.toFixed(2)}`);\n                sliderB.setAttribute('aria-label', `参数 b, 当前值 ${b.toFixed(1)}`);\n                sliderC.setAttribute('aria-label', `参数 c, 当前值 ${c.toFixed(1)}`);\n            }\n\n            // 从外部设置变量 (preset / teacher)\n            function setVariables(vars) {\n                if (vars.a !== undefined) { sliderA.value = vars.a; }\n                if (vars.b !== undefined) { sliderB.value = vars.b; }\n                if (vars.c !== undefined) { sliderC.value = vars.c; }\n                readSliders();\n                if (isAnimating) {\n                    // 如果正在动画，重置\n                    isAnimating = false;\n                    t = 0;\n                    animateBtn.textContent = '▶ 描点演示';\n                }\n                render(1);\n                updateVertexAxis();\n                stateBadge.textContent = '✅ 完成';\n            }\n\n            // ------ 动画循环 ------\n            let animStartTime = 0;\n            let animId = null;\n\n            function startAnimation() {\n                if (a === 0) {\n                    stateBadge.textContent = '⚠️ a=0 不是二次函数';\n                    return;\n                }\n                if (isAnimating) {\n                    // 如果已经在动画，则重置动画\n                    isAnimating = false;\n                    if (animId) cancelAnimationFrame(animId);\n                    animId = null;\n                    t = 0;\n                    animateBtn.textContent = '▶ 描点演示';\n                    render(1);\n                    stateBadge.textContent = '⏸ 已暂停';\n                    return;\n                }\n                // 开始动画\n                isAnimating = true;\n                t = 0;\n                animateBtn.textContent = '⏸ 暂停';\n                animStartTime = performance.now();\n                if (animId) cancelAnimationFrame(animId);\n                animId = requestAnimationFrame(animateLoop);\n            }\n\n            function animateLoop(timestamp) {\n                if (!isAnimating) {\n                    // 如果被暂停，停止循环\n                    animId = null;\n                    return;\n                }\n                const elapsed = timestamp - animStartTime;\n                const progress = Math.min(elapsed / ANIMATION_DURATION, 1);\n                t = progress;\n                render(progress);\n                if (progress < 1) {\n                    animId = requestAnimationFrame(animateLoop);\n                } else {\n                    // 动画完成\n                    isAnimating = false;\n                    animateBtn.textContent = '▶ 描点演示';\n                    render(1);\n                    updateVertexAxis();\n                    stateBadge.textContent = '✅ 完成';\n                    animId = null;\n                }\n            }\n\n            // 重置按钮\n            function resetSim() {\n                // 重置为默认值 a=1, b=0, c=0\n                sliderA.value = '1.0';\n                sliderB.value = '0.0';\n                sliderC.value = '0.0';\n                readSliders();\n                if (isAnimating) {\n                    isAnimating = false;\n                    if (animId) cancelAnimationFrame(animId);\n                    animId = null;\n                    animateBtn.textContent = '▶ 描点演示';\n                }\n                t = 0;\n                render(1);\n                updateVertexAxis();\n                stateBadge.textContent = '⏸ 就绪';\n            }\n\n            // ------ 事件绑定 ------\n            sliderA.addEventListener('input', function() {\n                readSliders();\n                if (!isAnimating) {\n                    render(1);\n                    updateVertexAxis();\n                    stateBadge.textContent = '✅ 完成';\n                } else {\n                    // 动画中改变参数 -> 立即停止动画并重绘\n                    isAnimating = false;\n                    if (animId) cancelAnimationFrame(animId);\n                    animId = null;\n                    animateBtn.textContent = '▶ 描点演示';\n                    render(1);\n                    updateVertexAxis();\n                    stateBadge.textContent = '⏸ 已暂停';\n                }\n            });\n            sliderB.addEventListener('input', sliderA.oninput);\n            sliderC.addEventListener('input', sliderA.oninput);\n\n            animateBtn.addEventListener('click', startAnimation);\n            resetBtn.addEventListener('click', resetSim);\n\n            // 预设\n            document.querySelectorAll('[data-preset]').forEach(el => {\n                el.addEventListener('click', function() {\n                    const vars = JSON.parse(this.dataset.preset);\n                    setVariables(vars);\n                });\n            });\n\n            // 键盘支持\n            document.addEventListener('keydown', function(e) {\n                if (e.key === ' ' || e.key === 'Space') {\n                    e.preventDefault();\n                    startAnimation();\n                }\n                if (e.key === 'r' || e.key === 'R') {\n                    resetSim();\n                }\n            });\n\n            // ------ postMessage (teacher) ------\n            window.addEventListener('message', function(event) {\n                const { type, target, state, content } = event.data || {};\n                switch (type) {\n                    case 'SET_WIDGET_STATE': {\n                        if (state) {\n                            setVariables(state);\n                        }\n                        break;\n                    }\n                    case 'HIGHLIGHT_ELEMENT': {\n                        const highlightEl = document.querySelector(target);\n                        if (highlightEl) {\n                            highlightEl.style.outline = '3px solid rgba(139, 92, 246, 0.8)';\n                            highlightEl.style.outlineOffset = '4px';\n                            highlightEl.style.animation = 'pulse-highlight 2s infinite';\n                            setTimeout(() => {\n                                highlightEl.style.outline = '';\n                                highlightEl.style.animation = '';\n                            }, 3000);\n                        }\n                        break;\n                    }\n                    case 'ANNOTATE_ELEMENT': {\n                        const annotateEl = document.querySelector(target);\n                        if (annotateEl && content) {\n                            const rect = annotateEl.getBoundingClientRect();\n                            const tooltip = document.createElement('div');\n                            tooltip.className = 'teacher-annotation';\n                            tooltip.style.cssText = 'position:fixed; top:' + (rect.top - 40) + 'px; left:' + rect.left + 'px;';\n                            tooltip.textContent = content;\n                            document.body.appendChild(tooltip);\n                            setTimeout(() => tooltip.remove(), 4000);\n                        }\n                        break;\n                    }\n                    case 'REVEAL_ELEMENT': {\n                        const revealEl = document.querySelector(target);\n                        if (revealEl) {\n                            revealEl.style.display = '';\n                            revealEl.style.opacity = '1';\n                        }\n                        break;\n                    }\n                }\n            });\n\n            // ------ resize handling ------\n            function resizeCanvas() {\n                const wrapper = canvas.parentElement;\n                const rect = wrapper.getBoundingClientRect();\n                const w = rect.width - 16; // padding\n                const ratio = 16/9;\n                let desiredH = w / ratio;\n                if (desiredH > 500) desiredH = 500;\n                canvas.style.width = w + 'px';\n                canvas.style.height = desiredH + 'px';\n            }\n            window.addEventListener('resize', resizeCanvas);\n            setTimeout(resizeCanvas, 50);\n            // ResizeObserver\n            if (window.ResizeObserver) {\n                const ro = new ResizeObserver(() => resizeCanvas());\n                ro.observe(canvas.parentElement);\n            }\n\n            // 初始渲染\n            readSliders();\n            render(1);\n            updateVertexAxis();\n            stateBadge.textContent = '✅ 完成';\n        })();\n    </script>\n</body>\n</html>",
+        "widgetType": "simulation",
+        "widgetConfig": {
+          "type": "simulation",
+          "concept": "quadratic_function_abc",
+          "description": "二次函数 y = ax² + bx + c 参数探索：调整 a, b, c 观察抛物线开口、顶点与对称轴变化。",
+          "variables": [
+            {
+              "name": "a",
+              "label": "a (开口)",
+              "min": -4,
+              "max": 4,
+              "default": 1,
+              "step": 0.05
+            },
+            {
+              "name": "b",
+              "label": "b (对称轴)",
+              "min": -6,
+              "max": 6,
+              "default": 0,
+              "step": 0.1
+            },
+            {
+              "name": "c",
+              "label": "c (平移)",
+              "min": -6,
+              "max": 6,
+              "default": 0,
+              "step": 0.1
+            }
+          ],
+          "presets": [
+            {
+              "name": "基础抛物线",
+              "variables": {
+                "a": 1,
+                "b": 0,
+                "c": 0
+              }
+            },
+            {
+              "name": "开口向下",
+              "variables": {
+                "a": -1.5,
+                "b": 0,
+                "c": 3
+              }
+            },
+            {
+              "name": "对称轴右移",
+              "variables": {
+                "a": 0.5,
+                "b": -3,
+                "c": 1
+              }
+            },
+            {
+              "name": "窄 & 上移",
+              "variables": {
+                "a": 2,
+                "b": 4,
+                "c": -2
+              }
+            }
+          ]
+        },
+        "teacherActions": [
+          {
+            "id": "intro",
+            "type": "speech",
+            "content": "欢迎来到二次函数 y = ax² + bx + c 的参数探索模拟器。拖动滑块改变 a、b、c 的值，观察抛物线如何变化。",
+            "label": "开始探索"
+          },
+          {
+            "id": "highlight_a_slider",
+            "type": "highlight",
+            "target": "#a-slider",
+            "content": "a 控制抛物线的开口方向和大小：a>0 开口向上，a<0 开口向下，|a|越大开口越窄。",
+            "label": "参数 a 讲解"
+          },
+          {
+            "id": "set_a_negative",
+            "type": "setState",
+            "state": {
+              "a": -1.5,
+              "b": 0,
+              "c": 3
+            },
+            "content": "",
+            "label": "设置 a 为负值"
+          },
+          {
+            "id": "highlight_b_slider",
+            "type": "highlight",
+            "target": "#b-slider",
+            "content": "b 影响抛物线的对称轴位置：对称轴为 x = -b/(2a)，改变 b 可左右移动抛物线。",
+            "label": "参数 b 讲解"
+          },
+          {
+            "id": "set_b_nonzero",
+            "type": "setState",
+            "state": {
+              "a": 0.5,
+              "b": -3,
+              "c": 1
+            },
+            "content": "",
+            "label": "示范 b 的效果"
+          },
+          {
+            "id": "highlight_c_slider",
+            "type": "highlight",
+            "target": "#c-slider",
+            "content": "c 控制抛物线上下平移：c>0 向上移，c<0 向下移，顶点纵坐标随 c 变化。",
+            "label": "参数 c 讲解"
+          },
+          {
+            "id": "set_all_example",
+            "type": "setState",
+            "state": {
+              "a": 2,
+              "b": 4,
+              "c": -2
+            },
+            "content": "",
+            "label": "综合示例"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_ryTl33L7",
+          "title": "开始探索",
+          "type": "speech",
+          "text": "欢迎来到二次函数 y = ax² + bx + c 的参数探索模拟器。拖动滑块改变 a、b、c 的值，观察抛物线如何变化。"
+        },
+        {
+          "id": "action_v6qZfOdR",
+          "title": "参数 a 讲解",
+          "type": "widget_highlight",
+          "target": "#a-slider"
+        },
+        {
+          "id": "action_v6qZfOdR_speech",
+          "type": "speech",
+          "text": "a 控制抛物线的开口方向和大小：a>0 开口向上，a<0 开口向下，|a|越大开口越窄。",
+          "title": "参数 a 讲解"
+        },
+        {
+          "id": "action_tsBhKq80",
+          "title": "设置 a 为负值",
+          "type": "widget_setState",
+          "state": {
+            "a": -1.5,
+            "b": 0,
+            "c": 3
+          }
+        },
+        {
+          "id": "action_Pd9y18zH",
+          "title": "参数 b 讲解",
+          "type": "widget_highlight",
+          "target": "#b-slider"
+        },
+        {
+          "id": "action_Pd9y18zH_speech",
+          "type": "speech",
+          "text": "b 影响抛物线的对称轴位置：对称轴为 x = -b/(2a)，改变 b 可左右移动抛物线。",
+          "title": "参数 b 讲解"
+        },
+        {
+          "id": "action_kqtd-rd8",
+          "title": "示范 b 的效果",
+          "type": "widget_setState",
+          "state": {
+            "a": 0.5,
+            "b": -3,
+            "c": 1
+          }
+        },
+        {
+          "id": "action_-q15L-4A",
+          "title": "参数 c 讲解",
+          "type": "widget_highlight",
+          "target": "#c-slider"
+        },
+        {
+          "id": "action_-q15L-4A_speech",
+          "type": "speech",
+          "text": "c 控制抛物线上下平移：c>0 向上移，c<0 向下移，顶点纵坐标随 c 变化。",
+          "title": "参数 c 讲解"
+        },
+        {
+          "id": "action_Z0Av4h6B",
+          "title": "综合示例",
+          "type": "widget_setState",
+          "state": {
+            "a": 2,
+            "b": 4,
+            "c": -2
+          }
+        }
+      ],
+      "createdAt": 1781658904402,
+      "updatedAt": 1781658904402
+    },
+    {
+      "id": "scene_aOB-MP-RF5",
+      "stageId": "ivZVOpwn_0",
+      "type": "quiz",
+      "title": "小测：图像与参数",
+      "order": 4,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "二次函数 y = -2(x - 3)^2 + 5 的开口方向是什么？",
+            "options": [
+              {
+                "value": "A",
+                "label": "向上"
+              },
+              {
+                "value": "B",
+                "label": "向下"
+              },
+              {
+                "value": "C",
+                "label": "向左"
+              },
+              {
+                "value": "D",
+                "label": "无法确定"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "二次函数 y = a(x - h)^2 + k 中，a 决定开口方向。当 a > 0 时开口向上，当 a < 0 时开口向下。本题中 a = -2 < 0，因此抛物线开口向下。选项B正确。A选项错误，A选项对应 a > 0 的情况。C选项和D选项与二次函数标准形式无关。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "short_answer",
+            "question": "已知二次函数 y = ax^2 + bx + c 的图像经过点 (1, 0) 和 (3, 0) ，顶点在直线 x = 2 上。请写出该二次函数图像与 x 轴的两个交点坐标，并说明理由。",
+            "commentPrompt": "评分要点：\n（1）正确写出两个交点坐标（各30%，共60%）\n（2）说明因为函数图像经过这两点，所以它们是图像与x轴的交点（20%）\n（3）语言清晰，逻辑严密（20%）",
+            "analysis": "因为函数图像经过点 (1, 0) 和 (3, 0)，而 x 轴上的点纵坐标为 0，所以这两个点就是二次函数图像与 x 轴的交点。因此，两个交点坐标分别是 (1, 0) 和 (3, 0)。",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "二次函数 y = a(x - h)^2 + k 中，a 的符号决定抛物线开口方向：a > 0 向上开口，a < 0 向下开口。",
+          "二次函数图像与 x 轴的交点纵坐标为 0，可以通过解方程 ax^2 + bx + c = 0 求得。",
+          "顶点式 y = a(x - h)^2 + k 中，(h, k) 是顶点坐标，直线 x = h 是对称轴。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_5_yhUnOU",
+          "type": "speech",
+          "text": "好了同学们，通过刚才的学习，我们掌握了不少关于二次函数图像与参数关系的知识。现在，让星野老师来检验一下大家的学习成果吧！这里有一道选择题和一道简答题，考验大家对开口方向以及图像与x轴交点坐标的掌握情况。"
+        },
+        {
+          "id": "action_Ay480hTr",
+          "type": "speech",
+          "text": "首先看第一题：二次函数 y = -2(x - 3)^2 + 5 的开口方向是什么？这道题的关键在于解析式中的系数a。在这里，a就是括号前面的-2。大家还记得吗？当a>0时，抛物线开口向上；当a<0时，开口向下。因为这里是负数-2，所以正确答案是B，开口向下。"
+        },
+        {
+          "id": "action_gHNic7DD",
+          "type": "speech",
+          "text": "再看第二题，这也是一个非常典型的综合题。已知图像经过（1, 0）和（3, 0），顶点在直线x=2上。首先，因为（1, 0）和（3, 0）都在x轴上，所以它们就是该二次函数图像与x轴的两个交点坐标。理由就是，与x轴的交点纵坐标为0，而题中明确给出这两个点，且它们满足二次函数的解析式。"
+        },
+        {
+          "id": "action_p3WSjvGL",
+          "type": "speech",
+          "text": "大家注意，顶点在x=2上，这也正好验证了二次函数的对称性。因为与x轴的两个交点一定关于对称轴对称，而1和3的平均值正好是2，所以对称轴就是x=2。这个关系可以帮助我们求出二次函数的解析式，不过题中只要求写出交点坐标和说明理由，所以回答（1, 0）和（3, 0）就足够了。"
+        },
+        {
+          "id": "action_NR3oiJ8F",
+          "type": "speech",
+          "text": "希望大家通过这个小测验，能更牢固地掌握如何从解析式和图像特征中挖掘信息。记住，数形结合是学习二次函数最有力的工具！"
+        }
+      ],
+      "createdAt": 1781658904402,
+      "updatedAt": 1781658904402
+    },
+    {
+      "id": "scene_nJg8jbibCg",
+      "stageId": "ivZVOpwn_0",
+      "type": "quiz",
+      "title": "小测：应用与分析",
+      "order": 7,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "short_answer",
+            "question": "某公司推出一种新产品，经过市场调研发现，该产品的日销售额y（万元）与日产量x（吨）之间存在一定的关系。统计数据显示：当x=1时，y=10；当x=3时，y=14；当x=5时，y=10。假设y是x的二次函数。\n（1）请求出y关于x的二次函数解析式。\n（2）请求出日产量为多少吨时，日销售额最大？最大日销售额是多少万元？\n（3）如果公司希望日销售额不低于10万元，那么日产量应该控制在什么范围内？（请用不等式表示并求解）",
+            "commentPrompt": "评分细则：\n(1) 正确设出二次函数一般式并列出方程组——30%。步骤：设y=ax^2+bx+c，代入三组数据得到关于a,b,c的三元一次方程组。\n(2) 正确求解a , b , c的值，得出函数解析式——20%。注意：计算结果必须准确，例如a=-1, b=6, c=5。\n(3) 正确将解析式化为顶点式或利用对称轴公式求最大值——20%。步骤：x=-b/(2a)=3，最大值为y=14万元。\n(4) 正确建立不等式并求解x的范围——20%。步骤：-x^2+6x+5 ≥ 10 -> -x^2+6x-5 ≥ 0 -> x^2-6x+5 ≤ 0 -> (x-1)(x-5) ≤ 0 -> 1 ≤ x ≤ 5。\n(5) 书写规范，过程清晰，结果标单位——10%。",
+            "analysis": "（1）设二次函数为y=ax^2+bx+c (a≠0)。代入数据得：\n当x=1时，a+b+c=10；当x=3时，9a+3b+c=14；当x=5时，25a+5b+c=10。\n解得a=-1，b=6，c=5，所以y=-x^2+6x+5。\n（2）y=-x^2+6x+5 = -(x^2-6x+9)+5+9 = -(x-3)^2+14。\n当x=3时，y最大=14。因此，日产量为3吨时，日销售额最大，最大为14万元。\n（3）由题意：-x^2+6x+5 ≥ 10，整理得x^2-6x+5 ≤ 0，即(x-1)(x-5) ≤ 0，解得1 ≤ x ≤ 5。因此日产量应控制在1吨到5吨之间。",
+            "points": 50,
+            "hasAnswer": false
+          },
+          {
+            "id": "q2",
+            "type": "short_answer",
+            "question": "某体育公园计划修建一个形状为矩形的篮球训练场，并打算在矩形场地四周修建一条宽度相同的环形步道（如下图，草坪为矩形ABCD，步道为四周等宽的区域）。已知矩形场地ABCD的长为40米，宽为30米。现计划将步道区域全部铺设防滑地砖，而中央的矩形场地铺设草坪。设步道宽度为x米，步道区域的总面积为S平方米。\n（1）请写出S关于x的二次函数解析式，并写出x的取值范围。\n（2）若用于铺设步道区域的总预算是有限的，只有铺设面积不超过544平方米时才能进行。请计算步道宽度x可以达到的最大值是多少米？",
+            "commentPrompt": "评分细则：\n(1) 正确识别步道面积与x的关系——40%。步骤：步道面积 = 外围大矩形面积 - 内层矩形面积。外围长=(40+2x)，宽=(30+2x)。\n(2) 正确推导出S的表达式——25%。S=(40+2x)(30+2x)-40*30=1200+140x+4x^2-1200=4x^2+140x。同时正确得出x的取值范围：x>0。\n(3) 正确建立方程或不等式——20%。由S≤544得到4x^2+140x-544≤0。\n(4) 正确求解二次不等式（或方程）并舍去不合题意的解——15%。例如：4x^2+140x-544=0解得x=-34（舍）或x=4。所以x的最大值为4米。答案需带单位‘米’。",
+            "analysis": "（1）外围大矩形长=(40+2x)米，宽=(30+2x)米。外围大矩形面积=(40+2x)(30+2x)=1200+80x+60x+4x^2=4x^2+140x+1200（平方米）。中央草坪面积=40×30=1200（平方米）。所以步道面积S = 外围面积 - 中央面积 = 4x^2+140x（平方米）。因为步道宽度为正数，且实际中步道宽度不能太大，这里只需x>0即可（理论上x>0即可，但在实际问题中，通常还需保证步道完整，无其他限制，因此x>0）。\n（2）依题意：S ≤ 544，即4x^2+140x ≤ 544，整理得4x^2+140x-544 ≤ 0，两边同除以4得x^2+35x-136 ≤ 0。解方程x^2+35x-136=0，判别式Δ=35^2+4×136=1225+544=1769，开平方得√1769≈42.06，但更简单的方法是用十字相乘：x^2+35x-136 = (x-4)(x+34)，因此不等式化为(x-4)(x+34) ≤ 0，解得-34 ≤ x ≤ 4。结合x>0，得x的取值范围为0 < x ≤ 4。所以步道宽度x可以达到的最大值为4米。",
+            "points": 50,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "二次函数的一般式y=ax^2+bx+c可以通过代入三组对应值求解待定系数。",
+          "利用配方法或顶点坐标公式(-b/(2a), (4ac-b^2)/(4a))可以求二次函数的最大值或最小值。",
+          "将实际问题转化为二次不等式并求解，可以确定变量的取值范围。",
+          "建立函数模型时，要准确理解几何图形中长度、面积之间的关系，正确列出函数解析式。",
+          "二次不等式的解法包括先化为标准形式，再通过因式分解或求根公式求解，注意结合实际问题取舍解。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_yBR4XCTE",
+          "type": "speech",
+          "text": "好了，同学们，刚刚我们学习了二次函数的实际应用，现在让我们来做一个小测验，检验一下大家掌握得怎么样。"
+        },
+        {
+          "id": "action_jCmKCziT",
+          "type": "speech",
+          "text": "这两道题都是生活中常见的二次函数问题，第一道是产品销售，第二道是场地建设。大家可以根据题目中的信息，先尝试建立二次函数模型，然后完成后面的求解。"
+        },
+        {
+          "id": "action_wEJhRHkH",
+          "type": "speech",
+          "text": "第一题中，我们要利用给定的三个点（1,10）、（3,14）、（5,10）来设出二次函数的一般式y=ax²+bx+c，然后解方程组求出解析式。求完解析式之后，再求顶点坐标得到最大日销售额以及对应的日产量。"
+        },
+        {
+          "id": "action_bzucUWfm",
+          "type": "speech",
+          "text": "第二题呢，关键在于理解环形步道面积的求法——用大矩形面积减去小矩形面积。这里小矩形的长是(40-2x)米，宽是(30-2x)米，注意x的范围要合理。"
+        },
+        {
+          "id": "action_LAK7n8rO",
+          "type": "speech",
+          "text": "大家先自己动手算一算，然后可以对照答案检查一下。如果有不清楚的地方，可以举手问我也没关系。"
+        }
+      ],
+      "createdAt": 1781658904402,
+      "updatedAt": 1781658904402
+    }
+  ],
+  "createdAt": "2026-06-17T01:15:04.403Z"
+}

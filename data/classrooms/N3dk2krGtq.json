@@ -1,0 +1,297 @@
+{
+  "id": "N3dk2krGtq",
+  "stage": {
+    "id": "N3dk2krGtq",
+    "name": "什么是好的游戏设计？",
+    "languageDirective": "This course is conducted in Chinese, as inferred from the user's requirement text. All course content, including scene titles, descriptions, key points, quiz questions, and interactive instructions, must be written in Chinese. Technical terms and established English names (e.g., 'MDA Framework', 'Flow State') can be kept in their original English form, but should be accompanied by a Chinese translation or explanation on first mention. No other languages are used.",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1781659623453,
+    "updatedAt": 1781659623453,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_PLff8Exe-C",
+      "stageId": "N3dk2krGtq",
+      "type": "quiz",
+      "title": "知识巩固：机制与关卡",
+      "order": 5,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "在游戏机制设计中，哪种描述最符合MDA框架的定义？",
+            "options": [
+              {
+                "value": "A",
+                "label": "一种专门用于数值平衡的设计工具"
+              },
+              {
+                "value": "B",
+                "label": "一种分析游戏如何通过机制（Mechanics）、动态（Dynamics）、情感（Aesthetics）三者互动产生玩家体验的框架"
+              },
+              {
+                "value": "C",
+                "label": "一种只关注玩家情感反应的评价量表"
+              },
+              {
+                "value": "D",
+                "label": "一种用于编写游戏剧情的故事结构"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "MDA框架是由Robin Hunicke、Marc LeBlanc和Robert Zubek提出的，将游戏拆解为机制（Mechanics）、动态（Dynamics）和情感（Aesthetics）三个层面，强调从设计师视角（机制→动态→情感）与玩家视角（情感→动态→机制）双向理解游戏的体验生成。选项A过于片面；选项C只聚焦情感维度；选项D偏离了核心概念。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "multiple",
+            "question": "以下哪些是有效的关卡设计原则？（多选）",
+            "options": [
+              {
+                "value": "A",
+                "label": "引导玩家通过视觉线索和空间布局自然发现目标"
+              },
+              {
+                "value": "B",
+                "label": "坚持所有关卡必须是无缝衔接的开放世界，不允许任何分割"
+              },
+              {
+                "value": "C",
+                "label": "运用节奏变化：在紧张战斗后安排安全区域或解谜环节让玩家喘息"
+              },
+              {
+                "value": "D",
+                "label": "奖励探索行为，用隐藏通道或收集品鼓励玩家仔细观察环境"
+              }
+            ],
+            "answer": [
+              "A",
+              "C",
+              "D"
+            ],
+            "analysis": "A（引导与视觉语言）是关卡设计的基础原则；C（节奏控制）是维持玩家心流的关键；D（鼓励探索）能提升关卡的重玩价值和沉浸感。而B过于绝对，许多优秀游戏（如《传送门》系列）就是使用线性分割式关卡来确保机制的教学与推进。",
+            "points": 15,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "short_answer",
+            "question": "请简述游戏机制中“核心循环”（Core Game Loop）的概念，并说明它为何对关卡设计至关重要。",
+            "commentPrompt": "评分标准：（1）准确定义核心循环，即玩家在游戏中重复执行的基本行为模式（例如：行动→反馈→成长→新行动）——占40%；（2）解释核心循环与关卡设计的关系，如关卡如何强化、变化或组合核心循环来维持新鲜感——占40%；（3）语言表达清晰，概念使用准确——占20%。",
+            "analysis": "核心循环指玩家在游戏中最基础、最频繁重复的一系列行为（如《塞尔达传说》中：探索→战斗→收集→装备升级→探索更强的区域）。它在关卡设计中至关重要，因为每个关卡实际上都是在核心循环的基础上叠加变化：调整难度曲线、引入新敌人/机制、改变空间布局等，从而让玩家在熟悉的节奏中持续获得挑战和新鲜感，避免厌倦。一个好的关卡应能清晰地引导玩家进入并维持核心循环，同时逐步拓展它的深度。",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "MDA框架将游戏拆解为机制（Mechanics）、动态（Dynamics）和情感（Aesthetics）三个交互层面，帮助设计师与玩家双向理解体验生成。",
+          "有效的关卡设计依赖视觉引导、节奏控制和探索激励，而非僵硬的规则。",
+          "核心循环（Core Game Loop）是玩家重复执行的基本行为模式，关卡在此基础上通过变化和组合来维持心流与新鲜感。",
+          "关卡设计中的节奏控制（紧张-放松交替）是防止玩家疲劳并延长沉浸感的关键技术。",
+          "奖励探索行为（如隐藏通道、收集品）能大幅提升关卡的重玩价值与玩家成就感。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_3xD5T0XL",
+          "type": "speech",
+          "text": "好了，同学们，刚才我们一起深入探讨了游戏机制和关卡设计的奥秘。现在，让我们通过一个小测验来巩固一下这些核心概念吧！别紧张，这就像一场小小的头脑冒险，看看大家掌握了多少。"
+        },
+        {
+          "id": "action_rMX-jCw2",
+          "type": "speech",
+          "text": "我们先来看第一道单选题。它问的是：在游戏机制设计中，哪种描述最符合MDA框架的定义？注意啦，MDA框架可不是一个简单的数值工具，它强调的是机制、动态与情感三者之间的互动关系。所以，请大家果断选择那个最全面的描述。"
+        },
+        {
+          "id": "action_AqpdsjVP",
+          "type": "speech",
+          "text": "接下来是第二道多选题，考验大家对关卡设计原则的识别能力。记住，好的关卡设计需要引导、节奏和奖励，但绝对不是强制性的无缝开放世界。想想看，哪些选项真正体现了这些核心思想？可以多选哦！"
+        },
+        {
+          "id": "action_Cjh_hC5B",
+          "type": "speech",
+          "text": "最后这道简答题，是关于“核心循环”的。请大家简要说明它的概念，并解释为什么它对关卡设计至关重要。这就像在描述游戏的心脏是如何跳动的——核心循环就是玩家在关卡中反复进行的动作链条，它驱动着玩家的前进和成长。"
+        },
+        {
+          "id": "action_Y0qCo7uD",
+          "type": "discussion",
+          "topic": "MDA框架中的“动态（Dynamics）”环节在关卡设计中通常如何体现？比如，在《塞尔达传说：旷野之息》的神庙解谜中，玩家的探索行为如何被引导？",
+          "prompt": "结合我们讨论过的关卡设计原则，想象一下如果你要设计一个神庙，你会如何利用视觉线索和空间布局来引导玩家？",
+          "agentId": "default-3"
+        }
+      ],
+      "createdAt": 1781659686932,
+      "updatedAt": 1781659686932
+    },
+    {
+      "id": "scene_fWq4bq4ILT",
+      "stageId": "N3dk2krGtq",
+      "type": "quiz",
+      "title": "综合小测验",
+      "order": 9,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "在游戏设计中的'MDA框架'中，'M'代表什么？",
+            "options": [
+              {
+                "value": "A",
+                "label": "Mechanics（机制）"
+              },
+              {
+                "value": "B",
+                "label": "Motion（运动）"
+              },
+              {
+                "value": "C",
+                "label": "Memory（记忆）"
+              },
+              {
+                "value": "D",
+                "label": "Metaphor（隐喻）"
+              }
+            ],
+            "answer": [
+              "A"
+            ],
+            "analysis": "MDA框架由Robin Hunicke、Marc LeBlanc和Robert Zubek提出，M代表Mechanics（机制），即游戏规则和系统；D代表Dynamics（动态），即玩家与机制的交互行为；A代表Aesthetics（美学），即玩家体验到的情感反应。正确答案是A。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "single",
+            "question": "以下哪个概念最能描述玩家在游戏中体验到的最佳状态——即挑战与技能达到平衡时产生的沉浸感？",
+            "options": [
+              {
+                "value": "A",
+                "label": "沉浸式学习（Immersive Learning）"
+              },
+              {
+                "value": "B",
+                "label": "心流状态（Flow State）"
+              },
+              {
+                "value": "C",
+                "label": "认知负荷（Cognitive Load）"
+              },
+              {
+                "value": "D",
+                "label": "强化学习（Reinforcement Learning）"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "心流状态由心理学家Mihaly Csikszentmihalyi提出，指当挑战与个人技能相匹配时，个体完全投入、失去时间感的沉浸状态。这在游戏设计中至关重要，良好的关卡设计应帮助玩家进入并维持心流。正确答案是B。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "single",
+            "question": "在关卡设计中，以下哪种方法最有效地引导玩家探索并发现隐藏内容？",
+            "options": [
+              {
+                "value": "A",
+                "label": "直接使用文本提示告知玩家隐藏内容的位置"
+              },
+              {
+                "value": "B",
+                "label": "利用光线、颜色或地标等视觉线索进行暗示"
+              },
+              {
+                "value": "C",
+                "label": "强制要求玩家探索所有路线才能过关"
+              },
+              {
+                "value": "D",
+                "label": "随机生成隐藏内容来增加不可预测性"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "良好的关卡设计应通过环境本身引导玩家，而不是依赖直接指示或强制。使用视觉线索（如光线变化、颜色对比、醒目的地标）是经典且有效的隐性引导方法，能让玩家在探索中获得成就感。选项A太过直白，缺乏探索乐趣；选项C会使探索失去选择性，可能引发疲劳；选项D随机生成可能造成不公平体验或不合理的布局。正确答案是B。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q4",
+            "type": "short_answer",
+            "question": "请简要分析玩家心理学中的“外在奖励”与“内在动机”之间的区别，并结合游戏设计举例说明两者是如何相互影响的。",
+            "commentPrompt": "评分标准：（1）准确解释外在奖励和内在动机的定义与区别，各占25%——共50%（2）提供至少一个具体游戏设计中的例子，说明两者如何相互作用——30%（3）表达清晰、逻辑连贯，并能体现一定深度思考——20%",
+            "analysis": "参考要点：外在奖励（如经验值、金币、等级、成就徽章）来自游戏系统的外部反馈，旨在激励特定行为；内在动机则源于玩家内心的兴趣、好奇心和自主感（如探索世界的乐趣、掌握技能的满足感）。两者相互影响：合理设计的外在奖励可以强化内在动机（如《塞尔达传说：荒野之息》中探索神庙获得技能升级，既满足了收集欲又强化了探索本身的乐趣）；但过度依赖外在奖励可能削弱内在动机（即“过度合理化效应”，如为了分数而答题，学习乐趣降低）。",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "MDA框架将游戏设计拆解为Mechanics（机制）、Dynamics（动态）和Aesthetics（美学）三个层次，帮助设计师系统地理解和塑造玩家体验。",
+          "心流状态是游戏设计中追求的理想体验，通过平衡挑战与玩家技能来实现深度沉浸。",
+          "有效的关卡设计使用视觉线索等隐性引导方法，鼓励玩家自主探索并发现隐藏内容，而非强制或直接告知。",
+          "外在奖励（如金币、装备）与内在动机（如好奇心、胜任感）的平衡是玩家心理学中的核心议题，两者设计不当会导致玩家动机下降。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_zNw3EMtr",
+          "type": "speech",
+          "text": "好了，大家准备好了吗？现在我们就进入这堂课最后的综合小测验环节吧！这个测验会覆盖我们刚刚讨论的游戏设计核心原则、关卡设计技巧，以及玩家心理学等几个关键方面。"
+        },
+        {
+          "id": "action_k6oUit30",
+          "type": "speech",
+          "text": "题目一共有四道，前三个是单选题，最后一个是简答题，需要大家结合所学的知识进行分析。别紧张，把它当作一次对自己学习成果的检验和巩固就好。"
+        },
+        {
+          "id": "action_kz7ZPqv4",
+          "type": "speech",
+          "text": "第一题考的是我们在游戏机制部分提到的'MDA框架'。这个框架非常重要，请大家回想一下，'M'、'D'、'A'分别代表什么？其中'M'是核心的起点。"
+        },
+        {
+          "id": "action_XjoE8k7k",
+          "type": "speech",
+          "text": "第二题和我们在讨论玩家体验时提到的'最优体验'状态有关。请大家仔细区分几个选项中，哪个概念最准确地描述了挑战与技能恰好平衡时的那种沉浸感。"
+        },
+        {
+          "id": "action_oixn4kkP",
+          "type": "speech",
+          "text": "第三题是关于关卡设计中引导探索的技巧。还记得我们讲过，直接告诉玩家隐藏内容在哪，和利用视觉线索进行暗示，哪种方法更能激发玩家的探索欲和成就感吗？"
+        },
+        {
+          "id": "action_FtjQb1u8",
+          "type": "speech",
+          "text": "最后一题是简答题，需要大家分析'外在奖励'和'内在动机'的区别和相互影响，并举例说明。这个知识点贯穿了整个玩家心理学部分，大家可以结合我们课上讨论过的游戏例子来思考。"
+        },
+        {
+          "id": "action_G9VFzcrm",
+          "type": "discussion",
+          "topic": "关于第四题，大家认为在现实生活中，游戏里的哪些外在奖励设计（比如升级、皮肤）最终成功激发了你的内在动机，让你持续玩下去？",
+          "prompt": "分享你的亲身经历或观察到的例子，分析一下奖励和动机之间的关系。",
+          "agentId": "default-3"
+        }
+      ],
+      "createdAt": 1781659686932,
+      "updatedAt": 1781659686932
+    }
+  ],
+  "createdAt": "2026-06-17T01:28:06.933Z"
+}

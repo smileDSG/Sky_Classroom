@@ -9,7 +9,11 @@ import { EventEmitter } from 'events';
 import { createLogger } from '@/lib/logger';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { planLesson } from '@/lib/teaching/lesson-planner';
-import { generateSectionContent, generateLessonConcurrent, extractContentSummary } from '@/lib/teaching/content-generator';
+import {
+  generateSectionContent,
+  generateLessonConcurrent,
+  extractContentSummary,
+} from '@/lib/teaching/content-generator';
 import { decideAdaptiveAdjustment } from '@/lib/teaching/adaptive-engine';
 import { updatePathAfterJob } from '@/lib/teaching/learning-path-engine';
 import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
@@ -49,11 +53,7 @@ async function assertNotCancelled(jobId: string): Promise<void> {
  * Run a teaching job: plan lesson → generate content concurrently.
  * Each completed section is persisted to the job store immediately.
  */
-export function runTeachingJob(
-  jobId: string,
-  topic: string,
-  userId: string,
-): Promise<void> {
+export function runTeachingJob(jobId: string, topic: string, userId: string): Promise<void> {
   const existing = runningJobs.get(jobId);
   if (existing) return existing;
 
@@ -100,11 +100,11 @@ export function runTeachingJob(
 
       // Phase 2: Generate content concurrently
       let completedCount = 0;
-      for await (const { section, chunks } of generateLessonConcurrent(plan)) {
+      for await (const { section, chunks, structured } of generateLessonConcurrent(plan)) {
         await assertNotCancelled(jobId);
         completedCount++;
 
-        const sectionData: GeneratedSectionData = { section, chunks };
+        const sectionData: GeneratedSectionData = { section, chunks, structured };
         const jobAfterSection = await updateTeachingJobProgress(jobId, {
           step: 'generating_content',
           progress: Math.round(10 + (completedCount / totalSections) * 85),
@@ -119,6 +119,7 @@ export function runTeachingJob(
           sectionIndex: completedCount - 1,
           section,
           chunks,
+          structured,
         });
 
         // Emit progress update so frontend syncs plan/sections/message state
@@ -133,7 +134,9 @@ export function runTeachingJob(
           done: false,
         });
 
-        log.info(`[${jobId}] Section ${completedCount}/${totalSections} completed: ${section.title}`);
+        log.info(
+          `[${jobId}] Section ${completedCount}/${totalSections} completed: ${section.title}`,
+        );
       }
 
       // Phase 3: Adaptive supplementation based on feedback/quiz results
@@ -147,7 +150,9 @@ export function runTeachingJob(
           );
 
           if (decision.shouldSupplement && decision.supplementalSections.length > 0) {
-            log.info(`[${jobId}] Generating ${decision.supplementalSections.length} supplemental sections`);
+            log.info(
+              `[${jobId}] Generating ${decision.supplementalSections.length} supplemental sections`,
+            );
 
             // Update plan with supplemental sections
             const currentPlan = jobAfterContent.plan;
@@ -184,8 +189,13 @@ export function runTeachingJob(
               for (let i = 0; i < decision.supplementalSections.length; i++) {
                 await assertNotCancelled(jobId);
                 const supSection = decision.supplementalSections[i];
-                const chunks = await generateSectionContent(supSection, precedingSections);
-                const sectionData: GeneratedSectionData = { section: supSection, chunks };
+                const { chunks: supChunks, structured: supStructured } =
+                  await generateSectionContent(supSection, precedingSections);
+                const sectionData: GeneratedSectionData = {
+                  section: supSection,
+                  chunks: supChunks,
+                  structured: supStructured,
+                };
 
                 const jobAfterSupplement = await updateTeachingJobProgress(jobId, {
                   step: 'generating_content',
@@ -219,7 +229,9 @@ export function runTeachingJob(
                   progress: jobAfterSupplement.progress,
                   message: jobAfterSupplement.message,
                   plan: jobAfterSupplement.plan,
-                  sectionsCompleted: jobAfterSupplement.sectionsCompleted ?? (jobAfterContent.sections?.length ?? 0) + i + 1,
+                  sectionsCompleted:
+                    jobAfterSupplement.sectionsCompleted ??
+                    (jobAfterContent.sections?.length ?? 0) + i + 1,
                   totalSections: jobAfterSupplement.totalSections ?? updatedSections.length,
                   done: false,
                 });
@@ -319,8 +331,8 @@ export async function retrySection(
   }
 
   // Regenerate
-  const chunks = await generateSectionContent(section, precedingSections);
-  const sectionData: GeneratedSectionData = { section, chunks };
+  const { chunks, structured } = await generateSectionContent(section, precedingSections);
+  const sectionData: GeneratedSectionData = { section, chunks, structured };
 
   // Replace in job store
   if (job.sections) {

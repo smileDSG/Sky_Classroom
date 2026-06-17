@@ -2,7 +2,7 @@
   "profile": {
     "userId": "admin-default",
     "masteryBySubject": {
-      "math": 0,
+      "math": 40,
       "physics": 0,
       "chemistry": 0,
       "biology": 0,
@@ -12,19 +12,127 @@
       "geography": 0,
       "politics": 0
     },
-    "masteryByKnowledge": {},
-    "weakPoints": [],
-    "strongPoints": [],
-    "errorPatterns": [],
-    "totalQuestions": 0,
+    "masteryByKnowledge": {
+      "测试加法": 42,
+      "加法": 0,
+      "函数": 40,
+      "复习测试": 50,
+      "reviewCount测试": 50,
+      "nextReview测试": 50,
+      "����": 100,
+      "综合": 90,
+      "简谐振动描述": 100,
+      "导数与相位关系": 100,
+      "振动图像判读": 100
+    },
+    "weakPoints": [
+      "加法"
+    ],
+    "strongPoints": [
+      "����",
+      "综合",
+      "简谐振动描述",
+      "导数与相位关系",
+      "振动图像判读"
+    ],
+    "errorPatterns": [
+      {
+        "knowledgePoint": "测试加法",
+        "errorType": "calculation-error",
+        "frequency": 6,
+        "lastOccurrence": "2026-06-17T00:56:24.856Z"
+      },
+      {
+        "knowledgePoint": "加法",
+        "errorType": "calculation-error",
+        "frequency": 12,
+        "lastOccurrence": "2026-06-17T00:56:24.856Z"
+      },
+      {
+        "knowledgePoint": "函数",
+        "errorType": "concept-unclear",
+        "frequency": 6,
+        "lastOccurrence": "2026-06-17T00:56:24.856Z"
+      },
+      {
+        "knowledgePoint": "复习测试",
+        "errorType": "calculation-error",
+        "frequency": 6,
+        "lastOccurrence": "2026-06-12T07:53:53.147Z"
+      },
+      {
+        "knowledgePoint": "reviewCount测试",
+        "errorType": "calculation-error",
+        "frequency": 6,
+        "lastOccurrence": "2026-06-12T07:53:53.153Z"
+      },
+      {
+        "knowledgePoint": "nextReview测试",
+        "errorType": "calculation-error",
+        "frequency": 6,
+        "lastOccurrence": "2026-06-12T07:53:53.159Z"
+      },
+      {
+        "knowledgePoint": "����",
+        "errorType": "calculation-error",
+        "frequency": 2,
+        "lastOccurrence": "2026-06-11T13:59:58.495Z"
+      },
+      {
+        "knowledgePoint": "综合",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-06-11T02:23:59.548Z"
+      },
+      {
+        "knowledgePoint": "综合",
+        "errorType": "misreading",
+        "frequency": 1,
+        "lastOccurrence": "2026-06-11T02:23:52.388Z"
+      },
+      {
+        "knowledgePoint": "简谐振动描述",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-06-11T02:20:10.303Z"
+      },
+      {
+        "knowledgePoint": "导数与相位关系",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-06-11T02:20:10.303Z"
+      },
+      {
+        "knowledgePoint": "振动图像判读",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-06-11T02:20:10.303Z"
+      }
+    ],
+    "totalQuestions": 48,
     "totalCorrect": 0,
-    "lastUpdated": "2026-06-16T07:12:26.571Z",
+    "lastUpdated": "2026-06-17T00:56:24.864Z",
     "recentQuizPerformance": {
-      "overallAccuracy": 50,
-      "accuracyByKnowledge": {},
-      "topErrorCauses": [],
-      "recommendedDepthShift": "maintain"
+      "overallAccuracy": 0,
+      "accuracyByKnowledge": {
+        "复习测试": 0,
+        "reviewCount测试": 0,
+        "nextReview测试": 0,
+        "加法": 0,
+        "测试加法": 0,
+        "����": 0,
+        "综合": 0,
+        "简谐振动描述": 0,
+        "导数与相位关系": 0,
+        "振动图像判读": 0
+      },
+      "topErrorCauses": [
+        "calculation",
+        "concept",
+        "reading"
+      ],
+      "recommendedDepthShift": "shallower"
     }
   },
-  "cachedAt": 1781593946574
+  "cachedAt": 1781657784866
 }

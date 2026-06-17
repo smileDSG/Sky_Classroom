@@ -10,6 +10,7 @@ import path from 'path';
 import { writeJsonFileAtomic } from '@/lib/server/classroom-storage';
 import type { LessonPlan, LessonSection } from '@/lib/teaching/lesson-types';
 import type { ContentChunk } from '@/lib/teaching/content-types';
+import type { StructuredContent } from '@/lib/generation/classroom-content-agent';
 import type { SectionFeedback, QuizResult } from '@/lib/teaching/adaptive-engine';
 import { createLogger } from '@/lib/logger';
 
@@ -32,6 +33,7 @@ export type TeachingJobStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 
 export interface GeneratedSectionData {
   section: LessonSection;
   chunks: ContentChunk[];
+  structured?: StructuredContent;
 }
 
 export interface TeachingJob {
@@ -260,7 +262,8 @@ export async function updateTeachingJobProgress(
   };
 
   if (progress.plan) patch.plan = progress.plan;
-  if (progress.sectionsCompleted !== undefined) patch.sectionsCompleted = progress.sectionsCompleted;
+  if (progress.sectionsCompleted !== undefined)
+    patch.sectionsCompleted = progress.sectionsCompleted;
   if (progress.totalSections !== undefined) patch.totalSections = progress.totalSections;
   if (progress.isFavorited !== undefined) patch.isFavorited = progress.isFavorited;
 

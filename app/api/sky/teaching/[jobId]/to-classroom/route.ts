@@ -14,10 +14,7 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:TeachingToClassroom');
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ jobId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {
   try {
     const { jobId } = await params;
 
@@ -35,19 +32,24 @@ export async function POST(
     }
 
     // Convert teaching job to classroom stage
-    const { stage, scenes } = convertTeachingJobToStage(job);
+    const { stage, scenes } = await convertTeachingJobToStage(job);
 
     // Persist the classroom
     const baseUrl = req.headers.get('origin') || req.nextUrl.origin || 'http://localhost:3000';
     await persistClassroom({ id: stage.id, stage, scenes }, baseUrl);
 
-    log.info(`Teaching job ${jobId} converted to classroom ${stage.id} with ${scenes.length} scenes`);
+    log.info(
+      `Teaching job ${jobId} converted to classroom ${stage.id} with ${scenes.length} scenes`,
+    );
 
-    return apiSuccess({
-      stageId: stage.id,
-      sceneCount: scenes.length,
-      redirectUrl: `/classroom/${stage.id}`,
-    }, 201);
+    return apiSuccess(
+      {
+        stageId: stage.id,
+        sceneCount: scenes.length,
+        redirectUrl: `/classroom/${stage.id}`,
+      },
+      201,
+    );
   } catch (err) {
     log.error('Teaching to classroom conversion failed:', err);
     return apiError(

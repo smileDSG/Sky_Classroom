@@ -42,7 +42,7 @@ const pagePlanSchema = z.object({
 const sectionPlanSchema = z.object({
   sectionId: z.number(),
   title: z.string(),
-  pages: z.array(pagePlanSchema).min(1).max(10),
+  pages: z.array(pagePlanSchema).min(1).max(15),
 });
 
 export const outlineSchema = z.object({
@@ -205,7 +205,14 @@ export async function planSections(
     log.info(`[Layer1] Skeleton planned: ${skeletons.length} sections, ${totalPages} pages total`);
     return { success: true, skeleton: { sectionSkeletons: skeletons, totalPages } };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const rawMsg = err instanceof Error ? err.message : String(err);
+    const msg = rawMsg.includes('Failed to process successful response')
+      ? 'LLM 响应处理失败（可能是响应过大或格式异常），请重试'
+      : rawMsg.includes('timeout') || rawMsg.includes('超时')
+        ? 'LLM 调用超时，请稍后重试'
+        : /terminated|aborted|ECONNRESET|ETIMEDOUT/i.test(rawMsg)
+          ? 'LLM 连接被中断（网络波动或并发过高），请重试'
+          : rawMsg;
     log.error(`[Layer1] Failed: ${msg}`);
     return { success: false, error: msg };
   }
@@ -402,7 +409,9 @@ export async function planSectionPages(
       ? 'LLM 响应处理失败（可能是响应过大或格式异常），请重试'
       : rawMsg.includes('timeout') || rawMsg.includes('超时')
         ? 'LLM 调用超时，请稍后重试'
-        : rawMsg;
+        : /terminated|aborted|ECONNRESET|ETIMEDOUT/i.test(rawMsg)
+          ? 'LLM 连接被中断（网络波动或并发过高），系统会自动重试'
+          : rawMsg;
     log.error(`[Layer2] Section ${skeleton.sectionId} failed: ${msg}`);
     return { success: false, error: msg };
   }
@@ -532,10 +541,11 @@ export async function planOutline(
     }
 
     // ══ Step 3: Layer 2 — Concurrent section page planning ══
-    log.info(`[Planning] Starting Layer 2 for ${sectionSkeletons.length} sections with concurrency=12`);
+    // Concurrency=3 to avoid provider-side connection saturation / termination
+    log.info(`[Planning] Starting Layer 2 for ${sectionSkeletons.length} sections with concurrency=3`);
     const sectionResults = await withConcurrencyLimit(
       sectionSkeletons,
-      12,
+      3,
       async (skeleton) => {
         return await planSectionPages(
           skeleton,

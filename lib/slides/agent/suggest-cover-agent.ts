@@ -182,7 +182,7 @@ export async function suggestCoverStyle(
       { retries: 1, timeoutMs: 25000, validate: (text) => text.trim().length > 200 && text.includes('paletteId') },
     );
     const llmDuration = Date.now() - llmStart;
-    log.info(`[suggestCoverStyle] LLM done in ${llmDuration}ms, tokens=${(result.usage as unknown as Record<string, number> | undefined)?.completionTokens ?? '?'}`);
+    log.info(`[suggestCoverStyle] LLM done in ${llmDuration}ms, tokens=${(result.usage as Record<string, number> | undefined)?.completionTokens ?? '?'}`);
 
     const jsonText = cleanJsonText(result.text);
     let parsed: Record<string, unknown>;

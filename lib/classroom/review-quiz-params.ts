@@ -6,7 +6,7 @@
  */
 
 import type { QuizDetail } from './complete-summary';
-import { inferSubject } from '@/lib/student/profile-builder';
+import { inferSubject } from '@/lib/mistakes/subject-inference';
 
 export interface ReviewQuizParams {
   subject: string;
@@ -29,9 +29,7 @@ export function deriveReviewQuizParams(
   quizDetails: QuizDetail[],
   overallPct: number,
 ): ReviewQuizParams {
-  const weakKPs = Array.from(
-    new Set(quizDetails.flatMap((d) => d.knowledgePoints ?? [])),
-  );
+  const weakKPs = Array.from(new Set(quizDetails.flatMap((d) => d.knowledgePoints ?? [])));
 
   // Infer subject by majority vote
   const subjectVotes = new Map<string, number>();
@@ -39,9 +37,7 @@ export function deriveReviewQuizParams(
     const subject = inferSubject(kp);
     subjectVotes.set(subject, (subjectVotes.get(subject) ?? 0) + 1);
   }
-  const subject =
-    Array.from(subjectVotes.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ??
-    'math';
+  const subject = Array.from(subjectVotes.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'math';
 
   // Difficulty based on overall accuracy
   let difficulty: 'easy' | 'medium' | 'hard';

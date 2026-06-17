@@ -41,8 +41,6 @@ export interface GenerateOptions {
   jobId: string;
   /** Target audience education level from user personalization */
   educationLevel?: string;
-  onProgress?: (progress: { stage: PipelineStage; progress: number; message: string; totalPages?: number }) => Promise<void>;
-  onComplete?: (result: { pptxUrl: string; fileName: string; previewImages?: string[]; qaReport?: QAReport }) => Promise<void>;
 }
 
 export type PipelineStage =
@@ -231,6 +229,15 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         }
       }, 10000); // +1% every 10s, up to 30%
       planResult = await planOutline(topic, difficulty, minPages, maxPages, designDNA, languageModel, educationLevel);
+
+      // Retry once on transient connection errors
+      if (!planResult.success && planResult.error && /terminated|timeout|aborted|ECONNRESET|ETIMEDOUT/i.test(planResult.error)) {
+        log.warn(`[Pipeline:${jobId}] Planning failed with "${planResult.error}", retrying once...`);
+        updateJob(jobId, { message: '大纲规划遇到网络波动，正在重试...', progress: 3 });
+        await new Promise((r) => setTimeout(r, 3000));
+        planResult = await planOutline(topic, difficulty, minPages, maxPages, designDNA, languageModel, educationLevel);
+      }
+
       // Record planning LLM call (approximate from no direct access — logged in planning-agent)
       clearInterval(planningHeartbeat);
       planningHeartbeat = null;
@@ -563,7 +570,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
       startStep(jobId, 'preview_png');
       updateJob(jobId, { stage: 'merging', message: '正在生成预览图...', progress: 85 });
 
-      const previewResult = await generatePreviewFromPptx(pptxUrl, undefined);
+      const previewResult = await generatePreviewFromPptx(pptxUrl, undefined, sidecarPath);
       const previewImages: string[] = previewResult.success ? previewResult.slideImages : [];
 
       endStep(jobId, 'preview_png', { previewCount: previewImages.length });

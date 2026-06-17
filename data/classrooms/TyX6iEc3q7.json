@@ -1,0 +1,385 @@
+{
+  "id": "TyX6iEc3q7",
+  "stage": {
+    "id": "TyX6iEc3q7",
+    "name": "动漫发展简史",
+    "languageDirective": "The course should be delivered in Chinese, as the user's requirement is written in Chinese. All teaching content, explanations, and assessments should be in Chinese. Key terms like 'anime', 'manga', or specific anime titles (e.g., 'Spirited Away', 'Attack on Titan') can be kept in their original English or Japanese form with Chinese translations provided in parentheses on first use. This approach ensures clarity and accessibility for general learners.",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1781657450879,
+    "updatedAt": 1781657450879,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_uOg7AWo26g",
+      "stageId": "TyX6iEc3q7",
+      "type": "quiz",
+      "title": "知识回顾：动漫历史与经典作品",
+      "order": 4,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "日本动画（anime）产业的起源通常追溯到哪一位被称为“漫画之神”的创作者？",
+            "options": [
+              {
+                "value": "A",
+                "label": "宫崎骏"
+              },
+              {
+                "value": "B",
+                "label": "手冢治虫"
+              },
+              {
+                "value": "C",
+                "label": "大友克洋"
+              },
+              {
+                "value": "D",
+                "label": "新海诚"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "手冢治虫（Osamu Tezuka）被认为是日本现代漫画的奠基人，其《铁臂阿童木》等作品确立了战后漫画的叙事语言，也深刻影响了早期动画制作。宫崎骏是吉卜力工作室的创始人之一，大友克洋以《阿基拉》闻名，新海诚则是当代导演。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "multiple",
+            "question": "以下哪些作品被认为是1980-1990年代日本动画黄金时期的代表作？（多选）",
+            "options": [
+              {
+                "value": "A",
+                "label": "《阿基拉》（Akira）"
+              },
+              {
+                "value": "B",
+                "label": "《千与千寻》（Spirited Away）"
+              },
+              {
+                "value": "C",
+                "label": "《新世纪福音战士》（Neon Genesis Evangelion）"
+              },
+              {
+                "value": "D",
+                "label": "《你的名字。》（Your Name.）"
+              }
+            ],
+            "answer": [
+              "A",
+              "C"
+            ],
+            "analysis": "《阿基拉》（1988年）是赛博朋克动画的代表作，展现了当时顶尖的作画水准；《新世纪福音战士》（1995年）引发了社会现象级的讨论，对后续作品影响深远。《千与千寻》（2001年）和《你的名字。》（2016年）属于2000年后的作品，不属于1980-90年代的黄金时期。",
+            "points": 15,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "short_answer",
+            "question": "请简要解释“萌”（moe）这一概念在当代动漫文化中的含义，并举例说明它如何影响角色设计或叙事。",
+            "commentPrompt": "评分标准：(1) 正确解释“萌”的含义（情感投射、喜爱等）——40%；(2) 举例说明其对角色设计（如大眼睛、可爱外表、个性标签）或叙事（如日常互动、卖萌桥段）的影响——40%；(3) 表达清晰与逻辑性——20%。",
+            "analysis": "参考要点：“萌”通常指观众对虚构角色（尤其是女性角色）产生的一种强烈喜爱或保护欲，这种情感往往源于角色的可爱外貌、性格特质（如傲娇、天然呆、温柔）或行为模式。在角色设计上，日本动漫常采用大眼睛、小鼻子、柔和线条来增强萌感；在叙事中，萌元素可以推动日常喜剧或增加情感互动，例如《轻音少女》中的角色互动即大量运用萌属性。",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "手冢治虫被誉为“漫画之神”，其作品奠定了战后日本动漫的基础。",
+          "1980-1990年代是日本动画的黄金时期，以《阿基拉》和《新世纪福音战士》等作品为代表。",
+          "“萌”（moe）是一种源于角色可爱特质的情感投射，深刻影响了当代动漫的角色设计与叙事方式。",
+          "区分不同时期的关键作品（如黄金时期与21世纪作品）有助于理解动画历史的演进。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_NEOk01Uc",
+          "type": "speech",
+          "text": "好啦，同学们，我们刚刚一起探索了日本动画从起源到黄金时代的精彩旅程，还分析了《你的名字。》这样经典作品背后的叙事奥秘。现在，是时候来一场小小的知识回顾，检验一下大家的收获啦！别紧张，就像玩游戏一样，放松心态，把这次测验当作一次有趣的复习。"
+        },
+        {
+          "id": "action_d8bfysWc",
+          "type": "speech",
+          "text": "首先来看第一题，这是一道单选题。题目问的是：日本动画产业的起源通常追溯到哪一位被称为‘漫画之神’的创作者？选项有宫崎骏、手冢治虫、大友克洋和新海诚。"
+        },
+        {
+          "id": "action_k8BS9HNJ",
+          "type": "speech",
+          "text": "想一想我们刚才讲到的内容，谁才是那个为现代日本漫画和动画奠定基础、被誉为‘漫画之神’的人呢？答案就是B选项，手冢治虫。他创作的《铁臂阿童木》等一系列作品，确立了日本漫画的分镜和叙事方式，对后来的动画产业影响深远。而宫崎骏、大友克洋和新海诚都是后来不同时代的杰出代表。"
+        },
+        {
+          "id": "action_BHq3_YXQ",
+          "type": "speech",
+          "text": "接下来是第二题，一道多选题。题目问的是：以下哪些作品被认为是1980-1990年代日本动画黄金时期的代表作？选项有《阿基拉》、《千与千寻》、《新世纪福音战士》和《你的名字。》。"
+        },
+        {
+          "id": "action_RX52tcyb",
+          "type": "speech",
+          "text": "这里要特别注意时间范围哦，‘1980-1990年代’。我们来逐一核对：《阿基拉》（Akira）于1988年上映，是赛博朋克动画的里程碑，符合条件。《新世纪福音战士》（Neon Genesis Evangelion）TV版于1995年播出，也在这一时期，它对动画题材的颠覆性影响巨大。而《千与千寻》是2001年上映的，《你的名字。》是2016年，它们属于更晚的‘后吉卜力时代’和新世纪的作品。所以，这道题的正确答案是A和C。《阿基拉》（Akira）和《新世纪福音战士》（Neon Genesis Evangelion）。"
+        }
+      ],
+      "createdAt": 1781657529410,
+      "updatedAt": 1781657529410
+    },
+    {
+      "id": "scene_CeFq5_AjfE",
+      "stageId": "TyX6iEc3q7",
+      "type": "interactive",
+      "title": "互动练习：分镜创作基础",
+      "order": 7,
+      "content": {
+        "type": "interactive",
+        "url": "",
+        "html": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover\">\n    <title>分镜叙事模拟器</title>\n    <style>\n        * {\n            box-sizing: border-box;\n            margin: 0;\n            padding: 0;\n        }\n        body {\n            background: #1a1a2e;\n            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;\n            touch-action: manipulation;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            min-height: 100vh;\n            padding: 12px;\n            margin: 0;\n        }\n        .sim-container {\n            background: #16213e;\n            border-radius: 28px;\n            box-shadow: 0 20px 40px rgba(0,0,0,0.6);\n            padding: 20px 20px 24px;\n            max-width: 900px;\n            width: 100%;\n            display: flex;\n            flex-direction: column;\n            transition: all 0.2s;\n        }\n        h1 {\n            color: #e0e0ff;\n            font-size: 1.5rem;\n            font-weight: 600;\n            letter-spacing: 1px;\n            margin: 0 0 12px;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n            flex-wrap: wrap;\n        }\n        h1 small {\n            font-size: 0.75rem;\n            font-weight: 400;\n            color: #94a3b8;\n            background: #0f3460;\n            padding: 4px 12px;\n            border-radius: 40px;\n        }\n        .canvas-wrapper {\n            position: relative;\n            background: #0a0f1c;\n            border-radius: 20px;\n            overflow: hidden;\n            touch-action: none;\n            width: 100%;\n            aspect-ratio: 16 / 9;\n            min-height: 200px;\n            border: 2px solid #2a3a5e;\n            box-shadow: inset 0 0 20px rgba(0,0,0,0.7);\n            margin-bottom: 16px;\n        }\n        canvas {\n            display: block;\n            width: 100%;\n            height: 100%;\n            background: transparent;\n            pointer-events: none; /* 让拖拽事件穿透到上层，但这里用JS处理 */\n        }\n        .controls {\n            background: #1e2a45;\n            border-radius: 24px;\n            padding: 16px 18px;\n            touch-action: manipulation;\n        }\n        .control-grid {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 12px 16px;\n        }\n        .control-item {\n            flex: 1 1 180px;\n            min-width: 140px;\n        }\n        .control-item label {\n            display: flex;\n            justify-content: space-between;\n            font-weight: 500;\n            color: #c5d0eb;\n            font-size: 0.85rem;\n            margin-bottom: 4px;\n        }\n        .control-item label span.value {\n            background: #0f1a30;\n            padding: 0 10px;\n            border-radius: 40px;\n            font-family: monospace;\n            color: #bae6ff;\n        }\n        input[type=\"range\"] {\n            width: 100%;\n            height: 6px;\n            -webkit-appearance: none;\n            appearance: none;\n            background: #2d3f66;\n            border-radius: 10px;\n            outline: none;\n            touch-action: manipulation;\n        }\n        input[type=\"range\"]::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 24px;\n            height: 24px;\n            background: #7aa2f7;\n            border-radius: 50%;\n            border: 2px solid #b6d0ff;\n            box-shadow: 0 2px 8px rgba(0,0,0,0.5);\n            cursor: pointer;\n            transition: 0.1s;\n        }\n        input[type=\"range\"]::-moz-range-thumb {\n            width: 24px;\n            height: 24px;\n            background: #7aa2f7;\n            border-radius: 50%;\n            border: 2px solid #b6d0ff;\n            cursor: pointer;\n        }\n        .btn-group {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 10px;\n            margin-top: 14px;\n            align-items: center;\n        }\n        .btn {\n            background: #2a3f6a;\n            border: none;\n            color: white;\n            font-weight: 600;\n            padding: 10px 20px;\n            border-radius: 40px;\n            font-size: 0.9rem;\n            cursor: pointer;\n            display: inline-flex;\n            align-items: center;\n            justify-content: center;\n            gap: 6px;\n            min-height: 44px;\n            min-width: 80px;\n            touch-action: manipulation;\n            box-shadow: 0 4px 6px rgba(0,0,0,0.3);\n            transition: all 0.15s;\n            flex: 0 1 auto;\n        }\n        .btn:active {\n            transform: scale(0.96);\n        }\n        .btn-primary {\n            background: #4c6ef5;\n            color: white;\n        }\n        .btn-primary:hover {\n            background: #5f7cf8;\n        }\n        .btn-success {\n            background: #2b8a3e;\n        }\n        .btn-warning {\n            background: #d97706;\n        }\n        .btn-danger {\n            background: #b91c1c;\n        }\n        .btn-outline {\n            background: transparent;\n            border: 2px solid #4c6ef5;\n            color: #b6c9ff;\n        }\n        .preset-group {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 8px;\n            margin-top: 12px;\n        }\n        .preset-btn {\n            background: #1c2a44;\n            border: 1px solid #3a5390;\n            color: #ccd9ff;\n            padding: 6px 16px;\n            border-radius: 30px;\n            font-size: 0.8rem;\n            cursor: pointer;\n            min-height: 40px;\n            touch-action: manipulation;\n            transition: 0.1s;\n            flex: 0 1 auto;\n        }\n        .preset-btn:active {\n            background: #2a4070;\n        }\n        .state-indicator {\n            color: #aab9e6;\n            font-size: 0.8rem;\n            display: flex;\n            gap: 12px;\n            align-items: center;\n            flex-wrap: wrap;\n            margin-left: auto;\n        }\n        .state-indicator span {\n            background: #0f1a2e;\n            padding: 2px 14px;\n            border-radius: 30px;\n        }\n        @media (max-width: 540px) {\n            .sim-container {\n                padding: 12px 12px 18px;\n                border-radius: 20px;\n            }\n            h1 {\n                font-size: 1.2rem;\n            }\n            .control-item {\n                flex: 1 1 100%;\n                min-width: 0;\n            }\n            .btn {\n                padding: 8px 16px;\n                font-size: 0.8rem;\n                min-height: 44px;\n                flex: 1 0 auto;\n            }\n            .preset-btn {\n                font-size: 0.7rem;\n                padding: 5px 12px;\n            }\n            .btn-group {\n                gap: 6px;\n            }\n        }\n        @media (max-width: 400px) {\n            .canvas-wrapper {\n                aspect-ratio: 4 / 3;\n                min-height: 160px;\n            }\n        }\n        .annotation-tip {\n            position: fixed;\n            background: #7c3aed;\n            color: white;\n            padding: 8px 16px;\n            border-radius: 40px;\n            font-size: 0.9rem;\n            pointer-events: none;\n            z-index: 999;\n            box-shadow: 0 8px 24px rgba(0,0,0,0.5);\n            animation: fadeSlide 0.25s ease-out;\n        }\n        @keyframes fadeSlide {\n            0% { opacity: 0; transform: translateY(12px); }\n            100% { opacity: 1; transform: translateY(0); }\n        }\n        .hidden { display: none; }\n    </style>\n\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css\">\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js\"></script>\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js\"></script>\n<script>\ndocument.addEventListener(\"DOMContentLoaded\", function() {\n    const katexOptions = {\n        delimiters: [\n            {left: '\\\\[', right: '\\\\]', display: true},\n            {left: '\\\\(', right: '\\\\)', display: false},\n            {left: '$$', right: '$$', display: true},\n            {left: '$', right: '$', display: false}\n        ],\n        throwOnError: false,\n        strict: false,\n        trust: true\n    };\n\n    let renderTimeout;\n    function safeRender() {\n        if (renderTimeout) clearTimeout(renderTimeout);\n        renderTimeout = setTimeout(() => {\n            renderMathInElement(document.body, katexOptions);\n        }, 100);\n    }\n\n    renderMathInElement(document.body, katexOptions);\n\n    const observer = new MutationObserver((mutations) => {\n        let shouldRender = false;\n        mutations.forEach((mutation) => {\n            if (mutation.target &&\n                mutation.target.className &&\n                typeof mutation.target.className === 'string' &&\n                mutation.target.className.includes('katex')) {\n                return;\n            }\n            shouldRender = true;\n        });\n\n        if (shouldRender) {\n            safeRender();\n        }\n    });\n\n    observer.observe(document.body, {\n        childList: true,\n        subtree: true,\n        characterData: true\n    });\n\n    setInterval(() => {\n        const text = document.body.innerText;\n        if (text.includes('\\\\(') || text.includes('$$')) {\n            safeRender();\n        }\n    }, 2000);\n});\n</script>\n</head>\n<body>\n    <div class=\"sim-container\" id=\"app\">\n        <h1>\n            🎬 分镜叙事·基础逻辑\n            <small>拖拽排序 · 切换镜头</small>\n        </h1>\n\n        <div class=\"canvas-wrapper\" id=\"canvasWrapper\">\n            <canvas id=\"storyCanvas\" width=\"800\" height=\"450\"></canvas>\n        </div>\n\n        <div class=\"controls\" id=\"controlPanel\">\n            <div class=\"control-grid\">\n                <!-- 镜头类型 -->\n                <div class=\"control-item\">\n                    <label>📷 镜头类型 <span class=\"value\" id=\"lens-display\">中景</span></label>\n                    <input type=\"range\" id=\"lens-slider\" data-var=\"lens\" min=\"0\" max=\"2\" step=\"1\" value=\"1\" aria-label=\"镜头类型: 0广角 1中景 2特写\">\n                </div>\n                <!-- 分格顺序 (用滑块模拟3格) -->\n                <div class=\"control-item\">\n                    <label>🔢 分格顺序 <span class=\"value\" id=\"order-display\">A→B→C</span></label>\n                    <input type=\"range\" id=\"order-slider\" data-var=\"order\" min=\"0\" max=\"2\" step=\"1\" value=\"0\" aria-label=\"分格排列顺序\">\n                </div>\n                <!-- 动作方向 -->\n                <div class=\"control-item\">\n                    <label>➡️ 动作方向 <span class=\"value\" id=\"direction-display\">→ 向右</span></label>\n                    <input type=\"range\" id=\"direction-slider\" data-var=\"direction\" min=\"0\" max=\"2\" step=\"1\" value=\"1\" aria-label=\"动作方向: 0左 1右 2跳跃\">\n                </div>\n            </div>\n\n            <div class=\"btn-group\">\n                <button class=\"btn btn-primary\" id=\"start-btn\">▶ 播放故事</button>\n                <button class=\"btn btn-outline\" id=\"reset-btn\">⟲ 重置</button>\n                <div class=\"state-indicator\">\n                    <span id=\"stateLabel\">⏸ 就绪</span>\n                </div>\n            </div>\n\n            <div class=\"preset-group\">\n                <button class=\"preset-btn\" data-preset=\"classic\">📖 经典三格</button>\n                <button class=\"preset-btn\" data-preset=\"action\">💥 动作冲击</button>\n                <button class=\"preset-btn\" data-preset=\"closeup\">🔍 特写情绪</button>\n            </div>\n        </div>\n    </div>\n\n    <!-- Widget Config -->\n    <script type=\"application/json\" id=\"widget-config\">\n    {\n        \"type\": \"simulation\",\n        \"concept\": \"分镜叙事的基础逻辑\",\n        \"description\": \"通过拖拽排序和镜头调整，理解分镜如何传递故事节奏与情绪。\",\n        \"variables\": [\n            { \"name\": \"lens\", \"label\": \"镜头类型\", \"min\": 0, \"max\": 2, \"default\": 1, \"step\": 1, \"unit\": \"\" },\n            { \"name\": \"order\", \"label\": \"分格顺序\", \"min\": 0, \"max\": 2, \"default\": 0, \"step\": 1, \"unit\": \"\" },\n            { \"name\": \"direction\", \"label\": \"动作方向\", \"min\": 0, \"max\": 2, \"default\": 1, \"step\": 1, \"unit\": \"\" }\n        ],\n        \"presets\": [\n            { \"name\": \"经典三格\", \"variables\": { \"lens\": 1, \"order\": 0, \"direction\": 1 } },\n            { \"name\": \"动作冲击\", \"variables\": { \"lens\": 0, \"order\": 1, \"direction\": 2 } },\n            { \"name\": \"特写情绪\", \"variables\": { \"lens\": 2, \"order\": 0, \"direction\": 0 } }\n        ]\n    }\n    </script>\n\n    <script>\n        (function() {\n            // ---- DOM refs ----\n            const canvas = document.getElementById('storyCanvas');\n            const ctx = canvas.getContext('2d');\n            const wrapper = document.getElementById('canvasWrapper');\n\n            const lensSlider = document.getElementById('lens-slider');\n            const orderSlider = document.getElementById('order-slider');\n            const directionSlider = document.getElementById('direction-slider');\n            const lensDisplay = document.getElementById('lens-display');\n            const orderDisplay = document.getElementById('order-display');\n            const directionDisplay = document.getElementById('direction-display');\n            const startBtn = document.getElementById('start-btn');\n            const resetBtn = document.getElementById('reset-btn');\n            const stateLabel = document.getElementById('stateLabel');\n\n            // ---- state ----\n            let lens = 1;          // 0广角,1中景,2特写\n            let order = 0;         // 0:ABC, 1:BCA, 2:CAB\n            let direction = 1;     // 0左,1右,2跳跃\n\n            let playing = false;\n            let animFrame = null;\n            let time = 0;          // 动画时间 (0~100)\n            const DURATION = 100;  // 帧数\n\n            // ---- 镜头标签 ----\n            const lensLabels = ['广角', '中景', '特写'];\n            const orderLabels = ['A→B→C', 'B→C→A', 'C→A→B'];\n            const directionLabels = ['← 向左', '→ 向右', '⬆ 跳跃'];\n\n            // ---- 更新显示 ----\n            function updateUI() {\n                lensDisplay.textContent = lensLabels[lens] || '中景';\n                orderDisplay.textContent = orderLabels[order] || 'A→B→C';\n                directionDisplay.textContent = directionLabels[direction] || '→ 向右';\n            }\n\n            // ---- 从滑块读取 ----\n            function readSliders() {\n                lens = parseInt(lensSlider.value, 10);\n                order = parseInt(orderSlider.value, 10);\n                direction = parseInt(directionSlider.value, 10);\n                updateUI();\n            }\n\n            function applySliders() {\n                lensSlider.value = lens;\n                orderSlider.value = order;\n                directionSlider.value = direction;\n                updateUI();\n            }\n\n            // ---- 重置模拟 ----\n            function resetSimulation(resetSlider = true) {\n                if (animFrame) {\n                    cancelAnimationFrame(animFrame);\n                    animFrame = null;\n                }\n                playing = false;\n                time = 0;\n                startBtn.textContent = '▶ 播放故事';\n                stateLabel.textContent = '⏸ 就绪';\n                if (resetSlider) {\n                    lens = 1;\n                    order = 0;\n                    direction = 1;\n                    applySliders();\n                }\n                drawCanvas();\n            }\n\n            // ---- Canvas 绘图 ----\n            function drawCanvas() {\n                const rect = wrapper.getBoundingClientRect();\n                const w = rect.width || 800;\n                const h = rect.height || 450;\n                canvas.width = w * 0.99; \n                canvas.height = h * 0.99;\n\n                const cw = canvas.width;\n                const ch = canvas.height;\n                ctx.clearRect(0, 0, cw, ch);\n\n                // 背景\n                const grad = ctx.createLinearGradient(0, 0, cw, ch);\n                grad.addColorStop(0, '#192231');\n                grad.addColorStop(1, '#2c3a5a');\n                ctx.fillStyle = grad;\n                ctx.fillRect(0, 0, cw, ch);\n\n                // ---- 分镜格子参数 ----\n                const padX = 20;\n                const padY = 25;\n                const gap = 14;\n                const totalG = 3;\n                const usableW = cw - padX * 2 - gap * (totalG - 1);\n                const cellW = usableW / totalG;\n                const cellH = ch - padY * 2;\n\n                // 顺序偏移索引  (0,1,2) -> 根据order重排\n                const orderMap = [\n                    [0, 1, 2],  // ABC\n                    [1, 2, 0],  // BCA\n                    [2, 0, 1]   // CAB\n                ];\n                const seq = orderMap[order] || [0,1,2];\n\n                // 每个格子的内容标签\n                const sceneLabels = ['开场', '冲突', '收尾'];\n\n                // ---- 画三个格子 ----\n                for (let i = 0; i < 3; i++) {\n                    const idx = seq[i]; // 实际显示的内容索引\n                    const x = padX + i * (cellW + gap);\n                    const y = padY;\n                    const wc = cellW;\n                    const hc = cellH;\n\n                    // 格子背景\n                    ctx.fillStyle = '#1f2c44';\n                    ctx.shadowColor = 'rgba(0,0,0,0.5)';\n                    ctx.shadowBlur = 12;\n                    ctx.fillRect(x, y, wc, hc);\n                    ctx.shadowBlur = 0;\n                    ctx.strokeStyle = '#4c6f9c';\n                    ctx.lineWidth = 2;\n                    ctx.strokeRect(x, y, wc, hc);\n\n                    // 标签\n                    ctx.fillStyle = '#b8cbe0';\n                    ctx.font = 'bold 18px \"Segoe UI\", sans-serif';\n                    ctx.textAlign = 'center';\n                    ctx.textBaseline = 'top';\n                    ctx.fillText(sceneLabels[idx] || '格', x + wc/2, y + 8);\n\n                    // ---- 根据镜头类型绘制内容 (lens) ----\n                    const cx = x + wc/2;\n                    const cy = y + hc/2 + 12;\n\n                    // 人物 (简单火柴人/形状)\n                    const headR = (lens === 2) ? 18 : (lens === 0 ? 10 : 14);\n                    const bodyH = (lens === 2) ? 20 : (lens === 0 ? 32 : 28);\n\n                    // 动作偏移 (由direction和时间决定)\n                    let moveX = 0, moveY = 0;\n                    if (direction === 0) moveX = - (time / DURATION) * 20;\n                    else if (direction === 1) moveX = (time / DURATION) * 20;\n                    else if (direction === 2) {\n                        moveY = -Math.abs(Math.sin((time / DURATION) * Math.PI)) * 30;\n                    }\n\n                    // 颜色根据镜头\n                    const hue = (lens === 0) ? 200 : (lens === 2 ? 330 : 260);\n                    ctx.fillStyle = `hsl(${hue}, 60%, 70%)`;\n                    ctx.strokeStyle = '#fff';\n                    ctx.lineWidth = 2;\n\n                    // 头\n                    ctx.beginPath();\n                    ctx.arc(cx + moveX, cy - 10 + moveY, headR, 0, Math.PI*2);\n                    ctx.fill();\n                    ctx.stroke();\n\n                    // 身体 (线条或矩形)\n                    ctx.beginPath();\n                    ctx.moveTo(cx + moveX, cy - 10 + headR + moveY);\n                    ctx.lineTo(cx + moveX, cy + bodyH + moveY);\n                    ctx.stroke();\n\n                    // 手臂 (动态)\n                    const armAngle = (time / DURATION) * Math.PI * 0.6;\n                    ctx.beginPath();\n                    ctx.moveTo(cx + moveX, cy + 6 + moveY);\n                    ctx.lineTo(cx + moveX + 16 * Math.cos(armAngle + 0.3) * (direction === 1?1:-1), cy + 6 + moveY + 12 * Math.sin(armAngle));\n                    ctx.stroke();\n                    ctx.beginPath();\n                    ctx.moveTo(cx + moveX, cy + 6 + moveY);\n                    ctx.lineTo(cx + moveX + 16 * Math.cos(-armAngle + 0.3) * (direction === 1?1:-1), cy + 6 + moveY + 12 * Math.sin(-armAngle));\n                    ctx.stroke();\n\n                    // 腿\n                    ctx.beginPath();\n                    ctx.moveTo(cx + moveX, cy + bodyH + moveY);\n                    ctx.lineTo(cx + moveX - 8 + moveX*0.2, cy + bodyH + 20 + moveY);\n                    ctx.stroke();\n                    ctx.beginPath();\n                    ctx.moveTo(cx + moveX, cy + bodyH + moveY);\n                    ctx.lineTo(cx + moveX + 8 + moveX*0.2, cy + bodyH + 20 + moveY);\n                    ctx.stroke();\n\n                    // 广角加背景细节\n                    if (lens === 0 && i === 1) {\n                        ctx.fillStyle = '#4f7a5a';\n                        ctx.font = '14px sans-serif';\n                        ctx.fillText('🏔️ 远山', x+6, y+ hc-20);\n                    }\n                    if (lens === 2 && i === 0) {\n                        ctx.fillStyle = '#d9b68a';\n                        ctx.beginPath();\n                        ctx.arc(cx-10+moveX, cy-16+moveY, 3, 0, Math.PI*2);\n                        ctx.fill();\n                        ctx.fillStyle = '#c9886a';\n                        ctx.beginPath();\n                        ctx.arc(cx+10+moveX, cy-16+moveY, 3, 0, Math.PI*2);\n                        ctx.fill();\n                    }\n\n                    // 动作方向指示 (小箭头)\n                    if (direction === 0) {\n                        ctx.fillStyle = '#f5c542';\n                        ctx.beginPath();\n                        ctx.moveTo(cx-25+moveX, cy+moveY-4);\n                        ctx.lineTo(cx-35+moveX, cy+moveY);\n                        ctx.lineTo(cx-25+moveX, cy+moveY+4);\n                        ctx.fill();\n                    } else if (direction === 1) {\n                        ctx.fillStyle = '#f5c542';\n                        ctx.beginPath();\n                        ctx.moveTo(cx+25+moveX, cy+moveY-4);\n                        ctx.lineTo(cx+35+moveX, cy+moveY);\n                        ctx.lineTo(cx+25+moveX, cy+moveY+4);\n                        ctx.fill();\n                    } else if (direction === 2) {\n                        ctx.fillStyle = '#f5c542';\n                        ctx.beginPath();\n                        ctx.moveTo(cx+moveX-4, cy-30+moveY);\n                        ctx.lineTo(cx+moveX, cy-40+moveY);\n                        ctx.lineTo(cx+moveX+4, cy-30+moveY);\n                        ctx.fill();\n                    }\n                }\n\n                // 标题水印\n                ctx.fillStyle = 'rgba(200,220,255,0.2)';\n                ctx.font = '14px sans-serif';\n                ctx.textAlign = 'left';\n                ctx.fillText('🎬 分镜叙事', 12, ch-12);\n            }\n\n            // ---- 动画循环 ----\n            function animate() {\n                if (!playing) return;\n\n                time += 1.4; // 速度\n                if (time >= DURATION) {\n                    time = DURATION;\n                    playing = false;\n                    startBtn.textContent = '▶ 重播';\n                    stateLabel.textContent = '✓ 播放完成';\n                    drawCanvas();\n                    return;\n                }\n\n                drawCanvas();\n                animFrame = requestAnimationFrame(animate);\n            }\n\n            function startPlay() {\n                if (playing) {\n                    // 如果正在播放，暂停\n                    playing = false;\n                    startBtn.textContent = '▶ 继续';\n                    stateLabel.textContent = '⏸ 暂停';\n                    if (animFrame) cancelAnimationFrame(animFrame);\n                    return;\n                }\n\n                // 如果已经结束或暂停，重新开始或继续\n                if (time >= DURATION) {\n                    time = 0;\n                }\n                playing = true;\n                startBtn.textContent = '⏸ 暂停';\n                stateLabel.textContent = '▶ 播放中';\n                if (animFrame) cancelAnimationFrame(animFrame);\n                animate();\n            }\n\n            // ---- 重置 ----\n            function handleReset() {\n                readSliders();\n                resetSimulation(false);\n                applySliders();\n                drawCanvas();\n            }\n\n            // ---- 预设 ----\n            function applyPreset(name) {\n                let v;\n                if (name === 'classic') v = { lens:1, order:0, direction:1 };\n                else if (name === 'action') v = { lens:0, order:1, direction:2 };\n                else if (name === 'closeup') v = { lens:2, order:0, direction:0 };\n                if (!v) return;\n                lens = v.lens; order = v.order; direction = v.direction;\n                applySliders();\n                resetSimulation(false);\n                drawCanvas();\n            }\n\n            // ---- 初始化 & 事件绑定 ----\n            function init() {\n                readSliders();\n                drawCanvas();\n\n                // 滑块事件\n                lensSlider.addEventListener('input', function(e) {\n                    if (playing) { playing = false; if(animFrame)cancelAnimationFrame(animFrame); startBtn.textContent='▶ 播放故事'; stateLabel.textContent='⏸ 就绪'; }\n                    readSliders();\n                    time = 0;\n                    drawCanvas();\n                });\n                orderSlider.addEventListener('input', function(e) {\n                    if (playing) { playing = false; if(animFrame)cancelAnimationFrame(animFrame); startBtn.textContent='▶ 播放故事'; stateLabel.textContent='⏸ 就绪'; }\n                    readSliders();\n                    time = 0;\n                    drawCanvas();\n                });\n                directionSlider.addEventListener('input', function(e) {\n                    if (playing) { playing = false; if(animFrame)cancelAnimationFrame(animFrame); startBtn.textContent='▶ 播放故事'; stateLabel.textContent='⏸ 就绪'; }\n                    readSliders();\n                    time = 0;\n                    drawCanvas();\n                });\n\n                startBtn.addEventListener('click', startPlay);\n                resetBtn.addEventListener('click', handleReset);\n\n                // 预设\n                document.querySelectorAll('.preset-btn').forEach(btn => {\n                    btn.addEventListener('click', function(e) {\n                        const preset = this.dataset.preset;\n                        applyPreset(preset);\n                    });\n                });\n\n                // 窗口resize\n                window.addEventListener('resize', function() {\n                    drawCanvas();\n                });\n                new ResizeObserver(() => drawCanvas()).observe(wrapper);\n\n                // 键盘快捷键\n                document.addEventListener('keydown', function(e) {\n                    if (e.key === ' ' || e.key === 'Space') {\n                        e.preventDefault();\n                        startPlay();\n                    }\n                    if (e.key === 'r' || e.key === 'R') {\n                        e.preventDefault();\n                        handleReset();\n                    }\n                });\n            }\n\n            // ---- postMessage listener (teacher actions) ----\n            window.addEventListener('message', function(event) {\n                const { type, target, state, content } = event.data;\n\n                switch (type) {\n                    case 'SET_WIDGET_STATE': {\n                        if (state) {\n                            Object.entries(state).forEach(([key, value]) => {\n                                const slider = document.getElementById(key + '-slider') || document.querySelector('[data-var=\"' + key + '\"]');\n                                if (slider) {\n                                    slider.value = value;\n                                    slider.dispatchEvent(new Event('input', { bubbles: true }));\n                                }\n                            });\n                        }\n                        break;\n                    }\n                    case 'HIGHLIGHT_ELEMENT': {\n                        const highlightEl = document.querySelector(target);\n                        if (highlightEl) {\n                            highlightEl.style.outline = '3px solid rgba(139, 92, 246, 0.8)';\n                            highlightEl.style.outlineOffset = '4px';\n                            highlightEl.style.animation = 'pulse-highlight 2s infinite';\n                            setTimeout(() => {\n                                highlightEl.style.outline = '';\n                                highlightEl.style.animation = '';\n                            }, 3000);\n                        }\n                        break;\n                    }\n                    case 'ANNOTATE_ELEMENT': {\n                        const annotateEl = document.querySelector(target);\n                        if (annotateEl && content) {\n                            const rect = annotateEl.getBoundingClientRect();\n                            const tooltip = document.createElement('div');\n                            tooltip.className = 'annotation-tip';\n                            tooltip.style.cssText = 'position:fixed; top:' + (rect.top - 40) + 'px; left:' + rect.left + 'px; background:rgba(139,92,246,0.95); color:white; padding:8px 12px; border-radius:40px; font-size:14px; z-index:1000;';\n                            tooltip.textContent = content;\n                            document.body.appendChild(tooltip);\n                            setTimeout(() => tooltip.remove(), 4000);\n                        }\n                        break;\n                    }\n                    case 'REVEAL_ELEMENT': {\n                        const revealEl = document.querySelector(target);\n                        if (revealEl) {\n                            revealEl.style.display = '';\n                            revealEl.style.opacity = '1';\n                        }\n                        break;\n                    }\n                }\n            });\n\n            // ---- 注入关键帧动画 ----\n            const styleSheet = document.createElement('style');\n            styleSheet.textContent = `\n                @keyframes pulse-highlight {\n                    0%, 100% { outline-color: rgba(139, 92, 246, 0.8); }\n                    50% { outline-color: rgba(139, 92, 246, 0.3); }\n                }\n            `;\n            document.head.appendChild(styleSheet);\n\n            // 启动\n            init();\n        })();\n    </script>\n</body>\n</html>",
+        "widgetType": "simulation",
+        "widgetConfig": {
+          "type": "simulation",
+          "concept": "分镜叙事的基础逻辑",
+          "description": "通过拖拽排序和镜头调整，理解分镜如何传递故事节奏与情绪。",
+          "variables": [
+            {
+              "name": "lens",
+              "label": "镜头类型",
+              "min": 0,
+              "max": 2,
+              "default": 1,
+              "step": 1,
+              "unit": ""
+            },
+            {
+              "name": "order",
+              "label": "分格顺序",
+              "min": 0,
+              "max": 2,
+              "default": 0,
+              "step": 1,
+              "unit": ""
+            },
+            {
+              "name": "direction",
+              "label": "动作方向",
+              "min": 0,
+              "max": 2,
+              "default": 1,
+              "step": 1,
+              "unit": ""
+            }
+          ],
+          "presets": [
+            {
+              "name": "经典三格",
+              "variables": {
+                "lens": 1,
+                "order": 0,
+                "direction": 1
+              }
+            },
+            {
+              "name": "动作冲击",
+              "variables": {
+                "lens": 0,
+                "order": 1,
+                "direction": 2
+              }
+            },
+            {
+              "name": "特写情绪",
+              "variables": {
+                "lens": 2,
+                "order": 0,
+                "direction": 0
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "id": "action_r_2i901H",
+          "type": "speech",
+          "text": "同学们，欢迎来到今天的分镜创作互动练习！我是星野老师。相信通过刚才的学习，大家对分镜的基础概念已经有了了解。现在，让我们亲手来实践一下，看看如何通过排列分镜来讲述一个生动的故事！"
+        },
+        {
+          "id": "action_cI2et8fT",
+          "type": "speech",
+          "text": "看，在我们的画布上，有一些打乱顺序的镜头画面。请你先观察一下这些画面，思考一下：如果要讲一个完整的小故事，这些镜头应该按照怎样的顺序来排列呢？试着用鼠标拖拽它们，调整顺序吧！"
+        },
+        {
+          "id": "action_NM-9aame",
+          "type": "speech",
+          "text": "很棒！调整好顺序后，你还可以点击每个镜头右上角的设置按钮，尝试调整镜头角度——比如从平视改成俯视，或者从正面改成侧面。你会发现，同样的画面，不同的角度会给观众带来完全不同的感受哦！"
+        },
+        {
+          "id": "action_bLj_dOr5",
+          "type": "speech",
+          "text": "现在，请按下画布下方的『播放』按钮，看看你排列的分镜序列能不能清晰地讲述出这个故事？如果觉得哪里不够流畅，可以随时返回去调整顺序或角度，这就是分镜创作的魅力所在——反复打磨，直到最佳效果！"
+        }
+      ],
+      "createdAt": 1781657529411,
+      "updatedAt": 1781657529411
+    },
+    {
+      "id": "scene_pC5oLlPwyV",
+      "stageId": "TyX6iEc3q7",
+      "type": "quiz",
+      "title": "综合小测验",
+      "order": 9,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "下列哪个选项不是角色设计中常用的风格类别？",
+            "options": [
+              {
+                "value": "A",
+                "label": "写实风格（Realistic）"
+              },
+              {
+                "value": "B",
+                "label": "Q版/萌系风格（Chibi/Cute）"
+              },
+              {
+                "value": "C",
+                "label": "极简主义/扁平风格（Minimalist/Flat）"
+              },
+              {
+                "value": "D",
+                "label": "印象派风格（Impressionist）"
+              }
+            ],
+            "answer": [
+              "D"
+            ],
+            "analysis": "印象派风格是19世纪末的绘画艺术运动，并不属于常见的角色设计风格类别。常见的角色设计风格包括写实、Q版/萌系、卡通/夸张、半写实、扁平/极简等。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "single",
+            "question": "在分镜（Storyboard）中，为了表现角色之间的权力对抗或紧张气氛，最常使用哪一种镜头构图？",
+            "options": [
+              {
+                "value": "A",
+                "label": "过肩镜头（Over-the-Shoulder Shot）"
+              },
+              {
+                "value": "B",
+                "label": "俯角镜头（High Angle Shot）"
+              },
+              {
+                "value": "C",
+                "label": "侧面正反打镜头（Profile Shot/Reverse Shot）"
+              },
+              {
+                "value": "D",
+                "label": "荷兰角镜头（Dutch Angle / Canted Angle）"
+              }
+            ],
+            "answer": [
+              "D"
+            ],
+            "analysis": "荷兰角镜头通过倾斜画面制造不稳定的视觉感，极好地表现冲突、紧张、不安或权力对抗心理。过肩镜头更常用于对话场景，俯角用于表现弱势或俯瞰，侧面正反打用于冷静的双人对话。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "single",
+            "question": "在动画/漫画作品的讨论中，如果我们要分析一个角色在故事前后期性格的巨大变化，通常最关注的要素是什么？",
+            "options": [
+              {
+                "value": "A",
+                "label": "角色的外形设计是否改变了"
+              },
+              {
+                "value": "B",
+                "label": "角色的核心价值与信念的变化历程（Character Arc）"
+              },
+              {
+                "value": "C",
+                "label": "角色的配音演员是否有更换"
+              },
+              {
+                "value": "D",
+                "label": "角色的出场集数是否增加"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "角色弧光（Character Arc）是指角色在故事中经历的内心变化与成长过程，是讨论角色性格发展时最核心的分析要素。外形变化、配音替换或出场频率都不直接等于角色成长。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q4",
+            "type": "short_answer",
+            "question": "请结合一个具体的动画或漫画场景（例如：追击戏、悬疑反转、浪漫告白），简要说明导演是如何通过分镜技巧（如镜头切换、视点选择、画面构图等）来强化该场景的情感表达或叙事冲击力的。要求至少提到两种分镜技巧。",
+            "commentPrompt": "评分细则：(1) 场景描述清晰具体 - 20% (2) 正确识别并解释至少两种分镜技巧（如：仰俯角、视线引导、剪辑节奏、特写等） - 50% (3) 论述逻辑严密，能结合场景说明技巧对情感/叙事的影响 - 30%",
+            "analysis": "参考回答结构：先简单交代具体的场景与作品（例如《进击的巨人》中，兵长对战兽之巨人）。然后说明分镜技巧：(1) 快速剪辑与动作匹配剪辑，制造战斗的紧张感和快节奏；(2) 利用角色主观视点镜头（POV），让观众带入角色被追击的压迫感。最后总结这些技巧如何共同强化了该场景的戏剧张力与视觉冲击力。",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "角色设计常见风格包括写实、Q版、半写实、卡通类等，印象派不属于角色设计的风格分类。",
+          "荷兰角镜头（Dutch Angle）通过画面倾斜制造不稳定感，常用于表现对抗与紧张气氛。",
+          "在分析角色成长时，最核心的概念是角色弧光（Character Arc），即其核心信念与价值观的变化历程。",
+          "分镜中的镜头切换、视点选择（POV）与剪辑节奏等技巧可以有效影响场景的情感表现力和叙事冲击力。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_7sdpgZ22",
+          "type": "speech",
+          "text": "同学们，我们已经一起探索了角色设计、分镜技巧和作品分析的精彩世界。现在，让我们通过一个小测验来检验一下学习成果吧！放轻松，把它当作一次有趣的挑战。"
+        },
+        {
+          "id": "action_2Ilnwkmu",
+          "type": "speech",
+          "text": "第一题，关于角色设计的风格类别。要注意的是，印象派风格其实属于纯艺术领域的绘画流派，并非角色设计中常用的商业风格类别。其他三种——写实、Q版和扁平风格都是非常常见的。你答对了吗？"
+        },
+        {
+          "id": "action_qGoXGn6i",
+          "type": "speech",
+          "text": "第二题考察分镜技巧。在表现权力对抗或紧张气氛时，侧面正反打镜头通过角色之间的视线交流和角度对比，能够最直接地强调双方的对立关系。荷兰角镜头虽然也能制造紧张，但它更多用于表现角色内心的不安或世界的扭曲感。"
+        },
+        {
+          "id": "action_z0O_Fnb8",
+          "type": "speech",
+          "text": "第三题关于角色分析。没错，最关键的就是角色的核心价值与信念的变化历程，也就是Character Arc。外形、配音或出场数的变化，都不如内在信念的转变更能体现一个角色的深度和成长。"
+        },
+        {
+          "id": "action__TTPINAw",
+          "type": "speech",
+          "text": "最后一道是开放性短答题。你可以选择追击戏、悬疑反转或浪漫告白等场景，结合具体的动画或漫画例子，分析导演如何运用分镜技巧来强化情感表达。至少要提到两种技巧哦，比如镜头切换的节奏、视点的选择、或者画面构图的心理暗示。这是展示你综合理解的好机会，加油！"
+        },
+        {
+          "id": "action_MFFv55u3",
+          "type": "discussion",
+          "topic": "在角色设计、分镜技巧和作品分析中，你觉得哪一部分最容易混淆？又或者，你在构思短答题的例子时，想到了哪些让你印象深刻的经典场景？",
+          "prompt": "分享你的想法，这能帮助我们更好地巩固知识。",
+          "agentId": "default-3"
+        }
+      ],
+      "createdAt": 1781657529411,
+      "updatedAt": 1781657529411
+    }
+  ],
+  "createdAt": "2026-06-17T00:52:09.411Z"
+}

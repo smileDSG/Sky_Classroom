@@ -1,0 +1,456 @@
+{
+  "id": "3t73kPExLX",
+  "stage": {
+    "id": "3t73kPExLX",
+    "name": "什么是二次函数？",
+    "languageDirective": "Use simplified Chinese as the teaching language. All scene content, explanations, and quizzes must be in Chinese. Mathematical terms like '二次函数' (quadratic function), '抛物线' (parabola), '顶点' (vertex), and '对称轴' (axis of symmetry) should use their standard Chinese translations. Programming or tool names are not applicable here.",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1781661213630,
+    "updatedAt": 1781661213630,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_T3U6b0ywnn",
+      "stageId": "3t73kPExLX",
+      "type": "interactive",
+      "title": "探索抛物线：调节系数影响",
+      "order": 3,
+      "content": {
+        "type": "interactive",
+        "url": "",
+        "html": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover\">\n  <title>二次函数系数探索 · 抛物线模拟器</title>\n  <style>\n    * {\n      box-sizing: border-box;\n      margin: 0;\n      padding: 0;\n    }\n\n    body {\n      font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif;\n      background: #f1f5f9;\n      display: flex;\n      justify-content: center;\n      align-items: center;\n      min-height: 100vh;\n      padding: 8px;\n      touch-action: manipulation;\n    }\n\n    .sim-card {\n      max-width: 900px;\n      width: 100%;\n      background: white;\n      border-radius: 36px 36px 28px 28px;\n      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.12);\n      overflow: hidden;\n      padding: 18px 18px 20px;\n      display: flex;\n      flex-direction: column;\n      gap: 12px;\n      transition: all 0.15s;\n    }\n\n    h1 {\n      font-size: 1.5rem;\n      font-weight: 600;\n      letter-spacing: -0.01em;\n      color: #0b1120;\n      margin: 0 0 2px 0;\n      display: flex;\n      align-items: center;\n      gap: 10px;\n    }\n    h1 small {\n      font-size: 0.85rem;\n      font-weight: 400;\n      color: #3b4a6b;\n      background: #eef2f6;\n      padding: 2px 14px;\n      border-radius: 40px;\n      margin-left: 4px;\n    }\n\n    .canvas-wrapper {\n      position: relative;\n      background: #ffffff;\n      border-radius: 24px;\n      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04), 0 6px 12px -8px rgba(0,0,0,0.2);\n      overflow: hidden;\n      width: 100%;\n      aspect-ratio: 16 / 10;\n      min-height: 210px;\n      touch-action: none;\n    }\n\n    canvas {\n      display: block;\n      width: 100%;\n      height: 100%;\n      background: #fafcff;\n      touch-action: none;\n      cursor: crosshair;\n    }\n\n    .status-indicator {\n      position: absolute;\n      top: 10px;\n      left: 14px;\n      background: rgba(10, 20, 40, 0.7);\n      backdrop-filter: blur(6px);\n      -webkit-backdrop-filter: blur(6px);\n      border-radius: 60px;\n      padding: 4px 16px 4px 12px;\n      font-size: 0.8rem;\n      color: white;\n      display: flex;\n      align-items: center;\n      gap: 8px;\n      pointer-events: none;\n      font-weight: 500;\n      letter-spacing: 0.3px;\n      border: 1px solid rgba(255, 255, 255, 0.2);\n    }\n    .status-dot {\n      width: 10px;\n      height: 10px;\n      border-radius: 10px;\n      background: #94a3b8;\n    }\n    .status-dot.running {\n      background: #10b981;\n      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);\n    }\n    .status-dot.paused {\n      background: #f59e0b;\n    }\n    .status-dot.ended {\n      background: #ef4444;\n    }\n\n    .info-hud {\n      position: absolute;\n      bottom: 8px;\n      right: 10px;\n      background: rgba(0, 0, 0, 0.6);\n      backdrop-filter: blur(4px);\n      -webkit-backdrop-filter: blur(4px);\n      padding: 6px 14px 8px 14px;\n      border-radius: 18px;\n      color: #e9edf2;\n      font-size: 0.8rem;\n      display: flex;\n      gap: 18px;\n      font-variant-numeric: tabular-nums;\n      border: 1px solid rgba(255,255,255,0.08);\n      pointer-events: none;\n      flex-wrap: wrap;\n      line-height: 1.5;\n    }\n    .info-hud span {\n      white-space: nowrap;\n    }\n    .info-hud .val {\n      font-family: \"SF Mono\", \"Menlo\", monospace;\n      font-weight: 500;\n      color: white;\n      margin-left: 3px;\n    }\n\n    .controls-panel {\n      background: #f8faff;\n      border-radius: 28px;\n      padding: 14px 14px 10px;\n      box-shadow: inset 0 1px 3px rgba(0,0,0,0.02), 0 4px 8px -6px rgba(0,0,0,0.08);\n      display: flex;\n      flex-direction: column;\n      gap: 8px;\n      transition: all 0.2s;\n    }\n\n    .slider-grid {\n      display: flex;\n      flex-wrap: wrap;\n      gap: 2px 12px;\n      justify-content: space-between;\n      align-items: stretch;\n    }\n\n    .slider-item {\n      flex: 1 0 100px;\n      min-width: 90px;\n      display: flex;\n      flex-direction: column;\n      gap: 0px;\n      padding: 6px 4px 2px;\n      background: rgba(255, 255, 255, 0.5);\n      border-radius: 28px;\n    }\n\n    .slider-label {\n      display: flex;\n      justify-content: space-between;\n      font-size: 0.75rem;\n      font-weight: 500;\n      color: #1e2b41;\n      padding: 0 4px;\n    }\n    .slider-label .value {\n      font-family: \"SF Mono\", \"Menlo\", monospace;\n      font-weight: 600;\n      background: #eef2f7;\n      padding: 0 10px;\n      border-radius: 20px;\n      font-size: 0.7rem;\n      line-height: 1.8;\n    }\n    input[type=\"range\"] {\n      width: 100%;\n      height: 28px;\n      -webkit-appearance: none;\n      appearance: none;\n      background: transparent;\n      margin: 2px 0;\n      touch-action: manipulation;\n    }\n    input[type=\"range\"]::-webkit-slider-runnable-track {\n      height: 6px;\n      background: #d0d9e8;\n      border-radius: 8px;\n    }\n    input[type=\"range\"]::-webkit-slider-thumb {\n      -webkit-appearance: none;\n      width: 28px;\n      height: 28px;\n      background: #2a4b7a;\n      border-radius: 28px;\n      margin-top: -11px;\n      box-shadow: 0 2px 8px rgba(0, 20, 40, 0.2);\n      border: 3px solid white;\n      transition: 0.05s;\n      cursor: grab;\n    }\n    input[type=\"range\"]::-moz-range-thumb {\n      width: 28px;\n      height: 28px;\n      background: #2a4b7a;\n      border-radius: 28px;\n      border: 3px solid white;\n      cursor: grab;\n    }\n    input[type=\"range\"]:focus {\n      outline: none;\n    }\n\n    .action-row {\n      display: flex;\n      flex-wrap: wrap;\n      align-items: center;\n      justify-content: center;\n      gap: 8px 10px;\n      margin-top: 6px;\n      padding: 2px 0;\n    }\n\n    button {\n      background: #edf2f9;\n      border: none;\n      padding: 10px 20px;\n      border-radius: 60px;\n      font-weight: 600;\n      font-size: 0.9rem;\n      color: #0b1a32;\n      min-height: 48px;\n      min-width: 64px;\n      display: inline-flex;\n      align-items: center;\n      justify-content: center;\n      gap: 8px;\n      box-shadow: 0 2px 4px rgba(0,0,0,0.02);\n      transition: all 0.1s ease;\n      touch-action: manipulation;\n      cursor: pointer;\n      flex: 0 1 auto;\n      border: 1px solid rgba(0,0,0,0.02);\n    }\n    button:active {\n      transform: scale(0.96);\n      background: #dce4ef;\n    }\n    button.primary {\n      background: #1f3b62;\n      color: white;\n      box-shadow: 0 4px 8px -4px rgba(20, 50, 100, 0.3);\n    }\n    button.primary:active {\n      background: #142a47;\n    }\n    button.reset-btn {\n      background: #ecf1f7;\n      color: #24405e;\n    }\n    .presets {\n      display: flex;\n      flex-wrap: wrap;\n      justify-content: center;\n      gap: 8px;\n      margin-top: 4px;\n    }\n    .presets button {\n      font-size: 0.75rem;\n      background: #e6ecf5;\n      padding: 6px 16px;\n      min-height: 38px;\n      border-radius: 40px;\n      flex: 0 1 auto;\n      color: #1d334e;\n      font-weight: 500;\n    }\n    .presets button:active {\n      background: #ccd7e8;\n    }\n\n    /* 移动端适配 */\n    @media (max-width: 500px) {\n      .sim-card { padding: 10px; }\n      .slider-item { min-width: 80px; flex: 1 0 40%; }\n      .info-hud { font-size: 0.65rem; gap: 8px; padding: 4px 10px; bottom: 4px; right: 5px; }\n      .status-indicator { top: 6px; left: 6px; padding: 2px 12px; font-size: 0.7rem; }\n      button { min-height: 44px; padding: 8px 14px; font-size: 0.8rem; }\n      h1 { font-size: 1.2rem; }\n    }\n\n    @media (max-width: 400px) {\n      .action-row { flex-direction: row; flex-wrap: wrap; }\n      .slider-grid { flex-direction: column; gap: 2px; }\n      .slider-item { min-width: 100%; }\n    }\n\n    /* keyboard hints */\n    .kbd-hint {\n      font-size: 0.6rem;\n      opacity: 0.5;\n      margin-left: 6px;\n      font-weight: 400;\n    }\n\n    .teacher-annotation {\n      pointer-events: none;\n      font-weight: 500;\n      box-shadow: 0 8px 20px rgba(0,0,0,0.2);\n    }\n  </style>\n\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css\">\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js\"></script>\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js\"></script>\n<script>\ndocument.addEventListener(\"DOMContentLoaded\", function() {\n    const katexOptions = {\n        delimiters: [\n            {left: '\\\\[', right: '\\\\]', display: true},\n            {left: '\\\\(', right: '\\\\)', display: false},\n            {left: '$$', right: '$$', display: true},\n            {left: '$', right: '$', display: false}\n        ],\n        throwOnError: false,\n        strict: false,\n        trust: true\n    };\n\n    let renderTimeout;\n    function safeRender() {\n        if (renderTimeout) clearTimeout(renderTimeout);\n        renderTimeout = setTimeout(() => {\n            renderMathInElement(document.body, katexOptions);\n        }, 100);\n    }\n\n    renderMathInElement(document.body, katexOptions);\n\n    const observer = new MutationObserver((mutations) => {\n        let shouldRender = false;\n        mutations.forEach((mutation) => {\n            if (mutation.target &&\n                mutation.target.className &&\n                typeof mutation.target.className === 'string' &&\n                mutation.target.className.includes('katex')) {\n                return;\n            }\n            shouldRender = true;\n        });\n\n        if (shouldRender) {\n            safeRender();\n        }\n    });\n\n    observer.observe(document.body, {\n        childList: true,\n        subtree: true,\n        characterData: true\n    });\n\n    setInterval(() => {\n        const text = document.body.innerText;\n        if (text.includes('\\\\(') || text.includes('$$')) {\n            safeRender();\n        }\n    }, 2000);\n});\n</script>\n</head>\n<body>\n  <div class=\"sim-card\">\n    <h1>📈 二次函数 · 系数探索 <small>y = ax² + bx + c</small></h1>\n\n    <div class=\"canvas-wrapper\" id=\"canvasWrapper\">\n      <canvas id=\"graphCanvas\" width=\"800\" height=\"500\"></canvas>\n\n      <div class=\"status-indicator\" id=\"statusIndicator\">\n        <span class=\"status-dot\" id=\"statusDot\"></span>\n        <span id=\"statusText\">就绪</span>\n      </div>\n\n      <div class=\"info-hud\" id=\"hudDisplay\">\n        <span>顶点 <span class=\"val\" id=\"vertexDisplay\">(0, 0)</span></span>\n        <span>对称轴 <span class=\"val\" id=\"axisDisplay\">x = 0</span></span>\n      </div>\n    </div>\n\n    <div class=\"controls-panel\">\n      <div class=\"slider-grid\">\n        <div class=\"slider-item\" data-var=\"a\">\n          <div class=\"slider-label\"><span>a (开口)</span><span class=\"value\" id=\"a-display\">1.0</span></div>\n          <input type=\"range\" id=\"a-slider\" min=\"-4\" max=\"4\" step=\"0.1\" value=\"1\" aria-label=\"系数 a 调节滑块\">\n        </div>\n        <div class=\"slider-item\" data-var=\"b\">\n          <div class=\"slider-label\"><span>b (对称轴)</span><span class=\"value\" id=\"b-display\">0.0</span></div>\n          <input type=\"range\" id=\"b-slider\" min=\"-6\" max=\"6\" step=\"0.2\" value=\"0\" aria-label=\"系数 b 调节滑块\">\n        </div>\n        <div class=\"slider-item\" data-var=\"c\">\n          <div class=\"slider-label\"><span>c (上下移)</span><span class=\"value\" id=\"c-display\">0.0</span></div>\n          <input type=\"range\" id=\"c-slider\" min=\"-5\" max=\"5\" step=\"0.2\" value=\"0\" aria-label=\"系数 c 调节滑块\">\n        </div>\n      </div>\n\n      <div class=\"action-row\">\n        <button id=\"start-btn\" class=\"primary\">▶ 绘制抛物线</button>\n        <button id=\"reset-btn\" class=\"reset-btn\">↺ 重置</button>\n      </div>\n\n      <div class=\"presets\">\n        <button data-preset='{\"a\":1,\"b\":0,\"c\":0}'>🌸 标准 y=x²</button>\n        <button data-preset='{\"a\":-0.8,\"b\":2,\"c\":1}'>🌧 开口向下</button>\n        <button data-preset='{\"a\":0.3,\"b\":-3,\"c\":2}'>🌱 窄&右移</button>\n        <button data-preset='{\"a\":2,\"b\":4,\"c\":-1}'>🔥 陡峭</button>\n      </div>\n    </div>\n  </div>\n\n  <script type=\"application/json\" id=\"widget-config\">\n  {\n    \"type\": \"simulation\",\n    \"concept\": \"quadratic_coefficients\",\n    \"description\": \"通过滑块调整二次函数 y = ax² + bx + c 的系数，实时观察抛物线形状、位置与对称轴的变化。\",\n    \"variables\": [\n      { \"name\": \"a\", \"label\": \"系数 a\", \"min\": -4, \"max\": 4, \"step\": 0.1, \"default\": 1, \"unit\": \"\" },\n      { \"name\": \"b\", \"label\": \"系数 b\", \"min\": -6, \"max\": 6, \"step\": 0.2, \"default\": 0, \"unit\": \"\" },\n      { \"name\": \"c\", \"label\": \"系数 c\", \"min\": -5, \"max\": 5, \"step\": 0.2, \"default\": 0, \"unit\": \"\" }\n    ],\n    \"presets\": [\n      { \"name\": \"标准 y=x²\", \"variables\": { \"a\": 1, \"b\": 0, \"c\": 0 } },\n      { \"name\": \"开口向下\", \"variables\": { \"a\": -0.8, \"b\": 2, \"c\": 1 } },\n      { \"name\": \"窄 & 右移\", \"variables\": { \"a\": 0.3, \"b\": -3, \"c\": 2 } },\n      { \"name\": \"陡峭\", \"variables\": { \"a\": 2, \"b\": 4, \"c\": -1 } }\n    ]\n  }\n  </script>\n\n  <script>\n    (function() {\n      \"use strict\";\n\n      // DOM refs\n      const canvas = document.getElementById('graphCanvas');\n      const ctx = canvas.getContext('2d');\n      const wrapper = document.getElementById('canvasWrapper');\n\n      const aSlider = document.getElementById('a-slider');\n      const bSlider = document.getElementById('b-slider');\n      const cSlider = document.getElementById('c-slider');\n      const aDisplay = document.getElementById('a-display');\n      const bDisplay = document.getElementById('b-display');\n      const cDisplay = document.getElementById('c-display');\n\n      const startBtn = document.getElementById('start-btn');\n      const resetBtn = document.getElementById('reset-btn');\n\n      const statusDot = document.getElementById('statusDot');\n      const statusText = document.getElementById('statusText');\n      const vertexDisplay = document.getElementById('vertexDisplay');\n      const axisDisplay = document.getElementById('axisDisplay');\n\n      // State\n      let a = 1, b = 0, c = 0;\n      let running = false;\n      let animFrame = null;\n      let time = 0;          // for subtle animation (floating particles / glow)\n      \n      // 重置初始值\n      const DEFAULT_A = 1, DEFAULT_B = 0, DEFAULT_C = 0;\n\n      // size management\n      function resizeCanvas() {\n        const rect = wrapper.getBoundingClientRect();\n        const w = rect.width;\n        const h = rect.height;\n        if (w > 0 && h > 0) {\n          canvas.width = w * window.devicePixelRatio;\n          canvas.height = h * window.devicePixelRatio;\n          canvas.style.width = w + 'px';\n          canvas.style.height = h + 'px';\n          ctx.setTransform(1, 0, 0, 1, 0, 0);\n          ctx.scale(window.devicePixelRatio, window.devicePixelRatio);\n          drawOnce();\n        }\n      }\n\n      // 绘图核心 (with animation)\n      function drawQuadratic(animate = false) {\n        const w = canvas.width / window.devicePixelRatio;\n        const h = canvas.height / window.devicePixelRatio;\n        if (w < 10) return;\n        \n        // 留边距\n        const leftMargin = 30;\n        const rightMargin = 20;\n        const topMargin = 28;\n        const bottomMargin = 26;\n        const plotW = w - leftMargin - rightMargin;\n        const plotH = h - topMargin - bottomMargin;\n\n        // 坐标系范围: x ∈ [-8, 8], y ∈ [-5, 6] (为了美观)\n        const xMin = -8, xMax = 8, yMin = -4.5, yMax = 6.5;\n        const scaleX = plotW / (xMax - xMin);\n        const scaleY = plotH / (yMax - yMin);\n        \n        function toCanvasX(x) { return leftMargin + (x - xMin) * scaleX; }\n        function toCanvasY(y) { return topMargin + (yMax - y) * scaleY; }\n\n        ctx.clearRect(0, 0, w, h);\n\n        // ----- 绘制网格 + 轴 -----\n        ctx.save();\n        ctx.strokeStyle = \"#dbe1ed\";\n        ctx.lineWidth = 0.6;\n        // 网格\n        for (let x = -8; x <= 8; x += 1) {\n          ctx.beginPath();\n          ctx.moveTo(toCanvasX(x), topMargin);\n          ctx.lineTo(toCanvasX(x), topMargin + plotH);\n          ctx.stroke();\n        }\n        for (let y = -4; y <= 6; y += 1) {\n          ctx.beginPath();\n          ctx.moveTo(leftMargin, toCanvasY(y));\n          ctx.lineTo(leftMargin + plotW, toCanvasY(y));\n          ctx.stroke();\n        }\n\n        // 轴\n        ctx.strokeStyle = \"#2b405e\";\n        ctx.lineWidth = 1.8;\n        ctx.beginPath();\n        ctx.moveTo(toCanvasX(0), topMargin);\n        ctx.lineTo(toCanvasX(0), topMargin + plotH);\n        ctx.stroke();\n        ctx.beginPath();\n        ctx.moveTo(leftMargin, toCanvasY(0));\n        ctx.lineTo(leftMargin + plotW, toCanvasY(0));\n        ctx.stroke();\n\n        // 轴上刻度短线\n        ctx.fillStyle = \"#1e3152\";\n        ctx.font = \"10px 'SF Pro', 'Helvetica Neue', sans-serif\";\n        ctx.textAlign = \"center\";\n        ctx.textBaseline = \"top\";\n        for (let x = -8; x <= 8; x += 1) {\n          if (x === 0) continue;\n          ctx.fillText(x, toCanvasX(x), toCanvasY(0) + 4);\n          ctx.beginPath();\n          ctx.moveTo(toCanvasX(x), toCanvasY(0) - 4);\n          ctx.lineTo(toCanvasX(x), toCanvasY(0) + 4);\n          ctx.strokeStyle = \"#65758e\";\n          ctx.lineWidth = 1;\n          ctx.stroke();\n        }\n        ctx.textAlign = \"right\";\n        ctx.textBaseline = \"middle\";\n        for (let y = -4; y <= 6; y += 1) {\n          if (y === 0) continue;\n          ctx.fillText(y, leftMargin - 8, toCanvasY(y));\n        }\n        ctx.restore();\n\n        // ----- 二次函数曲线 -----\n        const steps = 240;\n        ctx.save();\n        ctx.beginPath();\n        ctx.strokeStyle = \"#c0265a\";\n        ctx.lineWidth = 3.2;\n        ctx.shadowColor = \"rgba(192, 38, 90, 0.25)\";\n        ctx.shadowBlur = 12;\n        let first = true;\n        for (let i = 0; i <= steps; i++) {\n          const t = i / steps;\n          const x = xMin + t * (xMax - xMin);\n          const yVal = a * x * x + b * x + c;\n          const canvasX = toCanvasX(x);\n          const canvasY = toCanvasY(yVal);\n          if (canvasY < topMargin - 20 || canvasY > topMargin + plotH + 20) {\n            first = true;\n            continue;\n          }\n          if (first) {\n            ctx.moveTo(canvasX, canvasY);\n            first = false;\n          } else {\n            ctx.lineTo(canvasX, canvasY);\n          }\n        }\n        ctx.stroke();\n        ctx.restore();\n\n        // ----- 顶点标记 -----\n        const vertexX = -b / (2 * a);\n        const vertexY = a * vertexX * vertexX + b * vertexX + c;\n        const vx = toCanvasX(vertexX);\n        const vy = toCanvasY(vertexY);\n\n        ctx.save();\n        ctx.shadowBlur = 12;\n        ctx.shadowColor = \"rgba(0,0,0,0.15)\";\n        ctx.beginPath();\n        ctx.arc(vx, vy, 7, 0, 2 * Math.PI);\n        ctx.fillStyle = \"#0f3b5e\";\n        ctx.fill();\n        ctx.fillStyle = \"white\";\n        ctx.font = \"bold 11px 'SF Pro', sans-serif\";\n        ctx.textAlign = \"center\";\n        ctx.textBaseline = \"bottom\";\n        ctx.fillText(`顶点`, vx, vy - 10);\n        ctx.restore();\n\n        // 对称轴 (虚线)\n        ctx.save();\n        ctx.setLineDash([6, 6]);\n        ctx.strokeStyle = \"#3a6e9f\";\n        ctx.lineWidth = 1.8;\n        ctx.beginPath();\n        ctx.moveTo(vx, topMargin + 6);\n        ctx.lineTo(vx, topMargin + plotH - 6);\n        ctx.stroke();\n        ctx.setLineDash([]);\n        ctx.restore();\n\n        // 更新 HUD\n        vertexDisplay.textContent = `(${vertexX.toFixed(2)}, ${vertexY.toFixed(2)})`;\n        axisDisplay.textContent = `x = ${vertexX.toFixed(2)}`;\n\n        // 如果正在运行，加一点闪烁粒子 (动画感)\n        if (animate && running) {\n          ctx.save();\n          for (let i = 0; i < 18; i++) {\n            const phase = (i / 18 + time * 0.02) % 1;\n            const x = xMin + (i / 18) * (xMax - xMin);\n            const yVal = a * x * x + b * x + c + (Math.sin(time * 0.1 + i) * 0.2);\n            const cx = toCanvasX(x);\n            const cy = toCanvasY(yVal);\n            ctx.beginPath();\n            ctx.arc(cx, cy, 2 + 1.5 * Math.sin(time * 0.05 + i), 0, 2 * Math.PI);\n            ctx.fillStyle = `rgba(210, 60, 90, ${0.2 + 0.3 * Math.sin(time*0.1 + i)})`;\n            ctx.fill();\n          }\n          ctx.restore();\n        }\n      }\n\n      function drawOnce() {\n        drawQuadratic(false);\n      }\n\n      // 动画循环\n      function animateLoop() {\n        if (!running) return;\n        time++;\n        drawQuadratic(true);\n        animFrame = requestAnimationFrame(animateLoop);\n      }\n\n      function startSimulation() {\n        if (running) {\n          // 暂停\n          running = false;\n          startBtn.innerHTML = '▶ 绘制抛物线';\n          statusDot.className = 'status-dot paused';\n          statusText.textContent = '暂停';\n          if (animFrame) cancelAnimationFrame(animFrame);\n          animFrame = null;\n          drawOnce();\n          return;\n        }\n        // 启动\n        running = true;\n        startBtn.innerHTML = '⏸ 暂停';\n        statusDot.className = 'status-dot running';\n        statusText.textContent = '动画中';\n        if (animFrame) cancelAnimationFrame(animFrame);\n        animateLoop();\n      }\n\n      function resetSimulation() {\n        // 停止动画\n        running = false;\n        if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }\n        startBtn.innerHTML = '▶ 绘制抛物线';\n        statusDot.className = 'status-dot';\n        statusText.textContent = '就绪';\n        \n        // 重置滑块与变量\n        aSlider.value = DEFAULT_A; a = DEFAULT_A;\n        bSlider.value = DEFAULT_B; b = DEFAULT_B;\n        cSlider.value = DEFAULT_C; c = DEFAULT_C;\n        updateDisplays();\n        drawOnce();\n      }\n\n      function updateDisplays() {\n        aDisplay.textContent = Number(a).toFixed(1);\n        bDisplay.textContent = Number(b).toFixed(1);\n        cDisplay.textContent = Number(c).toFixed(1);\n      }\n\n      function readSliders() {\n        a = parseFloat(aSlider.value);\n        b = parseFloat(bSlider.value);\n        c = parseFloat(cSlider.value);\n        updateDisplays();\n        if (!running) drawOnce();\n        else { /* 动画中自动更新 */ }\n      }\n\n      // 预设应用\n      function applyPreset(values) {\n        resetSimulation();\n        aSlider.value = values.a; a = values.a;\n        bSlider.value = values.b; b = values.b;\n        cSlider.value = values.c; c = values.c;\n        updateDisplays();\n        drawOnce();\n      }\n\n      // 事件绑定\n      aSlider.addEventListener('input', readSliders);\n      bSlider.addEventListener('input', readSliders);\n      cSlider.addEventListener('input', readSliders);\n\n      startBtn.addEventListener('click', startSimulation);\n      resetBtn.addEventListener('click', resetSimulation);\n\n      // 预设按钮\n      document.querySelectorAll('[data-preset]').forEach(btn => {\n        btn.addEventListener('click', function(e) {\n          const vals = JSON.parse(this.dataset.preset);\n          applyPreset(vals);\n        });\n      });\n\n      // 窗口大小\n      window.addEventListener('resize', resizeCanvas);\n      const ro = new ResizeObserver(() => resizeCanvas());\n      ro.observe(wrapper);\n\n      // 键盘快捷操作 (空格 播放/暂停, R 重置)\n      document.addEventListener('keydown', function(e) {\n        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;\n        if (e.key === ' ' || e.code === 'Space') {\n          e.preventDefault();\n          startSimulation();\n        }\n        if (e.key === 'r' || e.key === 'R') {\n          e.preventDefault();\n          resetSimulation();\n        }\n      });\n\n      // 初始化\n      (function init() {\n        readSliders();\n        resizeCanvas();\n        drawOnce();\n        statusDot.className = 'status-dot';\n        statusText.textContent = '就绪';\n      })();\n\n      // ========== postMessage 教师控制 ==========\n      window.addEventListener('message', function(event) {\n        const { type, target, state, content } = event.data || {};\n\n        switch (type) {\n          case 'SET_WIDGET_STATE': {\n            if (state) {\n              Object.entries(state).forEach(([key, value]) => {\n                const slider = document.getElementById(key + '-slider') || document.querySelector('[data-var=\"' + key + '\"] input');\n                if (slider) {\n                  slider.value = value;\n                  slider.dispatchEvent(new Event('input', { bubbles: true }));\n                }\n              });\n            }\n            break;\n          }\n\n          case 'HIGHLIGHT_ELEMENT': {\n            const highlightEl = document.querySelector(target);\n            if (highlightEl) {\n              highlightEl.style.outline = '3px solid rgba(139, 92, 246, 0.8)';\n              highlightEl.style.outlineOffset = '4px';\n              highlightEl.style.animation = 'pulse-highlight 2s infinite';\n              setTimeout(() => {\n                highlightEl.style.outline = '';\n                highlightEl.style.animation = '';\n              }, 3000);\n            }\n            break;\n          }\n\n          case 'ANNOTATE_ELEMENT': {\n            const annotateEl = document.querySelector(target);\n            if (annotateEl && content) {\n              const rect = annotateEl.getBoundingClientRect();\n              const tooltip = document.createElement('div');\n              tooltip.className = 'teacher-annotation';\n              tooltip.style.cssText = 'position:fixed; top:' + (rect.top - 40) + 'px; left:' + rect.left + 'px; background:rgba(139,92,246,0.95); color:white; padding:8px 12px; border-radius:8px; font-size:14px; z-index:1000; animation:fadeIn 0.3s;';\n              tooltip.textContent = content;\n              document.body.appendChild(tooltip);\n              setTimeout(() => tooltip.remove(), 4000);\n            }\n            break;\n          }\n\n          case 'REVEAL_ELEMENT': {\n            const revealEl = document.querySelector(target);\n            if (revealEl) {\n              revealEl.style.display = '';\n              revealEl.style.opacity = '1';\n            }\n            break;\n          }\n        }\n      });\n\n      // 添加关键帧动画 (已经在全局 style 中)\n      const style = document.createElement('style');\n      style.textContent = '@keyframes pulse-highlight { 0%, 100% { outline-color: rgba(139, 92, 246, 0.8); } 50% { outline-color: rgba(139, 92, 246, 0.4); } } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }';\n      document.head.appendChild(style);\n\n    })();\n  </script>\n</body>\n</html>",
+        "widgetType": "simulation",
+        "widgetConfig": {
+          "type": "simulation",
+          "concept": "quadratic_coefficients",
+          "description": "通过滑块调整二次函数 y = ax² + bx + c 的系数，实时观察抛物线形状、位置与对称轴的变化。",
+          "variables": [
+            {
+              "name": "a",
+              "label": "系数 a",
+              "min": -4,
+              "max": 4,
+              "step": 0.1,
+              "default": 1,
+              "unit": ""
+            },
+            {
+              "name": "b",
+              "label": "系数 b",
+              "min": -6,
+              "max": 6,
+              "step": 0.2,
+              "default": 0,
+              "unit": ""
+            },
+            {
+              "name": "c",
+              "label": "系数 c",
+              "min": -5,
+              "max": 5,
+              "step": 0.2,
+              "default": 0,
+              "unit": ""
+            }
+          ],
+          "presets": [
+            {
+              "name": "标准 y=x²",
+              "variables": {
+                "a": 1,
+                "b": 0,
+                "c": 0
+              }
+            },
+            {
+              "name": "开口向下",
+              "variables": {
+                "a": -0.8,
+                "b": 2,
+                "c": 1
+              }
+            },
+            {
+              "name": "窄 & 右移",
+              "variables": {
+                "a": 0.3,
+                "b": -3,
+                "c": 2
+              }
+            },
+            {
+              "name": "陡峭",
+              "variables": {
+                "a": 2,
+                "b": 4,
+                "c": -1
+              }
+            }
+          ]
+        },
+        "teacherActions": [
+          {
+            "id": "intro",
+            "type": "speech",
+            "content": "欢迎来到二次函数系数模拟器！通过调节 a、b、c 三个滑块，你可以直观地看到抛物线 y = ax² + bx + c 的形状、位置和对称轴如何变化。",
+            "label": "开始演示"
+          },
+          {
+            "id": "highlight_a",
+            "type": "highlight",
+            "target": "#a-slider",
+            "content": "滑块 a 控制二次项系数。当 a > 0 时抛物线开口向上，a < 0 时开口向下；|a| 越大抛物线越窄，|a| 越小抛物线越宽。试试拖动看看效果。",
+            "label": "调节系数 a"
+          },
+          {
+            "id": "demo_a_negative",
+            "type": "setState",
+            "state": {
+              "a": -0.8,
+              "b": 2,
+              "c": 1
+            },
+            "content": "我们来看一个开口向下的例子：设 a = -0.8, b = 2, c = 1。注意抛物线的开口翻转了，对称轴也发生了移动。",
+            "label": "开口向下演示"
+          },
+          {
+            "id": "highlight_b",
+            "type": "highlight",
+            "target": "#b-slider",
+            "content": "滑块 b 控制一次项系数。改变 b 会使抛物线的对称轴左右移动，同时顶点位置也会变化。试着改变 b 值，观察对称轴如何沿着 x 轴平移。",
+            "label": "调节系数 b"
+          },
+          {
+            "id": "demo_b_right",
+            "type": "setState",
+            "state": {
+              "a": 0.3,
+              "b": -3,
+              "c": 2
+            },
+            "content": "现在设 a = 0.3, b = -3, c = 2。可以看到抛物线变宽了，对称轴向右移动到了 x = 5 的位置。b 的符号决定了对称轴移动的方向。",
+            "label": "窄且右移演示"
+          },
+          {
+            "id": "highlight_c",
+            "type": "highlight",
+            "target": "#c-slider",
+            "content": "滑块 c 控制常数项。改变 c 会使整条抛物线上下平移：c 增大时上移，c 减小时下移。试试拖动滑块，注意顶点在 y 轴方向的变化。",
+            "label": "调节系数 c"
+          },
+          {
+            "id": "summary",
+            "type": "speech",
+            "content": "总结一下：a 决定开口方向和宽窄，b 影响对称轴位置，c 控制上下平移。你可以尝试不同的系数组合，观察它们如何共同决定抛物线形状。",
+            "label": "总结规律"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_5fcFkTnD",
+          "title": "开始演示",
+          "type": "speech",
+          "text": "欢迎来到二次函数系数模拟器！通过调节 a、b、c 三个滑块，你可以直观地看到抛物线 y = ax² + bx + c 的形状、位置和对称轴如何变化。"
+        },
+        {
+          "id": "action_nLPS0ePo",
+          "title": "调节系数 a",
+          "type": "widget_highlight",
+          "target": "#a-slider"
+        },
+        {
+          "id": "action_nLPS0ePo_speech",
+          "type": "speech",
+          "text": "滑块 a 控制二次项系数。当 a > 0 时抛物线开口向上，a < 0 时开口向下；|a| 越大抛物线越窄，|a| 越小抛物线越宽。试试拖动看看效果。",
+          "title": "调节系数 a"
+        },
+        {
+          "id": "action_9Fui4f5B",
+          "title": "开口向下演示",
+          "type": "widget_setState",
+          "state": {
+            "a": -0.8,
+            "b": 2,
+            "c": 1
+          }
+        },
+        {
+          "id": "action_9Fui4f5B_speech",
+          "type": "speech",
+          "text": "我们来看一个开口向下的例子：设 a = -0.8, b = 2, c = 1。注意抛物线的开口翻转了，对称轴也发生了移动。",
+          "title": "开口向下演示"
+        },
+        {
+          "id": "action_fFVTSnKp",
+          "title": "调节系数 b",
+          "type": "widget_highlight",
+          "target": "#b-slider"
+        },
+        {
+          "id": "action_fFVTSnKp_speech",
+          "type": "speech",
+          "text": "滑块 b 控制一次项系数。改变 b 会使抛物线的对称轴左右移动，同时顶点位置也会变化。试着改变 b 值，观察对称轴如何沿着 x 轴平移。",
+          "title": "调节系数 b"
+        },
+        {
+          "id": "action_f_HnozPa",
+          "title": "窄且右移演示",
+          "type": "widget_setState",
+          "state": {
+            "a": 0.3,
+            "b": -3,
+            "c": 2
+          }
+        },
+        {
+          "id": "action_f_HnozPa_speech",
+          "type": "speech",
+          "text": "现在设 a = 0.3, b = -3, c = 2。可以看到抛物线变宽了，对称轴向右移动到了 x = 5 的位置。b 的符号决定了对称轴移动的方向。",
+          "title": "窄且右移演示"
+        },
+        {
+          "id": "action_liTla_mh",
+          "title": "调节系数 c",
+          "type": "widget_highlight",
+          "target": "#c-slider"
+        },
+        {
+          "id": "action_liTla_mh_speech",
+          "type": "speech",
+          "text": "滑块 c 控制常数项。改变 c 会使整条抛物线上下平移：c 增大时上移，c 减小时下移。试试拖动滑块，注意顶点在 y 轴方向的变化。",
+          "title": "调节系数 c"
+        },
+        {
+          "id": "action_Nv5FGc7u",
+          "title": "总结规律",
+          "type": "speech",
+          "text": "总结一下：a 决定开口方向和宽窄，b 影响对称轴位置，c 控制上下平移。你可以尝试不同的系数组合，观察它们如何共同决定抛物线形状。"
+        }
+      ],
+      "createdAt": 1781661277864,
+      "updatedAt": 1781661277864
+    },
+    {
+      "id": "scene_fJEQD3iEJS",
+      "stageId": "3t73kPExLX",
+      "type": "quiz",
+      "title": "基础知识小测",
+      "order": 4,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "二次函数 y = -2(x - 3)^2 + 5 的顶点坐标是？",
+            "options": [
+              {
+                "value": "A",
+                "label": "(-2, 5)"
+              },
+              {
+                "value": "B",
+                "label": "(3, 5)"
+              },
+              {
+                "value": "C",
+                "label": "(-3, 5)"
+              },
+              {
+                "value": "D",
+                "label": "(3, -5)"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "二次函数顶点式 y = a(x - h)^2 + k 中，顶点坐标为 (h, k)。本题中 h = 3，k = 5，故顶点坐标为 (3, 5)。选项 A 错误地包含了系数 a；选项 C 符号错误；选项 D 混淆了 h 的符号。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "short_answer",
+            "question": "请写出二次函数 y = x^2 - 4x + 1 的对称轴方程，并判断其开口方向。",
+            "commentPrompt": "评分标准：(1) 正确写出对称轴方程 x = 2 - 50% (2) 正确判断开口向上 - 30% (3) 推理过程清晰完整 - 20%",
+            "analysis": "对称轴方程为 x = 2。因为二次项系数 a = 1 > 0，所以抛物线开口向上。",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "二次函数的顶点式 y = a(x - h)^2 + k 中，顶点坐标为 (h, k)，对称轴为直线 x = h。",
+          "二次项系数 a 决定抛物线的开口方向：a > 0 时开口向上，a < 0 时开口向下。",
+          "一般式 y = ax^2 + bx + c 可通过配方转化为顶点式，以便直接读取顶点坐标和对称轴。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_FWSof-ND",
+          "type": "speech",
+          "text": "同学们，我们已经学习了二次函数的基本概念和图像性质，现在是时候来检验一下大家的掌握程度啦！别紧张，测试只是帮助我们找到需要加强的地方。"
+        },
+        {
+          "id": "action_ktqWs0xz",
+          "type": "speech",
+          "text": "先来看第一道选择题。二次函数 y = -2(x - 3)^2 + 5 的顶点坐标是？这道题考察的是二次函数的顶点式 y = a(x - h)^2 + k，其中顶点坐标就是 (h, k)。注意看，这里 a = -2，顶点是 (3, 5)，所以正确答案是 B。"
+        },
+        {
+          "id": "action_IOhXEDQG",
+          "type": "speech",
+          "text": "很多同学容易出错的地方是把 x - 3 中的 -3 误认为是顶点横坐标。记住，顶点式里是 (x - h)，所以 h = 3，而不是 -3。开口方向由 a 的正负决定，a = -2 是负数，所以开口向下。"
+        },
+        {
+          "id": "action_5CAOgq7G",
+          "type": "speech",
+          "text": "接下来是简答题：请写出二次函数 y = x^2 - 4x + 1 的对称轴方程，并判断其开口方向。要解答这个问题，我们需要回忆配方法或者直接用顶点公式。这里 a = 1，b = -4，所以对称轴方程是 x = -b/(2a) = 2。a 大于 0，所以开口向上。"
+        },
+        {
+          "id": "action_wo0UElmc",
+          "type": "speech",
+          "text": "这道题的关键是掌握从一般式求对称轴的方法，以及开口方向与 a 的关系。如果你做对了，说明你已经掌握了这些核心概念；如果做错了，也别灰心，多练习几次就能熟悉了。"
+        },
+        {
+          "id": "action_vYkiv3Fd",
+          "type": "speech",
+          "text": "好了，这是这节课的最后一个小测试。希望大家能从这些题目中发现问题，巩固对二次函数的理解。有问题的话随时可以和老师讨论哦！"
+        }
+      ],
+      "createdAt": 1781661277864,
+      "updatedAt": 1781661277864
+    },
+    {
+      "id": "scene_qS13rXOnEB",
+      "stageId": "3t73kPExLX",
+      "type": "quiz",
+      "title": "综合提升小测",
+      "order": 7,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "multiple",
+            "question": "二次函数 y = -2x^2 + 8x - 5 可以转化为顶点式 y = a(x-h)^2 + k。下面关于转化过程和性质的描述，哪些是正确的？",
+            "options": [
+              {
+                "value": "A",
+                "label": "顶点坐标是 (2, 3)"
+              },
+              {
+                "value": "B",
+                "label": "对称轴是直线 x = 2"
+              },
+              {
+                "value": "C",
+                "label": "函数的最大值是 3"
+              },
+              {
+                "value": "D",
+                "label": "函数与y轴的交点坐标为 (0, -5)"
+              }
+            ],
+            "answer": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "analysis": "通过配方：y = -2(x^2 - 4x) - 5 = -2[(x-2)^2 - 4] - 5 = -2(x-2)^2 + 8 - 5 = -2(x-2)^2 + 3，所以顶点式为 y = -2(x-2)^2 + 3。顶点坐标为 (2, 3)，对称轴为 x = 2。由于a = -2 < 0，抛物线开口向下，所以函数有最大值3。当x=0时，y = -5，所以与y轴交点坐标为 (0, -5)。因此所有四个选项都正确。",
+            "points": 15,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "short_answer",
+            "question": "一个足球被踢出后的飞行高度h（米）与飞行时间t（秒）的关系近似满足二次函数 h = -5t^2 + 20t。请问：\n（1）足球飞行的最大高度是多少米？\n（2）从踢出到落地，足球在空中飞行了多长时间？\n\n请写出完整的解答过程，包括：建模思路、配方或公式法求最值、以及结论。",
+            "commentPrompt": "评分细则：\n(1) 正确将一般式化为顶点式或使用顶点坐标公式 - 40%\n(2) 正确求出最大高度 - 30%\n(3) 正确求出落地时间 - 20%\n(4) 步骤完整、表达清晰 - 10%",
+            "analysis": "参考解答：\n（1）配方法：h = -5t^2 + 20t = -5(t^2 - 4t) = -5[(t-2)^2 - 4] = -5(t-2)^2 + 20。所以顶点坐标为 (2, 20)，即当t=2秒时，最大高度为20米。\n（2）落地时h=0，所以 -5t^2 + 20t = 0，即 5t(4 - t) = 0，解得 t=0 或 t=4。t=0为踢出时刻，所以飞行时间为4秒。",
+            "points": 20,
+            "hasAnswer": false
+          },
+          {
+            "id": "q3",
+            "type": "single",
+            "question": "已知某商品的利润y（元）与售价x（元/件）的关系可近似表示为 y = -x^2 + 100x - 1600。为了使利润最大化，售价应定为多少元？",
+            "options": [
+              {
+                "value": "A",
+                "label": "40元"
+              },
+              {
+                "value": "B",
+                "label": "50元"
+              },
+              {
+                "value": "C",
+                "label": "60元"
+              },
+              {
+                "value": "D",
+                "label": "80元"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "利润函数 y = -x^2 + 100x - 1600 是开口向下的二次函数，在顶点处取得最大值。顶点横坐标公式为 x = -b/(2a) = -100/(2*(-1)) = 50。代入得 y = -(50)^2 + 100*50 - 1600 = -2500 + 5000 - 1600 = 900。所以当售价为50元时，可获得最大利润900元。故B正确。A选项40元时y=800元；C选项60元时y=800元；D选项80元时y=0元，均不是最大值。",
+            "points": 10,
+            "hasAnswer": true
+          }
+        ],
+        "knowledgePoints": [
+          "二次函数一般式 y=ax^2+bx+c 可以通过配方法转化为顶点式 y=a(x-h)^2+k，从而直接得到顶点坐标 (h,k) 和对称轴 x=h。",
+          "当二次项系数 a < 0 时，抛物线开口向下，函数在顶点处取得最大值；当 a > 0 时，开口向上，函数在顶点处取得最小值。",
+          "利用二次函数解决实际问题的关键是正确建立函数模型，并通过求顶点坐标或解方程找到最优解。",
+          "二次函数与x轴的交点（即对应方程 ax^2+bx+c=0 的解）可以帮助确定运动或变化过程中的关键时间点或平衡点。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_qPsJtnCF",
+          "type": "speech",
+          "text": "好了，同学们，我们已经把二次函数的顶点式、一般式互化和实际应用都学完了。现在是时候进行一个小小的综合提升小测，看看你们掌握得怎么样啦！"
+        },
+        {
+          "id": "action_fns15TAl",
+          "type": "speech",
+          "text": "小测一共有三道题，第一道是多项选择题，第二道是简答题，第三道是单选题。不用紧张，每题都和我们刚刚讲过的重点紧密相关。记住：配方、公式法求最值、建模思路，这些核心方法都要用上哦。"
+        },
+        {
+          "id": "action_oFa4LuZg",
+          "type": "speech",
+          "text": "首先看第一题：二次函数 y = -2x^2 + 8x - 5 转化为顶点式。这里的关键是配方法——先把二次项系数提出来，再配方。注意开口向下，顶点的纵坐标就是最大值。选项A、B、C都要仔细验证，D是求与y轴交点，这个简单，令x=0就可以了。"
+        },
+        {
+          "id": "action_WUTNKMBD",
+          "type": "speech",
+          "text": "接下来第二题是实际应用题：足球飞行的轨迹。要建立 h = -5t^2 + 20t 这个模型，求最大高度就用配方法或顶点公式，求飞行时间就是令 h = 0 解二次方程。记得写出完整的解答过程：建模、配方、结论，缺一不可哦。"
+        },
+        {
+          "id": "action_yXwLczmn",
+          "type": "speech",
+          "text": "最后看第三题：商品利润问题。利润函数 y = -x^2 + 100x - 1600，同样是开口向下的抛物线，求利润最大化的售价就是求顶点横坐标。用对称轴公式或配方法都能得出答案。这道题考的是把实际问题转化为二次函数最值模型的能力。"
+        },
+        {
+          "id": "action_ZpZoIPER",
+          "type": "speech",
+          "text": "好啦，题目思路都给你们点了一遍，现在拿出笔和纸，开始答题吧！遇到困难可以回顾前面的笔记。做完后我们来对答案，看看哪些地方还需要加强。"
+        }
+      ],
+      "createdAt": 1781661277864,
+      "updatedAt": 1781661277864
+    }
+  ],
+  "createdAt": "2026-06-17T01:54:37.864Z"
+}
