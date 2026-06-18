@@ -11,6 +11,8 @@ import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { generateHomework } from '@/lib/teaching/homework-generator';
+import { buildStudentProfile } from '@/lib/student/profile-builder';
+import { resolveSubject } from '@/lib/student/profile-config';
 
 const log = createLogger('TeachingHomeworkAPI');
 
@@ -45,12 +47,16 @@ export async function GET(
       return NextResponse.json({ error: '无权访问此任务' }, { status: 403 });
     }
 
+    // Build profile to resolve the real subject for the topic
+    const profile = await buildStudentProfile(userId);
+    const subject = resolveSubject(job.topic, profile);
+
     // Generate homework based on job feedback/quiz results
     const homework = await generateHomework(
       job.sectionFeedbacks ?? [],
       job.quizResults ?? [],
       job.topic,
-      'math',
+      subject,
     );
 
     log.info(`Homework generated for job ${jobId}: ${homework.questions.length} questions`);

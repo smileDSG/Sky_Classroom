@@ -16,7 +16,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
-import { invalidateProfileCache } from '@/lib/student/profile-builder';
+import { buildStudentProfile, invalidateProfileCache } from '@/lib/student/profile-builder';
+import { resolveSubject } from '@/lib/student/profile-config';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { getServerStorage } from '@/lib/server/server-storage';
@@ -103,12 +104,15 @@ export async function POST(request: NextRequest) {
       const quizDAO = createQuizAttemptDAO(storage);
       const mistakeDAO = createMistakeBookDAO(storage);
 
+      const profile = await buildStudentProfile(userId);
+      const subject = resolveSubject(topic, profile);
+
       const wrongAnswers = validatedAnswers.filter((a) => !a.isCorrect);
 
       if (wrongAnswers.length > 0) {
         await quizDAO.add({
           userId,
-          subject: 'unknown',
+          subject,
           difficulty: 'easy',
           topic,
           source: 'ai',

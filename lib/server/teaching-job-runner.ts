@@ -101,7 +101,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
       // Phase 2: Generate content concurrently
       let completedCount = 0;
       const failedSections: { section: LessonSection; index: number }[] = [];
-      for await (const { section, chunks, structured, index } of generateLessonConcurrent(plan)) {
+      for await (const { section, chunks, structured, index } of generateLessonConcurrent(plan, profile)) {
         await assertNotCancelled(jobId);
         completedCount++;
         // 使用 section 在 plan 中的真实索引，避免章节被丢弃/重试后 sectionIndex 错位
@@ -186,6 +186,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
           return (async () => {
             const { chunks, structured } = await generateSectionContent(
               section,
+              profile,
               precedingSections,
             );
             return { section, index, chunks, structured };
@@ -260,6 +261,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
             jobAfterContent.sectionFeedbacks ?? [],
             jobAfterContent.quizResults ?? [],
             jobAfterContent.plan?.sections ?? [],
+            profile.masteryByKnowledge,
           );
 
           if (decision.shouldSupplement && decision.supplementalSections.length > 0) {
@@ -303,7 +305,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
                 await assertNotCancelled(jobId);
                 const supSection = decision.supplementalSections[i];
                 const { chunks: supChunks, structured: supStructured } =
-                  await generateSectionContent(supSection, precedingSections);
+                  await generateSectionContent(supSection, profile, precedingSections);
                 const sectionData: GeneratedSectionData = {
                   section: supSection,
                   chunks: supChunks,
@@ -426,6 +428,9 @@ export async function retrySection(
     throw new Error(`Section ${sectionId} not found in plan`);
   }
 
+  // Re-build profile for the user so retry content is also personalized
+  const profile = job.userId ? await buildStudentProfile(job.userId) : undefined;
+
   // Find preceding sections for context
   const sectionIndex = job.plan.sections.findIndex((s) => s.id === sectionId);
   const precedingSections: PrecedingSection[] = [];
@@ -444,7 +449,7 @@ export async function retrySection(
   }
 
   // Regenerate
-  const { chunks, structured } = await generateSectionContent(section, precedingSections);
+  const { chunks, structured } = await generateSectionContent(section, profile, precedingSections);
   const sectionData: GeneratedSectionData = { section, chunks, structured };
 
   // Replace in job store

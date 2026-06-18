@@ -5,8 +5,8 @@
  * sections should be generated for weak knowledge points.
  */
 
-import type { LessonSection, LessonPlan } from './lesson-types';
-import type { ContentChunk } from './content-types';
+import type { LessonSection } from './lesson-types';
+import { getDifficultyForMastery } from '@/lib/student/profile-config';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('AdaptiveEngine');
@@ -58,10 +58,39 @@ export function analyzeWeakPoints(
   return Array.from(weakSet);
 }
 
+/** Map difficulty id to lesson section depth. */
+function difficultyToDepth(difficulty: string): 'basic' | 'intermediate' | 'advanced' {
+  switch (difficulty) {
+    case 'easy':
+      return 'basic';
+    case 'medium':
+      return 'intermediate';
+    case 'hard':
+      return 'advanced';
+    default:
+      return 'basic';
+  }
+}
+
+/** Map a depth label to a suggested duration in minutes. */
+function durationForDepth(depth: string): number {
+  switch (depth) {
+    case 'basic':
+      return 5;
+    case 'intermediate':
+      return 8;
+    case 'advanced':
+      return 12;
+    default:
+      return 5;
+  }
+}
+
 /** Build supplemental sections for weak knowledge points. */
 export function buildSupplementalSections(
   weakPoints: string[],
   existingSections: LessonSection[],
+  masteryByKnowledge?: Record<string, number>,
 ): LessonSection[] {
   if (weakPoints.length === 0) {
     return [];
@@ -91,13 +120,19 @@ export function buildSupplementalSections(
     const group = groups[i];
     if (group.length === 0) continue;
 
+    // Determine depth from the weakest point in the group
+    const minMastery = Math.min(
+      ...group.map((kp) => masteryByKnowledge?.[kp] ?? 0),
+    );
+    const depth = difficultyToDepth(getDifficultyForMastery(minMastery));
+
     supplemental.push({
       id: `section-supplement-${i + 1}`,
       title: `补充强化：${group.join('、')}`,
       contentType: 'example',
-      depth: 'basic',
+      depth,
       knowledgePoints: group,
-      estimatedDuration: 5,
+      estimatedDuration: durationForDepth(depth),
       hasQuiz: true,
     });
   }
@@ -111,9 +146,14 @@ export function decideAdaptiveAdjustment(
   feedbacks: SectionFeedback[],
   quizResults: QuizResult[],
   existingSections: LessonSection[],
+  masteryByKnowledge?: Record<string, number>,
 ): AdaptiveDecision {
   const weakPoints = analyzeWeakPoints(feedbacks, quizResults);
-  const supplementalSections = buildSupplementalSections(weakPoints, existingSections);
+  const supplementalSections = buildSupplementalSections(
+    weakPoints,
+    existingSections,
+    masteryByKnowledge,
+  );
 
   return {
     shouldSupplement: supplementalSections.length > 0,

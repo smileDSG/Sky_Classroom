@@ -10,8 +10,12 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createLogger } from '@/lib/logger';
 import { resolveApiKey, resolveBaseUrl } from '@/lib/server/provider-config';
 import { retrieveRelevantContext } from '@/lib/agents/rag/retriever';
+import { buildProfileContextPrompt } from '@/lib/student/profile-prompts';
+import type { StudentProfile } from '@/lib/student/profile-types';
 
 const log = createLogger('MemoryCardsAgent');
+
+export const MEMORY_CARDS_AGENT_PROMPT_VERSION = 'v2-profile-driven';
 
 // ── 输出结构 ───────────────────────────────────────────────────────
 
@@ -89,11 +93,17 @@ const MEMORY_CARDS_AGENT_SYSTEM_PROMPT = `你是一位专业的记忆术专家�
   "reviewIntervals": [1, 2, 4, 7, 15]
 }
 
-## 卡片数量建议
-- 简单主题：5-8 张卡片
-- 中等主题：8-15 张卡片
-- 复杂主题：15-25 张卡片
-- 确保每张卡片都有价值，不要为了凑数添加无用卡片`;
+## 学情感知
+- 如果调用方提供了学生学情上下文，请优先为薄弱知识点生成卡片
+- 针对高频错误模式设计纠错型卡片（正面写常见错误，背面写正确理解和避免方法）
+- 根据薄弱知识点的掌握度分布调整卡片难度：掌握度越低，卡片越基础、助记技巧越丰富
+- 复习间隔和卡片数量由学情上下文决定，不要自行套用固定值
+
+## 卡片数量原则
+- 确保每张卡片都有价值，不要为了凑数添加无用卡片
+- 薄弱知识点较多时适当增加卡片，已掌握知识点可减少或跳过
+
+<!-- prompt-version: ${MEMORY_CARDS_AGENT_PROMPT_VERSION} -->`;
 
 // ── Agent 核心函数 ─────────────────────────────────────────────────
 
@@ -101,6 +111,7 @@ export async function generateMemoryCards(
   contentText: string,
   topic?: string,
   cardCount?: number,
+  profile?: StudentProfile,
 ): Promise<MemoryCardDeck> {
   const apiKey = resolveApiKey('deepseek');
   const baseUrl = resolveBaseUrl('deepseek') || 'https://api.deepseek.com/v1';
@@ -146,14 +157,20 @@ export async function generateMemoryCards(
     log.warn('RAG retrieval failed for memory cards:', ragErr);
   }
 
+  const profileContext = profile
+    ? `\n\n${buildProfileContextPrompt(profile, { maxWeakPoints: 5, maxErrorPatterns: 3 })}`
+    : '';
+
   let userPrompt: string;
   if (topic) {
-    userPrompt = `请根据以下关于"${topic}"的内容，制作${cardCount ? `约${cardCount}张` : ''}记忆卡片：\n\n${contentText}${ragContext}`;
+    userPrompt = `请根据以下关于"${topic}"的内容，制作${cardCount ? `约${cardCount}张` : ''}记忆卡片：\n\n${contentText}${profileContext}${ragContext}`;
   } else {
-    userPrompt = `请根据以下内容，制作${cardCount ? `约${cardCount}张` : ''}记忆卡片：\n\n${contentText}${ragContext}`;
+    userPrompt = `请根据以下内容，制作${cardCount ? `约${cardCount}张` : ''}记忆卡片：\n\n${contentText}${profileContext}${ragContext}`;
   }
 
-  log.info(`Generating memory cards, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}`);
+  log.info(
+    `Generating memory cards, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}, profile injected: ${Boolean(profile)}`,
+  );
 
   const result = await generateText({
     model: deepseek.chat('deepseek-chat'),

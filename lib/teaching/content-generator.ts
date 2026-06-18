@@ -7,12 +7,14 @@
 
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
+import type { LanguageModel } from 'ai';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { structuredContentSchema } from '@/lib/generation/classroom-content-agent';
 import type { StructuredContent } from '@/lib/generation/classroom-content-agent';
 import { resolveSolverModel } from '@/lib/solve/solver-constants';
 import type { LessonPlan, LessonSection } from './lesson-types';
 import type { ContentChunk, PrecedingSection } from './content-types';
+import type { StudentProfile } from '@/lib/student/profile-types';
 import {
   CONTENT_SYSTEM_PROMPT,
   STRUCTURED_CONTENT_SYSTEM_PROMPT,
@@ -34,13 +36,18 @@ export interface GeneratedSection {
 /** Generate content for a single section — tries structured first, falls back to chunks */
 export async function generateSectionContent(
   section: LessonSection,
+  profile?: StudentProfile,
   precedingSections?: PrecedingSection[],
 ): Promise<{ chunks: ContentChunk[]; structured?: StructuredContent }> {
   const modelConfig = resolveSolverModel('universal');
   const { model } = getModel(modelConfig);
 
+  log.info(
+    `[ContentGen] profile injected: ${Boolean(profile)}, section: ${section.id}, kps: ${section.knowledgePoints.join('、')}`,
+  );
+
   // ── Attempt 1: Structured content (rich slides) ──
-  const structuredPrompt = buildStructuredContentPrompt(section, precedingSections);
+  const structuredPrompt = buildStructuredContentPrompt(section, profile, precedingSections);
   if (structuredPrompt) {
     try {
       const result = await callLLM(
@@ -69,7 +76,7 @@ export async function generateSectionContent(
           `[ContentGen] Structured content generated for ${section.id} (type=${validation.data.type})`,
         );
         // Also generate chunks as fallback data (quiz questions, etc.)
-        const chunks = await generateChunksContent(section, model, precedingSections);
+        const chunks = await generateChunksContent(section, model, profile, precedingSections);
         return { chunks, structured: validation.data };
       }
       log.warn(
@@ -84,18 +91,19 @@ export async function generateSectionContent(
   }
 
   // ── Attempt 2: Fallback to chunk-based content ──
-  const chunks = await generateChunksContent(section, model, precedingSections);
+  const chunks = await generateChunksContent(section, model, profile, precedingSections);
   return { chunks };
 }
 
 /** Generate chunk-based content (original approach) */
 async function generateChunksContent(
   section: LessonSection,
-  model: string,
+  model: LanguageModel,
+  profile?: StudentProfile,
   precedingSections?: PrecedingSection[],
 ): Promise<ContentChunk[]> {
   try {
-    const prompt = buildContentPrompt(section, precedingSections);
+    const prompt = buildContentPrompt(section, profile, precedingSections);
 
     const result = await callLLM(
       {
@@ -183,9 +191,12 @@ function fallbackContent(section: LessonSection): ContentChunk[] {
  * Generate content for the entire lesson plan, section by section.
  * Returns an async generator that yields each completed section.
  */
-export async function* generateLessonStream(plan: LessonPlan): AsyncGenerator<GeneratedSection> {
+export async function* generateLessonStream(
+  plan: LessonPlan,
+  profile?: StudentProfile,
+): AsyncGenerator<GeneratedSection> {
   for (const section of plan.sections) {
-    const { chunks, structured } = await generateSectionContent(section);
+    const { chunks, structured } = await generateSectionContent(section, profile);
     yield { section, chunks, structured };
   }
 }
@@ -193,10 +204,13 @@ export async function* generateLessonStream(plan: LessonPlan): AsyncGenerator<Ge
 /**
  * Generate all content without streaming (for non-SSE usage).
  */
-export async function generateLessonContent(plan: LessonPlan): Promise<GeneratedSection[]> {
+export async function generateLessonContent(
+  plan: LessonPlan,
+  profile?: StudentProfile,
+): Promise<GeneratedSection[]> {
   const sections: GeneratedSection[] = [];
   for (const section of plan.sections) {
-    const { chunks, structured } = await generateSectionContent(section);
+    const { chunks, structured } = await generateSectionContent(section, profile);
     sections.push({ section, chunks, structured });
   }
   return sections;
@@ -219,13 +233,14 @@ export function extractContentSummary(chunks: ContentChunk[]): string {
  */
 export async function* generateLessonConcurrent(
   plan: LessonPlan,
+  profile?: StudentProfile,
   concurrency: number = 2,
 ): AsyncGenerator<GeneratedSection> {
   const sections = plan.sections;
   if (sections.length === 0) return;
 
   // Section 0: generate alone
-  const firstResult = await generateSectionContent(sections[0]);
+  const firstResult = await generateSectionContent(sections[0], profile);
   yield {
     section: sections[0],
     chunks: firstResult.chunks,
@@ -259,7 +274,7 @@ export async function* generateLessonConcurrent(
     // Generate batch in parallel
     const results = await Promise.allSettled(
       batch.map(async (section) => {
-        const { chunks, structured } = await generateSectionContent(section, precedingSections);
+        const { chunks, structured } = await generateSectionContent(section, profile, precedingSections);
         return { section, chunks, structured };
       }),
     );

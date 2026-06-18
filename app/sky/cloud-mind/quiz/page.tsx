@@ -23,26 +23,22 @@ import {
 } from 'lucide-react';
 import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial-canvas';
 import { deriveQuizParamsFromProfile } from '@/lib/student/quiz-param-deriver';
+import {
+  SUBJECT_CONFIG,
+  DIFFICULTY_CONFIG,
+  QUIZ_COUNT_OPTIONS,
+} from '@/lib/student/profile-config';
 import { MathRenderer } from '@/components/sky/solve/math-renderer';
 import type { QuestionBankRow } from '@/lib/question-bank/types';
 
-const SUBJECTS = [
-  { id: 'math', label: '数学', dot: 'bg-violet-400' },
-  { id: 'physics', label: '物理', dot: 'bg-sky-400' },
-  { id: 'chemistry', label: '化学', dot: 'bg-emerald-400' },
-  { id: 'biology', label: '生物', dot: 'bg-green-400' },
-  { id: 'chinese', label: '语文', dot: 'bg-rose-400' },
-  { id: 'english', label: '英语', dot: 'bg-amber-400' },
-  { id: 'history', label: '历史', dot: 'bg-orange-400' },
-  { id: 'politics', label: '政治', dot: 'bg-red-400' },
-  { id: 'geography', label: '地理', dot: 'bg-teal-400' },
-];
+const SUBJECTS = SUBJECT_CONFIG.map((s) => ({ id: s.id, label: s.label, dot: s.dot }));
 
-const DIFFICULTIES = [
-  { id: 'easy', label: '基础', desc: '巩固基础概念', star: '★' },
-  { id: 'medium', label: '进阶', desc: '提升应用能力', star: '★★' },
-  { id: 'hard', label: '挑战', desc: '拓展思维深度', star: '★★★' },
-];
+const DIFFICULTIES = DIFFICULTY_CONFIG.map((d, i) => ({
+  id: d.id,
+  label: d.label,
+  desc: d.desc,
+  star: '★'.repeat(i + 1),
+}));
 
 const SUBJECT_LABEL_BY_ID = Object.fromEntries(SUBJECTS.map((subject) => [subject.id, subject.label]));
 
@@ -574,7 +570,7 @@ export default function CloudMindQuizPage() {
 
       <QuizPanel title="题目数量">
         <div className="flex gap-2">
-          {[3, 5, 10, 15].map((n) => (
+          {QUIZ_COUNT_OPTIONS.map((n) => (
             <button
               key={n}
               onClick={() => setCount(n)}

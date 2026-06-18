@@ -9,6 +9,8 @@
 import { search } from '@/lib/question-bank/dao';
 import { generateQuiz } from '@/lib/agents/cloud-mind/quiz-agent';
 import { createLogger } from '@/lib/logger';
+import { resolveSubject } from '@/lib/student/profile-config';
+import type { StudentProfile } from '@/lib/student/profile-types';
 import type { SectionFeedback, QuizResult } from './adaptive-engine';
 
 const log = createLogger('HomeworkGenerator');
@@ -145,14 +147,16 @@ export async function generateHomework(
   feedbacks: SectionFeedback[],
   quizResults: QuizResult[],
   topic: string,
-  subject: string = 'math',
+  subject?: string,
+  profile?: StudentProfile,
 ): Promise<HomeworkAssignment> {
+  const resolvedSubject = subject || resolveSubject(topic, profile);
   const weakPoints = extractWeakPoints(feedbacks, quizResults);
 
   if (weakPoints.length === 0) {
     // No weak points: generate a general reinforcement assignment on the topic
     log.info(`No weak points for "${topic}", generating general reinforcement`);
-    const aiQuestions = await generateAIQuestions([topic], subject, 3);
+    const aiQuestions = await generateAIQuestions([topic], resolvedSubject, 3);
     return {
       title: `${topic} — 巩固练习`,
       description: '你在本节课中表现良好，这里有几道巩固练习题帮助你加深印象。',
@@ -163,14 +167,14 @@ export async function generateHomework(
   }
 
   // Strategy 1: Search question bank
-  let questions = await searchBankQuestions(weakPoints, subject, 2);
+  let questions = await searchBankQuestions(weakPoints, resolvedSubject, 2);
   log.info(`Found ${questions.length} questions from question bank for weak points: ${weakPoints.join('、')}`);
 
   // Strategy 2: If not enough, use AI generation
   const targetCount = Math.min(weakPoints.length * 2 + 1, 8);
   if (questions.length < targetCount) {
     const remaining = targetCount - questions.length;
-    const aiQuestions = await generateAIQuestions(weakPoints, subject, remaining);
+    const aiQuestions = await generateAIQuestions(weakPoints, resolvedSubject, remaining);
     // Re-number IDs
     const maxId = questions.length > 0 ? Math.max(...questions.map((q) => q.id)) : 0;
     for (let i = 0; i < aiQuestions.length; i++) {
