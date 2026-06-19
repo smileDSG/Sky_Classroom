@@ -284,7 +284,9 @@
       "Bash(npm view *)",
       "Bash(npx prettier *)",
       "Bash(git log *)",
-      "Skill(code-review)"
+      "Skill(code-review)",
+      "Bash(git rev-list *)",
+      "Bash(echo \"--- exit: $? ---\")"
     ]
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useEffect, useState, useCallback } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { StatCards, ActivityTimeline } from '@/components/sky/dashboard/stat-cards';
@@ -29,6 +29,7 @@ import {
   Star,
   BookOpen,
   ChevronRight,
+  BarChart3,
 } from 'lucide-react';
 
 const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -47,86 +48,108 @@ function getGreeting(isDark: boolean): string {
   return '夜深了，注意休息！';
 }
 
-function getGreetingEmoji(isDark: boolean): string {
-  const hour = new Date().getHours();
-  if (isDark) return '🌙';
-  if (hour >= 5 && hour < 12) return '☀️';
-  if (hour >= 12 && hour < 18) return '🌤️';
-  return '🌙';
-}
-
-// ── Cloud Mind Mini Card ──────────────────────────────────────────
+// ── Cloud Mind Mini Card (redesigned) ────────────────────────────
 
 function CloudMindMiniCard() {
   const tools = [
-    {
-      icon: Camera,
-      label: '拍照搜题',
-      color: 'text-violet-500',
-      bg: 'bg-violet-500/10',
-      href: '/sky/cloud-mind/solve',
-    },
-    {
-      icon: Presentation,
-      label: '幻灯片',
-      color: 'text-cyan-500',
-      bg: 'bg-cyan-500/10',
-      href: '/sky/cloud-mind/slides',
-    },
-    {
-      icon: Brain,
-      label: '记忆卡片',
-      color: 'text-rose-500',
-      bg: 'bg-rose-500/10',
-      href: '/sky/cloud-mind/memory',
-    },
+    { icon: Camera, label: '拍照搜题', desc: '智能识别题目', color: 'text-violet-400', bg: 'bg-violet-500/10', hoverBg: 'hover:bg-violet-500/15', href: '/sky/cloud-mind/solve' },
+    { icon: Presentation, label: '幻灯片', desc: '一键生成课件', color: 'text-cyan-400', bg: 'bg-cyan-500/10', hoverBg: 'hover:bg-cyan-500/15', href: '/sky/cloud-mind/slides' },
+    { icon: Brain, label: '记忆卡片', desc: 'AI 智能复习', color: 'text-rose-400', bg: 'bg-rose-500/10', hoverBg: 'hover:bg-rose-500/15', href: '/sky/cloud-mind/memory' },
   ];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 p-6"
+      transition={{ delay: 0.2 }}
+      className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700"
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+      {/* Subtle decorative elements */}
+      <div className="absolute -top-6 -right-6 w-20 h-20 bg-white/8 rounded-full blur-xl" />
+      <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-purple-400/8 rounded-full blur-2xl" />
 
-      <div className="relative z-10">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
-            <Brain className="h-4 w-4 text-white" />
+      <div className="relative z-10 px-3.5 py-3.5">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-2.5">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/15">
+            <Brain className="h-3.5 w-3.5 text-white" />
           </div>
-          <span className="text-xs font-medium text-indigo-200 tracking-wider uppercase">
-            AI 工具集
-          </span>
+          <div>
+            <span className="text-[9px] font-medium text-indigo-200/70 tracking-wider uppercase">AI 工具</span>
+            <h3 className="text-sm font-bold text-white leading-tight">云端智囊</h3>
+          </div>
         </div>
 
-        <h3 className="text-xl font-bold text-white mb-1">云端智囊</h3>
-        <p className="text-sm text-indigo-100 mb-4">AI 驱动的智能学习工具，助你高效学习</p>
-
-        <div className="flex gap-2 mb-4">
-          {tools.map((tool) => {
+        {/* Tool buttons */}
+        <div className="space-y-1.5">
+          {tools.map((tool, i) => {
             const Icon = tool.icon;
             return (
               <Link
                 key={tool.label}
                 href={tool.href}
-                className={`flex items-center gap-1.5 rounded-lg ${tool.bg} px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:scale-105`}
+                className="group/tool flex items-center gap-2.5 rounded-lg bg-white/8 px-2.5 py-2 ring-1 ring-white/8 transition-all hover:bg-white/12"
               >
-                <Icon className={`h-4 w-4 ${tool.color}`} />
-                {tool.label}
+                <div className={`flex h-6 w-6 items-center justify-center rounded-md ${tool.bg} ${tool.hoverBg} transition-colors`}>
+                  <Icon className={`h-3.5 w-3.5 ${tool.color}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-white truncate">{tool.label}</p>
+                </div>
+                <ArrowRight className="h-3 w-3 text-indigo-200/30 group-hover/tool:text-white group-hover/tool:translate-x-0.5 transition-all" />
               </Link>
             );
           })}
         </div>
+      </div>
+    </motion.div>
+  );
+}
 
-        <Link
-          href="/sky/cloud-mind"
-          className="inline-flex items-center gap-1.5 text-sm text-indigo-200 hover:text-white transition-colors"
-        >
-          查看全部工具
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
+// ── Quick Actions Compact ────────────────────────────────────────
+
+function QuickActionsCompact() {
+  const actions = [
+    { icon: BookOpen, label: '学习路径', color: 'text-indigo-400', bg: 'bg-indigo-500/10', hoverBg: 'hover:bg-indigo-500/15', href: '/sky/learning' },
+    { icon: BarChart3, label: '数据分析', color: 'text-emerald-400', bg: 'bg-emerald-500/10', hoverBg: 'hover:bg-emerald-500/15', href: '/sky/analytics' },
+    { icon: TrendingUp, label: '复习计划', color: 'text-amber-400', bg: 'bg-amber-500/10', hoverBg: 'hover:bg-amber-500/15', href: '/sky/learning' },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.25 }}
+      className="rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/50 dark:bg-slate-900/40 backdrop-blur-sm"
+    >
+      <div className="px-3.5 py-3">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-2.5">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-500/10">
+            <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+          </div>
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">快捷操作</h3>
+        </div>
+
+        {/* Action buttons */}
+        <div className="space-y-1.5">
+          {actions.map((action, i) => {
+            const Icon = action.icon;
+            return (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="group/action flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50"
+              >
+                <div className={`flex h-6 w-6 items-center justify-center rounded-md ${action.bg} ${action.hoverBg} transition-colors`}>
+                  <Icon className={`h-3.5 w-3.5 ${action.color}`} />
+                </div>
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{action.label}</span>
+                <ArrowRight className="h-3 w-3 text-slate-300 dark:text-slate-600 ml-auto group-hover/action:text-slate-500 group-hover/action:translate-x-0.5 transition-all" />
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </motion.div>
   );
@@ -147,12 +170,107 @@ function formatStudyTime(minutes: number): string {
   return m > 0 ? `${h}h${m}m` : `${h}h`;
 }
 
+// ── Empty state for the dashboard ────────────────────────────────
+
+function DashboardEmptyState() {
+  const quickActions = [
+    { icon: Camera, label: '拍照搜题', desc: '拍题自动识别并解析', href: '/sky/solve', gradient: 'from-violet-500 to-indigo-500', bg: 'bg-violet-500/10 hover:bg-violet-500/15', iconColor: 'text-violet-400' },
+    { icon: Presentation, label: '生成课件', desc: 'AI 自动生成精美 PPT', href: '/sky/slides', gradient: 'from-cyan-500 to-blue-500', bg: 'bg-cyan-500/10 hover:bg-cyan-500/15', iconColor: 'text-cyan-400' },
+    { icon: Brain, label: 'AI 助手', desc: '智能答疑与知识讲解', href: '/sky/assistant', gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-500/10 hover:bg-amber-500/15', iconColor: 'text-amber-400' },
+    { icon: TrendingUp, label: '复习计划', desc: '基于艾宾浩斯记忆曲线', href: '/sky/learning', gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-500/10 hover:bg-emerald-500/15', iconColor: 'text-emerald-400' },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Welcome hero */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-gradient-to-br from-violet-50/50 via-white/60 to-indigo-50/50 dark:from-slate-900/40 dark:via-slate-900/40 dark:to-slate-800/40 px-5 py-6 backdrop-blur-sm"
+      >
+        {/* Subtle decorative elements */}
+        <div className="absolute top-0 right-0 w-36 h-36 bg-violet-400/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-400/5 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4" />
+
+        <div className="relative z-10 flex flex-col items-center text-center">
+          {/* Animated icon */}
+          <motion.div
+            className="mb-4 relative"
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 200, delay: 0.15 }}
+          >
+            <div className="absolute inset-0 rounded-2xl bg-violet-500/15 blur-lg scale-110" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/15">
+              <Star className="h-8 w-8 text-white" />
+            </div>
+          </motion.div>
+
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-1.5">
+            欢迎来到摘星锦囊
+          </h2>
+          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 max-w-md leading-relaxed mb-6">
+            你的个人学习驾驶舱。完成练习后，这里会展示学习数据和知识趋势。
+          </p>
+
+          {/* Quick start CTA */}
+          <Link
+            href="/sky/solve"
+            className="group/cta inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-violet-500/15 transition-all hover:shadow-lg hover:shadow-violet-500/20 hover:scale-[1.02]"
+          >
+            <Camera className="h-4 w-4" />
+            拍照搜题开始学习
+            <ArrowRight className="h-3.5 w-3.5 group-hover/cta:translate-x-0.5 transition-transform" />
+          </Link>
+        </div>
+      </motion.div>
+
+      {/* Quick action cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {quickActions.map((action, i) => {
+          const Icon = action.icon;
+          return (
+            <motion.div
+              key={action.label}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 + i * 0.06 }}
+            >
+              <Link
+                href={action.href}
+                className={`group/action relative overflow-hidden rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/60 dark:bg-slate-900/40 backdrop-blur-sm p-3.5 transition-all hover:scale-[1.02] hover:shadow-md`}
+              >
+                {/* Hover gradient */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover/action:opacity-[0.05] transition-opacity`} />
+
+                <div className="relative z-10">
+                  <div className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${action.bg} mb-2.5`}>
+                    <Icon className={`h-4.5 w-4.5 ${action.iconColor}`} />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{action.label}</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{action.desc}</p>
+                </div>
+              </Link>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function SkyDashboardPage() {
   const { resolvedTheme } = useTheme();
   const { user } = useAuth();
   const mistakes = useSkyClassroomStore((s) => s.mistakes);
   const greeting = useMemo(() => getGreeting(resolvedTheme === 'dark'), [resolvedTheme]);
-  const greetingEmoji = useMemo(() => getGreetingEmoji(resolvedTheme === 'dark'), [resolvedTheme]);
+  const greetingEmoji = useMemo(() => {
+    const hour = new Date().getHours();
+    if (resolvedTheme === 'dark') return '🌙';
+    if (hour >= 5 && hour < 12) return '☀️';
+    if (hour >= 12 && hour < 18) return '️';
+    return '🌙';
+  }, [resolvedTheme]);
 
   // ── Fetch learning stats ──────────────────────────────────────
   const [stats, setStats] = useState<LearningStats>({
@@ -264,228 +382,170 @@ export default function SkyDashboardPage() {
   const nextMilestone = MILESTONES.find((m) => m > stats.streakDays);
   const maxMilestone = MILESTONES[MILESTONES.length - 1];
 
+  const hasData = mistakes.length > 0;
+
   return (
     <SkyAppShell>
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="mx-auto max-w-6xl space-y-4">
         {/* ── Greeting ─────────────────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between"
+          transition={{ duration: 0.4 }}
+          className="relative overflow-hidden rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-gradient-to-r from-violet-50/60 via-white/50 to-indigo-50/60 dark:from-slate-900/40 dark:via-slate-900/40 dark:to-slate-800/40 px-4 py-4 md:px-5 md:py-4 backdrop-blur-sm"
         >
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <span className="text-3xl">{greetingEmoji}</span>
-              {greeting}
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              今天是学习的好日子，继续加油！
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setFavoriteDialogOpen(true)}
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
-            >
-              <Star className="h-4 w-4 fill-current" />
-              收藏
-            </button>
-            <div className="flex items-center gap-2 text-sm text-slate-400">
-              <motion.div
-                className="w-2 h-2 rounded-full bg-emerald-400"
-                animate={{ scale: [1, 1.3, 1], opacity: [1, 0.6, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              学习进行中
+          {/* Subtle decorative elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-violet-300/5 dark:bg-violet-600/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-1/4 w-24 h-24 bg-indigo-300/5 dark:bg-indigo-600/5 rounded-full blur-2xl translate-y-1/2" />
+
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+            <div>
+              <h2 className="text-lg md:text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <span className="text-xl md:text-2xl">{greetingEmoji}</span>
+                {greeting}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {hasData
+                  ? `已有 ${mistakes.length} 道错题，继续加油！`
+                  : '开始你的第一道练习吧！'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <button
+                onClick={() => setFavoriteDialogOpen(true)}
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium text-rose-600 dark:text-rose-400 bg-rose-500/10 ring-1 ring-rose-500/15 hover:bg-rose-500/20 transition-colors"
+              >
+                <Star className="h-3 w-3 fill-current" />
+                收藏
+              </button>
+              <div className="flex items-center gap-1.5 rounded-md bg-white/60 dark:bg-slate-800/50 ring-1 ring-slate-200/40 dark:ring-slate-700/40 px-2.5 py-1 text-slate-500 dark:text-slate-400">
+                <motion.div
+                  className="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                  animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                学习中
+              </div>
+              {stats.streakDays > 0 && (
+                <div className="flex items-center gap-1 rounded-md bg-amber-500/10 ring-1 ring-amber-500/15 px-2.5 py-1 text-amber-600 dark:text-amber-400 text-xs font-medium">
+                  <Zap className="h-3 w-3" />
+                  {stats.streakDays}天
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
 
         {/* ── Daily Suggestions ────────────────────────────────── */}
-        <DailySuggestCard mistakes={mistakes} />
+        {hasData && <DailySuggestCard mistakes={mistakes} />}
 
-        {mistakes.length === 0 ? (
-          /* ── Empty state onboarding ─────────────────────────── */
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-600 bg-white/50 dark:bg-slate-900/50 p-12 text-center"
-          >
-            <div className="text-5xl mb-4">⭐</div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-              欢迎来到摘星锦囊
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
-              这里是你的学习驾驶舱。开始使用后，会展示学习数据统计、知识掌握趋势、能力雷达图和最近学习活动。
-            </p>
-            <div className="flex gap-3">
-              <Link
-                href="/sky/solve"
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.03]"
-              >
-                <Camera className="h-4 w-4" />
-                拍照搜题开始学习
-              </Link>
-              <Link
-                href="/sky/cloud-mind"
-                className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 px-5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-all"
-              >
-                <Brain className="h-4 w-4" />
-                探索 AI 工具集
-              </Link>
-            </div>
-          </motion.div>
-        ) : (
-          <>
-            {/* ── Zone 1: Overview Stats + Streak (merged) ─────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              {/* Left: 3 stat cards stacked */}
-              <div className="lg:col-span-2">
-                <StatCards mistakes={mistakes} />
+        <AnimatePresence mode="wait">
+          {!hasData ? (
+            <DashboardEmptyState key="empty" />
+          ) : (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
+            >
+              {/* ── Zone 1: Stats + Learning Path (compact bento) ─────── */}
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                {/* Left: 3 stat cards (span 3 cols) */}
+                <div className="lg:col-span-3">
+                  <StatCards mistakes={mistakes} />
+                </div>
+
+                {/* Right: Learning Path (span 1 col) */}
+                <div className="lg:col-span-1">
+                  <LearningPathCard
+                    onStartTopic={(topic) => {
+                      window.location.href = `/sky/teaching?topic=${encodeURIComponent(topic)}`;
+                    }}
+                  />
+                </div>
               </div>
 
-              {/* Right: Learning Path + Streak + Quick Actions combined */}
-              <div className="lg:col-span-1 space-y-4">
-                <LearningPathCard
-                  onStartTopic={(topic) => {
-                    window.location.href = `/sky/teaching?topic=${encodeURIComponent(topic)}`;
-                  }}
-                />
-
-                {/* Inline streak card */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="rounded-2xl border border-slate-200/60 dark:border-slate-700/40 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm"
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-500/15">
-                      <Sparkles className="h-3.5 w-3.5 text-orange-500" />
-                    </div>
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      连续打卡
-                    </span>
-                  </div>
-                  <div className="flex items-baseline gap-1.5 mb-2">
-                    <span className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-                      {stats.streakDays}
-                    </span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">天</span>
-                    {nextMilestone && (
-                      <span className="ml-auto text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
-                        距{MILESTONE_NAMES[nextMilestone]}还差 {nextMilestone - stats.streakDays} 天
+              {/* ─ Zone 2: Streak + AI Tools (balanced row) ────── */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Streak card */}
+                <div className="lg:col-span-1">
+                  <motion.div
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/50 dark:bg-slate-900/40 px-4 py-3.5 backdrop-blur-sm"
+                  >
+                    <div className="flex items-center gap-1.5 mb-2.5">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-orange-500/10">
+                        <Sparkles className="h-3 w-3 text-orange-500" />
+                      </div>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                        连续打卡
                       </span>
-                    )}
-                  </div>
-                  <div className="relative h-2 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
-                    <motion.div
-                      className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-orange-400 to-amber-500"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(stats.streakDays / maxMilestone, 1) * 100}%` }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                    />
-                  </div>
-                  <div className="flex justify-between">
-                    {MILESTONES.map((d) => {
-                      const achieved = stats.streakDays >= d;
-                      const isNext = nextMilestone === d;
-                      return (
-                        <span
-                          key={d}
-                          className={`text-[10px] ${
-                            achieved
-                              ? 'text-amber-600 dark:text-amber-400 font-medium'
-                              : isNext
-                                ? 'text-slate-500 dark:text-slate-400 font-medium'
+                      {nextMilestone && (
+                        <span className="ml-auto text-[9px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/8 px-1.5 py-0.5 rounded-full">
+                          目标: {nextMilestone}天
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-baseline gap-1 mb-1.5">
+                      <span className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                        {stats.streakDays}
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">天</span>
+                    </div>
+                    <div className="relative h-1 rounded-full bg-slate-100 dark:bg-slate-800 mb-1.5">
+                      <motion.div
+                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-orange-400 to-amber-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(stats.streakDays / maxMilestone, 1) * 100}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                      />
+                    </div>
+                    <div className="flex justify-between">
+                      {MILESTONES.slice(0, 4).map((d) => {
+                        const achieved = stats.streakDays >= d;
+                        return (
+                          <span
+                            key={d}
+                            className={`text-[9px] ${
+                              achieved
+                                ? 'text-amber-600 dark:text-amber-400 font-medium'
                                 : 'text-slate-400 dark:text-slate-500'
-                          }`}
-                        >
-                          {MILESTONE_NAMES[d]}
-                        </span>
-                      );
-                    })}
-                  </div>
-                  {stats.streakDays === 0 && (
-                    <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
-                      今天开始你的第一天打卡吧！
-                    </p>
-                  )}
-                </motion.div>
+                            }`}
+                          >
+                            {MILESTONE_NAMES[d]}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                </div>
 
-                {/* Quick actions compact */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="grid grid-cols-2 gap-2"
-                >
-                  {[
-                    {
-                      icon: Camera,
-                      label: '拍照搜题',
-                      href: '/sky/solve',
-                      color: 'text-violet-500',
-                      bg: 'bg-violet-500/10 hover:bg-violet-500/20',
-                    },
-                    {
-                      icon: Presentation,
-                      label: '幻灯片',
-                      href: '/sky/slides',
-                      color: 'text-cyan-500',
-                      bg: 'bg-cyan-500/10 hover:bg-cyan-500/20',
-                    },
-                    {
-                      icon: TrendingUp,
-                      label: '学习数据',
-                      href: '/sky/learning',
-                      color: 'text-emerald-500',
-                      bg: 'bg-emerald-500/10 hover:bg-emerald-500/20',
-                    },
-                    {
-                      icon: Brain,
-                      label: 'AI 助手',
-                      href: '/sky/assistant',
-                      color: 'text-amber-500',
-                      bg: 'bg-amber-500/10 hover:bg-amber-500/20',
-                    },
-                  ].map((action) => {
-                    const Icon = action.icon;
-                    return (
-                      <Link
-                        key={action.label}
-                        href={action.href}
-                        className={`flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700/50 px-3 py-2.5 ${action.bg} backdrop-blur-sm transition-all hover:scale-[1.03]`}
-                      >
-                        <Icon className={`w-4 h-4 ${action.color}`} />
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                          {action.label}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </motion.div>
-              </div>
-            </div>
+                {/* Cloud Mind tools */}
+                <div className="lg:col-span-1">
+                  <CloudMindMiniCard />
+                </div>
 
-            {/* ── Zone 2: AI Tools + Charts ────────────────────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              {/* Left: Cloud Mind Card */}
-              <div className="lg:col-span-1">
-                <CloudMindMiniCard />
+                {/* Quick actions */}
+                <div className="lg:col-span-1">
+                  <QuickActionsCompact />
+                </div>
               </div>
-              {/* Right: Charts side by side */}
-              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+
+              {/* ── Zone 3: Charts ─────────────────────────────── */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <LearningTrendChart data={trendData} />
                 <AbilityRadar data={radarData} />
               </div>
-            </div>
 
-            {/* ── Zone 3: Activity ─────────────────────────────── */}
-            <ActivityTimeline mistakes={mistakes} />
-          </>
-        )}
+              {/* ── Zone 4: Activity ───────────────────────────── */}
+              <ActivityTimeline mistakes={mistakes} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Favorites Dialog ─────────────────────────────── */}
         <Dialog open={favoriteDialogOpen} onOpenChange={setFavoriteDialogOpen}>
