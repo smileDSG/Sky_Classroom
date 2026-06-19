@@ -8,6 +8,7 @@
 
 import { NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { requireQuota } from '@/lib/server/billing/require-quota';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { buildStudyGroupSetup } from '@/lib/teaching/study-group';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
@@ -20,11 +21,18 @@ export async function POST(
   { params }: { params: Promise<{ jobId: string }> },
 ) {
   try {
+    const quota = await requireQuota('generationCount');
+    if ('error' in quota) return quota.error;
+
     const { jobId } = await params;
     const job = await readTeachingJob(jobId);
 
     if (!job) {
       return apiError('NOT_FOUND', 404, '教案不存在');
+    }
+
+    if (job.userId !== quota.userId) {
+      return apiError('UNAUTHORIZED', 403, '无权访问此教案');
     }
 
     if (job.status !== 'succeeded') {

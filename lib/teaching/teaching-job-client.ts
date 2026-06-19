@@ -36,6 +36,7 @@ export interface TeachingHistoryItem {
   totalSections: number;
   createdAt: string;
   completedAt?: string;
+  isFavorited?: boolean;
 }
 
 // ── Submit ────────────────────────────────────────────────────────
@@ -162,7 +163,14 @@ export async function cancelTeachingJob(jobId: string): Promise<void> {
 // ── SSE Stream ───────────────────────────────────────────────────
 
 export interface TeachingStreamEvent {
-  type: 'connected' | 'section_done' | 'plan_adjusted' | 'supplement_section' | 'progress' | 'job_done' | 'error';
+  type:
+    | 'connected'
+    | 'section_done'
+    | 'plan_adjusted'
+    | 'supplement_section'
+    | 'progress'
+    | 'job_done'
+    | 'error';
   jobId?: string;
   sectionIndex?: number;
   section?: LessonSection;
@@ -184,7 +192,12 @@ export interface TeachingStreamEvent {
 export interface StreamCallbacks {
   onSectionDone?: (sectionIndex: number, section: LessonSection, chunks: ContentChunk[]) => void;
   onPlanAdjusted?: (plan: LessonPlan, reason: string) => void;
-  onSupplementSection?: (sectionIndex: number, section: LessonSection, chunks: ContentChunk[], reason: string) => void;
+  onSupplementSection?: (
+    sectionIndex: number,
+    section: LessonSection,
+    chunks: ContentChunk[],
+    reason: string,
+  ) => void;
 }
 
 export async function streamTeachingJob(
@@ -252,7 +265,12 @@ function streamViaSSE(
         }
 
         if (data.type === 'supplement_section' && data.section && data.chunks) {
-          callbacks?.onSupplementSection?.(data.sectionIndex!, data.section, data.chunks, data.reason || '');
+          callbacks?.onSupplementSection?.(
+            data.sectionIndex!,
+            data.section,
+            data.chunks,
+            data.reason || '',
+          );
           return;
         }
 
@@ -289,12 +307,15 @@ function streamViaSSE(
     });
 
     // Timeout after 5 minutes
-    setTimeout(() => {
-      if (!resolved) {
-        eventSource.close();
-        reject(new Error('SSE timeout'));
-      }
-    }, 5 * 60 * 1000);
+    setTimeout(
+      () => {
+        if (!resolved) {
+          eventSource.close();
+          reject(new Error('SSE timeout'));
+        }
+      },
+      5 * 60 * 1000,
+    );
   });
 }
 
@@ -306,8 +327,17 @@ const log = {
 
 // ── History ───────────────────────────────────────────────────────
 
-export async function fetchTeachingHistory(limit = 50): Promise<TeachingHistoryItem[]> {
-  const res = await fetch(`/api/sky/teaching/history?limit=${limit}`, {
+export async function fetchTeachingHistory(options?: {
+  limit?: number;
+  favorited?: boolean;
+}): Promise<TeachingHistoryItem[]> {
+  const limit = options?.limit ?? 50;
+  const favorited = options?.favorited ?? false;
+  const qs = new URLSearchParams();
+  qs.set('limit', String(limit));
+  if (favorited) qs.set('favorited', 'true');
+
+  const res = await fetch(`/api/sky/teaching/history?${qs.toString()}`, {
     credentials: 'include',
   });
   if (!res.ok) {
@@ -346,7 +376,7 @@ export async function deleteTeachingHistory(id: string): Promise<void> {
 export async function retrySection(
   jobId: string,
   sectionId: string,
-): Promise<{ section: LessonSection; chunks: ContentChunk[] } | null> {
+): Promise<{ section: LessonSection; chunks: ContentChunk[]; structured?: Record<string, unknown> } | null> {
   const res = await fetch(`/api/sky/teaching/${jobId}/retry-section`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -411,9 +441,7 @@ export async function sendTeachingChat(
 
 // ── Favorite ──────────────────────────────────────────────────────
 
-export async function toggleTeachingFavorite(
-  jobId: string,
-): Promise<boolean> {
+export async function toggleTeachingFavorite(jobId: string): Promise<boolean> {
   const res = await fetch(`/api/sky/teaching/${jobId}/favorite`, {
     method: 'POST',
     credentials: 'include',
@@ -432,50 +460,4 @@ export async function toggleTeachingFavorite(
 
   const json = await res.json();
   return json.data?.isFavorited ?? false;
-}
-
-// ── Share ─────────────────────────────────────────────────────────
-
-export interface ShareInfo {
-  token: string;
-  shareUrl: string;
-  expiresAt: string;
-}
-
-export async function shareTeachingJob(
-  jobId: string,
-): Promise<ShareInfo> {
-  const res = await fetch(`/api/sky/teaching/${jobId}/share`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-
-  if (!res.ok) {
-    let detail = '';
-    try {
-      const body = await res.json();
-      detail = body.error ?? body.details ?? '';
-    } catch {
-      /* ignore */
-    }
-    throw new Error(detail || '分享失败');
-  }
-
-  const json = await res.json();
-  return json.data;
-}
-
-export async function getShareInfo(
-  jobId: string,
-): Promise<{ isShared: boolean; token?: string; shareUrl?: string }> {
-  const res = await fetch(`/api/sky/teaching/${jobId}/share`, {
-    credentials: 'include',
-  });
-
-  if (!res.ok) {
-    return { isShared: false };
-  }
-
-  const json = await res.json();
-  return json.data;
 }

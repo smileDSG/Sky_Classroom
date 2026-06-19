@@ -2,7 +2,7 @@
   "profile": {
     "userId": "default-user",
     "masteryBySubject": {
-      "math": 67,
+      "math": 40,
       "physics": 0,
       "chemistry": 0,
       "biology": 0,
@@ -13,22 +13,22 @@
       "politics": 0
     },
     "masteryByKnowledge": {
-      "综合练习": 67
+      "综合练习": 40
     },
     "weakPoints": [],
     "strongPoints": [],
     "errorPatterns": [],
-    "totalQuestions": 3,
-    "totalCorrect": 2,
-    "lastUpdated": "2026-06-16T06:51:22.471Z",
+    "totalQuestions": 15,
+    "totalCorrect": 6,
+    "lastUpdated": "2026-06-19T08:03:58.368Z",
     "recentQuizPerformance": {
-      "overallAccuracy": 67,
+      "overallAccuracy": 40,
       "accuracyByKnowledge": {
-        "综合练习": 67
+        "综合练习": 40
       },
       "topErrorCauses": [],
       "recommendedDepthShift": "maintain"
     }
   },
-  "cachedAt": 1781592682471
+  "cachedAt": 1781856238369
 }

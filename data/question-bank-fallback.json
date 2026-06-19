@@ -1,5 +1,429 @@
 [
   {
+    "id": "qb_mqkn1j4i_5fzoia",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "下列哪个不等式表示 \"$x$ 不小于 $3$\"？",
+    "answer": "B",
+    "explanation": "\"不小于\" 即大于或等于，用符号 \"$\\geq$\" 表示。所以 $x \\geq 3$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$x > 3$",
+      "$x \\geq 3$",
+      "$x < 3$",
+      "$x \\leq 3$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_6z2hs",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.978Z",
+    "updatedAt": "2026-06-19T07:59:36.978Z"
+  },
+  {
+    "id": "qb_mqkn1j2l_8y8sre",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "一个正方体的棱长是 $2$ cm，它的体积是？",
+    "answer": "C",
+    "explanation": "正方体体积公式为 $V = \\text{棱长}^3$，所以 $V = 2^3 = 8$ cm$^3$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$4$ cm$^3$",
+      "$6$ cm$^3$",
+      "$8$ cm$^3$",
+      "$12$ cm$^3$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_1d30x7m",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.909Z",
+    "updatedAt": "2026-06-19T07:59:36.909Z"
+  },
+  {
+    "id": "qb_mqkn1iyu_0ti3we",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "如果 $a = 3$，$b = -2$，那么 $a - b$ 的值是？",
+    "answer": "B",
+    "explanation": "代入得 $a - b = 3 - (-2) = 3 + 2 = 5$。注意减去负数等于加上正数。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$1$",
+      "$5$",
+      "$-1$",
+      "$-5$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_v3ad8h",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.773Z",
+    "updatedAt": "2026-06-19T07:59:36.773Z"
+  },
+  {
+    "id": "qb_mqkn1iwr_liw2jg",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "下列哪个数是无理数？",
+    "answer": "B",
+    "explanation": "无理数是无限不循环小数。$\\sqrt{4}=2$ 是有理数，$0.333\\ldots$ 和 $\\frac{1}{3}$ 都是有理数（无限循环小数是有理数），$\\sqrt{2}$ 是无限不循环小数，是无理数。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$\\sqrt{4}$",
+      "$\\sqrt{2}$",
+      "$0.333\\ldots$",
+      "$\\frac{1}{3}$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_1fzj3i7",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.699Z",
+    "updatedAt": "2026-06-19T07:59:36.699Z"
+  },
+  {
+    "id": "qb_mqkn1iui_9ixj28",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "计算 $\\frac{1}{2} + \\frac{1}{3}$ 的结果是？",
+    "answer": "B",
+    "explanation": "先通分，分母为 6：$\\frac{1}{2} = \\frac{3}{6}$，$\\frac{1}{3} = \\frac{2}{6}$，相加得 $\\frac{5}{6}$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$\\frac{2}{5}$",
+      "$\\frac{5}{6}$",
+      "$\\frac{1}{6}$",
+      "$\\frac{2}{6}$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_1ysc2zy",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.618Z",
+    "updatedAt": "2026-06-19T07:59:36.618Z"
+  },
+  {
+    "id": "qb_mqkn1isk_l8p0w3",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "一个长方形的长是 $8$ cm，宽是 $5$ cm，它的面积是？",
+    "answer": "C",
+    "explanation": "长方形面积公式为 $S = \\text{长} \\times \\text{宽}$，所以 $S = 8 \\times 5 = 40$ cm$^2$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$13$ cm$^2$",
+      "$26$ cm$^2$",
+      "$40$ cm$^2$",
+      "$45$ cm$^2$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_1m7qlay",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.548Z",
+    "updatedAt": "2026-06-19T07:59:36.548Z"
+  },
+  {
+    "id": "qb_mqkn1iqj_5cnmja",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "下列哪个分数与 $\\frac{1}{2}$ 相等？",
+    "answer": "B",
+    "explanation": "$\\frac{3}{6}$ 化简后为 $\\frac{1}{2}$（分子分母同时除以 3）。其他选项化简后均不等于 $\\frac{1}{2}$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$\\frac{2}{3}$",
+      "$\\frac{3}{6}$",
+      "$\\frac{4}{9}$",
+      "$\\frac{5}{10}$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_z4dfw8",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.475Z",
+    "updatedAt": "2026-06-19T07:59:36.475Z"
+  },
+  {
+    "id": "qb_mqkn1iny_4un717",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "化简 $3a + 2b - a + 3b$ 的结果是？",
+    "answer": "A",
+    "explanation": "合并同类项：$3a - a = 2a$，$2b + 3b = 5b$，所以结果为 $2a + 5b$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$2a + 5b$",
+      "$4a + 5b$",
+      "$2a + 6b$",
+      "$4a + 6b$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_1reaur7",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.382Z",
+    "updatedAt": "2026-06-19T07:59:36.382Z"
+  },
+  {
+    "id": "qb_mqkn1iln_lu8dd0",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "一个圆的半径是 $3$ cm，它的周长是多少？（取 $\\pi = 3.14$）",
+    "answer": "B",
+    "explanation": "圆的周长公式为 $C = 2\\pi r$，代入 $r=3$，$\\pi=3.14$，得 $C = 2 \\times 3.14 \\times 3 = 18.84$ cm。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$9.42$ cm",
+      "$18.84$ cm",
+      "$28.26$ cm",
+      "$12.56$ cm"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_ogz7tg",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.299Z",
+    "updatedAt": "2026-06-19T07:59:36.299Z"
+  },
+  {
+    "id": "qb_mqkn1ijp_h4s6k7",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "下列哪个数是质数？",
+    "answer": "D",
+    "explanation": "质数是大于 1 且只有 1 和它本身两个因数的自然数。$1$ 不是质数，$4$ 和 $9$ 是合数，$7$ 只有因数 1 和 7，是质数。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$1$",
+      "$4$",
+      "$9$",
+      "$7$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_1w4oxf7",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.229Z",
+    "updatedAt": "2026-06-19T07:59:36.229Z"
+  },
+  {
+    "id": "qb_mqkn1ihx_dndbx9",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "方程 $2x + 3 = 7$ 的解是？",
+    "answer": "A",
+    "explanation": "移项：$2x = 7 - 3 = 4$，两边同时除以 $2$：$x = 2$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$x = 2$",
+      "$x = 3$",
+      "$x = 4$",
+      "$x = 5$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_179sneu",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.165Z",
+    "updatedAt": "2026-06-19T07:59:36.165Z"
+  },
+  {
+    "id": "qb_mqkn1ig1_xl7glu",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "一个三角形的三个内角分别是 $50^\\circ$、$60^\\circ$ 和 $x^\\circ$，则 $x$ 等于？",
+    "answer": "A",
+    "explanation": "三角形内角和为 $180^\\circ$。已知两个角分别为 $50^\\circ$ 和 $60^\\circ$，所以第三个角 $x = 180 - 50 - 60 = 70^\\circ$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$70$",
+      "$80$",
+      "$90$",
+      "$100$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_824jv7",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.097Z",
+    "updatedAt": "2026-06-19T07:59:36.097Z"
+  },
+  {
+    "id": "qb_mqkn1ief_tef2d8",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "计算 $\\frac{2}{3} \\times \\frac{3}{4}$ 的结果是？",
+    "answer": "A",
+    "explanation": "分数相乘时，分子乘分子，分母乘分母：$\\frac{2 \\times 3}{3 \\times 4} = \\frac{6}{12} = \\frac{1}{2}$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$\\frac{1}{2}$",
+      "$\\frac{6}{7}$",
+      "$\\frac{1}{4}$",
+      "$\\frac{2}{3}$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_9wwc82",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:36.039Z",
+    "updatedAt": "2026-06-19T07:59:36.039Z"
+  },
+  {
+    "id": "qb_mqkn1ib1_dmb633",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "下列哪个数是最小的正整数？",
+    "answer": "B",
+    "explanation": "正整数是指大于 0 的整数。$0$ 不是正数也不是负数，$-1$ 是负数，所以最小的正整数是 $1$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$0$",
+      "$1$",
+      "$2$",
+      "$-1$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_uu6hw5",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:35.917Z",
+    "updatedAt": "2026-06-19T07:59:35.917Z"
+  },
+  {
+    "id": "qb_mqkn1ia4_jvs3ls",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "计算 $(-3) + 5$ 的结果是？",
+    "answer": "A",
+    "explanation": "根据有理数加法法则，异号两数相加，取绝对值较大的符号，并用较大的绝对值减去较小的绝对值。$(-3)+5$，因为 $5$ 的绝对值大于 $3$ 的绝对值，所以结果为正，$5-3=2$。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$2$",
+      "$-2$",
+      "$8$",
+      "$-8$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_2nkdg3",
+    "verified": true,
+    "createdAt": "2026-06-19T07:59:35.884Z",
+    "updatedAt": "2026-06-19T07:59:35.884Z"
+  },
+  {
+    "id": "qb_mqkhpm7n_mxzcc8",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "medium",
+    "questionType": "solve",
+    "content": "1+1=?",
+    "answer": "2",
+    "explanation": "",
+    "knowledgePoints": [],
+    "image": null,
+    "options": null,
+    "source": null,
+    "tags": [],
+    "problemHash": "qb_rqfcp",
+    "verified": true,
+    "createdAt": "2026-06-19T05:30:23.027Z",
+    "updatedAt": "2026-06-19T05:30:23.027Z"
+  },
+  {
     "id": "qb_mqf3sjqw_17dvfy",
     "subject": "数学",
     "grade": "",

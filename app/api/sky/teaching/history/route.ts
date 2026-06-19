@@ -21,12 +21,16 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const limitParam = url.searchParams.get('limit');
   const limit = limitParam ? Math.min(parseInt(limitParam, 10), 100) : 50;
+  const favorited = url.searchParams.get('favorited') === 'true';
 
   const allJobs = await listTeachingJobsByUser(quota.userId);
 
   // Only return completed (succeeded) jobs for history, but also include running ones
   const history = allJobs
-    .filter((j) => j.status === 'succeeded' || j.status === 'running')
+    .filter((j) => {
+      if (favorited) return j.isFavorited === true && j.status === 'succeeded';
+      return j.status === 'succeeded' || j.status === 'running';
+    })
     .slice(0, limit)
     .map((j) => ({
       id: j.id,
@@ -39,6 +43,7 @@ export async function GET(req: NextRequest) {
       totalSections: j.totalSections ?? 0,
       createdAt: j.createdAt,
       completedAt: j.completedAt,
+      isFavorited: j.isFavorited ?? false,
     }));
 
   return apiSuccess({ history });

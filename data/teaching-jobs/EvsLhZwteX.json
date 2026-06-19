@@ -1,0 +1,107 @@
+{
+  "id": "EvsLhZwteX",
+  "userId": "admin-default",
+  "topic": "级数",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 10,
+  "message": "教案生成已取消",
+  "createdAt": "2026-06-17T03:26:32.899Z",
+  "updatedAt": "2026-06-17T03:29:10.342Z",
+  "sectionsCompleted": 0,
+  "totalSections": 6,
+  "startedAt": "2026-06-17T03:26:32.906Z",
+  "plan": {
+    "title": "级数基础与审敛方法",
+    "sections": [
+      {
+        "id": "section-1",
+        "title": "级数的基本概念",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "级数定义",
+          "部分和",
+          "收敛与发散"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-2",
+        "title": "随堂测验1：基本概念",
+        "contentType": "quiz",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "级数定义",
+          "部分和",
+          "收敛与发散"
+        ],
+        "estimatedDuration": 3,
+        "hasQuiz": false
+      },
+      {
+        "id": "section-3",
+        "title": "正项级数审敛法",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "比较判别法",
+          "比值判别法",
+          "根值判别法"
+        ],
+        "estimatedDuration": 10,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-4",
+        "title": "随堂测验2：审敛法",
+        "contentType": "quiz",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "比较判别法",
+          "比值判别法",
+          "根值判别法"
+        ],
+        "estimatedDuration": 3,
+        "hasQuiz": false
+      },
+      {
+        "id": "section-5",
+        "title": "交错级数与绝对收敛",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "交错级数",
+          "莱布尼茨判别法",
+          "绝对收敛",
+          "条件收敛"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-6",
+        "title": "随堂测验3：交错级数",
+        "contentType": "quiz",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "交错级数",
+          "莱布尼茨判别法",
+          "绝对收敛",
+          "条件收敛"
+        ],
+        "estimatedDuration": 3,
+        "hasQuiz": false
+      }
+    ],
+    "estimatedDuration": 35,
+    "focusPoints": [
+      "级数收敛的定义",
+      "比值判别法",
+      "莱布尼茨判别法"
+    ]
+  },
+  "completedAt": "2026-06-17T03:29:10.342Z",
+  "error": "用户取消了生成"
+}

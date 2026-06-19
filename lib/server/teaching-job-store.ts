@@ -244,9 +244,10 @@ export async function markTeachingJobRunning(jobId: string): Promise<TeachingJob
 export async function updateTeachingJobProgress(
   jobId: string,
   progress: {
-    step: string;
-    progress: number;
-    message: string;
+    step?: string;
+    progress?: number;
+    message?: string;
+    status?: TeachingJobStatus;
     plan?: LessonPlan;
     sectionsCompleted?: number;
     totalSections?: number;
@@ -254,13 +255,14 @@ export async function updateTeachingJobProgress(
     isFavorited?: boolean;
   },
 ): Promise<TeachingJob> {
-  const patch: Partial<TeachingJob> = {
-    status: 'running',
-    step: progress.step,
-    progress: progress.progress,
-    message: progress.message,
-  };
+  const patch: Partial<TeachingJob> = {};
 
+  if (progress.status !== undefined) {
+    patch.status = progress.status;
+  }
+  if (progress.step !== undefined) patch.step = progress.step;
+  if (progress.progress !== undefined) patch.progress = progress.progress;
+  if (progress.message !== undefined) patch.message = progress.message;
   if (progress.plan) patch.plan = progress.plan;
   if (progress.sectionsCompleted !== undefined)
     patch.sectionsCompleted = progress.sectionsCompleted;
