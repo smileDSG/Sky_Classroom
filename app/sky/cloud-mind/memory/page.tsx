@@ -28,6 +28,8 @@ import type { MistakeRecord } from '@/lib/mistakes/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { MemoryCardDeck } from '@/lib/agents/cloud-mind/memory-cards-agent';
+import { MEMORY_COUNT_OPTIONS } from '@/lib/student/profile-config';
+import type { StudentProfile } from '@/lib/student/profile-types';
 
 export default function CloudMindMemoryPage() {
   const searchParams = useSearchParams();
@@ -43,6 +45,8 @@ export default function CloudMindMemoryPage() {
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [showMistakePicker, setShowMistakePicker] = useState(false);
   const [studiedCards, setStudiedCards] = useState<Set<number>>(new Set());
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
   const router = useRouter();
   const { setForceDark } = useTheme();
 
@@ -58,6 +62,41 @@ export default function CloudMindMemoryPage() {
     if (qContent) setContent(qContent);
     if (qTopic) setTopic(qTopic);
   }, [searchParams]);
+
+  // Load student profile for weak-point recommendations
+  useEffect(() => {
+    let cancelled = false;
+    setProfileLoading(true);
+    fetch('/api/student/profile')
+      .then((res) => res.json())
+      .then((json) => {
+        if (cancelled) return;
+        if (json.success && json.data?.hasProfile) {
+          setProfile({
+            userId: '',
+            masteryBySubject: {} as Record<string, number>,
+            masteryByKnowledge: json.data.masteryByKnowledge ?? {},
+            weakPoints: json.data.weakPoints ?? [],
+            strongPoints: Object.entries(json.data.masteryByKnowledge ?? {})
+              .filter(([, m]) => (m as number) > 80)
+              .map(([k]) => k),
+            errorPatterns: json.data.errorPatterns ?? [],
+            totalQuestions: 0,
+            totalCorrect: 0,
+            lastUpdated: new Date(),
+          });
+        }
+      })
+      .catch(() => {
+        /* ignore */
+      })
+      .finally(() => {
+        if (!cancelled) setProfileLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const causeLabels: Record<MistakeCause, string> = {
     'concept-unclear': '概念不清',
@@ -133,8 +172,8 @@ export default function CloudMindMemoryPage() {
     return unsub;
   }, [activeTaskId]);
 
-  const handleGenerate = async () => {
-    if (!content.trim()) {
+  const handleGenerate = async (auto = false) => {
+    if (!auto && !content.trim()) {
       setError('请输入学习内容或知识点');
       return;
     }
@@ -151,7 +190,7 @@ export default function CloudMindMemoryPage() {
     useTaskStore.getState().addTask({
       id: taskId,
       type: 'memory',
-      label: `记忆卡片: ${topic || '未命名主题'}`,
+      label: auto ? '记忆卡片: 基于薄弱点生成' : `记忆卡片: ${topic || '未命名主题'}`,
       status: 'running',
       progress: 30,
       phase: '碎片生成中…',
@@ -160,10 +199,13 @@ export default function CloudMindMemoryPage() {
     });
 
     try {
+      const body = auto
+        ? { auto: true }
+        : { content: content.trim(), topic: topic || undefined, cardCount };
       const res = await fetch('/api/sky/cloud-mind/memory-cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: content.trim(), topic: topic || undefined, cardCount }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
       if (!json.success) {
@@ -385,7 +427,7 @@ export default function CloudMindMemoryPage() {
                   碎片数量
                 </label>
                 <div className="flex items-center gap-2">
-                  {[6, 12, 20, 30].map((count) => (
+                  {MEMORY_COUNT_OPTIONS.map((count) => (
                     <button
                       key={count}
                       onClick={() => setCardCount(count)}
@@ -447,6 +489,34 @@ export default function CloudMindMemoryPage() {
                   </div>
                 </div>
               </button>
+
+              {/* Auto-generate from weak points */}
+              {profile && profile.weakPoints.length > 0 && !content.trim() && (
+                <button
+                  onClick={() => handleGenerate(true)}
+                  disabled={loading || profileLoading}
+                  className="w-full mb-4 flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all group"
+                  style={{
+                    border: '1px dashed var(--memory-primary)',
+                    background: 'rgba(251, 113, 133, 0.08)',
+                  }}
+                >
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                    style={{ background: 'rgba(251, 113, 133, 0.2)' }}
+                  >
+                    <Sparkles className="h-4.5 w-4.5 text-[var(--memory-primary)]" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium" style={{ color: 'var(--memory-primary)' }}>
+                      基于薄弱点一键生成
+                    </div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--memory-muted)' }}>
+                      推荐：{profile.weakPoints.slice(0, 3).join('、')}
+                    </div>
+                  </div>
+                </button>
+              )}
 
               {/* Mistake Picker Panel */}
               {showMistakePicker && (

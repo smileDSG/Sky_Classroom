@@ -10,8 +10,13 @@ import { jsonrepair } from 'jsonrepair';
 import { createLogger } from '@/lib/logger';
 import { resolveApiKey, resolveBaseUrl } from '@/lib/server/provider-config';
 import { retrieveRelevantContext } from '@/lib/agents/rag/retriever';
+import { buildProfileContextPrompt } from '@/lib/student/profile-prompts';
+import type { StudentProfile } from '@/lib/student/profile-types';
+import { getSubjectLabel } from '@/lib/mistakes/subject-inference';
 
 const log = createLogger('QuizAgent');
+
+export const QUIZ_AGENT_PROMPT_VERSION = 'v2-profile-driven';
 
 // ── 输出结构 ───────────────────────────────────────────────────────
 
@@ -45,16 +50,10 @@ const QUIZ_AGENT_SYSTEM_PROMPT = `你是一位资深的教育出题专家，擅�
 - 进阶（medium）：需要理解和简单推理，涉及知识的综合运用
 - 挑战（hard）：需要深入分析和多步推理，有思维陷阱
 
-## 学科特点
-- 数学：注重计算过程和公式运用
-- 物理：注重物理情景理解和公式选择
-- 化学：注重反应原理和实验操作
-- 生物：注重概念辨析和生理过程
-- 语文：注重文学常识和阅读理解
-- 英语：注重语法和词汇运用
-- 历史：注重史实脉络、时代背景和因果分析
-- 政治：注重概念理解、材料分析和观点辨析
-- 地理：注重区域认知、图表信息和自然人文联系
+## 学情感知
+- 如果调用方提供了学生学情上下文，请优先针对薄弱知识点出题
+- 针对高频错误模式设计具有迷惑性的干扰项
+- 已掌握知识点可降低权重或作为复习巩固题
 
 ## 输出格式要求
 请严格按照以下 JSON 格式输出：
@@ -87,7 +86,9 @@ const QUIZ_AGENT_SYSTEM_PROMPT = `你是一位资深的教育出题专家，擅�
 - 数学公式必须使用 LaTeX 格式：行内公式用 $...$ 包裹，独立公式用 $$...$$ 包裹
   例如二次函数顶点写成 $y = a(x - h)^2 + k$
   分数写成 $\\frac{1}{2}$，积分写成 $\\int_{0}^{1} f(x) dx$
-  禁止使用 Unicode 数学符号（如 × ÷ ² ³ α β），必须使用 LaTeX 命令（如 \\times \\div \\alpha \\beta）`;
+  禁止使用 Unicode 数学符号（如 × ÷ ² ³ α β），必须使用 LaTeX 命令（如 \\times \\div \\alpha \\beta）
+
+<!-- prompt-version: ${QUIZ_AGENT_PROMPT_VERSION} -->`;
 
 function stripOptionPrefix(option: string): string {
   return option.replace(/^\s*[A-DＡ-Ｄ][\.．、:]\s*/i, '').trim();
@@ -232,6 +233,7 @@ export async function generateQuiz(
   difficulty: string,
   topic: string,
   count: number,
+  profile?: StudentProfile,
 ): Promise<QuizOutput> {
   const apiKey = resolveApiKey('deepseek');
   const baseUrl = resolveBaseUrl('deepseek') || 'https://api.deepseek.com/v1';
@@ -263,29 +265,23 @@ export async function generateQuiz(
     hard: '挑战',
   };
 
-  const subjectLabels: Record<string, string> = {
-    math: '数学',
-    physics: '物理',
-    chemistry: '化学',
-    biology: '生物',
-    chinese: '语文',
-    english: '英语',
-    history: '历史',
-    politics: '政治',
-    geography: '地理',
-  };
-
-  const subjectLabel = subjectLabels[subject] || subject;
+  const subjectLabel = getSubjectLabel(subject as any) || subject;
   const difficultyLabel = difficultyLabels[difficulty] || difficulty;
+
+  const profileContext = profile
+    ? `\n\n${buildProfileContextPrompt(profile, { maxWeakPoints: 5, maxErrorPatterns: 3 })}`
+    : '';
 
   let userPrompt: string;
   if (topic) {
-    userPrompt = `请为"${subjectLabel}"学科，关于"${topic}"知识点，生成${count}道${difficultyLabel}难度的选择题。\n\n要求：\n- 学科：${subjectLabel}\n- 知识点：${topic}\n- 难度：${difficultyLabel}\n- 数量：${count}道\n- 每道题4个选项，只有1个正确答案\n- 提供详细解析${ragContext}`;
+    userPrompt = `请为"${subjectLabel}"学科，关于"${topic}"知识点，生成${count}道${difficultyLabel}难度的选择题。\n\n要求：\n- 学科：${subjectLabel}\n- 知识点：${topic}\n- 难度：${difficultyLabel}\n- 数量：${count}道\n- 每道题4个选项，只有1个正确答案\n- 提供详细解析${profileContext}${ragContext}`;
   } else {
-    userPrompt = `请为"${subjectLabel}"学科，生成${count}道${difficultyLabel}难度的选择题。\n\n要求：\n- 学科：${subjectLabel}\n- 难度：${difficultyLabel}\n- 数量：${count}道\n- 每道题4个选项，只有1个正确答案\n- 提供详细解析${ragContext}`;
+    userPrompt = `请为"${subjectLabel}"学科，生成${count}道${difficultyLabel}难度的选择题。\n\n要求：\n- 学科：${subjectLabel}\n- 难度：${difficultyLabel}\n- 数量：${count}道\n- 每道题4个选项，只有1个正确答案\n- 提供详细解析${profileContext}${ragContext}`;
   }
 
-  log.info(`Generating quiz: ${subjectLabel} / ${difficultyLabel} / ${count} questions`);
+  log.info(
+    `[QuizAgent] Generating quiz: ${subjectLabel} / ${difficultyLabel} / ${count} questions, profile injected: ${Boolean(profile)}`,
+  );
 
   const result = await generateText({
     model: deepseek.chat('deepseek-chat'),

@@ -10,6 +10,7 @@ import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
+import { resolveSubject } from '@/lib/student/profile-config';
 import { extractPrerequisites } from '@/lib/teaching/diagnostic-generator';
 import { search } from '@/lib/question-bank/dao';
 import { generateQuiz } from '@/lib/agents/cloud-mind/quiz-agent';
@@ -142,7 +143,7 @@ async function generateDiagnosticQuestions(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { topic, subject = 'math' } = body;
+    const { topic, subject: requestedSubject } = body;
 
     if (!topic || typeof topic !== 'string') {
       return NextResponse.json({ error: 'Missing topic' }, { status: 400 });
@@ -164,6 +165,7 @@ export async function POST(request: NextRequest) {
 
     // Build profile and extract prerequisites
     const profile = await buildStudentProfile(userId);
+    const subject = requestedSubject || resolveSubject(topic, profile);
     const prerequisites = extractPrerequisites(topic, profile);
 
     if (prerequisites.length === 0) {

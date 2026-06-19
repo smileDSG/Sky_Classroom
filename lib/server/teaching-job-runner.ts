@@ -100,9 +100,12 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
 
       // Phase 2: Generate content concurrently
       let completedCount = 0;
-      for await (const { section, chunks, structured } of generateLessonConcurrent(plan)) {
+      const failedSections: { section: LessonSection; index: number }[] = [];
+      for await (const { section, chunks, structured, index } of generateLessonConcurrent(plan, profile)) {
         await assertNotCancelled(jobId);
         completedCount++;
+        // 使用 section 在 plan 中的真实索引，避免章节被丢弃/重试后 sectionIndex 错位
+        const sectionIndex = typeof index === 'number' ? index : completedCount - 1;
 
         const sectionData: GeneratedSectionData = { section, chunks, structured };
         const jobAfterSection = await updateTeachingJobProgress(jobId, {
@@ -116,7 +119,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
         // Emit SSE event for this section
         teachingEvents.emit(`job:${jobId}`, {
           type: 'section_done',
-          sectionIndex: completedCount - 1,
+          sectionIndex,
           section,
           chunks,
           structured,
@@ -134,9 +137,120 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
           done: false,
         });
 
+        // 收集生成失败的章节，Phase 2 结束后自动重试一次
+        if (chunks.some((c) => c.failed)) {
+          failedSections.push({ section, index: sectionIndex });
+        }
+
         log.info(
           `[${jobId}] Section ${completedCount}/${totalSections} completed: ${section.title}`,
         );
+      }
+
+      // Phase 2.5: 自动重试失败的章节一次（并发执行），减少用户手动点"重新生成"
+      // 并发重试避免串行 N×(structured+chunks LLM 调用) 严重拖慢总时长
+      // 每个重试一完成就立即 emit progress/section_done，让进度条紧跟实际重试进度
+      // （而非等全部重试完成才推进），避免重试期间进度条长时间卡住
+      if (failedSections.length > 0) {
+        await assertNotCancelled(jobId);
+        const retryTotal = failedSections.length;
+        log.info(
+          `[${jobId}] ${retryTotal} section(s) failed, auto-retrying once (concurrent)`,
+        );
+        const jobForRetry = await readTeachingJob(jobId);
+
+        // 累积成功的重试结果，全部完成后一次性写回 store（避免并发写竞态）
+        const successMap = new Map<string, GeneratedSectionData>();
+        let settledCount = 0;
+        let replacedCount = 0;
+
+        const retryTasks = failedSections.map(({ section, index }) => {
+          // 提前为该失败章节构建前序上下文（用 Phase 2 的 sections 快照）
+          const precedingSections: PrecedingSection[] = [];
+          if (jobForRetry?.sections) {
+            for (let i = 0; i < index; i++) {
+              const ps = jobForRetry.sections.find(
+                (s) => s.section.id === plan.sections[i]?.id,
+              );
+              if (ps) {
+                precedingSections.push({
+                  title: ps.section.title,
+                  knowledgePoints: ps.section.knowledgePoints,
+                  depth: ps.section.depth,
+                  contentSummary: extractContentSummary(ps.chunks),
+                });
+              }
+            }
+          }
+
+          return (async () => {
+            const { chunks, structured } = await generateSectionContent(
+              section,
+              profile,
+              precedingSections,
+            );
+            return { section, index, chunks, structured };
+          })()
+            .then((value) => {
+              settledCount++;
+              const { section: sec, index: idx, chunks, structured } = value;
+              // 仍失败则保留原占位，等待用户手动重试
+              if (chunks.some((c) => c.failed)) {
+                log.warn(`[${jobId}] Auto-retry still failed for section ${sec.id}`);
+                return;
+              }
+              successMap.set(sec.id, { section: sec, chunks, structured });
+              replacedCount++;
+              // 立即推送该章节，前端用真实索引覆盖
+              teachingEvents.emit(`job:${jobId}`, {
+                type: 'section_done',
+                sectionIndex: idx,
+                section: sec,
+                chunks,
+                structured,
+              });
+              log.info(`[${jobId}] Auto-retry succeeded for section ${sec.id}`);
+            })
+            .catch((retryErr) => {
+              settledCount++;
+              log.warn(`[${jobId}] Auto-retry threw for section ${section.id}:`, retryErr);
+            })
+            .finally(() => {
+              // 每个重试结算后立即推进进度（95→99），紧跟实际重试完成节奏
+              const retryProgress =
+                retryTotal > 0 ? 95 + Math.round((settledCount / retryTotal) * 4) : 99;
+              teachingEvents.emit(`job:${jobId}`, {
+                type: 'progress',
+                step: 'generating_content',
+                progress: retryProgress,
+                message: `正在重新生成失败章节（${settledCount}/${retryTotal}）`,
+                sectionsCompleted: jobForRetry?.sectionsCompleted ?? completedCount,
+                totalSections: jobForRetry?.totalSections ?? totalSections,
+                done: false,
+              });
+            });
+        });
+
+        await Promise.allSettled(retryTasks);
+
+        // 全部重试完成后一次性写回 store（替换成功章节）
+        if (replacedCount > 0) {
+          const jobBeforeReplace = await readTeachingJob(jobId);
+          const newSections = [...(jobBeforeReplace?.sections ?? [])];
+          for (const [sectionId, data] of successMap) {
+            const replaceIdx = newSections.findIndex((s) => s.section.id === sectionId);
+            if (replaceIdx >= 0) {
+              newSections[replaceIdx] = data;
+            } else {
+              newSections.push(data);
+            }
+          }
+          await updateTeachingJob(jobId, {
+            sections: newSections,
+            progress: 99,
+            message: `已重新生成 ${replacedCount} 个失败章节`,
+          });
+        }
       }
 
       // Phase 3: Adaptive supplementation based on feedback/quiz results
@@ -147,6 +261,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
             jobAfterContent.sectionFeedbacks ?? [],
             jobAfterContent.quizResults ?? [],
             jobAfterContent.plan?.sections ?? [],
+            profile.masteryByKnowledge,
           );
 
           if (decision.shouldSupplement && decision.supplementalSections.length > 0) {
@@ -190,7 +305,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
                 await assertNotCancelled(jobId);
                 const supSection = decision.supplementalSections[i];
                 const { chunks: supChunks, structured: supStructured } =
-                  await generateSectionContent(supSection, precedingSections);
+                  await generateSectionContent(supSection, profile, precedingSections);
                 const sectionData: GeneratedSectionData = {
                   section: supSection,
                   chunks: supChunks,
@@ -210,7 +325,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
                   title: supSection.title,
                   knowledgePoints: supSection.knowledgePoints,
                   depth: supSection.depth,
-                  contentSummary: extractContentSummary(chunks),
+                  contentSummary: extractContentSummary(supChunks),
                 });
 
                 // Emit SSE event
@@ -218,7 +333,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
                   type: 'supplement_section',
                   sectionIndex: updatedSections.length - decision.supplementalSections.length + i,
                   section: supSection,
-                  chunks,
+                  chunks: supChunks,
                   reason: decision.weakKnowledgePoints.join('、'),
                 });
 
@@ -313,6 +428,9 @@ export async function retrySection(
     throw new Error(`Section ${sectionId} not found in plan`);
   }
 
+  // Re-build profile for the user so retry content is also personalized
+  const profile = job.userId ? await buildStudentProfile(job.userId) : undefined;
+
   // Find preceding sections for context
   const sectionIndex = job.plan.sections.findIndex((s) => s.id === sectionId);
   const precedingSections: PrecedingSection[] = [];
@@ -331,7 +449,7 @@ export async function retrySection(
   }
 
   // Regenerate
-  const { chunks, structured } = await generateSectionContent(section, precedingSections);
+  const { chunks, structured } = await generateSectionContent(section, profile, precedingSections);
   const sectionData: GeneratedSectionData = { section, chunks, structured };
 
   // Replace in job store

@@ -10,6 +10,7 @@ import { NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { buildStudyGroupSetup } from '@/lib/teaching/study-group';
+import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:StudyGroup');
@@ -30,9 +31,12 @@ export async function POST(
       return apiError('INVALID_REQUEST', 400, '教案尚未生成完成，无法开启学习小组');
     }
 
-    const setup = buildStudyGroupSetup(job);
+    const profile = job.userId ? await buildStudentProfile(job.userId) : undefined;
+    const setup = buildStudyGroupSetup(job, profile);
 
-    log.info(`Created study group ${setup.sessionId} for job ${jobId}`);
+    log.info(
+      `Created study group ${setup.sessionId} for job ${jobId}, profile injected: ${Boolean(profile)}`,
+    );
 
     return apiSuccess(
       {

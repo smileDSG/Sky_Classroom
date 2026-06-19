@@ -24,6 +24,7 @@ import type {
 } from '@/lib/types/stage';
 import type { TeachingJob, GeneratedSectionData } from '@/lib/server/teaching-job-store';
 import type { ContentChunk } from '@/lib/teaching/content-types';
+import type { Action } from '@/lib/types/action';
 import {
   layoutContentWithTemplate,
   selectTemplateForOutline,
@@ -37,14 +38,14 @@ const CANVAS_H = 562.5;
 
 const DEFAULT_THEME: SlideTheme = {
   backgroundColor: '#ffffff',
-  themeColors: ['#5b9bd5', '#ed7d31', '#a5a5a5', '#ffc000', '#4472c4'],
+  themeColors: ['#3B82F6', '#60A5FA', '#93C5FD', '#1E40AF', '#0EA5E9'],
   fontColor: '#333333',
   fontName: 'Microsoft YaHei',
 };
 
 const DEFAULT_BACKGROUND: SlideBackground = {
   type: 'solid',
-  color: '#ffffff',
+  color: '#f0f9ff',
 };
 
 /** Approximate chars that fit in a content slide body area */
@@ -242,6 +243,33 @@ function chunksToSlides(
       canvas: slide,
     };
 
+    // Build immersive actions for this slide page
+    const actions: Action[] = [];
+    const titleElementId = currentPageElements[0]?.id;
+
+    const kpText = section.knowledgePoints?.length
+      ? `本节重点：${section.knowledgePoints.join('、')}。`
+      : '';
+    const speechText = pageCount === 0
+      ? `接下来我们进入「${section.title}」。${kpText}${section.estimatedDuration ? `预计用时 ${section.estimatedDuration} 分钟。` : ''}`
+      : `我们继续「${section.title}」的讲解。`;
+
+    actions.push({
+      id: createId('action'),
+      type: 'speech',
+      title: 'Scene Introduction',
+      text: speechText,
+    });
+
+    if (titleElementId) {
+      actions.push({
+        id: createId('action'),
+        type: 'spotlight',
+        title: 'Highlight Title',
+        elementId: titleElementId,
+      });
+    }
+
     scenes.push({
       id: createId('scene'),
       stageId,
@@ -249,6 +277,7 @@ function chunksToSlides(
       title: pageCount === 0 ? section.title : `${section.title} (${pageCount + 1})`,
       order: baseOrder + pageCount,
       content: slideContent,
+      actions,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -332,7 +361,7 @@ function convertSectionToQuizScene(
   const quizChunks = chunks.filter((c) => c.type === 'quiz' && !c.failed);
   if (quizChunks.length === 0) return null;
 
-  const questions: QuizQuestion[] = quizChunks.map((chunk, idx) => {
+  const questions: QuizQuestion[] = quizChunks.map((chunk) => {
     const opts: QuizOption[] = (chunk.options ?? []).map((o, i) => ({
       label: o,
       value: String.fromCharCode(65 + i), // A, B, C, D
@@ -361,6 +390,15 @@ function convertSectionToQuizScene(
     knowledgePoints: section.knowledgePoints,
   };
 
+  const actions: Action[] = [
+    {
+      id: createId('action'),
+      type: 'speech',
+      title: 'Quiz Introduction',
+      text: `学习完以上内容，我们来做几道练习题巩固一下吧。请认真思考后作答。`,
+    },
+  ];
+
   return {
     id: createId('scene'),
     stageId,
@@ -368,6 +406,7 @@ function convertSectionToQuizScene(
     title: section.title,
     order,
     content: quizContent,
+    actions,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -418,6 +457,17 @@ export async function convertSectionToScenes(
   if (structured && !isTestEnv) {
     const slide = await structuredToSlide(structured, section.title);
     if (slide) {
+      const richActions: Action[] = [];
+      const richKpText = section.knowledgePoints?.length
+        ? `本节重点：${section.knowledgePoints.join('、')}。`
+        : '';
+      richActions.push({
+        id: createId('action'),
+        type: 'speech',
+        title: 'Scene Introduction',
+        text: `接下来我们进入「${section.title}」。${richKpText}${section.estimatedDuration ? `预计用时 ${section.estimatedDuration} 分钟。` : ''}`,
+      });
+
       scenes.push({
         id: createId('scene'),
         stageId,
@@ -425,6 +475,7 @@ export async function convertSectionToScenes(
         title: section.title,
         order,
         content: { type: 'slide', canvas: slide },
+        actions: richActions,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
@@ -461,6 +512,17 @@ export async function convertSectionToScenes(
       background: DEFAULT_BACKGROUND,
       type: 'content',
     };
+    const summaryActions: Action[] = [];
+    const sumKpText = section.knowledgePoints?.length
+      ? `本节重点：${section.knowledgePoints.join('、')}。`
+      : '';
+    summaryActions.push({
+      id: createId('action'),
+      type: 'speech',
+      title: 'Scene Introduction',
+      text: `接下来我们进入「${section.title}」。${sumKpText}${section.estimatedDuration ? `预计用时 ${section.estimatedDuration} 分钟。` : ''}`,
+    });
+
     scenes.push({
       id: createId('scene'),
       stageId,
@@ -468,6 +530,7 @@ export async function convertSectionToScenes(
       title: section.title,
       order,
       content: { type: 'slide', canvas: summarySlide },
+      actions: summaryActions,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -496,29 +559,112 @@ export async function convertTeachingJobToStage(
     description: `由 AI 智能授课教案转换而来：${job.topic}`,
     createdAt: now,
     updatedAt: now,
-    agentIds: [],
+    agentIds: ['default-1', 'default-2', 'default-3'],
+    style: 'interactive',
+    languageDirective: 'zh-CN',
   };
 
   const scenes: Scene[] = [];
   let order = 0;
 
   // Add a cover slide
+  const coverTitleText = job.plan?.title ?? job.topic ?? '教案课堂';
+  const coverElements: PPTElement[] = [
+    {
+      id: createId('el'),
+      type: 'text',
+      left: 60,
+      top: 80,
+      width: 880,
+      height: 70,
+      rotate: 0,
+      content: `<p style="text-align:center;"><strong><span style="font-size:32px;color:#1E40AF;font-family:Microsoft YaHei;">${escapeHtml(coverTitleText)}</span></strong></p>`,
+      defaultFontName: 'Microsoft YaHei',
+      defaultColor: '#1E40AF',
+      lineHeight: 1.3,
+      paragraphSpace: 0,
+      textType: 'title',
+    },
+    {
+      id: createId('el'),
+      type: 'text',
+      left: 60,
+      top: 170,
+      width: 880,
+      height: 40,
+      rotate: 0,
+      content: `<p style="text-align:center;color:#64748b;font-size:16px;font-family:Microsoft YaHei;">${escapeHtml(job.topic)}</p>`,
+      defaultFontName: 'Microsoft YaHei',
+      defaultColor: '#64748b',
+      lineHeight: 1.4,
+      paragraphSpace: 0,
+      textType: 'content',
+    },
+    {
+      id: createId('el'),
+      type: 'text',
+      left: 60,
+      top: 230,
+      width: 880,
+      height: 30,
+      rotate: 0,
+      content: `<p style="text-align:center;color:#94a3b8;font-size:14px;font-family:Microsoft YaHei;">预计 ${job.plan?.estimatedDuration ?? '-'} 分钟 · ${job.plan?.sections.length ?? (job.sections ?? []).length} 个章节</p>`,
+      defaultFontName: 'Microsoft YaHei',
+      defaultColor: '#94a3b8',
+      lineHeight: 1.4,
+      paragraphSpace: 0,
+      textType: 'content',
+    },
+  ];
+
+  if (job.plan?.focusPoints?.length) {
+    const badges = job.plan.focusPoints
+      .map((fp) => `<span style="display:inline-block;background:#DBEAFE;color:#1E40AF;padding:4px 12px;border-radius:9999px;font-size:13px;margin:4px;font-family:Microsoft YaHei;">${escapeHtml(fp)}</span>`)
+      .join('');
+    coverElements.push({
+      id: createId('el'),
+      type: 'text',
+      left: 60,
+      top: 280,
+      width: 880,
+      height: 60,
+      rotate: 0,
+      content: `<p style="text-align:center;">${badges}</p>`,
+      defaultFontName: 'Microsoft YaHei',
+      defaultColor: '#1E40AF',
+      lineHeight: 1.4,
+      paragraphSpace: 0,
+      textType: 'content',
+    });
+  }
+
   const coverSlide: Slide = {
     id: createId('slide'),
     viewportSize: CANVAS_W,
     viewportRatio: CANVAS_H / CANVAS_W,
     theme: DEFAULT_THEME,
-    elements: [
-      createTitleElement(job.plan?.title ?? job.topic ?? '教案课堂'),
-      createBodyElement(
-        `<p style="text-align:center;color:#64748b;">${escapeHtml(job.topic)}</p>`,
-        200,
-        60,
-      ),
-    ],
-    background: { type: 'solid', color: '#f8fafc' },
+    elements: coverElements,
+    background: { type: 'solid', color: '#f0f9ff' },
     type: 'cover',
   };
+
+  const coverActions: Action[] = [];
+  const introText = `同学们好，今天我们要学习的是《${job.plan?.title ?? job.topic ?? '教案课堂'}》。本节课共 ${job.plan?.sections.length ?? (job.sections ?? []).length} 个章节，${job.plan?.estimatedDuration ? `预计用时 ${job.plan.estimatedDuration} 分钟。` : ''}${job.plan?.focusPoints?.length ? `重点内容：${job.plan.focusPoints.join('、')}。` : ''}让我们一起开始吧！`;
+  coverActions.push({
+    id: createId('action'),
+    type: 'speech',
+    title: 'Course Introduction',
+    text: introText,
+  });
+  const coverTitleId = coverSlide.elements[0]?.id;
+  if (coverTitleId) {
+    coverActions.push({
+      id: createId('action'),
+      type: 'spotlight',
+      title: 'Highlight Title',
+      elementId: coverTitleId,
+    });
+  }
 
   scenes.push({
     id: createId('scene'),
@@ -527,6 +673,7 @@ export async function convertTeachingJobToStage(
     title: '封面',
     order: order++,
     content: { type: 'slide', canvas: coverSlide },
+    actions: coverActions,
     createdAt: now,
     updatedAt: now,
   });
@@ -540,22 +687,72 @@ export async function convertTeachingJobToStage(
   }
 
   // Add an end slide
+  const endElements: PPTElement[] = [
+    {
+      id: createId('el'),
+      type: 'text',
+      left: 60,
+      top: 120,
+      width: 880,
+      height: 60,
+      rotate: 0,
+      content: `<p style="text-align:center;"><strong><span style="font-size:28px;color:#1E40AF;font-family:Microsoft YaHei;">课程结束</span></strong></p>`,
+      defaultFontName: 'Microsoft YaHei',
+      defaultColor: '#1E40AF',
+      lineHeight: 1.3,
+      paragraphSpace: 0,
+      textType: 'title',
+    },
+    {
+      id: createId('el'),
+      type: 'text',
+      left: 60,
+      top: 200,
+      width: 880,
+      height: 40,
+      rotate: 0,
+      content: `<p style="text-align:center;color:#64748b;font-size:16px;font-family:Microsoft YaHei;">感谢学习！希望大家课后及时复习今天学到的内容。</p>`,
+      defaultFontName: 'Microsoft YaHei',
+      defaultColor: '#64748b',
+      lineHeight: 1.4,
+      paragraphSpace: 0,
+      textType: 'content',
+    },
+    {
+      id: createId('el'),
+      type: 'text',
+      left: 60,
+      top: 260,
+      width: 880,
+      height: 30,
+      rotate: 0,
+      content: `<p style="text-align:center;color:#94a3b8;font-size:14px;font-family:Microsoft YaHei;">共完成 ${(job.sections ?? []).length} 个章节${job.plan?.estimatedDuration ? ` · 预计用时 ${job.plan.estimatedDuration} 分钟` : ''}</p>`,
+      defaultFontName: 'Microsoft YaHei',
+      defaultColor: '#94a3b8',
+      lineHeight: 1.4,
+      paragraphSpace: 0,
+      textType: 'content',
+    },
+  ];
+
   const endSlide: Slide = {
     id: createId('slide'),
     viewportSize: CANVAS_W,
     viewportRatio: CANVAS_H / CANVAS_W,
     theme: DEFAULT_THEME,
-    elements: [
-      createBodyElement(
-        `<p style="text-align:center;font-size:28px;color:#1e3a5f;"><strong>课程结束</strong></p>
-         <p style="text-align:center;color:#64748b;margin-top:12px;">感谢学习！</p>`,
-        180,
-        120,
-      ),
-    ],
-    background: { type: 'solid', color: '#f8fafc' },
+    elements: endElements,
+    background: { type: 'solid', color: '#f0f9ff' },
     type: 'end',
   };
+
+  const endActions: Action[] = [
+    {
+      id: createId('action'),
+      type: 'speech',
+      title: 'Course Closing',
+      text: `课程《${job.plan?.title ?? job.topic ?? '教案课堂'}》到这里就结束啦！感谢大家的认真学习。希望大家课后及时复习今天学到的内容，我们下节课再见！`,
+    },
+  ];
 
   scenes.push({
     id: createId('scene'),
@@ -564,6 +761,7 @@ export async function convertTeachingJobToStage(
     title: '结束',
     order,
     content: { type: 'slide', canvas: endSlide },
+    actions: endActions,
     createdAt: now,
     updatedAt: now,
   });

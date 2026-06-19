@@ -46,7 +46,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ job
       {
         stageId: stage.id,
         sceneCount: scenes.length,
-        redirectUrl: `/sky/classroom?stageId=${stage.id}`,
+        redirectUrl: `/classroom/${stage.id}`,
       },
       201,
     );

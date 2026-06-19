@@ -3,6 +3,8 @@
  */
 
 import type { PrecedingSection } from './content-types';
+import type { StudentProfile } from '@/lib/student/profile-types';
+import { buildProfileContextPrompt } from '@/lib/student/profile-prompts';
 
 export const CONTENT_SYSTEM_PROMPT = `You are an expert teacher generating lesson content. Output must be valid JSON with Markdown and LaTeX formatting.
 
@@ -10,7 +12,9 @@ IMPORTANT: For mathematical formulas, you MUST use standard LaTeX delimiters:
 - Inline math: $...$ (e.g., $x^2 + y^2 = z^2$)
 - Display math: $$...$$ (e.g., $$\int_0^1 f(x) dx$$)
 
-Do NOT use \\( ... \\) or \\[ ... \\] delimiters. Always use $ and $$ for math expressions.`;
+Do NOT use \\( ... \\) or \\[ ... \\] delimiters. Always use $ and $$ for math expressions.
+
+<!-- prompt-version: v2-profile-driven -->`;
 
 export const STRUCTURED_CONTENT_SYSTEM_PROMPT = `You are an expert teacher generating structured slide content. Output must be a single valid JSON object matching the requested content type.
 
@@ -23,7 +27,9 @@ Rules:
 - Output ONLY the JSON object, no markdown fences, no extra text
 - All text fields should be concise and suitable for slide display
 - Use Chinese for all content unless otherwise specified
-- Each card/item should be self-contained and meaningful on its own`;
+- Each card/item should be self-contained and meaningful on its own
+
+<!-- prompt-version: v2-profile-driven -->`;
 
 // ── Content type → StructuredContent type mapping ──
 
@@ -127,6 +133,7 @@ export function buildContentPrompt(
     knowledgePoints: string[];
     hasQuiz?: boolean;
   },
+  profile?: StudentProfile,
   precedingSections?: PrecedingSection[],
 ): string {
   const depthGuide: Record<string, string> = {
@@ -154,6 +161,16 @@ export function buildContentPrompt(
       .join('\n');
     precedingContext = `\n## 前序内容摘要\n${summaries}\n\n请确保本节内容与前序内容衔接自然，避免重复。\n`;
   }
+
+  // 学情上下文
+  const profileContext = profile
+    ? `\n${buildProfileContextPrompt(profile, {
+        maxWeakPoints: 3,
+        maxErrorPatterns: 2,
+        includeRecent: false,
+        highlightKnowledgePoints: section.knowledgePoints,
+      })}\n`
+    : '';
 
   // 测验要求
   const quizRequirement = section.hasQuiz
@@ -186,7 +203,7 @@ export function buildContentPrompt(
 - 类型：${typeDesc}
 - 深度：${depthDesc}
 - 知识点：${kpStr}
-${precedingContext}
+${precedingContext}${profileContext}
 ## 输出要求
 返回 JSON 格式，包含多个内容块：
 {
@@ -217,6 +234,7 @@ export function buildStructuredContentPrompt(
     knowledgePoints: string[];
     hasQuiz?: boolean;
   },
+  profile?: StudentProfile,
   precedingSections?: PrecedingSection[],
 ): string {
   const kpStr = section.knowledgePoints.join('、');
@@ -239,13 +257,23 @@ export function buildStructuredContentPrompt(
     precedingContext = `\n## 前序内容摘要\n${summaries}\n\n请确保本节内容与前序衔接自然，避免重复。\n`;
   }
 
+  // 学情上下文
+  const profileContext = profile
+    ? `\n${buildProfileContextPrompt(profile, {
+        maxWeakPoints: 3,
+        maxErrorPatterns: 2,
+        includeRecent: false,
+        highlightKnowledgePoints: section.knowledgePoints,
+      })}\n`
+    : '';
+
   return `请为以下教学环节生成结构化幻灯片内容。
 
 ## 环节信息
 - 标题：${section.title}
 - 知识点：${kpStr}
 - 深度：${section.depth}
-${precedingContext}
+${precedingContext}${profileContext}
 ## 输出格式
 严格输出以下 JSON 结构（${structuredType} 类型）：
 ${schemaGuide}

@@ -6,7 +6,8 @@ import { getServerStorage } from '@/lib/server/server-storage';
 import { readTeachingJob, updateTeachingJob } from '@/lib/server/teaching-job-store';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
-import { invalidateProfileCache } from '@/lib/student/profile-builder';
+import { buildStudentProfile, invalidateProfileCache } from '@/lib/student/profile-builder';
+import { resolveSubject } from '@/lib/student/profile-config';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -118,12 +119,15 @@ export async function POST(request: NextRequest) {
       const section = job?.plan?.sections.find((s) => s.id === sectionId);
       const knowledgePoints = section?.knowledgePoints ?? [];
 
+      const profile = await buildStudentProfile(userId);
+      const subject = job?.topic ? resolveSubject(job.topic, profile) : 'unknown';
+
       if (feedbackType === 'mastered' && knowledgePoints.length > 0) {
         // Record a virtual correct quiz attempt for each knowledge point
         const quizDAO = createQuizAttemptDAO(storage);
         await quizDAO.add({
           userId,
-          subject: 'unknown',
+          subject,
           difficulty: 'medium',
           topic: `授课掌握: ${knowledgePoints.join('、')}`,
           source: 'ai',

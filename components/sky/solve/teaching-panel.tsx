@@ -2,7 +2,27 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Loader2, Sparkles, AlertCircle, RefreshCw, Send, X, Brain, CheckCircle2, ThumbsUp, ThumbsDown, MessageCircle, Star, Share2, Pencil, FileText, Presentation, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  BookOpen,
+  Loader2,
+  Sparkles,
+  AlertCircle,
+  RefreshCw,
+  Send,
+  X,
+  Brain,
+  CheckCircle2,
+  ThumbsUp,
+  ThumbsDown,
+  MessageCircle,
+  Star,
+  Pencil,
+  FileText,
+  Presentation,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +44,6 @@ import {
   retrySection,
   streamTeachingJob,
   toggleTeachingFavorite,
-  shareTeachingJob,
   type TeachingJobState,
 } from '@/lib/teaching/teaching-job-client';
 import {
@@ -37,6 +56,8 @@ import type { ContentChunk } from '@/lib/teaching/content-types';
 import { analyzeHighlights } from '@/lib/teaching/personalized-highlighter';
 import type { StudentProfile } from '@/lib/student/profile-types';
 import type { LearningPath } from '@/lib/teaching/learning-path-types';
+import { inferSubject } from '@/lib/mistakes/subject-inference';
+import type { Subject } from '@/lib/solve/agents/analyze-types';
 import { HOT_TOPICS, searchTopics } from '@/configs/teaching-topics';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -59,6 +80,28 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   diagram: <BookOpen className="h-3.5 w-3.5" />,
   quiz: <Send className="h-3.5 w-3.5" />,
 };
+
+/** Infer a subject to use for cold-start topic recommendations. */
+function resolveColdStartSubject(masteryByKnowledge?: Record<string, number>): Subject {
+  if (!masteryByKnowledge) return 'math';
+  const subjects = Object.entries(masteryByKnowledge)
+    .filter(([, m]) => m > 0)
+    .map(([kp, m]) => ({ subject: inferSubject(kp), mastery: m as number }))
+    .filter((s) => s.subject !== 'unknown');
+  if (subjects.length === 0) return 'math';
+  // Pick the subject with the lowest average mastery
+  const subjectStats = new Map<Subject, { sum: number; count: number }>();
+  for (const { subject, mastery } of subjects) {
+    const stat = subjectStats.get(subject) ?? { sum: 0, count: 0 };
+    stat.sum += mastery;
+    stat.count += 1;
+    subjectStats.set(subject, stat);
+  }
+  const weakest = Array.from(subjectStats.entries()).sort(
+    (a, b) => a[1].sum / a[1].count - b[1].sum / b[1].count,
+  )[0]?.[0];
+  return weakest ?? 'math';
+}
 
 /* 投射类型 — 星际色彩 */
 const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
@@ -155,10 +198,12 @@ const SectionCard = React.memo(function SectionCard({
       className="teaching-section-appear"
       style={{ animationDelay: `${index * 80}ms` }}
     >
-      <Card className={cn(
-        'bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-sky-200/50 dark:border-sky-800/30',
-        hasFailed && 'border-red-200 dark:border-red-800/50',
-      )}>
+      <Card
+        className={cn(
+          'bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-sky-200/50 dark:border-sky-800/30',
+          hasFailed && 'border-red-200 dark:border-red-800/50',
+        )}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -166,10 +211,7 @@ const SectionCard = React.memo(function SectionCard({
                 {TYPE_ICONS[section.contentType]}
                 <span className="ml-1">{typeBadge.label}</span>
               </Badge>
-              <h3
-                className="text-sm font-semibold"
-                style={{ color: 'var(--teaching-text)' }}
-              >
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--teaching-text)' }}>
                 {section.title}
               </h3>
             </div>
@@ -222,8 +264,10 @@ const SectionCard = React.memo(function SectionCard({
                 chunk.type === 'diagram' &&
                   'bg-cyan-50/50 dark:bg-cyan-900/10 border border-cyan-100 dark:border-cyan-800/30',
                 chunk.type === 'text' && 'bg-white/40 dark:bg-slate-700/20',
-                chunk.failed && 'bg-red-50/50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30',
-                chunk.isFollowUp && 'ml-4 border-l-2 border-l-sky-400/40 bg-sky-50/20 dark:bg-sky-900/5',
+                chunk.failed &&
+                  'bg-red-50/50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30',
+                chunk.isFollowUp &&
+                  'ml-4 border-l-2 border-l-sky-400/40 bg-sky-50/20 dark:bg-sky-900/5',
               )}
             >
               {chunk.type === 'example' && (
@@ -268,16 +312,16 @@ const SectionCard = React.memo(function SectionCard({
               )}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1">
-              {chunk.type === 'quiz' && chunk.options && chunk.options.length > 0 ? (
-                <QuizInteraction chunk={chunk} jobId={jobId} />
-              ) : (
-                <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-100">
-                  <MathRenderer
-                    content={chunk.content}
-                    highlights={profile ? analyzeHighlights(chunk.content, profile) : undefined}
-                  />
-                </div>
-              )}
+                  {chunk.type === 'quiz' && chunk.options && chunk.options.length > 0 ? (
+                    <QuizInteraction chunk={chunk} jobId={jobId} />
+                  ) : (
+                    <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-100">
+                      <MathRenderer
+                        content={chunk.content}
+                        highlights={profile ? analyzeHighlights(chunk.content, profile) : undefined}
+                      />
+                    </div>
+                  )}
                 </div>
                 <TTSButton text={chunk.content} className="shrink-0 mt-1" />
               </div>
@@ -385,40 +429,19 @@ function SectionSkeleton() {
       }}
     >
       <div className="flex items-center justify-between">
-        <div
-          className="h-6 w-36 rounded"
-          style={{ background: 'rgba(45, 212, 191, 0.08)' }}
-        />
+        <div className="h-6 w-36 rounded" style={{ background: 'rgba(45, 212, 191, 0.08)' }} />
         <div className="flex gap-2">
-          <div
-            className="h-5 w-16 rounded"
-            style={{ background: 'rgba(45, 212, 191, 0.06)' }}
-          />
-          <div
-            className="h-5 w-12 rounded"
-            style={{ background: 'rgba(45, 212, 191, 0.06)' }}
-          />
+          <div className="h-5 w-16 rounded" style={{ background: 'rgba(45, 212, 191, 0.06)' }} />
+          <div className="h-5 w-12 rounded" style={{ background: 'rgba(45, 212, 191, 0.06)' }} />
         </div>
       </div>
       <div className="flex gap-1.5 mt-3">
-        <div
-          className="h-5 w-20 rounded-full"
-          style={{ background: 'rgba(45, 212, 191, 0.06)' }}
-        />
-        <div
-          className="h-5 w-16 rounded-full"
-          style={{ background: 'rgba(45, 212, 191, 0.06)' }}
-        />
+        <div className="h-5 w-20 rounded-full" style={{ background: 'rgba(45, 212, 191, 0.06)' }} />
+        <div className="h-5 w-16 rounded-full" style={{ background: 'rgba(45, 212, 191, 0.06)' }} />
       </div>
       <div className="space-y-3 mt-4">
-        <div
-          className="h-24 rounded-lg"
-          style={{ background: 'rgba(45, 212, 191, 0.04)' }}
-        />
-        <div
-          className="h-16 rounded-lg"
-          style={{ background: 'rgba(45, 212, 191, 0.04)' }}
-        />
+        <div className="h-24 rounded-lg" style={{ background: 'rgba(45, 212, 191, 0.04)' }} />
+        <div className="h-16 rounded-lg" style={{ background: 'rgba(45, 212, 191, 0.04)' }} />
       </div>
     </div>
   );
@@ -432,11 +455,18 @@ interface TeachingPanelProps {
     topic: string;
     plan?: LessonPlan;
     sections?: { section: LessonSection; chunks: ContentChunk[] }[];
+    isFavorited?: boolean;
   } | null;
+  /** Job id of the history item being viewed, used for homework/favorite */
+  viewHistoryJobId?: string;
   onViewedHistory?: () => void;
 }
 
-export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPanelProps) {
+export function TeachingPanel({
+  viewHistoryItem,
+  viewHistoryJobId,
+  onViewedHistory,
+}: TeachingPanelProps) {
   const { user } = useAuth();
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
@@ -453,7 +483,6 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [chatSection, setChatSection] = useState<{ id: string; title: string } | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   // Homework state
   const [homework, setHomework] = useState<{
@@ -481,17 +510,24 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
   const [displayIndex, setDisplayIndex] = useState(-1);
 
   // Learning progress tracking
-  const [feedbackStats, setFeedbackStats] = useState<{ mastered: number; needsReview: number }>({ mastered: 0, needsReview: 0 });
+  const [feedbackStats, setFeedbackStats] = useState<{ mastered: number; needsReview: number }>({
+    mastered: 0,
+    needsReview: 0,
+  });
 
   // Diagnostic state
-  const [diagnosticStep, setDiagnosticStep] = useState<'idle' | 'loading' | 'ready' | 'done'>('idle');
+  const [diagnosticStep, setDiagnosticStep] = useState<'idle' | 'loading' | 'ready' | 'done'>(
+    'idle',
+  );
   const [diagnosticSessionId, setDiagnosticSessionId] = useState<string | null>(null);
-  const [diagnosticQuestions, setDiagnosticQuestions] = useState<Array<{
-    id: number;
-    question: string;
-    options: string[];
-    knowledgePoint: string;
-  }>>([]);
+  const [diagnosticQuestions, setDiagnosticQuestions] = useState<
+    Array<{
+      id: number;
+      question: string;
+      options: string[];
+      knowledgePoint: string;
+    }>
+  >([]);
   const [diagnosticAnswers, setDiagnosticAnswers] = useState<Record<number, number>>({});
   const [diagnosticResult, setDiagnosticResult] = useState<{
     accuracy: number;
@@ -499,6 +535,10 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     recommendedDepth: string;
     canProceed: boolean;
   } | null>(null);
+
+  // Server-pushed progress (0-100). 优先于本地 sections 比例计算，使进度条紧跟
+  // 后端实际生成/重试进度，避免 Phase 2.5 重试期间卡在 100%。
+  const [serverProgress, setServerProgress] = useState<number | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -510,7 +550,12 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.data) {
-            const { weakPoints, hasProfile: profileExists, masteryByKnowledge, errorPatterns } = data.data;
+            const {
+              weakPoints,
+              hasProfile: profileExists,
+              masteryByKnowledge,
+              errorPatterns,
+            } = data.data;
             setHasProfile(profileExists);
 
             if (profileExists && masteryByKnowledge) {
@@ -533,16 +578,17 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
               // Use weak points as recommendations
               setRecommendedTopics(weakPoints.slice(0, 5));
             } else {
-              // Cold start: use hot topics from math
-              const mathTopics = HOT_TOPICS.find((c) => c.subject === 'math');
-              setRecommendedTopics(mathTopics?.topics.slice(0, 5) ?? []);
+              // Cold start: infer weakest subject from knowledge graph and use its hot topics
+              const coldStartSubject = resolveColdStartSubject(masteryByKnowledge);
+              const subjectTopics = HOT_TOPICS.find((c) => c.subject === coldStartSubject);
+              setRecommendedTopics(subjectTopics?.topics.slice(0, 5) ?? []);
             }
           }
         }
       } catch {
         // Silently fail, use default topics
-        const mathTopics = HOT_TOPICS.find((c) => c.subject === 'math');
-        setRecommendedTopics(mathTopics?.topics.slice(0, 5) ?? []);
+        const subjectTopics = HOT_TOPICS.find((c) => c.subject === 'math');
+        setRecommendedTopics(subjectTopics?.topics.slice(0, 5) ?? []);
       }
     })();
   }, []);
@@ -582,9 +628,25 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
       setError(null);
       setTopic(viewHistoryItem.topic);
       setDisplayIndex(0);
-      onViewedHistory?.();
+      setIsFavorited(viewHistoryItem.isFavorited ?? false);
+    } else {
+      // Cleared history view: reset to the empty teaching interface
+      setPlan(null);
+      setSections([]);
+      setDone(false);
+      setLoading(false);
+      setError(null);
+      setTopic('');
+      setDisplayIndex(-1);
+      setIsFavorited(false);
+      setHomework(null);
+      setShowHomework(false);
+      setLearningPath(null);
+      setShowStudyGroup(false);
+      setServerProgress(null);
+      setMessage('');
     }
-  }, [viewHistoryItem, onViewedHistory]);
+  }, [viewHistoryItem]);
 
   // ── Auto-show first section when it arrives ──
   useEffect(() => {
@@ -622,6 +684,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         setLoading(true);
         setPlan(data.plan ?? null);
         setSections(data.sections ?? []);
+        setServerProgress(typeof data.progress === 'number' ? data.progress : null);
         setMessage(data.message || '');
 
         resumePolling(entry.jobId, entry.topic);
@@ -647,6 +710,9 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
             setPlan(data.plan ?? null);
             if (data.sections !== undefined) {
               setSections(data.sections);
+            }
+            if (typeof data.progress === 'number') {
+              setServerProgress(data.progress);
             }
             setMessage(data.message || '');
           },
@@ -739,65 +805,72 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
   }, []);
 
   // ── Actually start the teaching job (after diagnostic if any) ──
-  const startTeachingJob = useCallback(async (overrideTopic?: string) => {
-    const t = overrideTopic || topic;
-    if (!t.trim()) return;
+  const startTeachingJob = useCallback(
+    async (overrideTopic?: string) => {
+      const t = overrideTopic || topic;
+      if (!t.trim()) return;
 
-    setLoading(true);
-    setError(null);
-    setPlan(null);
-    setSections([]);
-    setDone(false);
-    setMessage('正在提交...');
-    setDiagnosticStep('idle');
-    setDiagnosticSessionId(null);
-    setFeedbackStats({ mastered: 0, needsReview: 0 });
-    setLearningPath(null);
-    setDisplayIndex(-1);
+      setLoading(true);
+      setError(null);
+      setPlan(null);
+      setSections([]);
+      setDone(false);
+      setServerProgress(null);
+      setMessage('正在提交...');
+      setDiagnosticStep('idle');
+      setDiagnosticSessionId(null);
+      setFeedbackStats({ mastered: 0, needsReview: 0 });
+      setLearningPath(null);
+      setDisplayIndex(-1);
+      setIsFavorited(false);
+      setHomework(null);
+      setShowHomework(false);
 
-    try {
-      const jobId = await submitTeachingJob(t.trim());
+      try {
+        const jobId = await submitTeachingJob(t.trim());
 
-      setCurrentJobId(jobId);
+        setCurrentJobId(jobId);
 
-      addActiveTeachingJobEntry({ jobId, topic: t.trim() });
+        addActiveTeachingJobEntry({ jobId, topic: t.trim() });
 
-      useTaskStore.getState().addTask({
-        id: jobId,
-        type: 'teaching',
-        label: `授课: ${t.trim().length > 20 ? t.trim().slice(0, 17) + '...' : t.trim()}`,
-        status: 'running',
-        progress: 0,
-        phase: '正在提交...',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        jobId,
-        resultRoute: '/sky/teaching',
-      });
-
-      resumePolling(jobId, t.trim());
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : '教案生成失败';
-      if (msg === 'User not found' || msg.includes('Not authenticated')) {
-        toast.error('登录已过期，请重新登录', {
-          duration: 5000,
-          action: {
-            label: '稍后登录',
-            onClick: () => {
-              // Keep current content, don't redirect
-            },
-          },
+        useTaskStore.getState().addTask({
+          id: jobId,
+          type: 'teaching',
+          label: `授课: ${t.trim().length > 20 ? t.trim().slice(0, 17) + '...' : t.trim()}`,
+          status: 'running',
+          progress: 0,
+          phase: '正在提交...',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          jobId,
+          resultRoute: '/sky/teaching',
         });
-        // Delay redirect to allow user to see the toast
-        setTimeout(() => {
-          window.location.href = '/auth/login';
-        }, 5000);
-        return;
+
+        resumePolling(jobId, t.trim());
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '教案生成失败';
+        if (msg === 'User not found' || msg.includes('Not authenticated')) {
+          toast.error('登录已过期，请重新登录', {
+            duration: 5000,
+            action: {
+              label: '稍后登录',
+              onClick: () => {
+                // Keep current content, don't redirect
+              },
+            },
+          });
+          // Delay redirect to allow user to see the toast
+          setTimeout(() => {
+            window.location.href = '/auth/login';
+          }, 5000);
+          return;
+        }
+        setError(msg);
+        setLoading(false);
       }
-      setError(msg);
-      setLoading(false);
-    }
-  }, [topic, resumePolling]);
+    },
+    [topic, resumePolling],
+  );
 
   // ── Start with diagnostic ──
   const handleStart = useCallback(async () => {
@@ -814,11 +887,27 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     setDiagnosticAnswers({});
     setDiagnosticResult(null);
 
+    // Resolve subject from topic + profile knowledge graph
+    const resolvePanelSubject = (): Subject => {
+      const fromTopic = inferSubject(topic.trim());
+      if (fromTopic !== 'unknown') return fromTopic;
+      if (profile?.masteryByKnowledge) {
+        const weakestKp = Object.entries(profile.masteryByKnowledge)
+          .filter(([, m]) => m > 0)
+          .sort((a, b) => a[1] - b[1])[0]?.[0];
+        if (weakestKp) {
+          const fromKp = inferSubject(weakestKp);
+          if (fromKp !== 'unknown') return fromKp;
+        }
+      }
+      return 'math';
+    };
+
     try {
       const res = await fetch('/api/sky/teaching/diagnostic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topic.trim(), subject: 'math' }),
+        body: JSON.stringify({ topic: topic.trim(), subject: resolvePanelSubject() }),
       });
       const data = await res.json();
 
@@ -897,62 +986,50 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
   }, [currentJobId]);
 
   // ── Retry Section ──
-  const handleRetrySection = useCallback(async (sectionId: string) => {
-    if (!currentJobId) return;
+  const handleRetrySection = useCallback(
+    async (sectionId: string) => {
+      if (!currentJobId) return;
 
-    try {
-      toast.info('正在重新生成...');
-      const result = await retrySection(currentJobId, sectionId);
+      try {
+        toast.info('正在重新生成...');
+        const result = await retrySection(currentJobId, sectionId);
 
-      if (result) {
-        // Update sections state
-        setSections((prev) => {
-          const idx = prev.findIndex((s) => s.section.id === sectionId);
-          if (idx >= 0) {
-            const updated = [...prev];
-            updated[idx] = result;
-            return updated;
-          }
-          return [...prev, result];
-        });
-        toast.success('重新生成完成');
+        if (result) {
+          // Update sections state
+          setSections((prev) => {
+            const idx = prev.findIndex((s) => s.section.id === sectionId);
+            if (idx >= 0) {
+              const updated = [...prev];
+              updated[idx] = result;
+              return updated;
+            }
+            return [...prev, result];
+          });
+          toast.success('重新生成完成');
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '重新生成失败';
+        toast.error(msg);
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : '重新生成失败';
-      toast.error(msg);
-    }
-  }, [currentJobId]);
+    },
+    [currentJobId],
+  );
 
   // ── Favorite ──
+  const effectiveJobId = currentJobId ?? viewHistoryJobId;
+
   const handleToggleFavorite = useCallback(async () => {
-    if (!currentJobId) return;
+    if (!effectiveJobId) return;
 
     try {
-      const result = await toggleTeachingFavorite(currentJobId);
+      const result = await toggleTeachingFavorite(effectiveJobId);
       setIsFavorited(result);
       toast.success(result ? '已收藏' : '已取消收藏');
     } catch (err) {
       const msg = err instanceof Error ? err.message : '操作失败';
       toast.error(msg);
     }
-  }, [currentJobId]);
-
-  // ── Share ──
-  const handleShare = useCallback(async () => {
-    if (!currentJobId) return;
-
-    try {
-      const result = await shareTeachingJob(currentJobId);
-      setShareUrl(result.shareUrl);
-
-      // Copy to clipboard
-      await navigator.clipboard.writeText(result.shareUrl);
-      toast.success('分享链接已复制到剪贴板');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : '分享失败';
-      toast.error(msg);
-    }
-  }, [currentJobId]);
+  }, [effectiveJobId]);
 
   // ── Convert to Classroom ──
   const handleToClassroom = useCallback(async () => {
@@ -994,7 +1071,10 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
 
   // ── Homework ──
   const handleFetchHomework = useCallback(async () => {
-    if (!currentJobId) return;
+    if (!effectiveJobId) {
+      toast.error('请先完成或选择一份教案');
+      return;
+    }
 
     if (homework) {
       setShowHomework((prev) => !prev);
@@ -1003,7 +1083,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
 
     setHomeworkLoading(true);
     try {
-      const res = await fetch(`/api/sky/teaching/${currentJobId}/homework`, {
+      const res = await fetch(`/api/sky/teaching/${effectiveJobId}/homework`, {
         credentials: 'include',
       });
       const data = await res.json();
@@ -1019,11 +1099,12 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
     } finally {
       setHomeworkLoading(false);
     }
-  }, [currentJobId, homework]);
+  }, [effectiveJobId, homework]);
 
-  const progress = plan
-    ? Math.round((sections.length / plan.sections.length) * 100)
-    : 0;
+  // 优先使用服务端推送的进度（紧跟实际生成/重试进度，避免重试期间卡在 100%）；
+  // 服务端未推送时回退到本地 sections 完成比例。
+  const sectionsRatio = plan ? Math.round((sections.length / plan.sections.length) * 100) : 0;
+  const progress = serverProgress ?? sectionsRatio;
   const canSubmit = !loading && topic.trim().length > 0;
 
   return (
@@ -1040,17 +1121,13 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
         <div
           className="px-5 pt-4 pb-3"
           style={{
-            background:
-              'linear-gradient(135deg, rgba(45, 212, 191, 0.08) 0%, transparent 100%)',
+            background: 'linear-gradient(135deg, rgba(45, 212, 191, 0.08) 0%, transparent 100%)',
             borderBottom: '1px solid var(--teaching-border)',
           }}
         >
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-[var(--teaching-primary)]" />
-            <h3
-              className="text-base font-semibold"
-              style={{ color: 'var(--teaching-text)' }}
-            >
+            <h3 className="text-base font-semibold" style={{ color: 'var(--teaching-text)' }}>
               教学指令台
             </h3>
           </div>
@@ -1185,7 +1262,10 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                     >
                       {plan ? plan.title : '正在分析学情...'}
                     </p>
-                    <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--teaching-muted)' }}>
+                    <p
+                      className="text-xs mt-0.5 truncate"
+                      style={{ color: 'var(--teaching-muted)' }}
+                    >
                       {message || '正在准备...'}
                     </p>
                   </div>
@@ -1241,11 +1321,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                           <div
                             className={cn(
                               'h-1.5 rounded-full transition-all duration-500',
-                              isCompleted
-                                ? ''
-                                : isCurrent
-                                  ? 'teaching-teal-breathe'
-                                  : '',
+                              isCompleted ? '' : isCurrent ? 'teaching-teal-breathe' : '',
                             )}
                             style={{
                               background: isCompleted
@@ -1253,9 +1329,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                                 : isCurrent
                                   ? 'rgba(45, 212, 191, 0.3)'
                                   : 'rgba(45, 212, 191, 0.08)',
-                              boxShadow: isCompleted
-                                ? '0 0 6px rgba(45, 212, 191, 0.3)'
-                                : 'none',
+                              boxShadow: isCompleted ? '0 0 6px rgba(45, 212, 191, 0.3)' : 'none',
                             }}
                           />
                           {/* Tooltip */}
@@ -1293,14 +1367,10 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                         key={step.key}
                         className={cn(
                           'flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all',
-                          isActive
-                            ? 'font-medium'
-                            : '',
+                          isActive ? 'font-medium' : '',
                         )}
                         style={{
-                          background: isActive
-                            ? 'rgba(45, 212, 191, 0.12)'
-                            : 'transparent',
+                          background: isActive ? 'rgba(45, 212, 191, 0.12)' : 'transparent',
                           color: isDone
                             ? 'var(--teaching-success)'
                             : isActive
@@ -1346,12 +1416,37 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
               }}
             >
               <div className="px-5 py-4">
-                <h3
-                  className="text-lg font-bold teaching-glow-text mb-2"
-                  style={{ color: 'var(--teaching-primary)' }}
-                >
-                  {plan.title}
-                </h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3
+                    className="text-lg font-bold teaching-glow-text"
+                    style={{ color: 'var(--teaching-primary)' }}
+                  >
+                    {plan.title}
+                  </h3>
+                  {!currentJobId && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setPlan(null);
+                        setSections([]);
+                        setDone(false);
+                        setTopic('');
+                        setDisplayIndex(-1);
+                        setError(null);
+                        setHomework(null);
+                        setShowHomework(false);
+                        setLearningPath(null);
+                        setShowStudyGroup(false);
+                        onViewedHistory?.();
+                      }}
+                      className="text-[var(--teaching-muted)] hover:text-[var(--teaching-primary)]"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      返回
+                    </Button>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                   <span style={{ color: 'var(--teaching-muted)' }}>
                     预计 {plan.estimatedDuration} 分钟
@@ -1393,7 +1488,9 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
               <h3 className="text-base font-semibold">星际课前诊断</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              {diagnosticStep === 'loading' ? '正在生成前置知识检测题...' : '请完成以下前置知识检测，我们将根据结果调整授课重点'}
+              {diagnosticStep === 'loading'
+                ? '正在生成前置知识检测题...'
+                : '请完成以下前置知识检测，我们将根据结果调整授课重点'}
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1402,30 +1499,42 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                 <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
               </div>
             )}
-            {diagnosticStep === 'ready' && diagnosticQuestions.map((q, idx) => (
-              <div key={q.id} className="space-y-2">
-                <p className="text-sm font-medium">{idx + 1}. {q.question}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {q.options.map((opt, optIdx) => (
-                    <Button
-                      key={optIdx}
-                      variant={diagnosticAnswers[q.id] === optIdx ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setDiagnosticAnswers((prev) => ({ ...prev, [q.id]: optIdx }))}
-                      className="justify-start text-left h-auto py-2"
-                    >
-                      {String.fromCharCode(65 + optIdx)}. {opt}
-                    </Button>
-                  ))}
+            {diagnosticStep === 'ready' &&
+              diagnosticQuestions.map((q, idx) => (
+                <div key={q.id} className="space-y-2">
+                  <p className="text-sm font-medium">
+                    {idx + 1}. {q.question}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {q.options.map((opt, optIdx) => (
+                      <Button
+                        key={optIdx}
+                        variant={diagnosticAnswers[q.id] === optIdx ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() =>
+                          setDiagnosticAnswers((prev) => ({ ...prev, [q.id]: optIdx }))
+                        }
+                        className="justify-start text-left h-auto py-2"
+                      >
+                        {String.fromCharCode(65 + optIdx)}. {opt}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
             {diagnosticStep === 'ready' && diagnosticQuestions.length > 0 && (
               <div className="flex gap-2 pt-2">
                 <Button onClick={submitDiagnostic} className="bg-teal-500 hover:bg-teal-600">
                   提交诊断
                 </Button>
-                <Button variant="outline" onClick={() => { setDiagnosticStep('idle'); setDiagnosticSessionId(null); startTeachingJob(); }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDiagnosticStep('idle');
+                    setDiagnosticSessionId(null);
+                    startTeachingJob();
+                  }}
+                >
                   跳过诊断，直接授课
                 </Button>
               </div>
@@ -1436,16 +1545,24 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
 
       {/* Diagnostic Result */}
       {diagnosticStep === 'done' && diagnosticResult && (
-        <Card className={cn(
-          diagnosticResult.accuracy >= 80 ? 'border-green-200 bg-green-50/30' :
-          diagnosticResult.accuracy >= 50 ? 'border-teal-200 bg-teal-50/30' :
-          'border-red-200 bg-red-50/30'
-        )}>
+        <Card
+          className={cn(
+            diagnosticResult.accuracy >= 80
+              ? 'border-green-200 bg-green-50/30'
+              : diagnosticResult.accuracy >= 50
+                ? 'border-teal-200 bg-teal-50/30'
+                : 'border-red-200 bg-red-50/30',
+          )}
+        >
           <CardHeader>
             <div className="flex items-center gap-2">
-              {diagnosticResult.accuracy >= 80 ? <CheckCircle2 className="h-5 w-5 text-green-500" /> :
-               diagnosticResult.accuracy >= 50 ? <Brain className="h-5 w-5 text-teal-500" /> :
-               <AlertCircle className="h-5 w-5 text-red-500" />}
+              {diagnosticResult.accuracy >= 80 ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              ) : diagnosticResult.accuracy >= 50 ? (
+                <Brain className="h-5 w-5 text-teal-500" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-red-500" />
+              )}
               <h3 className="text-base font-semibold">诊断报告</h3>
             </div>
           </CardHeader>
@@ -1458,14 +1575,25 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                 <p className="text-muted-foreground mb-1">薄弱前置知识点：</p>
                 <div className="flex flex-wrap gap-1">
                   {diagnosticResult.weakPrerequisites.map((wp) => (
-                    <Badge key={wp} variant="outline" className="text-xs">{wp}</Badge>
+                    <Badge key={wp} variant="outline" className="text-xs">
+                      {wp}
+                    </Badge>
                   ))}
                 </div>
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <Button onClick={() => { setDiagnosticStep('idle'); setDiagnosticSessionId(null); startTeachingJob(); }}
-                className={diagnosticResult.accuracy >= 50 ? 'bg-green-500 hover:bg-green-600' : 'bg-teal-500 hover:bg-teal-600'}
+              <Button
+                onClick={() => {
+                  setDiagnosticStep('idle');
+                  setDiagnosticSessionId(null);
+                  startTeachingJob();
+                }}
+                className={
+                  diagnosticResult.accuracy >= 50
+                    ? 'bg-green-500 hover:bg-green-600'
+                    : 'bg-teal-500 hover:bg-teal-600'
+                }
               >
                 {diagnosticResult.canProceed ? '开始授课' : '先开始授课，注意薄弱环节'}
               </Button>
@@ -1487,7 +1615,9 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
           jobId={currentJobId ?? undefined}
           profile={profile}
           onRetry={handleRetrySection}
-          onAskQuestion={(sectionId, sectionTitle) => setChatSection({ id: sectionId, title: sectionTitle })}
+          onAskQuestion={(sectionId, sectionTitle) =>
+            setChatSection({ id: sectionId, title: sectionTitle })
+          }
           onFeedback={(type) =>
             setFeedbackStats((prev) => ({
               ...prev,
@@ -1593,9 +1723,11 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                       <BookOpen className="h-3 w-3 mr-1" />
                     )}
                     下一课：
-                    {learningPath.nodes.find(
-                      (n) => n.status === 'pending' || n.status === 'in_progress',
-                    )?.topic}
+                    {
+                      learningPath.nodes.find(
+                        (n) => n.status === 'pending' || n.status === 'in_progress',
+                      )?.topic
+                    }
                   </Button>
                 )}
                 <Button
@@ -1634,15 +1766,6 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                 >
                   <Star className={cn('h-3 w-3 mr-1', isFavorited && 'fill-current')} />
                   {isFavorited ? '已收藏' : '收藏'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleShare}
-                  className="text-green-600 dark:text-green-400 border-green-200 dark:border-green-800 hover:text-green-700"
-                >
-                  <Share2 className="h-3 w-3 mr-1" />
-                  分享
                 </Button>
               </div>
             </CardContent>
@@ -1714,7 +1837,9 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                 {homework.questions.map((q, idx) => (
                   <div key={q.id} className="space-y-2">
                     <div className="flex items-start gap-2">
-                      <span className="text-sm font-medium text-sky-600 dark:text-sky-400 shrink-0">{idx + 1}.</span>
+                      <span className="text-sm font-medium text-sky-600 dark:text-sky-400 shrink-0">
+                        {idx + 1}.
+                      </span>
                       <div className="text-sm leading-relaxed">
                         <MathRenderer content={q.question} />
                       </div>
@@ -1725,7 +1850,9 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
                           key={optIdx}
                           className="text-sm px-3 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                         >
-                          <span className="font-medium text-slate-500 mr-1">{String.fromCharCode(65 + optIdx)}.</span>
+                          <span className="font-medium text-slate-500 mr-1">
+                            {String.fromCharCode(65 + optIdx)}.
+                          </span>
                           <MathRenderer content={opt} />
                         </div>
                       ))}
@@ -1806,9 +1933,7 @@ export function TeachingPanel({ viewHistoryItem, onViewedHistory }: TeachingPane
       )}
 
       {/* Study Group */}
-      {showStudyGroup && currentJobId && (
-        <StudyGroupPanel jobId={currentJobId} />
-      )}
+      {showStudyGroup && effectiveJobId && <StudyGroupPanel jobId={effectiveJobId} />}
     </div>
   );
 }

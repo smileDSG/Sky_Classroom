@@ -6,7 +6,11 @@
  */
 
 import type { StudentProfile } from './profile-types';
-import type { Subject } from '@/lib/solve/agents/analyze-types';
+import {
+  getDifficultyForMastery,
+  resolveSubject,
+  QUIZ_COUNT_OPTIONS,
+} from './profile-config';
 
 export interface AutoQuizParams {
   subject: string;
@@ -19,26 +23,23 @@ export interface AutoQuizParams {
  * Derive quiz parameters from a student's profile.
  *
  * Strategy:
- * 1. Subject = the subject with the lowest mastery (>0).
+ * 1. Subject = inferred from topic, or weakest positive-mastery subject in profile.
  * 2. Topic = top N weak points joined.
- * 3. Difficulty = based on average mastery of weak points.
- * 4. Count = configurable (default 5).
+ * 3. Difficulty = based on average mastery of weak points, adjusted by recent performance.
+ * 4. Count = configurable (default from QUIZ_COUNT_OPTIONS).
  */
 export function deriveQuizParamsFromProfile(
   profile: StudentProfile,
   options?: { count?: number; maxTopics?: number },
 ): AutoQuizParams {
-  const count = options?.count ?? 5;
+  const count = options?.count ?? QUIZ_COUNT_OPTIONS[1]; // default 5
   const maxTopics = options?.maxTopics ?? 3;
 
-  // 1. Subject: pick the one with the lowest positive mastery
-  const subjects = Object.entries(profile.masteryBySubject)
-    .filter(([, v]) => v > 0)
-    .sort((a, b) => a[1] - b[1]);
-  const subject = (subjects[0]?.[0] as Subject) ?? 'math';
-
-  // 2. Topic: top N weak points
+  // 1. Topic: top N weak points
   const topic = profile.weakPoints.slice(0, maxTopics).join('、') || '基础复习';
+
+  // 2. Subject: infer from topic, fall back to weakest positive-mastery subject
+  const subject = resolveSubject(topic, profile);
 
   // 3. Difficulty: based on average mastery of weak points
   let avgMastery = 0;
@@ -55,10 +56,15 @@ export function deriveQuizParamsFromProfile(
         : 50;
   }
 
-  let difficulty: 'easy' | 'medium' | 'hard';
-  if (avgMastery < 30) difficulty = 'easy';
-  else if (avgMastery < 70) difficulty = 'medium';
-  else difficulty = 'hard';
+  let difficulty = getDifficultyForMastery(avgMastery);
+
+  // Adjust based on recent quiz performance recommended depth shift
+  const shift = profile.recentQuizPerformance?.recommendedDepthShift;
+  if (shift === 'deeper' && difficulty !== 'hard') {
+    difficulty = difficulty === 'easy' ? 'medium' : 'hard';
+  } else if (shift === 'shallower' && difficulty !== 'easy') {
+    difficulty = difficulty === 'hard' ? 'medium' : 'easy';
+  }
 
   return { subject, difficulty, topic, count };
 }
