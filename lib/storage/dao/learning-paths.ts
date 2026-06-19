@@ -46,10 +46,12 @@ export function createLearningPathDAO(storage: StorageProvider): LearningPathDAO
     async getActiveByUser(userId: string): Promise<LearningPath | null> {
       const entries = await storage.getAll<LearningPath>(TABLE, (entry) => {
         const path = entry.data;
-        return (
-          path.userId === userId &&
-          path.nodes.some((n) => n.status === 'pending' || n.status === 'in_progress')
-        );
+        if (path.userId !== userId) return false;
+        // A path is "active" while it still has pending/in-progress work, OR
+        // it has nodes but none are completed/skipped yet (freshly created).
+        const hasOpen = path.nodes.some((n) => n.status === 'pending' || n.status === 'in_progress');
+        const hasFinished = path.nodes.some((n) => n.status === 'completed' || n.status === 'skipped');
+        return hasOpen || (path.nodes.length > 0 && !hasFinished);
       });
       if (entries.length === 0) return null;
       // Return most recently updated active path

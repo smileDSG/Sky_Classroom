@@ -100,9 +100,18 @@ export async function POST(req: NextRequest) {
 
     const storage = await getServerStorage();
     const dao = createLearningPathDAO(storage);
+
+    // Defensive: never persist/return an empty path as a "success" — that would
+    // render a blank card and a misleading toast. The engine fallback should
+    // guarantee nodes, but guard regardless.
+    if (!path.nodes || path.nodes.length === 0) {
+      log.error(`Built empty learning path for user ${quota.userId}`);
+      return apiError('GENERATION_FAILED', 500, '未能生成学习路径，请稍后重试');
+    }
+
     await dao.add(path);
 
-    log.info(`Created learning path ${path.id} for user ${quota.userId}`);
+    log.info(`Created learning path ${path.id} for user ${quota.userId} with ${path.nodes.length} nodes`);
 
     return apiSuccess({ data: { path } }, 201);
   } catch (err) {

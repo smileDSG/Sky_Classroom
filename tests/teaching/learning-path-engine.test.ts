@@ -493,4 +493,28 @@ describe('buildInitialPathFromContext', () => {
     });
     expect(() => buildInitialPathFromContext(context)).not.toThrow();
   });
+
+  it('seeds fallback nodes when there is no workshop data at all', () => {
+    // No mistakes, no mastery, no knowledge graph — the situation that produced
+    // empty paths before the fallback was added.
+    const emptyProfile = makeProfile({
+      masteryByKnowledge: {},
+      weakPoints: [],
+      strongPoints: [],
+    });
+    const context: PathGenerationContext = {
+      profile: emptyProfile,
+      mistakes: [],
+      knowledgeGraph: { nodes: [], edges: [], weakPoints: [] },
+      reviewSchedule: buildReviewSchedule([]),
+      learningStats: null,
+      quizSummary: null,
+    };
+    const path = buildInitialPathFromContext(context);
+    expect(path.nodes.length).toBeGreaterThanOrEqual(1);
+    // Fallback nodes should come from the built-in knowledge system.
+    const allKPs = path.nodes.flatMap((n) => n.knowledgePoints);
+    expect(allKPs.length).toBeGreaterThan(0);
+    expect(path.nodes[0].status).toBe('pending');
+  });
 });

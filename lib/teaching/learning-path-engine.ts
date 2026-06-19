@@ -95,6 +95,51 @@ function groupIntoTopics(points: string[]): Array<{ topic: string; knowledgePoin
   return groups;
 }
 
+/**
+ * Build a fallback knowledge-point list from the built-in relation map when
+ * the student has no workshop data yet. If a goal topic is given, anchor the
+ * path on its prerequisite chain; otherwise pick a balanced set of foundational
+ * high-school math topics. Returns de-duplicated, ordered points.
+ */
+function seedFallbackPoints(goalTopic: string | undefined, maxNodes: number): string[] {
+  const ordered: string[] = [];
+  const seen = new Set<string>();
+  const push = (kp: string) => {
+    if (!seen.has(kp)) {
+      seen.add(kp);
+      ordered.push(kp);
+    }
+  };
+
+  if (goalTopic && KNOWLEDGE_RELATIONS[goalTopic]) {
+    // Prerequisite chain first (deepest first), then the goal itself.
+    for (const p of collectPrerequisites(goalTopic)) push(p);
+    push(goalTopic);
+  }
+
+  // Foundational backbone used when there is no goal or the chain is too short.
+  const FOUNDATION = [
+    '函数概念',
+    '一次函数',
+    '一元一次方程',
+    '一元二次方程',
+    '二次函数',
+    '不等式',
+    '三角形',
+    '全等三角形',
+    '相似三角形',
+    '勾股定理',
+    '概率',
+    '统计',
+  ];
+  for (const kp of FOUNDATION) {
+    if (ordered.length >= maxNodes) break;
+    push(kp);
+  }
+
+  return ordered.slice(0, maxNodes);
+}
+
 // ── New workshop-aware path generation ───────────────────────────────
 
 /** Build a minimal context from a profile for backward-compatible callers. */
@@ -368,6 +413,22 @@ export function buildInitialPathFromContext(
     finalPoints = [...finalPoints, ...extras].slice(0, config.maxNodes);
   }
 
+  // Fallback: when the user has no workshop data yet (no mistakes / profile /
+  // graph), the candidate set above is empty and we would otherwise produce a
+  // path with zero nodes. Seed it from the built-in knowledge system so the
+  // generated path is always meaningful, not a blank shell.
+  if (finalPoints.length < config.minNodes) {
+    const seeded = seedFallbackPoints(goalTopic, config.maxNodes);
+    const existing = new Set(finalPoints);
+    for (const p of seeded) {
+      if (existing.has(p)) continue;
+      finalPoints.push(p);
+      existing.add(p);
+      if (finalPoints.length >= config.minNodes && finalPoints.length >= 3) break;
+    }
+    finalPoints = finalPoints.slice(0, config.maxNodes);
+  }
+
   // Cap at max
   finalPoints = finalPoints.slice(0, config.maxNodes);
 
@@ -385,8 +446,10 @@ export function buildInitialPathFromContext(
       knowledgePoints: t.knowledgePoints,
       estimatedSections: Math.min(Math.max(t.knowledgePoints.length * 2, 2), 5),
       prerequisites: uniquePrereqs,
-      status: i === 0 ? 'pending' : 'pending',
-      masteryBefore: t.knowledgePoints.reduce((sum, kp) => sum + (profile.masteryByKnowledge[kp] ?? 0), 0) / t.knowledgePoints.length,
+      status: 'pending',
+      masteryBefore:
+        t.knowledgePoints.reduce((sum, kp) => sum + (profile.masteryByKnowledge[kp] ?? 0), 0) /
+        t.knowledgePoints.length,
     };
   });
 

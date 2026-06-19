@@ -1,5 +1,59 @@
 [
   {
+    "id": "qb_mqkp1cn0_2yjue0",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "计算 $(-3) + 5 \\times 2$ 的结果是多少？",
+    "answer": "B",
+    "explanation": "按照运算顺序，先算乘法再算加法：$5 \\times 2 = 10$，然后 $(-3) + 10 = 7$。注意不可先算加法再乘法，否则会得到错误答案 4。故选 B。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "4",
+      "7",
+      "13",
+      "-1"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_1knomo8",
+    "verified": true,
+    "createdAt": "2026-06-19T08:55:27.804Z",
+    "updatedAt": "2026-06-19T08:55:27.804Z"
+  },
+  {
+    "id": "qb_mqkp1clo_4l4mjf",
+    "subject": "数学",
+    "grade": "",
+    "difficulty": "easy",
+    "questionType": "choice",
+    "content": "若一个三角形的两个内角分别为 $30^\\circ$ 和 $60^\\circ$，则第三个内角的度数为多少？",
+    "answer": "B",
+    "explanation": "三角形内角和为 $180^\\circ$。已知两个角分别为 $30^\\circ$ 和 $60^\\circ$，则第三个角为 $180^\\circ - 30^\\circ - 60^\\circ = 90^\\circ$。故选 B。",
+    "knowledgePoints": [],
+    "image": null,
+    "options": [
+      "$60^\\circ$",
+      "$90^\\circ$",
+      "$120^\\circ$",
+      "$150^\\circ$"
+    ],
+    "source": "AI智能出题",
+    "tags": [
+      "AI生成",
+      "智能出题"
+    ],
+    "problemHash": "qb_jw45vv",
+    "verified": true,
+    "createdAt": "2026-06-19T08:55:27.756Z",
+    "updatedAt": "2026-06-19T08:55:27.756Z"
+  },
+  {
     "id": "qb_mqkn1j4i_5fzoia",
     "subject": "数学",
     "grade": "",

@@ -194,9 +194,14 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
       });
       const data = await res.json();
       if (data.success) {
-        setPath(data.data.path);
+        const newPath = data.data?.path;
+        setPath(newPath ?? null);
         setDialogOpen(false);
-        toast.success('学习路径已生成');
+        if (newPath && newPath.nodes.length > 0) {
+          toast.success('学习路径已生成');
+        } else {
+          toast.error('生成失败：未获取到路径内容，请稍后重试');
+        }
       } else {
         toast.error(data.error || '生成失败，请重试');
       }
