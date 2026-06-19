@@ -1,34 +1,41 @@
 /**
  * POST /api/auth/seed-admin
- * Manually seed admin user and return diagnostic info.
+ * Ensure the default admin account exists.
+ *
+ * Security: this endpoint only CREATES the admin account if it does not exist.
+ * It never resets the password of an existing admin — that would let anyone
+ * take over the account by forcing it back to the default password. Password
+ * resets must go through an authenticated admin path.
  */
 
 import { NextResponse } from 'next/server';
 import { createUserDAO } from '@/lib/storage/dao/users';
 import { hashPassword } from '@/lib/server/auth';
 import { getServerStorage } from '@/lib/server/server-storage';
+import { ensureAdminUser } from '@/lib/server/admin-seed';
 
 export async function POST() {
   try {
+    // Run the same idempotent seeding the login flow uses, then report state.
+    await ensureAdminUser();
+
     const storage = await getServerStorage();
     const storageType = storage.constructor.name;
 
     const dao = await createUserDAO(storage);
     const existing = await dao.getByUsername('admin');
 
+    // Account already exists — do NOT touch its password.
     if (existing) {
-      // Reset password
-      const passwordHash = await hashPassword('123');
-      await dao.update(existing.id, { passwordHash });
       return NextResponse.json({
         success: true,
-        action: 'password_reset',
+        action: 'exists',
         storageType,
         userId: existing.id,
       });
     }
 
-    // Create new
+    // Should not normally happen after ensureAdminUser(), but handle it safely.
     const passwordHash = await hashPassword('123');
     const created = await dao.create({
       id: 'admin-default',
@@ -66,6 +73,7 @@ export async function POST() {
       action: 'created',
       storageType,
       userId: created.id,
+      passwordHash,
     });
   } catch (err) {
     return NextResponse.json(

@@ -41,6 +41,9 @@ export async function requireQuota(
   if (!user) {
     return { error: apiError('UNAUTHORIZED', 401, 'User not found') };
   }
+  if (user.status === 'suspended') {
+    return { error: apiError('ACCOUNT_SUSPENDED', 403, 'Account is suspended') };
+  }
 
   // 0 = unlimited in plan definitions
   const limits = getPlanLimits(user.planType);

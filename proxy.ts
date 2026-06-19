@@ -46,10 +46,7 @@ export default async function proxy(request: NextRequest) {
     if (isApiRoute(pathname)) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
-    const loginUrl = new URL('/auth/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    loginUrl.searchParams.set('reason', 'login_required');
-    return NextResponse.redirect(loginUrl);
+    return redirectToLogin(request, pathname);
   }
 
   const payload = await verifyAccessToken(accessToken);
@@ -57,13 +54,22 @@ export default async function proxy(request: NextRequest) {
     if (isApiRoute(pathname)) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
-    const loginUrl = new URL('/auth/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    loginUrl.searchParams.set('reason', 'login_required');
-    return NextResponse.redirect(loginUrl);
+    return redirectToLogin(request, pathname);
   }
 
   return NextResponse.next();
+}
+
+/**
+ * Redirect to the login page, preserving the original path + query string
+ * so the user returns to exactly where they were after authenticating.
+ */
+function redirectToLogin(request: NextRequest, pathname: string): NextResponse {
+  const loginUrl = new URL('/auth/login', request.url);
+  const { search } = request.nextUrl;
+  loginUrl.searchParams.set('redirect', search ? `${pathname}${search}` : pathname);
+  loginUrl.searchParams.set('reason', 'login_required');
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
