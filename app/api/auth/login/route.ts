@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, signRefreshToken, verifyPassword } from '@/lib/server/auth';
+import { ACCESS_COOKIE_MAX_AGE, REFRESH_COOKIE_MAX_AGE } from '@/lib/server/auth/jwt';
 import { createUserDAO } from '@/lib/storage/dao/users';
 import { ensureAdminUser } from '@/lib/server/admin-seed';
 
@@ -66,14 +67,14 @@ export async function POST(request: Request) {
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60,
+      maxAge: ACCESS_COOKIE_MAX_AGE,
     });
     response.cookies.set('refresh_token', refreshToken, {
       httpOnly: true,
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60,
+      maxAge: REFRESH_COOKIE_MAX_AGE,
     });
     return response;
   } catch (err) {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   BookOpen,
@@ -27,6 +28,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from './math-renderer';
 import { QuizInteraction } from './quiz-interaction';
@@ -36,15 +44,16 @@ import { TTSButton } from './tts-button';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useAuth } from '@/components/auth/auth-provider';
 import { toast } from 'sonner';
+import { ClassroomConfigDialog } from './classroom-config-dialog';
+import { addActiveJobEntry } from '@/lib/classroom/classroom-session';
+import type { TeachingToClassroomConfig } from '@/lib/teaching/classroom-config-recommendation';
 import {
   submitTeachingJob,
   fetchTeachingJob,
-  pollTeachingJob,
   cancelTeachingJob,
   retrySection,
   streamTeachingJob,
   toggleTeachingFavorite,
-  type TeachingJobState,
 } from '@/lib/teaching/teaching-job-client';
 import {
   addActiveTeachingJobEntry,
@@ -123,32 +132,6 @@ const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
   },
 };
 
-/* 内容块左边框色 */
-const CHUNK_BORDER: Record<string, string> = {
-  formula: 'border-l-2 border-l-teal-400/60',
-  example: 'border-l-2 border-l-emerald-400/60',
-  quiz: 'border-l-2 border-l-orange-400/60',
-  diagram: 'border-l-2 border-l-violet-400/60',
-  text: '',
-};
-
-const CHUNK_BADGE: Record<string, { label: string; cls: string } | null> = {
-  formula: {
-    label: '核心公式',
-    cls: 'bg-teal-900/30 text-teal-300 border border-teal-500/20',
-  },
-  example: {
-    label: '例题',
-    cls: 'bg-emerald-900/30 text-emerald-300 border border-emerald-500/20',
-  },
-  quiz: {
-    label: '随堂测验',
-    cls: 'bg-orange-900/30 text-orange-300 border border-orange-500/20',
-  },
-  diagram: null,
-  text: null,
-};
-
 // ── Section Renderer ───────────────────────────────────────────────
 
 interface SectionCardProps {
@@ -157,6 +140,7 @@ interface SectionCardProps {
   index: number;
   jobId?: string;
   profile?: StudentProfile | null;
+  isRetrying?: boolean;
   onRetry?: (sectionId: string) => void;
   onAskQuestion?: (sectionId: string, sectionTitle: string) => void;
   onFeedback?: (type: 'mastered' | 'needs_review') => void;
@@ -168,6 +152,7 @@ const SectionCard = React.memo(function SectionCard({
   index,
   jobId,
   profile,
+  isRetrying,
   onRetry,
   onAskQuestion,
   onFeedback,
@@ -175,14 +160,6 @@ const SectionCard = React.memo(function SectionCard({
   const sortedChunks = [...chunks].sort((a, b) => a.order - b.order);
   const hasFailed = sortedChunks.some((c) => c.failed);
   const typeBadge = TYPE_BADGE[section.contentType] ?? TYPE_BADGE.explanation;
-
-  const typeLabel: Record<string, string> = {
-    text: '讲解',
-    formula: '公式',
-    example: '例题',
-    quiz: '测验',
-    diagram: '图表',
-  };
 
   const handleRetry = () => {
     if (onRetry) {
@@ -333,10 +310,15 @@ const SectionCard = React.memo(function SectionCard({
                 variant="outline"
                 size="sm"
                 onClick={handleRetry}
+                disabled={isRetrying}
                 className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
-                <RefreshCw className="h-3 w-3 mr-1" />
-                重新生成
+                {isRetrying ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                )}
+                {isRetrying ? '重新生成中...' : '重新生成'}
               </Button>
             </div>
           )}
@@ -468,6 +450,7 @@ export function TeachingPanel({
   onViewedHistory,
 }: TeachingPanelProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<LessonPlan | null>(null);
@@ -503,11 +486,19 @@ export function TeachingPanel({
   const [homeworkLoading, setHomeworkLoading] = useState(false);
   const [showHomework, setShowHomework] = useState(false);
   const [toClassroomLoading, setToClassroomLoading] = useState(false);
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [startClassroomLoading, setStartClassroomLoading] = useState(false);
   const [learningPath, setLearningPath] = useState<LearningPath | null>(null);
+
+  // Feature flag: set to false to instantly revert to the legacy one-click conversion.
+  const USE_SKY_CLASSROOM_CREATION = true;
   const [showStudyGroup, setShowStudyGroup] = useState(false);
 
   // Chapter-by-chapter reading state (-1 = not started)
   const [displayIndex, setDisplayIndex] = useState(-1);
+
+  // Retry state for the "重新生成" button
+  const [retryingSectionId, setRetryingSectionId] = useState<string | null>(null);
 
   // Learning progress tracking
   const [feedbackStats, setFeedbackStats] = useState<{ mastered: number; needsReview: number }>({
@@ -541,6 +532,7 @@ export function TeachingPanel({
   const [serverProgress, setServerProgress] = useState<number | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+  const isFirstRenderRef = useRef(true);
 
   // ── Fetch recommended topics on mount ──
   useEffect(() => {
@@ -591,7 +583,7 @@ export function TeachingPanel({
         setRecommendedTopics(subjectTopics?.topics.slice(0, 5) ?? []);
       }
     })();
-  }, []);
+  }, [user?.id]);
 
   // ── Search suggestions ──
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -629,7 +621,7 @@ export function TeachingPanel({
       setTopic(viewHistoryItem.topic);
       setDisplayIndex(0);
       setIsFavorited(viewHistoryItem.isFavorited ?? false);
-    } else {
+    } else if (!isFirstRenderRef.current) {
       // Cleared history view: reset to the empty teaching interface
       setPlan(null);
       setSections([]);
@@ -646,6 +638,7 @@ export function TeachingPanel({
       setServerProgress(null);
       setMessage('');
     }
+    isFirstRenderRef.current = false;
   }, [viewHistoryItem]);
 
   // ── Auto-show first section when it arrives ──
@@ -675,6 +668,11 @@ export function TeachingPanel({
           setSections(data.sections ?? []);
           setDone(true);
           setTopic(entry.topic);
+          setCurrentJobId(entry.jobId);
+          setDisplayIndex(data.sections && data.sections.length > 0 ? 0 : -1);
+          setLoading(false);
+          setError(null);
+          setServerProgress(typeof data.progress === 'number' ? data.progress : null);
           removeActiveTeachingJobEntry(entry.jobId);
           return;
         }
@@ -684,8 +682,10 @@ export function TeachingPanel({
         setLoading(true);
         setPlan(data.plan ?? null);
         setSections(data.sections ?? []);
+        setDisplayIndex(data.sections && data.sections.length > 0 ? 0 : -1);
         setServerProgress(typeof data.progress === 'number' ? data.progress : null);
         setMessage(data.message || '');
+        setError(null);
 
         resumePolling(entry.jobId, entry.topic);
       } catch {
@@ -931,7 +931,7 @@ export function TeachingPanel({
       toast.error('诊断生成失败，直接开始授课');
       await startTeachingJob();
     }
-  }, [topic, hasProfile, startTeachingJob]);
+  }, [topic, hasProfile, startTeachingJob, profile?.masteryByKnowledge]);
 
   // ── Submit diagnostic answers ──
   const submitDiagnostic = useCallback(async () => {
@@ -985,17 +985,25 @@ export function TeachingPanel({
     setError(null);
   }, [currentJobId]);
 
+  // Effective job id used for retry/favorite/homework/classroom.
+  // Prefer the history item being viewed so actions operate on the visible job.
+  const effectiveJobId = viewHistoryJobId ?? currentJobId;
+
   // ── Retry Section ──
   const handleRetrySection = useCallback(
     async (sectionId: string) => {
-      if (!currentJobId) return;
+      if (!effectiveJobId) {
+        toast.error('请先选择一份教案');
+        return;
+      }
 
+      setRetryingSectionId(sectionId);
       try {
         toast.info('正在重新生成...');
-        const result = await retrySection(currentJobId, sectionId);
+        const result = await retrySection(effectiveJobId, sectionId);
 
         if (result) {
-          // Update sections state
+          // Update sections state by index to avoid duplicates
           setSections((prev) => {
             const idx = prev.findIndex((s) => s.section.id === sectionId);
             if (idx >= 0) {
@@ -1003,21 +1011,31 @@ export function TeachingPanel({
               updated[idx] = result;
               return updated;
             }
+            // If the section is missing (shouldn't happen), append it at the
+            // correct plan index so ordering is preserved.
+            const planIdx = plan?.sections.findIndex((s) => s.id === sectionId) ?? -1;
+            if (planIdx >= 0) {
+              const updated = [...prev];
+              updated.splice(planIdx, 0, result);
+              return updated;
+            }
             return [...prev, result];
           });
           toast.success('重新生成完成');
+        } else {
+          toast.error('重新生成失败');
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : '重新生成失败';
         toast.error(msg);
+      } finally {
+        setRetryingSectionId(null);
       }
     },
-    [currentJobId],
+    [effectiveJobId, plan?.sections],
   );
 
   // ── Favorite ──
-  const effectiveJobId = currentJobId ?? viewHistoryJobId;
-
   const handleToggleFavorite = useCallback(async () => {
     if (!effectiveJobId) return;
 
@@ -1033,10 +1051,13 @@ export function TeachingPanel({
 
   // ── Convert to Classroom ──
   const handleToClassroom = useCallback(async () => {
-    if (!currentJobId) return;
+    if (!effectiveJobId) {
+      toast.error('请先完成或选择一份教案');
+      return;
+    }
     setToClassroomLoading(true);
     try {
-      const res = await fetch(`/api/sky/teaching/${currentJobId}/to-classroom`, {
+      const res = await fetch(`/api/sky/teaching/${effectiveJobId}/to-classroom`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -1053,7 +1074,57 @@ export function TeachingPanel({
     } finally {
       setToClassroomLoading(false);
     }
-  }, [currentJobId]);
+  }, [effectiveJobId]);
+
+  // ── Start Classroom (sky-style config + review flow) ──
+  const handleStartClassroomConfig = useCallback(() => {
+    if (!effectiveJobId) {
+      toast.error('请先完成或选择一份教案');
+      return;
+    }
+    setConfigDialogOpen(true);
+  }, [effectiveJobId]);
+
+  const handleConfigSubmit = useCallback(
+    async (config: TeachingToClassroomConfig) => {
+      if (!effectiveJobId) return;
+      setStartClassroomLoading(true);
+      try {
+        const res = await fetch(`/api/sky/teaching/${effectiveJobId}/start-classroom`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(config),
+        });
+        const data = await res.json();
+        if (!data.success) {
+          toast.error(data.error || '创建课堂失败');
+          return;
+        }
+        const { jobId } = data.data;
+        addActiveJobEntry({ jobId, topic: plan?.title || topic });
+        useTaskStore.getState().addTask({
+          id: jobId,
+          type: 'slides',
+          label: `课堂: ${plan?.title || topic}`,
+          status: 'running',
+          progress: 30,
+          phase: '教案大纲已生成，等待审阅',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          jobId,
+          resultRoute: `/generation-progress?jobId=${jobId}`,
+        });
+        setConfigDialogOpen(false);
+        router.push(`/generation-progress?jobId=${jobId}`);
+      } catch {
+        toast.error('创建课堂失败');
+      } finally {
+        setStartClassroomLoading(false);
+      }
+    },
+    [effectiveJobId, plan, topic, router],
+  );
 
   // ── Next Lesson from Learning Path ──
   const handleNextLesson = useCallback(() => {
@@ -1612,8 +1683,9 @@ export function TeachingPanel({
           section={sections[displayIndex].section}
           chunks={sections[displayIndex].chunks}
           index={displayIndex}
-          jobId={currentJobId ?? undefined}
+          jobId={effectiveJobId ?? undefined}
           profile={profile}
+          isRetrying={retryingSectionId === sections[displayIndex].section.id}
           onRetry={handleRetrySection}
           onAskQuestion={(sectionId, sectionTitle) =>
             setChatSection({ id: sectionId, title: sectionTitle })
@@ -1633,51 +1705,127 @@ export function TeachingPanel({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between"
+          className="flex flex-col sm:flex-row items-center justify-between gap-3"
         >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setDisplayIndex((i) => {
-                const next = Math.max(0, i - 1);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                return next;
-              });
-            }}
-            disabled={displayIndex <= 0}
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            上一章
-          </Button>
-          <span className="text-sm text-slate-500 dark:text-slate-400">
-            {displayIndex + 1} / {plan?.sections.length ?? sections.length}
-          </span>
-          {displayIndex < sections.length - 1 ? (
+          <div className="flex items-center gap-2">
             <Button
+              variant="outline"
               size="sm"
               onClick={() => {
                 setDisplayIndex((i) => {
-                  const next = i + 1;
+                  const next = Math.max(0, i - 1);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                   return next;
                 });
               }}
+              disabled={displayIndex <= 0}
             >
-              下一章
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              上一章
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDisplayIndex(0);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              disabled={displayIndex <= 0}
+            >
+              首章
+            </Button>
+          </div>
+
+          <Select
+            value={String(displayIndex)}
+            onValueChange={(value) => {
+              const next = Number(value);
+              setDisplayIndex(next);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <SelectTrigger
+              className="h-9 min-w-[180px] max-w-[260px] text-sm"
+              style={{
+                background: 'var(--teaching-surface)',
+                borderColor: 'var(--teaching-border)',
+                color: 'var(--teaching-text)',
+              }}
+            >
+              <SelectValue placeholder="选择章节" />
+            </SelectTrigger>
+            <SelectContent
+              className="max-h-[320px]"
+              style={{
+                background: 'var(--teaching-surface-elevated)',
+                borderColor: 'var(--teaching-border)',
+              }}
+            >
+              {(plan?.sections ?? sections.map((s) => s.section)).map((sec, i) => {
+                const isAvailable = done || i < sections.length;
+                return (
+                  <SelectItem
+                    key={sec.id}
+                    value={String(i)}
+                    disabled={!isAvailable}
+                    className="text-sm"
+                    style={{ color: 'var(--teaching-text)' }}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">第 {i + 1} 章</span>
+                      <span className="truncate max-w-[180px]">{sec.title}</span>
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-2">
+            {displayIndex < sections.length - 1 ? (
+              <Button
+                size="sm"
+                onClick={() => {
+                  setDisplayIndex((i) => {
+                    const next = i + 1;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return next;
+                  });
+                }}
+              >
+                下一章
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            ) : loading ? (
+              <Button size="sm" disabled>
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                正在生成...
+              </Button>
+            ) : done ? (
+              <Button size="sm" disabled variant="outline">
+                <CheckCircle2 className="h-4 w-4 mr-1" />
+                已完成
+              </Button>
+            ) : (
+              <Button size="sm" disabled>
+                <ChevronRight className="h-4 w-4 ml-1" />
+                下一章
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const lastIndex = sections.length - 1;
+                setDisplayIndex(lastIndex);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              disabled={displayIndex >= sections.length - 1}
+            >
+              末章
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
-          ) : loading ? (
-            <Button size="sm" disabled>
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-              正在生成下一章...
-            </Button>
-          ) : done ? null : (
-            <Button size="sm" disabled>
-              <ChevronRight className="h-4 w-4 ml-1" />
-              下一章
-            </Button>
-          )}
+          </div>
         </motion.div>
       )}
 
@@ -1696,16 +1844,24 @@ export function TeachingPanel({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleToClassroom}
-                  disabled={toClassroomLoading}
+                  onClick={
+                    USE_SKY_CLASSROOM_CREATION ? handleStartClassroomConfig : handleToClassroom
+                  }
+                  disabled={USE_SKY_CLASSROOM_CREATION ? startClassroomLoading : toClassroomLoading}
                   className="text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800 hover:text-violet-700"
                 >
-                  {toClassroomLoading ? (
+                  {USE_SKY_CLASSROOM_CREATION ? (
+                    startClassroomLoading ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Presentation className="h-3 w-3 mr-1" />
+                    )
+                  ) : toClassroomLoading ? (
                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                   ) : (
                     <Presentation className="h-3 w-3 mr-1" />
                   )}
-                  转为课堂模式
+                  {USE_SKY_CLASSROOM_CREATION ? '创建课堂' : '转为课堂模式'}
                 </Button>
                 {learningPath?.nodes.some(
                   (n) => n.status === 'pending' || n.status === 'in_progress',
@@ -1772,6 +1928,17 @@ export function TeachingPanel({
           </Card>
         </motion.div>
       )}
+
+      {/* Create Classroom Config Dialog */}
+      <ClassroomConfigDialog
+        key={effectiveJobId || 'new'}
+        open={configDialogOpen}
+        onOpenChange={setConfigDialogOpen}
+        plan={plan}
+        sections={sections}
+        onSubmit={handleConfigSubmit}
+        loading={startClassroomLoading}
+      />
 
       {/* Learning Summary */}
       {done && (feedbackStats.mastered > 0 || feedbackStats.needsReview > 0) && (

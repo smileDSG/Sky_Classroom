@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
@@ -14,6 +14,10 @@ import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useAuth } from '@/components/auth/auth-provider';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { fetchTeachingHistory, type TeachingHistoryItem } from '@/lib/teaching/teaching-job-client';
 import {
   Brain,
   Camera,
@@ -24,6 +28,7 @@ import {
   TrendingUp,
   Star,
   BookOpen,
+  ChevronRight,
   BarChart3,
 } from 'lucide-react';
 
@@ -273,17 +278,40 @@ export default function SkyDashboardPage() {
     streakDays: 0,
     masteryPercent: 0,
   });
+  const [favoriteDialogOpen, setFavoriteDialogOpen] = useState(false);
+  const [favorites, setFavorites] = useState<TeachingHistoryItem[]>([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
 
   useEffect(() => {
     syncMistakesFromQuizzes();
   }, []);
+
+  const loadFavorites = useCallback(async () => {
+    setFavoritesLoading(true);
+    try {
+      const data = await fetchTeachingHistory({ favorited: true, limit: 50 });
+      setFavorites(data);
+    } catch {
+      setFavorites([]);
+    } finally {
+      setFavoritesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (favoriteDialogOpen) {
+      loadFavorites();
+    }
+  }, [favoriteDialogOpen, loadFavorites]);
 
   useEffect(() => {
     if (!user) return;
     const fetchStats = () => {
       fetch('/api/sky/learning-stats', { credentials: 'include' })
         .then((r) => r.json())
-        .then((j) => { if (j.success) setStats(j); })
+        .then((j) => {
+          if (j.success) setStats(j);
+        })
         .catch(() => {});
     };
     fetchStats();
@@ -343,7 +371,14 @@ export default function SkyDashboardPage() {
 
   // ── Milestone helpers ─────────────────────────────────────────
   const MILESTONES = [3, 7, 14, 30, 60, 100];
-  const MILESTONE_NAMES: Record<number, string> = { 3: '铜星', 7: '银星', 14: '金星', 30: '白金', 60: '钻石', 100: '传奇' };
+  const MILESTONE_NAMES: Record<number, string> = {
+    3: '铜星',
+    7: '银星',
+    14: '金星',
+    30: '白金',
+    60: '钻石',
+    100: '传奇',
+  };
   const nextMilestone = MILESTONES.find((m) => m > stats.streakDays);
   const maxMilestone = MILESTONES[MILESTONES.length - 1];
 
@@ -376,6 +411,13 @@ export default function SkyDashboardPage() {
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs">
+              <button
+                onClick={() => setFavoriteDialogOpen(true)}
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium text-rose-600 dark:text-rose-400 bg-rose-500/10 ring-1 ring-rose-500/15 hover:bg-rose-500/20 transition-colors"
+              >
+                <Star className="h-3 w-3 fill-current" />
+                收藏
+              </button>
               <div className="flex items-center gap-1.5 rounded-md bg-white/60 dark:bg-slate-800/50 ring-1 ring-slate-200/40 dark:ring-slate-700/40 px-2.5 py-1 text-slate-500 dark:text-slate-400">
                 <motion.div
                   className="w-1.5 h-1.5 rounded-full bg-emerald-400"
@@ -504,6 +546,60 @@ export default function SkyDashboardPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Favorites Dialog ─────────────────────────────── */}
+        <Dialog open={favoriteDialogOpen} onOpenChange={setFavoriteDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-rose-500 fill-current" />
+                收藏的教案
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-2">
+              {favoritesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Zap className="h-5 w-5 animate-spin text-rose-500" />
+                </div>
+              ) : favorites.length === 0 ? (
+                <div className="text-center py-8 text-sm text-slate-500 dark:text-slate-400">
+                  暂无收藏的教案
+                </div>
+              ) : (
+                <ScrollArea className="max-h-[360px]">
+                  <div className="space-y-2">
+                    {favorites.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={`/sky/teaching?history=${item.id}`}
+                        onClick={() => setFavoriteDialogOpen(false)}
+                        className="group flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 p-3 transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10">
+                          <BookOpen className="h-4 w-4 text-rose-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
+                            {item.plan?.title || item.topic}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              {new Date(item.createdAt).toLocaleDateString('zh-CN')}
+                            </span>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              {item.totalSections || item.sections?.length || 0} 章节
+                            </Badge>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-500 transition-colors" />
+                      </Link>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </SkyAppShell>
   );

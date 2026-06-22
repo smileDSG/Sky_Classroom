@@ -23,7 +23,6 @@ import type {
   QuizOption,
 } from '@/lib/types/stage';
 import type { TeachingJob, GeneratedSectionData } from '@/lib/server/teaching-job-store';
-import type { ContentChunk } from '@/lib/teaching/content-types';
 import type { Action } from '@/lib/types/action';
 import {
   layoutContentWithTemplate,
@@ -427,8 +426,8 @@ async function structuredToSlide(
       viewportSize: CANVAS_W,
       viewportRatio: CANVAS_H / CANVAS_W,
       theme: DEFAULT_THEME,
-      elements: templateData.page.elements as PPTElement[],
-      background: (templateData.page.background as SlideBackground) ?? DEFAULT_BACKGROUND,
+      elements: templateData.page.elements as unknown as PPTElement[],
+      background: (templateData.page.background as unknown as SlideBackground) ?? DEFAULT_BACKGROUND,
       type: 'content',
     };
   } catch (err) {

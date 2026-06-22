@@ -8,7 +8,7 @@
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import type { LanguageModel } from 'ai';
-import { parseJsonResponse } from '@/lib/generation/json-repair';
+import { parseJsonResponse, tryParseJson } from '@/lib/generation/json-repair';
 import { structuredContentSchema } from '@/lib/generation/classroom-content-agent';
 import type { StructuredContent } from '@/lib/generation/classroom-content-agent';
 import { resolveSolverModel } from '@/lib/solve/solver-constants';
@@ -21,6 +21,7 @@ import {
   buildContentPrompt,
   buildStructuredContentPrompt,
 } from './content-prompts';
+import { generateQuizSectionContent, deterministicQuizChunks } from './quiz-section-generator';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ContentGenerator');
@@ -92,6 +93,28 @@ export async function generateSectionContent(
 
   // ── Attempt 2: Fallback to chunk-based content ──
   const chunks = await generateChunksContent(section, model, profile, precedingSections);
+
+  // ── Attempt 3: Robust fallback for quiz sections ──
+  // The chunk-based prompt frequently fails for quiz sections (especially the final
+  // assessment), leaving users with a non-interactive "generation failed" message.
+  // Use the dedicated quiz agent as a robust fallback, and a deterministic template
+  // as the absolute last resort so the UI always renders an interactive quiz.
+  if (section.contentType === 'quiz' && chunks.some((c) => c.failed)) {
+    try {
+      log.info(
+        `[ContentGen] Quiz section ${section.id} failed via chunks, trying quiz agent fallback`,
+      );
+      const quizChunks = await generateQuizSectionContent(section, profile);
+      return { chunks: quizChunks };
+    } catch (quizErr) {
+      log.warn(
+        `[ContentGen] Quiz agent fallback failed for ${section.id}, using deterministic fallback:`,
+        quizErr,
+      );
+      return { chunks: deterministicQuizChunks(section) };
+    }
+  }
+
   return { chunks };
 }
 
@@ -139,7 +162,7 @@ async function generateChunksContent(
     }
 
     const rawChunks = parsed.chunks as Record<string, unknown>[];
-    return rawChunks
+    const mappedChunks = rawChunks
       .map((c, i) => {
         const type = ['text', 'formula', 'example', 'quiz', 'diagram'].includes(c.type as string)
           ? (c.type as ContentChunk['type'])
@@ -167,6 +190,8 @@ async function generateChunksContent(
         return chunk;
       })
       .filter((c) => c.content.length > 0);
+
+    return flattenNestedChunks(mappedChunks, section.id);
   } catch (err) {
     log.warn(`generateChunksContent failed for ${section.id}:`, err);
     return fallbackContent(section);
@@ -185,6 +210,53 @@ function fallbackContent(section: LessonSection): ContentChunk[] {
       failed: true,
     },
   ];
+}
+
+/**
+ * LLM 偶尔会输出嵌套的 chunks JSON（把整个 chunks 数组作为某个 chunk 的 content）。
+ * 检测并展开这种嵌套结构，避免前端拿到 JSON 字符串而不是可渲染的内容。
+ */
+function flattenNestedChunks(chunks: ContentChunk[], sectionId: string): ContentChunk[] {
+  const result: ContentChunk[] = [];
+  for (const chunk of chunks) {
+    const trimmed = chunk.content.trim();
+    if (!trimmed.startsWith('{') || !trimmed.includes('"chunks"')) {
+      result.push(chunk);
+      continue;
+    }
+
+    const nested = tryParseJson<{ chunks?: Record<string, unknown>[] }>(trimmed);
+    if (!nested || !Array.isArray(nested.chunks)) {
+      // 看起来像嵌套 JSON 但解析失败 —— 保留原 chunk，让前端至少能看到原始文本
+      result.push(chunk);
+      continue;
+    }
+
+    log.info(
+      `[ContentGen] Flattened nested chunks for ${sectionId}: ${nested.chunks.length} inner chunks`,
+    );
+    for (const inner of nested.chunks) {
+      if (typeof inner.content !== 'string' || inner.content.length === 0) continue;
+      const type = ['text', 'formula', 'example', 'quiz', 'diagram'].includes(inner.type as string)
+        ? (inner.type as ContentChunk['type'])
+        : 'text';
+      const flat: ContentChunk = {
+        sectionId,
+        type,
+        content: inner.content,
+        order: typeof inner.order === 'number' ? inner.order : result.length + 1,
+      };
+      if (type === 'quiz') {
+        if (typeof inner.question === 'string') flat.question = inner.question;
+        if (Array.isArray(inner.options)) {
+          flat.options = inner.options.filter((o): o is string => typeof o === 'string');
+        }
+        if (typeof inner.correctAnswer === 'number') flat.correctAnswer = inner.correctAnswer;
+      }
+      result.push(flat);
+    }
+  }
+  return result;
 }
 
 /**
@@ -274,7 +346,11 @@ export async function* generateLessonConcurrent(
     // Generate batch in parallel
     const results = await Promise.allSettled(
       batch.map(async (section) => {
-        const { chunks, structured } = await generateSectionContent(section, profile, precedingSections);
+        const { chunks, structured } = await generateSectionContent(
+          section,
+          profile,
+          precedingSections,
+        );
         return { section, chunks, structured };
       }),
     );

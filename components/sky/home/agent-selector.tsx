@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
 // 预定义的代理配置 - 使用用户提供的趣味头像
-const TEACHER_OPTIONS = [
+export const TEACHER_OPTIONS = [
   {
     id: 'default-1',
     name: '卡皮老师',
@@ -28,7 +28,7 @@ const TEACHER_OPTIONS = [
   },
 ];
 
-const STUDENT_OPTIONS = [
+export const STUDENT_OPTIONS = [
   {
     id: 'default-3',
     name: '海绵宝宝',

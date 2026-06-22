@@ -66,14 +66,24 @@ export function installFetchInterceptor() {
 
     if (res.status === 401) {
       const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : args[0]?.url;
+      const method = (
+        typeof args[1] === 'object' && args[1] ? args[1].method : undefined
+      )?.toUpperCase();
+      const reqInit = typeof args[0] === 'object' && args[0] ? (args[0] as Request) : null;
+      const resolvedMethod = method ?? (reqInit?.method?.toUpperCase() || 'GET');
+
       // Only handle 401 from our own API routes, not external or auth routes
       if (url?.startsWith('/api/') && !url.startsWith('/api/auth/')) {
         // Start a refresh attempt (shared across concurrent callers)
         const ok = await tryRefresh();
         if (ok) {
           cancelRedirect();
-          // Retry the original request with the refreshed token
-          return originalFetch(...args);
+          // Only auto-retry idempotent requests — replaying a POST could
+          // duplicate a mutation (e.g. double submit). Non-idempotent calls
+          // fall through and surface the 401 to the caller instead.
+          if (resolvedMethod === 'GET' || resolvedMethod === 'HEAD') {
+            return originalFetch(...args);
+          }
         } else {
           scheduleRedirect();
         }

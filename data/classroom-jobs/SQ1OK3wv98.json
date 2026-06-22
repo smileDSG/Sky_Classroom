@@ -1,0 +1,265 @@
+{
+  "id": "SQ1OK3wv98",
+  "status": "awaiting_review",
+  "step": "generating_outlines",
+  "progress": 30,
+  "message": "教案大纲已生成，等待审阅",
+  "createdAt": "2026-06-19T07:07:47.113Z",
+  "updatedAt": "2026-06-19T07:07:47.117Z",
+  "inputSummary": {
+    "requirementPreview": "三角函数",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "ol_U9JB73il",
+        "type": "quiz",
+        "title": "任意角三角函数定义与符号",
+        "description": "## 任意角三角函数的定义 在平面直角坐标系中，以原点 $O$ 为圆心，半径为 $1$ 的单位圆上，任意角 $\\alpha$ 的终边与单位圆交于点 $P(x, y)$。我们定义： - $\\sin \\alpha = y$ - $\\cos",
+        "keyPoints": [
+          "任意角的三角函数定义",
+          "三角函数在各象限的符号"
+        ],
+        "estimatedDuration": 480,
+        "order": 1,
+        "quizConfig": {
+          "questionCount": 1,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single"
+          ]
+        }
+      },
+      {
+        "id": "ol_1fnuDFPA",
+        "type": "quiz",
+        "title": "随堂测验：三角函数定义与符号",
+        "description": "随堂测验：三角函数定义与符号",
+        "keyPoints": [
+          "任意角的三角函数定义",
+          "三角函数在各象限的符号"
+        ],
+        "estimatedDuration": 180,
+        "order": 2,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single"
+          ]
+        }
+      },
+      {
+        "id": "ol_RmjnptYQ",
+        "type": "slide",
+        "title": "同角三角函数关系与化简",
+        "description": "{ \"chunks\": [ { \"type\": \"text\", \"content\": \"## 同角三角函数关系\\n\\n根据三角函数的定义，同一角 $\\alpha$ 的三个函数之间满足以下基本关系：\\n\\n",
+        "keyPoints": [
+          "sin²α+cos²α=1",
+          "tanα=sinα/cosα"
+        ],
+        "estimatedDuration": 600,
+        "order": 3
+      },
+      {
+        "id": "ol_npbaOQwz",
+        "type": "quiz",
+        "title": "随堂测验：同角关系应用",
+        "description": "同学们，我们已经学习了同角三角函数的基本关系：平方关系 $\\sin^2\\alpha+\\cos^2\\alpha=1$ 和商数关系 $\\tan\\alpha=\\dfrac{\\sin\\alpha}{\\cos\\alpha}$。下面通过几道随堂测验来检",
+        "keyPoints": [
+          "sin²α+cos²α=1",
+          "tanα=sinα/cosα"
+        ],
+        "estimatedDuration": 180,
+        "order": 4,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single"
+          ]
+        }
+      },
+      {
+        "id": "ol_TI-ieB4z",
+        "type": "slide",
+        "title": "诱导公式及其应用",
+        "description": "{ \"chunks\": [ { \"type\": \"text\", \"content\": \"## 诱导公式：化任意角为锐角\\n\\n在学习了同角三角函数关系后，我们还需要处理任意角的三角函数值。例如，如何求 $",
+        "keyPoints": [
+          "诱导公式（奇变偶不变，符号看象限）"
+        ],
+        "estimatedDuration": 480,
+        "order": 5
+      },
+      {
+        "id": "ol_K8w8iAiy",
+        "type": "quiz",
+        "title": "随堂测验：诱导公式",
+        "description": "{ \"chunks\": [ { \"type\": \"text\", \"content\": \"## 随堂测验：诱导公式强化\\n\\n同学们，我们已经学习了诱导公式的口诀“奇变偶不变，符号看象限”。本次测验重点考察",
+        "keyPoints": [
+          "诱导公式（奇变偶不变，符号看象限）"
+        ],
+        "estimatedDuration": 180,
+        "order": 6,
+        "quizConfig": {
+          "questionCount": 1,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single"
+          ]
+        }
+      }
+    ],
+    "languageDirective": "使用中文进行教学。所有内容、标题、说明均使用中文输出。",
+    "topicSummary": "三角函数基础强化",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      }
+    ],
+    "stage": {
+      "id": "stage_nThSuv3i",
+      "name": "三角函数基础强化",
+      "description": "由 AI 智能授课教案转换而来：三角函数",
+      "languageDirective": "使用中文进行教学。所有内容、标题、说明均使用中文输出。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1781852867111,
+      "updatedAt": 1781852867111,
+      "agentIds": [
+        "default-1",
+        "default-3",
+        "default-4"
+      ],
+      "interactiveMode": false
+    },
+    "requirement": "基于已生成的教案创建课堂。主题：三角函数基础强化。重点：诱导公式的记忆与符号判断、同角三角函数关系的灵活运用、三角函数在各象限符号的确定。",
+    "enableImageGeneration": true,
+    "enableVideoGeneration": false,
+    "enableTTS": true
+  },
+  "outlines": [
+    {
+      "id": "ol_U9JB73il",
+      "type": "quiz",
+      "title": "任意角三角函数定义与符号",
+      "description": "## 任意角三角函数的定义 在平面直角坐标系中，以原点 $O$ 为圆心，半径为 $1$ 的单位圆上，任意角 $\\alpha$ 的终边与单位圆交于点 $P(x, y)$。我们定义： - $\\sin \\alpha = y$ - $\\cos",
+      "keyPoints": [
+        "任意角的三角函数定义",
+        "三角函数在各象限的符号"
+      ],
+      "estimatedDuration": 480,
+      "order": 1,
+      "quizConfig": {
+        "questionCount": 1,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single"
+        ]
+      }
+    },
+    {
+      "id": "ol_1fnuDFPA",
+      "type": "quiz",
+      "title": "随堂测验：三角函数定义与符号",
+      "description": "随堂测验：三角函数定义与符号",
+      "keyPoints": [
+        "任意角的三角函数定义",
+        "三角函数在各象限的符号"
+      ],
+      "estimatedDuration": 180,
+      "order": 2,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single"
+        ]
+      }
+    },
+    {
+      "id": "ol_RmjnptYQ",
+      "type": "slide",
+      "title": "同角三角函数关系与化简",
+      "description": "{ \"chunks\": [ { \"type\": \"text\", \"content\": \"## 同角三角函数关系\\n\\n根据三角函数的定义，同一角 $\\alpha$ 的三个函数之间满足以下基本关系：\\n\\n",
+      "keyPoints": [
+        "sin²α+cos²α=1",
+        "tanα=sinα/cosα"
+      ],
+      "estimatedDuration": 600,
+      "order": 3
+    },
+    {
+      "id": "ol_npbaOQwz",
+      "type": "quiz",
+      "title": "随堂测验：同角关系应用",
+      "description": "同学们，我们已经学习了同角三角函数的基本关系：平方关系 $\\sin^2\\alpha+\\cos^2\\alpha=1$ 和商数关系 $\\tan\\alpha=\\dfrac{\\sin\\alpha}{\\cos\\alpha}$。下面通过几道随堂测验来检",
+      "keyPoints": [
+        "sin²α+cos²α=1",
+        "tanα=sinα/cosα"
+      ],
+      "estimatedDuration": 180,
+      "order": 4,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single"
+        ]
+      }
+    },
+    {
+      "id": "ol_TI-ieB4z",
+      "type": "slide",
+      "title": "诱导公式及其应用",
+      "description": "{ \"chunks\": [ { \"type\": \"text\", \"content\": \"## 诱导公式：化任意角为锐角\\n\\n在学习了同角三角函数关系后，我们还需要处理任意角的三角函数值。例如，如何求 $",
+      "keyPoints": [
+        "诱导公式（奇变偶不变，符号看象限）"
+      ],
+      "estimatedDuration": 480,
+      "order": 5
+    },
+    {
+      "id": "ol_K8w8iAiy",
+      "type": "quiz",
+      "title": "随堂测验：诱导公式",
+      "description": "{ \"chunks\": [ { \"type\": \"text\", \"content\": \"## 随堂测验：诱导公式强化\\n\\n同学们，我们已经学习了诱导公式的口诀“奇变偶不变，符号看象限”。本次测验重点考察",
+      "keyPoints": [
+        "诱导公式（奇变偶不变，符号看象限）"
+      ],
+      "estimatedDuration": 180,
+      "order": 6,
+      "quizConfig": {
+        "questionCount": 1,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single"
+        ]
+      }
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "使用中文进行教学。所有内容、标题、说明均使用中文输出。",
+    "totalScenes": 6
+  },
+  "topicSummary": "三角函数基础强化"
+}

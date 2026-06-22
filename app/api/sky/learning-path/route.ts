@@ -11,12 +11,53 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { requireQuota } from '@/lib/server/billing/require-quota';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { buildStudentProfile, invalidateProfileCache } from '@/lib/student/profile-builder';
-import { buildInitialPath, updatePathAfterJob } from '@/lib/teaching/learning-path-engine';
+import {
+  buildInitialPath,
+  buildInitialPathFromContext,
+  updatePathAfterJob,
+} from '@/lib/teaching/learning-path-engine';
+import { buildPathGenerationContext } from '@/lib/teaching/learning-path-context';
+import type {
+  PathGenerationOptions,
+  PriorityStrategy,
+  StrategyAlias,
+} from '@/lib/teaching/learning-path-types';
 import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:LearningPath');
+
+const VALID_PRIORITY_STRATEGIES: PriorityStrategy[] = [
+  'weakness',
+  'review',
+  'error-pattern',
+  'goal-topic',
+  'balanced',
+];
+
+function normalizePriorities(
+  priorities?: string[],
+  strategy?: string,
+): PriorityStrategy[] {
+  const valid = (priorities ?? []).filter((p): p is PriorityStrategy =>
+    VALID_PRIORITY_STRATEGIES.includes(p as PriorityStrategy),
+  );
+  if (valid.length > 0) return valid;
+
+  switch (strategy) {
+    case 'weakness-first':
+      return ['weakness'];
+    case 'review-first':
+      return ['review'];
+    case 'error-first':
+      return ['error-pattern'];
+    case 'goal-topic':
+      return ['goal-topic'];
+    default:
+      return ['balanced'];
+  }
+}
 
 /** GET — Return active learning path for current user */
 export async function GET(req: NextRequest) {
@@ -30,10 +71,10 @@ export async function GET(req: NextRequest) {
     const activePath = await dao.getActiveByUser(quota.userId);
 
     if (!activePath) {
-      return apiSuccess({ path: null }, 200);
+      return apiSuccess({ data: { path: null } }, 200);
     }
 
-    return apiSuccess({ path: activePath }, 200);
+    return apiSuccess({ data: { path: activePath } }, 200);
   } catch (err) {
     log.error('Failed to get learning path:', err);
     return apiError('INTERNAL_ERROR', 500, 'Failed to get learning path');
@@ -47,18 +88,32 @@ export async function POST(req: NextRequest) {
     if ('error' in quota) return quota.error;
 
     const body = await req.json();
-    const { goalTopic } = body as { goalTopic?: string };
+    const { goalTopic, priorities, strategy } = body as PathGenerationOptions;
 
-    const profile = await buildStudentProfile(quota.userId);
-    const path = buildInitialPath(profile, goalTopic);
+    const normalizedPriorities = normalizePriorities(priorities, strategy);
+    const context = await buildPathGenerationContext(quota.userId);
+    const path = buildInitialPathFromContext(context, {
+      goalTopic,
+      priorities: normalizedPriorities,
+      strategy: strategy as StrategyAlias,
+    });
 
     const storage = await getServerStorage();
     const dao = createLearningPathDAO(storage);
+
+    // Defensive: never persist/return an empty path as a "success" — that would
+    // render a blank card and a misleading toast. The engine fallback should
+    // guarantee nodes, but guard regardless.
+    if (!path.nodes || path.nodes.length === 0) {
+      log.error(`Built empty learning path for user ${quota.userId}`);
+      return apiError('GENERATION_FAILED', 500, '未能生成学习路径，请稍后重试');
+    }
+
     await dao.add(path);
 
-    log.info(`Created learning path ${path.id} for user ${quota.userId}`);
+    log.info(`Created learning path ${path.id} for user ${quota.userId} with ${path.nodes.length} nodes`);
 
-    return apiSuccess({ path }, 201);
+    return apiSuccess({ data: { path } }, 201);
   } catch (err) {
     log.error('Failed to create learning path:', err);
     return apiError('INTERNAL_ERROR', 500, 'Failed to create learning path');
@@ -107,7 +162,7 @@ export async function PATCH(req: NextRequest) {
 
     log.info(`Updated learning path ${pathId} after job ${jobId}`);
 
-    return apiSuccess({ path: updated }, 200);
+    return apiSuccess({ data: { path: updated } }, 200);
   } catch (err) {
     log.error('Failed to update learning path:', err);
     return apiError('INTERNAL_ERROR', 500, 'Failed to update learning path');

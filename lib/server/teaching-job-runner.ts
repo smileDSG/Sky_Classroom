@@ -455,12 +455,14 @@ export async function retrySection(
   // Replace in job store
   if (job.sections) {
     const idx = job.sections.findIndex((s) => s.section.id === sectionId);
+    const newSections = [...job.sections];
     if (idx >= 0) {
-      job.sections[idx] = sectionData;
+      newSections[idx] = sectionData;
     } else {
-      job.sections.push(sectionData);
+      newSections.push(sectionData);
     }
-    await updateTeachingJobProgress(jobId, {
+    await updateTeachingJob(jobId, {
+      sections: newSections,
       step: job.step,
       progress: job.progress,
       message: job.message,

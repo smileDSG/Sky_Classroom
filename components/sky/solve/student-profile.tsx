@@ -98,8 +98,11 @@ function StatCard({
 function MasteryBar({ label, score }: { label: string; score: number }) {
   return (
     <div className="flex items-center gap-3 py-1.5">
-      <span className="text-sm w-20 shrink-0 truncate" title={label}>
-        {label}
+      <span
+        className="text-sm w-24 shrink-0 truncate"
+        title={label}
+      >
+        <MathRenderer content={label} />
       </span>
       <div className="flex-1">
         <Progress value={score} className="h-2" />
@@ -238,7 +241,7 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
                     variant="secondary"
                     className="bg-red-900/20 text-red-400 border-red-800/30"
                   >
-                    {kp}
+                    <MathRenderer content={kp} />
                   </Badge>
                 ))}
               </div>
@@ -265,7 +268,7 @@ export function StudentProfileDisplay({ profile, className }: StudentProfileDisp
                     variant="secondary"
                     className="bg-green-900/20 text-green-400 border-green-800/30"
                   >
-                    {kp}
+                    <MathRenderer content={kp} />
                   </Badge>
                 ))}
               </div>
