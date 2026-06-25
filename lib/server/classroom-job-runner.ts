@@ -25,6 +25,25 @@ async function assertNotCancelled(jobId: string): Promise<void> {
 
 const log = createLogger('ClassroomJob');
 const runningJobs = new Map<string, Promise<void>>();
+const CLASSROOM_KB_SEARCH_TIMEOUT_MS = 2000;
+const KB_SEARCH_TIMEOUT = Symbol('KB_SEARCH_TIMEOUT');
+
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+): Promise<T | typeof KB_SEARCH_TIMEOUT> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<typeof KB_SEARCH_TIMEOUT>((resolve) => {
+        timeout = setTimeout(() => resolve(KB_SEARCH_TIMEOUT), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
 
 export function runClassroomGenerationJob(
   jobId: string,
@@ -46,20 +65,45 @@ export function runClassroomGenerationJob(
       // Search classroom KB for similar templates
       let kbContext = '';
       try {
-        const { search } = await import('@/lib/knowledge-base/kb-manager');
-        const kbResults = await search({
-          kbType: 'classroom',
-          query: input.requirement,
-          topK: 2,
-          threshold: 0.05,
-          verifiedOnly: true,
+        await assertNotCancelled(jobId);
+        await updateClassroomGenerationJobProgress(jobId, {
+          step: 'initializing',
+          progress: 3,
+          message: 'Loading classroom references',
+          scenesGenerated: 0,
         });
-        if (kbResults.length > 0) {
+
+        const { search } = await import('@/lib/knowledge-base/kb-manager');
+        const kbResults = await withTimeout(
+          search({
+            kbType: 'classroom',
+            query: input.requirement,
+            topK: 2,
+            threshold: 0.05,
+            verifiedOnly: true,
+          }),
+          CLASSROOM_KB_SEARCH_TIMEOUT_MS,
+        );
+        if (kbResults === KB_SEARCH_TIMEOUT) {
+          log.warn(
+            `Classroom KB search timed out after ${CLASSROOM_KB_SEARCH_TIMEOUT_MS}ms for job ${jobId}; continuing without references.`,
+          );
+        } else if (kbResults.length > 0) {
           const refs = kbResults.map((r) => r.chunk.content).join('\n---\n');
           kbContext = `\n\n【参考已有课堂模板】\n${refs}`;
           log.info(`Classroom KB retrieved ${kbResults.length} references for job ${jobId}`);
         }
-      } catch {
+        await assertNotCancelled(jobId);
+        await updateClassroomGenerationJobProgress(jobId, {
+          step: 'initializing',
+          progress: 4,
+          message: 'Preparing classroom generation',
+          scenesGenerated: 0,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.message === 'Job was cancelled') {
+          throw error;
+        }
         // ignore KB search errors
       }
 
@@ -67,7 +111,7 @@ export function runClassroomGenerationJob(
         ? { ...input, requirement: input.requirement + kbContext }
         : input;
 
-      const result = await generateClassroom(enrichedInput, {
+      const result = (await generateClassroom(enrichedInput, {
         baseUrl,
         phase: 'outline_only',
         modelConfig,
@@ -75,22 +119,19 @@ export function runClassroomGenerationJob(
           await assertNotCancelled(jobId);
           await updateClassroomGenerationJobProgress(jobId, progress);
         },
-      }) as OutlineOnlyResult;
+      })) as OutlineOnlyResult;
 
       // Persist full Phase 1 state for Phase 2 continuation
       await savePhaseOneResultHybrid(jobId, result as unknown as Record<string, unknown>);
 
-      await markClassroomGenerationJobAwaitingReviewHybrid(
-        jobId,
-        result.outlines,
-        {
-          languageDirective: result.languageDirective,
-          totalScenes: result.outlines.length,
-        },
-      );
+      await markClassroomGenerationJobAwaitingReviewHybrid(jobId, result.outlines, {
+        languageDirective: result.languageDirective,
+        totalScenes: result.outlines.length,
+      });
       // Set topicSummary separately
       if (result.topicSummary) {
-        const { updateClassroomGenerationJobHybrid } = await import('@/lib/server/classroom-job-store-hybrid');
+        const { updateClassroomGenerationJobHybrid } =
+          await import('@/lib/server/classroom-job-store-hybrid');
         await updateClassroomGenerationJobHybrid(jobId, { topicSummary: result.topicSummary });
       }
     } catch (error) {
@@ -114,10 +155,7 @@ export function runClassroomGenerationJob(
   return jobPromise;
 }
 
-export async function runClassroomContinueJob(
-  jobId: string,
-  baseUrl: string,
-): Promise<void> {
+export async function runClassroomContinueJob(jobId: string, baseUrl: string): Promise<void> {
   const existing = runningJobs.get(jobId);
   if (existing) {
     return existing;

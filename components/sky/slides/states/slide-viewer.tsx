@@ -31,9 +31,7 @@ export function SlideViewer({ images, activeIndex, onSelect, onOpenGallery }: Sl
           <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-bold text-primary">
             {activeIndex + 1}
           </span>
-          <span className="text-xs text-slate-400 dark:text-gray-500">
-            / {images.length}
-          </span>
+          <span className="text-xs text-slate-400 dark:text-gray-500">/ {images.length}</span>
         </div>
 
         {onOpenGallery && (
@@ -58,7 +56,7 @@ export function SlideViewer({ images, activeIndex, onSelect, onOpenGallery }: Sl
               key={activeIndex}
               src={currentImage}
               alt={`Slide ${activeIndex + 1}`}
-              className="max-h-full max-w-full rounded-xl border border-slate-200 dark:border-gray-700 bg-white shadow-xl object-contain animate-fade-in-scale"
+              className="max-h-full max-w-full rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-slate-900 shadow-xl object-contain animate-fade-in-scale"
               draggable={false}
             />
           </button>
@@ -113,9 +111,7 @@ export function SlideViewer({ images, activeIndex, onSelect, onOpenGallery }: Sl
                 />
                 <span
                   className={`absolute bottom-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[7px] font-bold transition-colors ${
-                    i === activeIndex
-                      ? 'bg-primary text-white'
-                      : 'bg-black/50 text-white'
+                    i === activeIndex ? 'bg-primary text-white' : 'bg-black/50 text-white'
                   }`}
                 >
                   {i + 1}

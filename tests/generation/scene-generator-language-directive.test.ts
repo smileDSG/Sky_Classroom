@@ -12,6 +12,7 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 
 import { generateSceneContent, generateSceneActions } from '@/lib/generation/scene-generator';
 import { buildSceneFromOutline } from '@/lib/generation/scene-builder';
+import { selectThemeForTemplate } from '@/lib/generation/classroom-design-dna';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type {
   SceneOutline,
@@ -77,6 +78,44 @@ describe('scene-generator language directive threading (issue #472)', () => {
       const combined = lastSystem() + lastUser();
       expect(combined).toContain(DIRECTIVE);
       expect(combined).not.toContain('{{languageDirective}}');
+    });
+
+    it('threads course theme tokens into slide content prompt and polish', async () => {
+      const themeSelection = selectThemeForTemplate('tech_dark_blue');
+      const { aiCall, lastUser, lastSystem } = makeCapturingAiCall(
+        JSON.stringify({
+          background: { type: 'solid', color: '#ffffff' },
+          elements: [
+            {
+              id: 'rule',
+              type: 'shape',
+              left: 105,
+              top: 154,
+              width: 790,
+              height: 4,
+              path: 'M 0 0 L 1 0 L 1 1 L 0 1 Z',
+              viewBox: [1, 1],
+              fill: '#2f80d1',
+              fixedRatio: false,
+            },
+          ],
+        }),
+      );
+
+      const content = await generateSceneContent(baseOutline({ type: 'slide' }), aiCall, {
+        languageDirective: DIRECTIVE,
+        themeSelection,
+      });
+
+      const combined = lastSystem() + lastUser();
+      expect(combined).toContain('tech-dark-cn');
+      expect(combined).toContain('#00D4FF');
+      expect(combined).toContain('#E8F4FF');
+      expect(combined).not.toContain('{{themeDirective}}');
+      const elements = content && 'elements' in content ? content.elements : [];
+      expect(elements.some((element) => (element as { fill?: string }).fill === '#00D4FF')).toBe(
+        true,
+      );
     });
 
     it('threads languageDirective into quiz content prompt', async () => {
@@ -242,16 +281,23 @@ describe('scene-generator language directive threading (issue #472)', () => {
       // so we check the combined system + user content.
       const aiCall: AICallFn = async (system, user) => {
         captured.push(system + user);
-        // First call is content (expects structured content JSON); second is actions (expects array)
+        // First call is slide content JSON; second is actions (expects array)
         return captured.length === 1
           ? JSON.stringify({
-              type: 'concept',
-              title: 'Test Scene',
-              cards: [
-                { title: 'A', desc: 'Description of point a with enough length to pass validation and be meaningful for the test.' },
-                { title: 'B', desc: 'Description of point b with enough length to pass validation and be meaningful for the test.' },
+              background: { type: 'solid', color: '#ffffff' },
+              elements: [
+                {
+                  id: 'title',
+                  type: 'text',
+                  left: 105,
+                  top: 78,
+                  width: 790,
+                  height: 70,
+                  content: '<p style="font-size:34px;"><strong>Test Scene</strong></p>',
+                  defaultFontName: '',
+                  defaultColor: '#172033',
+                },
               ],
-              summary: 'This is a comprehensive summary that meets the minimum length requirement.',
             })
           : '[]';
       };

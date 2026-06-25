@@ -13,8 +13,12 @@ import type { StudentProfile } from '@/lib/student/profile-types';
 import type { LessonPlan, LessonSection, DiagnosticResult } from './lesson-types';
 import { LESSON_SYSTEM_PROMPT, buildLessonPlannerPrompt } from './lesson-prompts';
 import { createLogger } from '@/lib/logger';
+import type { ThinkingConfig } from '@/lib/types/provider';
 
 const log = createLogger('LessonPlanner');
+
+/** Disable reasoning/thinking for lesson planning to reduce latency. */
+const DISABLE_THINKING: ThinkingConfig = { mode: 'disabled', enabled: false };
 
 function adjustDepth(
   baseDepth: 'basic' | 'intermediate' | 'advanced',
@@ -88,9 +92,10 @@ function fallbackPlan(
     title: `${topic} 授课计划`,
     sections,
     estimatedDuration: sections.reduce((s, sec) => s + sec.estimatedDuration, 0),
-    focusPoints: diagnosticResult?.weakPrerequisites.length ?? 0 > 0
-      ? [...diagnosticResult!.weakPrerequisites, ...weakKps].slice(0, 5)
-      : weakKps,
+    focusPoints:
+      (diagnosticResult?.weakPrerequisites.length ?? 0 > 0)
+        ? [...diagnosticResult!.weakPrerequisites, ...weakKps].slice(0, 5)
+        : weakKps,
   };
 }
 
@@ -110,11 +115,11 @@ export async function planLesson(
         model,
         messages: [{ role: 'user', content: prompt }] as any,
         temperature: 0.7,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 2048,
       },
       'lesson-planner',
       { retries: 1 },
-      undefined,
+      DISABLE_THINKING,
       LESSON_SYSTEM_PROMPT,
     );
 

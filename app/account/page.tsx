@@ -16,7 +16,8 @@ import { SecurityForm } from '@/components/account/security-form';
 import { PlanBillingSection } from '@/components/account/plan-billing-section';
 import { Button } from '@/components/ui/button';
 
-export default function AccountPage() {const router = useRouter();
+export default function AccountPage() {
+const router = useRouter();
   const { user, isLoading } = useAuth();
   const [activeSection, setActiveSection] = useState<AccountSection>('profile');
 

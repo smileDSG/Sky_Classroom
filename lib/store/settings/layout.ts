@@ -13,16 +13,14 @@ export interface LayoutSliceActions {
 export function getDefaultLayoutState() {
   return {
     timelineCollapsed: true,
-    chatAreaCollapsed: false,
+    chatAreaCollapsed: true,
     chatAreaWidth: 320,
   };
 }
 
 export function createLayoutActions(
   set: (
-    partial:
-      | Partial<LayoutSliceState>
-      | ((state: LayoutSliceState) => Partial<LayoutSliceState>),
+    partial: Partial<LayoutSliceState> | ((state: LayoutSliceState) => Partial<LayoutSliceState>),
   ) => void,
 ): LayoutSliceActions {
   return {

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { useTheme } from '@/lib/hooks/use-theme';
+import { InlineMath } from '@/components/ui/inline-math';
 import { motion, AnimatePresence } from 'motion/react';
 import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial-canvas';
 import {
@@ -30,6 +31,15 @@ import { useRouter } from 'next/navigation';
 import type { MemoryCardDeck } from '@/lib/agents/cloud-mind/memory-cards-agent';
 import { MEMORY_COUNT_OPTIONS } from '@/lib/student/profile-config';
 import type { StudentProfile } from '@/lib/student/profile-types';
+import {
+  buildMemoryCardId,
+  buildMemoryDeckId,
+  MEMORY_REVIEW_LABELS,
+  scheduleMemoryReview,
+} from '@/lib/cloud-mind/spaced-repetition';
+import type { MemoryReviewRating } from '@/lib/cloud-mind/types';
+
+type CardReviewStatus = MemoryReviewRating;
 
 export default function CloudMindMemoryPage() {
   const searchParams = useSearchParams();
@@ -45,6 +55,7 @@ export default function CloudMindMemoryPage() {
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [showMistakePicker, setShowMistakePicker] = useState(false);
   const [studiedCards, setStudiedCards] = useState<Set<number>>(new Set());
+  const [cardReviewStatus, setCardReviewStatus] = useState<Record<number, CardReviewStatus>>({});
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const router = useRouter();
@@ -140,6 +151,7 @@ export default function CloudMindMemoryPage() {
       setDeck(task.result as MemoryCardDeck);
       setCurrentCard(0);
       setStudiedCards(new Set());
+      setCardReviewStatus({});
       store.removeTask(task.id);
       setActiveTaskId(null);
     }
@@ -159,6 +171,7 @@ export default function CloudMindMemoryPage() {
         setDeck(task.result as MemoryCardDeck);
         setCurrentCard(0);
         setStudiedCards(new Set());
+        setCardReviewStatus({});
         setLoading(false);
         useTaskStore.getState().removeTask(task.id);
         setActiveTaskId(null);
@@ -172,8 +185,10 @@ export default function CloudMindMemoryPage() {
     return unsub;
   }, [activeTaskId]);
 
-  const handleGenerate = async (auto = false) => {
-    if (!auto && !content.trim()) {
+  const handleGenerate = async (auto: boolean = false) => {
+    const isAuto = auto === true;
+
+    if (!isAuto && !content.trim()) {
       setError('请输入学习内容或知识点');
       return;
     }
@@ -183,6 +198,7 @@ export default function CloudMindMemoryPage() {
     setDeck(null);
     setFlipped(false);
     setStudiedCards(new Set());
+    setCardReviewStatus({});
 
     const taskId = `memory_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     setActiveTaskId(taskId);
@@ -190,7 +206,7 @@ export default function CloudMindMemoryPage() {
     useTaskStore.getState().addTask({
       id: taskId,
       type: 'memory',
-      label: auto ? '记忆卡片: 基于薄弱点生成' : `记忆卡片: ${topic || '未命名主题'}`,
+      label: isAuto ? '记忆卡片: 基于薄弱点生成' : `记忆卡片: ${topic || '未命名主题'}`,
       status: 'running',
       progress: 30,
       phase: '碎片生成中…',
@@ -199,7 +215,7 @@ export default function CloudMindMemoryPage() {
     });
 
     try {
-      const body = auto
+      const body = isAuto
         ? { auto: true }
         : { content: content.trim(), topic: topic || undefined, cardCount };
       const res = await fetch('/api/sky/cloud-mind/memory-cards', {
@@ -237,17 +253,47 @@ export default function CloudMindMemoryPage() {
 
   const trackFlip = () => {
     setFlipped(!flipped);
-    if (!flipped && deck) {
-      setStudiedCards((prev) => {
-        const next = new Set(prev);
-        next.add(currentCard);
-        return next;
-      });
-      // Update Zustand store
-      const store = useSkyClassroomStore.getState();
+  };
+
+  const confirmCardMastery = (status: CardReviewStatus) => {
+    if (!deck) return;
+
+    const wasConfirmed = studiedCards.has(currentCard);
+    const nextStudiedCards = new Set(studiedCards);
+    nextStudiedCards.add(currentCard);
+
+    setCardReviewStatus((prev) => ({ ...prev, [currentCard]: status }));
+    setStudiedCards(nextStudiedCards);
+
+    const card = deck.cards[currentCard];
+    const deckId = buildMemoryDeckId(deck.topic || topic || 'memory', deck.cards.length);
+    const cardId = buildMemoryCardId(deckId, currentCard, card.front);
+    const store = useSkyClassroomStore.getState();
+    const previousReview = store.memoryReviews.find((review) => review.cardId === cardId) ?? null;
+    const review = scheduleMemoryReview({
+      cardId,
+      deckId,
+      rating: status,
+      previous: previousReview,
+      sourceType: content.trim() ? 'manual' : 'memory',
+      sourceId: activeTaskId ?? undefined,
+      front: card.front,
+      back: card.back,
+      tags: card.tags,
+    });
+    store.recordMemoryReview(review);
+    fetch('/api/sky/cloud-mind/memory-reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(review),
+    }).catch(() => {
+      /* local persisted review is still available */
+    });
+
+    if (!wasConfirmed) {
       store.updateMemoryProgress({
         totalFlipped: store.memoryProgress.totalFlipped + 1,
-        topicCount: new Set([...studiedCards, currentCard]).size,
+        topicCount: nextStudiedCards.size,
         lastStudied: Date.now(),
       });
     }
@@ -265,6 +311,22 @@ export default function CloudMindMemoryPage() {
     hard: 'text-rose-400',
   };
   const difficultyLabels = { easy: '简单', medium: '中等', hard: '困难' };
+  const currentCardConfirmed = studiedCards.has(currentCard);
+  const currentCardStatus = cardReviewStatus[currentCard];
+  const currentReview =
+    deck && currentCardConfirmed
+      ? useSkyClassroomStore
+          .getState()
+          .memoryReviews.find(
+            (review) =>
+              review.cardId ===
+              buildMemoryCardId(
+                buildMemoryDeckId(deck.topic || topic || 'memory', deck.cards.length),
+                currentCard,
+                deck.cards[currentCard].front,
+              ),
+          )
+      : null;
 
   return (
     <div
@@ -551,7 +613,7 @@ export default function CloudMindMemoryPage() {
 
             {/* Generate button — border style + sweep */}
             <button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={loading || !content.trim()}
               className="celestial-button flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               style={{
@@ -610,6 +672,7 @@ export default function CloudMindMemoryPage() {
                       setDeck(null);
                       setContent('');
                       setStudiedCards(new Set());
+                      setCardReviewStatus({});
                     }}
                     className="flex items-center gap-1.5 text-sm transition-colors"
                     style={{ color: 'var(--memory-muted)' }}
@@ -644,15 +707,17 @@ export default function CloudMindMemoryPage() {
                             className="h-2 w-2 rounded-full transition-all duration-500"
                             style={{
                               background:
-                                i < currentCard
-                                  ? 'var(--memory-primary)'
-                                  : i === currentCard
-                                    ? 'var(--memory-primary)'
-                                    : 'rgba(255,255,255,0.15)',
+                                cardReviewStatus[i] === 'mastered'
+                                  ? 'var(--memory-collected)'
+                                  : cardReviewStatus[i] === 'review'
+                                    ? 'var(--memory-warm)'
+                                    : i === currentCard
+                                      ? 'var(--memory-primary)'
+                                      : 'rgba(255,255,255,0.15)',
                               boxShadow:
                                 i === currentCard
                                   ? '0 0 8px var(--memory-glow)'
-                                  : i < currentCard
+                                  : cardReviewStatus[i]
                                     ? '0 0 4px var(--memory-glow)'
                                     : 'none',
                               transform: i === currentCard ? 'scale(1.5)' : 'scale(1)',
@@ -663,10 +728,12 @@ export default function CloudMindMemoryPage() {
                               className="h-px w-4 transition-all duration-500"
                               style={{
                                 background:
-                                  i < currentCard
+                                  cardReviewStatus[i]
                                     ? 'var(--memory-primary)'
                                     : 'rgba(255,255,255,0.1)',
-                                boxShadow: i < currentCard ? '0 0 4px var(--memory-glow)' : 'none',
+                                boxShadow: cardReviewStatus[i]
+                                  ? '0 0 4px var(--memory-glow)'
+                                  : 'none',
                               }}
                             />
                           )}
@@ -684,25 +751,28 @@ export default function CloudMindMemoryPage() {
                   {/* Card — 3D flip */}
                   <div
                     onClick={trackFlip}
-                    className="w-full max-w-2xl cursor-pointer"
+                    className="w-full max-w-3xl cursor-pointer"
                     style={{ perspective: '1000px' }}
                   >
                     <motion.div
+                      data-testid="memory-card-shell"
                       animate={{ rotateY: flipped ? 180 : 0 }}
                       transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-                      className="relative w-full"
-                      style={{ transformStyle: 'preserve-3d', minHeight: 280 }}
+                      className="relative h-[420px] w-full sm:h-[460px]"
+                      style={{
+                        transformStyle: 'preserve-3d',
+                      }}
                     >
                       {/* Front */}
                       <div
-                        className="absolute inset-0 rounded-2xl p-8 flex flex-col items-center justify-center"
+                        className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden rounded-2xl p-6 sm:p-8"
                         style={{
                           background: 'var(--memory-surface-elevated)',
                           border: '1px solid var(--memory-border)',
                           backfaceVisibility: 'hidden',
                         }}
                       >
-                        <div className="text-center">
+                        <div className="flex h-full w-full flex-col items-center justify-center overflow-y-auto text-center">
                           <div className="flex items-center justify-center gap-2 mb-4">
                             <span
                               className={`text-lg ${difficultyStar[deck.cards[currentCard].difficulty]}`}
@@ -717,10 +787,10 @@ export default function CloudMindMemoryPage() {
                             </span>
                           </div>
                           <p
-                            className="text-xl font-bold leading-relaxed"
+                            className="text-xl font-bold leading-relaxed whitespace-pre-wrap"
                             style={{ color: 'var(--memory-text)' }}
                           >
-                            {deck.cards[currentCard].front}
+                            <InlineMath text={deck.cards[currentCard].front} />
                           </p>
                           <p className="text-xs mt-6" style={{ color: 'var(--memory-muted)' }}>
                             点击翻转星图
@@ -730,7 +800,7 @@ export default function CloudMindMemoryPage() {
 
                       {/* Back */}
                       <div
-                        className="absolute inset-0 rounded-2xl p-8 flex flex-col items-center justify-center"
+                        className="absolute inset-0 flex flex-col overflow-hidden rounded-2xl p-6 sm:p-8"
                         style={{
                           background:
                             'linear-gradient(135deg, var(--memory-surface-elevated) 0%, rgba(251, 113, 133, 0.08) 100%)',
@@ -739,34 +809,42 @@ export default function CloudMindMemoryPage() {
                           transform: 'rotateY(180deg)',
                         }}
                       >
-                        <div className="text-center">
-                          <p
-                            className="text-lg leading-relaxed mb-4"
-                            style={{ color: 'var(--memory-text)' }}
+                        <div className="flex h-full w-full flex-col overflow-hidden text-center">
+                          <div
+                            data-testid="memory-card-back-scroll"
+                            className="min-h-0 flex-1 overflow-y-auto pr-1"
                           >
-                            {deck.cards[currentCard].back}
-                          </p>
-                          {deck.cards[currentCard].mnemonic && (
-                            <div
-                              className="mt-3 rounded-xl p-3"
-                              style={{
-                                background: 'rgba(251, 113, 133, 0.06)',
-                                border: '1px solid var(--memory-border)',
-                              }}
+                            <p
+                              className="text-lg leading-relaxed mb-4 whitespace-pre-wrap"
+                              style={{ color: 'var(--memory-text)' }}
                             >
+                              <InlineMath text={deck.cards[currentCard].back} />
+                            </p>
+                            {deck.cards[currentCard].mnemonic && (
                               <div
-                                className="flex items-center gap-1.5 text-xs mb-1"
-                                style={{ color: 'var(--memory-primary)' }}
+                                className="mt-3 rounded-xl p-3"
+                                style={{
+                                  background: 'rgba(251, 113, 133, 0.06)',
+                                  border: '1px solid var(--memory-border)',
+                                }}
                               >
-                                <Lightbulb className="h-3 w-3" />
-                                助记星
+                                <div
+                                  className="flex items-center gap-1.5 text-xs mb-1"
+                                  style={{ color: 'var(--memory-primary)' }}
+                                >
+                                  <Lightbulb className="h-3 w-3" />
+                                  助记星
+                                </div>
+                                <p
+                                  className="text-sm whitespace-pre-wrap"
+                                  style={{ color: 'var(--memory-muted)' }}
+                                >
+                                  <InlineMath text={deck.cards[currentCard].mnemonic} />
+                                </p>
                               </div>
-                              <p className="text-sm" style={{ color: 'var(--memory-muted)' }}>
-                                {deck.cards[currentCard].mnemonic}
-                              </p>
-                            </div>
-                          )}
-                          <div className="flex flex-wrap justify-center gap-1.5 mt-4">
+                            )}
+                          </div>
+                          <div className="mt-4 flex shrink-0 flex-wrap justify-center gap-1.5">
                             {deck.cards[currentCard].tags.map((tag, i) => (
                               <span
                                 key={i}
@@ -785,6 +863,60 @@ export default function CloudMindMemoryPage() {
                       </div>
                     </motion.div>
                   </div>
+
+                  {flipped && studiedCards.size < deck.cards.length && (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex flex-wrap items-center justify-center gap-3">
+                        {(['forgotten', 'fuzzy', 'remembered'] as const).map((rating) => {
+                          const isActive = currentCardStatus === rating;
+                          const isPositive = rating === 'remembered';
+                          return (
+                            <button
+                              key={rating}
+                              type="button"
+                              onClick={() => confirmCardMastery(rating)}
+                              className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium transition-all"
+                              style={{
+                                background: isActive
+                                  ? isPositive
+                                    ? 'var(--memory-collected-glow)'
+                                    : 'var(--memory-warm-glow)'
+                                  : 'transparent',
+                                border: `1px solid ${
+                                  isActive
+                                    ? isPositive
+                                      ? 'var(--memory-collected)'
+                                      : 'var(--memory-warm)'
+                                    : 'var(--memory-border)'
+                                }`,
+                                color: isActive
+                                  ? isPositive
+                                    ? 'var(--memory-collected)'
+                                    : 'var(--memory-warm)'
+                                  : 'var(--memory-muted)',
+                              }}
+                            >
+                              {isPositive ? (
+                                <CheckCircle2 className="h-4 w-4" />
+                              ) : (
+                                <AlertCircle className="h-4 w-4" />
+                              )}
+                              {MEMORY_REVIEW_LABELS[rating]}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {currentReview && (
+                        <p className="text-xs" style={{ color: 'var(--memory-muted)' }}>
+                          下次复习：
+                          {new Date(currentReview.nextReviewAt).toLocaleDateString('zh-CN', {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Navigation / Completion */}
                   {studiedCards.size >= deck.cards.length ? (
@@ -841,7 +973,8 @@ export default function CloudMindMemoryPage() {
                       </button>
                       <button
                         onClick={nextCard}
-                        className="flex h-10 w-10 items-center justify-center rounded-full transition-all"
+                        disabled={!currentCardConfirmed}
+                        className="flex h-10 w-10 items-center justify-center rounded-full transition-all disabled:cursor-not-allowed disabled:opacity-40"
                         style={{
                           background: 'var(--memory-surface)',
                           border: '1px solid var(--memory-border)',
@@ -908,10 +1041,10 @@ export default function CloudMindMemoryPage() {
                         className="text-sm font-semibold mb-2 line-clamp-2"
                         style={{ color: 'var(--memory-text)' }}
                       >
-                        {card.front}
+                        <InlineMath text={card.front} />
                       </p>
                       <p className="text-xs line-clamp-2" style={{ color: 'var(--memory-muted)' }}>
-                        {card.back}
+                        <InlineMath text={card.back} />
                       </p>
                       <div className="flex flex-wrap gap-1 mt-3">
                         {card.tags.slice(0, 3).map((tag, j) => (
@@ -961,8 +1094,11 @@ export default function CloudMindMemoryPage() {
                     <Lightbulb className="h-4 w-4 text-amber-400" />
                     <span className="text-sm font-semibold text-amber-300">学习建议星云</span>
                   </div>
-                  <p className="text-sm" style={{ color: 'var(--memory-muted)' }}>
-                    {deck.studyTips}
+                  <p
+                    className="text-sm whitespace-pre-wrap"
+                    style={{ color: 'var(--memory-muted)' }}
+                  >
+                    <InlineMath text={deck.studyTips} />
                   </p>
                   <div className="mt-3 flex items-center gap-2">
                     <Layers className="h-3.5 w-3.5 text-amber-400/60" />

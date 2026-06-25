@@ -22,8 +22,12 @@ import {
   buildStructuredContentPrompt,
 } from './content-prompts';
 import { createLogger } from '@/lib/logger';
+import type { ThinkingConfig } from '@/lib/types/provider';
 
 const log = createLogger('ContentGenerator');
+
+/** Disable reasoning/thinking for teaching content to reduce latency. */
+const DISABLE_THINKING: ThinkingConfig = { mode: 'disabled', enabled: false };
 
 export interface GeneratedSection {
   section: LessonSection;
@@ -46,25 +50,30 @@ export async function generateSectionContent(
     `[ContentGen] profile injected: ${Boolean(profile)}, section: ${section.id}, kps: ${section.knowledgePoints.join('、')}`,
   );
 
-  // ── Attempt 1: Structured content (rich slides) ──
-  const structuredPrompt = buildStructuredContentPrompt(section, profile, precedingSections);
-  if (structuredPrompt) {
+  // ── Generate chunks and structured content in parallel ──
+  // The teaching panel renders chunks; structured content is only used when
+  // converting to classroom slides. Running both concurrently avoids the
+  // previous 2x serial latency while keeping both outputs available.
+  const chunksPromise = generateChunksContent(section, model, profile, precedingSections);
+
+  const structuredPromise = (async (): Promise<StructuredContent | undefined> => {
+    const structuredPrompt = buildStructuredContentPrompt(section, profile, precedingSections);
+    if (!structuredPrompt) return undefined;
     try {
       const result = await callLLM(
         {
           model,
           messages: [{ role: 'user', content: structuredPrompt }] as any,
           temperature: 0.6,
-          maxOutputTokens: 4096,
+          maxOutputTokens: 2048,
         },
         'content-generator-structured',
-        { retries: 2 },
-        undefined,
+        { retries: 1 },
+        DISABLE_THINKING,
         STRUCTURED_CONTENT_SYSTEM_PROMPT,
       );
 
       const raw = (result.text || '').trim();
-      // Strip markdown fences if present
       const cleaned = raw
         .replace(/^```json\s*/, '')
         .replace(/\s*```$/, '')
@@ -75,24 +84,17 @@ export async function generateSectionContent(
         log.info(
           `[ContentGen] Structured content generated for ${section.id} (type=${validation.data.type})`,
         );
-        // Also generate chunks as fallback data (quiz questions, etc.)
-        const chunks = await generateChunksContent(section, model, profile, precedingSections);
-        return { chunks, structured: validation.data };
+        return validation.data;
       }
-      log.warn(
-        `[ContentGen] Structured validation failed for ${section.id}, falling back to chunks`,
-      );
+      log.warn(`[ContentGen] Structured validation failed for ${section.id}`);
     } catch (err) {
-      log.warn(
-        `[ContentGen] Structured generation failed for ${section.id}, falling back to chunks:`,
-        err,
-      );
+      log.warn(`[ContentGen] Structured generation failed for ${section.id}:`, err);
     }
-  }
+    return undefined;
+  })();
 
-  // ── Attempt 2: Fallback to chunk-based content ──
-  const chunks = await generateChunksContent(section, model, profile, precedingSections);
-  return { chunks };
+  const [chunks, structured] = await Promise.all([chunksPromise, structuredPromise]);
+  return { chunks, structured };
 }
 
 /** Generate chunk-based content (original approach) */
@@ -110,11 +112,11 @@ async function generateChunksContent(
         model,
         messages: [{ role: 'user', content: prompt }] as any,
         temperature: 0.6,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 2048,
       },
       'content-generator',
-      { retries: 2 },
-      undefined,
+      { retries: 1 },
+      DISABLE_THINKING,
       CONTENT_SYSTEM_PROMPT,
     );
 
@@ -228,13 +230,13 @@ export function extractContentSummary(chunks: ContentChunk[]): string {
 /**
  * Generate content concurrently with controlled parallelism.
  * - Section 0 is generated alone (ensures opening quality)
- * - Sections 1+ are generated in parallel batches (2 concurrent)
+ * - Sections 1+ are generated in parallel batches (3 concurrent)
  * - Each completed section is yielded immediately
  */
 export async function* generateLessonConcurrent(
   plan: LessonPlan,
   profile?: StudentProfile,
-  concurrency: number = 2,
+  concurrency: number = 3,
 ): AsyncGenerator<GeneratedSection> {
   const sections = plan.sections;
   if (sections.length === 0) return;
@@ -274,7 +276,11 @@ export async function* generateLessonConcurrent(
     // Generate batch in parallel
     const results = await Promise.allSettled(
       batch.map(async (section) => {
-        const { chunks, structured } = await generateSectionContent(section, profile, precedingSections);
+        const { chunks, structured } = await generateSectionContent(
+          section,
+          profile,
+          precedingSections,
+        );
         return { section, chunks, structured };
       }),
     );

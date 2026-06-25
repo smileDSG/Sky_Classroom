@@ -116,8 +116,8 @@ export async function createClassroomGenerationJobHybrid(
     id: jobId,
     status: 'initializing',
     step: 'initializing',
-    progress: 0,
-    message: 'Classroom generation job queued',
+    progress: 1,
+    message: 'Starting classroom generation',
     createdAt: now,
     updatedAt: now,
     inputSummary: {
@@ -183,7 +183,12 @@ export async function updateClassroomGenerationJobHybrid(
   startFlushTimer();
 
   // If terminal state, flush immediately
-  if (patch.status === 'succeeded' || patch.status === 'failed' || patch.status === 'cancelled') {
+  if (
+    patch.status === 'succeeded' ||
+    patch.status === 'failed' ||
+    patch.status === 'cancelled' ||
+    patch.startedAt
+  ) {
     try {
       await writeJsonFileAtomic(jobFilePath(jobId), updated);
       dirtyJobs.delete(jobId);

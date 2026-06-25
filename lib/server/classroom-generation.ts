@@ -31,9 +31,10 @@ import {
   generateTTSForClassroom,
 } from '@/lib/server/classroom-media-generation';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
-import type { UserRequirements } from '@/lib/types/generation';
+import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { AGENT_COLOR_PALETTE, AGENT_DEFAULT_AVATARS } from '@/lib/constants/agent-defaults';
+import { selectThemeForCourse } from '@/lib/generation/classroom-design-dna';
 
 const log = createLogger('Classroom');
 
@@ -62,7 +63,7 @@ export type ClassroomGenerationStep =
   | 'awaiting_review';
 
 export interface OutlineOnlyResult {
-  outlines: import('@/lib/types/generation').SceneOutline[];
+  outlines: SceneOutline[];
   languageDirective: string;
   topicSummary?: string;
   agents: AgentInfo[];
@@ -90,6 +91,35 @@ export interface GenerateClassroomResult {
   scenes: Scene[];
   scenesCount: number;
   createdAt: string;
+}
+
+const SCENE_PROGRESS_INITIAL = 31;
+const SCENE_PROGRESS_CONTENT_DONE = 55;
+const SCENE_PROGRESS_ACTIONS_DONE = 75;
+const SCENE_PROGRESS_CREATED_DONE = 90;
+
+type ProgressReporter = (progress: ClassroomGenerationProgress) => Promise<void> | void;
+
+function progressInRange(start: number, end: number, completed: number, total: number): number {
+  const safeTotal = Math.max(total, 1);
+  const next = start + Math.floor((Math.min(completed, safeTotal) / safeTotal) * (end - start));
+  return Math.min(Math.max(next, start), end);
+}
+
+async function reportSceneProgress(
+  onProgress: ProgressReporter | undefined,
+  progress: number,
+  message: string,
+  scenesGenerated: number,
+  totalScenes: number,
+): Promise<void> {
+  await onProgress?.({
+    step: 'generating_scenes',
+    progress,
+    message,
+    scenesGenerated,
+    totalScenes,
+  });
 }
 
 function createInMemoryStore(stage: Stage): StageStore {
@@ -352,12 +382,14 @@ export async function generateClassroom(
   const heartbeat = options.onProgress
     ? setInterval(() => {
         outlineProgress = Math.min(outlineProgress + 2, 28);
-        Promise.resolve(options.onProgress!({
-          step: 'generating_outlines',
-          progress: outlineProgress,
-          message: 'AI is thinking...',
-          scenesGenerated: 0,
-        })).catch(() => {});
+        Promise.resolve(
+          options.onProgress!({
+            step: 'generating_outlines',
+            progress: outlineProgress,
+            message: 'AI is thinking...',
+            scenesGenerated: 0,
+          }),
+        ).catch(() => {});
       }, 2000)
     : null;
 
@@ -387,6 +419,7 @@ export async function generateClassroom(
 
   const { languageDirective, outlines } = outlinesResult.data;
   log.info(`Generated ${outlines.length} scene outlines (languageDirective: ${languageDirective})`);
+  const courseTheme = selectThemeForCourse(outlines);
 
   // Generate a short AI topic summary for display on progress cards
   const topicSummary = await generateTopicSummary(requirement, outlines, aiCall);
@@ -467,23 +500,30 @@ export async function generateClassroom(
     };
   }
 
-  log.info(`Stage 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`);
+  log.info(
+    `Stage 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`,
+  );
 
-  await options.onProgress?.({
-    step: 'generating_scenes',
-    progress: 31,
-    message: `Generating ${outlines.length} scenes in parallel...`,
-    scenesGenerated: 0,
-    totalScenes: outlines.length,
-  });
+  await reportSceneProgress(
+    options.onProgress,
+    SCENE_PROGRESS_INITIAL,
+    `Generating ${outlines.length} scenes in parallel...`,
+    0,
+    outlines.length,
+  );
 
   // Phase A: Generate all scene content in parallel
+  let contentProcessed = 0;
   const contentResults = await pMap(
     outlines,
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
       try {
-        const content = await generateSceneContent(safeOutline, aiCall, { agents, languageDirective });
+        const content = await generateSceneContent(safeOutline, aiCall, {
+          agents,
+          languageDirective,
+          themeSelection: courseTheme,
+        });
         if (!content) {
           log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
           return null;
@@ -492,17 +532,32 @@ export async function generateClassroom(
       } catch (err) {
         log.error(`Scene "${safeOutline.title}" content generation error:`, err);
         return null;
+      } finally {
+        contentProcessed += 1;
+        await reportSceneProgress(
+          options.onProgress,
+          progressInRange(
+            SCENE_PROGRESS_INITIAL,
+            SCENE_PROGRESS_CONTENT_DONE,
+            contentProcessed,
+            outlines.length,
+          ),
+          `Generated scene content ${contentProcessed}/${outlines.length}`,
+          0,
+          outlines.length,
+        );
       }
     },
     { concurrency },
   );
 
   // Phase B: Generate all scene actions in parallel (content already available)
+  let actionsProcessed = 0;
   const sceneResults = await pMap(
     contentResults,
     async (result) => {
-      if (!result) return null;
       try {
+        if (!result) return null;
         const actions = await generateSceneActions(result.outline, result.content, aiCall, {
           agents,
           languageDirective,
@@ -510,8 +565,22 @@ export async function generateClassroom(
         log.info(`Scene "${result.outline.title}": ${actions.length} actions`);
         return { outline: result.outline, content: result.content, actions, index: result.index };
       } catch (err) {
-        log.error(`Scene "${result.outline.title}" action generation error:`, err);
+        log.error(`Scene "${result?.outline.title ?? 'unknown'}" action generation error:`, err);
         return null;
+      } finally {
+        actionsProcessed += 1;
+        await reportSceneProgress(
+          options.onProgress,
+          progressInRange(
+            SCENE_PROGRESS_CONTENT_DONE,
+            SCENE_PROGRESS_ACTIONS_DONE,
+            actionsProcessed,
+            outlines.length,
+          ),
+          `Generated scene actions ${actionsProcessed}/${outlines.length}`,
+          0,
+          outlines.length,
+        );
       }
     },
     { concurrency },
@@ -521,20 +590,30 @@ export async function generateClassroom(
   let generatedScenes = 0;
   for (const result of sceneResults) {
     if (!result) continue;
-    const sceneId = createSceneWithActions(result.outline, result.content, result.actions, api);
+    const sceneId = createSceneWithActions(
+      result.outline,
+      result.content,
+      result.actions,
+      api,
+      courseTheme,
+    );
     if (!sceneId) {
       log.warn(`Skipping scene "${result.outline.title}" — scene creation failed`);
       continue;
     }
     generatedScenes += 1;
-    const progressEnd = 30 + Math.floor(((generatedScenes) / Math.max(outlines.length, 1)) * 60);
-    await options.onProgress?.({
-      step: 'generating_scenes',
-      progress: Math.min(progressEnd, 90),
-      message: `Generated ${generatedScenes}/${outlines.length} scenes`,
-      scenesGenerated: generatedScenes,
-      totalScenes: outlines.length,
-    });
+    await reportSceneProgress(
+      options.onProgress,
+      progressInRange(
+        SCENE_PROGRESS_ACTIONS_DONE,
+        SCENE_PROGRESS_CREATED_DONE,
+        generatedScenes,
+        outlines.length,
+      ),
+      `Generated ${generatedScenes}/${outlines.length} scenes`,
+      generatedScenes,
+      outlines.length,
+    );
   }
 
   const scenes = store.getState().scenes;
@@ -553,10 +632,7 @@ export async function generateClassroom(
     totalScenes: outlines.length,
   });
 
-  const persisted = await persistClassroom(
-    { id: stageId, stage, scenes },
-    options.baseUrl,
-  );
+  const persisted = await persistClassroom({ id: stageId, stage, scenes }, options.baseUrl);
 
   log.info(`Classroom persisted: ${persisted.id}, URL: ${persisted.url}`);
 
@@ -632,7 +708,8 @@ export async function generateClassroomContinue(
     onProgress?: (progress: ClassroomGenerationProgress) => Promise<void> | void;
   },
 ): Promise<GenerateClassroomResult> {
-  const { outlines, languageDirective, agents, stage, requirement, pdfText, researchContext } = saved;
+  const { outlines, languageDirective, agents, stage } = saved;
+  const courseTheme = selectThemeForCourse(outlines);
 
   const {
     model: languageModel,
@@ -678,23 +755,30 @@ export async function generateClassroomContinue(
   const store = createInMemoryStore(stage);
   const api = createStageAPI(store);
 
-  log.info(`Phase 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`);
+  log.info(
+    `Phase 2: Generating ${outlines.length} scene(s) in parallel (concurrency=${concurrency})...`,
+  );
 
-  await options.onProgress?.({
-    step: 'generating_scenes',
-    progress: 31,
-    message: `Generating ${outlines.length} scenes in parallel...`,
-    scenesGenerated: 0,
-    totalScenes: outlines.length,
-  });
+  await reportSceneProgress(
+    options.onProgress,
+    SCENE_PROGRESS_INITIAL,
+    `Generating ${outlines.length} scenes in parallel...`,
+    0,
+    outlines.length,
+  );
 
   // Phase A: Generate all scene content in parallel
+  let contentProcessed = 0;
   const contentResults = await pMap(
     outlines,
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
       try {
-        const content = await generateSceneContent(safeOutline, aiCall, { agents, languageDirective });
+        const content = await generateSceneContent(safeOutline, aiCall, {
+          agents,
+          languageDirective,
+          themeSelection: courseTheme,
+        });
         if (!content) {
           log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
           return null;
@@ -703,25 +787,54 @@ export async function generateClassroomContinue(
       } catch (err) {
         log.error(`Scene "${safeOutline.title}" content generation error:`, err);
         return null;
+      } finally {
+        contentProcessed += 1;
+        await reportSceneProgress(
+          options.onProgress,
+          progressInRange(
+            SCENE_PROGRESS_INITIAL,
+            SCENE_PROGRESS_CONTENT_DONE,
+            contentProcessed,
+            outlines.length,
+          ),
+          `Generated scene content ${contentProcessed}/${outlines.length}`,
+          0,
+          outlines.length,
+        );
       }
     },
     { concurrency },
   );
 
   // Phase B: Generate all scene actions in parallel (content already available)
+  let actionsProcessed = 0;
   const sceneResults = await pMap(
     contentResults,
     async (result) => {
-      if (!result) return null;
       try {
+        if (!result) return null;
         const actions = await generateSceneActions(result.outline, result.content, aiCall, {
           agents,
           languageDirective,
         });
         return { outline: result.outline, content: result.content, actions, index: result.index };
       } catch (err) {
-        log.error(`Scene "${result.outline.title}" action generation error:`, err);
+        log.error(`Scene "${result?.outline.title ?? 'unknown'}" action generation error:`, err);
         return null;
+      } finally {
+        actionsProcessed += 1;
+        await reportSceneProgress(
+          options.onProgress,
+          progressInRange(
+            SCENE_PROGRESS_CONTENT_DONE,
+            SCENE_PROGRESS_ACTIONS_DONE,
+            actionsProcessed,
+            outlines.length,
+          ),
+          `Generated scene actions ${actionsProcessed}/${outlines.length}`,
+          0,
+          outlines.length,
+        );
       }
     },
     { concurrency },
@@ -731,20 +844,30 @@ export async function generateClassroomContinue(
   let generatedScenes = 0;
   for (const result of sceneResults) {
     if (!result) continue;
-    const sceneId = createSceneWithActions(result.outline, result.content, result.actions, api);
+    const sceneId = createSceneWithActions(
+      result.outline,
+      result.content,
+      result.actions,
+      api,
+      courseTheme,
+    );
     if (!sceneId) {
       log.warn(`Skipping scene "${result.outline.title}" — scene creation failed`);
       continue;
     }
     generatedScenes += 1;
-    const progressEnd = 30 + Math.floor(((generatedScenes) / Math.max(outlines.length, 1)) * 60);
-    await options.onProgress?.({
-      step: 'generating_scenes',
-      progress: Math.min(progressEnd, 90),
-      message: `Generated ${generatedScenes}/${outlines.length} scenes`,
-      scenesGenerated: generatedScenes,
-      totalScenes: outlines.length,
-    });
+    await reportSceneProgress(
+      options.onProgress,
+      progressInRange(
+        SCENE_PROGRESS_ACTIONS_DONE,
+        SCENE_PROGRESS_CREATED_DONE,
+        generatedScenes,
+        outlines.length,
+      ),
+      `Generated ${generatedScenes}/${outlines.length} scenes`,
+      generatedScenes,
+      outlines.length,
+    );
   }
 
   const scenes = store.getState().scenes;

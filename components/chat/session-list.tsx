@@ -1,10 +1,10 @@
 'use client';
 
-import type { ChatSession, SessionStatus } from '@/lib/types/chat';
-import { cn } from '@/lib/utils';
-import { MessageSquare, HelpCircle, BookOpen, Users, MapPin, Clock, CheckCircle2, Circle, ChevronRight, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
+import { BookOpen, ChevronRight, HelpCircle, MapPin, MessageSquare, Users, X } from 'lucide-react';
 import { ChatSessionComponent } from './chat-session';
+import type { ChatSession } from '@/lib/types/chat';
+import { cn } from '@/lib/utils';
 
 interface SessionListProps {
   sessions: ChatSession[];
@@ -17,12 +17,15 @@ interface SessionListProps {
   onDeleteSession?: (sessionId: string) => void;
 }
 
-const SESSION_TYPE_CONFIG: Record<string, {
-  Icon: typeof MessageSquare;
-  color: string;
-  bgGradient: string;
-  ringColor: string;
-}> = {
+const SESSION_TYPE_CONFIG: Record<
+  string,
+  {
+    Icon: typeof MessageSquare;
+    color: string;
+    bgGradient: string;
+    ringColor: string;
+  }
+> = {
   discussion: {
     Icon: MessageSquare,
     color: 'text-amber-600 dark:text-amber-400',
@@ -43,6 +46,21 @@ const SESSION_TYPE_CONFIG: Record<string, {
   },
 };
 
+function getLastTextPreview(session: ChatSession) {
+  const lastMessage = session.messages[session.messages.length - 1];
+  const parts = lastMessage?.parts as Array<{ type?: string; text?: string }> | undefined;
+  return parts?.find((part) => part.type === 'text' && part.text)?.text?.slice(0, 40) || '';
+}
+
+function getSceneLabel(
+  session: ChatSession,
+  sceneTitleMap?: Map<string, { title: string; order: number }>,
+) {
+  if (!session.sceneId || !sceneTitleMap?.has(session.sceneId)) return '未关联幻灯片';
+  const scene = sceneTitleMap.get(session.sceneId)!;
+  return `第 ${scene.order + 1} 页 · ${scene.title}`;
+}
+
 export function SessionList({
   sessions,
   expandedSessionIds,
@@ -52,27 +70,19 @@ export function SessionList({
   onToggleExpand,
   onEndSession,
   onDeleteSession,
-}: SessionListProps) {return (
-    <div className="space-y-1.5 px-0.5">
+}: SessionListProps) {
+  return (
+    <div className="space-y-1.5 px-2">
       <AnimatePresence mode="popLayout">
         {sessions.map((session) => {
           const isExpanded = expandedSessionIds.has(session.id);
           const isActive = session.status === 'active';
           const cfg = SESSION_TYPE_CONFIG[session.type] || SESSION_TYPE_CONFIG.qa;
           const { Icon } = cfg;
-
-          // Get last message preview
-          const lastMsg = session.messages[session.messages.length - 1];
-          const lastMsgText = (lastMsg?.parts as any[])
-            ?.find((p: any) => p.type === 'text' && p.text)
-            ?.text
-            ?.slice(0, 40) || '';
-
-          // Get unique participant roles
+          const lastTextPreview = getLastTextPreview(session);
           const participantRoles = new Set(
-            session.messages.map((m) => m.metadata?.originalRole || m.role).filter(Boolean)
+            session.messages.map((message) => message.metadata?.originalRole || message.role),
           );
-          const participantCount = participantRoles.size;
 
           return (
             <motion.div
@@ -83,134 +93,119 @@ export function SessionList({
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                'rounded-xl border overflow-hidden transition-all duration-200',
+                'overflow-hidden rounded-xl border transition-all duration-200',
                 isExpanded
-                  ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm'
+                  ? 'border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'
                   : isActive
                     ? `bg-gradient-to-r ${cfg.bgGradient} border-transparent shadow-sm ring-1 ${cfg.ringColor}`
-                    : 'bg-white dark:bg-slate-800 border-slate-200/50 dark:border-slate-700/40 hover:shadow-sm',
+                    : 'border-slate-200/60 bg-white hover:shadow-sm dark:border-slate-700/45 dark:bg-slate-800',
               )}
             >
               <div
                 role="button"
                 tabIndex={0}
                 onClick={() => onToggleExpand(session.id)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleExpand(session.id); } }}
-                className="w-full flex items-center gap-3 px-3.5 py-3 text-left cursor-pointer"
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onToggleExpand(session.id);
+                  }
+                }}
+                className="flex w-full cursor-pointer items-center gap-3 px-3.5 py-3 text-left"
               >
-                {/* Type icon */}
-                <div className={cn(
-                  'h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-all',
-                  isExpanded
-                    ? `bg-gradient-to-br ${cfg.bgGradient} ${cfg.color}`
-                    : cfg.color,
-                )}>
-                  <Icon className="w-4 h-4" />
+                <div
+                  className={cn(
+                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all',
+                    isExpanded ? `bg-gradient-to-br ${cfg.bgGradient} ${cfg.color}` : cfg.color,
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
                 </div>
 
-                {/* Title + preview */}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={cn(
-                      'text-[13px] font-semibold truncate',
-                      isExpanded ? 'text-slate-800 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200',
-                    )}>
+                    <span
+                      className={cn(
+                        'truncate text-[15px] font-semibold',
+                        isExpanded
+                          ? 'text-slate-800 dark:text-slate-100'
+                          : 'text-slate-700 dark:text-slate-200',
+                      )}
+                    >
                       {session.title}
                     </span>
-                    {isActive && (
-                      <span className="relative flex h-2 w-2 shrink-0">
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                      </span>
-                    )}
+                    {isActive && <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />}
                   </div>
+
                   {!isExpanded && (
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {lastMsgText ? (
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
-                          {lastMsgText}
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                          暂无消息
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {!isExpanded && session.sceneId && sceneTitleMap?.has(session.sceneId) && (
-                    <div className="flex items-center gap-1 mt-1 text-[10px] text-sky-500/70 dark:text-sky-400/70">
-                      <MapPin className="w-3 h-3" />
-                      <span className="truncate">
-                        {(() => {
-                          const s = sceneTitleMap.get(session.sceneId!)!;
-                          return `${`第 ${s.order + 1} 页`} — ${s.title}`;
-                        })()}
+                    <div className="mt-0.5 flex items-center gap-2">
+                      <span className="truncate text-sm text-slate-400 dark:text-slate-500">
+                        {lastTextPreview || '暂无消息'}
                       </span>
                     </div>
                   )}
-                  {!isExpanded && !session.sceneId && (
-                    <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-400/70 dark:text-slate-500/70">
-                      <MapPin className="w-3 h-3" />
-                      <span className="truncate">{'未关联幻灯片'}</span>
+
+                  {!isExpanded && (
+                    <div className="mt-1 flex items-center gap-1 text-xs text-sky-500/75 dark:text-sky-400/75">
+                      <MapPin className="h-3 w-3" />
+                      <span className="truncate">{getSceneLabel(session, sceneTitleMap)}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Badges + chevron */}
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex shrink-0 items-center gap-1.5">
                   {!isExpanded && (
                     <>
-                      {participantCount > 1 && (
-                        <div className="flex items-center gap-0.5 text-[10px] text-slate-400 dark:text-slate-500">
-                          <Users className="w-3 h-3" />
-                          {participantCount}
+                      {participantRoles.size > 1 && (
+                        <div className="flex items-center gap-0.5 text-xs text-slate-400 dark:text-slate-500">
+                          <Users className="h-3 w-3" />
+                          {participantRoles.size}
                         </div>
                       )}
-                      <span className={cn(
-                        'text-[10px] font-medium px-1.5 py-px rounded-full',
-                        isActive
-                          ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                          : session.status === 'completed'
-                            ? 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400'
-                            : session.status === 'interrupted'
-                              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                              : 'bg-slate-100 dark:bg-slate-700/50 text-slate-400 dark:text-slate-500',
-                      )}>
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 py-px text-xs font-medium',
+                          isActive
+                            ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400',
+                        )}
+                      >
                         {session.messages.length}
                       </span>
                     </>
                   )}
-                  {/* Delete button on collapsed card */}
+
                   {!isActive && !isExpanded && onDeleteSession && (
                     <span
                       role="button"
                       tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={(event) => {
+                        event.stopPropagation();
                         onDeleteSession(session.id);
                       }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          e.stopPropagation();
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          event.stopPropagation();
                           onDeleteSession(session.id);
                         }
                       }}
-                      className="w-5 h-5 rounded-full flex items-center justify-center
-                        text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
-                        transition-colors shrink-0 cursor-pointer"
-                      title={'删除会话'}
+                      className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-slate-500 dark:hover:bg-red-900/20"
+                      title="删除会话"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="h-3 w-3" />
                     </span>
                   )}
-                  <ChevronRight className={cn(
-                    'w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 shrink-0',
-                    isExpanded ? 'rotate-90' : 'rotate-0',
-                  )} />
+
+                  <ChevronRight
+                    className={cn(
+                      'h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 dark:text-slate-500',
+                      isExpanded ? 'rotate-90' : 'rotate-0',
+                    )}
+                  />
                 </div>
               </div>
 
-              {/* Expanded messages */}
               <AnimatePresence initial={false}>
                 {isExpanded && (
                   <motion.div
@@ -221,23 +216,12 @@ export function SessionList({
                     className="overflow-hidden border-t border-slate-100 dark:border-slate-700/50"
                   >
                     <div className="px-1.5 pb-2 pt-1.5">
-                      {session.sceneId && sceneTitleMap?.has(session.sceneId) && (
-                        <div className="flex items-center gap-1.5 px-2 py-1 mb-1.5 text-[11px] text-sky-500/80 dark:text-sky-400/80 bg-sky-50/50 dark:bg-sky-950/30 rounded-lg">
-                          <MapPin className="w-3.5 h-3.5" />
-                          <span className="truncate font-medium">
-                            {(() => {
-                              const s = sceneTitleMap.get(session.sceneId!)!;
-                              return `${`第 ${s.order + 1} 页`} — ${s.title}`;
-                            })()}
-                          </span>
-                        </div>
-                      )}
-                      {!session.sceneId && (
-                        <div className="flex items-center gap-1.5 px-2 py-1 mb-1.5 text-[11px] text-slate-500/80 dark:text-slate-400/80 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg">
-                          <MapPin className="w-3.5 h-3.5" />
-                          <span className="truncate font-medium">{'未关联幻灯片'}</span>
-                        </div>
-                      )}
+                      <div className="mb-1.5 flex items-center gap-1.5 rounded-lg bg-sky-50/60 px-2 py-1 text-xs text-sky-500/85 dark:bg-sky-950/30 dark:text-sky-400/85">
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span className="truncate font-medium">
+                          {getSceneLabel(session, sceneTitleMap)}
+                        </span>
+                      </div>
                       <ChatSessionComponent
                         session={session}
                         isActive={isActive}
@@ -255,18 +239,13 @@ export function SessionList({
         })}
       </AnimatePresence>
 
-      {/* Empty state */}
       {sessions.length === 0 && (
-        <div className="h-36 flex flex-col items-center justify-center text-center px-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-slate-100 to-slate-200/50 dark:from-slate-800 dark:to-slate-800/50 rounded-2xl flex items-center justify-center mb-3 text-slate-400 dark:text-slate-500 shadow-inner">
-            <MessageSquare className="w-6 h-6" />
+        <div className="flex h-36 flex-col items-center justify-center px-4 text-center">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200/50 text-slate-400 shadow-inner dark:from-slate-800 dark:to-slate-800/50 dark:text-slate-500">
+            <MessageSquare className="h-6 w-6" />
           </div>
-          <p className="text-[13px] font-semibold text-slate-400 dark:text-slate-500">
-            {'暂无对话'}
-          </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            {'输入消息开始对话'}
-          </p>
+          <p className="text-base font-semibold text-slate-400 dark:text-slate-500">暂无对话</p>
+          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">输入消息开始对话</p>
         </div>
       )}
     </div>

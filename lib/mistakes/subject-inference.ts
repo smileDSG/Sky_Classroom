@@ -9,9 +9,12 @@ import type { Subject } from '@/lib/solve/agents/analyze-types';
 export type { Subject } from '@/lib/solve/agents/analyze-types';
 
 export function inferSubject(knowledgePoint: string): Subject {
-  if (/方程|函数|代数|几何|三角|概率|统计|微积分|数列|向量|集合|不等式/.test(knowledgePoint)) return 'math';
-  if (/力|电|磁|光|热|原子|牛顿|能量|动量|速度|加速度|欧姆|安培|洛伦兹/.test(knowledgePoint)) return 'physics';
-  if (/元素|反应|化学键|摩尔|氧化还原|离子|溶液|有机|电解质|化学平衡/.test(knowledgePoint)) return 'chemistry';
+  if (/方程|函数|代数|几何|三角|概率|统计|微积分|数列|向量|集合|不等式/.test(knowledgePoint))
+    return 'math';
+  if (/力|电|磁|光|热|原子|牛顿|能量|动量|速度|加速度|欧姆|安培|洛伦兹/.test(knowledgePoint))
+    return 'physics';
+  if (/元素|反应|化学键|摩尔|氧化还原|离子|溶液|有机|电解质|化学平衡/.test(knowledgePoint))
+    return 'chemistry';
   if (/细胞|基因|生态|遗传|酶|蛋白质|DNA|进化/.test(knowledgePoint)) return 'biology';
   if (/诗|词|文言|修辞|作文|标点|病句/.test(knowledgePoint)) return 'chinese';
   if (/语法|时态|从句|单词|阅读.*英/.test(knowledgePoint)) return 'english';
@@ -34,6 +37,14 @@ const SUBJECT_LABELS: Record<Subject, string> = {
   unknown: '其他',
 };
 
+export function isSubject(value: string): value is Subject {
+  return value in SUBJECT_LABELS;
+}
+
 export function getSubjectLabel(subject: Subject): string {
   return SUBJECT_LABELS[subject] ?? '其他';
+}
+
+export function getSubjectLabelOrSelf(subject: string): string {
+  return isSubject(subject) ? getSubjectLabel(subject) : subject;
 }

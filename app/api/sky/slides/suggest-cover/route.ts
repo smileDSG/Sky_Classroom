@@ -46,7 +46,8 @@ export async function POST(req: NextRequest) {
       return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, `风格推荐失败: ${styleResult.error || '请重试'}`);
     }
 
-    // Step 2: Render cover PPTX
+    // Step 2: Best-effort server preview. The smart-cover UI renders from
+    // designDNA, so PPTX/LibreOffice preview failures should not block it.
     const publicDir = path.resolve(process.cwd(), 'public');
     const coversDir = path.join(publicDir, 'temp', 'covers');
     await fs.mkdir(coversDir, { recursive: true });
@@ -54,6 +55,8 @@ export async function POST(req: NextRequest) {
     const coverTitle = topic.trim();
     const coverSubtitle = `${diff}教学课件`;
     const designDNA = styleResult.designDNA;
+    let pngUrl: string | null = null;
+    let previewError: string | undefined;
 
     const renderStart = Date.now();
     const renderResult = await renderCoverPptx(
@@ -66,25 +69,21 @@ export async function POST(req: NextRequest) {
     log.info(`[API:SuggestCover] PPTX render took ${Date.now() - renderStart}ms, success=${renderResult.success}`);
 
     if (!renderResult.success || !renderResult.pptxPath) {
-      log.error(`[API:SuggestCover] PPTX render failed: ${renderResult.error}`);
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '封面渲染失败');
+      previewError = renderResult.error || 'PPTX preview render failed';
+      log.warn(`[API:SuggestCover] PPTX preview unavailable: ${previewError}`);
+    } else {
+      // Step 3: Convert to PNG
+      const pngStart = Date.now();
+      const pngResult = await convertPptxToPng(renderResult.pptxPath, coversDir);
+      log.info(`[API:SuggestCover] PNG conversion took ${Date.now() - pngStart}ms, success=${pngResult.success}`);
+
+      if (pngResult.success && pngResult.pngPath) {
+        pngUrl = '/temp/covers/' + path.basename(pngResult.pngPath);
+      } else {
+        previewError = pngResult.error || 'PNG preview conversion failed';
+        log.warn(`[API:SuggestCover] PNG preview unavailable: ${previewError}`);
+      }
     }
-
-    // Step 3: Convert to PNG
-    const pngStart = Date.now();
-    const pngResult = await convertPptxToPng(renderResult.pptxPath, coversDir);
-    log.info(`[API:SuggestCover] PNG conversion took ${Date.now() - pngStart}ms, success=${pngResult.success}`);
-
-    if (!pngResult.success || !pngResult.pngPath) {
-      log.error(`[API:SuggestCover] PNG conversion failed: ${pngResult.error}`);
-      const isLoMissing = pngResult.error?.includes('LibreOffice not found');
-      const userMessage = isLoMissing
-        ? 'LibreOffice 未安装或路径不正确，请安装 LibreOffice 后重试。'
-        : `封面预览生成失败: ${pngResult.error || '请重试'}`;
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, userMessage, pngResult.error);
-    }
-
-    const pngUrl = '/temp/covers/' + path.basename(pngResult.pngPath);
     const totalDuration = Date.now() - reqStart;
 
     log.info(`[API:SuggestCover] complete in ${totalDuration}ms — png=${pngUrl}, style=${designDNA.styleName}`);
@@ -92,6 +91,8 @@ export async function POST(req: NextRequest) {
     return apiSuccess({
       cover: {
         pngUrl,
+        previewAvailable: Boolean(pngUrl),
+        ...(previewError ? { previewError } : {}),
         designDNA,
       },
       alternatives: styleResult.alternatives || [],

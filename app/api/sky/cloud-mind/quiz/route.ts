@@ -10,7 +10,7 @@ import { cookies } from 'next/headers';
 import { generateQuiz } from '@/lib/agents/cloud-mind/quiz-agent';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { deriveQuizParamsFromProfile } from '@/lib/student/quiz-param-deriver';
-import { getSubjectLabel } from '@/lib/mistakes/subject-inference';
+import { getSubjectLabelOrSelf } from '@/lib/mistakes/subject-inference';
 import { verifyAccessToken } from '@/lib/server/auth';
 import { createLogger } from '@/lib/logger';
 
@@ -50,12 +50,10 @@ export async function POST(req: NextRequest) {
     };
 
     const userId = await resolveUserId();
-    let profile = userId ? await buildStudentProfile(userId) : undefined;
+    const profile = userId ? await buildStudentProfile(userId) : undefined;
 
     // Auto-derive missing parameters from the student profile
-    let derived:
-      | { subject: string; difficulty: string; topic: string; count: number }
-      | undefined;
+    let derived: { subject: string; difficulty: string; topic: string; count: number } | undefined;
     if (auto || !subject || !difficulty || !topic) {
       if (!profile) {
         return Response.json(
@@ -69,14 +67,9 @@ export async function POST(req: NextRequest) {
     }
 
     const finalSubject = subject || derived?.subject || 'math';
-    const finalDifficulty = normalizeDifficulty(
-      difficulty || derived?.difficulty || 'medium',
-    );
+    const finalDifficulty = normalizeDifficulty(difficulty || derived?.difficulty || 'medium');
     const finalTopic = topic || derived?.topic || '';
-    const questionCount = Math.min(
-      Math.max(count || derived?.count || 5, 1),
-      20,
-    );
+    const questionCount = Math.min(Math.max(count || derived?.count || 5, 1), 20);
 
     const result = await generateQuiz(
       finalSubject,
@@ -86,15 +79,13 @@ export async function POST(req: NextRequest) {
       profile,
     );
 
-    log.info(
-      `Quiz generated: ${result.questions.length} questions for ${finalSubject}`,
-    );
+    log.info(`Quiz generated: ${result.questions.length} questions for ${finalSubject}`);
 
     return Response.json({
       success: true,
       data: {
         ...result,
-        subject: getSubjectLabel(finalSubject as any) || result.subject,
+        subject: getSubjectLabelOrSelf(finalSubject) || result.subject,
         difficulty: finalDifficulty,
       },
       meta: {

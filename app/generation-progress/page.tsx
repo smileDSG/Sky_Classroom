@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   ArrowLeft,
   Sparkles,
@@ -44,6 +44,13 @@ const PHASE_LABELS: Record<string, string> = {
   completed: '完成',
 };
 
+function getClassroomFailureMessage(error?: string): string {
+  if (error?.includes('Stale job')) {
+    return '生成任务已失效，可能是开发服务重启或任务停留太久。请返回首页重新生成一次。';
+  }
+  return error || '课堂生成失败';
+}
+
 function GenerationProgressContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -68,6 +75,58 @@ function GenerationProgressContent() {
 
   const alwaysReview = useSettingsStore((s) => s.reviewOutlineEnabled);
   const setAlwaysReview = useSettingsStore((s) => s.setReviewOutlineEnabled);
+
+  const updateFromJob = useCallback(
+    (data: ClassroomJobState) => {
+      if (data.status === 'cancelled') {
+        removeActiveJobEntry(jobId!);
+        toast.info('课堂生成已取消');
+        router.push('/');
+        return;
+      }
+
+      setStep(data.step);
+      setProgress(data.progress);
+      setMessage(data.message);
+      if (data.outlines) setOutlines(data.outlines);
+      if (data.outlinesMeta) setOutlinesMeta(data.outlinesMeta);
+      if (data.scenesGenerated != null) setScenesGenerated(data.scenesGenerated);
+      if (data.totalScenes != null) setTotalScenes(data.totalScenes);
+      if (data.result) {
+        setResult(data.result);
+        // Don't remove active job entry here — let ClassroomJobPoller show
+        // a dialog if the user navigates away before clicking "进入课堂".
+        // Entry is removed in handleGoToClassroom and handleCancel instead.
+      }
+      if (data.status === 'failed') {
+        removeActiveJobEntry(jobId!);
+        setError(getClassroomFailureMessage(data.error));
+      }
+
+      // Update task store for multi-task tracking
+      const task = useTaskStore.getState().tasks[jobId ?? ''];
+      if (task) {
+        const update: Record<string, unknown> = {
+          progress: data.progress,
+          phase: data.message,
+        };
+
+        // When outline is ready for review, mark task as completed
+        if (data.status === 'awaiting_review') {
+          update.status = 'completed';
+          update.progress = 100;
+          update.phase = '大纲已生成，等待审阅';
+        }
+        if (data.status === 'failed') {
+          update.status = 'failed';
+          update.error = getClassroomFailureMessage(data.error);
+        }
+
+        useTaskStore.getState().updateTask(task.id, update);
+      }
+    },
+    [jobId, router],
+  );
 
   // Start polling on mount
   useEffect(() => {
@@ -105,7 +164,8 @@ function GenerationProgressContent() {
             setResult(current.result);
             setPhase('done');
           } else if (current.status === 'failed') {
-            setError(current.error || '生成失败');
+            setError(getClassroomFailureMessage(current.error));
+            removeActiveJobEntry(jobId);
           }
           return;
         }
@@ -139,13 +199,16 @@ function GenerationProgressContent() {
           if (final.status === 'succeeded' && final.result) {
             setResult(final.result);
             setPhase('done');
+          } else if (final.status === 'failed') {
+            setError(getClassroomFailureMessage(final.error));
+            removeActiveJobEntry(jobId);
           }
         }
       } catch (err) {
         if (cancelled || abortController.signal.aborted) return;
         if (err instanceof DOMException && err.name === 'AbortError') return;
-        log.error('Generation progress poll error:', err);
-        setError(err instanceof Error ? err.message : '生成过程出错');
+        log.warn('Generation progress poll warning:', err);
+        setError(err instanceof Error ? getClassroomFailureMessage(err.message) : '生成过程出错');
       }
     })();
 
@@ -153,51 +216,7 @@ function GenerationProgressContent() {
       cancelled = true;
       abortController.abort();
     };
-  }, [jobId]);
-
-  const updateFromJob = useCallback(
-    (data: ClassroomJobState) => {
-      if (data.status === 'cancelled') {
-        removeActiveJobEntry(jobId!);
-        toast.info('课堂生成已取消');
-        router.push('/');
-        return;
-      }
-
-      setStep(data.step);
-      setProgress(data.progress);
-      setMessage(data.message);
-      if (data.outlines) setOutlines(data.outlines);
-      if (data.outlinesMeta) setOutlinesMeta(data.outlinesMeta);
-      if (data.scenesGenerated != null) setScenesGenerated(data.scenesGenerated);
-      if (data.totalScenes != null) setTotalScenes(data.totalScenes);
-      if (data.result) {
-        setResult(data.result);
-        // Don't remove active job entry here — let ClassroomJobPoller show
-        // a dialog if the user navigates away before clicking "进入课堂".
-        // Entry is removed in handleGoToClassroom and handleCancel instead.
-      }
-
-      // Update task store for multi-task tracking
-      const task = useTaskStore.getState().tasks[jobId ?? ''];
-      if (task) {
-        const update: Record<string, unknown> = {
-          progress: data.progress,
-          phase: data.message,
-        };
-
-        // When outline is ready for review, mark task as completed
-        if (data.status === 'awaiting_review') {
-          update.status = 'completed';
-          update.progress = 100;
-          update.phase = '大纲已生成，等待审阅';
-        }
-
-        useTaskStore.getState().updateTask(task.id, update);
-      }
-    },
-    [jobId, router],
-  );
+  }, [jobId, updateFromJob]);
 
   const handleApproveOutline = useCallback(async () => {
     if (!jobId) return;
@@ -245,14 +264,17 @@ function GenerationProgressContent() {
       if (final.result) {
         setResult(final.result);
         setPhase('done');
+      } else if (final.status === 'failed') {
+        setError(getClassroomFailureMessage(final.error));
+        removeActiveJobEntry(jobId);
       }
     } catch (err) {
       if (signal?.aborted) return;
       if (err instanceof DOMException && err.name === 'AbortError') return;
-      log.error('Approve outline error:', err);
-      setError(err instanceof Error ? err.message : '继续生成失败');
+      log.warn('Approve outline warning:', err);
+      setError(err instanceof Error ? getClassroomFailureMessage(err.message) : '继续生成失败');
     }
-  }, [jobId, updateFromJob]);
+  }, [jobId, outlines, updateFromJob]);
 
   const handleCancel = useCallback(async () => {
     if (!jobId || cancelling) return;
@@ -279,7 +301,7 @@ function GenerationProgressContent() {
       removeActiveJobEntry(jobId!);
       router.push(`/classroom/${result.classroomId}`);
     }
-  }, [result, router]);
+  }, [jobId, result, router]);
 
   const stepLabel = PHASE_LABELS[step] || step || '处理中';
 

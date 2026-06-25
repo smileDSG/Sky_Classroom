@@ -64,6 +64,10 @@ export async function POST(req: NextRequest) {
     // Record generation usage
     await recordUsage(quota.userId, quota.planType, 'generationCount');
 
+    void runClassroomGenerationJob(jobId, body, baseUrl).catch((err) => {
+      log.error(`[direct] runClassroomGenerationJob failed for ${jobId}:`, err);
+    });
+
     after(() =>
       runClassroomGenerationJob(jobId, body, baseUrl).catch((err) => {
         log.error(`[after] runClassroomGenerationJob failed for ${jobId}:`, err);

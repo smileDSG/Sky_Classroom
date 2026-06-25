@@ -33,11 +33,11 @@ import { GENERATION_CONCURRENCY } from '@/lib/constants/generation';
 import { generationCache } from './cache';
 import { scoreContent, isAcceptable } from './quality-scorer';
 import { createLogger } from '@/lib/logger';
-import { selectThemeForOutline, selectThemeForTemplate, type ClassroomThemeSelection } from './classroom-design-dna';
 import {
-  layoutContentWithTemplate,
-  selectTemplateForOutline,
-} from './classroom-template-layout-agent';
+  selectThemeForOutline,
+  selectThemeForTemplate,
+  type ClassroomThemeSelection,
+} from './classroom-design-dna';
 
 // Content generators
 import { generateSlideContent } from './scene-content/slide-generator';
@@ -61,7 +61,7 @@ import { processActions } from './scene-actions/_shared';
 
 const log = createLogger('Generation');
 
-// ── Options interfaces ──
+// Options interfaces
 
 export interface SceneContentOptions {
   assignedImages?: PdfImage[];
@@ -95,6 +95,7 @@ export async function generateFullScenes(
   callbacks?: GenerationCallbacks,
   languageDirective?: string,
   courseTemplate?: string,
+  themeSelection?: ClassroomThemeSelection,
 ): Promise<GenerationResult<string[]>> {
   const api = createStageAPI(store);
   const totalScenes = sceneOutlines.length;
@@ -113,7 +114,14 @@ export async function generateFullScenes(
     sceneOutlines,
     async (outline, index) => {
       try {
-        const sceneId = await generateSingleScene(outline, api, aiCall, languageDirective, courseTemplate);
+        const sceneId = await generateSingleScene(
+          outline,
+          api,
+          aiCall,
+          languageDirective,
+          courseTemplate,
+          themeSelection,
+        );
 
         completedCount++;
         callbacks?.onProgress?.({
@@ -152,8 +160,13 @@ export async function generateSingleScene(
   aiCall: AICallFn,
   languageDirective?: string,
   courseTemplate?: string,
+  themeSelection?: ClassroomThemeSelection,
 ): Promise<string | null> {
-  const cacheKey = generationCache.buildKey(outline, { languageDirective });
+  const cacheKey = generationCache.buildKey(outline, {
+    languageDirective,
+    courseTemplate,
+    themeSelection: themeSelection?.paletteName,
+  });
 
   let content:
     | GeneratedSlideContent
@@ -165,11 +178,15 @@ export async function generateSingleScene(
 
   if (content && actions) {
     log.info(`Cache hit for: ${outline.title}`);
-    return createSceneWithActions(outline, content, actions, api);
+    return createSceneWithActions(outline, content, actions, api, themeSelection);
   }
 
   log.info(`Step 3.1: Generating content for: ${outline.title}`);
-  content = await generateSceneContent(outline, aiCall, { languageDirective, courseTemplate });
+  content = await generateSceneContent(outline, aiCall, {
+    languageDirective,
+    courseTemplate,
+    themeSelection,
+  });
   if (!content) {
     log.error(`Failed to generate content for: ${outline.title}`);
     return null;
@@ -202,7 +219,7 @@ export async function generateSingleScene(
   log.info(`Generated ${actions.length} actions for: ${outline.title}`);
   generationCache.set(`${cacheKey}:actions`, actions);
 
-  return createSceneWithActions(outline, content, actions, api);
+  return createSceneWithActions(outline, content, actions, api, themeSelection);
 }
 
 // ==================== Content Dispatcher ====================
@@ -228,7 +245,6 @@ export async function generateSceneContent(
     languageDirective,
     thinkingConfig,
     themeSelection,
-    courseTemplate,
   } = options;
 
   log.info(`[SceneContent] Generating content for "${outline.title}" (type=${outline.type}, order=${outline.order})`);
@@ -254,32 +270,9 @@ export async function generateSceneContent(
     return generateWidgetContent(outline, aiCall, languageDirective);
   }
 
-  // Cover slide: template-driven (order === 1 is the cover)
-  if (outline.type === 'slide' && outline.order === 1) {
-    const selectedTemplate = courseTemplate || selectTemplateForOutline(outline.title);
-    log.info(`[SceneGen] Cover template: ${selectedTemplate} (courseTemplate=${courseTemplate || 'none'}) for "${outline.title}"`);
-
-    const coverContent = {
-      type: 'cover' as const,
-      title: outline.title,
-      subtitle: outline.description || '',
-      instructor: '讲师：星穹课堂',
-      date: `${new Date().getFullYear()}年${new Date().getMonth() + 1}月${new Date().getDate()}日`,
-    };
-
-    const templateData = await layoutContentWithTemplate(coverContent as unknown as import('./classroom-content-agent').StructuredContent, selectedTemplate);
-    log.info(`[SceneGen] Cover template loaded: ${templateData.templateName}/${templateData.pageName}`);
-
-    return {
-      elements: [],
-      background: undefined,
-      remark: outline.description,
-      templateData,
-    };
-  }
-
   switch (outline.type) {
-    case 'slide':
+    case 'slide': {
+      const slideThemeSelection = themeSelection ?? selectThemeForOutline(outline);
       return generateSlideContent(
         outline,
         aiCall,
@@ -289,9 +282,9 @@ export async function generateSceneContent(
         generatedMediaMapping,
         agents,
         languageDirective,
-        themeSelection,
-        courseTemplate,
+        slideThemeSelection,
       );
+    }
     case 'quiz':
       return generateQuizContent(outline, aiCall, languageDirective);
     case 'pbl':

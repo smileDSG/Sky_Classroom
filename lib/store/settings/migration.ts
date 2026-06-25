@@ -45,7 +45,8 @@ const log = createLogger('SettingsMigration');
 // ---------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type MigratableState = Partial<LLMSettingsSlice & AudioSettingsSlice & MediaSliceState> & Record<string, any>;
+export type MigratableState = Partial<LLMSettingsSlice & AudioSettingsSlice & MediaSliceState> &
+  Record<string, any>;
 
 // ---------------------------------------------------------------------------
 // ensureValidProviderSelections
@@ -62,19 +63,13 @@ export function ensureValidProviderSelections(state: MigratableState): void {
 
   // Validate image provider
   const defaultImageConfig = getDefaultImageConfig();
-  if (
-    state.imageProviderId &&
-    !(state.imageProviderId in IMAGE_PROVIDERS)
-  ) {
+  if (state.imageProviderId && !(state.imageProviderId in IMAGE_PROVIDERS)) {
     state.imageProviderId = defaultImageConfig.imageProviderId;
   }
 
   // Validate video provider
   const defaultVideoConfig = getDefaultVideoConfig();
-  if (
-    state.videoProviderId &&
-    !(state.videoProviderId in VIDEO_PROVIDERS)
-  ) {
+  if (state.videoProviderId && !(state.videoProviderId in VIDEO_PROVIDERS)) {
     state.videoProviderId = defaultVideoConfig.videoProviderId;
   }
 }
@@ -167,10 +162,7 @@ export function migrateFromOldStorage(): Record<string, unknown> | null {
  * Called by zustand/persist every time the stored version is less than the
  * current `version` declared on the persist options.
  */
-export function migrateSettings(
-  persistedState: unknown,
-  version: number,
-): MigratableState {
+export function migrateSettings(persistedState: unknown, version: number): MigratableState {
   // Guard against corrupted localStorage: if the persisted state is not a
   // valid object, return an empty object so migrate runs on defaults.
   if (!persistedState || typeof persistedState !== 'object' || Array.isArray(persistedState)) {
@@ -193,11 +185,17 @@ export function migrateSettings(
 
   // v3 → v4: rename sidebarCollapsed to timelineCollapsed
   if (version < 4) {
-    const legacy = (state as Record<string, unknown>);
+    const legacy = state as Record<string, unknown>;
     if (typeof legacy.sidebarCollapsed === 'boolean') {
       (state as Record<string, unknown>).timelineCollapsed = legacy.sidebarCollapsed;
       delete legacy.sidebarCollapsed;
     }
+  }
+
+  // v4 → v5: classroom defaults to Sky Theater mode, with side panels folded.
+  if (version < 5) {
+    state.timelineCollapsed = true;
+    state.chatAreaCollapsed = true;
   }
 
   // Ensure providersConfig has all built-in providers (also in merge below)
@@ -318,8 +316,7 @@ export function migrateSettings(
   // Migrate Web Search: old flat fields → new provider-based config
   if (!state.webSearchProvidersConfig) {
     const oldApiKey = (state.webSearchApiKey as string) || '';
-    const oldIsServerConfigured =
-      (state.webSearchIsServerConfigured as boolean) || false;
+    const oldIsServerConfigured = (state.webSearchIsServerConfigured as boolean) || false;
     state.webSearchProviderId = 'tavily' as WebSearchProviderId;
     state.webSearchProvidersConfig = {
       tavily: {
@@ -355,10 +352,7 @@ export function migrateSettings(
   ensureValidProviderSelections(state);
   ensureBuiltInAudioProviders(state as Partial<AudioSettingsSlice>);
   ensureBuiltInWebSearchProviders(state as Partial<AudioSettingsSlice>);
-  state.thinkingConfigs = pruneThinkingConfigs(
-    state.thinkingConfigs,
-    state.providersConfig,
-  );
+  state.thinkingConfigs = pruneThinkingConfigs(state.thinkingConfigs, state.providersConfig);
 
   return state;
 }

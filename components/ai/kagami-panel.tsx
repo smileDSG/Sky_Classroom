@@ -11,7 +11,9 @@ function loadMode(): KagamiMode {
   try {
     const saved = localStorage.getItem('kagami-panel-mode');
     if (saved === 'normal' || saved === 'anime') return saved;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return 'anime';
 }
 
@@ -58,14 +60,18 @@ function pickOpening(): string {
 }
 
 function detectLang(text: string): string {
-  let cjk = 0, hira = 0, kata = 0, hang = 0, lat = 0;
+  let cjk = 0,
+    hira = 0,
+    kata = 0,
+    hang = 0,
+    lat = 0;
   for (const ch of text.slice(0, 500)) {
     const c = ch.charCodeAt(0);
-    if ((c >= 0x4E00 && c <= 0x9FFF) || (c >= 0x3400 && c <= 0x4DBF)) cjk++;
-    else if (c >= 0x3040 && c <= 0x309F) hira++;
-    else if (c >= 0x30A0 && c <= 0x30FF) kata++;
-    else if (c >= 0xAC00 && c <= 0xD7AF) hang++;
-    else if ((c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A)) lat++;
+    if ((c >= 0x4e00 && c <= 0x9fff) || (c >= 0x3400 && c <= 0x4dbf)) cjk++;
+    else if (c >= 0x3040 && c <= 0x309f) hira++;
+    else if (c >= 0x30a0 && c <= 0x30ff) kata++;
+    else if (c >= 0xac00 && c <= 0xd7af) hang++;
+    else if ((c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a)) lat++;
   }
   if (hira > 0 || kata > 0) return 'ja';
   if (hang > cjk && hang > lat) return 'ko';
@@ -163,7 +169,12 @@ export function KagamiPanel() {
   const [voiceOn, setVoiceOn] = useState(true);
   const [mode, setMode] = useState<KagamiMode>('anime');
   // ── translate popup state ────────────────────────────────────
-  const [tlPopup, setTlPopup] = useState<{ text: string; src: string; x: number; y: number } | null>(null);
+  const [tlPopup, setTlPopup] = useState<{
+    text: string;
+    src: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const [tlResult, setTlResult] = useState('');
   const [tlLoading, setTlLoading] = useState(false);
 
@@ -181,7 +192,11 @@ export function KagamiPanel() {
       if (text.length < 2 || text.length > 3000) return;
 
       let rect: DOMRect;
-      try { rect = selObj.getRangeAt(0).getBoundingClientRect(); } catch { return; }
+      try {
+        rect = selObj.getRangeAt(0).getBoundingClientRect();
+      } catch {
+        return;
+      }
       const src = detectLang(text);
       const x = rect.left + rect.width / 2;
       const y = rect.top - 8;
@@ -193,23 +208,33 @@ export function KagamiPanel() {
         fetch('/api/sky/cloud-mind/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text.slice(0, 3000), sourceLang: src === 'auto' ? '' : src, targetLang: 'zh', stream: false }),
-        }).then(async (res) => {
-          const raw = await res.text();
-          try {
-            const j = JSON.parse(raw);
-            setTlResult(j?.success && j?.data?.translation ? j.data.translation : '翻译失败');
-          } catch {
-            setTlResult(raw.slice(0, 500));
-          }
-        }).catch(() => setTlResult('网络错误')).finally(() => setTlLoading(false));
+          body: JSON.stringify({
+            text: text.slice(0, 3000),
+            sourceLang: src === 'auto' ? '' : src,
+            targetLang: 'zh',
+            stream: false,
+          }),
+        })
+          .then(async (res) => {
+            const raw = await res.text();
+            try {
+              const j = JSON.parse(raw);
+              setTlResult(j?.success && j?.data?.translation ? j.data.translation : '翻译失败');
+            } catch {
+              setTlResult(raw.slice(0, 500));
+            }
+          })
+          .catch(() => setTlResult('网络错误'))
+          .finally(() => setTlLoading(false));
       }, 200);
     };
     window.addEventListener('mouseup', onMouseUp);
     return () => window.removeEventListener('mouseup', onMouseUp);
   }, []);
   // Hydrate mode from localStorage after mount (avoids SSR mismatch)
-  useEffect(() => { setMode(loadMode()); }, []);
+  useEffect(() => {
+    setMode(loadMode());
+  }, []);
   // Reset chat when mode switches
   const prevModeRef = useRef(mode);
   useEffect(() => {
@@ -229,7 +254,8 @@ export function KagamiPanel() {
     // Normal mode: always answer properly
     if (mode === 'normal') return true;
     // Anime mode: expanded keywords including educational questions
-    const problemKeywords = /题|题|题目|怎么做|解题|讲解|帮忙|这道|问一下|算|等于|方程|函数|几何|代数|三角|概率|求|证明|化简|因式分解|计算|面积|体积|角度|导数|积分|极限|矩阵|向量|怎么|帮我|什么是|什么叫|怎么理解|解释|区别|定义|概念|原理|定理|公式|方法|步骤|过程|级数|无穷|微积分|为什么/;
+    const problemKeywords =
+      /题|题|题目|怎么做|解题|讲解|帮忙|这道|问一下|算|等于|方程|函数|几何|代数|三角|概率|求|证明|化简|因式分解|计算|面积|体积|角度|导数|积分|极限|矩阵|向量|怎么|帮我|什么是|什么叫|怎么理解|解释|区别|定义|概念|原理|定理|公式|方法|步骤|过程|级数|无穷|微积分|为什么/;
     const mathExpr = /\d+[+\-×÷*^]\d+|[xXyYzZ]\s*=/i;
     return problemKeywords.test(msg) || mathExpr.test(msg);
   };
@@ -276,7 +302,8 @@ export function KagamiPanel() {
     '有什么问题随时问我，我会尽力帮你解答的。',
   ];
 
-  const pickNormalOpening = () => NORMAL_OPENING_LINES[Math.floor(Math.random() * NORMAL_OPENING_LINES.length)];
+  const pickNormalOpening = () =>
+    NORMAL_OPENING_LINES[Math.floor(Math.random() * NORMAL_OPENING_LINES.length)];
 
   const NORMAL_CHAT_REPLIES = [
     '如果有学习上的问题，随时可以来问我哦。',
@@ -287,24 +314,32 @@ export function KagamiPanel() {
     '加油！有不懂的地方就问我。',
   ];
 
-  const pickNormalReply = () => NORMAL_CHAT_REPLIES[Math.floor(Math.random() * NORMAL_CHAT_REPLIES.length)];
+  const pickNormalReply = () =>
+    NORMAL_CHAT_REPLIES[Math.floor(Math.random() * NORMAL_CHAT_REPLIES.length)];
 
   // Play voice clip for a scene
-  const playVoice = useCallback((s: Scene) => {
-    if (!voiceOn) return;
-    const src = VOICE_CLIPS[s];
-    if (!src) return;
-    try {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+  const playVoice = useCallback(
+    (s: Scene) => {
+      if (!voiceOn) return;
+      const src = VOICE_CLIPS[s];
+      if (!src) return;
+      try {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+        const audio = new Audio(src);
+        audio.volume = 0.7;
+        audio.play().catch(() => {
+          /* file missing — silent */
+        });
+        audioRef.current = audio;
+      } catch {
+        /* ignore */
       }
-      const audio = new Audio(src);
-      audio.volume = 0.7;
-      audio.play().catch(() => { /* file missing — silent */ });
-      audioRef.current = audio;
-    } catch { /* ignore */ }
-  }, [voiceOn]);
+    },
+    [voiceOn],
+  );
 
   // Keyboard shortcut
   useEffect(() => {
@@ -332,18 +367,21 @@ export function KagamiPanel() {
 
   // Scene transition — smooth slide for galgame feel
   // Uses a two-layer approach: old image slides out, new image slides in
-  const changeScene = useCallback((next: Scene) => {
-    if (next === scene) return;
-    sceneKey.current += 1;
-    setTransition(true);  // start exit animation on current
-    setTimeout(() => {
-      setScene(next);
-      playVoice(next);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setTransition(false)); // enter animation on new
-      });
-    }, 350); // match CSS duration
-  }, [scene, playVoice]);
+  const changeScene = useCallback(
+    (next: Scene) => {
+      if (next === scene) return;
+      sceneKey.current += 1;
+      setTransition(true); // start exit animation on current
+      setTimeout(() => {
+        setScene(next);
+        playVoice(next);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => setTransition(false)); // enter animation on new
+        });
+      }, 350); // match CSS duration
+    },
+    [scene, playVoice],
+  );
 
   const sendMessage = async (msgs: Message[]) => {
     if (abortRef.current) abortRef.current.abort();
@@ -365,7 +403,14 @@ export function KagamiPanel() {
       });
 
       if (!res.ok || !res.body) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: mode === 'anime' ? '……信号不好，待会再说。' : '抱歉，网络连接异常，请稍后重试。' }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content:
+              mode === 'anime' ? '……信号不好，待会再说。' : '抱歉，网络连接异常，请稍后重试。',
+          },
+        ]);
         changeScene('idle');
         setLoading(false);
         return;
@@ -393,7 +438,9 @@ export function KagamiPanel() {
             if (event.type === 'done') {
               if (isSolving.current) changeScene('done');
             }
-          } catch { /* partial */ }
+          } catch {
+            /* partial */
+          }
         }
       };
 
@@ -409,7 +456,14 @@ export function KagamiPanel() {
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        setMessages((prev) => [...prev, { role: 'assistant', content: mode === 'anime' ? '……烦死了，网络又出问题了。' : '抱歉，网络出现问题，请稍后重试。' }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content:
+              mode === 'anime' ? '……烦死了，网络又出问题了。' : '抱歉，网络出现问题，请稍后重试。',
+          },
+        ]);
         changeScene('idle');
       }
     } finally {
@@ -512,25 +566,35 @@ export function KagamiPanel() {
       <button
         ref={fabRef}
         className={`fixed z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${open ? 'hidden' : ''}`}
-        style={
-          hasDragged
-            ? { left: pos.x, top: pos.y }
-            : { right: 24, bottom: 24 }
+        style={hasDragged ? { left: pos.x, top: pos.y } : { right: 24, bottom: 24 }}
+        title={
+          mode === 'anime'
+            ? '小镜课堂 (Ctrl+Shift+A) — 点击打开 / 拖拽移动'
+            : 'AI 学习助手 (Ctrl+Shift+A) — 点击打开 / 拖拽移动'
         }
-        title={mode === 'anime' ? '小镜课堂 (Ctrl+Shift+A) — 点击打开 / 拖拽移动' : 'AI 学习助手 (Ctrl+Shift+A) — 点击打开 / 拖拽移动'}
       >
-        <img src={mode === 'anime' ? CHIBI : NORMAL_ICON} alt="小镜" draggable={false} className="h-full w-full object-cover pointer-events-none" />
+        <img
+          src={mode === 'anime' ? CHIBI : NORMAL_ICON}
+          alt="小镜"
+          draggable={false}
+          className="h-full w-full object-cover pointer-events-none"
+        />
       </button>
 
       {/* Panel */}
       {open && (
-        <div ref={panelRef} className="fixed bottom-6 right-6 z-50 flex h-[560px] w-[420px] rounded-xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
+        <div
+          ref={panelRef}
+          className="fixed bottom-6 right-6 z-50 flex h-[560px] w-[420px] rounded-xl bg-white dark:bg-slate-900 shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+        >
           {/* Character area */}
-          <div className={`relative flex w-[160px] flex-shrink-0 items-end overflow-hidden ${
-            mode === 'anime'
-              ? 'bg-gradient-to-b from-[#f0e6f6] to-[#e8d5f0]'
-              : 'bg-gradient-to-b from-[#e0ecf8] to-[#d0dff0]'
-          }`}>
+          <div
+            className={`relative flex w-[160px] flex-shrink-0 items-end overflow-hidden ${
+              mode === 'anime'
+                ? 'bg-gradient-to-b from-[#f0e6f6] to-[#e8d5f0] dark:from-slate-900 dark:to-slate-800'
+                : 'bg-gradient-to-b from-[#e0ecf8] to-[#d0dff0] dark:from-slate-900 dark:to-slate-800'
+            }`}
+          >
             <div data-kagami className="absolute inset-0 flex items-center justify-center">
               <img
                 key={sceneKey.current}
@@ -546,9 +610,13 @@ export function KagamiPanel() {
             </div>
             {/* Scene label */}
             <div className="absolute bottom-2 left-0 right-0 text-center">
-              <span className={`text-xs bg-white/70 rounded-full px-2 py-0.5 ${
-                mode === 'anime' ? 'text-purple-400' : 'text-blue-500'
-              }`}>
+              <span
+                className={`text-xs bg-white/70 dark:bg-slate-800/80 rounded-full px-2 py-0.5 ${
+                  mode === 'anime'
+                    ? 'text-purple-400 dark:text-purple-300'
+                    : 'text-blue-500 dark:text-blue-300'
+                }`}
+              >
                 {scene === 'idle' && (mode === 'anime' ? '……' : '待命中')}
                 {scene === 'thinking' && (mode === 'anime' ? '正在思考……' : '思考中...')}
                 {scene === 'teaching' && (mode === 'anime' ? '讲解中……' : '讲解中...')}
@@ -560,22 +628,32 @@ export function KagamiPanel() {
           {/* Chat area */}
           <div className="flex flex-1 flex-col min-w-0">
             {/* Header */}
-            <div className="flex items-center justify-between border-b px-3 py-2.5">
-              <span className="font-semibold text-sm text-gray-800">{mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}</span>
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 px-3 py-2.5">
+              <span className="font-semibold text-sm text-gray-800 dark:text-slate-100">
+                {mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}
+              </span>
               <div className="flex items-center gap-1.5">
                 {/* Mode toggle */}
                 <button
                   onClick={() => {
                     const next = mode === 'anime' ? 'normal' : 'anime';
                     setMode(next);
-                    try { localStorage.setItem('kagami-panel-mode', next); } catch { /* ignore */ }
+                    try {
+                      localStorage.setItem('kagami-panel-mode', next);
+                    } catch {
+                      /* ignore */
+                    }
                   }}
                   className={`rounded px-1.5 py-0.5 text-xs transition-colors font-medium ${
                     mode === 'anime'
-                      ? 'bg-pink-100 text-pink-600'
-                      : 'bg-blue-100 text-blue-600'
+                      ? 'bg-pink-100 text-pink-600 dark:bg-pink-950/30 dark:text-pink-300'
+                      : 'bg-blue-100 text-blue-600 dark:bg-blue-950/30 dark:text-blue-300'
                   }`}
-                  title={mode === 'anime' ? '当前：二次元版 — 点击切换常规版' : '当前：常规版 — 点击切换二次元版'}
+                  title={
+                    mode === 'anime'
+                      ? '当前：二次元版 — 点击切换常规版'
+                      : '当前：常规版 — 点击切换二次元版'
+                  }
                 >
                   {mode === 'anime' ? '🌸 二次元' : '📖 常规'}
                 </button>
@@ -583,8 +661,8 @@ export function KagamiPanel() {
                   onClick={() => setVoiceOn((v) => !v)}
                   className={`rounded px-1.5 py-0.5 text-xs transition-colors ${
                     voiceOn
-                      ? 'bg-purple-100 text-purple-600'
-                      : 'bg-gray-100 text-gray-400'
+                      ? 'bg-purple-100 text-purple-600 dark:bg-purple-950/30 dark:text-purple-300'
+                      : 'bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-500'
                   }`}
                   title={voiceOn ? '语音已开启' : '语音已关闭'}
                 >
@@ -593,7 +671,7 @@ export function KagamiPanel() {
                 <span className="text-[10px] text-gray-400">Ctrl+Shift+A</span>
                 <button
                   onClick={() => setOpen(false)}
-                  className="rounded p-0.5 text-gray-400 hover:bg-gray-100"
+                  className="rounded p-0.5 text-gray-400 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                 >
                   ✕
                 </button>
@@ -601,38 +679,42 @@ export function KagamiPanel() {
             </div>
 
             {/* Messages */}
-            <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2" style={{ overscrollBehavior: 'contain' }}>
-                {messages.length === 0 && (
-                  <div className="py-6 text-center text-sm text-gray-400">
-                    <p className="text-lg mb-1">💜</p>
-                    <p className="text-xs">
-                      {mode === 'anime' ? '遇到不会的题目了？' : '有任何学习问题，尽管问我'}
-                    </p>
-                    <p className="text-xs text-gray-300">
-                      {mode === 'anime' ? '输入问题，小镜会帮你' : '输入题目，我会耐心解答'}
-                    </p>
-                  </div>
-                )}
-                {messages.map((m, i) => (
+            <div
+              ref={listRef}
+              className="flex-1 overflow-y-auto px-3 py-2 space-y-2"
+              style={{ overscrollBehavior: 'contain' }}
+            >
+              {messages.length === 0 && (
+                <div className="py-6 text-center text-sm text-gray-400 dark:text-slate-400">
+                  <p className="text-lg mb-1">💜</p>
+                  <p className="text-xs">
+                    {mode === 'anime' ? '遇到不会的题目了？' : '有任何学习问题，尽管问我'}
+                  </p>
+                  <p className="text-xs text-gray-300 dark:text-slate-500">
+                    {mode === 'anime' ? '输入问题，小镜会帮你' : '输入题目，我会耐心解答'}
+                  </p>
+                </div>
+              )}
+              {messages.map((m, i) => (
+                <div
+                  key={i}
+                  className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
                   <div
-                    key={i}
-                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs leading-relaxed ${
+                      m.role === 'user'
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-purple-50 dark:bg-purple-950/30 text-gray-700 dark:text-slate-200'
+                    }`}
                   >
-                    <div
-                      className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs leading-relaxed ${
-                        m.role === 'user'
-                          ? 'bg-purple-500 text-white'
-                          : 'bg-purple-50 text-gray-700'
-                      }`}
-                    >
-                      {m.content ? <InlineMath text={m.content} /> : (loading ? '...' : '')}
-                    </div>
+                    {m.content ? <InlineMath text={m.content} /> : loading ? '...' : ''}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
 
             {/* Input */}
-            <div className="border-t px-2 py-2">
+            <div className="border-t border-gray-200 dark:border-slate-700 px-2 py-2">
               <div className="flex gap-1.5">
                 <input
                   value={input}
@@ -644,7 +726,7 @@ export function KagamiPanel() {
                     }
                   }}
                   placeholder="输入题目……"
-                  className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-purple-400"
+                  className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-purple-400 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 dark:focus:border-purple-400"
                 />
                 <button
                   onClick={handleSubmit}
@@ -660,39 +742,70 @@ export function KagamiPanel() {
       )}
 
       {/* ── translate popup (portal) ─────────────────────────── */}
-      {tlPopup && typeof window !== 'undefined' && (() => {
-        const { createPortal } = require('react-dom');
-        return createPortal(
-          <div className="fixed inset-0 z-[99999]" onClick={() => { setTlPopup(null); setTlResult(''); }}>
+      {tlPopup &&
+        typeof window !== 'undefined' &&
+        (() => {
+          const { createPortal } = require('react-dom');
+          return createPortal(
             <div
-              className="absolute w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-sky-200/60 bg-white shadow-2xl overflow-hidden"
-              style={{ left: Math.min(tlPopup.x, window.innerWidth - 330), top: Math.min(tlPopup.y, window.innerHeight - 200) }}
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              className="fixed inset-0 z-[99999]"
+              onClick={() => {
+                setTlPopup(null);
+                setTlResult('');
+              }}
             >
-              <div className="flex items-center justify-between px-3 py-2 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-blue-50">
-                <span className="text-xs font-medium text-sky-700">翻译</span>
-                <button onClick={() => { setTlPopup(null); setTlResult(''); }} className="text-slate-400 hover:text-slate-600 text-sm leading-none">&times;</button>
+              <div
+                className="absolute w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-sky-200/60 dark:border-sky-700/60 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden"
+                style={{
+                  left: Math.min(tlPopup.x, window.innerWidth - 330),
+                  top: Math.min(tlPopup.y, window.innerHeight - 200),
+                }}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-3 py-2 border-b border-sky-100 dark:border-slate-700 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-slate-800 dark:to-slate-700">
+                  <span className="text-xs font-medium text-sky-700 dark:text-sky-300">翻译</span>
+                  <button
+                    onClick={() => {
+                      setTlPopup(null);
+                      setTlResult('');
+                    }}
+                    className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 text-sm leading-none"
+                  >
+                    &times;
+                  </button>
+                </div>
+                <div className="p-3">
+                  <p className="text-xs text-slate-500 dark:text-slate-500 mb-2 line-clamp-3 italic border-l-2 border-sky-200 dark:border-slate-700 pl-2">
+                    {tlPopup.text}
+                  </p>
+                  <div className="h-px bg-sky-100 dark:bg-slate-700 mb-2" />
+                  {tlLoading && (
+                    <div className="flex items-center gap-1.5 py-2">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" />
+                      <span
+                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400"
+                        style={{ animationDelay: '120ms' }}
+                      />
+                      <span
+                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400"
+                        style={{ animationDelay: '240ms' }}
+                      />
+                      <span className="text-xs text-slate-400 dark:text-slate-400 ml-2">
+                        正在翻译…
+                      </span>
+                    </div>
+                  )}
+                  {!tlLoading && tlResult && (
+                    <p className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">
+                      {tlResult}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="p-3">
-                <p className="text-xs text-slate-500 mb-2 line-clamp-3 italic border-l-2 border-sky-200 pl-2">{tlPopup.text}</p>
-                <div className="h-px bg-sky-100 mb-2" />
-                {tlLoading && (
-                  <div className="flex items-center gap-1.5 py-2">
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '120ms' }} />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '240ms' }} />
-                    <span className="text-xs text-slate-400 ml-2">正在翻译…</span>
-                  </div>
-                )}
-                {!tlLoading && tlResult && (
-                  <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">{tlResult}</p>
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body,
-        );
-      })()}
+            </div>,
+            document.body,
+          );
+        })()}
     </>
   );
 }

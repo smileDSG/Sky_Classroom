@@ -17,6 +17,8 @@ import {
   Trophy,
   Target,
   BookOpen,
+  Brain,
+  Lightbulb,
   Loader2,
   Zap,
   Star,
@@ -488,6 +490,48 @@ export default function CloudMindQuizPage() {
   const correctCount = answers.filter((a, i) => a === questions[i]?.answer).length;
   const accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
   const currentQ = questions[currentIdx];
+  const wrongQuestions = questions.filter((question, index) => answers[index] !== question.answer);
+  const nextActionTopic = topic.trim() || SUBJECT_LABEL_BY_ID[subject] || subject;
+  const wrongQuestionContent = wrongQuestions
+    .map(
+      (question, index) =>
+        `错题 ${index + 1}：${question.question}\n正确答案：${question.options[question.answer]}\n解析：${question.explanation}`,
+    )
+    .join('\n\n');
+  const nextActionLinks = [
+    {
+      label: '复习错题',
+      desc: `${wrongQuestions.length} 道错题需要回看`,
+      href: '/sky/learning',
+      icon: BookOpen,
+      tone: 'text-rose-300 border-rose-500/25 bg-rose-500/8',
+      disabled: wrongQuestions.length === 0,
+    },
+    {
+      label: '生成同类题',
+      desc: `${nextActionTopic} 专项练习`,
+      href: `/sky/cloud-mind/quiz?topic=${encodeURIComponent(nextActionTopic)}&difficulty=${accuracy < 70 ? 'easy' : difficulty}&count=5`,
+      icon: Target,
+      tone: 'text-amber-300 border-amber-500/25 bg-amber-500/8',
+      disabled: false,
+    },
+    {
+      label: '生成记忆卡',
+      desc: wrongQuestions.length > 0 ? '把错因转成复习卡' : '提炼本次练习要点',
+      href: `/sky/cloud-mind/memory?topic=${encodeURIComponent(nextActionTopic)}&content=${encodeURIComponent(wrongQuestionContent || `知识点：${nextActionTopic}`)}`,
+      icon: Brain,
+      tone: 'text-violet-300 border-violet-500/25 bg-violet-500/8',
+      disabled: false,
+    },
+    {
+      label: '进入微讲解',
+      desc: '生成一段针对性讲解',
+      href: `/sky/cloud-mind/teaching?topic=${encodeURIComponent(nextActionTopic)}&from=quiz`,
+      icon: Lightbulb,
+      tone: 'text-emerald-300 border-emerald-500/25 bg-emerald-500/8',
+      disabled: false,
+    },
+  ];
   const selectedBankCount = questions.filter((question) => {
     const status = bankSaveStatusById[question.id] ?? 'idle';
     return selectedForBank.has(question.id) && status !== 'saving' && status !== 'saved' && status !== 'duplicate';
@@ -839,6 +883,46 @@ export default function CloudMindQuizPage() {
                   {saveStatus === 'saving' && '正在写入学情分析…'}
                   {saveStatus === 'saved' && '已写入学情分析，返回学情页可查看各学科掌握度'}
                   {saveStatus === 'failed' && '成绩写入学情分析失败，可稍后重试'}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border p-5" style={panelStyle}>
+                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-amber-100">
+                  <Zap className="h-4 w-4 text-amber-400" />
+                  下一步学习动作
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {nextActionLinks.map((action) => {
+                    const Icon = action.icon;
+                    const contentNode = (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          <span className="text-sm font-semibold">{action.label}</span>
+                        </div>
+                        <p className="mt-1 text-xs text-amber-100/55">{action.desc}</p>
+                      </>
+                    );
+                    if (action.disabled) {
+                      return (
+                        <div
+                          key={action.label}
+                          className="rounded-xl border border-amber-500/10 bg-amber-500/5 px-4 py-3 text-amber-100/35"
+                        >
+                          {contentNode}
+                        </div>
+                      );
+                    }
+                    return (
+                      <Link
+                        key={action.label}
+                        href={action.href}
+                        className={`rounded-xl border px-4 py-3 transition-all hover:translate-y-[-1px] ${action.tone}`}
+                      >
+                        {contentNode}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
 

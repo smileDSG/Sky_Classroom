@@ -1,0 +1,2213 @@
+{
+  "id": "qXM4d6ZAKa",
+  "stage": {
+    "id": "qXM4d6ZAKa",
+    "name": "从物理问题到格林公式",
+    "languageDirective": "The entire course content should be delivered in Chinese. Since the user's requirement is in Chinese ('格林公式') and there is no explicit language request otherwise, Chinese is the inferred teaching language. Academic terms such as '格林公式' (Green's theorem), '曲线积分' (line integral), and '二重积分' (double integral) should be explained using their standard Chinese translations. Technical terms like 'curl' and 'divergence' may be introduced with both the English term and its Chinese translation for clarity.",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1782297343995,
+    "updatedAt": 1782297343995,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_qYDm2Yp7Vn",
+      "stageId": "qXM4d6ZAKa",
+      "type": "slide",
+      "title": "从物理问题到格林公式",
+      "order": 1,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "URKSl9NsGGeBFyod4pJK2",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#F8FAFE",
+            "themeColors": [
+              "#00D4FF",
+              "#3B82F6",
+              "#E8F4FF",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "PingFang SC",
+            "outline": {
+              "color": "#3B82F6",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_-Tn2GkSS",
+              "type": "text",
+              "left": 105,
+              "top": 78,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">从物理问题到格林公式</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.18,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "shape_oX5o6J3H",
+              "type": "shape",
+              "left": 105,
+              "top": 154,
+              "width": 790,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_f6FoYaQn",
+              "type": "shape",
+              "left": 105,
+              "top": 190,
+              "width": 420,
+              "height": 260,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#eef4fb",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_pCeyW_8a",
+              "type": "shape",
+              "left": 220,
+              "top": 240,
+              "width": 90,
+              "height": 90,
+              "path": "M 1 0.5 A 0.5 0.5 0 1 1 0 0.5 A 0.5 0.5 0 1 1 1 0.5 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "none",
+              "outline": {
+                "width": 3,
+                "style": "solid",
+                "color": "#2f80d1"
+              },
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "line_vCX2jh2F",
+              "type": "line",
+              "left": 290,
+              "top": 300,
+              "width": 3,
+              "start": [
+                0,
+                0
+              ],
+              "end": [
+                -60,
+                20
+              ],
+              "curve": [
+                -30,
+                -10
+              ],
+              "style": "solid",
+              "color": "#2f80d1",
+              "points": [
+                "",
+                "arrow"
+              ]
+            },
+            {
+              "id": "line_P1SvyIvf",
+              "type": "line",
+              "left": 290,
+              "top": 265,
+              "width": 3,
+              "start": [
+                10,
+                0
+              ],
+              "end": [
+                -70,
+                -20
+              ],
+              "curve": [
+                -30,
+                10
+              ],
+              "style": "solid",
+              "color": "#2f80d1",
+              "points": [
+                "",
+                "arrow"
+              ]
+            },
+            {
+              "id": "shape_ywruXy9z",
+              "type": "shape",
+              "left": 240,
+              "top": 270,
+              "width": 50,
+              "height": 40,
+              "path": "M 0.1 1 L 0.2 0 L 0.4 1 L 0.6 0 L 0.8 1 L 1 0 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "opacity": 0.15,
+              "rotate": 0
+            },
+            {
+              "id": "text_BsDI8M_u",
+              "type": "text",
+              "left": 200,
+              "top": 220,
+              "width": 130,
+              "height": 53,
+              "content": "<p style=\"font-size:18px; text-align:center; font-weight:bold;\">矢量场 <i>F</i></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_zdIhsJ80",
+              "type": "text",
+              "left": 310,
+              "top": 325,
+              "width": 80,
+              "height": 49,
+              "content": "<p style=\"font-size:15px; color:#555;\">封闭曲线 C</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_kf59oQlF",
+              "type": "text",
+              "left": 250,
+              "top": 370,
+              "width": 100,
+              "height": 49,
+              "content": "<p style=\"font-size:15px; color:#555;\">面积分区域 D</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_biPj51sG",
+              "type": "text",
+              "left": 570,
+              "top": 195,
+              "width": 340,
+              "height": 130,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">引言：为什么需要格林公式？</strong></p><p style=\"font-size:18px; margin-top:8px;\">• 计算封闭边界上的环流</p><p style=\"font-size:18px;\">• 避免逐段线积分的繁琐</p><p style=\"font-size:18px;\">• 揭示线积分与面积分的深层联系</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_ZNYjpP9D",
+              "type": "text",
+              "left": 570,
+              "top": 340,
+              "width": 340,
+              "height": 103,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">物理背景</strong></p><p style=\"font-size:18px; margin-top:8px;\">• 环流：沿边界 <i>C</i> 的切向积分</p><p style=\"font-size:18px;\">• 通量：穿过区域 <i>D</i> 的法向积分</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape_hJQdKQ_M",
+              "type": "shape",
+              "left": 60,
+              "top": 480,
+              "width": 880,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_HD3a5UG5",
+              "type": "text",
+              "left": 105,
+              "top": 472.5,
+              "width": 790,
+              "height": 42,
+              "content": "<p style=\"font-size:15px; color:#2f80d1;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">核心思想：</strong>边界上的线积分 <span style=\"color:#172033;\">∮</span> 转化为内部区域上的二重积分 <span style=\"color:#172033;\">∬</span> — 局部旋度累加等于整体环流</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape_9rugnFkv",
+              "type": "shape",
+              "left": 570,
+              "top": 455,
+              "width": 16,
+              "height": 52,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#ed7d31",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_cItjXAb3",
+              "type": "text",
+              "left": 590,
+              "top": 462,
+              "width": 240,
+              "height": 52.5,
+              "content": "<p style=\"font-size:15px; color:#ed7d31;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">学习目标：</strong>理解格林公式的几何意义</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_bc1nngmG",
+          "type": "spotlight",
+          "elementId": "text_-Tn2GkSS"
+        },
+        {
+          "id": "action_ZLAE4Ev8",
+          "type": "speech",
+          "text": "同学们好，欢迎来到今天的微积分课堂。上一页我们刚刚了解了曲线积分的基本概念，接下来我们要探讨一个非常精彩的话题——从物理问题到格林公式。"
+        },
+        {
+          "id": "action_u0PkDVHG",
+          "type": "spotlight",
+          "elementId": "text_biPj51sG"
+        },
+        {
+          "id": "action_SFsQMR8K",
+          "type": "speech",
+          "text": "首先，我们来思考一个问题：为什么我们需要格林公式？在实际应用中，我们经常需要计算一个矢量场沿着封闭边界上的环流，比如流体在一个封闭区域边缘的循环运动。如果逐段去计算线积分，过程会非常繁琐。格林公式提供了一座桥梁，它揭示了线积分与面积分之间深刻的联系。"
+        },
+        {
+          "id": "action_nJBWZtsb",
+          "type": "spotlight",
+          "elementId": "text_ZNYjpP9D"
+        },
+        {
+          "id": "action_2IBkClYi",
+          "type": "speech",
+          "text": "这里有两个关键的物理背景概念。首先是环流，它描述的是矢量场沿边界C的切向积分，直观理解就是流体沿着边界旋转的强度。其次是通量，它描述的是穿过区域D的法向积分，可以想象成流体穿过这个区域表面的流量。这两个概念是理解格林公式的物理基础。"
+        },
+        {
+          "id": "action_mCWJrHXb",
+          "type": "spotlight",
+          "elementId": "shape_oX5o6J3H"
+        },
+        {
+          "id": "action_nGawfvpD",
+          "type": "speech",
+          "text": "请大家看这个示意图。这里展示了一个简单的矢量场，中间这个区域D，它的边界就是这条封闭曲线C。想象一下，流体在这个区域内流动，沿着边界C会有一个环流，而我们需要找到一种方法来计算它。"
+        },
+        {
+          "id": "action_KiS62kAe",
+          "type": "spotlight",
+          "elementId": "text_HD3a5UG5"
+        },
+        {
+          "id": "action_e5_hYylN",
+          "type": "speech",
+          "text": "这个示意图揭示了格林公式的核心思想：边界上的线积分可以转化为内部区域上的二重积分。具体来说，就是边界C上的环流等于区域D内部所有微小旋度的总和。简单来说，就是整体边界上的累积效应等于内部所有局部旋转的叠加。这就像数一堆硬币，你不一定非要一枚一枚数，也可以把它们排成一条线，通过计算直线的总长度来推算硬币的数量。"
+        },
+        {
+          "id": "action_6dAuCiYz",
+          "type": "spotlight",
+          "elementId": "text_cItjXAb3"
+        },
+        {
+          "id": "action_VmaMYeDC",
+          "type": "speech",
+          "text": "所以，我们今天的学习目标就是要理解格林公式的几何意义。不单是记住公式本身，而是真正理解为什么曲线积分和面积分之间可以有这样的转化关系。这个几何直觉会帮助我们在后续的内容中更灵活地运用它。"
+        },
+        {
+          "id": "action_FKsn48PA",
+          "type": "laser",
+          "elementId": "text_kf59oQlF"
+        },
+        {
+          "id": "action_LOvLDVK6",
+          "type": "speech",
+          "text": "好了，现在大家是不是对格林公式有了一个初步的印象？我们先用这样的直观理解做个热身，接下来我们就要正式进入格林公式的推导了。"
+        }
+      ],
+      "createdAt": 1782297452727,
+      "updatedAt": 1782297452727
+    },
+    {
+      "id": "scene_KMMZPxQHnI",
+      "stageId": "qXM4d6ZAKa",
+      "type": "slide",
+      "title": "格林公式的定义与形式",
+      "order": 2,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "UaayeJeTULqixu6QjT4Vd",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_bHIqQSHR",
+              "type": "text",
+              "left": 105,
+              "top": 70,
+              "width": 790,
+              "height": 64,
+              "content": "<p style=\"font-size:30px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">格林公式的定义与形式</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.18,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "shape_pkg63sBK",
+              "type": "shape",
+              "left": 105,
+              "top": 146,
+              "width": 600,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "latex_VxyfBpKt",
+              "type": "latex",
+              "left": 120,
+              "top": 180,
+              "width": 760,
+              "height": 118,
+              "latex": "\\oint_C (P\\,dx+Q\\,dy)=\\iint_D\\left(\\frac{\\partial Q}{\\partial x}-\\frac{\\partial P}{\\partial y}\\right)dA",
+              "color": "#1a1a1a",
+              "align": "center",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:2.2719em;vertical-align:-0.9119em;\"></span><span class=\"mop\"><span class=\"mop op-symbol large-op\" style=\"margin-right:0.44445em;position:relative;top:-0.0011em;\">∮</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:-0.4336em;\"><span style=\"top:-1.7881em;margin-left:-0.4445em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mathnormal mtight\" style=\"margin-right:0.07153em;\">C</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.9119em;\"><span></span></span></span></span></span></span><span class=\"mopen\">(</span><span class=\"mord mathnormal\" style=\"margin-right:0.13889em;\">P</span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathnormal\">x</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">+</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mord mathnormal\">Q</span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathnormal\" style=\"margin-right:0.03588em;\">y</span><span class=\"mclose\">)</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:2.4em;vertical-align:-0.95em;\"></span><span class=\"mop\"><span class=\"mop op-symbol large-op\" style=\"margin-right:0.44445em;position:relative;top:-0.001em;\">∬</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:-0.4334em;\"><span style=\"top:-1.7883em;margin-left:-0.4445em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mathnormal mtight\" style=\"margin-right:0.02778em;\">D</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.9117em;\"><span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"minner\"><span class=\"mopen delimcenter\" style=\"top:0em;\"><span class=\"delimsizing size3\">(</span></span><span class=\"mord\"><span class=\"mopen nulldelimiter\"></span><span class=\"mfrac\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:1.3714em;\"><span style=\"top:-2.314em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"mord\"><span class=\"mord\" style=\"margin-right:0.05556em;\">∂</span><span class=\"mord mathnormal\">x</span></span></span><span style=\"top:-3.23em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"frac-line\" style=\"border-bottom-width:0.04em;\"></span></span><span style=\"top:-3.677em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"mord\"><span class=\"mord\" style=\"margin-right:0.05556em;\">∂</span><span class=\"mord mathnormal\">Q</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.686em;\"><span></span></span></span></span></span><span class=\"mclose nulldelimiter\"></span></span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">−</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mord\"><span class=\"mopen nulldelimiter\"></span><span class=\"mfrac\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:1.3714em;\"><span style=\"top:-2.314em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"mord\"><span class=\"mord\" style=\"margin-right:0.05556em;\">∂</span><span class=\"mord mathnormal\" style=\"margin-right:0.03588em;\">y</span></span></span><span style=\"top:-3.23em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"frac-line\" style=\"border-bottom-width:0.04em;\"></span></span><span style=\"top:-3.677em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"mord\"><span class=\"mord\" style=\"margin-right:0.05556em;\">∂</span><span class=\"mord mathnormal\" style=\"margin-right:0.13889em;\">P</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.8804em;\"><span></span></span></span></span></span><span class=\"mclose nulldelimiter\"></span></span><span class=\"mclose delimcenter\" style=\"top:0em;\"><span class=\"delimsizing size3\">)</span></span></span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathnormal\">A</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "shape_ct3IV8Vm",
+              "type": "shape",
+              "left": 590,
+              "top": 180,
+              "width": 350,
+              "height": 250,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#eef4ff",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_cHAvrMyV",
+              "type": "text",
+              "left": 610,
+              "top": 193,
+              "width": 310,
+              "height": 50,
+              "content": "<p style=\"font-size:16px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">符号说明</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_u-XhJuWz",
+              "type": "text",
+              "left": 610,
+              "top": 244,
+              "width": 310,
+              "height": 166,
+              "content": "<p style=\"font-size:16px;\">• <strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">C</strong>：正向封闭曲线</p><p style=\"font-size:16px;\">• <strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">D</strong>：曲线所围区域</p><p style=\"font-size:16px;\">• <strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">P(x,y), Q(x,y)</strong>：二元函数</p><p style=\"font-size:16px;\">• 前提：P、Q 在 D 内有一阶连续偏导数</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text__fV7FJtg",
+              "type": "text",
+              "left": 105,
+              "top": 285,
+              "width": 420,
+              "height": 50,
+              "content": "<p style=\"font-size:16px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">正向方向定义</strong>：逆时针为正</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "table_5bdNPYmw",
+              "type": "table",
+              "left": 105,
+              "top": 364.5,
+              "width": 790,
+              "height": 150,
+              "colWidths": [
+                0.5,
+                0.5
+              ],
+              "data": [
+                [
+                  {
+                    "id": "t1",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "左端：线积分",
+                    "style": {
+                      "bold": true,
+                      "align": "center",
+                      "backcolor": "#d9e2f3"
+                    }
+                  },
+                  {
+                    "id": "t2",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "右端：二重积分",
+                    "style": {
+                      "bold": true,
+                      "align": "center",
+                      "backcolor": "#d9e2f3"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "id": "t3",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "沿封闭曲线 C 的环流量",
+                    "style": {
+                      "align": "center"
+                    }
+                  },
+                  {
+                    "id": "t4",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "区域 D 上的旋度通量",
+                    "style": {
+                      "align": "center"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "id": "t5",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "∮_C (P dx + Q dy)",
+                    "style": {
+                      "align": "center"
+                    }
+                  },
+                  {
+                    "id": "t6",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "∬_D (∂Q/∂x - ∂P/∂y) dA",
+                    "style": {
+                      "align": "center"
+                    }
+                  }
+                ]
+              ],
+              "outline": {
+                "width": 1,
+                "style": "solid",
+                "color": "#cccccc"
+              },
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_gH9Pka10",
+          "type": "spotlight",
+          "elementId": "text_bHIqQSHR"
+        },
+        {
+          "id": "action_tGvOcuJU",
+          "type": "speech",
+          "text": "同学们，大家好！欢迎来到今天的课程。之前我们学习了很多积分知识，现在我们来介绍一个将曲线积分和二重积分联系起来的核心定理——格林公式。"
+        },
+        {
+          "id": "action_zMsVJIbQ",
+          "type": "spotlight",
+          "elementId": "latex_VxyfBpKt"
+        },
+        {
+          "id": "action_hzCJWLnJ",
+          "type": "speech",
+          "text": "首先，来看格林公式的标准形式。这个公式告诉我们：一个封闭曲线上的线积分，等于这个曲线所围区域上的二重积分。左边是曲线积分，右边是二重积分，它们通过偏导数联系了起来。"
+        },
+        {
+          "id": "action_nz5KxSDj",
+          "type": "spotlight",
+          "elementId": "text_cHAvrMyV"
+        },
+        {
+          "id": "action_-doNzx2o",
+          "type": "speech",
+          "text": "接下来我们看看公式中的每个符号代表什么含义。我会逐一为大家解释。"
+        },
+        {
+          "id": "action_zfeKZ7rr",
+          "type": "laser",
+          "elementId": "text_u-XhJuWz"
+        },
+        {
+          "id": "action_s022o_8L",
+          "type": "speech",
+          "text": "曲线 C 是一条正向的封闭曲线，D 是它所围成的区域。P 和 Q 是两个关于 x 和 y 的二元函数。同时，使用格林公式有一个重要前提：P 和 Q 在 D 内必须有一阶连续偏导数，否则公式不成立。"
+        },
+        {
+          "id": "action_UZzQb8xk",
+          "type": "spotlight",
+          "elementId": "text__fV7FJtg"
+        },
+        {
+          "id": "action_gDDCdGKB",
+          "type": "speech",
+          "text": "这里特别强调一下‘正向’方向的定义：在平面上，我们规定逆时针方向为正方向。也就是说，沿着曲线走，如果区域 D 始终在你的左手边，那么就是正向。"
+        },
+        {
+          "id": "action_R34tkFYw",
+          "type": "spotlight",
+          "elementId": "table_5bdNPYmw"
+        },
+        {
+          "id": "action_iT4v09cc",
+          "type": "speech",
+          "text": "最后，我们通过这张表格来对比一下公式的左右两端。左边是曲线积分，求和的对象是 P dx + Q dy；右边是二重积分，被积函数是 Q 对 x 的偏导减去 P 对 y 的偏导。记住这种对应关系，应用起来就清晰多了。"
+        }
+      ],
+      "createdAt": 1782297452730,
+      "updatedAt": 1782297452730
+    },
+    {
+      "id": "scene_Jre8BvjjYH",
+      "stageId": "qXM4d6ZAKa",
+      "type": "quiz",
+      "title": "基础知识小测验",
+      "order": 3,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "格林公式主要适用于以下哪种类型的曲线？",
+            "options": [
+              {
+                "value": "A",
+                "label": "任意曲线"
+              },
+              {
+                "value": "B",
+                "label": "分段光滑的封闭曲线"
+              },
+              {
+                "value": "C",
+                "label": "只有光滑的直线段"
+              },
+              {
+                "value": "D",
+                "label": "无限延伸的曲线"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "格林公式要求积分曲线是封闭的，并且是分段光滑的（即由有限条光滑曲线拼接而成）。选项 A 过于宽泛；选项 C 仅包含直线段，不满足光滑性条件；选项 D 不是封闭曲线。因此正确答案是 B。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "multiple",
+            "question": "下列关于格林公式的描述，哪些是正确的？（多选）",
+            "options": [
+              {
+                "value": "A",
+                "label": "格林公式将封闭曲线上的线积分转换为该曲线所围区域上的二重积分"
+              },
+              {
+                "value": "B",
+                "label": "格林公式要求曲线取正向，即逆时针方向"
+              },
+              {
+                "value": "C",
+                "label": "格林公式可以直接计算任意曲线上的积分"
+              },
+              {
+                "value": "D",
+                "label": "格林公式中的被积函数需要有连续的偏导数"
+              }
+            ],
+            "answer": [
+              "A",
+              "B",
+              "D"
+            ],
+            "analysis": "选项 A 正确：格林公式的核心就是把线积分转化为二重积分。选项 B 正确：正向通常指逆时针方向，但严格来说，正向是指当人沿着曲线行走时，区域始终在左侧。选项 C 错误：格林公式只适用于封闭曲线，不是任意曲线。选项 D 正确：为了应用格林公式，被积函数的偏导数需要在区域内连续。",
+            "points": 15,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "short_answer",
+            "question": "请用自己的话简要说明格林公式适用于什么条件，并写出格林公式的表达式（可用文字描述）。",
+            "commentPrompt": "(1) 适用条件：封闭曲线、分段光滑、曲线正向、P和Q的偏导数连续 - 40% \n(2) 表达式正确：能正确写出线积分等于区域上二重积分的公式，并区分P和Q的角色 - 40% \n(3) 表述清晰、逻辑完整 - 20%",
+            "analysis": "参考回答：\n格林公式适用于分段光滑的封闭曲线L，并且L的方向是正向（逆时针）。它要求函数P(x,y)和Q(x,y)在L所围成的区域D上具有一阶连续偏导数。\n表达式：\n线积分∮L [P dx + Q dy] = 二重积分∬D (∂Q/∂x - ∂P/∂y) dxdy。\n即，封闭曲线上的线积分等于该曲线所围区域上的二重积分，其中被积函数是Q对x的偏导数减去P对y的偏导数。",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "格林公式适用于分段光滑的封闭曲线，要求曲线取正向（逆时针方向）。",
+          "格林公式的本质是将封闭曲线上的线积分转换为该曲线所围区域上的二重积分。",
+          "格林公式成立的重要条件是函数P(x,y)和Q(x,y)在区域内具有连续的一阶偏导数。",
+          "格林公式的数学表达式为：∮L (P dx + Q dy) = ∬D (∂Q/∂x - ∂P/∂y) dA。",
+          "格林公式是曲线积分与二重积分之间的桥梁，广泛应用于物理和工程中的面积计算与场论分析。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_bodrBXSE",
+          "type": "speech",
+          "text": "同学们，接下来我们来做一个关于格林公式的小测验，检验一下大家对前面内容的理解！"
+        },
+        {
+          "id": "action_DqbuUMrM",
+          "type": "speech",
+          "text": "第一题是单选题：格林公式主要适用于以下哪种类型的曲线？选项包括任意曲线、分段光滑的封闭曲线、只有光滑的直线段，以及无限延伸的曲线。请仔细回忆一下我们刚刚讲过的内容——格林公式有个非常关键的前提条件。"
+        },
+        {
+          "id": "action_iRLlECFe",
+          "type": "speech",
+          "text": "第二题是多选题：下列关于格林公式的描述，哪些是正确的？注意要选所有正确的选项哦。格林公式的核心在于将封闭曲线上的线积分转化为该曲线所围区域上的二重积分，但它的成立需要曲线取正向（也就是逆时针方向），而且被积函数需要满足一定的连续性条件。"
+        },
+        {
+          "id": "action_NRuF0CnT",
+          "type": "speech",
+          "text": "最后一题是简答题：请用自己的话简要说明格林公式适用于什么条件，并写出格林公式的表达式。可以用文字描述，不一定要写数学公式，但要表达清楚。"
+        },
+        {
+          "id": "action_Wd1EQm6W",
+          "type": "speech",
+          "text": "做完这几个题目后，相信大家会对格林公式的适用条件和表达形式有更清晰的认识。如果还有疑问，之后我们可以一起讨论！"
+        }
+      ],
+      "createdAt": 1782297452730,
+      "updatedAt": 1782297452730
+    },
+    {
+      "id": "scene_TBHY2rR7Fn",
+      "stageId": "qXM4d6ZAKa",
+      "type": "interactive",
+      "title": "探索格林公式：矢量场可视化",
+      "order": 4,
+      "content": {
+        "type": "interactive",
+        "url": "",
+        "html": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">\n    <title>格林公式交互模拟 · 线积分与二重积分转化</title>\n    <style>\n        * {\n            box-sizing: border-box;\n            margin: 0;\n            padding: 0;\n        }\n        body {\n            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n            background: #f5f7fc;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            min-height: 100vh;\n            margin: 0;\n            padding: 16px;\n            touch-action: manipulation;\n        }\n        .sim-container {\n            max-width: 1000px;\n            width: 100%;\n            background: white;\n            border-radius: 28px;\n            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.10);\n            overflow: hidden;\n            padding: 20px 20px 24px;\n            transition: all 0.2s;\n        }\n        h2 {\n            font-weight: 600;\n            font-size: 1.5rem;\n            letter-spacing: -0.01em;\n            color: #1e293b;\n            display: flex;\n            justify-content: space-between;\n            align-items: baseline;\n            flex-wrap: wrap;\n            margin-bottom: 12px;\n        }\n        .sub {\n            font-size: 1rem;\n            font-weight: 400;\n            color: #64748b;\n        }\n        .canvas-wrapper {\n            position: relative;\n            background: #fafbff;\n            border-radius: 20px;\n            overflow: hidden;\n            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02);\n            touch-action: none;\n            margin-bottom: 16px;\n        }\n        canvas {\n            display: block;\n            width: 100%;\n            height: auto;\n            aspect-ratio: 16/10;\n            background: #fafbff;\n            border-radius: 20px;\n            touch-action: none;\n            min-height: 280px;\n            max-height: 480px;\n        }\n        .control-panel {\n            background: #ffffff;\n            border-radius: 24px;\n            padding: 12px 8px 16px 8px;\n            display: flex;\n            flex-direction: column;\n            gap: 16px;\n            box-shadow: 0 -4px 12px rgba(0,0,0,0.02);\n        }\n        .slider-grid {\n            display: grid;\n            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));\n            gap: 16px 14px;\n        }\n        .slider-item {\n            display: flex;\n            flex-direction: column;\n            gap: 4px;\n        }\n        .slider-item label {\n            font-size: 0.8rem;\n            font-weight: 500;\n            color: #1e293b;\n            display: flex;\n            justify-content: space-between;\n        }\n        .slider-item label span.val {\n            font-family: 'JetBrains Mono', 'SF Mono', monospace;\n            background: #f1f5f9;\n            padding: 0 8px;\n            border-radius: 30px;\n            font-size: 0.8rem;\n            color: #0f172a;\n        }\n        input[type=range] {\n            width: 100%;\n            height: 6px;\n            -webkit-appearance: none;\n            background: #e2e8f0;\n            border-radius: 10px;\n            outline: none;\n            margin: 6px 0;\n            touch-action: manipulation;\n        }\n        input[type=range]::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 22px;\n            height: 22px;\n            border-radius: 22px;\n            background: #3b82f6;\n            border: 2px solid white;\n            box-shadow: 0 2px 8px rgba(59,130,246,0.3);\n            cursor: pointer;\n            transition: 0.1s;\n            touch-action: manipulation;\n        }\n        input[type=range]::-moz-range-thumb {\n            width: 22px;\n            height: 22px;\n            border-radius: 22px;\n            background: #3b82f6;\n            border: 2px solid white;\n            box-shadow: 0 2px 8px rgba(59,130,246,0.3);\n            cursor: pointer;\n        }\n        .action-row {\n            display: flex;\n            flex-wrap: wrap;\n            align-items: center;\n            gap: 10px;\n        }\n        .btn-group {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 8px;\n            align-items: center;\n        }\n        button, .preset-btn {\n            background: #f1f5f9;\n            border: none;\n            padding: 10px 18px;\n            border-radius: 60px;\n            font-weight: 500;\n            font-size: 0.9rem;\n            color: #1e293b;\n            display: inline-flex;\n            align-items: center;\n            justify-content: center;\n            gap: 6px;\n            min-width: 44px;\n            min-height: 44px;\n            touch-action: manipulation;\n            cursor: pointer;\n            box-shadow: 0 1px 3px rgba(0,0,0,0.02);\n            transition: all 0.15s;\n            border: 1px solid transparent;\n        }\n        button.primary {\n            background: #2563eb;\n            color: white;\n            box-shadow: 0 4px 10px rgba(37,99,235,0.2);\n        }\n        button.primary:hover {\n            background: #1d4ed8;\n        }\n        button.outline {\n            background: transparent;\n            border: 1px solid #cbd5e1;\n        }\n        button.outline:hover {\n            background: #f8fafc;\n        }\n        button:active {\n            transform: scale(0.96);\n        }\n        .preset-group {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 6px;\n        }\n        .preset-btn {\n            background: #eef2ff;\n            color: #4338ca;\n            padding: 6px 14px;\n            font-size: 0.78rem;\n            border: 1px solid #c7d2fe;\n        }\n        .preset-btn:hover {\n            background: #e0e7ff;\n        }\n        .status-badge {\n            font-size: 0.75rem;\n            background: #f1f5f9;\n            padding: 4px 12px;\n            border-radius: 30px;\n            color: #475569;\n            display: inline-flex;\n            align-items: center;\n            gap: 6px;\n            margin-left: auto;\n        }\n        .stat-row {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 18px 24px;\n            background: #f8fafc;\n            border-radius: 30px;\n            padding: 8px 18px;\n            font-family: 'JetBrains Mono', 'SF Mono', monospace;\n            font-size: 0.8rem;\n            color: #0f172a;\n            border: 1px solid #e9edf2;\n        }\n        .stat-row span {\n            display: inline-flex;\n            align-items: center;\n            gap: 6px;\n        }\n        .stat-row .num {\n            font-weight: 600;\n            color: #1e293b;\n            background: white;\n            padding: 0 10px;\n            border-radius: 40px;\n        }\n        .legend-note {\n            font-size: 0.75rem;\n            color: #64748b;\n            padding: 6px 0 0 4px;\n        }\n        .teacher-annotation {\n            position: fixed;\n            background: rgba(139, 92, 246, 0.94);\n            color: white;\n            padding: 8px 16px;\n            border-radius: 30px;\n            font-size: 0.9rem;\n            z-index: 1000;\n            pointer-events: none;\n            box-shadow: 0 8px 16px rgba(0,0,0,0.1);\n            animation: fadeIn 0.2s;\n        }\n        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }\n        @keyframes pulse-highlight {\n            0%, 100% { outline-color: rgba(139, 92, 246, 0.8); }\n            50% { outline-color: rgba(139, 92, 246, 0.3); }\n        }\n        /* mobile adaptation */\n        @media (max-width: 600px) {\n            .sim-container { padding: 12px; }\n            h2 { font-size: 1.25rem; }\n            .slider-grid { grid-template-columns: 1fr 1fr; gap: 10px; }\n            .action-row { flex-direction: column; align-items: stretch; }\n            .btn-group { justify-content: center; }\n            .stat-row { font-size: 0.7rem; padding: 6px 12px; gap: 8px; justify-content: center; }\n            canvas { min-height: 220px; max-height: 340px; }\n            .preset-group { justify-content: center; }\n        }\n        @media (max-width: 400px) {\n            .slider-grid { grid-template-columns: 1fr; }\n        }\n    </style>\n\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css\">\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js\"></script>\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js\"></script>\n<script>\ndocument.addEventListener(\"DOMContentLoaded\", function() {\n    const katexOptions = {\n        delimiters: [\n            {left: '\\\\[', right: '\\\\]', display: true},\n            {left: '\\\\(', right: '\\\\)', display: false},\n            {left: '$$', right: '$$', display: true},\n            {left: '$', right: '$', display: false}\n        ],\n        throwOnError: false,\n        strict: false,\n        trust: true\n    };\n\n    let renderTimeout;\n    function safeRender() {\n        if (renderTimeout) clearTimeout(renderTimeout);\n        renderTimeout = setTimeout(() => {\n            renderMathInElement(document.body, katexOptions);\n        }, 100);\n    }\n\n    renderMathInElement(document.body, katexOptions);\n\n    const observer = new MutationObserver((mutations) => {\n        let shouldRender = false;\n        mutations.forEach((mutation) => {\n            if (mutation.target &&\n                mutation.target.className &&\n                typeof mutation.target.className === 'string' &&\n                mutation.target.className.includes('katex')) {\n                return;\n            }\n            shouldRender = true;\n        });\n\n        if (shouldRender) {\n            safeRender();\n        }\n    });\n\n    observer.observe(document.body, {\n        childList: true,\n        subtree: true,\n        characterData: true\n    });\n\n    setInterval(() => {\n        const text = document.body.innerText;\n        if (text.includes('\\\\(') || text.includes('$$')) {\n            safeRender();\n        }\n    }, 2000);\n});\n</script>\n</head>\n<body>\n<div class=\"sim-container\" role=\"main\" aria-label=\"格林公式模拟器\">\n    <h2>\n        <span>∮ 格林公式 · 线积分 ⇄ 二重积分</span>\n        <span class=\"sub\" style=\"font-size:0.85rem; display:flex; gap:6px;\">\n            <span style=\"background:#dbeafe; padding:2px 10px; border-radius:30px;\">∮Pdx+Qdy</span>\n            <span style=\"background:#e0f2fe; padding:2px 10px; border-radius:30px;\">∬(∂Q/∂x−∂P/∂y)dA</span>\n        </span>\n    </h2>\n\n    <div class=\"canvas-wrapper\">\n        <canvas id=\"simCanvas\" width=\"800\" height=\"500\" aria-label=\"格林公式 曲线与矢量场 模拟画布\"></canvas>\n        <div style=\"position:absolute; bottom:6px; right:12px; background:rgba(255,255,255,0.7); backdrop-filter:blur(2px); border-radius:30px; padding:2px 12px; font-size:0.65rem; color:#475569;\">拖动滑块 · 点击开始</div>\n    </div>\n\n    <div class=\"control-panel\" id=\"controlPanel\">\n        <!-- 滑块区域 -->\n        <div class=\"slider-grid\">\n            <div class=\"slider-item\">\n                <label>P 系数 a <span class=\"val\" id=\"a-display\">0.8</span></label>\n                <input type=\"range\" id=\"a-slider\" data-var=\"a\" min=\"-2\" max=\"2\" step=\"0.02\" value=\"0.8\" aria-label=\"P x方向系数 a\">\n            </div>\n            <div class=\"slider-item\">\n                <label>P 系数 b <span class=\"val\" id=\"b-display\">-0.2</span></label>\n                <input type=\"range\" id=\"b-slider\" data-var=\"b\" min=\"-2\" max=\"2\" step=\"0.02\" value=\"-0.2\" aria-label=\"P y方向系数 b\">\n            </div>\n            <div class=\"slider-item\">\n                <label>Q 系数 c <span class=\"val\" id=\"c-display\">0.3</span></label>\n                <input type=\"range\" id=\"c-slider\" data-var=\"c\" min=\"-2\" max=\"2\" step=\"0.02\" value=\"0.3\" aria-label=\"Q x方向系数 c\">\n            </div>\n            <div class=\"slider-item\">\n                <label>Q 系数 d <span class=\"val\" id=\"d-display\">0.5</span></label>\n                <input type=\"range\" id=\"d-slider\" data-var=\"d\" min=\"-2\" max=\"2\" step=\"0.02\" value=\"0.5\" aria-label=\"Q y方向系数 d\">\n            </div>\n            <div class=\"slider-item\">\n                <label>曲线半径 r <span class=\"val\" id=\"r-display\">1.8</span></label>\n                <input type=\"range\" id=\"r-slider\" data-var=\"r\" min=\"0.5\" max=\"3.0\" step=\"0.05\" value=\"1.8\" aria-label=\"圆形曲线半径\">\n            </div>\n        </div>\n\n        <!-- 操作行 -->\n        <div class=\"action-row\">\n            <div class=\"btn-group\">\n                <button id=\"start-btn\" class=\"primary\" aria-label=\"开始/暂停模拟\">▶ 开始</button>\n                <button id=\"reset-btn\" class=\"outline\" aria-label=\"重置模拟\">⟳ 重置</button>\n            </div>\n            <div class=\"preset-group\">\n                <button class=\"preset-btn\" data-preset=\"uniform\">均匀场</button>\n                <button class=\"preset-btn\" data-preset=\"rotational\">旋转场</button>\n                <button class=\"preset-btn\" data-preset=\"radial\">径向场</button>\n            </div>\n            <span class=\"status-badge\" id=\"status-badge\">⚪ 就绪</span>\n        </div>\n\n        <!-- 数据显示 -->\n        <div class=\"stat-row\" id=\"dataDisplay\">\n            <span>∮Pdx+Qdy <span class=\"num\" id=\"line-integral-val\">0.000</span></span>\n            <span>∬(∂Q/∂x−∂P/∂y)dA <span class=\"num\" id=\"double-integral-val\">0.000</span></span>\n            <span>差值 <span class=\"num\" id=\"diff-val\">0.000</span></span>\n            <span style=\"font-weight:300; color:#94a3b8;\">|</span>\n            <span>curl ≈ <span class=\"num\" id=\"curl-val\">0.00</span></span>\n        </div>\n        <div class=\"legend-note\">\n            <span style=\"display:inline-block; width:12px; height:12px; background:#2563eb; border-radius:4px; margin-right:4px;\"></span> 矢量场 · \n            <span style=\"display:inline-block; width:12px; height:12px; background:rgba(100,200,100,0.6); border:1px solid #2e7d32; border-radius:50%;\"></span> 曲线路径\n        </div>\n    </div>\n</div>\n\n<script type=\"application/json\" id=\"widget-config\">\n{\n    \"type\": \"simulation\",\n    \"concept\": \"green_theorem_line_double_integral\",\n    \"description\": \"调整矢量场 P(x,y), Q(x,y) 系数及圆形曲线半径，观察线积分与二重积分数值始终相等。\",\n    \"variables\": [\n        { \"name\": \"a\", \"label\": \"P 系数 a\", \"min\": -2, \"max\": 2, \"default\": 0.8, \"unit\": \"\" },\n        { \"name\": \"b\", \"label\": \"P 系数 b\", \"min\": -2, \"max\": 2, \"default\": -0.2, \"unit\": \"\" },\n        { \"name\": \"c\", \"label\": \"Q 系数 c\", \"min\": -2, \"max\": 2, \"default\": 0.3, \"unit\": \"\" },\n        { \"name\": \"d\", \"label\": \"Q 系数 d\", \"min\": -2, \"max\": 2, \"default\": 0.5, \"unit\": \"\" },\n        { \"name\": \"r\", \"label\": \"曲线半径\", \"min\": 0.5, \"max\": 3.0, \"default\": 1.8, \"unit\": \"\" }\n    ],\n    \"presets\": [\n        { \"name\": \"均匀场\", \"variables\": { \"a\": 1.0, \"b\": 0.0, \"c\": 0.0, \"d\": 1.0, \"r\": 1.8 } },\n        { \"name\": \"旋转场\", \"variables\": { \"a\": 0.0, \"b\": -1.0, \"c\": 1.0, \"d\": 0.0, \"r\": 1.8 } },\n        { \"name\": \"径向场\", \"variables\": { \"a\": 1.0, \"b\": 0.5, \"c\": 0.5, \"d\": 1.0, \"r\": 1.8 } }\n    ]\n}\n</script>\n\n<script>\n    (function() {\n        'use strict';\n\n        // DOM refs\n        const canvas = document.getElementById('simCanvas');\n        const ctx = canvas.getContext('2d');\n\n        const aSlider = document.getElementById('a-slider');\n        const bSlider = document.getElementById('b-slider');\n        const cSlider = document.getElementById('c-slider');\n        const dSlider = document.getElementById('d-slider');\n        const rSlider = document.getElementById('r-slider');\n\n        const aDisplay = document.getElementById('a-display');\n        const bDisplay = document.getElementById('b-display');\n        const cDisplay = document.getElementById('c-display');\n        const dDisplay = document.getElementById('d-display');\n        const rDisplay = document.getElementById('r-display');\n\n        const lineIntegralVal = document.getElementById('line-integral-val');\n        const doubleIntegralVal = document.getElementById('double-integral-val');\n        const diffVal = document.getElementById('diff-val');\n        const curlVal = document.getElementById('curl-val');\n\n        const startBtn = document.getElementById('start-btn');\n        const resetBtn = document.getElementById('reset-btn');\n        const statusBadge = document.getElementById('status-badge');\n\n        // 状态\n        let running = false;\n        let paused = false;\n        let ended = false;\n        let animFrame = null;\n        let angle = 0; // 用于动画，角度参数\n\n        // 参数 (实时从滑块读取)\n        function getParams() {\n            return {\n                a: parseFloat(aSlider.value),\n                b: parseFloat(bSlider.value),\n                c: parseFloat(cSlider.value),\n                d: parseFloat(dSlider.value),\n                r: parseFloat(rSlider.value)\n            };\n        }\n\n        // 更新显示数值\n        function updateLabels(p) {\n            aDisplay.textContent = p.a.toFixed(2);\n            bDisplay.textContent = p.b.toFixed(2);\n            cDisplay.textContent = p.c.toFixed(2);\n            dDisplay.textContent = p.d.toFixed(2);\n            rDisplay.textContent = p.r.toFixed(2);\n        }\n\n        // 计算格林公式相关积分 (解析)\n        // P = a x + b y, Q = c x + d y\n        // ∂Q/∂x = c, ∂P/∂y = b => curl = c - b\n        // 对圆形区域: 面积 = π r^2, 二重积分 = (c - b) * π r^2\n        // 线积分: ∮ P dx + Q dy 通过格林公式也等于 curl * area\n        function computeIntegrals(p) {\n            const curl = p.c - p.b;\n            const area = Math.PI * p.r * p.r;\n            const doubleInt = curl * area;\n            const lineInt = doubleInt; // 格林保证相等\n            return { curl, area, lineInt, doubleInt };\n        }\n\n        // 绘图 (包含动画粒子)\n        function drawScene(timestamp) {\n            const rect = canvas.getBoundingClientRect();\n            const dpr = window.devicePixelRatio || 1;\n            const w = canvas.width = (rect.width * dpr) || 800;\n            const h = canvas.height = (rect.height * dpr) || 500;\n            ctx.scale(dpr, dpr);\n            const cw = w / dpr;\n            const ch = h / dpr;\n\n            const params = getParams();\n            updateLabels(params);\n\n            // 清除\n            ctx.clearRect(0, 0, cw, ch);\n\n            // 中心\n            const cx = cw * 0.5;\n            const cy = ch * 0.55;\n            const radius = Math.min(cw, ch) * 0.28 * (params.r / 2.0);  // 缩放\n\n            // 画背景网格\n            ctx.save();\n            ctx.strokeStyle = '#e9edf2';\n            ctx.lineWidth = 0.5;\n            for (let x = 0; x < cw; x += 30) {\n                ctx.beginPath();\n                ctx.moveTo(x, 0);\n                ctx.lineTo(x, ch);\n                ctx.stroke();\n            }\n            for (let y = 0; y < ch; y += 30) {\n                ctx.beginPath();\n                ctx.moveTo(0, y);\n                ctx.lineTo(cw, y);\n                ctx.stroke();\n            }\n            ctx.restore();\n\n            // 绘制矢量场 (箭头)\n            const step = 38;\n            const scaleVec = 0.7;\n            ctx.save();\n            for (let x = 20; x < cw - 10; x += step) {\n                for (let y = 20; y < ch - 10; y += step) {\n                    const px = (x - cx) * 0.015;\n                    const py = (y - cy) * 0.015;\n                    const P = params.a * px + params.b * py;\n                    const Q = params.c * px + params.d * py;\n                    const mag = Math.hypot(P, Q);\n                    if (mag < 0.001) continue;\n                    const norm = Math.min(1, mag * 0.6);\n                    const dx = (P / mag) * 12 * norm;\n                    const dy = (Q / mag) * 12 * norm;\n                    ctx.beginPath();\n                    ctx.moveTo(x, y);\n                    ctx.lineTo(x + dx, y + dy);\n                    ctx.strokeStyle = `rgba(37, 99, 235, ${0.2 + 0.3 * norm})`;\n                    ctx.lineWidth = 1.4;\n                    ctx.stroke();\n                    // 箭头三角形\n                    if (norm > 0.2) {\n                        const angleArrow = Math.atan2(dy, dx);\n                        const headLen = 5 + 3 * norm;\n                        ctx.beginPath();\n                        ctx.moveTo(x + dx, y + dy);\n                        ctx.lineTo(x + dx - headLen * Math.cos(angleArrow - 0.4), y + dy - headLen * Math.sin(angleArrow - 0.4));\n                        ctx.lineTo(x + dx - headLen * Math.cos(angleArrow + 0.4), y + dy - headLen * Math.sin(angleArrow + 0.4));\n                        ctx.closePath();\n                        ctx.fillStyle = `rgba(37, 99, 235, ${0.25 + 0.3 * norm})`;\n                        ctx.fill();\n                    }\n                }\n            }\n            ctx.restore();\n\n            // 绘制圆形路径 (曲线)\n            ctx.save();\n            ctx.beginPath();\n            ctx.arc(cx, cy, radius, 0, 2 * Math.PI);\n            ctx.strokeStyle = '#2e7d32';\n            ctx.lineWidth = 3;\n            ctx.setLineDash([]);\n            ctx.stroke();\n            ctx.fillStyle = 'rgba(100, 200, 100, 0.08)';\n            ctx.fill();\n            // 标记路径方向 (动画小点)\n            const dotAngle = running ? (angle * 0.02) % (2 * Math.PI) : 0;\n            const dotX = cx + radius * Math.cos(dotAngle);\n            const dotY = cy + radius * Math.sin(dotAngle);\n            ctx.beginPath();\n            ctx.arc(dotX, dotY, 5, 0, 2 * Math.PI);\n            ctx.fillStyle = '#2e7d32';\n            ctx.shadowColor = 'rgba(0,80,0,0.2)';\n            ctx.shadowBlur = 8;\n            ctx.fill();\n            ctx.shadowBlur = 0;\n            ctx.restore();\n\n            // 显示 curl 色块 (背景提示)\n            const curl = params.c - params.b;\n            ctx.save();\n            ctx.font = '13px \"Segoe UI\", sans-serif';\n            ctx.fillStyle = '#1e293b';\n            ctx.fillText(`curl = ∂Q/∂x − ∂P/∂y = ${curl.toFixed(3)}`, 16, 30);\n            ctx.restore();\n\n            // 显示积分\n            const integrals = computeIntegrals(params);\n            lineIntegralVal.textContent = integrals.lineInt.toFixed(4);\n            doubleIntegralVal.textContent = integrals.doubleInt.toFixed(4);\n            diffVal.textContent = (integrals.lineInt - integrals.doubleInt).toFixed(6);\n            curlVal.textContent = integrals.curl.toFixed(3);\n\n            // 如果正在运行, 增加角度以产生动画\n            if (running && !paused) {\n                angle += 0.5;\n            }\n\n            // 状态更新\n            if (running && !paused) {\n                statusBadge.innerHTML = '▶ 运行中';\n            } else if (paused) {\n                statusBadge.innerHTML = '⏸ 暂停';\n            } else {\n                statusBadge.innerHTML = '⚪ 就绪';\n            }\n\n            // 循环\n            if (running) {\n                animFrame = requestAnimationFrame(drawScene);\n            }\n        }\n\n        // 启动/暂停\n        function startSim() {\n            if (!running) {\n                running = true;\n                paused = false;\n                ended = false;\n                startBtn.textContent = '⏸ 暂停';\n                startBtn.classList.add('primary');\n                animFrame = requestAnimationFrame(drawScene);\n            } else if (paused) {\n                paused = false;\n                startBtn.textContent = '⏸ 暂停';\n                animFrame = requestAnimationFrame(drawScene);\n            } else {\n                // 正在运行 -> 暂停\n                paused = true;\n                startBtn.textContent = '▶ 继续';\n                if (animFrame) cancelAnimationFrame(animFrame);\n                animFrame = null;\n                drawScene(); // 静态更新\n            }\n        }\n\n        // 重置\n        function resetSim() {\n            running = false;\n            paused = false;\n            ended = false;\n            if (animFrame) {\n                cancelAnimationFrame(animFrame);\n                animFrame = null;\n            }\n            angle = 0;\n            startBtn.textContent = '▶ 开始';\n            statusBadge.innerHTML = '⚪ 就绪';\n            // 滑块保持当前值, 重新绘制\n            drawScene();\n        }\n\n        // 应用预设\n        function applyPreset(name) {\n            const config = {\n                'uniform': { a: 1.0, b: 0.0, c: 0.0, d: 1.0, r: 1.8 },\n                'rotational': { a: 0.0, b: -1.0, c: 1.0, d: 0.0, r: 1.8 },\n                'radial': { a: 1.0, b: 0.5, c: 0.5, d: 1.0, r: 1.8 }\n            };\n            const vals = config[name];\n            if (!vals) return;\n            aSlider.value = vals.a;\n            bSlider.value = vals.b;\n            cSlider.value = vals.c;\n            dSlider.value = vals.d;\n            rSlider.value = vals.r;\n            resetSim();\n            // 触发绘制\n            drawScene();\n        }\n\n        // 键盘支持\n        document.addEventListener('keydown', (e) => {\n            if (e.key === ' ' || e.key === 'Space') {\n                e.preventDefault();\n                startSim();\n            }\n            if (e.key === 'r' || e.key === 'R') {\n                e.preventDefault();\n                resetSim();\n            }\n        });\n\n        // 滑块实时更新\n        [aSlider, bSlider, cSlider, dSlider, rSlider].forEach(slider => {\n            slider.addEventListener('input', function() {\n                if (!running) {\n                    drawScene();\n                } else if (paused) {\n                    drawScene();\n                } else {\n                    // 运行中更新参数但不重绘循环 (循环会自动重绘)\n                    // 但为了即时反馈, 强制重绘一帧? 会由动画循环处理, 但可能需要更新显示\n                    // 已经由动画循环处理\n                }\n                // 更新显示\n                const p = getParams();\n                updateLabels(p);\n                // 即使动画运行, 更新积分显示\n                const integrals = computeIntegrals(p);\n                lineIntegralVal.textContent = integrals.lineInt.toFixed(4);\n                doubleIntegralVal.textContent = integrals.doubleInt.toFixed(4);\n                diffVal.textContent = (integrals.lineInt - integrals.doubleInt).toFixed(6);\n                curlVal.textContent = integrals.curl.toFixed(3);\n                // 但画布由动画循环绘制\n                if (!running) {\n                    drawScene();\n                }\n            });\n        });\n\n        // 事件绑定\n        startBtn.addEventListener('click', startSim);\n        resetBtn.addEventListener('click', resetSim);\n\n        // 预设按钮\n        document.querySelectorAll('[data-preset]').forEach(btn => {\n            btn.addEventListener('click', function() {\n                const preset = this.dataset.preset;\n                applyPreset(preset);\n            });\n        });\n\n        // postMessage 监听 (教师控制)\n        window.addEventListener('message', function(event) {\n            const { type, target, state, content } = event.data || {};\n            switch (type) {\n                case 'SET_WIDGET_STATE': {\n                    if (state) {\n                        Object.entries(state).forEach(([key, value]) => {\n                            const slider = document.getElementById(key + '-slider') || document.querySelector('[data-var=\"' + key + '\"]');\n                            if (slider) {\n                                slider.value = value;\n                                slider.dispatchEvent(new Event('input', { bubbles: true }));\n                            }\n                        });\n                    }\n                    break;\n                }\n                case 'HIGHLIGHT_ELEMENT': {\n                    const highlightEl = target ? document.querySelector(target) : null;\n                    if (highlightEl) {\n                        highlightEl.style.outline = '3px solid rgba(139, 92, 246, 0.8)';\n                        highlightEl.style.outlineOffset = '4px';\n                        highlightEl.style.animation = 'pulse-highlight 2s infinite';\n                        setTimeout(() => {\n                            highlightEl.style.outline = '';\n                            highlightEl.style.animation = '';\n                        }, 3000);\n                    }\n                    break;\n                }\n                case 'ANNOTATE_ELEMENT': {\n                    const annotateEl = target ? document.querySelector(target) : null;\n                    if (annotateEl && content) {\n                        const rect = annotateEl.getBoundingClientRect();\n                        const tooltip = document.createElement('div');\n                        tooltip.className = 'teacher-annotation';\n                        tooltip.style.cssText = `position:fixed; top:${rect.top - 46}px; left:${rect.left + rect.width/2}px; transform:translateX(-50%); background:rgba(139,92,246,0.94); color:white; padding:8px 16px; border-radius:30px; font-size:0.9rem; z-index:1000; pointer-events:none;`;\n                        tooltip.textContent = content;\n                        document.body.appendChild(tooltip);\n                        setTimeout(() => tooltip.remove(), 4000);\n                    }\n                    break;\n                }\n                case 'REVEAL_ELEMENT': {\n                    const revealEl = target ? document.querySelector(target) : null;\n                    if (revealEl) {\n                        revealEl.style.display = '';\n                        revealEl.style.opacity = '1';\n                    }\n                    break;\n                }\n            }\n        });\n\n        // 注入脉冲动画 (已包含在style中)\n        // 初始绘制\n        drawScene();\n\n        // 窗口尺寸变化重绘\n        let resizeTimer;\n        window.addEventListener('resize', function() {\n            clearTimeout(resizeTimer);\n            resizeTimer = setTimeout(() => {\n                if (!running) drawScene();\n            }, 150);\n        });\n\n        // 移动端触摸优化\n        canvas.addEventListener('touchstart', (e) => {\n            // 防止干扰滚动\n        }, { passive: true });\n\n        console.log('格林公式模拟已加载');\n    })();\n</script>\n</body>\n</html>",
+        "widgetType": "simulation",
+        "widgetConfig": {
+          "type": "simulation",
+          "concept": "green_theorem_line_double_integral",
+          "description": "调整矢量场 P(x,y), Q(x,y) 系数及圆形曲线半径，观察线积分与二重积分数值始终相等。",
+          "variables": [
+            {
+              "name": "a",
+              "label": "P 系数 a",
+              "min": -2,
+              "max": 2,
+              "default": 0.8,
+              "unit": ""
+            },
+            {
+              "name": "b",
+              "label": "P 系数 b",
+              "min": -2,
+              "max": 2,
+              "default": -0.2,
+              "unit": ""
+            },
+            {
+              "name": "c",
+              "label": "Q 系数 c",
+              "min": -2,
+              "max": 2,
+              "default": 0.3,
+              "unit": ""
+            },
+            {
+              "name": "d",
+              "label": "Q 系数 d",
+              "min": -2,
+              "max": 2,
+              "default": 0.5,
+              "unit": ""
+            },
+            {
+              "name": "r",
+              "label": "曲线半径",
+              "min": 0.5,
+              "max": 3,
+              "default": 1.8,
+              "unit": ""
+            }
+          ],
+          "presets": [
+            {
+              "name": "均匀场",
+              "variables": {
+                "a": 1,
+                "b": 0,
+                "c": 0,
+                "d": 1,
+                "r": 1.8
+              }
+            },
+            {
+              "name": "旋转场",
+              "variables": {
+                "a": 0,
+                "b": -1,
+                "c": 1,
+                "d": 0,
+                "r": 1.8
+              }
+            },
+            {
+              "name": "径向场",
+              "variables": {
+                "a": 1,
+                "b": 0.5,
+                "c": 0.5,
+                "d": 1,
+                "r": 1.8
+              }
+            }
+          ]
+        },
+        "teacherActions": [
+          {
+            "id": "intro",
+            "type": "speech",
+            "content": "这个模拟帮助直观验证格林公式：曲线积分与二重积分数值始终相等。我们先调整矢量场和曲线半径，观察积分变化。",
+            "label": "开始介绍"
+          },
+          {
+            "id": "highlight_acoeff",
+            "type": "highlight",
+            "target": "#a-slider",
+            "content": "滑块 a 控制矢量场 P 的 x 分量系数，调整它可改变场的方向和强度。",
+            "label": "调整 P 系数 a"
+          },
+          {
+            "id": "highlight_dcoeff",
+            "type": "highlight",
+            "target": "#d-slider",
+            "content": "滑块 d 控制矢量场 Q 的 y 分量系数，配合其他系数可构造旋转场或辐散场。",
+            "label": "调整 Q 系数 d"
+          },
+          {
+            "id": "demo_rotation_field",
+            "type": "setState",
+            "state": {
+              "a": 0,
+              "b": -1,
+              "c": 1,
+              "d": 0,
+              "r": 1.8
+            },
+            "content": "",
+            "label": "设为旋转场"
+          },
+          {
+            "id": "highlight_radius",
+            "type": "highlight",
+            "target": "#r-slider",
+            "content": "调整曲线半径，观察线积分和二重积分随曲线大小同步变化，始终相等。",
+            "label": "调整曲线半径"
+          },
+          {
+            "id": "comparison_observations",
+            "type": "speech",
+            "content": "注意两个积分值始终保持一致。尝试不同预设，感受格林公式的几何与数值意义。",
+            "label": "观察积分相等"
+          },
+          {
+            "id": "demo_radial_field",
+            "type": "setState",
+            "state": {
+              "a": 1,
+              "b": 0.5,
+              "c": 0.5,
+              "d": 1,
+              "r": 1.8
+            },
+            "content": "尝试径向场：P = x + 0.5y, Q = 0.5x + y，也是旋度为零但有散度。线积分 = 二重积分 = 0？",
+            "label": "测试径向场"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_pCC8MyiI",
+          "title": "开始介绍",
+          "type": "speech",
+          "text": "这个模拟帮助直观验证格林公式：曲线积分与二重积分数值始终相等。我们先调整矢量场和曲线半径，观察积分变化。"
+        },
+        {
+          "id": "action_j80VHDvx",
+          "title": "调整 P 系数 a",
+          "type": "widget_highlight",
+          "target": "#a-slider"
+        },
+        {
+          "id": "action_j80VHDvx_speech",
+          "type": "speech",
+          "text": "滑块 a 控制矢量场 P 的 x 分量系数，调整它可改变场的方向和强度。",
+          "title": "调整 P 系数 a"
+        },
+        {
+          "id": "action_Cmb_6hIO",
+          "title": "调整 Q 系数 d",
+          "type": "widget_highlight",
+          "target": "#d-slider"
+        },
+        {
+          "id": "action_Cmb_6hIO_speech",
+          "type": "speech",
+          "text": "滑块 d 控制矢量场 Q 的 y 分量系数，配合其他系数可构造旋转场或辐散场。",
+          "title": "调整 Q 系数 d"
+        },
+        {
+          "id": "action_UdwYYK1J",
+          "title": "设为旋转场",
+          "type": "widget_setState",
+          "state": {
+            "a": 0,
+            "b": -1,
+            "c": 1,
+            "d": 0,
+            "r": 1.8
+          }
+        },
+        {
+          "id": "action_jS6FGJFt",
+          "title": "调整曲线半径",
+          "type": "widget_highlight",
+          "target": "#r-slider"
+        },
+        {
+          "id": "action_jS6FGJFt_speech",
+          "type": "speech",
+          "text": "调整曲线半径，观察线积分和二重积分随曲线大小同步变化，始终相等。",
+          "title": "调整曲线半径"
+        },
+        {
+          "id": "action_o9q7bSTP",
+          "title": "观察积分相等",
+          "type": "speech",
+          "text": "注意两个积分值始终保持一致。尝试不同预设，感受格林公式的几何与数值意义。"
+        },
+        {
+          "id": "action_jLnD3MDZ",
+          "title": "测试径向场",
+          "type": "widget_setState",
+          "state": {
+            "a": 1,
+            "b": 0.5,
+            "c": 0.5,
+            "d": 1,
+            "r": 1.8
+          }
+        },
+        {
+          "id": "action_jLnD3MDZ_speech",
+          "type": "speech",
+          "text": "尝试径向场：P = x + 0.5y, Q = 0.5x + y，也是旋度为零但有散度。线积分 = 二重积分 = 0？",
+          "title": "测试径向场"
+        }
+      ],
+      "createdAt": 1782297452730,
+      "updatedAt": 1782297452730
+    },
+    {
+      "id": "scene_4E58wnffuK",
+      "stageId": "qXM4d6ZAKa",
+      "type": "slide",
+      "title": "格林公式的应用场景",
+      "order": 5,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "ImBrn9O-vP0jlIm0qnzln",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_y3-KZGh_",
+              "type": "text",
+              "left": 105,
+              "top": 78,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">格林公式的应用场景</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.18,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "shape_aRRkiXSg",
+              "type": "shape",
+              "left": 105,
+              "top": 154,
+              "width": 790,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_fYA0xOe0",
+              "type": "shape",
+              "left": 60,
+              "top": 190,
+              "width": 440,
+              "height": 280,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#f0f4fa",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_rfb4Gxxv",
+              "type": "text",
+              "left": 80,
+              "top": 200,
+              "width": 400,
+              "height": 49,
+              "content": "<p style=\"font-size:15px; color:#2f80d1;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">格林公式核心</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "latex_CvrnTYYa",
+              "type": "latex",
+              "left": 120,
+              "top": 250,
+              "width": 760,
+              "height": 118,
+              "latex": "\\oint_C P\\,dx + Q\\,dy = \\iint_D \\left( \\frac{\\partial Q}{\\partial x} - \\frac{\\partial P}{\\partial y} \\right) dA",
+              "color": "#172033",
+              "align": "center",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:2.2719em;vertical-align:-0.9119em;\"></span><span class=\"mop\"><span class=\"mop op-symbol large-op\" style=\"margin-right:0.44445em;position:relative;top:-0.0011em;\">∮</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:-0.4336em;\"><span style=\"top:-1.7881em;margin-left:-0.4445em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mathnormal mtight\" style=\"margin-right:0.07153em;\">C</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.9119em;\"><span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathnormal\" style=\"margin-right:0.13889em;\">P</span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathnormal\">x</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">+</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.8889em;vertical-align:-0.1944em;\"></span><span class=\"mord mathnormal\">Q</span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathnormal\" style=\"margin-right:0.03588em;\">y</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:2.4em;vertical-align:-0.95em;\"></span><span class=\"mop\"><span class=\"mop op-symbol large-op\" style=\"margin-right:0.44445em;position:relative;top:-0.001em;\">∬</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:-0.4334em;\"><span style=\"top:-1.7883em;margin-left:-0.4445em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mathnormal mtight\" style=\"margin-right:0.02778em;\">D</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.9117em;\"><span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"minner\"><span class=\"mopen delimcenter\" style=\"top:0em;\"><span class=\"delimsizing size3\">(</span></span><span class=\"mord\"><span class=\"mopen nulldelimiter\"></span><span class=\"mfrac\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:1.3714em;\"><span style=\"top:-2.314em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"mord\"><span class=\"mord\" style=\"margin-right:0.05556em;\">∂</span><span class=\"mord mathnormal\">x</span></span></span><span style=\"top:-3.23em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"frac-line\" style=\"border-bottom-width:0.04em;\"></span></span><span style=\"top:-3.677em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"mord\"><span class=\"mord\" style=\"margin-right:0.05556em;\">∂</span><span class=\"mord mathnormal\">Q</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.686em;\"><span></span></span></span></span></span><span class=\"mclose nulldelimiter\"></span></span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">−</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mord\"><span class=\"mopen nulldelimiter\"></span><span class=\"mfrac\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:1.3714em;\"><span style=\"top:-2.314em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"mord\"><span class=\"mord\" style=\"margin-right:0.05556em;\">∂</span><span class=\"mord mathnormal\" style=\"margin-right:0.03588em;\">y</span></span></span><span style=\"top:-3.23em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"frac-line\" style=\"border-bottom-width:0.04em;\"></span></span><span style=\"top:-3.677em;\"><span class=\"pstrut\" style=\"height:3em;\"></span><span class=\"mord\"><span class=\"mord\" style=\"margin-right:0.05556em;\">∂</span><span class=\"mord mathnormal\" style=\"margin-right:0.13889em;\">P</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.8804em;\"><span></span></span></span></span></span><span class=\"mclose nulldelimiter\"></span></span><span class=\"mclose delimcenter\" style=\"top:0em;\"><span class=\"delimsizing size3\">)</span></span></span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathnormal\">A</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "text_k8yS7eCn",
+              "type": "text",
+              "left": 80,
+              "top": 350,
+              "width": 400,
+              "height": 94,
+              "content": "<p style=\"font-size:16px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">联系</strong> 闭曲线积分与二重积分</p><p style=\"font-size:16px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">条件</strong> D 为单连通区域，边界 C 取正向</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape_qGHuRHop",
+              "type": "shape",
+              "left": 530,
+              "top": 190,
+              "width": 410,
+              "height": 280,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#eaf3ff",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_BIYx7uFD",
+              "type": "text",
+              "left": 550,
+              "top": 200,
+              "width": 370,
+              "height": 49,
+              "content": "<p style=\"font-size:15px; color:#2f80d1;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">典型应用</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_aCeYPF1G",
+              "type": "text",
+              "left": 550,
+              "top": 250,
+              "width": 370,
+              "height": 77,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">1. 简化曲线积分</strong></p><p style=\"font-size:18px;\">用二重积分代替复杂的闭曲线积分</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_Dj3ueWIp",
+              "type": "text",
+              "left": 550,
+              "top": 322,
+              "width": 370,
+              "height": 77,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">2. 计算平面区域面积</strong></p><p style=\"font-size:18px;\"><span style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">A = ½ ∮<sub>C</sub> (x dy – y dx)</span></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_8aLqOOrM",
+              "type": "text",
+              "left": 550,
+              "top": 390,
+              "width": 370,
+              "height": 77,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">3. 验证保守场</strong></p><p style=\"font-size:18px;\">旋度为零 → 积分与路径无关</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape_9yJov0pM",
+              "type": "shape",
+              "left": 60,
+              "top": 474.5,
+              "width": 880,
+              "height": 40,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#f9f2e0",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_nhiIImOK",
+              "type": "text",
+              "left": 80,
+              "top": 472.5,
+              "width": 840,
+              "height": 42,
+              "content": "<p style=\"font-size:15px; color:#d4872c;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">核心思想：</strong>将二维区域的整体性质与边界性质相互转化，是向量分析的重要工具</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_LwwuMAyO",
+          "type": "spotlight",
+          "elementId": "text_y3-KZGh_"
+        },
+        {
+          "id": "action_ULn4WzCX",
+          "type": "speech",
+          "text": "同学们，欢迎来到今天的讲解。上一页我们提过格林公式这个强有力的理论工具，现在我们就来看看它具体有哪些重要的应用场景。"
+        },
+        {
+          "id": "action_9hPH519x",
+          "type": "spotlight",
+          "elementId": "latex_CvrnTYYa"
+        },
+        {
+          "id": "action_aF2kdCRe",
+          "type": "speech",
+          "text": "首先，快速回顾一下格林公式的核心——它建立了闭曲线上的线积分与曲线所围区域上的二重积分之间的联系，公式如上所示。"
+        },
+        {
+          "id": "action_lTQe4nV0",
+          "type": "spotlight",
+          "elementId": "text_k8yS7eCn"
+        },
+        {
+          "id": "action_aIHj92lL",
+          "type": "speech",
+          "text": "不过要使用这个公式，需要满足两个条件：区域D是单连通的，并且边界曲线C取正向。这是应用的基础。"
+        },
+        {
+          "id": "action_WZ2a7s2G",
+          "type": "spotlight",
+          "elementId": "text_BIYx7uFD"
+        },
+        {
+          "id": "action_EM-q3WpM",
+          "type": "speech",
+          "text": "好，我们来看格林公式三个最典型的应用。"
+        },
+        {
+          "id": "action_ZrB2iPYN",
+          "type": "spotlight",
+          "elementId": "text_aCeYPF1G"
+        },
+        {
+          "id": "action_dAUz4LPD",
+          "type": "speech",
+          "text": "第一个应用，简化曲线积分。当我们面对一个复杂的闭曲线积分时，直接计算往往非常困难。这时就可以利用格林公式，将其转化为相对简单的二重积分来计算。"
+        },
+        {
+          "id": "action_c59CvBBg",
+          "type": "spotlight",
+          "elementId": "text_Dj3ueWIp"
+        },
+        {
+          "id": "action_u2wSRVYj",
+          "type": "speech",
+          "text": "第二个应用，计算平面区域的面积。这个公式非常巧妙：通过一个特殊的格林公式变换，我们可以用线积分来计算任意形状平面区域的面积，即A等于二分之一倍的∮C (x dy – y dx)。"
+        },
+        {
+          "id": "action_0bnuQiyR",
+          "type": "spotlight",
+          "elementId": "text_8aLqOOrM"
+        },
+        {
+          "id": "action_FPEcBRFO",
+          "type": "speech",
+          "text": "第三个应用，验证保守场。如果一个向量场的旋度为零，那么这个场就是保守场，对应的线积分与路径无关。而格林公式恰恰为我们提供了一种判断方法。"
+        },
+        {
+          "id": "action_AjFKEGhr",
+          "type": "spotlight",
+          "elementId": "text_nhiIImOK"
+        },
+        {
+          "id": "action_0Ak35CIW",
+          "type": "speech",
+          "text": "所以归根结底，格林公式的核心思想就是：将二维区域内部的整体性质，与其边界上的积分性质相互转化。这是向量分析中非常重要的工具。"
+        }
+      ],
+      "createdAt": 1782297452732,
+      "updatedAt": 1782297452732
+    },
+    {
+      "id": "scene_Dl12Gh39Wx",
+      "stageId": "qXM4d6ZAKa",
+      "type": "slide",
+      "title": "常见误区与注意事项",
+      "order": 6,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "HVXvVamGQ-NQYNAltn_CJ",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_VoN5BCnF",
+              "type": "text",
+              "left": 105,
+              "top": 78,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">常见误区与注意事项</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.18,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "shape_8I1lv2S7",
+              "type": "shape",
+              "left": 105,
+              "top": 154,
+              "width": 790,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_FW3cQMfS",
+              "type": "shape",
+              "left": 105,
+              "top": 180,
+              "width": 410,
+              "height": 135,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#fef3c7",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_PwyZBzKc",
+              "type": "text",
+              "left": 125,
+              "top": 188,
+              "width": 370,
+              "height": 50,
+              "content": "<p style=\"font-size:16px; color:#92400e;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">常见误区</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#92400e",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_D6KBVYLv",
+              "type": "text",
+              "left": 125,
+              "top": 234,
+              "width": 370,
+              "height": 94,
+              "content": "<p style=\"font-size:16px;\">• 曲线不封闭时直接使用公式</p><p style=\"font-size:16px;\">• 忽略一阶连续偏导数条件</p><p style=\"font-size:16px;\">• 方向判断错误导致符号出错</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape_zBiFxx72",
+              "type": "shape",
+              "left": 545,
+              "top": 180,
+              "width": 355,
+              "height": 135,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#dcfce7",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_WCoToxDm",
+              "type": "text",
+              "left": 565,
+              "top": 188,
+              "width": 315,
+              "height": 50,
+              "content": "<p style=\"font-size:16px; color:#166534;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">注意事项</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#166534",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_05mDoarb",
+              "type": "text",
+              "left": 565,
+              "top": 234,
+              "width": 315,
+              "height": 94,
+              "content": "<p style=\"font-size:16px;\">• 多连通区域：使用多个正向曲线</p><p style=\"font-size:16px;\">• 先验证连续性和封闭性</p><p style=\"font-size:16px;\">• 方向与边界一致</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_icbcHdui",
+              "type": "text",
+              "left": 105,
+              "top": 340,
+              "width": 790,
+              "height": 56,
+              "content": "<p style=\"font-size:20px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">正确使用 vs 错误使用</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "table_4Wt6a4Ml",
+              "type": "table",
+              "left": 105,
+              "top": 374.5,
+              "width": 790,
+              "height": 140,
+              "colWidths": [
+                0.3,
+                0.35,
+                0.35
+              ],
+              "data": [
+                [
+                  {
+                    "id": "h1",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "条件",
+                    "style": {
+                      "bold": true,
+                      "backcolor": "#e0e0e0"
+                    }
+                  },
+                  {
+                    "id": "h2",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "错误做法",
+                    "style": {
+                      "bold": true,
+                      "backcolor": "#e0e0e0"
+                    }
+                  },
+                  {
+                    "id": "h3",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "正确做法",
+                    "style": {
+                      "bold": true,
+                      "backcolor": "#e0e0e0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "id": "r1c1",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "封闭曲线"
+                  },
+                  {
+                    "id": "r1c2",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "直接对非封闭曲线积分"
+                  },
+                  {
+                    "id": "r1c3",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "先补线再应用格林公式"
+                  }
+                ],
+                [
+                  {
+                    "id": "r2c1",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "连续偏导"
+                  },
+                  {
+                    "id": "r2c2",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "忽略间断点直接使用"
+                  },
+                  {
+                    "id": "r2c3",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "挖去间断点或用分段方法"
+                  }
+                ],
+                [
+                  {
+                    "id": "r3c1",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "曲线方向"
+                  },
+                  {
+                    "id": "r3c2",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "方向随意导致符号错"
+                  },
+                  {
+                    "id": "r3c3",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "逆时针为正方向"
+                  }
+                ]
+              ],
+              "outline": {
+                "width": 2,
+                "style": "solid",
+                "color": "#d1d5db"
+              },
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_N_bSXuIF",
+          "type": "spotlight",
+          "elementId": "text_VoN5BCnF"
+        },
+        {
+          "id": "action_zpo6Xm5g",
+          "type": "speech",
+          "text": "好了，掌握了格林公式的核心之后，我们来看一个非常重要的环节——常见误区与注意事项。这部分能帮你避开很多计算中的‘坑’。"
+        },
+        {
+          "id": "action_SODvCau7",
+          "type": "spotlight",
+          "elementId": "text_PwyZBzKc"
+        },
+        {
+          "id": "action_nVGsUxCL",
+          "type": "speech",
+          "text": "首先来看最常见的误区。很多同学拿到曲线积分，第一个想到的就是格林公式，但请注意，它有三个大前提。"
+        },
+        {
+          "id": "action_r7l3JeBb",
+          "type": "spotlight",
+          "elementId": "text_D6KBVYLv"
+        },
+        {
+          "id": "action_QnHcls2E",
+          "type": "speech",
+          "text": "第一个误区：曲线不封闭时直接套用公式。格林公式本质上是将封闭曲线上的积分转化为二重积分，如果曲线不封闭，这个转化就失去了基础。第二个误区：忽略一阶连续偏导数的条件。如果P和Q的偏导数在区域内不连续，公式就不能直接使用。第三个误区：方向判断错误。正向边界是逆时针，如果方向弄反了，结果会差一个负号，这点特别容易出错。"
+        },
+        {
+          "id": "action_NS6Kk2Es",
+          "type": "spotlight",
+          "elementId": "text_WCoToxDm"
+        },
+        {
+          "id": "action_AueESDKm",
+          "type": "speech",
+          "text": "接下来我们看看应该注意什么。这些注意事项能帮助你避开上面的误区。"
+        },
+        {
+          "id": "action_-BV5Lop9",
+          "type": "spotlight",
+          "elementId": "text_05mDoarb"
+        },
+        {
+          "id": "action_D9MCERZC",
+          "type": "speech",
+          "text": "对于多连通区域，比如中间有个洞的情况，我们不能直接用一条曲线搞定。正确的做法是使用多个正向曲线，分别计算它们的积分，然后求和。另外，每次使用前都要先验证曲线是否封闭，以及被积函数是否连续。还有一个好习惯：确认边界方向与区域方向一致，这样符号就不会错了。"
+        },
+        {
+          "id": "action_1btFjl7g",
+          "type": "spotlight",
+          "elementId": "table_4Wt6a4Ml"
+        },
+        {
+          "id": "action_dUvldXGa",
+          "type": "speech",
+          "text": "我们来看这个对比表，左边是错误使用，右边是正确使用。比如，对于不封闭的曲线，错误做法是直接套公式，而正确做法是添加辅助线使之封闭，或者用其他方法计算。对于有间断点的区域，错误做法是视而不见，正确做法是先证明偏导数连续，或者分割区域。这个表很直观，建议大家记在笔记里。"
+        }
+      ],
+      "createdAt": 1782297452734,
+      "updatedAt": 1782297452734
+    },
+    {
+      "id": "scene_kgrAzWFCgS",
+      "stageId": "qXM4d6ZAKa",
+      "type": "quiz",
+      "title": "综合应用练习",
+      "order": 7,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "short_answer",
+            "question": "给定矢量场 F = (y, x^2)，计算沿曲线 C 的线积分 ∮_C F·dr，其中 C 是由直线 y = 0、x = 1 和抛物线 y = x^2 围成的封闭曲线，且方向为逆时针。请使用格林公式来计算该线积分，并说明每一步的推导过程。",
+            "commentPrompt": "评分标准：(1) 正确应用格林公式，将线积分转换为二重积分 - 40%；(2) 正确计算偏导数 ∂Q/∂x 和 ∂P/∂y - 30%；(3) 正确计算二重积分并得到最终结果 - 30%。",
+            "analysis": "参考解答：首先，P = y, Q = x^2。根据格林公式，∮_C Pdx + Qdy = ∬_D (∂Q/∂x - ∂P/∂y) dA，其中 D 是曲线 C 所围成的区域。计算 ∂Q/∂x = 2x，∂P/∂y = 1，所以被积函数为 2x - 1。区域 D 由 y 从 0 到 x^2，x 从 0 到 1 描述。因此，∬_D (2x - 1) dA = ∫_{x=0}^{1} ∫_{y=0}^{x^2} (2x - 1) dy dx = ∫_{0}^{1} (2x - 1) * [y]_{0}^{x^2} dx = ∫_{0}^{1} (2x - 1) * x^2 dx = ∫_{0}^{1} (2x^3 - x^2) dx = [ (1/2)x^4 - (1/3)x^3 ]_{0}^{1} = 1/2 - 1/3 = 1/6。因此，线积分的值为 1/6。",
+            "points": 25,
+            "hasAnswer": false
+          },
+          {
+            "id": "q2",
+            "type": "short_answer",
+            "question": "利用格林公式推导由曲线 C 围成的平面区域 D 的面积公式：A = (1/2) ∮_C (x dy - y dx)。请写出详细的推导过程，并利用该公式计算由椭圆 x^2/a^2 + y^2/b^2 = 1 所围成的面积。",
+            "commentPrompt": "评分标准：(1) 正确选择矢量场 P = -y/2, Q = x/2 并验证 ∂Q/∂x - ∂P/∂y = 1 - 40%；(2) 写出面积公式的推导步骤 - 30%；(3) 正确应用公式计算椭圆面积得到 πab - 30%。",
+            "analysis": "参考解答：要推导面积公式，我们选择一个矢量场 F = (P, Q) 使得 ∂Q/∂x - ∂P/∂y = 1。例如，取 P = -y/2, Q = x/2，则 ∂Q/∂x = 1/2，∂P/∂y = -1/2，所以 ∂Q/∂x - ∂P/∂y = 1/2 - (-1/2) = 1。根据格林公式，面积 A = ∬_D dA = ∬_D (∂Q/∂x - ∂P/∂y) dA = ∮_C (P dx + Q dy) = (1/2) ∮_C (x dy - y dx)。\n对于椭圆 x^2/a^2 + y^2/b^2 = 1，参数方程为 x = a cosθ, y = b sinθ，θ 从 0 到 2π。则 dx = -a sinθ dθ, dy = b cosθ dθ。代入面积公式：A = (1/2) ∮_C (x dy - y dx) = (1/2) ∫_{0}^{2π} [ (a cosθ)*(b cosθ) - (b sinθ)*(-a sinθ) ] dθ = (1/2) ∫_{0}^{2π} (ab cos^2θ + ab sin^2θ) dθ = (1/2) ∫_{0}^{2π} ab dθ = (1/2) * ab * 2π = πab。因此椭圆面积为 πab。",
+            "points": 30,
+            "hasAnswer": false
+          },
+          {
+            "id": "q3",
+            "type": "short_answer",
+            "question": "判断矢量场 F = (y sin x, cos x + y) 是否为保守场。如果是保守场，请找出其势函数，并计算沿任意路径从点 (0, 0) 到点 (π/2, 1) 的线积分。如果不是保守场，请说明理由。",
+            "commentPrompt": "评分标准：(1) 正确计算旋度 ∂Q/∂x - ∂P/∂y 并判断保守性 - 30%；(2) 如果保守，正确求出势函数 - 40%；(3) 正确计算线积分值 - 30%。",
+            "analysis": "参考解答：判断保守场的条件是 ∂P/∂y = ∂Q/∂x（在单连通区域内）。这里 P = y sin x，Q = cos x + y。计算 ∂P/∂y = sin x，∂Q/∂x = -sin x。由于 ∂P/∂y ≠ ∂Q/∂x（除非 sin x = 0 的特殊点），该矢量场不是保守场。因此，线积分与路径有关，不能仅由端点确定。如果题目要求计算特定路径的线积分，需要给出具体路径。对于从 (0,0) 到 (π/2,1) 的任意路径，由于非保守性，结果不同，无法给出唯一值。",
+            "points": 20,
+            "hasAnswer": false
+          },
+          {
+            "id": "q4",
+            "type": "short_answer",
+            "question": "使用格林公式计算积分 ∮_C (x^2 + y^2) dx + (2xy) dy，其中曲线 C 是由直线 x = 0, x = 1, y = 0 和 y = 1 围成的正方形边界，方向为逆时针。然后，验证结果是否等于直接用参数化计算得到的值，并讨论格林公式在此计算中的优势。",
+            "commentPrompt": "评分标准：(1) 正确应用格林公式将线积分转化为二重积分 - 30%；(2) 正确计算出二重积分的结果 - 30%；(3) 通过参数化验证结果（至少验证一条边） - 30%；(4) 讨论格林公式的优势 - 10%。",
+            "analysis": "参考解答：P = x^2 + y^2, Q = 2xy。计算偏导数：∂Q/∂x = 2y，∂P/∂y = 2y。所以 ∂Q/∂x - ∂P/∂y = 2y - 2y = 0。根据格林公式，∮_C (x^2 + y^2) dx + (2xy) dy = ∬_D (0) dA = 0，其中 D 为正方形区域 [0,1]×[0,1]。\n验证：将正方形分成四条边，每条边参数化并计算线积分，累加应为 0。例如，直角边 y=0，x 从 0 到 1：沿该段，y=0，dy=0，∫ (x^2 + 0) dx = ∫_0^1 x^2 dx = 1/3。右边 x=1，y 从 0 到 1：dx=0，∫ (2*1*y) dy = ∫_0^1 2y dy = 1。上边 y=1，x 从 1 到 0（注意方向）：dx为负，∫ (x^2 + 1) dx + (2x) dy 但dy=0，所以从 1 到 0 积分为 -∫_1^0 (x^2 + 1) dx = ∫_0^1 (x^2 +1) dx = (1/3 + 1) = 4/3。左边 x=0，y 从 1 到 0：dx=0，∫ (0) dy = 0。总和 = 1/3 + 1 - 4/3 + 0 = 0。验证成立。\n格林公式的优势：将复杂的曲线积分转化为简单的区域二重积分，尤其是当被积函数在区域上具有对称性或偏导数相减为零时，计算量大大减少。此例中，直接参数化需要分解四条边并积分，而格林公式瞬间得出结果为 0。",
+            "points": 25,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "格林公式建立了平面区域上封闭曲线的线积分与该区域上二重积分之间的联系，公式为 ∮_C Pdx + Qdy = ∬_D (∂Q/∂x - ∂P/∂y) dA。",
+          "利用格林公式，可以通过选择合适的矢量场 P = -y/2, Q = x/2 来推导平面区域面积公式 A = (1/2) ∮_C (x dy - y dx)。",
+          "判断矢量场 F = (P, Q) 是否为保守场的条件是旋度 ∂Q/∂x - ∂P/∂y = 0，如果成立，则线积分与路径无关，可以定义势函数。",
+          "格林公式简化计算的优势在于将边界上的曲线积分转化为内部区域上的二重积分，特别是当被积函数满足某些对称性或偏导差为零时，计算效率大幅提升。",
+          "应用格林公式时需注意曲线的方向必须正向（逆时针），且函数 P 和 Q 在区域内部及边界上具有连续偏导数。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_47Gqcv-L",
+          "type": "speech",
+          "text": "同学们，接下来我们进入今天的综合应用练习环节。这里有几个精心挑选的题目，旨在检验大家运用格林公式解决实际问题的能力。每一题都非常有代表性，请大家认真对待，先独立思考，然后我们再来一起分析和讲解。"
+        },
+        {
+          "id": "action_meJgSt2f",
+          "type": "speech",
+          "text": "第一题要求大家利用格林公式计算一个由直线和抛物线围成的封闭曲线上的线积分。请大家注意，使用格林公式前，关键是要正确地将线积分转化为二重积分，并明确被积函数与积分区域。要写出每一步的推导，证明你理解了从第一类曲线积分到二重积分的转化过程。"
+        },
+        {
+          "id": "action_dxd6KjJ8",
+          "type": "speech",
+          "text": "第二题是一个很经典的推导题。请利用格林公式推导出平面区域面积公式 A = 1/2 ∮ (x dy - y dx)。这个公式的美妙之处在于，它将区域的面积与边界上的线积分联系起来。推导完成后，请用这个公式计算椭圆所围成的面积，这样你们就能看到公式的实用价值了。"
+        },
+        {
+          "id": "action_nl4y8G4T",
+          "type": "speech",
+          "text": "第三题是关于保守场的判断。判断一个矢量场是否为保守场，通常有两种方法：一是检查其旋度是否为零，二是看它是否满足格林公式或斯托克斯定理的逆命题条件。如果是保守场，请找出势函数，并利用势函数计算沿任意路径的线积分——这将大大简化计算。请先判断，再求解。"
+        },
+        {
+          "id": "action_3JibQGO8",
+          "type": "speech",
+          "text": "最后一题，我们可以用格林公式计算一个正方形边界上的线积分，这样就能看到格林公式带来的巨大便利。如果你先用格林公式将线积分转化为二重积分，再通过参数化方法直接计算进行验证，就会发现格林公式可以避开复杂的参数化过程，让四段边界上的积分变成简单的二重积分区域上的计算。"
+        },
+        {
+          "id": "action_vq42UEcf",
+          "type": "speech",
+          "text": "好的，下面请大家开始作答。注意整理好每一步的推导，写出清晰的思路和计算结果。完成题目后，我们再一起交流讨论。如果遇到困难，也不要气馁，这正是检验和巩固知识点的好机会。"
+        }
+      ],
+      "createdAt": 1782297452735,
+      "updatedAt": 1782297452735
+    },
+    {
+      "id": "scene_553qtaVLIP",
+      "stageId": "qXM4d6ZAKa",
+      "type": "slide",
+      "title": "课程总结与拓展",
+      "order": 9,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "RnBaa-mBuS5gEhtEGjHMY",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_IljE_Xxq",
+              "type": "text",
+              "left": 105,
+              "top": 78,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">课程总结与拓展</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.18,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "shape_bTwpSMMp",
+              "type": "shape",
+              "left": 105,
+              "top": 156,
+              "width": 790,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_Ux1EqKsE",
+              "type": "shape",
+              "left": 105,
+              "top": 205,
+              "width": 420,
+              "height": 260,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#eaf4fe",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_A0RajH1z",
+              "type": "text",
+              "left": 125,
+              "top": 215,
+              "width": 380,
+              "height": 83,
+              "content": "<p style=\"font-size:20px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">格林公式（二维）</strong></p><p style=\"font-size:20px; color:#555;\">∮_C P dx + Q dy = ∬_D (∂Q/∂x − ∂P/∂y) dA</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "line_inHtJgLa",
+              "type": "line",
+              "left": 125,
+              "top": 310,
+              "width": 3,
+              "start": [
+                0,
+                0
+              ],
+              "end": [
+                60,
+                0
+              ],
+              "style": "solid",
+              "color": "#2f80d1",
+              "points": [
+                "",
+                "arrow"
+              ]
+            },
+            {
+              "id": "text_jaPayCDI",
+              "type": "text",
+              "left": 195,
+              "top": 300,
+              "width": 140,
+              "height": 49,
+              "content": "<p style=\"font-size:15px; color:#2f80d1;\">线积分 → 面积分</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_3kEBcY2_",
+              "type": "text",
+              "left": 125,
+              "top": 350,
+              "width": 380,
+              "height": 102,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">核心思想：</strong></p><p style=\"font-size:18px;\">• 边界（曲线C）与内部（区域D）的关系</p><p style=\"font-size:18px;\">• 旋度的二维版本</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape_2NJlPdPG",
+              "type": "shape",
+              "left": 565,
+              "top": 205,
+              "width": 370,
+              "height": 260,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#f8f9fa",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_6HO-gQ28",
+              "type": "text",
+              "left": 585,
+              "top": 215,
+              "width": 330,
+              "height": 56,
+              "content": "<p style=\"font-size:20px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">三维推广</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape_W2vGqT6F",
+              "type": "shape",
+              "left": 585,
+              "top": 278,
+              "width": 16,
+              "height": 8,
+              "path": "M 1 0.5 A 0.5 0.5 0 1 1 0 0.5 A 0.5 0.5 0 1 1 1 0.5 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "text_KpWbWVCp",
+              "type": "text",
+              "left": 603,
+              "top": 268,
+              "width": 310,
+              "height": 72,
+              "content": "<p style=\"font-size:16px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">斯托克斯定理</strong>（三维旋度）</p><p style=\"font-size:16px; color:#555;\">曲面积分 → 边界线积分</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape_oDRMw7oQ",
+              "type": "shape",
+              "left": 585,
+              "top": 338,
+              "width": 16,
+              "height": 8,
+              "path": "M 1 0.5 A 0.5 0.5 0 1 1 0 0.5 A 0.5 0.5 0 1 1 1 0.5 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#ed7d31",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "text_qYUQU4k6",
+              "type": "text",
+              "left": 603,
+              "top": 328,
+              "width": 310,
+              "height": 72,
+              "content": "<p style=\"font-size:16px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">高斯散度定理</strong>（通量）</p><p style=\"font-size:16px; color:#555;\">体积分 → 封闭曲面积分</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape__pme1Atb",
+              "type": "shape",
+              "left": 585,
+              "top": 398,
+              "width": 16,
+              "height": 8,
+              "path": "M 1 0.5 A 0.5 0.5 0 1 1 0 0.5 A 0.5 0.5 0 1 1 1 0.5 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#70ad47",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "text_iElX_Wob",
+              "type": "text",
+              "left": 603,
+              "top": 388,
+              "width": 310,
+              "height": 72,
+              "content": "<p style=\"font-size:16px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">统一视角</strong></p><p style=\"font-size:16px; color:#555;\">所有公式都是广义斯托克斯定理的特例</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#333",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape_kyXMY5D_",
+              "type": "shape",
+              "left": 105,
+              "top": 474.5,
+              "width": 830,
+              "height": 40,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#eaf4fe",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_5b1l-CDA",
+              "type": "text",
+              "left": 125,
+              "top": 472.5,
+              "width": 790,
+              "height": 42,
+              "content": "<p style=\"font-size:15px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">下一步：</strong>学习向量微积分章节 · 参考教材《微积分》多元函数部分</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_1R4YUs1N",
+          "type": "spotlight",
+          "elementId": "text_IljE_Xxq"
+        },
+        {
+          "id": "action_-OfUIgix",
+          "type": "speech",
+          "text": "好了，同学们，这是我们今天的最后一页了。让我们来做一次完整的课程总结与拓展，把刚才学到的格林公式，放到一个更广阔的图景中去看。"
+        },
+        {
+          "id": "action_dd2J_HuR",
+          "type": "spotlight",
+          "elementId": "text_A0RajH1z"
+        },
+        {
+          "id": "action_nXyGCDlL",
+          "type": "speech",
+          "text": "首先，回顾核心。我们刚才一直在反复强调的格林公式：∮_C P dx + Q dy = ∬_D (∂Q/∂x − ∂P/∂y) dA。它的精髓在于——将封闭曲线上的线积分，转化成了被它所包围的区域上的二重积分。"
+        },
+        {
+          "id": "action_-RxF-dL5",
+          "type": "spotlight",
+          "elementId": "text_jaPayCDI"
+        },
+        {
+          "id": "action_sKQJp27Z",
+          "type": "speech",
+          "text": "没错，它的核心思想就是‘化曲为直’，或者说，建立起了‘边界’与‘内部’的联系。"
+        },
+        {
+          "id": "action_YY2DA2Jr",
+          "type": "laser",
+          "elementId": "text_3kEBcY2_"
+        },
+        {
+          "id": "action_uuxKX8WJ",
+          "type": "speech",
+          "text": "看到没有？这个神奇公式揭示了：沿着一块区域的边界（曲线C）的累积变化，实际上完全取决于这块区域内部（区域D）各个点的‘旋转程度’，也就是旋度。"
+        },
+        {
+          "id": "action_1pyXzXEi",
+          "type": "spotlight",
+          "elementId": "text_6HO-gQ28"
+        },
+        {
+          "id": "action_sENkw759",
+          "type": "speech",
+          "text": "那么，如果我们将这个精妙的思想从二维平面推广到三维空间，会发生什么呢？"
+        },
+        {
+          "id": "action_hjSkvX7P",
+          "type": "spotlight",
+          "elementId": "text_KpWbWVCp"
+        },
+        {
+          "id": "action_Dp91jODg",
+          "type": "speech",
+          "text": "这里就诞生了伟大的斯托克斯定理。它是格林公式在三维空间中的直接推广。它将曲面上的面积分，与其边界曲线上的线积分联系了起来。想象一下，你有一个类似于‘蹦床’的曲面，边缘是那条闭合曲线，斯托克斯定理说的就是，曲面上每个点的‘三维旋转’（也就是旋度）加起来的效果，就等于沿着边缘走一圈的效果。"
+        },
+        {
+          "id": "action_76J15tbj",
+          "type": "spotlight",
+          "elementId": "text_qYUQU4k6"
+        },
+        {
+          "id": "action_LacG2QYH",
+          "type": "speech",
+          "text": "而另一个重要的推广是高斯散度定理。它讲的是‘通量’。想象一个封闭的盒子，比如一个篮球。高斯定理告诉我们：通过整个球表面往外‘流’出去的总量（通量），等于球内部所有点‘源’与‘汇’的总和。它把封闭曲面积分和内部的体积分联系在了一起。"
+        },
+        {
+          "id": "action_p5XQ1JbO",
+          "type": "spotlight",
+          "elementId": "text_iElX_Wob"
+        },
+        {
+          "id": "action_p9P6NcA5",
+          "type": "speech",
+          "text": "最令人惊叹的是，无论是我们刚刚学的格林公式、还是三维的斯托克斯定理和高斯定理，它们都只是同一个宏大数学思想的不同表现——也就是‘广义斯托克斯定理’。它用一个公式，统一了微积分中积分学的所有核心：边界上的积分，等于内部的导数之和。这就是数学的魅力。"
+        },
+        {
+          "id": "action_uqJirUxj",
+          "type": "spotlight",
+          "elementId": "text_5b1l-CDA"
+        },
+        {
+          "id": "action_kMIKv9Pd",
+          "type": "speech",
+          "text": "好了，我们今天的旅程到这里就结束了。如果大家对向量微积分、或者这些公式的更多应用感兴趣，可以参考教材《微积分》中多元函数的部分，我们下节课再见！"
+        }
+      ],
+      "createdAt": 1782297452736,
+      "updatedAt": 1782297452736
+    }
+  ],
+  "createdAt": "2026-06-24T10:37:32.737Z"
+}

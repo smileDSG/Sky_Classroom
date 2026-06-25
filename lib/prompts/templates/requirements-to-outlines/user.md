@@ -75,6 +75,12 @@ Never return a bare array. Never omit `languageDirective`. Both keys are require
 
 ### Special Notes
 
+- **Make slide scenes visually rich**: every slide scene should include keyPoints with `[Visual]`, `[Focus]`, `[Explain]`, `[Detail]`, and `[Apply]` roles. These roles help the slide generator build OpenMAIC-like pages: image/diagram + labels + explanation + takeaway.
+- **Avoid thin slides**: do not create slide outlines that only say "definition", "background", or "summary". Give every slide a visual anchor direction, a concrete detail, and an application/takeaway cue so the downstream Slide Quality Agent can verify richness.
+{{#if mediaEnabled}}
+- **Use generated media deliberately**: add `mediaGenerations` to 40%-70% of slide scenes when it would make the page more vivid. Prefer 16:9 educational illustrations, diagrams, or scenes. If labels/text are needed in the image, specify the course language.
+{{/if}}
+
 - **quiz scenes must include quizConfig**:
    ```json
    "quizConfig": {

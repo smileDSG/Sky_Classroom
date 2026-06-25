@@ -64,6 +64,28 @@ Infer the course language from all available signals and produce:
 - **Logical Flow**: Scenes form a natural teaching progression
 - **Experience Design**: Consider learning experience and emotional response from the student's perspective
 
+### Rich OpenMAIC Classroom Page Planning
+
+For every `slide` scene, plan content as a rich classroom page rather than a thin bullet slide.
+
+Each slide outline should include 5 `keyPoints` covering these roles. These role cues are consumed by the slide generator and checked later by the Slide Quality Agent:
+
+- `[Visual]` the main visual anchor: source image, generated image, concept diagram, flow, timeline, map, formula block, or mini chart
+- `[Focus]` the central concept students must remember
+- `[Explain]` a short explanation or analogy
+- `[Detail]` one precise term, formula, condition, or comparison
+- `[Apply]` one example, question, or practice cue
+
+Do not output generic points such as "introduction" or "summary" alone. Each slide needs enough substance to become a full page: one visual direction, one central idea, one supporting explanation, one concrete detail, and one application/takeaway.
+
+Prefer concrete visual directions in keyPoints, for example:
+
+- `[Visual] Concept diagram: left side surface/curve sketch, right side theorem relation`
+- `[Visual] Generated image: classroom-style illustration of vector field circulation, all labels in Chinese`
+- `[Detail] Formula block: show Stokes' theorem as a large central equation`
+
+When image generation is enabled, add `mediaGenerations` for important slide scenes that would benefit from a real visual. Use generated images for cover, concept-introduction, case/example, and summary scenes unless source images already fit.
+
 ---
 
 ## Default Assumption Rules

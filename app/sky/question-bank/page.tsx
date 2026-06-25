@@ -21,6 +21,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { createLogger } from '@/lib/logger';
 import { useDebounce } from '@/lib/hooks/use-debounce';
+import { useTheme } from '@/lib/hooks/use-theme';
 import type { QuestionBankRow } from '@/lib/question-bank/types';
 import { QuestionForm } from '@/components/sky/question-bank/question-form';
 import { ConfirmDialog } from '@/components/sky/question-bank/confirm-dialog';
@@ -88,6 +89,8 @@ const COMMON_GRADES = [
 
 export default function QuestionBankPage() {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const [questions, setQuestions] = useState<QuestionBankRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -255,19 +258,20 @@ export default function QuestionBankPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div
-      className="relative min-h-screen"
-      style={{ background: 'linear-gradient(180deg, #0B0D1A 0%, #121008 50%, #0B0D1A 100%)' }}
-    >
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <CelestialCanvas starCount={120} parallax={false} nebula grid={false} horizonGlow />
-      </div>
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute top-0 left-1/3 h-[500px] w-[500px] rounded-full bg-amber-500/5 blur-[150px]" />
-        <div className="absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-sky-500/4 blur-[120px]" />
-      </div>
+    <div className="relative min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-[#0B0D1A] dark:via-[#121008] dark:to-[#0B0D1A]">
+      {isDark && (
+        <>
+          <div className="pointer-events-none fixed inset-0 z-0">
+            <CelestialCanvas starCount={120} parallax={false} nebula grid={false} horizonGlow />
+          </div>
+          <div className="pointer-events-none fixed inset-0 z-0">
+            <div className="absolute top-0 left-1/3 h-[500px] w-[500px] rounded-full bg-amber-500/5 blur-[150px]" />
+            <div className="absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-sky-500/4 blur-[120px]" />
+          </div>
+        </>
+      )}
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-12 space-y-6 text-amber-50">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-12 space-y-6 text-slate-800 dark:text-amber-50">
         <motion.div
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
@@ -275,7 +279,7 @@ export default function QuestionBankPage() {
         >
           <Link
             href="/sky/cloud-mind/quiz"
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-amber-200/60 transition-all hover:text-amber-300 hover:bg-amber-500/10"
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-slate-500 dark:text-amber-200/60 transition-all hover:text-slate-700 dark:hover:text-amber-300 hover:bg-slate-100 dark:hover:bg-amber-500/10"
           >
             <ArrowLeft className="h-4 w-4" />
             返回星际试炼场
@@ -286,7 +290,7 @@ export default function QuestionBankPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-slate-950/70 p-8 shadow-2xl shadow-amber-950/20 backdrop-blur-xl md:p-10"
+          className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-amber-500/20 bg-white/80 dark:bg-slate-950/70 p-8 shadow-xl shadow-slate-200/50 dark:shadow-amber-950/20 backdrop-blur-xl md:p-10 text-slate-800 dark:text-amber-50"
         >
           <div className="absolute top-0 right-0 w-72 h-72 bg-amber-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
           <div className="absolute bottom-0 left-0 w-56 h-56 bg-sky-400/10 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4" />
@@ -294,19 +298,21 @@ export default function QuestionBankPage() {
           <div className="relative z-10 flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
-                  <Library className="h-5 w-5 text-amber-200" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200/70 dark:bg-white/15 backdrop-blur-sm">
+                  <Library className="h-5 w-5 text-amber-600 dark:text-amber-200" />
                 </div>
-                <span className="text-xs font-medium text-amber-200 tracking-wider uppercase">
+                <span className="text-xs font-medium text-slate-500 dark:text-amber-200 tracking-wider uppercase">
                   知识之海
                 </span>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">题库中心</h1>
-              <p className="text-amber-100 text-base max-w-md leading-relaxed">
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white mb-2">
+                题库中心
+              </h1>
+              <p className="text-slate-600 dark:text-amber-100 text-base max-w-md leading-relaxed">
                 汇聚各学科精选题目，支持批量导入与智能检索，为 AI 解题与课堂测验提供坚实数据基础。
               </p>
               <div className="mt-4 flex items-center gap-4">
-                <div className="flex items-center gap-1.5 text-sm text-amber-200">
+                <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-amber-200">
                   <FileQuestion className="h-4 w-4" />
                   <span>{total} 道题</span>
                 </div>
@@ -316,7 +322,7 @@ export default function QuestionBankPage() {
             <div className="hidden md:flex items-center gap-2">
               <Button
                 variant="outline"
-                className="border-amber-400/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20 hover:text-amber-50"
+                className="border-amber-400/30 dark:border-amber-400/30 bg-amber-500/10 text-slate-700 dark:text-amber-100 hover:bg-amber-500/20 hover:text-slate-900 dark:hover:text-amber-50"
                 onClick={() => setCreateOpen(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -335,7 +341,7 @@ export default function QuestionBankPage() {
         <div className="flex md:hidden items-center gap-2">
           <Button
             variant="outline"
-            className="flex-1 border-amber-400/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20 hover:text-amber-50"
+            className="flex-1 border-amber-400/30 dark:border-amber-400/30 bg-amber-500/10 text-slate-700 dark:text-amber-100 hover:bg-amber-500/20 hover:text-slate-900 dark:hover:text-amber-50"
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -349,7 +355,7 @@ export default function QuestionBankPage() {
           </Link>
         </div>
 
-        <Card className="border-amber-500/20 bg-slate-950/70 text-amber-50 shadow-xl shadow-amber-950/10 backdrop-blur-xl">
+        <Card className="border-slate-200 dark:border-amber-500/20 bg-white dark:bg-slate-950/70 text-slate-800 dark:text-amber-50 shadow-xl shadow-slate-200/50 dark:shadow-amber-950/10 backdrop-blur-xl">
           <CardContent className="pt-6">
             <div className="flex flex-wrap gap-4 items-end">
               <div className="flex-1 min-w-[200px]">
@@ -451,7 +457,7 @@ export default function QuestionBankPage() {
         </Card>
 
         {/* ── List ── */}
-        <Card className="border-amber-500/20 bg-slate-950/70 text-amber-50 shadow-xl shadow-amber-950/10 backdrop-blur-xl">
+        <Card className="border-slate-200 dark:border-amber-500/20 bg-white dark:bg-slate-950/70 text-slate-800 dark:text-amber-50 shadow-xl shadow-slate-200/50 dark:shadow-amber-950/10 backdrop-blur-xl">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -522,7 +528,7 @@ export default function QuestionBankPage() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95 }}
                           transition={{ duration: 0.2 }}
-                          className={`group relative overflow-hidden rounded-xl border border-amber-500/10 bg-slate-900/70 transition-all hover:border-amber-400/30 hover:bg-slate-900/90 hover:shadow-lg hover:shadow-amber-950/20 ${isSelected ? 'ring-1 ring-amber-300/60 bg-amber-500/10' : ''}`}
+                          className={`group relative overflow-hidden rounded-xl border border-slate-200 dark:border-amber-500/10 bg-white dark:bg-slate-900/70 text-slate-700 dark:text-amber-50 transition-all hover:border-slate-300 dark:hover:border-amber-400/30 hover:bg-slate-50 dark:hover:bg-slate-900/90 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-amber-950/20 ${isSelected ? 'ring-1 ring-amber-500/40 dark:ring-amber-300/60 bg-amber-500/10' : ''}`}
                         >
                           <div className={`absolute left-0 top-0 bottom-0 w-1 ${theme.bar}`} />
 
@@ -543,7 +549,7 @@ export default function QuestionBankPage() {
                                     </Badge>
                                     <Badge
                                       variant="outline"
-                                      className="text-xs border-amber-500/20 text-amber-100/70"
+                                      className="text-xs border-slate-200 dark:border-amber-500/20 text-slate-600 dark:text-amber-100/70"
                                     >
                                       {TYPE_LABELS[q.questionType]}
                                     </Badge>
@@ -567,12 +573,12 @@ export default function QuestionBankPage() {
                                     onClick={() => toggleExpand(q.id)}
                                   >
                                     <p
-                                      className={`text-sm font-medium text-amber-50 ${isExpanded ? '' : 'line-clamp-2'}`}
+                                      className={`text-sm font-medium text-slate-800 dark:text-amber-50 ${isExpanded ? '' : 'line-clamp-2'}`}
                                     >
                                       {q.content}
                                     </p>
                                     {q.content.length > 120 && (
-                                      <span className="mt-1 inline-flex items-center gap-0.5 text-xs text-amber-300 hover:underline">
+                                      <span className="mt-1 inline-flex items-center gap-0.5 text-xs text-amber-600 dark:text-amber-300 hover:underline">
                                         {isExpanded ? (
                                           <>
                                             <ChevronUp className="w-3 h-3" /> 收起
@@ -593,8 +599,11 @@ export default function QuestionBankPage() {
                                       </p>
                                       <div className="flex flex-wrap gap-x-3 gap-y-1">
                                         {q.options.map((opt, idx) => (
-                                          <span key={idx} className="text-xs text-amber-50/80">
-                                            <span className="font-medium text-muted-foreground">
+                                          <span
+                                            key={idx}
+                                            className="text-xs text-slate-600 dark:text-amber-50/80"
+                                          >
+                                            <span className="font-medium text-slate-700 dark:text-amber-50/90">
                                               {String.fromCharCode(65 + idx)}.
                                             </span>{' '}
                                             {opt}
@@ -606,7 +615,9 @@ export default function QuestionBankPage() {
 
                                   <p className="text-xs text-muted-foreground mt-1.5">
                                     答案:{' '}
-                                    <span className="font-medium text-amber-100">{q.answer}</span>
+                                    <span className="font-medium text-slate-600 dark:text-amber-100">
+                                      {q.answer}
+                                    </span>
                                   </p>
 
                                   {q.knowledgePoints && q.knowledgePoints.length > 0 && (
@@ -614,7 +625,7 @@ export default function QuestionBankPage() {
                                       {q.knowledgePoints.map((kp, idx) => (
                                         <span
                                           key={idx}
-                                          className="inline-flex items-center rounded-full border border-amber-500/10 bg-slate-800/80 px-2 py-0.5 text-[11px] text-amber-100/60"
+                                          className="inline-flex items-center rounded-full border border-slate-200 dark:border-amber-500/10 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 text-[11px] text-slate-600 dark:text-amber-100/60"
                                         >
                                           {kp}
                                         </span>
@@ -628,7 +639,7 @@ export default function QuestionBankPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-amber-100/70 hover:bg-amber-500/10 hover:text-amber-200"
+                                  className="h-8 w-8 text-slate-600 dark:text-amber-100/70 hover:bg-slate-100 dark:hover:bg-amber-500/10 hover:text-slate-800 dark:hover:text-amber-200"
                                   onClick={() => {
                                     const qp = new URLSearchParams();
                                     if (debouncedKeyword) qp.set('q', debouncedKeyword);
@@ -667,10 +678,12 @@ export default function QuestionBankPage() {
                   >
                     <div className="flex flex-col items-center gap-4">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10">
-                        <BookOpen className="h-8 w-8 text-amber-300" />
+                        <BookOpen className="h-8 w-8 text-amber-600 dark:text-amber-300" />
                       </div>
                       <div>
-                        <p className="text-base font-medium text-amber-50">题库空空如也</p>
+                        <p className="text-base font-medium text-slate-800 dark:text-amber-50">
+                          题库空空如也
+                        </p>
                         <p className="text-sm text-muted-foreground mt-1">
                           通过批量导入或手动创建，开始构建你的知识库
                         </p>
@@ -678,7 +691,7 @@ export default function QuestionBankPage() {
                       <div className="flex items-center gap-2 mt-2">
                         <Button
                           variant="outline"
-                          className="border-amber-400/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20 hover:text-amber-50"
+                          className="border-amber-400/30 dark:border-amber-400/30 bg-amber-500/10 text-slate-700 dark:text-amber-100 hover:bg-amber-500/20 hover:text-slate-900 dark:hover:text-amber-50"
                           onClick={() => setCreateOpen(true)}
                         >
                           <Plus className="w-4 h-4 mr-2" />

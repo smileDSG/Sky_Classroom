@@ -77,7 +77,8 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     options.onStopSession,
     options.onSegmentSealed,
     options.shouldHoldAfterReveal,
-  ]);// Track current stageId for data isolation
+  ]);
+  // Track current stageId for data isolation
   const stageId = useStageStore((s) => s.stage?.id);
   const stageIdRef = useRef(stageId);
 
@@ -466,9 +467,15 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       }
 
       const defaultMaxTurns = requestTemplate.config.agentIds.length <= 1 ? 1 : 10;
-      const maxTurns = settingsState.maxTurns
+      const configuredMaxTurns = settingsState.maxTurns
         ? parseInt(settingsState.maxTurns, 10) || defaultMaxTurns
         : defaultMaxTurns;
+      const maxTurns =
+        requestTemplate.config.agentIds.length <= 1
+          ? 1
+          : sessionType === 'qa'
+            ? Math.min(configuredMaxTurns, 2)
+            : configuredMaxTurns;
 
       // Per-iteration buffer reference — set in onEvent, used in onIterationEnd
       let currentBuffer: StreamBuffer | null = null;
@@ -511,7 +518,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
               signal,
             });
             if (res.status === 401) {
-              const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+              const refreshRes = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                credentials: 'include',
+              });
               if (refreshRes.ok) {
                 res = await fetch('/api/chat', {
                   method: 'POST',
@@ -764,41 +774,44 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
   );
 
   /** Delete a session permanently from the list */
-  const deleteSession = useCallback((sessionId: string) => {
-    log.info(`[ChatArea] Deleting session: ${sessionId}`);
+  const deleteSession = useCallback(
+    (sessionId: string) => {
+      log.info(`[ChatArea] Deleting session: ${sessionId}`);
 
-    // Abort if currently streaming
-    if (abortControllerRef.current && streamingSessionIdRef.current === sessionId) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-      streamingSessionIdRef.current = null;
-      setIsStreaming(false);
-    }
+      // Abort if currently streaming
+      if (abortControllerRef.current && streamingSessionIdRef.current === sessionId) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+        streamingSessionIdRef.current = null;
+        setIsStreaming(false);
+      }
 
-    // Shutdown and remove buffer
-    const buf = buffersRef.current.get(sessionId);
-    if (buf) {
-      buf.shutdown();
-      buffersRef.current.delete(sessionId);
-    }
-    lectureMessageIds.current.delete(sessionId);
-    lectureLastActionIndexRef.current.delete(sessionId);
+      // Shutdown and remove buffer
+      const buf = buffersRef.current.get(sessionId);
+      if (buf) {
+        buf.shutdown();
+        buffersRef.current.delete(sessionId);
+      }
+      lectureMessageIds.current.delete(sessionId);
+      lectureLastActionIndexRef.current.delete(sessionId);
 
-    // Clear live state callbacks if deleting active session
-    if (activeSessionId === sessionId) {
-      setActiveSessionId(null);
-      onLiveSpeechRef.current?.(null, null);
-      onThinkingRef.current?.(null);
-    }
+      // Clear live state callbacks if deleting active session
+      if (activeSessionId === sessionId) {
+        setActiveSessionId(null);
+        onLiveSpeechRef.current?.(null, null);
+        onThinkingRef.current?.(null);
+      }
 
-    setExpandedSessionIds((prev) => {
-      const next = new Set(prev);
-      next.delete(sessionId);
-      return next;
-    });
+      setExpandedSessionIds((prev) => {
+        const next = new Set(prev);
+        next.delete(sessionId);
+        return next;
+      });
 
-    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-  }, [activeSessionId]);
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    },
+    [activeSessionId],
+  );
 
   /**
    * End the currently active QA/Discussion session (if any).
@@ -1061,7 +1074,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         for (const session of activeQAOrDiscussion) {
           await endSession(session.id);
         }
-        sessionId = await createSession('qa', content.length > 30 ? content.slice(0, 30) + '...' : content);
+        sessionId = await createSession(
+          'qa',
+          content.length > 30 ? content.slice(0, 30) + '...' : content,
+        );
       }
 
       const controller = new AbortController();
@@ -1095,7 +1111,11 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       // When transitioning from lecture to QA, inject lecture messages as context
       // so the AI knows what was just taught and can answer questions about it.
       let lectureContextMessages: UIMessage<ChatMessageMetadata>[] = [];
-      if (needNewSession && activeSession?.type === 'lecture' && activeSession.messages.length > 0) {
+      if (
+        needNewSession &&
+        activeSession?.type === 'lecture' &&
+        activeSession.messages.length > 0
+      ) {
         lectureContextMessages = activeSession.messages;
       }
 

@@ -1,0 +1,22 @@
+{
+  "id": "AjnfmaT0ES",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 1,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-06-25T07:35:46.360Z",
+  "updatedAt": "2026-06-25T07:37:32.033Z",
+  "inputSummary": {
+    "requirementPreview": "齐次非线性微分方程",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-25T07:35:46.369Z",
+  "completedAt": "2026-06-25T07:37:32.032Z",
+  "error": "用户取消了生成"
+}

@@ -1,0 +1,1814 @@
+{
+  "id": "BcIdyaKyFm",
+  "stage": {
+    "id": "BcIdyaKyFm",
+    "name": "什么是二次函数",
+    "languageDirective": "本课程将使用中文（简体）进行教学，这是用户输入的语言。所有教学说明、场景描述和关键点均使用中文。数学专业术语（如二次函数、顶点、对称轴等）使用标准的中文数学术语。代码或编程相关概念中的专有名词（如HTML、JavaScript）保留英文原样。",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1782386461851,
+    "updatedAt": 1782386461851,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_Ob8OymKOvf",
+      "stageId": "BcIdyaKyFm",
+      "type": "slide",
+      "title": "什么是二次函数",
+      "order": 1,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "OaMfYgeFZCYHilpkdWwIw",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_ToRaC244",
+              "type": "text",
+              "left": 105,
+              "top": 48,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">什么是二次函数</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E293B",
+              "lineHeight": 1.18,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "shape_HhyIfmeF",
+              "type": "shape",
+              "left": 105,
+              "top": 126,
+              "width": 730,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#CADCFC",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_b_Ypaqqa",
+              "type": "text",
+              "left": 110,
+              "top": 410,
+              "width": 430,
+              "height": 50,
+              "content": "<p style=\"font-size:18px; color:#94A3B8;\">篮球抛物线轨迹 — 生活中的二次函数</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#94A3B8",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_CC1120Lu",
+              "type": "text",
+              "left": 590,
+              "top": 165,
+              "width": 300,
+              "height": 69,
+              "content": "<p style=\"font-size:30px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">核心定义</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E2761",
+              "lineHeight": 1.36,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "latex_S9Gqdodk",
+              "type": "latex",
+              "left": 140,
+              "top": 218,
+              "width": 418,
+              "height": 76,
+              "latex": "y = ax^2 + bx + c \\quad (a \\neq 0)",
+              "color": "#475569",
+              "align": "center",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:0.625em;vertical-align:-0.1944em;\"></span><span class=\"mord mathnormal\" style=\"margin-right:0.03588em;\">y</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.9474em;vertical-align:-0.0833em;\"></span><span class=\"mord mathnormal\">a</span><span class=\"mord\"><span class=\"mord mathnormal\">x</span><span class=\"msupsub\"><span class=\"vlist-t\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.8641em;\"><span style=\"top:-3.113em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\">2</span></span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">+</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.7778em;vertical-align:-0.0833em;\"></span><span class=\"mord mathnormal\">b</span><span class=\"mord mathnormal\">x</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">+</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mord mathnormal\">c</span><span class=\"mspace\" style=\"margin-right:1em;\"></span><span class=\"mopen\">(</span><span class=\"mord mathnormal\">a</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\"><span class=\"mrel\"><span class=\"mord vbox\"><span class=\"thinbox\"><span class=\"rlap\"><span class=\"strut\" style=\"height:0.8889em;vertical-align:-0.1944em;\"></span><span class=\"inner\"><span class=\"mord\"><span class=\"mrel\"></span></span></span><span class=\"fix\"></span></span></span></span></span><span class=\"mspace nobreak\"></span><span class=\"mrel\">=</span></span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mord\">0</span><span class=\"mclose\">)</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "text_GgmHFroJ",
+              "type": "text",
+              "left": 590,
+              "top": 300,
+              "width": 300,
+              "height": 102,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">特征</strong></p><p style=\"font-size:18px;\">- 自变量 x 的最高次数为 2</p><p style=\"font-size:18px;\">- 系数 a 不能为零</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_SypYIbcG",
+              "type": "text",
+              "left": 110,
+              "top": 468,
+              "width": 780,
+              "height": 46.5,
+              "content": "<p style=\"font-size:18px; color:#475569;\">与一次函数不同，二次函数的图像是曲线，生活中常见于抛物线运动</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#FFFFFF"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_JpgQM-MU",
+          "type": "spotlight",
+          "elementId": "text_ToRaC244"
+        },
+        {
+          "id": "action_cBajgeG5",
+          "type": "speech",
+          "text": "同学们，我们开始今天的新内容。首先，我们来学习一个非常重要的概念——什么是二次函数。"
+        },
+        {
+          "id": "action_QBFx-kyA",
+          "type": "spotlight",
+          "elementId": "text_b_Ypaqqa"
+        },
+        {
+          "id": "action_lr1AfJPF",
+          "type": "speech",
+          "text": "大家看这张图，一个篮球在空中划出一道优美的弧线，这就是我们生活中常见的抛物线运动。而描述这种运动的数学工具，就是二次函数。"
+        },
+        {
+          "id": "action_3kpkLIcq",
+          "type": "spotlight",
+          "elementId": "text_CC1120Lu"
+        },
+        {
+          "id": "action_Tyv0Zg3U",
+          "type": "speech",
+          "text": "接下来，我们来看它的核心定义。"
+        },
+        {
+          "id": "action_CuCbqOSi",
+          "type": "spotlight",
+          "elementId": "latex_S9Gqdodk"
+        },
+        {
+          "id": "action_oodh8Sqr",
+          "type": "speech",
+          "text": "形如 y 等于 a x 的平方加上 b x 再加上 c，并且要求 a 不等于 0 的函数，叫做二次函数。注意，这里 a 是一个关键，它一定不能为 0。"
+        },
+        {
+          "id": "action_2mvDwgsA",
+          "type": "laser",
+          "elementId": "text_GgmHFroJ"
+        },
+        {
+          "id": "action_vXlHQPY4",
+          "type": "speech",
+          "text": "它的特征是，自变量 x 的最高次数是 2，而且系数 a 不能为零。如果 a 等于 0，那它就变成一次函数了。"
+        },
+        {
+          "id": "action_gLIr00bT",
+          "type": "spotlight",
+          "elementId": "text_SypYIbcG"
+        },
+        {
+          "id": "action_tEcfzdQm",
+          "type": "speech",
+          "text": "和我们之前学的一次函数不同，二次函数的图像不再是直线，而是一条平滑的曲线。这种曲线在生活中随处可见，比如刚才提到的篮球抛物线，还有过山车的轨道等等。"
+        }
+      ],
+      "createdAt": 1782386532511,
+      "updatedAt": 1782386532511
+    },
+    {
+      "id": "scene_q8zpumbAFY",
+      "stageId": "BcIdyaKyFm",
+      "type": "interactive",
+      "title": "y = ax² 的探索：系数 a 的影响",
+      "order": 2,
+      "content": {
+        "type": "interactive",
+        "url": "",
+        "html": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, shrink-to-fit=no, user-scalable=no\">\n  <title>二次函数 y=ax² 系数a 模拟器</title>\n  <style>\n    * {\n      box-sizing: border-box;\n      margin: 0;\n      padding: 0;\n    }\n    body {\n      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;\n      background: #f8fafc;\n      min-height: 100vh;\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      justify-content: center;\n      padding: 12px;\n      touch-action: pan-x pan-y;\n    }\n    #sim-container {\n      max-width: 720px;\n      width: 100%;\n      background: white;\n      border-radius: 28px;\n      box-shadow: 0 12px 40px rgba(0,0,0,0.08);\n      overflow: hidden;\n      padding: 16px 16px 20px;\n    }\n    h1 {\n      font-size: 1.4rem;\n      font-weight: 600;\n      letter-spacing: 0.01em;\n      color: #0f172a;\n      display: flex;\n      align-items: center;\n      gap: 8px;\n      margin-bottom: 10px;\n      padding: 0 6px;\n    }\n    h1 small {\n      font-size: 0.9rem;\n      font-weight: 400;\n      color: #475569;\n      margin-left: auto;\n    }\n    .canvas-wrapper {\n      position: relative;\n      background: #f1f5f9;\n      border-radius: 20px;\n      overflow: hidden;\n      width: 100%;\n      aspect-ratio: 1 / 0.9;\n      max-height: 420px;\n      touch-action: none;\n    }\n    canvas {\n      display: block;\n      width: 100%;\n      height: 100%;\n      background: white;\n      touch-action: none;\n      cursor: crosshair;\n    }\n    .control-panel {\n      margin-top: 12px;\n      padding: 12px 8px 4px;\n      background: #ffffff;\n      border-radius: 20px;\n      box-shadow: 0 2px 8px rgba(0,0,0,0.02);\n    }\n    .slider-group {\n      display: flex;\n      flex-wrap: wrap;\n      align-items: center;\n      gap: 6px 8px;\n      margin-bottom: 10px;\n    }\n    .slider-group label {\n      font-weight: 500;\n      font-size: 0.95rem;\n      min-width: 50px;\n      color: #1e293b;\n    }\n    .slider-group input[type=\"range\"] {\n      flex: 1 1 100px;\n      min-width: 80px;\n      height: 6px;\n      background: #d1d5db;\n      border-radius: 10px;\n      appearance: none;\n      -webkit-appearance: none;\n      outline: none;\n      transition: background 0.15s;\n    }\n    .slider-group input[type=\"range\"]::-webkit-slider-thumb {\n      -webkit-appearance: none;\n      appearance: none;\n      width: 26px;\n      height: 26px;\n      border-radius: 50%;\n      background: #6366f1;\n      cursor: pointer;\n      border: 2px solid white;\n      box-shadow: 0 2px 8px rgba(99,102,241,0.3);\n      transition: 0.08s;\n    }\n    .slider-group input[type=\"range\"]::-moz-range-thumb {\n      width: 26px;\n      height: 26px;\n      border-radius: 50%;\n      background: #6366f1;\n      border: 2px solid white;\n      cursor: pointer;\n    }\n    .slider-value {\n      font-weight: 600;\n      font-size: 1.1rem;\n      min-width: 48px;\n      text-align: right;\n      color: #0f172a;\n      font-variant-numeric: tabular-nums;\n      font-family: 'SF Mono', 'Menlo', monospace;\n    }\n    .preset-row, .action-row {\n      display: flex;\n      flex-wrap: wrap;\n      gap: 6px;\n      margin: 8px 0 6px;\n    }\n    .preset-btn, .action-btn {\n      flex: 1 0 auto;\n      padding: 8px 12px;\n      background: #f1f5f9;\n      border: none;\n      border-radius: 40px;\n      font-weight: 500;\n      font-size: 0.85rem;\n      color: #1e293b;\n      cursor: pointer;\n      transition: all 0.12s;\n      touch-action: manipulation;\n      min-height: 44px;\n      display: inline-flex;\n      align-items: center;\n      justify-content: center;\n      box-shadow: 0 1px 3px rgba(0,0,0,0.02);\n    }\n    .preset-btn:active, .action-btn:active {\n      transform: scale(0.97);\n    }\n    .preset-btn {\n      background: #eef2ff;\n      color: #4338ca;\n    }\n    .action-btn.primary {\n      background: #6366f1;\n      color: white;\n      font-weight: 600;\n      box-shadow: 0 4px 10px rgba(99,102,241,0.2);\n    }\n    .action-btn.primary:active {\n      background: #4f46e5;\n    }\n    .action-btn.secondary {\n      background: #e2e8f0;\n      color: #1e293b;\n    }\n    .status-badge {\n      display: inline-block;\n      font-size: 0.75rem;\n      background: #f1f5f9;\n      padding: 4px 12px;\n      border-radius: 20px;\n      color: #475569;\n      margin-left: 6px;\n      font-weight: 500;\n    }\n    .legend {\n      display: flex;\n      flex-wrap: wrap;\n      justify-content: center;\n      gap: 10px 18px;\n      font-size: 0.8rem;\n      color: #334155;\n      margin-top: 8px;\n      padding: 0 4px;\n    }\n    .legend span::before {\n      content: \"●\";\n      margin-right: 6px;\n      font-size: 1rem;\n      display: inline-block;\n      vertical-align: middle;\n    }\n    .key-hint {\n      color: #94a3b8;\n      font-size: 0.7rem;\n      text-align: center;\n      margin-top: 6px;\n    }\n\n    /* 移动端完全避免重叠：控制区始终在canvas下方 */\n    @media (max-width: 520px) {\n      #sim-container { padding: 12px 8px 16px; }\n      h1 { font-size: 1.2rem; }\n      .slider-group label { min-width: 42px; font-size: 0.85rem; }\n      .slider-value { min-width: 40px; font-size: 0.95rem; }\n      .preset-btn, .action-btn { font-size: 0.8rem; padding: 8px 10px; min-height: 44px; }\n      .canvas-wrapper { aspect-ratio: 1 / 0.85; max-height: 320px; }\n    }\n    @media (max-width: 420px) {\n      .slider-group input[type=\"range\"] { min-width: 60px; }\n      .preset-btn, .action-btn { font-size: 0.75rem; padding: 6px 8px; }\n    }\n    @media (max-width: 360px) {\n      .preset-row { gap: 4px; }\n      .preset-btn { flex: 1 1 30%; }\n    }\n\n    /* 老师标注 */\n    .teacher-annotation {\n      position: fixed;\n      background: rgba(99,102,241,0.95);\n      color: white;\n      padding: 8px 14px;\n      border-radius: 24px;\n      font-size: 14px;\n      z-index: 9999;\n      box-shadow: 0 8px 20px rgba(0,0,0,0.15);\n      pointer-events: none;\n      animation: fadeSlide 0.3s ease;\n      max-width: 240px;\n    }\n    @keyframes fadeSlide {\n      from { opacity: 0; transform: translateY(10px); }\n      to { opacity: 1; transform: translateY(0); }\n    }\n    @keyframes pulse-highlight {\n      0%, 100% { outline-color: rgba(99,102,241,0.8); }\n      50% { outline-color: rgba(99,102,241,0.25); }\n    }\n  </style>\n\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css\">\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js\"></script>\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js\"></script>\n<script>\ndocument.addEventListener(\"DOMContentLoaded\", function() {\n    const katexOptions = {\n        delimiters: [\n            {left: '\\\\[', right: '\\\\]', display: true},\n            {left: '\\\\(', right: '\\\\)', display: false},\n            {left: '$$', right: '$$', display: true},\n            {left: '$', right: '$', display: false}\n        ],\n        throwOnError: false,\n        strict: false,\n        trust: true\n    };\n\n    let renderTimeout;\n    function safeRender() {\n        if (renderTimeout) clearTimeout(renderTimeout);\n        renderTimeout = setTimeout(() => {\n            renderMathInElement(document.body, katexOptions);\n        }, 100);\n    }\n\n    renderMathInElement(document.body, katexOptions);\n\n    const observer = new MutationObserver((mutations) => {\n        let shouldRender = false;\n        mutations.forEach((mutation) => {\n            if (mutation.target &&\n                mutation.target.className &&\n                typeof mutation.target.className === 'string' &&\n                mutation.target.className.includes('katex')) {\n                return;\n            }\n            shouldRender = true;\n        });\n\n        if (shouldRender) {\n            safeRender();\n        }\n    });\n\n    observer.observe(document.body, {\n        childList: true,\n        subtree: true,\n        characterData: true\n    });\n\n    setInterval(() => {\n        const text = document.body.innerText;\n        if (text.includes('\\\\(') || text.includes('$$')) {\n            safeRender();\n        }\n    }, 2000);\n});\n</script>\n</head>\n<body>\n<div id=\"sim-container\">\n  <h1>\n    y = <em>a</em>x²\n    <small>系数 a 的图像</small>\n  </h1>\n\n  <!-- Canvas -->\n  <div class=\"canvas-wrapper\">\n    <canvas id=\"graphCanvas\" width=\"600\" height=\"540\"></canvas>\n  </div>\n\n  <!-- Control Panel (始终在画布下方) -->\n  <div class=\"control-panel\">\n    <div class=\"slider-group\">\n      <label for=\"a-slider\" id=\"a-label\">a =</label>\n      <input type=\"range\" id=\"a-slider\" min=\"-4\" max=\"4\" step=\"0.05\" value=\"1\" aria-label=\"系数 a，范围 -4 到 4\">\n      <span class=\"slider-value\" id=\"a-display\">1.00</span>\n      <span class=\"status-badge\" id=\"status-badge\">● 就绪</span>\n    </div>\n\n    <div class=\"preset-row\">\n      <button class=\"preset-btn\" data-preset='{\"a\":1}' aria-label=\"预设：开口向上标准\">▲ 标准</button>\n      <button class=\"preset-btn\" data-preset='{\"a\":2}' aria-label=\"预设：开口较窄\">⏫ 窄开口</button>\n      <button class=\"preset-btn\" data-preset='{\"a\":-1}' aria-label=\"预设：开口向下\">▼ 向下</button>\n      <button class=\"preset-btn\" data-preset='{\"a\":0.5}' aria-label=\"预设：开口较宽\">🔽 宽开口</button>\n    </div>\n\n    <div class=\"action-row\">\n      <button class=\"action-btn primary\" id=\"animate-btn\" aria-label=\"开始演示, 动态变化 a\">▶ 演示</button>\n      <button class=\"action-btn secondary\" id=\"reset-btn\" aria-label=\"重置图像和状态\">⟳ 重置</button>\n    </div>\n\n    <div class=\"legend\">\n      <span style=\"color:#2563eb;\">y = ax²  (a动态)</span>\n      <span style=\"color:#dc2626;\">对称轴 x=0</span>\n      <span style=\"color:#059669;\">顶点 (0,0)</span>\n    </div>\n    <div class=\"key-hint\">␣ 暂停/继续 · R 重置 · 滑块可调</div>\n  </div>\n</div>\n\n<!-- 嵌入的widget配置 -->\n<script type=\"application/json\" id=\"widget-config\">\n{\n  \"type\": \"simulation\",\n  \"concept\": \"quadratic_function_coefficient_a\",\n  \"description\": \"二次函数 y = ax² 图像与系数a的关系：改变a的大小和正负，观察抛物线开口方向和宽窄变化。\",\n  \"variables\": [\n    { \"name\": \"a\", \"label\": \"系数 a\", \"min\": -4, \"max\": 4, \"default\": 1, \"step\": 0.05, \"unit\": \"\" }\n  ],\n  \"presets\": [\n    { \"name\": \"标准向上\", \"variables\": { \"a\": 1 } },\n    { \"name\": \"窄开口\", \"variables\": { \"a\": 2 } },\n    { \"name\": \"向下开口\", \"variables\": { \"a\": -1 } },\n    { \"name\": \"宽开口\", \"variables\": { \"a\": 0.5 } }\n  ]\n}\n</script>\n\n<script>\n(function() {\n  // ----- DOM 元素 -----\n  const canvas = document.getElementById('graphCanvas');\n  const ctx = canvas.getContext('2d');\n  const aSlider = document.getElementById('a-slider');\n  const aDisplay = document.getElementById('a-display');\n  const statusBadge = document.getElementById('status-badge');\n  const animateBtn = document.getElementById('animate-btn');\n  const resetBtn = document.getElementById('reset-btn');\n\n  // ----- 状态 -----\n  let a = 1.0;                // 当前系数\n  let animating = false;      // 是否正在演示动画\n  let animationId = null;\n  let animDirection = 1;      // 方向: 1 增加, -1 减少\n  let animPhase = 0;         // 0~1 循环\n\n  const A_MIN = -4;\n  const A_MAX = 4;\n  const A_RANGE = A_MAX - A_MIN;\n\n  // ----- 画布自适应 (Retina + 响应式) -----\n  function resizeCanvas() {\n    const wrapper = canvas.parentElement;\n    const rect = wrapper.getBoundingClientRect();\n    const w = rect.width;\n    const h = rect.height || (w * 0.9);\n    const dpr = window.devicePixelRatio || 1;\n    canvas.width = w * dpr;\n    canvas.height = h * dpr;\n    canvas.style.width = w + 'px';\n    canvas.style.height = h + 'px';\n    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n    drawCanvas(w, h);\n  }\n\n  // ----- 绘图核心 -----\n  function drawCanvas(width, height) {\n    if (!width || !height) {\n      const rect = canvas.parentElement.getBoundingClientRect();\n      width = rect.width || 600;\n      height = rect.height || (width * 0.9);\n    }\n    const w = width, h = height;\n    const pad = 32;           // 边距\n    const graphW = w - pad * 2;\n    const graphH = h - pad * 2;\n    const xCenter = w / 2;\n    const yCenter = h / 2;\n\n    // 坐标范围: x: [-4,4], y: [-4,4] (保持比例)\n    const scale = Math.min(graphW / 8, graphH / 8) * 0.9;\n    const originX = xCenter;\n    const originY = yCenter;\n\n    // 清空\n    ctx.clearRect(0, 0, w, h);\n    // 底色\n    ctx.fillStyle = '#fafbfc';\n    ctx.fillRect(0, 0, w, h);\n\n    // ---- 网格 ----\n    ctx.strokeStyle = '#e2e8f0';\n    ctx.lineWidth = 0.8;\n    for (let i = -4; i <= 4; i++) {\n      if (i === 0) continue;\n      const x = originX + i * scale;\n      ctx.beginPath();\n      ctx.moveTo(x, pad);\n      ctx.lineTo(x, h - pad);\n      ctx.stroke();\n      const y = originY - i * scale;\n      ctx.beginPath();\n      ctx.moveTo(pad, y);\n      ctx.lineTo(w - pad, y);\n      ctx.stroke();\n    }\n\n    // ---- 坐标轴 ----\n    ctx.strokeStyle = '#1e293b';\n    ctx.lineWidth = 1.8;\n    ctx.beginPath();\n    ctx.moveTo(pad, originY);\n    ctx.lineTo(w - pad, originY);\n    ctx.stroke();\n    ctx.beginPath();\n    ctx.moveTo(originX, pad);\n    ctx.lineTo(originX, h - pad);\n    ctx.stroke();\n\n    // 原点箭头\n    ctx.fillStyle = '#1e293b';\n    ctx.beginPath();\n    ctx.arc(originX, originY, 3, 0, 2 * Math.PI);\n    ctx.fill();\n\n    // ---- 刻度标签 ----\n    ctx.fillStyle = '#475569';\n    ctx.font = '12px system-ui, sans-serif';\n    ctx.textAlign = 'center';\n    ctx.textBaseline = 'top';\n    for (let i = -4; i <= 4; i++) {\n      if (i === 0) continue;\n      const x = originX + i * scale;\n      ctx.fillText(i, x, originY + 6);\n      const y = originY - i * scale;\n      ctx.textAlign = 'right';\n      ctx.textBaseline = 'middle';\n      ctx.fillText(i, originX - 8, y);\n      ctx.textAlign = 'center';\n      ctx.textBaseline = 'top';\n    }\n    ctx.textAlign = 'center';\n    ctx.textBaseline = 'top';\n    ctx.fillText('0', originX + 4, originY + 6);\n\n    // ---- 绘制二次曲线 y = a * x² (x范围 -3.6 ~ 3.6) ----\n    const curveStart = -Math.min(3.6, 4);\n    const curveEnd = Math.min(3.6, 4);\n    const steps = 120;\n    ctx.strokeStyle = '#2563eb';\n    ctx.lineWidth = 3.2;\n    ctx.shadowColor = 'rgba(37,99,235,0.15)';\n    ctx.shadowBlur = 8;\n    ctx.beginPath();\n    let first = true;\n    for (let i = 0; i <= steps; i++) {\n      const xVal = curveStart + (curveEnd - curveStart) * (i / steps);\n      const yVal = a * xVal * xVal;\n      const canvasX = originX + xVal * scale;\n      const canvasY = originY - yVal * scale;\n      if (canvasY < pad - 10 || canvasY > h - pad + 10) {\n        first = true;\n        continue;\n      }\n      if (first) {\n        ctx.moveTo(canvasX, canvasY);\n        first = false;\n      } else {\n        ctx.lineTo(canvasX, canvasY);\n      }\n    }\n    ctx.stroke();\n    ctx.shadowBlur = 0;\n\n    // ---- 顶点标记 (0,0) 绿色圆 ----\n    ctx.fillStyle = '#059669';\n    ctx.beginPath();\n    ctx.arc(originX, originY, 6, 0, 2 * Math.PI);\n    ctx.fill();\n    ctx.strokeStyle = 'white';\n    ctx.lineWidth = 2;\n    ctx.stroke();\n    ctx.fillStyle = '#065f46';\n    ctx.font = 'bold 12px system-ui';\n    ctx.textAlign = 'left';\n    ctx.textBaseline = 'bottom';\n    ctx.fillText('顶点(0,0)', originX + 10, originY - 6);\n\n    // ---- 对称轴 (x=0) 红色虚线 ----\n    ctx.strokeStyle = '#dc2626';\n    ctx.lineWidth = 1.5;\n    ctx.setLineDash([5, 5]);\n    ctx.beginPath();\n    ctx.moveTo(originX, pad);\n    ctx.lineTo(originX, h - pad);\n    ctx.stroke();\n    ctx.setLineDash([]);\n    ctx.fillStyle = '#b91c1c';\n    ctx.font = 'bold 11px system-ui';\n    ctx.textAlign = 'left';\n    ctx.textBaseline = 'bottom';\n    ctx.fillText('x=0', originX + 6, pad + 14);\n\n    // ---- 动态信息浮层 (a值) ----\n    ctx.fillStyle = 'rgba(15,23,42,0.8)';\n    ctx.font = 'bold 15px \"SF Mono\", monospace';\n    ctx.textAlign = 'right';\n    ctx.textBaseline = 'bottom';\n    const infoX = w - pad - 4;\n    const infoY = h - pad - 14;\n    ctx.fillText('a = ' + a.toFixed(2), infoX, infoY);\n\n    // ---- 开口方向文字 ----\n    let direction = a > 0 ? '开口向上 ↗' : (a < 0 ? '开口向下 ↘' : '退化为直线');\n    if (Math.abs(a) < 0.01) direction = '几乎水平';\n    ctx.fillStyle = '#334155';\n    ctx.font = '13px system-ui';\n    ctx.textAlign = 'left';\n    ctx.textBaseline = 'bottom';\n    ctx.fillText(direction, pad + 8, h - pad - 14);\n  }\n\n  // ----- 更新UI (不触发动画) -----\n  function updateUI() {\n    aDisplay.textContent = a.toFixed(2);\n    aSlider.value = a;\n    const dpr = window.devicePixelRatio || 1;\n    const rect = canvas.parentElement.getBoundingClientRect();\n    if (rect.width > 0) {\n      drawCanvas(rect.width, rect.height);\n    } else {\n      drawCanvas(600, 540);\n    }\n  }\n\n  // ----- 动画循环 (演示模式) -----\n  function animateLoop(timestamp) {\n    if (!animating) return;\n\n    // 每帧微调 a: 正弦振荡 -4 ~ 4\n    const speed = 0.015;\n    animPhase += speed;\n    const newA = A_MIN + (Math.sin(animPhase * Math.PI) * 0.5 + 0.5) * A_RANGE;\n    a = Math.min(A_MAX, Math.max(A_MIN, newA));\n    a = Math.round(a * 100) / 100;\n\n    // 更新滑块与显示\n    aSlider.value = a;\n    aDisplay.textContent = a.toFixed(2);\n\n    // 绘图\n    const rect = canvas.parentElement.getBoundingClientRect();\n    drawCanvas(rect.width, rect.height);\n    statusBadge.textContent = '▶ 演示中';\n\n    animationId = requestAnimationFrame(animateLoop);\n  }\n\n  function startAnimation() {\n    if (animating) {\n      // 暂停\n      animating = false;\n      if (animationId) {\n        cancelAnimationFrame(animationId);\n        animationId = null;\n      }\n      animateBtn.textContent = '▶ 继续';\n      statusBadge.textContent = '⏸ 暂停';\n      return;\n    }\n    // 开始/继续\n    animating = true;\n    animateBtn.textContent = '⏸ 暂停';\n    statusBadge.textContent = '▶ 演示中';\n    if (!animationId) {\n      animationId = requestAnimationFrame(animateLoop);\n    }\n  }\n\n  function stopAnimationAndReset() {\n    animating = false;\n    if (animationId) {\n      cancelAnimationFrame(animationId);\n      animationId = null;\n    }\n    animPhase = 0;\n    animateBtn.textContent = '▶ 演示';\n    // 重置a为滑块值\n    a = parseFloat(aSlider.value);\n    a = Math.min(A_MAX, Math.max(A_MIN, a));\n    aSlider.value = a;\n    aDisplay.textContent = a.toFixed(2);\n    statusBadge.textContent = '● 就绪';\n    const rect = canvas.parentElement.getBoundingClientRect();\n    drawCanvas(rect.width, rect.height);\n  }\n\n  // ----- 重置 (完全重置状态) -----\n  function fullReset() {\n    stopAnimationAndReset();\n    a = 1.0;\n    aSlider.value = a;\n    aDisplay.textContent = a.toFixed(2);\n    statusBadge.textContent = '● 就绪';\n    animPhase = 0;\n    const rect = canvas.parentElement.getBoundingClientRect();\n    drawCanvas(rect.width, rect.height);\n  }\n\n  // ----- 预设处理 -----\n  function applyPreset(preset) {\n    stopAnimationAndReset();\n    if (preset.a !== undefined) {\n      a = Math.min(A_MAX, Math.max(A_MIN, preset.a));\n      a = Math.round(a * 100) / 100;\n      aSlider.value = a;\n      aDisplay.textContent = a.toFixed(2);\n    }\n    statusBadge.textContent = '● 预设';\n    const rect = canvas.parentElement.getBoundingClientRect();\n    drawCanvas(rect.width, rect.height);\n  }\n\n  // ----- 事件绑定 -----\n  // 滑块\n  aSlider.addEventListener('input', function() {\n    if (animating) {\n      // 如果正在动画, 停止动画并进入手动模式\n      stopAnimationAndReset();\n    }\n    a = parseFloat(this.value);\n    aDisplay.textContent = a.toFixed(2);\n    statusBadge.textContent = '● 手动';\n    const rect = canvas.parentElement.getBoundingClientRect();\n    drawCanvas(rect.width, rect.height);\n  });\n\n  // 演示按钮\n  animateBtn.addEventListener('click', startAnimation);\n\n  // 重置按钮\n  resetBtn.addEventListener('click', fullReset);\n\n  // 预设按钮\n  document.querySelectorAll('.preset-btn').forEach(btn => {\n    btn.addEventListener('click', function() {\n      try {\n        const preset = JSON.parse(this.getAttribute('data-preset'));\n        applyPreset(preset);\n      } catch(e) {}\n    });\n  });\n\n  // 键盘快捷键: 空格 暂停/继续, R 重置\n  document.addEventListener('keydown', function(e) {\n    if (e.key === ' ' || e.key === 'Space') {\n      e.preventDefault();\n      startAnimation();\n    } else if (e.key === 'r' || e.key === 'R') {\n      e.preventDefault();\n      fullReset();\n    }\n  });\n\n  // 自适应画布\n  window.addEventListener('resize', function() {\n    resizeCanvas();\n  });\n  const ro = new ResizeObserver(function() {\n    resizeCanvas();\n  });\n  ro.observe(canvas.parentElement);\n\n  // 初始绘制\n  setTimeout(function() {\n    resizeCanvas();\n    a = parseFloat(aSlider.value);\n    aDisplay.textContent = a.toFixed(2);\n    const rect = canvas.parentElement.getBoundingClientRect();\n    drawCanvas(rect.width, rect.height);\n  }, 50);\n\n  // ----- 老师 postMessage 接口 (完全按要求) -----\n  window.addEventListener('message', function(event) {\n    const { type, target, state, content } = event.data || {};\n    switch (type) {\n      case 'SET_WIDGET_STATE': {\n        if (state && typeof state === 'object') {\n          Object.entries(state).forEach(([key, value]) => {\n            if (key === 'a') {\n              const slider = document.getElementById('a-slider');\n              if (slider) {\n                slider.value = value;\n                slider.dispatchEvent(new Event('input', { bubbles: true }));\n              }\n            }\n          });\n        }\n        break;\n      }\n      case 'HIGHLIGHT_ELEMENT': {\n        if (target) {\n          const el = document.querySelector(target);\n          if (el) {\n            el.style.outline = '3px solid rgba(99,102,241,0.8)';\n            el.style.outlineOffset = '4px';\n            el.style.animation = 'pulse-highlight 2s infinite';\n            setTimeout(() => {\n              el.style.outline = '';\n              el.style.animation = '';\n            }, 3000);\n          }\n        }\n        break;\n      }\n      case 'ANNOTATE_ELEMENT': {\n        if (target && content) {\n          const el = document.querySelector(target);\n          if (el) {\n            const rect = el.getBoundingClientRect();\n            const tooltip = document.createElement('div');\n            tooltip.className = 'teacher-annotation';\n            tooltip.style.top = (rect.top - 44) + 'px';\n            tooltip.style.left = rect.left + 'px';\n            tooltip.textContent = content;\n            document.body.appendChild(tooltip);\n            setTimeout(() => tooltip.remove(), 4000);\n          }\n        }\n        break;\n      }\n      case 'REVEAL_ELEMENT': {\n        if (target) {\n          const el = document.querySelector(target);\n          if (el) {\n            el.style.display = '';\n            el.style.opacity = '1';\n          }\n        }\n        break;\n      }\n    }\n  });\n\n  // 注入 pulse-highlight keyframe (动态, 但已写在style中, 确保)\n})();\n</script>\n</body>\n</html>",
+        "widgetType": "simulation",
+        "widgetConfig": {
+          "type": "simulation",
+          "concept": "quadratic_function_coefficient_a",
+          "description": "二次函数 y = ax² 图像与系数a的关系：改变a的大小和正负，观察抛物线开口方向和宽窄变化。",
+          "variables": [
+            {
+              "name": "a",
+              "label": "系数 a",
+              "min": -4,
+              "max": 4,
+              "default": 1,
+              "step": 0.05,
+              "unit": ""
+            }
+          ],
+          "presets": [
+            {
+              "name": "标准向上",
+              "variables": {
+                "a": 1
+              }
+            },
+            {
+              "name": "窄开口",
+              "variables": {
+                "a": 2
+              }
+            },
+            {
+              "name": "向下开口",
+              "variables": {
+                "a": -1
+              }
+            },
+            {
+              "name": "宽开口",
+              "variables": {
+                "a": 0.5
+              }
+            }
+          ]
+        },
+        "teacherActions": [
+          {
+            "id": "intro",
+            "type": "speech",
+            "content": "欢迎来到二次函数 y = ax² 的交互模拟器。在这里，你可以拖动滑块，直观地观察系数 a 对抛物线开口方向和宽窄的影响。",
+            "label": "开始探索"
+          },
+          {
+            "id": "highlight_slider",
+            "type": "highlight",
+            "target": "#a-slider",
+            "content": "这个滑块控制系数 a 的值，范围从 -4 到 4。试着拖动它，看看抛物线会如何变化。",
+            "label": "系数滑块"
+          },
+          {
+            "id": "show_default",
+            "type": "annotation",
+            "target": "#a-display",
+            "content": "当前 a = 1，抛物线开口向上，顶点在原点 (0,0)。",
+            "label": "默认状态"
+          },
+          {
+            "id": "demo_open_up",
+            "type": "setState",
+            "state": {
+              "a": 2
+            },
+            "content": "当 a = 2 时，|a| 增大，开口变窄，但方向不变（向上）。",
+            "label": "窄开口向上"
+          },
+          {
+            "id": "demo_open_down",
+            "type": "setState",
+            "state": {
+              "a": -1
+            },
+            "content": "当 a = -1 时，a < 0，开口方向反转，变为向下开口。",
+            "label": "向下开口"
+          },
+          {
+            "id": "demo_wide_open",
+            "type": "setState",
+            "state": {
+              "a": 0.5
+            },
+            "content": "当 a = 0.5 时，|a| 小于 1，开口变宽，方向仍然是向上。",
+            "label": "宽开口向上"
+          },
+          {
+            "id": "summary",
+            "type": "speech",
+            "content": "通过操作我们看到：a > 0 开口向上，a < 0 开口向下；|a| 越大开口越窄，|a| 越小开口越宽。顶点始终在原点。现在你可以自由拖动滑块，继续探索！",
+            "label": "总结规律"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_pRez1lui",
+          "title": "开始探索",
+          "type": "speech",
+          "text": "欢迎来到二次函数 y = ax² 的交互模拟器。在这里，你可以拖动滑块，直观地观察系数 a 对抛物线开口方向和宽窄的影响。"
+        },
+        {
+          "id": "action_ap5EHgjC",
+          "title": "系数滑块",
+          "type": "widget_highlight",
+          "target": "#a-slider"
+        },
+        {
+          "id": "action_ap5EHgjC_speech",
+          "type": "speech",
+          "text": "这个滑块控制系数 a 的值，范围从 -4 到 4。试着拖动它，看看抛物线会如何变化。",
+          "title": "系数滑块"
+        },
+        {
+          "id": "action_UoprXXjm",
+          "title": "默认状态",
+          "type": "widget_annotation",
+          "target": "#a-display"
+        },
+        {
+          "id": "action_UoprXXjm_speech",
+          "type": "speech",
+          "text": "当前 a = 1，抛物线开口向上，顶点在原点 (0,0)。",
+          "title": "默认状态"
+        },
+        {
+          "id": "action_AiMXbUNs",
+          "title": "窄开口向上",
+          "type": "widget_setState",
+          "state": {
+            "a": 2
+          }
+        },
+        {
+          "id": "action_AiMXbUNs_speech",
+          "type": "speech",
+          "text": "当 a = 2 时，|a| 增大，开口变窄，但方向不变（向上）。",
+          "title": "窄开口向上"
+        },
+        {
+          "id": "action_UY_2dLFh",
+          "title": "向下开口",
+          "type": "widget_setState",
+          "state": {
+            "a": -1
+          }
+        },
+        {
+          "id": "action_UY_2dLFh_speech",
+          "type": "speech",
+          "text": "当 a = -1 时，a < 0，开口方向反转，变为向下开口。",
+          "title": "向下开口"
+        },
+        {
+          "id": "action_7wVToewb",
+          "title": "宽开口向上",
+          "type": "widget_setState",
+          "state": {
+            "a": 0.5
+          }
+        },
+        {
+          "id": "action_7wVToewb_speech",
+          "type": "speech",
+          "text": "当 a = 0.5 时，|a| 小于 1，开口变宽，方向仍然是向上。",
+          "title": "宽开口向上"
+        },
+        {
+          "id": "action_YwNwT6Si",
+          "title": "总结规律",
+          "type": "speech",
+          "text": "通过操作我们看到：a > 0 开口向上，a < 0 开口向下；|a| 越大开口越窄，|a| 越小开口越宽。顶点始终在原点。现在你可以自由拖动滑块，继续探索！"
+        }
+      ],
+      "createdAt": 1782386532512,
+      "updatedAt": 1782386532512
+    },
+    {
+      "id": "scene_PJgm03FncX",
+      "stageId": "BcIdyaKyFm",
+      "type": "slide",
+      "title": "二次函数的图像：抛物线",
+      "order": 3,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "EjdzxIwbIA7aeUjX9U3xW",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "shape_0yzeidrA",
+              "type": "shape",
+              "left": 110,
+              "top": 182,
+              "width": 410,
+              "height": 251,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#F0F3FA",
+              "fixedRatio": false,
+              "opacity": 1,
+              "rotate": 0
+            },
+            {
+              "id": "shape_bFK8xYCh",
+              "type": "shape",
+              "left": 154,
+              "top": 232,
+              "width": 320,
+              "height": 148,
+              "path": "M 0.05 0.72 C 0.18 0.18, 0.48 0.08, 0.76 0.24 C 0.96 0.36, 0.92 0.74, 0.68 0.86 C 0.43 0.98, 0.18 0.92, 0.05 0.72 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#F0F3FA",
+              "fixedRatio": false,
+              "opacity": 0.95,
+              "rotate": 0
+            },
+            {
+              "id": "shape_chkcNyU3",
+              "type": "shape",
+              "left": 176,
+              "top": 260,
+              "width": 54,
+              "height": 54,
+              "path": "M 1 0.5 A 0.5 0.5 0 1 1 0 0.5 A 0.5 0.5 0 1 1 1 0.5 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#ffffff",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_Sl6KH1uw",
+              "type": "shape",
+              "left": 330,
+              "top": 242,
+              "width": 76,
+              "height": 76,
+              "path": "M 1 0.5 A 0.5 0.5 0 1 1 0 0.5 A 0.5 0.5 0 1 1 1 0.5 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#CADCFC",
+              "fixedRatio": false,
+              "opacity": 0.18,
+              "rotate": 0
+            },
+            {
+              "id": "line_4tGjzHfW",
+              "type": "line",
+              "left": 230,
+              "top": 284,
+              "width": 3,
+              "start": [
+                0,
+                0
+              ],
+              "end": [
+                98,
+                -8
+              ],
+              "style": "solid",
+              "color": "#CADCFC",
+              "points": [
+                "",
+                "arrow"
+              ]
+            },
+            {
+              "id": "text_c_H4zbju",
+              "type": "text",
+              "left": 105,
+              "top": 48,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">二次函数的图像：抛物线</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E293B",
+              "lineHeight": 1.18,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "shape_C_HAJY63",
+              "type": "shape",
+              "left": 105,
+              "top": 124,
+              "width": 790,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#CADCFC",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_Wy605TZ9",
+              "type": "shape",
+              "left": 110,
+              "top": 155,
+              "width": 420,
+              "height": 280,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#F0F3FA",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "line_u7kN6yA-",
+              "type": "line",
+              "left": 130,
+              "top": 300,
+              "width": 3,
+              "start": [
+                0,
+                0
+              ],
+              "end": [
+                380,
+                0
+              ],
+              "style": "solid",
+              "color": "#1E2761",
+              "points": [
+                "",
+                "arrow"
+              ]
+            },
+            {
+              "id": "text_FDFXIPRb",
+              "type": "text",
+              "left": 295,
+              "top": 190,
+              "width": 80,
+              "height": 53,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">顶点</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E2761",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_OljObdMb",
+              "type": "text",
+              "left": 130,
+              "top": 440,
+              "width": 380,
+              "height": 53,
+              "content": "<p style=\"font-size:18px; text-align:center;\">抛物线开口向上，顶点为最低点</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_YwU1tJlj",
+              "type": "text",
+              "left": 590,
+              "top": 165,
+              "width": 310,
+              "height": 42,
+              "content": "<p style=\"font-size:30px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">五个关键特征</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E293B",
+              "lineHeight": 1.36,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "text_EEAEC5AM",
+              "type": "text",
+              "left": 590,
+              "top": 215,
+              "width": 310,
+              "height": 72,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">开口方向</strong></p><p style=\"font-size:18px;\">a &gt; 0 开口向上，a &lt; 0 开口向下</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_UOK4xyuB",
+              "type": "text",
+              "left": 590,
+              "top": 295,
+              "width": 310,
+              "height": 62,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">对称轴</strong>：x = -b/(2a)</p><p style=\"font-size:18px;\">图像关于此直线对称</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_9FgshdKQ",
+              "type": "text",
+              "left": 590,
+              "top": 365,
+              "width": 310,
+              "height": 69.5,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">顶点与最值</strong></p><p style=\"font-size:18px;\">开口向上有最小值，向下有最大值</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_9UFjDly3",
+              "type": "text",
+              "left": 105,
+              "top": 442.5,
+              "width": 790,
+              "height": 53,
+              "content": "<p style=\"font-size:18px;\">增减性：对称轴两侧函数增减方向相反</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#FFFFFF"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_qjT1CxCa",
+          "type": "spotlight",
+          "elementId": "text_c_H4zbju"
+        },
+        {
+          "id": "action_1Ql4WSb6",
+          "type": "speech",
+          "text": "同学们，上节课我们学习了二次函数的一般形式，今天我们来深入看看它的图像——抛物线。大家看，这个优美的U形曲线就是二次函数的图像。"
+        },
+        {
+          "id": "action_Rc5ON1Fu",
+          "type": "spotlight",
+          "elementId": "text_YwU1tJlj"
+        },
+        {
+          "id": "action_wrdNw7D1",
+          "type": "speech",
+          "text": "课本上总结了抛物线的五个关键特征，分别是开口方向、对称轴、顶点、最值和增减性。掌握了这五点，二次函数的图像就完全掌握了。"
+        },
+        {
+          "id": "action_wPKkXayT",
+          "type": "spotlight",
+          "elementId": "text_EEAEC5AM"
+        },
+        {
+          "id": "action_sVB_Jc7L",
+          "type": "speech",
+          "text": "首先是开口方向。当二次项系数a大于0时，抛物线开口向上，像一个大碗；当a小于0时，开口向下，像一个倒扣的碗。这个概念很直观，大家看这个图就明白了。"
+        },
+        {
+          "id": "action_8B8Oai8Z",
+          "type": "spotlight",
+          "elementId": "text_UOK4xyuB"
+        },
+        {
+          "id": "action_1n_oZWOH",
+          "type": "speech",
+          "text": "接下来是对称轴，它的公式是x等于负的2a分之b。这条直线是抛物线完美的对称中心，图像关于它左右对称。大家想象一下，把抛物线沿这条线对折，两边正好重合。"
+        },
+        {
+          "id": "action_wNxuOEqz",
+          "type": "spotlight",
+          "elementId": "text_FDFXIPRb"
+        },
+        {
+          "id": "action_cfcmaeva",
+          "type": "speech",
+          "text": "对称轴与抛物线的交点就是顶点——也就是抛物线的最低点或最高点。它的横坐标就是对称轴的数值，代入解析式就能求出纵坐标。"
+        },
+        {
+          "id": "action_WJS00g3t",
+          "type": "spotlight",
+          "elementId": "text_9FgshdKQ"
+        },
+        {
+          "id": "action_uSMqaLjR",
+          "type": "speech",
+          "text": "顶点直接决定了最值。如果开口向上，顶点就是最小值点；开口向下，顶点就是最大值点。这正是我们前面讲过的开口方向的应用。"
+        },
+        {
+          "id": "action_N-SSKIIr",
+          "type": "spotlight",
+          "elementId": "text_9UFjDly3"
+        },
+        {
+          "id": "action_MzFVwTZ4",
+          "type": "speech",
+          "text": "最后看增减性。在对称轴左侧和右侧，函数值的增减规律正好相反。比如开口向上时，左边递减，右边递增。大家课后可以根据这个规律，自己画几个不同开口方向的抛物线试试看。"
+        }
+      ],
+      "createdAt": 1782386532513,
+      "updatedAt": 1782386532513
+    },
+    {
+      "id": "scene_o8cJHiN2Gg",
+      "stageId": "BcIdyaKyFm",
+      "type": "quiz",
+      "title": "基础知识小测",
+      "order": 4,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "下列哪个函数是二次函数的标准形式？",
+            "options": [
+              {
+                "value": "A",
+                "label": "y = 2x + 3"
+              },
+              {
+                "value": "B",
+                "label": "y = x² + 3x - 5"
+              },
+              {
+                "value": "C",
+                "label": "y = x³ + 2x² + 1"
+              },
+              {
+                "value": "D",
+                "label": "y = 1/x² + 2x"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "二次函数的标准形式是 y = ax² + bx + c（a ≠ 0），其中自变量的最高次数为2。选项A是一次函数，最高次数为1；选项C是三次函数，最高次数为3；选项D含有分式，不是整式二次函数。只有选项B满足 y = x² + 3x - 5，符合标准形式。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "single",
+            "question": "对于二次函数 y = -2x² + 4x - 1，其图象的开口方向是什么？",
+            "options": [
+              {
+                "value": "A",
+                "label": "向上"
+              },
+              {
+                "value": "B",
+                "label": "向下"
+              },
+              {
+                "value": "C",
+                "label": "向左"
+              },
+              {
+                "value": "D",
+                "label": "向右"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "二次函数的开口方向由二次项系数a决定：当a > 0时开口向上，当a < 0时开口向下。该函数中 a = -2 < 0，所以开口向下。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "single",
+            "question": "二次函数 y = x² - 6x + 5 的对称轴方程是什么？",
+            "options": [
+              {
+                "value": "A",
+                "label": "x = 3"
+              },
+              {
+                "value": "B",
+                "label": "x = -3"
+              },
+              {
+                "value": "C",
+                "label": "x = 6"
+              },
+              {
+                "value": "D",
+                "label": "x = -6"
+              }
+            ],
+            "answer": [
+              "A"
+            ],
+            "analysis": "二次函数 y = ax² + bx + c 的对称轴公式为 x = -b/(2a)。这里 a = 1，b = -6，代入得 x = -(-6)/(2*1) = 6/2 = 3。因此对称轴是 x = 3。",
+            "points": 10,
+            "hasAnswer": true
+          }
+        ],
+        "knowledgePoints": [
+          "二次函数的标准形式是 y = ax² + bx + c（a ≠ 0），自变量的最高次数为2。",
+          "二次项系数a的符号决定抛物线开口方向：a > 0开口向上，a < 0开口向下。",
+          "二次函数的对称轴方程可通过公式 x = -b/(2a) 求得。",
+          "判断一个函数是否为二次函数，要看其是否满足整式且最高次项次数为2。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_R7Y1nljA",
+          "type": "speech",
+          "text": "好了，同学们，接下来我们来一个小小的闯关游戏，检查一下大家对二次函数基本特征的掌握情况！"
+        },
+        {
+          "id": "action_zDx_wURy",
+          "type": "speech",
+          "text": "先别急着答题哦，先回顾一下——二次函数的标准形式是 y = ax² + bx + c，其中 a 不能为 0。"
+        },
+        {
+          "id": "action_92PrI1lx",
+          "type": "speech",
+          "text": "第一题：下列哪个函数是二次函数的标准形式？B 选项 y = x² + 3x - 5 就是我们的标准形式，它的 a=1, b=3, c=-5。"
+        },
+        {
+          "id": "action_vZUT_z3k",
+          "type": "speech",
+          "text": "第二题：对于二次函数 y = -2x² + 4x - 1，判断开口方向看 a 的符号。这里 a = -2，是负数，所以开口向下，选 B。"
+        },
+        {
+          "id": "action_5dwMFtp1",
+          "type": "speech",
+          "text": "第三题：二次函数 y = x² - 6x + 5 的对称轴公式是 x = -b/(2a)。这里 a=1, b=-6，代入得 x = -(-6)/(2×1) = 6/2 = 3，所以选 A。"
+        }
+      ],
+      "createdAt": 1782386532513,
+      "updatedAt": 1782386532513
+    },
+    {
+      "id": "scene_i3PH2vLXTF",
+      "stageId": "BcIdyaKyFm",
+      "type": "slide",
+      "title": "二次函数的三种表示形式",
+      "order": 5,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "oWkUKha3ezkLS1UOcxQ2P",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_UhcHxFkE",
+              "type": "text",
+              "left": 105,
+              "top": 48,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">二次函数的三种表示形式</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E293B",
+              "lineHeight": 1.18,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "shape_m0b3hXxn",
+              "type": "shape",
+              "left": 105,
+              "top": 124,
+              "width": 790,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#CADCFC",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_Q7yvEu9H",
+              "type": "shape",
+              "left": 110,
+              "top": 165,
+              "width": 460,
+              "height": 240,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#F0F3FA",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_ZbHPoR56",
+              "type": "text",
+              "left": 135,
+              "top": 180,
+              "width": 410,
+              "height": 53,
+              "content": "<p style=\"font-size:18px; color:#1E293B;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">三种形式一览</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E293B",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "latex_dyN5_NFe",
+              "type": "latex",
+              "left": 140,
+              "top": 241,
+              "width": 420,
+              "height": 76,
+              "latex": "y = ax^2 + bx + c",
+              "color": "#1E2761",
+              "align": "center",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:0.625em;vertical-align:-0.1944em;\"></span><span class=\"mord mathnormal\" style=\"margin-right:0.03588em;\">y</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.9474em;vertical-align:-0.0833em;\"></span><span class=\"mord mathnormal\">a</span><span class=\"mord\"><span class=\"mord mathnormal\">x</span><span class=\"msupsub\"><span class=\"vlist-t\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.8641em;\"><span style=\"top:-3.113em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\">2</span></span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">+</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.7778em;vertical-align:-0.0833em;\"></span><span class=\"mord mathnormal\">b</span><span class=\"mord mathnormal\">x</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">+</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.4306em;\"></span><span class=\"mord mathnormal\">c</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "latex_C5PWULaL",
+              "type": "latex",
+              "left": 140,
+              "top": 325,
+              "width": 420,
+              "height": 76,
+              "latex": "y = a(x - h)^2 + k",
+              "color": "#1E2761",
+              "align": "center",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:0.625em;vertical-align:-0.1944em;\"></span><span class=\"mord mathnormal\" style=\"margin-right:0.03588em;\">y</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mord mathnormal\">a</span><span class=\"mopen\">(</span><span class=\"mord mathnormal\">x</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">−</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1.1141em;vertical-align:-0.25em;\"></span><span class=\"mord mathnormal\">h</span><span class=\"mclose\"><span class=\"mclose\">)</span><span class=\"msupsub\"><span class=\"vlist-t\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.8641em;\"><span style=\"top:-3.113em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\">2</span></span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">+</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.6944em;\"></span><span class=\"mord mathnormal\" style=\"margin-right:0.03148em;\">k</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "latex_z4Ijjw5V",
+              "type": "latex",
+              "left": 140,
+              "top": 409,
+              "width": 420,
+              "height": 76,
+              "latex": "y = a(x - x_1)(x - x_2)",
+              "color": "#1E2761",
+              "align": "center",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:0.625em;vertical-align:-0.1944em;\"></span><span class=\"mord mathnormal\" style=\"margin-right:0.03588em;\">y</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mord mathnormal\">a</span><span class=\"mopen\">(</span><span class=\"mord mathnormal\">x</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">−</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mord\"><span class=\"mord mathnormal\">x</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.3011em;\"><span style=\"top:-2.55em;margin-left:0em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\">1</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.15em;\"><span></span></span></span></span></span></span><span class=\"mclose\">)</span><span class=\"mopen\">(</span><span class=\"mord mathnormal\">x</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">−</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mord\"><span class=\"mord mathnormal\">x</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.3011em;\"><span style=\"top:-2.55em;margin-left:0em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\">2</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.15em;\"><span></span></span></span></span></span></span><span class=\"mclose\">)</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "text_iZCM5qKb",
+              "type": "text",
+              "left": 610,
+              "top": 170,
+              "width": 310,
+              "height": 127,
+              "content": "<p style=\"font-size:22px; color:#1E293B;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">核心概念</strong></p><p style=\"font-size:22px; color:#475569;\">• <strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">一般式</strong>：标准展开形式</p><p style=\"font-size:22px; color:#475569;\">• <strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">顶点式</strong>：顶点为(h, k)</p><p style=\"font-size:22px; color:#475569;\">• <strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">交点式</strong>：x₁、x₂为x轴交点</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_PI-Vvn1g",
+              "type": "text",
+              "left": 610,
+              "top": 305,
+              "width": 310,
+              "height": 118,
+              "content": "<p style=\"font-size:22px; color:#1E293B;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">转换方法</strong></p><p style=\"font-size:22px; color:#475569;\">• 配方法：一般式 → 顶点式</p><p style=\"font-size:22px; color:#475569;\">• 因式分解：一般式 → 交点式</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_rnnynIig",
+              "type": "text",
+              "left": 110,
+              "top": 442.5,
+              "width": 780,
+              "height": 53,
+              "content": "<p style=\"font-size:18px; color:#475569;\">三种形式等价，按需选择最方便的形式进行求解或分析。</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#FFFFFF"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_czR4LDCS",
+          "type": "spotlight",
+          "elementId": "text_UhcHxFkE"
+        },
+        {
+          "id": "action_OWNPOwU4",
+          "type": "speech",
+          "text": "同学们，今天我们来学习二次函数的三种表示形式，它们是解题时的得力工具。"
+        },
+        {
+          "id": "action_0BweWEmo",
+          "type": "spotlight",
+          "elementId": "latex_dyN5_NFe"
+        },
+        {
+          "id": "action_qj9qmywT",
+          "type": "speech",
+          "text": "首先是一般式：y = ax² + bx + c，这是我们最熟悉的形式，a、b、c都是常数，它直接展示了二次项、一次项和常数项。"
+        },
+        {
+          "id": "action_g5ov5iPw",
+          "type": "laser",
+          "elementId": "latex_C5PWULaL"
+        },
+        {
+          "id": "action_K7hwec5k",
+          "type": "speech",
+          "text": "接下来是顶点式：y = a(x - h)² + k，它的优势在于可以一眼看出抛物线的顶点坐标是(h, k)。"
+        },
+        {
+          "id": "action_MOEOg-rx",
+          "type": "spotlight",
+          "elementId": "text_iZCM5qKb"
+        },
+        {
+          "id": "action_6WS_TNuL",
+          "type": "speech",
+          "text": "注意核心概念：顶点式直接给出了顶点，而交点式y = a(x - x₁)(x - x₂)则直接给出了抛物线与x轴的两个交点x₁和x₂。"
+        },
+        {
+          "id": "action_PO_6sEHD",
+          "type": "laser",
+          "elementId": "text_rnnynIig"
+        },
+        {
+          "id": "action_CkslZvZv",
+          "type": "speech",
+          "text": "要记住，这三种形式是等价的，我们可以根据需要选择最方便的形式来求解或分析，而且它们之间可以互相转换。"
+        },
+        {
+          "id": "action_k5wmVUXl",
+          "type": "spotlight",
+          "elementId": "text_PI-Vvn1g"
+        },
+        {
+          "id": "action_vTKNRx2T",
+          "type": "speech",
+          "text": "转换方法包括：用配方法从一般式得到顶点式，用因式分解从一般式得到交点式。同学们课下可以多练习一下这两种变换。"
+        }
+      ],
+      "createdAt": 1782386532514,
+      "updatedAt": 1782386532514
+    },
+    {
+      "id": "scene__zw0Y9CTsZ",
+      "stageId": "BcIdyaKyFm",
+      "type": "slide",
+      "title": "二次函数与一元二次方程",
+      "order": 6,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "3d5JBxeQzqLFclkIzVa29",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_FRmnawnn",
+              "type": "text",
+              "left": 105,
+              "top": 48,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">二次函数与一元二次方程</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E293B",
+              "lineHeight": 1.18,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "shape_vTZolEs0",
+              "type": "shape",
+              "left": 105,
+              "top": 126,
+              "width": 790,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#CADCFC",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_-PVgUA5q",
+              "type": "text",
+              "left": 590,
+              "top": 170,
+              "width": 310,
+              "height": 88,
+              "content": "<p style=\"font-size:22px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">核心关系</strong></p><p style=\"font-size:22px;\">二次函数与x轴的交点</p><p style=\"font-size:22px;\">即一元二次方程的实数根</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_hT2LSYm5",
+              "type": "text",
+              "left": 590,
+              "top": 266,
+              "width": 310,
+              "height": 77,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">判别式 Δ = b² − 4ac</strong> 决定交点个数</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E293B",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "latex_eWOaRhH1",
+              "type": "latex",
+              "left": 140,
+              "top": 318,
+              "width": 418,
+              "height": 76,
+              "latex": "\\Delta = b^2 - 4ac",
+              "color": "#1E2761",
+              "align": "center",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:0.6833em;\"></span><span class=\"mord\">Δ</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.9474em;vertical-align:-0.0833em;\"></span><span class=\"mord\"><span class=\"mord mathnormal\">b</span><span class=\"msupsub\"><span class=\"vlist-t\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.8641em;\"><span style=\"top:-3.113em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\">2</span></span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">−</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.6444em;\"></span><span class=\"mord\">4</span><span class=\"mord mathnormal\">a</span><span class=\"mord mathnormal\">c</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "shape_XsP6LIXL",
+              "type": "shape",
+              "left": 110,
+              "top": 402.5,
+              "width": 780,
+              "height": 112,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#F0F3FA",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_MKr2RMIL",
+              "type": "text",
+              "left": 130,
+              "top": 430,
+              "width": 740,
+              "height": 84.5,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">Δ > 0</strong> — 两个不同交点，方程有两个不等实根</p><p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">Δ = 0</strong> — 一个交点（顶点在x轴上），方程有两个相等实根</p><p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">Δ < 0</strong> — 无交点，方程无实根</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E293B",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#FFFFFF"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_SnxkpWvu",
+          "type": "spotlight",
+          "elementId": "text_FRmnawnn"
+        },
+        {
+          "id": "action_Lol5EV4s",
+          "type": "speech",
+          "text": "同学们，这一讲我们来学习‘二次函数与一元二次方程’之间非常奇妙的关系。"
+        },
+        {
+          "id": "action_Nyxyig5R",
+          "type": "spotlight",
+          "elementId": "text_-PVgUA5q"
+        },
+        {
+          "id": "action_KAiCx5hx",
+          "type": "speech",
+          "text": "核心联系在于：二次函数图像与x轴的交点坐标，其实就是对应一元二次方程的实数根。"
+        },
+        {
+          "id": "action_taiXKR_B",
+          "type": "spotlight",
+          "elementId": "text_hT2LSYm5"
+        },
+        {
+          "id": "action_pqJExk1j",
+          "type": "speech",
+          "text": "那么，交点个数由什么决定呢？正是判别式 Δ = b² − 4ac。"
+        },
+        {
+          "id": "action_ZMSZDt-u",
+          "type": "laser",
+          "elementId": "latex_eWOaRhH1"
+        },
+        {
+          "id": "action_TTNyPz89",
+          "type": "speech",
+          "text": "请大家看这个公式，Δ就是判别式，它的符号决定了交点的三种情况。"
+        },
+        {
+          "id": "action_MMLd2fvI",
+          "type": "spotlight",
+          "elementId": "text_MKr2RMIL"
+        },
+        {
+          "id": "action_X0IesOMI",
+          "type": "speech",
+          "text": "当Δ大于0时，图像与x轴有两个不同交点，方程有两个不等实根；当Δ等于0时，顶点恰好落在x轴上，只有一个交点，方程有两个相等的实根；当Δ小于0时，图像与x轴无交点，方程没有实数根。"
+        }
+      ],
+      "createdAt": 1782386532514,
+      "updatedAt": 1782386532514
+    },
+    {
+      "id": "scene_wrWMJDTusZ",
+      "stageId": "BcIdyaKyFm",
+      "type": "slide",
+      "title": "二次函数图像的平移",
+      "order": 7,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "69x7k6ewnSU0CoAsTf8gA",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_x9WgF2Z-",
+              "type": "text",
+              "left": 105,
+              "top": 48,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">二次函数图像的平移</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E293B",
+              "lineHeight": 1.18,
+              "paragraphSpace": 0,
+              "rotate": 0
+            },
+            {
+              "id": "shape_pk_cuFxm",
+              "type": "shape",
+              "left": 105,
+              "top": 124,
+              "width": 790,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#CADCFC",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_bzIfGQ5l",
+              "type": "shape",
+              "left": 110,
+              "top": 160,
+              "width": 430,
+              "height": 282.5,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#F0F3FA",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_c_-QU7Lh",
+              "type": "text",
+              "left": 120,
+              "top": 180,
+              "width": 80,
+              "height": 56,
+              "content": "<p style=\"font-size:20px; text-align:center;\">y</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_9LkQqkfi",
+              "type": "text",
+              "left": 315,
+              "top": 278,
+              "width": 80,
+              "height": 56,
+              "content": "<p style=\"font-size:20px; text-align:center;\">O</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_gSixSLU1",
+              "type": "text",
+              "left": 150,
+              "top": 300,
+              "width": 160,
+              "height": 74,
+              "content": "<p style=\"font-size:18px; text-align:center;\">向右平移 h</p><p style=\"font-size:18px; text-align:center;\">y = a(x–h)²</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E2761",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_BeqzA7gS",
+              "type": "text",
+              "left": 340,
+              "top": 230,
+              "width": 160,
+              "height": 40,
+              "content": "<p style=\"font-size:18px; text-align:center;\">向上平移 k</p><p style=\"font-size:18px; text-align:center;\">y = a(x–h)² + k</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E2761",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_mej0lkzZ",
+              "type": "text",
+              "left": 140,
+              "top": 382,
+              "width": 370,
+              "height": 52.5,
+              "content": "<p style=\"color:#172033;font-size:18px; text-align:center;\">平移变换不改变图像的形状与开口方向</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#172033",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_-0j7DoHK",
+              "type": "text",
+              "left": 590,
+              "top": 175,
+              "width": 310,
+              "height": 64,
+              "content": "<p style=\"font-size:22px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">平移法则</strong></p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E293B",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "shape_fYmFC8uw",
+              "type": "shape",
+              "left": 590,
+              "top": 243,
+              "width": 60,
+              "height": 8,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#CADCFC",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_LDLN0kvo",
+              "type": "text",
+              "left": 590,
+              "top": 265,
+              "width": 310,
+              "height": 112,
+              "content": "<p style=\"font-size:18px;\">• 左加右减：y = a(x–h)²</p><p style=\"font-size:18px;\">• 上加下减：y = a(x–h)² + k</p><p style=\"font-size:18px;\">• 顶点坐标 (h, k)</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_Z_jJxhEd",
+              "type": "text",
+              "left": 590,
+              "top": 390,
+              "width": 310,
+              "height": 44.5,
+              "content": "<p style=\"font-size:18px;\"><strong style=\"font-family:Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif;\">应用提示</strong></p><p style=\"font-size:18px;\">已知平移方向和距离，可直接写出顶点式</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#1E2761",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            },
+            {
+              "id": "text_a2NLzWf3",
+              "type": "text",
+              "left": 105,
+              "top": 442.5,
+              "width": 790,
+              "height": 53,
+              "content": "<p style=\"font-size:18px;\">核心：平移只改变顶点位置，a 不变 → 图像形状、开口方向不变</p>",
+              "defaultFontName": "Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif",
+              "defaultColor": "#475569",
+              "lineHeight": 1.36,
+              "paragraphSpace": 4,
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#FFFFFF"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_Ml_JhT1p",
+          "type": "spotlight",
+          "elementId": "text_x9WgF2Z-"
+        },
+        {
+          "id": "action_91ZvNwTT",
+          "type": "speech",
+          "text": "同学们，欢迎来到今天的数学课堂。接下来我们一起来学习二次函数图像的平移变换。"
+        },
+        {
+          "id": "action_SiZ0FUqH",
+          "type": "spotlight",
+          "elementId": "text_-0j7DoHK"
+        },
+        {
+          "id": "action_qaJQd4Wr",
+          "type": "speech",
+          "text": "我们之前已经学习了 y = ax² 的图像。现在，如果我们在解析式中加上一个常数 h 或者 k，图像会发生什么样的变化呢？这就是我们今天的核心——平移法则。"
+        },
+        {
+          "id": "action_TOH605ab",
+          "type": "spotlight",
+          "elementId": "text_LDLN0kvo"
+        },
+        {
+          "id": "action_6eMU0Pq-",
+          "type": "speech",
+          "text": "请大家记住这个口诀：左加右减，上加下减。具体来说，y = a(x - h)² 的图像相当于把 y = ax² 的图像向右平移 h 个单位；而 y = a(x - h)² + k 则是在此基础上再向上平移 k 个单位。"
+        },
+        {
+          "id": "action_qE_3cPfs",
+          "type": "spotlight",
+          "elementId": "text_gSixSLU1"
+        },
+        {
+          "id": "action_Uy2Cfhnn",
+          "type": "speech",
+          "text": "看这里，向右平移 h 个单位，解析式中 x 变成了 (x - h)，所以顶点坐标也从 (0,0) 变成了 (h,0)。"
+        },
+        {
+          "id": "action_eujZEvzg",
+          "type": "spotlight",
+          "elementId": "text_BeqzA7gS"
+        },
+        {
+          "id": "action_gQWTHPwd",
+          "type": "speech",
+          "text": "再加上 k 的话，图像继续向上平移，此时顶点坐标变为 (h, k)。是不是很清晰？"
+        },
+        {
+          "id": "action_8xuLMvnw",
+          "type": "spotlight",
+          "elementId": "text_mej0lkzZ"
+        },
+        {
+          "id": "action_FDpNWDXY",
+          "type": "speech",
+          "text": "这里有一个非常重要的结论：平移变换只改变图像的位置，不会改变图像的形状和开口方向。也就是说，a 的值在整个平移过程中是不变的。"
+        },
+        {
+          "id": "action_ipOn8k3q",
+          "type": "spotlight",
+          "elementId": "text_a2NLzWf3"
+        },
+        {
+          "id": "action_LeQ6jXgP",
+          "type": "speech",
+          "text": "总结一下核心要点：平移只改变顶点位置，a 不变，所以图像形状和开口方向保持不变。只要知道了平移的方向和距离，我们就能直接写出顶点式了。"
+        },
+        {
+          "id": "action_IA_6T_xr",
+          "type": "spotlight",
+          "elementId": "text_Z_jJxhEd"
+        },
+        {
+          "id": "action_9ds8iIcN",
+          "type": "speech",
+          "text": "举个应用例子：如果我们已知 y = x² 的图像向右平移 3 个单位，再向上平移 2 个单位，那么新的解析式就是 y = (x - 3)² + 2。是不是很简单？"
+        },
+        {
+          "id": "action_yxVd2nKA",
+          "type": "speech",
+          "text": "最后请大家注意，思考一下：如果平移是向左或者向下呢？口诀还是那个口诀——左加右减，上加下减，只不过 h 或 k 取负数即可。比如向左平移 2 个单位，就是 y = a(x + 2)²。"
+        }
+      ],
+      "createdAt": 1782386532516,
+      "updatedAt": 1782386532516
+    },
+    {
+      "id": "scene_5TG15VkEck",
+      "stageId": "BcIdyaKyFm",
+      "type": "quiz",
+      "title": "函数变换与应用练习",
+      "order": 8,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "将二次函数 y = 2x^2 - 4x + 5 化为顶点式后，其顶点坐标是什么？",
+            "options": [
+              {
+                "value": "A",
+                "label": "(1, 3)"
+              },
+              {
+                "value": "B",
+                "label": "(-1, 3)"
+              },
+              {
+                "value": "C",
+                "label": "(1, 7)"
+              },
+              {
+                "value": "D",
+                "label": "(-1, 7)"
+              }
+            ],
+            "answer": [
+              "A"
+            ],
+            "analysis": "通过配方法将二次函数化为顶点式：y = 2x^2 - 4x + 5 = 2(x^2 - 2x) + 5 = 2[(x-1)^2 - 1] + 5 = 2(x-1)^2 + 3，所以顶点坐标为 (1, 3)。选项B、C、D的计算均存在错误。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "single",
+            "question": "二次函数 y = -3x^2 + 6x - 2 的图像，可以由函数 y = -3x^2 的图像经过怎样的平移得到？",
+            "options": [
+              {
+                "value": "A",
+                "label": "向右平移1个单位，再向下平移1个单位"
+              },
+              {
+                "value": "B",
+                "label": "向左平移1个单位，再向上平移1个单位"
+              },
+              {
+                "value": "C",
+                "label": "向右平移1个单位，再向上平移1个单位"
+              },
+              {
+                "value": "D",
+                "label": "向左平移1个单位，再向下平移1个单位"
+              }
+            ],
+            "answer": [
+              "C"
+            ],
+            "analysis": "先将 y = -3x^2 + 6x - 2 化为顶点式：y = -3(x^2 - 2x) - 2 = -3[(x-1)^2 - 1] - 2 = -3(x-1)^2 + 1，顶点为 (1, 1)。而 y = -3x^2 的顶点为 (0, 0)。因此，需要将 y = -3x^2 向右平移1个单位，再向上平移1个单位才能得到目标函数。选项A、B、D的平移方向均有误。",
+            "points": 12,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "short_answer",
+            "question": "已知二次函数 y = x^2 - 4x + k 的图像与 x 轴有两个不同的交点，请确定 k 的取值范围，并简要说明理由。",
+            "commentPrompt": "评分标准：（1）正确写出判别式 b^2 - 4ac 的表达式并代入数值 —— 40%（2）根据条件列出正确的不等式并求解得 k < 4 —— 40%（3）结论表达完整、逻辑清晰 —— 20%",
+            "analysis": "参考答案：二次函数 y = x^2 - 4x + k 与 x 轴有两个不同的交点，等价于对应一元二次方程 x^2 - 4x + k = 0 有两个不相等的实数根，即判别式 > 0。这里 a = 1, b = -4, c = k，判别式 = b^2 - 4ac = (-4)^2 - 4*1*k = 16 - 4k。令 16 - 4k > 0，解得 k < 4。所以 k 的取值范围是 k < 4。",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "通过配方法可以将二次函数的一般式化为顶点式，从而直接得到顶点坐标和对称轴。",
+          "二次函数图像的平移变换遵循‘左加右减，上加下减’的规律，关键在于顶点位置的移动。",
+          "二次函数与x轴的交点个数由判别式决定：Δ>0有两个不同交点，Δ=0有一个交点，Δ<0无交点。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_0PDrzSss",
+          "type": "speech",
+          "text": "好了，接下来我们来做一组练习，检验一下大家对二次函数顶点式、平移规律以及图像性质的理解。这三道题难度适中，但很能考验你们对知识的灵活运用哦。请大家先认真读题，思考后再作答。"
+        },
+        {
+          "id": "action_PnVapC5a",
+          "type": "speech",
+          "text": "第一题，将二次函数 y = 2x² - 4x + 5 化为顶点式。这里我们需要用配方法，先提取二次项系数 2，得到 y = 2(x² - 2x) + 5，然后在括号内加上一次项系数一半的平方 1，再减去 1，得到 y = 2[(x - 1)² - 1] + 5，整理后就是 y = 2(x - 1)² + 3。所以顶点坐标是 (1, 3)，正确答案是 A 选项。大家在做配方法时，记得要注意符号和系数的处理哦。"
+        },
+        {
+          "id": "action_llCCSTTs",
+          "type": "speech",
+          "text": "第二题，关于平移。我们先对 y = -3x² + 6x - 2 配方，提取 -3 得 y = -3(x² - 2x) - 2，配方得 -3[(x - 1)² - 1] - 2 = -3(x - 1)² + 1。顶点式是 y = -3(x - 1)² + 1，而 y = -3x² 的顶点是 (0,0)，所以要向右平移 1 个单位，再向上平移 1 个单位，答案是 C。注意左右平移看 x 的变化，上下平移看常数项的变化，方向不要弄反哦。"
+        },
+        {
+          "id": "action__8y6t5wk",
+          "type": "speech",
+          "text": "第三题是简答题，要求确定 k 的取值范围。关键点是二次函数与 x 轴有两个不同交点，意味着相应的一元二次方程 x² - 4x + k = 0 有两个不相等的实数根。所以判别式 Δ = (-4)² - 4×1×k = 16 - 4k > 0，解得 k < 4。同时要注意这里二次项系数不为 0，已经满足。所以答案是 k < 4，理由就是判别式大于 0。大家在写解答时，要把推导过程写清楚哦。"
+        }
+      ],
+      "createdAt": 1782386532516,
+      "updatedAt": 1782386532516
+    }
+  ],
+  "createdAt": "2026-06-25T11:22:12.516Z"
+}

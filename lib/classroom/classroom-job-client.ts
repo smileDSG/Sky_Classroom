@@ -53,7 +53,7 @@ export async function submitClassroomJob(body: Record<string, unknown>): Promise
 }
 
 export async function fetchClassroomJob(jobId: string): Promise<ClassroomJobState | null> {
-  const res = await fetch(`/api/generate-classroom/${jobId}`);
+  const res = await fetch(`/api/generate-classroom/${jobId}`, { cache: 'no-store' });
   if (!res.ok) {
     if (res.status === 404) return null;
     let detail = '';
@@ -77,7 +77,7 @@ export async function pollClassroomJob(
   const pollUrl = `/api/generate-classroom/${jobId}`;
 
   while (!signal.aborted) {
-    const res = await fetch(pollUrl, { signal });
+    const res = await fetch(pollUrl, { cache: 'no-store', signal });
     if (!res.ok) {
       let detail = '';
       try {
@@ -94,12 +94,7 @@ export async function pollClassroomJob(
 
     onUpdate(data);
 
-    if (data.done) {
-      if (data.status === 'failed') {
-        throw new Error(json.data?.error ?? json.error ?? '课堂生成失败');
-      }
-      return;
-    }
+    if (data.done) return;
 
     if (data.status === 'awaiting_review') return;
 

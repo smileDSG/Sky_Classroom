@@ -1,0 +1,461 @@
+{
+  "id": "pf_pAWo7ye",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-24T06:08:39.577Z",
+  "updatedAt": "2026-06-24T06:11:11.311Z",
+  "inputSummary": {
+    "requirementPreview": "斯托克斯公式\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 10,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-24T06:08:39.605Z",
+  "totalScenes": 10,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "开场：从平面到空间的积分",
+        "description": "通过回顾格林公式，引出从二维曲线积分到三维曲面积分的推广需求，建立学习动机。",
+        "keyPoints": [
+          "回顾：格林公式建立了平面区域上的二重积分与其边界曲线积分的关系。",
+          "问题：对于空间中的曲面，是否存在类似的定理？",
+          "引入：斯托克斯公式正是格林公式在三维空间中的推广。",
+          "可视化提示：展示一个曲面及其边界曲线，暗示两者之间的联系。",
+          "学习目标：理解斯托克斯公式如何将曲面积分与边界曲线积分联系起来。"
+        ],
+        "teachingObjective": "能够说出斯托克斯公式的核心思想，即它关联了曲面积分和边界曲线积分。",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "核心概念：旋度",
+        "description": "讲解旋度的定义和物理意义，为理解斯托克斯公式的右侧打下基础。",
+        "keyPoints": [
+          "定义：旋度 (curl) 是一个向量算子，描述向量场在某一点附近的旋转程度。",
+          "符号表示：\\( \\nabla \\times \\mathbf{F} \\)。",
+          "物理意义：想象将一个小螺旋桨放入流场中，螺旋桨的旋转角速度就与旋度有关。",
+          "公式：若 \\( \\mathbf{F} = (P, Q, R) \\)，则 \\( \\nabla \\times \\mathbf{F} = (R_y - Q_z, P_z - R_x, Q_x - P_y) \\)。",
+          "[Chart] 建议使用小动画演示不同位置旋度的大小与方向，用箭头长度表示大小，方向用箭头指向表示。"
+        ],
+        "teachingObjective": "能够写出三维向量场旋度的计算公式。",
+        "estimatedDuration": 180,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "斯托克斯公式的标准形式",
+        "description": "正式给出斯托克斯公式的表达式，并解释各项的几何意义。",
+        "keyPoints": [
+          "公式：\\( \\oint_{\\partial \\Sigma} \\mathbf{F} \\cdot d\\mathbf{r} = \\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S} \\)。",
+          "解释左侧：\\( \\partial \\Sigma \\) 是曲面 \\( \\Sigma \\) 的边界曲线，是一个闭合曲线。",
+          "解释右侧：\\( \\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S} \\) 是旋度穿过曲面 \\( \\Sigma \\) 的通量。",
+          "核心思想：向量场的旋度在曲面上的积分等于该向量场沿曲面边界线的环量。",
+          "使用场景：在计算闭合曲线上的第二类曲线积分时，可以转为计算曲面积分，反之亦然。"
+        ],
+        "teachingObjective": "能够背诵并复述斯托克斯公式的标准形式。",
+        "estimatedDuration": 180,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "关键细节：有向曲面与右手定则",
+        "description": "强调应用斯托克斯公式时需要注意的方向和一致性规则，避免常见错误。",
+        "keyPoints": [
+          "前提：曲面 \\( \\Sigma \\) 必须是**有向曲面**，即具有明确的侧。",
+          "规则：边界曲线 \\( \\partial \\Sigma \\) 的方向必须与曲面的法向量方向符合**右手定则**。",
+          "右手定则：右手拇指指向法向量方向，四指弯曲的方向即为边界曲线的正方向。",
+          "错误示例：方向不一致会导致计算结果差一个负号。",
+          "图示辅助：建议配合一个3D交互模型来演示不同方向下的情况。"
+        ],
+        "teachingObjective": "能够根据给定的有向曲面，判断其边界曲线的正确方向。",
+        "estimatedDuration": 150,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "interactive",
+        "title": "互动探索：调整曲线与旋度",
+        "description": "让学习者通过调整参数或观察不同向量场，直观感受曲线积分与旋度积分的关系。",
+        "keyPoints": [
+          "选择一个简单的空间向量场（如 \\( \\mathbf{F} = (-y, x, 0) \\)）。",
+          "提供一个圆形或正方形的空间边界曲线。",
+          "允许用户调整曲面的大小和倾斜角度。",
+          "实时计算并显示左侧的环量和右侧的旋度通量，验证两者相等。",
+          "通过交互理解公式中各项的物理意义。"
+        ],
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "斯托克斯公式的守恒性与几何关系",
+          "keyVariables": [
+            "向量场的旋度大小（可预设不同场）",
+            "曲面半径/边长",
+            "曲面法向量方向（倾斜角度）"
+          ]
+        },
+        "estimatedDuration": 240,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "quiz",
+        "title": "小测验：概念理解",
+        "description": "通过选择题和填空题，检查学习者对斯托克斯公式基本概念和应用的掌握情况。",
+        "keyPoints": [
+          "考查旋度的定义和计算。",
+          "考查公式中各项的含义。",
+          "考查右手定则的应用。",
+          "考查在什么情况下选择使用公式的不同侧（曲线积分转曲面积分，反之亦然）。"
+        ],
+        "teachingObjective": "测试对斯托克斯公式核心概念的理解是否准确。",
+        "estimatedDuration": 180,
+        "order": 6,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "应用示例（上）：计算曲面积分",
+        "description": "展示一个典型例题，演示如何用斯托克斯公式将不易计算的曲面积分转为更易计算的曲线积分。",
+        "keyPoints": [
+          "例题描述：计算 \\( \\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S} \\)，其中 \\( \\mathbf{F} = (z, x, y) \\)，Σ是上半球面。",
+          "思路分析：直接计算曲面积分较麻烦，考虑使用斯托克斯公式。",
+          "关键步骤：确定Σ的边界曲线 \\( \\partial \\Sigma \\)（一个平面圆）。",
+          "转化：将曲面积分转为该平面圆上的第二类曲线积分。",
+          "计算：利用参数方程计算曲线积分，得到最终结果。"
+        ],
+        "teachingObjective": "能够模仿例题的步骤，应用斯托克斯公式来计算曲面积分。",
+        "estimatedDuration": 240,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "应用示例（下）：简化曲线积分",
+        "description": "展示另一个例子，演示如何使用斯托克斯公式将复杂的空间曲线积分转为简单的曲面积分。",
+        "keyPoints": [
+          "例题描述：计算 \\( \\oint_{C} \\mathbf{F} \\cdot d\\mathbf{r} \\)，其中C是空间中的一个复杂闭合曲线。",
+          "思路分析：直接参数化C可能非常复杂，无法计算。",
+          "关键思路：构造一个以C为边界的曲面 \\( \\Sigma \\)（通常选择最简单的平面）。",
+          "转化：利用斯托克斯公式，将环量转换为旋度穿过该构造曲面的通量。",
+          "计算：计算旋度，然后计算其在平面上的投影面积分，快速得到结果。"
+        ],
+        "teachingObjective": "能够在面对复杂空间曲线时，有意识地构造曲面来应用斯托克斯公式。",
+        "estimatedDuration": 240,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "总结与要点",
+        "description": "回顾本节课的核心内容，归纳斯托克斯公式的关键点及其与格林公式、高斯公式的关系。",
+        "keyPoints": [
+          "回顾：斯托克斯公式 = 格林公式在三维空间的有向曲面上的推广。",
+          "核心：\\( \\oint_{\\partial \\Sigma} \\mathbf{F} \\cdot d\\mathbf{r} = \\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S} \\)",
+          "桥梁：连接了曲线积分和曲面积分，允许我们在两者之间自由转换。",
+          "关系：与高斯公式并称三大公式，是向量分析的核心内容。",
+          "[Table] 表格对比格林公式、斯托克斯公式和高斯公式的维度、对象和应用场景。"
+        ],
+        "teachingObjective": "能够在知识框架中找到斯托克斯公式的位置。",
+        "estimatedDuration": 150,
+        "order": 9
+      },
+      {
+        "id": "scene_10",
+        "type": "quiz",
+        "title": "综合评测：应用技巧",
+        "description": "通过一道包含计算步骤的题目，全面检验学习者对公式的理解和应用能力。",
+        "keyPoints": [
+          "题目包含：确定方向、选择转换策略、计算旋度、计算曲面积分/曲线积分。",
+          "步骤拆解：引导学习者写出每一步的推理和计算过程。",
+          "检查点：重点在于思路是否清晰，而不仅仅是最终答案。"
+        ],
+        "teachingObjective": "能够独立地、完整地应用斯托克斯公式解决一个综合问题。",
+        "estimatedDuration": 300,
+        "order": 10,
+        "quizConfig": {
+          "questionCount": 1,
+          "difficulty": "hard",
+          "questionTypes": [
+            "short_answer"
+          ]
+        }
+      }
+    ],
+    "languageDirective": "使用中文作为教学语言。所有教学讲解、术语解释均使用中文。对于斯托克斯公式相关的数学术语，使用标准的中文数学译名（如：‘旋度’、‘曲面积分’、‘有向曲面’等）。源代码风格的数学表达式保持英文符号。对于初学者，确保解释清晰，使用浅显易懂的语言辅助理解。",
+    "topicSummary": "斯托克斯公式概述",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "kaC8FKQJq8",
+      "name": "开场：从平面到空间的积分",
+      "languageDirective": "使用中文作为教学语言。所有教学讲解、术语解释均使用中文。对于斯托克斯公式相关的数学术语，使用标准的中文数学译名（如：‘旋度’、‘曲面积分’、‘有向曲面’等）。源代码风格的数学表达式保持英文符号。对于初学者，确保解释清晰，使用浅显易懂的语言辅助理解。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782281344543,
+      "updatedAt": 1782281344543,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "斯托克斯公式\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "开场：从平面到空间的积分",
+      "description": "通过回顾格林公式，引出从二维曲线积分到三维曲面积分的推广需求，建立学习动机。",
+      "keyPoints": [
+        "回顾：格林公式建立了平面区域上的二重积分与其边界曲线积分的关系。",
+        "问题：对于空间中的曲面，是否存在类似的定理？",
+        "引入：斯托克斯公式正是格林公式在三维空间中的推广。",
+        "可视化提示：展示一个曲面及其边界曲线，暗示两者之间的联系。",
+        "学习目标：理解斯托克斯公式如何将曲面积分与边界曲线积分联系起来。"
+      ],
+      "teachingObjective": "能够说出斯托克斯公式的核心思想，即它关联了曲面积分和边界曲线积分。",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "核心概念：旋度",
+      "description": "讲解旋度的定义和物理意义，为理解斯托克斯公式的右侧打下基础。",
+      "keyPoints": [
+        "定义：旋度 (curl) 是一个向量算子，描述向量场在某一点附近的旋转程度。",
+        "符号表示：\\( \\nabla \\times \\mathbf{F} \\)。",
+        "物理意义：想象将一个小螺旋桨放入流场中，螺旋桨的旋转角速度就与旋度有关。",
+        "公式：若 \\( \\mathbf{F} = (P, Q, R) \\)，则 \\( \\nabla \\times \\mathbf{F} = (R_y - Q_z, P_z - R_x, Q_x - P_y) \\)。",
+        "[Chart] 建议使用小动画演示不同位置旋度的大小与方向，用箭头长度表示大小，方向用箭头指向表示。"
+      ],
+      "teachingObjective": "能够写出三维向量场旋度的计算公式。",
+      "estimatedDuration": 180,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "斯托克斯公式的标准形式",
+      "description": "正式给出斯托克斯公式的表达式，并解释各项的几何意义。",
+      "keyPoints": [
+        "公式：\\( \\oint_{\\partial \\Sigma} \\mathbf{F} \\cdot d\\mathbf{r} = \\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S} \\)。",
+        "解释左侧：\\( \\partial \\Sigma \\) 是曲面 \\( \\Sigma \\) 的边界曲线，是一个闭合曲线。",
+        "解释右侧：\\( \\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S} \\) 是旋度穿过曲面 \\( \\Sigma \\) 的通量。",
+        "核心思想：向量场的旋度在曲面上的积分等于该向量场沿曲面边界线的环量。",
+        "使用场景：在计算闭合曲线上的第二类曲线积分时，可以转为计算曲面积分，反之亦然。"
+      ],
+      "teachingObjective": "能够背诵并复述斯托克斯公式的标准形式。",
+      "estimatedDuration": 180,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "关键细节：有向曲面与右手定则",
+      "description": "强调应用斯托克斯公式时需要注意的方向和一致性规则，避免常见错误。",
+      "keyPoints": [
+        "前提：曲面 \\( \\Sigma \\) 必须是**有向曲面**，即具有明确的侧。",
+        "规则：边界曲线 \\( \\partial \\Sigma \\) 的方向必须与曲面的法向量方向符合**右手定则**。",
+        "右手定则：右手拇指指向法向量方向，四指弯曲的方向即为边界曲线的正方向。",
+        "错误示例：方向不一致会导致计算结果差一个负号。",
+        "图示辅助：建议配合一个3D交互模型来演示不同方向下的情况。"
+      ],
+      "teachingObjective": "能够根据给定的有向曲面，判断其边界曲线的正确方向。",
+      "estimatedDuration": 150,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "interactive",
+      "title": "互动探索：调整曲线与旋度",
+      "description": "让学习者通过调整参数或观察不同向量场，直观感受曲线积分与旋度积分的关系。",
+      "keyPoints": [
+        "选择一个简单的空间向量场（如 \\( \\mathbf{F} = (-y, x, 0) \\)）。",
+        "提供一个圆形或正方形的空间边界曲线。",
+        "允许用户调整曲面的大小和倾斜角度。",
+        "实时计算并显示左侧的环量和右侧的旋度通量，验证两者相等。",
+        "通过交互理解公式中各项的物理意义。"
+      ],
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "斯托克斯公式的守恒性与几何关系",
+        "keyVariables": [
+          "向量场的旋度大小（可预设不同场）",
+          "曲面半径/边长",
+          "曲面法向量方向（倾斜角度）"
+        ]
+      },
+      "estimatedDuration": 240,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "quiz",
+      "title": "小测验：概念理解",
+      "description": "通过选择题和填空题，检查学习者对斯托克斯公式基本概念和应用的掌握情况。",
+      "keyPoints": [
+        "考查旋度的定义和计算。",
+        "考查公式中各项的含义。",
+        "考查右手定则的应用。",
+        "考查在什么情况下选择使用公式的不同侧（曲线积分转曲面积分，反之亦然）。"
+      ],
+      "teachingObjective": "测试对斯托克斯公式核心概念的理解是否准确。",
+      "estimatedDuration": 180,
+      "order": 6,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "应用示例（上）：计算曲面积分",
+      "description": "展示一个典型例题，演示如何用斯托克斯公式将不易计算的曲面积分转为更易计算的曲线积分。",
+      "keyPoints": [
+        "例题描述：计算 \\( \\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S} \\)，其中 \\( \\mathbf{F} = (z, x, y) \\)，Σ是上半球面。",
+        "思路分析：直接计算曲面积分较麻烦，考虑使用斯托克斯公式。",
+        "关键步骤：确定Σ的边界曲线 \\( \\partial \\Sigma \\)（一个平面圆）。",
+        "转化：将曲面积分转为该平面圆上的第二类曲线积分。",
+        "计算：利用参数方程计算曲线积分，得到最终结果。"
+      ],
+      "teachingObjective": "能够模仿例题的步骤，应用斯托克斯公式来计算曲面积分。",
+      "estimatedDuration": 240,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "应用示例（下）：简化曲线积分",
+      "description": "展示另一个例子，演示如何使用斯托克斯公式将复杂的空间曲线积分转为简单的曲面积分。",
+      "keyPoints": [
+        "例题描述：计算 \\( \\oint_{C} \\mathbf{F} \\cdot d\\mathbf{r} \\)，其中C是空间中的一个复杂闭合曲线。",
+        "思路分析：直接参数化C可能非常复杂，无法计算。",
+        "关键思路：构造一个以C为边界的曲面 \\( \\Sigma \\)（通常选择最简单的平面）。",
+        "转化：利用斯托克斯公式，将环量转换为旋度穿过该构造曲面的通量。",
+        "计算：计算旋度，然后计算其在平面上的投影面积分，快速得到结果。"
+      ],
+      "teachingObjective": "能够在面对复杂空间曲线时，有意识地构造曲面来应用斯托克斯公式。",
+      "estimatedDuration": 240,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "总结与要点",
+      "description": "回顾本节课的核心内容，归纳斯托克斯公式的关键点及其与格林公式、高斯公式的关系。",
+      "keyPoints": [
+        "回顾：斯托克斯公式 = 格林公式在三维空间的有向曲面上的推广。",
+        "核心：\\( \\oint_{\\partial \\Sigma} \\mathbf{F} \\cdot d\\mathbf{r} = \\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S} \\)",
+        "桥梁：连接了曲线积分和曲面积分，允许我们在两者之间自由转换。",
+        "关系：与高斯公式并称三大公式，是向量分析的核心内容。",
+        "[Table] 表格对比格林公式、斯托克斯公式和高斯公式的维度、对象和应用场景。"
+      ],
+      "teachingObjective": "能够在知识框架中找到斯托克斯公式的位置。",
+      "estimatedDuration": 150,
+      "order": 9
+    },
+    {
+      "id": "scene_10",
+      "type": "quiz",
+      "title": "综合评测：应用技巧",
+      "description": "通过一道包含计算步骤的题目，全面检验学习者对公式的理解和应用能力。",
+      "keyPoints": [
+        "题目包含：确定方向、选择转换策略、计算旋度、计算曲面积分/曲线积分。",
+        "步骤拆解：引导学习者写出每一步的推理和计算过程。",
+        "检查点：重点在于思路是否清晰，而不仅仅是最终答案。"
+      ],
+      "teachingObjective": "能够独立地、完整地应用斯托克斯公式解决一个综合问题。",
+      "estimatedDuration": 300,
+      "order": 10,
+      "quizConfig": {
+        "questionCount": 1,
+        "difficulty": "hard",
+        "questionTypes": [
+          "short_answer"
+        ]
+      }
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "使用中文作为教学语言。所有教学讲解、术语解释均使用中文。对于斯托克斯公式相关的数学术语，使用标准的中文数学译名（如：‘旋度’、‘曲面积分’、‘有向曲面’等）。源代码风格的数学表达式保持英文符号。对于初学者，确保解释清晰，使用浅显易懂的语言辅助理解。",
+    "totalScenes": 10
+  },
+  "topicSummary": "斯托克斯公式概述",
+  "completedAt": "2026-06-24T06:11:11.311Z",
+  "result": {
+    "classroomId": "kaC8FKQJq8",
+    "url": "http://localhost:3000/classroom/kaC8FKQJq8",
+    "scenesCount": 10
+  }
+}

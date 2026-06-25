@@ -1,0 +1,447 @@
+{
+  "id": "zpX6hvKVbC",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-24T10:35:21.137Z",
+  "updatedAt": "2026-06-24T10:37:32.742Z",
+  "inputSummary": {
+    "requirementPreview": "格林公式\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 8,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-24T10:35:21.150Z",
+  "totalScenes": 9,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "从物理问题到格林公式",
+        "description": "通过一个常见的物理问题（例如计算流体在一个封闭区域上的环流）引入格林公式的直观意义，揭示面积分与线积分之间的联系。",
+        "keyPoints": [
+          "引言：为什么需要格林公式？",
+          "物理背景：环流与通量",
+          "核心思想：将边界上的线积分转化为内部的面积分",
+          "[Chart] 一个简单的矢量场示意图，显示一个封闭曲线及其内部的面积分区域。",
+          "学习目标：理解格林公式的几何意义"
+        ],
+        "teachingObjective": "理解格林公式的物理背景和基本思想",
+        "estimatedDuration": 180,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "格林公式的定义与形式",
+        "description": "正式给出格林公式的数学表达式，并解释每个符号的含义，为后续应用奠定基础。",
+        "keyPoints": [
+          "格林公式的标准形式：\\( \\oint_C (P\\,dx + Q\\,dy) = \\iint_D \\left( \\frac{\\partial Q}{\\partial x} - \\frac{\\partial P}{\\partial y} \\right) dA \\)",
+          "变量说明：\\(C\\) 是正向封闭曲线，\\(D\\) 是曲线所围成的区域，\\(P\\) 和 \\(Q\\) 是二元函数。",
+          "前提条件：\\(P\\) 和 \\(Q\\) 在 \\(D\\) 内有一阶连续偏导数。",
+          "正向方向的定义（逆时针为正）",
+          "[Table] 对比左端（线积分）和右端（二重积分）的计算形式"
+        ],
+        "teachingObjective": "掌握格林公式的标准数学表达式及其各部分的含义",
+        "estimatedDuration": 210,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "quiz",
+        "title": "基础知识小测验",
+        "description": "检验对格林公式基本概念和表达式的理解。",
+        "keyPoints": [
+          "格林公式的适用条件",
+          "区分线积分与二重积分",
+          "正向封闭曲线的定义"
+        ],
+        "teachingObjective": "巩固格林公式的基础知识",
+        "estimatedDuration": 120,
+        "order": 3,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "interactive",
+        "title": "探索格林公式：矢量场可视化",
+        "description": "通过交互式模拟，用户可以调整矢量场参数，观察线积分和面积分的变化，直观感受格林公式的正确性。",
+        "keyPoints": [
+          "调整矢量场 \\(P(x,y)\\) 和 \\(Q(x,y)\\) 的参数",
+          "改变封闭曲线的形状和大小",
+          "实时计算并显示线积分和二重积分的数值",
+          "观察两个积分值在参数变化下始终相等",
+          "强化对公式的几何和数值理解"
+        ],
+        "teachingObjective": "通过动手操作深化对格林公式的直观理解",
+        "estimatedDuration": 300,
+        "order": 4,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "格林公式：线积分与二重积分的相互转化",
+          "keyVariables": [
+            "P(x,y) 系数 (a, b): 控制 x 方向分量",
+            "Q(x,y) 系数 (c, d): 控制 y 方向分量",
+            "曲线半径 (r): 控制圆形曲线的大小",
+            "旋度 (∂Q/∂x - ∂P/∂y) 的分布图"
+          ]
+        }
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "格林公式的应用场景",
+        "description": "介绍格林公式在具体问题中的应用，例如简化曲线积分计算、计算不规则平面区域的面积等。",
+        "keyPoints": [
+          "应用一：用面积分计算复杂的曲线积分",
+          "应用二：利用线积分推导平面区域面积公式 \\( A = \\frac{1}{2} \\oint_C (x\\,dy - y\\,dx) \\)",
+          "应用三：验证保守场（旋度为零）",
+          "典型例题分析（逐步推导）"
+        ],
+        "teachingObjective": "学会将格林公式应用于计算和推导",
+        "estimatedDuration": 240,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "常见误区与注意事项",
+        "description": "总结在使用格林公式时常犯的错误和需要注意的条件，避免误解和计算失误。",
+        "keyPoints": [
+          "误区一：曲线不封闭时直接使用公式",
+          "误区二：忽略一阶连续偏导数的条件",
+          "误区三：曲线方向判断错误导致符号错误",
+          "注意事项：如何正确处理多连通区域（使用多个正向曲线）",
+          "[Table] 正确使用与错误使用对比表"
+        ],
+        "teachingObjective": "避免常见的应用错误",
+        "estimatedDuration": 180,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "综合应用练习",
+        "description": "通过计算题和应用题检验学生运用格林公式解决实际问题的能力。",
+        "keyPoints": [
+          "计算具体矢量场下的线积分",
+          "利用格林公式推导面积",
+          "判断保守场的条件"
+        ],
+        "teachingObjective": "回顾并综合应用所学知识",
+        "estimatedDuration": 180,
+        "order": 7,
+        "quizConfig": {
+          "questionCount": 4,
+          "difficulty": "hard",
+          "questionTypes": [
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_8",
+        "type": "pbl",
+        "title": "项目挑战：流体环流分析",
+        "description": "给定一个二维流体速度场，要求学生团队协作，使用格林公式计算并分析流体在一个不规则湖泊（封闭多边形区域）上的环流强度和方向，并提出预防洪水或改善水质的建议。",
+        "keyPoints": [
+          "任务：利用格林公式计算环流",
+          "角色分配：数据研究员、计算分析师、方案报告员",
+          "支撑材料：提供多边形顶点坐标和速度场函数",
+          "产出：计算报告和简单的工程建议"
+        ],
+        "teachingObjective": "培养综合应用格林公式解决实际工程问题的能力",
+        "estimatedDuration": 900,
+        "order": 8,
+        "pblConfig": {
+          "projectTopic": "基于格林公式的流体环流分析",
+          "projectDescription": "模拟一个真实的工程场景，学生需使用格林公式分析一个不规则多边形的流体环流。",
+          "targetSkills": [
+            "将实际问题抽象为数学问题",
+            "正确应用格林公式进行数值计算",
+            "团队协作与报告撰写",
+            "批判性思维和问题分解"
+          ],
+          "issueCount": 3
+        }
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "课程总结与拓展",
+        "description": "回顾格林公式的核心内容，并简要介绍其在高维空间的推广（斯托克斯公式、散度定理），激发进一步学习的兴趣。",
+        "keyPoints": [
+          "核心回顾：格林公式架起了线积分与面积分之间的桥梁",
+          "推广方向：斯托克斯定理（三维空间的旋度）",
+          "推广方向：高斯散度定理（通量与体积分）",
+          "学习资源推荐与下一步学习建议"
+        ],
+        "teachingObjective": "总结本课内容并形成知识拓展的桥梁",
+        "estimatedDuration": 120,
+        "order": 9
+      }
+    ],
+    "languageDirective": "The entire course content should be delivered in Chinese. Since the user's requirement is in Chinese ('格林公式') and there is no explicit language request otherwise, Chinese is the inferred teaching language. Academic terms such as '格林公式' (Green's theorem), '曲线积分' (line integral), and '二重积分' (double integral) should be explained using their standard Chinese translations. Technical terms like 'curl' and 'divergence' may be introduced with both the English term and its Chinese translation for clarity.",
+    "topicSummary": "格林公式总结",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "qXM4d6ZAKa",
+      "name": "从物理问题到格林公式",
+      "languageDirective": "The entire course content should be delivered in Chinese. Since the user's requirement is in Chinese ('格林公式') and there is no explicit language request otherwise, Chinese is the inferred teaching language. Academic terms such as '格林公式' (Green's theorem), '曲线积分' (line integral), and '二重积分' (double integral) should be explained using their standard Chinese translations. Technical terms like 'curl' and 'divergence' may be introduced with both the English term and its Chinese translation for clarity.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782297343995,
+      "updatedAt": 1782297343995,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "格林公式\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "从物理问题到格林公式",
+      "description": "通过一个常见的物理问题（例如计算流体在一个封闭区域上的环流）引入格林公式的直观意义，揭示面积分与线积分之间的联系。",
+      "keyPoints": [
+        "引言：为什么需要格林公式？",
+        "物理背景：环流与通量",
+        "核心思想：将边界上的线积分转化为内部的面积分",
+        "[Chart] 一个简单的矢量场示意图，显示一个封闭曲线及其内部的面积分区域。",
+        "学习目标：理解格林公式的几何意义"
+      ],
+      "teachingObjective": "理解格林公式的物理背景和基本思想",
+      "estimatedDuration": 180,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "格林公式的定义与形式",
+      "description": "正式给出格林公式的数学表达式，并解释每个符号的含义，为后续应用奠定基础。",
+      "keyPoints": [
+        "格林公式的标准形式：\\( \\oint_C (P\\,dx + Q\\,dy) = \\iint_D \\left( \\frac{\\partial Q}{\\partial x} - \\frac{\\partial P}{\\partial y} \\right) dA \\)",
+        "变量说明：\\(C\\) 是正向封闭曲线，\\(D\\) 是曲线所围成的区域，\\(P\\) 和 \\(Q\\) 是二元函数。",
+        "前提条件：\\(P\\) 和 \\(Q\\) 在 \\(D\\) 内有一阶连续偏导数。",
+        "正向方向的定义（逆时针为正）",
+        "[Table] 对比左端（线积分）和右端（二重积分）的计算形式"
+      ],
+      "teachingObjective": "掌握格林公式的标准数学表达式及其各部分的含义",
+      "estimatedDuration": 210,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "quiz",
+      "title": "基础知识小测验",
+      "description": "检验对格林公式基本概念和表达式的理解。",
+      "keyPoints": [
+        "格林公式的适用条件",
+        "区分线积分与二重积分",
+        "正向封闭曲线的定义"
+      ],
+      "teachingObjective": "巩固格林公式的基础知识",
+      "estimatedDuration": 120,
+      "order": 3,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "interactive",
+      "title": "探索格林公式：矢量场可视化",
+      "description": "通过交互式模拟，用户可以调整矢量场参数，观察线积分和面积分的变化，直观感受格林公式的正确性。",
+      "keyPoints": [
+        "调整矢量场 \\(P(x,y)\\) 和 \\(Q(x,y)\\) 的参数",
+        "改变封闭曲线的形状和大小",
+        "实时计算并显示线积分和二重积分的数值",
+        "观察两个积分值在参数变化下始终相等",
+        "强化对公式的几何和数值理解"
+      ],
+      "teachingObjective": "通过动手操作深化对格林公式的直观理解",
+      "estimatedDuration": 300,
+      "order": 4,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "格林公式：线积分与二重积分的相互转化",
+        "keyVariables": [
+          "P(x,y) 系数 (a, b): 控制 x 方向分量",
+          "Q(x,y) 系数 (c, d): 控制 y 方向分量",
+          "曲线半径 (r): 控制圆形曲线的大小",
+          "旋度 (∂Q/∂x - ∂P/∂y) 的分布图"
+        ]
+      }
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "格林公式的应用场景",
+      "description": "介绍格林公式在具体问题中的应用，例如简化曲线积分计算、计算不规则平面区域的面积等。",
+      "keyPoints": [
+        "应用一：用面积分计算复杂的曲线积分",
+        "应用二：利用线积分推导平面区域面积公式 \\( A = \\frac{1}{2} \\oint_C (x\\,dy - y\\,dx) \\)",
+        "应用三：验证保守场（旋度为零）",
+        "典型例题分析（逐步推导）"
+      ],
+      "teachingObjective": "学会将格林公式应用于计算和推导",
+      "estimatedDuration": 240,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "常见误区与注意事项",
+      "description": "总结在使用格林公式时常犯的错误和需要注意的条件，避免误解和计算失误。",
+      "keyPoints": [
+        "误区一：曲线不封闭时直接使用公式",
+        "误区二：忽略一阶连续偏导数的条件",
+        "误区三：曲线方向判断错误导致符号错误",
+        "注意事项：如何正确处理多连通区域（使用多个正向曲线）",
+        "[Table] 正确使用与错误使用对比表"
+      ],
+      "teachingObjective": "避免常见的应用错误",
+      "estimatedDuration": 180,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "综合应用练习",
+      "description": "通过计算题和应用题检验学生运用格林公式解决实际问题的能力。",
+      "keyPoints": [
+        "计算具体矢量场下的线积分",
+        "利用格林公式推导面积",
+        "判断保守场的条件"
+      ],
+      "teachingObjective": "回顾并综合应用所学知识",
+      "estimatedDuration": 180,
+      "order": 7,
+      "quizConfig": {
+        "questionCount": 4,
+        "difficulty": "hard",
+        "questionTypes": [
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_8",
+      "type": "pbl",
+      "title": "项目挑战：流体环流分析",
+      "description": "给定一个二维流体速度场，要求学生团队协作，使用格林公式计算并分析流体在一个不规则湖泊（封闭多边形区域）上的环流强度和方向，并提出预防洪水或改善水质的建议。",
+      "keyPoints": [
+        "任务：利用格林公式计算环流",
+        "角色分配：数据研究员、计算分析师、方案报告员",
+        "支撑材料：提供多边形顶点坐标和速度场函数",
+        "产出：计算报告和简单的工程建议"
+      ],
+      "teachingObjective": "培养综合应用格林公式解决实际工程问题的能力",
+      "estimatedDuration": 900,
+      "order": 8,
+      "pblConfig": {
+        "projectTopic": "基于格林公式的流体环流分析",
+        "projectDescription": "模拟一个真实的工程场景，学生需使用格林公式分析一个不规则多边形的流体环流。",
+        "targetSkills": [
+          "将实际问题抽象为数学问题",
+          "正确应用格林公式进行数值计算",
+          "团队协作与报告撰写",
+          "批判性思维和问题分解"
+        ],
+        "issueCount": 3
+      }
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "课程总结与拓展",
+      "description": "回顾格林公式的核心内容，并简要介绍其在高维空间的推广（斯托克斯公式、散度定理），激发进一步学习的兴趣。",
+      "keyPoints": [
+        "核心回顾：格林公式架起了线积分与面积分之间的桥梁",
+        "推广方向：斯托克斯定理（三维空间的旋度）",
+        "推广方向：高斯散度定理（通量与体积分）",
+        "学习资源推荐与下一步学习建议"
+      ],
+      "teachingObjective": "总结本课内容并形成知识拓展的桥梁",
+      "estimatedDuration": 120,
+      "order": 9
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "The entire course content should be delivered in Chinese. Since the user's requirement is in Chinese ('格林公式') and there is no explicit language request otherwise, Chinese is the inferred teaching language. Academic terms such as '格林公式' (Green's theorem), '曲线积分' (line integral), and '二重积分' (double integral) should be explained using their standard Chinese translations. Technical terms like 'curl' and 'divergence' may be introduced with both the English term and its Chinese translation for clarity.",
+    "totalScenes": 9
+  },
+  "topicSummary": "格林公式总结",
+  "completedAt": "2026-06-24T10:37:32.742Z",
+  "result": {
+    "classroomId": "qXM4d6ZAKa",
+    "url": "http://localhost:3000/classroom/qXM4d6ZAKa",
+    "scenesCount": 8
+  }
+}

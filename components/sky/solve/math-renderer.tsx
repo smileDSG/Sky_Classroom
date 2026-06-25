@@ -14,6 +14,8 @@ interface MathRendererProps {
   content: string;
   className?: string;
   highlights?: KnowledgePointHighlight[];
+  /** Render all math as display-mode (centered, larger) blocks. */
+  displayMode?: boolean;
 }
 
 // ── Known LaTeX commands ────────────────────────────────────────────────
@@ -819,17 +821,11 @@ function fixCommonLatexErrors(text: string): string {
     (_m, digits: string) => `\\sqrt{${digits}}`,
   );
   // Fix \sqrt}... (misplaced brace from enclosing \frac etc.): \sqrt}14 → \sqrt{14}
-  result = result.replace(
-    /\\sqrt\}([a-zA-Z0-9]+)/g,
-    (_m, content: string) => `\\sqrt{${content}}`,
-  );
+  result = result.replace(/\\sqrt\}([a-zA-Z0-9]+)/g, (_m, content: string) => `\\sqrt{${content}}`);
   // Fix rac{...} → \frac{...} (LLM often drops \f from \frac)
   // Only match after math operators/punctuation to avoid false positives
   // with English words like "trace", "place", etc.
-  result = result.replace(
-    /(?<=[·×÷=+\-*/<>{}|^_\n\s])rac\{/g,
-    '\\frac{',
-  );
+  result = result.replace(/(?<=[·×÷=+\-*/<>{}|^_\n\s])rac\{/g, '\\frac{');
   result = result.replace(
     /\\(cdot|times|div|pm|mp|star|circ|bullet)([a-zA-Z])/g,
     (_m, cmd: string, ch: string) => `\\${cmd} ${ch}`,
@@ -1208,7 +1204,6 @@ function renderKatex(math: string, displayMode = false): string {
         displayMode,
         throwOnError: false,
         strict: false,
-
       });
       setCachedKatex(math, displayMode, result);
       return result;
@@ -1219,7 +1214,6 @@ function renderKatex(math: string, displayMode = false): string {
           displayMode,
           throwOnError: false,
           strict: false,
-
         });
         setCachedKatex(math, displayMode, result);
         return result;
@@ -1234,10 +1228,9 @@ function renderKatex(math: string, displayMode = false): string {
 
 // ── Component ───────────────────────────────────────────────────────────
 
-export function MathRenderer({ content, className, highlights }: MathRendererProps) {
-  if (!content) return null;
-
+export function MathRenderer({ content, className, highlights, displayMode }: MathRendererProps) {
   const segments = useMemo(() => {
+    if (!content) return [];
     // Step 1: Always strip markdown formatting (LLM often outputs **bold**, --- separators, etc.)
     const cleaned = stripMarkdown(content);
     // Step 2: Fast path: if content is already well-formed (only $...$ delimited math,
@@ -1246,24 +1239,34 @@ export function MathRenderer({ content, className, highlights }: MathRendererPro
     return parseMixedContent(preprocessed);
   }, [content]);
 
+  if (!content) return null;
+
   return (
     <span className={className}>
       {segments.map((seg, i) => {
         if (seg.type === 'text') {
           if (!highlights || highlights.length === 0) {
-            return <Fragment key={i}>{seg.value}</Fragment>;
+            return (
+              <span key={i} className="whitespace-pre-wrap">
+                {seg.value}
+              </span>
+            );
           }
           const parts = splitHighlightedText(seg.value, highlights);
           return (
             <Fragment key={i}>
               {parts.map((part, j) => {
                 if (!part.highlight || part.highlight.level === 'normal') {
-                  return <span key={j}>{part.text}</span>;
+                  return (
+                    <span key={j} className="whitespace-pre-wrap">
+                      {part.text}
+                    </span>
+                  );
                 }
                 return (
                   <span
                     key={j}
-                    className={cn(HIGHLIGHT_STYLES[part.highlight.level])}
+                    className={cn(HIGHLIGHT_STYLES[part.highlight.level], 'whitespace-pre-wrap')}
                     title={getHighlightTooltip(part.highlight)}
                   >
                     {part.text}
@@ -1273,7 +1276,7 @@ export function MathRenderer({ content, className, highlights }: MathRendererPro
             </Fragment>
           );
         }
-        if (seg.type === 'block-math') {
+        if (seg.type === 'block-math' || (seg.type === 'inline-math' && displayMode)) {
           // Display-mode math: centered block, larger rendering
           const html = renderKatex(seg.value, true);
           return (

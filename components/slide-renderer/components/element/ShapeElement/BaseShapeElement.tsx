@@ -12,6 +12,9 @@ export interface BaseShapeElementProps {
   elementInfo: PPTShapeElement;
 }
 
+const SLIDE_FONT_STACK =
+  'Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif';
+
 /**
  * Base shape element for read-only/playback mode
  */
@@ -24,9 +27,10 @@ export function BaseShapeElement({ elementInfo }: BaseShapeElementProps) {
   const text: ShapeText = elementInfo.text || {
     content: '',
     align: 'middle',
-    defaultFontName: 'Microsoft YaHei',
+    defaultFontName: SLIDE_FONT_STACK,
     defaultColor: '#333333',
   };
+  const fontFamily = text.defaultFontName?.trim() || SLIDE_FONT_STACK;
 
   return (
     <div
@@ -44,7 +48,7 @@ export function BaseShapeElement({ elementInfo }: BaseShapeElementProps) {
             filter: shadowStyle ? `drop-shadow(${shadowStyle})` : '',
             transform: flipStyle,
             color: text.defaultColor,
-            fontFamily: text.defaultFontName,
+            fontFamily,
           }}
         >
           <svg

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
@@ -18,25 +18,25 @@ export function SkyClassroomEntry() {
   const originRef = useRef({ x: 0, y: 0 });
   const offsetRef = useRef({ dx: 0, dy: 0 });
   const positionRef = useRef(position);
-  positionRef.current = position;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if ((e.target as HTMLElement).closest('[data-toggle-collapse]')) return;
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
-      hasMovedRef.current = false;
-      originRef.current = { x: e.clientX, y: e.clientY };
-      const pos = positionRef.current;
-      offsetRef.current = { dx: e.clientX - pos.x, dy: e.clientY - pos.y };
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('[data-toggle-collapse]')) return;
 
-      const el = containerRef.current;
-      if (el) {
-        el.setPointerCapture(e.pointerId);
-      }
-    },
-    [],
-  );
+    hasMovedRef.current = false;
+    originRef.current = { x: e.clientX, y: e.clientY };
+    const pos = positionRef.current;
+    offsetRef.current = { dx: e.clientX - pos.x, dy: e.clientY - pos.y };
+
+    const el = containerRef.current;
+    if (el) {
+      el.setPointerCapture(e.pointerId);
+    }
+  }, []);
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
@@ -51,8 +51,14 @@ export function SkyClassroomEntry() {
 
       const btnW = collapsed ? 36 : 120;
       const btnH = 36;
-      const newX = Math.max(0, Math.min(window.innerWidth - btnW, e.clientX - offsetRef.current.dx));
-      const newY = Math.max(0, Math.min(window.innerHeight - btnH, e.clientY - offsetRef.current.dy));
+      const newX = Math.max(
+        0,
+        Math.min(window.innerWidth - btnW, e.clientX - offsetRef.current.dx),
+      );
+      const newY = Math.max(
+        0,
+        Math.min(window.innerHeight - btnH, e.clientY - offsetRef.current.dy),
+      );
       setPosition({ x: newX, y: newY });
     },
     [collapsed],
@@ -77,8 +83,9 @@ export function SkyClassroomEntry() {
     setCollapsed((prev) => !prev);
   }, []);
 
-  // Hide on sky classroom pages and homepage
-  const hidden = pathname.startsWith('/sky') || pathname === '/';
+  // Hide on sky classroom pages, homepage, and the presentation classroom itself.
+  const hidden =
+    pathname.startsWith('/sky') || pathname.startsWith('/classroom') || pathname === '/';
   if (hidden) return null;
 
   return (

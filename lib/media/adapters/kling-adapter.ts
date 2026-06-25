@@ -15,9 +15,12 @@
  * - kling-v1-6     (v1)
  *
  * API docs: https://docs.klingai.com/api
+ *
+ * Note: `crypto` is required dynamically at runtime to avoid HMR
+ * errors when this module is pulled into client-side code via the
+ * store/settings import chain.
  */
 
-import crypto from 'crypto';
 import type {
   VideoGenerationConfig,
   VideoGenerationOptions,
@@ -40,6 +43,8 @@ function base64url(data: Buffer | string): string {
 }
 
 function generateJWT(accessKey: string, secretKey: string): string {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const crypto = require('crypto') as typeof import('crypto');
   const now = Math.floor(Date.now() / 1000);
 
   const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));

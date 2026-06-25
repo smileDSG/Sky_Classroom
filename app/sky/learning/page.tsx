@@ -59,6 +59,51 @@ export default function LearningPage() {
   const [activeTab, setActiveTab] = useState<string>('mistakes');
   const mistakes = useSkyClassroomStore((s) => s.mistakes);
   const prioritizeReview = useSkyClassroomStore((s) => s.prioritizeReview);
+  const [seeding, setSeeding] = useState(false);
+  const [seedMsg, setSeedMsg] = useState<string | null>(null);
+
+  const seedData = async () => {
+    setSeeding(true);
+    setSeedMsg('正在清除旧数据并填充新数据...');
+    try {
+      // Step 1: Clear quiz localStorage traces first (prevents sync on reload)
+      if (typeof window !== 'undefined') {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('quizResults:') || key.startsWith('quizAnswers:'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        console.log('[seed] Cleared', keysToRemove.length, 'quiz keys');
+      }
+
+      // Step 2: Clear + seed the SERVER
+      const serverRes = await fetch('/api/dev/seed-mistakes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clear: false }),
+      });
+      const serverJson = await serverRes.json();
+      console.log('[seed] Server cleared:', serverJson.data?.cleared, 'seeded:', serverJson.data?.seeded);
+
+      // Step 3: Clear + seed the CLIENT (IndexedDB + localStorage + Zustand)
+      const { seedMistakes } = await import('@/scripts/seed-mistakes');
+      const result = await seedMistakes();
+      if (result.added > 0) {
+        setSeedMsg(`✅ 已清除旧数据，填充 ${result.added} 条真实错题`);
+        // Reload page so ReviewPlan re-reads the fresh data
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        setSeedMsg('❌ 填充失败');
+      }
+    } catch (e) {
+      console.error('Seed error:', e);
+      setSeedMsg('❌ 填充失败');
+    }
+    setSeeding(false);
+  };
 
   const weakPoints = useMemo(() => {
     if (mistakes.length === 0) return [];
@@ -124,6 +169,19 @@ export default function LearningPage() {
               <p className="text-emerald-100 text-base max-w-md leading-relaxed">
                 每一步都是向上的阶梯，记录错题、规划复习、构建知识图谱，让成长有迹可循。
               </p>
+              {seedMsg && (
+                <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-900/40 px-4 py-2 text-sm text-emerald-200">
+                  {seedMsg}
+                  {!seedMsg.includes('已填充') && (
+                    <button
+                      onClick={() => setSeedMsg(null)}
+                      className="ml-1 text-emerald-400 hover:text-white transition-colors"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              )}
               <div className="mt-4 flex items-center gap-4">
                 <div className="flex items-center gap-1.5 text-sm text-emerald-200">
                   <TrendingUp className="h-4 w-4" />
@@ -134,6 +192,19 @@ export default function LearningPage() {
                   <Leaf className="h-4 w-4" />
                   <span>科学记忆</span>
                 </div>
+                {/* Seed button removed - data seeded successfully */}
+                {/* {process.env.NODE_ENV === 'development' && ( */}
+                {/*   <> */}
+                {/*     <div className="h-4 w-px bg-emerald-400/30" /> */}
+                {/*     <button */}
+                {/*       onClick={seedData} */}
+                {/*       disabled={seeding} */}
+                {/*       className="flex items-center gap-1.5 rounded-lg bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-200 hover:bg-emerald-500/30 transition-all disabled:opacity-50" */}
+                {/*     > */}
+                {/*       {seeding ? '⏳ 填充中...' : '🧪 一键填充真实数据'} */}
+                {/*     </button> */}
+                {/*   </> */}
+                {/* )} */}
               </div>
             </div>
 

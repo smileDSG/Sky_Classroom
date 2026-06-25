@@ -14,6 +14,8 @@ IMPORTANT: For mathematical formulas, you MUST use standard LaTeX delimiters:
 
 Do NOT use \\( ... \\) or \\[ ... \\] delimiters. Always use $ and $$ for math expressions.
 
+For text explanations, use paragraphs separated by blank lines and Markdown lists for key steps or points. Avoid walls of text without breaks.
+
 <!-- prompt-version: v2-profile-driven -->`;
 
 export const STRUCTURED_CONTENT_SYSTEM_PROMPT = `You are an expert teacher generating structured slide content. Output must be a single valid JSON object matching the requested content type.
@@ -219,8 +221,10 @@ ${precedingContext}${profileContext}
 要求：
 1. 至少 2 个内容块
 2. 公式使用 $...$（行内）或 $$...$$（独立行），不要使用 \\( \\) 或 \\[ \\]
-3. 例题需包含完整的解题步骤
-4. 随堂测需提供参考答案${quizRequirement}${quizFormatGuide}`;
+3. type 为 formula 的内容块必须使用 $$...$$ 独立居中显示，不要混用普通说明文字
+4. 讲解文本必须分段：不同观点/步骤之间用空行分隔，每段控制在 2-4 行；关键步骤或要点请使用 Markdown 列表（- 或 1.）
+5. 例题需包含完整的解题步骤
+6. 随堂测需提供参考答案${quizRequirement}${quizFormatGuide}`;
 }
 
 // ── New: StructuredContent prompt for rich slides ──

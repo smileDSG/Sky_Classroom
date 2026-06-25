@@ -95,6 +95,372 @@ describe('scoreSlideContent', () => {
     expect(score.coherence).toBeLessThan(0.8);
     expect(score.issues.some((i) => i.includes('identical positions'))).toBe(true);
   });
+
+  it('penalizes slides without a visual anchor or enough learning blocks', () => {
+    const content: GeneratedSlideContent = {
+      elements: [
+        {
+          id: 'title',
+          type: 'text',
+          left: 90,
+          top: 70,
+          width: 820,
+          height: 70,
+          content: '<p style="font-size:34px;">Python list basics</p>',
+        },
+        {
+          id: 'body',
+          type: 'text',
+          left: 120,
+          top: 180,
+          width: 720,
+          height: 90,
+          content: '<p style="font-size:18px;">Lists store ordered values.</p>',
+        },
+      ] as GeneratedSlideContent['elements'],
+      background: { type: 'solid', color: '#ffffff' },
+      remark: 'This slide introduces list basics.',
+    };
+
+    const score = scoreSlideContent(content);
+
+    expect(score.overall).toBeLessThan(0.7);
+    expect(score.issues.some((issue) => issue.includes('visual anchor'))).toBe(true);
+    expect(score.warnings.some((warning) => warning.includes('learning blocks'))).toBe(true);
+  });
+
+  it('flags foreground callout overlays that cover earlier content', () => {
+    const content: GeneratedSlideContent = {
+      elements: [
+        {
+          id: 'content-panel',
+          type: 'shape',
+          left: 110,
+          top: 180,
+          width: 410,
+          height: 320,
+          fill: '#e8f4ff',
+        },
+        {
+          id: 'content-text',
+          type: 'text',
+          left: 150,
+          top: 390,
+          width: 330,
+          height: 94,
+          content:
+            '<p style="font-size:20px;">Cargo / Rustfmt / Clippy toolchain<br/>Active crate ecosystem</p>',
+        },
+        {
+          id: 'domain-strip',
+          type: 'text',
+          left: 112,
+          top: 420,
+          width: 776,
+          height: 84,
+          fill: '#06c8e9',
+          content:
+            '<p style="font-size:22px;">适用领域：操作系统 · 嵌入式 · WebAssembly · 高性能服务 · CLI工具</p>',
+        },
+      ] as GeneratedSlideContent['elements'],
+      background: { type: 'solid', color: '#ffffff' },
+      remark: 'This slide has a foreground callout collision.',
+    };
+
+    const score = scoreSlideContent(content);
+
+    expect(score.issues.some((issue) => issue.includes('foreground overlay'))).toBe(true);
+    expect(score.coherence).toBeLessThan(0.95);
+  });
+
+  it('penalizes slides with too many colored background panels', () => {
+    const content: GeneratedSlideContent = {
+      elements: [
+        {
+          id: 'title',
+          type: 'text',
+          left: 90,
+          top: 64,
+          width: 760,
+          height: 70,
+          content: '<p style="font-size:34px;"><strong>Gradient descent workflow</strong></p>',
+        },
+        { id: 'rule', type: 'shape', left: 90, top: 142, width: 760, height: 3, fill: '#2f80d1' },
+        {
+          id: 'visual',
+          type: 'image',
+          left: 105,
+          top: 185,
+          width: 430,
+          height: 242,
+          src: 'img_1',
+        },
+        {
+          id: 'panel-1',
+          type: 'shape',
+          left: 570,
+          top: 190,
+          width: 330,
+          height: 70,
+          fill: '#06c8e9',
+        },
+        {
+          id: 'panel-2',
+          type: 'shape',
+          left: 570,
+          top: 278,
+          width: 330,
+          height: 70,
+          fill: '#f97316',
+        },
+        {
+          id: 'panel-3',
+          type: 'shape',
+          left: 570,
+          top: 366,
+          width: 330,
+          height: 70,
+          fill: '#8b5cf6',
+        },
+        {
+          id: 'focus',
+          type: 'text',
+          left: 590,
+          top: 202,
+          width: 290,
+          height: 46,
+          content: '<p style="font-size:20px;">Focus: choose a stable step</p>',
+        },
+        {
+          id: 'explain',
+          type: 'text',
+          left: 590,
+          top: 290,
+          width: 290,
+          height: 46,
+          content: '<p style="font-size:18px;">Gradient points downhill.</p>',
+        },
+        {
+          id: 'apply',
+          type: 'text',
+          left: 590,
+          top: 378,
+          width: 290,
+          height: 46,
+          content: '<p style="font-size:18px;">Practice: compare loss curves.</p>',
+        },
+      ] as GeneratedSlideContent['elements'],
+      background: { type: 'solid', color: '#ffffff' },
+      remark: 'This slide has a visual anchor but uses too many colored panels.',
+    };
+
+    const score = scoreSlideContent(content);
+
+    expect(score.warnings.some((warning) => warning.includes('colored background boxes'))).toBe(
+      true,
+    );
+    expect(score.coherence).toBeLessThan(0.95);
+  });
+
+  it('penalizes unlabeled abstract visual placeholders', () => {
+    const content: GeneratedSlideContent = {
+      elements: [
+        {
+          id: 'title',
+          type: 'text',
+          left: 105,
+          top: 78,
+          width: 790,
+          height: 70,
+          content: '<p style="font-size:34px;">What is a quadratic function</p>',
+        },
+        {
+          id: 'visual-panel',
+          type: 'shape',
+          left: 110,
+          top: 188,
+          width: 410,
+          height: 245,
+          fill: '#e8f4ff',
+        },
+        {
+          id: 'visual-blob',
+          type: 'shape',
+          left: 154,
+          top: 232,
+          width: 320,
+          height: 148,
+          fill: '#e8f4ff',
+        },
+        {
+          id: 'visual-node-a',
+          type: 'shape',
+          left: 176,
+          top: 260,
+          width: 54,
+          height: 54,
+          fill: '#ffffff',
+        },
+        {
+          id: 'visual-node-b',
+          type: 'shape',
+          left: 330,
+          top: 242,
+          width: 76,
+          height: 76,
+          fill: '#2f80d1',
+        },
+        {
+          id: 'visual-line',
+          type: 'line',
+          left: 230,
+          top: 284,
+          width: 3,
+          start: [0, 0],
+          end: [98, -8],
+          style: 'solid',
+          color: '#2f80d1',
+          points: ['', 'arrow'],
+        },
+        {
+          id: 'focus',
+          type: 'text',
+          left: 590,
+          top: 198,
+          width: 300,
+          height: 58,
+          content: '<p style="font-size:22px;"><strong>Core definition</strong></p>',
+        },
+        {
+          id: 'explain',
+          type: 'text',
+          left: 590,
+          top: 270,
+          width: 300,
+          height: 58,
+          content: '<p style="font-size:18px;">A function in the form y = ax^2 + bx + c.</p>',
+        },
+      ] as GeneratedSlideContent['elements'],
+      background: { type: 'solid', color: '#ffffff' },
+      remark: 'This slide has an abstract unlabeled placeholder diagram.',
+    };
+
+    const score = scoreSlideContent(content);
+
+    expect(score.warnings.some((warning) => warning.includes('unlabeled visual placeholder'))).toBe(
+      true,
+    );
+    expect(score.coherence).toBeLessThan(0.95);
+  });
+
+  it('scores rich OpenMAIC-style slides higher than thin text slides', () => {
+    const thin: GeneratedSlideContent = {
+      elements: [
+        {
+          id: 'title',
+          type: 'text',
+          left: 90,
+          top: 70,
+          width: 820,
+          height: 70,
+          content: '<p style="font-size:34px;">Python list basics</p>',
+        },
+        {
+          id: 'body',
+          type: 'text',
+          left: 120,
+          top: 180,
+          width: 720,
+          height: 90,
+          content: '<p style="font-size:18px;">Lists store ordered values.</p>',
+        },
+      ] as GeneratedSlideContent['elements'],
+      background: { type: 'solid', color: '#ffffff' },
+      remark: 'This slide introduces list basics.',
+    };
+
+    const rich: GeneratedSlideContent = {
+      elements: [
+        {
+          id: 'title',
+          type: 'text',
+          left: 90,
+          top: 64,
+          width: 760,
+          height: 70,
+          content: '<p style="font-size:34px;"><strong>Python list workflow</strong></p>',
+        },
+        { id: 'rule', type: 'shape', left: 90, top: 142, width: 760, height: 4, fill: '#2f80d1' },
+        {
+          id: 'diagram-bg',
+          type: 'shape',
+          left: 110,
+          top: 185,
+          width: 430,
+          height: 250,
+          fill: '#eaf4ff',
+        },
+        { id: 'node-a', type: 'shape', left: 155, top: 240, width: 90, height: 64, fill: '#fff' },
+        { id: 'node-b', type: 'shape', left: 365, top: 240, width: 90, height: 64, fill: '#fff' },
+        {
+          id: 'arrow',
+          type: 'line',
+          left: 252,
+          top: 272,
+          width: 3,
+          start: [0, 0],
+          end: [96, 0],
+          style: 'solid',
+          color: '#2f80d1',
+          points: ['', 'arrow'],
+        },
+        {
+          id: 'focus',
+          type: 'text',
+          left: 590,
+          top: 198,
+          width: 300,
+          height: 58,
+          content: '<p style="font-size:22px;"><strong>Focus: ordered container</strong></p>',
+        },
+        {
+          id: 'explain',
+          type: 'text',
+          left: 590,
+          top: 270,
+          width: 300,
+          height: 58,
+          content: '<p style="font-size:18px;">Use index to locate each item.</p>',
+        },
+        {
+          id: 'apply',
+          type: 'text',
+          left: 590,
+          top: 342,
+          width: 300,
+          height: 58,
+          content: '<p style="font-size:18px;">Practice: append, remove, sort.</p>',
+        },
+        {
+          id: 'takeaway',
+          type: 'text',
+          left: 120,
+          top: 460,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:18px;">Takeaway: list operations change sequence state.</p>',
+        },
+      ] as GeneratedSlideContent['elements'],
+      background: { type: 'solid', color: '#ffffff' },
+      remark: 'This slide uses a diagram, hierarchy, and application cue.',
+    };
+
+    const thinScore = scoreSlideContent(thin);
+    const richScore = scoreSlideContent(rich);
+
+    expect(richScore.overall).toBeGreaterThan(thinScore.overall);
+    expect(richScore.issues).toHaveLength(0);
+  });
 });
 
 describe('scoreQuizContent', () => {

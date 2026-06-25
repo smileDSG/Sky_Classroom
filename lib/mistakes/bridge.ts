@@ -61,78 +61,9 @@ function getCompletedSceneIds(): string[] {
 
 /**
  * Sync mistakes from all completed quizzes into the sky classroom store.
- * Call this on the learning page mount. Idempotent — won't duplicate records.
+ * DISABLED: Quiz results no longer auto-sync to mistakes.
+ * Users should use the solve page to manually add mistakes.
  */
 export function syncMistakesFromQuizzes(): void {
-  if (typeof window === 'undefined') return;
-
-  const store = useSkyClassroomStore.getState();
-  const existingIds = new Set(store.mistakes.map((m) => m.id));
-
-  // Get all scenes from the stage store (main app's data)
-  const stageScenes = useStageStore.getState().scenes;
-
-  const sceneIds = getCompletedSceneIds();
-  if (sceneIds.length === 0) return;
-
-  let synced = 0;
-
-  for (const sceneId of sceneIds) {
-    // Read quiz results from localStorage (written by main app)
-    const rawResults = localStorage.getItem(RESULTS_KEY_PREFIX + sceneId);
-    const rawAnswers = localStorage.getItem(ANSWERS_KEY_PREFIX + sceneId);
-    if (!rawResults || !rawAnswers) continue;
-
-    let results: QuestionResult[];
-    let answers: Record<string, string | string[]>;
-    try {
-      results = JSON.parse(rawResults);
-      answers = JSON.parse(rawAnswers);
-    } catch {
-      continue;
-    }
-    if (!Array.isArray(results)) continue;
-
-    // Find the scene that contains quiz questions
-    const scene = stageScenes.find((s) => s.id === sceneId);
-    const questions: QuizQuestion[] =
-      scene?.content?.type === 'quiz'
-        ? (scene.content as { questions: QuizQuestion[] }).questions ?? []
-        : [];
-
-    for (const r of results) {
-      if (r.status !== 'incorrect') continue;
-
-      const q = questions.find((q) => q.id === r.questionId);
-      if (!q) continue;
-
-      const recordId = `quiz-${sceneId}-${q.id}`;
-      if (existingIds.has(recordId)) continue;
-
-      const userAnswer = formatAnswer(toArray(answers[q.id]));
-      const correctAnswer = formatAnswer(toArray(q.answer));
-      const cause = analyzeMistakeCause(q.question, correctAnswer, userAnswer);
-
-      const record: MistakeRecord = {
-        id: recordId,
-        problem: q.question,
-        userAnswer,
-        correctAnswer,
-        cause,
-        solvedAt: new Date(),
-        reviewed: false,
-        reviewCount: 0,
-        masteryLevel: 0,
-        knowledgePoints: guessKnowledgePoints(q.question),
-      };
-
-      store.addMistake(record);
-      existingIds.add(recordId);
-      synced++;
-    }
-  }
-
-  if (synced > 0) {
-    log.info(`Synced ${synced} new mistakes from ${sceneIds.length} quiz scene(s)`);
-  }
+  // No-op — quiz results no longer auto-synced to mistake book
 }

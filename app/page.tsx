@@ -214,6 +214,9 @@ export default function HomePage() {
             useTaskStore.getState().updateTask(useTaskStore.getState().tasks[jobId]?.id ?? '', {
               progress: data.progress,
               phase: data.message,
+              ...(data.status === 'awaiting_review'
+                ? { status: 'completed' as const, progress: 100 }
+                : {}),
             });
 
             await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -332,6 +335,12 @@ export default function HomePage() {
             },
           }));
 
+          useTaskStore.getState().updateTask(entry.jobId, {
+            progress: data.status === 'awaiting_review' ? 100 : data.progress,
+            phase: data.message,
+            ...(data.status === 'awaiting_review' ? { status: 'completed' as const } : {}),
+          });
+
           startJobPolling(entry.jobId, topic);
         } catch {
           // Job file may not exist yet — ignore
@@ -360,10 +369,6 @@ export default function HomePage() {
   const currentModelId = useSettingsStore((s) => s.modelId);
   const { cachedValue: cachedRequirement, updateCache: updateRequirementCache } =
     useDraftCache<string>({ key: 'requirementDraft' });
-
-  const { importing, fileInputRef, triggerFileSelect, handleFileChange } = useImportClassroom(() =>
-    loadClassrooms(),
-  );
 
   // 草稿恢复
   const draftRestoredRef = useRef(false);
@@ -415,6 +420,10 @@ export default function HomePage() {
     }
   }, []);
 
+  const { importing, fileInputRef, triggerFileSelect, handleFileChange } = useImportClassroom(() =>
+    loadClassrooms(),
+  );
+
   useEffect(() => {
     // 清理媒体存储
     useMediaGenerationStore.getState().revokeObjectUrls();
@@ -426,7 +435,7 @@ export default function HomePage() {
       revokeThumbnailSlideMediaUrls(thumbnailsRef.current);
       thumbnailsRef.current = {};
     };
-  }, []);
+  }, [loadClassrooms]);
 
   // 保存设置
   const handleWebSearchChange = useCallback((value: boolean) => {

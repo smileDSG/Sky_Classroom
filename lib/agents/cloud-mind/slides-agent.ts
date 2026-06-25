@@ -5,13 +5,18 @@
  * 使用 DeepSeek 分析并生成教学讲解内容。
  */
 
-import { generateText } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
 import { createLogger } from '@/lib/logger';
+import { callLLM, streamLLM } from '@/lib/ai/llm';
+import { getModel } from '@/lib/ai/providers';
 import { resolveApiKey, resolveBaseUrl } from '@/lib/server/provider-config';
 import { retrieveRelevantContext } from '@/lib/agents/rag/retriever';
 import { buildPersonalizationPrompt } from '@/lib/agents/personalization-utils';
 import type { PersonalizationSliceState } from '@/lib/store/settings/personalization';
+import {
+  buildCloudMindCacheKey,
+  getCloudMindCache,
+  setCloudMindCache,
+} from '@/lib/agents/cloud-mind/cache';
 
 const log = createLogger('SlidesAgent');
 
@@ -107,7 +112,12 @@ export async function analyzeSlides(
     throw new Error('DeepSeek API key is not configured. Set DEEPSEEK_API_KEY in .env.local.');
   }
 
-  const deepseek = createOpenAI({ apiKey, baseURL: baseUrl });
+  const { model } = getModel({
+    providerId: 'deepseek',
+    modelId: 'deepseek-chat',
+    apiKey,
+    baseUrl,
+  });
 
   // — RAG: 从知识库检索相关补充资料
   let ragContext = '';
@@ -125,17 +135,16 @@ export async function analyzeSlides(
       });
 
       if (kbResults.length > 0) {
-        const contextParts = kbResults.map((r) =>
-          `【${r.chunk.docTitle}】\n${r.chunk.content}`
-        );
+        const contextParts = kbResults.map((r) => `【${r.chunk.docTitle}】\n${r.chunk.content}`);
         ragContext = `\n\n【参考课件（来自已有课件库）】\n${contextParts.join('\n---\n')}`;
         log.info(`Slides KB retrieved ${kbResults.length} chunks`);
       } else {
         // 2) Fall back to general RAG
-        const ragResult = await retrieveRelevantContext(
-          query,
-          { topK: 3, rerank: true, maxContextChars: 2000 },
-        );
+        const ragResult = await retrieveRelevantContext(query, {
+          topK: 3,
+          rerank: true,
+          maxContextChars: 2000,
+        });
         if (ragResult.contextText) {
           ragContext = `\n\n【补充参考资料（来自知识库）】\n${ragResult.contextText}`;
           log.info(`RAG retrieved ${ragResult.chunks.length} chunks for slides analysis`);
@@ -147,24 +156,40 @@ export async function analyzeSlides(
   }
 
   // Build personalized system prompt
-  const personalizationPrompt = personalization
-    ? buildPersonalizationPrompt(personalization)
-    : '';
+  const personalizationPrompt = personalization ? buildPersonalizationPrompt(personalization) : '';
   const systemPrompt = `${SLIDES_AGENT_SYSTEM_PROMPT}${personalizationPrompt}`;
 
   const userPrompt = topic
     ? `请分析以下"${topic}"相关的课件内容，生成完整的教学讲解：\n\n${contentText}${ragContext}`
     : `请分析以下课件内容，生成完整的教学讲解：\n\n${contentText}${ragContext}`;
 
-  log.info(`Analyzing slides, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}`);
-
-  const result = await generateText({
-    model: deepseek.chat('deepseek-chat'),
-    system: systemPrompt,
-    prompt: userPrompt,
-    temperature: 0.7,
-    maxOutputTokens: 8192,
+  const cacheKey = buildCloudMindCacheKey('slides-analysis', {
+    contentText,
+    topic,
+    personalization,
+    ragContext,
   });
+  const cached = getCloudMindCache<SlidesAnalysisOutput>(cacheKey);
+  if (cached) {
+    log.info(`Slides analysis cache hit, topic: ${topic || 'auto-detect'}`);
+    return cached;
+  }
+
+  log.info(
+    `Analyzing slides, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}`,
+  );
+
+  const result = await callLLM(
+    {
+      model,
+      system: systemPrompt,
+      prompt: userPrompt,
+      temperature: 0.7,
+      maxOutputTokens: 8192,
+    },
+    'cloud-mind-slides-analysis',
+    { retries: 1, timeoutMs: 60_000 },
+  );
 
   const text = result.text || '';
   log.info(`Slides analysis complete, response length: ${text.length}`);
@@ -181,6 +206,7 @@ export async function analyzeSlides(
       throw new Error('Invalid response structure');
     }
 
+    setCloudMindCache(cacheKey, parsed);
     return parsed;
   } catch (parseError) {
     log.error('Failed to parse slides analysis response:', parseError);
@@ -195,8 +221,6 @@ export async function streamSlidesAnalysis(
   contentText: string,
   topic?: string,
 ): Promise<ReadableStream> {
-  const { streamText } = await import('ai');
-
   const apiKey = resolveApiKey('deepseek');
   const baseUrl = resolveBaseUrl('deepseek') || 'https://api.deepseek.com/v1';
 
@@ -204,19 +228,27 @@ export async function streamSlidesAnalysis(
     throw new Error('DeepSeek API key is not configured.');
   }
 
-  const deepseek = createOpenAI({ apiKey, baseURL: baseUrl });
+  const { model } = getModel({
+    providerId: 'deepseek',
+    modelId: 'deepseek-chat',
+    apiKey,
+    baseUrl,
+  });
 
   const userPrompt = topic
     ? `请分析以下"${topic}"相关的课件内容，生成完整的教学讲解：\n\n${contentText}`
     : `请分析以下课件内容，生成完整的教学讲解：\n\n${contentText}`;
 
-  const result = streamText({
-    model: deepseek.chat('deepseek-chat'),
-    system: SLIDES_AGENT_SYSTEM_PROMPT,
-    prompt: userPrompt,
-    temperature: 0.7,
-    maxOutputTokens: 8192,
-  });
+  const result = streamLLM(
+    {
+      model,
+      system: SLIDES_AGENT_SYSTEM_PROMPT,
+      prompt: userPrompt,
+      temperature: 0.7,
+      maxOutputTokens: 8192,
+    },
+    'cloud-mind-slides-stream',
+  );
 
   return result.toTextStreamResponse().body!;
 }
