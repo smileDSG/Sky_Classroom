@@ -20,21 +20,23 @@ describe('slide richness prompt contract', () => {
     expect(combined).toContain('visual anchor');
   });
 
-  it('keeps slide content requirements for clean OpenMAIC-style visual structure', () => {
+  it('keeps classroom slide prompts OpenMAIC-first instead of theme-driven', () => {
     const system = readTemplate('slide-content', 'system.md');
     const user = readTemplate('slide-content', 'user.md');
     const combined = `${system}\n${user}`;
 
-    expect(combined).toContain('Slide Richness Contract');
-    expect(combined).toContain('dominant visual anchor');
-    expect(combined).toContain('learning text blocks');
-    expect(combined).toContain('font hierarchy');
-    expect(combined).toContain('white or very light background');
-    expect(combined).toContain('thin dividers');
-    expect(combined).toContain('image + text');
-    expect(combined).toContain('minimal colored background boxes');
-    expect(combined).toContain('No unlabeled abstract visual placeholders');
-    expect(combined).toContain('at most one pale panel');
-    expect(combined).toContain('No foreground callout may overlap earlier content');
+    expect(combined).toContain('Slide Content Generator');
+    expect(combined).toContain('Generate well-structured slide components');
+    expect(combined).toContain('TextElement');
+    expect(combined).toContain('ShapeElement');
+    expect(combined).toContain('LineElement');
+    expect(combined).toContain('LatexElement');
+    expect(combined).toContain('TableElement');
+    expect(combined).toContain('All TextElement `height` values');
+    expect(combined).not.toContain('Course Theme');
+    expect(combined).not.toContain('{{themeDirective}}');
+    expect(combined).not.toContain('Slide Richness Contract');
+    expect(combined).not.toContain('layout recipe');
+    expect(combined).not.toContain('minimal colored background boxes');
   });
 });

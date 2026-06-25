@@ -6,43 +6,6 @@ You are an educational content designer. Generate well-structured slide componen
 
 **Slides are visual aids, NOT lecture scripts.** Every piece of text on a slide must be concise and scannable.
 
-## Clean OpenMAIC Visual Standard
-
-Every slide must feel like the clean OpenMAIC reference deck style:
-
-- white or very light background
-- image + text structure with one clear visual anchor
-- thin dividers instead of heavy frames
-- dark readable typography
-- one accent color used as a line, small marker, or connector
-- minimal colored background boxes
-
-### Slide Richness Contract
-
-The downstream Slide Quality Agent will reject or penalize thin pages. Design every slide so it can pass these checks:
-
-- Dominant visual anchor: one image, generated media block, chart, table, formula block, or diagram composition should occupy roughly 30%-45% of the page.
-- Learning blocks: include at least 4 meaningful text blocks across title, focus, explanation/detail, application cue, and takeaway. Keep each block short.
-- Visual hierarchy: title 30-38px, key label 20-24px, body/takeaway 18-20px. Do not make all text the same size.
-- Element richness: target 8-12 purposeful elements. Use shapes, labels, arrows, and media for structure, not decoration alone.
-- Clean surfaces: at most one pale panel may be used to hold a diagram or formula. Do not build stacked colored cards, saturated strips, or dashboard-like tiles.
-- No thin text-only slide: if no media is available, build a concept diagram, process flow, comparison line, formula area, or mini chart.
-- No unlabeled abstract visual placeholders: every diagram made from shapes must include readable labels tied to the title or key points.
-- Bottom callout safety: avoid full-width bottom takeaway/callout strips. Prefer a plain text takeaway separated by a thin divider. If a strip is absolutely necessary, only use it when the bottom 90px is empty. No card, table, formula, code block, or body text may extend underneath it.
-
-- Use one stable font family only: `Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif`.
-- Follow the course theme tokens supplied in the user prompt. Treat those colors and fonts as the slide deck identity.
-- Every page needs one dominant visual anchor occupying 30%-45% of the slide area.
-- Every page should contain title, thin rule, main visual, 2-3 concise explanation blocks, and an optional plain takeaway. Do not add extra boxes just to look rich.
-- If provided images exist, use the most relevant image as the visual anchor.
-- If AI-generated image placeholders exist, prefer one 16:9 image block with a short caption.
-- If no image is available, build a diagram-like visual anchor with shapes, arrows, formula blocks, mini charts, or process nodes. Do not leave a text-only page.
-- Keep body copy to 3-4 bullets. Each bullet should be 8-18 Chinese characters or 4-10 English words where possible.
-- For formula-heavy pages, show one large formula area plus 2-3 compact interpretation bullets. Do not put long derivations in text boxes.
-- No text box may sit flush against the bottom of the canvas. Keep at least 50px bottom margin.
-- Never layer a late full-width callout or text box on top of earlier content. If you need a bottom strip, shrink or move the main content so its bottom is at least 12px above the strip.
-- Use the `[Visual]`, `[Focus]`, `[Explain]`, `[Detail]`, `[Apply]` cues from key points as layout ingredients. Do not copy the bracket labels verbatim unless they are useful as tiny section tags.
-
 ### What belongs ON the slide:
 - Keywords, short phrases, and bullet points
 - Data, labels, and captions
@@ -503,50 +466,6 @@ When splitting a derivation across multiple LaTeX elements (one per line), simpl
 
 ## Design Rules
 
-### OpenMAIC Classroom Visual Target
-
-The generated page should look like the provided OpenMAIC GIF references: clean white canvas, clear title, one large visual, concise explanatory text, and plenty of breathing room. It should not look like a dashboard, marketing hero, or card grid.
-
-Use one of these layout recipes unless the scene clearly requires a chart, formula, or table:
-
-**Recipe A: Title + Image/Text Split**
-- Large title at top-left: left 105, top 70-90, width 760-820, font-size 32-36, bold.
-- Thin horizontal rule under title: left 105, top around 145-165, width 620-790, height 1-3, fill accent or neutral gray.
-- Main media block on the left: left 110, top 180-205, width 410-450, height 230-260.
-- Right text column on the right: left 590-610, top 190-215, width 280-310, height 180-260. Use plain text blocks, not filled cards.
-- If no image is available, replace the media block with a diagram-like composition made of thin connectors, labels, simple nodes, or a small chart.
-- Keep text concise: 3-5 bullets, 8-16 words each.
-
-**Recipe B: Centered Visual + Plain Notes**
-- Large centered title: left 120, top 78-95, width 760, font-size 34-38, bold.
-- Subtitle or objective below: left 170, top 145-175, width 660, font-size 20-24, center aligned.
-- Main visual or formula area: left 220-280, top 220-250, width 460-560, height 190-240.
-- Use a thin divider and plain caption instead of a large colored note card.
-- Use this for cover, summary, quote, project instructions, or role-selection introduction slides.
-
-**Recipe C: Technical Diagram + Takeaways**
-- Title and rule as Recipe A.
-- Left or center visual diagram: flow, stack, timeline, or system architecture using shapes and connectors.
-- Right vertical highlight bar: a thin 3-5px accent rectangle beside takeaways.
-- Takeaways: 3 plain-text bullets, one bold numeric or keyword emphasis.
-- Optional chart in bottom-right only if it fits with 24px spacing.
-
-**Recipe D: Warm Humanities / Library Style**
-- Use soft cream or paper-like background (#fff8e8, #fff6df, #f8f1df) only when the topic is humanities, language, culture, or creative writing.
-- Title top-left with a darker serif-like color; underline in charcoal/gray.
-- Large image or illustration on the left, quote/caption below it.
-- Plain right text column with 3 bullets. Use at most one pale panel only when it improves legibility.
-
-Visual quality rules:
-- Avoid generic dashboard/card grids unless the scene is explicitly a dashboard.
-- Avoid tiny dense paragraphs. A slide should feel like a visual aid, not an article.
-- Prefer large negative space and a single dominant visual region.
-- Use restrained colors: white/paper background, black/slate text, one accent color, thin dividers, and at most one pale panel fill.
-- Avoid saturated large rectangles, stacked colored cards, and full-width colored takeaway bars.
-- When a course theme is supplied, replace the sample blue/gray colors in the recipes with the theme background, accent, panel fill, and text colors.
-- Do not create decorative gradient blobs, floating orbs, or purely decorative bokeh.
-- Never place important content under the center-right playback button area; keep the vertical band around x=520-620 and y=240-330 relatively uncluttered when possible.
-
 ### Rule 1: Text Width Calculation
 
 Before finalizing any text element, verify it fits in one line (unless multi-line is intended):
@@ -961,8 +880,8 @@ Example:
 | Main title   | 32-36px          |
 | Subtitle     | 24-28px          |
 | Key points   | 18-20px          |
-| Body text    | 18-20px          |
-| Captions     | 16-18px          |
+| Body text    | 16-18px          |
+| Captions     | 14-16px          |
 
 Maintain consistent sizing for same-level content. Ensure 2-4px difference between hierarchy levels.
 

@@ -27,7 +27,6 @@ import {
   formatTeacherPersonaForPrompt,
 } from '../prompt-formatters';
 import { parseJsonResponse } from '../json-repair';
-import { polishGeneratedSlideData, polishSlideElements } from './slide-polish';
 
 const log = createLogger('Generation');
 
@@ -261,31 +260,6 @@ function toSlideBackground(background: GeneratedSlideData['background']): SlideB
   return undefined;
 }
 
-function formatThemeDirective(themeSelection?: ClassroomThemeSelection): string {
-  if (!themeSelection) {
-    return [
-      'No course theme was provided. Use a restrained neutral classroom style.',
-      'Avoid copying sample colors literally unless they fit the topic.',
-    ].join('\n');
-  }
-
-  const { palette, fonts } = themeSelection;
-  return [
-    `Course theme: ${themeSelection.styleName} (${themeSelection.paletteName}), mood: ${themeSelection.mood}.`,
-    `Use these palette tokens consistently on this slide:`,
-    `- content background: #${palette.contentBg}`,
-    `- primary accent: #${palette.accent}`,
-    `- secondary accent: #${palette.accentSecondary}`,
-    `- light panel fill: #${palette.accentLight}`,
-    `- title text: #${palette.textPrimary}`,
-    `- body text: #${palette.textBody}`,
-    `- muted text: #${palette.textMuted}`,
-    `- text on dark/accent: #${palette.textOnDark}`,
-    `Typography: heading ${fonts.heading}, body ${fonts.body}, English ${fonts.en}.`,
-    `Do not default to the sample blue palette (#2f80d1/#dbeafe) unless it is one of the theme colors above.`,
-  ].join('\n');
-}
-
 export async function generateSlideContent(
   outline: SceneOutline,
   aiCall: AICallFn,
@@ -295,7 +269,7 @@ export async function generateSlideContent(
   generatedMediaMapping?: ImageMapping,
   agents?: AgentInfo[],
   languageDirective?: string,
-  themeSelection?: ClassroomThemeSelection,
+  _themeSelection?: ClassroomThemeSelection,
 ): Promise<GeneratedSlideContent | null> {
   let assignedImagesText = 'No images available. Do not insert any image elements.';
   let visionImages: Array<{ id: string; src: string }> | undefined;
@@ -371,7 +345,6 @@ export async function generateSlideContent(
     canvas_height: canvasHeight,
     teacherContext,
     languageDirective: languageDirective || '',
-    themeDirective: formatThemeDirective(themeSelection),
     imageElementEnabled,
     generatedImageEnabled,
     generatedVideoEnabled,
@@ -389,12 +362,7 @@ export async function generateSlideContent(
     return null;
   }
 
-  const polishedData = polishGeneratedSlideData(generatedData, {
-    title: outline.title,
-    keyPoints: outline.keyPoints,
-    themeSelection,
-  });
-  const fixedElements = fixElementDefaults(polishedData.elements, assignedImages);
+  const fixedElements = fixElementDefaults(generatedData.elements, assignedImages);
   const latexProcessedElements = processLatexElements(fixedElements);
   const resolvedElements = resolveImageIds(
     latexProcessedElements,
@@ -405,16 +373,11 @@ export async function generateSlideContent(
     resolvedElements,
     outline.mediaGenerations,
   );
-  const polishedElements = polishSlideElements(videoNormalizedElements, {
-    title: outline.title,
-    keyPoints: outline.keyPoints,
-    themeSelection,
-  });
 
-  const processedElements = polishedElements.map((el) => ({
+  const processedElements = videoNormalizedElements.map((el) => ({
     ...el,
     id: `${el.type}_${nanoid(8)}`,
-    rotate: el.type === 'line' ? undefined : ((el as { rotate?: number }).rotate ?? 0),
+    rotate: 0,
   })) as PPTElement[];
 
   return {

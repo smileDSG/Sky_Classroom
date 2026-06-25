@@ -33,11 +33,7 @@ import { GENERATION_CONCURRENCY } from '@/lib/constants/generation';
 import { generationCache } from './cache';
 import { scoreContent, isAcceptable } from './quality-scorer';
 import { createLogger } from '@/lib/logger';
-import {
-  selectThemeForOutline,
-  selectThemeForTemplate,
-  type ClassroomThemeSelection,
-} from './classroom-design-dna';
+import type { ClassroomThemeSelection } from './classroom-design-dna';
 
 // Content generators
 import { generateSlideContent } from './scene-content/slide-generator';
@@ -244,7 +240,6 @@ export async function generateSceneContent(
     agents,
     languageDirective,
     thinkingConfig,
-    themeSelection,
   } = options;
 
   log.info(`[SceneContent] Generating content for "${outline.title}" (type=${outline.type}, order=${outline.order})`);
@@ -271,8 +266,7 @@ export async function generateSceneContent(
   }
 
   switch (outline.type) {
-    case 'slide': {
-      const slideThemeSelection = themeSelection ?? selectThemeForOutline(outline);
+    case 'slide':
       return generateSlideContent(
         outline,
         aiCall,
@@ -282,9 +276,7 @@ export async function generateSceneContent(
         generatedMediaMapping,
         agents,
         languageDirective,
-        slideThemeSelection,
       );
-    }
     case 'quiz':
       return generateQuizContent(outline, aiCall, languageDirective);
     case 'pbl':
@@ -355,49 +347,32 @@ export function createSceneWithActions(
     | GeneratedPBLContent,
   actions: Action[],
   api: ReturnType<typeof createStageAPI>,
-  themeSelection?: import('./classroom-design-dna').ClassroomThemeSelection,
+  _themeSelection?: import('./classroom-design-dna').ClassroomThemeSelection,
 ): string | null {
   if (outline.type === 'slide' && 'elements' in content) {
     const slideContent = content as GeneratedSlideContent;
-    const theme = themeSelection ?? (
-      slideContent.templateData
-        ? selectThemeForTemplate(slideContent.templateData.templateName)
-        : selectThemeForOutline(outline)
-    );
-    const palette = theme.palette;
-    const slideTheme: SlideTheme = {
-      backgroundColor: `#${palette.contentBg}`,
-      themeColors: [
-        `#${palette.accent}`,
-        `#${palette.accentSecondary}`,
-        `#${palette.accentLight}`,
-        `#${palette.textPrimary}`,
-        `#${palette.textMuted}`,
-      ],
-      fontColor: `#${palette.textPrimary}`,
-      fontName: theme.fonts.heading,
-      outline: { color: `#${palette.accentSecondary}`, width: 2, style: 'solid' },
+    const defaultTheme: SlideTheme = {
+      backgroundColor: '#ffffff',
+      themeColors: ['#5b9bd5', '#ed7d31', '#a5a5a5', '#ffc000', '#4472c4'],
+      fontColor: '#333333',
+      fontName: 'Microsoft YaHei',
+      outline: { color: '#d14424', width: 2, style: 'solid' },
       shadow: { h: 0, v: 0, blur: 10, color: '#000000' },
     };
-    const hasTemplateData = !!slideContent.templateData;
-    log.info(`[SceneCreate] Creating slide for "${outline.title}": hasTemplateData=${hasTemplateData}, legacyElements=${slideContent.elements.length}`);
-
-    if (hasTemplateData) {
-      log.info(`[SceneCreate] Template data: ${slideContent.templateData!.templateName}/${slideContent.templateData!.pageName}, ${slideContent.templateData!.page.elements.length} elements`);
-    }
+    log.info(
+      `[SceneCreate] Creating OpenMAIC-first slide for "${outline.title}": elements=${slideContent.elements.length}`,
+    );
 
     const slide: Slide = {
       id: nanoid(),
       viewportSize: 1000,
       viewportRatio: 0.5625,
-      theme: slideTheme,
+      theme: defaultTheme,
       elements: slideContent.elements,
       background: slideContent.background,
-      templateData: slideContent.templateData,
-      layoutVersion: slideContent.templateData ? 2 : 1,
     };
 
-    log.info(`[SceneCreate] Slide created: id=${slide.id}, layoutVersion=${slide.layoutVersion}, templateData=${!!slide.templateData}`);
+    log.info(`[SceneCreate] OpenMAIC-first slide created: id=${slide.id}`);
 
     const sceneResult = api.scene.create({
       type: 'slide',
