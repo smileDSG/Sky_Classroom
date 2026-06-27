@@ -14,7 +14,7 @@ const tools = [
     cardBg: 'bg-sky-500/15 hover:bg-sky-500/25',
     cardBorder: 'border-sky-400/20 hover:border-sky-400/35',
     dot: 'bg-sky-400',
-    href: '/sky/slides',
+    href: '/sky/cloud-mind/slides',
   },
   {
     icon: Search,
@@ -25,7 +25,7 @@ const tools = [
     cardBg: 'bg-amber-500/15 hover:bg-amber-500/25',
     cardBorder: 'border-amber-400/20 hover:border-amber-400/35',
     dot: 'bg-amber-400',
-    href: '/sky/solve',
+    href: '/sky/cloud-mind/solve',
   },
   {
     icon: MessageSquare,
@@ -114,7 +114,9 @@ export function CloudMindHeroButton() {
                       <div
                         className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${tool.dot}`}
                       />
-                      <div className={`flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-xl ${tool.iconBg} transition-all duration-300`}>
+                      <div
+                        className={`flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-xl ${tool.iconBg} transition-all duration-300`}
+                      >
                         <Icon className={`h-5 w-5 ${tool.iconColor}`} />
                       </div>
                     </div>

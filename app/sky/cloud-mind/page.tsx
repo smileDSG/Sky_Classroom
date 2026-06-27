@@ -1,9 +1,22 @@
 'use client';
 
+import { useMemo } from 'react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
-import { Camera, Presentation, Brain, ArrowRight, Sparkles, Zap, BookOpen, FileQuestion } from 'lucide-react';
+import {
+  Camera,
+  Presentation,
+  Brain,
+  ArrowRight,
+  Sparkles,
+  Zap,
+  BookOpen,
+  FileQuestion,
+  Route,
+} from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { buildPersonalizedActionPlan } from '@/lib/sky/personalized-actions';
 
 const TOOLS = [
   {
@@ -81,6 +94,12 @@ const itemVariants = {
 };
 
 export default function CloudMindPage() {
+  const mistakes = useSkyClassroomStore((s) => s.mistakes);
+  const actionPlan = useMemo(() => buildPersonalizedActionPlan(mistakes), [mistakes]);
+  const pinnedActions = actionPlan.actions
+    .filter((action) => ['quiz', 'memory', 'teaching'].includes(action.id))
+    .slice(0, 3);
+
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-6xl space-y-8">
@@ -107,8 +126,8 @@ export default function CloudMindPage() {
 
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">云端智囊</h1>
             <p className="text-indigo-100 text-base md:text-lg max-w-xl leading-relaxed">
-              汇聚 AI 之力，为你的学习保驾护航。拍照搜题、PPT课件生成、智能写作、智能出题……
-              多种工具一站直达。
+              汇聚 AI
+              之力，为你的学习保驾护航。拍照搜题、PPT课件生成、智能出题、记忆卡片与智能授课一站直达。
             </p>
 
             <div className="mt-6 flex items-center gap-4">
@@ -124,6 +143,48 @@ export default function CloudMindPage() {
             </div>
           </div>
         </motion.div>
+
+        {actionPlan.hasSignals && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl border border-slate-200/50 bg-white/70 p-5 backdrop-blur-sm dark:border-slate-700/30 dark:bg-slate-800/60"
+          >
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Route className="h-4 w-4 text-indigo-500" />
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    来自天梯工坊
+                  </span>
+                </div>
+                <h2 className="mt-2 text-lg font-bold text-slate-800 dark:text-slate-100">
+                  为「{actionPlan.primaryTopic}」安排下一步
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {actionPlan.primaryReason}
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {pinnedActions.map((action) => (
+                  <Link
+                    key={action.id}
+                    href={action.href}
+                    className="group rounded-xl border border-slate-200/60 bg-white/70 px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white dark:border-slate-700/40 dark:bg-slate-900/40 dark:hover:border-indigo-800"
+                  >
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      {action.label}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                      {action.description}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Tools Grid */}
         <motion.div

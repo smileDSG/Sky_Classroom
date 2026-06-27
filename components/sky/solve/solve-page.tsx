@@ -89,8 +89,26 @@ interface StreamState {
   answer: string;
   steps: { label: string; content: string; keyPoints: string[] }[];
   knowledgePoints: { name: string; description: string; difficulty: string }[];
-  similarQuestions: { problem: string; difficulty: number; knowledgePoint: string; answer?: string }[];
+  similarQuestions: {
+    problem: string;
+    difficulty: number;
+    knowledgePoint: string;
+    answer?: string;
+  }[];
   fromQuestionBank: boolean;
+}
+
+interface StreamKnowledgePoint {
+  name?: string;
+  description?: string;
+  difficulty?: string;
+}
+
+interface StreamSimilarQuestion {
+  problem?: string;
+  difficulty?: number;
+  knowledgePoint?: string;
+  answer?: string;
 }
 
 async function streamExplain(
@@ -172,7 +190,7 @@ async function streamExplain(
               break;
 
             case 'knowledge':
-              accumulated.knowledgePoints = event.points.map((p: any) => ({
+              accumulated.knowledgePoints = event.points.map((p: StreamKnowledgePoint) => ({
                 name: p.name || '',
                 description: p.description || '',
                 difficulty: p.difficulty || 'medium',
@@ -181,7 +199,7 @@ async function streamExplain(
               break;
 
             case 'similar':
-              accumulated.similarQuestions = event.questions.map((q: any) => ({
+              accumulated.similarQuestions = event.questions.map((q: StreamSimilarQuestion) => ({
                 problem: q.problem || '',
                 difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
                 knowledgePoint: q.knowledgePoint || '',
@@ -217,7 +235,12 @@ interface JobState {
   answer: string;
   steps: { label: string; content: string; keyPoints: string[] }[];
   knowledgePoints: { name: string; description: string; difficulty: string }[];
-  similarQuestions: { problem: string; difficulty: number; knowledgePoint: string; answer?: string }[];
+  similarQuestions: {
+    problem: string;
+    difficulty: number;
+    knowledgePoint: string;
+    answer?: string;
+  }[];
   fromQuestionBank: boolean;
   solvingTime: number;
 }
@@ -399,7 +422,12 @@ export function SolvePage() {
         answer: string;
         steps: { label: string; content: string; keyPoints: string[] }[];
         knowledgePoints: { name: string; description: string; difficulty: string }[];
-        similarQuestions: { problem: string; difficulty: number; knowledgePoint: string; answer?: string }[];
+        similarQuestions: {
+          problem: string;
+          difficulty: number;
+          knowledgePoint: string;
+          answer?: string;
+        }[];
         fromQuestionBank: boolean;
       }> = {};
 
@@ -552,7 +580,7 @@ export function SolvePage() {
           phase: '正在提交...',
           createdAt: Date.now(),
           updatedAt: Date.now(),
-          resultRoute: '/sky/solve',
+          resultRoute: '/sky/cloud-mind/solve',
           previewUrl,
           recognizedText: problemText,
         });
@@ -764,7 +792,12 @@ export function SolvePage() {
             state === 'graded' ||
             state === 'error' ||
             state === 'solving') && (
-            <Button variant="outline" size="sm" className="gap-2 border-[var(--probe-border)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-border-strong)]" onClick={handleReset}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 border-[var(--probe-border)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-border-strong)]"
+              onClick={handleReset}
+            >
               <RotateCcw className="h-4 w-4" />
               重新探测
             </Button>
@@ -783,7 +816,9 @@ export function SolvePage() {
                 </div>
                 信号输入
               </CardTitle>
-              <CardDescription className="text-[var(--probe-muted)]">支持拍照、语音和文字信号捕获</CardDescription>
+              <CardDescription className="text-[var(--probe-muted)]">
+                支持拍照、语音和文字信号捕获
+              </CardDescription>
             </CardHeader>
             <CardContent className="p-4">
               <MultimodalInput
@@ -804,10 +839,19 @@ export function SolvePage() {
                 探测指南
               </div>
               <ul className="mt-3 space-y-2 text-xs text-[var(--probe-muted)]">
-                <li className="flex items-center gap-2"><span className="text-[var(--probe-primary)]">✦</span> 拍照时尽量保持光线充足、文字清晰</li>
-                <li className="flex items-center gap-2"><span className="text-[var(--probe-accent)]">✦</span> 语音输入支持数学公式朗读</li>
-                <li className="flex items-center gap-2"><span className="text-[var(--probe-success)]">✦</span> 输入答案后可获得 AI 批改</li>
-                <li className="flex items-center gap-2"><span className="text-[var(--probe-warm)]">✦</span> 系统会自动推荐相似题目</li>
+                <li className="flex items-center gap-2">
+                  <span className="text-[var(--probe-primary)]">✦</span>{' '}
+                  拍照时尽量保持光线充足、文字清晰
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-[var(--probe-accent)]">✦</span> 语音输入支持数学公式朗读
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-[var(--probe-success)]">✦</span> 输入答案后可获得 AI 批改
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-[var(--probe-warm)]">✦</span> 系统会自动推荐相似题目
+                </li>
               </ul>
             </div>
           )}
@@ -923,7 +967,10 @@ export function SolvePage() {
           ) : (
             <>
               {state === 'error' && error && (
-                <Alert variant="destructive" className="border-[var(--probe-error)]/40 bg-[var(--probe-error)]/15 shadow-[0_0_16px_rgba(248,113,113,0.15)]">
+                <Alert
+                  variant="destructive"
+                  className="border-[var(--probe-error)]/40 bg-[var(--probe-error)]/15 shadow-[0_0_16px_rgba(248,113,113,0.15)]"
+                >
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>信号异常</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
@@ -938,7 +985,9 @@ export function SolvePage() {
                     </div>
                     <div className="absolute -inset-3 rounded-3xl border border-[var(--probe-primary)]/10 animate-pulse" />
                   </div>
-                  <h3 className="mt-6 text-lg font-semibold text-[var(--probe-text)]">等待信号输入</h3>
+                  <h3 className="mt-6 text-lg font-semibold text-[var(--probe-text)]">
+                    等待信号输入
+                  </h3>
                   <p className="mt-2 text-sm text-[var(--probe-muted)]">
                     在左侧输入题目，AI 将为你解码详细的解题步骤
                   </p>
@@ -966,11 +1015,16 @@ export function SolvePage() {
                         ) : (
                           <>
                             <BookOpen className="h-4 w-4 text-[var(--probe-muted)]" />
-                            <span className="text-sm text-[var(--probe-muted)]">正在归档至错题本...</span>
+                            <span className="text-sm text-[var(--probe-muted)]">
+                              正在归档至错题本...
+                            </span>
                           </>
                         )}
                       </div>
-                      <Badge variant="secondary" className="text-xs border border-[var(--probe-primary)]/30 bg-[var(--probe-primary)]/10 text-[var(--probe-primary-bright)]">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs border border-[var(--probe-primary)]/30 bg-[var(--probe-primary)]/10 text-[var(--probe-primary-bright)]"
+                      >
                         前往
                         <a href="/sky/learning" className="ml-1 underline">
                           学习数据
@@ -992,7 +1046,9 @@ export function SolvePage() {
                         <BookOpen className="h-4 w-4 text-[var(--probe-primary-bright)]" />
                       </div>
                       <span className="text-sm text-[var(--probe-text)]">
-                        {mistakeBookState === 'saved' ? '已归档至错题本' : '是否将此题归档至错题本？'}
+                        {mistakeBookState === 'saved'
+                          ? '已归档至错题本'
+                          : '是否将此题归档至错题本？'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">

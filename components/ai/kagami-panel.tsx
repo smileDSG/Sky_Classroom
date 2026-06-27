@@ -57,23 +57,6 @@ function pickOpening(): string {
   return OPENING_LINES[Math.floor(Math.random() * OPENING_LINES.length)];
 }
 
-function detectLang(text: string): string {
-  let cjk = 0, hira = 0, kata = 0, hang = 0, lat = 0;
-  for (const ch of text.slice(0, 500)) {
-    const c = ch.charCodeAt(0);
-    if ((c >= 0x4E00 && c <= 0x9FFF) || (c >= 0x3400 && c <= 0x4DBF)) cjk++;
-    else if (c >= 0x3040 && c <= 0x309F) hira++;
-    else if (c >= 0x30A0 && c <= 0x30FF) kata++;
-    else if (c >= 0xAC00 && c <= 0xD7AF) hang++;
-    else if ((c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A)) lat++;
-  }
-  if (hira > 0 || kata > 0) return 'ja';
-  if (hang > cjk && hang > lat) return 'ko';
-  if (cjk > 4) return 'zh';
-  if (lat > 0) return 'en';
-  return 'auto';
-}
-
 const KAGAMI_PERSONA = `你是柊镜（小镜），来自幸运星的傲娇女高中生。性格特点：
 - 外冷内热：表面毒舌不耐烦，实际很关心对方的学习，绝对不会真的拒绝帮助
 - 优等生：成绩优秀，讲解题目清晰有条理，擅长英语，目标是成为律师
@@ -162,52 +145,6 @@ export function KagamiPanel() {
   const [hasGreeted, setHasGreeted] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
   const [mode, setMode] = useState<KagamiMode>('anime');
-  // ── translate popup state ────────────────────────────────────
-  const [tlPopup, setTlPopup] = useState<{ text: string; src: string; x: number; y: number } | null>(null);
-  const [tlResult, setTlResult] = useState('');
-  const [tlLoading, setTlLoading] = useState(false);
-
-  // ── mouseup → detect selection → show translate popup ───────
-  useEffect(() => {
-    const onMouseUp = (e: MouseEvent) => {
-      // ignore clicks inside the Kagami panel / FAB
-      const target = e.target as HTMLElement;
-      if (fabRef.current?.contains(target) || panelRef.current?.contains(target)) return;
-
-      // capture selection synchronously before it's cleared
-      const selObj = window.getSelection();
-      if (!selObj || selObj.rangeCount === 0) return;
-      const text = selObj.toString().trim();
-      if (text.length < 2 || text.length > 3000) return;
-
-      let rect: DOMRect;
-      try { rect = selObj.getRangeAt(0).getBoundingClientRect(); } catch { return; }
-      const src = detectLang(text);
-      const x = rect.left + rect.width / 2;
-      const y = rect.top - 8;
-
-      setTimeout(() => {
-        setTlPopup({ text, src, x, y });
-        setTlResult('');
-        setTlLoading(true);
-        fetch('/api/sky/cloud-mind/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text.slice(0, 3000), sourceLang: src === 'auto' ? '' : src, targetLang: 'zh', stream: false }),
-        }).then(async (res) => {
-          const raw = await res.text();
-          try {
-            const j = JSON.parse(raw);
-            setTlResult(j?.success && j?.data?.translation ? j.data.translation : '翻译失败');
-          } catch {
-            setTlResult(raw.slice(0, 500));
-          }
-        }).catch(() => setTlResult('网络错误')).finally(() => setTlLoading(false));
-      }, 200);
-    };
-    window.addEventListener('mouseup', onMouseUp);
-    return () => window.removeEventListener('mouseup', onMouseUp);
-  }, []);
   // Hydrate mode from localStorage after mount (avoids SSR mismatch)
   useEffect(() => { setMode(loadMode()); }, []);
   // Reset chat when mode switches
@@ -659,40 +596,6 @@ export function KagamiPanel() {
         </div>
       )}
 
-      {/* ── translate popup (portal) ─────────────────────────── */}
-      {tlPopup && typeof window !== 'undefined' && (() => {
-        const { createPortal } = require('react-dom');
-        return createPortal(
-          <div className="fixed inset-0 z-[99999]" onClick={() => { setTlPopup(null); setTlResult(''); }}>
-            <div
-              className="absolute w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-sky-200/60 bg-white shadow-2xl overflow-hidden"
-              style={{ left: Math.min(tlPopup.x, window.innerWidth - 330), top: Math.min(tlPopup.y, window.innerHeight - 200) }}
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between px-3 py-2 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-blue-50">
-                <span className="text-xs font-medium text-sky-700">翻译</span>
-                <button onClick={() => { setTlPopup(null); setTlResult(''); }} className="text-slate-400 hover:text-slate-600 text-sm leading-none">&times;</button>
-              </div>
-              <div className="p-3">
-                <p className="text-xs text-slate-500 mb-2 line-clamp-3 italic border-l-2 border-sky-200 pl-2">{tlPopup.text}</p>
-                <div className="h-px bg-sky-100 mb-2" />
-                {tlLoading && (
-                  <div className="flex items-center gap-1.5 py-2">
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '120ms' }} />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '240ms' }} />
-                    <span className="text-xs text-slate-400 ml-2">正在翻译…</span>
-                  </div>
-                )}
-                {!tlLoading && tlResult && (
-                  <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">{tlResult}</p>
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body,
-        );
-      })()}
     </>
   );
 }
