@@ -16,7 +16,6 @@ import {
   FileQuestion,
   PenTool,
   Languages,
-  Search,
   Brain,
 } from 'lucide-react';
 import { useTaskStore, type BackgroundTask, type TaskType } from '@/lib/store/use-task-store';
@@ -50,8 +49,8 @@ const TASK_ROUTES: Record<TaskType, string> = {
   slides: '/sky/cloud-mind',
   pptx: '/sky/cloud-mind',
   quiz: '/sky/cloud-mind/quiz',
-  write: '/sky/cloud-mind/write',
-  translate: '/sky/cloud-mind/translate',
+  write: '/sky/cloud-mind',
+  translate: '/sky/cloud-mind',
   memory: '/sky/cloud-mind/memory',
   teaching: '/sky/teaching',
   general: '/sky/cloud-mind',
@@ -59,7 +58,6 @@ const TASK_ROUTES: Record<TaskType, string> = {
 
 function TaskItem({ task }: { task: BackgroundTask }) {
   const router = useRouter();
-  const updateTask = useTaskStore((s) => s.updateTask);
   const removeTask = useTaskStore((s) => s.removeTask);
   const dismissTask = useTaskStore((s) => s.dismissTask);
   const autoDismissTimerRef = useRef<NodeJS.Timeout | null>(null);

@@ -3,10 +3,7 @@
 import { useMemo } from 'react';
 import type { MistakeCause } from '@/lib/solve/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-import {
-  buildKnowledgeGraph,
-  getMasterySummary,
-} from '@/lib/knowledge-graph';
+import { buildKnowledgeGraph, getMasterySummary } from '@/lib/knowledge-graph';
 import { inferSubject, getSubjectLabel } from '@/lib/mistakes/subject-inference';
 import type { Subject } from '@/lib/mistakes/subject-inference';
 
@@ -15,18 +12,18 @@ import type { Subject } from '@/lib/mistakes/subject-inference';
 const causeLabels: Record<MistakeCause, string> = {
   'concept-unclear': '概念不清',
   'calculation-error': '计算失误',
-  'misreading': '审题错误',
+  misreading: '审题错误',
   'method-wrong': '方法错误',
-  'careless': '粗心',
+  careless: '粗心',
   'format-error': '格式错误',
 };
 
 const causeBarColors: Record<MistakeCause, string> = {
   'concept-unclear': 'bg-purple-500',
   'calculation-error': 'bg-orange-500',
-  'misreading': 'bg-blue-500',
+  misreading: 'bg-blue-500',
   'method-wrong': 'bg-red-500',
-  'careless': 'bg-yellow-500',
+  careless: 'bg-yellow-500',
   'format-error': 'bg-gray-500',
 };
 
@@ -40,7 +37,6 @@ const allCauses: MistakeCause[] = [
 ];
 
 // ── SVG text styles (Tailwind doesn't work inside SVG) ──────────────
-const SVG_TEXT_SM = { fontSize: '9px', fontFamily: 'system-ui, sans-serif' };
 const SVG_TEXT_XS = { fontSize: '8px', fontFamily: 'system-ui, sans-serif' };
 
 // ── Component ─────────────────────────────────────────────────────────
@@ -54,8 +50,7 @@ export function LearningStats() {
   const stats = useMemo(() => {
     const totalCount = mistakes.length;
     const reviewedCount = mistakes.filter((m) => m.reviewed).length;
-    const reviewRate =
-      totalCount > 0 ? Math.round((reviewedCount / totalCount) * 100) : 0;
+    const reviewRate = totalCount > 0 ? Math.round((reviewedCount / totalCount) * 100) : 0;
 
     // Cause distribution
     const causeDist: Record<string, number> = {};
@@ -112,6 +107,10 @@ export function LearningStats() {
   }, [mistakes]);
 
   const trendMax = Math.max(...trendData.map((d) => d.total), 1);
+  const trendYAxisTicks = useMemo(
+    () => [...new Set([0, Math.ceil(trendMax / 2), trendMax])],
+    [trendMax],
+  );
 
   // ── Subject dimension stats ─────────────────────────────────────
   const subjectStats = useMemo(() => {
@@ -162,9 +161,7 @@ export function LearningStats() {
       <div className="grid grid-cols-3 gap-4">
         {/* Total mistakes */}
         <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
-          <div className="text-3xl font-bold text-[#EF4444]">
-            {stats.totalCount}
-          </div>
+          <div className="text-3xl font-bold text-[#EF4444]">{stats.totalCount}</div>
           <div className="mt-1 text-sm text-gray-500 dark:text-slate-400">总错题数</div>
         </div>
 
@@ -172,9 +169,7 @@ export function LearningStats() {
         <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
           <div className="text-3xl font-bold text-[#10B981]">
             {stats.reviewedCount}
-            <span className="ml-1 text-lg font-normal text-gray-400">
-              / {stats.totalCount}
-            </span>
+            <span className="ml-1 text-lg font-normal text-gray-400">/ {stats.totalCount}</span>
           </div>
           <div className="mt-1 text-sm text-gray-500 dark:text-slate-400">
             已复习 · 复习率 {stats.reviewRate}%
@@ -190,9 +185,7 @@ export function LearningStats() {
 
         {/* Weak points count */}
         <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
-          <div className="text-3xl font-bold text-[#F59E0B]">
-            {stats.weakPointsCount}
-          </div>
+          <div className="text-3xl font-bold text-[#F59E0B]">{stats.weakPointsCount}</div>
           <div className="mt-1 text-sm text-gray-500 dark:text-slate-400">薄弱知识点</div>
         </div>
       </div>
@@ -204,12 +197,14 @@ export function LearningStats() {
         </h3>
         <svg viewBox="0 0 360 180" className="w-full" style={{ maxHeight: 180 }}>
           {/* Y-axis grid + labels */}
-          {[0, Math.ceil(trendMax / 2), trendMax].map((pct) => {
+          {trendYAxisTicks.map((pct) => {
             const y = 150 - (pct / trendMax) * 130;
             return (
               <g key={`y-${pct}`}>
                 <line x1={36} y1={y} x2={346} y2={y} stroke="#e5e7eb" strokeWidth="0.5" />
-                <text x={30} y={y + 3} textAnchor="end" {...SVG_TEXT_XS} fill="#9ca3af">{pct}</text>
+                <text x={30} y={y + 3} textAnchor="end" {...SVG_TEXT_XS} fill="#9ca3af">
+                  {pct}
+                </text>
               </g>
             );
           })}
@@ -221,26 +216,49 @@ export function LearningStats() {
           {trendData.map((d, i) => {
             if (i % 2 !== 0 && i !== trendData.length - 1) return null;
             const x = 36 + (i / 13) * 310;
-            return <text key={`x-${i}`} x={x} y={168} textAnchor="middle" {...SVG_TEXT_XS} fill="#6b7280">{d.date}</text>;
+            return (
+              <text
+                key={`x-${i}`}
+                x={x}
+                y={168}
+                textAnchor="middle"
+                {...SVG_TEXT_XS}
+                fill="#6b7280"
+              >
+                {d.date}
+              </text>
+            );
           })}
 
           {/* Total line (red) */}
           <polyline
-            fill="none" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-            points={trendData.map((d, i) => {
-              const x = 36 + (i / 13) * 310;
-              const y = 150 - (d.total / trendMax) * 130;
-              return `${x},${y}`;
-            }).join(' ')}
+            fill="none"
+            stroke="#EF4444"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={trendData
+              .map((d, i) => {
+                const x = 36 + (i / 13) * 310;
+                const y = 150 - (d.total / trendMax) * 130;
+                return `${x},${y}`;
+              })
+              .join(' ')}
           />
           {/* Reviewed line (green) */}
           <polyline
-            fill="none" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-            points={trendData.map((d, i) => {
-              const x = 36 + (i / 13) * 310;
-              const y = 150 - (d.reviewed / trendMax) * 130;
-              return `${x},${y}`;
-            }).join(' ')}
+            fill="none"
+            stroke="#10B981"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={trendData
+              .map((d, i) => {
+                const x = 36 + (i / 13) * 310;
+                const y = 150 - (d.reviewed / trendMax) * 130;
+                return `${x},${y}`;
+              })
+              .join(' ')}
           />
 
           {/* Data points */}
@@ -249,17 +267,33 @@ export function LearningStats() {
             return (
               <g key={`pt-${i}`}>
                 {d.total > 0 && (
-                  <circle cx={x} cy={150 - (d.total / trendMax) * 130} r="3" fill="#EF4444" stroke="#fff" strokeWidth="1" />
+                  <circle
+                    cx={x}
+                    cy={150 - (d.total / trendMax) * 130}
+                    r="3"
+                    fill="#EF4444"
+                    stroke="#fff"
+                    strokeWidth="1"
+                  />
                 )}
                 {d.reviewed > 0 && (
-                  <circle cx={x} cy={150 - (d.reviewed / trendMax) * 130} r="3" fill="#10B981" stroke="#fff" strokeWidth="1" />
+                  <circle
+                    cx={x}
+                    cy={150 - (d.reviewed / trendMax) * 130}
+                    r="3"
+                    fill="#10B981"
+                    stroke="#fff"
+                    strokeWidth="1"
+                  />
                 )}
               </g>
             );
           })}
 
           {/* Axis title */}
-          <text x={191} y={178} textAnchor="middle" {...SVG_TEXT_XS} fill="#9ca3af">日期 →</text>
+          <text x={191} y={178} textAnchor="middle" {...SVG_TEXT_XS} fill="#9ca3af">
+            日期 →
+          </text>
         </svg>
 
         {/* Legend */}
@@ -315,7 +349,9 @@ export function LearningStats() {
         <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-lg">🧠</span>
-            <span className="text-sm font-semibold text-gray-700 dark:text-slate-200">记忆卡片学习</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-slate-200">
+              记忆卡片学习
+            </span>
           </div>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
@@ -328,7 +364,9 @@ export function LearningStats() {
             </div>
             <div>
               <div className="text-2xl font-bold text-[#06B6D4]">
-                {memoryProgress.lastStudied ? new Date(memoryProgress.lastStudied).toLocaleDateString() : '-'}
+                {memoryProgress.lastStudied
+                  ? new Date(memoryProgress.lastStudied).toLocaleDateString()
+                  : '-'}
               </div>
               <div className="text-xs text-gray-400">最近学习</div>
             </div>
@@ -342,8 +380,7 @@ export function LearningStats() {
         <div className="space-y-2.5">
           {allCauses.map((cause) => {
             const count = stats.causeDist[cause] ?? 0;
-            const pct =
-              stats.maxCause > 0 ? (count / stats.maxCause) * 100 : 0;
+            const pct = stats.maxCause > 0 ? (count / stats.maxCause) * 100 : 0;
 
             return (
               <div key={cause} className="flex items-center gap-3">

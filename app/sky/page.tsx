@@ -9,6 +9,7 @@ import { LearningTrendChart } from '@/components/sky/dashboard/learning-trend-ch
 import { AbilityRadar } from '@/components/sky/dashboard/ability-radar';
 import { DailySuggestCard } from '@/components/sky/dashboard/daily-suggest-card';
 import { LearningPathCard } from '@/components/sky/dashboard/learning-path-card';
+import { PersonalizedActionBridge } from '@/components/sky/dashboard/personalized-action-bridge';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
@@ -37,8 +38,8 @@ const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '
 function getGreeting(isDark: boolean): string {
   const hour = new Date().getHours();
   if (isDark) {
-    if (hour >= 5 && hour < 12) return '晚上好，同学！';
-    if (hour >= 12 && hour < 18) return '夜晚好，同学！';
+    if (hour >= 5 && hour < 12) return '早安，同学！';
+    if (hour >= 12 && hour < 18) return '下午好，同学！';
     if (hour >= 18 && hour < 22) return '晚上好，同学！';
     return '夜深了，注意休息！';
   }
@@ -52,9 +53,33 @@ function getGreeting(isDark: boolean): string {
 
 function CloudMindMiniCard() {
   const tools = [
-    { icon: Camera, label: '拍照搜题', desc: '智能识别题目', color: 'text-violet-400', bg: 'bg-violet-500/10', hoverBg: 'hover:bg-violet-500/15', href: '/sky/cloud-mind/solve' },
-    { icon: Presentation, label: '幻灯片', desc: '一键生成课件', color: 'text-cyan-400', bg: 'bg-cyan-500/10', hoverBg: 'hover:bg-cyan-500/15', href: '/sky/cloud-mind/slides' },
-    { icon: Brain, label: '记忆卡片', desc: 'AI 智能复习', color: 'text-rose-400', bg: 'bg-rose-500/10', hoverBg: 'hover:bg-rose-500/15', href: '/sky/cloud-mind/memory' },
+    {
+      icon: Camera,
+      label: '拍照搜题',
+      desc: '智能识别题目',
+      color: 'text-violet-400',
+      bg: 'bg-violet-500/10',
+      hoverBg: 'hover:bg-violet-500/15',
+      href: '/sky/cloud-mind/solve',
+    },
+    {
+      icon: Presentation,
+      label: '幻灯片',
+      desc: '一键生成课件',
+      color: 'text-cyan-400',
+      bg: 'bg-cyan-500/10',
+      hoverBg: 'hover:bg-cyan-500/15',
+      href: '/sky/cloud-mind/slides',
+    },
+    {
+      icon: Brain,
+      label: '记忆卡片',
+      desc: 'AI 智能复习',
+      color: 'text-rose-400',
+      bg: 'bg-rose-500/10',
+      hoverBg: 'hover:bg-rose-500/15',
+      href: '/sky/cloud-mind/memory',
+    },
   ];
 
   return (
@@ -75,7 +100,9 @@ function CloudMindMiniCard() {
             <Brain className="h-3.5 w-3.5 text-white" />
           </div>
           <div>
-            <span className="text-[9px] font-medium text-indigo-200/70 tracking-wider uppercase">AI 工具</span>
+            <span className="text-[9px] font-medium text-indigo-200/70 tracking-wider uppercase">
+              AI 工具
+            </span>
             <h3 className="text-sm font-bold text-white leading-tight">云端智囊</h3>
           </div>
         </div>
@@ -90,7 +117,9 @@ function CloudMindMiniCard() {
                 href={tool.href}
                 className="group/tool flex items-center gap-2.5 rounded-lg bg-white/8 px-2.5 py-2 ring-1 ring-white/8 transition-all hover:bg-white/12"
               >
-                <div className={`flex h-6 w-6 items-center justify-center rounded-md ${tool.bg} ${tool.hoverBg} transition-colors`}>
+                <div
+                  className={`flex h-6 w-6 items-center justify-center rounded-md ${tool.bg} ${tool.hoverBg} transition-colors`}
+                >
                   <Icon className={`h-3.5 w-3.5 ${tool.color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -110,9 +139,30 @@ function CloudMindMiniCard() {
 
 function QuickActionsCompact() {
   const actions = [
-    { icon: BookOpen, label: '学习路径', color: 'text-indigo-400', bg: 'bg-indigo-500/10', hoverBg: 'hover:bg-indigo-500/15', href: '/sky/learning' },
-    { icon: BarChart3, label: '数据分析', color: 'text-emerald-400', bg: 'bg-emerald-500/10', hoverBg: 'hover:bg-emerald-500/15', href: '/sky/analytics' },
-    { icon: TrendingUp, label: '复习计划', color: 'text-amber-400', bg: 'bg-amber-500/10', hoverBg: 'hover:bg-amber-500/15', href: '/sky/learning' },
+    {
+      icon: BookOpen,
+      label: '学习路径',
+      color: 'text-indigo-400',
+      bg: 'bg-indigo-500/10',
+      hoverBg: 'hover:bg-indigo-500/15',
+      href: '/sky/learning?tab=graph',
+    },
+    {
+      icon: BarChart3,
+      label: '数据分析',
+      color: 'text-emerald-400',
+      bg: 'bg-emerald-500/10',
+      hoverBg: 'hover:bg-emerald-500/15',
+      href: '/sky/learning?tab=stats',
+    },
+    {
+      icon: TrendingUp,
+      label: '复习计划',
+      color: 'text-amber-400',
+      bg: 'bg-amber-500/10',
+      hoverBg: 'hover:bg-amber-500/15',
+      href: '/sky/learning?tab=review',
+    },
   ];
 
   return (
@@ -141,10 +191,14 @@ function QuickActionsCompact() {
                 href={action.href}
                 className="group/action flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50"
               >
-                <div className={`flex h-6 w-6 items-center justify-center rounded-md ${action.bg} ${action.hoverBg} transition-colors`}>
+                <div
+                  className={`flex h-6 w-6 items-center justify-center rounded-md ${action.bg} ${action.hoverBg} transition-colors`}
+                >
                   <Icon className={`h-3.5 w-3.5 ${action.color}`} />
                 </div>
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{action.label}</span>
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                  {action.label}
+                </span>
                 <ArrowRight className="h-3 w-3 text-slate-300 dark:text-slate-600 ml-auto group-hover/action:text-slate-500 group-hover/action:translate-x-0.5 transition-all" />
               </Link>
             );
@@ -174,10 +228,42 @@ function formatStudyTime(minutes: number): string {
 
 function DashboardEmptyState() {
   const quickActions = [
-    { icon: Camera, label: '拍照搜题', desc: '拍题自动识别并解析', href: '/sky/solve', gradient: 'from-violet-500 to-indigo-500', bg: 'bg-violet-500/10 hover:bg-violet-500/15', iconColor: 'text-violet-400' },
-    { icon: Presentation, label: '生成课件', desc: 'AI 自动生成精美 PPT', href: '/sky/slides', gradient: 'from-cyan-500 to-blue-500', bg: 'bg-cyan-500/10 hover:bg-cyan-500/15', iconColor: 'text-cyan-400' },
-    { icon: Brain, label: 'AI 助手', desc: '智能答疑与知识讲解', href: '/sky/assistant', gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-500/10 hover:bg-amber-500/15', iconColor: 'text-amber-400' },
-    { icon: TrendingUp, label: '复习计划', desc: '基于艾宾浩斯记忆曲线', href: '/sky/learning', gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-500/10 hover:bg-emerald-500/15', iconColor: 'text-emerald-400' },
+    {
+      icon: Camera,
+      label: '拍照搜题',
+      desc: '拍题自动识别并解析',
+      href: '/sky/cloud-mind/solve',
+      gradient: 'from-violet-500 to-indigo-500',
+      bg: 'bg-violet-500/10 hover:bg-violet-500/15',
+      iconColor: 'text-violet-400',
+    },
+    {
+      icon: Presentation,
+      label: '生成课件',
+      desc: 'AI 自动生成精美 PPT',
+      href: '/sky/cloud-mind/slides',
+      gradient: 'from-cyan-500 to-blue-500',
+      bg: 'bg-cyan-500/10 hover:bg-cyan-500/15',
+      iconColor: 'text-cyan-400',
+    },
+    {
+      icon: Brain,
+      label: 'AI 助手',
+      desc: '智能答疑与知识讲解',
+      href: '/sky/assistant',
+      gradient: 'from-amber-500 to-orange-500',
+      bg: 'bg-amber-500/10 hover:bg-amber-500/15',
+      iconColor: 'text-amber-400',
+    },
+    {
+      icon: TrendingUp,
+      label: '复习计划',
+      desc: '基于艾宾浩斯记忆曲线',
+      href: '/sky/learning',
+      gradient: 'from-emerald-500 to-green-500',
+      bg: 'bg-emerald-500/10 hover:bg-emerald-500/15',
+      iconColor: 'text-emerald-400',
+    },
   ];
 
   return (
@@ -215,7 +301,7 @@ function DashboardEmptyState() {
 
           {/* Quick start CTA */}
           <Link
-            href="/sky/solve"
+            href="/sky/cloud-mind/solve"
             className="group/cta inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-violet-500/15 transition-all hover:shadow-lg hover:shadow-violet-500/20 hover:scale-[1.02]"
           >
             <Camera className="h-4 w-4" />
@@ -241,14 +327,22 @@ function DashboardEmptyState() {
                 className={`group/action relative overflow-hidden rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/60 dark:bg-slate-900/40 backdrop-blur-sm p-3.5 transition-all hover:scale-[1.02] hover:shadow-md`}
               >
                 {/* Hover gradient */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover/action:opacity-[0.05] transition-opacity`} />
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover/action:opacity-[0.05] transition-opacity`}
+                />
 
                 <div className="relative z-10">
-                  <div className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${action.bg} mb-2.5`}>
+                  <div
+                    className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${action.bg} mb-2.5`}
+                  >
                     <Icon className={`h-4.5 w-4.5 ${action.iconColor}`} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{action.label}</p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{action.desc}</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    {action.label}
+                  </p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    {action.desc}
+                  </p>
                 </div>
               </Link>
             </motion.div>
@@ -268,7 +362,7 @@ export default function SkyDashboardPage() {
     const hour = new Date().getHours();
     if (resolvedTheme === 'dark') return '🌙';
     if (hour >= 5 && hour < 12) return '☀️';
-    if (hour >= 12 && hour < 18) return '️';
+    if (hour >= 12 && hour < 18) return '🌤️';
     return '🌙';
   }, [resolvedTheme]);
 
@@ -405,9 +499,7 @@ export default function SkyDashboardPage() {
                 {greeting}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {hasData
-                  ? `已有 ${mistakes.length} 道错题，继续加油！`
-                  : '开始你的第一道练习吧！'}
+                {hasData ? `已有 ${mistakes.length} 道错题，继续加油！` : '开始你的第一道练习吧！'}
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs">
@@ -438,6 +530,7 @@ export default function SkyDashboardPage() {
 
         {/* ── Daily Suggestions ────────────────────────────────── */}
         {hasData && <DailySuggestCard mistakes={mistakes} />}
+        {hasData && <PersonalizedActionBridge mistakes={mistakes} />}
 
         <AnimatePresence mode="wait">
           {!hasData ? (
@@ -500,7 +593,9 @@ export default function SkyDashboardPage() {
                       <motion.div
                         className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-orange-400 to-amber-500"
                         initial={{ width: 0 }}
-                        animate={{ width: `${Math.min(stats.streakDays / maxMilestone, 1) * 100}%` }}
+                        animate={{
+                          width: `${Math.min(stats.streakDays / maxMilestone, 1) * 100}%`,
+                        }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
                       />
                     </div>

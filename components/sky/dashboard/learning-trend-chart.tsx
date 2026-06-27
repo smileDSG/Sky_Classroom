@@ -44,8 +44,22 @@ function GridLines({ maxVal }: { maxVal: number }) {
         const val = Math.round(maxVal - (i / lines) * maxVal);
         return (
           <g key={i}>
-            <line x1={padL} y1={y} x2={W - padR} y2={y} className="stroke-slate-300 dark:stroke-slate-600" strokeWidth={0.5} strokeDasharray="4,4" />
-            <text x={padL - 8} y={y + 4} textAnchor="end" className="fill-slate-400 dark:fill-slate-500" fontSize={10}>
+            <line
+              x1={padL}
+              y1={y}
+              x2={W - padR}
+              y2={y}
+              className="stroke-slate-300 dark:stroke-slate-600"
+              strokeWidth={0.5}
+              strokeDasharray="4,4"
+            />
+            <text
+              x={padL - 8}
+              y={y + 4}
+              textAnchor="end"
+              className="fill-slate-400 dark:fill-slate-500"
+              fontSize={10}
+            >
               {val}
             </text>
           </g>
@@ -67,15 +81,24 @@ function buildArea(pathD: string, points: { x: number }[]): string {
 export function LearningTrendChart({ data }: LearningTrendChartProps) {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
-  const maxVal = useMemo(() => Math.max(...data.map((d) => Math.max(d.total, d.reviewed)), 1), [data]);
+  const maxVal = useMemo(
+    () => Math.max(...data.map((d) => Math.max(d.total, d.reviewed)), 1),
+    [data],
+  );
   const totalPoints = useMemo(() => buildPoints(data, 'total'), [data]);
   const reviewedPoints = useMemo(() => buildPoints(data, 'reviewed'), [data]);
 
   const totalPath = useMemo(() => buildPath(totalPoints), [totalPoints]);
   const reviewedPath = useMemo(() => buildPath(reviewedPoints), [reviewedPoints]);
 
-  const totalCount = useAnimatedNumber(data.reduce((s, d) => s + d.total, 0), { duration: 1500 });
-  const reviewedCount = useAnimatedNumber(data.reduce((s, d) => s + d.reviewed, 0), { duration: 1500 });
+  const totalCount = useAnimatedNumber(
+    data.reduce((s, d) => s + d.total, 0),
+    { duration: 1500 },
+  );
+  const reviewedCount = useAnimatedNumber(
+    data.reduce((s, d) => s + d.reviewed, 0),
+    { duration: 1500 },
+  );
 
   if (data.length === 0 || data.every((d) => d.total === 0)) {
     return (
@@ -96,12 +119,14 @@ export function LearningTrendChart({ data }: LearningTrendChartProps) {
               <TrendingUp className="h-6 w-6 text-violet-500" />
             </div>
           </div>
-          <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">学习趋势即将呈现</h4>
+          <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+            学习趋势即将呈现
+          </h4>
           <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center max-w-[180px]">
             完成搜题后，这里会展示近14天的学习曲线
           </p>
           <Link
-            href="/sky/solve"
+            href="/sky/cloud-mind/solve"
             className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-violet-500/8 hover:bg-violet-500/15 px-3 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 transition-all hover:scale-[1.02]"
           >
             <Search className="h-3 w-3" />
@@ -123,14 +148,22 @@ export function LearningTrendChart({ data }: LearningTrendChartProps) {
       <div className="mb-2.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <TrendingUp className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400" />
-          <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">近14天学习趋势</h3>
+          <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+            近14天学习趋势
+          </h3>
         </div>
         <div className="flex items-center gap-2.5 text-[10px]">
           <span className="text-slate-500 dark:text-slate-400">
-            错题 <span className="text-violet-500 dark:text-violet-400 font-bold">{Math.round(totalCount.value)}</span>
+            错题{' '}
+            <span className="text-violet-500 dark:text-violet-400 font-bold">
+              {Math.round(totalCount.value)}
+            </span>
           </span>
           <span className="text-slate-500 dark:text-slate-400">
-            已复习 <span className="text-emerald-500 dark:text-emerald-400 font-bold">{Math.round(reviewedCount.value)}</span>
+            已复习{' '}
+            <span className="text-emerald-500 dark:text-emerald-400 font-bold">
+              {Math.round(reviewedCount.value)}
+            </span>
           </span>
         </div>
       </div>
@@ -148,7 +181,11 @@ export function LearningTrendChart({ data }: LearningTrendChartProps) {
       </div>
 
       {/* SVG Chart */}
-      <svg viewBox={`0 0 ${CHART.width} ${CHART.height}`} className="w-full h-auto" style={{ overflow: 'visible' }}>
+      <svg
+        viewBox={`0 0 ${CHART.width} ${CHART.height}`}
+        className="w-full h-auto"
+        style={{ overflow: 'visible' }}
+      >
         <defs>
           <linearGradient id="totalLineGrad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#8B5CF6" />
@@ -168,7 +205,14 @@ export function LearningTrendChart({ data }: LearningTrendChartProps) {
 
         {/* X axis labels */}
         {totalPoints.map((p, i) => (
-          <text key={i} x={p.x} y={CHART.height - 6} textAnchor="middle" className="fill-slate-500 dark:fill-slate-400" fontSize={10}>
+          <text
+            key={i}
+            x={p.x}
+            y={CHART.height - 6}
+            textAnchor="middle"
+            className="fill-slate-500 dark:fill-slate-400"
+            fontSize={10}
+          >
             {p.day}
           </text>
         ))}
@@ -266,22 +310,44 @@ export function LearningTrendChart({ data }: LearningTrendChartProps) {
         ))}
 
         {/* Tooltip */}
-        {hoverIdx !== null && (() => {
-          const tp = totalPoints[hoverIdx];
-          const rp = reviewedPoints[hoverIdx];
-          const tipY = Math.min(tp.y, rp.y) - 28;
-          return (
-            <g>
-              <rect x={tp.x - 40} y={tipY} width={80} height={28} rx={6} className="fill-slate-800 dark:fill-slate-700" stroke="#475569" />
-              <text x={tp.x} y={tipY + 12} textAnchor="middle" className="fill-slate-100" fontSize={10} fontWeight={600}>
-                错题 {data[hoverIdx].total}
-              </text>
-              <text x={tp.x} y={tipY + 23} textAnchor="middle" className="fill-emerald-300" fontSize={10}>
-                已复习 {data[hoverIdx].reviewed}
-              </text>
-            </g>
-          );
-        })()}
+        {hoverIdx !== null &&
+          (() => {
+            const tp = totalPoints[hoverIdx];
+            const rp = reviewedPoints[hoverIdx];
+            const tipY = Math.min(tp.y, rp.y) - 28;
+            return (
+              <g>
+                <rect
+                  x={tp.x - 40}
+                  y={tipY}
+                  width={80}
+                  height={28}
+                  rx={6}
+                  className="fill-slate-800 dark:fill-slate-700"
+                  stroke="#475569"
+                />
+                <text
+                  x={tp.x}
+                  y={tipY + 12}
+                  textAnchor="middle"
+                  className="fill-slate-100"
+                  fontSize={10}
+                  fontWeight={600}
+                >
+                  错题 {data[hoverIdx].total}
+                </text>
+                <text
+                  x={tp.x}
+                  y={tipY + 23}
+                  textAnchor="middle"
+                  className="fill-emerald-300"
+                  fontSize={10}
+                >
+                  已复习 {data[hoverIdx].reviewed}
+                </text>
+              </g>
+            );
+          })()}
       </svg>
     </motion.div>
   );

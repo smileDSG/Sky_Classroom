@@ -183,7 +183,10 @@ interface MistakesSlice {
   /** Set nextReview=now for all mistakes matching the given knowledge points */
   prioritizeReview: (knowledgePoints: string[]) => void;
   /** Cache AI-generated solution data for a mistake */
-  updateMistakeSolution: (id: string, data: { solutionSteps?: string[]; hints?: string[]; errorExplanation?: string }) => void;
+  updateMistakeSolution: (
+    id: string,
+    data: { solutionSteps?: string[]; hints?: string[]; errorExplanation?: string },
+  ) => void;
 }
 
 const createMistakesSlice = (
@@ -240,9 +243,7 @@ const createMistakesSlice = (
   },
   updateMistakeSolution: (id, data) => {
     set((s) => ({
-      mistakes: s.mistakes.map((m) =>
-        m.id === id ? { ...m, ...data } : m,
-      ),
+      mistakes: s.mistakes.map((m) => (m.id === id ? { ...m, ...data } : m)),
     }));
   },
 });
@@ -297,7 +298,11 @@ const createMemorySlice = (set: SetFn<MemorySlice>): MemorySlice => ({
 
 // ── Combined Store ─────────────────────────────────────────────────
 
-export type SkyClassroomStore = SolveSlice & SlidesSlice & MistakesSlice & AssistantSlice & MemorySlice;
+export type SkyClassroomStore = SolveSlice &
+  SlidesSlice &
+  MistakesSlice &
+  AssistantSlice &
+  MemorySlice;
 
 export const useSkyClassroomStore = create<SkyClassroomStore>()(
   persist(
@@ -354,6 +359,7 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
         style: state.style,
         difficulty: state.difficulty,
         mistakes: state.mistakes,
+        memoryProgress: state.memoryProgress,
       }),
     },
   ),

@@ -5,9 +5,8 @@ import { usePathname } from 'next/navigation';
 
 const NAV_ITEMS = [
   { label: '首页', href: '/sky', icon: '🏠' },
-  { label: '搜题', href: '/sky/solve', icon: '🔍' },
-  { label: '幻灯片', href: '/sky/slides', icon: '📖' },
-  { label: '学习数据', href: '/sky/learning', icon: '📊' },
+  { label: '云端智囊', href: '/sky/cloud-mind', icon: '🧠' },
+  { label: '天梯工坊', href: '/sky/learning', icon: '📊' },
   { label: '小镜课堂', href: '/sky/assistant', icon: '/avatars/kagami/chibi.png' },
 ];
 
@@ -27,9 +26,7 @@ export function SkySidebar({ collapsed }: SkySidebarProps) {
       <nav className="flex flex-1 flex-col gap-1 p-3">
         {NAV_ITEMS.map((item) => {
           const isActive =
-            item.href === '/sky'
-              ? pathname === '/sky'
-              : pathname.startsWith(item.href);
+            item.href === '/sky' ? pathname === '/sky' : pathname.startsWith(item.href);
 
           return (
             <Link
