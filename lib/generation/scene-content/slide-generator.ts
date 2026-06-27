@@ -28,6 +28,7 @@ import {
 } from '../prompt-formatters';
 import { parseJsonResponse } from '../json-repair';
 import { polishSlideElements } from './slide-polish';
+import { auditSlideLayout } from '@/lib/slides/agent/layout-guard-agent';
 
 const log = createLogger('Generation');
 
@@ -250,7 +251,9 @@ function processLatexElements(
     .filter((el): el is NonNullable<typeof el> => el !== null);
 }
 
-function toSlideBackground(background: GeneratedSlideData['background']): SlideBackground | undefined {
+function toSlideBackground(
+  background: GeneratedSlideData['background'],
+): SlideBackground | undefined {
   if (!background) return undefined;
   if (background.type === 'solid' && background.color) {
     return { type: 'solid', color: background.color };
@@ -259,6 +262,61 @@ function toSlideBackground(background: GeneratedSlideData['background']): SlideB
     return { type: 'gradient', gradient: background.gradient };
   }
   return undefined;
+}
+
+function getBlockingLayoutIssueDetails(elements: PPTElement[]): string[] {
+  return auditSlideLayout(elements)
+    .filter((issue) =>
+      [
+        'readable_element_overlap',
+        'foreground_overlay_collision',
+        'latex_box_too_small',
+        'unsafe_bottom_zone',
+        'text_outside_background',
+      ].includes(issue.type),
+    )
+    .map((issue) =>
+      [
+        issue.type,
+        issue.textId ? `textId=${issue.textId}` : '',
+        issue.backgroundId ? `backgroundId=${issue.backgroundId}` : '',
+        issue.detail,
+      ]
+        .filter(Boolean)
+        .join(' | '),
+    );
+}
+
+function finalizeSlideElements(
+  generatedData: GeneratedSlideData,
+  outline: SceneOutline,
+  assignedImages: PdfImage[] | undefined,
+  imageMapping: ImageMapping | undefined,
+  generatedMediaMapping: ImageMapping | undefined,
+): PPTElement[] {
+  const fixedElements = fixElementDefaults(generatedData.elements, assignedImages);
+  const latexProcessedElements = processLatexElements(fixedElements);
+  const resolvedElements = resolveImageIds(
+    latexProcessedElements,
+    imageMapping,
+    generatedMediaMapping,
+  );
+  const videoNormalizedElements = normalizeGeneratedVideoRefs(
+    resolvedElements,
+    outline.mediaGenerations,
+  );
+
+  const processedElements = videoNormalizedElements.map((el) => ({
+    ...el,
+    id: `${el.type}_${nanoid(8)}`,
+    rotate: 0,
+  })) as PPTElement[];
+
+  return polishSlideElements(processedElements, {
+    title: outline.title,
+    keyPoints: outline.keyPoints,
+    decorate: false,
+  }) as PPTElement[];
 }
 
 export async function generateSlideContent(
@@ -399,28 +457,61 @@ Hard rules:
     }
   }
 
-  const fixedElements = fixElementDefaults(generatedData.elements, assignedImages);
-  const latexProcessedElements = processLatexElements(fixedElements);
-  const resolvedElements = resolveImageIds(
-    latexProcessedElements,
+  let polishedElements = finalizeSlideElements(
+    generatedData,
+    outline,
+    assignedImages,
     imageMapping,
     generatedMediaMapping,
   );
-  const videoNormalizedElements = normalizeGeneratedVideoRefs(
-    resolvedElements,
-    outline.mediaGenerations,
-  );
+  let blockingIssues = getBlockingLayoutIssueDetails(polishedElements);
 
-  const processedElements = videoNormalizedElements.map((el) => ({
-    ...el,
-    id: `${el.type}_${nanoid(8)}`,
-    rotate: 0,
-  })) as PPTElement[];
-  const polishedElements = polishSlideElements(processedElements, {
-    title: outline.title,
-    keyPoints: outline.keyPoints,
-    decorate: false,
-  }) as PPTElement[];
+  if (blockingIssues.length > 0) {
+    log.warn(
+      `OpenMAIC slide QA found ${blockingIssues.length} blocking layout issue(s) for "${outline.title}"; retrying page design.`,
+    );
+    const retryPrompt = `${prompts.user}
+
+## OPENMAIC QA LAYOUT RETRY
+
+Your previous slide JSON rendered with blocking layout problems. Regenerate the full slide as pure JSON.
+
+Blocking issues:
+${blockingIssues.map((issue, index) => `${index + 1}. ${issue}`).join('\n')}
+
+Previous slide JSON:
+${JSON.stringify(generatedData).slice(0, 12000)}
+
+Hard layout rules for the retry:
+- If you create 2-4 card backgrounds in a row, each card's icon/title/body/formula must be inside that same card's left/top/width/height.
+- Do not reuse the same left/top coordinates for different card labels.
+- Keep formulas in a latex element with enough height; simple formulas need at least 64px height.
+- Do not allow readable text or latex boxes to overlap.
+- Keep all readable content inside the safe area: left >= 48, right <= 952, top >= 48, bottom <= 514.5.
+- Return the same top-level schema: { "background": ..., "elements": [...], "remark": "..." }.
+- Return pure JSON only.`;
+
+    const retryResponse = await aiCall(prompts.system, retryPrompt, visionImages);
+    const retryData = parseJsonResponse<GeneratedSlideData>(retryResponse);
+
+    if (retryData?.elements && Array.isArray(retryData.elements)) {
+      const retryElements = finalizeSlideElements(
+        retryData,
+        outline,
+        assignedImages,
+        imageMapping,
+        generatedMediaMapping,
+      );
+      const retryIssues = getBlockingLayoutIssueDetails(retryElements);
+      if (retryIssues.length <= blockingIssues.length) {
+        generatedData = retryData;
+        polishedElements = retryElements;
+        blockingIssues = retryIssues;
+      }
+    } else {
+      log.warn(`OpenMAIC slide QA retry for "${outline.title}" did not return valid elements.`);
+    }
+  }
 
   return {
     elements: polishedElements,

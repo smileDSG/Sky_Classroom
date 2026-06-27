@@ -1457,4 +1457,596 @@ describe('slide polish', () => {
     expect(String(steps.content)).toContain('font-size:18px');
     expect(auditSlideLayout(polished)).toEqual([]);
   });
+
+  it('repairs card text ownership when a generated multi-card row stacks all labels in one column', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 72,
+          content: '<p style="font-size:36px;"><strong>What is a Quadratic Function?</strong></p>',
+        },
+        {
+          id: 'subtitle',
+          type: 'text',
+          left: 60,
+          top: 128,
+          width: 880,
+          height: 53,
+          content:
+            '<p style="font-size:18px;">A polynomial function of degree 2 - the curve family of algebra</p>',
+        },
+        {
+          id: 'card-a',
+          type: 'shape',
+          left: 60,
+          top: 228,
+          width: 280,
+          height: 260,
+          fill: '#e8f0fe',
+        },
+        {
+          id: 'card-b',
+          type: 'shape',
+          left: 360,
+          top: 228,
+          width: 280,
+          height: 271,
+          fill: '#fef3e2',
+        },
+        {
+          id: 'card-c',
+          type: 'shape',
+          left: 660,
+          top: 228,
+          width: 280,
+          height: 260,
+          fill: '#e6f4ed',
+        },
+        {
+          id: 'icon-a',
+          type: 'text',
+          left: 130,
+          top: 243,
+          width: 140,
+          height: 57,
+          content: '<p style="font-size:24px; text-align:center;">A</p>',
+        },
+        {
+          id: 'heading-a',
+          type: 'text',
+          left: 80,
+          top: 308,
+          width: 240,
+          height: 47,
+          content: '<p style="font-size:20px; text-align:center;"><strong>Degree 2</strong></p>',
+        },
+        {
+          id: 'body-a',
+          type: 'text',
+          left: 80,
+          top: 363,
+          width: 240,
+          height: 103,
+          content:
+            '<p style="font-size:18px; text-align:center;">Highest power of the variable is 2</p><p style="font-size:18px; text-align:center;">Example: x², 3x²</p>',
+        },
+        {
+          id: 'icon-b',
+          type: 'text',
+          left: 130,
+          top: 243,
+          width: 140,
+          height: 57,
+          content: '<p style="font-size:24px; text-align:center;">B</p>',
+        },
+        {
+          id: 'heading-b',
+          type: 'text',
+          left: 80,
+          top: 308,
+          width: 240,
+          height: 47,
+          content:
+            '<p style="font-size:20px; text-align:center;"><strong>General Form</strong></p>',
+        },
+        {
+          id: 'formula-b',
+          type: 'latex',
+          left: 290,
+          top: 368,
+          width: 420,
+          height: 62,
+          latex: 'f(x)=ax^2+bx+c',
+        },
+        {
+          id: 'where-b',
+          type: 'text',
+          left: 390,
+          top: 438,
+          width: 220,
+          height: 53,
+          content: '<p style="font-size:18px; text-align:center;">where a != 0</p>',
+        },
+        {
+          id: 'icon-c',
+          type: 'text',
+          left: 130,
+          top: 243,
+          width: 140,
+          height: 57,
+          content: '<p style="font-size:24px; text-align:center;">C</p>',
+        },
+        {
+          id: 'heading-c',
+          type: 'text',
+          left: 80,
+          top: 308,
+          width: 240,
+          height: 47,
+          content:
+            '<p style="font-size:20px; text-align:center;"><strong>Parabola Graph</strong></p>',
+        },
+        {
+          id: 'body-c',
+          type: 'text',
+          left: 80,
+          top: 363,
+          width: 240,
+          height: 103,
+          content:
+            '<p style="font-size:18px; text-align:center;">Symmetric U-shaped curve</p><p style="font-size:18px; text-align:center;">Opens up or down</p>',
+        },
+      ],
+      { title: 'What is a Quadratic Function?', decorate: false },
+    );
+
+    const headingA = polished.find((element) => element.id === 'heading-a')!;
+    const headingB = polished.find((element) => element.id === 'heading-b')!;
+    const headingC = polished.find((element) => element.id === 'heading-c')!;
+    const formula = polished.find((element) => element.id === 'formula-b')!;
+
+    expect(headingA.left).toBeLessThan(340);
+    expect(headingB.left).toBeGreaterThanOrEqual(360);
+    expect(headingB.left + headingB.width).toBeLessThanOrEqual(640);
+    expect(headingC.left).toBeGreaterThanOrEqual(660);
+    expect(formula.left).toBeGreaterThanOrEqual(360);
+    expect(formula.left + formula.width).toBeLessThanOrEqual(640);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('rewrites crowded cubic introduction pages into separated review and formula panels', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 70,
+          content: '<p style="font-size:32px;"><strong>三次函数引入</strong></p>',
+        },
+        {
+          id: 'known-linear',
+          type: 'text',
+          left: 80,
+          top: 222,
+          width: 240,
+          height: 53,
+          content: '<p style="font-size:18px;"><strong>一次函数</strong></p>',
+        },
+        {
+          id: 'known-quadratic',
+          type: 'text',
+          left: 380,
+          top: 222,
+          width: 240,
+          height: 53,
+          content: '<p style="font-size:18px;"><strong>二次函数</strong></p>',
+        },
+        {
+          id: 'problem',
+          type: 'text',
+          left: 80,
+          top: 426,
+          width: 840,
+          height: 64,
+          content:
+            '<p style="font-size:18px;"><strong>问题：</strong> 无盖长方体盒子容积V与底面边长x的关系中出现了x³项。</p>',
+        },
+        {
+          id: 'general-form-heading',
+          type: 'text',
+          left: 60,
+          top: 393,
+          width: 400,
+          height: 56,
+          content: '<p style="font-size:20px;"><strong>三、三次函数的一般形式</strong></p>',
+        },
+        {
+          id: 'formula',
+          type: 'latex',
+          left: 120,
+          top: 394.5,
+          width: 760,
+          height: 118,
+          latex: 'f(x) = ax^3 + bx^2 + cx + d \\quad (a \\neq 0)',
+        },
+      ],
+      { title: '三次函数引入', decorate: false },
+    );
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_cubic_intro_'))).toBe(
+      true,
+    );
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('rewrites crowded cubic graph feature charts into a clean schematic layout', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 70,
+          content: '<p style="font-size:32px;"><strong>三次函数的图像特征</strong></p>',
+        },
+        {
+          id: 'trend',
+          type: 'text',
+          left: 90,
+          top: 226,
+          width: 420,
+          height: 50,
+          content: '<p style="font-size:20px;"><strong>走势方向：</strong>由首项系数 a 决定</p>',
+        },
+        {
+          id: 'symmetry',
+          type: 'text',
+          left: 530,
+          top: 226,
+          width: 420,
+          height: 50,
+          content: '<p style="font-size:20px;"><strong>对称性：</strong>关于拐点中心对称</p>',
+        },
+        {
+          id: 'chart',
+          type: 'chart',
+          left: 60,
+          top: 352.5,
+          width: 500,
+          height: 160,
+          chartType: 'line',
+          data: {
+            labels: ['-2', '-1', '0', '1', '2'],
+            legends: ['a = 1 (y = x³)', 'a = -1 (y = -x³)'],
+            series: [
+              [-8, -1, 0, 1, 8],
+              [8, 1, 0, -1, -8],
+            ],
+          },
+          themeColors: ['#5b9bd5', '#ed7d31'],
+        },
+        {
+          id: 'intersection-note',
+          type: 'text',
+          left: 60,
+          top: 470.5,
+          width: 880,
+          height: 42,
+          content:
+            '<p style="font-size:18px;">图像与 x 轴交点：最多 3 个 ｜ 与 y 轴交点：(0, d)</p>',
+        },
+      ],
+      { title: '三次函数的图像特征', decorate: false },
+    );
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_cubic_graph_'))).toBe(
+      true,
+    );
+    expect(polished.some((element) => element.type === 'chart')).toBe(false);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('separates cubic coefficient formula from the explanatory note panel', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 72,
+          content: '<p style="font-size:32px;"><strong>三次函数的系数影响</strong></p>',
+        },
+        {
+          id: 'subtitle',
+          type: 'text',
+          left: 60,
+          top: 128,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">探索系数 a、b、c、d 如何改变函数图像形态</p>',
+        },
+        {
+          id: 'card-a',
+          type: 'shape',
+          left: 60,
+          top: 238,
+          width: 205,
+          height: 140,
+          fill: '#e3f2fd',
+        },
+        {
+          id: 'card-a-text',
+          type: 'text',
+          left: 85,
+          top: 268,
+          width: 155,
+          height: 77,
+          content: '<p style="font-size:18px;"><strong>系数 a</strong><br/>开口与陡峭</p>',
+        },
+        {
+          id: 'card-b',
+          type: 'shape',
+          left: 285,
+          top: 238,
+          width: 205,
+          height: 140,
+          fill: '#e8f5e9',
+        },
+        {
+          id: 'card-b-text',
+          type: 'text',
+          left: 310,
+          top: 268,
+          width: 155,
+          height: 77,
+          content: '<p style="font-size:18px;"><strong>系数 b</strong><br/>平移与弯曲</p>',
+        },
+        {
+          id: 'card-c',
+          type: 'shape',
+          left: 510,
+          top: 238,
+          width: 205,
+          height: 140,
+          fill: '#fff3e0',
+        },
+        {
+          id: 'card-c-text',
+          type: 'text',
+          left: 535,
+          top: 268,
+          width: 155,
+          height: 77,
+          content: '<p style="font-size:18px;"><strong>系数 c</strong><br/>原点斜率</p>',
+        },
+        {
+          id: 'card-d',
+          type: 'shape',
+          left: 735,
+          top: 238,
+          width: 205,
+          height: 140,
+          fill: '#fce4ec',
+        },
+        {
+          id: 'card-d-text',
+          type: 'text',
+          left: 760,
+          top: 268,
+          width: 155,
+          height: 77,
+          content: '<p style="font-size:18px;"><strong>系数 d</strong><br/>上下平移</p>',
+        },
+        {
+          id: 'formula',
+          type: 'latex',
+          left: 290,
+          top: 428,
+          width: 420,
+          height: 80,
+          latex: 'f(x) = ax^3 + bx^2 + cx + d',
+        },
+        {
+          id: 'note-bg',
+          type: 'shape',
+          left: 500,
+          top: 412.5,
+          width: 440,
+          height: 102,
+          fill: '#f5f5f5',
+        },
+        {
+          id: 'note',
+          type: 'text',
+          left: 520,
+          top: 432,
+          width: 400,
+          height: 77,
+          content:
+            '<p style="font-size:18px;">• a > 0：两端上升 | a < 0：两端下降<br/>• c 控制 x → 0 附近切线斜率</p>',
+        },
+      ],
+      { title: '探索三次函数的系数影响', decorate: false },
+    );
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_cubic_coeff_'))).toBe(
+      true,
+    );
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('repairs composite step-flow cards when stacked labels belong to upper cards and color strips', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 72,
+          content: '<p style="font-size:36px;"><strong>Cubic monotonicity and extrema</strong></p>',
+        },
+        {
+          id: 'section-heading',
+          type: 'text',
+          left: 60,
+          top: 308,
+          width: 300,
+          height: 76,
+          content: '<p style="font-size:24px;"><strong>Extrema decision steps</strong></p>',
+        },
+        {
+          id: 'upper-a',
+          type: 'shape',
+          left: 60,
+          top: 383,
+          width: 280,
+          height: 130,
+          fill: '#eaf2f8',
+        },
+        {
+          id: 'step-a',
+          type: 'text',
+          left: 80,
+          top: 398,
+          width: 240,
+          height: 63,
+          content: '<p style="font-size:18px;">1. Differentiate<br/>Compute f prime and Delta</p>',
+        },
+        {
+          id: 'upper-b',
+          type: 'shape',
+          left: 360,
+          top: 383,
+          width: 280,
+          height: 130,
+          fill: '#eaf2f8',
+        },
+        {
+          id: 'step-b',
+          type: 'text',
+          left: 80,
+          top: 398,
+          width: 240,
+          height: 63,
+          content: '<p style="font-size:18px;">2. Solve roots<br/>Set f prime equal to zero</p>',
+        },
+        {
+          id: 'upper-c',
+          type: 'shape',
+          left: 660,
+          top: 383,
+          width: 280,
+          height: 130,
+          fill: '#eaf2f8',
+        },
+        {
+          id: 'step-c',
+          type: 'text',
+          left: 80,
+          top: 398,
+          width: 240,
+          height: 63,
+          content:
+            '<p style="font-size:18px;">3. Judge signs<br/>Confirm intervals and extrema</p>',
+        },
+        {
+          id: 'strip-a',
+          type: 'shape',
+          left: 60,
+          top: 452.5,
+          width: 280,
+          height: 60,
+          fill: '#1abc9c',
+        },
+        {
+          id: 'strip-caption',
+          type: 'text',
+          left: 80,
+          top: 468.5,
+          width: 240,
+          height: 30,
+          content: '<p style="font-size:18px;">Delta and extrema count</p>',
+        },
+        {
+          id: 'strip-label-a',
+          type: 'text',
+          left: 80,
+          top: 468.5,
+          width: 240,
+          height: 30,
+          content: '<p style="font-size:18px;">Delta > 0: two extrema</p>',
+        },
+        {
+          id: 'strip-b',
+          type: 'shape',
+          left: 360,
+          top: 452.5,
+          width: 280,
+          height: 60,
+          fill: '#f39c12',
+        },
+        {
+          id: 'strip-label-b',
+          type: 'text',
+          left: 80,
+          top: 468.5,
+          width: 240,
+          height: 30,
+          content: '<p style="font-size:18px;">Delta = 0: one extrema</p>',
+        },
+        {
+          id: 'strip-c',
+          type: 'shape',
+          left: 660,
+          top: 452.5,
+          width: 280,
+          height: 60,
+          fill: '#e74c3c',
+        },
+        {
+          id: 'strip-label-c',
+          type: 'text',
+          left: 80,
+          top: 468.5,
+          width: 240,
+          height: 30,
+          content: '<p style="font-size:18px;">Delta < 0: no extrema</p>',
+        },
+      ],
+      { title: 'Cubic monotonicity and extrema', decorate: false },
+    );
+
+    const stepA = polished.find((element) => element.id === 'step-a')!;
+    const stepB = polished.find((element) => element.id === 'step-b')!;
+    const stepC = polished.find((element) => element.id === 'step-c')!;
+    const labelA = polished.find((element) => element.id === 'strip-label-a')!;
+    const labelB = polished.find((element) => element.id === 'strip-label-b')!;
+    const labelC = polished.find((element) => element.id === 'strip-label-c')!;
+    const caption = polished.find((element) => element.id === 'strip-caption')!;
+
+    expect(stepA.left).toBeLessThan(340);
+    expect(stepB.left).toBeGreaterThanOrEqual(360);
+    expect(stepB.left + stepB.width).toBeLessThanOrEqual(640);
+    expect(stepC.left).toBeGreaterThanOrEqual(660);
+    expect(labelA.left).toBeLessThan(340);
+    expect(labelB.left).toBeGreaterThanOrEqual(360);
+    expect(labelB.left + labelB.width).toBeLessThanOrEqual(640);
+    expect(labelC.left).toBeGreaterThanOrEqual(660);
+    expect(caption.top + Number(caption.height ?? 0)).toBeLessThanOrEqual(stepA.top);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
 });

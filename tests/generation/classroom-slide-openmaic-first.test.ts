@@ -247,6 +247,96 @@ function messySummaryResponse(): string {
   });
 }
 
+function overlappingTextResponse(): string {
+  return JSON.stringify({
+    background: { type: 'solid', color: '#ffffff' },
+    elements: [
+      {
+        id: 'title',
+        type: 'text',
+        left: 60,
+        top: 50,
+        width: 880,
+        height: 72,
+        content: '<p style="font-size:32px;"><strong>Gradient Descent</strong></p>',
+      },
+      {
+        id: 'overlap-a',
+        type: 'text',
+        left: 120,
+        top: 220,
+        width: 360,
+        height: 110,
+        content: '<p style="font-size:20px;">Loss surface shows model error.</p>',
+      },
+      {
+        id: 'overlap-b',
+        type: 'text',
+        left: 120,
+        top: 220,
+        width: 360,
+        height: 110,
+        content: '<p style="font-size:20px;">Gradient direction tells us how to move.</p>',
+      },
+    ],
+    remark: 'bad overlapping draft',
+  });
+}
+
+function nonOverlappingTextResponse(): string {
+  return JSON.stringify({
+    background: { type: 'solid', color: '#ffffff' },
+    elements: [
+      {
+        id: 'title',
+        type: 'text',
+        left: 60,
+        top: 50,
+        width: 880,
+        height: 72,
+        content: '<p style="font-size:32px;"><strong>Gradient Descent</strong></p>',
+      },
+      {
+        id: 'panel-a',
+        type: 'shape',
+        left: 80,
+        top: 190,
+        width: 380,
+        height: 150,
+        fill: '#e8f4ff',
+      },
+      {
+        id: 'text-a',
+        type: 'text',
+        left: 110,
+        top: 220,
+        width: 320,
+        height: 80,
+        content: '<p style="font-size:20px;">Loss surface shows model error.</p>',
+      },
+      {
+        id: 'panel-b',
+        type: 'shape',
+        left: 540,
+        top: 190,
+        width: 380,
+        height: 150,
+        fill: '#fef3e2',
+      },
+      {
+        id: 'text-b',
+        type: 'text',
+        left: 570,
+        top: 220,
+        width: 320,
+        height: 80,
+        content: '<p style="font-size:20px;">Gradient direction tells us how to move.</p>',
+      },
+    ],
+    remark: 'fixed layout',
+  });
+}
+
 describe('OpenMAIC original classroom slide generation', () => {
   it('uses the original OpenMAIC element-level prompt without custom adapter directives', async () => {
     const { aiCall, lastSystem, lastUser } = makeAiCall(directElementsResponse());
@@ -338,6 +428,22 @@ describe('OpenMAIC original classroom slide generation', () => {
     expect(result?.elements.some((element) => element.id.startsWith('formula_list_'))).toBe(false);
   });
 
+  it('retries OpenMAIC page design when QA finds blocking readable overlaps', async () => {
+    const { aiCall, users, callCount } = makeAiCallSequence([
+      overlappingTextResponse(),
+      nonOverlappingTextResponse(),
+    ]);
+
+    const result = await generateSlideContent(makeOutline(), aiCall);
+
+    expect(result).not.toBeNull();
+    expect(callCount()).toBe(2);
+    expect(users()[1]).toContain('OPENMAIC QA LAYOUT RETRY');
+    expect(users()[1]).toContain('readable_element_overlap');
+    expect(auditSlideLayout(result?.elements ?? [])).toEqual([]);
+    expect(result?.remark).toBe('fixed layout');
+  });
+
   it('normalizes messy OpenMAIC element coordinates before classroom playback', async () => {
     const { aiCall } = makeAiCall(messySummaryResponse());
 
@@ -365,9 +471,9 @@ describe('OpenMAIC original classroom slide generation', () => {
 
     expect(auditSlideLayout(elements)).toEqual([]);
     expect(elements.length).toBeGreaterThanOrEqual(8);
-    expect(textElements.some((element) => String(element.content ?? '').includes('抛物线问题'))).toBe(
-      false,
-    );
+    expect(
+      textElements.some((element) => String(element.content ?? '').includes('抛物线问题')),
+    ).toBe(false);
   });
 
   it('creates classroom slide scenes without template metadata', () => {

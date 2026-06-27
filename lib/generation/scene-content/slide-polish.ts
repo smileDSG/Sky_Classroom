@@ -768,11 +768,404 @@ function vertexFormReferenceLayout(
   ];
 }
 
+function shouldUseCubicIntroLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  const source = getLayoutSignalText(elements, context);
+  const title = getSlideTitle(elements, context);
+  return (
+    /三次函数引入|\u4e09\u6b21\u51fd\u6570\u5f15\u5165/i.test(title) &&
+    /一次函数|\u4e00\u6b21\u51fd\u6570/.test(source) &&
+    /二次函数|\u4e8c\u6b21\u51fd\u6570/.test(source) &&
+    /(一般形式|\u4e00\u822c\u5f62\u5f0f|ax\^3|x³|x\^3)/i.test(source)
+  );
+}
+
+function cubicIntroReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const prefix = 'polish_ref_cubic_intro';
+  const cardTop = 200;
+  const cardWidth = 260;
+  const cardGap = 28;
+  const cardLefts = [82, 82 + cardWidth + cardGap, 82 + (cardWidth + cardGap) * 2];
+
+  return [
+    textElement(
+      `${prefix}_title`,
+      `<strong>${title}</strong>`,
+      82,
+      48,
+      836,
+      56,
+      34,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    shapeElement(`${prefix}_rule`, 82, 126, 836, 2, '#d7dde8', 1),
+    textElement(
+      `${prefix}_review_heading`,
+      '<strong>一、回顾已知</strong>',
+      82,
+      152,
+      300,
+      34,
+      22,
+      theme.accent,
+      undefined,
+      1.1,
+    ),
+    shapeElement(`${prefix}_linear_card`, cardLefts[0], cardTop, cardWidth, 130, '#e8f4fd', 1),
+    textElement(
+      `${prefix}_linear_content`,
+      '<strong>一次函数</strong><br/>f(x) = kx + b<br/>k ≠ 0',
+      cardLefts[0] + 24,
+      cardTop + 20,
+      cardWidth - 48,
+      84,
+      20,
+      theme.textPrimary,
+      undefined,
+      1.16,
+    ),
+    shapeElement(`${prefix}_quadratic_card`, cardLefts[1], cardTop, cardWidth, 130, '#e8f4fd', 1),
+    textElement(
+      `${prefix}_quadratic_content`,
+      '<strong>二次函数</strong><br/>f(x) = ax<sup>2</sup> + bx + c<br/>a ≠ 0',
+      cardLefts[1] + 24,
+      cardTop + 20,
+      cardWidth - 48,
+      84,
+      19,
+      theme.textPrimary,
+      undefined,
+      1.16,
+    ),
+    shapeElement(`${prefix}_feature_card`, cardLefts[2], cardTop, cardWidth, 130, '#fef9e7', 1),
+    textElement(
+      `${prefix}_feature_content`,
+      '<strong>一次函数特征</strong><br/>图像为直线<br/>斜率 k 决定增减',
+      cardLefts[2] + 24,
+      cardTop + 20,
+      cardWidth - 48,
+      84,
+      18,
+      '#5f3b00',
+      undefined,
+      1.16,
+    ),
+    shapeElement(`${prefix}_problem_panel`, 82, 360, 402, 134, '#f5f5f5', 1),
+    textElement(
+      `${prefix}_problem_content`,
+      '<strong>二、实际问题引入</strong><br/>无盖长方体盒子的容积关系中会出现 x<sup>3</sup> 项，最高次数为 3，进入新的函数类型。',
+      110,
+      380,
+      330,
+      88,
+      18,
+      theme.textBody,
+      undefined,
+      1.18,
+    ),
+    shapeElement(`${prefix}_formula_panel`, 526, 360, 392, 134, '#f0f9ff', 1),
+    textElement(
+      `${prefix}_formula_content`,
+      '<strong>三、三次函数的一般形式</strong><br/>f(x) = ax<sup>3</sup> + bx<sup>2</sup> + cx + d<br/>a、b、c、d 为常数，且 a ≠ 0。',
+      554,
+      380,
+      320,
+      88,
+      18,
+      theme.textBody,
+      undefined,
+      1.18,
+    ),
+  ];
+}
+
+function shouldUseCubicGraphFeaturesLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  const source = getLayoutSignalText(elements, context);
+  const title = getSlideTitle(elements, context);
+  const hasCubicGraphTitle =
+    /三次函数.*图像特征|\u4e09\u6b21\u51fd\u6570.*\u56fe\u50cf\u7279\u5f81/.test(title);
+  return (
+    hasCubicGraphTitle &&
+    /(走势|对称性|交点|\u8d70\u52bf|\u5bf9\u79f0\u6027|\u4ea4\u70b9)/.test(source) &&
+    elements.some((element) => element.type === 'chart')
+  );
+}
+
+function cubicGraphFeaturesReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const prefix = 'polish_ref_cubic_graph';
+
+  return [
+    textElement(
+      `${prefix}_title`,
+      `<strong>${title}</strong>`,
+      82,
+      44,
+      836,
+      54,
+      34,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_subtitle`,
+      '从走势、对称性到交点，快速读懂三次函数图像',
+      82,
+      116,
+      836,
+      34,
+      21,
+      theme.accent,
+      undefined,
+      1.1,
+    ),
+    shapeElement(`${prefix}_rule`, 82, 168, 836, 2, theme.accent, 0.9),
+    shapeElement(`${prefix}_trend_card`, 82, 194, 398, 122, '#f8fafc', 1),
+    shapeElement(`${prefix}_trend_bar`, 82, 206, 8, 82, theme.accentSecondary, 1),
+    textElement(
+      `${prefix}_trend_content`,
+      '<strong>走势方向</strong>：由首项系数 a 决定<br/>a > 0：左下 ↗ 右上<br/>a < 0：左上 ↘ 右下',
+      110,
+      210,
+      332,
+      86,
+      18,
+      theme.textBody,
+      undefined,
+      1.16,
+    ),
+    shapeElement(`${prefix}_symmetry_card`, 520, 194, 398, 122, '#f8fafc', 1),
+    shapeElement(`${prefix}_symmetry_bar`, 520, 206, 8, 82, theme.accent, 1),
+    textElement(
+      `${prefix}_symmetry_content`,
+      '<strong>对称性</strong>：关于拐点中心对称<br/>拐点 (x₀, f(x₀)) 是对称中心<br/>f(x₀+h)+f(x₀-h)=2f(x₀)',
+      548,
+      210,
+      332,
+      86,
+      18,
+      theme.textBody,
+      undefined,
+      1.16,
+    ),
+    shapeElement(`${prefix}_graph_panel`, 82, 334, 424, 152, '#ffffff', 1),
+    lineElement(`${prefix}_axis_x`, 118, 426, [0, 0], [328, 0], 2, '#a8b3c4', {
+      points: ['', 'arrow'],
+    }),
+    lineElement(`${prefix}_axis_y`, 282, 462, [0, 0], [0, -106], 2, '#a8b3c4', {
+      points: ['', 'arrow'],
+    }),
+    lineElement(`${prefix}_curve_up`, 136, 452, [0, 0], [300, -96], 4, '#5b9bd5', {
+      cubic: [
+        [82, -8],
+        [205, -90],
+      ],
+    }),
+    lineElement(`${prefix}_curve_down`, 136, 356, [0, 0], [300, 96], 4, '#ed7d31', {
+      cubic: [
+        [82, 8],
+        [205, 90],
+      ],
+    }),
+    circleElement(`${prefix}_inflection_dot`, 274, 400, 12, theme.accent, 1),
+    textElement(
+      `${prefix}_graph_caption`,
+      '走势对比：a = 1 与 a = -1',
+      118,
+      346,
+      328,
+      22,
+      18,
+      '#64748b',
+      undefined,
+      1.08,
+    ),
+    shapeElement(`${prefix}_legend_panel`, 542, 342, 376, 94, '#ffffff', 1),
+    circleElement(`${prefix}_legend_up_dot`, 568, 362, 16, '#5b9bd5', 1),
+    textElement(
+      `${prefix}_legend_text`,
+      'a = 1：图像从左下 ↗ 至右上<br/>a = -1：图像从左上 ↘ 至右下',
+      594,
+      354,
+      286,
+      66,
+      18,
+      theme.textBody,
+      undefined,
+      1.16,
+    ),
+    circleElement(`${prefix}_legend_down_dot`, 568, 398, 16, '#ed7d31', 1),
+    shapeElement(`${prefix}_intersections_panel`, 542, 442, 376, 72, '#f8fafc', 1),
+    textElement(
+      `${prefix}_intersections`,
+      'x 轴 ≤ 3 交点；y 轴为 (0, d)。',
+      558,
+      458,
+      344,
+      24,
+      18,
+      theme.textBody,
+      undefined,
+      1.08,
+    ),
+  ];
+}
+
+function shouldUseCubicCoefficientLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  const source = getLayoutSignalText(elements, context);
+  const title = getSlideTitle(elements, context);
+  const hasCoefficientTitle =
+    /三次函数.*系数影响|\u4e09\u6b21\u51fd\u6570.*\u7cfb\u6570\u5f71\u54cd/.test(title) ||
+    /系数.*影响|\u7cfb\u6570.*\u5f71\u54cd/.test(title);
+
+  return (
+    hasCoefficientTitle &&
+    /(系数 a|系数 b|系数 c|系数 d|\u7cfb\u6570 a|\u7cfb\u6570 b|\u7cfb\u6570 c|\u7cfb\u6570 d)/.test(
+      source,
+    ) &&
+    /(ax\^3|x³|x\^3|bx\^2|cx\s*\+\s*d)/i.test(source)
+  );
+}
+
+function cubicCoefficientReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const prefix = 'polish_ref_cubic_coeff';
+  const cardTop = 214;
+  const cardWidth = 190;
+  const cardHeight = 126;
+  const cardGap = 26;
+  const cardLefts = [
+    82,
+    82 + cardWidth + cardGap,
+    82 + (cardWidth + cardGap) * 2,
+    82 + (cardWidth + cardGap) * 3,
+  ];
+  const cards = [
+    { id: 'a', fill: '#e3f2fd', color: '#1d65b7', title: '系数 a', body: '开口与陡峭' },
+    { id: 'b', fill: '#e8f5e9', color: '#2f7d32', title: '系数 b', body: '平移与弯曲' },
+    { id: 'c', fill: '#fff3e0', color: '#8a5a00', title: '系数 c', body: '原点斜率' },
+    { id: 'd', fill: '#fce4ec', color: '#c62828', title: '系数 d', body: '上下平移' },
+  ];
+
+  return [
+    textElement(
+      `${prefix}_title`,
+      `<strong>${title}</strong>`,
+      82,
+      48,
+      836,
+      56,
+      34,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_subtitle`,
+      '探索系数 a、b、c、d 如何改变函数图像形态',
+      82,
+      120,
+      836,
+      34,
+      21,
+      theme.textBody,
+      undefined,
+      1.1,
+    ),
+    shapeElement(`${prefix}_rule`, 82, 170, 836, 2, theme.accent, 0.9),
+    ...cards.flatMap((card, index) => {
+      const left = cardLefts[index];
+      return [
+        shapeElement(
+          `${prefix}_${card.id}_card`,
+          left,
+          cardTop,
+          cardWidth,
+          cardHeight,
+          card.fill,
+          1,
+        ),
+        textElement(
+          `${prefix}_${card.id}_text`,
+          `<strong>${card.title}</strong><br/>${card.body}`,
+          left + 24,
+          cardTop + 32,
+          cardWidth - 48,
+          62,
+          20,
+          card.color,
+          undefined,
+          1.16,
+        ),
+      ];
+    }),
+    shapeElement(`${prefix}_formula_panel`, 82, 392, 392, 94, '#ffffff', 1),
+    textElement(
+      `${prefix}_formula`,
+      'f(x) = ax<sup>3</sup> + bx<sup>2</sup> + cx + d',
+      110,
+      418,
+      336,
+      42,
+      20,
+      theme.textPrimary,
+      undefined,
+      1.12,
+    ),
+    shapeElement(`${prefix}_note_panel`, 526, 386, 392, 112, '#f5f5f5', 1),
+    textElement(
+      `${prefix}_note`,
+      'a &gt; 0：两端上升；a &lt; 0：两端下降。<br/>c 控制 x → 0 附近的切线斜率。',
+      554,
+      406,
+      328,
+      70,
+      18,
+      theme.textBody,
+      undefined,
+      1.16,
+    ),
+  ];
+}
+
 function referenceLayoutElements<T extends SlideLikeElement>(
   elements: T[],
   context?: SlidePolishContext,
 ): T[] | null {
   if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return elements;
+  if (shouldUseCubicIntroLayout(elements, context)) {
+    return cubicIntroReferenceLayout(elements, context) as T[];
+  }
+  if (shouldUseCubicGraphFeaturesLayout(elements, context)) {
+    return cubicGraphFeaturesReferenceLayout(elements, context) as T[];
+  }
+  if (shouldUseCubicCoefficientLayout(elements, context)) {
+    return cubicCoefficientReferenceLayout(elements, context) as T[];
+  }
   if (shouldUseEquationRelationLayout(elements, context)) {
     return equationRelationReferenceLayout(elements, context) as T[];
   }
@@ -1301,7 +1694,8 @@ function polishReferenceLayoutElements<T extends SlideLikeElement>(
 
 function protectReadableLayout<T extends SlideLikeElement>(elements: T[]): T[] {
   const compacted = compactTitleWhitespace(elements);
-  const parallelAligned = normalizeParallelRows(compacted);
+  const cardOwned = normalizeCardTextOwnership(compacted);
+  const parallelAligned = normalizeParallelRows(cardOwned);
   const stepAdjusted = normalizeStepSections(parallelAligned);
   const bottomAdjusted = fitBottomReadableRows(stepAdjusted);
   const tableCaptionAdjusted = fitTableCaptionsAboveTables(bottomAdjusted);
@@ -1314,10 +1708,12 @@ function protectReadableLayout<T extends SlideLikeElement>(elements: T[]): T[] {
   const finalReserved = reserveBottomCalloutSpace(repaired);
   const finalSpaced = normalizeParallelRows(
     enforceReadableSafeBounds(
-      resolveVerticalReadableOverlaps(normalizeStepSections(finalReserved)),
+      resolveVerticalReadableOverlaps(
+        normalizeStepSections(normalizeCardTextOwnership(finalReserved)),
+      ),
     ),
   );
-  return reserveBottomCalloutSpace(normalizeStepSections(finalSpaced));
+  return reserveBottomCalloutSpace(normalizeStepSections(normalizeCardTextOwnership(finalSpaced)));
 }
 
 function compactTitleWhitespace<T extends SlideLikeElement>(elements: T[]): T[] {
@@ -1415,6 +1811,485 @@ function normalizeParallelRows<T extends SlideLikeElement>(elements: T[]): T[] {
     const target = targets.get(element);
     return target ? ({ ...element, ...target } as T) : element;
   });
+}
+
+function getCardBackgroundRows<T extends SlideLikeElement>(elements: T[]): T[][] {
+  const candidates = elements
+    .filter((element) => {
+      if (!isBackgroundShapeLike(element)) return false;
+      const box = getElementBox(element);
+      if (box.top < 150 || box.top > 470) return false;
+      if (box.width < 160 || box.width > 520) return false;
+      const isMainCard = box.height >= 72 && box.height <= 320 && box.top <= 430;
+      const isCardStrip = box.height >= 44 && box.height < 72 && box.top >= 360;
+      if (!isMainCard && !isCardStrip) return false;
+      return true;
+    })
+    .sort((a, b) => a.top - b.top || a.left - b.left);
+
+  const rows: T[][] = [];
+  for (const candidate of candidates) {
+    const row = rows.find((group) => Math.abs(group[0].top - candidate.top) <= 28);
+    if (row) {
+      row.push(candidate);
+    } else {
+      rows.push([candidate]);
+    }
+  }
+
+  return rows
+    .map((row) => row.sort((a, b) => a.left - b.left))
+    .filter((row) => {
+      if (row.length < 3 || row.length > 4) return false;
+      const boxes = row.map(getElementBox);
+      for (let i = 1; i < boxes.length; i += 1) {
+        const gap = boxes[i].left - boxes[i - 1].right;
+        if (gap < 12 || gap > 120) return false;
+      }
+      return true;
+    });
+}
+
+function getCardRowBox(cards: SlideLikeElement[]): ElementBox {
+  return cards
+    .map(getElementBox)
+    .reduce(
+      (acc, box) =>
+        toBox(
+          Math.min(acc.left, box.left),
+          Math.min(acc.top, box.top),
+          Math.max(acc.right, box.right) - Math.min(acc.left, box.left),
+          Math.max(acc.bottom, box.bottom) - Math.min(acc.top, box.top),
+        ),
+      getElementBox(cards[0]),
+    );
+}
+
+function getCardIndexForX(cards: SlideLikeElement[], x: number): number {
+  let bestIndex = 0;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  cards.forEach((card, index) => {
+    const box = getElementBox(card);
+    const center = box.left + box.width / 2;
+    const distance = Math.abs(center - x);
+    if (distance < bestDistance) {
+      bestIndex = index;
+      bestDistance = distance;
+    }
+  });
+  return bestIndex;
+}
+
+function isCardReadableCandidate(element: SlideLikeElement): boolean {
+  return element.type === 'text' || element.type === 'latex';
+}
+
+function rowsShareColumns(a: SlideLikeElement[], b: SlideLikeElement[]): boolean {
+  if (a.length !== b.length) return false;
+
+  return a.every((card, index) => {
+    const cardBox = getElementBox(card);
+    const otherBox = getElementBox(b[index]);
+    const centerDelta = Math.abs(
+      cardBox.left + cardBox.width / 2 - (otherBox.left + otherBox.width / 2),
+    );
+    return centerDelta <= 36 && Math.abs(cardBox.width - otherBox.width) <= 72;
+  });
+}
+
+function findNestedCardRow(
+  cards: SlideLikeElement[],
+  allRows: SlideLikeElement[][],
+): SlideLikeElement[] | undefined {
+  const rowBox = getCardRowBox(cards);
+  return allRows.find((row) => {
+    if (row === cards) return false;
+    const otherBox = getCardRowBox(row);
+    return (
+      otherBox.top > rowBox.top + 20 &&
+      otherBox.top < rowBox.bottom - 4 &&
+      rowsShareColumns(cards, row)
+    );
+  });
+}
+
+function candidateBelongsToNestedRow(
+  candidate: SlideLikeElement,
+  currentCards: SlideLikeElement[],
+  allRows: SlideLikeElement[][],
+): boolean {
+  const candidateBox = getElementBox(candidate);
+  const centerX = candidateBox.left + candidateBox.width / 2;
+  const centerY = candidateBox.top + candidateBox.height / 2;
+  const currentBox = getCardRowBox(currentCards);
+
+  return allRows.some((row) => {
+    if (row === currentCards) return false;
+    const rowBox = getCardRowBox(row);
+    return (
+      rowBox.top > currentBox.top + 20 &&
+      centerY >= rowBox.top - 4 &&
+      centerY <= rowBox.bottom + 8 &&
+      centerX >= rowBox.left - 90 &&
+      centerX <= rowBox.right + 90 &&
+      rowsShareColumns(currentCards, row)
+    );
+  });
+}
+
+function groupCardCandidatesByTop<T extends SlideLikeElement>(
+  indexedCandidates: Array<{ element: T; index: number }>,
+): Array<Array<{ element: T; index: number }>> {
+  const bands: Array<Array<{ element: T; index: number }>> = [];
+
+  indexedCandidates.forEach((candidate) => {
+    const candidateTop = getElementBox(candidate.element).top;
+    const band = bands.find(
+      (group) => Math.abs(getElementBox(group[0].element).top - candidateTop) <= 18,
+    );
+    if (band) {
+      band.push(candidate);
+    } else {
+      bands.push([candidate]);
+    }
+  });
+
+  return bands.map((band) => band.sort((a, b) => a.index - b.index));
+}
+
+function startsLikeColumnSpecificText(text: string): boolean {
+  return /^(\s*([①②③④⑤⑥⑦⑧⑨]|\d+[.)、:]|[A-D][.:：]|Delta\s*[<=>]|Δ|D\s*[<=>]|f\s*[(']|x\s*[<=>]))/i.test(
+    text,
+  );
+}
+
+function isLikelyCardRowCaption(element: SlideLikeElement): boolean {
+  if (element.type !== 'text') return false;
+  const text = getTextContent(element);
+  if (!text || startsLikeColumnSpecificText(text)) return false;
+  return text.length >= 10 || /(关系|个数|数量|count|relationship|summary|note)/i.test(text);
+}
+
+function fitCaptionNearCardRow<T extends SlideLikeElement>(
+  element: T,
+  cards: SlideLikeElement[],
+  allRows: SlideLikeElement[][],
+): T {
+  const rowBox = getCardRowBox(cards);
+  const mainRow = allRows
+    .filter((row) => row !== cards)
+    .filter((row) => {
+      const otherBox = getCardRowBox(row);
+      return (
+        otherBox.top < rowBox.top && otherBox.bottom > rowBox.top && rowsShareColumns(row, cards)
+      );
+    })
+    .sort((a, b) => getCardRowBox(b).top - getCardRowBox(a).top)[0];
+  const anchorBox = mainRow ? getCardRowBox(mainRow) : rowBox;
+  const leftOffset = Math.min(360, Math.max(320, rowBox.width * 0.34));
+  const top = clamp(anchorBox.top - 38, MARGIN, Math.max(MARGIN, rowBox.top - 24));
+  const height = Math.min(28, Math.max(22, Number(element.height ?? 24)));
+
+  return {
+    ...element,
+    left: rowBox.left + leftOffset,
+    top,
+    width: Math.max(220, rowBox.width - leftOffset),
+    height,
+  };
+}
+
+function getCardTextTarget(
+  card: SlideLikeElement,
+  cardIndex: number,
+  cards: SlideLikeElement[],
+  allRows: SlideLikeElement[][],
+): SlideLikeElement {
+  const nestedRow = findNestedCardRow(cards, allRows);
+  if (!nestedRow) return card;
+
+  const cardBox = getElementBox(card);
+  const nestedBox = getElementBox(nestedRow[cardIndex]);
+  if (nestedBox.top <= cardBox.top + 24 || nestedBox.top >= cardBox.bottom) return card;
+
+  return {
+    ...card,
+    height: Math.max(44, nestedBox.top - cardBox.top - 6),
+  };
+}
+
+function fitElementInsideCardBand<T extends SlideLikeElement>(
+  element: T,
+  card: SlideLikeElement,
+): T {
+  const fitted = fitElementInsideCard(element, card);
+  const cardBox = getElementBox(card);
+  if (cardBox.height > 104) return fitted;
+
+  const minTop = cardBox.top + (cardBox.height <= 72 ? 8 : 12);
+  const maxBottom = cardBox.bottom - (cardBox.height <= 72 ? 8 : 10);
+  const maxHeight = Math.max(24, maxBottom - minTop);
+  const preferredHeight = Math.max(
+    Number(element.height ?? 0),
+    Number(fitted.height ?? 0),
+    cardBox.height <= 72 ? 24 : 36,
+  );
+  const height = Math.min(preferredHeight, maxHeight);
+  const next = {
+    ...fitted,
+    top: minTop,
+    height,
+  } as T & Record<string, unknown>;
+
+  if (next.type === 'text') {
+    next['paragraphSpace'] = 0;
+    next['lineHeight'] = cardBox.height <= 72 ? 1.12 : 1.16;
+  }
+
+  return next as T;
+}
+
+function findSectionHeadingAboveCardRow<T extends SlideLikeElement>(
+  elements: T[],
+  rowBox: ElementBox,
+): T | undefined {
+  return elements
+    .filter((element) => element.type === 'text')
+    .filter((element) => {
+      const box = getElementBox(element);
+      if (box.top < rowBox.top - 130 || box.top > rowBox.top - 18) return false;
+      if (box.left > rowBox.left + 48) return false;
+      if (box.width > 440) return false;
+      const text = getTextContent(element);
+      return text.length >= 2 && text.length <= 32;
+    })
+    .sort((a, b) => getElementBox(b).top - getElementBox(a).top)[0];
+}
+
+function expandCompositeCardRows<T extends SlideLikeElement>(elements: T[]): T[] {
+  let adjusted = elements.map((element) => ({ ...element })) as T[];
+  const rows = getCardBackgroundRows(adjusted);
+  const targets = new Map<number, Partial<SlideLikeElement>>();
+
+  for (const cards of rows) {
+    const nestedRow = findNestedCardRow(cards, rows);
+    if (!nestedRow) continue;
+
+    const rowBox = getCardRowBox(cards);
+    const nestedBox = getCardRowBox(nestedRow);
+    if (nestedBox.top - rowBox.top >= 88) continue;
+
+    const heading = findSectionHeadingAboveCardRow(adjusted, rowBox);
+    const headingBox = heading ? getElementBox(heading) : undefined;
+    const headingHeight = heading
+      ? Math.min(Number(heading.height ?? headingBox?.height ?? 34), 34)
+      : 0;
+    const minTop = headingBox
+      ? headingBox.top + headingHeight + 14
+      : Math.max(MARGIN, rowBox.top - 42);
+    const desiredTop = clamp(Math.min(rowBox.top, nestedBox.top - 96), minTop, rowBox.top);
+    if (desiredTop >= rowBox.top - 1) continue;
+
+    if (heading) {
+      const headingIndex = adjusted.findIndex((element) => element.id === heading.id);
+      if (headingIndex >= 0) {
+        targets.set(headingIndex, { height: headingHeight });
+      }
+    }
+
+    cards.forEach((card) => {
+      const index = adjusted.findIndex((element) => element.id === card.id);
+      if (index < 0) return;
+      const box = getElementBox(card);
+      targets.set(index, {
+        top: desiredTop,
+        height: Math.max(72, box.bottom - desiredTop),
+      });
+    });
+  }
+
+  if (targets.size === 0) return elements;
+
+  adjusted = adjusted.map((element, index) => {
+    const target = targets.get(index);
+    return target ? ({ ...element, ...target } as T) : element;
+  });
+
+  return adjusted;
+}
+
+function shouldDistributeBandAcrossCards(
+  cards: SlideLikeElement[],
+  band: Array<{ element: SlideLikeElement; index: number }>,
+): boolean {
+  if (band.length < cards.length) return false;
+  const cardIndexes = new Set(
+    band.map(({ element }) => {
+      const box = getElementBox(element);
+      return getCardIndexForX(cards, box.left + box.width / 2);
+    }),
+  );
+  if (cardIndexes.size < Math.min(cards.length, band.length)) return true;
+
+  return band.some(({ element }, index) =>
+    band.slice(index + 1).some(({ element: other }) => {
+      const overlap = intersectionArea(getElementBox(element), getElementBox(other));
+      const smallerArea = Math.min(
+        getElementBox(element).width * getElementBox(element).height,
+        getElementBox(other).width * getElementBox(other).height,
+      );
+      return smallerArea > 0 && overlap / smallerArea >= 0.08;
+    }),
+  );
+}
+
+function hasCardOwnershipConflict(
+  cards: SlideLikeElement[],
+  candidates: SlideLikeElement[],
+): boolean {
+  if (candidates.length < cards.length) return false;
+
+  const hasReadableOverlap = candidates.some((element, index) =>
+    candidates.slice(index + 1).some((other) => {
+      const overlap = intersectionArea(getElementBox(element), getElementBox(other));
+      if (overlap <= 0) return false;
+      const smallerArea = Math.min(
+        getElementBox(element).width * getElementBox(element).height,
+        getElementBox(other).width * getElementBox(other).height,
+      );
+      return smallerArea > 0 && overlap / smallerArea >= 0.08;
+    }),
+  );
+  if (hasReadableOverlap) return true;
+
+  const topBands: SlideLikeElement[][] = [];
+  for (const candidate of candidates) {
+    const band = topBands.find((group) => Math.abs(group[0].top - candidate.top) <= 18);
+    if (band) {
+      band.push(candidate);
+    } else {
+      topBands.push([candidate]);
+    }
+  }
+
+  return topBands.some((band) => {
+    if (band.length < 2 || band.length > cards.length) return false;
+    const cardIndexes = new Set(
+      band.map((element) => {
+        const box = getElementBox(element);
+        return getCardIndexForX(cards, box.left + box.width / 2);
+      }),
+    );
+    return cardIndexes.size < band.length;
+  });
+}
+
+function fitElementInsideCard<T extends SlideLikeElement>(element: T, card: SlideLikeElement): T {
+  const cardBox = getElementBox(card);
+  const horizontalPad = element.type === 'latex' ? 22 : 20;
+  const verticalPad = 14;
+  const maxWidth = Math.max(80, cardBox.width - horizontalPad * 2);
+  const minWidth = element.type === 'latex' ? Math.min(220, maxWidth) : Math.min(80, maxWidth);
+  const width = clamp(Math.min(Math.max(element.width, minWidth), maxWidth), 60, maxWidth);
+  const left = cardBox.left + (cardBox.width - width) / 2;
+  const minHeight = element.type === 'latex' ? 64 : 30;
+  const top = clamp(
+    element.top,
+    cardBox.top + verticalPad,
+    Math.max(cardBox.top + verticalPad, cardBox.bottom - verticalPad - minHeight),
+  );
+  const height = Math.ceil(
+    Math.max(
+      minHeight,
+      Math.min(Number(element.height ?? minHeight), cardBox.bottom - top - verticalPad),
+    ),
+  );
+
+  return {
+    ...element,
+    left,
+    top,
+    width,
+    height,
+  };
+}
+
+function normalizeCardTextOwnership<T extends SlideLikeElement>(elements: T[]): T[] {
+  let adjusted = expandCompositeCardRows(elements).map((element) => ({ ...element })) as T[];
+  const cardRows = getCardBackgroundRows(adjusted);
+
+  for (const cards of cardRows) {
+    const rowBox = getCardRowBox(cards);
+
+    const indexedCandidates = adjusted
+      .map((element, index) => ({ element, index }))
+      .filter(({ element }) => isCardReadableCandidate(element))
+      .filter(({ element }) => {
+        const box = getElementBox(element);
+        const centerX = box.left + box.width / 2;
+        if (box.top < rowBox.top - 8 || box.top > rowBox.bottom + 18) return false;
+        if (centerX < rowBox.left - 90 || centerX > rowBox.right + 90) return false;
+        if (candidateBelongsToNestedRow(element, cards, cardRows)) return false;
+        return true;
+      })
+      .sort((a, b) => a.index - b.index);
+
+    const candidates = indexedCandidates.map(({ element }) => element);
+    if (!hasCardOwnershipConflict(cards, candidates)) continue;
+
+    const targets = new Map<number, T>();
+    const consumedIndexes = new Set<number>();
+
+    for (const rawBand of groupCardCandidatesByTop(indexedCandidates)) {
+      if (!shouldDistributeBandAcrossCards(cards, rawBand)) continue;
+
+      let band = [...rawBand];
+      if (band.length === cards.length + 1) {
+        const captionIndex = band.findIndex(({ element }) => isLikelyCardRowCaption(element));
+        if (captionIndex >= 0) {
+          const [caption] = band.splice(captionIndex, 1);
+          targets.set(caption.index, fitCaptionNearCardRow(caption.element, cards, cardRows));
+          consumedIndexes.add(caption.index);
+        }
+      }
+
+      band.slice(0, cards.length).forEach(({ element, index }, cardIndex) => {
+        const targetCard = getCardTextTarget(cards[cardIndex], cardIndex, cards, cardRows);
+        targets.set(index, fitElementInsideCardBand(element, targetCard));
+        consumedIndexes.add(index);
+      });
+    }
+
+    if (targets.size === 0) {
+      let cardIndex = 0;
+      const minCandidateTop = Math.min(...candidates.map((element) => getElementBox(element).top));
+      let lastTop = minCandidateTop;
+
+      for (const { element, index } of indexedCandidates) {
+        if (
+          getElementBox(element).top <= minCandidateTop + 30 &&
+          lastTop > minCandidateTop + 30 &&
+          cardIndex < cards.length - 1
+        ) {
+          cardIndex += 1;
+        }
+
+        targets.set(index, fitElementInsideCard(element, cards[cardIndex]));
+        lastTop = getElementBox(element).top;
+      }
+    } else {
+      for (const { element, index } of indexedCandidates) {
+        if (consumedIndexes.has(index)) continue;
+        const box = getElementBox(element);
+        const cardIndex = getCardIndexForX(cards, box.left + box.width / 2);
+        targets.set(index, fitElementInsideCard(element, cards[cardIndex]));
+      }
+    }
+
+    adjusted = adjusted.map((element, index) => targets.get(index) ?? element);
+  }
+
+  return adjusted;
 }
 
 function hasBoxOverlap(a: SlideLikeElement, b: SlideLikeElement, padding = 0): boolean {
@@ -1595,6 +2470,31 @@ function setTextFontSizeIfNeeded<T extends SlideLikeElement>(element: T, minSize
   };
 }
 
+function stepBodiesBelongToCardRow(
+  heading: SlideLikeElement,
+  stepBodies: SlideLikeElement[],
+  elements: SlideLikeElement[],
+): boolean {
+  const headingBox = getElementBox(heading);
+  return getCardBackgroundRows(elements).some((cards) => {
+    const rowBox = getCardRowBox(cards);
+    if (rowBox.top < headingBox.top + 24) return false;
+    const paddedRow = expandBox(rowBox, 14);
+    const ownedBodies = stepBodies.filter((body) => {
+      const bodyBox = getElementBox(body);
+      const centerX = bodyBox.left + bodyBox.width / 2;
+      const centerY = bodyBox.top + bodyBox.height / 2;
+      return (
+        centerX >= paddedRow.left &&
+        centerX <= paddedRow.right &&
+        centerY >= paddedRow.top &&
+        centerY <= paddedRow.bottom
+      );
+    });
+    return ownedBodies.length >= Math.min(3, stepBodies.length);
+  });
+}
+
 function normalizeStepSections<T extends SlideLikeElement>(elements: T[]): T[] {
   const headings = elements
     .filter((element) => element.type === 'text')
@@ -1622,6 +2522,7 @@ function normalizeStepSections<T extends SlideLikeElement>(elements: T[]): T[] {
     .sort((a, b) => a.left - b.left || a.top - b.top);
 
   if (stepBodies.length === 0) return elements;
+  if (stepBodiesBelongToCardRow(heading, stepBodies, elements)) return elements;
 
   const headingHeight = 30;
   const bodyGap = 8;
@@ -2048,7 +2949,7 @@ function enforceReadableSafeBounds<T extends SlideLikeElement>(elements: T[]): T
 }
 
 function getMinimumReadableHeight(element: SlideLikeElement): number {
-  if (element.type === 'latex') return 60;
+  if (element.type === 'latex') return 64;
   if (element.type === 'table') return 72;
   if (element.type === 'text') return element.top < 150 ? 44 : 36;
   return 28;
