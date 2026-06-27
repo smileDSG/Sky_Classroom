@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateLessonContent } from '@/lib/teaching/content-generator';
+import { buildContentPrompt } from '@/lib/teaching/content-prompts';
 import type { LessonPlan } from '@/lib/teaching/lesson-types';
 
 vi.mock('@/lib/ai/llm', () => ({
@@ -103,5 +104,13 @@ describe('generateLessonContent', () => {
     const sections = await generateLessonContent(mockPlan);
 
     expect(sections[0].chunks.length).toBe(1);
+  });
+
+  it('requires quiz chunks to stay grounded in section knowledge points', () => {
+    const prompt = buildContentPrompt(mockPlan.sections[0]);
+
+    expect(prompt).toContain('随堂题必须直接考查本节知识点（二次函数）');
+    expect(prompt).toContain('不得生成与本节无关的随机题');
+    expect(prompt).toContain('question 必须直接围绕本节知识点（二次函数）');
   });
 });

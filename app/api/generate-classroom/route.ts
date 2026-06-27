@@ -64,15 +64,19 @@ export async function POST(req: NextRequest) {
     // Record generation usage
     await recordUsage(quota.userId, quota.planType, 'generationCount');
 
-    void runClassroomGenerationJob(jobId, body, baseUrl).catch((err) => {
-      log.error(`[direct] runClassroomGenerationJob failed for ${jobId}:`, err);
+    // Start generation immediately. Do not rely solely on after() because
+    // Turbopack/dev-mode may drop or delay after() callbacks, leaving the
+    // job stuck at 1% indefinitely.
+    runClassroomGenerationJob(jobId, body, baseUrl).catch((err) => {
+      log.error(`runClassroomGenerationJob failed for ${jobId}:`, err);
     });
 
-    after(() =>
-      runClassroomGenerationJob(jobId, body, baseUrl).catch((err) => {
-        log.error(`[after] runClassroomGenerationJob failed for ${jobId}:`, err);
-      }),
-    );
+    after(async () => {
+      // Best-effort: if the synchronous start above somehow did not claim the
+      // runner (e.g. module was still loading), this wakes the job up.
+      const { resumeClassroomGenerationJob } = await import('@/lib/server/classroom-job-runner');
+      resumeClassroomGenerationJob(jobId, baseUrl).catch(() => {});
+    });
 
     return apiSuccess(
       {

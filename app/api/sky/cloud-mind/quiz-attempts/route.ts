@@ -34,7 +34,7 @@ function normalizeDifficulty(value: unknown): Difficulty {
 function normalizeQuestions(rawQuestions: unknown): QuizAttemptQuestion[] {
   if (!Array.isArray(rawQuestions)) return [];
   return rawQuestions
-    .map((raw) => {
+    .map((raw): QuizAttemptQuestion | null => {
       const item = raw as Partial<QuizAttemptQuestion>;
       const answer = typeof item.answer === 'number' ? item.answer : Number(item.answer);
       const userAnswer = item.userAnswer === null || item.userAnswer === undefined

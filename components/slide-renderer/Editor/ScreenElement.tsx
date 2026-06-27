@@ -87,10 +87,7 @@ export function ScreenElement({ elementInfo, elementIndex, animate }: ScreenElem
 
   const elevationShadow = useMemo(() => {
     switch (elementInfo.type) {
-      case ElementTypes.TEXT:
-        return '0 1px 3px rgba(0,0,0,0.08)';
       case ElementTypes.IMAGE:
-      case ElementTypes.SHAPE:
       case ElementTypes.CHART:
       case ElementTypes.TABLE:
         return '0 4px 12px rgba(0,0,0,0.12)';

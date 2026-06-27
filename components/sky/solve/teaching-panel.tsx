@@ -453,12 +453,16 @@ interface TeachingPanelProps {
   /** Job id of the history item being viewed, used for homework/favorite */
   viewHistoryJobId?: string;
   onViewedHistory?: () => void;
+  initialTopic?: string;
+  personalizationNotice?: string | null;
 }
 
 export function TeachingPanel({
   viewHistoryItem,
   viewHistoryJobId,
   onViewedHistory,
+  initialTopic,
+  personalizationNotice,
 }: TeachingPanelProps) {
   const { user } = useAuth();
   const [topic, setTopic] = useState('');
@@ -534,6 +538,12 @@ export function TeachingPanel({
   const [serverProgress, setServerProgress] = useState<number | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+  const userEditedTopicRef = useRef(false);
+
+  useEffect(() => {
+    if (!initialTopic || userEditedTopicRef.current || topic.trim() || loading || done) return;
+    setTopic(initialTopic);
+  }, [done, initialTopic, loading, topic]);
 
   // ── Fetch recommended topics on mount ──
   useEffect(() => {
@@ -591,6 +601,7 @@ export function TeachingPanel({
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const handleTopicChange = (value: string) => {
+    userEditedTopicRef.current = true;
     setTopic(value);
     if (value.trim().length > 0) {
       const results = searchTopics(value.trim());
@@ -603,11 +614,13 @@ export function TeachingPanel({
   };
 
   const handleSelectSuggestion = (suggestion: string) => {
+    userEditedTopicRef.current = true;
     setTopic(suggestion);
     setShowSuggestions(false);
   };
 
   const handleSelectRecommended = (recommended: string) => {
+    userEditedTopicRef.current = true;
     setTopic(recommended);
   };
 
@@ -1128,6 +1141,11 @@ export function TeachingPanel({
           </div>
         </div>
         <div className="px-5 py-5">
+          {personalizationNotice && !done && (
+            <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-4 py-3 text-sm text-emerald-200">
+              {personalizationNotice}
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <Input

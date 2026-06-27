@@ -190,9 +190,13 @@ export async function generateSingleScene(
 
   // Log content generation result
   if ('templateData' in content) {
-    log.info(`[SingleScene] Content generated for "${outline.title}": hasTemplateData=${!!content.templateData}, legacyElements=${content.elements.length}`);
+    log.info(
+      `[SingleScene] Content generated for "${outline.title}": hasTemplateData=${!!content.templateData}, legacyElements=${content.elements.length}`,
+    );
   } else {
-    log.info(`[SingleScene] Content generated for "${outline.title}": type=${outline.type}, no templateData field`);
+    log.info(
+      `[SingleScene] Content generated for "${outline.title}": type=${outline.type}, no templateData field`,
+    );
   }
 
   generationCache.set(`${cacheKey}:content`, content);
@@ -240,9 +244,12 @@ export async function generateSceneContent(
     agents,
     languageDirective,
     thinkingConfig,
+    themeSelection,
   } = options;
 
-  log.info(`[SceneContent] Generating content for "${outline.title}" (type=${outline.type}, order=${outline.order})`);
+  log.info(
+    `[SceneContent] Generating content for "${outline.title}" (type=${outline.type}, order=${outline.order})`,
+  );
 
   // Unified path for interactive scenes (both normal and ultra mode)
   if (outline.type === 'interactive') {
@@ -276,6 +283,7 @@ export async function generateSceneContent(
         generatedMediaMapping,
         agents,
         languageDirective,
+        themeSelection,
       );
     case 'quiz':
       return generateQuizContent(outline, aiCall, languageDirective);
@@ -386,9 +394,13 @@ export function createSceneWithActions(
     });
 
     if (!sceneResult.success) {
-      log.error(`[SceneCreate] Failed to create scene for "${outline.title}": ${sceneResult.error}`);
+      log.error(
+        `[SceneCreate] Failed to create scene for "${outline.title}": ${sceneResult.error}`,
+      );
     } else {
-      log.info(`[SceneCreate] Scene created successfully for "${outline.title}": sceneId=${sceneResult.data}`);
+      log.info(
+        `[SceneCreate] Scene created successfully for "${outline.title}": sceneId=${sceneResult.data}`,
+      );
     }
 
     return sceneResult.success ? (sceneResult.data ?? null) : null;

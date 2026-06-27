@@ -250,23 +250,23 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
         return;
       }
 
-      console.error('[DiscussionTTS] TTS generation failed:', err);
-
       // Clear current state
       audioRef.current = null;
       isPlayingRef.current = false;
 
       // Try fallback to browser native TTS if server TTS failed
       if ((item.providerId as string) !== 'browser-native-tts') {
-        console.log('[DiscussionTTS] Falling back to browser native TTS');
+        console.warn('[DiscussionTTS] Server TTS failed; falling back to browser native TTS:', err);
         try {
           currentProviderRef.current = 'browser-native-tts';
           onAudioStateChangeRef.current?.(item.agentId, 'playing', item.text);
-          browserSpeakRef.current(item.text, item.voiceId);
+          browserSpeakRef.current(item.text);
           return;
         } catch (fallbackErr) {
-          console.error('[DiscussionTTS] Browser TTS fallback also failed:', fallbackErr);
+          console.warn('[DiscussionTTS] Browser TTS fallback also failed:', fallbackErr);
         }
+      } else {
+        console.warn('[DiscussionTTS] Browser native TTS failed:', err);
       }
 
       // Mark as done and continue queue

@@ -74,7 +74,7 @@ describe('fixElementDefaults', () => {
     const fixed = fixElementDefaults(elements);
     const shape = fixed[0] as Element;
 
-    expect(shape.viewBox).toBe('0 0 200 200');
+    expect(shape.viewBox).toEqual([200, 200]);
     expect(shape.fill).toBe('#5b9bd5');
     expect(shape.fixedRatio).toBe(false);
   });

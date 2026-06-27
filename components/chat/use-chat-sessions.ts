@@ -22,6 +22,7 @@ import { USER_AVATAR } from '@/lib/types/roundtable';
 import { StreamBuffer } from '@/lib/buffer/stream-buffer';
 import type { AgentStartItem, ActionItem } from '@/lib/buffer/stream-buffer';
 import { runAgentLoop, type AgentLoopStoreState } from '@/lib/chat/agent-loop';
+import { getAgentIdsForSession, getTriggerAgentIdForSession } from '@/lib/chat/session-agents';
 import { ActionEngine } from '@/lib/action/engine';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
@@ -937,10 +938,11 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         const userProfileState = useUserProfileStore.getState();
         const mc = getCurrentModelConfig();
 
-        const agentIds =
-          useSettingsStore.getState().selectedAgentIds?.length > 0
-            ? useSettingsStore.getState().selectedAgentIds
-            : session.config.agentIds;
+        const selectedAgentIds = useSettingsStore.getState().selectedAgentIds;
+        const agentIds = getAgentIdsForSession(
+          session.type,
+          selectedAgentIds?.length > 0 ? selectedAgentIds : session.config.agentIds,
+        );
 
         await runAgentLoopFn(
           sessionId,
@@ -956,7 +958,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             config: {
               agentIds,
               sessionType: session.type,
-              triggerAgentId: 'default-2',
+              triggerAgentId: getTriggerAgentIdForSession(session.type),
             },
             userProfile: {
               nickname: userProfileState.nickname || undefined,
@@ -1088,11 +1090,6 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       const now = Date.now();
       const userMessageId = `user-${now}`;
 
-      // Read all selected agent IDs from settings store
-      const settingsState = useSettingsStore.getState();
-      const agentIds: string[] =
-        settingsState.selectedAgentIds?.length > 0 ? settingsState.selectedAgentIds : ['default-1'];
-
       const userMessage: UIMessage<ChatMessageMetadata> = {
         id: userMessageId,
         role: 'user',
@@ -1123,6 +1120,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         ? [...lectureContextMessages, ...existingSession.messages, userMessage]
         : [...lectureContextMessages, userMessage];
       const sessionType: SessionType = existingSession?.type || 'qa';
+      const agentIds = getAgentIdsForSession(
+        sessionType,
+        existingSession?.config.agentIds ?? useSettingsStore.getState().selectedAgentIds,
+      );
 
       // Pure updater — no side effects
       setSessions((prev) => {
@@ -1189,7 +1190,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             config: {
               agentIds,
               sessionType,
-              triggerAgentId: 'default-2',
+              triggerAgentId: getTriggerAgentIdForSession(sessionType),
             },
             userProfile: {
               nickname: userProfileState.nickname || undefined,

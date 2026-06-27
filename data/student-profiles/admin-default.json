@@ -13,7 +13,18 @@
       "politics": 0
     },
     "masteryByKnowledge": {
-      "一元一次方程": 48,
+      "三角形": 42,
+      "相似三角形": 54,
+      "不等式性质": 94,
+      "一元一次不等式": 94,
+      "加法运算": 94,
+      "一元一次方程": 42,
+      "reviewCount测试": 80,
+      "nextReview测试": 80,
+      "测试加法": 70,
+      "加法": 40,
+      "函数": 60,
+      "复习测试": 80,
       "一元二次方程": 48,
       "二次函数定义": 80,
       "y=ax^2+bx+c图像特征": 80,
@@ -23,7 +34,6 @@
       "函数概念": 54,
       "导数": 80,
       "极值": 90,
-      "函数": 90,
       "复数": 90,
       "轨迹方程": 90,
       "二项分布": 90,
@@ -46,7 +56,6 @@
       "等差数列": 90,
       "数列求和": 90,
       "切线方程": 90,
-      "三角形": 80,
       "内切圆": 90,
       "余弦定理": 90,
       "空间向量": 90,
@@ -54,8 +63,10 @@
     },
     "weakPoints": [],
     "strongPoints": [
+      "不等式性质",
+      "一元一次不等式",
+      "加法运算",
       "极值",
-      "函数",
       "复数",
       "轨迹方程",
       "二项分布",
@@ -85,260 +96,336 @@
     ],
     "errorPatterns": [
       {
+        "knowledgePoint": "三角形",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-06-27T08:21:43.872Z"
+      },
+      {
+        "knowledgePoint": "相似三角形",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-06-27T08:21:43.872Z"
+      },
+      {
+        "knowledgePoint": "不等式性质",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-06-27T08:21:43.872Z"
+      },
+      {
+        "knowledgePoint": "一元一次不等式",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-06-27T08:21:43.872Z"
+      },
+      {
+        "knowledgePoint": "加法运算",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-06-27T08:21:43.872Z"
+      },
+      {
         "knowledgePoint": "一元一次方程",
         "errorType": "concept-unclear",
-        "frequency": 2,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "frequency": 3,
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
+      },
+      {
+        "knowledgePoint": "reviewCount测试",
+        "errorType": "calculation-error",
+        "frequency": 3,
+        "lastOccurrence": "2026-06-25T14:48:24.007Z"
+      },
+      {
+        "knowledgePoint": "nextReview测试",
+        "errorType": "calculation-error",
+        "frequency": 3,
+        "lastOccurrence": "2026-06-25T14:48:24.034Z"
+      },
+      {
+        "knowledgePoint": "测试加法",
+        "errorType": "calculation-error",
+        "frequency": 3,
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
+      },
+      {
+        "knowledgePoint": "加法",
+        "errorType": "calculation-error",
+        "frequency": 6,
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
+      },
+      {
+        "knowledgePoint": "函数",
+        "errorType": "concept-unclear",
+        "frequency": 3,
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
+      },
+      {
+        "knowledgePoint": "复习测试",
+        "errorType": "calculation-error",
+        "frequency": 3,
+        "lastOccurrence": "2026-06-25T14:48:23.981Z"
       },
       {
         "knowledgePoint": "一元二次方程",
         "errorType": "concept-unclear",
         "frequency": 2,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "二次函数定义",
         "errorType": "concept-unclear",
         "frequency": 2,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "y=ax^2+bx+c图像特征",
         "errorType": "concept-unclear",
         "frequency": 2,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "开口方向",
         "errorType": "concept-unclear",
         "frequency": 2,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "对称轴",
         "errorType": "concept-unclear",
         "frequency": 2,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "因式分解",
         "errorType": "concept-unclear",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "函数概念",
         "errorType": "concept-unclear",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "导数",
         "errorType": "method-wrong",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "极值",
         "errorType": "method-wrong",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "函数",
         "errorType": "method-wrong",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "复数",
         "errorType": "method-wrong",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "轨迹方程",
         "errorType": "method-wrong",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "二项分布",
         "errorType": "careless",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "期望",
         "errorType": "careless",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "方差",
         "errorType": "careless",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "椭圆",
         "errorType": "concept-unclear",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "离心率",
         "errorType": "concept-unclear",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "二次函数",
         "errorType": "concept-unclear",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "待定系数法",
         "errorType": "concept-unclear",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "不等式",
         "errorType": "careless",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "不等式组",
         "errorType": "careless",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "定积分",
         "errorType": "misreading",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "积分计算",
         "errorType": "misreading",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "直线方程",
         "errorType": "misreading",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "点到直线距离",
         "errorType": "misreading",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "对数函数",
         "errorType": "concept-unclear",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "定义域",
         "errorType": "concept-unclear",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "排列组合",
         "errorType": "method-wrong",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "概率",
         "errorType": "method-wrong",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "等差数列",
         "errorType": "calculation-error",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "数列求和",
         "errorType": "calculation-error",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "导数",
         "errorType": "concept-unclear",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "切线方程",
         "errorType": "concept-unclear",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "三角形",
         "errorType": "careless",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "内切圆",
         "errorType": "careless",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "余弦定理",
         "errorType": "calculation-error",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "三角形",
         "errorType": "calculation-error",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "空间向量",
         "errorType": "calculation-error",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       },
       {
         "knowledgePoint": "方向余弦",
         "errorType": "calculation-error",
         "frequency": 1,
-        "lastOccurrence": "2026-06-25T13:15:46.077Z"
+        "lastOccurrence": "2026-06-27T08:21:43.873Z"
       }
     ],
-    "totalQuestions": 52,
+    "totalQuestions": 85,
     "totalCorrect": 17,
-    "lastUpdated": "2026-06-25T13:15:46.087Z",
+    "lastUpdated": "2026-06-27T08:21:43.900Z",
     "recentQuizPerformance": {
-      "overallAccuracy": 0,
+      "overallAccuracy": 14,
       "accuracyByKnowledge": {
+        "三角形": 0,
+        "相似三角形": 0,
+        "不等式性质": 100,
+        "一元一次不等式": 100,
+        "加法运算": 100,
         "一元一次方程": 0,
         "一元二次方程": 0,
         "因式分解": 0,
-        "函数概念": 0
+        "函数概念": 0,
+        "reviewCount测试": 0,
+        "nextReview测试": 0,
+        "复习测试": 0
       },
-      "topErrorCauses": [],
+      "topErrorCauses": [
+        "calculation"
+      ],
       "recommendedDepthShift": "shallower"
     }
   },
-  "cachedAt": 1782393346088
+  "cachedAt": 1782548503926
 }

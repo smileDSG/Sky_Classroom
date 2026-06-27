@@ -675,6 +675,28 @@ Agent 输出质量报告。
 
 > AI 不只是生成内容，而是在持续理解学生、组织学习过程、沉淀学习证据，并帮助教师和学生形成可持续改进的学习闭环。
 
+## 十三、实施记录
+
+### 2026-06-25：最小可展示闭环落地
+
+已完成：
+
+1. 云端智囊总览页从工具矩阵升级为学习驾驶舱，展示今日建议、证据链、薄弱点、待复习内容、最近记录和全部工具入口。
+2. 新增 `GET /api/sky/cloud-mind/dashboard`，汇总学生画像、错题、测验记录和知识库状态生成推荐。
+3. 新增证据链组件 `components/sky/cloud-mind/evidence-list.tsx`，统一展示推荐依据。
+4. 知识库能力保留在 API 与服务层，前端入口暂不放入云端智囊工具集。
+5. 升级知识库 API，优先使用持久化 `kb-manager`，未配置 MySQL 时回退内存 RAG。
+6. 新增记忆卡复习调度与 `memory-reviews`、`memory-due` API，记忆卡反馈支持长期状态、掌握度和下次复习时间。
+7. 测验完成页新增下一步动作：复习错题、生成同类题、生成记忆卡、进入微讲解。
+8. 首页相关入口保持原有 `/sky` 页面导航方式，云端智囊页内部只保留核心工具入口。
+
+验证结果：
+
+- `pnpm vitest run tests/cloud-mind/spaced-repetition.test.ts tests/cloud-mind/recommendation-engine.test.ts tests/sky/cloud-mind-memory.test.tsx`：通过，9 个测试通过。
+- 受影响文件 `eslint`：通过，无 error。
+- 受影响文件 `prettier --check`：通过。
+- `npx tsc --noEmit` 与全量 `pnpm test` 仍受仓库既有类型/测试问题影响，未作为本轮完成条件。
+
 ## 十三、2026-06-25 性能加速落地记录
 
 本次优化先处理云端智囊中最容易形成等待感的 AI 调用链路，目标是在不改变页面交互和 API 返回结构的前提下缩短重复请求与排队等待时间。
@@ -702,3 +724,30 @@ Agent 输出质量报告。
 3. 为 PPT 长文本分析增加切片摘要：先做章节摘要，再生成讲解脚本。
 4. 将云端智囊缓存抽象到 Redis，并按用户、模型、提示词版本、输入 hash 做隔离。
 5. 为缓存命中率、首 token 时间、总生成时间增加可观测指标。
+
+## 十四、2026-06-25 首批升级实施记录
+
+本轮按反馈收敛云端智囊范围，恢复为独立 AI 工具集页面，避免和 `/sky` 学习驾驶舱重复。
+
+### 14.1 已落地
+
+1. `/sky/cloud-mind` 恢复为截图风格的紫色 Hero + 工具卡片布局。
+2. 工具矩阵只保留拍照搜题、PPT 课件生成、智能出题、记忆卡片、智能授课 5 项。
+3. 移除云端智囊页中的今日建议、证据链、薄弱点、待复习、最近记录等和 `/sky` 页面重复的驾驶舱内容。
+4. 从云端智囊前端入口中移除智能写作、智能翻译和知识库。
+5. 删除前端 `/sky/cloud-mind/knowledge` 页面，知识库能力暂保留在 API 层。
+6. 首页相关入口恢复原有 `/sky/slides`、`/sky/solve`、`/sky/assistant` 等跳转，不再被本轮改动牵动。
+7. 修复记忆卡片复习状态从旧的 `mastered/review` 到 `remembered/fuzzy/forgotten` 后遗留的类型判断。
+8. 修复答题记录保存接口中的 `QuizAttemptQuestion` 过滤类型谓词，消除云端智囊相关类型检查噪音。
+
+### 14.2 验证结果
+
+1. `pnpm vitest run tests/agents/cloud-mind-cache.test.ts tests/sky/cloud-mind-memory.test.tsx` 通过，2 个测试文件、7 个用例全部通过。
+2. 针对本轮触达文件运行 ESLint，通过且 0 error；`app/sky/page.tsx` 仍有 4 个既有 warning。
+3. `npx tsc --noEmit --pretty false` 仍被仓库其它模块既有类型错误阻塞；过滤 `cloud-mind` 后已无直接相关报错。
+
+### 14.3 下一步建议
+
+1. 若后续重新开放知识库，应先确定它和 `/sky` 学习驾驶舱的边界，再加入口。
+2. 如果继续压缩重复功能，可进一步评估云端智囊是否只保留 AI 生成类工具。
+3. 后续 UI 调整优先以截图风格为基线，避免改成新的驾驶舱结构。

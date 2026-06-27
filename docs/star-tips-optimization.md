@@ -4,6 +4,8 @@
 > **目标**：从"静态仪表盘"升级为"智能学习助手首页"，增加主动引导、个性化建议和游戏化激励
 > **状态**：✅ 全部完成
 
+相关取舍文档：[`docs/star-tips-redundancy-audit.md`](./star-tips-redundancy-audit.md)
+
 ---
 
 ## 一、现状分析

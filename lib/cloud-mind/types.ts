@@ -50,7 +50,15 @@ export interface DueReviewItem {
 
 export interface RecentLearningRecord {
   id: string;
-  source: 'quiz' | 'mistake' | 'memory' | 'knowledge' | 'write' | 'translate' | 'slides';
+  source:
+    | 'quiz'
+    | 'mistake'
+    | 'memory'
+    | 'knowledge'
+    | 'write'
+    | 'translate'
+    | 'slides'
+    | 'profile';
   title: string;
   detail: string;
   createdAt: number;
@@ -81,6 +89,39 @@ export interface CloudMindDashboardData {
     masteryAverage: number;
     recentAccuracy: number | null;
   };
+}
+
+export type PersonalizationDifficulty = 'easy' | 'medium' | 'hard';
+
+export type CloudMindToolTarget = 'solve' | 'slides' | 'quiz' | 'memory' | 'teaching';
+
+export interface PersonalizationContext {
+  userId: string;
+  generatedAt: number;
+  hasLearningData: boolean;
+  weakPoints: WeakPointSummary[];
+  masteryByKnowledge: Record<string, number>;
+  recentAccuracy: number | null;
+  dueReviews: DueReviewItem[];
+  errorPatterns: Array<{
+    knowledgePoint: string;
+    errorType: string;
+    frequency: number;
+    lastOccurrence: string;
+  }>;
+  learningPath?: {
+    current?: string;
+    next?: string;
+    nodes: string[];
+    reason: string;
+  };
+  preferredDifficulty: PersonalizationDifficulty;
+  recommendation: {
+    title: string;
+    reason: string;
+    targetTool: CloudMindToolTarget;
+    href: string;
+  } | null;
 }
 
 export type MemoryReviewRating = 'remembered' | 'fuzzy' | 'forgotten';

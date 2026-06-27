@@ -73,6 +73,30 @@ describe('CloudMindMemoryPage', () => {
           json: async () => ({ success: true, data: { hasProfile: false } }),
         } as Response;
       }
+      if (url === '/api/sky/cloud-mind/personalization-context') {
+        return {
+          json: async () => ({
+            success: true,
+            data: {
+              userId: 'test-user',
+              generatedAt: Date.now(),
+              hasLearningData: false,
+              weakPoints: [],
+              masteryByKnowledge: {},
+              recentAccuracy: null,
+              dueReviews: [],
+              errorPatterns: [],
+              preferredDifficulty: 'medium',
+              recommendation: {
+                title: 'Start with quiz',
+                reason: 'No learning data yet',
+                targetTool: 'quiz',
+                href: '/sky/cloud-mind/quiz',
+              },
+            },
+          }),
+        } as Response;
+      }
       if (url === '/api/sky/cloud-mind/memory-cards') {
         return {
           json: async () => ({ success: true, data: mockDeck }),
@@ -121,6 +145,59 @@ describe('CloudMindMemoryPage', () => {
       cardCount: 12,
     });
     expect(requestBody.auto).toBeUndefined();
+  });
+
+  it('prefills topic and content from personalization context', async () => {
+    mockFetch.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/sky/cloud-mind/personalization-context') {
+        return {
+          json: async () => ({
+            success: true,
+            data: {
+              userId: 'test-user',
+              generatedAt: Date.now(),
+              hasLearningData: true,
+              weakPoints: [
+                {
+                  knowledgePoint: '二次函数',
+                  mastery: 42,
+                  recentMistakeCount: 2,
+                  actionHref: '/sky/cloud-mind/quiz?topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0',
+                },
+              ],
+              masteryByKnowledge: { 二次函数: 42 },
+              recentAccuracy: 55,
+              dueReviews: [],
+              errorPatterns: [],
+              preferredDifficulty: 'easy',
+              recommendation: {
+                title: 'Practice weak point',
+                reason: 'Weak point detected',
+                targetTool: 'quiz',
+                href: '/sky/cloud-mind/quiz?topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0',
+              },
+            },
+          }),
+        } as Response;
+      }
+      if (url === '/api/sky/cloud-mind/memory-cards') {
+        return {
+          json: async () => ({ success: true, data: mockDeck }),
+        } as Response;
+      }
+      return {
+        json: async () => ({ success: true, data: { hasProfile: false } }),
+      } as Response;
+    });
+
+    render(<CloudMindMemoryPage />);
+
+    await waitFor(() => {
+      const [topicInput, contentTextarea] = screen.getAllByRole('textbox');
+      expect(topicInput).toHaveValue('二次函数');
+      expect((contentTextarea as HTMLTextAreaElement).value).toContain('二次函数');
+    });
   });
 
   it('renders LaTeX formulas in generated cards with KaTeX', async () => {

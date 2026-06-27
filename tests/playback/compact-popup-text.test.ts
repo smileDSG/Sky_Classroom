@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCompactPopupText, getSpeechTextForView } from '@/lib/playback/derived-state';
+import {
+  computePlaybackView,
+  getCompactPopupText,
+  getSpeechTextForView,
+} from '@/lib/playback/derived-state';
 
 describe('getCompactPopupText', () => {
   it('does not show idle text when no speech is active', () => {
@@ -78,5 +82,39 @@ describe('getSpeechTextForView', () => {
         liveSpeech: 'streamed segment',
       }),
     ).toBe('streamed segment');
+  });
+});
+
+describe('computePlaybackView', () => {
+  it('does not surface the first scene speech while playback is between speech actions', () => {
+    const view = computePlaybackView({
+      engineMode: 'playing',
+      lectureSpeech: null,
+      liveSpeech: null,
+      speakingAgentId: null,
+      thinkingState: null,
+      isCueUser: false,
+      isTopicPending: false,
+      chatIsStreaming: false,
+      discussionTrigger: null,
+      playbackCompleted: false,
+      idleText: 'first scene speech',
+      speakingStudent: false,
+      sessionType: null,
+    });
+
+    expect(view.phase).toBe('lecturePlaying');
+    expect(view.sourceText).toBe('');
+    expect(view.bubbleRole).toBeNull();
+    expect(
+      getCompactPopupText({
+        engineMode: 'playing',
+        isInLiveFlow: view.isInLiveFlow,
+        lectureSpeech: null,
+        currentSpeech: null,
+        userMessage: null,
+        sourceText: view.sourceText,
+      }),
+    ).toBeNull();
   });
 });

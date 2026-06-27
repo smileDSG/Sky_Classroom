@@ -199,12 +199,10 @@ export function Roundtable({
 
   const sourceText = userMessage
     ? userMessage
-    : (playbackView?.sourceText ??
-      (currentSpeech
-        ? currentSpeech
-        : isInLiveFlow
-          ? ''
-          : lectureSpeech || (playbackCompleted ? '' : idleText) || ''));
+    : currentSpeech
+      ? currentSpeech
+      : (playbackView?.sourceText ??
+        (isInLiveFlow ? '' : lectureSpeech || (playbackCompleted ? '' : idleText) || ''));
   const hasAgentFeedback = Boolean(playbackView?.sourceText || thinkingState);
   const prevHasAgentFeedbackRef = useRef(hasAgentFeedback);
 
@@ -543,26 +541,36 @@ export function Roundtable({
     isRecording ||
     isProcessing;
 
+  const popupText = getCompactPopupText({
+    engineMode,
+    isInLiveFlow,
+    lectureSpeech: lectureSpeech ?? null,
+    currentSpeech: currentSpeech ?? null,
+    userMessage,
+    sourceText,
+  });
+
   // Derive effective speaking agent for the popup — user messages come from local
   // state, not from the engine, so map them to the user participant explicitly.
   // Map speech to the correct participant for the popup.
   // speakingAgentId from the engine covers live chat; bubbleRole covers
   // lecture/idle playback where the engine doesn't emit an agentId.
   const popupSpeakingAgentId = (() => {
+    if (!popupText?.trim()) return null;
     if (userMessage) return userParticipant?.id ?? null;
     if (speakingAgentId) return speakingAgentId;
     // Any agent speaking — teacher, student, or thinking agent
-    if (sourceText && bubbleRole === 'teacher') return teacherParticipant?.id ?? null;
-    if (sourceText && bubbleRole === 'agent' && speakingStudent) return speakingStudent.id;
+    if (popupText && bubbleRole === 'teacher') return teacherParticipant?.id ?? null;
+    if (popupText && bubbleRole === 'agent' && speakingStudent) return speakingStudent.id;
     // Fallback: if an agent is thinking, treat them as speaker
-    if (sourceText && thinkingState?.agentId) return thinkingState.agentId;
+    if (popupText && thinkingState?.agentId) return thinkingState.agentId;
     return null;
   })();
 
   // Reset dismissed state when speaker or text changes (new speech = show popup again)
   useEffect(() => {
     setDismissedSpeaker(null);
-  }, [popupSpeakingAgentId, sourceText]);
+  }, [popupSpeakingAgentId, popupText]);
 
   // Prepare participants for CharacterStrip
   const stripParticipants = initialParticipants.map((p) => ({
@@ -693,20 +701,11 @@ export function Roundtable({
       name: '我',
       role: 'user' as const,
     };
-    const compactPopupText = getCompactPopupText({
-      engineMode,
-      isInLiveFlow,
-      lectureSpeech: lectureSpeech ?? null,
-      currentSpeech: currentSpeech ?? null,
-      userMessage,
-      sourceText,
-    });
-
     return (
       <div className="flex h-full w-full flex-col items-center rounded-[28px] border border-white/70 bg-white/62 px-2 py-3 shadow-[0_16px_42px_rgba(14,116,144,0.12)] backdrop-blur-2xl dark:border-slate-800 dark:bg-slate-950/80">
         <AvatarSpeechPopup
           speakingAgentId={popupSpeakingAgentId}
-          sourceText={compactPopupText}
+          sourceText={popupText}
           participants={stripParticipants}
           mode="avatar"
           anchorRefMap={avatarRefMapRef}

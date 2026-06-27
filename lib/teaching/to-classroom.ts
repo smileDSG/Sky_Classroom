@@ -234,15 +234,18 @@ function chunksToSlides(
 
   const flushPage = () => {
     if (currentPageElements.length <= 1) return; // Only title, skip empty page
-    const slide: Slide = polishSlide({
-      id: createId('slide'),
-      viewportSize: CANVAS_W,
-      viewportRatio: CANVAS_H / CANVAS_W,
-      theme: DEFAULT_THEME,
-      elements: currentPageElements,
-      background: DEFAULT_BACKGROUND,
-      type: 'content',
-    }, { title: section.title, keyPoints: section.knowledgePoints });
+    const slide: Slide = polishSlide(
+      {
+        id: createId('slide'),
+        viewportSize: CANVAS_W,
+        viewportRatio: CANVAS_H / CANVAS_W,
+        theme: DEFAULT_THEME,
+        elements: currentPageElements,
+        background: DEFAULT_BACKGROUND,
+        type: 'content',
+      },
+      { title: section.title, keyPoints: section.knowledgePoints },
+    );
 
     const slideContent: SlideContent = {
       type: 'slide',
@@ -541,6 +544,34 @@ function splitSentences(text: string, max = 4): Array<{ desc: string }> {
     .map((desc) => ({ desc }));
 }
 
+function stableIndexFromText(text: string, modulo: number): number {
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash * 31 + text.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % modulo;
+}
+
+function structuredLayoutSeed(structured: StructuredContent, sectionTitle: string): string {
+  const title = 'title' in structured && structured.title ? structured.title : sectionTitle;
+  const content =
+    structured.type === 'concept'
+      ? structured.cards.map((card) => `${card.title}:${card.desc}`).join('|')
+      : '';
+  return `${structured.type}:${sectionTitle}:${title}:${content}`;
+}
+
+function stableRange(seed: string, salt: string, min: number, max: number): number {
+  return min + stableIndexFromText(`${seed}:${salt}`, max - min + 1);
+}
+
+function stablePick<T>(items: T[], seed: string, salt: string): T {
+  return items[stableIndexFromText(`${seed}:${salt}`, items.length)];
+}
+function containsAny(text: string, patterns: RegExp[]): boolean {
+  return patterns.some((pattern) => pattern.test(text));
+}
+
 function addMiniDiagram(elements: PPTElement[], left: number, top: number, title: string): void {
   elements.push(createShapeElement(left, top, 410, 245, '#f8fbff', 1));
   elements.push(createShapeElement(left + 22, top + 26, 366, 34, '#eaf4ff', 1));
@@ -579,6 +610,275 @@ function addMiniDiagram(elements: PPTElement[], left: number, top: number, title
   elements.push(createShapeElement(left + 42, top + 210, 246, 8, '#bfdbfe', 1));
 }
 
+function addConceptFocusVisual(
+  elements: PPTElement[],
+  structured: Extract<StructuredContent, { type: 'concept' }>,
+  sectionTitle: string,
+  seed: string,
+): 'left' | 'right' | 'none' {
+  const source = `${sectionTitle} ${structured.title} ${structured.cards
+    .map((card) => `${card.title} ${card.desc}`)
+    .join(' ')}`;
+  const hasGraph = containsAny(source, [
+    /\u56fe\u50cf|\u56fe\u8c61|\u629b\u7269\u7ebf|\u5750\u6807|\u5f00\u53e3/,
+    /graph|parabola|coordinate/i,
+  ]);
+  const hasApplication = containsAny(source, [
+    /\u5e94\u7528|\u5b9e\u9645|\u751f\u6d3b|\u60c5\u5883|\u5efa\u6a21/,
+    /application|scenario|model/i,
+  ]);
+  const hasDefinition = containsAny(source, [
+    /\u5b9a\u4e49|\u6982\u5ff5|\u672c\u8d28|\u5f62\u5982/,
+    /definition|concept/i,
+  ]);
+
+  if (structured.formulas?.[0]) {
+    const formulaLeft = stablePick([118, 372, 526], seed, 'formula-left');
+    const formulaTop = stablePick([168, 438], seed, 'formula-top');
+    elements.push(createLatexElement(structured.formulas[0].latex, formulaTop, formulaLeft));
+  }
+
+  if (hasGraph) {
+    const left = stablePick([116, 560], seed, 'graph-left');
+    const top = stableRange(seed, 'graph-top', 188, 224);
+    addMiniDiagram(elements, left, top, '\u56fe\u50cf\u89c2\u5bdf');
+    return left < 400 ? 'left' : 'right';
+  }
+
+  if (hasApplication) {
+    const left = stablePick([120, 552], seed, 'app-left');
+    const top = stableRange(seed, 'app-top', 190, 218);
+    elements.push(createShapeElement(left, top, 324, 214, '#fff7ed', 1));
+    elements.push(
+      createTextElement(
+        `<strong>${escapeHtml(structured.cards[0]?.title ?? sectionTitle)}</strong>`,
+        left + 28,
+        top + 26,
+        252,
+        32,
+        {
+          fontSize: 21,
+          color: '#7a4217',
+        },
+      ),
+    );
+    elements.push(
+      createTextElement(
+        escapeHtml(structured.cards[0]?.desc ?? sectionTitle),
+        left + 28,
+        top + 82,
+        260,
+        82,
+        {
+          fontSize: 17,
+          color: '#4a3218',
+        },
+      ),
+    );
+    elements.push(
+      createShapeElement(
+        left + 36,
+        top + 176,
+        stableRange(seed, 'app-bar', 130, 230),
+        10,
+        '#fdba74',
+        1,
+      ),
+    );
+    return left < 400 ? 'left' : 'right';
+  }
+
+  if (hasDefinition) {
+    const left = stablePick([122, 506], seed, 'def-left');
+    const top = stableRange(seed, 'def-top', 186, 220);
+    elements.push(createShapeElement(left, top, 370, 218, '#f8fbff', 1));
+    elements.push(createShapeElement(left + 26, top + 28, 7, 150, '#2f80d1', 1));
+    elements.push(
+      createTextElement(
+        `<strong>${escapeHtml(structured.cards[0]?.title ?? sectionTitle)}</strong><br/>${escapeHtml(structured.cards[0]?.desc ?? sectionTitle)}`,
+        left + 54,
+        top + 34,
+        278,
+        120,
+        {
+          fontSize: 19,
+          color: '#17335c',
+        },
+      ),
+    );
+    return left < 400 ? 'left' : 'right';
+  }
+
+  const left = stablePick([112, 492], seed, 'mini-left');
+  addMiniDiagram(elements, left, stableRange(seed, 'mini-top', 184, 212), 'Concept Map');
+  return left < 400 ? 'left' : 'right';
+}
+
+function addAdaptiveConceptCards(
+  elements: PPTElement[],
+  structured: Extract<StructuredContent, { type: 'concept' }>,
+  seed: string,
+  reservedSide: 'left' | 'right' | 'none',
+): void {
+  const cards = structured.cards.slice(0, 5);
+  const palette = stablePick(
+    [
+      ['#e7f3ff', '#e8faef', '#fff3c4', '#f3e8ff', '#ffe4e6'],
+      ['#f8fbff', '#fff7ed', '#ecfeff', '#f0fdf4', '#fef3c7'],
+      ['#eef2ff', '#fef9c3', '#f0fdfa', '#fff1f2', '#eff6ff'],
+    ],
+    seed,
+    'palette',
+  );
+  const colors = ['#17406d', '#166534', '#92400e', '#6b21a8', '#9f1239'];
+  const fullLayouts = [
+    [
+      [544, 190, 160, 118],
+      [724, 190, 160, 118],
+      [544, 330, 160, 118],
+      [724, 330, 160, 118],
+    ],
+    [
+      [118, 194, 208, 112],
+      [382, 190, 236, 128],
+      [674, 194, 208, 112],
+      [246, 348, 208, 112],
+      [546, 348, 208, 112],
+    ],
+    [
+      [118, 204, 254, 118],
+      [408, 204, 254, 118],
+      [698, 204, 176, 118],
+      [188, 358, 294, 104],
+      [518, 358, 294, 104],
+    ],
+    [
+      [122, 330, 172, 122],
+      [318, 292, 172, 122],
+      [514, 330, 172, 122],
+      [710, 292, 172, 122],
+    ],
+  ];
+  const leftReservedLayouts = [
+    [
+      [590, 188, 290, 82],
+      [590, 284, 290, 82],
+      [590, 380, 290, 82],
+    ],
+    [
+      [568, 190, 146, 118],
+      [734, 190, 146, 118],
+      [568, 332, 146, 118],
+      [734, 332, 146, 118],
+    ],
+  ];
+  const rightReservedLayouts = [
+    [
+      [120, 188, 290, 82],
+      [120, 284, 290, 82],
+      [120, 380, 290, 82],
+    ],
+    [
+      [120, 190, 146, 118],
+      [286, 190, 146, 118],
+      [120, 332, 146, 118],
+      [286, 332, 146, 118],
+    ],
+  ];
+  const layoutPack =
+    reservedSide === 'left'
+      ? leftReservedLayouts
+      : reservedSide === 'right'
+        ? rightReservedLayouts
+        : fullLayouts;
+  const layouts = layoutPack[stableIndexFromText(`${seed}:card-pattern`, layoutPack.length)];
+
+  cards.forEach((card, index) => {
+    const slot = layouts[index % layouts.length];
+    const offsetX = stableRange(seed, `card-${index}-x`, -8, 8);
+    const offsetY = stableRange(seed, `card-${index}-y`, -6, 6);
+    const [left, top, width, height] = slot;
+    elements.push(
+      createShapeElement(
+        left + offsetX,
+        top + offsetY,
+        width,
+        height,
+        palette[index % palette.length],
+        1,
+      ),
+    );
+    elements.push(
+      createTextElement(
+        `<strong>${escapeHtml(card.title)}</strong>`,
+        left + offsetX + 20,
+        top + offsetY + 18,
+        width - 40,
+        28,
+        {
+          fontSize: width < 190 ? 17 : 19,
+          color: colors[index % colors.length],
+        },
+      ),
+    );
+    elements.push(
+      createTextElement(
+        escapeHtml(card.desc),
+        left + offsetX + 20,
+        top + offsetY + 58,
+        width - 40,
+        Math.max(42, height - 72),
+        {
+          fontSize: width < 190 ? 14 : 16,
+          color: '#243044',
+        },
+      ),
+    );
+  });
+}
+
+function addConceptSummary(
+  elements: PPTElement[],
+  structured: Extract<StructuredContent, { type: 'concept' }>,
+  sectionTitle: string,
+  seed: string,
+): void {
+  const summary = structured.summary || structured.cards[0]?.desc || sectionTitle;
+  const placements = [
+    [150, 454, 700, 36],
+    [560, 410, 310, 58],
+    [124, 416, 338, 58],
+    [236, 466, 528, 34],
+  ];
+  const [left, top, width, height] =
+    placements[stableIndexFromText(`${seed}:summary`, placements.length)];
+  elements.push(createShapeElement(left - 18, top - 8, width + 36, height + 16, '#f1f5ff', 0.9));
+  elements.push(
+    createTextElement(
+      `<strong>Key idea:</strong> ${escapeHtml(summary)}`,
+      left,
+      top,
+      width,
+      height,
+      {
+        fontSize: width < 360 ? 15 : 16,
+        color: '#21446d',
+      },
+    ),
+  );
+}
+
+function addConceptAdaptiveLayout(
+  elements: PPTElement[],
+  structured: Extract<StructuredContent, { type: 'concept' }>,
+  sectionTitle: string,
+): void {
+  const seed = structuredLayoutSeed(structured, sectionTitle);
+  const reservedSide = addConceptFocusVisual(elements, structured, sectionTitle, seed);
+  addAdaptiveConceptCards(elements, structured, seed, reservedSide);
+  addConceptSummary(elements, structured, sectionTitle, seed);
+}
+
 function createOpenMaicStyleSlide(structured: StructuredContent, sectionTitle: string): Slide {
   const title = 'title' in structured && structured.title ? structured.title : sectionTitle;
   const elements: PPTElement[] = [
@@ -602,25 +902,7 @@ function createOpenMaicStyleSlide(structured: StructuredContent, sectionTitle: s
 
   switch (structured.type) {
     case 'concept': {
-      addMiniDiagram(elements, 112, 184, 'Concept Map');
-      elements.push(createShapeElement(560, 188, 4, 255, '#f97316', 1));
-      elements.push(
-        createTextElement(bulletsHtml(structured.cards), 585, 198, 310, 172, {
-          fontSize: 18,
-          color: '#20242d',
-        }),
-      );
-      const summary = structured.summary || structured.cards[0]?.desc || sectionTitle;
-      elements.push(createShapeElement(585, 386, 304, 62, '#f2f7ff', 0.92));
-      elements.push(
-        createTextElement(`<strong>Key idea:</strong> ${escapeHtml(summary)}`, 604, 398, 264, 46, {
-          fontSize: 14,
-          color: '#21446d',
-        }),
-      );
-      if (structured.formulas?.[0]) {
-        elements.push(createLatexElement(structured.formulas[0].latex, 452, 130));
-      }
+      addConceptAdaptiveLayout(elements, structured, sectionTitle);
       break;
     }
     case 'compare': {
@@ -977,8 +1259,11 @@ function createOpenMaicStyleSlide(structured: StructuredContent, sectionTitle: s
   };
 }
 
-/** Convert StructuredContent into an OpenMAIC-style element slide. */
-function structuredToSlide(structured: StructuredContent, sectionTitle: string): Slide | null {
+/** Convert StructuredContent into a local element slide when the OpenMAIC agent is unavailable. */
+export function createStructuredFallbackSlide(
+  structured: StructuredContent,
+  sectionTitle: string,
+): Slide | null {
   try {
     return polishSlide(createOpenMaicStyleSlide(structured, sectionTitle), { title: sectionTitle });
   } catch (err) {
@@ -1103,18 +1388,22 @@ async function generateElementSlideForSection(
 
     if (!content || content.elements.length === 0) return null;
 
-    return polishSlide({
-      id: createId('slide'),
-      viewportSize: CANVAS_W,
-      viewportRatio: CANVAS_H / CANVAS_W,
-      theme: DEFAULT_THEME,
-      elements: content.elements,
-      background: content.background ?? DEFAULT_BACKGROUND,
-      type: 'content',
-    }, {
-      title: sectionData.section.title,
-      keyPoints: sectionData.section.knowledgePoints,
-    });
+    return polishSlide(
+      {
+        id: createId('slide'),
+        viewportSize: CANVAS_W,
+        viewportRatio: CANVAS_H / CANVAS_W,
+        theme: DEFAULT_THEME,
+        elements: content.elements,
+        background: content.background ?? DEFAULT_BACKGROUND,
+        type: 'content',
+      },
+      {
+        title: sectionData.section.title,
+        keyPoints: sectionData.section.knowledgePoints,
+        decorate: false,
+      },
+    );
   } catch (err) {
     log.warn(
       `[ToClassroom] Element-level slide generation failed for "${sectionData.section.title}":`,
@@ -1144,7 +1433,7 @@ export async function convertSectionToScenes(
   if (!isTestEnv) {
     const slide =
       (await generateElementSlideForSection(sectionData, order)) ??
-      (structured ? structuredToSlide(structured, section.title) : null);
+      (structured ? createStructuredFallbackSlide(structured, section.title) : null);
     if (slide) {
       const richActions: Action[] = [];
       const richKpText = section.knowledgePoints?.length
@@ -1192,15 +1481,18 @@ export async function convertSectionToScenes(
         ),
       );
     }
-    const summarySlide: Slide = polishSlide({
-      id: createId('slide'),
-      viewportSize: CANVAS_W,
-      viewportRatio: CANVAS_H / CANVAS_W,
-      theme: DEFAULT_THEME,
-      elements: summaryElements,
-      background: DEFAULT_BACKGROUND,
-      type: 'content',
-    }, { title: section.title, keyPoints: section.knowledgePoints });
+    const summarySlide: Slide = polishSlide(
+      {
+        id: createId('slide'),
+        viewportSize: CANVAS_W,
+        viewportRatio: CANVAS_H / CANVAS_W,
+        theme: DEFAULT_THEME,
+        elements: summaryElements,
+        background: DEFAULT_BACKGROUND,
+        type: 'content',
+      },
+      { title: section.title, keyPoints: section.knowledgePoints },
+    );
     const summaryActions: Action[] = [];
     const sumKpText = section.knowledgePoints?.length
       ? `本节重点：${section.knowledgePoints.join('、')}。`
@@ -1330,15 +1622,18 @@ export async function convertTeachingJobToStage(
     });
   }
 
-  const coverSlide: Slide = polishSlide({
-    id: createId('slide'),
-    viewportSize: CANVAS_W,
-    viewportRatio: CANVAS_H / CANVAS_W,
-    theme: DEFAULT_THEME,
-    elements: coverElements,
-    background: { type: 'solid', color: '#f0f9ff' },
-    type: 'cover',
-  }, { title: coverTitleText, keyPoints: job.plan?.focusPoints });
+  const coverSlide: Slide = polishSlide(
+    {
+      id: createId('slide'),
+      viewportSize: CANVAS_W,
+      viewportRatio: CANVAS_H / CANVAS_W,
+      theme: DEFAULT_THEME,
+      elements: coverElements,
+      background: { type: 'solid', color: '#f0f9ff' },
+      type: 'cover',
+    },
+    { title: coverTitleText, keyPoints: job.plan?.focusPoints },
+  );
 
   const coverActions: Action[] = [];
   const introText = `同学们好，今天我们要学习的是《${job.plan?.title ?? job.topic ?? '教案课堂'}》。本节课共 ${job.plan?.sections.length ?? (job.sections ?? []).length} 个章节，${job.plan?.estimatedDuration ? `预计用时 ${job.plan.estimatedDuration} 分钟。` : ''}${job.plan?.focusPoints?.length ? `重点内容：${job.plan.focusPoints.join('、')}。` : ''}让我们一起开始吧！`;
@@ -1427,15 +1722,18 @@ export async function convertTeachingJobToStage(
     },
   ];
 
-  const endSlide: Slide = polishSlide({
-    id: createId('slide'),
-    viewportSize: CANVAS_W,
-    viewportRatio: CANVAS_H / CANVAS_W,
-    theme: DEFAULT_THEME,
-    elements: endElements,
-    background: { type: 'solid', color: '#f0f9ff' },
-    type: 'end',
-  }, { title: '课程结束', keyPoints: job.plan?.focusPoints });
+  const endSlide: Slide = polishSlide(
+    {
+      id: createId('slide'),
+      viewportSize: CANVAS_W,
+      viewportRatio: CANVAS_H / CANVAS_W,
+      theme: DEFAULT_THEME,
+      elements: endElements,
+      background: { type: 'solid', color: '#f0f9ff' },
+      type: 'end',
+    },
+    { title: '课程结束', keyPoints: job.plan?.focusPoints },
+  );
 
   const endActions: Action[] = [
     {

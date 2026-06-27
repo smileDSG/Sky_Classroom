@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchClassroomJob, pollClassroomJob } from '@/lib/classroom/classroom-job-client';
+import {
+  fetchClassroomJob,
+  isClassroomPollAbort,
+  isTransientClassroomPollError,
+  pollClassroomJob,
+} from '@/lib/classroom/classroom-job-client';
 
 describe('classroom job client', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it('treats failed jobs as terminal poll results instead of throwing', async () => {
@@ -54,5 +60,69 @@ describe('classroom job client', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/generate-classroom/job_2', {
       cache: 'no-store',
     });
+  });
+
+  it('passes abort signals to direct job status fetches', async () => {
+    const job = {
+      status: 'running',
+      step: 'generating_scenes',
+      progress: 45,
+      message: 'Generating scenes',
+      done: false,
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: job }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const abortController = new AbortController();
+
+    await expect(fetchClassroomJob('job_3', abortController.signal)).resolves.toEqual(job);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/generate-classroom/job_3', {
+      cache: 'no-store',
+      signal: abortController.signal,
+    });
+  });
+
+  it('classifies browser fetch failures as transient poll errors', () => {
+    expect(isTransientClassroomPollError(new TypeError('Failed to fetch'))).toBe(true);
+    expect(isTransientClassroomPollError(new Error('NetworkError when attempting to fetch'))).toBe(
+      true,
+    );
+    expect(isTransientClassroomPollError(new Error('Job is in failed state'))).toBe(false);
+    expect(isClassroomPollAbort(new DOMException('Aborted', 'AbortError'))).toBe(true);
+    expect(isTransientClassroomPollError(new DOMException('Aborted', 'AbortError'))).toBe(false);
+  });
+
+  it('retries transient fetch failures while polling', async () => {
+    vi.useFakeTimers();
+
+    const completedJob = {
+      status: 'succeeded',
+      step: 'done',
+      progress: 100,
+      message: 'Classroom ready',
+      done: true,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: completedJob }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const onUpdate = vi.fn();
+    const promise = pollClassroomJob('job_4', onUpdate, new AbortController().signal);
+
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(2000);
+
+    await expect(promise).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(onUpdate).toHaveBeenCalledWith(completedJob);
   });
 });

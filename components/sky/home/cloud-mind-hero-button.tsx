@@ -117,7 +117,9 @@ export function CloudMindHeroButton() {
                   `}
                 >
                   {/* Top accent line */}
-                  <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 ${tool.iconBg.replace('/30', '')}`} />
+                  <div
+                    className={`absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 ${tool.iconBg.replace('/30', '')}`}
+                  />
 
                   {/* Shimmer on hover */}
                   <div className="absolute inset-0 opacity-0 group-hover/item:opacity-100 transition-opacity duration-500 pointer-events-none">
@@ -128,8 +130,11 @@ export function CloudMindHeroButton() {
                     {/* Icon container — larger with ring and glow */}
                     <div className="relative">
                       {/* Outer glow ring */}
-                      <div className={`absolute inset-0 rounded-2xl blur-md opacity-0 group-hover/item:opacity-60 transition-opacity duration-300 ${tool.iconBg}`} />
-                      <div className={`
+                      <div
+                        className={`absolute inset-0 rounded-2xl blur-md opacity-0 group-hover/item:opacity-60 transition-opacity duration-300 ${tool.iconBg}`}
+                      />
+                      <div
+                        className={`
                         relative flex h-12 w-12 md:h-14 md:w-14
                         items-center justify-center rounded-2xl
                         ${tool.iconBg}
@@ -137,8 +142,11 @@ export function CloudMindHeroButton() {
                         shadow-inner shadow-white/10
                         group-hover/item:scale-110 group-hover/item:shadow-lg
                         transition-all duration-300
-                      `}>
-                        <Icon className={`h-6 w-6 md:h-7 md:w-7 ${tool.iconColor} drop-shadow-sm`} />
+                      `}
+                      >
+                        <Icon
+                          className={`h-6 w-6 md:h-7 md:w-7 ${tool.iconColor} drop-shadow-sm`}
+                        />
                       </div>
                     </div>
 

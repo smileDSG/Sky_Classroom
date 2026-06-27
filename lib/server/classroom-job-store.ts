@@ -50,6 +50,8 @@ export interface ClassroomGenerationJob {
     apiKey?: string;
     baseUrl?: string;
   };
+  /** Persisted generation input so we can resume after a process restart/HMR. */
+  input?: GenerateClassroomInput;
   result?: {
     classroomId: string;
     url: string;
@@ -173,6 +175,7 @@ export async function createClassroomGenerationJob(
     inputSummary: buildInputSummary(input),
     scenesGenerated: 0,
     modelConfig,
+    input,
   };
 
   await ensureClassroomJobsDir();

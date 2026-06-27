@@ -89,9 +89,7 @@ export function scheduleMemoryReview(input: {
   };
 }
 
-export function getLatestMemoryReviews(
-  reviews: MemoryReviewRecord[],
-): MemoryReviewRecord[] {
+export function getLatestMemoryReviews(reviews: MemoryReviewRecord[]): MemoryReviewRecord[] {
   const byCardId = new Map<string, MemoryReviewRecord>();
   for (const review of reviews) {
     const existing = byCardId.get(review.cardId);
@@ -111,8 +109,5 @@ export function getDueMemoryReviews(
 ): MemoryReviewRecord[] {
   return getLatestMemoryReviews(reviews)
     .filter((review) => new Date(review.nextReviewAt).getTime() <= now && review.mastery < 95)
-    .sort(
-      (a, b) =>
-        new Date(a.nextReviewAt).getTime() - new Date(b.nextReviewAt).getTime(),
-    );
+    .sort((a, b) => new Date(a.nextReviewAt).getTime() - new Date(b.nextReviewAt).getTime());
 }

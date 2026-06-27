@@ -17,9 +17,6 @@ export interface AvatarSpeechPopupProps {
     role: 'teacher' | 'student' | 'user';
     color?: string;
   }>;
-  sidebarWidth?: number;
-  speakerTop?: number | null;
-  popupLeft?: number;
   dismissed?: boolean;
   onDismiss?: () => void;
   container?: HTMLElement | null;
@@ -76,8 +73,9 @@ export function AvatarSpeechPopup({
       ? (anchorRefMap?.current.get(speakingAgentId)?.getBoundingClientRect() ?? null)
       : null;
   const useAvatarPlacement = mode === 'avatar' && !!anchorRect;
-  const avatarPopupWidth = 236;
-  const avatarRailLeft = 88;
+  const avatarPopupWidth = 252;
+  const avatarPopupMaxHeight = 260;
+  const avatarRailLeft = 82;
 
   const content = (
     <div
@@ -92,7 +90,10 @@ export function AvatarSpeechPopup({
                 16,
                 Math.min(avatarRailLeft, window.innerWidth - avatarPopupWidth - 16),
               ),
-              top: Math.max(76, Math.min(anchorRect.top - 8, window.innerHeight - 190)),
+              top: Math.max(
+                76,
+                Math.min(anchorRect.top - 8, window.innerHeight - avatarPopupMaxHeight - 24),
+              ),
             }
           : undefined
       }
@@ -115,12 +116,12 @@ export function AvatarSpeechPopup({
           transition={{ duration: 0.3, ease: [0.21, 1, 0.36, 1] }}
           className={cn(
             'pointer-events-auto group',
-            useAvatarPlacement ? 'w-[min(236px,calc(100vw-6rem))]' : 'mx-4 w-full max-w-2xl',
+            useAvatarPlacement ? 'w-[min(252px,calc(100vw-6rem))]' : 'mx-4 w-full max-w-2xl',
           )}
         >
           <div
             className={cn(
-              'flex items-start gap-2.5 rounded-2xl px-3 py-2.5',
+              'flex items-start gap-2 rounded-2xl px-2.5 py-2',
               useAvatarPlacement
                 ? 'border border-white/80 bg-white/90 shadow-[0_18px_48px_rgba(14,116,144,0.18)] backdrop-blur-2xl dark:border-slate-800 dark:bg-slate-950/90'
                 : 'bg-transparent transition-colors duration-200 group-hover:bg-black/10',
@@ -168,7 +169,7 @@ export function AvatarSpeechPopup({
                 className={cn(
                   'leading-relaxed',
                   useAvatarPlacement
-                    ? 'mt-1 line-clamp-3 text-xs text-slate-700 dark:text-slate-300'
+                    ? 'mt-1 max-h-[min(34vh,190px)] overflow-y-auto pr-1 text-[13px] text-slate-700 dark:text-slate-300'
                     : 'line-clamp-2 text-base text-slate-400',
                 )}
                 style={useAvatarPlacement ? undefined : { textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}

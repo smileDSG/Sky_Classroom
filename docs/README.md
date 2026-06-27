@@ -58,6 +58,8 @@ docs/
 | 性能优化方案 | `features/core/performance-optimization-plan.md` |
 | 怎么跑测试 | `testing/testing-guide.md` |
 | 有哪些已知问题 | `testing/problem.txt` |
+| 云端智囊工具个性化教学方案 | `cloud-mind-personalized-tools-plan.md` |
+| 云端智囊个性化工具实施记录 | `cloud-mind-personalized-tools-implementation.md` |
 
 ## 文档命名规范
 

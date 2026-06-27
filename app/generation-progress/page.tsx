@@ -11,7 +11,7 @@ import {
   FileText,
   Search,
   Clapperboard,
-  Image,
+  Image as ImageIcon,
   Volume2,
   Save,
 } from 'lucide-react';
@@ -69,9 +69,11 @@ function GenerationProgressContent() {
   const [result, setResult] = useState<ClassroomJobState['result']>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [approving, setApproving] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const hasStartedRef = useRef(false);
+  const approveInFlightRef = useRef(false);
 
   const alwaysReview = useSettingsStore((s) => s.reviewOutlineEnabled);
   const setAlwaysReview = useSettingsStore((s) => s.setReviewOutlineEnabled);
@@ -147,7 +149,7 @@ function GenerationProgressContent() {
 
       try {
         // Check current state first
-        const current = await fetchClassroomJob(jobId);
+        const current = await fetchClassroomJob(jobId, abortController.signal);
         if (cancelled || abortController.signal.aborted) return;
         if (!current) {
           setError('课堂生成任务不存在');
@@ -185,7 +187,7 @@ function GenerationProgressContent() {
         if (cancelled || abortController.signal.aborted) return;
 
         // Check final state after polling
-        const final = await fetchClassroomJob(jobId);
+        const final = await fetchClassroomJob(jobId, abortController.signal);
         if (cancelled || abortController.signal.aborted) return;
         if (!final) {
           setError('课堂生成任务不存在');
@@ -220,6 +222,9 @@ function GenerationProgressContent() {
 
   const handleApproveOutline = useCallback(async () => {
     if (!jobId) return;
+    if (approveInFlightRef.current) return;
+    approveInFlightRef.current = true;
+    setApproving(true);
 
     const signal = abortRef.current?.signal;
     try {
@@ -249,7 +254,7 @@ function GenerationProgressContent() {
 
       if (signal?.aborted) return;
 
-      const final = await fetchClassroomJob(jobId);
+      const final = await fetchClassroomJob(jobId, signal);
       if (signal?.aborted) return;
       if (!final) {
         setError('课堂生成任务不存在');
@@ -258,6 +263,8 @@ function GenerationProgressContent() {
       if (final.status === 'awaiting_review') {
         if (final.outlines) setOutlines(final.outlines);
         if (final.outlinesMeta) setOutlinesMeta(final.outlinesMeta);
+        approveInFlightRef.current = false;
+        setApproving(false);
         setPhase('reviewing');
         return;
       }
@@ -271,6 +278,8 @@ function GenerationProgressContent() {
     } catch (err) {
       if (signal?.aborted) return;
       if (err instanceof DOMException && err.name === 'AbortError') return;
+      approveInFlightRef.current = false;
+      setApproving(false);
       log.warn('Approve outline warning:', err);
       setError(err instanceof Error ? getClassroomFailureMessage(err.message) : '继续生成失败');
     }
@@ -362,7 +371,7 @@ function GenerationProgressContent() {
                 }}
                 alwaysReview={alwaysReview}
                 onAlwaysReviewChange={setAlwaysReview}
-                isLoading={false}
+                isLoading={approving}
               />
               <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
                 <button
@@ -419,7 +428,7 @@ function GenerationProgressContent() {
                   { key: 'researching', icon: Search, label: '搜索资料' },
                   { key: 'generating_outlines', icon: FileText, label: '生成大纲' },
                   { key: 'generating_scenes', icon: Clapperboard, label: '生成场景' },
-                  { key: 'generating_media', icon: Image, label: '生成媒体' },
+                  { key: 'generating_media', icon: ImageIcon, label: '生成媒体' },
                   { key: 'persisting', icon: Save, label: '保存课堂' },
                 ].map(({ key, icon: Icon, label }) => {
                   const isActive = step === key;
@@ -649,7 +658,7 @@ function GenerationProgressContent() {
               {step === 'generating_media' && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 rounded-lg bg-pink-50 dark:bg-pink-900/10 px-4 py-3">
-                    <Image className="h-4 w-4 text-pink-500" />
+                    <ImageIcon className="h-4 w-4 text-pink-500" />
                     <div>
                       <p className="text-sm font-medium">正在生成媒体文件</p>
                       <p className="text-xs text-muted-foreground">

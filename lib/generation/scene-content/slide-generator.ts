@@ -27,6 +27,7 @@ import {
   formatTeacherPersonaForPrompt,
 } from '../prompt-formatters';
 import { parseJsonResponse } from '../json-repair';
+import { polishSlideElements } from './slide-polish';
 
 const log = createLogger('Generation');
 
@@ -355,11 +356,47 @@ export async function generateSlideContent(
 
   log.debug(`Generating element-level slide content for: ${outline.title}`);
   const response = await aiCall(prompts.system, prompts.user, visionImages);
-  const generatedData = parseJsonResponse<GeneratedSlideData>(response);
+  let generatedData = parseJsonResponse<GeneratedSlideData>(response);
 
   if (!generatedData?.elements || !Array.isArray(generatedData.elements)) {
-    log.error(`Failed to parse AI slide response for: ${outline.title}`);
-    return null;
+    log.warn(`AI slide response for "${outline.title}" missed elements; retrying schema repair.`);
+    const retryPrompt = `${prompts.user}
+
+## REQUIRED SCHEMA RETRY
+
+Your previous response did not match the OpenMAIC slide schema. Return the slide again as pure JSON with this exact top-level shape:
+
+{
+  "background": { "type": "solid", "color": "#ffffff" },
+  "elements": [
+    {
+      "id": "title_001",
+      "type": "text",
+      "left": 60,
+      "top": 50,
+      "width": 880,
+      "height": 76,
+      "content": "<p style=\\"font-size:32px;\\"><strong>${outline.title}</strong></p>",
+      "defaultFontName": "",
+      "defaultColor": "#333333"
+    }
+  ],
+  "remark": "speaker note"
+}
+
+Hard rules:
+- Do NOT return plan fields such as "layout", "bullets", "visual", or "takeaway" unless they are inside a rendered element's text.
+- Every visible item must be an element in the "elements" array with left/top/width/height.
+- Use separate "latex" elements for formulas.
+- Return pure JSON only.`;
+
+    const retryResponse = await aiCall(prompts.system, retryPrompt, visionImages);
+    generatedData = parseJsonResponse<GeneratedSlideData>(retryResponse);
+
+    if (!generatedData?.elements || !Array.isArray(generatedData.elements)) {
+      log.error(`Failed to parse AI slide response for: ${outline.title}`);
+      return null;
+    }
   }
 
   const fixedElements = fixElementDefaults(generatedData.elements, assignedImages);
@@ -379,9 +416,14 @@ export async function generateSlideContent(
     id: `${el.type}_${nanoid(8)}`,
     rotate: 0,
   })) as PPTElement[];
+  const polishedElements = polishSlideElements(processedElements, {
+    title: outline.title,
+    keyPoints: outline.keyPoints,
+    decorate: false,
+  }) as PPTElement[];
 
   return {
-    elements: processedElements,
+    elements: polishedElements,
     background: toSlideBackground(generatedData.background),
     remark: generatedData.remark || outline.description,
   };

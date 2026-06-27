@@ -17,14 +17,41 @@ import type {
 } from './types';
 
 export const CLOUD_MIND_TOOLS: ToolStatus[] = [
-  { id: 'solve', label: '拍照搜题', href: '/sky/cloud-mind/solve', group: 'diagnosis', status: 'ready' },
-  { id: 'quiz', label: '智能出题', href: '/sky/cloud-mind/quiz', group: 'diagnosis', status: 'ready' },
-  { id: 'memory', label: '记忆卡片', href: '/sky/cloud-mind/memory', group: 'alchemy', status: 'ready' },
-  { id: 'write', label: '智能写作', href: '/sky/cloud-mind/write', group: 'alchemy', status: 'ready' },
-  { id: 'translate', label: '智能翻译', href: '/sky/cloud-mind/translate', group: 'alchemy', status: 'ready' },
-  { id: 'knowledge', label: '知识库', href: '/sky/cloud-mind/knowledge', group: 'alchemy', status: 'beta' },
-  { id: 'slides', label: 'PPT 课件', href: '/sky/cloud-mind/slides', group: 'classroom', status: 'ready' },
-  { id: 'teaching', label: '智能授课', href: '/sky/cloud-mind/teaching', group: 'classroom', status: 'ready' },
+  {
+    id: 'solve',
+    label: '拍照搜题',
+    href: '/sky/cloud-mind/solve',
+    group: 'diagnosis',
+    status: 'ready',
+  },
+  {
+    id: 'quiz',
+    label: '智能出题',
+    href: '/sky/cloud-mind/quiz',
+    group: 'diagnosis',
+    status: 'ready',
+  },
+  {
+    id: 'memory',
+    label: '记忆卡片',
+    href: '/sky/cloud-mind/memory',
+    group: 'alchemy',
+    status: 'ready',
+  },
+  {
+    id: 'slides',
+    label: 'PPT 课件',
+    href: '/sky/cloud-mind/slides',
+    group: 'classroom',
+    status: 'ready',
+  },
+  {
+    id: 'teaching',
+    label: '智能授课',
+    href: '/sky/cloud-mind/teaching',
+    group: 'classroom',
+    status: 'ready',
+  },
 ];
 
 export const EMPTY_KB_STATS: KBStats = {
@@ -38,7 +65,10 @@ export const EMPTY_KB_STATS: KBStats = {
   } satisfies Record<KBType, { chunks: number; documents: number }>,
 };
 
-function withQuery(href: string, params: Record<string, string | number | boolean | undefined>): string {
+function withQuery(
+  href: string,
+  params: Record<string, string | number | boolean | undefined>,
+): string {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === '') continue;
@@ -53,6 +83,30 @@ function average(values: number[]): number {
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
+function hasProfileLearningData(profile: StudentProfile | null): boolean {
+  return (
+    (profile?.totalQuestions ?? 0) > 0 ||
+    Object.keys(profile?.masteryByKnowledge ?? {}).length > 0 ||
+    (profile?.errorPatterns.length ?? 0) > 0
+  );
+}
+
+function deriveWeakPointNames(input: {
+  profile: StudentProfile | null;
+  recentCounts: Map<string, number>;
+}): string[] {
+  if (input.profile?.weakPoints?.length) return input.profile.weakPoints;
+
+  const recentNames = [...input.recentCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([point]) => point);
+  if (recentNames.length > 0) return recentNames;
+
+  return Object.entries(input.profile?.masteryByKnowledge ?? {})
+    .sort((a, b) => a[1] - b[1])
+    .map(([point]) => point);
+}
+
 function deriveWeakPoints(input: {
   profile: StudentProfile | null;
   mistakes: MistakeBookEntry[];
@@ -61,12 +115,10 @@ function deriveWeakPoints(input: {
 }): WeakPointSummary[] {
   const recentCounts = countRecentMistakesByKnowledge(input.mistakes);
   const dueCounts = countRecentMistakesByKnowledge(input.dueMistakes, 9999);
-  const weakPointNames =
-    input.profile?.weakPoints?.length
-      ? input.profile.weakPoints
-      : [...recentCounts.entries()]
-          .sort((a, b) => b[1] - a[1])
-          .map(([point]) => point);
+  const weakPointNames = deriveWeakPointNames({
+    profile: input.profile,
+    recentCounts,
+  });
 
   return weakPointNames.slice(0, 5).map((knowledgePoint) => {
     const mastery = input.profile?.masteryByKnowledge?.[knowledgePoint] ?? 50;
@@ -103,7 +155,7 @@ function buildDueReviews(dueMistakes: MistakeBookEntry[]): DueReviewItem[] {
 function buildRecentRecords(input: {
   attempts: QuizAttempt[];
   mistakes: MistakeBookEntry[];
-  kbStats: KBStats | null;
+  profile: StudentProfile | null;
 }): RecentLearningRecord[] {
   const quizRecords: RecentLearningRecord[] = input.attempts.slice(0, 4).map((attempt) => ({
     id: attempt.id,
@@ -123,21 +175,28 @@ function buildRecentRecords(input: {
     href: '/sky/learning',
   }));
 
-  const knowledgeRecord: RecentLearningRecord[] =
-    (input.kbStats?.totalDocuments ?? 0) > 0
+  const profileRecords: RecentLearningRecord[] =
+    input.attempts.length === 0 &&
+    input.mistakes.length === 0 &&
+    hasProfileLearningData(input.profile)
       ? [
           {
-            id: 'knowledge-base',
-            source: 'knowledge',
-            title: '知识库资料',
-            detail: `${input.kbStats?.totalDocuments ?? 0} 份资料，${input.kbStats?.totalChunks ?? 0} 个片段`,
-            createdAt: Date.now(),
-            href: '/sky/cloud-mind/knowledge',
+            id: `profile-${input.profile?.userId ?? 'unknown'}`,
+            source: 'profile',
+            title: '学情画像更新',
+            detail: `累计 ${input.profile?.totalQuestions ?? 0} 道题，正确 ${
+              input.profile?.totalCorrect ?? 0
+            } 道`,
+            createdAt:
+              input.profile?.lastUpdated instanceof Date
+                ? input.profile.lastUpdated.getTime()
+                : Date.now(),
+            href: '/sky/learning',
           },
         ]
       : [];
 
-  return [...quizRecords, ...mistakeRecords, ...knowledgeRecord]
+  return [...quizRecords, ...mistakeRecords, ...profileRecords]
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, 6);
 }
@@ -248,29 +307,6 @@ function buildRecommendations(input: {
     });
   }
 
-  if ((input.kbStats?.totalDocuments ?? 0) === 0) {
-    recommendations.push({
-      id: 'knowledge-seed',
-      title: '补充第一份学习资料',
-      reason: '资料进入知识库后，讲解、出题和记忆卡都能引用来源。',
-      priority: input.hasLearningData ? 52 : 72,
-      actionType: 'build_knowledge',
-      target: {
-        href: '/sky/cloud-mind/knowledge',
-        label: '添加资料',
-      },
-      evidence: [
-        {
-          type: 'knowledge',
-          title: '知识库状态',
-          summary: '当前还没有可引用的资料片段',
-          sourceId: 'knowledge-base',
-          confidence: 0.7,
-        },
-      ],
-    });
-  }
-
   return recommendations.sort((a, b) => b.priority - a.priority).slice(0, 4);
 }
 
@@ -285,7 +321,7 @@ export function buildCloudMindDashboard(input: {
   const kbStats = input.kbStats ?? EMPTY_KB_STATS;
   const masteryValues = Object.values(input.profile?.masteryByKnowledge ?? {});
   const hasLearningData =
-    (input.profile?.totalQuestions ?? 0) > 0 ||
+    hasProfileLearningData(input.profile) ||
     input.mistakes.length > 0 ||
     input.recentAttempts.length > 0;
   const weakPoints = deriveWeakPoints({
@@ -298,7 +334,7 @@ export function buildCloudMindDashboard(input: {
   const recentRecords = buildRecentRecords({
     attempts: input.recentAttempts,
     mistakes: input.mistakes,
-    kbStats,
+    profile: input.profile,
   });
   const recommendations = buildRecommendations({
     profile: input.profile,
@@ -326,7 +362,7 @@ export function buildCloudMindDashboard(input: {
       recentAccuracy:
         input.recentAttempts.length > 0
           ? average(input.recentAttempts.slice(0, 3).map((attempt) => attempt.accuracy))
-          : null,
+          : (input.profile?.recentQuizPerformance?.overallAccuracy ?? null),
     },
   };
 }

@@ -1,7 +1,8 @@
-import { after, type NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import {
   isValidClassroomJobId,
+  markClassroomGenerationJobResumedHybrid,
   readClassroomGenerationJobHybrid,
   updateClassroomGenerationJobHybrid,
 } from '@/lib/server/classroom-job-store-hybrid';
@@ -27,6 +28,31 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
     const job = await readClassroomGenerationJobHybrid(jobId);
     if (!job) {
       return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
+    }
+
+    if (job.status === 'running' && job.step === 'generating_scenes') {
+      return apiSuccess(
+        {
+          jobId,
+          status: 'running',
+          step: 'generating_scenes',
+          message: 'Outline already approved, generation is continuing',
+        },
+        202,
+      );
+    }
+
+    if (job.status === 'succeeded' && job.result) {
+      return apiSuccess(
+        {
+          jobId,
+          status: 'succeeded',
+          step: 'completed',
+          result: job.result,
+          message: 'Classroom generation already completed',
+        },
+        200,
+      );
     }
 
     if (job.status !== 'awaiting_review') {
@@ -55,16 +81,24 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
 
     const baseUrl = buildRequestOrigin(req);
 
-    after(() => runClassroomContinueJob(jobId, baseUrl));
+    await markClassroomGenerationJobResumedHybrid(jobId);
+
+    // Start immediately; don't rely on after() in dev/Turbopack.
+    runClassroomContinueJob(jobId, baseUrl).catch((err) => {
+      log.error(`Classroom continue job failed for ${jobId}:`, err);
+    });
 
     log.info(`Classroom continue job triggered: ${jobId}`);
 
-    return apiSuccess({
-      jobId,
-      status: 'running',
-      step: 'generating_scenes',
-      message: '大纲已审阅，继续生成',
-    }, 202);
+    return apiSuccess(
+      {
+        jobId,
+        status: 'running',
+        step: 'generating_scenes',
+        message: '大纲已审阅，继续生成',
+      },
+      202,
+    );
   } catch (error) {
     log.error(`Classroom approve failed [jobId=${resolvedJobId ?? 'unknown'}]:`, error);
     return apiError(

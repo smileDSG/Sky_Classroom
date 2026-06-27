@@ -186,6 +186,8 @@ export function computePlaybackView(raw: PlaybackRawState): PlaybackView {
     sourceText = lectureSpeech;
   } else if (phase === 'completed') {
     sourceText = '';
+  } else if (phase === 'lecturePlaying' || phase === 'lecturePaused') {
+    sourceText = '';
   } else {
     sourceText = idleText || '';
   }
@@ -226,7 +228,7 @@ export function computePlaybackView(raw: PlaybackRawState): PlaybackView {
     bubbleRole = null;
   } else if (isCueUser) {
     bubbleRole = null;
-  } else if (lectureSpeech || idleText) {
+  } else if (lectureSpeech || (phase === 'idle' && idleText)) {
     bubbleRole = 'teacher';
   } else {
     bubbleRole = null;

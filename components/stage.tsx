@@ -195,6 +195,7 @@ export function Stage({
   const stageRef = useRef<HTMLDivElement>(null);
   // Guard to prevent double flash when manual stop triggers onDiscussionEnd
   const manualStopRef = useRef(false);
+  const liveCleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Monotonic counter incremented on each scene switch — used to discard stale SSE callbacks
   const sceneEpochRef = useRef(0);
   // When true, the next engine init will auto-start playback (for auto-play scene advance)
@@ -222,6 +223,10 @@ export function Stage({
 
   /** Reset all live/discussion state (shared by doSessionCleanup & onDiscussionEnd) */
   const resetLiveState = useCallback(() => {
+    if (liveCleanupTimerRef.current) {
+      clearTimeout(liveCleanupTimerRef.current);
+      liveCleanupTimerRef.current = null;
+    }
     setLiveSpeech(null);
     setAudioSpeech(null);
     setSpeakingAgentId(null);
@@ -256,7 +261,7 @@ export function Stage({
    * Unified session cleanup — called by both roundtable stop button and chat area end button.
    * Handles: engine transition, flash, roundtable state clearing.
    */
-  const doSessionCleanup = useCallback(() => {
+  const doSessionCleanup = useCallback((options?: { preserveQaBubble?: boolean }) => {
     const activeType = chatSessionType;
 
     // Engine cleanup — guard to avoid double flash from onDiscussionEnd
@@ -269,6 +274,23 @@ export function Stage({
       setEndFlashSessionType(activeType);
       setShowEndFlash(true);
       setTimeout(() => setShowEndFlash(false), 1800);
+    }
+
+    if (activeType === 'qa' && options?.preserveQaBubble) {
+      setChatIsStreaming(false);
+      setChatSessionType(null);
+      setThinkingState(null);
+      setIsCueUser(false);
+      setIsTopicPending(false);
+      setIsDiscussionPaused(false);
+      setSpeechProgress(null);
+      liveCleanupTimerRef.current = setTimeout(() => {
+        liveCleanupTimerRef.current = null;
+        setLiveSpeech(null);
+        setAudioSpeech(null);
+        setSpeakingAgentId(null);
+      }, 6000);
+      return;
     }
 
     // Stop any in-flight discussion TTS audio
@@ -742,6 +764,7 @@ export function Stage({
       chatSessionType,
     ],
   );
+  const activeSpeechTextForView = playbackView.isInLiveFlow ? speechTextForView : lectureSpeech;
 
   const isTopicActive = playbackView.isTopicActive;
 
@@ -1042,7 +1065,7 @@ export function Stage({
               mode={mode}
               initialParticipants={participants}
               playbackView={playbackView}
-              currentSpeech={speechTextForView}
+              currentSpeech={activeSpeechTextForView}
               lectureSpeech={lectureSpeech}
               idleText={firstSpeechText}
               playbackCompleted={playbackCompleted}
@@ -1333,7 +1356,7 @@ export function Stage({
             setIsCueUser(true);
           }}
           onLiveSessionError={handleLiveSessionError}
-          onStopSession={doSessionCleanup}
+          onStopSession={() => doSessionCleanup({ preserveQaBubble: true })}
           onSegmentSealed={discussionTTS.handleSegmentSealed}
           shouldHoldAfterReveal={discussionTTS.shouldHold}
           enableFilters

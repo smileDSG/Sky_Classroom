@@ -97,7 +97,7 @@ export function FeatureHighlights() {
       color: 'from-sky-400 to-blue-500',
       bgColor: 'bg-sky-50 dark:bg-sky-900/20',
       iconColor: 'text-sky-500',
-      href: '/sky/slides',
+      href: '/sky/cloud-mind/slides',
     },
   ];
 
@@ -139,9 +139,7 @@ export function FeatureHighlights() {
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               {feature.title}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {feature.desc}
-            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{feature.desc}</p>
           </div>
         </motion.div>
       ))}

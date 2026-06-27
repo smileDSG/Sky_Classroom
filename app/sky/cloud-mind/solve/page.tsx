@@ -5,16 +5,51 @@ import { motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial-canvas';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTheme } from '@/lib/hooks/use-theme';
+import type { PersonalizationContext, PersonalizationDifficulty } from '@/lib/cloud-mind/types';
 
 export default function CloudMindSolvePage() {
   const { setForceDark } = useTheme();
+  const [weakPointNames, setWeakPointNames] = useState<string[]>([]);
+  const [preferredDifficulty, setPreferredDifficulty] =
+    useState<PersonalizationDifficulty>('medium');
+  const [personalizationNotice, setPersonalizationNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setForceDark(true);
     return () => setForceDark(false);
   }, [setForceDark]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/sky/cloud-mind/personalization-context')
+      .then((res) => res.json())
+      .then((json: { success?: boolean; data?: PersonalizationContext }) => {
+        if (cancelled || !json.success || !json.data) return;
+
+        const context = json.data;
+        const weakPoints = context.weakPoints.map((item) => item.knowledgePoint);
+        const primaryTopic = weakPoints[0] ?? context.learningPath?.next;
+
+        setWeakPointNames(weakPoints);
+        setPreferredDifficulty(context.preferredDifficulty);
+
+        if (primaryTopic) {
+          setPersonalizationNotice(
+            `已根据天梯工坊为你准备：关注「${primaryTopic}」的解题讲解和后续练习`,
+          );
+        }
+      })
+      .catch(() => {
+        /* personalization is optional */
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div
@@ -79,7 +114,11 @@ export default function CloudMindSolvePage() {
           </Link>
         </motion.div>
 
-        <SolvePage />
+        <SolvePage
+          personalizationNotice={personalizationNotice}
+          weakPointNames={weakPointNames}
+          preferredDifficulty={preferredDifficulty}
+        />
       </div>
     </div>
   );

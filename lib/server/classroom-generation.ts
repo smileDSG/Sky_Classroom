@@ -13,7 +13,8 @@ import {
   createSceneWithActions,
   generateSceneActions,
   generateSceneContent,
-} from '@/lib/generation/scene-generator';
+  type SceneContentOptions,
+} from '@/lib/generation/openmaic-main-scene-generator';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type { AgentInfo } from '@/lib/generation/pipeline-types';
 import { getDefaultAgents } from '@/lib/orchestration/registry/store';
@@ -99,6 +100,53 @@ const SCENE_PROGRESS_ACTIONS_DONE = 75;
 const SCENE_PROGRESS_CREATED_DONE = 90;
 
 type ProgressReporter = (progress: ClassroomGenerationProgress) => Promise<void> | void;
+type GeneratedSceneContent = NonNullable<Awaited<ReturnType<typeof generateSceneContent>>>;
+
+function createSlideFallbackOutline(outline: SceneOutline): SceneOutline {
+  return {
+    ...outline,
+    type: 'slide',
+    description: `${outline.description || outline.title}\n\nPresent the original ${outline.type} activity as a regular OpenMAIC classroom slide. Keep the key idea visual, concrete, and lesson-ready.`,
+    quizConfig: undefined,
+    interactiveConfig: undefined,
+    pblConfig: undefined,
+    widgetType: undefined,
+    widgetOutline: undefined,
+  };
+}
+
+async function generateSceneContentWithSlideFallback(
+  outline: SceneOutline,
+  aiCall: AICallFn,
+  options: SceneContentOptions,
+): Promise<{ outline: SceneOutline; content: GeneratedSceneContent } | null> {
+  try {
+    const content = await generateSceneContent(outline, aiCall, options);
+    if (content) return { outline, content };
+  } catch (err) {
+    log.error(`Scene "${outline.title}" content generation error:`, err);
+  }
+
+  if (outline.type === 'slide') {
+    return null;
+  }
+
+  const fallbackOutline = createSlideFallbackOutline(outline);
+  log.warn(
+    `Scene "${outline.title}" (${outline.type}) content generation failed; retrying as OpenMAIC slide.`,
+  );
+
+  try {
+    const fallbackContent = await generateSceneContent(fallbackOutline, aiCall, options);
+    if (fallbackContent) {
+      return { outline: fallbackOutline, content: fallbackContent };
+    }
+  } catch (err) {
+    log.error(`Scene "${outline.title}" slide fallback generation error:`, err);
+  }
+
+  return null;
+}
 
 function progressInRange(start: number, end: number, completed: number, total: number): number {
   const safeTotal = Math.max(total, 1);
@@ -519,16 +567,16 @@ export async function generateClassroom(
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
       try {
-        const content = await generateSceneContent(safeOutline, aiCall, {
+        const result = await generateSceneContentWithSlideFallback(safeOutline, aiCall, {
           agents,
           languageDirective,
           themeSelection: courseTheme,
         });
-        if (!content) {
+        if (!result) {
           log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
           return null;
         }
-        return { outline: safeOutline, content, index };
+        return { ...result, index };
       } catch (err) {
         log.error(`Scene "${safeOutline.title}" content generation error:`, err);
         return null;
@@ -550,6 +598,17 @@ export async function generateClassroom(
     },
     { concurrency },
   );
+
+  const failedContentOutlines = contentResults
+    .map((result, index) => (result ? null : outlines[index]))
+    .filter((outline): outline is SceneOutline => outline !== null);
+  if (failedContentOutlines.length > 0) {
+    throw new Error(
+      `OpenMAIC classroom content generation failed for ${failedContentOutlines.length} scene(s): ${failedContentOutlines
+        .map((outline) => outline.title)
+        .join(', ')}`,
+    );
+  }
 
   // Phase B: Generate all scene actions in parallel (content already available)
   let actionsProcessed = 0;
@@ -774,16 +833,16 @@ export async function generateClassroomContinue(
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
       try {
-        const content = await generateSceneContent(safeOutline, aiCall, {
+        const result = await generateSceneContentWithSlideFallback(safeOutline, aiCall, {
           agents,
           languageDirective,
           themeSelection: courseTheme,
         });
-        if (!content) {
+        if (!result) {
           log.warn(`Skipping scene "${safeOutline.title}" — content generation failed`);
           return null;
         }
-        return { outline: safeOutline, content, index };
+        return { ...result, index };
       } catch (err) {
         log.error(`Scene "${safeOutline.title}" content generation error:`, err);
         return null;
@@ -805,6 +864,17 @@ export async function generateClassroomContinue(
     },
     { concurrency },
   );
+
+  const failedContentOutlines = contentResults
+    .map((result, index) => (result ? null : outlines[index]))
+    .filter((outline): outline is SceneOutline => outline !== null);
+  if (failedContentOutlines.length > 0) {
+    throw new Error(
+      `OpenMAIC classroom content generation failed for ${failedContentOutlines.length} scene(s): ${failedContentOutlines
+        .map((outline) => outline.title)
+        .join(', ')}`,
+    );
+  }
 
   // Phase B: Generate all scene actions in parallel (content already available)
   let actionsProcessed = 0;

@@ -72,7 +72,7 @@ export async function generateSlides(
     ? `\n## Teaching Style Directive (CRITICAL)\n${personaPrompt}\n\nEvery slide title and body text MUST follow this style throughout the entire deck.`
     : '';
 
-  const prompts = buildPrompt(PROMPT_IDS.SLIDE_CONTENT_V2, {
+  const prompts = buildPrompt(PROMPT_IDS.SLIDE_CONTENT, {
     title: 'Topic Overview',
     description: topic,
     keyPoints: 'See user prompt for deck structure requirements.',
@@ -173,9 +173,10 @@ function buildUserPrompt(
   // Build per-slide structure hints for body slides
   const slideAssignments = buildSlideAssignments(count, topic);
 
-  const bodyLines = slideAssignments.length > 0
-    ? slideAssignments.map((s) => `  - ${s}`).join('\n')
-    : `- Slides 2 to ${count - 1}: Content slides (type: "content") — each covering a distinct sub-topic or aspect`;
+  const bodyLines =
+    slideAssignments.length > 0
+      ? slideAssignments.map((s) => `  - ${s}`).join('\n')
+      : `- Slides 2 to ${count - 1}: Content slides (type: "content") — each covering a distinct sub-topic or aspect`;
 
   return [
     `Generate a complete slide deck on the following topic.`,
@@ -192,10 +193,10 @@ function buildUserPrompt(
     `Plan the body slides with variety, depth, and progression:`,
     `- Each slide covers ONE main idea or sub-topic — explain it thoroughly with definition, explanation, and examples`,
     `- For longer decks (10+ slides), each major sub-topic gets 2-3 slides (theory → examples → applications)`,
-    `- Middle slides must mix layouts — don't repeat the same pattern on consecutive slides`,
-    `- At least 2-3 slides should use a side-by-side layout (theory+example, comparison, or diagram+caption)`,
-    `- For math/science topics: use LaTeX formulas on multiple slides, not just one
-- Do NOT add thin divider lines or horizontal bar shapes under titles — use whitespace spacing instead`,
+    `- Middle slides must mix OpenMAIC compositions: visual anchor, callout map, process flow, timeline, diagram labels, table-as-layout, or formula stage`,
+    `- Do NOT use the old card-panel template: no two equal pastel rounded cards, no repeated large content boxes, no title-body card grid`,
+    `- For math/science topics: use LaTeX formulas on multiple slides as large visual anchors with labels and worked-example steps`,
+    `- Do NOT add thin divider lines or horizontal bar shapes under titles; use whitespace, scale, and placement instead`,
     `- For humanities topics: include comparison slides, timeline layouts, and multiple perspectives`,
     `- Progression: introduction → definitions → detailed breakdowns → worked examples → applications → connections → common mistakes → summary`,
     ``,
@@ -229,7 +230,7 @@ function buildUserPrompt(
     `All TextElement heights must come from the lookup table in the system prompt.`,
     `CRITICAL — Bottom margin: ensure top + height ≤ 562 for EVERY element. If a text element would extend past the bottom, reduce its height or move it up.`,
     `CRITICAL — Right margin: ensure left + width ≤ 1000 for EVERY element.`,
-    `Default to Simple Layout Mode for text-heavy slides; use complex layouts for comparisons and diagrams.`,
+    `Default to OpenMAIC element-level composition: one strong visual idea per slide, with asymmetric placement and compact explanatory text.`,
     `Output pure JSON only — no markdown fences, no explanations.`,
   ]
     .filter((line) => line !== '')
@@ -240,32 +241,32 @@ function buildUserPrompt(
 
 const SUBJECT_PATTERNS: Array<{ pattern: RegExp; hint: string }> = [
   {
-    pattern: /数学|代数|几何|三角|函数|方程|微积分|概率|统计|数列|向量|math|algebra|calculus/i,
-    hint: 'This is a MATH topic. Emphasize formulas (use LatexElement), worked examples, and derivations. Pair theory with concrete numeric examples side by side.',
+    pattern: /数学|代数|几何|三角|函数|方程|微积分|导数|单调|概率|统计|数列|向量|math|algebra|calculus/i,
+    hint: 'This is a MATH topic. Emphasize formulas (use LatexElement), worked examples, and derivations. Use a large formula or graph as the visual anchor with compact callout labels.',
   },
   {
     pattern: /物理|力学|电|磁|光|热|量子|相对论|physics|force|energy|wave/i,
-    hint: 'This is a PHYSICS topic. Use LaTeX formulas for equations, show real-world applications, and include diagrams where helpful.',
+    hint: 'This is a PHYSICS topic. Use LaTeX formulas for equations, real-world applications, and diagram-led compositions with arrows and labels.',
   },
   {
     pattern: /化学|元素|反应|分子|原子|chemistry|reaction|molecule|bond/i,
-    hint: 'This is a CHEMISTRY topic. Use LaTeX for chemical equations, comparison layouts for reaction types, and structured tables for properties.',
+    hint: 'This is a CHEMISTRY topic. Use LaTeX for chemical equations, reaction-flow diagrams, and structured tables for properties.',
   },
   {
     pattern: /生物|细胞|基因|DNA|遗传|生态|进化|biology|cell|gene|evolution/i,
-    hint: 'This is a BIOLOGY topic. Use comparison layouts (e.g. mitosis vs meiosis), structured lists for processes, and diagrams where appropriate.',
+    hint: 'This is a BIOLOGY topic. Use process maps, labeled diagrams, and compact comparison tables where appropriate.',
   },
   {
     pattern: /历史|朝代|战争|革命|文明|history|war|revolution|civilization/i,
-    hint: 'This is a HISTORY topic. Use timeline-style layouts, comparison slides for causes vs effects, and side-by-side layouts for contrasting perspectives.',
+    hint: 'This is a HISTORY topic. Use timeline-style layouts, cause-effect maps, and quote/source callouts for contrasting perspectives.',
   },
   {
     pattern: /地理|气候|地形|人口|经济|geography|climate|population/i,
-    hint: 'This is a GEOGRAPHY topic. Use comparison layouts, data presentation with tables, and structured breakdowns of regional characteristics.',
+    hint: 'This is a GEOGRAPHY topic. Use map-like region layouts, data presentation with tables, and structured breakdowns of regional characteristics.',
   },
   {
     pattern: /语文|文学|诗歌|散文|小说|诗词|古文|论语|literature|poem|poetry|novel/i,
-    hint: 'This is a LITERATURE topic. Use structured analysis layouts, quote+citation pairings, comparison slides for themes/characters, and timeline-style progressions.',
+    hint: 'This is a LITERATURE topic. Use quote+citation pairings, motif maps, theme/character matrices, and timeline-style progressions.',
   },
 ];
 
@@ -275,7 +276,7 @@ function inferSubjectHint(topic: string): string {
       return `\n## Subject Guidance\n${hint}`;
     }
   }
-  return `\n## Subject Guidance\nGeneral academic topic. Use Simple Layout Mode for definition slides, and side-by-side layouts for examples and applications.`;
+  return `\n## Subject Guidance\nGeneral academic topic. Use OpenMAIC compositions with a visual anchor, compact callouts, and varied information structures for examples and applications.`;
 }
 
 function buildSlideAssignments(count: number, topic: string): string[] {
@@ -284,67 +285,110 @@ function buildSlideAssignments(count: number, topic: string): string[] {
 
   const assignments: string[] = [];
 
-  const isMath = /数学|代数|几何|函数|方程|微积分|math|algebra|calculus/i.test(topic);
+  const isMath = /数学|代数|几何|函数|方程|微积分|导数|单调|math|algebra|calculus/i.test(topic);
   const isHistory = /历史|朝代|history/i.test(topic);
   const isScience = /物理|化学|生物|physics|chemistry|biology/i.test(topic);
 
   if (isMath) {
-    assignments.push('Slide 2: Topic introduction + core definitions (Simple Layout)');
-    assignments.push('Slide 3: Key formula with LaTeX (use LatexElement, side-by-side with explanation)');
-    if (bodyCount >= 3) assignments.push('Slide 4: Worked example 1 — basic calculation (step-by-step with LaTeX)');
-    if (bodyCount >= 4) assignments.push('Slide 5: Worked example 2 — real-world application (side-by-side: problem + solution)');
-    if (bodyCount >= 5) assignments.push('Slide 6: Common mistakes and misconceptions (comparison layout: right vs wrong)');
+    assignments.push('Slide 2: Topic introduction + core definitions (hero formula/graph anchor)');
+    assignments.push(
+      'Slide 3: Key formula with LaTeX (use LatexElement as the visual anchor with callout labels)',
+    );
+    if (bodyCount >= 3)
+      assignments.push('Slide 4: Worked example 1 — basic calculation (step-by-step with LaTeX)');
+    if (bodyCount >= 4)
+      assignments.push(
+        'Slide 5: Worked example 2 — real-world application (problem flow with solution callouts)',
+      );
+    if (bodyCount >= 5)
+      assignments.push(
+        'Slide 6: Common mistakes and misconceptions (mistake map with correction callouts)',
+      );
     if (bodyCount >= 6) assignments.push('Slide 7: Advanced variation or edge case');
     // Fill remaining
     for (let i = assignments.length + 2; i < count - 1; i++) {
-      const types = ['Additional worked example', 'Visual proof or geometric interpretation', 'Practice problem with hints', 'Connection to related topics', 'Historical context or discovery story'];
-      assignments.push(`Slide ${i}: ${types[(i - assignments.length - 2) % types.length]} (vary layout)`);
+      const types = [
+        'Additional worked example',
+        'Visual proof or geometric interpretation',
+        'Practice problem with hints',
+        'Connection to related topics',
+        'Historical context or discovery story',
+      ];
+      assignments.push(
+        `Slide ${i}: ${types[(i - assignments.length - 2) % types.length]} (vary layout)`,
+      );
     }
   } else if (isHistory) {
-    assignments.push('Slide 2: Historical background + context (Simple Layout)');
+    assignments.push('Slide 2: Historical background + context (timeline anchor)');
     assignments.push('Slide 3: Key timeline of major events (structured list with dates)');
-    if (bodyCount >= 3) assignments.push('Slide 4: Deep dive — event 1 (cause, course, consequence)');
-    if (bodyCount >= 4) assignments.push('Slide 5: Deep dive — event 2 (cause, course, consequence)');
-    if (bodyCount >= 5) assignments.push('Slide 6: Key figures and their roles (side-by-side comparison)');
-    if (bodyCount >= 6) assignments.push('Slide 7: Causes vs effects analysis (comparison layout)');
-    if (bodyCount >= 7) assignments.push('Slide 8: Different historical perspectives or interpretations');
+    if (bodyCount >= 3)
+      assignments.push('Slide 4: Deep dive — event 1 (cause, course, consequence)');
+    if (bodyCount >= 4)
+      assignments.push('Slide 5: Deep dive — event 2 (cause, course, consequence)');
+    if (bodyCount >= 5)
+      assignments.push('Slide 6: Key figures and their roles (portrait/name matrix with role labels)');
+    if (bodyCount >= 6) assignments.push('Slide 7: Causes vs effects analysis (cause-effect map)');
+    if (bodyCount >= 7)
+      assignments.push('Slide 8: Different historical perspectives or interpretations');
     for (let i = assignments.length + 2; i < count - 1; i++) {
-      const types = ['Long-term impact and legacy', 'Primary source analysis', 'Connection to modern parallels', 'Regional variations'];
-      assignments.push(`Slide ${i}: ${types[(i - assignments.length - 2) % types.length]} (vary layout)`);
+      const types = [
+        'Long-term impact and legacy',
+        'Primary source analysis',
+        'Connection to modern parallels',
+        'Regional variations',
+      ];
+      assignments.push(
+        `Slide ${i}: ${types[(i - assignments.length - 2) % types.length]} (vary layout)`,
+      );
     }
   } else if (isScience) {
-    assignments.push('Slide 2: Core concept introduction + definition (Simple Layout)');
-    assignments.push('Slide 3: Key principles and mechanisms (step-by-step, use LaTeX for formulas)');
+    assignments.push('Slide 2: Core concept introduction + definition (diagram anchor)');
+    assignments.push(
+      'Slide 3: Key principles and mechanisms (step-by-step, use LaTeX for formulas)',
+    );
     if (bodyCount >= 3) assignments.push('Slide 4: Detailed breakdown — component 1');
     if (bodyCount >= 4) assignments.push('Slide 5: Detailed breakdown — component 2');
-    if (bodyCount >= 5) assignments.push('Slide 6: Real-world example 1 (side-by-side: theory + application)');
+    if (bodyCount >= 5)
+      assignments.push('Slide 6: Real-world example 1 (application diagram with theory callouts)');
     if (bodyCount >= 6) assignments.push('Slide 7: Real-world example 2 or case study');
-    if (bodyCount >= 7) assignments.push('Slide 8: Comparison with related concepts (comparison layout)');
+    if (bodyCount >= 7)
+      assignments.push('Slide 8: Comparison with related concepts (compact comparison table)');
     for (let i = assignments.length + 2; i < count - 1; i++) {
-      const types = ['Experimental evidence or data', 'Common misconceptions', 'Practical applications', 'Frontier research or future directions'];
-      assignments.push(`Slide ${i}: ${types[(i - assignments.length - 2) % types.length]} (vary layout)`);
+      const types = [
+        'Experimental evidence or data',
+        'Common misconceptions',
+        'Practical applications',
+        'Frontier research or future directions',
+      ];
+      assignments.push(
+        `Slide ${i}: ${types[(i - assignments.length - 2) % types.length]} (vary layout)`,
+      );
     }
   } else {
-    assignments.push('Slide 2: Topic introduction + overview (Simple Layout)');
+    assignments.push('Slide 2: Topic introduction + overview (hero visual anchor)');
     assignments.push('Slide 3: Core concept 1 — definition and explanation');
     if (bodyCount >= 3) assignments.push('Slide 4: Core concept 2 — detailed breakdown');
-    if (bodyCount >= 4) assignments.push('Slide 5: Key example or case study (side-by-side layout)');
+    if (bodyCount >= 4)
+      assignments.push('Slide 5: Key example or case study (visual anchor with callout labels)');
     if (bodyCount >= 5) assignments.push('Slide 6: Practical applications or real-world relevance');
     if (bodyCount >= 6) assignments.push('Slide 7: Comparison or contrasting perspectives');
     for (let i = assignments.length + 2; i < count - 1; i++) {
-      const types = ['Deeper analysis of a sub-topic', 'Additional example or case study', 'Common questions and answers', 'Summary of key points so far'];
-      assignments.push(`Slide ${i}: ${types[(i - assignments.length - 2) % types.length]} (vary layout)`);
+      const types = [
+        'Deeper analysis of a sub-topic',
+        'Additional example or case study',
+        'Common questions and answers',
+        'Summary of key points so far',
+      ];
+      assignments.push(
+        `Slide ${i}: ${types[(i - assignments.length - 2) % types.length]} (vary layout)`,
+      );
     }
   }
 
   return assignments;
 }
 
-function inferSlideType(
-  index: number,
-  total: number,
-  raw: GeneratedSlideData,
-): Slide['type'] {
+function inferSlideType(index: number, total: number, raw: GeneratedSlideData): Slide['type'] {
   if ((raw as unknown as Record<string, unknown>).type) {
     const t = (raw as unknown as Record<string, unknown>).type as string;
     if (t === 'cover' || t === 'content' || t === 'end') return t;
@@ -354,9 +398,7 @@ function inferSlideType(
   return 'content';
 }
 
-function buildSlideBackground(
-  raw: GeneratedSlideData['background'],
-): Slide['background'] {
+function buildSlideBackground(raw: GeneratedSlideData['background']): Slide['background'] {
   if (!raw) return undefined;
   if (raw.type === 'solid' && raw.color) {
     return { type: 'solid', color: raw.color };
@@ -423,8 +465,7 @@ function centerCoverTitle(elements: PPTElement[]): PPTElement[] {
 
   // Calculate total stack height and center the whole block vertically
   const totalStackHeight =
-    textInfos.reduce((sum, t) => sum + t.el.height, 0) +
-    COVER_TEXT_GAP * (textInfos.length - 1);
+    textInfos.reduce((sum, t) => sum + t.el.height, 0) + COVER_TEXT_GAP * (textInfos.length - 1);
 
   const startY = (CANVAS_H - totalStackHeight) / 2;
 

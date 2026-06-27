@@ -9,7 +9,12 @@ import type { TeachingHistoryItem } from '@/lib/teaching/teaching-job-client';
 import type { LessonPlan, LessonSection } from '@/lib/teaching/lesson-types';
 import type { ContentChunk } from '@/lib/teaching/content-types';
 
-export function TeachingPage() {
+interface TeachingPageProps {
+  initialTopic?: string;
+  personalizationNotice?: string | null;
+}
+
+export function TeachingPage({ initialTopic, personalizationNotice }: TeachingPageProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [historyItem, setHistoryItem] = useState<{
     topic: string;
@@ -76,7 +81,12 @@ export function TeachingPage() {
         </div>
       )}
 
-      <TeachingPanel viewHistoryItem={historyItem} onViewedHistory={handleViewedHistory} />
+      <TeachingPanel
+        viewHistoryItem={historyItem}
+        onViewedHistory={handleViewedHistory}
+        initialTopic={initialTopic}
+        personalizationNotice={personalizationNotice}
+      />
     </div>
   );
 }

@@ -931,4 +931,530 @@ describe('slide polish', () => {
 
     expect(readabilityIssues).toEqual([]);
   });
+
+  it('rewrites crowded quadratic equation relation slides into the reference card layout', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 110,
+          top: 68,
+          width: 620,
+          height: 58,
+          content: '<p style="font-size:32px;"><strong>二次函数与一元二次方程的联系</strong></p>',
+        },
+        {
+          id: 'formula',
+          type: 'latex',
+          left: 300,
+          top: 260,
+          width: 420,
+          height: 70,
+          latex: 'y=ax^2+bx+c \\quad ax^2+bx+c=0',
+        },
+        {
+          id: 'floating-note',
+          type: 'text',
+          left: 300,
+          top: 365,
+          width: 470,
+          height: 42,
+          content:
+            '<p style="font-size:16px;">二次函数与 x 轴的交点横坐标 = 一元二次方程的实数根</p>',
+        },
+        {
+          id: 'card-a',
+          type: 'shape',
+          left: 72,
+          top: 426,
+          width: 348,
+          height: 188,
+          fill: '#e8f5ee',
+        },
+        {
+          id: 'card-b',
+          type: 'shape',
+          left: 444,
+          top: 426,
+          width: 348,
+          height: 188,
+          fill: '#fff7dc',
+        },
+        {
+          id: 'card-c',
+          type: 'shape',
+          left: 817,
+          top: 426,
+          width: 348,
+          height: 188,
+          fill: '#fde8e8',
+        },
+      ],
+      {
+        decorate: false,
+        title: '二次函数与一元二次方程的联系',
+        keyPoints: ['判别式 Δ', '实数根', 'x 轴交点'],
+      },
+    );
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_relation_'))).toBe(true);
+    expect(polished.some((element) => element.id === 'floating-note')).toBe(false);
+    expect(polished.every((element) => element.left >= 48)).toBe(true);
+    expect(polished.every((element) => element.left + element.width <= 952)).toBe(true);
+    expect(polished.every((element) => element.top + Number(element.height ?? 0) <= 514.5)).toBe(
+      true,
+    );
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('rewrites crowded quadratic vertex-form slides into the reference definition layout', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 140,
+          top: 86,
+          width: 620,
+          height: 58,
+          content: '<p style="font-size:32px;"><strong>二次函数的顶点式</strong></p>',
+        },
+        {
+          id: 'definition',
+          type: 'text',
+          left: 180,
+          top: 210,
+          width: 240,
+          height: 42,
+          content: '<p style="font-size:20px;"><strong>顶点式定义</strong></p>',
+        },
+        {
+          id: 'example-bg',
+          type: 'shape',
+          left: 730,
+          top: 226,
+          width: 496,
+          height: 260,
+          fill: '#eaf4fb',
+        },
+        {
+          id: 'table',
+          type: 'table',
+          left: 136,
+          top: 446,
+          width: 1090,
+          height: 110,
+          outline: { color: '#cccccc', width: 1, style: 'solid' },
+          colWidths: [0.2, 0.4, 0.4],
+          cellMinHeight: 44,
+          data: [],
+        },
+        {
+          id: 'formula-over-table',
+          type: 'latex',
+          left: 350,
+          top: 430,
+          width: 460,
+          height: 118,
+          latex: 'y=a(x-h)^2+k',
+        },
+      ],
+      {
+        decorate: false,
+        title: '二次函数的顶点式',
+        keyPoints: ['顶点式：y = a(x-h)^2 + k', '顶点为 (h, k)', '对称轴为 x = h'],
+      },
+    );
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_vertex_'))).toBe(true);
+    expect(polished.some((element) => element.id === 'table')).toBe(false);
+    expect(polished.some((element) => element.id === 'formula-over-table')).toBe(false);
+    expect(polished.every((element) => element.left >= 48)).toBe(true);
+    expect(polished.every((element) => element.left + element.width <= 952)).toBe(true);
+    expect(polished.every((element) => element.top + Number(element.height ?? 0) <= 514.5)).toBe(
+      true,
+    );
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('does not collapse every quadratic subsection into the same parabola fallback layout', () => {
+    const subsectionTitles = ['二次函数的开口方向', '二次函数的最值', '二次函数的实际应用'];
+
+    const polishedSlides = subsectionTitles.map((title) =>
+      polishSlideElements(
+        [
+          {
+            id: 'title',
+            type: 'text',
+            left: 105,
+            top: 78,
+            width: 790,
+            height: 70,
+            content: `<p style="font-size:34px;">${title}</p>`,
+          },
+          {
+            id: 'body',
+            type: 'text',
+            left: 590,
+            top: 205,
+            width: 300,
+            height: 94,
+            content: '<p style="font-size:18px;">观察参数变化对二次函数图像和结论的影响。</p>',
+          },
+        ],
+        {
+          title,
+          keyPoints: ['开口方向', '顶点', '对称轴'],
+        },
+      ),
+    );
+
+    expect(
+      polishedSlides.every((elements) =>
+        elements.every((element) => !element.id?.startsWith('polish_quad_')),
+      ),
+    ).toBe(true);
+  });
+
+  it('preserves application slide structure while keeping the definition below the cards', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 105,
+          top: 78,
+          width: 790,
+          height: 70,
+          content: '<p style="font-size:34px;">生活中的二次函数</p>',
+        },
+        {
+          id: 'scene-a',
+          type: 'shape',
+          left: 82,
+          top: 214,
+          width: 250,
+          height: 142,
+          fill: '#e7f3ff',
+        },
+        {
+          id: 'scene-b',
+          type: 'shape',
+          left: 375,
+          top: 214,
+          width: 250,
+          height: 142,
+          fill: '#e8faef',
+        },
+        {
+          id: 'scene-c',
+          type: 'shape',
+          left: 668,
+          top: 214,
+          width: 250,
+          height: 142,
+          fill: '#fff3c4',
+        },
+        {
+          id: 'definition',
+          type: 'text',
+          left: 118,
+          top: 382,
+          width: 760,
+          height: 48,
+          content:
+            '<p style="font-size:18px;"><strong>二次函数定义：</strong>形如 y = ax<sup>2</sup> + bx + c（a ≠ 0）的函数</p>',
+        },
+        {
+          id: 'empty-bottom-panel',
+          type: 'shape',
+          left: 105,
+          top: 452,
+          width: 790,
+          height: 54,
+          fill: '#eef3ff',
+        },
+      ],
+      {
+        title: '生活中的二次函数',
+        keyPoints: ['篮球投篮', '拱桥造型', '喷泉水柱'],
+      },
+    );
+
+    const definition = polished.find((element) => element.id === 'definition')!;
+    const cards = ['scene-a', 'scene-b', 'scene-c'].map(
+      (id) => polished.find((element) => element.id === id)!,
+    );
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_app_'))).toBe(false);
+    expect(definition.top).toBeGreaterThan(
+      Math.max(...cards.map((card) => card.top + Number(card.height))),
+    );
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('moves misplaced key-step text out of card bodies into a readable bottom section', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'card-a',
+          type: 'shape',
+          left: 76,
+          top: 228,
+          width: 303,
+          height: 194,
+          fill: '#e7f3ff',
+        },
+        {
+          id: 'card-b',
+          type: 'shape',
+          left: 401,
+          top: 228,
+          width: 303,
+          height: 194,
+          fill: '#fff3dc',
+        },
+        {
+          id: 'card-c',
+          type: 'shape',
+          left: 726,
+          top: 228,
+          width: 303,
+          height: 194,
+          fill: '#f0e4ff',
+        },
+        {
+          id: 'card-body-a',
+          type: 'text',
+          left: 134,
+          top: 380,
+          width: 190,
+          height: 50,
+          content: '<p style="font-size:18px;">且两侧符号变化</p>',
+        },
+        {
+          id: 'card-body-b',
+          type: 'text',
+          left: 502,
+          top: 380,
+          width: 204,
+          height: 50,
+          content: '<p style="font-size:18px;">凹凸性发生改变</p>',
+        },
+        {
+          id: 'step-heading',
+          type: 'text',
+          left: 87,
+          top: 438,
+          width: 240,
+          height: 58,
+          content: '<p style="font-size:22px;"><strong>关键步骤</strong></p>',
+        },
+        {
+          id: 'step-a',
+          type: 'text',
+          left: 80,
+          top: 380,
+          width: 420,
+          height: 42,
+          content: '<p style="font-size:15px;">① 求 f′(x)=0 得极值候选点</p>',
+        },
+        {
+          id: 'step-b',
+          type: 'text',
+          left: 500,
+          top: 380,
+          width: 440,
+          height: 42,
+          content: '<p style="font-size:15px;">② 求 f″(x)=0 得拐点候选点</p>',
+        },
+      ],
+      { decorate: false },
+    );
+
+    const cardBodies = ['card-body-a', 'card-body-b'].map(
+      (id) => polished.find((element) => element.id === id)!,
+    );
+    const heading = polished.find((element) => element.id === 'step-heading')!;
+    const steps = ['step-a', 'step-b'].map((id) => polished.find((element) => element.id === id)!);
+
+    expect(Math.min(...steps.map((step) => step.top))).toBeGreaterThan(heading.top);
+    for (const step of steps) {
+      for (const cardBody of cardBodies) {
+        expect(overlaps(step, cardBody)).toBe(false);
+      }
+    }
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('separates bottom memory heading, left steps, and right callout without overlap', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'summary-a',
+          type: 'shape',
+          left: 96,
+          top: 158,
+          width: 476,
+          height: 122,
+          fill: '#e7f3ff',
+        },
+        {
+          id: 'summary-b',
+          type: 'shape',
+          left: 572,
+          top: 158,
+          width: 477,
+          height: 122,
+          fill: '#fff2c7',
+        },
+        {
+          id: 'summary-c',
+          type: 'shape',
+          left: 96,
+          top: 312,
+          width: 476,
+          height: 122,
+          fill: '#dbf8e7',
+        },
+        {
+          id: 'summary-d',
+          type: 'shape',
+          left: 572,
+          top: 312,
+          width: 477,
+          height: 122,
+          fill: '#fce7f3',
+        },
+        {
+          id: 'divider',
+          type: 'shape',
+          left: 140,
+          top: 430,
+          width: 866,
+          height: 1,
+          fill: '#dddddd',
+        },
+        {
+          id: 'memory-heading',
+          type: 'text',
+          left: 106,
+          top: 450,
+          width: 320,
+          height: 56,
+          content: '<p style="font-size:22px;"><strong>解题步骤与记忆口诀</strong></p>',
+        },
+        {
+          id: 'memory-steps',
+          type: 'text',
+          left: 60,
+          top: 470.5,
+          width: 480,
+          height: 42,
+          content: '<p style="font-size:15px;">步骤：先看系数 a，再求导数 f′(x)</p>',
+        },
+        {
+          id: 'callout-bg',
+          type: 'shape',
+          left: 520,
+          top: 460.5,
+          width: 420,
+          height: 54,
+          fill: '#dff1ff',
+        },
+        {
+          id: 'callout-text',
+          type: 'text',
+          left: 540,
+          top: 470.5,
+          width: 380,
+          height: 42,
+          content: '<p style="font-size:15px;">口诀：开口方向看 a，拐点中心要记牢</p>',
+        },
+      ],
+      { decorate: false },
+    );
+
+    const heading = polished.find((element) => element.id === 'memory-heading')!;
+    const steps = polished.find((element) => element.id === 'memory-steps')!;
+    const calloutBg = polished.find((element) => element.id === 'callout-bg')!;
+    const calloutText = polished.find((element) => element.id === 'callout-text')!;
+
+    expect(steps.top).toBeGreaterThan(heading.top);
+    expect(calloutText.top).toBeGreaterThan(heading.top);
+    expect(overlaps(heading, steps)).toBe(false);
+    expect(overlaps(heading, calloutText)).toBe(false);
+    expect(calloutBg.top).toBeLessThanOrEqual(calloutText.top);
+    expect(calloutBg.top + Number(calloutBg.height)).toBeGreaterThanOrEqual(
+      calloutText.top + Number(calloutText.height),
+    );
+    expect(steps.top + Number(steps.height)).toBeLessThanOrEqual(514.5);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('widens and enlarges compact core-step text in the bottom section', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'card-a',
+          type: 'shape',
+          left: 56,
+          top: 122,
+          width: 303,
+          height: 163,
+          fill: '#dff1ff',
+        },
+        {
+          id: 'card-b',
+          type: 'shape',
+          left: 381,
+          top: 122,
+          width: 303,
+          height: 163,
+          fill: '#fff2c7',
+        },
+        {
+          id: 'card-c',
+          type: 'shape',
+          left: 706,
+          top: 122,
+          width: 303,
+          height: 163,
+          fill: '#dbf8e7',
+        },
+        {
+          id: 'core-heading',
+          type: 'text',
+          left: 67,
+          top: 338,
+          width: 230,
+          height: 58,
+          content: '<p style="font-size:22px;"><strong>核心步骤</strong></p>',
+        },
+        {
+          id: 'core-steps',
+          type: 'text',
+          left: 244,
+          top: 404,
+          width: 365,
+          height: 48,
+          content:
+            '<p style="font-size:12px;">① 求导得二次函数 f′(x)<br/>② 解 f′(x)>0 和 f′(x)<0，确定单调区间<br/>③ 令 f′(x)=0 解出候选极值点</p>',
+        },
+      ],
+      { decorate: false },
+    );
+
+    const heading = polished.find((element) => element.id === 'core-heading')!;
+    const steps = polished.find(
+      (element) => element.id === 'core-steps',
+    ) as (typeof polished)[number] & Record<string, unknown>;
+
+    expect(steps.top).toBeGreaterThan(heading.top);
+    expect(steps.left).toBeLessThanOrEqual(105);
+    expect(steps.width).toBeGreaterThanOrEqual(760);
+    expect(String(steps.content)).toContain('font-size:18px');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
 });

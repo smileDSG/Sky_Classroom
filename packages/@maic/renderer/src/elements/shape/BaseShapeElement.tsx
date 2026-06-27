@@ -89,6 +89,37 @@ function pathCoordBBox(
   return { minX, minY, maxX, maxY };
 }
 
+function normalizeViewBox(
+  viewBox: PPTShapeElement['viewBox'] | string | unknown,
+  fallbackWidth: number,
+  fallbackHeight: number,
+): [number, number] {
+  if (Array.isArray(viewBox) && viewBox.length >= 2) {
+    const width = Number(viewBox[0]);
+    const height = Number(viewBox[1]);
+    if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) {
+      return [width, height];
+    }
+  }
+
+  if (typeof viewBox === 'string') {
+    const nums = viewBox
+      .trim()
+      .split(/[\s,]+/)
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value));
+    const width = nums.length >= 4 ? nums[2] : nums[0];
+    const height = nums.length >= 4 ? nums[3] : nums[1];
+    if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) {
+      return [width, height];
+    }
+  }
+
+  const width = Number.isFinite(fallbackWidth) && fallbackWidth > 0 ? fallbackWidth : 1;
+  const height = Number.isFinite(fallbackHeight) && fallbackHeight > 0 ? fallbackHeight : 1;
+  return [width, height];
+}
+
 export function BaseShapeElement({ elementInfo }: BaseShapeElementProps) {
   const { fill } = useElementFill(elementInfo, 'base');
   const { outlineWidth, outlineColor, strokeDashArray } = useElementOutline(elementInfo.outline);
@@ -146,8 +177,13 @@ export function BaseShapeElement({ elementInfo }: BaseShapeElementProps) {
             // exported PNG. Fix: grow the SVG viewport to contain the full path
             // bbox and offset it back, so the geometry renders in the exact same
             // place but nothing falls outside the captured viewport.
-            const sx = elementInfo.width / (elementInfo.viewBox[0] || elementInfo.width || 1);
-            const sy = elementInfo.height / (elementInfo.viewBox[1] || elementInfo.height || 1);
+            const [viewBoxWidth, viewBoxHeight] = normalizeViewBox(
+              elementInfo.viewBox,
+              elementInfo.width,
+              elementInfo.height,
+            );
+            const sx = elementInfo.width / viewBoxWidth;
+            const sy = elementInfo.height / viewBoxHeight;
             const bbox = pathCoordBBox(elementInfo.path);
             const CAP = 4000; // guard against pathological coords blowing up the SVG
             let padL = 0;

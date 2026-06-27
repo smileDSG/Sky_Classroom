@@ -297,6 +297,18 @@ const useStageStoreBase = create<StageState>()((set, get) => ({
         });
         log.info('Loaded from storage:', stageId);
       } else {
+        set((s) => ({
+          stage: null,
+          scenes: [],
+          currentSceneId: null,
+          chats: [],
+          outlines: [],
+          generationEpoch: s.generationEpoch + 1,
+          generationStatus: 'idle' as const,
+          currentGeneratingOrder: -1,
+          failedOutlines: [],
+          generatingOutlines: [],
+        }));
         log.warn('No data found for stage:', stageId);
       }
     } catch (error) {

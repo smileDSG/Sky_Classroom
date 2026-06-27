@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
+import { promises as fs } from 'fs';
+import path from 'path';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { verifyAccessToken } from '@/lib/server/auth';
 import { getServerStorage } from '@/lib/server/server-storage';
@@ -9,9 +11,11 @@ import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { buildCloudMindDashboard, EMPTY_KB_STATS } from '@/lib/cloud-mind/recommendation-engine';
 import { createLogger } from '@/lib/logger';
 import type { KBStats } from '@/lib/knowledge-base/types';
-import type { StudentProfile } from '@/lib/student/profile-types';
+import type { ProfileCacheEntry, StudentProfile } from '@/lib/student/profile-types';
 
 const log = createLogger('API:CloudMindDashboard');
+const DEMO_PROFILE_USER_ID = 'default-user';
+const DEMO_FALLBACK_USER_IDS = new Set(['admin-default']);
 
 async function resolveUserId(req: NextRequest): Promise<string> {
   const url = new URL(req.url);
@@ -38,6 +42,57 @@ async function safeBuildProfile(userId: string): Promise<StudentProfile | null> 
   }
 }
 
+function hasProfileLearningData(profile: StudentProfile | null): boolean {
+  return (
+    (profile?.totalQuestions ?? 0) > 0 ||
+    Object.keys(profile?.masteryByKnowledge ?? {}).length > 0 ||
+    (profile?.errorPatterns.length ?? 0) > 0
+  );
+}
+
+function hydrateProfileDates(profile: StudentProfile): StudentProfile {
+  return {
+    ...profile,
+    lastUpdated: new Date(profile.lastUpdated),
+    errorPatterns: profile.errorPatterns.map((pattern) => ({
+      ...pattern,
+      lastOccurrence: new Date(pattern.lastOccurrence),
+    })),
+  };
+}
+
+async function readCachedDemoProfile(): Promise<StudentProfile | null> {
+  try {
+    const cachePath = path.join(
+      process.cwd(),
+      'data',
+      'student-profiles',
+      `${DEMO_PROFILE_USER_ID}.json`,
+    );
+    const raw = await fs.readFile(cachePath, 'utf-8');
+    const entry = JSON.parse(raw) as ProfileCacheEntry;
+    return hydrateProfileDates(entry.profile);
+  } catch (err) {
+    log.warn('Demo profile unavailable for cloud mind dashboard:', err);
+    return null;
+  }
+}
+
+async function resolveDashboardProfile(userId: string): Promise<StudentProfile | null> {
+  const profile = await safeBuildProfile(userId);
+  if (hasProfileLearningData(profile) || !DEMO_FALLBACK_USER_IDS.has(userId)) {
+    return profile;
+  }
+
+  const demoProfile = await readCachedDemoProfile();
+  if (!demoProfile || !hasProfileLearningData(demoProfile)) return profile;
+
+  return {
+    ...demoProfile,
+    userId,
+  };
+}
+
 async function safeKnowledgeStats(): Promise<KBStats> {
   if (!process.env.MYSQL_DATABASE) return EMPTY_KB_STATS;
 
@@ -58,7 +113,7 @@ export async function GET(req: NextRequest) {
     const quizAttemptDAO = createQuizAttemptDAO(storage);
 
     const [profile, mistakesResult, dueMistakes, recentAttempts, kbStats] = await Promise.all([
-      safeBuildProfile(userId),
+      resolveDashboardProfile(userId),
       mistakeDAO.list({ page: 1, pageSize: 50 }),
       mistakeDAO.getDueForReview(),
       quizAttemptDAO.list({ userId, recentDays: 14 }),

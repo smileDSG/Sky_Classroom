@@ -150,6 +150,7 @@ function textElement(
   fontSize: number,
   color = '#263244',
   fill?: string,
+  lineHeight = 1.35,
 ): SlideLikeElement & Record<string, unknown> {
   return {
     id,
@@ -159,11 +160,11 @@ function textElement(
     width,
     height,
     rotate: 0,
-    content: `<p style="font-size:${fontSize}px;font-family:${FONT_STACK};line-height:1.35;">${content}</p>`,
+    content: `<p style="font-size:${fontSize}px;font-family:${FONT_STACK};line-height:${lineHeight};">${content}</p>`,
     defaultFontName: FONT_STACK,
     defaultColor: color,
     fill,
-    lineHeight: 1.35,
+    lineHeight,
     paragraphSpace: 0,
   };
 }
@@ -336,10 +337,16 @@ function estimateTextHeight(
 
 function polishTextElement<T extends SlideLikeElement>(element: T): T {
   const text = { ...element } as T & PPTTextElement;
-  const isTitle = text.textType === 'title' || text.top < 170;
+  const plainText = stripHtml(String(text.content ?? ''));
+  const isTitle =
+    text.textType === 'title' ||
+    (text.top < 118 &&
+      Number(text.height ?? 0) >= 44 &&
+      text.width >= 420 &&
+      plainText.length <= 42);
   let content = normalizeFontFamily(String(text.content ?? ''));
   let fontSize = getFontSize(content, isTitle ? 34 : 18);
-  fontSize = clamp(fontSize, isTitle ? 30 : 15, isTitle ? 38 : 22);
+  fontSize = clamp(fontSize, isTitle ? 30 : 18, isTitle ? 38 : 24);
   content = setFontSize(content, fontSize);
 
   const lineHeight = Number(text.lineHeight ?? (isTitle ? 1.18 : 1.36));
@@ -352,7 +359,7 @@ function polishTextElement<T extends SlideLikeElement>(element: T): T {
   let left = clamp(text.left, MARGIN, CANVAS_WIDTH - MARGIN - width);
 
   const maxHeight = Math.max(42, CANVAS_HEIGHT - MARGIN - top);
-  while (height > maxHeight && fontSize > (isTitle ? 28 : 15)) {
+  while (height > maxHeight && fontSize > (isTitle ? 28 : 18)) {
     fontSize -= 1;
     content = setFontSize(content, fontSize);
     height = estimateTextHeight(content, width, fontSize, lineHeight);
@@ -405,7 +412,17 @@ function polishLineElement<T extends SlideLikeElement>(element: T): T {
 
 function polishBoxElement<T extends SlideLikeElement>(element: T): T {
   const width = clamp(element.width, 16, CANVAS_WIDTH - MARGIN * 2);
-  const height = clamp(Number(element.height ?? 16), 8, CANVAS_HEIGHT - MARGIN * 2);
+  const minHeight = isThinDecorativeElement(element) ? 1 : 8;
+  const rawHeight = Number(element.height ?? 16);
+  const isWideBottomBand =
+    element.type === 'shape' &&
+    !hasShapeText(element) &&
+    element.top > 400 &&
+    width >= 700 &&
+    rawHeight >= 24;
+  const height = isWideBottomBand
+    ? clamp(rawHeight, minHeight, 56)
+    : clamp(rawHeight, minHeight, CANVAS_HEIGHT - MARGIN * 2);
   return {
     ...element,
     left: clamp(element.left, MARGIN, CANVAS_WIDTH - MARGIN - width),
@@ -456,11 +473,322 @@ function getSlideTitle(elements: SlideLikeElement[], context?: SlidePolishContex
   return escapeHtmlShort(titleText || 'Quadratic function graph', 42);
 }
 
+function getLayoutSignalText(elements: SlideLikeElement[], context?: SlidePolishContext): string {
+  return [
+    context?.title,
+    ...(context?.keyPoints ?? []),
+    ...elements.map((element) => {
+      const record = element as Record<string, unknown>;
+      return [getTextContent(element), record['latex']].filter(Boolean).join(' ');
+    }),
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+function hasAnySignal(text: string, patterns: RegExp[]): boolean {
+  return patterns.some((pattern) => pattern.test(text));
+}
+
+function countSignals(text: string, patterns: RegExp[]): number {
+  return patterns.filter((pattern) => pattern.test(text)).length;
+}
+
+function shouldUseEquationRelationLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  const source = getLayoutSignalText(elements, context);
+  if (!isQuadraticTopicText(source)) return false;
+
+  const hasEquation = /一元二次方程|\u4e00\u5143\u4e8c\u6b21\u65b9\u7a0b/i.test(source);
+  const relationSignalCount = countSignals(source, [
+    /一元二次方程|\u4e00\u5143\u4e8c\u6b21\u65b9\u7a0b/i,
+    /实数根|\u5b9e\u6570\u6839/i,
+    /判别式|\u5224\u522b\u5f0f|Delta|Δ|\\Delta/i,
+    /x\s*轴|\u0078\s*\u8f74/i,
+    /交点|\u4ea4\u70b9/i,
+  ]);
+
+  return hasEquation || relationSignalCount >= 2;
+}
+
+function shouldUseVertexFormLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  const source = getLayoutSignalText(elements, context);
+  if (!isQuadraticTopicText(source)) return false;
+
+  return hasAnySignal(source, [
+    /顶点式|\u9876\u70b9\u5f0f/i,
+    /顶点.*对称轴|\u9876\u70b9.*\u5bf9\u79f0\u8f74/i,
+    /a\s*\(\s*x\s*[-−]\s*h\s*\)\s*\^?\s*2/i,
+    /a\s*\(\s*x\s*[-−]\s*3\s*\)\s*\^?\s*2/i,
+  ]);
+}
+
+function referenceHeaderElements(
+  prefix: string,
+  title: string,
+  subtitle: string,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  return [
+    textElement(
+      `${prefix}_title`,
+      `<strong>${title}</strong>`,
+      82,
+      42,
+      836,
+      58,
+      34,
+      theme.textPrimary,
+      undefined,
+      1.12,
+    ),
+    textElement(
+      prefix + '_subtitle',
+      subtitle,
+      82,
+      122,
+      836,
+      38,
+      22,
+      theme.textBody,
+      undefined,
+      1.15,
+    ),
+    shapeElement(`${prefix}_rule`, 82, 188, 836, 3, theme.accent, 0.95),
+  ];
+}
+
+function equationRelationReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const prefix = 'polish_ref_relation';
+
+  const cards = [
+    {
+      id: 'positive',
+      fill: '#e8f5ee',
+      color: '#14532d',
+      title: 'Δ > 0',
+      body: '两个根，两个交点',
+    },
+    {
+      id: 'zero',
+      fill: '#fff7dc',
+      color: '#8a4b00',
+      title: 'Δ = 0',
+      body: '一个重根，图像相切',
+    },
+    {
+      id: 'negative',
+      fill: '#fde8e8',
+      color: '#9f1239',
+      title: 'Δ < 0',
+      body: '无实根，无交点',
+    },
+  ];
+
+  return [
+    ...referenceHeaderElements(prefix, title, '函数图像与 x 轴的交点，对应方程的实数根', theme),
+    shapeElement(`${prefix}_formula_panel`, 150, 202, 700, 116, '#f8fafc', 1),
+    textElement(
+      `${prefix}_function_formula`,
+      'y = ax<sup>2</sup> + bx + c',
+      196,
+      225,
+      250,
+      44,
+      26,
+      theme.textPrimary,
+      undefined,
+      1.12,
+    ),
+    textElement(`${prefix}_formula_join`, '与', 488, 225, 32, 44, 24, '#64748b', undefined, 1.12),
+    textElement(
+      `${prefix}_equation_formula`,
+      'ax<sup>2</sup> + bx + c = 0',
+      570,
+      225,
+      250,
+      44,
+      26,
+      theme.textPrimary,
+      undefined,
+      1.12,
+    ),
+    textElement(
+      `${prefix}_bridge`,
+      '<strong>核心关系：</strong>交点横坐标 = 方程实数根。',
+      110,
+      312,
+      780,
+      44,
+      20,
+      theme.textBody,
+      undefined,
+      1.16,
+    ),
+    ...cards.flatMap((card, index) => {
+      const left = 72 + index * 286;
+      return [
+        shapeElement(`${prefix}_${card.id}_card`, left, 362, 270, 152, card.fill, 1),
+        textElement(
+          `${prefix}_${card.id}_title`,
+          `<strong>${card.title}</strong>`,
+          left + 28,
+          376,
+          214,
+          32,
+          24,
+          card.color,
+          undefined,
+          1.1,
+        ),
+        textElement(
+          `${prefix}_${card.id}_body`,
+          card.body,
+          left + 28,
+          440,
+          200,
+          54,
+          18,
+          theme.textBody,
+          undefined,
+          1.18,
+        ),
+      ];
+    }),
+  ];
+}
+
+function vertexFormReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const prefix = 'polish_ref_vertex';
+
+  return [
+    ...referenceHeaderElements(prefix, title, '从顶点式直接读出顶点、对称轴和图像平移', theme),
+    shapeElement(`${prefix}_definition_panel`, 82, 196, 392, 228, '#f8fafc', 1),
+    textElement(
+      `${prefix}_definition_title`,
+      '<strong>顶点式定义</strong>',
+      112,
+      216,
+      320,
+      36,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_definition_formula`,
+      '<span style="font-size:30px;">y = a(x - h)<sup>2</sup> + k</span>',
+      112,
+      278,
+      320,
+      44,
+      28,
+      theme.textPrimary,
+      undefined,
+      1.12,
+    ),
+    textElement(
+      `${prefix}_definition_note`,
+      '顶点为 (h, k)，对称轴为 x = h。',
+      112,
+      348,
+      320,
+      62,
+      18,
+      theme.textBody,
+      undefined,
+      1.15,
+    ),
+    shapeElement(`${prefix}_example_panel`, 526, 196, 392, 228, '#eaf4fb', 1),
+    textElement(
+      `${prefix}_example_title`,
+      '<strong>示例</strong>',
+      556,
+      216,
+      320,
+      36,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_example_formula`,
+      '<span style="font-size:28px;">y = 2(x - 3)<sup>2</sup> + 5</span>',
+      556,
+      278,
+      320,
+      42,
+      26,
+      theme.textPrimary,
+      undefined,
+      1.12,
+    ),
+    textElement(
+      `${prefix}_example_note`,
+      '顶点：(3, 5)　对称轴：x = 3',
+      556,
+      348,
+      320,
+      62,
+      18,
+      theme.textBody,
+      undefined,
+      1.15,
+    ),
+    shapeElement(`${prefix}_takeaway_rule`, 82, 446, 836, 3, theme.accentSecondary, 0.9),
+    textElement(
+      `${prefix}_takeaway`,
+      '口诀：看到 (x - h)<sup>2</sup> 就读 h，常数项读 k。',
+      112,
+      462,
+      776,
+      42,
+      20,
+      theme.textPrimary,
+      undefined,
+      1.16,
+    ),
+  ];
+}
+
+function referenceLayoutElements<T extends SlideLikeElement>(
+  elements: T[],
+  context?: SlidePolishContext,
+): T[] | null {
+  if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return elements;
+  if (shouldUseEquationRelationLayout(elements, context)) {
+    return equationRelationReferenceLayout(elements, context) as T[];
+  }
+  if (shouldUseVertexFormLayout(elements, context)) {
+    return vertexFormReferenceLayout(elements, context) as T[];
+  }
+  return null;
+}
+
 function shouldUseQuadraticTeachingLayout(
   elements: SlideLikeElement[],
   context?: SlidePolishContext,
 ): boolean {
-  if (!isQuadraticTopicText(getContextSourceText(elements, context))) return false;
+  const source = getContextSourceText(elements, context);
+  if (!isQuadraticTopicText(source)) return false;
+  if (!isParabolaGraphIntroSlide(elements, context)) return false;
 
   const hasRichMedia = elements.some((element) =>
     ['image', 'video', 'chart', 'table', 'latex'].includes(element.type),
@@ -475,6 +803,26 @@ function shouldUseQuadraticTeachingLayout(
   const learningBlockCount = elements.filter(isReadableElement).length;
 
   return !hasCurvedParabola || elements.length < 16 || learningBlockCount < 5;
+}
+
+function isParabolaGraphIntroSlide(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  const title = getSlideTitle(elements, context);
+  const source = getContextSourceText(elements, context);
+  const titleSignalsGraph = /图像|图象|抛物线|\u56fe\u50cf|\u56fe\u8c61|\u629b\u7269\u7ebf/i.test(
+    title,
+  );
+  if (!titleSignalsGraph) return false;
+
+  const specificNonGraphTopic =
+    /顶点式|一元二次方程|判别式|实际应用|应用|最值|性质|平移|配方法|一般式|解析式|\u9876\u70b9\u5f0f|\u4e00\u5143\u4e8c\u6b21\u65b9\u7a0b|\u5224\u522b\u5f0f|\u5b9e\u9645\u5e94\u7528|\u5e94\u7528|\u6700\u503c|\u6027\u8d28|\u5e73\u79fb|\u914d\u65b9\u6cd5|\u4e00\u822c\u5f0f|\u89e3\u6790\u5f0f/i;
+  if (specificNonGraphTopic.test(title)) return false;
+
+  return /抛物线|开口|对称轴|顶点|parabola|\u629b\u7269\u7ebf|\u5f00\u53e3|\u5bf9\u79f0\u8f74|\u9876\u70b9/i.test(
+    source,
+  );
 }
 
 function quadraticTeachingLayout(
@@ -879,6 +1227,11 @@ export function polishSlideElements<T extends SlideLikeElement>(
   context?: SlidePolishContext,
 ): T[] {
   const baseElements = elements.filter((element) => !element.id?.startsWith('polish_rich_'));
+  const referenceElements = referenceLayoutElements(baseElements, context);
+  if (referenceElements) {
+    return polishReferenceLayoutElements(referenceElements, context);
+  }
+
   const shouldDecorate = context?.decorate !== false;
   const layoutElements =
     shouldDecorate && shouldUseQuadraticTeachingLayout(baseElements, context)
@@ -919,10 +1272,38 @@ export function polishSlideElements<T extends SlideLikeElement>(
   return protectReadableLayout(polished);
 }
 
+function polishReferenceLayoutElements<T extends SlideLikeElement>(
+  elements: T[],
+  context?: SlidePolishContext,
+): T[] {
+  const polished = elements.map((element) => {
+    const themedElement = applyThemeToElement(element, context);
+    switch (themedElement.type) {
+      case 'text':
+        return polishTextElement(themedElement);
+      case 'latex':
+        return polishLatexElement(themedElement);
+      case 'line':
+        return polishLineElement(themedElement);
+      case 'shape':
+      case 'image':
+      case 'video':
+      case 'chart':
+      case 'table':
+        return polishBoxElement(themedElement);
+      default:
+        return themedElement;
+    }
+  });
+
+  return enforceReadableSafeBounds(polished);
+}
+
 function protectReadableLayout<T extends SlideLikeElement>(elements: T[]): T[] {
   const compacted = compactTitleWhitespace(elements);
   const parallelAligned = normalizeParallelRows(compacted);
-  const bottomAdjusted = fitBottomReadableRows(parallelAligned);
+  const stepAdjusted = normalizeStepSections(parallelAligned);
+  const bottomAdjusted = fitBottomReadableRows(stepAdjusted);
   const tableCaptionAdjusted = fitTableCaptionsAboveTables(bottomAdjusted);
   const latexAdjusted = fitLatexAroundRightColumn(tableCaptionAdjusted);
   const rightColumnAdjusted = fitRightColumnAboveTables(latexAdjusted);
@@ -932,9 +1313,11 @@ function protectReadableLayout<T extends SlideLikeElement>(elements: T[]): T[] {
   const repaired = repairSlideLayout(enforceReadableSafeBounds(spaced));
   const finalReserved = reserveBottomCalloutSpace(repaired);
   const finalSpaced = normalizeParallelRows(
-    enforceReadableSafeBounds(resolveVerticalReadableOverlaps(finalReserved)),
+    enforceReadableSafeBounds(
+      resolveVerticalReadableOverlaps(normalizeStepSections(finalReserved)),
+    ),
   );
-  return reserveBottomCalloutSpace(finalSpaced);
+  return reserveBottomCalloutSpace(normalizeStepSections(finalSpaced));
 }
 
 function compactTitleWhitespace<T extends SlideLikeElement>(elements: T[]): T[] {
@@ -1062,7 +1445,7 @@ function isBottomBandShape(element: SlideLikeElement): boolean {
     box.top > 400 &&
     box.width >= 700 &&
     box.height >= 24 &&
-    box.height <= 64
+    box.height <= 96
   );
 }
 
@@ -1145,6 +1528,225 @@ function fitBottomReadableRows<T extends SlideLikeElement>(elements: T[]): T[] {
       height: row.height,
     };
   });
+}
+
+function isStepHeadingText(text: string): boolean {
+  const compact = text.replace(/\s+/g, '');
+  return /(核心步骤|关键步骤|解题步骤|记忆口诀|步骤与记忆|任务要求|Step|Steps|Keysteps|KeySteps)/i.test(
+    compact,
+  );
+}
+
+function isStepBodyText(text: string): boolean {
+  const compact = text.replace(/\s+/g, '');
+  if (isStepHeadingText(compact)) return false;
+  return (
+    /[①②③④⑤⑥⑦⑧⑨]/.test(compact) ||
+    /(^|\s)(\d+)[.、]/.test(text) ||
+    /^(步骤|口诀)[：:]/.test(compact) ||
+    /(求导|求f|解f|令f|确定单调|候选|开口方向|中心要记牢)/.test(compact)
+  );
+}
+
+function isNumberedStepBodyText(text: string): boolean {
+  return /[①②③④⑤⑥⑦⑧⑨]/.test(text) || /(^|\s)(\d+)[.、]/.test(text);
+}
+
+function getLearningCardBottom(elements: SlideLikeElement[], headingTop: number): number {
+  const cards = elements
+    .filter(isBackgroundShapeLike)
+    .map(getElementBox)
+    .filter((box) => {
+      if (box.top < 100 || box.top > headingTop + 16) return false;
+      if (box.width < 150 || box.height < 60) return false;
+      return box.bottom <= headingTop + 24 || box.top < 360;
+    });
+
+  if (cards.length === 0) return 0;
+  return Math.max(...cards.map((box) => box.bottom));
+}
+
+function getCompanionBackgroundForText<T extends SlideLikeElement>(
+  text: T,
+  elements: T[],
+): T | undefined {
+  const textBox = getElementBox(text);
+  return elements.find((candidate) => {
+    if (!isBackgroundShapeLike(candidate)) return false;
+    const box = getElementBox(candidate);
+    const horizontalOverlap = Math.min(box.right, textBox.right) - Math.max(box.left, textBox.left);
+    const verticalOverlap = Math.min(box.bottom, textBox.bottom) - Math.max(box.top, textBox.top);
+    return (
+      horizontalOverlap >= textBox.width * 0.65 &&
+      verticalOverlap >= Math.min(textBox.height, box.height) * 0.45 &&
+      box.height <= textBox.height + 42
+    );
+  });
+}
+
+function setTextFontSizeIfNeeded<T extends SlideLikeElement>(element: T, minSize: number): T {
+  if (element.type !== 'text') return element;
+  const content = String((element as Record<string, unknown>).content ?? '');
+  const current = getFontSize(content, minSize);
+  if (current >= minSize) return element;
+  return {
+    ...element,
+    content: setFontSize(content, minSize),
+  };
+}
+
+function normalizeStepSections<T extends SlideLikeElement>(elements: T[]): T[] {
+  const headings = elements
+    .filter((element) => element.type === 'text')
+    .filter((element) => isStepHeadingText(getTextContent(element)))
+    .sort((a, b) => b.top - a.top);
+
+  if (headings.length === 0) return elements;
+
+  const heading = headings[0];
+  const headingBox = getElementBox(heading);
+  if (headingBox.top < 250) return elements;
+
+  const stepBodies = elements
+    .filter((element) => element.type === 'text' && element !== heading)
+    .filter((element) => isStepBodyText(getTextContent(element)))
+    .filter((element) => {
+      const box = getElementBox(element);
+      if (box.top < 300) return false;
+      if (!isNumberedStepBodyText(getTextContent(element)) && box.bottom < headingBox.bottom - 8) {
+        return false;
+      }
+      if (Math.abs(box.top - headingBox.top) <= 120) return true;
+      return box.bottom > headingBox.top - 80;
+    })
+    .sort((a, b) => a.left - b.left || a.top - b.top);
+
+  if (stepBodies.length === 0) return elements;
+
+  const headingHeight = 30;
+  const bodyGap = 8;
+  const safeBottom = CANVAS_HEIGHT - MARGIN;
+  const minBodyHeight = 36;
+  const latestHeadingTop = safeBottom - headingHeight - bodyGap - minBodyHeight;
+  const cardBottom = getLearningCardBottom(elements, headingBox.top);
+  const preferredHeadingTop = Math.max(headingBox.top, cardBottom + 10, 338);
+  const headingTop = clamp(Math.min(preferredHeadingTop, latestHeadingTop), 320, latestHeadingTop);
+  const bodyTop = headingTop + headingHeight + bodyGap;
+  const bodyHeight = Math.max(32, Math.min(56, safeBottom - bodyTop));
+  if (bodyHeight < 32) return elements;
+
+  const bodySet = new Set(stepBodies);
+  const rightCallout = stepBodies
+    .filter((element) => /口诀|Tip|Note|Remember/i.test(getTextContent(element)))
+    .sort((a, b) => getElementBox(b).width - getElementBox(a).width)[0];
+  const rightCalloutBg = rightCallout
+    ? getCompanionBackgroundForText(rightCallout, elements)
+    : undefined;
+  const hasRightCallout = !!rightCallout && !!rightCalloutBg;
+  const leftBodies = hasRightCallout
+    ? stepBodies.filter((element) => element !== rightCallout)
+    : stepBodies;
+
+  const targets = new Map<
+    string | undefined,
+    Partial<SlideLikeElement> & { content?: string; paragraphSpace?: number; lineHeight?: number }
+  >();
+
+  targets.set(heading.id, {
+    left: 68,
+    top: headingTop,
+    width: hasRightCallout ? 470 : 864,
+    height: headingHeight,
+    content: setFontSize(String((heading as Record<string, unknown>).content ?? ''), 24),
+    paragraphSpace: 0,
+    lineHeight: 1.18,
+  });
+
+  if (hasRightCallout && rightCallout && rightCalloutBg) {
+    const calloutLeft = 570;
+    const calloutWidth = 372;
+    const calloutTop = bodyTop - 8;
+    const calloutHeight = Math.min(Math.max(54, bodyHeight + 16), safeBottom - calloutTop);
+    const calloutTextTop = calloutTop + 8;
+    targets.set(rightCalloutBg.id, {
+      left: calloutLeft,
+      top: calloutTop,
+      width: calloutWidth,
+      height: calloutHeight,
+    });
+    targets.set(rightCallout.id, {
+      left: calloutLeft + 28,
+      top: calloutTextTop,
+      width: calloutWidth - 56,
+      height: Math.max(22, Math.min(36, calloutHeight - 16)),
+      content: setFontSize(String((rightCallout as Record<string, unknown>).content ?? ''), 18),
+      paragraphSpace: 0,
+      lineHeight: 1.28,
+    });
+  }
+
+  if (leftBodies.length === 1) {
+    const body = leftBodies[0];
+    targets.set(body.id, {
+      left: 68,
+      top: bodyTop,
+      width: hasRightCallout ? 470 : 864,
+      height: bodyHeight,
+      content: setFontSize(String((body as Record<string, unknown>).content ?? ''), 18),
+      paragraphSpace: 0,
+      lineHeight: 1.28,
+    });
+  } else if (leftBodies.length > 1) {
+    const availableWidth = hasRightCallout ? 470 : 864;
+    const gap = 18;
+    const columnCount = Math.min(leftBodies.length, 2);
+    const columnWidth = (availableWidth - gap * (columnCount - 1)) / columnCount;
+    leftBodies.forEach((body, index) => {
+      const column = index % columnCount;
+      const row = Math.floor(index / columnCount);
+      const rowHeight = Math.max(34, Math.min(42, bodyHeight - row * 40));
+      targets.set(body.id, {
+        left: 68 + column * (columnWidth + gap),
+        top: bodyTop + row * 40,
+        width: columnWidth,
+        height: rowHeight,
+        content: setFontSize(String((body as Record<string, unknown>).content ?? ''), 18),
+        paragraphSpace: 0,
+        lineHeight: 1.25,
+      });
+    });
+  }
+
+  if (targets.size <= 1) return elements;
+
+  const stepZoneTop = headingTop - 8;
+  const stepZone = toBox(60, stepZoneTop, 890, safeBottom - stepZoneTop);
+
+  return elements.map((element) => {
+    const target = targets.get(element.id);
+    if (target) {
+      return {
+        ...element,
+        ...target,
+      };
+    }
+
+    if (
+      isReadableElement(element) &&
+      !bodySet.has(element) &&
+      element !== heading &&
+      getElementBox(element).top < stepZone.top &&
+      intersectionArea(getElementBox(element), expandBox(stepZone, 4)) > 0
+    ) {
+      return fitElementAboveZone(element, stepZone);
+    }
+
+    if (element.type === 'text') {
+      return setTextFontSizeIfNeeded(element, 18);
+    }
+
+    return element;
+  }) as T[];
 }
 
 function isWideBottomCallout(element: SlideLikeElement): boolean {
@@ -1392,9 +1994,23 @@ function removeDecorationsCoveringReadableContent<T extends SlideLikeElement>(el
 
   return elements.filter((element) => {
     if (isMeaningfulDiagramLine(element)) return true;
+    if (isClassicTitleDivider(element, elements)) return true;
     if (!isThinDecorativeElement(element)) return true;
     const box = getElementBox(element);
     return !readableBoxes.some((readableBox) => intersectionArea(box, readableBox) > 0);
+  });
+}
+
+function isClassicTitleDivider(element: SlideLikeElement, elements: SlideLikeElement[]): boolean {
+  if (!isThinDecorativeElement(element)) return false;
+
+  const box = getElementBox(element);
+  if (box.width < 700 || box.height > 12 || box.top < 108 || box.top > 165) return false;
+
+  return elements.some((candidate) => {
+    if (candidate.type !== 'text' || candidate.top > 125) return false;
+    const titleBox = getElementBox(candidate);
+    return titleBox.width >= 600 && titleBox.bottom <= box.top + 12;
   });
 }
 

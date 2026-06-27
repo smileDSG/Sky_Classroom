@@ -3,16 +3,15 @@ import {
   generateClassroom,
   generateClassroomContinue,
   type GenerateClassroomInput,
+  type GenerateClassroomResult,
   type OutlineOnlyResult,
 } from '@/lib/server/classroom-generation';
 import {
   markClassroomGenerationJobFailedHybrid,
   markClassroomGenerationJobRunningHybrid,
   markClassroomGenerationJobSucceededHybrid,
-  markClassroomGenerationJobAwaitingReviewHybrid,
   markClassroomGenerationJobResumedHybrid,
   readClassroomGenerationJobHybrid,
-  savePhaseOneResultHybrid,
   updateClassroomGenerationJobProgressHybrid as updateClassroomGenerationJobProgress,
 } from '@/lib/server/classroom-job-store-hybrid';
 
@@ -57,10 +56,30 @@ export function runClassroomGenerationJob(
 
   const jobPromise = (async () => {
     try {
+      const initialJob = await readClassroomGenerationJobHybrid(jobId);
+      if (!initialJob) {
+        throw new Error(`Job not found: ${jobId}`);
+      }
+
+      if (
+        initialJob.status === 'awaiting_review' ||
+        initialJob.status === 'succeeded' ||
+        initialJob.status === 'failed' ||
+        initialJob.status === 'cancelled'
+      ) {
+        log.info(
+          `Skipping classroom generation for ${jobId}; job is already ${initialJob.status}.`,
+        );
+        return;
+      }
+
+      // If we reach here, the job is running/initializing and there is no
+      // active runner in this process (runningJobs check above already
+      // guarded against duplicates). Continue execution so HMR/restart can
+      // resume the job.
       await markClassroomGenerationJobRunningHybrid(jobId);
 
-      const job = await readClassroomGenerationJobHybrid(jobId);
-      const modelConfig = job?.modelConfig;
+      const modelConfig = initialJob.modelConfig;
 
       // Search classroom KB for similar templates
       let kbContext = '';
@@ -113,33 +132,39 @@ export function runClassroomGenerationJob(
 
       const result = (await generateClassroom(enrichedInput, {
         baseUrl,
-        phase: 'outline_only',
         modelConfig,
         onProgress: async (progress) => {
           await assertNotCancelled(jobId);
           await updateClassroomGenerationJobProgress(jobId, progress);
         },
-      })) as OutlineOnlyResult;
+      })) as GenerateClassroomResult;
 
-      // Persist full Phase 1 state for Phase 2 continuation
-      await savePhaseOneResultHybrid(jobId, result as unknown as Record<string, unknown>);
+      await markClassroomGenerationJobSucceededHybrid(jobId, result);
 
-      await markClassroomGenerationJobAwaitingReviewHybrid(jobId, result.outlines, {
-        languageDirective: result.languageDirective,
-        totalScenes: result.outlines.length,
-      });
-      // Set topicSummary separately
-      if (result.topicSummary) {
-        const { updateClassroomGenerationJobHybrid } =
-          await import('@/lib/server/classroom-job-store-hybrid');
-        await updateClassroomGenerationJobHybrid(jobId, { topicSummary: result.topicSummary });
+      // Save to classroom knowledge base (fire and forget)
+      try {
+        const { write } = await import('@/lib/knowledge-base/kb-manager');
+        const kbContent = JSON.stringify({
+          requirement: initialJob.inputSummary?.requirementPreview || '',
+          sceneCount: result.scenesCount || 0,
+        });
+        write({
+          kbType: 'classroom',
+          title: `课堂: ${(initialJob.inputSummary?.requirementPreview || '未知主题').slice(0, 60)}`,
+          content: kbContent,
+          tags: ['classroom'],
+          sourceId: jobId,
+          verified: true,
+        }).catch((e) => log.warn('KB save failed:', e));
+      } catch {
+        // ignore KB save errors
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (message === 'Job was cancelled') {
-        log.info(`Classroom outline job ${jobId} was cancelled.`);
+        log.info(`Classroom generation job ${jobId} was cancelled.`);
       } else {
-        log.error(`Classroom outline job ${jobId} failed:`, error);
+        log.error(`Classroom generation job ${jobId} failed:`, error);
         try {
           await markClassroomGenerationJobFailedHybrid(jobId, message);
         } catch (markFailedError) {
@@ -148,6 +173,65 @@ export function runClassroomGenerationJob(
       }
     } finally {
       runningJobs.delete(jobId);
+    }
+  })();
+
+  runningJobs.set(jobId, jobPromise);
+  return jobPromise;
+}
+
+/**
+ * Resume a classroom generation job after a server restart or HMR.
+ * Uses the in-memory runningJobs map for idempotency.
+ */
+export function resumeClassroomGenerationJob(jobId: string, baseUrl: string): Promise<void> {
+  const existing = runningJobs.get(jobId);
+  if (existing) return existing;
+
+  const jobPromise = (async () => {
+    try {
+      const job = await readClassroomGenerationJobHybrid(jobId);
+      if (!job) {
+        log.warn(`Cannot resume classroom job ${jobId}: job not found`);
+        return;
+      }
+
+      // Terminal or review states don't need a runner.
+      if (job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled') {
+        return;
+      }
+
+      // If the job is awaiting review, only resume after explicit approval.
+      if (job.status === 'awaiting_review') {
+        return;
+      }
+
+      if (!job.input) {
+        log.error(`Cannot resume classroom job ${jobId}: persisted input is missing`);
+        await markClassroomGenerationJobFailedHybrid(jobId, '任务输入数据丢失，无法恢复生成');
+        return;
+      }
+
+      // Phase 1 already produced outlines and the job was interrupted before
+      // scene generation. Resume from the saved phase-one result.
+      if (job.phaseOneResult) {
+        log.info(`Resuming classroom continue job ${jobId}`);
+        await runClassroomContinueJob(jobId, baseUrl);
+        return;
+      }
+
+      // Otherwise resume the full pipeline from the beginning. The runner
+      // itself will skip if the job is already terminal/running.
+      log.info(`Resuming classroom generation job ${jobId}`);
+      await runClassroomGenerationJob(jobId, job.input, baseUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      log.error(`Failed to resume classroom generation job ${jobId}:`, error);
+      try {
+        await markClassroomGenerationJobFailedHybrid(jobId, message);
+      } catch (markFailedError) {
+        log.error(`Failed to persist failed status for resumed job ${jobId}:`, markFailedError);
+      }
     }
   })();
 

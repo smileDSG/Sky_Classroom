@@ -42,7 +42,11 @@ function normalizeKbType(value: unknown): KBType {
 }
 
 function normalizeTags(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map(String).map((tag) => tag.trim()).filter(Boolean);
+  if (Array.isArray(value))
+    return value
+      .map(String)
+      .map((tag) => tag.trim())
+      .filter(Boolean);
   if (typeof value === 'string') {
     return value
       .split(/[,，\s]+/)
@@ -101,7 +105,10 @@ async function tryPersistentSearch(query: string, kbType?: KBType): Promise<KBSe
         search({ kbType: type, query, topK: 5, threshold: 0.01 }).catch(() => []),
       ),
     );
-    return nested.flat().sort((a, b) => b.score - a.score).slice(0, 8);
+    return nested
+      .flat()
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
   } catch (err) {
     log.warn('Persistent KB search unavailable:', err);
     return [];

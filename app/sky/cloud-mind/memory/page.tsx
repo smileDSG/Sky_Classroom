@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
@@ -30,19 +30,20 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { MemoryCardDeck } from '@/lib/agents/cloud-mind/memory-cards-agent';
 import { MEMORY_COUNT_OPTIONS } from '@/lib/student/profile-config';
-import type { StudentProfile } from '@/lib/student/profile-types';
 import {
   buildMemoryCardId,
   buildMemoryDeckId,
   MEMORY_REVIEW_LABELS,
   scheduleMemoryReview,
 } from '@/lib/cloud-mind/spaced-repetition';
-import type { MemoryReviewRating } from '@/lib/cloud-mind/types';
+import type { MemoryReviewRating, PersonalizationContext } from '@/lib/cloud-mind/types';
 
 type CardReviewStatus = MemoryReviewRating;
 
 export default function CloudMindMemoryPage() {
   const searchParams = useSearchParams();
+  const queryContent = searchParams.get('content');
+  const queryTopic = searchParams.get('topic');
   const [content, setContent] = useState('');
   const [topic, setTopic] = useState('');
   const [cardCount, setCardCount] = useState(12);
@@ -56,8 +57,11 @@ export default function CloudMindMemoryPage() {
   const [showMistakePicker, setShowMistakePicker] = useState(false);
   const [studiedCards, setStudiedCards] = useState<Set<number>>(new Set());
   const [cardReviewStatus, setCardReviewStatus] = useState<Record<number, CardReviewStatus>>({});
-  const [profile, setProfile] = useState<StudentProfile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
+  const [recommendedWeakPoints, setRecommendedWeakPoints] = useState<string[]>([]);
+  const [contextLoading, setContextLoading] = useState(false);
+  const [personalizationNotice, setPersonalizationNotice] = useState<string | null>(null);
+  const userEditedTopicRef = useRef(false);
+  const userEditedContentRef = useRef(false);
   const router = useRouter();
   const { setForceDark } = useTheme();
 
@@ -68,46 +72,67 @@ export default function CloudMindMemoryPage() {
 
   // Pre-fill from URL query params
   useEffect(() => {
-    const qContent = searchParams.get('content');
-    const qTopic = searchParams.get('topic');
-    if (qContent) setContent(qContent);
-    if (qTopic) setTopic(qTopic);
-  }, [searchParams]);
+    if (queryContent) {
+      userEditedContentRef.current = true;
+      setContent(queryContent);
+    }
+    if (queryTopic) {
+      userEditedTopicRef.current = true;
+      setTopic(queryTopic);
+    }
+  }, [queryContent, queryTopic]);
 
-  // Load student profile for weak-point recommendations
+  // Load CloudMind personalization context for weak-point recommendations.
   useEffect(() => {
     let cancelled = false;
-    setProfileLoading(true);
-    fetch('/api/student/profile')
+    const hasUrlParams = queryContent || queryTopic;
+    setContextLoading(true);
+    fetch('/api/sky/cloud-mind/personalization-context')
       .then((res) => res.json())
-      .then((json) => {
+      .then((json: { success?: boolean; data?: PersonalizationContext }) => {
         if (cancelled) return;
-        if (json.success && json.data?.hasProfile) {
-          setProfile({
-            userId: '',
-            masteryBySubject: {} as Record<string, number>,
-            masteryByKnowledge: json.data.masteryByKnowledge ?? {},
-            weakPoints: json.data.weakPoints ?? [],
-            strongPoints: Object.entries(json.data.masteryByKnowledge ?? {})
-              .filter(([, m]) => (m as number) > 80)
-              .map(([k]) => k),
-            errorPatterns: json.data.errorPatterns ?? [],
-            totalQuestions: 0,
-            totalCorrect: 0,
-            lastUpdated: new Date(),
-          });
+        const context = json.data;
+        if (!json.success || !context) return;
+
+        const weakPoints = context.weakPoints.map((item) => item.knowledgePoint);
+        setRecommendedWeakPoints(weakPoints);
+        if (hasUrlParams) return;
+
+        const dueReview = context.dueReviews[0];
+        const recommendedTopic =
+          dueReview?.knowledgePoints[0] ??
+          context.weakPoints[0]?.knowledgePoint ??
+          context.learningPath?.next;
+        if (recommendedTopic && !userEditedTopicRef.current) {
+          setTopic(recommendedTopic);
+        }
+        if (!userEditedContentRef.current) {
+          if (dueReview) {
+            setContent(
+              `到期复习：${dueReview.title}\n知识点：${dueReview.knowledgePoints.join('、') || recommendedTopic || '综合复习'}\n请生成概念卡、易错卡和例题卡。`,
+            );
+          } else if (recommendedTopic) {
+            setContent(`围绕「${recommendedTopic}」生成概念卡、例题卡和易错卡。`);
+          }
+        }
+        if (recommendedTopic) {
+          setPersonalizationNotice(
+            `已根据天梯工坊为你预设：${recommendedTopic} / ${
+              dueReview ? '到期复习优先' : '薄弱点巩固'
+            }`,
+          );
         }
       })
       .catch(() => {
         /* ignore */
       })
       .finally(() => {
-        if (!cancelled) setProfileLoading(false);
+        if (!cancelled) setContextLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [queryContent, queryTopic]);
 
   const causeLabels: Record<MistakeCause, string> = {
     'concept-unclear': '概念不清',
@@ -128,6 +153,8 @@ export default function CloudMindMemoryPage() {
   };
 
   const handleSelectMistake = (m: MistakeRecord) => {
+    userEditedTopicRef.current = true;
+    userEditedContentRef.current = true;
     setTopic(m.knowledgePoints.join('、'));
     setContent(
       `【题目】${m.problem}\n\n【我的答案】${m.userAnswer}\n\n【正确答案】${m.correctAnswer}\n\n【错因】${causeLabels[m.cause]}\n\n【知识点】${m.knowledgePoints.join('、')}`,
@@ -462,7 +489,10 @@ export default function CloudMindMemoryPage() {
                 <input
                   type="text"
                   value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
+                  onChange={(e) => {
+                    userEditedTopicRef.current = true;
+                    setTopic(e.target.value);
+                  }}
                   placeholder="例如：三角函数公式、化学元素周期表..."
                   className="w-full bg-transparent border-0 border-b px-0 py-2 text-sm outline-none transition-all"
                   style={{
@@ -527,6 +557,19 @@ export default function CloudMindMemoryPage() {
               </label>
 
               {/* Mistake import — starlight dashed channel */}
+              {personalizationNotice && (
+                <div
+                  className="mb-4 rounded-xl px-4 py-3 text-sm"
+                  style={{
+                    background: 'rgba(52, 211, 153, 0.08)',
+                    border: '1px solid rgba(52, 211, 153, 0.18)',
+                    color: '#A7F3D0',
+                  }}
+                >
+                  {personalizationNotice}
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={handleImportFromMistakes}
@@ -553,10 +596,10 @@ export default function CloudMindMemoryPage() {
               </button>
 
               {/* Auto-generate from weak points */}
-              {profile && profile.weakPoints.length > 0 && !content.trim() && (
+              {recommendedWeakPoints.length > 0 && !content.trim() && (
                 <button
                   onClick={() => handleGenerate(true)}
-                  disabled={loading || profileLoading}
+                  disabled={loading || contextLoading}
                   className="w-full mb-4 flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all group"
                   style={{
                     border: '1px dashed var(--memory-primary)',
@@ -571,12 +614,32 @@ export default function CloudMindMemoryPage() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-medium" style={{ color: 'var(--memory-primary)' }}>
+                      Generate from weak points
+                    </div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--memory-muted)' }}>
+                      Recommend: {recommendedWeakPoints.slice(0, 3).join(', ')}
+                    </div>
+                  </div>
+                  {/*
+                  {/*
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium" style={{ color: 'var(--memory-primary)' }}>
                       基于薄弱点一键生成
                     </div>
                     <div className="text-xs mt-0.5" style={{ color: 'var(--memory-muted)' }}>
-                      推荐：{profile.weakPoints.slice(0, 3).join('、')}
+                      推荐：{recommendedWeakPoints.slice(0, 3).join('、')}
                     </div>
                   </div>
+                  {/*
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium" style={{ color: 'var(--memory-primary)' }}>
+                      基于薄弱点一键生成
+                    </div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--memory-muted)' }}>
+                      推荐：{recommendedWeakPoints.slice(0, 3).join('、')}
+                    </div>
+                  </div>
+                  */}
                 </button>
               )}
 
@@ -590,7 +653,10 @@ export default function CloudMindMemoryPage() {
 
               <textarea
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) => {
+                  userEditedContentRef.current = true;
+                  setContent(e.target.value);
+                }}
                 placeholder="粘贴需要记忆的知识点、课文内容、公式定理等…AI 会自动提炼出关键碎片"
                 rows={6}
                 className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all resize-y"
@@ -707,9 +773,10 @@ export default function CloudMindMemoryPage() {
                             className="h-2 w-2 rounded-full transition-all duration-500"
                             style={{
                               background:
-                                cardReviewStatus[i] === 'mastered'
+                                cardReviewStatus[i] === 'remembered'
                                   ? 'var(--memory-collected)'
-                                  : cardReviewStatus[i] === 'review'
+                                  : cardReviewStatus[i] === 'fuzzy' ||
+                                      cardReviewStatus[i] === 'forgotten'
                                     ? 'var(--memory-warm)'
                                     : i === currentCard
                                       ? 'var(--memory-primary)'
@@ -727,10 +794,9 @@ export default function CloudMindMemoryPage() {
                             <div
                               className="h-px w-4 transition-all duration-500"
                               style={{
-                                background:
-                                  cardReviewStatus[i]
-                                    ? 'var(--memory-primary)'
-                                    : 'rgba(255,255,255,0.1)',
+                                background: cardReviewStatus[i]
+                                  ? 'var(--memory-primary)'
+                                  : 'rgba(255,255,255,0.1)',
                                 boxShadow: cardReviewStatus[i]
                                   ? '0 0 4px var(--memory-glow)'
                                   : 'none',

@@ -44,7 +44,7 @@ vi.mock('@/lib/generation/outline-generator', async () => {
   };
 });
 
-vi.mock('@/lib/generation/scene-generator', () => sceneGeneratorMocks);
+vi.mock('@/lib/generation/openmaic-main-scene-generator', () => sceneGeneratorMocks);
 
 vi.mock('@/lib/server/classroom-storage', () => ({
   persistClassroom: vi.fn(async ({ id }: { id: string }) => ({
@@ -149,13 +149,19 @@ describe('classroom generation progress', () => {
     );
   });
 
-  test('reports second-stage progress before the first scene is created', async () => {
+  test('reports per-scene progress and creates scenes through OpenMAIC scene generation', async () => {
     const onProgress = vi.fn((_progress: ClassroomGenerationProgress) => {});
 
-    await generateClassroomContinue(savedOutlineResult(), {
+    const result = await generateClassroomContinue(savedOutlineResult(), {
       baseUrl: 'http://localhost',
       onProgress,
     });
+
+    expect(result.scenesCount).toBe(2);
+    expect(result.scenes.map((scene) => scene.type)).toEqual(['slide', 'quiz']);
+    expect(sceneGeneratorMocks.generateSceneContent).toHaveBeenCalledTimes(2);
+    expect(sceneGeneratorMocks.generateSceneActions).toHaveBeenCalledTimes(2);
+    expect(sceneGeneratorMocks.createSceneWithActions).toHaveBeenCalledTimes(2);
 
     const firstSceneCreateOrder =
       sceneGeneratorMocks.createSceneWithActions.mock.invocationCallOrder[0];
@@ -166,8 +172,58 @@ describe('classroom generation progress', () => {
       }))
       .filter((entry) => entry.order < firstSceneCreateOrder)
       .map((entry) => entry.progress.progress);
+    const reportedProgress = onProgress.mock.calls.map(([progress]) => progress.progress);
 
     expect(progressBeforeFirstScene).toContain(31);
     expect(progressBeforeFirstScene.some((progress) => progress > 31)).toBe(true);
+    expect(reportedProgress).toContain(31);
+    expect(reportedProgress).toContain(55);
+    expect(reportedProgress).toContain(100);
+  });
+
+  test('retries non-slide content as an OpenMAIC slide when specialized generation fails', async () => {
+    sceneGeneratorMocks.generateSceneContent.mockImplementation(async (outline: SceneOutline) => {
+      if (outline.id === 'scene-2' && outline.type === 'quiz') return null;
+      return outline.type === 'quiz' ? quizContent : slideContent;
+    });
+
+    const result = await generateClassroomContinue(savedOutlineResult(), {
+      baseUrl: 'http://localhost',
+    });
+
+    expect(result.scenesCount).toBe(2);
+    expect(result.scenes.map((scene) => scene.type)).toEqual(['slide', 'slide']);
+    expect(sceneGeneratorMocks.generateSceneContent).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'scene-2', type: 'quiz' }),
+      expect.any(Function),
+      expect.any(Object),
+    );
+    expect(sceneGeneratorMocks.generateSceneContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'scene-2',
+        type: 'slide',
+        quizConfig: undefined,
+      }),
+      expect.any(Function),
+      expect.any(Object),
+    );
+    expect(sceneGeneratorMocks.generateSceneActions).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: 'scene-2', type: 'slide' }),
+      slideContent,
+      expect.any(Function),
+      expect.any(Object),
+    );
+  });
+
+  test('fails the classroom job when OpenMAIC scene content generation returns no content', async () => {
+    sceneGeneratorMocks.generateSceneContent.mockResolvedValue(null);
+
+    await expect(
+      generateClassroomContinue(savedOutlineResult(), {
+        baseUrl: 'http://localhost',
+      }),
+    ).rejects.toThrow('OpenMAIC classroom content generation failed for 2 scene(s): Intro, Check');
+
+    expect(sceneGeneratorMocks.createSceneWithActions).not.toHaveBeenCalled();
   });
 });
