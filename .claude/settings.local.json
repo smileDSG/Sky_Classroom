@@ -278,7 +278,15 @@
       "Bash(xargs kill -9)",
       "Bash(Get-Content \"C:\\\\Users\\\\lenovo\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\E--01-Work-sky-classroom\\\\9442920a-cf46-477b-9729-bfa92fb30901\\\\tasks\\\\bw3ynbkbi.output\")",
       "Bash(Select-Object Name, Mode)",
-      "Bash(kill 33092)"
+      "Bash(kill 33092)",
+      "Bash(claude --version)",
+      "Bash(npx @anthropic-ai/claude-code --version)",
+      "Bash(npm view *)",
+      "Bash(npx prettier *)",
+      "Bash(git log *)",
+      "Skill(code-review)",
+      "Bash(git rev-list *)",
+      "Bash(echo \"--- exit: $? ---\")"
     ]
   }
 }

@@ -51,16 +51,13 @@ function getTopCause(mistakes: MistakeRecord[]): string {
   return CAUSE_LABELS[top] ?? '综合';
 }
 
-export function generateSuggestions(
-  mistakes: MistakeRecord[],
-  stats: QuickStats,
-): Suggestion[] {
+export function generateSuggestions(mistakes: MistakeRecord[], stats: QuickStats): Suggestion[] {
   if (mistakes.length === 0) {
     return [
       {
         icon: '📸',
         text: '还没有学习记录，拍照搜题开始你的第一次练习吧！',
-        action: { label: '去搜题', href: '/sky/solve' },
+        action: { label: '去搜题', href: '/sky/cloud-mind/solve' },
       },
     ];
   }
@@ -74,9 +71,7 @@ export function generateSuggestions(
     .sort((a, b) => a.mastery - b.mastery)[0];
 
   if (weakest) {
-    const topCause = getTopCause(
-      mistakes.filter((m) => m.knowledgePoints.includes(weakest.name)),
-    );
+    const topCause = getTopCause(mistakes.filter((m) => m.knowledgePoints.includes(weakest.name)));
     suggestions.push({
       icon: '📌',
       text: `你的"${weakest.name}"掌握度仅 ${weakest.mastery}%，错因集中在${topCause}，建议今天重点复习`,
@@ -101,11 +96,8 @@ export function generateSuggestions(
   }
 
   // ── 3. Low mastery outlier ────────────────────────────────────
-  const avgMastery =
-    graph.nodes.reduce((s, n) => s + n.mastery, 0) / graph.nodes.length;
-  const outliers = graph.nodes.filter(
-    (n) => n.mastery < avgMastery * 0.6 && n !== weakest,
-  );
+  const avgMastery = graph.nodes.reduce((s, n) => s + n.mastery, 0) / graph.nodes.length;
+  const outliers = graph.nodes.filter((n) => n.mastery < avgMastery * 0.6 && n !== weakest);
   if (outliers.length > 0) {
     const target = outliers[0];
     suggestions.push({
@@ -120,9 +112,7 @@ export function generateSuggestions(
 
   // ── 4. Due for review ─────────────────────────────────────────
   const now = Date.now();
-  const dueToday = mistakes.filter(
-    (m) => !m.reviewed && (!m.nextReview || m.nextReview <= now),
-  );
+  const dueToday = mistakes.filter((m) => !m.reviewed && (!m.nextReview || m.nextReview <= now));
   if (dueToday.length > 0) {
     suggestions.push({
       icon: '⏰',
@@ -133,9 +123,7 @@ export function generateSuggestions(
 
   // ── 5. Recent mistake surge ───────────────────────────────────
   const oneDayAgo = now - 86400000;
-  const todayMistakes = mistakes.filter(
-    (m) => new Date(m.solvedAt).getTime() > oneDayAgo,
-  );
+  const todayMistakes = mistakes.filter((m) => new Date(m.solvedAt).getTime() > oneDayAgo);
   if (todayMistakes.length >= 5) {
     suggestions.push({
       icon: '💡',

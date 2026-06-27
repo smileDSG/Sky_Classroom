@@ -11,7 +11,7 @@ import type { NextResponse } from 'next/server';
 
 /**
  * Get the current authenticated user from the request cookies.
- * Returns null if not authenticated.
+ * Returns null if not authenticated or the account is suspended.
  */
 export async function getCurrentUser(): Promise<UserEntry | null> {
   const cookieStore = await cookies();
@@ -22,7 +22,12 @@ export async function getCurrentUser(): Promise<UserEntry | null> {
   if (!payload) return null;
 
   const dao = await createUserDAO();
-  return dao.getById(payload.sub);
+  const user = await dao.getById(payload.sub);
+  if (!user) return null;
+
+  // A suspended account must not remain usable via an already-issued token.
+  if (user.status === 'suspended') return null;
+  return user;
 }
 
 /**
@@ -34,6 +39,19 @@ export async function requireAuth(): Promise<{ user: UserEntry } | { error: Next
     return { error: apiError('UNAUTHORIZED', 401, 'Not authenticated') };
   }
   return { user };
+}
+
+/**
+ * Require an admin user. Returns the user or an error response.
+ * Use this to guard admin-only routes — login alone is not sufficient.
+ */
+export async function requireAdmin(): Promise<{ user: UserEntry } | { error: NextResponse }> {
+  const result = await requireAuth();
+  if ('error' in result) return result;
+  if (result.user.role !== 'admin') {
+    return { error: apiError('UNAUTHORIZED', 401, 'Admin privileges required') };
+  }
+  return result;
 }
 
 /**

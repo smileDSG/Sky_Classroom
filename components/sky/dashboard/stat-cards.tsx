@@ -214,21 +214,21 @@ const actions = [
   {
     icon: Search,
     label: '拍照搜题',
-    href: '/sky/solve',
+    href: '/sky/cloud-mind/solve',
     color: 'text-violet-400',
     bg: 'bg-violet-500/10 hover:bg-violet-500/20',
   },
   {
     icon: BookOpen,
     label: '幻灯片讲解',
-    href: '/sky/slides',
+    href: '/sky/cloud-mind/slides',
     color: 'text-cyan-400',
     bg: 'bg-cyan-500/10 hover:bg-cyan-500/20',
   },
   {
     icon: BarChart3,
     label: '学习数据',
-    href: '/sky/learning',
+    href: '/sky/learning?tab=stats',
     color: 'text-emerald-400',
     bg: 'bg-emerald-500/10 hover:bg-emerald-500/20',
   },
@@ -367,11 +367,15 @@ export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
                       <div className="flex gap-3">
                         <div>
                           <span className="text-slate-400">我的答案：</span>
-                          <span className="text-red-500 dark:text-red-400">{m.userAnswer || '—'}</span>
+                          <span className="text-red-500 dark:text-red-400">
+                            {m.userAnswer || '—'}
+                          </span>
                         </div>
                         <div>
                           <span className="text-slate-400">正确答案：</span>
-                          <span className="text-emerald-600 dark:text-emerald-400">{m.correctAnswer || '—'}</span>
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            {m.correctAnswer || '—'}
+                          </span>
                         </div>
                       </div>
                       <div className="flex gap-2 pt-0.5">

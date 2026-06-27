@@ -78,7 +78,9 @@ export function StudyGroupPanel({ jobId }: StudyGroupPanelProps) {
   }, [messages]);
 
   // Fetch study group setup
-  const fetchSetup = useCallback(async () => {
+  // Note: apiSuccess spreads fields at the top level, so response is
+  // { success: true, sessionId, context, agents, discussionTopic, discussionPrompt }
+  const fetchSetup = useCallback(async (): Promise<StudyGroupSetup> => {
     const res = await fetch(`/api/sky/teaching/${jobId}/study-group`, {
       method: 'POST',
       credentials: 'include',
@@ -87,8 +89,19 @@ export function StudyGroupPanel({ jobId }: StudyGroupPanelProps) {
     if (!data.success) {
       throw new Error(data.error || '获取学习小组配置失败');
     }
-    setSetup(data.data);
-    setAgents(data.data.agents);
+    const setupData: StudyGroupSetup = {
+      sessionId: data.sessionId,
+      context: data.context,
+      agents: data.agents,
+      discussionTopic: data.discussionTopic,
+      discussionPrompt: data.discussionPrompt,
+    };
+    if (!setupData.agents || setupData.agents.length === 0) {
+      throw new Error('学习小组配置不完整');
+    }
+    setSetup(setupData);
+    setAgents(setupData.agents);
+    return setupData;
   }, [jobId]);
 
   // Parse SSE stream and accumulate events
@@ -140,11 +153,11 @@ export function StudyGroupPanel({ jobId }: StudyGroupPanelProps) {
 
   // Run one discussion turn
   const runTurn = useCallback(
-    async (userContent?: string): Promise<boolean> => {
-      if (!setup || abortRef.current?.signal.aborted) return false;
+    async (activeSetup: StudyGroupSetup, userContent?: string): Promise<boolean> => {
+      if (abortRef.current?.signal.aborted) return false;
 
       const mc = getCurrentModelConfig();
-      const agentIds = setup.agents.map((a) => a.id);
+      const agentIds = activeSetup.agents.map((a) => a.id);
 
       // Build messages
       const uiMessages = messages.map((m) => ({
@@ -182,10 +195,12 @@ export function StudyGroupPanel({ jobId }: StudyGroupPanelProps) {
           config: {
             agentIds,
             sessionType: 'discussion',
-            discussionTopic: setup.discussionTopic,
+            discussionTopic: activeSetup.discussionTopic,
             discussionPrompt:
-              setup.discussionPrompt + formatMemoryForPrompt(memoryRef.current),
-            agentConfigs: setup.agents.map(({ createdAt: _c, updatedAt: _u, isDefault: _d, ...rest }) => rest),
+              activeSetup.discussionPrompt + formatMemoryForPrompt(memoryRef.current),
+            agentConfigs: activeSetup.agents.map(
+              ({ createdAt: _c, updatedAt: _u, isDefault: _d, ...rest }) => rest,
+            ),
             triggerAgentId: userContent ? undefined : agentIds[0],
           },
           directorState: directorStateRef.current,
@@ -278,19 +293,19 @@ export function StudyGroupPanel({ jobId }: StudyGroupPanelProps) {
         totalAgents > 0 && !cueUser && turnCountRef.current < MAX_DISCUSSION_TURNS;
       return shouldContinue;
     },
-    [setup, messages],
+    [messages],
   );
 
   // Run discussion loop
   const runDiscussionLoop = useCallback(
-    async (userContent?: string) => {
+    async (activeSetup: StudyGroupSetup, userContent?: string) => {
       if (isStreaming) return;
       setIsStreaming(true);
 
       try {
-        let shouldContinue = await runTurn(userContent);
+        let shouldContinue = await runTurn(activeSetup, userContent);
         while (shouldContinue && !abortRef.current?.signal.aborted) {
-          shouldContinue = await runTurn();
+          shouldContinue = await runTurn(activeSetup);
         }
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') {
@@ -307,10 +322,11 @@ export function StudyGroupPanel({ jobId }: StudyGroupPanelProps) {
 
   // Start discussion
   const handleStart = useCallback(async () => {
-    if (!setup) {
+    let activeSetup = setup;
+    if (!activeSetup) {
       setIsLoading(true);
       try {
-        await fetchSetup();
+        activeSetup = await fetchSetup();
       } catch (err) {
         const msg = err instanceof Error ? err.message : '初始化失败';
         toast.error(msg);
@@ -329,13 +345,13 @@ export function StudyGroupPanel({ jobId }: StudyGroupPanelProps) {
     setStarted(true);
 
     // Start the loop
-    runDiscussionLoop();
+    runDiscussionLoop(activeSetup);
   }, [setup, fetchSetup, runDiscussionLoop]);
 
   // Send user message
   const handleSend = useCallback(async () => {
     const trimmed = input.trim();
-    if (!trimmed || isStreaming) return;
+    if (!trimmed || isStreaming || !setup) return;
 
     // Add user message
     const userMsg: StudyGroupMessage = {
@@ -351,8 +367,8 @@ export function StudyGroupPanel({ jobId }: StudyGroupPanelProps) {
 
     // Continue discussion with user input
     abortRef.current = new AbortController();
-    runDiscussionLoop(trimmed);
-  }, [input, isStreaming, runDiscussionLoop]);
+    runDiscussionLoop(setup, trimmed);
+  }, [input, isStreaming, setup, runDiscussionLoop]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -413,13 +429,20 @@ export function StudyGroupPanel({ jobId }: StudyGroupPanelProps) {
                   <X className="h-3.5 w-3.5" />
                 </Button>
               )}
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setIsOpen(false)}
+              >
                 <X className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
           {setup && (
-            <p className="text-xs text-muted-foreground mt-1 truncate">讨论主题：{setup.discussionTopic}</p>
+            <p className="text-xs text-muted-foreground mt-1 truncate">
+              讨论主题：{setup.discussionTopic}
+            </p>
           )}
         </CardHeader>
 
@@ -459,13 +482,20 @@ export function StudyGroupPanel({ jobId }: StudyGroupPanelProps) {
             </div>
           ) : (
             messages.map((msg, idx) => (
-              <div key={msg.id + idx} className={cn('flex gap-2', msg.role === 'user' && 'flex-row-reverse')}>
+              <div
+                key={msg.id + idx}
+                className={cn('flex gap-2', msg.role === 'user' && 'flex-row-reverse')}
+              >
                 <div
                   className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden"
                   style={{ backgroundColor: msg.agentColor }}
                 >
                   {msg.agentAvatar ? (
-                    <img src={msg.agentAvatar} alt={msg.agentName} className="w-full h-full object-cover" />
+                    <img
+                      src={msg.agentAvatar}
+                      alt={msg.agentName}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     msg.agentName[0]
                   )}

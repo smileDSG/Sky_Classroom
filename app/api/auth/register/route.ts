@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, signRefreshToken, hashPassword } from '@/lib/server/auth';
+import { ACCESS_COOKIE_MAX_AGE, REFRESH_COOKIE_MAX_AGE } from '@/lib/server/auth/jwt';
 import { createUserDAO } from '@/lib/storage/dao/users';
 import { generateVerifyToken } from '@/lib/server/auth/tokens';
 import { sendVerificationEmail } from '@/lib/server/email';
@@ -99,8 +100,8 @@ export async function POST(request: Request) {
         status: 201,
         headers: {
           'Set-Cookie': [
-            `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${60 * 60}`,
-            `refresh_token=${refreshToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`,
+            `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${ACCESS_COOKIE_MAX_AGE}`,
+            `refresh_token=${refreshToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${REFRESH_COOKIE_MAX_AGE}`,
           ].join(', '),
         },
       },

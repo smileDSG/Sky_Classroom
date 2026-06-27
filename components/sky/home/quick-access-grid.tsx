@@ -12,7 +12,7 @@ const quickAccessItems = [
     color: 'text-sky-500',
     bg: 'bg-sky-500/10 hover:bg-sky-500/20',
     border: 'border-sky-200/50 dark:border-sky-800/30',
-    href: '/sky/slides',
+    href: '/sky/cloud-mind/slides',
   },
   {
     icon: Search,
@@ -21,7 +21,7 @@ const quickAccessItems = [
     color: 'text-violet-500',
     bg: 'bg-violet-500/10 hover:bg-violet-500/20',
     border: 'border-violet-200/50 dark:border-violet-800/30',
-    href: '/sky/solve',
+    href: '/sky/cloud-mind/solve',
   },
   {
     icon: Brain,

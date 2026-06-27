@@ -27,6 +27,10 @@ export async function GET(request: NextRequest) {
       return apiError('UNAUTHORIZED', 401, 'User not found');
     }
 
+    if (user.status === 'suspended') {
+      return apiError('ACCOUNT_SUSPENDED', 403, 'Account is suspended');
+    }
+
     return apiSuccess({
       user: {
         id: user.id,

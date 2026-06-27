@@ -14,7 +14,9 @@ interface AbilityRadarProps {
   data: RadarDimension[];
 }
 
-const CX = 140, CY = 130, R = 90; // center x, center y, max radius
+const CX = 140,
+  CY = 130,
+  R = 90; // center x, center y, max radius
 const LEVELS = 4;
 
 /** Generate polygon points for n vertices at given radius ratio */
@@ -36,6 +38,26 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
   const n = data.length;
   const allZero = data.every((d) => d.value === 0);
 
+  const gridLevels = useMemo(
+    () =>
+      Array.from({ length: LEVELS }).map((_, i) => ({
+        ratio: (i + 1) / LEVELS,
+        points: polygonPoints(n, (i + 1) / LEVELS),
+      })),
+    [n],
+  );
+
+  const valuePoints = useMemo(
+    () =>
+      data.map((d, i) => ({
+        x: CX + R * (d.value / 100) * Math.cos((Math.PI * 2 * i) / n - Math.PI / 2),
+        y: CY + R * (d.value / 100) * Math.sin((Math.PI * 2 * i) / n - Math.PI / 2),
+      })),
+    [data, n],
+  );
+
+  const labelPoints = useMemo(() => polygonPoints(n, 1.18), [n]);
+
   if (allZero) {
     return (
       <motion.div
@@ -55,12 +77,14 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
               <Target className="h-6 w-6 text-emerald-500" />
             </div>
           </div>
-          <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">能力雷达待激活</h4>
+          <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+            能力雷达待激活
+          </h4>
           <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center max-w-[160px] leading-relaxed">
             完成更多练习后，这里会展示知识能力分布
           </p>
           <Link
-            href="/sky/solve"
+            href="/sky/cloud-mind/solve"
             className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-emerald-500/8 hover:bg-emerald-500/15 px-3 py-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 transition-all hover:scale-[1.02]"
           >
             <Brain className="h-3 w-3" />
@@ -70,21 +94,6 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
       </motion.div>
     );
   }
-
-  const gridLevels = useMemo(() =>
-    Array.from({ length: LEVELS }).map((_, i) => ({
-      ratio: (i + 1) / LEVELS,
-      points: polygonPoints(n, (i + 1) / LEVELS),
-    })), [n]);
-
-  const valuePoints = useMemo(() =>
-    data.map((d) => ({
-      x: CX + R * (d.value / 100) * Math.cos((Math.PI * 2 * data.indexOf(d)) / n - Math.PI / 2),
-      y: CY + R * (d.value / 100) * Math.sin((Math.PI * 2 * data.indexOf(d)) / n - Math.PI / 2),
-    })), [data, n]);
-
-  const labelPoints = useMemo(() =>
-    polygonPoints(n, 1.18), [n]);
 
   return (
     <motion.div
@@ -121,7 +130,11 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
             points={pointsToAttr(level.points)}
             fill="none"
             stroke="currentColor"
-            className={i === LEVELS - 1 ? 'text-slate-400 dark:text-slate-500' : 'text-slate-300 dark:text-slate-600'}
+            className={
+              i === LEVELS - 1
+                ? 'text-slate-400 dark:text-slate-500'
+                : 'text-slate-300 dark:text-slate-600'
+            }
             strokeWidth={i === LEVELS - 1 ? 1 : 0.5}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -131,7 +144,15 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
 
         {/* Axis lines */}
         {polygonPoints(n, 1).map((p, i) => (
-          <line key={i} x1={CX} y1={CY} x2={p.x} y2={p.y} className="stroke-slate-300 dark:stroke-slate-600" strokeWidth={0.5} />
+          <line
+            key={i}
+            x1={CX}
+            y1={CY}
+            x2={p.x}
+            y2={p.y}
+            className="stroke-slate-300 dark:stroke-slate-600"
+            strokeWidth={0.5}
+          />
         ))}
 
         {/* Data area */}
