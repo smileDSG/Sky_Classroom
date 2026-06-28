@@ -3,7 +3,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { convertTeachingJobToStage, convertSectionToScenes } from '@/lib/teaching/to-classroom';
+import {
+  convertTeachingJobToStage,
+  convertSectionToScenes,
+  createStructuredFallbackSlide,
+} from '@/lib/teaching/to-classroom';
 import type { TeachingJob, GeneratedSectionData } from '@/lib/server/teaching-job-store';
 import type { LessonSection } from '@/lib/teaching/lesson-types';
 import type { ContentChunk } from '@/lib/teaching/content-types';
@@ -206,9 +210,12 @@ describe('convertSectionToScenes', () => {
     const scenes = await convertSectionToScenes(section, 'stage-1', 0);
     expect(scenes.length).toBeGreaterThan(0);
     if (scenes[0].content.type === 'slide') {
-      const textEls = scenes[0].content.canvas.elements.filter((el) => el.type === 'text');
-      // Title + one body element
-      expect(textEls.length).toBe(2);
+      const textContent = scenes[0].content.canvas.elements
+        .filter((el) => el.type === 'text')
+        .map((el) => String((el as { content?: unknown }).content ?? ''))
+        .join('\n');
+      expect(textContent).toContain('正常内容');
+      expect(textContent).not.toContain('失败内容');
     }
   });
 
@@ -246,5 +253,58 @@ describe('convertSectionToScenes', () => {
     // In test env, structured path is skipped → falls back to chunks
     expect(scenes.length).toBeGreaterThan(0);
     expect(scenes[0].type).toBe('slide');
+  });
+
+  it('varies structured fallback layouts instead of producing title-only differences', async () => {
+    const makeConcept = (title: string, focus: string) =>
+      ({
+        type: 'concept',
+        title,
+        cards: [
+          { title: 'Definition', desc: `Explain the quadratic function from ${focus}.` },
+          { title: 'Graph', desc: `Connect ${focus} with parabola, vertex, axis, and opening.` },
+          {
+            title: 'Application',
+            desc: `Use ${focus} in throwing, bridge, and fountain examples.`,
+          },
+          { title: 'Judgement', desc: `Read parameter changes through ${focus}.` },
+        ],
+        summary: `${title} connects symbolic form, graph features, and classroom examples.`,
+        formulas: [{ label: 'general', latex: 'y=ax^2+bx+c' }],
+      }) as const;
+
+    const slides = [
+      createStructuredFallbackSlide(
+        makeConcept('Quadratic Definition', 'definition rules'),
+        'Quadratic Definition',
+      ),
+      createStructuredFallbackSlide(
+        makeConcept('Quadratic Applications', 'real-world modelling'),
+        'Quadratic Applications',
+      ),
+      createStructuredFallbackSlide(
+        makeConcept('Quadratic Graph Features', 'graph observation'),
+        'Quadratic Graph Features',
+      ),
+      createStructuredFallbackSlide(
+        makeConcept('Quadratic Parameters', 'parameter a b c'),
+        'Quadratic Parameters',
+      ),
+    ];
+
+    slides.forEach((slide) => expect(slide).not.toBeNull());
+
+    const signatures = slides.map((slide) =>
+      slide!.elements
+        .filter((element) => element.type !== 'text' || element.top > 168)
+        .slice(0, 10)
+        .map(
+          (element) =>
+            `${element.type}:${Math.round(element.left)},${Math.round(element.top)},${Math.round(element.width)},${Math.round(Number(element.height ?? 0))}`,
+        )
+        .join('|'),
+    );
+
+    expect(new Set(signatures).size).toBeGreaterThan(2);
   });
 });

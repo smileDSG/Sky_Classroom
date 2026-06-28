@@ -1,22 +1,18 @@
-'use client';
+﻿'use client';
 
-import { useImperativeHandle, forwardRef, useRef, useCallback, useState, useMemo } from 'react';
-import type { SessionType } from '@/lib/types/chat';
-import type { LectureNoteEntry } from '@/lib/types/chat';
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { BookOpen, MessageSquare, PanelRightClose } from 'lucide-react';
 import type { DiscussionRequest } from '@/components/roundtable';
-import type { Action, SpeechAction, DiscussionAction } from '@/lib/types/action';
-import { cn } from '@/lib/utils';
-import { useStageStore } from '@/lib/store';
-import { PanelLeftClose, BookOpen, MessageSquare } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useChatSessions } from './use-chat-sessions';
-import { SessionList } from './session-list';
-import { LectureNotesView } from './lecture-notes-view';
-import {
-  MessageFilters,
-  type MessageFilterState,
-} from '@/components/classroom/message-filters';
+import { MessageFilters, type MessageFilterState } from '@/components/classroom/message-filters';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
+import { useStageStore } from '@/lib/store';
+import type { Action, DiscussionAction, SpeechAction } from '@/lib/types/action';
+import type { LectureNoteEntry, SessionType } from '@/lib/types/chat';
+import { cn } from '@/lib/utils';
+import { LectureNotesView } from './lecture-notes-view';
+import { SessionList } from './session-list';
+import { useChatSessions } from './use-chat-sessions';
 
 interface ChatAreaProps {
   className?: string;
@@ -38,10 +34,8 @@ interface ChatAreaProps {
     fullText: string,
     agentId: string | null,
   ) => void;
-  /** When provided and returns true, StreamBuffer holds on the current text item after reveal. */
   shouldHoldAfterReveal?: () => { holding: boolean; segmentDone: number } | boolean;
   currentSceneId?: string | null;
-  /** Enable message type/agent filter bar above chat sessions. */
   enableFilters?: boolean;
 }
 
@@ -66,9 +60,15 @@ export interface ChatAreaRef {
   switchToTab: (tab: 'lecture' | 'chat') => void;
 }
 
-const DEFAULT_WIDTH = 340;
-const MIN_WIDTH = 240;
-const MAX_WIDTH = 560;
+const DEFAULT_WIDTH = 360;
+const MIN_WIDTH = 320;
+const MAX_WIDTH = 420;
+const SESSION_TYPE_TO_FILTER_KEY: Record<string, 'discussion' | 'lecture' | 'qa' | 'system'> = {
+  discussion: 'discussion',
+  qa: 'qa',
+  lecture: 'lecture',
+  system: 'system',
+};
 
 export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
   (
@@ -92,7 +92,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       enableFilters = false,
     },
     ref,
-  ) => {const scenes = useStageStore((s) => s.scenes);
+  ) => {
+    const scenes = useStageStore((state) => state.scenes);
     const {
       sessions,
       activeSessionType,
@@ -127,12 +128,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     });
 
     const [activeTab, setActiveTab] = useState<'lecture' | 'chat'>('lecture');
-    const isDraggingRef = useRef(false);
     const [isDragging, setIsDragging] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
 
-    // Derive lecture notes directly from scenes — updates reactively as scenes stream in
-    // Preserves action order so spotlight/laser badges appear inline between speech texts
     const lectureNotes: LectureNoteEntry[] = useMemo(
       () =>
         scenes
@@ -143,24 +141,25 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
             sceneOrder: scene.order,
             items: scene
               .actions!.filter(
-                (a) =>
-                  a.type === 'speech' ||
-                  a.type === 'spotlight' ||
-                  a.type === 'laser' ||
-                  a.type === 'play_video' ||
-                  a.type === 'discussion',
+                (action) =>
+                  action.type === 'speech' ||
+                  action.type === 'spotlight' ||
+                  action.type === 'laser' ||
+                  action.type === 'play_video' ||
+                  action.type === 'discussion',
               )
-              .map((a) => {
-                if (a.type === 'speech') {
+              .map((action) => {
+                if (action.type === 'speech') {
                   return {
                     kind: 'speech' as const,
-                    text: (a as SpeechAction).text,
+                    text: (action as SpeechAction).text,
                   };
                 }
                 return {
                   kind: 'action' as const,
-                  type: a.type,
-                  label: a.type === 'discussion' ? (a as DiscussionAction).topic : undefined,
+                  type: action.type,
+                  label:
+                    action.type === 'discussion' ? (action as DiscussionAction).topic : undefined,
                 };
               }),
             completedAt: scene.updatedAt || scene.createdAt || 0,
@@ -169,52 +168,36 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       [scenes],
     );
 
-    // Filter out lecture sessions for the Chat tab
     const chatSessions = useMemo(() => sessions.filter((s) => s.type !== 'lecture'), [sessions]);
 
-    // Build scene lookup map from ALL scenes for session-scene association
     const sceneTitleMap = useMemo(() => {
       const map = new Map<string, { title: string; order: number }>();
-      for (let i = 0; i < scenes.length; i++) {
-        const scene = scenes[i];
-        map.set(scene.id, { title: scene.title, order: scene.order });
-      }
+      scenes.forEach((scene) => map.set(scene.id, { title: scene.title, order: scene.order }));
       return map;
     }, [scenes]);
 
-    // Message filter state (local)
     const [messageFilters, setMessageFilters] = useState<MessageFilterState>({
       types: new Set(),
       agentIds: new Set(),
     });
 
-    // Map session type to MessageFilter type key
-    const sessionTypeToFilterKey: Record<string, 'discussion' | 'lecture' | 'qa' | 'system'> = {
-      discussion: 'discussion',
-      qa: 'qa',
-      lecture: 'lecture',
-      system: 'system',
-    };
-
-    // Apply message type filters to chat sessions
     const filteredChatSessions = useMemo(() => {
       if (!enableFilters || messageFilters.types.size === 0) return chatSessions;
-      return chatSessions.filter((s) => messageFilters.types.has(sessionTypeToFilterKey[s.type] ?? 'system'));
+      return chatSessions.filter((session) =>
+        messageFilters.types.has(SESSION_TYPE_TO_FILTER_KEY[session.type] ?? 'system'),
+      );
     }, [chatSessions, enableFilters, messageFilters.types]);
 
-    // Get available agents for filter badges
     const availableAgents = useMemo(() => {
       const registry = useAgentRegistry.getState();
       return Object.entries(registry.agents).map(([id, cfg]) => ({ id, name: cfg.name ?? id }));
     }, []);
 
-    // Whether there's an active discussion/QA session (for amber dot on Chat tab)
     const hasActiveChatSession = useMemo(
-      () => chatSessions.some((s) => s.status === 'active'),
+      () => chatSessions.some((session) => session.status === 'active'),
       [chatSessions],
     );
 
-    // Wrap endSession for QA/Discussion: also notify parent for engine cleanup
     const handleEndSession = useCallback(
       async (sessionId: string) => {
         await endSession(sessionId);
@@ -256,23 +239,19 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       switchToTab,
     }));
 
-    // Drag-to-resize
     const handleDragStart = useCallback(
-      (e: React.MouseEvent) => {
-        e.preventDefault();
-        isDraggingRef.current = true;
+      (event: React.MouseEvent) => {
+        event.preventDefault();
         setIsDragging(true);
-        const startX = e.clientX;
+        const startX = event.clientX;
         const startWidth = width;
 
-        const handleMouseMove = (me: MouseEvent) => {
-          const delta = me.clientX - startX;
-          const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta));
-          onWidthChange?.(newWidth);
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+          const delta = startX - moveEvent.clientX;
+          onWidthChange?.(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta)));
         };
 
         const handleMouseUp = () => {
-          isDraggingRef.current = false;
           setIsDragging(false);
           document.removeEventListener('mousemove', handleMouseMove);
           document.removeEventListener('mouseup', handleMouseUp);
@@ -285,93 +264,87 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
       },
-      [width, onWidthChange],
+      [onWidthChange, width],
     );
 
     const displayWidth = collapsed ? 0 : width;
 
     return (
-      <div
-        style={{
-          width: displayWidth,
-          transition: isDragging ? 'none' : 'width 0.3s ease',
-        }}
+      <aside
+        style={{ width: displayWidth, transition: isDragging ? 'none' : 'width 220ms ease' }}
         className={cn(
-          'bg-white dark:bg-slate-950 border-l border-sky-200/50 dark:border-slate-700',
-          'flex flex-col shrink-0 z-20 relative overflow-hidden h-full',
+          'relative z-20 flex h-full shrink-0 flex-col overflow-visible rounded-[26px] border border-white/80 bg-white/78 shadow-sm backdrop-blur-2xl dark:border-slate-800 dark:bg-slate-950/86',
           className,
         )}
       >
-        {/* Drag handle */}
         {!collapsed && (
           <div
             onMouseDown={handleDragStart}
-            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize z-50 group hover:bg-sky-400/50 dark:hover:bg-violet-500/50 active:bg-sky-500/70 dark:active:bg-violet-500/70 transition-colors"
+            className="group absolute bottom-0 left-0 top-0 z-50 w-1.5 cursor-col-resize transition-colors hover:bg-sky-200/60 dark:hover:bg-slate-700/60"
           >
-            <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-sky-300 dark:bg-slate-700 group-hover:bg-sky-400 dark:group-hover:bg-violet-400 transition-colors" />
+            <div className="absolute left-0.5 top-1/2 h-10 w-0.5 -translate-y-1/2 rounded-full bg-sky-200 transition-colors group-hover:bg-sky-500 dark:bg-slate-700" />
           </div>
         )}
 
-        <div className={cn('flex flex-col w-full h-full overflow-hidden', collapsed && 'hidden')}>
+        <div className={cn('flex h-full w-full flex-col overflow-hidden', collapsed && 'hidden')}>
           <Tabs
             value={activeTab}
-            onValueChange={(v) => setActiveTab(v as 'lecture' | 'chat')}
-            className="flex flex-col h-full gap-0"
+            onValueChange={(value) => setActiveTab(value as 'lecture' | 'chat')}
+            className="flex h-full flex-col gap-0"
           >
-            {/* Redesigned tab header row */}
-            <div className="h-12 flex items-center gap-2 shrink-0 px-3 pt-2 pb-1">
-              <TabsList variant="line" className="h-9 flex-1 w-0 bg-slate-100/60 dark:bg-slate-800/60 rounded-xl p-1">
+            <div className="flex h-14 shrink-0 items-center gap-3 border-b border-sky-100/80 px-3.5 dark:border-slate-800">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-sky-700/60">
+                  Learning Assistant
+                </div>
+                <div className="mt-0.5 truncate text-base font-black text-slate-900 dark:text-slate-100">
+                  学习助手
+                </div>
+              </div>
+              <TabsList
+                variant="line"
+                className="h-8 w-auto shrink-0 rounded-full border border-sky-100 bg-white/72 p-1 dark:border-slate-800 dark:bg-slate-900"
+              >
                 <TabsTrigger
                   value="lecture"
-                  className="text-[13px] gap-1.5 flex-1 rounded-lg transition-all duration-200
-                    data-[state=active]:bg-gradient-to-r data-[state=active]:from-sky-400 data-[state=active]:to-indigo-400
-                    data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:shadow-sky-300/30
-                    data-[state=active]:dark:shadow-sky-500/20
-                    text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200
-                    border-0 after:absolute after:inset-x-0 after:bottom-[-5px] after:h-0.5 after:bg-gradient-to-r after:from-sky-400 after:to-indigo-400
-                    data-[state=active]:after:opacity-100 after:opacity-0"
+                  className="h-7 gap-1.5 rounded-full border-0 bg-transparent px-2.5 text-[13px] font-semibold text-sky-800/70 transition-colors data-[state=active]:bg-transparent data-[state=active]:font-black data-[state=active]:text-sky-950 dark:text-slate-400 dark:data-[state=active]:bg-transparent dark:data-[state=active]:text-sky-100"
                 >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  {'笔记'}
+                  <BookOpen className="h-3.5 w-3.5" />
+                  Script
                 </TabsTrigger>
                 <TabsTrigger
                   value="chat"
-                  className="text-[13px] gap-1.5 flex-1 rounded-lg transition-all duration-200 relative
-                    data-[state=active]:bg-gradient-to-r data-[state=active]:from-sky-400 data-[state=active]:to-indigo-400
-                    data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:shadow-sky-300/30
-                    data-[state=active]:dark:shadow-sky-500/20
-                    text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200
-                    border-0 after:absolute after:inset-x-0 after:bottom-[-5px] after:h-0.5 after:bg-gradient-to-r after:from-sky-400 after:to-indigo-400
-                    data-[state=active]:after:opacity-100 after:opacity-0"
+                  className="relative h-7 gap-1.5 rounded-full border-0 bg-transparent px-2.5 text-[13px] font-semibold text-sky-800/70 transition-colors data-[state=active]:bg-transparent data-[state=active]:font-black data-[state=active]:text-sky-950 dark:text-slate-400 dark:data-[state=active]:bg-transparent dark:data-[state=active]:text-sky-100"
                 >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  {'对话'}
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Q&A
+                  {hasActiveChatSession && activeTab === 'lecture' && (
+                    <span className="absolute right-3 top-3 flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500" />
+                    </span>
+                  )}
                 </TabsTrigger>
               </TabsList>
 
               {onCollapseChange && (
                 <button
+                  type="button"
                   onClick={() => onCollapseChange(true)}
-                  aria-label="收起"
-                  title="收起"
-                  className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center
-                    text-slate-400 dark:text-slate-500
-                    hover:text-slate-600 dark:hover:text-slate-300
-                    hover:bg-slate-100 dark:hover:bg-slate-800
-                    active:scale-90 transition-all duration-200"
+                  aria-label="Close notes"
+                  title="Close notes"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sky-800/65 transition-all duration-200 hover:bg-white/85 hover:text-sky-950 active:scale-90 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                 >
-                  <PanelLeftClose className="w-4 h-4" />
+                  <PanelRightClose className="h-4 w-4" />
                 </button>
               )}
             </div>
 
-            {/* Notes Tab */}
-            <TabsContent value="lecture" className="flex-1 overflow-hidden flex flex-col">
+            <TabsContent value="lecture" className="flex flex-1 flex-col overflow-hidden">
               <LectureNotesView notes={lectureNotes} currentSceneId={currentSceneId} />
             </TabsContent>
 
-            {/* Chat Tab */}
-            <TabsContent value="chat" className="flex-1 overflow-hidden flex flex-col">
+            <TabsContent value="chat" className="flex flex-1 flex-col overflow-hidden">
               {enableFilters && (
                 <MessageFilters
                   filters={messageFilters}
@@ -381,15 +354,15 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
               )}
               <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
                 {filteredChatSessions.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-50">
-                    <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mb-3 text-slate-600">
-                      <MessageSquare className="w-6 h-6" />
+                  <div className="flex h-full flex-col items-center justify-center p-6 text-center opacity-60">
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-sky-50 text-sky-500 dark:bg-slate-800 dark:text-slate-600">
+                      <MessageSquare className="h-6 w-6" />
                     </div>
-                    <p className="text-sm font-medium text-slate-400">
-                      {'暂无对话'}
+                    <p className="text-base font-medium text-slate-500 dark:text-slate-400">
+                      No questions yet
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {'输入消息开始对话'}
+                    <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">
+                      Questions and discussion will appear here.
                     </p>
                   </div>
                 ) : (
@@ -411,7 +384,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
             </TabsContent>
           </Tabs>
         </div>
-      </div>
+      </aside>
     );
   },
 );

@@ -1,24 +1,33 @@
 'use client';
 
-import { useMemo } from 'react';
-import { motion } from 'motion/react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'motion/react';
 import {
-  Camera,
-  Presentation,
-  Brain,
   ArrowRight,
+  BookOpen,
+  Brain,
+  Camera,
+  FileQuestion,
+  Loader2,
+  Presentation,
   Sparkles,
   Zap,
-  BookOpen,
-  FileQuestion,
-  Route,
+  type LucideIcon,
 } from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
-import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-import { buildPersonalizedActionPlan } from '@/lib/sky/personalized-actions';
+import type { CloudMindDashboardData, LearningRecommendation } from '@/lib/cloud-mind/types';
 
-const TOOLS = [
+const TOOLS: Array<{
+  id: string;
+  label: string;
+  description: string;
+  href: string;
+  icon: LucideIcon;
+  gradient: string;
+  stats: string;
+  badge?: string;
+}> = [
   {
     id: 'solve',
     label: '拍照搜题',
@@ -75,59 +84,141 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
+      staggerChildren: 0.08,
+      delayChildren: 0.12,
     },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 24 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6,
+      duration: 0.5,
       ease: [0.25, 0.1, 0.25, 1] as const,
     },
   },
 };
 
+type DashboardState = 'loading' | 'ready' | 'error';
+
+const suggestionPanelClass =
+  'rounded-2xl border border-slate-200/80 bg-white/90 shadow-xl shadow-slate-200/50 backdrop-blur-sm dark:border-slate-700/30 dark:bg-slate-900/55 dark:shadow-slate-950/10';
+
+function getRecommendationAction(recommendation: LearningRecommendation | null) {
+  const href = recommendation?.target.href ?? '';
+  const isCloudMindTool =
+    href.startsWith('/sky/cloud-mind/') &&
+    !href.startsWith('/sky/cloud-mind/write') &&
+    !href.startsWith('/sky/cloud-mind/translate') &&
+    !href.startsWith('/sky/cloud-mind/knowledge');
+
+  if (recommendation && isCloudMindTool) return recommendation.target;
+
+  if (recommendation?.actionType === 'review_cards') {
+    return {
+      href: '/sky/cloud-mind/memory',
+      label: '生成记忆卡片',
+    };
+  }
+
+  if (recommendation?.actionType === 'micro_lesson') {
+    return {
+      href: '/sky/cloud-mind/teaching',
+      label: '进入微讲解',
+    };
+  }
+
+  if (!recommendation) {
+    return {
+      href: '/sky/cloud-mind/quiz',
+      label: '开始诊断',
+    };
+  }
+
+  return {
+    href: '/sky/cloud-mind/quiz',
+    label: '开始练习',
+  };
+}
+
+function buildMemoryHref(topic?: string): string {
+  if (!topic) return '/sky/cloud-mind/memory';
+  return `/sky/cloud-mind/memory?topic=${encodeURIComponent(topic)}&content=${encodeURIComponent(
+    `知识点：${topic}`,
+  )}`;
+}
+
+function buildTeachingHref(topic?: string): string {
+  if (!topic) return '/sky/cloud-mind/teaching';
+  return `/sky/cloud-mind/teaching?topic=${encodeURIComponent(topic)}&from=cloud-mind`;
+}
+
 export default function CloudMindPage() {
-  const mistakes = useSkyClassroomStore((s) => s.mistakes);
-  const actionPlan = useMemo(() => buildPersonalizedActionPlan(mistakes), [mistakes]);
-  const pinnedActions = actionPlan.actions
-    .filter((action) => ['quiz', 'memory', 'teaching'].includes(action.id))
-    .slice(0, 3);
+  const [dashboard, setDashboard] = useState<CloudMindDashboardData | null>(null);
+  const [dashboardState, setDashboardState] = useState<DashboardState>('loading');
+
+  useEffect(() => {
+    let active = true;
+
+    fetch('/api/sky/cloud-mind/dashboard', { credentials: 'include' })
+      .then((res) => res.json())
+      .then((payload: { data?: CloudMindDashboardData }) => {
+        if (!active) return;
+        setDashboard(payload.data ?? null);
+        setDashboardState('ready');
+      })
+      .catch(() => {
+        if (!active) return;
+        setDashboardState('error');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const primaryRecommendation = dashboard?.recommendations[0] ?? null;
+  const recommendationAction = getRecommendationAction(primaryRecommendation);
+  const suggestedTopic = dashboard?.weakPoints[0]?.knowledgePoint;
+  const secondaryAction = recommendationAction.href.startsWith('/sky/cloud-mind/memory')
+    ? {
+        href: buildTeachingHref(suggestedTopic),
+        label: '进入微讲解',
+      }
+    : {
+        href: buildMemoryHref(suggestedTopic),
+        label: '生成记忆卡片',
+      };
 
   return (
     <SkyAppShell>
-      <div className="mx-auto max-w-6xl space-y-8">
-        {/* Hero Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+      <div className="mx-auto max-w-6xl space-y-5 pt-1">
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 p-8 md:p-12"
+          transition={{ duration: 0.7 }}
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-7 py-8 shadow-2xl shadow-violet-950/20 md:px-10 md:py-10"
         >
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+          <div className="absolute right-0 top-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-48 w-48 -translate-x-1/2 translate-y-1/2 rounded-full bg-indigo-400/20 blur-2xl" />
 
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
-              <span className="text-sm font-medium text-indigo-200 tracking-wider uppercase">
+              <span className="text-sm font-medium tracking-wider text-indigo-200 uppercase">
                 AI 工具集
               </span>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">云端智囊</h1>
-            <p className="text-indigo-100 text-base md:text-lg max-w-xl leading-relaxed">
+            <h1 className="mb-3 text-3xl font-bold text-white md:text-4xl">云端智囊</h1>
+            <p className="max-w-xl text-base leading-relaxed text-indigo-100 md:text-lg">
               汇聚 AI
-              之力，为你的学习保驾护航。拍照搜题、PPT课件生成、智能出题、记忆卡片与智能授课一站直达。
+              之力，为你的学习保驾护航。拍照搜题、PPT课件生成、智能出题、记忆卡片、智能授课，一站直达。
             </p>
 
             <div className="mt-6 flex items-center gap-4">
@@ -142,56 +233,69 @@ export default function CloudMindPage() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </motion.section>
 
-        {actionPlan.hasSignals && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="rounded-2xl border border-slate-200/50 bg-white/70 p-5 backdrop-blur-sm dark:border-slate-700/30 dark:bg-slate-800/60"
-          >
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Route className="h-4 w-4 text-indigo-500" />
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    来自天梯工坊
-                  </span>
-                </div>
-                <h2 className="mt-2 text-lg font-bold text-slate-800 dark:text-slate-100">
-                  为「{actionPlan.primaryTopic}」安排下一步
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {actionPlan.primaryReason}
-                </p>
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 0.1 }}
+          className={`${suggestionPanelClass} p-5`}
+        >
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-sm font-semibold text-indigo-700 dark:text-indigo-200">
+                <Sparkles className="h-4 w-4" />
+                今日推荐工具
+                {dashboardState === 'loading' && (
+                  <Loader2 className="h-4 w-4 animate-spin text-indigo-500 dark:text-indigo-200" />
+                )}
               </div>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {pinnedActions.map((action) => (
-                  <Link
-                    key={action.id}
-                    href={action.href}
-                    className="group rounded-xl border border-slate-200/60 bg-white/70 px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white dark:border-slate-700/40 dark:bg-slate-900/40 dark:hover:border-indigo-800"
-                  >
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {action.label}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                      {action.description}
-                    </p>
-                  </Link>
-                ))}
-              </div>
+              <h2 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
+                {dashboardState === 'error'
+                  ? '暂时没有拿到实时建议'
+                  : (primaryRecommendation?.title ?? '先完成一次入门诊断')}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {dashboardState === 'error'
+                  ? '可以直接从下面的 AI 工具开始。'
+                  : (primaryRecommendation?.reason ??
+                    '建立第一份学情画像后，智囊会优先推荐更适合当前状态的 AI 工具。')}
+              </p>
             </div>
-          </motion.div>
-        )}
 
-        {/* Tools Grid */}
-        <motion.div
+            <div className="flex shrink-0 flex-wrap items-center gap-3">
+              <Link
+                href={recommendationAction.href}
+                className="inline-flex items-center gap-2 rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-colors hover:bg-indigo-400"
+              >
+                {recommendationAction.label}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href={secondaryAction.href}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-indigo-400/40 dark:hover:text-indigo-200"
+              >
+                {secondaryAction.label}
+              </Link>
+            </div>
+          </div>
+        </motion.section>
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">全部工具</h2>
+            <p className="text-sm text-slate-500">保留当前 5 个核心入口</p>
+          </div>
+          <span className="rounded-full border border-slate-200/80 bg-white/85 px-3 py-1 text-xs font-semibold text-slate-500 dark:border-slate-700/40 dark:bg-slate-900/55 dark:text-slate-400">
+            {TOOLS.length} 个工具
+          </span>
+        </div>
+
+        <motion.section
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           {TOOLS.map((tool) => {
             const Icon = tool.icon;
@@ -199,15 +303,14 @@ export default function CloudMindPage() {
               <motion.div key={tool.id} variants={itemVariants}>
                 <Link
                   href={tool.href}
-                  className="group relative flex flex-col h-full overflow-hidden rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1"
+                  className="group relative flex min-h-44 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-lg shadow-slate-200/50 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/50 hover:bg-white hover:shadow-xl hover:shadow-indigo-200/50 dark:border-slate-700/30 dark:bg-slate-900/55 dark:shadow-none dark:hover:border-indigo-400/30 dark:hover:bg-slate-900/75 dark:hover:shadow-indigo-500/10"
                 >
-                  {/* Glow effect on hover */}
                   <div
-                    className={`absolute inset-0 opacity-0 group-hover:opacity-[0.08] transition-opacity duration-500 bg-gradient-to-br ${tool.gradient}`}
+                    className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-[0.06] dark:group-hover:opacity-[0.08]`}
                   />
 
-                  <div className="relative z-10 flex flex-col h-full">
-                    <div className="flex items-start justify-between mb-4">
+                  <div className="relative z-10 flex h-full flex-col">
+                    <div className="mb-4 flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         <div
                           className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-lg`}
@@ -215,23 +318,23 @@ export default function CloudMindPage() {
                           <Icon className="h-6 w-6 text-white" />
                         </div>
                         {tool.badge && (
-                          <span className="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
                             {tool.badge}
                           </span>
                         )}
                       </div>
-                      <ArrowRight className="h-5 w-5 text-slate-300 dark:text-slate-600 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all duration-300" />
+                      <ArrowRight className="h-5 w-5 text-slate-400 transition-all duration-300 group-hover:translate-x-1 group-hover:text-indigo-500 dark:text-slate-600 dark:group-hover:text-indigo-300" />
                     </div>
 
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1.5">
+                    <h3 className="mb-1.5 text-lg font-bold text-slate-800 dark:text-slate-100">
                       {tool.label}
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed flex-1">
+                    <p className="flex-1 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                       {tool.description}
                     </p>
 
-                    <div className="mt-4 flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-700/50 px-2.5 py-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <div className="mt-4">
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800/70 dark:text-slate-400">
                         {tool.stats}
                       </span>
                     </div>
@@ -240,19 +343,7 @@ export default function CloudMindPage() {
               </motion.div>
             );
           })}
-        </motion.div>
-
-        {/* Bottom CTA */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="rounded-2xl bg-gradient-to-r from-slate-100 to-indigo-50 dark:from-slate-800/50 dark:to-indigo-950/30 border border-slate-200/50 dark:border-slate-700/30 p-6 text-center"
-        >
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            所有工具均支持多学科，持续迭代中 ✨
-          </p>
-        </motion.div>
+        </motion.section>
       </div>
     </SkyAppShell>
   );

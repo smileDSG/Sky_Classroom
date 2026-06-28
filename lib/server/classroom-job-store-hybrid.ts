@@ -33,6 +33,12 @@ let flushTimer: ReturnType<typeof setInterval> | null = null;
 let isFlushing = false;
 
 const FLUSH_INTERVAL_MS = 5000; // Flush every 5 seconds
+const TERMINAL_STATUSES: ClassroomGenerationJobStatus[] = [
+  'succeeded',
+  'failed',
+  'cancelled',
+  'awaiting_review',
+];
 
 /** Start the background flush timer if not already running. */
 function startFlushTimer() {
@@ -82,6 +88,28 @@ function jobFilePath(jobId: string) {
   return path.join(CLASSROOM_JOBS_DIR, `${jobId}.json`);
 }
 
+async function readJobFromDisk(jobId: string): Promise<ClassroomGenerationJob | null> {
+  try {
+    const content = await fs.readFile(jobFilePath(jobId), 'utf-8');
+    return JSON.parse(content) as ClassroomGenerationJob;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function isDiskJobNewerOrMoreComplete(
+  cached: ClassroomGenerationJob,
+  disk: ClassroomGenerationJob,
+): boolean {
+  if (disk.id !== cached.id) return false;
+  if (new Date(disk.updatedAt).getTime() > new Date(cached.updatedAt).getTime()) return true;
+  if (TERMINAL_STATUSES.includes(disk.status) && disk.status !== cached.status) return true;
+  return disk.progress > cached.progress;
+}
+
 /** Mark stale jobs as failed if no progress for 30 min. */
 function markStaleIfNeeded(job: ClassroomGenerationJob): ClassroomGenerationJob {
   if (job.status !== 'running') return job;
@@ -116,8 +144,8 @@ export async function createClassroomGenerationJobHybrid(
     id: jobId,
     status: 'initializing',
     step: 'initializing',
-    progress: 0,
-    message: 'Classroom generation job queued',
+    progress: 1,
+    message: 'Starting classroom generation',
     createdAt: now,
     updatedAt: now,
     inputSummary: {
@@ -131,6 +159,7 @@ export async function createClassroomGenerationJobHybrid(
     },
     scenesGenerated: 0,
     modelConfig,
+    input,
   };
 
   await ensureClassroomJobsDir();
@@ -145,22 +174,22 @@ export async function readClassroomGenerationJobHybrid(
   // Check memory first
   const cached = inMemoryJobs.get(jobId);
   if (cached) {
+    if (!TERMINAL_STATUSES.includes(cached.status)) {
+      const diskJob = await readJobFromDisk(jobId);
+      if (diskJob && isDiskJobNewerOrMoreComplete(cached, diskJob)) {
+        inMemoryJobs.set(jobId, diskJob);
+        return markStaleIfNeeded(diskJob);
+      }
+    }
     return markStaleIfNeeded(cached);
   }
 
   // Fallback to disk
-  try {
-    const content = await fs.readFile(jobFilePath(jobId), 'utf-8');
-    const job = JSON.parse(content) as ClassroomGenerationJob;
-    // Load into memory for future reads
-    inMemoryJobs.set(jobId, job);
-    return markStaleIfNeeded(job);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return null;
-    }
-    throw error;
-  }
+  const job = await readJobFromDisk(jobId);
+  if (!job) return null;
+  // Load into memory for future reads
+  inMemoryJobs.set(jobId, job);
+  return markStaleIfNeeded(job);
 }
 
 export async function updateClassroomGenerationJobHybrid(
@@ -183,7 +212,12 @@ export async function updateClassroomGenerationJobHybrid(
   startFlushTimer();
 
   // If terminal state, flush immediately
-  if (patch.status === 'succeeded' || patch.status === 'failed' || patch.status === 'cancelled') {
+  if (
+    patch.status === 'succeeded' ||
+    patch.status === 'failed' ||
+    patch.status === 'cancelled' ||
+    patch.startedAt
+  ) {
     try {
       await writeJsonFileAtomic(jobFilePath(jobId), updated);
       dirtyJobs.delete(jobId);

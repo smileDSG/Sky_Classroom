@@ -55,6 +55,12 @@ interface SolveResult {
   fromQuestionBank: boolean;
 }
 
+interface SolvePageProps {
+  personalizationNotice?: string | null;
+  weakPointNames?: string[];
+  preferredDifficulty?: 'easy' | 'medium' | 'hard';
+}
+
 /** Call recognition API, return extracted problem text */
 async function recognizeImage(file: File): Promise<{ text: string; latex: string }> {
   const formData = new FormData();
@@ -96,19 +102,6 @@ interface StreamState {
     answer?: string;
   }[];
   fromQuestionBank: boolean;
-}
-
-interface StreamKnowledgePoint {
-  name?: string;
-  description?: string;
-  difficulty?: string;
-}
-
-interface StreamSimilarQuestion {
-  problem?: string;
-  difficulty?: number;
-  knowledgePoint?: string;
-  answer?: string;
 }
 
 async function streamExplain(
@@ -190,21 +183,40 @@ async function streamExplain(
               break;
 
             case 'knowledge':
-              accumulated.knowledgePoints = event.points.map((p: StreamKnowledgePoint) => ({
-                name: p.name || '',
-                description: p.description || '',
-                difficulty: p.difficulty || 'medium',
-              }));
+              accumulated.knowledgePoints = (Array.isArray(event.points) ? event.points : []).map(
+                (point: unknown) => {
+                  const p = point as Partial<{
+                    name: string;
+                    description: string;
+                    difficulty: string;
+                  }>;
+                  return {
+                    name: p.name || '',
+                    description: p.description || '',
+                    difficulty: p.difficulty || 'medium',
+                  };
+                },
+              );
               onUpdate({ knowledgePoints: accumulated.knowledgePoints });
               break;
 
             case 'similar':
-              accumulated.similarQuestions = event.questions.map((q: StreamSimilarQuestion) => ({
-                problem: q.problem || '',
-                difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
-                knowledgePoint: q.knowledgePoint || '',
-                ...(q.answer ? { answer: q.answer } : {}),
-              }));
+              accumulated.similarQuestions = (
+                Array.isArray(event.questions) ? event.questions : []
+              ).map((question: unknown) => {
+                const q = question as Partial<{
+                  problem: string;
+                  difficulty: number;
+                  knowledgePoint: string;
+                  answer: string;
+                }>;
+                return {
+                  problem: q.problem || '',
+                  difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
+                  knowledgePoint: q.knowledgePoint || '',
+                  ...(q.answer ? { answer: q.answer } : {}),
+                };
+              });
               onUpdate({ similarQuestions: accumulated.similarQuestions });
               break;
 
@@ -319,7 +331,11 @@ function phaseProgress(phase: StreamPhase): string {
 
 // ── Component ────────────────────────────────────────────────────────
 
-export function SolvePage() {
+export function SolvePage({
+  personalizationNotice,
+  weakPointNames = [],
+  preferredDifficulty = 'medium',
+}: SolvePageProps = {}) {
   const [state, setState] = useState<SolvePageState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SolveResult | null>(null);
@@ -580,7 +596,7 @@ export function SolvePage() {
           phase: '正在提交...',
           createdAt: Date.now(),
           updatedAt: Date.now(),
-          resultRoute: '/sky/cloud-mind/solve',
+          resultRoute: '/sky/solve',
           previewUrl,
           recognizedText: problemText,
         });
@@ -752,6 +768,20 @@ export function SolvePage() {
   }, []);
 
   const isLoading = state === 'recognizing' || state === 'solving' || state === 'grading';
+  const solvedKnowledgePointNames =
+    result?.solution.knowledgePoints?.map((point) => point.name).filter(Boolean) ?? [];
+  const matchedWeakPoints = weakPointNames.filter((weakPoint) =>
+    solvedKnowledgePointNames.some((name) => name.includes(weakPoint) || weakPoint.includes(name)),
+  );
+  const primaryActionTopic = matchedWeakPoints[0] ?? solvedKnowledgePointNames[0] ?? '';
+  const encodedActionTopic = encodeURIComponent(primaryActionTopic);
+  const encodedMemoryContent = encodeURIComponent(
+    [
+      `题目：${result?.problem ?? ''}`,
+      `知识点：${primaryActionTopic || '综合复习'}`,
+      '请生成概念卡、易错卡和例题卡。',
+    ].join('\n'),
+  );
 
   return (
     <div className="relative mx-auto max-w-7xl">
@@ -804,6 +834,12 @@ export function SolvePage() {
           )}
         </div>
       </div>
+
+      {personalizationNotice && state === 'idle' && (
+        <div className="relative z-10 mb-6 rounded-xl border border-[var(--probe-success)]/25 bg-[var(--probe-success)]/10 px-4 py-3 text-sm text-[var(--probe-success)]">
+          {personalizationNotice}
+        </div>
+      )}
 
       <div className="relative z-10 grid gap-6 lg:grid-cols-[400px_1fr]">
         {/* ── LEFT COLUMN ── */}
@@ -1086,6 +1122,48 @@ export function SolvePage() {
               {(state === 'success' || state === 'graded') && result && (
                 <>
                   <SolutionPanel output={result.solution} />
+                  {primaryActionTopic && (
+                    <div className="probe-panel-elevated rounded-lg p-4">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <div className="text-sm font-semibold text-[var(--probe-text)]">
+                            根据天梯工坊继续练：{primaryActionTopic}
+                          </div>
+                          <div className="mt-1 text-xs text-[var(--probe-muted)]">
+                            {matchedWeakPoints.length > 0
+                              ? '这道题命中了你的薄弱点，建议立刻做一次针对性巩固。'
+                              : '可以把本题知识点同步到练习、记忆和微讲解里继续学习。'}
+                          </div>
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className="w-fit border border-[var(--probe-success)]/30 bg-[var(--probe-success)]/10 text-xs text-[var(--probe-success)]"
+                        >
+                          个性化推荐
+                        </Badge>
+                      </div>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                        <a
+                          href={`/sky/cloud-mind/quiz?topic=${encodedActionTopic}&difficulty=${preferredDifficulty}`}
+                          className="rounded-lg border border-[var(--probe-border)] px-3 py-2 text-center text-xs font-medium text-[var(--probe-primary-bright)] transition hover:border-[var(--probe-border-strong)] hover:bg-[var(--probe-primary)]/10"
+                        >
+                          生成同类题
+                        </a>
+                        <a
+                          href={`/sky/cloud-mind/memory?topic=${encodedActionTopic}&content=${encodedMemoryContent}`}
+                          className="rounded-lg border border-[var(--probe-border)] px-3 py-2 text-center text-xs font-medium text-[var(--probe-primary-bright)] transition hover:border-[var(--probe-border-strong)] hover:bg-[var(--probe-primary)]/10"
+                        >
+                          生成记忆卡
+                        </a>
+                        <a
+                          href={`/sky/cloud-mind/teaching?topic=${encodedActionTopic}&from=solve`}
+                          className="rounded-lg border border-[var(--probe-border)] px-3 py-2 text-center text-xs font-medium text-[var(--probe-primary-bright)] transition hover:border-[var(--probe-border-strong)] hover:bg-[var(--probe-primary)]/10"
+                        >
+                          进入微讲解
+                        </a>
+                      </div>
+                    </div>
+                  )}
                   <SimilarProblems
                     similarQuestions={result.solution.similarQuestions}
                     onQuestionClick={handleSimilarQuestionClick}

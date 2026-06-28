@@ -65,6 +65,24 @@ const log = createLogger('Home');
 
 const WEB_SEARCH_STORAGE_KEY = 'webSearchEnabled';
 const INTERACTIVE_MODE_STORAGE_KEY = 'interactiveModeEnabled';
+const CLASSROOM_POLL_INTERVAL_MS = 1500;
+const CLASSROOM_POLL_MAX_RETRY_MS = 8000;
+
+function waitForClassroomPoll(ms: number, signal: AbortSignal): Promise<void> {
+  if (signal.aborted) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    const timeout = setTimeout(resolve, ms);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timeout);
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
 
 // ── Classroom background job API helpers ──────────────────────────
 
@@ -72,6 +90,8 @@ import {
   type ClassroomJobState,
   submitClassroomJob,
   fetchClassroomJob,
+  isClassroomPollAbort,
+  isTransientClassroomPollError,
 } from '@/lib/classroom/classroom-job-client';
 import {
   type StoredJobEntry,
@@ -171,8 +191,32 @@ export default function HomePage() {
             [jobId]: { jobId, topic, phase: 'generating_outline', step: '', progress: 0 },
           }));
 
+          let transientPollFailures = 0;
           while (!abortController.signal.aborted) {
-            const data = await fetchClassroomJob(jobId);
+            let data: ClassroomJobState | null;
+            try {
+              data = await fetchClassroomJob(jobId, abortController.signal);
+              transientPollFailures = 0;
+            } catch (err) {
+              if (abortController.signal.aborted || isClassroomPollAbort(err)) return;
+
+              if (isTransientClassroomPollError(err)) {
+                transientPollFailures += 1;
+                if (transientPollFailures === 1 || transientPollFailures % 5 === 0) {
+                  log.warn(
+                    'Classroom poll temporarily failed; retrying:',
+                    err instanceof Error ? err.message : err,
+                  );
+                }
+                await waitForClassroomPoll(
+                  Math.min(CLASSROOM_POLL_MAX_RETRY_MS, 1000 + transientPollFailures * 1000),
+                  abortController.signal,
+                );
+                continue;
+              }
+
+              throw err;
+            }
             if (abortController.signal.aborted) return;
             if (!data) return;
 
@@ -214,13 +258,16 @@ export default function HomePage() {
             useTaskStore.getState().updateTask(useTaskStore.getState().tasks[jobId]?.id ?? '', {
               progress: data.progress,
               phase: data.message,
+              ...(data.status === 'awaiting_review'
+                ? { status: 'completed' as const, progress: 100 }
+                : {}),
             });
 
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            await waitForClassroomPoll(CLASSROOM_POLL_INTERVAL_MS, abortController.signal);
           }
         } catch (err) {
           if (abortController.signal.aborted) return;
-          if (err instanceof DOMException && err.name === 'AbortError') return;
+          if (isClassroomPollAbort(err)) return;
 
           // If job not found (404), silently clean up
           const isNotFound = err instanceof Error && err.message.includes('not found');
@@ -332,6 +379,12 @@ export default function HomePage() {
             },
           }));
 
+          useTaskStore.getState().updateTask(entry.jobId, {
+            progress: data.status === 'awaiting_review' ? 100 : data.progress,
+            phase: data.message,
+            ...(data.status === 'awaiting_review' ? { status: 'completed' as const } : {}),
+          });
+
           startJobPolling(entry.jobId, topic);
         } catch {
           // Job file may not exist yet — ignore
@@ -360,10 +413,6 @@ export default function HomePage() {
   const currentModelId = useSettingsStore((s) => s.modelId);
   const { cachedValue: cachedRequirement, updateCache: updateRequirementCache } =
     useDraftCache<string>({ key: 'requirementDraft' });
-
-  const { importing, fileInputRef, triggerFileSelect, handleFileChange } = useImportClassroom(() =>
-    loadClassrooms(),
-  );
 
   // 草稿恢复
   const draftRestoredRef = useRef(false);
@@ -415,6 +464,10 @@ export default function HomePage() {
     }
   }, []);
 
+  const { importing, fileInputRef, triggerFileSelect, handleFileChange } = useImportClassroom(() =>
+    loadClassrooms(),
+  );
+
   useEffect(() => {
     // 清理媒体存储
     useMediaGenerationStore.getState().revokeObjectUrls();
@@ -426,7 +479,7 @@ export default function HomePage() {
       revokeThumbnailSlideMediaUrls(thumbnailsRef.current);
       thumbnailsRef.current = {};
     };
-  }, []);
+  }, [loadClassrooms]);
 
   // 保存设置
   const handleWebSearchChange = useCallback((value: boolean) => {

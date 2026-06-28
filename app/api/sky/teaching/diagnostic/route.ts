@@ -55,8 +55,9 @@ export async function getSession(sessionId: string): Promise<DiagnosticSession |
 async function cleanupExpiredSessions(): Promise<void> {
   try {
     const storage = await getServerStorage();
-    const entries = await storage.getAll<DiagnosticSession>(SESSION_TABLE, (entry) =>
-      Date.now() - entry.data.createdAt > SESSION_TTL_MS,
+    const entries = await storage.getAll<DiagnosticSession>(
+      SESSION_TABLE,
+      (entry) => Date.now() - entry.data.createdAt > SESSION_TTL_MS,
     );
     for (const entry of entries) {
       await storage.delete(SESSION_TABLE, entry.id);
@@ -83,10 +84,29 @@ async function generateDiagnosticQuestions(
   prerequisites: string[],
   subject: string,
 ): Promise<DiagnosticQuestion[]> {
+  const topicStr = prerequisites.slice(0, 5).join('、');
+
+  // Strategy 1: Ask AI to generate topic-specific diagnostic questions.
+  // This guarantees the questions actually match the current topic.
+  try {
+    const quiz = await generateQuiz(subject, 'easy', topicStr, Math.min(prerequisites.length, 5));
+    if (quiz.questions.length > 0) {
+      return quiz.questions.map((q, i) => ({
+        id: i + 1,
+        question: q.question,
+        options: q.options.slice(0, 4),
+        answer: q.answer,
+        explanation: q.explanation,
+        knowledgePoint: prerequisites[i] ?? topicStr,
+      }));
+    }
+  } catch (err) {
+    log.warn('AI diagnostic generation failed, falling back to question bank:', err);
+  }
+
+  // Strategy 2: Fallback to question bank when AI is unavailable.
   const questions: DiagnosticQuestion[] = [];
   let id = 1;
-
-  // Strategy 1: Search question bank
   for (const kp of prerequisites) {
     if (questions.length >= 5) break;
     try {
@@ -112,27 +132,6 @@ async function generateDiagnosticQuestions(
       }
     } catch (err) {
       log.warn(`Failed to search question bank for "${kp}":`, err);
-    }
-  }
-
-  // Strategy 2: If not enough from bank, use AI quiz agent
-  if (questions.length < prerequisites.length && questions.length < 5) {
-    const remaining = prerequisites.slice(questions.length);
-    const topicStr = remaining.join('、');
-    try {
-      const quiz = await generateQuiz(subject, 'easy', topicStr, Math.min(remaining.length, 5 - questions.length));
-      for (const q of quiz.questions) {
-        questions.push({
-          id: id++,
-          question: q.question,
-          options: q.options.slice(0, 4),
-          answer: q.answer,
-          explanation: q.explanation,
-          knowledgePoint: remaining[Math.min(id - 2, remaining.length - 1)] || topicStr,
-        });
-      }
-    } catch (err) {
-      log.warn('AI quiz generation failed for diagnostic:', err);
     }
   }
 

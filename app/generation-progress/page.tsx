@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   ArrowLeft,
   Sparkles,
@@ -11,7 +11,7 @@ import {
   FileText,
   Search,
   Clapperboard,
-  Image,
+  Image as ImageIcon,
   Volume2,
   Save,
 } from 'lucide-react';
@@ -44,6 +44,13 @@ const PHASE_LABELS: Record<string, string> = {
   completed: '完成',
 };
 
+function getClassroomFailureMessage(error?: string): string {
+  if (error?.includes('Stale job')) {
+    return '生成任务已失效，可能是开发服务重启或任务停留太久。请返回首页重新生成一次。';
+  }
+  return error || '课堂生成失败';
+}
+
 function GenerationProgressContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,98 +69,14 @@ function GenerationProgressContent() {
   const [result, setResult] = useState<ClassroomJobState['result']>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [approving, setApproving] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const hasStartedRef = useRef(false);
+  const approveInFlightRef = useRef(false);
 
   const alwaysReview = useSettingsStore((s) => s.reviewOutlineEnabled);
   const setAlwaysReview = useSettingsStore((s) => s.setReviewOutlineEnabled);
-
-  // Start polling on mount
-  useEffect(() => {
-    if (!jobId) return;
-
-    // Reset on re-mount (handles React Strict Mode double-mount in dev)
-    hasStartedRef.current = false;
-
-    const abortController = new AbortController();
-    abortRef.current = abortController;
-
-    let cancelled = false;
-
-    (async () => {
-      // Guard against Strict Mode double-mount: if already started, skip
-      if (hasStartedRef.current) return;
-      hasStartedRef.current = true;
-
-      try {
-        // Check current state first
-        const current = await fetchClassroomJob(jobId);
-        if (cancelled || abortController.signal.aborted) return;
-        if (!current) {
-          setError('课堂生成任务不存在');
-          return;
-        }
-        updateFromJob(current);
-
-        if (current.status === 'awaiting_review') {
-          setPhase('reviewing');
-          return;
-        }
-        if (current.done) {
-          if (current.status === 'succeeded' && current.result) {
-            setResult(current.result);
-            setPhase('done');
-          } else if (current.status === 'failed') {
-            setError(current.error || '生成失败');
-          }
-          return;
-        }
-
-        setPhase('generating');
-
-        // Poll for progress
-        await pollClassroomJob(
-          jobId,
-          (data) => {
-            if (cancelled || abortController.signal.aborted) return;
-            updateFromJob(data);
-          },
-          abortController.signal,
-        );
-
-        if (cancelled || abortController.signal.aborted) return;
-
-        // Check final state after polling
-        const final = await fetchClassroomJob(jobId);
-        if (cancelled || abortController.signal.aborted) return;
-        if (!final) {
-          setError('课堂生成任务不存在');
-          return;
-        }
-        updateFromJob(final);
-
-        if (final.status === 'awaiting_review') {
-          setPhase('reviewing');
-        } else if (final.done) {
-          if (final.status === 'succeeded' && final.result) {
-            setResult(final.result);
-            setPhase('done');
-          }
-        }
-      } catch (err) {
-        if (cancelled || abortController.signal.aborted) return;
-        if (err instanceof DOMException && err.name === 'AbortError') return;
-        log.error('Generation progress poll error:', err);
-        setError(err instanceof Error ? err.message : '生成过程出错');
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      abortController.abort();
-    };
-  }, [jobId]);
 
   const updateFromJob = useCallback(
     (data: ClassroomJobState) => {
@@ -177,6 +100,10 @@ function GenerationProgressContent() {
         // a dialog if the user navigates away before clicking "进入课堂".
         // Entry is removed in handleGoToClassroom and handleCancel instead.
       }
+      if (data.status === 'failed') {
+        removeActiveJobEntry(jobId!);
+        setError(getClassroomFailureMessage(data.error));
+      }
 
       // Update task store for multi-task tracking
       const task = useTaskStore.getState().tasks[jobId ?? ''];
@@ -192,6 +119,10 @@ function GenerationProgressContent() {
           update.progress = 100;
           update.phase = '大纲已生成，等待审阅';
         }
+        if (data.status === 'failed') {
+          update.status = 'failed';
+          update.error = getClassroomFailureMessage(data.error);
+        }
 
         useTaskStore.getState().updateTask(task.id, update);
       }
@@ -199,8 +130,101 @@ function GenerationProgressContent() {
     [jobId, router],
   );
 
+  // Start polling on mount
+  useEffect(() => {
+    if (!jobId) return;
+
+    // Reset on re-mount (handles React Strict Mode double-mount in dev)
+    hasStartedRef.current = false;
+
+    const abortController = new AbortController();
+    abortRef.current = abortController;
+
+    let cancelled = false;
+
+    (async () => {
+      // Guard against Strict Mode double-mount: if already started, skip
+      if (hasStartedRef.current) return;
+      hasStartedRef.current = true;
+
+      try {
+        // Check current state first
+        const current = await fetchClassroomJob(jobId, abortController.signal);
+        if (cancelled || abortController.signal.aborted) return;
+        if (!current) {
+          setError('课堂生成任务不存在');
+          return;
+        }
+        updateFromJob(current);
+
+        if (current.status === 'awaiting_review') {
+          setPhase('reviewing');
+          return;
+        }
+        if (current.done) {
+          if (current.status === 'succeeded' && current.result) {
+            setResult(current.result);
+            setPhase('done');
+          } else if (current.status === 'failed') {
+            setError(getClassroomFailureMessage(current.error));
+            removeActiveJobEntry(jobId);
+          }
+          return;
+        }
+
+        setPhase('generating');
+
+        // Poll for progress
+        await pollClassroomJob(
+          jobId,
+          (data) => {
+            if (cancelled || abortController.signal.aborted) return;
+            updateFromJob(data);
+          },
+          abortController.signal,
+        );
+
+        if (cancelled || abortController.signal.aborted) return;
+
+        // Check final state after polling
+        const final = await fetchClassroomJob(jobId, abortController.signal);
+        if (cancelled || abortController.signal.aborted) return;
+        if (!final) {
+          setError('课堂生成任务不存在');
+          return;
+        }
+        updateFromJob(final);
+
+        if (final.status === 'awaiting_review') {
+          setPhase('reviewing');
+        } else if (final.done) {
+          if (final.status === 'succeeded' && final.result) {
+            setResult(final.result);
+            setPhase('done');
+          } else if (final.status === 'failed') {
+            setError(getClassroomFailureMessage(final.error));
+            removeActiveJobEntry(jobId);
+          }
+        }
+      } catch (err) {
+        if (cancelled || abortController.signal.aborted) return;
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        log.warn('Generation progress poll warning:', err);
+        setError(err instanceof Error ? getClassroomFailureMessage(err.message) : '生成过程出错');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      abortController.abort();
+    };
+  }, [jobId, updateFromJob]);
+
   const handleApproveOutline = useCallback(async () => {
     if (!jobId) return;
+    if (approveInFlightRef.current) return;
+    approveInFlightRef.current = true;
+    setApproving(true);
 
     const signal = abortRef.current?.signal;
     try {
@@ -230,7 +254,7 @@ function GenerationProgressContent() {
 
       if (signal?.aborted) return;
 
-      const final = await fetchClassroomJob(jobId);
+      const final = await fetchClassroomJob(jobId, signal);
       if (signal?.aborted) return;
       if (!final) {
         setError('课堂生成任务不存在');
@@ -239,20 +263,27 @@ function GenerationProgressContent() {
       if (final.status === 'awaiting_review') {
         if (final.outlines) setOutlines(final.outlines);
         if (final.outlinesMeta) setOutlinesMeta(final.outlinesMeta);
+        approveInFlightRef.current = false;
+        setApproving(false);
         setPhase('reviewing');
         return;
       }
       if (final.result) {
         setResult(final.result);
         setPhase('done');
+      } else if (final.status === 'failed') {
+        setError(getClassroomFailureMessage(final.error));
+        removeActiveJobEntry(jobId);
       }
     } catch (err) {
       if (signal?.aborted) return;
       if (err instanceof DOMException && err.name === 'AbortError') return;
-      log.error('Approve outline error:', err);
-      setError(err instanceof Error ? err.message : '继续生成失败');
+      approveInFlightRef.current = false;
+      setApproving(false);
+      log.warn('Approve outline warning:', err);
+      setError(err instanceof Error ? getClassroomFailureMessage(err.message) : '继续生成失败');
     }
-  }, [jobId, updateFromJob]);
+  }, [jobId, outlines, updateFromJob]);
 
   const handleCancel = useCallback(async () => {
     if (!jobId || cancelling) return;
@@ -279,7 +310,7 @@ function GenerationProgressContent() {
       removeActiveJobEntry(jobId!);
       router.push(`/classroom/${result.classroomId}`);
     }
-  }, [result, router]);
+  }, [jobId, result, router]);
 
   const stepLabel = PHASE_LABELS[step] || step || '处理中';
 
@@ -340,7 +371,7 @@ function GenerationProgressContent() {
                 }}
                 alwaysReview={alwaysReview}
                 onAlwaysReviewChange={setAlwaysReview}
-                isLoading={false}
+                isLoading={approving}
               />
               <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
                 <button
@@ -397,7 +428,7 @@ function GenerationProgressContent() {
                   { key: 'researching', icon: Search, label: '搜索资料' },
                   { key: 'generating_outlines', icon: FileText, label: '生成大纲' },
                   { key: 'generating_scenes', icon: Clapperboard, label: '生成场景' },
-                  { key: 'generating_media', icon: Image, label: '生成媒体' },
+                  { key: 'generating_media', icon: ImageIcon, label: '生成媒体' },
                   { key: 'persisting', icon: Save, label: '保存课堂' },
                 ].map(({ key, icon: Icon, label }) => {
                   const isActive = step === key;
@@ -627,7 +658,7 @@ function GenerationProgressContent() {
               {step === 'generating_media' && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 rounded-lg bg-pink-50 dark:bg-pink-900/10 px-4 py-3">
-                    <Image className="h-4 w-4 text-pink-500" />
+                    <ImageIcon className="h-4 w-4 text-pink-500" />
                     <div>
                       <p className="text-sm font-medium">正在生成媒体文件</p>
                       <p className="text-xs text-muted-foreground">

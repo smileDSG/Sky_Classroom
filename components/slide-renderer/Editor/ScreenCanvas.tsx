@@ -8,6 +8,7 @@ import { useSlideBackgroundStyle } from '@/lib/hooks/use-slide-background-style'
 import { useCanvasStore } from '@/lib/store';
 import { useSceneSelector } from '@/lib/contexts/scene-context';
 import { findElementGeometry } from '@/lib/utils/geometry';
+import { polishSlideElements } from '@/lib/generation/scene-content/slide-polish';
 import type { PPTElement, SlideBackground } from '@/lib/types/slides';
 import type { SlideContent } from '@/lib/types/stage';
 import type { PercentageGeometry } from '@/lib/types/action';
@@ -22,6 +23,18 @@ export function ScreenCanvas() {
   const elements = useSceneSelector<SlideContent, PPTElement[]>(
     (content) => content.canvas.elements,
   );
+  const sceneTitle = useSceneSelector<SlideContent, string | undefined>(
+    (content) =>
+      content.canvas.elements
+        .filter((element) => element.type === 'text' && element.top < 170)
+        .map((element) =>
+          String((element as { content?: string }).content ?? '').replace(/<[^>]+>/g, ''),
+        )[0],
+  );
+  const displayElements = useMemo(
+    () => polishSlideElements(elements, { title: sceneTitle, decorate: false }),
+    [elements, sceneTitle],
+  );
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Viewport size and positioning
@@ -32,30 +45,9 @@ export function ScreenCanvas() {
     (content) => content.canvas.background,
   );
   const { backgroundStyle } = useSlideBackgroundStyle(background);
-
   const templateData = useSceneSelector<SlideContent, TemplateSlideData | undefined>(
     (content) => content.canvas.templateData,
   );
-
-  // Diagnostic logging for template rendering
-  const currentScene = useSceneSelector<SlideContent, string | undefined>(
-    (content) => content.canvas?.id,
-  );
-  useMemo(() => {
-    if (templateData) {
-      // eslint-disable-next-line no-console
-      console.log('[ScreenCanvas] Template rendering:', {
-        slideId: currentScene,
-        templateName: templateData.templateName,
-        pageName: templateData.pageName,
-        elementCount: templateData.page.elements.length,
-        bgType: templateData.page.background.type,
-      });
-    } else {
-      // eslint-disable-next-line no-console
-      console.log('[ScreenCanvas] Legacy rendering (no templateData), elements:', elements.length);
-    }
-  }, [templateData, currentScene, elements.length]);
 
   // Get visual effect state
   const laserElementId = useCanvasStore.use.laserElementId();
@@ -65,24 +57,30 @@ export function ScreenCanvas() {
   // Compute laser pointer geometry
   const laserGeometry = useMemo<PercentageGeometry | null>(() => {
     if (!laserElementId) return null;
-    const element = elements.find((el) => el.id === laserElementId);
+    const element = displayElements.find((el) => el.id === laserElementId);
     if (!element) return null;
     return findElementGeometry(
-      { type: 'slide', content: { canvas: { elements } } } as Record<string, unknown>,
+      { type: 'slide', content: { canvas: { elements: displayElements } } } as Record<
+        string,
+        unknown
+      >,
       laserElementId,
     );
-  }, [laserElementId, elements]);
+  }, [laserElementId, displayElements]);
 
   // Compute zoom target geometry
   const zoomGeometry = useMemo<PercentageGeometry | null>(() => {
     if (!zoomTarget) return null;
-    const element = elements.find((el) => el.id === zoomTarget.elementId);
+    const element = displayElements.find((el) => el.id === zoomTarget.elementId);
     if (!element) return null;
     return findElementGeometry(
-      { type: 'slide', content: { canvas: { elements } } } as Record<string, unknown>,
+      { type: 'slide', content: { canvas: { elements: displayElements } } } as Record<
+        string,
+        unknown
+      >,
       zoomTarget.elementId,
     );
-  }, [zoomTarget, elements]);
+  }, [zoomTarget, displayElements]);
 
   return (
     <div className="relative h-full w-full overflow-hidden select-none" ref={canvasRef}>
@@ -106,7 +104,7 @@ export function ScreenCanvas() {
           <div
             className="w-full h-full bg-position-center rounded-lg"
             style={{ ...backgroundStyle }}
-          ></div>
+          />
         )}
 
         {/* Content layer - scaled */}
@@ -126,7 +124,7 @@ export function ScreenCanvas() {
               transform: `scale(${canvasScale})`,
             }}
           >
-            {elements.map((element, index) => (
+            {displayElements.map((element, index) => (
               <ScreenElement key={element.id} elementInfo={element} elementIndex={index + 1} />
             ))}
             {/* Highlight overlay - stacked above elements */}

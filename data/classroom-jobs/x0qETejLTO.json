@@ -1,0 +1,22 @@
+{
+  "id": "x0qETejLTO",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 19,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-06-24T04:00:56.582Z",
+  "updatedAt": "2026-06-24T04:01:00.704Z",
+  "inputSummary": {
+    "requirementPreview": "高斯公式\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-24T04:00:56.598Z",
+  "completedAt": "2026-06-24T04:01:00.704Z",
+  "error": "用户取消了生成"
+}

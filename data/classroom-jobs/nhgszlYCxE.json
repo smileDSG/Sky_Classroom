@@ -1,0 +1,391 @@
+{
+  "id": "nhgszlYCxE",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-23T13:16:18.578Z",
+  "updatedAt": "2026-06-23T13:18:38.603Z",
+  "inputSummary": {
+    "requirementPreview": "傅里叶级数\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 9,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-23T13:16:18.592Z",
+  "totalScenes": 9,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "什么是傅里叶级数？",
+        "description": "介绍傅里叶级数的核心思想和历史背景，建立初步的直觉理解。",
+        "keyPoints": [
+          "傅里叶级数的基本思想：任何周期函数都可以表示为不同频率的正弦波和余弦波的叠加。",
+          "历史背景：由法国数学家约瑟夫·傅里叶在19世纪初提出，最初用于研究热传导问题。",
+          "核心概念术语：周期函数、简谐波（基波）、谐波（高次谐波）、频谱。",
+          "现实应用比喻：将复杂的声音（如乐声）分解为不同音调（频率）的组合。"
+        ],
+        "teachingObjective": "能够用自己的语言描述傅里叶级数的核心思想，并说出至少一个应用场景。",
+        "estimatedDuration": 150,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "数学基础：周期函数与正弦波",
+        "description": "回顾周期函数和正弦波的基本性质，为傅里叶级数的数学表达式做铺垫。",
+        "keyPoints": [
+          "周期函数的定义：满足 f(x+T) = f(x) 的函数，其中 T 是周期。",
+          "正弦波/余弦波：最基本的周期函数，由振幅、频率和相位三个参数描述。",
+          "频率与周期的关系：频率 f = 1/T，角频率 ω = 2πf。",
+          "[Table] 常见周期函数示例：纯正弦波、方波、三角波，并对比它们的形状和傅里叶组成。"
+        ],
+        "estimatedDuration": 180,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "可视化：正弦波叠加实验",
+        "description": "通过交互式模拟器，让学习者亲手调整不同正弦波的频率和振幅，观察它们叠加后如何逼近一个方波，直观理解傅里叶级数的“叠加”原理。",
+        "keyPoints": [
+          "通过滑块调整基波和前三项谐波的振幅。",
+          "实时显示叠加后的波形与目标波形（方波）的对比。",
+          "观察到添加的谐波项越多，叠加波形越接近方波。"
+        ],
+        "teachingObjective": "能够通过调整参数，观察到正弦波叠加逼近方波的过程，理解傅里叶级数的逼近思想。",
+        "estimatedDuration": 240,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "傅里叶级数：正弦波叠加逼近方波",
+          "keyVariables": [
+            "基波频率 (f0): 固定",
+            "基波振幅 (A1): 可调",
+            "3次谐波振幅 (A3): 可调",
+            "5次谐波振幅 (A5): 可调",
+            "7次谐波振幅 (A7): 可调"
+          ]
+        },
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "傅里叶级数的数学表达式",
+        "description": "展示傅里叶级数的标准数学公式，并解释公式中每一项的物理意义。",
+        "keyPoints": [
+          "傅里叶级数的标准形式：f(t) = a0 + Σ(an*cos(nωt) + bn*sin(nωt))。",
+          "a0 (直流分量)：代表信号的平均值。",
+          "an 和 bn (傅里叶系数)：决定了每个频率分量的幅度，是傅里叶变换的关键。",
+          "nωt：n 代表谐波次数，ω 为基波角频率。"
+        ],
+        "estimatedDuration": 150,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "如何计算傅里叶系数？",
+        "description": "介绍计算傅里叶系数 an 和 bn 的核心公式——欧拉-傅里叶公式，并通过一个简单的示例展示计算过程。",
+        "keyPoints": [
+          "傅里叶系数的正交性原理：不同频率的正弦/余弦函数在周期内积分结果为零。",
+          "欧拉-傅里叶公式：利用正交性质，给出计算 an 和 bn 的积分公式。",
+          "计算示例：对周期为2π的简单周期函数 f(t)=t 计算其傅里叶系数。",
+          "[Table] 常见波形的傅里叶系数表：对方波、锯齿波、三角波等，列出其非零系数。"
+        ],
+        "teachingObjective": "能够应用公式求简单周期函数的傅里叶系数。",
+        "estimatedDuration": 200,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "quiz",
+        "title": "阶段测验：理解与计算",
+        "description": "通过一组选择题和简答题，检验对傅里叶级数基本概念和系数计算的理解。",
+        "keyPoints": [
+          "选择题：考察傅里叶级数基本概念、正余弦正交性。",
+          "选择题：考察对方波、三角波傅里叶成分的理解。",
+          "简答题：给定一个简单函数，要求写出其傅里叶级数表达式或部分系数。"
+        ],
+        "teachingObjective": "能正确回答关于傅里叶级数核心概念和简单计算的问题。",
+        "estimatedDuration": 180,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        },
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "傅里叶级数的应用（一）：信号处理与音频",
+        "description": "介绍傅里叶级数在音频编辑、音乐合成和降噪中的实际应用。",
+        "keyPoints": [
+          "音频压缩：MP3等格式利用傅里叶变换去除人耳不敏感的频率分量。",
+          "音乐合成：通过叠加不同频率和振幅的正弦波来模拟各种乐器的音色。",
+          "降噪技术：识别并滤除特定频率的噪声信号。"
+        ],
+        "estimatedDuration": 150,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "傅里叶级数的应用（二）：工程与科学",
+        "description": "展现傅里叶级数在电气工程、结构力学和热传导等领域的广泛应用。",
+        "keyPoints": [
+          "电气工程：分析电路中的谐波失真，保证电力质量。",
+          "结构力学：分析桥梁、建筑在风或地震作用下的振动模态。",
+          "热传导：最初的应用领域，分析温度分布随时间的变化。"
+        ],
+        "estimatedDuration": 180,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "课程总结与下一步",
+        "description": "总结傅里叶级数的关键概念和思想，并引导学习者探索更广泛的傅里叶分析领域。",
+        "keyPoints": [
+          "关键思想回顾：任何周期信号都可以分解为简单正弦波的叠加。",
+          "核心技能：理解级数表达式，并能计算简单情况下的系数。",
+          "展望未来：从傅里叶级数到傅里叶变换，再到快速傅里叶变换（FFT）。",
+          "【拓展阅读】推荐在线资源，如3Blue1Brown的关于傅里叶变换的介绍视频。"
+        ],
+        "estimatedDuration": 120,
+        "order": 9
+      }
+    ],
+    "languageDirective": "本课程以中文授课。核心术语如‘傅里叶级数（Fourier series）’、‘简谐波（simple harmonic wave）’等，首次出现时提供双语对照，后续统一使用中文术语。所有课程内容、讲解、注释和互动说明均使用中文。",
+    "topicSummary": "傅里叶级数入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "WoD2WcUIkS",
+      "name": "什么是傅里叶级数？",
+      "languageDirective": "本课程以中文授课。核心术语如‘傅里叶级数（Fourier series）’、‘简谐波（simple harmonic wave）’等，首次出现时提供双语对照，后续统一使用中文术语。所有课程内容、讲解、注释和互动说明均使用中文。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782220600420,
+      "updatedAt": 1782220600420,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "傅里叶级数\n\n\n【参考已有课堂模板】\n\":[\"宫崎骏（吉卜力）：《千与千寻》《幽灵公主》，手绘风格，自然与人文关怀\",\"新海诚：《你的名字。》《天气之子》，数码技术，细腻的光影与唯美场景\",\"对比分析：主题（成长 vs 距离与连接）、技术（手绘 vs 数码）、受众（全年龄 vs 青少年）\"],\"teachingObjective\":\"能够比较分析不同导演的作品风格与主题\",\"estimatedDuration\":180,\"order\":3},{\"id\":\"scene_4\",\"type\":\"slide\",\"title\":\"角色设计风格：从大眼萌妹到写实硬汉\",\"description\":\"介绍日本动漫角色设计的几种主流风格及其演变，包括不同流派的特点",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "什么是傅里叶级数？",
+      "description": "介绍傅里叶级数的核心思想和历史背景，建立初步的直觉理解。",
+      "keyPoints": [
+        "傅里叶级数的基本思想：任何周期函数都可以表示为不同频率的正弦波和余弦波的叠加。",
+        "历史背景：由法国数学家约瑟夫·傅里叶在19世纪初提出，最初用于研究热传导问题。",
+        "核心概念术语：周期函数、简谐波（基波）、谐波（高次谐波）、频谱。",
+        "现实应用比喻：将复杂的声音（如乐声）分解为不同音调（频率）的组合。"
+      ],
+      "teachingObjective": "能够用自己的语言描述傅里叶级数的核心思想，并说出至少一个应用场景。",
+      "estimatedDuration": 150,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "数学基础：周期函数与正弦波",
+      "description": "回顾周期函数和正弦波的基本性质，为傅里叶级数的数学表达式做铺垫。",
+      "keyPoints": [
+        "周期函数的定义：满足 f(x+T) = f(x) 的函数，其中 T 是周期。",
+        "正弦波/余弦波：最基本的周期函数，由振幅、频率和相位三个参数描述。",
+        "频率与周期的关系：频率 f = 1/T，角频率 ω = 2πf。",
+        "[Table] 常见周期函数示例：纯正弦波、方波、三角波，并对比它们的形状和傅里叶组成。"
+      ],
+      "estimatedDuration": 180,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "可视化：正弦波叠加实验",
+      "description": "通过交互式模拟器，让学习者亲手调整不同正弦波的频率和振幅，观察它们叠加后如何逼近一个方波，直观理解傅里叶级数的“叠加”原理。",
+      "keyPoints": [
+        "通过滑块调整基波和前三项谐波的振幅。",
+        "实时显示叠加后的波形与目标波形（方波）的对比。",
+        "观察到添加的谐波项越多，叠加波形越接近方波。"
+      ],
+      "teachingObjective": "能够通过调整参数，观察到正弦波叠加逼近方波的过程，理解傅里叶级数的逼近思想。",
+      "estimatedDuration": 240,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "傅里叶级数：正弦波叠加逼近方波",
+        "keyVariables": [
+          "基波频率 (f0): 固定",
+          "基波振幅 (A1): 可调",
+          "3次谐波振幅 (A3): 可调",
+          "5次谐波振幅 (A5): 可调",
+          "7次谐波振幅 (A7): 可调"
+        ]
+      },
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "傅里叶级数的数学表达式",
+      "description": "展示傅里叶级数的标准数学公式，并解释公式中每一项的物理意义。",
+      "keyPoints": [
+        "傅里叶级数的标准形式：f(t) = a0 + Σ(an*cos(nωt) + bn*sin(nωt))。",
+        "a0 (直流分量)：代表信号的平均值。",
+        "an 和 bn (傅里叶系数)：决定了每个频率分量的幅度，是傅里叶变换的关键。",
+        "nωt：n 代表谐波次数，ω 为基波角频率。"
+      ],
+      "estimatedDuration": 150,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "如何计算傅里叶系数？",
+      "description": "介绍计算傅里叶系数 an 和 bn 的核心公式——欧拉-傅里叶公式，并通过一个简单的示例展示计算过程。",
+      "keyPoints": [
+        "傅里叶系数的正交性原理：不同频率的正弦/余弦函数在周期内积分结果为零。",
+        "欧拉-傅里叶公式：利用正交性质，给出计算 an 和 bn 的积分公式。",
+        "计算示例：对周期为2π的简单周期函数 f(t)=t 计算其傅里叶系数。",
+        "[Table] 常见波形的傅里叶系数表：对方波、锯齿波、三角波等，列出其非零系数。"
+      ],
+      "teachingObjective": "能够应用公式求简单周期函数的傅里叶系数。",
+      "estimatedDuration": 200,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "quiz",
+      "title": "阶段测验：理解与计算",
+      "description": "通过一组选择题和简答题，检验对傅里叶级数基本概念和系数计算的理解。",
+      "keyPoints": [
+        "选择题：考察傅里叶级数基本概念、正余弦正交性。",
+        "选择题：考察对方波、三角波傅里叶成分的理解。",
+        "简答题：给定一个简单函数，要求写出其傅里叶级数表达式或部分系数。"
+      ],
+      "teachingObjective": "能正确回答关于傅里叶级数核心概念和简单计算的问题。",
+      "estimatedDuration": 180,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      },
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "傅里叶级数的应用（一）：信号处理与音频",
+      "description": "介绍傅里叶级数在音频编辑、音乐合成和降噪中的实际应用。",
+      "keyPoints": [
+        "音频压缩：MP3等格式利用傅里叶变换去除人耳不敏感的频率分量。",
+        "音乐合成：通过叠加不同频率和振幅的正弦波来模拟各种乐器的音色。",
+        "降噪技术：识别并滤除特定频率的噪声信号。"
+      ],
+      "estimatedDuration": 150,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "傅里叶级数的应用（二）：工程与科学",
+      "description": "展现傅里叶级数在电气工程、结构力学和热传导等领域的广泛应用。",
+      "keyPoints": [
+        "电气工程：分析电路中的谐波失真，保证电力质量。",
+        "结构力学：分析桥梁、建筑在风或地震作用下的振动模态。",
+        "热传导：最初的应用领域，分析温度分布随时间的变化。"
+      ],
+      "estimatedDuration": 180,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "课程总结与下一步",
+      "description": "总结傅里叶级数的关键概念和思想，并引导学习者探索更广泛的傅里叶分析领域。",
+      "keyPoints": [
+        "关键思想回顾：任何周期信号都可以分解为简单正弦波的叠加。",
+        "核心技能：理解级数表达式，并能计算简单情况下的系数。",
+        "展望未来：从傅里叶级数到傅里叶变换，再到快速傅里叶变换（FFT）。",
+        "【拓展阅读】推荐在线资源，如3Blue1Brown的关于傅里叶变换的介绍视频。"
+      ],
+      "estimatedDuration": 120,
+      "order": 9
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本课程以中文授课。核心术语如‘傅里叶级数（Fourier series）’、‘简谐波（simple harmonic wave）’等，首次出现时提供双语对照，后续统一使用中文术语。所有课程内容、讲解、注释和互动说明均使用中文。",
+    "totalScenes": 9
+  },
+  "topicSummary": "傅里叶级数入门",
+  "completedAt": "2026-06-23T13:18:38.603Z",
+  "result": {
+    "classroomId": "WoD2WcUIkS",
+    "url": "http://localhost:3000/classroom/WoD2WcUIkS",
+    "scenesCount": 9
+  }
+}

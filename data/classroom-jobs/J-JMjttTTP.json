@@ -1,0 +1,343 @@
+{
+  "id": "J-JMjttTTP",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-25T11:22:35.161Z",
+  "updatedAt": "2026-06-25T11:24:02.750Z",
+  "inputSummary": {
+    "requirementPreview": "二次函数\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 7,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-25T11:22:35.180Z",
+  "totalScenes": 7,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "什么是二次函数",
+        "description": "介绍二次函数的基本定义，通过生活实例引出二次函数的概念，为后续学习建立直观理解。",
+        "keyPoints": [
+          "定义：形如 y = ax² + bx + c (a≠0) 的函数称为二次函数。",
+          "实际背景：物体自由落体、抛物线运动等。",
+          "与一次函数的区别：图像不再是直线，而是曲线。"
+        ],
+        "teachingObjective": "理解二次函数的定义和一般形式。",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "interactive",
+        "title": "y = ax² 的探索：系数 a 的影响",
+        "description": "通过交互式模拟器，让学生拖动滑块改变系数a的值，直观观察抛物线开口方向和宽窄的变化。",
+        "keyPoints": [
+          "a > 0：开口向上；a < 0：开口向下。",
+          "|a|越大，开口越窄；|a|越小，开口越宽。",
+          "a不变时，抛物线形状不变。"
+        ],
+        "teachingObjective": "理解系数 a 对二次函数图像的影响。",
+        "estimatedDuration": 180,
+        "order": 2,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "二次函数 y = ax² 中系数 a 对图像的影响",
+          "keyVariables": [
+            {
+              "name": "a",
+              "type": "range",
+              "min": -5,
+              "max": 5,
+              "step": 0.1,
+              "default": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "二次函数的图像：抛物线",
+        "description": "系统讲解二次函数 y = ax² + bx + c 的图像（抛物线）的开口方向、对称轴、顶点坐标等关键特征。",
+        "keyPoints": [
+          "对称轴：直线 x = -b/(2a)。",
+          "顶点坐标：(-b/(2a), (4ac - b²)/(4a))。",
+          "最值：a > 0 时，顶点为最小值；a < 0 时，顶点为最大值。"
+        ],
+        "teachingObjective": "掌握二次函数图像的基本特征及对称轴和顶点坐标的求法。",
+        "estimatedDuration": 150,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "二次函数图像的平移",
+        "description": "讲解二次函数图像如何通过平移变换（左加右减，上加下减）从 y=ax² 得到其他形式的顶点式图像。",
+        "keyPoints": [
+          "移动法则：左加右减（x方向），上加下减（y方向）。",
+          "顶点式：y = a(x - h)² + k，顶点为 (h, k)。",
+          "将 y=ax² 的图像平移 |h| 个单位和 |k| 个单位即可得到。"
+        ],
+        "teachingObjective": "理解二次函数图像的平移规律。",
+        "estimatedDuration": 150,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "二次函数的三种表示形式",
+        "description": "介绍二次函数的一般式、顶点式和交点式，并对比其特点和应用场景。",
+        "keyPoints": [
+          "一般式：y = ax² + bx + c (a≠0)。",
+          "顶点式：y = a(x - h)² + k (a≠0)，可直接读出顶点坐标。",
+          "交点式：y = a(x - x₁)(x - x₂) (a≠0)，可直接读出与x轴的两个交点。",
+          "不同形式之间的转化方法（配方法）。"
+        ],
+        "teachingObjective": "理解二次函数三种表示形式的特点和应用场景。",
+        "estimatedDuration": 150,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "二次函数与一元二次方程",
+        "description": "阐述二次函数图像与x轴的交点（x₁, x₂）与一元二次方程 ax² + bx + c = 0 的根之间的关系。",
+        "keyPoints": [
+          "交点个数由判别式 Δ = b² - 4ac 决定。",
+          "Δ > 0：两个不同的交点，方程有两个不等实根。",
+          "Δ = 0：一个交点（顶点在x轴上），方程有两个相等实根。",
+          "Δ < 0：无交点，方程无实根。"
+        ],
+        "teachingObjective": "建立二次函数与一元二次方程之间的内在联系。",
+        "estimatedDuration": 150,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "单元小测验",
+        "description": "通过几个选择题和解答题，检测学生对二次函数基本概念、图像特征及其与方程关系的掌握情况。",
+        "keyPoints": [
+          "题目覆盖定义、开口方向、对称轴、顶点、平移、与方程的关系等核心内容。",
+          "既考查基础知识，也考查简单应用能力。"
+        ],
+        "teachingObjective": "巩固并检测本章所学知识。",
+        "estimatedDuration": 300,
+        "order": 7,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        }
+      }
+    ],
+    "languageDirective": "用户使用中文提出需求，因此课程教学语言默认为中文。所有术语（如“二次函数”、“配方法”、“顶点式”）在首次出现时使用中文标准译名，可酌情在后续出现时保留原词。对于初中阶段的数学概念，使用清晰、简洁的表述，适当辅以生活化例子帮助学生理解。",
+    "topicSummary": "二次函数基础",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "A6rU_1bZDU",
+      "name": "什么是二次函数",
+      "languageDirective": "用户使用中文提出需求，因此课程教学语言默认为中文。所有术语（如“二次函数”、“配方法”、“顶点式”）在首次出现时使用中文标准译名，可酌情在后续出现时保留原词。对于初中阶段的数学概念，使用清晰、简洁的表述，适当辅以生活化例子帮助学生理解。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782386565159,
+      "updatedAt": 1782386565159,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "二次函数\n\n\n【参考已有课堂模板】\n{\"requirement\":\"二次函数\",\"topicSummary\":\"二次函数基础\",\"outlines\":[{\"id\":\"scene_1\",\"type\":\"slide\",\"title\":\"什么是二次函数\",\"description\":\"介绍二次函数的基本定义，通过生活实例引出二次函数的概念，为后续学习建立直观理解。\",\"keyPoints\":[\"定义：形如 y = ax² + bx + c (a≠0) 的函数称为二次函数。\",\"实际背景：物体自由落体、抛物线运动等。\",\"与一次函数的区别：图像不再是直线，而是曲线。\"],\"teachingObjective\":\"理解二次函数的定义和一般形式。\",\"estimatedDuration\":120,\"order\":1},{\"id\":\"scene_2\",\"type\":\"interactive\",\"title\":\"y = ax² 的探索：系数 a 的影响\",\"description\":\"通过交互式模拟器，让学生拖动滑块改变系数a的值，直观观察抛物线开口方向和宽窄的变化\n---\n。（配方法）\"],\"teachingObjective\":\"理解二次函数三种表示形式的特点和应用场景。\",\"estimatedDuration\":150,\"order\":5},{\"id\":\"scene_6\",\"type\":\"slide\",\"title\":\"二次函数与一元二次方程\",\"description\":\"阐述二次函数图像与x轴的交点（x₁, x₂）与一元二次方程 ax² + bx + c = 0 的根之间的关系。\",\"keyPoints\":[\"交点个数由判别式 Δ = b² - 4ac 决定。\",\"Δ > 0：两个不同的交点，方程有两个不等实根。\",\"Δ = 0：一个交点（顶点在x轴上），方程有两个相等实根。\",\"Δ < 0：无交点，方程无实根。\"],\"teachingObjective\":\"建立二次函数与一元二次方程之间的内在联系。\",\"estimatedDuration\":150,\"order\":6},{\"id\":\"scene_7\",\"type\":\"slide\",\"title\":\"二次函数图像的平移\",\"description\":\"讲解二次函数图像如何通过平移变换（左加右减，上加下减）从 y=ax² 得到其他形式的顶点式图像",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "什么是二次函数",
+      "description": "介绍二次函数的基本定义，通过生活实例引出二次函数的概念，为后续学习建立直观理解。",
+      "keyPoints": [
+        "定义：形如 y = ax² + bx + c (a≠0) 的函数称为二次函数。",
+        "实际背景：物体自由落体、抛物线运动等。",
+        "与一次函数的区别：图像不再是直线，而是曲线。"
+      ],
+      "teachingObjective": "理解二次函数的定义和一般形式。",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "interactive",
+      "title": "y = ax² 的探索：系数 a 的影响",
+      "description": "通过交互式模拟器，让学生拖动滑块改变系数a的值，直观观察抛物线开口方向和宽窄的变化。",
+      "keyPoints": [
+        "a > 0：开口向上；a < 0：开口向下。",
+        "|a|越大，开口越窄；|a|越小，开口越宽。",
+        "a不变时，抛物线形状不变。"
+      ],
+      "teachingObjective": "理解系数 a 对二次函数图像的影响。",
+      "estimatedDuration": 180,
+      "order": 2,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "二次函数 y = ax² 中系数 a 对图像的影响",
+        "keyVariables": [
+          {
+            "name": "a",
+            "type": "range",
+            "min": -5,
+            "max": 5,
+            "step": 0.1,
+            "default": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "二次函数的图像：抛物线",
+      "description": "系统讲解二次函数 y = ax² + bx + c 的图像（抛物线）的开口方向、对称轴、顶点坐标等关键特征。",
+      "keyPoints": [
+        "对称轴：直线 x = -b/(2a)。",
+        "顶点坐标：(-b/(2a), (4ac - b²)/(4a))。",
+        "最值：a > 0 时，顶点为最小值；a < 0 时，顶点为最大值。"
+      ],
+      "teachingObjective": "掌握二次函数图像的基本特征及对称轴和顶点坐标的求法。",
+      "estimatedDuration": 150,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "二次函数图像的平移",
+      "description": "讲解二次函数图像如何通过平移变换（左加右减，上加下减）从 y=ax² 得到其他形式的顶点式图像。",
+      "keyPoints": [
+        "移动法则：左加右减（x方向），上加下减（y方向）。",
+        "顶点式：y = a(x - h)² + k，顶点为 (h, k)。",
+        "将 y=ax² 的图像平移 |h| 个单位和 |k| 个单位即可得到。"
+      ],
+      "teachingObjective": "理解二次函数图像的平移规律。",
+      "estimatedDuration": 150,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "二次函数的三种表示形式",
+      "description": "介绍二次函数的一般式、顶点式和交点式，并对比其特点和应用场景。",
+      "keyPoints": [
+        "一般式：y = ax² + bx + c (a≠0)。",
+        "顶点式：y = a(x - h)² + k (a≠0)，可直接读出顶点坐标。",
+        "交点式：y = a(x - x₁)(x - x₂) (a≠0)，可直接读出与x轴的两个交点。",
+        "不同形式之间的转化方法（配方法）。"
+      ],
+      "teachingObjective": "理解二次函数三种表示形式的特点和应用场景。",
+      "estimatedDuration": 150,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "二次函数与一元二次方程",
+      "description": "阐述二次函数图像与x轴的交点（x₁, x₂）与一元二次方程 ax² + bx + c = 0 的根之间的关系。",
+      "keyPoints": [
+        "交点个数由判别式 Δ = b² - 4ac 决定。",
+        "Δ > 0：两个不同的交点，方程有两个不等实根。",
+        "Δ = 0：一个交点（顶点在x轴上），方程有两个相等实根。",
+        "Δ < 0：无交点，方程无实根。"
+      ],
+      "teachingObjective": "建立二次函数与一元二次方程之间的内在联系。",
+      "estimatedDuration": 150,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "单元小测验",
+      "description": "通过几个选择题和解答题，检测学生对二次函数基本概念、图像特征及其与方程关系的掌握情况。",
+      "keyPoints": [
+        "题目覆盖定义、开口方向、对称轴、顶点、平移、与方程的关系等核心内容。",
+        "既考查基础知识，也考查简单应用能力。"
+      ],
+      "teachingObjective": "巩固并检测本章所学知识。",
+      "estimatedDuration": 300,
+      "order": 7,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      }
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "用户使用中文提出需求，因此课程教学语言默认为中文。所有术语（如“二次函数”、“配方法”、“顶点式”）在首次出现时使用中文标准译名，可酌情在后续出现时保留原词。对于初中阶段的数学概念，使用清晰、简洁的表述，适当辅以生活化例子帮助学生理解。",
+    "totalScenes": 7
+  },
+  "topicSummary": "二次函数基础",
+  "completedAt": "2026-06-25T11:24:02.750Z",
+  "result": {
+    "classroomId": "A6rU_1bZDU",
+    "url": "http://localhost:3000/classroom/A6rU_1bZDU",
+    "scenesCount": 7
+  }
+}

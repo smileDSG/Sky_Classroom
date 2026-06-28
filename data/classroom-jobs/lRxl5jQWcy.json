@@ -1,0 +1,491 @@
+{
+  "id": "lRxl5jQWcy",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 30,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-06-24T10:13:09.199Z",
+  "updatedAt": "2026-06-24T10:32:27.968Z",
+  "inputSummary": {
+    "requirementPreview": "格林公式\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-24T10:13:09.211Z",
+  "totalScenes": 12,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "引言：格林公式是什么？",
+        "description": "介绍格林公式的背景和基本概念，激发学生兴趣。",
+        "keyPoints": [
+          "什么是格林公式：平面向量场的曲线积分与二重积分的关系",
+          "格林公式的发现者：乔治·格林",
+          "格林公式的重要性：连接线积分与面积分，是分析学中的基本定理之一"
+        ],
+        "teachingObjective": "学生能够说出格林公式的基本思想及其在数学分析中的地位",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "预备知识回顾",
+        "description": "复习曲线积分和二重积分的基本概念，为格林公式的学习做铺垫。",
+        "keyPoints": [
+          "曲线积分的定义与计算方法",
+          "二重积分的定义与计算方法",
+          "向量场与通量的概念",
+          "[Table] 对比曲线积分与二重积分：积分区域、被积函数、意义"
+        ],
+        "teachingObjective": "学生能够回忆起曲线积分和二重积分的基本计算方法",
+        "estimatedDuration": 150,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "格林公式的表述",
+        "description": "清晰表述格林公式的数学形式，并解释每个符号的含义。",
+        "keyPoints": [
+          "格林公式的标准形式：∮_C (P dx + Q dy) = ∬_D (∂Q/∂x - ∂P/∂y) dxdy",
+          "条件：区域D为具有分段光滑边界曲线C的单连通区域，P和Q具有连续偏导数",
+          "符号解析：C的方向为正向（逆时针），D为有界闭区域"
+        ],
+        "teachingObjective": "学生能够准确写出格林公式并说明其使用条件",
+        "estimatedDuration": 180,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "格林公式的直观理解",
+        "description": "通过图形和动画直观解释格林公式的几何意义。",
+        "keyPoints": [
+          "散度（∂Q/∂x - ∂P/∂y）的含义：流体在一点处的发散程度",
+          "曲线积分表示流体沿边界流动的环量",
+          "格林公式的含义：区域内的总散度等于边界上的环量",
+          "类比：一维情况下的微积分基本定理"
+        ],
+        "teachingObjective": "学生能够从几何和物理角度理解格林公式的意义",
+        "estimatedDuration": 180,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "quiz",
+        "title": "小测验：格林公式基础",
+        "description": "检验学生对格林公式表述和条件的掌握程度。",
+        "keyPoints": [
+          "检验格林公式中各符号的含义",
+          "判断是否符合使用格林公式的条件",
+          "简单应用：根据向量场选择正确选项"
+        ],
+        "teachingObjective": "学生能够正确识别格林公式的组成部分和适用条件",
+        "estimatedDuration": 120,
+        "order": 5,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple"
+          ]
+        }
+      },
+      {
+        "id": "scene_6",
+        "type": "interactive",
+        "title": "向量场与散度可视化",
+        "description": "通过交互式模拟器观察不同向量场的散度，直观理解格林公式。",
+        "keyPoints": [
+          "调整向量场参数，观察散度变化",
+          "观察边界曲线积分与内部散度积分的关系",
+          "验证格林公式的数值准确性"
+        ],
+        "teachingObjective": "学生能够通过交互操作加深对格林公式几何意义的理解",
+        "estimatedDuration": 240,
+        "order": 6,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "格林公式：通过可视化向量场和散度，展示曲线积分与二重积分的关系",
+          "keyVariables": [
+            "P(x,y) = -y/(x^2+y^2)",
+            "Q(x,y) = x/(x^2+y^2)",
+            "区域形状：圆形、方形、任意多边形"
+          ]
+        }
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "格林公式的应用（一）",
+        "description": "演示如何利用格林公式将曲线积分转化为二重积分进行计算。",
+        "keyPoints": [
+          "计算闭合曲线上的第二类曲线积分",
+          "选取合适的P和Q函数",
+          "示例：计算∮_C (y dx - x dy)，其中C为单位圆",
+          "利用格林公式简化计算过程"
+        ],
+        "teachingObjective": "学生能够利用格林公式将曲线积分转化为二重积分并计算",
+        "estimatedDuration": 180,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "格林公式的应用（二）",
+        "description": "演示如何利用格林公式计算平面图形的面积。",
+        "keyPoints": [
+          "面积公式：A = (1/2) ∮_C (x dy - y dx)",
+          "推导过程：选取P = -y/2, Q = x/2",
+          "示例：计算椭圆x^2/a^2 + y^2/b^2 = 1的面积"
+        ],
+        "teachingObjective": "学生能够利用格林公式推导并计算平面图形的面积",
+        "estimatedDuration": 180,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "quiz",
+        "title": "阶段测验：格林公式综合应用",
+        "description": "检验学生应用格林公式解决实际问题的能力。",
+        "keyPoints": [
+          "计算给定向量场的曲线积分",
+          "利用格林公式计算不规则图形的面积",
+          "判断格林公式的适用性并提供理由"
+        ],
+        "teachingObjective": "学生能够灵活运用格林公式解决曲线积分和面积计算问题",
+        "estimatedDuration": 180,
+        "order": 9,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_10",
+        "type": "slide",
+        "title": "格林公式的推广与关联",
+        "description": "介绍格林公式与斯托克斯定理、高斯散度定理的联系。",
+        "keyPoints": [
+          "格林公式是二维情况下的斯托克斯定理",
+          "高维推广：斯托克斯定理和散度定理",
+          "格林公式在流体力学和电磁学中的应用简介"
+        ],
+        "teachingObjective": "学生能够知道格林公式与其他积分定理的联系及其在高维数学中的意义",
+        "estimatedDuration": 150,
+        "order": 10
+      },
+      {
+        "id": "scene_11",
+        "type": "slide",
+        "title": "常见错误与注意事项",
+        "description": "总结使用格林公式时容易出现的错误，帮助学生避免常见误区。",
+        "keyPoints": [
+          "忽略区域连通性条件",
+          "边界曲线方向判断错误",
+          "P和Q函数未在区域内连续",
+          "误用格林公式到非闭合曲线"
+        ],
+        "teachingObjective": "学生能够识别并避免使用格林公式时的常见错误",
+        "estimatedDuration": 120,
+        "order": 11
+      },
+      {
+        "id": "scene_12",
+        "type": "slide",
+        "title": "总结与回顾",
+        "description": "对本课程的核心内容进行系统总结，帮助学生构建知识体系。",
+        "keyPoints": [
+          "格林公式的核心内容与条件",
+          "格林公式的两种主要应用",
+          "格林公式与其他积分定理的联系",
+          "关键提示：牢记使用条件和方向"
+        ],
+        "teachingObjective": "学生能够复述格林公式的核心内容并形成系统的知识框架",
+        "estimatedDuration": 120,
+        "order": 12
+      }
+    ],
+    "languageDirective": "根据您使用中文输入‘格林公式’，课程将全程使用中文进行教学。所有数学术语（如格林公式、曲线积分、二重积分、向量场等）均使用标准中文翻译。课程内容面向具备微积分基础知识的普通学习者，将以清晰、直观的方式讲解格林公式的概念、适用条件及典型应用。",
+    "topicSummary": "格林公式基础",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "R0jZtQimz1",
+      "name": "引言：格林公式是什么？",
+      "languageDirective": "根据您使用中文输入‘格林公式’，课程将全程使用中文进行教学。所有数学术语（如格林公式、曲线积分、二重积分、向量场等）均使用标准中文翻译。课程内容面向具备微积分基础知识的普通学习者，将以清晰、直观的方式讲解格林公式的概念、适用条件及典型应用。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782296010238,
+      "updatedAt": 1782296010238,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "格林公式\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "引言：格林公式是什么？",
+      "description": "介绍格林公式的背景和基本概念，激发学生兴趣。",
+      "keyPoints": [
+        "什么是格林公式：平面向量场的曲线积分与二重积分的关系",
+        "格林公式的发现者：乔治·格林",
+        "格林公式的重要性：连接线积分与面积分，是分析学中的基本定理之一"
+      ],
+      "teachingObjective": "学生能够说出格林公式的基本思想及其在数学分析中的地位",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "预备知识回顾",
+      "description": "复习曲线积分和二重积分的基本概念，为格林公式的学习做铺垫。",
+      "keyPoints": [
+        "曲线积分的定义与计算方法",
+        "二重积分的定义与计算方法",
+        "向量场与通量的概念",
+        "[Table] 对比曲线积分与二重积分：积分区域、被积函数、意义"
+      ],
+      "teachingObjective": "学生能够回忆起曲线积分和二重积分的基本计算方法",
+      "estimatedDuration": 150,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "格林公式的表述",
+      "description": "清晰表述格林公式的数学形式，并解释每个符号的含义。",
+      "keyPoints": [
+        "格林公式的标准形式：∮_C (P dx + Q dy) = ∬_D (∂Q/∂x - ∂P/∂y) dxdy",
+        "条件：区域D为具有分段光滑边界曲线C的单连通区域，P和Q具有连续偏导数",
+        "符号解析：C的方向为正向（逆时针），D为有界闭区域"
+      ],
+      "teachingObjective": "学生能够准确写出格林公式并说明其使用条件",
+      "estimatedDuration": 180,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "格林公式的直观理解",
+      "description": "通过图形和动画直观解释格林公式的几何意义。",
+      "keyPoints": [
+        "散度（∂Q/∂x - ∂P/∂y）的含义：流体在一点处的发散程度",
+        "曲线积分表示流体沿边界流动的环量",
+        "格林公式的含义：区域内的总散度等于边界上的环量",
+        "类比：一维情况下的微积分基本定理"
+      ],
+      "teachingObjective": "学生能够从几何和物理角度理解格林公式的意义",
+      "estimatedDuration": 180,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "quiz",
+      "title": "小测验：格林公式基础",
+      "description": "检验学生对格林公式表述和条件的掌握程度。",
+      "keyPoints": [
+        "检验格林公式中各符号的含义",
+        "判断是否符合使用格林公式的条件",
+        "简单应用：根据向量场选择正确选项"
+      ],
+      "teachingObjective": "学生能够正确识别格林公式的组成部分和适用条件",
+      "estimatedDuration": 120,
+      "order": 5,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple"
+        ]
+      }
+    },
+    {
+      "id": "scene_6",
+      "type": "interactive",
+      "title": "向量场与散度可视化",
+      "description": "通过交互式模拟器观察不同向量场的散度，直观理解格林公式。",
+      "keyPoints": [
+        "调整向量场参数，观察散度变化",
+        "观察边界曲线积分与内部散度积分的关系",
+        "验证格林公式的数值准确性"
+      ],
+      "teachingObjective": "学生能够通过交互操作加深对格林公式几何意义的理解",
+      "estimatedDuration": 240,
+      "order": 6,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "格林公式：通过可视化向量场和散度，展示曲线积分与二重积分的关系",
+        "keyVariables": [
+          "P(x,y) = -y/(x^2+y^2)",
+          "Q(x,y) = x/(x^2+y^2)",
+          "区域形状：圆形、方形、任意多边形"
+        ]
+      }
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "格林公式的应用（一）",
+      "description": "演示如何利用格林公式将曲线积分转化为二重积分进行计算。",
+      "keyPoints": [
+        "计算闭合曲线上的第二类曲线积分",
+        "选取合适的P和Q函数",
+        "示例：计算∮_C (y dx - x dy)，其中C为单位圆",
+        "利用格林公式简化计算过程"
+      ],
+      "teachingObjective": "学生能够利用格林公式将曲线积分转化为二重积分并计算",
+      "estimatedDuration": 180,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "格林公式的应用（二）",
+      "description": "演示如何利用格林公式计算平面图形的面积。",
+      "keyPoints": [
+        "面积公式：A = (1/2) ∮_C (x dy - y dx)",
+        "推导过程：选取P = -y/2, Q = x/2",
+        "示例：计算椭圆x^2/a^2 + y^2/b^2 = 1的面积"
+      ],
+      "teachingObjective": "学生能够利用格林公式推导并计算平面图形的面积",
+      "estimatedDuration": 180,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "quiz",
+      "title": "阶段测验：格林公式综合应用",
+      "description": "检验学生应用格林公式解决实际问题的能力。",
+      "keyPoints": [
+        "计算给定向量场的曲线积分",
+        "利用格林公式计算不规则图形的面积",
+        "判断格林公式的适用性并提供理由"
+      ],
+      "teachingObjective": "学生能够灵活运用格林公式解决曲线积分和面积计算问题",
+      "estimatedDuration": 180,
+      "order": 9,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_10",
+      "type": "slide",
+      "title": "格林公式的推广与关联",
+      "description": "介绍格林公式与斯托克斯定理、高斯散度定理的联系。",
+      "keyPoints": [
+        "格林公式是二维情况下的斯托克斯定理",
+        "高维推广：斯托克斯定理和散度定理",
+        "格林公式在流体力学和电磁学中的应用简介"
+      ],
+      "teachingObjective": "学生能够知道格林公式与其他积分定理的联系及其在高维数学中的意义",
+      "estimatedDuration": 150,
+      "order": 10
+    },
+    {
+      "id": "scene_11",
+      "type": "slide",
+      "title": "常见错误与注意事项",
+      "description": "总结使用格林公式时容易出现的错误，帮助学生避免常见误区。",
+      "keyPoints": [
+        "忽略区域连通性条件",
+        "边界曲线方向判断错误",
+        "P和Q函数未在区域内连续",
+        "误用格林公式到非闭合曲线"
+      ],
+      "teachingObjective": "学生能够识别并避免使用格林公式时的常见错误",
+      "estimatedDuration": 120,
+      "order": 11
+    },
+    {
+      "id": "scene_12",
+      "type": "slide",
+      "title": "总结与回顾",
+      "description": "对本课程的核心内容进行系统总结，帮助学生构建知识体系。",
+      "keyPoints": [
+        "格林公式的核心内容与条件",
+        "格林公式的两种主要应用",
+        "格林公式与其他积分定理的联系",
+        "关键提示：牢记使用条件和方向"
+      ],
+      "teachingObjective": "学生能够复述格林公式的核心内容并形成系统的知识框架",
+      "estimatedDuration": 120,
+      "order": 12
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "根据您使用中文输入‘格林公式’，课程将全程使用中文进行教学。所有数学术语（如格林公式、曲线积分、二重积分、向量场等）均使用标准中文翻译。课程内容面向具备微积分基础知识的普通学习者，将以清晰、直观的方式讲解格林公式的概念、适用条件及典型应用。",
+    "totalScenes": 12
+  },
+  "topicSummary": "格林公式基础",
+  "completedAt": "2026-06-24T10:32:27.968Z",
+  "error": "用户取消了生成"
+}

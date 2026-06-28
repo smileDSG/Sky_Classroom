@@ -1,0 +1,397 @@
+{
+  "id": "eMdYTHR2Kb",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-24T03:59:04.257Z",
+  "updatedAt": "2026-06-24T04:03:17.719Z",
+  "inputSummary": {
+    "requirementPreview": "高斯公式\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 9,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-24T03:59:04.269Z",
+  "totalScenes": 9,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "从散度定理到高斯公式的引入",
+        "description": "通过一个生动直观的例子（如水箱中的水流），引出通量与散度的概念，并自然过渡到高斯公式的本质：一个封闭曲面上的通量等于其内部区域的散度体积分。",
+        "keyPoints": [
+          "复习向量场的通量概念以及散度的定义",
+          "通过一个简单例子（例如，一个立方体中的恒稳水流）建立直觉",
+          "提出高斯公式的核心思想：封闭曲面的通量 ↔ 内部区域散度的体积分"
+        ],
+        "teachingObjective": "理解高斯公式的物理背景和基本表述，建立从封闭曲面积分到体积分转化的直觉。",
+        "estimatedDuration": 180,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "高斯公式的数学表述与符号约定",
+        "description": "给出高斯公式的标准数学表达式，解释符号含义（如积分区域的记号、法向量的指向等），并强调其成立的条件。",
+        "keyPoints": [
+          "标准表述：∮∮_S F·n dS = ∫∫∫_V (∇·F) dV",
+          "解释符号：S为封闭曲面，V为S所围成的区域，n为外法向单位向量",
+          "成立条件：F在V及其边界S上具有连续一阶偏导数"
+        ],
+        "teachingObjective": "准确记忆和解释高斯公式的数学形式及其符号体系。",
+        "estimatedDuration": 150,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "quiz",
+        "title": "通量与散度的概念辨析",
+        "description": "通过选择题和判断题，检验学员对通量、散度以及高斯公式基本条件的理解。",
+        "keyPoints": [
+          "识别通量与散度的关系",
+          "判断高斯公式的适用条件",
+          "区分封闭曲面与非封闭曲面的处理方式"
+        ],
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple"
+          ]
+        },
+        "estimatedDuration": 120,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "完整计算实例演练（一）：直接应用公式",
+        "description": "选择一个规整的曲面（如球面或立方体表面）和一个简单的向量场，演示如何使用高斯公式将复杂的曲面积分转化为三重积分。",
+        "keyPoints": [
+          "选取的向量场示例：F = (x, y, z)",
+          "计算散度：∇·F = 3",
+          "转化并计算体积分：体积乘以散度 → 得到通量"
+        ],
+        "teachingObjective": "掌握高斯公式的标准计算流程：先求散度，然后计算三重积分。",
+        "estimatedDuration": 210,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "完整计算实例演练（二）：非规整区域的积分",
+        "description": "演示当积分区域为非标准形状时，如何利用高斯公式简化计算过程。例如，向量场含有奇点但不涉及时的处理。",
+        "keyPoints": [
+          "选择需要利用柱坐标或球坐标的复杂区域",
+          "计算散度后，将体积分转化为更容易计算的坐标系",
+          "强调计算技巧：区域可分割时，利用可加性"
+        ],
+        "teachingObjective": "学会在非标准区域下运用高斯公式，并掌握相应坐标变换技巧。",
+        "estimatedDuration": 240,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "interactive",
+        "title": "交互式探索：改变向量场对通量的影响",
+        "description": "提供一个3D模拟场景，学员可以通过调整向量场参数或改变封闭曲面的形状，实时观察散度分布与总通量的变化，加深对高斯公式物理意义的理解。",
+        "keyPoints": [
+          "散度与通量的实时关联可视化",
+          "调整向量场分量（如增加x方向梯度）",
+          "改变曲面形状（如拉伸立方体为一个长方体）"
+        ],
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "高斯公式：散度的体积分等于通量",
+          "keyVariables": [
+            "散度场 (divergence field) 的分布",
+            "封闭曲面S的形状（立方体、球体可调）",
+            "向量场F的各个分量系数"
+          ]
+        },
+        "teachingObjective": "通过交互实验，直观感受散度与通量的关系，巩固高斯公式的应用场景。",
+        "estimatedDuration": 300,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "高斯公式的应用：物理与工程中的常见场景",
+        "description": "介绍高斯公式在静电场中的等价形式（高斯定律），以及在流体力学中计算净流量等实际应用。",
+        "keyPoints": [
+          "电场中的应用：∮∮ E·dS = Q/ε₀ (高斯定律)",
+          "流体力学中的应用：通过一个单元流体的净流出量计算",
+          "热传导：温度梯度场下的热量通量"
+        ],
+        "teachingObjective": "掌握高斯公式在不同学科中的延伸和应用。",
+        "estimatedDuration": 180,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "quiz",
+        "title": "高斯公式综合测试",
+        "description": "通过包含中等难度的计算题和概念题，检验学员能否独立完成高斯公式的应用，包括计算和条件判断。",
+        "keyPoints": [
+          "直接计算某封闭曲面的通量",
+          "判断何时不可直接使用高斯公式",
+          "处理函数含有不可导点的情况"
+        ],
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        },
+        "estimatedDuration": 180,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "课程总结：高斯公式的核心要点与技巧",
+        "description": "系统梳理本节课的所有重点，包括公式记忆、计算步骤、常见误区以及应对策略。",
+        "keyPoints": [
+          "公式重述与记忆口诀：外通量 ⇄ 内散度积分",
+          "计算步骤总结：确认封闭性 → 求散度 → 算体积分",
+          "常见误区：忽略法向方向、曲面的封闭性判断错误、区域含奇点"
+        ],
+        "teachingObjective": "巩固知识体系，帮助学员快速回顾与应用。",
+        "estimatedDuration": 150,
+        "order": 9
+      }
+    ],
+    "languageDirective": "The course will be taught in Chinese, as the user's requirement is written in Chinese and the topic '高斯公式' is a standard Chinese mathematical term. All explanations, scene titles, descriptions, and key points will be delivered in Chinese. Important mathematical terms and formulas (e.g., divergence theorem, surface integral) will be presented bilingually where first introduced to aid comprehension, but the primary teaching language remains Chinese. For any English terms encountered, a Chinese translation will be provided immediately.",
+    "topicSummary": "高斯公式精讲",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "ooNY-iwVg1",
+      "name": "从散度定理到高斯公式的引入",
+      "languageDirective": "The course will be taught in Chinese, as the user's requirement is written in Chinese and the topic '高斯公式' is a standard Chinese mathematical term. All explanations, scene titles, descriptions, and key points will be delivered in Chinese. Important mathematical terms and formulas (e.g., divergence theorem, surface integral) will be presented bilingually where first introduced to aid comprehension, but the primary teaching language remains Chinese. For any English terms encountered, a Chinese translation will be provided immediately.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782273564570,
+      "updatedAt": 1782273564570,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "高斯公式\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "从散度定理到高斯公式的引入",
+      "description": "通过一个生动直观的例子（如水箱中的水流），引出通量与散度的概念，并自然过渡到高斯公式的本质：一个封闭曲面上的通量等于其内部区域的散度体积分。",
+      "keyPoints": [
+        "复习向量场的通量概念以及散度的定义",
+        "通过一个简单例子（例如，一个立方体中的恒稳水流）建立直觉",
+        "提出高斯公式的核心思想：封闭曲面的通量 ↔ 内部区域散度的体积分"
+      ],
+      "teachingObjective": "理解高斯公式的物理背景和基本表述，建立从封闭曲面积分到体积分转化的直觉。",
+      "estimatedDuration": 180,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "高斯公式的数学表述与符号约定",
+      "description": "给出高斯公式的标准数学表达式，解释符号含义（如积分区域的记号、法向量的指向等），并强调其成立的条件。",
+      "keyPoints": [
+        "标准表述：∮∮_S F·n dS = ∫∫∫_V (∇·F) dV",
+        "解释符号：S为封闭曲面，V为S所围成的区域，n为外法向单位向量",
+        "成立条件：F在V及其边界S上具有连续一阶偏导数"
+      ],
+      "teachingObjective": "准确记忆和解释高斯公式的数学形式及其符号体系。",
+      "estimatedDuration": 150,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "quiz",
+      "title": "通量与散度的概念辨析",
+      "description": "通过选择题和判断题，检验学员对通量、散度以及高斯公式基本条件的理解。",
+      "keyPoints": [
+        "识别通量与散度的关系",
+        "判断高斯公式的适用条件",
+        "区分封闭曲面与非封闭曲面的处理方式"
+      ],
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple"
+        ]
+      },
+      "estimatedDuration": 120,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "完整计算实例演练（一）：直接应用公式",
+      "description": "选择一个规整的曲面（如球面或立方体表面）和一个简单的向量场，演示如何使用高斯公式将复杂的曲面积分转化为三重积分。",
+      "keyPoints": [
+        "选取的向量场示例：F = (x, y, z)",
+        "计算散度：∇·F = 3",
+        "转化并计算体积分：体积乘以散度 → 得到通量"
+      ],
+      "teachingObjective": "掌握高斯公式的标准计算流程：先求散度，然后计算三重积分。",
+      "estimatedDuration": 210,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "完整计算实例演练（二）：非规整区域的积分",
+      "description": "演示当积分区域为非标准形状时，如何利用高斯公式简化计算过程。例如，向量场含有奇点但不涉及时的处理。",
+      "keyPoints": [
+        "选择需要利用柱坐标或球坐标的复杂区域",
+        "计算散度后，将体积分转化为更容易计算的坐标系",
+        "强调计算技巧：区域可分割时，利用可加性"
+      ],
+      "teachingObjective": "学会在非标准区域下运用高斯公式，并掌握相应坐标变换技巧。",
+      "estimatedDuration": 240,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "interactive",
+      "title": "交互式探索：改变向量场对通量的影响",
+      "description": "提供一个3D模拟场景，学员可以通过调整向量场参数或改变封闭曲面的形状，实时观察散度分布与总通量的变化，加深对高斯公式物理意义的理解。",
+      "keyPoints": [
+        "散度与通量的实时关联可视化",
+        "调整向量场分量（如增加x方向梯度）",
+        "改变曲面形状（如拉伸立方体为一个长方体）"
+      ],
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "高斯公式：散度的体积分等于通量",
+        "keyVariables": [
+          "散度场 (divergence field) 的分布",
+          "封闭曲面S的形状（立方体、球体可调）",
+          "向量场F的各个分量系数"
+        ]
+      },
+      "teachingObjective": "通过交互实验，直观感受散度与通量的关系，巩固高斯公式的应用场景。",
+      "estimatedDuration": 300,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "高斯公式的应用：物理与工程中的常见场景",
+      "description": "介绍高斯公式在静电场中的等价形式（高斯定律），以及在流体力学中计算净流量等实际应用。",
+      "keyPoints": [
+        "电场中的应用：∮∮ E·dS = Q/ε₀ (高斯定律)",
+        "流体力学中的应用：通过一个单元流体的净流出量计算",
+        "热传导：温度梯度场下的热量通量"
+      ],
+      "teachingObjective": "掌握高斯公式在不同学科中的延伸和应用。",
+      "estimatedDuration": 180,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "quiz",
+      "title": "高斯公式综合测试",
+      "description": "通过包含中等难度的计算题和概念题，检验学员能否独立完成高斯公式的应用，包括计算和条件判断。",
+      "keyPoints": [
+        "直接计算某封闭曲面的通量",
+        "判断何时不可直接使用高斯公式",
+        "处理函数含有不可导点的情况"
+      ],
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      },
+      "estimatedDuration": 180,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "课程总结：高斯公式的核心要点与技巧",
+      "description": "系统梳理本节课的所有重点，包括公式记忆、计算步骤、常见误区以及应对策略。",
+      "keyPoints": [
+        "公式重述与记忆口诀：外通量 ⇄ 内散度积分",
+        "计算步骤总结：确认封闭性 → 求散度 → 算体积分",
+        "常见误区：忽略法向方向、曲面的封闭性判断错误、区域含奇点"
+      ],
+      "teachingObjective": "巩固知识体系，帮助学员快速回顾与应用。",
+      "estimatedDuration": 150,
+      "order": 9
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "The course will be taught in Chinese, as the user's requirement is written in Chinese and the topic '高斯公式' is a standard Chinese mathematical term. All explanations, scene titles, descriptions, and key points will be delivered in Chinese. Important mathematical terms and formulas (e.g., divergence theorem, surface integral) will be presented bilingually where first introduced to aid comprehension, but the primary teaching language remains Chinese. For any English terms encountered, a Chinese translation will be provided immediately.",
+    "totalScenes": 9
+  },
+  "topicSummary": "高斯公式精讲",
+  "completedAt": "2026-06-24T04:03:17.719Z",
+  "result": {
+    "classroomId": "ooNY-iwVg1",
+    "url": "http://localhost:3000/classroom/ooNY-iwVg1",
+    "scenesCount": 9
+  }
+}

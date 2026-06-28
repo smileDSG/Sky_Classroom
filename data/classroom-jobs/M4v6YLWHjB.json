@@ -1,0 +1,445 @@
+{
+  "id": "M4v6YLWHjB",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 30,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-06-24T08:58:41.409Z",
+  "updatedAt": "2026-06-24T10:12:57.791Z",
+  "inputSummary": {
+    "requirementPreview": "格林公式\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-24T08:58:41.422Z",
+  "totalScenes": 10,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "What is Green's Theorem?",
+        "description": "Introduce Green's Theorem as a fundamental result in vector calculus that connects line integrals around a closed curve to double integrals over the enclosed region.",
+        "keyPoints": [
+          "Green's Theorem relates a line integral around a simple closed curve C to a double integral over the plane region D bounded by C.",
+          "Formally: ∮_C (P dx + Q dy) = ∬_D (∂Q/∂x - ∂P/∂y) dA",
+          "It is a special case of the more general Stokes' Theorem in two dimensions.",
+          "Used to simplify the calculation of work done by a force field or the circulation of a vector field."
+        ],
+        "teachingObjective": "Understand the basic statement and purpose of Green's Theorem.",
+        "estimatedDuration": 180,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "Prerequisites: Line Integrals and Double Integrals",
+        "description": "Briefly review the concepts of line integrals and double integrals, which are essential for applying Green's Theorem.",
+        "keyPoints": [
+          "A line integral ∮_C P dx + Q dy measures the cumulative effect of a vector field along a curve C.",
+          "A double integral ∬_D f(x,y) dA computes the volume under a surface over a region D.",
+          "Green's Theorem essentially allows converting a complex line integral into a simpler double integral (or vice versa).",
+          "[Table] | Integral Type | Notation | Meaning | Application | |---|---|---|---| | Line Integral | ∮_C P dx + Q dy | Work or circulation along C | Conservative fields, circulation | | Double Integral | ∬_D (∂Q/∂x - ∂P/∂y) dA | Flux of curl across D | Area, moment of inertia, Green's Theorem |"
+        ],
+        "teachingObjective": "Recall the definitions and notation for line and double integrals.",
+        "estimatedDuration": 120,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "Visualizing Green's Theorem",
+        "description": "Allow learners to manipulate a vector field and a closed curve to see how the line integral and double integral values relate.",
+        "keyPoints": [
+          "Interactively explore a vector field F = (P, Q) over a region.",
+          "Draw or select a simple closed curve C enclosing a region D.",
+          "Observe the line integral value and the double integral of (Q_x - P_y) over D.",
+          "Verify they are equal as predicted by Green's Theorem."
+        ],
+        "teachingObjective": "Visualize the equivalence between line and double integrals for a given vector field.",
+        "estimatedDuration": 180,
+        "order": 3,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "Green's Theorem relationship between line integral and double integral",
+          "keyVariables": [
+            "Vector field components P(x,y) and Q(x,y) (adjustable functions)",
+            "Shape and size of closed curve C (e.g., rectangle, circle, ellipse)",
+            "Calculated line integral value ∮_C (P dx + Q dy)",
+            "Calculated double integral value ∬_D (∂Q/∂x - ∂P/∂y) dA"
+          ]
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "Proof Sketch of Green's Theorem",
+        "description": "Provide a high-level, intuitive proof of Green's Theorem for a simple rectangular region, building intuition without complex analysis.",
+        "keyPoints": [
+          "For a rectangle [a,b]×[c,d], decompose the line integral into four segments.",
+          "Combine segments to show ∮ P dx = - ∬_D (∂P/∂y) dA and ∮ Q dy = ∬_D (∂Q/∂x) dA.",
+          "The theorem follows by summing these results.",
+          "This can be extended to more general regions using partition arguments."
+        ],
+        "teachingObjective": "Grasp the basic logical steps behind Green's Theorem.",
+        "estimatedDuration": 150,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "quiz",
+        "title": "Check Your Understanding: Green's Theorem Basics",
+        "description": "Test recall of the theorem statement, prerequisites, and conditions for application.",
+        "keyPoints": [
+          "Identify the correct formula for Green's Theorem.",
+          "Determine if Green's Theorem applies to a given curve (simple, closed, positively oriented).",
+          "Identify the relationship between line integrals and double integrals."
+        ],
+        "teachingObjective": "Confirm understanding of the fundamental concepts.",
+        "estimatedDuration": 120,
+        "order": 5,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "Applications: Computing Area using Green's Theorem",
+        "description": "Show how Green's Theorem can be used to find the area of a region by choosing a specific vector field.",
+        "keyPoints": [
+          "If P = -y/2 and Q = x/2, then ∂Q/∂x - ∂P/∂y = 1.",
+          "Thus, Area(D) = ∬_D 1 dA = ∮_C ( -y/2 dx + x/2 dy ).",
+          "This is a powerful tool for finding areas of regions with complicated boundaries.",
+          "Example: Compute the area of an ellipse using its parametric equation."
+        ],
+        "teachingObjective": "Learn a practical application of Green's Theorem for calculating area.",
+        "estimatedDuration": 180,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "Applications: Circulation and Flux",
+        "description": "Explain how Green's Theorem relates to the physical concepts of circulation (curl) and flux (divergence) of a vector field.",
+        "keyPoints": [
+          "The curl form: ∮_C F · dr = ∬_D (curl F) · k dA (circulation around C).",
+          "The flux form: ∮_C F · n ds = ∬_D div F dA (flux across C).",
+          "These interpretations are crucial in fluid dynamics and electromagnetism.",
+          "Green's Theorem shows that the net circulation of a field around a closed loop is the sum of the 'rotation' inside."
+        ],
+        "teachingObjective": "Connect Green's Theorem to physical intuition about circulation and flux.",
+        "estimatedDuration": 150,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "quiz",
+        "title": "Applying Green's Theorem",
+        "description": "Practice using Green's Theorem to solve problems, including area calculation and evaluating line integrals.",
+        "keyPoints": [
+          "Calculate the area of a region using the line integral formula.",
+          "Evaluate a line integral by converting it to a double integral using Green's Theorem.",
+          "Identify when Green's Theorem simplifies a problem."
+        ],
+        "teachingObjective": "Apply Green's Theorem to compute areas and evaluate integrals.",
+        "estimatedDuration": 180,
+        "order": 8,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "Limitations and Extensions",
+        "description": "Discuss the conditions for Green's Theorem and its relationships to other vector calculus theorems.",
+        "keyPoints": [
+          "Curve must be simple, closed, and piecewise smooth.",
+          "Region must be 'simply connected' (no holes) for the basic form.",
+          "Green's Theorem is a 2D case of Stokes' Theorem (curl) and the Divergence Theorem (flux).",
+          "For regions with holes, a generalized version applies using boundaries."
+        ],
+        "teachingObjective": "Understand the conditions and limitations of Green's Theorem.",
+        "estimatedDuration": 120,
+        "order": 9
+      },
+      {
+        "id": "scene_10",
+        "type": "slide",
+        "title": "Summary and Key Takeaways",
+        "description": "Recap the primary statements, applications, and significance of Green's Theorem.",
+        "keyPoints": [
+          "Green's Theorem transforms line integrals into double integrals and vice versa.",
+          "It is invaluable for calculating area, circulation, and flux.",
+          "It bridges the gap between one-dimensional and two-dimensional integration.",
+          "It is a foundational tool in advanced calculus, physics, and engineering."
+        ],
+        "teachingObjective": "Review and consolidate all key concepts from the lesson.",
+        "estimatedDuration": 90,
+        "order": 10
+      }
+    ],
+    "languageDirective": "This course will be taught in English. The user's requirement '格林公式' is the Chinese name for 'Green's Theorem,' a standard mathematical term. While the user wrote in Chinese, the teaching content is a universal mathematical concept best delivered in English to align with standard academic terminology. Key terms like 'Green's Theorem,' 'line integral,' and 'double integral' will be used in English. If the user explicitly prefers Chinese, please indicate in the follow-up.",
+    "topicSummary": "格林公式概述",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "VHL4JrZUo9",
+      "name": "What is Green's Theorem?",
+      "languageDirective": "This course will be taught in English. The user's requirement '格林公式' is the Chinese name for 'Green's Theorem,' a standard mathematical term. While the user wrote in Chinese, the teaching content is a universal mathematical concept best delivered in English to align with standard academic terminology. Key terms like 'Green's Theorem,' 'line integral,' and 'double integral' will be used in English. If the user explicitly prefers Chinese, please indicate in the follow-up.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782291539595,
+      "updatedAt": 1782291539595,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "格林公式\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "What is Green's Theorem?",
+      "description": "Introduce Green's Theorem as a fundamental result in vector calculus that connects line integrals around a closed curve to double integrals over the enclosed region.",
+      "keyPoints": [
+        "Green's Theorem relates a line integral around a simple closed curve C to a double integral over the plane region D bounded by C.",
+        "Formally: ∮_C (P dx + Q dy) = ∬_D (∂Q/∂x - ∂P/∂y) dA",
+        "It is a special case of the more general Stokes' Theorem in two dimensions.",
+        "Used to simplify the calculation of work done by a force field or the circulation of a vector field."
+      ],
+      "teachingObjective": "Understand the basic statement and purpose of Green's Theorem.",
+      "estimatedDuration": 180,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "Prerequisites: Line Integrals and Double Integrals",
+      "description": "Briefly review the concepts of line integrals and double integrals, which are essential for applying Green's Theorem.",
+      "keyPoints": [
+        "A line integral ∮_C P dx + Q dy measures the cumulative effect of a vector field along a curve C.",
+        "A double integral ∬_D f(x,y) dA computes the volume under a surface over a region D.",
+        "Green's Theorem essentially allows converting a complex line integral into a simpler double integral (or vice versa).",
+        "[Table] | Integral Type | Notation | Meaning | Application | |---|---|---|---| | Line Integral | ∮_C P dx + Q dy | Work or circulation along C | Conservative fields, circulation | | Double Integral | ∬_D (∂Q/∂x - ∂P/∂y) dA | Flux of curl across D | Area, moment of inertia, Green's Theorem |"
+      ],
+      "teachingObjective": "Recall the definitions and notation for line and double integrals.",
+      "estimatedDuration": 120,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "Visualizing Green's Theorem",
+      "description": "Allow learners to manipulate a vector field and a closed curve to see how the line integral and double integral values relate.",
+      "keyPoints": [
+        "Interactively explore a vector field F = (P, Q) over a region.",
+        "Draw or select a simple closed curve C enclosing a region D.",
+        "Observe the line integral value and the double integral of (Q_x - P_y) over D.",
+        "Verify they are equal as predicted by Green's Theorem."
+      ],
+      "teachingObjective": "Visualize the equivalence between line and double integrals for a given vector field.",
+      "estimatedDuration": 180,
+      "order": 3,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "Green's Theorem relationship between line integral and double integral",
+        "keyVariables": [
+          "Vector field components P(x,y) and Q(x,y) (adjustable functions)",
+          "Shape and size of closed curve C (e.g., rectangle, circle, ellipse)",
+          "Calculated line integral value ∮_C (P dx + Q dy)",
+          "Calculated double integral value ∬_D (∂Q/∂x - ∂P/∂y) dA"
+        ]
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "Proof Sketch of Green's Theorem",
+      "description": "Provide a high-level, intuitive proof of Green's Theorem for a simple rectangular region, building intuition without complex analysis.",
+      "keyPoints": [
+        "For a rectangle [a,b]×[c,d], decompose the line integral into four segments.",
+        "Combine segments to show ∮ P dx = - ∬_D (∂P/∂y) dA and ∮ Q dy = ∬_D (∂Q/∂x) dA.",
+        "The theorem follows by summing these results.",
+        "This can be extended to more general regions using partition arguments."
+      ],
+      "teachingObjective": "Grasp the basic logical steps behind Green's Theorem.",
+      "estimatedDuration": 150,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "quiz",
+      "title": "Check Your Understanding: Green's Theorem Basics",
+      "description": "Test recall of the theorem statement, prerequisites, and conditions for application.",
+      "keyPoints": [
+        "Identify the correct formula for Green's Theorem.",
+        "Determine if Green's Theorem applies to a given curve (simple, closed, positively oriented).",
+        "Identify the relationship between line integrals and double integrals."
+      ],
+      "teachingObjective": "Confirm understanding of the fundamental concepts.",
+      "estimatedDuration": 120,
+      "order": 5,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "Applications: Computing Area using Green's Theorem",
+      "description": "Show how Green's Theorem can be used to find the area of a region by choosing a specific vector field.",
+      "keyPoints": [
+        "If P = -y/2 and Q = x/2, then ∂Q/∂x - ∂P/∂y = 1.",
+        "Thus, Area(D) = ∬_D 1 dA = ∮_C ( -y/2 dx + x/2 dy ).",
+        "This is a powerful tool for finding areas of regions with complicated boundaries.",
+        "Example: Compute the area of an ellipse using its parametric equation."
+      ],
+      "teachingObjective": "Learn a practical application of Green's Theorem for calculating area.",
+      "estimatedDuration": 180,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "Applications: Circulation and Flux",
+      "description": "Explain how Green's Theorem relates to the physical concepts of circulation (curl) and flux (divergence) of a vector field.",
+      "keyPoints": [
+        "The curl form: ∮_C F · dr = ∬_D (curl F) · k dA (circulation around C).",
+        "The flux form: ∮_C F · n ds = ∬_D div F dA (flux across C).",
+        "These interpretations are crucial in fluid dynamics and electromagnetism.",
+        "Green's Theorem shows that the net circulation of a field around a closed loop is the sum of the 'rotation' inside."
+      ],
+      "teachingObjective": "Connect Green's Theorem to physical intuition about circulation and flux.",
+      "estimatedDuration": 150,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "quiz",
+      "title": "Applying Green's Theorem",
+      "description": "Practice using Green's Theorem to solve problems, including area calculation and evaluating line integrals.",
+      "keyPoints": [
+        "Calculate the area of a region using the line integral formula.",
+        "Evaluate a line integral by converting it to a double integral using Green's Theorem.",
+        "Identify when Green's Theorem simplifies a problem."
+      ],
+      "teachingObjective": "Apply Green's Theorem to compute areas and evaluate integrals.",
+      "estimatedDuration": 180,
+      "order": 8,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "Limitations and Extensions",
+      "description": "Discuss the conditions for Green's Theorem and its relationships to other vector calculus theorems.",
+      "keyPoints": [
+        "Curve must be simple, closed, and piecewise smooth.",
+        "Region must be 'simply connected' (no holes) for the basic form.",
+        "Green's Theorem is a 2D case of Stokes' Theorem (curl) and the Divergence Theorem (flux).",
+        "For regions with holes, a generalized version applies using boundaries."
+      ],
+      "teachingObjective": "Understand the conditions and limitations of Green's Theorem.",
+      "estimatedDuration": 120,
+      "order": 9
+    },
+    {
+      "id": "scene_10",
+      "type": "slide",
+      "title": "Summary and Key Takeaways",
+      "description": "Recap the primary statements, applications, and significance of Green's Theorem.",
+      "keyPoints": [
+        "Green's Theorem transforms line integrals into double integrals and vice versa.",
+        "It is invaluable for calculating area, circulation, and flux.",
+        "It bridges the gap between one-dimensional and two-dimensional integration.",
+        "It is a foundational tool in advanced calculus, physics, and engineering."
+      ],
+      "teachingObjective": "Review and consolidate all key concepts from the lesson.",
+      "estimatedDuration": 90,
+      "order": 10
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "This course will be taught in English. The user's requirement '格林公式' is the Chinese name for 'Green's Theorem,' a standard mathematical term. While the user wrote in Chinese, the teaching content is a universal mathematical concept best delivered in English to align with standard academic terminology. Key terms like 'Green's Theorem,' 'line integral,' and 'double integral' will be used in English. If the user explicitly prefers Chinese, please indicate in the follow-up.",
+    "totalScenes": 10
+  },
+  "topicSummary": "格林公式概述",
+  "completedAt": "2026-06-24T10:12:57.791Z",
+  "error": "用户取消了生成"
+}

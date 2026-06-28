@@ -13,6 +13,7 @@ import {
   Volume2,
   ChevronLeft,
   ChevronRight,
+  UsersRound,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AudioIndicatorState } from './audio-indicator';
@@ -27,7 +28,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { DEFAULT_TEACHER_AVATAR, DEFAULT_USER_AVATAR } from '@/components/roundtable/constants';
 import type { DiscussionAction } from '@/lib/types/action';
-import type { EngineMode, PlaybackView } from '@/lib/playback';
+import { getCompactPopupText, type EngineMode, type PlaybackView } from '@/lib/playback';
 import type { Participant } from '@/lib/types/roundtable';
 import { CharacterStrip } from '@/components/ui/character-avatar';
 import { SpeechBubble } from '@/components/ui/glass-dialog';
@@ -91,6 +92,7 @@ interface RoundtableProps {
   readonly fullscreenContainerRef?: React.RefObject<HTMLDivElement | null>;
   readonly onAskTeacher?: () => void;
   readonly isAskDialogOpen?: boolean;
+  readonly compactDock?: boolean;
 }
 
 export function Roundtable({
@@ -141,6 +143,7 @@ export function Roundtable({
   fullscreenContainerRef,
   onAskTeacher,
   isAskDialogOpen,
+  compactDock = false,
 }: RoundtableProps) {
   const ttsMuted = useSettingsStore((s) => s.ttsMuted);
   const setTTSMuted = useSettingsStore((s) => s.setTTSMuted);
@@ -171,7 +174,7 @@ export function Roundtable({
 
   const teacherParticipant = initialParticipants.find((p) => p.role === 'teacher');
   const studentParticipants = initialParticipants.filter(
-    (p) => p.role !== 'teacher' && p.role !== 'user'
+    (p) => p.role !== 'teacher' && p.role !== 'user',
   );
   const userParticipant = initialParticipants.find((p) => p.role === 'user');
 
@@ -196,12 +199,10 @@ export function Roundtable({
 
   const sourceText = userMessage
     ? userMessage
-    : (playbackView?.sourceText ??
-      (currentSpeech
-        ? currentSpeech
-        : isInLiveFlow
-          ? ''
-          : lectureSpeech || (playbackCompleted ? '' : idleText) || ''));
+    : currentSpeech
+      ? currentSpeech
+      : (playbackView?.sourceText ??
+        (isInLiveFlow ? '' : lectureSpeech || (playbackCompleted ? '' : idleText) || ''));
   const hasAgentFeedback = Boolean(playbackView?.sourceText || thinkingState);
   const prevHasAgentFeedbackRef = useRef(hasAgentFeedback);
 
@@ -226,7 +227,7 @@ export function Roundtable({
       prevHasAgentFeedbackRef.current = true;
       scheduleUserMessageClear();
     },
-    [scheduleUserMessageClear]
+    [scheduleUserMessageClear],
   );
 
   useEffect(() => {
@@ -540,26 +541,36 @@ export function Roundtable({
     isRecording ||
     isProcessing;
 
+  const popupText = getCompactPopupText({
+    engineMode,
+    isInLiveFlow,
+    lectureSpeech: lectureSpeech ?? null,
+    currentSpeech: currentSpeech ?? null,
+    userMessage,
+    sourceText,
+  });
+
   // Derive effective speaking agent for the popup — user messages come from local
   // state, not from the engine, so map them to the user participant explicitly.
   // Map speech to the correct participant for the popup.
   // speakingAgentId from the engine covers live chat; bubbleRole covers
   // lecture/idle playback where the engine doesn't emit an agentId.
   const popupSpeakingAgentId = (() => {
+    if (!popupText?.trim()) return null;
     if (userMessage) return userParticipant?.id ?? null;
     if (speakingAgentId) return speakingAgentId;
     // Any agent speaking — teacher, student, or thinking agent
-    if (sourceText && bubbleRole === 'teacher') return teacherParticipant?.id ?? null;
-    if (sourceText && bubbleRole === 'agent' && speakingStudent) return speakingStudent.id;
+    if (popupText && bubbleRole === 'teacher') return teacherParticipant?.id ?? null;
+    if (popupText && bubbleRole === 'agent' && speakingStudent) return speakingStudent.id;
     // Fallback: if an agent is thinking, treat them as speaker
-    if (sourceText && thinkingState?.agentId) return thinkingState.agentId;
+    if (popupText && thinkingState?.agentId) return thinkingState.agentId;
     return null;
   })();
 
   // Reset dismissed state when speaker or text changes (new speech = show popup again)
   useEffect(() => {
     setDismissedSpeaker(null);
-  }, [popupSpeakingAgentId, sourceText]);
+  }, [popupSpeakingAgentId, popupText]);
 
   // Prepare participants for CharacterStrip
   const stripParticipants = initialParticipants.map((p) => ({
@@ -574,6 +585,191 @@ export function Roundtable({
   // Progress calculation
   const progress = ((currentSceneIndex + 1) / scenesCount) * 100;
 
+  const renderDockAvatar = (
+    participant: {
+      id: string;
+      avatar: string;
+      name: string;
+      role: 'teacher' | 'student' | 'user';
+      color?: string;
+      description?: string;
+    },
+    options?: { isUser?: boolean },
+  ) => {
+    const isSpeaking = speakingAgentId === participant.id;
+    const isThinking = thinkingState?.agentId === participant.id;
+    const isUserActive = options?.isUser && isCueUser;
+    const isActive = isSpeaking || isThinking || isUserActive;
+
+    return (
+      <HoverCard key={participant.id} openDelay={180} closeDelay={80}>
+        <HoverCardTrigger asChild>
+          <button
+            type="button"
+            onClick={() => {
+              if (dismissedSpeaker) setDismissedSpeaker(null);
+            }}
+            className={cn(
+              'group relative flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-200',
+              'hover:bg-white/75 active:scale-95 dark:hover:bg-slate-900/80',
+              isActive && 'bg-white shadow-[0_10px_24px_rgba(14,116,144,0.18)]',
+            )}
+            aria-label={participant.name}
+            title={participant.name}
+          >
+            <span
+              className={cn(
+                'absolute inset-1 rounded-2xl border transition-colors',
+                isActive
+                  ? 'border-sky-400'
+                  : 'border-white/50 group-hover:border-sky-200 dark:border-slate-700',
+              )}
+            />
+            <span className="relative h-8 w-8 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-sky-100 dark:bg-slate-800 dark:ring-slate-700">
+              <AvatarDisplay src={participant.avatar} alt={participant.name} />
+            </span>
+            {isSpeaking && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-70" />
+                <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-sky-500 dark:border-slate-950" />
+              </span>
+            )}
+            {isThinking && !isSpeaking && (
+              <span className="absolute -right-0.5 -top-0.5 h-3 w-3 animate-pulse rounded-full border-2 border-white bg-cyan-400 dark:border-slate-950" />
+            )}
+            {isUserActive && (
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-amber-400 dark:border-slate-950" />
+            )}
+          </button>
+        </HoverCardTrigger>
+        <HoverCardContent
+          side="right"
+          align="center"
+          className="w-52 rounded-2xl border border-sky-100 bg-white/92 p-3 shadow-xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/92"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 overflow-hidden rounded-xl bg-sky-50 ring-1 ring-sky-100 dark:bg-slate-800 dark:ring-slate-700">
+              <AvatarDisplay src={participant.avatar} alt={participant.name} />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-950 dark:text-slate-100">
+                {participant.name}
+              </p>
+              <p className="text-xs text-sky-700/70 dark:text-sky-300/70">
+                {participant.role === 'teacher'
+                  ? '老师'
+                  : participant.role === 'user'
+                    ? '我'
+                    : '学生'}
+              </p>
+            </div>
+          </div>
+          {participant.description && (
+            <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              {participant.description}
+            </p>
+          )}
+        </HoverCardContent>
+      </HoverCard>
+    );
+  };
+
+  if (compactDock && !isPresenting) {
+    const teacherDockParticipant = teacherParticipant
+      ? {
+          id: teacherParticipant.id,
+          avatar: teacherAvatar,
+          name: teacherName,
+          role: 'teacher' as const,
+          color: getAgentConfig(teacherParticipant.id)?.color,
+          description: getAgentConfig(teacherParticipant.id)?.persona,
+        }
+      : null;
+
+    const studentDockParticipants = studentParticipants.map((student) => ({
+      id: student.id,
+      avatar: student.avatar,
+      name: student.name,
+      role: 'student' as const,
+      color: getAgentConfig(student.id)?.color,
+      description: getAgentConfig(student.id)?.persona,
+    }));
+
+    const userDockParticipant = {
+      id: userParticipant?.id || 'user',
+      avatar: userProfileAvatar || userAvatar,
+      name: '我',
+      role: 'user' as const,
+    };
+    return (
+      <div className="flex h-full w-full flex-col items-center rounded-[28px] border border-white/70 bg-white/62 px-2 py-3 shadow-[0_16px_42px_rgba(14,116,144,0.12)] backdrop-blur-2xl dark:border-slate-800 dark:bg-slate-950/80">
+        <AvatarSpeechPopup
+          speakingAgentId={popupSpeakingAgentId}
+          sourceText={popupText}
+          participants={stripParticipants}
+          mode="avatar"
+          anchorRefMap={avatarRefMapRef}
+          dismissed={
+            dismissedSpeaker === popupSpeakingAgentId ||
+            isInputOpen ||
+            isVoiceOpen ||
+            isAskDialogOpen
+          }
+          onDismiss={() => setDismissedSpeaker(popupSpeakingAgentId ?? null)}
+          container={fullscreenContainerRef?.current}
+        />
+
+        <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-50 text-sky-700 ring-1 ring-sky-100 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-800">
+          <UsersRound className="h-4 w-4" />
+        </div>
+
+        {teacherDockParticipant && (
+          <div
+            ref={(el) => {
+              teacherAvatarRef.current = el;
+              if (el) avatarRefMapRef.current.set(teacherDockParticipant.id, el);
+            }}
+          >
+            {renderDockAvatar(teacherDockParticipant)}
+          </div>
+        )}
+
+        {studentDockParticipants.length > 0 && (
+          <>
+            <div className="my-3 h-px w-8 bg-gradient-to-r from-transparent via-sky-200 to-transparent dark:via-slate-700" />
+            <div
+              ref={agentScrollRef}
+              className="flex min-h-0 flex-1 flex-col items-center gap-2 overflow-y-auto overflow-x-hidden py-1 scrollbar-hide"
+            >
+              {studentDockParticipants.map((student) => (
+                <div
+                  key={student.id}
+                  ref={(el) => {
+                    if (el) {
+                      studentAvatarRefs.current.set(student.id, el);
+                      avatarRefMapRef.current.set(student.id, el);
+                    }
+                  }}
+                >
+                  {renderDockAvatar(student)}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="my-3 h-px w-8 bg-gradient-to-r from-transparent via-sky-200 to-transparent dark:via-slate-700" />
+        <div
+          ref={(el) => {
+            if (el && userParticipant) avatarRefMapRef.current.set(userParticipant.id, el);
+          }}
+        >
+          {renderDockAvatar(userDockParticipant, { isUser: true })}
+        </div>
+      </div>
+    );
+  }
+
   if (isPresenting) {
     return (
       <div className="h-0 w-full relative z-10 overflow-visible">
@@ -583,7 +779,12 @@ export function Roundtable({
           speakingAgentId={popupSpeakingAgentId}
           sourceText={sourceText}
           participants={stripParticipants}
-          dismissed={dismissedSpeaker === popupSpeakingAgentId || isInputOpen || isVoiceOpen || isAskDialogOpen}
+          dismissed={
+            dismissedSpeaker === popupSpeakingAgentId ||
+            isInputOpen ||
+            isVoiceOpen ||
+            isAskDialogOpen
+          }
           onDismiss={() => setDismissedSpeaker(popupSpeakingAgentId ?? null)}
           container={fullscreenContainerRef?.current}
         />
@@ -619,9 +820,7 @@ export function Roundtable({
               }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block mr-1.5" />
-              {endFlashSessionType === 'discussion'
-                ? '讨论已结束'
-                : '问答已结束'}
+              {endFlashSessionType === 'discussion' ? '讨论已结束' : '问答已结束'}
             </motion.div>
           )}
         </AnimatePresence>
@@ -664,7 +863,7 @@ export function Roundtable({
                       'w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0',
                       isSendCooldown
                         ? 'bg-slate-600/50 cursor-not-allowed'
-                        : 'bg-violet-600 hover:bg-violet-500 shadow-[0_4px_16px_rgba(139,92,246,0.3)]'
+                        : 'bg-violet-600 hover:bg-violet-500 shadow-[0_4px_16px_rgba(139,92,246,0.3)]',
                     )}
                   >
                     {isSendCooldown ? (
@@ -707,9 +906,7 @@ export function Roundtable({
                   </span>
                   <button
                     type="button"
-                    aria-label={
-                      isRecording ? '停止录音' : '开始录音'
-                    }
+                    aria-label={isRecording ? '停止录音' : '开始录音'}
                     className="relative group cursor-pointer bg-transparent border-none p-0"
                     onClick={handleToggleVoice}
                   >
@@ -744,8 +941,7 @@ export function Roundtable({
             )}
           </AnimatePresence>
 
-          <AnimatePresence>
-          </AnimatePresence>
+          <AnimatePresence></AnimatePresence>
         </div>
 
         <div
@@ -776,7 +972,8 @@ export function Roundtable({
               >
                 <div className="flex items-center gap-2.5 rounded-full bg-slate-900/80 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] px-2.5 py-2">
                   <AnimatePresence>
-                    {((activeRole === 'agent' && speakingStudent) || presentationDiscussionParticipant) && (
+                    {((activeRole === 'agent' && speakingStudent) ||
+                      presentationDiscussionParticipant) && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.8, width: 0 }}
                         animate={{ opacity: 1, scale: 1, width: 'auto' }}
@@ -788,8 +985,13 @@ export function Roundtable({
                           <div className="absolute inset-0 rounded-full border-2 border-sky-500 shadow-[0_0_6px_rgba(14,165,233,0.3)] transition-all duration-300" />
                           <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden relative z-10 text-lg">
                             <AvatarDisplay
-                              src={(speakingStudent || presentationDiscussionParticipant)?.avatar || '/avatars/user.png'}
-                              alt={(speakingStudent || presentationDiscussionParticipant)?.name || ''}
+                              src={
+                                (speakingStudent || presentationDiscussionParticipant)?.avatar ||
+                                '/avatars/user.png'
+                              }
+                              alt={
+                                (speakingStudent || presentationDiscussionParticipant)?.name || ''
+                              }
                             />
                           </div>
                         </div>
@@ -833,7 +1035,7 @@ export function Roundtable({
                           'h-8 px-3 rounded-full flex items-center gap-1.5 transition-all active:scale-95',
                           isInputOpen
                             ? 'bg-sky-500 text-white'
-                            : 'bg-gradient-to-r from-sky-500 to-blue-500 text-white hover:from-sky-400 hover:to-blue-400 shadow-[0_4px_16px_rgba(14,165,233,0.4)]'
+                            : 'bg-gradient-to-r from-sky-500 to-blue-500 text-white hover:from-sky-400 hover:to-blue-400 shadow-[0_4px_16px_rgba(14,165,233,0.4)]',
                         )}
                       >
                         <MessageSquare className="w-4 h-4" />
@@ -855,7 +1057,7 @@ export function Roundtable({
                             ? 'text-slate-500 cursor-not-allowed'
                             : isVoiceOpen
                               ? 'bg-violet-600 text-white'
-                              : 'text-slate-300 hover:text-white hover:bg-white/10'
+                              : 'text-slate-300 hover:text-white hover:bg-white/10',
                         )}
                       >
                         {asrEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
@@ -885,7 +1087,7 @@ export function Roundtable({
                             ? 'ring-2 ring-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]'
                             : activeRole === 'user' || isInputOpen
                               ? 'ring-2 ring-sky-400'
-                              : 'ring-2 ring-slate-400/50 group-hover:ring-sky-400/70'
+                              : 'ring-2 ring-slate-400/50 group-hover:ring-sky-400/70',
                         )}
                       >
                         <img
@@ -906,8 +1108,14 @@ export function Roundtable({
                       anchorRef={discussionAnchorRef}
                       portalContainer={fullscreenContainerRef?.current}
                       align="left"
-                      agentName={presentationDiscussionParticipant?.name || presentationDiscussionAgentConfig?.name}
-                      agentAvatar={presentationDiscussionParticipant?.avatar || presentationDiscussionAgentConfig?.avatar}
+                      agentName={
+                        presentationDiscussionParticipant?.name ||
+                        presentationDiscussionAgentConfig?.name
+                      }
+                      agentAvatar={
+                        presentationDiscussionParticipant?.avatar ||
+                        presentationDiscussionAgentConfig?.avatar
+                      }
                       agentColor={presentationDiscussionAgentConfig?.color}
                       onSkip={() => onDiscussionSkip?.()}
                       onListen={() => onDiscussionStart?.(discussionRequest)}
@@ -932,7 +1140,12 @@ export function Roundtable({
           speakingAgentId={popupSpeakingAgentId}
           sourceText={sourceText}
           participants={stripParticipants}
-          dismissed={dismissedSpeaker === popupSpeakingAgentId || isInputOpen || isVoiceOpen || isAskDialogOpen}
+          dismissed={
+            dismissedSpeaker === popupSpeakingAgentId ||
+            isInputOpen ||
+            isVoiceOpen ||
+            isAskDialogOpen
+          }
           onDismiss={() => setDismissedSpeaker(popupSpeakingAgentId ?? null)}
           container={fullscreenContainerRef?.current}
         />
@@ -973,7 +1186,10 @@ export function Roundtable({
                   animate={{
                     opacity: isInputOpen || isVoiceOpen || isAskDialogOpen ? 0.4 : 1,
                     y: 0,
-                    filter: isInputOpen || isVoiceOpen || isAskDialogOpen ? 'blur(1px) grayscale(0.2)' : 'none',
+                    filter:
+                      isInputOpen || isVoiceOpen || isAskDialogOpen
+                        ? 'blur(1px) grayscale(0.2)'
+                        : 'none',
                   }}
                   exit={{ opacity: 0, y: -8, transition: { duration: 0.12 } }}
                   transition={{ duration: 0.2, ease: [0.21, 1, 0.36, 1] }}
@@ -1000,7 +1216,6 @@ export function Roundtable({
             {!bubbleRole && (
               <div className="flex items-center justify-center h-32">
                 <AnimatePresence>
-
                   {isCueUser && (
                     <motion.div
                       key="cue-user"
@@ -1015,7 +1230,11 @@ export function Roundtable({
                         transition={{ duration: 2, repeat: Infinity }}
                         className="relative w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30"
                       >
-                        {asrEnabled ? <Mic className="w-6 h-6 text-white" /> : <MessageSquare className="w-6 h-6 text-white" />}
+                        {asrEnabled ? (
+                          <Mic className="w-6 h-6 text-white" />
+                        ) : (
+                          <MessageSquare className="w-6 h-6 text-white" />
+                        )}
                         <motion.div
                           animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
                           transition={{ duration: 1.5, repeat: Infinity }}
@@ -1064,7 +1283,7 @@ export function Roundtable({
                       'w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0',
                       isSendCooldown
                         ? 'bg-sky-300/50 dark:bg-slate-600/50 cursor-not-allowed'
-                        : 'bg-sky-500 hover:bg-sky-600 dark:bg-violet-600 dark:hover:bg-violet-500'
+                        : 'bg-sky-500 hover:bg-sky-600 dark:bg-violet-600 dark:hover:bg-violet-500',
                     )}
                   >
                     {isSendCooldown ? (
@@ -1098,7 +1317,9 @@ export function Roundtable({
                     />
                   ))}
                 </div>
-                <span className="text-sm font-medium text-sky-500 dark:text-violet-400">{isProcessing ? '处理中...' : '录音中...'}</span>
+                <span className="text-sm font-medium text-sky-500 dark:text-violet-400">
+                  {isProcessing ? '处理中...' : '录音中...'}
+                </span>
                 <button
                   onClick={handleToggleVoice}
                   className="w-12 h-12 rounded-full bg-sky-500 hover:bg-sky-600 dark:bg-violet-600 dark:hover:bg-violet-500 flex items-center justify-center transition-all shadow-lg shadow-sky-500/30 dark:shadow-violet-600/30"
@@ -1114,7 +1335,13 @@ export function Roundtable({
         <BottomToolbar
           currentSceneIndex={currentSceneIndex}
           scenesCount={scenesCount}
-          engineState={engineMode === 'playing' || engineMode === 'live' ? 'playing' : engineMode === 'paused' ? 'paused' : 'idle'}
+          engineState={
+            engineMode === 'playing' || engineMode === 'live'
+              ? 'playing'
+              : engineMode === 'paused'
+                ? 'paused'
+                : 'idle'
+          }
           isLiveSession={isStreaming || isTopicPending || engineMode === 'live'}
           whiteboardOpen={whiteboardOpen}
           sidebarCollapsed={sidebarCollapsed}
@@ -1148,7 +1375,11 @@ export function Roundtable({
             useSettingsStore.getState().setPlaybackSpeed(nextSpeed);
           }}
           autoPlayLecture={useSettingsStore.getState().autoPlayLecture}
-          onToggleAutoPlay={() => useSettingsStore.getState().setAutoPlayLecture(!useSettingsStore.getState().autoPlayLecture)}
+          onToggleAutoPlay={() =>
+            useSettingsStore
+              .getState()
+              .setAutoPlayLecture(!useSettingsStore.getState().autoPlayLecture)
+          }
         />
       </div>
     </div>

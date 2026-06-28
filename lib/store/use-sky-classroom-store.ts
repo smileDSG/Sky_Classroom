@@ -24,6 +24,7 @@ import type {
 } from '@/lib/slides/types';
 import type { MistakeRecord, KnowledgeGraph, MistakeFilter } from '@/lib/mistakes/types';
 import type { Slide } from '@/lib/types/slides';
+import type { MemoryReviewRecord } from '@/lib/cloud-mind/types';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SkyClassroomStore');
@@ -184,10 +185,7 @@ interface MistakesSlice {
   /** Set nextReview=now for all mistakes matching the given knowledge points */
   prioritizeReview: (knowledgePoints: string[]) => void;
   /** Cache AI-generated solution data for a mistake */
-  updateMistakeSolution: (
-    id: string,
-    data: { solutionSteps?: string[]; hints?: string[]; errorExplanation?: string },
-  ) => void;
+  updateMistakeSolution: (id: string, data: { solutionSteps?: string[]; hints?: string[]; errorExplanation?: string }) => void;
 }
 
 const createMistakesSlice = (
@@ -269,7 +267,9 @@ const createMistakesSlice = (
   },
   updateMistakeSolution: (id, data) => {
     set((s) => ({
-      mistakes: s.mistakes.map((m) => (m.id === id ? { ...m, ...data } : m)),
+      mistakes: s.mistakes.map((m) =>
+        m.id === id ? { ...m, ...data } : m,
+      ),
     }));
   },
 });
@@ -307,7 +307,10 @@ interface MemorySlice {
     topicCount: number;
     lastStudied: number | null;
   };
+  memoryReviews: MemoryReviewRecord[];
   updateMemoryProgress: (data: Partial<MemorySlice['memoryProgress']>) => void;
+  recordMemoryReview: (review: MemoryReviewRecord) => void;
+  clearMemoryReviews: () => void;
 }
 
 const createMemorySlice = (set: SetFn<MemorySlice>): MemorySlice => ({
@@ -316,19 +319,27 @@ const createMemorySlice = (set: SetFn<MemorySlice>): MemorySlice => ({
     topicCount: 0,
     lastStudied: null,
   },
+  memoryReviews: [],
   updateMemoryProgress: (data) =>
     set((s) => ({
       memoryProgress: { ...s.memoryProgress, ...data },
     })),
+  recordMemoryReview: (review) =>
+    set((s) => {
+      const existingIndex = s.memoryReviews.findIndex((item) => item.id === review.id);
+      if (existingIndex < 0) {
+        return { memoryReviews: [...s.memoryReviews, review] };
+      }
+      const next = [...s.memoryReviews];
+      next[existingIndex] = review;
+      return { memoryReviews: next };
+    }),
+  clearMemoryReviews: () => set({ memoryReviews: [] }),
 });
 
 // ── Combined Store ─────────────────────────────────────────────────
 
-export type SkyClassroomStore = SolveSlice &
-  SlidesSlice &
-  MistakesSlice &
-  AssistantSlice &
-  MemorySlice;
+export type SkyClassroomStore = SolveSlice & SlidesSlice & MistakesSlice & AssistantSlice & MemorySlice;
 
 export const useSkyClassroomStore = create<SkyClassroomStore>()(
   persist(
@@ -375,6 +386,16 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
             return true;
           });
         }
+        if (!Array.isArray(s.memoryReviews)) {
+          s.memoryReviews = [];
+        }
+        if (!s.memoryProgress || typeof s.memoryProgress !== 'object') {
+          s.memoryProgress = {
+            totalFlipped: 0,
+            topicCount: 0,
+            lastStudied: null,
+          };
+        }
         return s as unknown as SkyClassroomStore;
       },
       partialize: (state) => ({
@@ -386,6 +407,7 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
         difficulty: state.difficulty,
         mistakes: state.mistakes,
         memoryProgress: state.memoryProgress,
+        memoryReviews: state.memoryReviews,
       }),
     },
   ),

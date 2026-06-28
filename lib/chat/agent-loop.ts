@@ -122,11 +122,18 @@ export async function runAgentLoop(
     const freshStoreState = callbacks.getStoreState();
     const currentMessages = callbacks.getMessages();
 
-    // Build request body
+    // Build request body. triggerAgentId is a one-shot hint for the first turn
+    // of a QA/discussion; keeping it on later iterations forces the same agent
+    // to speak repeatedly and prevents the director from ending naturally.
+    const configForTurn = { ...request.config };
+    if (turnCount > 0) {
+      delete configForTurn.triggerAgentId;
+    }
+
     const body: Record<string, unknown> = {
       messages: currentMessages,
       storeState: freshStoreState,
-      config: request.config,
+      config: configForTurn,
       directorState,
       userProfile: request.userProfile,
       apiKey: request.apiKey,

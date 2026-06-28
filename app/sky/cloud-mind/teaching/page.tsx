@@ -5,19 +5,50 @@ import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial
 import { motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTheme } from '@/lib/hooks/use-theme';
+import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 
 export default function CloudMindTeachingRoute() {
   const { setForceDark } = useTheme();
   const searchParams = useSearchParams();
-  const viewingHistory = !!searchParams.get('history');
+  const queryTopic = searchParams.get('topic');
+  const [contextTopic, setContextTopic] = useState('');
+  const [personalizationNotice, setPersonalizationNotice] = useState<string | null>(null);
+  const effectiveInitialTopic = queryTopic ?? contextTopic;
+  const effectivePersonalizationNotice = queryTopic ? null : personalizationNotice;
 
   useEffect(() => {
     setForceDark(true);
     return () => setForceDark(false);
   }, [setForceDark]);
+
+  useEffect(() => {
+    if (queryTopic) {
+      return;
+    }
+
+    let cancelled = false;
+    fetch('/api/sky/cloud-mind/personalization-context')
+      .then((res) => res.json())
+      .then((json: { success?: boolean; data?: PersonalizationContext }) => {
+        if (cancelled || !json.success || !json.data) return;
+        const context = json.data;
+        const topic = context.learningPath?.next ?? context.weakPoints[0]?.knowledgePoint;
+        if (!topic) return;
+        setContextTopic(topic);
+        setPersonalizationNotice(
+          `\u5df2\u6839\u636e\u5929\u68af\u5de5\u574a\u4e3a\u4f60\u9884\u8bbe\uff1a${topic} / \u5fae\u8bfe\u8bb2\u89e3`,
+        );
+      })
+      .catch(() => {
+        /* keep empty defaults */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [queryTopic]);
 
   return (
     <div
@@ -44,15 +75,18 @@ export default function CloudMindTeachingRoute() {
           className="mb-6"
         >
           <Link
-            href={viewingHistory ? '/sky/cloud-mind/teaching' : '/sky/cloud-mind'}
+            href="/sky/cloud-mind"
             className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-[var(--teaching-muted)] transition-all hover:text-[var(--teaching-primary-bright)] hover:bg-[var(--teaching-primary)]/10"
           >
             <ArrowLeft className="h-4 w-4" />
-            {viewingHistory ? '返回授课' : '返回'}
+            返回
           </Link>
         </motion.div>
 
-        <TeachingPage />
+        <TeachingPage
+          initialTopic={effectiveInitialTopic}
+          personalizationNotice={effectivePersonalizationNotice}
+        />
       </div>
     </div>
   );

@@ -2,18 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/server/auth/jwt';
 
 /** Routes that don't require authentication */
-const PUBLIC_PATHS = [
-  '/',
-  '/auth',
-  '/api/auth',
-  '/api/sky/solve/clear',
-  '/api/sky/enrichment',
-];
+const PUBLIC_PATHS = ['/', '/auth', '/api/auth', '/api/sky/solve/clear', '/api/sky/enrichment'];
 
 /** Static asset prefixes to always skip */
 const STATIC_PREFIXES = [
   '/_next',
   '/favicon.ico',
+  '/manifest.json',
+  '/sw.js',
   '/logos/',
   '/avatars/',
   '/logo-icon.svg',
@@ -73,5 +69,7 @@ function redirectToLogin(request: NextRequest, pathname: string): NextResponse {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png).*)',
+  ],
 };

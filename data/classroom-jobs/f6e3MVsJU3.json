@@ -1,0 +1,539 @@
+{
+  "id": "f6e3MVsJU3",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 30,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-06-24T08:56:27.144Z",
+  "updatedAt": "2026-06-24T08:58:31.467Z",
+  "inputSummary": {
+    "requirementPreview": "格林公式\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-24T08:56:27.167Z",
+  "totalScenes": 10,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "课程导入：从曲线积分到二重积分",
+        "description": "通过一个直观的物理问题（如求变力沿曲线做功）引出格林公式的核心思想，建立学习动机。",
+        "keyPoints": [
+          "回顾：第二类曲线积分的物理意义（变力沿曲线做功）。",
+          "问题：能否将复杂的曲线积分转化为更简单的二重积分计算？",
+          "结论：格林公式提供了这种转化的桥梁。",
+          "注意：公式的成立需要满足一定条件（区域、边界方向）。"
+        ],
+        "teachingObjective": "激发学习者对格林公式的兴趣，并建立其与曲线积分、二重积分之间关系的初步印象。",
+        "estimatedDuration": 180,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "格林公式的严格定义",
+        "description": "精确陈述格林公式，包括其数学表达、适用条件（单连通区域、正向边界）和符号说明。",
+        "keyPoints": [
+          "定义：设D为有界闭区域，其边界L为分段光滑的正向曲线，函数P(x,y)和Q(x,y)在D上具有一阶连续偏导数，则有 ∮_L P dx + Q dy = ∬_D (∂Q/∂x - ∂P/∂y) dσ。",
+          "解读：等式左边是正向曲线积分，右边是二重积分。",
+          "条件一：区域D必须是单连通的（内部没有“洞”）。",
+          "条件二：边界曲线L的方向必须是正向（沿边界行走时，区域始终在左侧）。",
+          "条件三：P和Q需要有连续的一阶偏导数。"
+        ],
+        "teachingObjective": "掌握格林公式的数学表达式及其成立的三个基本条件。",
+        "estimatedDuration": 240,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "公式推导与本质理解",
+        "description": "简要展示格林公式的推导思路（矩形区域到一般区域），帮助理解其核心思想是“内外转换”或“边界与内部的关系”。",
+        "keyPoints": [
+          "核心思想：格林公式是斯托克斯定理（Stokes Theorem）的二维特例，揭示了区域内部的“旋度”与边界上的“环量”之间的关系。",
+          "推导思路（可视化）：从矩形区域上的积分恒等式出发，通过分割求和的方法推广到一般单连通区域。",
+          "关键步骤：∂Q/∂x 积分导致Q在边界上的表达式；∂P/∂y积分导致P在边界上的表达式。",
+          "本质：它将一个复杂的边界积分转化为一个内部区域的面积分，计算上常常更简单。"
+        ],
+        "teachingObjective": "理解格林公式的推导逻辑与几何直观意义。",
+        "estimatedDuration": 240,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "interactive",
+        "title": "区域边界方向与正负判定",
+        "description": "通过可交互的图形模拟，让学习者自行拖动点或调整参数，直观理解什么是区域的“正向边界”和“反向边界”。",
+        "keyPoints": [
+          "交互操作：在画布上显示一个简单的单连通区域（如圆或椭圆），并高亮其边界。",
+          "核心学习点1：拖动观察，当箭头方向改变时，所围成的内部区域在左侧还是右侧。",
+          "核心学习点2：理解正向边界与公式中正负号的关系。",
+          "验证：点击“计算”按钮，比较正向和反向边界下的积分结果。"
+        ],
+        "teachingObjective": "通过交互操作，牢固掌握格林公式中边界方向的正负判定法则。",
+        "estimatedDuration": 300,
+        "order": 4,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "格林公式中边界方向（正向/反向）对积分结果的影响。",
+          "keyVariables": [
+            {
+              "name": "区域形状",
+              "type": "select",
+              "options": [
+                "圆形",
+                "椭圆形",
+                "矩形",
+                "自定义多边形"
+              ],
+              "initial": "椭圆形"
+            },
+            {
+              "name": "边界方向",
+              "type": "toggle",
+              "states": [
+                "正向（逆时针）",
+                "反向（顺时针）"
+              ],
+              "initial": "正向（逆时针）"
+            }
+          ]
+        }
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "典型应用一：简化曲线积分计算",
+        "description": "通过一个具体例题，演示如何利用格林公式将复杂的曲线积分转化为二重积分来求解。",
+        "keyPoints": [
+          "例题：计算 I = ∮_L (y^2 dx - x^2 dy)，其中L是沿逆时针方向围绕区域D的边界，D为直线y=0, y=2, 和曲线x=y^2-1所围成的区域。",
+          "步骤1：识别P(x,y)=y^2，Q(x,y)=-x^2。",
+          "步骤2：计算偏导数 ∂Q/∂x = -2x, ∂P/∂y = 2y。",
+          "步骤3：应用格林公式，转化为二重积分 ∬_D (-2x - 2y) dσ。",
+          "步骤4：在区域D上计算该二重积分（先对x后对y），得到最终结果。"
+        ],
+        "teachingObjective": "掌握利用格林公式将曲线积分转化为二重积分进行计算的标准步骤和方法。",
+        "estimatedDuration": 300,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "quiz",
+        "title": "基础概念自查测验",
+        "description": "通过几个快速选择题，检验学习者是否掌握了格林公式的定义、适用条件及基本应用方法。",
+        "keyPoints": [
+          "考查点1：格林公式的等式形式。",
+          "考查点2：适用条件（单连通、连续偏导、正向边界）。",
+          "考查点3：正向边界的理解。"
+        ],
+        "teachingObjective": "即时反馈，巩固对格林公式基本概念的掌握。",
+        "estimatedDuration": 180,
+        "order": 6,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple"
+          ]
+        }
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "典型应用二：利用曲线积分计算面积",
+        "description": "展示格林公式的另一个重要应用：可以用曲线积分来计算平面区域的面积。",
+        "keyPoints": [
+          "公式推导：当 Q=x, P=0 时，格林公式变成 ∮_L x dy = ∬_D dσ = A（面积）。",
+          "同理：当 Q=0, P=-y 时， ∮_L -y dx = A。",
+          "常用形式：A = (1/2) ∮_L (x dy - y dx)。",
+          "例题：用这个公式计算椭圆的面积 x^2/a^2 + y^2/b^2 = 1。",
+          "优点：对于边界复杂但参数方程简单的图形，这是一个非常强大的工具。"
+        ],
+        "teachingObjective": "掌握利用格林公式通过曲线积分计算平面区域面积的方法。",
+        "estimatedDuration": 240,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "拓展：多连通区域的格林公式",
+        "description": "介绍当区域内部有“洞”时（即多连通区域），格林公式的应用形式，即减去内部空洞的边界积分。",
+        "keyPoints": [
+          "问题：区域内部有岛屿（孔洞）时，原来的公式是否适用？",
+          "关键技巧：通过添加“割线”将多连通区域转化为单连通区域。",
+          "结论：在边界方向适当的情况下，公式变为 边界积分 = 所有内部区域（包括外边界和内边界）上的积分。",
+          "注意：内边界的正方向通常是顺时针（从外边界看）。",
+          "例子：环状区域（圆环）的格林公式应用。"
+        ],
+        "teachingObjective": "理解并能够处理多连通区域下格林公式的修正形式。",
+        "estimatedDuration": 240,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "interactive",
+        "title": "格林公式综合应用模拟器",
+        "description": "提供一个高级交互模拟器，学习者可以选择不同形状的区域（含或不含孔洞）和不同的函数P、Q，实时计算并对比曲线积分与二重积分的结果。",
+        "keyPoints": [
+          "功能1：选择/自定义一个区域（支持简单多边形和带孔洞区域）。",
+          "功能2：输入两个函数P(x,y)和Q(x,y)的表达式。",
+          "功能3：勾选“计算”后，同时显示 ∮_L P dx + Q dy 和 ∬_D (∂Q/∂x - ∂P/∂y) dσ 的结果。",
+          "功能4：如果结果不相等，系统会提示“条件不满足”并指出可能的错误（如方向不对、区域非单连通）。"
+        ],
+        "teachingObjective": "通过动手实验，验证格林公式的正确性，并深化对公式适用条件的理解。",
+        "estimatedDuration": 360,
+        "order": 9,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "格林公式在不同区域和函数类型下的验证与应用。",
+          "keyVariables": [
+            {
+              "name": "区域类型",
+              "type": "select",
+              "options": [
+                "单连通（无孔）",
+                "多连通（单孔）",
+                "多连通（二孔）"
+              ],
+              "initial": "单连通（无孔）"
+            },
+            {
+              "name": "P(x,y) 表达式",
+              "type": "text",
+              "initial": "0"
+            },
+            {
+              "name": "Q(x,y) 表达式",
+              "type": "text",
+              "initial": "x"
+            },
+            {
+              "name": "边界方向",
+              "type": "toggle",
+              "states": [
+                "正向",
+                "反向"
+              ],
+              "initial": "正向"
+            }
+          ]
+        }
+      },
+      {
+        "id": "scene_10",
+        "type": "slide",
+        "title": "课程总结与高阶视野",
+        "description": "总结格林公式的核心要点，并将其置于更广阔的微积分框架中（如与散度定理、斯托克斯定理的关系）。",
+        "keyPoints": [
+          "核心要点回顾：格林公式是联系曲线积分与二重积分的桥梁；其关键前提是区域单连通、函数偏导连续、边界方向正确。",
+          "主要应用：简化曲线积分计算、计算平面图形面积。",
+          "高阶视野：格林公式是二维空间中的旋度定理（斯托克斯定理的特例）。",
+          "前瞻：在三位空间中，有类似的斯托克斯定理（Stokes' Theorem）和高斯散度定理（Divergence Theorem）。"
+        ],
+        "teachingObjective": "巩固本课知识，并建立与其他重要定理的联系，拓展数学视野。",
+        "estimatedDuration": 180,
+        "order": 10
+      }
+    ],
+    "languageDirective": "The user's requirement is in Chinese. The inferred teaching language is Chinese (Simplified). All scene content, including titles, descriptions, key points, and question text, must be generated in Simplified Chinese. Professional mathematics terms, such as '格林公式' (Green's Theorem), '曲线积分' (line integral), '二重积分' (double integral), and '有界闭区域' (closed bounded region), should be translated and presented in their standard Chinese academic form. For any related international terms provided as supplementary context, display the English term alongside the Chinese translation in parentheses upon first mention. Avoid mixing Chinese and English within a single sentence unless it is a standard term.",
+    "topicSummary": "格林公式",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "D9UCmkR8L6",
+      "name": "课程导入：从曲线积分到二重积分",
+      "languageDirective": "The user's requirement is in Chinese. The inferred teaching language is Chinese (Simplified). All scene content, including titles, descriptions, key points, and question text, must be generated in Simplified Chinese. Professional mathematics terms, such as '格林公式' (Green's Theorem), '曲线积分' (line integral), '二重积分' (double integral), and '有界闭区域' (closed bounded region), should be translated and presented in their standard Chinese academic form. For any related international terms provided as supplementary context, display the English term alongside the Chinese translation in parentheses upon first mention. Avoid mixing Chinese and English within a single sentence unless it is a standard term.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782291413572,
+      "updatedAt": 1782291413572,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "格林公式\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "课程导入：从曲线积分到二重积分",
+      "description": "通过一个直观的物理问题（如求变力沿曲线做功）引出格林公式的核心思想，建立学习动机。",
+      "keyPoints": [
+        "回顾：第二类曲线积分的物理意义（变力沿曲线做功）。",
+        "问题：能否将复杂的曲线积分转化为更简单的二重积分计算？",
+        "结论：格林公式提供了这种转化的桥梁。",
+        "注意：公式的成立需要满足一定条件（区域、边界方向）。"
+      ],
+      "teachingObjective": "激发学习者对格林公式的兴趣，并建立其与曲线积分、二重积分之间关系的初步印象。",
+      "estimatedDuration": 180,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "格林公式的严格定义",
+      "description": "精确陈述格林公式，包括其数学表达、适用条件（单连通区域、正向边界）和符号说明。",
+      "keyPoints": [
+        "定义：设D为有界闭区域，其边界L为分段光滑的正向曲线，函数P(x,y)和Q(x,y)在D上具有一阶连续偏导数，则有 ∮_L P dx + Q dy = ∬_D (∂Q/∂x - ∂P/∂y) dσ。",
+        "解读：等式左边是正向曲线积分，右边是二重积分。",
+        "条件一：区域D必须是单连通的（内部没有“洞”）。",
+        "条件二：边界曲线L的方向必须是正向（沿边界行走时，区域始终在左侧）。",
+        "条件三：P和Q需要有连续的一阶偏导数。"
+      ],
+      "teachingObjective": "掌握格林公式的数学表达式及其成立的三个基本条件。",
+      "estimatedDuration": 240,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "公式推导与本质理解",
+      "description": "简要展示格林公式的推导思路（矩形区域到一般区域），帮助理解其核心思想是“内外转换”或“边界与内部的关系”。",
+      "keyPoints": [
+        "核心思想：格林公式是斯托克斯定理（Stokes Theorem）的二维特例，揭示了区域内部的“旋度”与边界上的“环量”之间的关系。",
+        "推导思路（可视化）：从矩形区域上的积分恒等式出发，通过分割求和的方法推广到一般单连通区域。",
+        "关键步骤：∂Q/∂x 积分导致Q在边界上的表达式；∂P/∂y积分导致P在边界上的表达式。",
+        "本质：它将一个复杂的边界积分转化为一个内部区域的面积分，计算上常常更简单。"
+      ],
+      "teachingObjective": "理解格林公式的推导逻辑与几何直观意义。",
+      "estimatedDuration": 240,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "interactive",
+      "title": "区域边界方向与正负判定",
+      "description": "通过可交互的图形模拟，让学习者自行拖动点或调整参数，直观理解什么是区域的“正向边界”和“反向边界”。",
+      "keyPoints": [
+        "交互操作：在画布上显示一个简单的单连通区域（如圆或椭圆），并高亮其边界。",
+        "核心学习点1：拖动观察，当箭头方向改变时，所围成的内部区域在左侧还是右侧。",
+        "核心学习点2：理解正向边界与公式中正负号的关系。",
+        "验证：点击“计算”按钮，比较正向和反向边界下的积分结果。"
+      ],
+      "teachingObjective": "通过交互操作，牢固掌握格林公式中边界方向的正负判定法则。",
+      "estimatedDuration": 300,
+      "order": 4,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "格林公式中边界方向（正向/反向）对积分结果的影响。",
+        "keyVariables": [
+          {
+            "name": "区域形状",
+            "type": "select",
+            "options": [
+              "圆形",
+              "椭圆形",
+              "矩形",
+              "自定义多边形"
+            ],
+            "initial": "椭圆形"
+          },
+          {
+            "name": "边界方向",
+            "type": "toggle",
+            "states": [
+              "正向（逆时针）",
+              "反向（顺时针）"
+            ],
+            "initial": "正向（逆时针）"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "典型应用一：简化曲线积分计算",
+      "description": "通过一个具体例题，演示如何利用格林公式将复杂的曲线积分转化为二重积分来求解。",
+      "keyPoints": [
+        "例题：计算 I = ∮_L (y^2 dx - x^2 dy)，其中L是沿逆时针方向围绕区域D的边界，D为直线y=0, y=2, 和曲线x=y^2-1所围成的区域。",
+        "步骤1：识别P(x,y)=y^2，Q(x,y)=-x^2。",
+        "步骤2：计算偏导数 ∂Q/∂x = -2x, ∂P/∂y = 2y。",
+        "步骤3：应用格林公式，转化为二重积分 ∬_D (-2x - 2y) dσ。",
+        "步骤4：在区域D上计算该二重积分（先对x后对y），得到最终结果。"
+      ],
+      "teachingObjective": "掌握利用格林公式将曲线积分转化为二重积分进行计算的标准步骤和方法。",
+      "estimatedDuration": 300,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "quiz",
+      "title": "基础概念自查测验",
+      "description": "通过几个快速选择题，检验学习者是否掌握了格林公式的定义、适用条件及基本应用方法。",
+      "keyPoints": [
+        "考查点1：格林公式的等式形式。",
+        "考查点2：适用条件（单连通、连续偏导、正向边界）。",
+        "考查点3：正向边界的理解。"
+      ],
+      "teachingObjective": "即时反馈，巩固对格林公式基本概念的掌握。",
+      "estimatedDuration": 180,
+      "order": 6,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple"
+        ]
+      }
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "典型应用二：利用曲线积分计算面积",
+      "description": "展示格林公式的另一个重要应用：可以用曲线积分来计算平面区域的面积。",
+      "keyPoints": [
+        "公式推导：当 Q=x, P=0 时，格林公式变成 ∮_L x dy = ∬_D dσ = A（面积）。",
+        "同理：当 Q=0, P=-y 时， ∮_L -y dx = A。",
+        "常用形式：A = (1/2) ∮_L (x dy - y dx)。",
+        "例题：用这个公式计算椭圆的面积 x^2/a^2 + y^2/b^2 = 1。",
+        "优点：对于边界复杂但参数方程简单的图形，这是一个非常强大的工具。"
+      ],
+      "teachingObjective": "掌握利用格林公式通过曲线积分计算平面区域面积的方法。",
+      "estimatedDuration": 240,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "拓展：多连通区域的格林公式",
+      "description": "介绍当区域内部有“洞”时（即多连通区域），格林公式的应用形式，即减去内部空洞的边界积分。",
+      "keyPoints": [
+        "问题：区域内部有岛屿（孔洞）时，原来的公式是否适用？",
+        "关键技巧：通过添加“割线”将多连通区域转化为单连通区域。",
+        "结论：在边界方向适当的情况下，公式变为 边界积分 = 所有内部区域（包括外边界和内边界）上的积分。",
+        "注意：内边界的正方向通常是顺时针（从外边界看）。",
+        "例子：环状区域（圆环）的格林公式应用。"
+      ],
+      "teachingObjective": "理解并能够处理多连通区域下格林公式的修正形式。",
+      "estimatedDuration": 240,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "interactive",
+      "title": "格林公式综合应用模拟器",
+      "description": "提供一个高级交互模拟器，学习者可以选择不同形状的区域（含或不含孔洞）和不同的函数P、Q，实时计算并对比曲线积分与二重积分的结果。",
+      "keyPoints": [
+        "功能1：选择/自定义一个区域（支持简单多边形和带孔洞区域）。",
+        "功能2：输入两个函数P(x,y)和Q(x,y)的表达式。",
+        "功能3：勾选“计算”后，同时显示 ∮_L P dx + Q dy 和 ∬_D (∂Q/∂x - ∂P/∂y) dσ 的结果。",
+        "功能4：如果结果不相等，系统会提示“条件不满足”并指出可能的错误（如方向不对、区域非单连通）。"
+      ],
+      "teachingObjective": "通过动手实验，验证格林公式的正确性，并深化对公式适用条件的理解。",
+      "estimatedDuration": 360,
+      "order": 9,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "格林公式在不同区域和函数类型下的验证与应用。",
+        "keyVariables": [
+          {
+            "name": "区域类型",
+            "type": "select",
+            "options": [
+              "单连通（无孔）",
+              "多连通（单孔）",
+              "多连通（二孔）"
+            ],
+            "initial": "单连通（无孔）"
+          },
+          {
+            "name": "P(x,y) 表达式",
+            "type": "text",
+            "initial": "0"
+          },
+          {
+            "name": "Q(x,y) 表达式",
+            "type": "text",
+            "initial": "x"
+          },
+          {
+            "name": "边界方向",
+            "type": "toggle",
+            "states": [
+              "正向",
+              "反向"
+            ],
+            "initial": "正向"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene_10",
+      "type": "slide",
+      "title": "课程总结与高阶视野",
+      "description": "总结格林公式的核心要点，并将其置于更广阔的微积分框架中（如与散度定理、斯托克斯定理的关系）。",
+      "keyPoints": [
+        "核心要点回顾：格林公式是联系曲线积分与二重积分的桥梁；其关键前提是区域单连通、函数偏导连续、边界方向正确。",
+        "主要应用：简化曲线积分计算、计算平面图形面积。",
+        "高阶视野：格林公式是二维空间中的旋度定理（斯托克斯定理的特例）。",
+        "前瞻：在三位空间中，有类似的斯托克斯定理（Stokes' Theorem）和高斯散度定理（Divergence Theorem）。"
+      ],
+      "teachingObjective": "巩固本课知识，并建立与其他重要定理的联系，拓展数学视野。",
+      "estimatedDuration": 180,
+      "order": 10
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "The user's requirement is in Chinese. The inferred teaching language is Chinese (Simplified). All scene content, including titles, descriptions, key points, and question text, must be generated in Simplified Chinese. Professional mathematics terms, such as '格林公式' (Green's Theorem), '曲线积分' (line integral), '二重积分' (double integral), and '有界闭区域' (closed bounded region), should be translated and presented in their standard Chinese academic form. For any related international terms provided as supplementary context, display the English term alongside the Chinese translation in parentheses upon first mention. Avoid mixing Chinese and English within a single sentence unless it is a standard term.",
+    "totalScenes": 10
+  },
+  "topicSummary": "格林公式",
+  "completedAt": "2026-06-24T08:58:31.467Z",
+  "error": "用户取消了生成"
+}

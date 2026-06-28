@@ -9,6 +9,7 @@ import type { StageStore } from '@/lib/api/stage-api';
 import { generateSceneOutlinesFromRequirements } from './outline-generator';
 import { generateFullScenes } from './scene-generator';
 import { selectTemplateForCourse } from './classroom-template-layout-agent';
+import { selectThemeForCourse } from './classroom-design-dna';
 import type { AICallFn, GenerationResult, GenerationCallbacks } from './pipeline-types';
 
 export function createGenerationSession(requirements: UserRequirements): GenerationSession {
@@ -59,6 +60,7 @@ export async function runGenerationPipeline(
 
     // Select unified template for the entire course (all slides share one style)
     const courseTemplate = selectTemplateForCourse(outlines);
+    const courseTheme = selectThemeForCourse(outlines);
 
     // Stage 2: Generate Full Scenes
     callbacks?.onProgress?.({
@@ -76,6 +78,7 @@ export async function runGenerationPipeline(
       callbacks,
       languageDirective,
       courseTemplate,
+      courseTheme,
     );
     if (!scenesResult.success) {
       throw new Error(scenesResult.error || 'Failed to generate scenes');

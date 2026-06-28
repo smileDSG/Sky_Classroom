@@ -57,15 +57,15 @@ export interface BottomToolbarProps {
 
 /* Compact control button */
 const ctrlBtn = cn(
-  'relative w-8 h-8 rounded-lg flex items-center justify-center',
+  'relative w-8 h-8 rounded-xl flex items-center justify-center',
   'transition-all duration-150 outline-none cursor-pointer',
-  'hover:bg-slate-100 dark:hover:bg-slate-700/50 active:scale-95',
+  'hover:bg-sky-50 dark:hover:bg-slate-700/50 active:scale-95',
   'text-slate-500 dark:text-slate-400',
 );
 
 /* Subtle separator */
 function CtrlDivider() {
-  return <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1 shrink-0" />;
+  return <div className="mx-1 h-4 w-px shrink-0 bg-slate-200 dark:bg-slate-700" />;
 }
 
 /* Volume icon based on level */
@@ -113,7 +113,8 @@ export function BottomToolbar({
   playbackSpeed = 1,
   onCycleSpeed,
   onAskTeacher,
-}: BottomToolbarProps) {const canGoPrev = currentSceneIndex > 0;
+}: BottomToolbarProps) {
+  const canGoPrev = currentSceneIndex > 0;
   const canGoNext = currentSceneIndex < scenesCount - 1;
   const showPlayPause = !isLiveSession;
 
@@ -146,11 +147,11 @@ export function BottomToolbar({
   const progress = ((currentSceneIndex + 1) / scenesCount) * 100;
 
   return (
-    <div className={cn('w-full', className)}>
+    <div className={cn('pointer-events-none w-full px-4 pb-0', className)}>
       {/* Progress bar */}
-      <div className="w-full h-1 bg-slate-100 dark:bg-slate-800">
+      <div className="mx-auto mb-2 h-1 w-full max-w-2xl overflow-hidden rounded-full bg-white/70 dark:bg-slate-800">
         <motion.div
-          className="h-full bg-gradient-to-r from-sky-400 to-blue-500"
+          className="h-full bg-sky-500"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -158,7 +159,7 @@ export function BottomToolbar({
       </div>
 
       {/* Toolbar container */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-700/50">
+      <div className="pointer-events-auto mx-auto grid max-w-2xl grid-cols-[1fr_auto_1fr] items-center rounded-[20px] border border-white/80 bg-white/78 px-2.5 py-1.5 shadow-[0_16px_42px_rgba(14,116,144,0.14)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/94">
         {/* Left: sidebar toggle + page indicator */}
         <div className="flex items-center gap-2 shrink-0">
           {onToggleSidebar && (
@@ -166,14 +167,14 @@ export function BottomToolbar({
               onClick={onToggleSidebar}
               className={cn(
                 ctrlBtn,
-                sidebarCollapsed ? 'opacity-50' : 'text-sky-500 dark:text-sky-400'
+                sidebarCollapsed ? 'opacity-50' : 'text-sky-700 dark:text-sky-300',
               )}
               aria-label="Toggle sidebar"
             >
               <LayoutList className="w-4 h-4" />
             </button>
           )}
-          <div className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+          <div className="flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-1 dark:bg-slate-800">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
               {currentSceneIndex + 1}
             </span>
@@ -191,12 +192,12 @@ export function BottomToolbar({
             <button
               onClick={onAskTeacher}
               className={cn(
-                'flex items-center gap-1.5 h-8 px-4 rounded-full',
-                'bg-gradient-to-r from-sky-500 to-blue-500',
+                'flex h-8 items-center gap-1.5 rounded-full px-4',
+                'bg-sky-600',
                 'text-white text-sm font-medium',
-                'hover:from-sky-400 hover:to-blue-400',
+                'hover:bg-sky-500',
                 'active:scale-95 transition-all',
-                'shadow-lg shadow-sky-500/25'
+                'shadow-lg shadow-sky-500/20',
               )}
             >
               <MessageCircle className="w-4 h-4" />
@@ -220,7 +221,7 @@ export function BottomToolbar({
                 className={cn(
                   ctrlBtn,
                   !ttsEnabled && 'opacity-30 cursor-not-allowed',
-                  ttsMuted && 'text-red-500'
+                  ttsMuted && 'text-red-500',
                 )}
                 aria-label={ttsMuted ? 'Unmute' : 'Mute'}
               >
@@ -270,14 +271,18 @@ export function BottomToolbar({
             <button
               onClick={onCycleSpeed}
               className={cn(
-                'w-10 h-8 rounded-lg flex items-center justify-center',
+                'flex h-8 w-10 items-center justify-center rounded-xl',
                 'text-xs font-bold tabular-nums transition-all',
                 playbackSpeed !== 1
-                  ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                  ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50',
               )}
             >
-              {playbackSpeed === 1.25 ? '1.25x' : playbackSpeed === 1.5 ? '1.5x' : `${playbackSpeed}x`}
+              {playbackSpeed === 1.25
+                ? '1.25x'
+                : playbackSpeed === 1.5
+                  ? '1.5x'
+                  : `${playbackSpeed}x`}
             </button>
           )}
 
@@ -288,10 +293,7 @@ export function BottomToolbar({
             <button
               onClick={onPrevSlide}
               disabled={!canGoPrev}
-              className={cn(
-                ctrlBtn,
-                'disabled:opacity-20 disabled:cursor-not-allowed'
-              )}
+              className={cn(ctrlBtn, 'disabled:opacity-20 disabled:cursor-not-allowed')}
               aria-label="Previous scene"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -306,11 +308,11 @@ export function BottomToolbar({
                 onStopDiscussion();
               }}
               className={cn(
-                'flex items-center gap-1.5 h-8 px-3 rounded-lg',
+                'flex h-8 items-center gap-1.5 rounded-xl px-3',
                 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400',
                 'text-xs font-semibold',
                 'hover:bg-red-100 dark:hover:bg-red-500/20',
-                'active:scale-95 transition-all'
+                'active:scale-95 transition-all',
               )}
             >
               <Square className="w-3.5 h-3.5 fill-current" />
@@ -320,10 +322,10 @@ export function BottomToolbar({
             <button
               onClick={onPlayPause}
               className={cn(
-                'w-10 h-8 rounded-lg flex items-center justify-center transition-all',
+                'flex h-8 w-10 items-center justify-center rounded-xl transition-all',
                 engineState === 'playing'
-                  ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/25'
-                  : 'bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  ? 'bg-sky-600 text-white shadow-lg shadow-sky-500/20'
+                  : 'bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700',
               )}
             >
               {engineState === 'playing' ? (
@@ -338,10 +340,7 @@ export function BottomToolbar({
             <button
               onClick={onNextSlide}
               disabled={!canGoNext}
-              className={cn(
-                ctrlBtn,
-                'disabled:opacity-20 disabled:cursor-not-allowed'
-              )}
+              className={cn(ctrlBtn, 'disabled:opacity-20 disabled:cursor-not-allowed')}
               aria-label="Next scene"
             >
               <ChevronRight className="w-5 h-5" />
@@ -356,7 +355,7 @@ export function BottomToolbar({
               onClick={onToggleAutoPlay}
               className={cn(
                 ctrlBtn,
-                autoPlayLecture && 'text-sky-500 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10'
+                autoPlayLecture && 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300',
               )}
               aria-label="Auto-play"
               title={autoPlayLecture ? '自动播放: 开' : '自动播放: 关'}
@@ -374,13 +373,13 @@ export function BottomToolbar({
             className={cn(
               ctrlBtn,
               'relative',
-              whiteboardOpen && 'text-violet-500 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10'
+              whiteboardOpen && 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300',
             )}
             title={whiteboardOpen ? '关闭白板' : '打开白板'}
           >
             <PencilLine className="w-4 h-4" />
             {!whiteboardOpen && whiteboardElementCount > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full" />
+              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-sky-500" />
             )}
           </button>
         </div>
@@ -391,18 +390,11 @@ export function BottomToolbar({
           {onTogglePresentation && (
             <button
               onClick={onTogglePresentation}
-              className={cn(
-                ctrlBtn,
-                isPresenting && 'text-sky-500 dark:text-sky-400'
-              )}
+              className={cn(ctrlBtn, isPresenting && 'text-sky-700 dark:text-sky-300')}
               aria-label={presentationLabel}
               title={presentationLabel}
             >
-              {isPresenting ? (
-                <Minimize2 className="w-4 h-4" />
-              ) : (
-                <Maximize2 className="w-4 h-4" />
-              )}
+              {isPresenting ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
           )}
           {onToggleChat && (
@@ -410,7 +402,7 @@ export function BottomToolbar({
               onClick={onToggleChat}
               className={cn(
                 ctrlBtn,
-                chatCollapsed ? 'opacity-50' : 'text-sky-500 dark:text-sky-400'
+                chatCollapsed ? 'opacity-50' : 'text-sky-700 dark:text-sky-300',
               )}
               aria-label="Toggle chat"
             >

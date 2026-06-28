@@ -91,7 +91,7 @@ export function fixElementDefaults(
       const shapeEl = el as Record<string, unknown>;
 
       if (!shapeEl.viewBox) {
-        shapeEl.viewBox = `0 0 ${el.width ?? 100} ${el.height ?? 100}`;
+        shapeEl.viewBox = [el.width ?? 100, el.height ?? 100];
       }
       if (!shapeEl.path) {
         const w = el.width ?? 100;

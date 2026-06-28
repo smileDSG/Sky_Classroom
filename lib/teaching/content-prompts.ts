@@ -14,6 +14,8 @@ IMPORTANT: For mathematical formulas, you MUST use standard LaTeX delimiters:
 
 Do NOT use \\( ... \\) or \\[ ... \\] delimiters. Always use $ and $$ for math expressions.
 
+For text explanations, use paragraphs separated by blank lines and Markdown lists for key steps or points. Avoid walls of text without breaks.
+
 <!-- prompt-version: v2-profile-driven -->`;
 
 export const STRUCTURED_CONTENT_SYSTEM_PROMPT = `You are an expert teacher generating structured slide content. Output must be a single valid JSON object matching the requested content type.
@@ -174,7 +176,7 @@ export function buildContentPrompt(
 
   // 测验要求
   const quizRequirement = section.hasQuiz
-    ? '\n5. 如果此环节不是 quiz 类型，请在内容末尾额外生成 1-2 个 quiz 类型的随堂测验题，包含题目、选项和参考答案'
+    ? `\n5. 如果此环节不是 quiz 类型，请在内容末尾额外生成 1-2 个 quiz 类型的随堂测验题，包含题目、选项和参考答案；随堂题必须直接考查本节知识点（${kpStr}），不得生成与本节无关的随机题`
     : '';
 
   const quizFormatGuide =
@@ -193,7 +195,8 @@ export function buildContentPrompt(
 注意：
 - options 数组包含所有选项
 - correctAnswer 为正确选项的索引（0=A, 1=B, 2=C, 3=D）
-- content 字段包含答案和详细解析`
+- question 必须直接围绕本节知识点（${kpStr}），不得偏离到其他章节或泛化成随机题
+- content 字段包含答案和详细解析，并点明题目对应的本节知识点`
       : '';
 
   return `请为以下教学环节生成内容。
@@ -219,8 +222,10 @@ ${precedingContext}${profileContext}
 要求：
 1. 至少 2 个内容块
 2. 公式使用 $...$（行内）或 $$...$$（独立行），不要使用 \\( \\) 或 \\[ \\]
-3. 例题需包含完整的解题步骤
-4. 随堂测需提供参考答案${quizRequirement}${quizFormatGuide}`;
+3. type 为 formula 的内容块必须使用 $$...$$ 独立居中显示，不要混用普通说明文字
+4. 讲解文本必须分段：不同观点/步骤之间用空行分隔，每段控制在 2-4 行；关键步骤或要点请使用 Markdown 列表（- 或 1.）
+5. 例题需包含完整的解题步骤
+6. 随堂测需提供参考答案，并且题目必须围绕本节知识点：${kpStr}${quizRequirement}${quizFormatGuide}`;
 }
 
 // ── New: StructuredContent prompt for rich slides ──

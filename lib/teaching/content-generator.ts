@@ -8,7 +8,7 @@
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import type { LanguageModel } from 'ai';
-import { parseJsonResponse, tryParseJson } from '@/lib/generation/json-repair';
+import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { structuredContentSchema } from '@/lib/generation/classroom-content-agent';
 import type { StructuredContent } from '@/lib/generation/classroom-content-agent';
 import { resolveSolverModel } from '@/lib/solve/solver-constants';
@@ -21,10 +21,13 @@ import {
   buildContentPrompt,
   buildStructuredContentPrompt,
 } from './content-prompts';
-import { generateQuizSectionContent, deterministicQuizChunks } from './quiz-section-generator';
 import { createLogger } from '@/lib/logger';
+import type { ThinkingConfig } from '@/lib/types/provider';
 
 const log = createLogger('ContentGenerator');
+
+/** Disable reasoning/thinking for teaching content to reduce latency. */
+const DISABLE_THINKING: ThinkingConfig = { mode: 'disabled', enabled: false };
 
 export interface GeneratedSection {
   section: LessonSection;
@@ -47,25 +50,30 @@ export async function generateSectionContent(
     `[ContentGen] profile injected: ${Boolean(profile)}, section: ${section.id}, kps: ${section.knowledgePoints.join('、')}`,
   );
 
-  // ── Attempt 1: Structured content (rich slides) ──
-  const structuredPrompt = buildStructuredContentPrompt(section, profile, precedingSections);
-  if (structuredPrompt) {
+  // ── Generate chunks and structured content in parallel ──
+  // The teaching panel renders chunks; structured content is only used when
+  // converting to classroom slides. Running both concurrently avoids the
+  // previous 2x serial latency while keeping both outputs available.
+  const chunksPromise = generateChunksContent(section, model, profile, precedingSections);
+
+  const structuredPromise = (async (): Promise<StructuredContent | undefined> => {
+    const structuredPrompt = buildStructuredContentPrompt(section, profile, precedingSections);
+    if (!structuredPrompt) return undefined;
     try {
       const result = await callLLM(
         {
           model,
           messages: [{ role: 'user', content: structuredPrompt }] as any,
           temperature: 0.6,
-          maxOutputTokens: 4096,
+          maxOutputTokens: 2048,
         },
         'content-generator-structured',
-        { retries: 2 },
-        undefined,
+        { retries: 1 },
+        DISABLE_THINKING,
         STRUCTURED_CONTENT_SYSTEM_PROMPT,
       );
 
       const raw = (result.text || '').trim();
-      // Strip markdown fences if present
       const cleaned = raw
         .replace(/^```json\s*/, '')
         .replace(/\s*```$/, '')
@@ -76,46 +84,17 @@ export async function generateSectionContent(
         log.info(
           `[ContentGen] Structured content generated for ${section.id} (type=${validation.data.type})`,
         );
-        // Also generate chunks as fallback data (quiz questions, etc.)
-        const chunks = await generateChunksContent(section, model, profile, precedingSections);
-        return { chunks, structured: validation.data };
+        return validation.data;
       }
-      log.warn(
-        `[ContentGen] Structured validation failed for ${section.id}, falling back to chunks`,
-      );
+      log.warn(`[ContentGen] Structured validation failed for ${section.id}`);
     } catch (err) {
-      log.warn(
-        `[ContentGen] Structured generation failed for ${section.id}, falling back to chunks:`,
-        err,
-      );
+      log.warn(`[ContentGen] Structured generation failed for ${section.id}:`, err);
     }
-  }
+    return undefined;
+  })();
 
-  // ── Attempt 2: Fallback to chunk-based content ──
-  const chunks = await generateChunksContent(section, model, profile, precedingSections);
-
-  // ── Attempt 3: Robust fallback for quiz sections ──
-  // The chunk-based prompt frequently fails for quiz sections (especially the final
-  // assessment), leaving users with a non-interactive "generation failed" message.
-  // Use the dedicated quiz agent as a robust fallback, and a deterministic template
-  // as the absolute last resort so the UI always renders an interactive quiz.
-  if (section.contentType === 'quiz' && chunks.some((c) => c.failed)) {
-    try {
-      log.info(
-        `[ContentGen] Quiz section ${section.id} failed via chunks, trying quiz agent fallback`,
-      );
-      const quizChunks = await generateQuizSectionContent(section, profile);
-      return { chunks: quizChunks };
-    } catch (quizErr) {
-      log.warn(
-        `[ContentGen] Quiz agent fallback failed for ${section.id}, using deterministic fallback:`,
-        quizErr,
-      );
-      return { chunks: deterministicQuizChunks(section) };
-    }
-  }
-
-  return { chunks };
+  const [chunks, structured] = await Promise.all([chunksPromise, structuredPromise]);
+  return { chunks, structured };
 }
 
 /** Generate chunk-based content (original approach) */
@@ -133,11 +112,11 @@ async function generateChunksContent(
         model,
         messages: [{ role: 'user', content: prompt }] as any,
         temperature: 0.6,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 2048,
       },
       'content-generator',
-      { retries: 2 },
-      undefined,
+      { retries: 1 },
+      DISABLE_THINKING,
       CONTENT_SYSTEM_PROMPT,
     );
 
@@ -162,7 +141,7 @@ async function generateChunksContent(
     }
 
     const rawChunks = parsed.chunks as Record<string, unknown>[];
-    const mappedChunks = rawChunks
+    return rawChunks
       .map((c, i) => {
         const type = ['text', 'formula', 'example', 'quiz', 'diagram'].includes(c.type as string)
           ? (c.type as ContentChunk['type'])
@@ -190,8 +169,6 @@ async function generateChunksContent(
         return chunk;
       })
       .filter((c) => c.content.length > 0);
-
-    return flattenNestedChunks(mappedChunks, section.id);
   } catch (err) {
     log.warn(`generateChunksContent failed for ${section.id}:`, err);
     return fallbackContent(section);
@@ -210,53 +187,6 @@ function fallbackContent(section: LessonSection): ContentChunk[] {
       failed: true,
     },
   ];
-}
-
-/**
- * LLM 偶尔会输出嵌套的 chunks JSON（把整个 chunks 数组作为某个 chunk 的 content）。
- * 检测并展开这种嵌套结构，避免前端拿到 JSON 字符串而不是可渲染的内容。
- */
-function flattenNestedChunks(chunks: ContentChunk[], sectionId: string): ContentChunk[] {
-  const result: ContentChunk[] = [];
-  for (const chunk of chunks) {
-    const trimmed = chunk.content.trim();
-    if (!trimmed.startsWith('{') || !trimmed.includes('"chunks"')) {
-      result.push(chunk);
-      continue;
-    }
-
-    const nested = tryParseJson<{ chunks?: Record<string, unknown>[] }>(trimmed);
-    if (!nested || !Array.isArray(nested.chunks)) {
-      // 看起来像嵌套 JSON 但解析失败 —— 保留原 chunk，让前端至少能看到原始文本
-      result.push(chunk);
-      continue;
-    }
-
-    log.info(
-      `[ContentGen] Flattened nested chunks for ${sectionId}: ${nested.chunks.length} inner chunks`,
-    );
-    for (const inner of nested.chunks) {
-      if (typeof inner.content !== 'string' || inner.content.length === 0) continue;
-      const type = ['text', 'formula', 'example', 'quiz', 'diagram'].includes(inner.type as string)
-        ? (inner.type as ContentChunk['type'])
-        : 'text';
-      const flat: ContentChunk = {
-        sectionId,
-        type,
-        content: inner.content,
-        order: typeof inner.order === 'number' ? inner.order : result.length + 1,
-      };
-      if (type === 'quiz') {
-        if (typeof inner.question === 'string') flat.question = inner.question;
-        if (Array.isArray(inner.options)) {
-          flat.options = inner.options.filter((o): o is string => typeof o === 'string');
-        }
-        if (typeof inner.correctAnswer === 'number') flat.correctAnswer = inner.correctAnswer;
-      }
-      result.push(flat);
-    }
-  }
-  return result;
 }
 
 /**
@@ -300,13 +230,13 @@ export function extractContentSummary(chunks: ContentChunk[]): string {
 /**
  * Generate content concurrently with controlled parallelism.
  * - Section 0 is generated alone (ensures opening quality)
- * - Sections 1+ are generated in parallel batches (2 concurrent)
+ * - Sections 1+ are generated in parallel batches (3 concurrent)
  * - Each completed section is yielded immediately
  */
 export async function* generateLessonConcurrent(
   plan: LessonPlan,
   profile?: StudentProfile,
-  concurrency: number = 2,
+  concurrency: number = 3,
 ): AsyncGenerator<GeneratedSection> {
   const sections = plan.sections;
   if (sections.length === 0) return;

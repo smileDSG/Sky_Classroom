@@ -4,19 +4,28 @@
  * 根据学科、难度、知识点，使用 AI 生成高质量选择题。
  */
 
-import { generateText } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
 import { jsonrepair } from 'jsonrepair';
 import { createLogger } from '@/lib/logger';
+import { callLLM } from '@/lib/ai/llm';
+import { getModel } from '@/lib/ai/providers';
 import { resolveApiKey, resolveBaseUrl } from '@/lib/server/provider-config';
 import { retrieveRelevantContext } from '@/lib/agents/rag/retriever';
 import { buildProfileContextPrompt } from '@/lib/student/profile-prompts';
 import type { StudentProfile } from '@/lib/student/profile-types';
-import { getSubjectLabel } from '@/lib/mistakes/subject-inference';
+import { getSubjectLabelOrSelf } from '@/lib/mistakes/subject-inference';
+import {
+  buildCloudMindCacheKey,
+  getCloudMindCache,
+  setCloudMindCache,
+} from '@/lib/agents/cloud-mind/cache';
+import {
+  QUIZ_EXPLANATION_PROMPT_LIMIT_CHARS,
+  sanitizeQuizExplanation,
+} from '@/lib/quiz/explanation';
 
 const log = createLogger('QuizAgent');
 
-export const QUIZ_AGENT_PROMPT_VERSION = 'v2-profile-driven';
+export const QUIZ_AGENT_PROMPT_VERSION = 'v4-topic-grounding';
 
 // ── 输出结构 ───────────────────────────────────────────────────────
 
@@ -43,7 +52,12 @@ const QUIZ_AGENT_SYSTEM_PROMPT = `你是一位资深的教育出题专家，擅�
 1. **精准出题**：根据指定学科和知识点，设计有区分度的选择题
 2. **难度把控**：严格控制题目难度符合要求
 3. **选项设计**：干扰项要有合理性，不能太明显错误
-4. **详细解析**：每道题提供清晰的解题思路和知识点说明
+4. **简明解析**：每道题提供短、准、能直接帮助订正的解析
+
+## 主题约束
+- 如果用户提供了“知识点/主题”，每一道题都必须直接考查该主题，不要泛化成同学科随机题
+- 题干、选项或解析中至少有一处能清楚看出与指定主题相关
+- 参考资料和学情上下文只能用于补充，不得替换或偏离用户指定主题
 
 ## 难度标准
 - 基础（easy）：考查基本概念和公式记忆，直接应用
@@ -68,7 +82,7 @@ const QUIZ_AGENT_SYSTEM_PROMPT = `你是一位资深的教育出题专家，擅�
       "question": "题目内容",
       "options": ["选项1", "选项2", "选项3", "选项4"],
       "answer": 0,
-      "explanation": "详细解析，包含解题思路和涉及的知识点"
+      "explanation": "一句到三句短解析，指出关键条件、核心步骤和正确答案依据"
     }
   ]
 }
@@ -79,13 +93,18 @@ const QUIZ_AGENT_SYSTEM_PROMPT = `你是一位资深的教育出题专家，擅�
 - options 只写选项内容，不要添加 A/B/C/D 前缀
 - questions 数组长度必须等于用户要求的题目数量
 - 每道题必须有 4 个选项
-- 解析要详细，帮助学生理解解题过程
+- 解析必须简短：不超过 ${QUIZ_EXPLANATION_PROMPT_LIMIT_CHARS} 个汉字，最多 3 句
+- 解析只写最终正确思路，不展示试错、自我纠错、反复验算或“可能/也许/我理解错了”等不确定表达
+- 生成 JSON 前请私下核对：题目、正确选项和解析必须一致；若不一致，先改题目或选项，不要在解析中说明矛盾
 - 确保 JSON 格式正确，可以被直接解析
 - 字符串中禁止出现未转义的换行符，所有换行必须使用 \\n 表示
 - 字符串中禁止出现未转义的双引号，必须使用 \\" 转义
 - 数学公式必须使用 LaTeX 格式：行内公式用 $...$ 包裹，独立公式用 $$...$$ 包裹
   例如二次函数顶点写成 $y = a(x - h)^2 + k$
   分数写成 $\\frac{1}{2}$，积分写成 $\\int_{0}^{1} f(x) dx$
+  在 JSON 字符串中，LaTeX 命令的反斜杠必须写成双反斜杠，例如：
+  "question": "在 $\\\\triangle ABC$ 中，$\\\\angle A=50^\\\\circ$，$\\\\angle B=60^\\\\circ$，求 $\\\\angle C$。"
+  禁止写成 "\\triangle"、"\\angle"、"\\circ"，否则 JSON 会把反斜杠当成转义字符导致显示为 riangle/angle/circ
   禁止使用 Unicode 数学符号（如 × ÷ ² ³ α β），必须使用 LaTeX 命令（如 \\times \\div \\alpha \\beta）
 
 <!-- prompt-version: ${QUIZ_AGENT_PROMPT_VERSION} -->`;
@@ -108,31 +127,41 @@ function normalizeAnswer(answer: unknown): number | null {
   return index >= 0 ? index : null;
 }
 
+export function restoreConsumedLatexEscapes(text: string): string {
+  return text
+    .replace(/\triangle\b/g, '\\triangle')
+    .replace(/\t\s*riangle/g, '\\triangle')
+    .replace(/(?<!\\)\briangle\s*([A-Z]{2,3})\b/g, '\\triangle $1')
+    .replace(/(?<!\\)\btriangle\s*([A-Z]{2,3})\b/g, '\\triangle $1')
+    .replace(/(?<!\\)\bangle\s*([A-Z])\b/g, '\\angle $1')
+    .replace(/(?<!\\)\^?\s*circ\b/g, '^\\circ')
+    .replace(/(?<!\\)\bfrac\s*\{/g, '\\frac{')
+    .replace(/(?<!\\)\bsqrt\s*\{/g, '\\sqrt{');
+}
+
 function normalizeQuizOutput(parsed: QuizOutput, count: number): QuizOutput {
   if (!parsed.questions || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
     throw new Error('Invalid response structure');
   }
 
-  const questions = parsed.questions
-    .slice(0, count)
-    .map((question, index) => {
-      const options = Array.isArray(question.options)
-        ? question.options.map((option) => stripOptionPrefix(String(option))).filter(Boolean)
-        : [];
-      const answer = normalizeAnswer(question.answer);
+  const questions = parsed.questions.slice(0, count).map((question, index) => {
+    const options = Array.isArray(question.options)
+      ? question.options.map((option) => stripOptionPrefix(String(option))).filter(Boolean)
+      : [];
+    const answer = normalizeAnswer(question.answer);
 
-      if (!question.question || options.length !== 4 || answer === null || answer < 0 || answer > 3) {
-        throw new Error(`Invalid question structure at index ${index + 1}`);
-      }
+    if (!question.question || options.length !== 4 || answer === null || answer < 0 || answer > 3) {
+      throw new Error(`Invalid question structure at index ${index + 1}`);
+    }
 
-      return {
-        id: index + 1,
-        question: String(question.question),
-        options,
-        answer,
-        explanation: String(question.explanation || '暂无解析'),
-      };
-    });
+    return {
+      id: index + 1,
+      question: restoreConsumedLatexEscapes(String(question.question)),
+      options: options.map(restoreConsumedLatexEscapes),
+      answer,
+      explanation: sanitizeQuizExplanation(restoreConsumedLatexEscapes(question.explanation)),
+    };
+  });
 
   if (questions.length !== count) {
     throw new Error(`Expected ${count} questions, got ${questions.length}`);
@@ -144,6 +173,40 @@ function normalizeQuizOutput(parsed: QuizOutput, count: number): QuizOutput {
     difficulty: parsed.difficulty,
     questions,
   };
+}
+
+export function buildQuizUserPrompt(input: {
+  subjectLabel: string;
+  difficultyLabel: string;
+  topic: string;
+  count: number;
+  profileContext?: string;
+  ragContext?: string;
+}): string {
+  const topic = input.topic.trim();
+  const profileContext = input.profileContext ?? '';
+  const ragContext = input.ragContext ?? '';
+  const commonRequirements = [
+    `- 学科：${input.subjectLabel}`,
+    topic ? `- 指定主题/知识点：${topic}` : '',
+    `- 难度：${input.difficultyLabel}`,
+    `- 数量：${input.count}道`,
+    '- 每道题4个选项，只有1个正确答案',
+    `- 提供简明解析：每题不超过 ${QUIZ_EXPLANATION_PROMPT_LIMIT_CHARS} 个汉字，最多 3 句`,
+    '- JSON 字符串里的 LaTeX 反斜杠必须写成双反斜杠，例如 $\\\\triangle ABC$、$\\\\angle A=50^\\\\circ$，不要写成 $\\triangle ABC$',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const topicRequirements = topic
+    ? `\n\n主题命中要求：\n- questions 中的每一道题都必须围绕“${topic}”出题\n- 不要生成与“${topic}”无关的泛化题、随机题或其他章节题\n- JSON 顶层 topic 字段必须写为“${topic}”`
+    : '\n\n主题命中要求：\n- 请先为本次测验选定一个清晰的核心考点，并让所有题目围绕该考点展开\n- JSON 顶层 topic 字段必须写出该核心考点';
+
+  const opening = topic
+    ? `请为“${input.subjectLabel}”学科，围绕“${topic}”知识点，生成${input.count}道${input.difficultyLabel}难度的选择题。`
+    : `请为“${input.subjectLabel}”学科，生成${input.count}道${input.difficultyLabel}难度的选择题。`;
+
+  return `${opening}\n\n要求：\n${commonRequirements}${topicRequirements}${profileContext}${ragContext}`;
 }
 
 // ── JSON 解析容错层 ────────────────────────────────────────────────
@@ -165,7 +228,7 @@ function extractJson(text: string): string {
 
 function tryRepairJson(text: string): string {
   // Remove common LLM output artifacts
-  let cleaned = text
+  const cleaned = text
     // Remove trailing commentary after the JSON object
     .replace(/}\s*(?:以上是|以上为|JSON|以上内容为|此致|敬礼|祝)[\s\S]*$/g, '}')
     // Remove BOM or zero-width chars
@@ -242,15 +305,21 @@ export async function generateQuiz(
     throw new Error('DeepSeek API key is not configured. Set DEEPSEEK_API_KEY in .env.local.');
   }
 
-  const deepseek = createOpenAI({ apiKey, baseURL: baseUrl });
+  const { model } = getModel({
+    providerId: 'deepseek',
+    modelId: 'deepseek-chat',
+    apiKey,
+    baseUrl,
+  });
 
   // — RAG: 从知识库检索相关补充内容
   let ragContext = '';
   try {
-    const ragResult = await retrieveRelevantContext(
-      topic || `${subject} ${difficulty}`,
-      { topK: 3, rerank: true, maxContextChars: 2000 },
-    );
+    const ragResult = await retrieveRelevantContext(topic || `${subject} ${difficulty}`, {
+      topK: 3,
+      rerank: true,
+      maxContextChars: 2000,
+    });
     if (ragResult.contextText) {
       ragContext = `\n\n【参考资料（来自知识库）】\n${ragResult.contextText}`;
       log.info(`RAG retrieved ${ragResult.chunks.length} chunks for quiz generation`);
@@ -265,31 +334,53 @@ export async function generateQuiz(
     hard: '挑战',
   };
 
-  const subjectLabel = getSubjectLabel(subject as any) || subject;
+  const subjectLabel = getSubjectLabelOrSelf(subject);
   const difficultyLabel = difficultyLabels[difficulty] || difficulty;
 
   const profileContext = profile
     ? `\n\n${buildProfileContextPrompt(profile, { maxWeakPoints: 5, maxErrorPatterns: 3 })}`
     : '';
 
-  let userPrompt: string;
-  if (topic) {
-    userPrompt = `请为"${subjectLabel}"学科，关于"${topic}"知识点，生成${count}道${difficultyLabel}难度的选择题。\n\n要求：\n- 学科：${subjectLabel}\n- 知识点：${topic}\n- 难度：${difficultyLabel}\n- 数量：${count}道\n- 每道题4个选项，只有1个正确答案\n- 提供详细解析${profileContext}${ragContext}`;
-  } else {
-    userPrompt = `请为"${subjectLabel}"学科，生成${count}道${difficultyLabel}难度的选择题。\n\n要求：\n- 学科：${subjectLabel}\n- 难度：${difficultyLabel}\n- 数量：${count}道\n- 每道题4个选项，只有1个正确答案\n- 提供详细解析${profileContext}${ragContext}`;
+  const trimmedTopic = topic.trim();
+  const cacheKey = buildCloudMindCacheKey('quiz', {
+    version: QUIZ_AGENT_PROMPT_VERSION,
+    subject,
+    difficulty,
+    topic: trimmedTopic,
+    count,
+    profileContext,
+    ragContext,
+  });
+  const cached = getCloudMindCache<QuizOutput>(cacheKey);
+  if (cached) {
+    log.info(`[QuizAgent] Cache hit: ${subjectLabel} / ${difficultyLabel} / ${count}`);
+    return cached;
   }
+
+  const userPrompt = buildQuizUserPrompt({
+    subjectLabel,
+    difficultyLabel,
+    topic: trimmedTopic,
+    count,
+    profileContext,
+    ragContext,
+  });
 
   log.info(
     `[QuizAgent] Generating quiz: ${subjectLabel} / ${difficultyLabel} / ${count} questions, profile injected: ${Boolean(profile)}`,
   );
 
-  const result = await generateText({
-    model: deepseek.chat('deepseek-chat'),
-    system: QUIZ_AGENT_SYSTEM_PROMPT,
-    prompt: userPrompt,
-    temperature: 0.8,
-    maxOutputTokens: 8192,
-  });
+  const result = await callLLM(
+    {
+      model,
+      system: QUIZ_AGENT_SYSTEM_PROMPT,
+      prompt: userPrompt,
+      temperature: 0.5,
+      maxOutputTokens: Math.min(8192, Math.max(2048, count * 650)),
+    },
+    'cloud-mind-quiz',
+    { retries: 1, timeoutMs: 60_000 },
+  );
 
   const text = result.text || '';
   log.info(`Quiz generation complete, response length: ${text.length}`);
@@ -297,7 +388,9 @@ export async function generateQuiz(
   // 解析 JSON 响应（多层容错策略）
   try {
     const parsed = parseQuizResponse(text);
-    return normalizeQuizOutput(parsed, count);
+    const normalized = normalizeQuizOutput(parsed, count);
+    setCloudMindCache(cacheKey, normalized);
+    return normalized;
   } catch (parseError) {
     log.error('Failed to parse quiz response:', parseError);
     throw new Error(`Failed to parse AI response: ${(parseError as Error).message}`);

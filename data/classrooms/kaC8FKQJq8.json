@@ -1,0 +1,2468 @@
+{
+  "id": "kaC8FKQJq8",
+  "stage": {
+    "id": "kaC8FKQJq8",
+    "name": "开场：从平面到空间的积分",
+    "languageDirective": "使用中文作为教学语言。所有教学讲解、术语解释均使用中文。对于斯托克斯公式相关的数学术语，使用标准的中文数学译名（如：‘旋度’、‘曲面积分’、‘有向曲面’等）。源代码风格的数学表达式保持英文符号。对于初学者，确保解释清晰，使用浅显易懂的语言辅助理解。",
+    "videoManifest": {},
+    "style": "interactive",
+    "createdAt": 1782281344543,
+    "updatedAt": 1782281344543,
+    "agentIds": [
+      "default-1",
+      "default-2",
+      "default-3",
+      "default-4",
+      "default-5",
+      "default-6"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_oHCfpCm64L",
+      "stageId": "kaC8FKQJq8",
+      "type": "slide",
+      "title": "开场：从平面到空间的积分",
+      "order": 1,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "8NvbuugEmZiS8OL1unifA",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_qOy-mkiX",
+              "type": "text",
+              "left": 105,
+              "top": 78,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong>从平面到空间的积分</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#172033",
+              "rotate": 0
+            },
+            {
+              "id": "shape_2Eg6hWNX",
+              "type": "shape",
+              "left": 105,
+              "top": 154,
+              "width": 790,
+              "height": 4,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_ri87LzGL",
+              "type": "shape",
+              "left": 110,
+              "top": 205,
+              "width": 410,
+              "height": 250,
+              "path": "M 0.1 0.8 C 0.15 0.3, 0.4 0.1, 0.7 0.2 C 0.9 0.25, 0.95 0.5, 0.85 0.75 C 0.75 0.95, 0.4 0.95, 0.1 0.8 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#e6f2ff",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "line_HFtBo2s9",
+              "type": "line",
+              "left": 110,
+              "top": 205,
+              "width": 3,
+              "start": [
+                41,
+                200
+              ],
+              "end": [
+                369,
+                50
+              ],
+              "cubic": [
+                [
+                  160,
+                  60
+                ],
+                [
+                  280,
+                  190
+                ]
+              ],
+              "style": "solid",
+              "color": "#2f80d1",
+              "points": [
+                "",
+                "arrow"
+              ]
+            },
+            {
+              "id": "text_ZDITH9-O",
+              "type": "text",
+              "left": 120,
+              "top": 410,
+              "width": 200,
+              "height": 43,
+              "content": "<p style=\"font-size:14px;\">曲面及其边界曲线</p>",
+              "defaultFontName": "",
+              "defaultColor": "#555555",
+              "rotate": 0
+            },
+            {
+              "id": "text_ZT_yxVrl",
+              "type": "text",
+              "left": 570,
+              "top": 205,
+              "width": 330,
+              "height": 232,
+              "content": "<p style=\"font-size:18px;\"><strong>回顾</strong></p><p style=\"font-size:16px;\">• 格林公式：平面区域上二重积分与边界曲线积分的关系</p><p style=\"font-size:16px;\">• 局限：仅适用于二维平面</p><p style=\"font-size:16px;\"><strong>问题</strong></p><p style=\"font-size:16px;\">• 空间曲面是否也有类似定理？</p><p style=\"font-size:16px;\"><strong>引入</strong></p><p style=\"font-size:16px;\">• 斯托克斯公式正是格林公式在三维空间中的推广</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "shape_iGF5O6qE",
+              "type": "shape",
+              "left": 570,
+              "top": 450,
+              "width": 330,
+              "height": 64,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#eaf4fd",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_wvAYKGE3",
+              "type": "text",
+              "left": 580,
+              "top": 458,
+              "width": 310,
+              "height": 46,
+              "content": "<p style=\"font-size:14px;\"><strong>学习目标</strong>：理解斯托克斯公式如何将曲面积分与边界曲线积分联系起来</p>",
+              "defaultFontName": "",
+              "defaultColor": "#1a5a9c",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_t7-pibzw",
+          "type": "spotlight",
+          "elementId": "text_qOy-mkiX"
+        },
+        {
+          "id": "action_IwLMMrTL",
+          "type": "speech",
+          "text": "同学们，大家好！欢迎来到今天的课程。我们之前已经学习了平面上的曲线积分和格林公式，今天我们要开启一个新的篇章——从平面走向空间！"
+        },
+        {
+          "id": "action_Gotg0ltj",
+          "type": "spotlight",
+          "elementId": "text_ZDITH9-O"
+        },
+        {
+          "id": "action_l2DzB6Wf",
+          "type": "speech",
+          "text": "大家请看这张图，这是一个在三维空间中的曲面，它的边缘是一条闭合的空间曲线。这就像一张有边界的曲面网。"
+        },
+        {
+          "id": "action_3FYks0uz",
+          "type": "spotlight",
+          "elementId": "text_ZT_yxVrl"
+        },
+        {
+          "id": "action_0fK_nNai",
+          "type": "speech",
+          "text": "回顾一下我们学过的格林公式：它告诉我们在平面上，一个封闭曲线围成的区域上的二重积分，等于沿着这条曲线的曲线积分。这就像是在二维平面上，我们能把‘面’的积分转化为‘边界’的积分。"
+        },
+        {
+          "id": "action_kP5rpHw2",
+          "type": "speech",
+          "text": "但是，我们的世界是三维的。对于空间中一个弯曲的曲面，它的边界是一条空间曲线。我们自然会想：有没有一个定理，能描述曲面积分和沿着它边界曲线的曲线积分之间的关系呢？"
+        },
+        {
+          "id": "action_GdQ3kWzj",
+          "type": "spotlight",
+          "elementId": "text_wvAYKGE3"
+        },
+        {
+          "id": "action_59tzwdJx",
+          "type": "speech",
+          "text": "这个问题的答案就是——斯托克斯公式！它正是格林公式在三维空间中的自然推广。今天我们的学习目标，就是理解这个神奇的公式是如何把曲面积分和它的边界曲线积分联系起来的。"
+        },
+        {
+          "id": "action_Mi3ZR2Bb",
+          "type": "speech",
+          "text": "简单来说，如果说格林公式是‘降维打击’的平面版，那么斯托克斯公式就是它的空间进阶版。它告诉我们，一个曲面上的‘旋度’（可以想象成曲面上的旋转程度）的积分，等于沿着这个曲面边界的曲线积分。"
+        },
+        {
+          "id": "action_mx8FLfge",
+          "type": "speech",
+          "text": "好了，接下来就让我们一起探索这个从平面到空间的奇妙演变吧！"
+        }
+      ],
+      "createdAt": 1782281471295,
+      "updatedAt": 1782281471295
+    },
+    {
+      "id": "scene_SsvmGtE-P3",
+      "stageId": "kaC8FKQJq8",
+      "type": "slide",
+      "title": "核心概念：旋度",
+      "order": 2,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "logJP1zyGH5QW4I0y6SFg",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_meAu7D7H",
+              "type": "text",
+              "left": 105,
+              "top": 78,
+              "width": 790,
+              "height": 76,
+              "content": "<p style=\"font-size:36px;\"><strong>核心概念：旋度</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#172033",
+              "rotate": 0
+            },
+            {
+              "id": "shape_sLsBm4RU",
+              "type": "shape",
+              "left": 105,
+              "top": 162,
+              "width": 790,
+              "height": 4,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_ovj74Tug",
+              "type": "shape",
+              "left": 110,
+              "top": 200,
+              "width": 410,
+              "height": 200,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#eaf4fc",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_RRsrIK-W",
+              "type": "text",
+              "left": 130,
+              "top": 210,
+              "width": 370,
+              "height": 49,
+              "content": "<p style=\"font-size:20px;\"><strong>定义</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#1a3c6b",
+              "rotate": 0
+            },
+            {
+              "id": "text_T9H10O8n",
+              "type": "text",
+              "left": 130,
+              "top": 262,
+              "width": 370,
+              "height": 130,
+              "content": "<p style=\"font-size:18px;\">• 向量算子，描述向量场</p><p style=\"font-size:18px;\">  在某点附近的旋转程度</p><p style=\"font-size:18px;\">• 符号：<b>∇ × F</b></p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "shape_N3L6_hUN",
+              "type": "shape",
+              "left": 560,
+              "top": 200,
+              "width": 380,
+              "height": 200,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#f5f0e8",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_QhN6cgN2",
+              "type": "text",
+              "left": 580,
+              "top": 210,
+              "width": 340,
+              "height": 49,
+              "content": "<p style=\"font-size:20px;\"><strong>物理意义</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#7b4f1a",
+              "rotate": 0
+            },
+            {
+              "id": "text_bXyp504J",
+              "type": "text",
+              "left": 580,
+              "top": 265,
+              "width": 340,
+              "height": 130,
+              "content": "<p style=\"font-size:18px;\">• 将小螺旋桨放入流场</p><p style=\"font-size:18px;\">• 旋度 → 旋转角速度</p><p style=\"font-size:18px;\">• 方向：右手定则判定</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "text_kQAggVSN",
+              "type": "text",
+              "left": 110,
+              "top": 440,
+              "width": 400,
+              "height": 49,
+              "content": "<p style=\"font-size:20px;\"><strong>计算公式</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#172033",
+              "rotate": 0
+            },
+            {
+              "id": "latex_nF__1mij",
+              "type": "latex",
+              "left": 110,
+              "top": 488,
+              "width": 780,
+              "height": 70,
+              "latex": "\\nabla \\times \\mathbf{F} = \\left( R_y - Q_z,\\; P_z - R_x,\\; Q_x - P_y \\right)",
+              "color": "#333333",
+              "align": "left",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:0.7667em;vertical-align:-0.0833em;\"></span><span class=\"mord\">∇</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">×</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.6861em;\"></span><span class=\"mord mathbf\">F</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1.0361em;vertical-align:-0.2861em;\"></span><span class=\"minner\"><span class=\"mopen delimcenter\" style=\"top:0em;\">(</span><span class=\"mord\"><span class=\"mord mathnormal\" style=\"margin-right:0.00773em;\">R</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.1514em;\"><span style=\"top:-2.55em;margin-left:-0.0077em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mathnormal mtight\" style=\"margin-right:0.03588em;\">y</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.2861em;\"><span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">−</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mord\"><span class=\"mord mathnormal\">Q</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.1514em;\"><span style=\"top:-2.55em;margin-left:0em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mathnormal mtight\" style=\"margin-right:0.04398em;\">z</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.15em;\"><span></span></span></span></span></span></span><span class=\"mpunct\">,</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord\"><span class=\"mord mathnormal\" style=\"margin-right:0.13889em;\">P</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.1514em;\"><span style=\"top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mathnormal mtight\" style=\"margin-right:0.04398em;\">z</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.15em;\"><span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">−</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mord\"><span class=\"mord mathnormal\" style=\"margin-right:0.00773em;\">R</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.1514em;\"><span style=\"top:-2.55em;margin-left:-0.0077em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mathnormal mtight\">x</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.15em;\"><span></span></span></span></span></span></span><span class=\"mpunct\">,</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord\"><span class=\"mord mathnormal\">Q</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.1514em;\"><span style=\"top:-2.55em;margin-left:0em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mathnormal mtight\">x</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.15em;\"><span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">−</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mord\"><span class=\"mord mathnormal\" style=\"margin-right:0.13889em;\">P</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.1514em;\"><span style=\"top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mathnormal mtight\" style=\"margin-right:0.03588em;\">y</span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.2861em;\"><span></span></span></span></span></span></span><span class=\"mclose delimcenter\" style=\"top:0em;\">)</span></span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_JYeA_qbV",
+          "type": "spotlight",
+          "elementId": "text_meAu7D7H"
+        },
+        {
+          "id": "action_aG6cCL_p",
+          "type": "speech",
+          "text": "同学们好，欢迎来到今天的数学课。我是星野老师。今天我们要学习一个非常有意思的核心概念——旋度。"
+        },
+        {
+          "id": "action_OlgS_Tk-",
+          "type": "laser",
+          "elementId": "text_RRsrIK-W"
+        },
+        {
+          "id": "action_kJrHxyPk",
+          "type": "speech",
+          "text": "首先，什么是旋度呢？从定义上看，它是一个向量算子，用来描述向量场在某一点附近旋转的程度。"
+        },
+        {
+          "id": "action_dz8arYoK",
+          "type": "spotlight",
+          "elementId": "text_T9H10O8n"
+        },
+        {
+          "id": "action_Tq0DZzgf",
+          "type": "speech",
+          "text": "我们用符号 ∇ × F 来表示旋度。这里的 ∇ 是向量微分算子，F 是我们研究的向量场。想象一下——如果你把一个微小的圆盘放在流场的某一点，旋度就是这个圆盘旋转的倾向。"
+        },
+        {
+          "id": "action_HK2dfqxl",
+          "type": "spotlight",
+          "elementId": "text_QhN6cgN2"
+        },
+        {
+          "id": "action_5Y8rDtsM",
+          "type": "speech",
+          "text": "为了帮助大家直观理解它的物理意义，让我们进行一个思想实验。"
+        },
+        {
+          "id": "action_d3mhv_M-",
+          "type": "spotlight",
+          "elementId": "text_bXyp504J"
+        },
+        {
+          "id": "action_8841RH8r",
+          "type": "speech",
+          "text": "想象你有一个非常小的螺旋桨，然后把它放入流场中。如果螺旋桨开始旋转，那就说明这个地方的旋度不为零。螺旋桨旋转的角速度就和旋度的大小有关，而旋转的方向则是由右手定则来判定的——四个手指弯曲的方向指向旋转方向，大拇指指向的就是旋度的方向。"
+        },
+        {
+          "id": "action_1Twie_nY",
+          "type": "laser",
+          "elementId": "text_kQAggVSN"
+        },
+        {
+          "id": "action_GQOvrRBl",
+          "type": "speech",
+          "text": "现在，让我们看看它的计算公式。如果向量场 F 由三个分量 P、Q、R 组成，那么它的旋度就可以通过这个行列式形式的公式计算出来。这个公式很重要，因为它为我们理解后面的斯托克斯公式奠定了基础。"
+        },
+        {
+          "id": "action_i9zs9g0O",
+          "type": "spotlight",
+          "elementId": "latex_nF__1mij"
+        },
+        {
+          "id": "action_vDg99A-W",
+          "type": "speech",
+          "text": "大家请看这个公式：∇ × F = ( ∂R/∂y - ∂Q/∂z， ∂P/∂z - ∂R/∂x， ∂Q/∂x - ∂P/∂y )。看起来可能有点复杂，但别担心，我们把它拆开来理解。每一个分量都表示场在某一个方向上的旋转分量，比如第一个分量就是描述在 x 方向上的旋转程度。在后面的例题中，我们会一起练习如何使用它。"
+        }
+      ],
+      "createdAt": 1782281471297,
+      "updatedAt": 1782281471297
+    },
+    {
+      "id": "scene_qYXYjGvWC3",
+      "stageId": "kaC8FKQJq8",
+      "type": "slide",
+      "title": "斯托克斯公式的标准形式",
+      "order": 3,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "JdD7fUq-FJ6t53M1t9_wG",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#F8FAFE",
+            "themeColors": [
+              "#00D4FF",
+              "#3B82F6",
+              "#E8F4FF",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "PingFang SC",
+            "outline": {
+              "color": "#3B82F6",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_z6I_UX87",
+              "type": "text",
+              "left": 105,
+              "top": 78,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong>斯托克斯公式的标准形式</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#172033",
+              "rotate": 0
+            },
+            {
+              "id": "shape_agwHuvtT",
+              "type": "shape",
+              "left": 105,
+              "top": 154,
+              "width": 790,
+              "height": 4,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "latex_Czj1hlEA",
+              "type": "latex",
+              "left": 110,
+              "top": 195,
+              "width": 440,
+              "height": 80,
+              "latex": "\\oint_{\\partial \\Sigma} \\mathbf{F} \\cdot d\\mathbf{r} = \\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S}",
+              "color": "#1a1a1a",
+              "align": "center",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:2.2719em;vertical-align:-0.9119em;\"></span><span class=\"mop\"><span class=\"mop op-symbol large-op\" style=\"margin-right:0.44445em;position:relative;top:-0.0011em;\">∮</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:-0.4258em;\"><span style=\"top:-1.7881em;margin-left:-0.4445em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\"><span class=\"mord mtight\" style=\"margin-right:0.05556em;\">∂</span><span class=\"mord mtight\">Σ</span></span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.9119em;\"><span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathbf\">F</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">⋅</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.6944em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathbf\">r</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:2.2717em;vertical-align:-0.9117em;\"></span><span class=\"mop\"><span class=\"mop op-symbol large-op\" style=\"margin-right:0.44445em;position:relative;top:-0.001em;\">∬</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:-0.4334em;\"><span style=\"top:-1.7883em;margin-left:-0.4445em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\"><span class=\"mord mtight\">Σ</span></span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.9117em;\"><span></span></span></span></span></span></span><span class=\"mopen\">(</span><span class=\"mord\">∇</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">×</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mord mathbf\">F</span><span class=\"mclose\">)</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">⋅</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.6944em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathbf\">S</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "shape_L9elZFAw",
+              "type": "shape",
+              "left": 110,
+              "top": 300,
+              "width": 440,
+              "height": 180,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#f0f4fa",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_iaFrwoUo",
+              "type": "shape",
+              "left": 160,
+              "top": 330,
+              "width": 340,
+              "height": 120,
+              "path": "M 0.1 0.8 C 0.3 0.4, 0.7 0.2, 0.9 0.5 C 0.6 0.9, 0.2 0.7, 0.1 0.8 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "rgba(47,128,209,0.12)",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "line_mUEVguaW",
+              "type": "line",
+              "left": 300,
+              "top": 340,
+              "width": 3,
+              "start": [
+                0,
+                20
+              ],
+              "end": [
+                30,
+                -30
+              ],
+              "style": "solid",
+              "color": "#2f80d1",
+              "points": [
+                "",
+                "arrow"
+              ]
+            },
+            {
+              "id": "line_QY9gsuZC",
+              "type": "line",
+              "left": 260,
+              "top": 420,
+              "width": 3,
+              "start": [
+                0,
+                0
+              ],
+              "end": [
+                60,
+                0
+              ],
+              "curve": [
+                30,
+                -30
+              ],
+              "style": "dashed",
+              "color": "#e67e22",
+              "points": [
+                "",
+                "arrow"
+              ]
+            },
+            {
+              "id": "text_WkxBV2yU",
+              "type": "text",
+              "left": 315,
+              "top": 300,
+              "width": 130,
+              "height": 49,
+              "content": "<p style=\"font-size:20px;color:#2f80d1;\">曲面 Σ</p>",
+              "defaultFontName": "",
+              "defaultColor": "#2f80d1",
+              "rotate": 0
+            },
+            {
+              "id": "text_sStyofwg",
+              "type": "text",
+              "left": 315,
+              "top": 420,
+              "width": 200,
+              "height": 49,
+              "content": "<p style=\"font-size:20px;color:#e67e22;\">边界曲线 ∂Σ</p>",
+              "defaultFontName": "",
+              "defaultColor": "#e67e22",
+              "rotate": 0
+            },
+            {
+              "id": "shape_tjDtq_yK",
+              "type": "shape",
+              "left": 590,
+              "top": 195,
+              "width": 340,
+              "height": 285,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#faf5eb",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_BuXz4tHO",
+              "type": "text",
+              "left": 608,
+              "top": 210,
+              "width": 300,
+              "height": 58,
+              "content": "<p style=\"font-size:24px;\"><strong>公式解读</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#172033",
+              "rotate": 0
+            },
+            {
+              "id": "text_EW9cyJkz",
+              "type": "text",
+              "left": 608,
+              "top": 270,
+              "width": 300,
+              "height": 200,
+              "content": "<p style=\"font-size:18px;\">• 左侧：<b>边界环量</b></p><p style=\"font-size:18px;\">  向量场沿边界曲线的线积分</p><p style=\"font-size:18px;\">• 右侧：<b>旋度通量</b></p><p style=\"font-size:18px;\">  旋度穿过曲面的总面积分</p><p style=\"font-size:18px;\">• 核心：曲面积分 ↔ 边界环量</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_k0SIJbaP",
+          "type": "spotlight",
+          "elementId": "latex_Czj1hlEA"
+        },
+        {
+          "id": "action_onDRxnu4",
+          "type": "speech",
+          "text": "同学们，请先看这个公式——这就是我们今天要学习的核心：斯托克斯公式的标准形式。"
+        },
+        {
+          "id": "action_W403US7U",
+          "type": "spotlight",
+          "elementId": "text_sStyofwg"
+        },
+        {
+          "id": "action_ODZndfcb",
+          "type": "speech",
+          "text": "公式左边的 ∂Σ 表示曲面的边界曲线，它是一个闭合的环路。"
+        },
+        {
+          "id": "action_53KFtciL",
+          "type": "spotlight",
+          "elementId": "text_WkxBV2yU"
+        },
+        {
+          "id": "action_Egbou7hz",
+          "type": "speech",
+          "text": "而右边，我们是在曲面 Σ 上进行曲面积分，积分的是向量场的旋度。"
+        },
+        {
+          "id": "action_KXbJfCpn",
+          "type": "spotlight",
+          "elementId": "text_EW9cyJkz"
+        },
+        {
+          "id": "action_7NygFs3L",
+          "type": "speech",
+          "text": "简单来说，左边的环量就是向量场沿边界曲线的线积分；右边的旋度通量则是旋度穿过曲面的总面积分。公式的核心就是：边界上的环量等于穿过曲面的旋度通量。"
+        },
+        {
+          "id": "action_EqKsp-Xm",
+          "type": "spotlight",
+          "elementId": "text_BuXz4tHO"
+        },
+        {
+          "id": "action_YwnlMd8h",
+          "type": "speech",
+          "text": "这个公式的用处非常大。比如，我们想计算一条闭合曲线上的第二类曲线积分，但直接算很复杂。这时候，就可以等价地转化为计算这个曲面上的旋度曲面积分，反过来也一样。灵活运用，解题思路就开阔了。"
+        }
+      ],
+      "createdAt": 1782281471298,
+      "updatedAt": 1782281471298
+    },
+    {
+      "id": "scene_V9H6M56yab",
+      "stageId": "kaC8FKQJq8",
+      "type": "slide",
+      "title": "关键细节：有向曲面与右手定则",
+      "order": 4,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "mqgDlmICwfbCGbi4A3321",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_n4raNyMJ",
+              "type": "text",
+              "left": 105,
+              "top": 70,
+              "width": 790,
+              "height": 76,
+              "content": "<p style=\"font-size:36px;\"><strong>关键细节：有向曲面与右手定则</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#172033",
+              "rotate": 0
+            },
+            {
+              "id": "shape_IMj0kCwN",
+              "type": "shape",
+              "left": 105,
+              "top": 158,
+              "width": 790,
+              "height": 4,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_FqpsySMp",
+              "type": "shape",
+              "left": 105,
+              "top": 190,
+              "width": 420,
+              "height": 270,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#f0f4fc",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_GoMQLlcY",
+              "type": "text",
+              "left": 175,
+              "top": 230,
+              "width": 280,
+              "height": 76,
+              "content": "<p style=\"font-size:18px; text-align:center;\"><strong>右手定则示意</strong></p><p style=\"font-size:16px; text-align:center;\">拇指→法向量</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "text_IZDeSltk",
+              "type": "text",
+              "left": 175,
+              "top": 320,
+              "width": 280,
+              "height": 76,
+              "content": "<p style=\"font-size:16px; text-align:center;\">四指弯曲→边界正方向</p>",
+              "defaultFontName": "",
+              "defaultColor": "#555555",
+              "rotate": 0
+            },
+            {
+              "id": "shape_KuvWTt8t",
+              "type": "shape",
+              "left": 555,
+              "top": 190,
+              "width": 385,
+              "height": 270,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#eef6ff",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_U2M6Zc5X",
+              "type": "shape",
+              "left": 555,
+              "top": 190,
+              "width": 6,
+              "height": 270,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#ed7d31",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_dbZtruap",
+              "type": "text",
+              "left": 575,
+              "top": 205,
+              "width": 350,
+              "height": 130,
+              "content": "<p style=\"font-size:18px;\">• 前提：曲面 Σ 必须是<strong>有向曲面</strong></p><p style=\"font-size:18px;\">• 规则：边界 ∂Σ 方向与法向量符合<strong>右手定则</strong></p><p style=\"font-size:18px;\">• 错误：方向不一致 → 结果差一个负号</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "text_K1iAvTBe",
+              "type": "text",
+              "left": 575,
+              "top": 345,
+              "width": 350,
+              "height": 94,
+              "content": "<p style=\"font-size:16px;\"><strong>Tip：</strong>推荐配合 3D 交互模型</p><p style=\"font-size:16px;\">观察不同方向下的方向判断</p>",
+              "defaultFontName": "",
+              "defaultColor": "#555555",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_TkOcC6Dt",
+          "type": "spotlight",
+          "elementId": "text_n4raNyMJ"
+        },
+        {
+          "id": "action_m9Q3H-dr",
+          "type": "speech",
+          "text": "同学们，我们接下来要深入应用斯托克斯公式的一个关键前提——有向曲面与右手定则。这是整个公式的灵魂所在。"
+        },
+        {
+          "id": "action_SFVmh-I3",
+          "type": "spotlight",
+          "elementId": "text_dbZtruap"
+        },
+        {
+          "id": "action_ximEgLmi",
+          "type": "speech",
+          "text": "首先看第一个要点：曲面 Σ 必须是有向曲面，也就是说，我们要明确曲面是取的哪一侧。没有这个‘方向’，边界的方向也就没有意义了。"
+        },
+        {
+          "id": "action_83APxHdq",
+          "type": "laser",
+          "elementId": "text_GoMQLlcY"
+        },
+        {
+          "id": "action_W3st_y7v",
+          "type": "speech",
+          "text": "那么如何确定边界的方向呢？这时候右手定则就登场了。大家看这个示意图，把你的右手伸出来，拇指指向曲面的法向量方向——"
+        },
+        {
+          "id": "action_f3ti_URy",
+          "type": "spotlight",
+          "elementId": "text_IZDeSltk"
+        },
+        {
+          "id": "action_sWTFoUDc",
+          "type": "speech",
+          "text": "——然后你四指弯曲的方向，就是边界曲线 ∂Σ 的正方向。记住：拇指指向‘法向量’，四指就是边界的方向。两者一定要配合好！"
+        },
+        {
+          "id": "action_iU0NXfJu",
+          "type": "spotlight",
+          "elementId": "text_dbZtruap"
+        },
+        {
+          "id": "action_qhhGUvrZ",
+          "type": "speech",
+          "text": "特别要警惕的是，如果方向搞反了，计算结果就会多一个负号。这在考试和实际应用中非常容易出错。"
+        },
+        {
+          "id": "action_U5xZ31kf",
+          "type": "laser",
+          "elementId": "text_K1iAvTBe"
+        },
+        {
+          "id": "action_nw2F20i-",
+          "type": "speech",
+          "text": "这里有一个小贴士：如果大家觉得空间想象有困难，我建议可以借助一个3D交互模型，从不同角度观察曲面和边界方向的关系。这对理解非常有帮助。"
+        },
+        {
+          "id": "action_1P3_VZ5r",
+          "type": "speech",
+          "text": "好了，我们整理一下思路：先确定曲面的有向性，再用右手定则定边界方向。只要方向一致，斯托克斯公式就能顺利应用。"
+        }
+      ],
+      "createdAt": 1782281471300,
+      "updatedAt": 1782281471300
+    },
+    {
+      "id": "scene_LMQzRsia-I",
+      "stageId": "kaC8FKQJq8",
+      "type": "interactive",
+      "title": "互动探索：调整曲线与旋度",
+      "order": 5,
+      "content": {
+        "type": "interactive",
+        "url": "",
+        "html": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.2, user-scalable=yes\">\n  <title>斯托克斯公式·旋度与环量交互模拟</title>\n  <style>\n    * {\n      box-sizing: border-box;\n      margin: 0;\n      padding: 0;\n    }\n    body {\n      background: #f5f7fb;\n      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;\n      display: flex;\n      justify-content: center;\n      align-items: center;\n      min-height: 100vh;\n      margin: 0;\n      padding: 12px;\n      touch-action: manipulation;\n    }\n    .sim-container {\n      max-width: 960px;\n      width: 100%;\n      background: white;\n      border-radius: 28px;\n      box-shadow: 0 12px 40px rgba(0,0,0,0.12);\n      padding: 20px 20px 24px;\n      transition: all 0.2s;\n    }\n    h1 {\n      font-size: 1.4rem;\n      font-weight: 600;\n      color: #1e293b;\n      margin: 0 0 6px 0;\n      display: flex;\n      align-items: center;\n      gap: 10px;\n      flex-wrap: wrap;\n    }\n    .subhead {\n      font-size: 0.9rem;\n      color: #475569;\n      margin-bottom: 14px;\n      border-left: 4px solid #7c3aed;\n      padding-left: 14px;\n      background: #f1f5f9;\n      border-radius: 0 12px 12px 0;\n      line-height: 1.4;\n    }\n    .canvas-wrapper {\n      position: relative;\n      background: #ffffff;\n      border-radius: 20px;\n      box-shadow: inset 0 2px 6px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.04);\n      margin-bottom: 16px;\n      width: 100%;\n      aspect-ratio: 4 / 3;\n      min-height: 260px;\n      touch-action: none;\n    }\n    #simCanvas {\n      display: block;\n      width: 100%;\n      height: 100%;\n      border-radius: 20px;\n      background: #fafcff;\n      touch-action: none;\n      cursor: grab;\n    }\n    .info-panel {\n      display: flex;\n      flex-wrap: wrap;\n      justify-content: space-between;\n      background: #f1f5f9;\n      padding: 12px 16px;\n      border-radius: 18px;\n      margin: 8px 0 14px 0;\n      font-family: 'JetBrains Mono', 'Fira Code', monospace;\n      font-size: 0.95rem;\n      gap: 8px 16px;\n    }\n    .info-item {\n      display: flex;\n      align-items: baseline;\n      gap: 6px;\n      flex-wrap: wrap;\n    }\n    .info-label {\n      color: #334155;\n      font-weight: 500;\n    }\n    .info-value {\n      background: #e2e8f0;\n      padding: 2px 10px;\n      border-radius: 30px;\n      font-weight: 600;\n      color: #0f172a;\n      min-width: 60px;\n      text-align: center;\n    }\n    .equal-badge {\n      background: #7c3aed;\n      color: white;\n      padding: 4px 18px;\n      border-radius: 40px;\n      font-weight: 600;\n      font-size: 0.9rem;\n      letter-spacing: 0.5px;\n      box-shadow: 0 2px 6px rgba(124,58,237,0.3);\n    }\n    .controls-grid {\n      display: grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 14px 20px;\n      margin: 8px 0 12px;\n    }\n    .control-group {\n      display: flex;\n      flex-direction: column;\n      gap: 2px;\n      min-width: 0;\n    }\n    .control-group label {\n      font-weight: 500;\n      color: #1e293b;\n      font-size: 0.85rem;\n      display: flex;\n      justify-content: space-between;\n    }\n    .control-group label span {\n      background: #e2e8f0;\n      padding: 0 10px;\n      border-radius: 20px;\n      font-weight: 600;\n      color: #0f172a;\n      font-size: 0.8rem;\n    }\n    input[type=range] {\n      width: 100%;\n      height: 6px;\n      -webkit-appearance: none;\n      appearance: none;\n      background: #cbd5e1;\n      border-radius: 10px;\n      outline: none;\n      margin: 6px 0;\n      touch-action: manipulation;\n    }\n    input[type=range]::-webkit-slider-thumb {\n      -webkit-appearance: none;\n      appearance: none;\n      width: 22px;\n      height: 22px;\n      background: #7c3aed;\n      border-radius: 50%;\n      cursor: pointer;\n      border: 2px solid white;\n      box-shadow: 0 2px 8px rgba(0,0,0,0.2);\n      touch-action: manipulation;\n    }\n    input[type=range]::-moz-range-thumb {\n      width: 22px;\n      height: 22px;\n      background: #7c3aed;\n      border-radius: 50%;\n      border: 2px solid white;\n      cursor: pointer;\n    }\n    .action-row {\n      display: flex;\n      flex-wrap: wrap;\n      gap: 10px;\n      justify-content: center;\n      margin: 10px 0 6px;\n    }\n    .btn {\n      background: #f1f5f9;\n      border: none;\n      padding: 10px 20px;\n      border-radius: 40px;\n      font-weight: 600;\n      font-size: 1rem;\n      color: #1e293b;\n      cursor: pointer;\n      transition: all 0.15s;\n      display: inline-flex;\n      align-items: center;\n      gap: 6px;\n      touch-action: manipulation;\n      min-height: 44px;\n      box-shadow: 0 2px 4px rgba(0,0,0,0.04);\n    }\n    .btn-primary {\n      background: #7c3aed;\n      color: white;\n      box-shadow: 0 4px 8px rgba(124,58,237,0.25);\n    }\n    .btn-primary:hover {\n      background: #6d28d9;\n    }\n    .btn-outline {\n      background: transparent;\n      border: 2px solid #7c3aed;\n      color: #7c3aed;\n    }\n    .btn-outline:hover {\n      background: #f5f3ff;\n    }\n    .btn:active {\n      transform: scale(0.96);\n    }\n    .preset-row {\n      display: flex;\n      flex-wrap: wrap;\n      gap: 8px;\n      justify-content: center;\n      margin-top: 10px;\n    }\n    .preset-btn {\n      background: #eef2ff;\n      border: 1px solid #c7d2fe;\n      padding: 6px 14px;\n      border-radius: 40px;\n      font-size: 0.8rem;\n      font-weight: 500;\n      color: #4338ca;\n      cursor: pointer;\n      transition: all 0.1s;\n      touch-action: manipulation;\n      min-height: 36px;\n    }\n    .preset-btn:hover {\n      background: #dbeafe;\n      border-color: #7c3aed;\n    }\n    .status-badge {\n      background: #e2e8f0;\n      padding: 4px 16px;\n      border-radius: 40px;\n      font-size: 0.8rem;\n      font-weight: 500;\n      color: #334155;\n    }\n    .status-badge.active {\n      background: #bbf7d0;\n      color: #166534;\n    }\n    .footer-note {\n      font-size: 0.75rem;\n      color: #64748b;\n      text-align: center;\n      margin-top: 12px;\n      border-top: 1px solid #e2e8f0;\n      padding-top: 12px;\n    }\n    @media (max-width: 600px) {\n      .controls-grid {\n        grid-template-columns: 1fr;\n        gap: 8px;\n      }\n      .sim-container {\n        padding: 12px 12px 16px;\n      }\n      .info-panel {\n        flex-direction: column;\n        align-items: stretch;\n        font-size: 0.85rem;\n      }\n      .btn {\n        padding: 8px 16px;\n        font-size: 0.9rem;\n        min-height: 44px;\n      }\n      .preset-btn {\n        font-size: 0.75rem;\n        padding: 6px 12px;\n      }\n      h1 {\n        font-size: 1.2rem;\n      }\n    }\n    @media (max-width: 420px) {\n      .info-item {\n        width: 100%;\n      }\n    }\n    /* 给canvas内元素预留空间 */\n    .teacher-annotation {\n      pointer-events: none;\n      z-index: 999;\n      font-weight: 500;\n      box-shadow: 0 4px 12px rgba(0,0,0,0.15);\n      white-space: nowrap;\n    }\n  </style>\n\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css\">\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js\"></script>\n<script src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js\"></script>\n<script>\ndocument.addEventListener(\"DOMContentLoaded\", function() {\n    const katexOptions = {\n        delimiters: [\n            {left: '\\\\[', right: '\\\\]', display: true},\n            {left: '\\\\(', right: '\\\\)', display: false},\n            {left: '$$', right: '$$', display: true},\n            {left: '$', right: '$', display: false}\n        ],\n        throwOnError: false,\n        strict: false,\n        trust: true\n    };\n\n    let renderTimeout;\n    function safeRender() {\n        if (renderTimeout) clearTimeout(renderTimeout);\n        renderTimeout = setTimeout(() => {\n            renderMathInElement(document.body, katexOptions);\n        }, 100);\n    }\n\n    renderMathInElement(document.body, katexOptions);\n\n    const observer = new MutationObserver((mutations) => {\n        let shouldRender = false;\n        mutations.forEach((mutation) => {\n            if (mutation.target &&\n                mutation.target.className &&\n                typeof mutation.target.className === 'string' &&\n                mutation.target.className.includes('katex')) {\n                return;\n            }\n            shouldRender = true;\n        });\n\n        if (shouldRender) {\n            safeRender();\n        }\n    });\n\n    observer.observe(document.body, {\n        childList: true,\n        subtree: true,\n        characterData: true\n    });\n\n    setInterval(() => {\n        const text = document.body.innerText;\n        if (text.includes('\\\\(') || text.includes('$$')) {\n            safeRender();\n        }\n    }, 2000);\n});\n</script>\n</head>\n<body>\n<div class=\"sim-container\">\n  <h1>\n    <span>🧲 斯托克斯公式 · 旋度与环量</span>\n    <span class=\"status-badge\" id=\"state-badge\">⏸ 待开始</span>\n  </h1>\n  <div class=\"subhead\">\n    调整曲面半径、倾斜角度、旋度大小，观察环量（∮F·dr）与旋度通量（∬∇×F·dS）实时相等\n  </div>\n\n  <div class=\"canvas-wrapper\">\n    <canvas id=\"simCanvas\" width=\"800\" height=\"600\"></canvas>\n  </div>\n\n  <div class=\"info-panel\" id=\"infoPanel\">\n    <div class=\"info-item\"><span class=\"info-label\">环量 ∮F·dr</span><span class=\"info-value\" id=\"circulation-display\">0.00</span></div>\n    <div class=\"info-item\"><span class=\"info-label\">旋度通量 ∬∇×F·dS</span><span class=\"info-value\" id=\"flux-display\">0.00</span></div>\n    <div class=\"info-item\"><span class=\"equal-badge\" id=\"equality-badge\">✓ 相等</span></div>\n    <div class=\"info-item\"><span class=\"info-label\">曲面法向量</span><span class=\"info-value\" id=\"normal-display\">(0,0,1)</span></div>\n  </div>\n\n  <div class=\"controls-grid\">\n    <div class=\"control-group\">\n      <label>曲面半径 <span id=\"radius-display\">2.0</span></label>\n      <input type=\"range\" id=\"radius-slider\" data-var=\"radius\" min=\"0.8\" max=\"3.5\" step=\"0.05\" value=\"2.0\" aria-label=\"曲面半径\">\n    </div>\n    <div class=\"control-group\">\n      <label>倾斜角度 (法向量) <span id=\"tilt-display\">30°</span></label>\n      <input type=\"range\" id=\"tilt-slider\" data-var=\"tilt\" min=\"0\" max=\"80\" step=\"1\" value=\"30\" aria-label=\"倾斜角度\">\n    </div>\n    <div class=\"control-group\">\n      <label>旋度大小 (∇×F) <span id=\"curl-display\">1.5</span></label>\n      <input type=\"range\" id=\"curl-slider\" data-var=\"curl\" min=\"0.2\" max=\"3.0\" step=\"0.05\" value=\"1.5\" aria-label=\"旋度大小\">\n    </div>\n    <div class=\"control-group\" style=\"justify-content: flex-end;\">\n      <div class=\"action-row\" style=\"margin:0\">\n        <button class=\"btn btn-primary\" id=\"start-btn\" aria-label=\"开始模拟\">▶ 开始旋转</button>\n        <button class=\"btn btn-outline\" id=\"reset-btn\" aria-label=\"重置\">⟲ 重置</button>\n      </div>\n    </div>\n  </div>\n\n  <div class=\"preset-row\">\n    <button class=\"preset-btn\" data-preset=\"circle_flat\">○ 水平圆盘</button>\n    <button class=\"preset-btn\" data-preset=\"tilted_45\">◇ 倾斜45°</button>\n    <button class=\"preset-btn\" data-preset=\"steep_curl\">⚡ 强旋度</button>\n    <button class=\"preset-btn\" data-preset=\"small_loop\">◎ 小环量</button>\n  </div>\n  <div class=\"footer-note\">拖动滑块调整 · 点击开始观察斯托克斯公式的几何关系</div>\n</div>\n\n<script type=\"application/json\" id=\"widget-config\">\n{\n  \"type\": \"simulation\",\n  \"concept\": \"stokes_theorem\",\n  \"description\": \"交互验证斯托克斯公式：环量 = 旋度通量。调整曲面半径、倾斜角、旋度大小，实时观察数值相等。\",\n  \"variables\": [\n    { \"name\": \"radius\", \"label\": \"曲面半径\", \"min\": 0.8, \"max\": 3.5, \"default\": 2.0, \"unit\": \"m\" },\n    { \"name\": \"tilt\", \"label\": \"倾斜角度\", \"min\": 0, \"max\": 80, \"default\": 30, \"unit\": \"°\" },\n    { \"name\": \"curl\", \"label\": \"旋度大小\", \"min\": 0.2, \"max\": 3.0, \"default\": 1.5, \"unit\": \"\" }\n  ],\n  \"presets\": [\n    { \"name\": \"水平圆盘\", \"variables\": { \"radius\": 2.0, \"tilt\": 0, \"curl\": 1.5 } },\n    { \"name\": \"倾斜45°\", \"variables\": { \"radius\": 2.2, \"tilt\": 45, \"curl\": 1.8 } },\n    { \"name\": \"强旋度\", \"variables\": { \"radius\": 1.8, \"tilt\": 20, \"curl\": 2.8 } },\n    { \"name\": \"小环量\", \"variables\": { \"radius\": 1.2, \"tilt\": 60, \"curl\": 0.8 } }\n  ]\n}\n</script>\n\n<script>\n  (function(){\n    // ---------- DOM refs ----------\n    const canvas = document.getElementById('simCanvas');\n    const ctx = canvas.getContext('2d');\n\n    const radiusSlider = document.getElementById('radius-slider');\n    const tiltSlider = document.getElementById('tilt-slider');\n    const curlSlider = document.getElementById('curl-slider');\n    const radiusDisplay = document.getElementById('radius-display');\n    const tiltDisplay = document.getElementById('tilt-display');\n    const curlDisplay = document.getElementById('curl-display');\n    const circulationDisplay = document.getElementById('circulation-display');\n    const fluxDisplay = document.getElementById('flux-display');\n    const equalityBadge = document.getElementById('equality-badge');\n    const normalDisplay = document.getElementById('normal-display');\n    const stateBadge = document.getElementById('state-badge');\n\n    const startBtn = document.getElementById('start-btn');\n    const resetBtn = document.getElementById('reset-btn');\n\n    // ---------- state ----------\n    let radius = 2.0;\n    let tiltDeg = 30;      // 0~80\n    let curlMag = 1.5;     // 旋度大小\n    let angle = 0;         // 旋转动画相位 (弧度)\n    let running = false;\n    let animationId = null;\n    let time = 0;\n\n    // 固定旋度方向：默认沿Z, 倾斜后法向量旋转\n    function getNormal(tiltDeg) {\n      const rad = tiltDeg * Math.PI / 180;\n      // 法向量原为 (0,0,1) 绕 X 轴旋转 tilt 角度 (Y方向不变)\n      const nx = 0;\n      const ny = Math.sin(rad);\n      const nz = Math.cos(rad);\n      const len = Math.sqrt(nx*nx + ny*ny + nz*nz);\n      return [nx/len, ny/len, nz/len];\n    }\n\n    // 计算理论环量 = 旋度点乘法向量 * 面积 (圆面积 π r^2)\n    // 旋度向量 = (0, 0, curlMag)  因为场 F = (-y, x, 0) 旋度为 (0,0,2) 但系数可调\n    // 但为了直观，我们设旋度 = (0,0,curlMag)*2? 保守: 使用 curlMag 直接作为旋度Z分量大小\n    function computeCirculationAndFlux(r, tiltDeg, curlMag) {\n      const area = Math.PI * r * r;\n      const normal = getNormal(tiltDeg);\n      // 旋度向量 = (0, 0, curlMag)   (curlMag 可调)\n      const curlVec = [0, 0, curlMag];\n      const dot = curlVec[0]*normal[0] + curlVec[1]*normal[1] + curlVec[2]*normal[2];\n      const flux = dot * area;\n      // 环量理论上等于旋度通量 (斯托克斯)\n      const circulation = flux;\n      return { circulation, flux, normal };\n    }\n\n    function updateDisplay() {\n      const { circulation, flux, normal } = computeCirculationAndFlux(radius, tiltDeg, curlMag);\n      circulationDisplay.textContent = circulation.toFixed(3);\n      fluxDisplay.textContent = flux.toFixed(3);\n      const diff = Math.abs(circulation - flux);\n      if (diff < 0.001) {\n        equalityBadge.textContent = '✓ 相等';\n        equalityBadge.style.background = '#7c3aed';\n      } else {\n        equalityBadge.textContent = '⚠ 偏差 ' + diff.toFixed(4);\n        equalityBadge.style.background = '#f59e0b';\n      }\n      normalDisplay.textContent = `(${normal[0].toFixed(2)}, ${normal[1].toFixed(2)}, ${normal[2].toFixed(2)})`;\n    }\n\n    // ---------- drawing (3D projection) ----------\n    function drawScene(phase) {\n      const rect = canvas.getBoundingClientRect();\n      const dpr = window.devicePixelRatio || 1;\n      const w = rect.width;\n      const h = rect.height;\n      canvas.width = w * dpr;\n      canvas.height = h * dpr;\n      ctx.scale(dpr, dpr);\n\n      const W = w, H = h;\n      ctx.clearRect(0, 0, W, H);\n\n      // 坐标变换: 中心偏移，Y朝上\n      const cx = W * 0.5;\n      const cy = H * 0.55;   // 稍微偏下留出顶部空间\n      const scale = Math.min(W, H) * 0.28; \n\n      // 获取法向量\n      const normal = getNormal(tiltDeg);\n      // 构建投影: 简单正交投影，视角沿 (0.5, -0.5, 1) 方向\n      const projX = (x, y, z) => cx + (x * 0.8 + z * 0.2) * scale;\n      const projY = (x, y, z) => cy - (y * 0.9 + z * -0.3 + x * -0.1) * scale;\n\n      // 绘制网格 (参考)\n      ctx.strokeStyle = '#d1d5db';\n      ctx.lineWidth = 0.5;\n      for (let i = -3; i <= 3; i+=0.5) {\n        const x1 = projX(i, -1.5, -1.5);\n        const y1 = projY(i, -1.5, -1.5);\n        const x2 = projX(i, 1.5, 1.5);\n        const y2 = projY(i, 1.5, 1.5);\n        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();\n      }\n\n      // ---------- 绘制曲面 (圆盘) ----------\n      const r = radius;\n      const segments = 40;\n      // 曲面法向量倾斜：将圆盘从 XY 平面绕 X 轴旋转 tiltDeg\n      const tiltRad = tiltDeg * Math.PI / 180;\n      const cosT = Math.cos(tiltRad);\n      const sinT = Math.sin(tiltRad);\n\n      // 曲面上的点: 在局部坐标 (u, v, 0) 旋转\n      const points = [];\n      for (let i = 0; i <= segments; i++) {\n        const theta = (i / segments) * 2 * Math.PI;\n        const u = r * Math.cos(theta);\n        const v = r * Math.sin(theta);\n        // 绕X轴旋转: y' = y*cosT - z*sinT, z' = y*sinT + z*cosT  初始z=0\n        const x = u;\n        const y = v * cosT;\n        const z = v * sinT;\n        points.push({x, y, z, theta});\n      }\n\n      // 绘制曲面半透明\n      ctx.beginPath();\n      for (let i = 0; i < points.length; i++) {\n        const p = points[i];\n        const px = projX(p.x, p.y, p.z);\n        const py = projY(p.x, p.y, p.z);\n        if (i === 0) ctx.moveTo(px, py);\n        else ctx.lineTo(px, py);\n      }\n      ctx.closePath();\n      ctx.fillStyle = 'rgba(124, 58, 237, 0.18)';\n      ctx.fill();\n      ctx.strokeStyle = '#7c3aed';\n      ctx.lineWidth = 2;\n      ctx.stroke();\n\n      // 画法向量箭头 (从圆心)\n      const centerX = projX(0,0,0);\n      const centerY = projY(0,0,0);\n      const nLen = 1.2;\n      const nx = normal[0]*nLen, ny = normal[1]*nLen, nz = normal[2]*nLen;\n      const arrowX = projX(nx, ny, nz);\n      const arrowY = projY(nx, ny, nz);\n      ctx.beginPath();\n      ctx.moveTo(centerX, centerY);\n      ctx.lineTo(arrowX, arrowY);\n      ctx.strokeStyle = '#ef4444';\n      ctx.lineWidth = 2.5;\n      ctx.stroke();\n      // 箭头头\n      const angleArrow = Math.atan2(arrowY - centerY, arrowX - centerX);\n      const headLen = 10;\n      ctx.beginPath();\n      ctx.moveTo(arrowX, arrowY);\n      ctx.lineTo(arrowX - headLen*Math.cos(angleArrow-0.4), arrowY - headLen*Math.sin(angleArrow-0.4));\n      ctx.moveTo(arrowX, arrowY);\n      ctx.lineTo(arrowX - headLen*Math.cos(angleArrow+0.4), arrowY - headLen*Math.sin(angleArrow+0.4));\n      ctx.strokeStyle = '#ef4444';\n      ctx.lineWidth = 2.5;\n      ctx.stroke();\n\n      // ---------- 向量场箭头 (表示旋度) 围绕曲面边界 ----------\n      const fieldScale = 0.9;\n      const numArrows = 18;\n      for (let i = 0; i < numArrows; i++) {\n        const theta = (i / numArrows) * 2 * Math.PI + phase * 0.5;\n        const u = r * Math.cos(theta);\n        const v = r * Math.sin(theta);\n        const x = u;\n        const y = v * cosT;\n        const z = v * sinT;\n        // 场方向: 切向 (-v, u, 0) 转为世界: 旋转后 (-v, u*cosT, u*sinT)\n        const fx = -v;\n        const fy = u * cosT;\n        const fz = u * sinT;\n        const len = Math.sqrt(fx*fx+fy*fy+fz*fz) || 1;\n        const arrowLen = 0.45;\n        const dx = fx / len * arrowLen;\n        const dy = fy / len * arrowLen;\n        const dz = fz / len * arrowLen;\n\n        const px = projX(x, y, z);\n        const py = projY(x, y, z);\n        const px2 = projX(x+dx, y+dy, z+dz);\n        const py2 = projY(x+dx, y+dy, z+dz);\n\n        ctx.beginPath();\n        ctx.moveTo(px, py);\n        ctx.lineTo(px2, py2);\n        ctx.strokeStyle = '#3b82f6';\n        ctx.lineWidth = 2.2;\n        ctx.stroke();\n        // 小箭头\n        const ang = Math.atan2(py2-py, px2-px);\n        ctx.beginPath();\n        ctx.moveTo(px2, py2);\n        ctx.lineTo(px2 - 6*Math.cos(ang-0.4), py2 - 6*Math.sin(ang-0.4));\n        ctx.moveTo(px2, py2);\n        ctx.lineTo(px2 - 6*Math.cos(ang+0.4), py2 - 6*Math.sin(ang+0.4));\n        ctx.strokeStyle = '#3b82f6';\n        ctx.lineWidth = 2;\n        ctx.stroke();\n      }\n\n      // 在曲面中心显示旋度通量值\n      ctx.font = 'bold 14px system-ui, sans-serif';\n      ctx.fillStyle = '#1e293b';\n      ctx.textAlign = 'center';\n      ctx.fillText('旋度通量', centerX, centerY - 24);\n      ctx.font = 'bold 16px \"JetBrains Mono\", monospace';\n      ctx.fillStyle = '#7c3aed';\n      const { flux } = computeCirculationAndFlux(radius, tiltDeg, curlMag);\n      ctx.fillText(flux.toFixed(3), centerX, centerY - 2);\n\n      // 状态水印\n      ctx.font = '12px sans-serif';\n      ctx.fillStyle = '#94a3b8';\n      ctx.textAlign = 'left';\n      ctx.fillText('斯托克斯公式: ∮F·dr = ∬∇×F·dS', 12, 28);\n    }\n\n    // ---------- animation loop ----------\n    function animate() {\n      if (!running) return;\n      time += 0.02;\n      angle = time;\n      drawScene(angle);\n      // 实时更新显示 (理论值不变，但可刷新)\n      updateDisplay();\n      animationId = requestAnimationFrame(animate);\n    }\n\n    function startSim() {\n      if (running) {\n        // 暂停\n        running = false;\n        if (animationId) cancelAnimationFrame(animationId);\n        startBtn.textContent = '▶ 继续旋转';\n        stateBadge.textContent = '⏸ 暂停';\n        stateBadge.className = 'status-badge';\n        return;\n      }\n      // 开始/继续\n      running = true;\n      startBtn.textContent = '⏸ 暂停';\n      stateBadge.textContent = '▶ 运行中';\n      stateBadge.className = 'status-badge active';\n      if (animationId) cancelAnimationFrame(animationId);\n      animate();\n    }\n\n    function resetSim() {\n      running = false;\n      if (animationId) cancelAnimationFrame(animationId);\n      animationId = null;\n      time = 0;\n      angle = 0;\n      // 重置滑块到初始值 (从config default)\n      radiusSlider.value = '2.0';\n      tiltSlider.value = '30';\n      curlSlider.value = '1.5';\n      radius = 2.0;\n      tiltDeg = 30;\n      curlMag = 1.5;\n      radiusDisplay.textContent = '2.0';\n      tiltDisplay.textContent = '30°';\n      curlDisplay.textContent = '1.5';\n      startBtn.textContent = '▶ 开始旋转';\n      stateBadge.textContent = '⏸ 待开始';\n      stateBadge.className = 'status-badge';\n      updateDisplay();\n      drawScene(0);\n    }\n\n    // ---------- slider events ----------\n    function updateFromSliders() {\n      radius = parseFloat(radiusSlider.value);\n      tiltDeg = parseFloat(tiltSlider.value);\n      curlMag = parseFloat(curlSlider.value);\n      radiusDisplay.textContent = radius.toFixed(2);\n      tiltDisplay.textContent = tiltDeg + '°';\n      curlDisplay.textContent = curlMag.toFixed(2);\n      updateDisplay();\n      if (!running) drawScene(0);\n    }\n\n    radiusSlider.addEventListener('input', updateFromSliders);\n    tiltSlider.addEventListener('input', updateFromSliders);\n    curlSlider.addEventListener('input', updateFromSliders);\n\n    // ---------- preset ----------\n    function applyPreset(name) {\n      let vals = { radius: 2.0, tilt: 30, curl: 1.5 };\n      if (name === 'circle_flat') { vals = { radius: 2.0, tilt: 0, curl: 1.5 }; }\n      else if (name === 'tilted_45') { vals = { radius: 2.2, tilt: 45, curl: 1.8 }; }\n      else if (name === 'steep_curl') { vals = { radius: 1.8, tilt: 20, curl: 2.8 }; }\n      else if (name === 'small_loop') { vals = { radius: 1.2, tilt: 60, curl: 0.8 }; }\n      radiusSlider.value = vals.radius;\n      tiltSlider.value = vals.tilt;\n      curlSlider.value = vals.curl;\n      radius = vals.radius;\n      tiltDeg = vals.tilt;\n      curlMag = vals.curl;\n      radiusDisplay.textContent = radius.toFixed(2);\n      tiltDisplay.textContent = tiltDeg + '°';\n      curlDisplay.textContent = curlMag.toFixed(2);\n      // 重置运行状态\n      if (running) {\n        running = false;\n        if (animationId) cancelAnimationFrame(animationId);\n        startBtn.textContent = '▶ 开始旋转';\n        stateBadge.textContent = '⏸ 待开始';\n        stateBadge.className = 'status-badge';\n      }\n      updateDisplay();\n      drawScene(0);\n    }\n\n    document.querySelectorAll('.preset-btn').forEach(btn => {\n      btn.addEventListener('click', function(e) {\n        const preset = this.dataset.preset;\n        applyPreset(preset);\n      });\n    });\n\n    // ---------- button events ----------\n    startBtn.addEventListener('click', startSim);\n    resetBtn.addEventListener('click', resetSim);\n\n    // 键盘快捷键\n    document.addEventListener('keydown', function(e) {\n      if (e.key === ' ' || e.key === 'Space') { e.preventDefault(); startSim(); }\n      if (e.key === 'r' || e.key === 'R') { resetSim(); }\n    });\n\n    // ---------- resize ----------\n    function resizeCanvas() {\n      if (!running) drawScene(0);\n    }\n    window.addEventListener('resize', resizeCanvas);\n    const ro = new ResizeObserver(() => { if (!running) drawScene(0); });\n    ro.observe(canvas);\n\n    // ---------- postMessage listener (teacher actions) ----------\n    window.addEventListener('message', function(event) {\n      const { type, target, state, content } = event.data || {};\n      switch (type) {\n        case 'SET_WIDGET_STATE': {\n          if (state) {\n            if (state.radius !== undefined) { radiusSlider.value = state.radius; }\n            if (state.tilt !== undefined) { tiltSlider.value = state.tilt; }\n            if (state.curl !== undefined) { curlSlider.value = state.curl; }\n            updateFromSliders();\n          }\n          break;\n        }\n        case 'HIGHLIGHT_ELEMENT': {\n          const el = document.querySelector(target);\n          if (el) {\n            el.style.outline = '3px solid rgba(139, 92, 246, 0.8)';\n            el.style.outlineOffset = '4px';\n            el.style.animation = 'pulse-highlight 2s infinite';\n            setTimeout(() => {\n              el.style.outline = '';\n              el.style.animation = '';\n            }, 3000);\n          }\n          break;\n        }\n        case 'ANNOTATE_ELEMENT': {\n          const el = document.querySelector(target);\n          if (el && content) {\n            const rect = el.getBoundingClientRect();\n            const tooltip = document.createElement('div');\n            tooltip.className = 'teacher-annotation';\n            tooltip.style.cssText = 'position:fixed; top:' + (rect.top - 40) + 'px; left:' + rect.left + 'px; background:rgba(139,92,246,0.95); color:white; padding:8px 12px; border-radius:8px; font-size:14px; z-index:1000; animation:fadeIn 0.3s;';\n            tooltip.textContent = content;\n            document.body.appendChild(tooltip);\n            setTimeout(() => tooltip.remove(), 4000);\n          }\n          break;\n        }\n        case 'REVEAL_ELEMENT': {\n          const el = document.querySelector(target);\n          if (el) {\n            el.style.display = '';\n            el.style.opacity = '1';\n          }\n          break;\n        }\n      }\n    });\n\n    // ---------- inject highlight animation ----------\n    const styleSheet = document.createElement('style');\n    styleSheet.textContent = `@keyframes pulse-highlight { 0%, 100% { outline-color: rgba(139, 92, 246, 0.8); } 50% { outline-color: rgba(139, 92, 246, 0.4); } } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`;\n    document.head.appendChild(styleSheet);\n\n    // ---------- init ----------\n    resetSim();\n  })();\n</script>\n</body>\n</html>",
+        "widgetType": "simulation",
+        "widgetConfig": {
+          "type": "simulation",
+          "concept": "stokes_theorem",
+          "description": "交互验证斯托克斯公式：环量 = 旋度通量。调整曲面半径、倾斜角、旋度大小，实时观察数值相等。",
+          "variables": [
+            {
+              "name": "radius",
+              "label": "曲面半径",
+              "min": 0.8,
+              "max": 3.5,
+              "default": 2,
+              "unit": "m"
+            },
+            {
+              "name": "tilt",
+              "label": "倾斜角度",
+              "min": 0,
+              "max": 80,
+              "default": 30,
+              "unit": "°"
+            },
+            {
+              "name": "curl",
+              "label": "旋度大小",
+              "min": 0.2,
+              "max": 3,
+              "default": 1.5,
+              "unit": ""
+            }
+          ],
+          "presets": [
+            {
+              "name": "水平圆盘",
+              "variables": {
+                "radius": 2,
+                "tilt": 0,
+                "curl": 1.5
+              }
+            },
+            {
+              "name": "倾斜45°",
+              "variables": {
+                "radius": 2.2,
+                "tilt": 45,
+                "curl": 1.8
+              }
+            },
+            {
+              "name": "强旋度",
+              "variables": {
+                "radius": 1.8,
+                "tilt": 20,
+                "curl": 2.8
+              }
+            },
+            {
+              "name": "小环量",
+              "variables": {
+                "radius": 1.2,
+                "tilt": 60,
+                "curl": 0.8
+              }
+            }
+          ]
+        },
+        "teacherActions": [
+          {
+            "id": "intro",
+            "type": "speech",
+            "content": "本互动演示将直观展示斯托克斯公式：曲面上的旋度通量等于其边界曲线上的环量。你可以调整参数，观察两者如何始终保持相等。",
+            "label": "开始讲解"
+          },
+          {
+            "id": "highlight_radius",
+            "type": "highlight",
+            "target": "#radius-slider",
+            "content": "这个滑块控制曲面的半径。曲面越大，边界曲线越长，环量和旋度通量都会增加。试试拖动它。",
+            "label": "调整半径"
+          },
+          {
+            "id": "highlight_tilt",
+            "type": "highlight",
+            "target": "#tilt-slider",
+            "content": "这个滑块控制曲面的倾斜角度。当倾斜角为0°时，曲面是水平的圆盘；增大角度，曲面会倾斜，但斯托克斯公式依然成立。",
+            "label": "调整倾斜"
+          },
+          {
+            "id": "demo_tilt45",
+            "type": "setState",
+            "state": {
+              "radius": 2.2,
+              "tilt": 45,
+              "curl": 1.8
+            },
+            "content": "",
+            "label": "倾斜45°预设"
+          },
+          {
+            "id": "underline_circulation",
+            "type": "annotation",
+            "target": "#radius-slider",
+            "content": "注意左侧显示的环量（∮ F·dr）和右侧显示的旋度通量（∬ ∇×F·dS）。在倾斜45°时，两个数值仍然相等。这说明斯托克斯公式与曲面的形状无关。",
+            "label": "观察数值相等"
+          },
+          {
+            "id": "demo_strong_curl",
+            "type": "setState",
+            "state": {
+              "radius": 1.8,
+              "tilt": 20,
+              "curl": 2.8
+            },
+            "content": "",
+            "label": "强旋度预设"
+          },
+          {
+            "id": "wrap_up",
+            "type": "speech",
+            "content": "至此你验证了：无论旋度大小、曲面半径或倾斜角度如何变化，环量始终等于旋度通量。这是斯托克斯公式的核心——它将曲线积分与曲面积分完美地联系起来。",
+            "label": "总结"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_DPceZ092",
+          "title": "开始讲解",
+          "type": "speech",
+          "text": "本互动演示将直观展示斯托克斯公式：曲面上的旋度通量等于其边界曲线上的环量。你可以调整参数，观察两者如何始终保持相等。"
+        },
+        {
+          "id": "action_GgPG_2Ce",
+          "title": "调整半径",
+          "type": "widget_highlight",
+          "target": "#radius-slider"
+        },
+        {
+          "id": "action_GgPG_2Ce_speech",
+          "type": "speech",
+          "text": "这个滑块控制曲面的半径。曲面越大，边界曲线越长，环量和旋度通量都会增加。试试拖动它。",
+          "title": "调整半径"
+        },
+        {
+          "id": "action_34oNEf50",
+          "title": "调整倾斜",
+          "type": "widget_highlight",
+          "target": "#tilt-slider"
+        },
+        {
+          "id": "action_34oNEf50_speech",
+          "type": "speech",
+          "text": "这个滑块控制曲面的倾斜角度。当倾斜角为0°时，曲面是水平的圆盘；增大角度，曲面会倾斜，但斯托克斯公式依然成立。",
+          "title": "调整倾斜"
+        },
+        {
+          "id": "action_bVxHo6V4",
+          "title": "倾斜45°预设",
+          "type": "widget_setState",
+          "state": {
+            "radius": 2.2,
+            "tilt": 45,
+            "curl": 1.8
+          }
+        },
+        {
+          "id": "action_LHQCKscs",
+          "title": "观察数值相等",
+          "type": "widget_annotation",
+          "target": "#radius-slider"
+        },
+        {
+          "id": "action_LHQCKscs_speech",
+          "type": "speech",
+          "text": "注意左侧显示的环量（∮ F·dr）和右侧显示的旋度通量（∬ ∇×F·dS）。在倾斜45°时，两个数值仍然相等。这说明斯托克斯公式与曲面的形状无关。",
+          "title": "观察数值相等"
+        },
+        {
+          "id": "action_PDuzcnuR",
+          "title": "强旋度预设",
+          "type": "widget_setState",
+          "state": {
+            "radius": 1.8,
+            "tilt": 20,
+            "curl": 2.8
+          }
+        },
+        {
+          "id": "action_hM1Z7stP",
+          "title": "总结",
+          "type": "speech",
+          "text": "至此你验证了：无论旋度大小、曲面半径或倾斜角度如何变化，环量始终等于旋度通量。这是斯托克斯公式的核心——它将曲线积分与曲面积分完美地联系起来。"
+        }
+      ],
+      "createdAt": 1782281471301,
+      "updatedAt": 1782281471301
+    },
+    {
+      "id": "scene_899_MmRCef",
+      "stageId": "kaC8FKQJq8",
+      "type": "quiz",
+      "title": "小测验：概念理解",
+      "order": 6,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "斯托克斯公式将空间曲面上的第二类曲面积分与什么联系起来？",
+            "options": [
+              {
+                "value": "A",
+                "label": "该曲面边界曲线上的第二类曲线积分"
+              },
+              {
+                "value": "B",
+                "label": "该曲面上的第一类曲面积分"
+              },
+              {
+                "value": "C",
+                "label": "该曲面所围区域的三重积分"
+              },
+              {
+                "value": "D",
+                "label": "该曲面在坐标平面上的投影区域的二重积分"
+              }
+            ],
+            "answer": [
+              "A"
+            ],
+            "analysis": "斯托克斯公式是格林公式在三维空间的推广。它建立了空间有向曲面上的第二类曲面积分与该曲面边界曲线上的第二类曲线积分之间的联系。选项A正确描述了这一核心思想。选项B错误，因为第一类曲面积分不考虑方向；选项C的三重积分是高斯公式的特征；选项D的二重积分与格林公式有关。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q2",
+            "type": "single",
+            "question": "在使用斯托克斯公式时，对于有向曲面，其边界曲线的方向由什么法则确定？",
+            "options": [
+              {
+                "value": "A",
+                "label": "左手定则：拇指指向曲面法向量的反方向，四指弯曲方向为边界曲线正向"
+              },
+              {
+                "value": "B",
+                "label": "右手定则：拇指指向曲面法向量方向，四指弯曲方向为边界曲线正向"
+              },
+              {
+                "value": "C",
+                "label": "只与曲线的起点和终点有关，与曲面定向无关"
+              },
+              {
+                "value": "D",
+                "label": "边界曲线方向始终是逆时针方向"
+              }
+            ],
+            "answer": [
+              "B"
+            ],
+            "analysis": "斯托克斯公式要求曲面的侧（即法向量的指向）与边界曲线的方向符合右手定则。具体来说，当你右手大拇指指向曲面的法向量方向时，四指弯曲的方向就是边界曲线的正向。选项A是左手定则，方向正好相反；选项C错误，因为斯托克斯公式中边界方向依赖于曲面定向，不是任意的；选项D错误，边界曲线方向不一定是逆时针，而是由右手定则确定。",
+            "points": 10,
+            "hasAnswer": true
+          },
+          {
+            "id": "q3",
+            "type": "short_answer",
+            "question": "请简要解释斯托克斯公式中‘旋度’这一概念的作用，并说明为什么公式要求曲面是有向的。",
+            "commentPrompt": "评分标准： (1) 正确解释旋度作为向量场局部旋转特性的度量，并结合斯托克斯公式说明其与曲面积分的关系 - 40% (2) 解释有向曲面的含义（指定法向量方向），以及为什么斯托克斯公式中曲面积分和曲线积分的方向必须通过右手定则一致 - 40% (3) 表达清晰，逻辑连贯 - 20%",
+            "analysis": "参考答案：旋度是向量分析中描述向量场在某一点附近旋转程度和方向的向量。在斯托克斯公式中，曲面上的旋度的通量（第二类曲面积分）等于边界上的环量（第二类曲线积分）。公式要求曲面是有向的，因为第二类曲面积分依赖于曲面法向量的指向（即曲面的侧），而边界曲线的正向由这个法向量通过右手定则唯一确定。如果曲面没有定向，那么曲面积分和曲线积分的方向就无法一致，公式就不成立。有向性保证了曲面的‘侧’与边界曲线的‘环绕方向’匹配，从而使得斯托克斯公式的等式两边具有确定的符号关系。",
+            "points": 20,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "斯托克斯公式将空间有向曲面上的曲面积分与边界曲线上的曲线积分联系起来，是格林公式的推广。",
+          "旋度是描述向量场局部旋转性质的向量，在斯托克斯公式中，曲面上的旋度通量等于边界上的环量。",
+          "使用斯托克斯公式时，曲面的定向（法向量方向）与边界曲线方向必须满足右手定则。",
+          "有向曲面的概念是斯托克斯公式成立的基础，它保证了曲面积分与曲线积分方向的一致性。",
+          "斯托克斯公式在物理学（如电磁学）中有广泛应用，用于联系磁场和电场与它们的源。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_J_ax_glF",
+          "type": "speech",
+          "text": "好啦，同学们，我们来做一个简短的小测验，检验一下大家对斯托克斯公式的理解。这部分内容很关键，它把曲面积分和曲线积分神奇地联系在了一起。请大家认真审题哦。"
+        },
+        {
+          "id": "action_NFnQyaP_",
+          "type": "speech",
+          "text": "先看第一道题：斯托克斯公式将空间曲面上的第二类曲面积分与什么联系起来？答案是A，与该曲面边界曲线上的第二类曲线积分。这就像是在说，曲面上的一种‘流动’度量，完全可以用它的边界曲线上的‘环流’来计算。"
+        },
+        {
+          "id": "action_uskTbKVq",
+          "type": "speech",
+          "text": "第二题考察了定向法则。在使用斯托克斯公式时，曲面边界曲线的方向由右手定则确定：拇指指向曲面法向量方向，四指弯曲方向就是边界曲线正向。这就保证了曲面的定向和边界曲线的方向是协调一致的，公式才能正确成立。所以答案是B。"
+        },
+        {
+          "id": "action_0yh3mJFr",
+          "type": "speech",
+          "text": "最后是简答题，让大家谈谈‘旋度’的作用以及曲面必须有向的原因。旋度是描述向量场在某点旋转强度的向量，它是斯托克斯公式中的核心角色。而曲面必须有向，是因为公式中曲面积分的结果依赖于法向量的指向，它决定了‘穿入’和‘穿出’的差别，进而影响整个计算的准确性。"
+        },
+        {
+          "id": "action_Mz19aTe3",
+          "type": "speech",
+          "text": "同学们对这两个问题的理解，正好反映了是否真正掌握了斯托克斯公式的精髓。旋度描述了场的局部旋转特性，而有向曲面则保证了我们能够正确度量这种旋转在整体上的累积效应。希望大家能把这个逻辑链条理清楚。"
+        }
+      ],
+      "createdAt": 1782281471301,
+      "updatedAt": 1782281471301
+    },
+    {
+      "id": "scene_9iJ-EXBRGt",
+      "stageId": "kaC8FKQJq8",
+      "type": "slide",
+      "title": "应用示例（上）：计算曲面积分",
+      "order": 7,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "ugOEvJIi5X0_h2Mvnir7S",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_9sId7vNL",
+              "type": "text",
+              "left": 105,
+              "top": 78,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong>应用示例：计算曲面积分</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#1e3a5f",
+              "rotate": 0
+            },
+            {
+              "id": "shape_UPjPi1H3",
+              "type": "shape",
+              "left": 105,
+              "top": 154,
+              "width": 790,
+              "height": 4,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_rZ6Q3pl1",
+              "type": "shape",
+              "left": 110,
+              "top": 195,
+              "width": 420,
+              "height": 230,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#eaf4fd",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_ta-egGSj",
+              "type": "text",
+              "left": 130,
+              "top": 205,
+              "width": 380,
+              "height": 46,
+              "content": "<p style=\"font-size:20px;\"><strong>例题</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#1e3a5f",
+              "rotate": 0
+            },
+            {
+              "id": "latex_UQm8p-7Z",
+              "type": "latex",
+              "left": 130,
+              "top": 250,
+              "width": 380,
+              "height": 60,
+              "latex": "\\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S} \\quad \\mathbf{F} = (z, x, y)",
+              "color": "#1e3a5f",
+              "align": "left",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:2.2717em;vertical-align:-0.9117em;\"></span><span class=\"mop\"><span class=\"mop op-symbol large-op\" style=\"margin-right:0.44445em;position:relative;top:-0.001em;\">∬</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:-0.4334em;\"><span style=\"top:-1.7883em;margin-left:-0.4445em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\"><span class=\"mord mtight\">Σ</span></span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.9117em;\"><span></span></span></span></span></span></span><span class=\"mopen\">(</span><span class=\"mord\">∇</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">×</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mord mathbf\">F</span><span class=\"mclose\">)</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">⋅</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.6944em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathbf\">S</span><span class=\"mspace\" style=\"margin-right:1em;\"></span><span class=\"mord mathbf\">F</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mopen\">(</span><span class=\"mord mathnormal\" style=\"margin-right:0.04398em;\">z</span><span class=\"mpunct\">,</span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathnormal\">x</span><span class=\"mpunct\">,</span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathnormal\" style=\"margin-right:0.03588em;\">y</span><span class=\"mclose\">)</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "text_7FQaQmCR",
+              "type": "text",
+              "left": 130,
+              "top": 320,
+              "width": 380,
+              "height": 94,
+              "content": "<p style=\"font-size:18px;\">Σ : 上半球面 z = √(1 − x² − y²)</p><p style=\"font-size:18px;\">方向：上侧</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "shape_YapubFIu",
+              "type": "shape",
+              "left": 580,
+              "top": 195,
+              "width": 360,
+              "height": 230,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#f9f6e8",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_qqzzWY8v",
+              "type": "text",
+              "left": 600,
+              "top": 205,
+              "width": 320,
+              "height": 46,
+              "content": "<p style=\"font-size:20px;\"><strong>思路分析</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#1e3a5f",
+              "rotate": 0
+            },
+            {
+              "id": "text_qSGgoFN1",
+              "type": "text",
+              "left": 600,
+              "top": 265,
+              "width": 320,
+              "height": 46,
+              "content": "<p style=\"font-size:18px;\">• 直接计算曲面积分较复杂</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "text_3uFCS5XF",
+              "type": "text",
+              "left": 600,
+              "top": 315,
+              "width": 320,
+              "height": 46,
+              "content": "<p style=\"font-size:18px;\">• 考虑使用 <strong>斯托克斯公式</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "text_Gms9cWDa",
+              "type": "text",
+              "left": 600,
+              "top": 365,
+              "width": 320,
+              "height": 46,
+              "content": "<p style=\"font-size:18px;\">• 转化为曲线积分简化计算</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "shape_Y0tfXEgK",
+              "type": "shape",
+              "left": 105,
+              "top": 455,
+              "width": 790,
+              "height": 2,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#cccccc",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_-pzPWjv8",
+              "type": "text",
+              "left": 110,
+              "top": 475,
+              "width": 760,
+              "height": 76,
+              "content": "<p style=\"font-size:20px;\"><strong>转化关键：</strong> 确定边界曲线 ∂Σ，它是一个平面圆。再利用参数方程计算曲线积分。</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_wZG1XWu4",
+          "type": "spotlight",
+          "elementId": "text_9sId7vNL"
+        },
+        {
+          "id": "action_1AmQIEgp",
+          "type": "speech",
+          "text": "同学们，现在我们来看一个应用斯托克斯公式的典型例题，帮大家更好地理解这个公式是如何帮助我们简化计算的。"
+        },
+        {
+          "id": "action_0GDSztdn",
+          "type": "spotlight",
+          "elementId": "text_ta-egGSj"
+        },
+        {
+          "id": "action_cRGXYpd2",
+          "type": "speech",
+          "text": "题目是这样的：计算曲面积分，其中向量场F是(z, x, y)，而Σ是上半球面，方向取上侧。"
+        },
+        {
+          "id": "action_2Ogp1Smz",
+          "type": "laser",
+          "elementId": "latex_UQm8p-7Z"
+        },
+        {
+          "id": "action_9VsWiHb1",
+          "type": "speech",
+          "text": "我们先来看这个积分式，上面有个旋度符号，表示我们要求的是旋度通过曲面的通量。这个曲面积分直接计算会比较复杂，因为曲面是球面的一部分，投影和方向处理起来都很麻烦。"
+        },
+        {
+          "id": "action_B1Ix8uLI",
+          "type": "spotlight",
+          "elementId": "text_qqzzWY8v"
+        },
+        {
+          "id": "action_dQsSvGZQ",
+          "type": "speech",
+          "text": "所以，我们来分析一下思路。"
+        },
+        {
+          "id": "action_e7L-FHFq",
+          "type": "spotlight",
+          "elementId": "text_qSGgoFN1"
+        },
+        {
+          "id": "action_It0IvBOP",
+          "type": "speech",
+          "text": "第一点，直接计算曲面积分确实比较复杂。大家看这个曲面，它是一个开放的曲面，表达式也比较复杂。"
+        },
+        {
+          "id": "action_iw51NvFN",
+          "type": "spotlight",
+          "elementId": "text_3uFCS5XF"
+        },
+        {
+          "id": "action_uNs5ST7M",
+          "type": "speech",
+          "text": "因此我们想到使用今天刚刚学习的斯托克斯公式。这个公式的核心思想，就是将一个曲面积分转化成一个沿着曲面边界的曲线积分。"
+        },
+        {
+          "id": "action_oSfQ2WB0",
+          "type": "spotlight",
+          "elementId": "text_Gms9cWDa"
+        },
+        {
+          "id": "action__1wOH_Ip",
+          "type": "speech",
+          "text": "这样一来，我们就把一个复杂的曲面积分问题，变成了一个相对简单的曲线积分问题，计算量会大大减少。"
+        },
+        {
+          "id": "action_GZLjt0zN",
+          "type": "spotlight",
+          "elementId": "text_-pzPWjv8"
+        },
+        {
+          "id": "action_uRbxOTdl",
+          "type": "speech",
+          "text": "那么转化的关键是什么呢？就是要确定这个曲面的边界曲线。上半球面Σ的边界∂Σ是它在xy平面上的投影——一个单位圆。我们把它用参数方程表示出来，就可以轻松计算这个曲线积分了。"
+        }
+      ],
+      "createdAt": 1782281471302,
+      "updatedAt": 1782281471302
+    },
+    {
+      "id": "scene_5gYBo5ZguT",
+      "stageId": "kaC8FKQJq8",
+      "type": "slide",
+      "title": "应用示例（下）：简化曲线积分",
+      "order": 8,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "3AJacZAl6nRT29U_fG0mZ",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_YAVNNec3",
+              "type": "text",
+              "left": 105,
+              "top": 78,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong>应用示例：简化曲线积分</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#172033",
+              "rotate": 0
+            },
+            {
+              "id": "shape_gqMwtsl9",
+              "type": "shape",
+              "left": 105,
+              "top": 154,
+              "width": 790,
+              "height": 4,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_1vDyeSrH",
+              "type": "shape",
+              "left": 110,
+              "top": 195,
+              "width": 400,
+              "height": 160,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#f0f4ff",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_43a-MQn4",
+              "type": "text",
+              "left": 130,
+              "top": 208,
+              "width": 100,
+              "height": 36,
+              "content": "<p style=\"font-size:16px; color:#2f80d1;\"><strong>题目</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#2f80d1",
+              "rotate": 0
+            },
+            {
+              "id": "latex_PhpABenF",
+              "type": "latex",
+              "left": 150,
+              "top": 245,
+              "width": 320,
+              "height": 60,
+              "latex": "\\oint_{C} \\mathbf{F} \\cdot d\\mathbf{r}",
+              "color": "#333333",
+              "align": "center",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:2.2719em;vertical-align:-0.9119em;\"></span><span class=\"mop\"><span class=\"mop op-symbol large-op\" style=\"margin-right:0.44445em;position:relative;top:-0.0011em;\">∮</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:-0.4336em;\"><span style=\"top:-1.7881em;margin-left:-0.4445em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\"><span class=\"mord mathnormal mtight\" style=\"margin-right:0.07153em;\">C</span></span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.9119em;\"><span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathbf\">F</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">⋅</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.6944em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathbf\">r</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "text_sDu5Z16e",
+              "type": "text",
+              "left": 180,
+              "top": 300,
+              "width": 300,
+              "height": 46,
+              "content": "<p style=\"font-size:16px;\">C 为空间复杂闭合曲线</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "shape_8OreqhgY",
+              "type": "shape",
+              "left": 570,
+              "top": 195,
+              "width": 370,
+              "height": 66,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#e8f8e8",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_nHBV69Sa",
+              "type": "text",
+              "left": 585,
+              "top": 204,
+              "width": 340,
+              "height": 49,
+              "content": "<p style=\"font-size:18px;\">➜ 步骤一：参数化 C 极端复杂，不可行</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "line_q1YgpH0Q",
+              "type": "line",
+              "left": 520,
+              "top": 310,
+              "width": 3,
+              "start": [
+                0,
+                0
+              ],
+              "end": [
+                40,
+                0
+              ],
+              "style": "solid",
+              "color": "#2f80d1",
+              "points": [
+                "",
+                "arrow"
+              ]
+            },
+            {
+              "id": "shape_AhS-LJnZ",
+              "type": "shape",
+              "left": 570,
+              "top": 280,
+              "width": 370,
+              "height": 66,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#fff3cd",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_JJlCS3tW",
+              "type": "text",
+              "left": 585,
+              "top": 289,
+              "width": 340,
+              "height": 49,
+              "content": "<p style=\"font-size:18px;\">✦ 关键思路：构造简单曲面 Σ</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "line_KBOKBjc8",
+              "type": "line",
+              "left": 520,
+              "top": 386,
+              "width": 3,
+              "start": [
+                0,
+                0
+              ],
+              "end": [
+                40,
+                0
+              ],
+              "style": "solid",
+              "color": "#2f80d1",
+              "points": [
+                "",
+                "arrow"
+              ]
+            },
+            {
+              "id": "shape_kiVs8FVA",
+              "type": "shape",
+              "left": 570,
+              "top": 370,
+              "width": 370,
+              "height": 66,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#d4edda",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_A3w3tETh",
+              "type": "text",
+              "left": 585,
+              "top": 379,
+              "width": 340,
+              "height": 49,
+              "content": "<p style=\"font-size:18px;\">✔ 斯托克斯公式：环量→旋度通量</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            },
+            {
+              "id": "shape_tPiChm_G",
+              "type": "shape",
+              "left": 105,
+              "top": 462,
+              "width": 790,
+              "height": 2,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#cccccc",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_CFMYNtPG",
+              "type": "text",
+              "left": 110,
+              "top": 478,
+              "width": 200,
+              "height": 36,
+              "content": "<p style=\"font-size:18px; color:#2f80d1;\"><strong>结果</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#2f80d1",
+              "rotate": 0
+            },
+            {
+              "id": "text_TEvnEhV7",
+              "type": "text",
+              "left": 310,
+              "top": 478,
+              "width": 580,
+              "height": 36,
+              "content": "<p style=\"font-size:18px;\">只需计算旋度在构造平面上的面积分，快速得解</p>",
+              "defaultFontName": "",
+              "defaultColor": "#333333",
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_nPDt6ure",
+          "type": "spotlight",
+          "elementId": "text_43a-MQn4"
+        },
+        {
+          "id": "action__69s04fG",
+          "type": "speech",
+          "text": "好，接下来我们来看一个应用示例，看看斯托克斯公式是如何化繁为简的。"
+        },
+        {
+          "id": "action_InS7fjZo",
+          "type": "spotlight",
+          "elementId": "latex_PhpABenF"
+        },
+        {
+          "id": "action_ooNrN62G",
+          "type": "speech",
+          "text": "题目是这样的：计算闭合曲线积分 ∮_C F · dr。其中 C 是一条空间中的复杂闭合曲线。"
+        },
+        {
+          "id": "action_N_n_pNfd",
+          "type": "spotlight",
+          "elementId": "text_sDu5Z16e"
+        },
+        {
+          "id": "action_HE4bvQi_",
+          "type": "speech",
+          "text": "你可以想象，这个曲线在三维空间里弯弯曲曲的，要是直接对 C 进行参数化来计算，几乎是不可能的。"
+        },
+        {
+          "id": "action_nwb-Wfnj",
+          "type": "spotlight",
+          "elementId": "text_nHBV69Sa"
+        },
+        {
+          "id": "action_5VbKL1Fa",
+          "type": "speech",
+          "text": "所以，我们第一步就发现，直接参数化 C 是极端复杂、不可行的。那我们该怎么办呢？"
+        },
+        {
+          "id": "action_JIh4u9P5",
+          "type": "laser",
+          "elementId": "text_JJlCS3tW"
+        },
+        {
+          "id": "action_IoDbpAv1",
+          "type": "speech",
+          "text": "关键思路来了：我们可以构造一个简单的曲面 Σ，以 C 为边界。通常我们都选择最简单的平面，比如一个三角形或者圆形平面。"
+        },
+        {
+          "id": "action_QkxsDsI_",
+          "type": "spotlight",
+          "elementId": "text_A3w3tETh"
+        },
+        {
+          "id": "action_WeP8GLhP",
+          "type": "speech",
+          "text": "这时候，斯托克斯公式就派上用场了。它告诉我们，这个复杂的环量，就等于旋度穿过我们构造的曲面 Σ 的通量。"
+        },
+        {
+          "id": "action_zGrtjlvP",
+          "type": "spotlight",
+          "elementId": "text_TEvnEhV7"
+        },
+        {
+          "id": "action_try8RmZK",
+          "type": "speech",
+          "text": "于是，我们只需计算旋度在这个简单平面上的面积分，就能快速得到结果。你看，一个复杂的空间曲线积分，就这样被简化成了一个简单的平面曲面积分，是不是很巧妙？"
+        }
+      ],
+      "createdAt": 1782281471304,
+      "updatedAt": 1782281471304
+    },
+    {
+      "id": "scene_7ZNceRqHR_",
+      "stageId": "kaC8FKQJq8",
+      "type": "slide",
+      "title": "总结与要点",
+      "order": 9,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "l4lWv8qtA9NYWn95iU9T3",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#FFFFFF",
+            "themeColors": [
+              "#CADCFC",
+              "#1E2761",
+              "#F0F3FA",
+              "#1E293B",
+              "#94A3B8"
+            ],
+            "fontColor": "#1E293B",
+            "fontName": "SimSun",
+            "outline": {
+              "color": "#1E2761",
+              "width": 2,
+              "style": "solid"
+            },
+            "shadow": {
+              "h": 0,
+              "v": 0,
+              "blur": 10,
+              "color": "#000000"
+            }
+          },
+          "elements": [
+            {
+              "id": "text_9rQvIDv8",
+              "type": "text",
+              "left": 105,
+              "top": 78,
+              "width": 790,
+              "height": 70,
+              "content": "<p style=\"font-size:34px;\"><strong>总结与要点</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#172033",
+              "rotate": 0
+            },
+            {
+              "id": "shape_2Iikt4x2",
+              "type": "shape",
+              "left": 105,
+              "top": 154,
+              "width": 790,
+              "height": 4,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#2f80d1",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "shape_hSdM-qu8",
+              "type": "shape",
+              "left": 110,
+              "top": 185,
+              "width": 420,
+              "height": 260,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#eef5fa",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_Z3X_Qt8Q",
+              "type": "text",
+              "left": 130,
+              "top": 200,
+              "width": 380,
+              "height": 52,
+              "content": "<p style=\"font-size:20px;\"><strong>核心公式</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#172033",
+              "rotate": 0
+            },
+            {
+              "id": "latex_XUmGLNUr",
+              "type": "latex",
+              "left": 130,
+              "top": 260,
+              "width": 380,
+              "height": 100,
+              "latex": "\\oint_{\\partial \\Sigma} \\mathbf{F} \\cdot d\\mathbf{r} = \\iint_{\\Sigma} (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S}",
+              "color": "#172033",
+              "align": "center",
+              "html": "<span class=\"katex-display\"><span class=\"katex\"><span class=\"katex-html\" aria-hidden=\"true\"><span class=\"base\"><span class=\"strut\" style=\"height:2.2719em;vertical-align:-0.9119em;\"></span><span class=\"mop\"><span class=\"mop op-symbol large-op\" style=\"margin-right:0.44445em;position:relative;top:-0.0011em;\">∮</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:-0.4258em;\"><span style=\"top:-1.7881em;margin-left:-0.4445em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\"><span class=\"mord mtight\" style=\"margin-right:0.05556em;\">∂</span><span class=\"mord mtight\">Σ</span></span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.9119em;\"><span></span></span></span></span></span></span><span class=\"mspace\" style=\"margin-right:0.1667em;\"></span><span class=\"mord mathbf\">F</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">⋅</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.6944em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathbf\">r</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span><span class=\"mrel\">=</span><span class=\"mspace\" style=\"margin-right:0.2778em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:2.2717em;vertical-align:-0.9117em;\"></span><span class=\"mop\"><span class=\"mop op-symbol large-op\" style=\"margin-right:0.44445em;position:relative;top:-0.001em;\">∬</span><span class=\"msupsub\"><span class=\"vlist-t vlist-t2\"><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:-0.4334em;\"><span style=\"top:-1.7883em;margin-left:-0.4445em;margin-right:0.05em;\"><span class=\"pstrut\" style=\"height:2.7em;\"></span><span class=\"sizing reset-size6 size3 mtight\"><span class=\"mord mtight\"><span class=\"mord mtight\">Σ</span></span></span></span></span><span class=\"vlist-s\">​</span></span><span class=\"vlist-r\"><span class=\"vlist\" style=\"height:0.9117em;\"><span></span></span></span></span></span></span><span class=\"mopen\">(</span><span class=\"mord\">∇</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">×</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:1em;vertical-align:-0.25em;\"></span><span class=\"mord mathbf\">F</span><span class=\"mclose\">)</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span><span class=\"mbin\">⋅</span><span class=\"mspace\" style=\"margin-right:0.2222em;\"></span></span><span class=\"base\"><span class=\"strut\" style=\"height:0.6944em;\"></span><span class=\"mord mathnormal\">d</span><span class=\"mord mathbf\">S</span></span></span></span></span>",
+              "fixedRatio": true,
+              "rotate": 0
+            },
+            {
+              "id": "shape_bcd-0VMM",
+              "type": "shape",
+              "left": 130,
+              "top": 380,
+              "width": 180,
+              "height": 46,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#d9eaf7",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_pm44Ih-C",
+              "type": "text",
+              "left": 140,
+              "top": 389,
+              "width": 160,
+              "height": 43,
+              "content": "<p style=\"font-size:16px;\">格林公式推广</p>",
+              "defaultFontName": "",
+              "defaultColor": "#1a4e7a",
+              "rotate": 0
+            },
+            {
+              "id": "shape_ULdgEsKP",
+              "type": "shape",
+              "left": 330,
+              "top": 380,
+              "width": 180,
+              "height": 46,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#d9eaf7",
+              "fixedRatio": false,
+              "rotate": 0
+            },
+            {
+              "id": "text_tICU_f89",
+              "type": "text",
+              "left": 340,
+              "top": 389,
+              "width": 160,
+              "height": 43,
+              "content": "<p style=\"font-size:16px;\">转换曲线与曲面积分</p>",
+              "defaultFontName": "",
+              "defaultColor": "#1a4e7a",
+              "rotate": 0
+            },
+            {
+              "id": "text_RyNGvrdF",
+              "type": "text",
+              "left": 570,
+              "top": 195,
+              "width": 330,
+              "height": 52,
+              "content": "<p style=\"font-size:20px;\"><strong>三大公式对比</strong></p>",
+              "defaultFontName": "",
+              "defaultColor": "#172033",
+              "rotate": 0
+            },
+            {
+              "id": "table_AQ-yHyRn",
+              "type": "table",
+              "left": 570,
+              "top": 250,
+              "width": 370,
+              "height": 200,
+              "colWidths": [
+                0.3,
+                0.3,
+                0.4
+              ],
+              "data": [
+                [
+                  {
+                    "id": "h1",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "公式",
+                    "style": {
+                      "bold": true,
+                      "backcolor": "#d9eaf7"
+                    }
+                  },
+                  {
+                    "id": "h2",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "维度",
+                    "style": {
+                      "bold": true,
+                      "backcolor": "#d9eaf7"
+                    }
+                  },
+                  {
+                    "id": "h3",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "应用场景",
+                    "style": {
+                      "bold": true,
+                      "backcolor": "#d9eaf7"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "id": "c1",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "格林公式"
+                  },
+                  {
+                    "id": "c2",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "二维平面"
+                  },
+                  {
+                    "id": "c3",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "闭区域与边界线"
+                  }
+                ],
+                [
+                  {
+                    "id": "c4",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "斯托克斯公式"
+                  },
+                  {
+                    "id": "c5",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "三维曲面"
+                  },
+                  {
+                    "id": "c6",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "曲面与边界曲线"
+                  }
+                ],
+                [
+                  {
+                    "id": "c7",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "高斯公式"
+                  },
+                  {
+                    "id": "c8",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "三维空间"
+                  },
+                  {
+                    "id": "c9",
+                    "colspan": 1,
+                    "rowspan": 1,
+                    "text": "封闭曲面与体积"
+                  }
+                ]
+              ],
+              "outline": {
+                "width": 1,
+                "style": "solid",
+                "color": "#c0c4cc"
+              },
+              "rotate": 0
+            },
+            {
+              "id": "shape_Cz8gqhy-",
+              "type": "shape",
+              "left": 555,
+              "top": 190,
+              "width": 6,
+              "height": 260,
+              "path": "M 0 0 L 1 0 L 1 1 L 0 1 Z",
+              "viewBox": [
+                1,
+                1
+              ],
+              "fill": "#ed7d31",
+              "fixedRatio": false,
+              "rotate": 0
+            }
+          ],
+          "background": {
+            "type": "solid",
+            "color": "#ffffff"
+          },
+          "layoutVersion": 1
+        }
+      },
+      "actions": [
+        {
+          "id": "action_ia-ea4XC",
+          "type": "spotlight",
+          "elementId": "text_9rQvIDv8"
+        },
+        {
+          "id": "action_jAlhR9id",
+          "type": "speech",
+          "text": "好了，同学们，到这里我们就把斯托克斯公式完整地学习了一遍。现在让我们一起来回顾一下今天最重要的几个要点。"
+        },
+        {
+          "id": "action_zGRxUbG8",
+          "type": "spotlight",
+          "elementId": "text_Z3X_Qt8Q"
+        },
+        {
+          "id": "action_NJ4JzLZN",
+          "type": "speech",
+          "text": "总结中首先要明确的，是斯托克斯公式的定位。它其实是格林公式在三维空间中的推广。还记得格林公式是在二维平面上连接二重积分和曲线积分，而斯托克斯公式则是将其拓展到了有向曲面上。"
+        },
+        {
+          "id": "action_pzwcqVe-",
+          "type": "spotlight",
+          "elementId": "latex_XUmGLNUr"
+        },
+        {
+          "id": "action_sjIcTK8O",
+          "type": "speech",
+          "text": "所以，它的核心公式就是大家看到的这个：曲线∮ F·dr 的积分，等于曲面上的旋度通量积分。左边是沿着曲面边界的线积分，右边则是曲面上所有旋转效果的累加。记住这个公式，就等于抓住了斯托克斯公式的灵魂。"
+        },
+        {
+          "id": "action_wE1jeWBa",
+          "type": "spotlight",
+          "elementId": "text_tICU_f89"
+        },
+        {
+          "id": "action_BYa6xoKf",
+          "type": "speech",
+          "text": "正因为有了这个等式，斯托克斯公式就成为了连接曲线积分和曲面积分的一座桥梁。当一个曲线积分很难直接计算的时候，我们可以考虑把它转换成一个曲面积分；反过来也是一样。这种在两种积分之间自由转换的能力，是它最强大的应用之一。"
+        },
+        {
+          "id": "action_fsNZZx5q",
+          "type": "spotlight",
+          "elementId": "text_RyNGvrdF"
+        },
+        {
+          "id": "action_LshmJMK4",
+          "type": "speech",
+          "text": "另外，我们这节课也提到了，斯托克斯公式与格林公式、高斯公式一起，并称为向量分析中的三大公式。这三个公式是理解向量场和积分关系的基石。"
+        },
+        {
+          "id": "action_fz6-PUOb",
+          "type": "laser",
+          "elementId": "table_AQ-yHyRn"
+        },
+        {
+          "id": "action_QAWk_oTD",
+          "type": "speech",
+          "text": "在屏幕上这张表格里，大家可以清楚地看到它们的对比。格林公式工作在二维平面，对象是标量函数；斯托克斯公式则进入了三维空间，处理有向曲面和向量场；而高斯公式呢，更是将封闭曲面积分与三重积分联系起来。理清它们的维度和适用场景，会帮助我们更容易地选择正确的工具。"
+        },
+        {
+          "id": "action_Kd4_tEZI",
+          "type": "spotlight",
+          "elementId": "text_9rQvIDv8"
+        },
+        {
+          "id": "action_Hl79Hn4b",
+          "type": "speech",
+          "text": "总之，今天的核心就是牢牢记住斯托克斯公式的形式，理解它作为桥梁的角色，并清楚它在三大公式中的位置。"
+        }
+      ],
+      "createdAt": 1782281471306,
+      "updatedAt": 1782281471306
+    },
+    {
+      "id": "scene_N155Yp3Ybb",
+      "stageId": "kaC8FKQJq8",
+      "type": "quiz",
+      "title": "综合评测：应用技巧",
+      "order": 10,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "short_answer",
+            "question": "给定有向曲面 S：z = 1 - x^2 - y^2 (z ≥ 0)，方向为上侧。向量场 F = (y, -x, z^3)。请使用斯托克斯公式，将计算曲面积分 ∬_S (∇×F)·dS 的问题转化为计算曲线积分的问题，然后计算出该曲面积分的值。\n\n要求：\n1. 确定有向曲面 S 的边界曲线 C 及其方向。\n2. 写出斯托克斯公式的具体形式，并代入本题中的向量场 F 和曲面 S。\n3. 计算旋度 ∇×F。\n4. 将曲面积分转化为曲线积分，并选择合适的参数化方法计算该曲线积分。\n5. 得出最终答案。\n\n请写出完整的推理过程和计算步骤，并最终给出曲面积分的数值。",
+            "commentPrompt": "评分标准：\n(1) 正确确定边界曲线 C 及其方向（20%）：需指出 C 是 z=0 平面上的圆周 x^2+y^2=1，方向为从 z 轴正向往负向看的逆时针方向（与曲面 S 的上侧方向符合右手法则）。\n(2) 正确写出斯托克斯公式并代入 F 和 S（20%）：公式为 ∬_S (∇×F)·dS = ∮_C F·dr，其中 C 为 S 的边界，方向与 S 的法向量满足右手法则。\n(3) 正确计算旋度 ∇×F（20%）：应得到 ∇×F = (0, 0, -2)。\n(4) 正确转化并参数化曲线积分（20%）：将曲线 C 参数化为 r(t) = (cos t, sin t, 0)，t 从 0 到 2π（逆时针），则 dr = (-sin t, cos t, 0) dt。代入 F 得 F·dr = (sin t * (-sin t) - cos t * cos t) dt = -(sin^2 t + cos^2 t) dt = -dt。\n(5) 正确计算积分并得出最终结果（20%）：积分 = ∫_0^{2π} -dt = -2π。\n\n注意：如步骤有逻辑错误或计算错误，酌情扣分；但思路正确、步骤完整可获大部分分数。",
+            "analysis": "参考解答：\n\n第一步：确定边界曲线 C 及其方向。\n曲面 S：z = 1 - x^2 - y^2，z ≥ 0。其边界为曲面与平面 z = 0 的交线，即曲线：z = 0，x^2 + y^2 = 1。这是一个位于 z=0 平面上的单位圆周。由于 S 的法向量取上侧，根据右手法则，边界曲线的方向应为从 z 轴正向往负向看时的逆时针方向（即通常的正方向）。\n\n第二步：写出斯托克斯公式。\n斯托克斯公式：∬_S (∇×F)·dS = ∮_C F·dr，其中 C 是 S 的边界曲线，方向与 S 的法向量满足右手法则。\n\n第三步：计算旋度 ∇×F。\nF = (y, -x, z^3)\n旋度：∇×F = (∂F_z/∂y - ∂F_y/∂z, ∂F_x/∂z - ∂F_z/∂x, ∂F_y/∂x - ∂F_x/∂y)\n= (0 - 0, 0 - 0, (-1) - 1) = (0, 0, -2)\n\n第四步：转化为曲线积分并计算。\n曲线 C：圆周 x^2 + y^2 = 1 在 z=0 平面上，方向为逆时针。\n参数化：r(t) = (cos t, sin t, 0)，t ∈ [0, 2π]，方向为逆时针。\ndr = (-sin t, cos t, 0) dt\nF(r(t)) = (sin t, -cos t, 0)\nF·dr = (sin t)*(-sin t) + (-cos t)*cos t + 0 = -sin^2 t - cos^2 t = -(sin^2 t + cos^2 t) = -1 dt\n所以，∮_C F·dr = ∫_0^{2π} -1 dt = -2π\n\n第五步：结论。\n因此，∬_S (∇×F)·dS = -2π。",
+            "points": 100,
+            "hasAnswer": false
+          }
+        ],
+        "knowledgePoints": [
+          "掌握斯托克斯公式：曲面积分与边界曲线积分之间的转化关系，适用于任何光滑有向曲面。",
+          "理解有向曲面边界方向的确定方法：曲面法向量与边界曲线方向满足右手螺旋法则。",
+          "熟练计算向量场的旋度，特别是对于简单的分量函数，能准确计算偏导数差值。",
+          "掌握空间曲线的参数化方法，并能将曲线积分转化为定积分进行计算。",
+          "应用斯托克斯公式简化曲面积分计算：当旋度计算简单或曲面积分困难时，转化到边界曲线积分往往更高效。"
+        ]
+      },
+      "actions": [
+        {
+          "id": "action_2ik9Cf0C",
+          "type": "speech",
+          "text": "同学们，经过这么多页的学习，我们终于来到了今天的综合评测环节！这道题将全面检验大家对斯托克斯公式的理解和应用能力。这是一道非常典型的综合题，涵盖了确定方向、选择转换策略、计算旋度等多个关键步骤。让我们一起来挑战一下吧！"
+        },
+        {
+          "id": "action_G4HEEkZ6",
+          "type": "speech",
+          "text": "这道题的核心是：给定有向曲面 S：z = 1 - x^2 - y^2（z ≥ 0），方向为上侧。向量场 F = (y, -x, z³)。要求我们使用斯托克斯公式，将曲面积分转化为曲线积分，然后计算出曲面积分的值。记住，重点在于思路是否清晰，而不仅仅是最终答案。让我们一步一步来拆解。"
+        },
+        {
+          "id": "action_QmGDfIbD",
+          "type": "speech",
+          "text": "首先，我们要确定有向曲面 S 的边界曲线 C。曲面是抛物面 z = 1 - x² - y² 被 z ≥ 0 截出的部分，也就是当 z=0 时，x² + y² = 1。所以边界曲线 C 是单位圆 x² + y² = 1，位于 z=0 平面上。因为曲面的方向为上侧，根据右手定则，边界曲线 C 的方向应该是逆时针方向看去。"
+        },
+        {
+          "id": "action_sHCd9D5M",
+          "type": "speech",
+          "text": "接下来，计算旋度 ∇×F。对于向量场 F = (y, -x, z³)，旋度计算公式是 ∇×F = (∂F₃/∂y - ∂F₂/∂z, ∂F₁/∂z - ∂F₃/∂x, ∂F₂/∂x - ∂F₁/∂y)。代入计算：∂F₃/∂y = ∂(z³)/∂y = 0，∂F₂/∂z = ∂(-x)/∂z = 0，所以第一分量为 0 - 0 = 0；∂F₁/∂z = ∂y/∂z = 0，∂F₃/∂x = ∂(z³)/∂x = 0，第二分量为 0 - 0 = 0；∂F₂/∂x = ∂(-x)/∂x = -1，∂F₁/∂y = ∂y/∂y = 1，第三分量为 -1 - 1 = -2。所以旋度 ∇×F = (0, 0, -2)。"
+        },
+        {
+          "id": "action_ehwnatM6",
+          "type": "speech",
+          "text": "现在，利用斯托克斯公式，曲面积分 ∬_S (∇×F)·dS 等于曲线积分 ∮_C F·dr。边界曲线 C 是单位圆，可以用参数化表示为：x = cosθ, y = sinθ, z = 0，其中θ从0到2π，方向为逆时针。那么 dr = (-sinθ dθ, cosθ dθ, 0)。在曲线C上，F = (y, -x, z³) = (sinθ, -cosθ, 0)。所以 F·dr = sinθ·(-sinθ dθ) + (-cosθ)·(cosθ dθ) + 0 = -sin²θ dθ - cos²θ dθ = -(sin²θ + cos²θ) dθ = -1 dθ。曲线积分 ∮_C F·dr = ∫₀^{2π} -1 dθ = -2π。因此，曲面积分的值为-2π。"
+        },
+        {
+          "id": "action_YW_k3ghq",
+          "type": "speech",
+          "text": "通过这道题，我们完整地体验了斯托克斯公式的应用流程：确定有向曲面的边界及其方向→计算旋度→将曲面积分转化为曲线积分→选择合适的参数化方法计算曲线积分。每一步都需要清晰的逻辑和细致的计算。希望大家在这次评测中巩固了自己的理解，也发现了需要进一步钻研的地方！"
+        }
+      ],
+      "createdAt": 1782281471306,
+      "updatedAt": 1782281471306
+    }
+  ],
+  "createdAt": "2026-06-24T06:11:11.307Z"
+}

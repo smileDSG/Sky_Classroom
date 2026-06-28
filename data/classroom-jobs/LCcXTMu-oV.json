@@ -1,0 +1,655 @@
+{
+  "id": "LCcXTMu-oV",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-25T05:51:33.793Z",
+  "updatedAt": "2026-06-25T05:55:01.739Z",
+  "inputSummary": {
+    "requirementPreview": "Python基础语法\n\n课程目标：从零开始学习 Python 变量、循环、函数和模块\n\n大纲：\n第1幕：Python 简介与环境搭建 — \n第2幕：变量与数据类型 — \n第3幕：条件语句与循环 — \n第4幕：函数定义与调用 — \n第5幕：列表与字典 — \n第6幕：模块与包管理 — \n第7幕：综合练习 — ",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 16,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-25T05:51:33.803Z",
+  "totalScenes": 17,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "欢迎与课程导航",
+        "description": "介绍课程目标与Python编程的用途，激发学习兴趣。",
+        "keyPoints": [
+          "Python是一门简洁、易读且功能强大的编程语言。",
+          "本课程适合完全零基础的学员入门。",
+          "你将学到变量、循环、函数和模块四大核心概念。",
+          "准备好电脑并保持学习的好奇心！"
+        ],
+        "teachingObjective": "让学员了解课程全貌与学习目标",
+        "estimatedDuration": 60,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "什么是Python？",
+        "description": "解释Python的来源、特点以及它为什么适合初学者。",
+        "keyPoints": [
+          "Python由 Guido van Rossum 于1991年创建。",
+          "它广泛应用于Web开发、数据分析、人工智能和自动化。",
+          "语法接近自然语言，学习曲线平缓。",
+          "Python社区庞大，学习资源丰富。"
+        ],
+        "teachingObjective": "了解Python的历史和主要应用领域",
+        "estimatedDuration": 120,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "环境搭建与Hello World",
+        "description": "指导学员安装Python和代码编辑器，并编写第一个程序。",
+        "keyPoints": [
+          "从python.org下载并安装Python（包含IDLE）。",
+          "也可以安装VS Code或PyCharm等代码编辑器。",
+          "打开终端或IDLE，输入 print('Hello, World!') 并运行。",
+          "看到“Hello, World!”输出，代表环境配置成功。"
+        ],
+        "teachingObjective": "学会搭建Python开发环境并运行第一个程序",
+        "estimatedDuration": 180,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "变量是什么？",
+        "description": "讲解变量作为数据容器的概念和Python中的赋值机制。",
+        "keyPoints": [
+          "变量是存储数据的‘容器’，可以存放数字、文字等。",
+          "Python使用等号 = 进行赋值操作，例如 age = 25。",
+          "变量名区分大小写，不能以数字开头，建议有描述性。",
+          "Python是动态类型语言，无需提前声明变量类型。"
+        ],
+        "teachingObjective": "理解变量的概念并掌握赋值语句",
+        "estimatedDuration": 120,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "常见数据类型",
+        "description": "介绍Python中基本的数据类型：整数、浮点数、字符串和布尔值。",
+        "keyPoints": [
+          "int：整数，如 1, 100, -5。",
+          "float：浮点数（小数），如 3.14, 0.001。",
+          "str：字符串，用单引号或双引号包围，如 'Python' 。",
+          "bool：布尔值，只有 True 和 False 两个值。"
+        ],
+        "teachingObjective": "能辨别并正确使用Python的基本数据类型",
+        "estimatedDuration": 120,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "quiz",
+        "title": "小测验：变量与数据类型",
+        "description": "通过选择题和填空题检验学员对变量和数据类型的掌握程度。",
+        "keyPoints": [
+          "检查赋值语句的正确写法。",
+          "判断不同数据值的类型分类。",
+          "区分动态类型与静态类型的差异。"
+        ],
+        "teachingObjective": "巩固变量与数据类型知识点",
+        "estimatedDuration": 120,
+        "order": 6,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "条件语句：if 与 else",
+        "description": "讲解如何用 if 语句让程序根据条件判断执行不同的代码块。",
+        "keyPoints": [
+          "if 语句格式：if 条件: 缩进代码块。",
+          "条件通常是比较表达式，如 age >= 18。",
+          "else 提供条件不成立时的备选路径。",
+          "elif 可以处理多个条件分支。"
+        ],
+        "teachingObjective": "学会使用 if-elif-else 结构实现分支逻辑",
+        "estimatedDuration": 150,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "循环：for 与 while",
+        "description": "介绍循环结构来实现重复执行任务。",
+        "keyPoints": [
+          "for 循环用于遍历序列（如列表、字符串、range）。",
+          "while 循环基于条件判断，满足条件时持续执行。",
+          "break 可提前退出循环，continue 跳过本次循环。",
+          "避免无限循环，确保条件最终会变为 False。"
+        ],
+        "teachingObjective": "掌握 for 和 while 循环的使用方法与控制技巧",
+        "estimatedDuration": 150,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "interactive",
+        "title": "动手写个循环输出图案",
+        "description": "学员在交互式代码编辑器中编写循环代码，生成一个由星号组成的三角形图案。",
+        "keyPoints": [
+          "使用 for 循环和 range 控制输出行数。",
+          "每行星号数量递增，实现三角形效果。",
+          "观察循环变量与输出结果的关系。"
+        ],
+        "teachingObjective": "通过实战编程加深对循环的理解",
+        "estimatedDuration": 300,
+        "order": 9,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python",
+          "codeTemplate": "for i in range(1, 6):\n    print('*' * i)",
+          "expectedOutput": "*\n**\n***\n****\n*****"
+        }
+      },
+      {
+        "id": "scene_10",
+        "type": "slide",
+        "title": "函数：定义与调用",
+        "description": "讲解函数的概念、定义方式和参数传递。",
+        "keyPoints": [
+          "函数是可重复使用的代码块，用于完成特定任务。",
+          "使用 def 关键字定义函数：def 函数名(参数): 代码块。",
+          "调用函数只需写函数名(参数) 即可。",
+          "return 语句可以返回计算结果。"
+        ],
+        "teachingObjective": "学会定义和调用自定义函数",
+        "estimatedDuration": 150,
+        "order": 10
+      },
+      {
+        "id": "scene_11",
+        "type": "slide",
+        "title": "参数与返回值",
+        "description": "深入讲解位置参数、默认参数和 return 的使用场景。",
+        "keyPoints": [
+          "位置参数按顺序传递，默认参数提供预设值。",
+          "函数可以没有 return，此时返回 None。",
+          "return 可以返回多个值（打包成元组）。",
+          "函数是代码复用的基石，让程序更模块化。"
+        ],
+        "teachingObjective": "理解函数参数传递机制与返回值处理",
+        "estimatedDuration": 120,
+        "order": 11
+      },
+      {
+        "id": "scene_12",
+        "type": "quiz",
+        "title": "小测验：循环与函数",
+        "description": "通过选择题和代码补全题检验循环与函数的综合理解。",
+        "keyPoints": [
+          "正确识别 for 和 while 的区别。",
+          "分析含 return 的函数的执行结果。",
+          "补全缺少参数的函数调用语句。"
+        ],
+        "teachingObjective": "巩固循环与函数的关键概念",
+        "estimatedDuration": 120,
+        "order": 12,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_13",
+        "type": "slide",
+        "title": "列表：有序的数据集合",
+        "description": "介绍列表的定义、索引、切片和常用方法。",
+        "keyPoints": [
+          "列表用方括号 [] 定义，元素用逗号分隔。",
+          "索引从0开始，负索引从末尾开始计数。",
+          "切片语法：list[start:end:step]。",
+          "常用方法：append, insert, remove, sort。"
+        ],
+        "teachingObjective": "掌握列表的创建、访问和基本操作",
+        "estimatedDuration": 150,
+        "order": 13
+      },
+      {
+        "id": "scene_14",
+        "type": "slide",
+        "title": "字典：键值对的映射",
+        "description": "讲解字典的定义、键值对的查询与修改。",
+        "keyPoints": [
+          "字典用花括号 {} 定义，由键值对组成：{'key': value}。",
+          "键必须唯一且不可变（字符串、数字常用作键）。",
+          "通过键来访问值，如 dict['name']。",
+          "常用方法：keys, values, items, get。"
+        ],
+        "teachingObjective": "学会创建和使用字典存储关联数据",
+        "estimatedDuration": 150,
+        "order": 14
+      },
+      {
+        "id": "scene_15",
+        "type": "slide",
+        "title": "模块与包管理",
+        "description": "介绍模块的概念、import 语句和 pip 工具的基本使用。",
+        "keyPoints": [
+          "模块是一个 .py 文件，可以包含函数、变量和类。",
+          "使用 import 语句导入模块，如 import random。",
+          "使用 from ... import ... 可直接导入特定内容。",
+          "pip 是安装第三方包的工具，如 pip install requests。"
+        ],
+        "teachingObjective": "学会导入并使用Python模块和第三方包",
+        "estimatedDuration": 150,
+        "order": 15
+      },
+      {
+        "id": "scene_16",
+        "type": "interactive",
+        "title": "编写一个简易记事本程序",
+        "description": "学员结合列表、字典和函数知识，编写一个控制台版的记事本程序（添加、查看、删除笔记）。",
+        "keyPoints": [
+          "用列表存储多条笔记，每条笔记是一个包含标题和内容的字典。",
+          "定义添加、查看、删除三个函数模块化功能。",
+          "借助 input() 实现用户交互。"
+        ],
+        "teachingObjective": "综合运用列表、字典和函数完成一个实用小项目",
+        "estimatedDuration": 480,
+        "order": 16,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python",
+          "codeTemplate": "# 简易记事本\nnotes = []\n\ndef add_note():\n    title = input('请输入笔记标题：')\n    content = input('请输入笔记内容：')\n    notes.append({'title': title, 'content': content})\n    print('笔记已添加！')\n\ndef show_notes():\n    for i, note in enumerate(notes, 1):\n        print(f\"{i}. {note['title']}: {note['content']}\")\n\ndef delete_note():\n    show_notes()\n    index = int(input('请输入要删除的笔记编号：')) - 1\n    if 0 <= index < len(notes):\n        del notes[index]\n        print('笔记已删除！')\n    else:\n        print('编号无效。')\n\n# 主循环\nwhile True:\n    print('\\n1. 添加笔记  2. 查看笔记  3. 删除笔记  4. 退出')\n    choice = input('请选择操作：')\n    if choice == '1':\n        add_note()\n    elif choice == '2':\n        show_notes()\n    elif choice == '3':\n        delete_note()\n    elif choice == '4':\n        break\n    else:\n        print('无效选择，请重新输入。')"
+        }
+      },
+      {
+        "id": "scene_17",
+        "type": "slide",
+        "title": "课程总结与展望",
+        "description": "回顾本课程涵盖的核心知识点，并推荐进一步学习方向和资源。",
+        "keyPoints": [
+          "已学内容：变量、数据类型、条件循环、函数、列表、字典、模块。",
+          "下一步可学习：文件I/O、面向对象编程、异常处理、网络请求。",
+          "推荐平台：LeetCode（刷题）、Real Python（文章）、官方文档。",
+          "保持编码练习，在实践中不断进步！"
+        ],
+        "teachingObjective": "总结学习成果，指明进阶路径",
+        "estimatedDuration": 90,
+        "order": 17
+      }
+    ],
+    "languageDirective": "教学内容应使用中文，保持专业、清晰、简洁的教学风格。编程语言关键词（如 if, for, def, import 等）和专有名词（如 Python, VS Code, pip 等）保留英文原词。专业术语如“变量”、“循环”、“函数”、“模块”使用中文标准翻译。面向零基础学习者，需包含基础概念的解释和鼓励性引导。",
+    "topicSummary": "Python基础语法",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "AwQGpQeqnf",
+      "name": "欢迎与课程导航",
+      "languageDirective": "教学内容应使用中文，保持专业、清晰、简洁的教学风格。编程语言关键词（如 if, for, def, import 等）和专有名词（如 Python, VS Code, pip 等）保留英文原词。专业术语如“变量”、“循环”、“函数”、“模块”使用中文标准翻译。面向零基础学习者，需包含基础概念的解释和鼓励性引导。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782366719254,
+      "updatedAt": 1782366719254,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "Python基础语法\n\n课程目标：从零开始学习 Python 变量、循环、函数和模块\n\n大纲：\n第1幕：Python 简介与环境搭建 — \n第2幕：变量与数据类型 — \n第3幕：条件语句与循环 — \n第4幕：函数定义与调用 — \n第5幕：列表与字典 — \n第6幕：模块与包管理 — \n第7幕：综合练习 — ",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "欢迎与课程导航",
+      "description": "介绍课程目标与Python编程的用途，激发学习兴趣。",
+      "keyPoints": [
+        "Python是一门简洁、易读且功能强大的编程语言。",
+        "本课程适合完全零基础的学员入门。",
+        "你将学到变量、循环、函数和模块四大核心概念。",
+        "准备好电脑并保持学习的好奇心！"
+      ],
+      "teachingObjective": "让学员了解课程全貌与学习目标",
+      "estimatedDuration": 60,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "什么是Python？",
+      "description": "解释Python的来源、特点以及它为什么适合初学者。",
+      "keyPoints": [
+        "Python由 Guido van Rossum 于1991年创建。",
+        "它广泛应用于Web开发、数据分析、人工智能和自动化。",
+        "语法接近自然语言，学习曲线平缓。",
+        "Python社区庞大，学习资源丰富。"
+      ],
+      "teachingObjective": "了解Python的历史和主要应用领域",
+      "estimatedDuration": 120,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "环境搭建与Hello World",
+      "description": "指导学员安装Python和代码编辑器，并编写第一个程序。",
+      "keyPoints": [
+        "从python.org下载并安装Python（包含IDLE）。",
+        "也可以安装VS Code或PyCharm等代码编辑器。",
+        "打开终端或IDLE，输入 print('Hello, World!') 并运行。",
+        "看到“Hello, World!”输出，代表环境配置成功。"
+      ],
+      "teachingObjective": "学会搭建Python开发环境并运行第一个程序",
+      "estimatedDuration": 180,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "变量是什么？",
+      "description": "讲解变量作为数据容器的概念和Python中的赋值机制。",
+      "keyPoints": [
+        "变量是存储数据的‘容器’，可以存放数字、文字等。",
+        "Python使用等号 = 进行赋值操作，例如 age = 25。",
+        "变量名区分大小写，不能以数字开头，建议有描述性。",
+        "Python是动态类型语言，无需提前声明变量类型。"
+      ],
+      "teachingObjective": "理解变量的概念并掌握赋值语句",
+      "estimatedDuration": 120,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "常见数据类型",
+      "description": "介绍Python中基本的数据类型：整数、浮点数、字符串和布尔值。",
+      "keyPoints": [
+        "int：整数，如 1, 100, -5。",
+        "float：浮点数（小数），如 3.14, 0.001。",
+        "str：字符串，用单引号或双引号包围，如 'Python' 。",
+        "bool：布尔值，只有 True 和 False 两个值。"
+      ],
+      "teachingObjective": "能辨别并正确使用Python的基本数据类型",
+      "estimatedDuration": 120,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "quiz",
+      "title": "小测验：变量与数据类型",
+      "description": "通过选择题和填空题检验学员对变量和数据类型的掌握程度。",
+      "keyPoints": [
+        "检查赋值语句的正确写法。",
+        "判断不同数据值的类型分类。",
+        "区分动态类型与静态类型的差异。"
+      ],
+      "teachingObjective": "巩固变量与数据类型知识点",
+      "estimatedDuration": 120,
+      "order": 6,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "条件语句：if 与 else",
+      "description": "讲解如何用 if 语句让程序根据条件判断执行不同的代码块。",
+      "keyPoints": [
+        "if 语句格式：if 条件: 缩进代码块。",
+        "条件通常是比较表达式，如 age >= 18。",
+        "else 提供条件不成立时的备选路径。",
+        "elif 可以处理多个条件分支。"
+      ],
+      "teachingObjective": "学会使用 if-elif-else 结构实现分支逻辑",
+      "estimatedDuration": 150,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "循环：for 与 while",
+      "description": "介绍循环结构来实现重复执行任务。",
+      "keyPoints": [
+        "for 循环用于遍历序列（如列表、字符串、range）。",
+        "while 循环基于条件判断，满足条件时持续执行。",
+        "break 可提前退出循环，continue 跳过本次循环。",
+        "避免无限循环，确保条件最终会变为 False。"
+      ],
+      "teachingObjective": "掌握 for 和 while 循环的使用方法与控制技巧",
+      "estimatedDuration": 150,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "interactive",
+      "title": "动手写个循环输出图案",
+      "description": "学员在交互式代码编辑器中编写循环代码，生成一个由星号组成的三角形图案。",
+      "keyPoints": [
+        "使用 for 循环和 range 控制输出行数。",
+        "每行星号数量递增，实现三角形效果。",
+        "观察循环变量与输出结果的关系。"
+      ],
+      "teachingObjective": "通过实战编程加深对循环的理解",
+      "estimatedDuration": 300,
+      "order": 9,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python",
+        "codeTemplate": "for i in range(1, 6):\n    print('*' * i)",
+        "expectedOutput": "*\n**\n***\n****\n*****"
+      }
+    },
+    {
+      "id": "scene_10",
+      "type": "slide",
+      "title": "函数：定义与调用",
+      "description": "讲解函数的概念、定义方式和参数传递。",
+      "keyPoints": [
+        "函数是可重复使用的代码块，用于完成特定任务。",
+        "使用 def 关键字定义函数：def 函数名(参数): 代码块。",
+        "调用函数只需写函数名(参数) 即可。",
+        "return 语句可以返回计算结果。"
+      ],
+      "teachingObjective": "学会定义和调用自定义函数",
+      "estimatedDuration": 150,
+      "order": 10
+    },
+    {
+      "id": "scene_11",
+      "type": "slide",
+      "title": "参数与返回值",
+      "description": "深入讲解位置参数、默认参数和 return 的使用场景。",
+      "keyPoints": [
+        "位置参数按顺序传递，默认参数提供预设值。",
+        "函数可以没有 return，此时返回 None。",
+        "return 可以返回多个值（打包成元组）。",
+        "函数是代码复用的基石，让程序更模块化。"
+      ],
+      "teachingObjective": "理解函数参数传递机制与返回值处理",
+      "estimatedDuration": 120,
+      "order": 11
+    },
+    {
+      "id": "scene_12",
+      "type": "quiz",
+      "title": "小测验：循环与函数",
+      "description": "通过选择题和代码补全题检验循环与函数的综合理解。",
+      "keyPoints": [
+        "正确识别 for 和 while 的区别。",
+        "分析含 return 的函数的执行结果。",
+        "补全缺少参数的函数调用语句。"
+      ],
+      "teachingObjective": "巩固循环与函数的关键概念",
+      "estimatedDuration": 120,
+      "order": 12,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_13",
+      "type": "slide",
+      "title": "列表：有序的数据集合",
+      "description": "介绍列表的定义、索引、切片和常用方法。",
+      "keyPoints": [
+        "列表用方括号 [] 定义，元素用逗号分隔。",
+        "索引从0开始，负索引从末尾开始计数。",
+        "切片语法：list[start:end:step]。",
+        "常用方法：append, insert, remove, sort。"
+      ],
+      "teachingObjective": "掌握列表的创建、访问和基本操作",
+      "estimatedDuration": 150,
+      "order": 13
+    },
+    {
+      "id": "scene_14",
+      "type": "slide",
+      "title": "字典：键值对的映射",
+      "description": "讲解字典的定义、键值对的查询与修改。",
+      "keyPoints": [
+        "字典用花括号 {} 定义，由键值对组成：{'key': value}。",
+        "键必须唯一且不可变（字符串、数字常用作键）。",
+        "通过键来访问值，如 dict['name']。",
+        "常用方法：keys, values, items, get。"
+      ],
+      "teachingObjective": "学会创建和使用字典存储关联数据",
+      "estimatedDuration": 150,
+      "order": 14
+    },
+    {
+      "id": "scene_15",
+      "type": "slide",
+      "title": "模块与包管理",
+      "description": "介绍模块的概念、import 语句和 pip 工具的基本使用。",
+      "keyPoints": [
+        "模块是一个 .py 文件，可以包含函数、变量和类。",
+        "使用 import 语句导入模块，如 import random。",
+        "使用 from ... import ... 可直接导入特定内容。",
+        "pip 是安装第三方包的工具，如 pip install requests。"
+      ],
+      "teachingObjective": "学会导入并使用Python模块和第三方包",
+      "estimatedDuration": 150,
+      "order": 15
+    },
+    {
+      "id": "scene_16",
+      "type": "interactive",
+      "title": "编写一个简易记事本程序",
+      "description": "学员结合列表、字典和函数知识，编写一个控制台版的记事本程序（添加、查看、删除笔记）。",
+      "keyPoints": [
+        "用列表存储多条笔记，每条笔记是一个包含标题和内容的字典。",
+        "定义添加、查看、删除三个函数模块化功能。",
+        "借助 input() 实现用户交互。"
+      ],
+      "teachingObjective": "综合运用列表、字典和函数完成一个实用小项目",
+      "estimatedDuration": 480,
+      "order": 16,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python",
+        "codeTemplate": "# 简易记事本\nnotes = []\n\ndef add_note():\n    title = input('请输入笔记标题：')\n    content = input('请输入笔记内容：')\n    notes.append({'title': title, 'content': content})\n    print('笔记已添加！')\n\ndef show_notes():\n    for i, note in enumerate(notes, 1):\n        print(f\"{i}. {note['title']}: {note['content']}\")\n\ndef delete_note():\n    show_notes()\n    index = int(input('请输入要删除的笔记编号：')) - 1\n    if 0 <= index < len(notes):\n        del notes[index]\n        print('笔记已删除！')\n    else:\n        print('编号无效。')\n\n# 主循环\nwhile True:\n    print('\\n1. 添加笔记  2. 查看笔记  3. 删除笔记  4. 退出')\n    choice = input('请选择操作：')\n    if choice == '1':\n        add_note()\n    elif choice == '2':\n        show_notes()\n    elif choice == '3':\n        delete_note()\n    elif choice == '4':\n        break\n    else:\n        print('无效选择，请重新输入。')"
+      }
+    },
+    {
+      "id": "scene_17",
+      "type": "slide",
+      "title": "课程总结与展望",
+      "description": "回顾本课程涵盖的核心知识点，并推荐进一步学习方向和资源。",
+      "keyPoints": [
+        "已学内容：变量、数据类型、条件循环、函数、列表、字典、模块。",
+        "下一步可学习：文件I/O、面向对象编程、异常处理、网络请求。",
+        "推荐平台：LeetCode（刷题）、Real Python（文章）、官方文档。",
+        "保持编码练习，在实践中不断进步！"
+      ],
+      "teachingObjective": "总结学习成果，指明进阶路径",
+      "estimatedDuration": 90,
+      "order": 17
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "教学内容应使用中文，保持专业、清晰、简洁的教学风格。编程语言关键词（如 if, for, def, import 等）和专有名词（如 Python, VS Code, pip 等）保留英文原词。专业术语如“变量”、“循环”、“函数”、“模块”使用中文标准翻译。面向零基础学习者，需包含基础概念的解释和鼓励性引导。",
+    "totalScenes": 17
+  },
+  "topicSummary": "Python基础语法",
+  "completedAt": "2026-06-25T05:55:01.739Z",
+  "result": {
+    "classroomId": "AwQGpQeqnf",
+    "url": "http://localhost:3000/classroom/AwQGpQeqnf",
+    "scenesCount": 16
+  }
+}

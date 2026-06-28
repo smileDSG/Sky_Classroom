@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   BookOpen,
@@ -28,13 +27,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from './math-renderer';
 import { QuizInteraction } from './quiz-interaction';
@@ -44,16 +36,15 @@ import { TTSButton } from './tts-button';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useAuth } from '@/components/auth/auth-provider';
 import { toast } from 'sonner';
-import { ClassroomConfigDialog } from './classroom-config-dialog';
-import { addActiveJobEntry } from '@/lib/classroom/classroom-session';
-import type { TeachingToClassroomConfig } from '@/lib/teaching/classroom-config-recommendation';
 import {
   submitTeachingJob,
   fetchTeachingJob,
+  pollTeachingJob,
   cancelTeachingJob,
   retrySection,
   streamTeachingJob,
   toggleTeachingFavorite,
+  type TeachingJobState,
 } from '@/lib/teaching/teaching-job-client';
 import {
   addActiveTeachingJobEntry,
@@ -78,9 +69,9 @@ const DEPTH_LABELS: Record<string, string> = {
 };
 
 const DEPTH_STAR_COLORS: Record<string, string> = {
-  basic: 'text-emerald-400',
-  intermediate: 'text-teal-400',
-  advanced: 'text-rose-400',
+  basic: 'text-emerald-500',
+  intermediate: 'text-indigo-500',
+  advanced: 'text-rose-500',
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -116,7 +107,7 @@ function resolveColdStartSubject(masteryByKnowledge?: Record<string, number>): S
 const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
   explanation: {
     label: '讲解',
-    cls: 'bg-sky-900/20 text-sky-300 border border-sky-500/20',
+    cls: 'bg-indigo-900/20 text-indigo-300 border border-indigo-500/20',
   },
   example: {
     label: '例题',
@@ -128,7 +119,7 @@ const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
   },
   quiz: {
     label: '测验',
-    cls: 'bg-orange-900/20 text-orange-300 border border-orange-500/20',
+    cls: 'bg-amber-900/20 text-amber-300 border border-amber-500/20',
   },
 };
 
@@ -140,7 +131,6 @@ interface SectionCardProps {
   index: number;
   jobId?: string;
   profile?: StudentProfile | null;
-  isRetrying?: boolean;
   onRetry?: (sectionId: string) => void;
   onAskQuestion?: (sectionId: string, sectionTitle: string) => void;
   onFeedback?: (type: 'mastered' | 'needs_review') => void;
@@ -152,7 +142,6 @@ const SectionCard = React.memo(function SectionCard({
   index,
   jobId,
   profile,
-  isRetrying,
   onRetry,
   onAskQuestion,
   onFeedback,
@@ -177,48 +166,44 @@ const SectionCard = React.memo(function SectionCard({
     >
       <Card
         className={cn(
-          'bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-sky-200/50 dark:border-sky-800/30',
+          'rounded-2xl border bg-[var(--teaching-surface)]/60 dark:bg-[var(--teaching-surface)]/60 backdrop-blur-sm shadow-sm overflow-hidden',
           hasFailed && 'border-red-200 dark:border-red-800/50',
         )}
+        style={{ borderColor: hasFailed ? undefined : 'var(--teaching-border)' }}
       >
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <Badge variant="secondary" className={cn('text-[11px]', typeBadge.cls)}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Badge variant="secondary" className={cn('text-[11px] gap-1', typeBadge.cls)}>
                 {TYPE_ICONS[section.contentType]}
-                <span className="ml-1">{typeBadge.label}</span>
+                {typeBadge.label}
               </Badge>
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--teaching-text)' }}>
+              <h3 className="text-base font-semibold text-[var(--teaching-text)] truncate">
                 {section.title}
               </h3>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <Badge
                 variant="outline"
                 className={cn(
-                  'text-[11px] border-[var(--teaching-border)]',
+                  'text-[11px] gap-1 border-[var(--teaching-border)]',
                   DEPTH_STAR_COLORS[section.depth],
                 )}
               >
-                <Star className="h-3 w-3 mr-0.5 fill-current" />
+                <Star className="h-3 w-3 fill-current" />
                 {DEPTH_LABELS[section.depth]}
               </Badge>
-              <span className="text-xs" style={{ color: 'var(--teaching-muted)' }}>
+              <span className="text-xs text-[var(--teaching-muted)]">
                 {section.estimatedDuration}分钟
               </span>
             </div>
           </div>
           {section.knowledgePoints.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2.5">
+            <div className="flex flex-wrap gap-1.5 mt-3">
               {section.knowledgePoints.map((kp) => (
                 <span
                   key={kp}
-                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px]"
-                  style={{
-                    background: 'rgba(45, 212, 191, 0.08)',
-                    border: '1px solid rgba(45, 212, 191, 0.2)',
-                    color: 'var(--teaching-primary)',
-                  }}
+                  className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium text-[var(--teaching-primary)] bg-[var(--teaching-primary)]/8 border border-[var(--teaching-primary)]/15"
                 >
                   {kp}
                 </span>
@@ -226,81 +211,94 @@ const SectionCard = React.memo(function SectionCard({
             </div>
           )}
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {sortedChunks.map((chunk) => (
             <div
               key={chunk.order}
               className={cn(
-                'rounded-lg p-4',
+                'rounded-xl p-4 border-l-2 transition-colors',
                 chunk.type === 'formula' &&
-                  'bg-sky-50/50 dark:bg-sky-900/10 border border-sky-100 dark:border-sky-800/30',
+                  'bg-indigo-50/50 dark:bg-indigo-950/20 border-l-indigo-400 border-indigo-100/60 dark:border-indigo-800/30',
                 chunk.type === 'example' &&
-                  'bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800/30',
+                  'bg-violet-50/50 dark:bg-violet-950/20 border-l-violet-400 border-violet-100/60 dark:border-violet-800/30',
                 chunk.type === 'quiz' &&
-                  'bg-teal-50/50 dark:bg-teal-900/10 border border-teal-100 dark:border-teal-800/30',
+                  'bg-amber-50/50 dark:bg-amber-950/20 border-l-amber-400 border-amber-100/60 dark:border-amber-800/30',
                 chunk.type === 'diagram' &&
-                  'bg-cyan-50/50 dark:bg-cyan-900/10 border border-cyan-100 dark:border-cyan-800/30',
-                chunk.type === 'text' && 'bg-white/40 dark:bg-slate-700/20',
+                  'bg-sky-50/50 dark:bg-sky-950/20 border-l-sky-400 border-sky-100/60 dark:border-sky-800/30',
+                chunk.type === 'text' &&
+                  'bg-slate-50/70 dark:bg-slate-800/30 border-l-slate-300 dark:border-l-slate-600 border-slate-100/60 dark:border-slate-700/30',
                 chunk.failed &&
-                  'bg-red-50/50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30',
+                  'bg-red-50/50 dark:bg-red-950/20 border-l-red-400 border-red-100/60 dark:border-red-800/30',
                 chunk.isFollowUp &&
-                  'ml-4 border-l-2 border-l-sky-400/40 bg-sky-50/20 dark:bg-sky-900/5',
+                  'ml-4 border-l-indigo-400 bg-indigo-50/30 dark:bg-indigo-950/10',
               )}
             >
-              {chunk.type === 'example' && (
-                <Badge
-                  variant="secondary"
-                  className="mb-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-                >
-                  例题
-                </Badge>
-              )}
-              {chunk.type === 'quiz' && (
-                <Badge
-                  variant="secondary"
-                  className="mb-2 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
-                >
-                  随堂测验
-                </Badge>
-              )}
-              {chunk.type === 'formula' && (
-                <Badge
-                  variant="secondary"
-                  className="mb-2 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400"
-                >
-                  核心公式
-                </Badge>
-              )}
-              {chunk.failed && (
-                <Badge
-                  variant="secondary"
-                  className="mb-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-                >
-                  生成失败
-                </Badge>
-              )}
-              {chunk.isFollowUp && (
-                <Badge
-                  variant="secondary"
-                  className="mb-2 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400"
-                >
-                  追问补充
-                </Badge>
-              )}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                {chunk.type === 'example' && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
+                  >
+                    例题
+                  </Badge>
+                )}
+                {chunk.type === 'quiz' && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                  >
+                    随堂测验
+                  </Badge>
+                )}
+                {chunk.type === 'formula' && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                  >
+                    核心公式
+                  </Badge>
+                )}
+                {chunk.failed && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                  >
+                    生成失败
+                  </Badge>
+                )}
+                {chunk.isFollowUp && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                  >
+                    追问补充
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <div className={cn('flex-1 min-w-0', chunk.type === 'formula' && 'text-center')}>
                   {chunk.type === 'quiz' && chunk.options && chunk.options.length > 0 ? (
                     <QuizInteraction chunk={chunk} jobId={jobId} />
                   ) : (
-                    <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-100">
+                    <div
+                      className={cn(
+                        'text-sm leading-relaxed text-slate-800 dark:text-slate-100',
+                        chunk.type === 'formula' && 'text-base',
+                      )}
+                    >
                       <MathRenderer
                         content={chunk.content}
-                        highlights={profile ? analyzeHighlights(chunk.content, profile) : undefined}
+                        displayMode={chunk.type === 'formula'}
+                        highlights={
+                          chunk.type !== 'formula' && profile
+                            ? analyzeHighlights(chunk.content, profile)
+                            : undefined
+                        }
                       />
                     </div>
                   )}
                 </div>
-                <TTSButton text={chunk.content} className="shrink-0 mt-1" />
+                <TTSButton text={chunk.content} className="shrink-0 mt-0.5" />
               </div>
             </div>
           ))}
@@ -310,27 +308,22 @@ const SectionCard = React.memo(function SectionCard({
                 variant="outline"
                 size="sm"
                 onClick={handleRetry}
-                disabled={isRetrying}
                 className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
-                {isRetrying ? (
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-3 w-3 mr-1" />
-                )}
-                {isRetrying ? '重新生成中...' : '重新生成'}
+                <RefreshCw className="h-3 w-3 mr-1" />
+                重新生成
               </Button>
             </div>
           )}
 
           {/* Learning feedback buttons */}
           {!hasFailed && (
-            <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-700">
+            <div className="flex justify-between items-center pt-3 border-t border-[var(--teaching-border)]">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onAskQuestion?.(section.id, section.title)}
-                className="text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-900/20"
+                className="text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
               >
                 <MessageCircle className="h-3 w-3 mr-1" />
                 提问
@@ -358,7 +351,7 @@ const SectionCard = React.memo(function SectionCard({
                     toast.success('已标记为「已掌握」');
                     onFeedback?.('mastered');
                   }}
-                  className="text-green-600 dark:text-green-400 border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-900/20"
+                  className="text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                 >
                   <ThumbsUp className="h-3 w-3 mr-1" />
                   已掌握
@@ -385,7 +378,7 @@ const SectionCard = React.memo(function SectionCard({
                     toast.success('已标记为「需复习」');
                     onFeedback?.('needs_review');
                   }}
-                  className="text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+                  className="text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                 >
                   <ThumbsDown className="h-3 w-3 mr-1" />
                   需复习
@@ -404,26 +397,44 @@ const SectionCard = React.memo(function SectionCard({
 function SectionSkeleton() {
   return (
     <div
-      className="rounded-xl border p-5 animate-pulse"
-      style={{
-        background: 'var(--teaching-surface)',
-        borderColor: 'var(--teaching-border)',
-      }}
+      className="rounded-2xl border p-5 animate-pulse bg-[var(--teaching-surface)]"
+      style={{ borderColor: 'var(--teaching-border)' }}
     >
       <div className="flex items-center justify-between">
-        <div className="h-6 w-36 rounded" style={{ background: 'rgba(45, 212, 191, 0.08)' }} />
+        <div
+          className="h-6 w-36 rounded-lg"
+          style={{ background: 'color-mix(in srgb, var(--teaching-primary) 8%, transparent)' }}
+        />
         <div className="flex gap-2">
-          <div className="h-5 w-16 rounded" style={{ background: 'rgba(45, 212, 191, 0.06)' }} />
-          <div className="h-5 w-12 rounded" style={{ background: 'rgba(45, 212, 191, 0.06)' }} />
+          <div
+            className="h-5 w-16 rounded-md"
+            style={{ background: 'color-mix(in srgb, var(--teaching-primary) 6%, transparent)' }}
+          />
+          <div
+            className="h-5 w-12 rounded-md"
+            style={{ background: 'color-mix(in srgb, var(--teaching-primary) 6%, transparent)' }}
+          />
         </div>
       </div>
       <div className="flex gap-1.5 mt-3">
-        <div className="h-5 w-20 rounded-full" style={{ background: 'rgba(45, 212, 191, 0.06)' }} />
-        <div className="h-5 w-16 rounded-full" style={{ background: 'rgba(45, 212, 191, 0.06)' }} />
+        <div
+          className="h-5 w-20 rounded-full"
+          style={{ background: 'color-mix(in srgb, var(--teaching-primary) 6%, transparent)' }}
+        />
+        <div
+          className="h-5 w-16 rounded-full"
+          style={{ background: 'color-mix(in srgb, var(--teaching-primary) 6%, transparent)' }}
+        />
       </div>
       <div className="space-y-3 mt-4">
-        <div className="h-24 rounded-lg" style={{ background: 'rgba(45, 212, 191, 0.04)' }} />
-        <div className="h-16 rounded-lg" style={{ background: 'rgba(45, 212, 191, 0.04)' }} />
+        <div
+          className="h-24 rounded-xl"
+          style={{ background: 'color-mix(in srgb, var(--teaching-primary) 4%, transparent)' }}
+        />
+        <div
+          className="h-16 rounded-xl"
+          style={{ background: 'color-mix(in srgb, var(--teaching-primary) 4%, transparent)' }}
+        />
       </div>
     </div>
   );
@@ -442,15 +453,18 @@ interface TeachingPanelProps {
   /** Job id of the history item being viewed, used for homework/favorite */
   viewHistoryJobId?: string;
   onViewedHistory?: () => void;
+  initialTopic?: string;
+  personalizationNotice?: string | null;
 }
 
 export function TeachingPanel({
   viewHistoryItem,
   viewHistoryJobId,
   onViewedHistory,
+  initialTopic,
+  personalizationNotice,
 }: TeachingPanelProps) {
   const { user } = useAuth();
-  const router = useRouter();
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<LessonPlan | null>(null);
@@ -486,19 +500,11 @@ export function TeachingPanel({
   const [homeworkLoading, setHomeworkLoading] = useState(false);
   const [showHomework, setShowHomework] = useState(false);
   const [toClassroomLoading, setToClassroomLoading] = useState(false);
-  const [configDialogOpen, setConfigDialogOpen] = useState(false);
-  const [startClassroomLoading, setStartClassroomLoading] = useState(false);
   const [learningPath, setLearningPath] = useState<LearningPath | null>(null);
-
-  // Feature flag: set to false to instantly revert to the legacy one-click conversion.
-  const USE_SKY_CLASSROOM_CREATION = true;
   const [showStudyGroup, setShowStudyGroup] = useState(false);
 
   // Chapter-by-chapter reading state (-1 = not started)
   const [displayIndex, setDisplayIndex] = useState(-1);
-
-  // Retry state for the "重新生成" button
-  const [retryingSectionId, setRetryingSectionId] = useState<string | null>(null);
 
   // Learning progress tracking
   const [feedbackStats, setFeedbackStats] = useState<{ mastered: number; needsReview: number }>({
@@ -532,7 +538,12 @@ export function TeachingPanel({
   const [serverProgress, setServerProgress] = useState<number | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
-  const isFirstRenderRef = useRef(true);
+  const userEditedTopicRef = useRef(false);
+
+  useEffect(() => {
+    if (!initialTopic || userEditedTopicRef.current || topic.trim() || loading || done) return;
+    setTopic(initialTopic);
+  }, [done, initialTopic, loading, topic]);
 
   // ── Fetch recommended topics on mount ──
   useEffect(() => {
@@ -583,13 +594,14 @@ export function TeachingPanel({
         setRecommendedTopics(subjectTopics?.topics.slice(0, 5) ?? []);
       }
     })();
-  }, [user?.id]);
+  }, []);
 
   // ── Search suggestions ──
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const handleTopicChange = (value: string) => {
+    userEditedTopicRef.current = true;
     setTopic(value);
     if (value.trim().length > 0) {
       const results = searchTopics(value.trim());
@@ -602,11 +614,13 @@ export function TeachingPanel({
   };
 
   const handleSelectSuggestion = (suggestion: string) => {
+    userEditedTopicRef.current = true;
     setTopic(suggestion);
     setShowSuggestions(false);
   };
 
   const handleSelectRecommended = (recommended: string) => {
+    userEditedTopicRef.current = true;
     setTopic(recommended);
   };
 
@@ -621,7 +635,7 @@ export function TeachingPanel({
       setTopic(viewHistoryItem.topic);
       setDisplayIndex(0);
       setIsFavorited(viewHistoryItem.isFavorited ?? false);
-    } else if (!isFirstRenderRef.current) {
+    } else {
       // Cleared history view: reset to the empty teaching interface
       setPlan(null);
       setSections([]);
@@ -638,7 +652,6 @@ export function TeachingPanel({
       setServerProgress(null);
       setMessage('');
     }
-    isFirstRenderRef.current = false;
   }, [viewHistoryItem]);
 
   // ── Auto-show first section when it arrives ──
@@ -668,11 +681,6 @@ export function TeachingPanel({
           setSections(data.sections ?? []);
           setDone(true);
           setTopic(entry.topic);
-          setCurrentJobId(entry.jobId);
-          setDisplayIndex(data.sections && data.sections.length > 0 ? 0 : -1);
-          setLoading(false);
-          setError(null);
-          setServerProgress(typeof data.progress === 'number' ? data.progress : null);
           removeActiveTeachingJobEntry(entry.jobId);
           return;
         }
@@ -682,10 +690,8 @@ export function TeachingPanel({
         setLoading(true);
         setPlan(data.plan ?? null);
         setSections(data.sections ?? []);
-        setDisplayIndex(data.sections && data.sections.length > 0 ? 0 : -1);
         setServerProgress(typeof data.progress === 'number' ? data.progress : null);
         setMessage(data.message || '');
-        setError(null);
 
         resumePolling(entry.jobId, entry.topic);
       } catch {
@@ -931,7 +937,7 @@ export function TeachingPanel({
       toast.error('诊断生成失败，直接开始授课');
       await startTeachingJob();
     }
-  }, [topic, hasProfile, startTeachingJob, profile?.masteryByKnowledge]);
+  }, [topic, hasProfile, startTeachingJob]);
 
   // ── Submit diagnostic answers ──
   const submitDiagnostic = useCallback(async () => {
@@ -985,25 +991,17 @@ export function TeachingPanel({
     setError(null);
   }, [currentJobId]);
 
-  // Effective job id used for retry/favorite/homework/classroom.
-  // Prefer the history item being viewed so actions operate on the visible job.
-  const effectiveJobId = viewHistoryJobId ?? currentJobId;
-
   // ── Retry Section ──
   const handleRetrySection = useCallback(
     async (sectionId: string) => {
-      if (!effectiveJobId) {
-        toast.error('请先选择一份教案');
-        return;
-      }
+      if (!currentJobId) return;
 
-      setRetryingSectionId(sectionId);
       try {
         toast.info('正在重新生成...');
-        const result = await retrySection(effectiveJobId, sectionId);
+        const result = await retrySection(currentJobId, sectionId);
 
         if (result) {
-          // Update sections state by index to avoid duplicates
+          // Update sections state
           setSections((prev) => {
             const idx = prev.findIndex((s) => s.section.id === sectionId);
             if (idx >= 0) {
@@ -1011,31 +1009,21 @@ export function TeachingPanel({
               updated[idx] = result;
               return updated;
             }
-            // If the section is missing (shouldn't happen), append it at the
-            // correct plan index so ordering is preserved.
-            const planIdx = plan?.sections.findIndex((s) => s.id === sectionId) ?? -1;
-            if (planIdx >= 0) {
-              const updated = [...prev];
-              updated.splice(planIdx, 0, result);
-              return updated;
-            }
             return [...prev, result];
           });
           toast.success('重新生成完成');
-        } else {
-          toast.error('重新生成失败');
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : '重新生成失败';
         toast.error(msg);
-      } finally {
-        setRetryingSectionId(null);
       }
     },
-    [effectiveJobId, plan?.sections],
+    [currentJobId],
   );
 
   // ── Favorite ──
+  const effectiveJobId = currentJobId ?? viewHistoryJobId;
+
   const handleToggleFavorite = useCallback(async () => {
     if (!effectiveJobId) return;
 
@@ -1051,13 +1039,10 @@ export function TeachingPanel({
 
   // ── Convert to Classroom ──
   const handleToClassroom = useCallback(async () => {
-    if (!effectiveJobId) {
-      toast.error('请先完成或选择一份教案');
-      return;
-    }
+    if (!currentJobId) return;
     setToClassroomLoading(true);
     try {
-      const res = await fetch(`/api/sky/teaching/${effectiveJobId}/to-classroom`, {
+      const res = await fetch(`/api/sky/teaching/${currentJobId}/to-classroom`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -1074,57 +1059,7 @@ export function TeachingPanel({
     } finally {
       setToClassroomLoading(false);
     }
-  }, [effectiveJobId]);
-
-  // ── Start Classroom (sky-style config + review flow) ──
-  const handleStartClassroomConfig = useCallback(() => {
-    if (!effectiveJobId) {
-      toast.error('请先完成或选择一份教案');
-      return;
-    }
-    setConfigDialogOpen(true);
-  }, [effectiveJobId]);
-
-  const handleConfigSubmit = useCallback(
-    async (config: TeachingToClassroomConfig) => {
-      if (!effectiveJobId) return;
-      setStartClassroomLoading(true);
-      try {
-        const res = await fetch(`/api/sky/teaching/${effectiveJobId}/start-classroom`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(config),
-        });
-        const data = await res.json();
-        if (!data.success) {
-          toast.error(data.error || '创建课堂失败');
-          return;
-        }
-        const { jobId } = data.data;
-        addActiveJobEntry({ jobId, topic: plan?.title || topic });
-        useTaskStore.getState().addTask({
-          id: jobId,
-          type: 'slides',
-          label: `课堂: ${plan?.title || topic}`,
-          status: 'running',
-          progress: 30,
-          phase: '教案大纲已生成，等待审阅',
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          jobId,
-          resultRoute: `/generation-progress?jobId=${jobId}`,
-        });
-        setConfigDialogOpen(false);
-        router.push(`/generation-progress?jobId=${jobId}`);
-      } catch {
-        toast.error('创建课堂失败');
-      } finally {
-        setStartClassroomLoading(false);
-      }
-    },
-    [effectiveJobId, plan, topic, router],
-  );
+  }, [currentJobId]);
 
   // ── Next Lesson from Learning Path ──
   const handleNextLesson = useCallback(() => {
@@ -1182,32 +1117,36 @@ export function TeachingPanel({
     <div className="space-y-6">
       {/* ═══ 教学指令台 ═══ */}
       <div
-        className="rounded-xl border backdrop-blur-sm overflow-hidden"
-        style={{
-          background: 'var(--teaching-surface)',
-          borderColor: 'var(--teaching-border)',
-          boxShadow: '0 0 24px -6px rgba(45, 212, 191, 0.08)',
-        }}
+        className="rounded-2xl border bg-[var(--teaching-surface)] backdrop-blur-sm overflow-hidden shadow-sm"
+        style={{ borderColor: 'var(--teaching-border)' }}
       >
         <div
-          className="px-5 pt-4 pb-3"
+          className="px-5 pt-5 pb-4"
           style={{
-            background: 'linear-gradient(135deg, rgba(45, 212, 191, 0.08) 0%, transparent 100%)',
+            background:
+              'linear-gradient(135deg, color-mix(in srgb, var(--teaching-primary) 6%, transparent) 0%, transparent 100%)',
             borderBottom: '1px solid var(--teaching-border)',
           }}
         >
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-[var(--teaching-primary)]" />
-            <h3 className="text-base font-semibold" style={{ color: 'var(--teaching-text)' }}>
-              教学指令台
-            </h3>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--teaching-primary)]/10 border border-[var(--teaching-primary)]/20">
+              <Sparkles className="h-4 w-4 text-[var(--teaching-primary)]" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-[var(--teaching-text)]">教学指令台</h3>
+              <p className="text-sm text-[var(--teaching-muted)]">
+                输入授课主题，AI 导师将根据你的学习情况生成个性化教案
+              </p>
+            </div>
           </div>
-          <p className="text-sm mt-1" style={{ color: 'var(--teaching-muted)' }}>
-            输入授课主题，AI 导师将根据你的学习情况生成个性化教案并流式推送
-          </p>
         </div>
-        <div className="px-5 py-4">
-          <div className="flex gap-3">
+        <div className="px-5 py-5">
+          {personalizationNotice && !done && (
+            <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-4 py-3 text-sm text-emerald-200">
+              {personalizationNotice}
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <Input
                 value={topic}
@@ -1217,7 +1156,7 @@ export function TeachingPanel({
                   if (e.key === 'Enter' && canSubmit) handleStart();
                 }}
                 disabled={loading}
-                className="flex-1"
+                className="h-12 rounded-xl border-[var(--teaching-border)] bg-white/70 dark:bg-slate-900/50 px-4 text-[var(--teaching-text)] placeholder:text-[var(--teaching-muted)] focus:border-[var(--teaching-primary)] focus:ring-[var(--teaching-primary)]/20"
                 onFocus={() => {
                   if (suggestions.length > 0) setShowSuggestions(true);
                 }}
@@ -1228,11 +1167,11 @@ export function TeachingPanel({
               />
               {/* Search suggestions dropdown */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg">
+                <div className="absolute z-10 top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
                   {suggestions.map((suggestion) => (
                     <button
                       key={suggestion}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                      className="w-full text-left px-4 py-2.5 text-sm text-[var(--teaching-text)] hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
                       onMouseDown={() => handleSelectSuggestion(suggestion)}
                     >
                       {suggestion}
@@ -1245,7 +1184,7 @@ export function TeachingPanel({
               <Button
                 onClick={handleCancel}
                 variant="outline"
-                className="min-w-[100px] h-10 border-red-500/30 text-red-400 hover:bg-red-900/20 hover:border-red-500/50"
+                className="min-w-[120px] h-12 rounded-xl border-red-500/30 text-red-400 hover:bg-red-900/20 hover:border-red-500/50"
               >
                 <X className="h-4 w-4 mr-2" />
                 取消
@@ -1254,9 +1193,9 @@ export function TeachingPanel({
               <button
                 onClick={handleStart}
                 disabled={!canSubmit}
-                className="teaching-button-primary teaching-button-sweep min-w-[120px] h-10 rounded-lg px-4 text-sm font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="teaching-button-primary teaching-button-sweep min-w-[140px] h-12 rounded-xl px-5 text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-[var(--teaching-text)]"
               >
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-4 w-4 text-[var(--teaching-primary)]" />
                 启动授课
               </button>
             )}
@@ -1264,8 +1203,8 @@ export function TeachingPanel({
 
           {/* Recommended topics */}
           {recommendedTopics.length > 0 && !loading && !done && (
-            <div className="mt-3">
-              <p className="text-xs text-muted-foreground mb-2">
+            <div className="mt-4">
+              <p className="text-xs font-medium text-[var(--teaching-muted)] mb-2">
                 {hasProfile ? '根据你的学习情况推荐：' : '热门推荐：'}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -1273,7 +1212,7 @@ export function TeachingPanel({
                   <Badge
                     key={t}
                     variant="outline"
-                    className="cursor-pointer hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                    className="cursor-pointer rounded-full px-3 py-1 text-xs font-medium border-[var(--teaching-border)] text-[var(--teaching-text)] hover:border-[var(--teaching-border-strong)] hover:bg-[var(--teaching-primary)]/8 transition-colors"
                     onClick={() => handleSelectRecommended(t)}
                   >
                     {t}
@@ -1284,14 +1223,12 @@ export function TeachingPanel({
           )}
 
           {!user && (
-            <p className="text-xs mt-2" style={{ color: 'var(--teaching-warm)' }}>
-              请先登录后再使用授课功能
-            </p>
+            <p className="text-xs mt-3 text-[var(--teaching-warm)]">请先登录后再使用授课功能</p>
           )}
         </div>
       </div>
 
-      {/* ═══ 全息教案投射 — 备课进度 ═══ */}
+      {/* ═══ 备课进度 ═══ */}
       <AnimatePresence>
         {loading && (
           <motion.div
@@ -1301,87 +1238,65 @@ export function TeachingPanel({
             transition={{ duration: 0.3 }}
           >
             <div
-              className="rounded-xl border backdrop-blur-sm overflow-hidden"
-              style={{
-                background: 'var(--teaching-surface)',
-                borderColor: 'var(--teaching-border)',
-              }}
+              className="rounded-2xl border bg-[var(--teaching-surface)] backdrop-blur-sm overflow-hidden shadow-sm"
+              style={{ borderColor: 'var(--teaching-border)' }}
             >
-              <div className="p-5 space-y-4">
+              <div className="p-5 space-y-5">
                 {/* Header */}
-                <div className="flex items-center gap-3">
-                  <div className="relative">
+                <div className="flex items-center gap-4">
+                  <div className="relative shrink-0">
                     <div
-                      className="h-10 w-10 rounded-xl flex items-center justify-center"
+                      className="h-11 w-11 rounded-2xl flex items-center justify-center"
                       style={{
                         background:
-                          'linear-gradient(135deg, rgba(45, 212, 191, 0.25), rgba(20, 184, 166, 0.15))',
-                        border: '1px solid rgba(45, 212, 191, 0.3)',
-                        boxShadow: '0 0 12px rgba(45, 212, 191, 0.2)',
+                          'linear-gradient(135deg, color-mix(in srgb, var(--teaching-primary) 25%, transparent), color-mix(in srgb, var(--teaching-accent) 15%, transparent))',
+                        border: '1px solid var(--teaching-border-strong)',
+                        boxShadow: '0 0 16px var(--teaching-glow)',
                       }}
                     >
                       <Sparkles className="h-5 w-5 text-[var(--teaching-primary)] animate-pulse" />
                     </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-[var(--teaching-surface)] flex items-center justify-center">
+                    <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-[var(--teaching-surface)] flex items-center justify-center">
                       <div className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p
-                      className="text-sm font-semibold truncate"
-                      style={{ color: 'var(--teaching-text)' }}
-                    >
+                    <p className="text-sm font-semibold truncate text-[var(--teaching-text)]">
                       {plan ? plan.title : '正在分析学情...'}
                     </p>
-                    <p
-                      className="text-xs mt-0.5 truncate"
-                      style={{ color: 'var(--teaching-muted)' }}
-                    >
+                    <p className="text-xs mt-0.5 truncate text-[var(--teaching-muted)]">
                       {message || '正在准备...'}
                     </p>
                   </div>
-                  <span
-                    className="text-lg font-bold font-mono teaching-glow-text"
-                    style={{ color: 'var(--teaching-primary)' }}
-                  >
+                  <span className="text-xl font-bold font-mono text-[var(--teaching-primary)]">
                     {progress}%
                   </span>
                 </div>
 
-                {/* Progress Bar with scan effect */}
+                {/* Progress Bar */}
                 <div className="relative">
                   <div
                     className="h-2.5 rounded-full overflow-hidden relative"
-                    style={{ background: 'rgba(45, 212, 191, 0.08)' }}
+                    style={{
+                      background: 'color-mix(in srgb, var(--teaching-primary) 8%, transparent)',
+                    }}
                   >
                     <motion.div
                       className="h-full rounded-full"
                       style={{
                         background:
-                          'linear-gradient(90deg, rgba(45, 212, 191, 0.6), rgba(20, 184, 166, 0.9))',
-                        boxShadow: '0 0 8px rgba(45, 212, 191, 0.4)',
+                          'linear-gradient(90deg, color-mix(in srgb, var(--teaching-primary) 60%, transparent), var(--teaching-primary))',
+                        boxShadow: '0 0 10px var(--teaching-glow)',
                       }}
                       initial={{ width: 0 }}
                       animate={{ width: `${progress}%` }}
                       transition={{ duration: 0.5, ease: 'easeOut' }}
                     />
                   </div>
-                  {/* Scanning light overlay */}
                   <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none teaching-project-scan" />
-                  {/* Glow */}
-                  <motion.div
-                    className="absolute top-0 h-2.5 rounded-full blur-sm pointer-events-none"
-                    style={{
-                      background:
-                        'linear-gradient(90deg, rgba(45, 212, 191, 0.3), rgba(20, 184, 166, 0.5))',
-                    }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.5, ease: 'easeOut' }}
-                  />
                 </div>
 
-                {/* Section Nodes — 星座连线风格 */}
+                {/* Section Nodes */}
                 {plan && plan.sections.length > 0 && (
                   <div className="flex items-center gap-1.5">
                     {plan.sections.map((sec, i) => {
@@ -1392,21 +1307,21 @@ export function TeachingPanel({
                           <div
                             className={cn(
                               'h-1.5 rounded-full transition-all duration-500',
-                              isCompleted ? '' : isCurrent ? 'teaching-teal-breathe' : '',
+                              isCompleted ? '' : isCurrent ? 'teaching-primary-breathe' : '',
                             )}
                             style={{
                               background: isCompleted
-                                ? 'linear-gradient(90deg, rgba(45, 212, 191, 0.7), rgba(20, 184, 166, 0.9))'
+                                ? 'linear-gradient(90deg, color-mix(in srgb, var(--teaching-primary) 70%, transparent), var(--teaching-primary))'
                                 : isCurrent
-                                  ? 'rgba(45, 212, 191, 0.3)'
-                                  : 'rgba(45, 212, 191, 0.08)',
-                              boxShadow: isCompleted ? '0 0 6px rgba(45, 212, 191, 0.3)' : 'none',
+                                  ? 'color-mix(in srgb, var(--teaching-primary) 30%, transparent)'
+                                  : 'color-mix(in srgb, var(--teaching-primary) 8%, transparent)',
+                              boxShadow: isCompleted ? '0 0 6px var(--teaching-glow)' : 'none',
                             }}
                           />
                           {/* Tooltip */}
                           <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                             <div
-                              className="px-2 py-1 rounded text-[10px] whitespace-nowrap"
+                              className="px-2 py-1 rounded-md text-[10px] whitespace-nowrap shadow-sm"
                               style={{
                                 background: 'var(--teaching-surface-elevated)',
                                 color: 'var(--teaching-text)',
@@ -1437,18 +1352,20 @@ export function TeachingPanel({
                       <div
                         key={step.key}
                         className={cn(
-                          'flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all',
+                          'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all',
                           isActive ? 'font-medium' : '',
                         )}
                         style={{
-                          background: isActive ? 'rgba(45, 212, 191, 0.12)' : 'transparent',
+                          background: isActive
+                            ? 'color-mix(in srgb, var(--teaching-primary) 12%, transparent)'
+                            : 'transparent',
                           color: isDone
                             ? 'var(--teaching-success)'
                             : isActive
                               ? 'var(--teaching-primary)'
                               : 'var(--teaching-muted)',
                           border: isActive
-                            ? '1px solid rgba(45, 212, 191, 0.25)'
+                            ? '1px solid var(--teaching-border-strong)'
                             : '1px solid transparent',
                         }}
                       >
@@ -1470,7 +1387,7 @@ export function TeachingPanel({
         )}
       </AnimatePresence>
 
-      {/* ═══ 全息投影卡 — 教案摘要 ═══ */}
+      {/* ═══ 教案摘要 ═══ */}
       <AnimatePresence>
         {plan && (
           <motion.div
@@ -1479,21 +1396,20 @@ export function TeachingPanel({
             transition={{ duration: 0.3 }}
           >
             <div
-              className="rounded-xl border backdrop-blur-sm overflow-hidden teaching-holo-flicker"
-              style={{
-                background: 'rgba(45, 212, 191, 0.04)',
-                borderColor: 'rgba(45, 212, 191, 0.25)',
-                boxShadow: '0 0 20px -4px rgba(45, 212, 191, 0.12)',
-              }}
+              className="rounded-2xl border bg-[var(--teaching-holo)] backdrop-blur-sm overflow-hidden shadow-sm"
+              style={{ borderColor: 'var(--teaching-border-strong)' }}
             >
-              <div className="px-5 py-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3
-                    className="text-lg font-bold teaching-glow-text"
-                    style={{ color: 'var(--teaching-primary)' }}
-                  >
-                    {plan.title}
-                  </h3>
+              <div className="px-5 py-5">
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-bold text-[var(--teaching-primary)]">
+                      {plan.title}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mt-1.5 text-[var(--teaching-muted)]">
+                      <span>预计 {plan.estimatedDuration} 分钟</span>
+                      <span>{plan.sections.length} 个章节</span>
+                    </div>
+                  </div>
                   {!currentJobId && (
                     <Button
                       variant="ghost"
@@ -1511,39 +1427,26 @@ export function TeachingPanel({
                         setShowStudyGroup(false);
                         onViewedHistory?.();
                       }}
-                      className="text-[var(--teaching-muted)] hover:text-[var(--teaching-primary)]"
+                      className="text-[var(--teaching-muted)] hover:text-[var(--teaching-primary)] hover:bg-[var(--teaching-primary)]/10 shrink-0"
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
                       返回
                     </Button>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                  <span style={{ color: 'var(--teaching-muted)' }}>
-                    预计 {plan.estimatedDuration} 分钟
-                  </span>
-                  <span style={{ color: 'var(--teaching-muted)' }}>
-                    {plan.sections.length} 个章节
-                  </span>
-                  {plan.focusPoints.length > 0 && (
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span style={{ color: 'var(--teaching-muted)' }}>重点：</span>
-                      {plan.focusPoints.map((fp) => (
-                        <span
-                          key={fp}
-                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px]"
-                          style={{
-                            background: 'rgba(45, 212, 191, 0.08)',
-                            border: '1px solid rgba(45, 212, 191, 0.2)',
-                            color: 'var(--teaching-primary)',
-                          }}
-                        >
-                          {fp}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {plan.focusPoints.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-[var(--teaching-muted)]">重点：</span>
+                    {plan.focusPoints.map((fp) => (
+                      <span
+                        key={fp}
+                        className="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium text-[var(--teaching-primary)] bg-[var(--teaching-primary)]/8 border border-[var(--teaching-primary)]/15"
+                      >
+                        {fp}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
@@ -1552,50 +1455,89 @@ export function TeachingPanel({
 
       {/* Diagnostic Quiz Modal */}
       {diagnosticStep !== 'idle' && diagnosticStep !== 'done' && (
-        <Card className="border-teal-200/50 dark:border-teal-800/30 bg-teal-50/30 dark:bg-teal-900/10">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-teal-500" />
-              <h3 className="text-base font-semibold">星际课前诊断</h3>
+        <Card
+          className="rounded-2xl border bg-[var(--teaching-surface)] overflow-hidden shadow-sm"
+          style={{ borderColor: 'var(--teaching-border)' }}
+        >
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--teaching-primary)]/10 border border-[var(--teaching-primary)]/20">
+                <Brain className="h-5 w-5 text-[var(--teaching-primary)]" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-[var(--teaching-text)]">
+                  星际课前诊断
+                </h3>
+                <p className="text-sm text-[var(--teaching-muted)]">
+                  {diagnosticStep === 'loading'
+                    ? '正在生成前置知识检测题...'
+                    : '请完成以下前置知识检测，我们将根据结果调整授课重点'}
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {diagnosticStep === 'loading'
-                ? '正在生成前置知识检测题...'
-                : '请完成以下前置知识检测，我们将根据结果调整授课重点'}
-            </p>
+            {diagnosticStep === 'ready' && diagnosticQuestions.length > 0 && (
+              <div className="mt-3 h-1.5 rounded-full bg-[var(--teaching-primary)]/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[var(--teaching-primary)] transition-all duration-300"
+                  style={{
+                    width: `${(Object.keys(diagnosticAnswers).length / diagnosticQuestions.length) * 100}%`,
+                  }}
+                />
+              </div>
+            )}
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             {diagnosticStep === 'loading' && (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-7 w-7 animate-spin text-[var(--teaching-primary)]" />
               </div>
             )}
             {diagnosticStep === 'ready' &&
               diagnosticQuestions.map((q, idx) => (
-                <div key={q.id} className="space-y-2">
-                  <p className="text-sm font-medium">
-                    {idx + 1}. {q.question}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {q.options.map((opt, optIdx) => (
-                      <Button
-                        key={optIdx}
-                        variant={diagnosticAnswers[q.id] === optIdx ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() =>
-                          setDiagnosticAnswers((prev) => ({ ...prev, [q.id]: optIdx }))
-                        }
-                        className="justify-start text-left h-auto py-2"
-                      >
-                        {String.fromCharCode(65 + optIdx)}. {opt}
-                      </Button>
-                    ))}
+                <div key={q.id} className="space-y-3">
+                  <div className="text-base font-semibold leading-relaxed text-[var(--teaching-text)]">
+                    <span className="text-[var(--teaching-primary)] mr-1">{idx + 1}.</span>
+                    <MathRenderer content={q.question} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {q.options.map((opt, optIdx) => {
+                      const selected = diagnosticAnswers[q.id] === optIdx;
+                      return (
+                        <button
+                          key={optIdx}
+                          onClick={() =>
+                            setDiagnosticAnswers((prev) => ({ ...prev, [q.id]: optIdx }))
+                          }
+                          className={cn(
+                            'flex items-start gap-3 rounded-xl border p-3.5 text-left text-sm transition-all',
+                            selected
+                              ? 'border-[var(--teaching-border-strong)] bg-[var(--teaching-primary)]/10 text-[var(--teaching-text)]'
+                              : 'border-[var(--teaching-border)] bg-white/50 dark:bg-slate-900/30 text-[var(--teaching-text)] hover:border-[var(--teaching-border-strong)] hover:bg-[var(--teaching-primary)]/5',
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-semibold mt-0.5',
+                              selected
+                                ? 'bg-[var(--teaching-primary)] text-white'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400',
+                            )}
+                          >
+                            {String.fromCharCode(65 + optIdx)}
+                          </span>
+                          <MathRenderer content={opt} />
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
             {diagnosticStep === 'ready' && diagnosticQuestions.length > 0 && (
-              <div className="flex gap-2 pt-2">
-                <Button onClick={submitDiagnostic} className="bg-teal-500 hover:bg-teal-600">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                <Button
+                  onClick={submitDiagnostic}
+                  className="h-11 rounded-xl px-6 bg-[var(--teaching-primary)] hover:bg-[var(--teaching-primary-bright)] text-white"
+                >
                   提交诊断
                 </Button>
                 <Button
@@ -1605,6 +1547,7 @@ export function TeachingPanel({
                     setDiagnosticSessionId(null);
                     startTeachingJob();
                   }}
+                  className="h-11 rounded-xl border-[var(--teaching-border)] text-[var(--teaching-muted)] hover:text-[var(--teaching-text)] hover:bg-[var(--teaching-primary)]/5"
                 >
                   跳过诊断，直接授课
                 </Button>
@@ -1618,53 +1561,93 @@ export function TeachingPanel({
       {diagnosticStep === 'done' && diagnosticResult && (
         <Card
           className={cn(
+            'rounded-2xl border overflow-hidden shadow-sm',
             diagnosticResult.accuracy >= 80
-              ? 'border-green-200 bg-green-50/30'
+              ? 'border-emerald-200/60 bg-emerald-50/40 dark:bg-emerald-950/15'
               : diagnosticResult.accuracy >= 50
-                ? 'border-teal-200 bg-teal-50/30'
-                : 'border-red-200 bg-red-50/30',
+                ? 'border-[var(--teaching-border)] bg-[var(--teaching-surface)]'
+                : 'border-red-200/60 bg-red-50/40 dark:bg-red-950/15',
           )}
         >
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              {diagnosticResult.accuracy >= 80 ? (
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-              ) : diagnosticResult.accuracy >= 50 ? (
-                <Brain className="h-5 w-5 text-teal-500" />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-red-500" />
-              )}
-              <h3 className="text-base font-semibold">诊断报告</h3>
+          <CardHeader className="pb-3">
+            <div className="flex items-start gap-4">
+              <div
+                className={cn(
+                  'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border',
+                  diagnosticResult.accuracy >= 80
+                    ? 'bg-emerald-100/70 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800/30'
+                    : diagnosticResult.accuracy >= 50
+                      ? 'bg-[var(--teaching-primary)]/10 border-[var(--teaching-primary)]/20'
+                      : 'bg-red-100/70 dark:bg-red-900/30 border-red-200 dark:border-red-800/30',
+                )}
+              >
+                {diagnosticResult.accuracy >= 80 ? (
+                  <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                ) : diagnosticResult.accuracy >= 50 ? (
+                  <Brain className="h-6 w-6 text-[var(--teaching-primary)]" />
+                ) : (
+                  <AlertCircle className="h-6 w-6 text-red-500" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold text-[var(--teaching-text)]">诊断报告</h3>
+                <p className="text-sm text-[var(--teaching-muted)] mt-0.5">
+                  {diagnosticResult.accuracy >= 80
+                    ? '前置知识掌握良好，可以进入正式授课'
+                    : diagnosticResult.accuracy >= 50
+                      ? '前置知识基本掌握，建议关注薄弱点'
+                      : '前置知识存在明显薄弱，需要重点补充'}
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p
+                  className={cn(
+                    'text-3xl font-bold',
+                    diagnosticResult.accuracy >= 80
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : diagnosticResult.accuracy >= 50
+                        ? 'text-[var(--teaching-primary)]'
+                        : 'text-red-500',
+                  )}
+                >
+                  {diagnosticResult.accuracy}%
+                </p>
+                <p className="text-xs text-[var(--teaching-muted)]">正确率</p>
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm">
-              前置知识检测正确率：<span className="font-bold">{diagnosticResult.accuracy}%</span>
-            </p>
+          <CardContent className="space-y-4">
             {diagnosticResult.weakPrerequisites.length > 0 && (
-              <div className="text-sm">
-                <p className="text-muted-foreground mb-1">薄弱前置知识点：</p>
-                <div className="flex flex-wrap gap-1">
+              <div>
+                <p className="text-xs font-medium text-[var(--teaching-muted)] mb-2">
+                  薄弱前置知识点：
+                </p>
+                <div className="flex flex-wrap gap-2">
                   {diagnosticResult.weakPrerequisites.map((wp) => (
-                    <Badge key={wp} variant="outline" className="text-xs">
+                    <Badge
+                      key={wp}
+                      variant="outline"
+                      className="text-xs rounded-full px-2.5 py-1 border-[var(--teaching-border)] text-[var(--teaching-text)] bg-[var(--teaching-primary)]/5"
+                    >
                       {wp}
                     </Badge>
                   ))}
                 </div>
               </div>
             )}
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-3 pt-1">
               <Button
                 onClick={() => {
                   setDiagnosticStep('idle');
                   setDiagnosticSessionId(null);
                   startTeachingJob();
                 }}
-                className={
+                className={cn(
+                  'h-11 rounded-xl px-6 text-white',
                   diagnosticResult.accuracy >= 50
-                    ? 'bg-green-500 hover:bg-green-600'
-                    : 'bg-teal-500 hover:bg-teal-600'
-                }
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-[var(--teaching-primary)] hover:bg-[var(--teaching-primary-bright)]',
+                )}
               >
                 {diagnosticResult.canProceed ? '开始授课' : '先开始授课，注意薄弱环节'}
               </Button>
@@ -1683,9 +1666,8 @@ export function TeachingPanel({
           section={sections[displayIndex].section}
           chunks={sections[displayIndex].chunks}
           index={displayIndex}
-          jobId={effectiveJobId ?? undefined}
+          jobId={currentJobId ?? undefined}
           profile={profile}
-          isRetrying={retryingSectionId === sections[displayIndex].section.id}
           onRetry={handleRetrySection}
           onAskQuestion={(sectionId, sectionTitle) =>
             setChatSection({ id: sectionId, title: sectionTitle })
@@ -1705,163 +1687,84 @@ export function TeachingPanel({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row items-center justify-between gap-3"
+          className="flex items-center justify-between"
         >
-          <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setDisplayIndex((i) => {
+                const next = Math.max(0, i - 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return next;
+              });
+            }}
+            disabled={displayIndex <= 0}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            上一章
+          </Button>
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {displayIndex + 1} / {plan?.sections.length ?? sections.length}
+          </span>
+          {displayIndex < sections.length - 1 ? (
             <Button
-              variant="outline"
               size="sm"
               onClick={() => {
                 setDisplayIndex((i) => {
-                  const next = Math.max(0, i - 1);
+                  const next = i + 1;
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                   return next;
                 });
               }}
-              disabled={displayIndex <= 0}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              上一章
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setDisplayIndex(0);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              disabled={displayIndex <= 0}
-            >
-              首章
-            </Button>
-          </div>
-
-          <Select
-            value={String(displayIndex)}
-            onValueChange={(value) => {
-              const next = Number(value);
-              setDisplayIndex(next);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          >
-            <SelectTrigger
-              className="h-9 min-w-[180px] max-w-[260px] text-sm"
-              style={{
-                background: 'var(--teaching-surface)',
-                borderColor: 'var(--teaching-border)',
-                color: 'var(--teaching-text)',
-              }}
-            >
-              <SelectValue placeholder="选择章节" />
-            </SelectTrigger>
-            <SelectContent
-              className="max-h-[320px]"
-              style={{
-                background: 'var(--teaching-surface-elevated)',
-                borderColor: 'var(--teaching-border)',
-              }}
-            >
-              {(plan?.sections ?? sections.map((s) => s.section)).map((sec, i) => {
-                const isAvailable = done || i < sections.length;
-                return (
-                  <SelectItem
-                    key={sec.id}
-                    value={String(i)}
-                    disabled={!isAvailable}
-                    className="text-sm"
-                    style={{ color: 'var(--teaching-text)' }}
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">第 {i + 1} 章</span>
-                      <span className="truncate max-w-[180px]">{sec.title}</span>
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-
-          <div className="flex items-center gap-2">
-            {displayIndex < sections.length - 1 ? (
-              <Button
-                size="sm"
-                onClick={() => {
-                  setDisplayIndex((i) => {
-                    const next = i + 1;
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    return next;
-                  });
-                }}
-              >
-                下一章
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            ) : loading ? (
-              <Button size="sm" disabled>
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                正在生成...
-              </Button>
-            ) : done ? (
-              <Button size="sm" disabled variant="outline">
-                <CheckCircle2 className="h-4 w-4 mr-1" />
-                已完成
-              </Button>
-            ) : (
-              <Button size="sm" disabled>
-                <ChevronRight className="h-4 w-4 ml-1" />
-                下一章
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const lastIndex = sections.length - 1;
-                setDisplayIndex(lastIndex);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              disabled={displayIndex >= sections.length - 1}
-            >
-              末章
+              下一章
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
-          </div>
+          ) : loading ? (
+            <Button size="sm" disabled>
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              正在生成下一章...
+            </Button>
+          ) : done ? null : (
+            <Button size="sm" disabled>
+              <ChevronRight className="h-4 w-4 ml-1" />
+              下一章
+            </Button>
+          )}
         </motion.div>
       )}
 
       {/* Done Banner */}
       {done && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200/50 dark:border-green-800/30">
-            <CardContent className="flex items-center justify-between py-4">
+          <Card
+            className="rounded-2xl border bg-gradient-to-br from-emerald-50/80 to-indigo-50/60 dark:from-emerald-950/20 dark:to-indigo-950/15 shadow-sm"
+            style={{ borderColor: 'var(--teaching-border)' }}
+          >
+            <CardContent className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 py-5">
               <div className="flex items-center gap-3">
-                <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400" />
-                <span className="font-medium text-green-700 dark:text-green-300">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/30">
+                  <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <span className="font-semibold text-[var(--teaching-text)]">
                   授课完成！共 {sections.length} 个章节，{plan?.estimatedDuration} 分钟
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={
-                    USE_SKY_CLASSROOM_CREATION ? handleStartClassroomConfig : handleToClassroom
-                  }
-                  disabled={USE_SKY_CLASSROOM_CREATION ? startClassroomLoading : toClassroomLoading}
-                  className="text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800 hover:text-violet-700"
+                  onClick={handleToClassroom}
+                  disabled={toClassroomLoading}
+                  className="rounded-lg border-[var(--teaching-border)] text-[var(--teaching-text)] hover:bg-[var(--teaching-primary)]/10 hover:text-[var(--teaching-primary)]"
                 >
-                  {USE_SKY_CLASSROOM_CREATION ? (
-                    startClassroomLoading ? (
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    ) : (
-                      <Presentation className="h-3 w-3 mr-1" />
-                    )
-                  ) : toClassroomLoading ? (
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  {toClassroomLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
                   ) : (
-                    <Presentation className="h-3 w-3 mr-1" />
+                    <Presentation className="h-3.5 w-3.5 mr-1.5 text-[var(--teaching-accent)]" />
                   )}
-                  {USE_SKY_CLASSROOM_CREATION ? '创建课堂' : '转为课堂模式'}
+                  转为课堂模式
                 </Button>
                 {learningPath?.nodes.some(
                   (n) => n.status === 'pending' || n.status === 'in_progress',
@@ -1871,28 +1774,23 @@ export function TeachingPanel({
                     size="sm"
                     onClick={handleNextLesson}
                     disabled={loading}
-                    className="text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:text-indigo-700"
+                    className="rounded-lg border-[var(--teaching-border)] text-[var(--teaching-text)] hover:bg-[var(--teaching-primary)]/10 hover:text-[var(--teaching-primary)]"
                   >
                     {loading ? (
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
                     ) : (
-                      <BookOpen className="h-3 w-3 mr-1" />
+                      <BookOpen className="h-3.5 w-3.5 mr-1.5 text-[var(--teaching-primary)]" />
                     )}
-                    下一课：
-                    {
-                      learningPath.nodes.find(
-                        (n) => n.status === 'pending' || n.status === 'in_progress',
-                      )?.topic
-                    }
+                    下一课
                   </Button>
                 )}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowStudyGroup((prev) => !prev)}
-                  className="text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:text-indigo-700"
+                  className="rounded-lg border-[var(--teaching-border)] text-[var(--teaching-text)] hover:bg-[var(--teaching-primary)]/10 hover:text-[var(--teaching-primary)]"
                 >
-                  <Users className="h-3 w-3 mr-1" />
+                  <Users className="h-3.5 w-3.5 mr-1.5 text-[var(--teaching-primary)]" />
                   {showStudyGroup ? '收起学习小组' : 'AI 学习小组'}
                 </Button>
                 <Button
@@ -1900,12 +1798,12 @@ export function TeachingPanel({
                   size="sm"
                   onClick={handleFetchHomework}
                   disabled={homeworkLoading}
-                  className="text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800 hover:text-sky-700"
+                  className="rounded-lg border-[var(--teaching-border)] text-[var(--teaching-text)] hover:bg-[var(--teaching-primary)]/10 hover:text-[var(--teaching-primary)]"
                 >
                   {homeworkLoading ? (
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
                   ) : (
-                    <Pencil className="h-3 w-3 mr-1" />
+                    <Pencil className="h-3.5 w-3.5 mr-1.5 text-[var(--teaching-primary)]" />
                   )}
                   {homework ? (showHomework ? '收起作业' : '查看作业') : '个性化作业'}
                 </Button>
@@ -1914,13 +1812,13 @@ export function TeachingPanel({
                   size="sm"
                   onClick={handleToggleFavorite}
                   className={cn(
-                    'border-green-200 dark:border-green-800',
+                    'rounded-lg border-[var(--teaching-border)]',
                     isFavorited
-                      ? 'text-teal-500 hover:text-teal-600'
-                      : 'text-green-600 dark:text-green-400 hover:text-green-700',
+                      ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                      : 'text-[var(--teaching-text)] hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20',
                   )}
                 >
-                  <Star className={cn('h-3 w-3 mr-1', isFavorited && 'fill-current')} />
+                  <Star className={cn('h-3.5 w-3.5 mr-1.5', isFavorited && 'fill-current')} />
                   {isFavorited ? '已收藏' : '收藏'}
                 </Button>
               </div>
@@ -1929,17 +1827,6 @@ export function TeachingPanel({
         </motion.div>
       )}
 
-      {/* Create Classroom Config Dialog */}
-      <ClassroomConfigDialog
-        key={effectiveJobId || 'new'}
-        open={configDialogOpen}
-        onOpenChange={setConfigDialogOpen}
-        plan={plan}
-        sections={sections}
-        onSubmit={handleConfigSubmit}
-        loading={startClassroomLoading}
-      />
-
       {/* Learning Summary */}
       {done && (feedbackStats.mastered > 0 || feedbackStats.needsReview > 0) && (
         <motion.div
@@ -1947,27 +1834,30 @@ export function TeachingPanel({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <Card className="border-blue-200/50 dark:border-blue-800/30 bg-blue-50/30 dark:bg-blue-900/10">
+          <Card
+            className="rounded-2xl border bg-[var(--teaching-surface)] shadow-sm"
+            style={{ borderColor: 'var(--teaching-border)' }}
+          >
             <CardContent className="py-4">
-              <div className="flex flex-wrap items-center gap-4">
+              <div className="flex flex-wrap items-center gap-5">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                  <BookOpen className="h-4 w-4 text-[var(--teaching-primary)]" />
+                  <span className="text-sm text-[var(--teaching-text)]">
                     已完成 <strong>{sections.length}</strong> 节
                   </span>
                 </div>
                 {feedbackStats.mastered > 0 && (
                   <div className="flex items-center gap-2">
-                    <ThumbsUp className="h-4 w-4 text-green-500" />
-                    <span className="text-sm text-green-700 dark:text-green-300">
+                    <ThumbsUp className="h-4 w-4 text-emerald-500" />
+                    <span className="text-sm text-[var(--teaching-text)]">
                       标记掌握 <strong>{feedbackStats.mastered}</strong> 个知识点
                     </span>
                   </div>
                 )}
                 {feedbackStats.needsReview > 0 && (
                   <div className="flex items-center gap-2">
-                    <ThumbsDown className="h-4 w-4 text-teal-500" />
-                    <span className="text-sm text-teal-700 dark:text-teal-300">
+                    <ThumbsDown className="h-4 w-4 text-[var(--teaching-accent)]" />
+                    <span className="text-sm text-[var(--teaching-text)]">
                       建议复习 <strong>{feedbackStats.needsReview}</strong> 个知识点
                     </span>
                   </div>
@@ -1987,54 +1877,66 @@ export function TeachingPanel({
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="border-sky-200/50 dark:border-sky-800/30 bg-sky-50/30 dark:bg-sky-900/10">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-sky-500" />
-                  <h3 className="text-base font-semibold">{homework.title}</h3>
+            <Card
+              className="rounded-2xl border bg-[var(--teaching-surface)] shadow-sm overflow-hidden"
+              style={{ borderColor: 'var(--teaching-border)' }}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--teaching-primary)]/10 border border-[var(--teaching-primary)]/20">
+                    <FileText className="h-5 w-5 text-[var(--teaching-primary)]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-base font-semibold text-[var(--teaching-text)]">
+                      {homework.title}
+                    </h3>
+                    <p className="text-sm text-[var(--teaching-muted)]">{homework.description}</p>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">{homework.description}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-[var(--teaching-muted)] mt-2">
                   <span>预计 {homework.estimatedDuration} 分钟</span>
                   <span>·</span>
                   <span>{homework.questions.length} 道题</span>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5">
                 {homework.questions.map((q, idx) => (
-                  <div key={q.id} className="space-y-2">
+                  <div key={q.id} className="space-y-2.5">
                     <div className="flex items-start gap-2">
-                      <span className="text-sm font-medium text-sky-600 dark:text-sky-400 shrink-0">
+                      <span className="text-sm font-semibold text-[var(--teaching-primary)] shrink-0">
                         {idx + 1}.
                       </span>
-                      <div className="text-sm leading-relaxed">
+                      <div className="text-sm leading-relaxed text-[var(--teaching-text)]">
                         <MathRenderer content={q.question} />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-5">
                       {q.options.map((opt, optIdx) => (
                         <div
                           key={optIdx}
-                          className="text-sm px-3 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                          className="text-sm px-3 py-2.5 rounded-xl border border-[var(--teaching-border)] bg-white/70 dark:bg-slate-900/40 text-[var(--teaching-text)]"
                         >
-                          <span className="font-medium text-slate-500 mr-1">
+                          <span className="font-medium text-[var(--teaching-muted)] mr-1">
                             {String.fromCharCode(65 + optIdx)}.
                           </span>
                           <MathRenderer content={opt} />
                         </div>
                       ))}
                     </div>
-                    <div className="flex items-center gap-2 pl-6">
-                      <Badge variant="outline" className="text-[11px]">
+                    <div className="flex items-center gap-2 pl-5">
+                      <Badge
+                        variant="outline"
+                        className="text-[11px] rounded-full px-2.5 py-0.5 border-[var(--teaching-border)] text-[var(--teaching-text)]"
+                      >
                         {q.knowledgePoint}
                       </Badge>
                       <Badge
                         variant="secondary"
                         className={cn(
-                          'text-[11px]',
+                          'text-[11px] rounded-full px-2.5 py-0.5',
                           q.source === 'question-bank'
                             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                            : 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+                            : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
                         )}
                       >
                         {q.source === 'question-bank' ? '题库' : 'AI生成'}
@@ -2056,20 +1958,14 @@ export function TeachingPanel({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            <div
-              className="rounded-xl border flex items-center gap-3 px-5 py-4"
-              style={{
-                background: 'rgba(239, 68, 68, 0.06)',
-                borderColor: 'rgba(239, 68, 68, 0.2)',
-              }}
-            >
-              <AlertCircle className="h-5 w-5 text-red-400 shrink-0" />
-              <span className="text-sm text-red-300 flex-1">{error}</span>
+            <div className="rounded-2xl border border-red-200/60 dark:border-red-800/40 bg-red-50/50 dark:bg-red-950/15 flex items-center gap-3 px-5 py-4">
+              <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
+              <span className="text-sm text-red-700 dark:text-red-300 flex-1">{error}</span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleStart}
-                className="text-red-400 border-red-500/30 hover:bg-red-900/20 hover:border-red-500/50"
+                className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
                 <RefreshCw className="h-3 w-3 mr-1" />
                 重试

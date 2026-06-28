@@ -158,12 +158,12 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
   }, [user, checkedIn, checkingIn]);
 
   return (
-    <div className="flex h-screen w-full flex-col relative">
+    <div className="relative flex h-screen w-full flex-col overflow-x-hidden">
       <AtmosphericBackground />
 
       {/* Header */}
       <header
-        className={`sticky top-0 z-50 grid h-16 shrink-0 grid-cols-3 items-center px-6 transition-all duration-500 ${
+        className={`sticky top-0 z-50 flex shrink-0 flex-wrap items-center gap-3 px-4 py-3 transition-all duration-500 md:grid md:h-16 md:grid-cols-3 md:gap-0 md:px-6 md:py-0 ${
           scrolled
             ? 'bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0_1px_20px_-8px_rgba(15,23,42,0.08)] dark:shadow-[0_1px_20px_-8px_rgba(0,0,0,0.2)] border-b border-slate-200/40 dark:border-slate-700/20'
             : 'bg-transparent'
@@ -178,15 +178,15 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
           />
         )}
 
-        <div className="flex items-center gap-3">
+        <div className="order-1 flex items-center gap-3 md:order-none">
           <Logo />
         </div>
 
-        <div className="flex justify-center">
+        <div className="order-3 w-full overflow-x-auto pb-1 md:order-none md:flex md:w-auto md:justify-center md:overflow-visible md:pb-0">
           <SkyTabBar />
         </div>
 
-        <div className="flex items-center justify-end gap-3">
+        <div className="order-2 ml-auto flex items-center justify-end gap-2 md:order-none md:ml-0 md:gap-3">
           {/* Check-in Button - Only show when logged in and not checked in */}
           {user && !checkedIn && (
             <Button
@@ -206,12 +206,12 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
             </div>
           )}
           <HeaderControls />
-          <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700/40" />
+          <div className="hidden h-5 w-px bg-slate-200/60 dark:bg-slate-700/40 sm:block" />
           <FloatingUserCard onUpgradeOpen={() => setUpgradeOpen(true)} />
         </div>
       </header>
 
-      <main className="flex-1 px-6 py-6">{children}</main>
+      <main className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</main>
 
       <BackgroundTasksIndicator />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />

@@ -1,0 +1,357 @@
+{
+  "id": "xTvKRtcGvC",
+  "status": "awaiting_review",
+  "step": "generating_outlines",
+  "progress": 30,
+  "message": "大纲已生成，等待审阅",
+  "createdAt": "2026-06-24T10:13:11.411Z",
+  "updatedAt": "2026-06-24T10:13:29.357Z",
+  "inputSummary": {
+    "requirementPreview": "格林公式\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-24T10:13:11.422Z",
+  "totalScenes": 8,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "课程导入：从微积分到格林公式",
+        "description": "介绍格林公式的背景与意义，建立学习者对课程内容的初步认知。",
+        "keyPoints": [
+          "回顾单变量微积分的基本定理：牛顿-莱布尼茨公式",
+          "引出问题：在平面区域上，如何将曲线积分与二重积分联系起来？",
+          "介绍格林公式的核心思想：它是微积分基本定理在二维空间中的推广"
+        ],
+        "teachingObjective": "了解格林公式在微积分体系中的位置和作用",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "格林公式的基本形式",
+        "description": "呈现格林公式的标准数学表达式，并解释其中各符号的含义。",
+        "keyPoints": [
+          "格林公式标准形式：∮_C (P dx + Q dy) = ∬_D (∂Q/∂x - ∂P/∂y) dA",
+          "解释符号：C 是分段光滑的封闭曲线，D 是 C 所围成的区域",
+          "强调 Green 公式的条件：函数 P(x,y) 和 Q(x,y) 在 D 上具有一阶连续偏导数"
+        ],
+        "teachingObjective": "记忆并理解格林公式的数学表达式",
+        "estimatedDuration": 150,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "公式的直观理解：旋度与环量",
+        "description": "从物理和几何角度解释格林公式的意义，帮助学习者建立直观认识。",
+        "keyPoints": [
+          "解释环量 (Circulation)：曲线积分 ∮_C (P dx + Q dy) 代表向量场沿闭合曲线的环量",
+          "解释旋度 (Curl)：被积函数 (∂Q/∂x - ∂P/∂y) 是向量场的旋度（二维情况下的标量形式）",
+          "核心思想：通过区域内部的旋度之和，计算边界上的环量"
+        ],
+        "teachingObjective": "从物理直观角度理解格林公式的意义",
+        "estimatedDuration": 150,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "interactive",
+        "title": "交互探索：向量场与格林公式",
+        "description": "通过可视化交互组件，让学习者调整向量场参数，观察环量与旋度的关系。",
+        "keyPoints": [
+          "调整参数 P 和 Q 的表达式，观察向量场的变化",
+          "观察不同闭合曲线 C 下的环量计算",
+          "实时计算并显示环量与旋度积分值，验证格林公式"
+        ],
+        "teachingObjective": "通过交互式探索，加深对格林公式直观理解",
+        "estimatedDuration": 300,
+        "order": 4,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "格林公式：验证向量场环量与旋度积分相等",
+          "keyVariables": [
+            "P(x,y)的表达式 (如: -y, x^2, y^2)",
+            "Q(x,y)的表达式 (如: x, xy, x^2)",
+            "路径 C 的形状 (圆形、矩形、自定义)",
+            "路径缩放比例"
+          ]
+        }
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "格林公式的应用（一）：计算曲线积分",
+        "description": "展示如何用格林公式将复杂的曲线积分转化为更简单的二重积分。",
+        "keyPoints": [
+          "场景案例：计算 ∮_C (x^2 y dx + x y^2 dy)，其中 C 为单位圆",
+          "步骤1：识别 P 和 Q",
+          "步骤2：计算偏导数 ∂Q/∂x 和 ∂P/∂y",
+          "步骤3：在区域 D 上计算二重积分"
+        ],
+        "teachingObjective": "掌握利用格林公式计算曲线积分的方法",
+        "estimatedDuration": 180,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "格林公式的应用（二）：计算平面区域面积",
+        "description": "展示格林公式的一个巧妙应用：用曲线积分计算平面图形的面积。",
+        "keyPoints": [
+          "推导：令 P = -y, Q = x，则 (∂Q/∂x - ∂P/∂y) = 2",
+          "面积公式：A = 1/2 ∮_C (x dy - y dx)",
+          "应用示例：用此公式计算椭圆或星形线的面积"
+        ],
+        "teachingObjective": "掌握利用格林公式进行面积计算的技巧",
+        "estimatedDuration": 150,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "阶段测验：格林公式基础",
+        "description": "通过几个选择题和计算题，检验学习者对格林公式的理解和应用能力。",
+        "keyPoints": [
+          "检验格林公式表达式和条件的记忆",
+          "考察利用格林公式计算曲线积分的基本步骤",
+          "应用格林公式求面积的特定技巧"
+        ],
+        "teachingObjective": "自我检测并巩固格林公式相关知识",
+        "estimatedDuration": 240,
+        "order": 7,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "格林公式的推广与总结",
+        "description": "总结格林公式，并介绍其在高维空间中的推广形式——斯托克斯公式。",
+        "keyPoints": [
+          "回顾格林公式的核心：边界与内部的联系",
+          "简要介绍斯托克斯公式：将格林公式从二维推广到三维空间中的曲面",
+          "[Table]格林公式与斯托克斯公式对比：维度、对象、公式形式"
+        ],
+        "teachingObjective": "理解格林公式的广泛意义及其在高维的推广",
+        "estimatedDuration": 120,
+        "order": 8
+      }
+    ],
+    "languageDirective": "The user's requirement is written in Chinese, and the course topic '格林公式' (Green's Theorem) is a mathematics topic. The course will be taught in Chinese, using standard Chinese mathematical terminology for concepts like '曲线积分' (line integrals), '二重积分' (double integrals), and '格林公式' (Green's Theorem). When introducing the formula, the symbolic notation and the standard English name 'Green's Theorem' may be shown alongside the Chinese translation for clarity. The teaching language and all scene content will be in Chinese.",
+    "topicSummary": "格林公式",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "ospjvCCUxs",
+      "name": "课程导入：从微积分到格林公式",
+      "languageDirective": "The user's requirement is written in Chinese, and the course topic '格林公式' (Green's Theorem) is a mathematics topic. The course will be taught in Chinese, using standard Chinese mathematical terminology for concepts like '曲线积分' (line integrals), '二重积分' (double integrals), and '格林公式' (Green's Theorem). When introducing the formula, the symbolic notation and the standard English name 'Green's Theorem' may be shown alongside the Chinese translation for clarity. The teaching language and all scene content will be in Chinese.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782296009356,
+      "updatedAt": 1782296009356,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "格林公式\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "课程导入：从微积分到格林公式",
+      "description": "介绍格林公式的背景与意义，建立学习者对课程内容的初步认知。",
+      "keyPoints": [
+        "回顾单变量微积分的基本定理：牛顿-莱布尼茨公式",
+        "引出问题：在平面区域上，如何将曲线积分与二重积分联系起来？",
+        "介绍格林公式的核心思想：它是微积分基本定理在二维空间中的推广"
+      ],
+      "teachingObjective": "了解格林公式在微积分体系中的位置和作用",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "格林公式的基本形式",
+      "description": "呈现格林公式的标准数学表达式，并解释其中各符号的含义。",
+      "keyPoints": [
+        "格林公式标准形式：∮_C (P dx + Q dy) = ∬_D (∂Q/∂x - ∂P/∂y) dA",
+        "解释符号：C 是分段光滑的封闭曲线，D 是 C 所围成的区域",
+        "强调 Green 公式的条件：函数 P(x,y) 和 Q(x,y) 在 D 上具有一阶连续偏导数"
+      ],
+      "teachingObjective": "记忆并理解格林公式的数学表达式",
+      "estimatedDuration": 150,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "公式的直观理解：旋度与环量",
+      "description": "从物理和几何角度解释格林公式的意义，帮助学习者建立直观认识。",
+      "keyPoints": [
+        "解释环量 (Circulation)：曲线积分 ∮_C (P dx + Q dy) 代表向量场沿闭合曲线的环量",
+        "解释旋度 (Curl)：被积函数 (∂Q/∂x - ∂P/∂y) 是向量场的旋度（二维情况下的标量形式）",
+        "核心思想：通过区域内部的旋度之和，计算边界上的环量"
+      ],
+      "teachingObjective": "从物理直观角度理解格林公式的意义",
+      "estimatedDuration": 150,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "interactive",
+      "title": "交互探索：向量场与格林公式",
+      "description": "通过可视化交互组件，让学习者调整向量场参数，观察环量与旋度的关系。",
+      "keyPoints": [
+        "调整参数 P 和 Q 的表达式，观察向量场的变化",
+        "观察不同闭合曲线 C 下的环量计算",
+        "实时计算并显示环量与旋度积分值，验证格林公式"
+      ],
+      "teachingObjective": "通过交互式探索，加深对格林公式直观理解",
+      "estimatedDuration": 300,
+      "order": 4,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "格林公式：验证向量场环量与旋度积分相等",
+        "keyVariables": [
+          "P(x,y)的表达式 (如: -y, x^2, y^2)",
+          "Q(x,y)的表达式 (如: x, xy, x^2)",
+          "路径 C 的形状 (圆形、矩形、自定义)",
+          "路径缩放比例"
+        ]
+      }
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "格林公式的应用（一）：计算曲线积分",
+      "description": "展示如何用格林公式将复杂的曲线积分转化为更简单的二重积分。",
+      "keyPoints": [
+        "场景案例：计算 ∮_C (x^2 y dx + x y^2 dy)，其中 C 为单位圆",
+        "步骤1：识别 P 和 Q",
+        "步骤2：计算偏导数 ∂Q/∂x 和 ∂P/∂y",
+        "步骤3：在区域 D 上计算二重积分"
+      ],
+      "teachingObjective": "掌握利用格林公式计算曲线积分的方法",
+      "estimatedDuration": 180,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "格林公式的应用（二）：计算平面区域面积",
+      "description": "展示格林公式的一个巧妙应用：用曲线积分计算平面图形的面积。",
+      "keyPoints": [
+        "推导：令 P = -y, Q = x，则 (∂Q/∂x - ∂P/∂y) = 2",
+        "面积公式：A = 1/2 ∮_C (x dy - y dx)",
+        "应用示例：用此公式计算椭圆或星形线的面积"
+      ],
+      "teachingObjective": "掌握利用格林公式进行面积计算的技巧",
+      "estimatedDuration": 150,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "阶段测验：格林公式基础",
+      "description": "通过几个选择题和计算题，检验学习者对格林公式的理解和应用能力。",
+      "keyPoints": [
+        "检验格林公式表达式和条件的记忆",
+        "考察利用格林公式计算曲线积分的基本步骤",
+        "应用格林公式求面积的特定技巧"
+      ],
+      "teachingObjective": "自我检测并巩固格林公式相关知识",
+      "estimatedDuration": 240,
+      "order": 7,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "格林公式的推广与总结",
+      "description": "总结格林公式，并介绍其在高维空间中的推广形式——斯托克斯公式。",
+      "keyPoints": [
+        "回顾格林公式的核心：边界与内部的联系",
+        "简要介绍斯托克斯公式：将格林公式从二维推广到三维空间中的曲面",
+        "[Table]格林公式与斯托克斯公式对比：维度、对象、公式形式"
+      ],
+      "teachingObjective": "理解格林公式的广泛意义及其在高维的推广",
+      "estimatedDuration": 120,
+      "order": 8
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "The user's requirement is written in Chinese, and the course topic '格林公式' (Green's Theorem) is a mathematics topic. The course will be taught in Chinese, using standard Chinese mathematical terminology for concepts like '曲线积分' (line integrals), '二重积分' (double integrals), and '格林公式' (Green's Theorem). When introducing the formula, the symbolic notation and the standard English name 'Green's Theorem' may be shown alongside the Chinese translation for clarity. The teaching language and all scene content will be in Chinese.",
+    "totalScenes": 8
+  },
+  "topicSummary": "格林公式"
+}

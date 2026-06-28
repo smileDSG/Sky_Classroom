@@ -13,9 +13,7 @@ export interface BaseLatexElementProps {
  */
 export function BaseLatexElement({ elementInfo }: BaseLatexElementProps) {
   return (
-    <div
-      className="base-element-latex relative w-full h-full"
-    >
+    <div className="base-element-latex relative w-full h-full">
       <div
         className="rotate-wrapper w-full h-full"
         style={{ transform: `rotate(${elementInfo.rotate}deg)` }}
@@ -80,7 +78,11 @@ function KatexContent({
     const naturalW = innerRef.current.scrollWidth;
     const naturalH = innerRef.current.scrollHeight;
     if (naturalW > 0 && naturalH > 0) {
-      setScale(Math.min(width / naturalW, height / naturalH));
+      const nextScale = Math.min(1, (width - 16) / naturalW, (height - 12) / naturalH);
+      const frame = requestAnimationFrame(() => {
+        setScale(Number.isFinite(nextScale) ? Math.max(0.01, nextScale) : 1);
+      });
+      return () => cancelAnimationFrame(frame);
     }
   }, [html, width, height]);
 
@@ -105,6 +107,7 @@ function KatexContent({
         style={{
           transformOrigin: origin,
           transform: `scale(${scale})`,
+          maxWidth: 'none',
           whiteSpace: 'nowrap',
         }}
         dangerouslySetInnerHTML={{ __html: html }}

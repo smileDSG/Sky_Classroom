@@ -12,6 +12,9 @@ import type {
   PPTElement,
   PPTTextElement,
   PPTLatexElement,
+  PPTShapeElement,
+  PPTImageElement,
+  PPTLineElement,
   SlideBackground,
 } from '@/lib/types/slides';
 import type {
@@ -24,10 +27,13 @@ import type {
 } from '@/lib/types/stage';
 import type { TeachingJob, GeneratedSectionData } from '@/lib/server/teaching-job-store';
 import type { Action } from '@/lib/types/action';
-import {
-  layoutContentWithTemplate,
-  selectTemplateForOutline,
-} from '@/lib/generation/classroom-template-layout-agent';
+import type { StructuredContent } from '@/lib/generation/classroom-content-agent';
+import type { SceneOutline } from '@/lib/types/generation';
+import type { AICallFn } from '@/lib/generation/pipeline-types';
+import { generateSlideContent } from '@/lib/generation/scene-content/slide-generator';
+import { polishSlide } from '@/lib/generation/scene-content/slide-polish';
+import { callLLM } from '@/lib/ai/llm';
+import { resolveModel } from '@/lib/server/resolve-model';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('TeachingToClassroom');
@@ -49,6 +55,7 @@ const DEFAULT_BACKGROUND: SlideBackground = {
 
 /** Approximate chars that fit in a content slide body area */
 const MAX_CHARS_PER_SLIDE = 280;
+let teachingSlideAiCallPromise: Promise<AICallFn | null> | null = null;
 
 function createId(prefix: string): string {
   return `${prefix}_${nanoid(8)}`;
@@ -227,15 +234,18 @@ function chunksToSlides(
 
   const flushPage = () => {
     if (currentPageElements.length <= 1) return; // Only title, skip empty page
-    const slide: Slide = {
-      id: createId('slide'),
-      viewportSize: CANVAS_W,
-      viewportRatio: CANVAS_H / CANVAS_W,
-      theme: DEFAULT_THEME,
-      elements: currentPageElements,
-      background: DEFAULT_BACKGROUND,
-      type: 'content',
-    };
+    const slide: Slide = polishSlide(
+      {
+        id: createId('slide'),
+        viewportSize: CANVAS_W,
+        viewportRatio: CANVAS_H / CANVAS_W,
+        theme: DEFAULT_THEME,
+        elements: currentPageElements,
+        background: DEFAULT_BACKGROUND,
+        type: 'content',
+      },
+      { title: section.title, keyPoints: section.knowledgePoints },
+    );
 
     const slideContent: SlideContent = {
       type: 'slide',
@@ -249,9 +259,10 @@ function chunksToSlides(
     const kpText = section.knowledgePoints?.length
       ? `本节重点：${section.knowledgePoints.join('、')}。`
       : '';
-    const speechText = pageCount === 0
-      ? `接下来我们进入「${section.title}」。${kpText}${section.estimatedDuration ? `预计用时 ${section.estimatedDuration} 分钟。` : ''}`
-      : `我们继续「${section.title}」的讲解。`;
+    const speechText =
+      pageCount === 0
+        ? `接下来我们进入「${section.title}」。${kpText}${section.estimatedDuration ? `预计用时 ${section.estimatedDuration} 分钟。` : ''}`
+        : `我们继续「${section.title}」的讲解。`;
 
     actions.push({
       id: createId('action'),
@@ -411,27 +422,993 @@ function convertSectionToQuizScene(
   };
 }
 
-// ── Layout Agent helpers ─────────────────────────────────────────
+// OpenMAIC-style slide layout helpers
 
-/** Convert StructuredContent into a Slide using the Layout Agent */
-async function structuredToSlide(
-  structured: import('@/lib/generation/classroom-content-agent').StructuredContent,
+function createTextElement(
+  content: string,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  options: {
+    color?: string;
+    fontSize?: number;
+    fill?: string;
+    lineHeight?: number;
+    textType?: 'title' | 'content';
+    italic?: boolean;
+  } = {},
+): PPTTextElement {
+  const fontSize = options.fontSize ?? 20;
+  const color = options.color ?? '#243044';
+  const fontStyle = options.italic ? 'font-style:italic;' : '';
+  return {
+    id: createId('el'),
+    type: 'text',
+    left,
+    top,
+    width,
+    height,
+    rotate: 0,
+    content: `<p style="font-size:${fontSize}px;color:${color};line-height:${options.lineHeight ?? 1.45};${fontStyle}">${content}</p>`,
+    defaultFontName: 'Microsoft YaHei',
+    defaultColor: color,
+    lineHeight: options.lineHeight ?? 1.45,
+    paragraphSpace: 4,
+    fill: options.fill,
+    textType: options.textType ?? 'content',
+  };
+}
+
+function createShapeElement(
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  fill: string,
+  opacity = 1,
+): PPTShapeElement {
+  return {
+    id: createId('shape'),
+    type: 'shape',
+    left,
+    top,
+    width,
+    height,
+    rotate: 0,
+    viewBox: `0 0 ${width} ${height}`,
+    path: `M0 0 L${width} 0 L${width} ${height} L0 ${height} Z`,
+    fixedRatio: false,
+    fill,
+    opacity,
+  };
+}
+
+function createRuleElement(
+  left: number,
+  top: number,
+  width: number,
+  color = '#2f80d1',
+): PPTLineElement {
+  return {
+    id: createId('line'),
+    type: 'line',
+    left,
+    top,
+    width: 3,
+    start: [0, 0],
+    end: [width, 0],
+    style: 'solid',
+    color,
+    points: ['', ''],
+  };
+}
+
+function createImageElement(
+  src: string,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+): PPTImageElement {
+  return {
+    id: createId('img'),
+    type: 'image',
+    left,
+    top,
+    width,
+    height,
+    rotate: 0,
+    fixedRatio: true,
+    src,
+    radius: 0,
+  };
+}
+
+function bulletsHtml(items: Array<{ title?: string; desc: string }>, max = 4): string {
+  return items
+    .slice(0, max)
+    .map((item) => {
+      const title = item.title ? `<strong>${escapeHtml(item.title)}:</strong> ` : '';
+      return `&bull; ${title}${escapeHtml(item.desc)}`;
+    })
+    .join('<br/>');
+}
+
+function splitSentences(text: string, max = 4): Array<{ desc: string }> {
+  return text
+    .split(/[\n。！？.!?；;]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, max)
+    .map((desc) => ({ desc }));
+}
+
+function stableIndexFromText(text: string, modulo: number): number {
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash * 31 + text.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % modulo;
+}
+
+function structuredLayoutSeed(structured: StructuredContent, sectionTitle: string): string {
+  const title = 'title' in structured && structured.title ? structured.title : sectionTitle;
+  const content =
+    structured.type === 'concept'
+      ? structured.cards.map((card) => `${card.title}:${card.desc}`).join('|')
+      : '';
+  return `${structured.type}:${sectionTitle}:${title}:${content}`;
+}
+
+function stableRange(seed: string, salt: string, min: number, max: number): number {
+  return min + stableIndexFromText(`${seed}:${salt}`, max - min + 1);
+}
+
+function stablePick<T>(items: T[], seed: string, salt: string): T {
+  return items[stableIndexFromText(`${seed}:${salt}`, items.length)];
+}
+function containsAny(text: string, patterns: RegExp[]): boolean {
+  return patterns.some((pattern) => pattern.test(text));
+}
+
+function addMiniDiagram(elements: PPTElement[], left: number, top: number, title: string): void {
+  elements.push(createShapeElement(left, top, 410, 245, '#f8fbff', 1));
+  elements.push(createShapeElement(left + 22, top + 26, 366, 34, '#eaf4ff', 1));
+  elements.push(
+    createTextElement(`<strong>${escapeHtml(title)}</strong>`, left + 38, top + 33, 320, 22, {
+      fontSize: 14,
+      color: '#1f456e',
+    }),
+  );
+
+  const cards = [
+    { x: left + 28, y: top + 82, fill: '#fff7ed', label: 'Input' },
+    { x: left + 158, y: top + 82, fill: '#eef7ff', label: 'Process' },
+    { x: left + 288, y: top + 82, fill: '#f0fdf4', label: 'Output' },
+  ];
+
+  cards.forEach((card, index) => {
+    elements.push(createShapeElement(card.x, card.y, 94, 82, card.fill, 1));
+    elements.push(
+      createTextElement(`<strong>${card.label}</strong>`, card.x + 13, card.y + 18, 68, 22, {
+        fontSize: 14,
+        color: '#243044',
+      }),
+    );
+    elements.push(
+      createTextElement(`Step ${index + 1}`, card.x + 18, card.y + 46, 58, 20, {
+        fontSize: 12,
+        color: '#64748b',
+      }),
+    );
+  });
+
+  elements.push(createRuleElement(left + 122, top + 122, 36, '#9bb7d5'));
+  elements.push(createRuleElement(left + 252, top + 122, 36, '#9bb7d5'));
+  elements.push(createShapeElement(left + 42, top + 188, 326, 12, '#dbeafe', 1));
+  elements.push(createShapeElement(left + 42, top + 210, 246, 8, '#bfdbfe', 1));
+}
+
+function addConceptFocusVisual(
+  elements: PPTElement[],
+  structured: Extract<StructuredContent, { type: 'concept' }>,
   sectionTitle: string,
-): Promise<Slide | null> {
+  seed: string,
+): 'left' | 'right' | 'none' {
+  const source = `${sectionTitle} ${structured.title} ${structured.cards
+    .map((card) => `${card.title} ${card.desc}`)
+    .join(' ')}`;
+  const hasGraph = containsAny(source, [
+    /\u56fe\u50cf|\u56fe\u8c61|\u629b\u7269\u7ebf|\u5750\u6807|\u5f00\u53e3/,
+    /graph|parabola|coordinate/i,
+  ]);
+  const hasApplication = containsAny(source, [
+    /\u5e94\u7528|\u5b9e\u9645|\u751f\u6d3b|\u60c5\u5883|\u5efa\u6a21/,
+    /application|scenario|model/i,
+  ]);
+  const hasDefinition = containsAny(source, [
+    /\u5b9a\u4e49|\u6982\u5ff5|\u672c\u8d28|\u5f62\u5982/,
+    /definition|concept/i,
+  ]);
+
+  if (structured.formulas?.[0]) {
+    const formulaLeft = stablePick([118, 372, 526], seed, 'formula-left');
+    const formulaTop = stablePick([168, 438], seed, 'formula-top');
+    elements.push(createLatexElement(structured.formulas[0].latex, formulaTop, formulaLeft));
+  }
+
+  if (hasGraph) {
+    const left = stablePick([116, 560], seed, 'graph-left');
+    const top = stableRange(seed, 'graph-top', 188, 224);
+    addMiniDiagram(elements, left, top, '\u56fe\u50cf\u89c2\u5bdf');
+    return left < 400 ? 'left' : 'right';
+  }
+
+  if (hasApplication) {
+    const left = stablePick([120, 552], seed, 'app-left');
+    const top = stableRange(seed, 'app-top', 190, 218);
+    elements.push(createShapeElement(left, top, 324, 214, '#fff7ed', 1));
+    elements.push(
+      createTextElement(
+        `<strong>${escapeHtml(structured.cards[0]?.title ?? sectionTitle)}</strong>`,
+        left + 28,
+        top + 26,
+        252,
+        32,
+        {
+          fontSize: 21,
+          color: '#7a4217',
+        },
+      ),
+    );
+    elements.push(
+      createTextElement(
+        escapeHtml(structured.cards[0]?.desc ?? sectionTitle),
+        left + 28,
+        top + 82,
+        260,
+        82,
+        {
+          fontSize: 17,
+          color: '#4a3218',
+        },
+      ),
+    );
+    elements.push(
+      createShapeElement(
+        left + 36,
+        top + 176,
+        stableRange(seed, 'app-bar', 130, 230),
+        10,
+        '#fdba74',
+        1,
+      ),
+    );
+    return left < 400 ? 'left' : 'right';
+  }
+
+  if (hasDefinition) {
+    const left = stablePick([122, 506], seed, 'def-left');
+    const top = stableRange(seed, 'def-top', 186, 220);
+    elements.push(createShapeElement(left, top, 370, 218, '#f8fbff', 1));
+    elements.push(createShapeElement(left + 26, top + 28, 7, 150, '#2f80d1', 1));
+    elements.push(
+      createTextElement(
+        `<strong>${escapeHtml(structured.cards[0]?.title ?? sectionTitle)}</strong><br/>${escapeHtml(structured.cards[0]?.desc ?? sectionTitle)}`,
+        left + 54,
+        top + 34,
+        278,
+        120,
+        {
+          fontSize: 19,
+          color: '#17335c',
+        },
+      ),
+    );
+    return left < 400 ? 'left' : 'right';
+  }
+
+  const left = stablePick([112, 492], seed, 'mini-left');
+  addMiniDiagram(elements, left, stableRange(seed, 'mini-top', 184, 212), 'Concept Map');
+  return left < 400 ? 'left' : 'right';
+}
+
+function addAdaptiveConceptCards(
+  elements: PPTElement[],
+  structured: Extract<StructuredContent, { type: 'concept' }>,
+  seed: string,
+  reservedSide: 'left' | 'right' | 'none',
+): void {
+  const cards = structured.cards.slice(0, 5);
+  const palette = stablePick(
+    [
+      ['#e7f3ff', '#e8faef', '#fff3c4', '#f3e8ff', '#ffe4e6'],
+      ['#f8fbff', '#fff7ed', '#ecfeff', '#f0fdf4', '#fef3c7'],
+      ['#eef2ff', '#fef9c3', '#f0fdfa', '#fff1f2', '#eff6ff'],
+    ],
+    seed,
+    'palette',
+  );
+  const colors = ['#17406d', '#166534', '#92400e', '#6b21a8', '#9f1239'];
+  const fullLayouts = [
+    [
+      [544, 190, 160, 118],
+      [724, 190, 160, 118],
+      [544, 330, 160, 118],
+      [724, 330, 160, 118],
+    ],
+    [
+      [118, 194, 208, 112],
+      [382, 190, 236, 128],
+      [674, 194, 208, 112],
+      [246, 348, 208, 112],
+      [546, 348, 208, 112],
+    ],
+    [
+      [118, 204, 254, 118],
+      [408, 204, 254, 118],
+      [698, 204, 176, 118],
+      [188, 358, 294, 104],
+      [518, 358, 294, 104],
+    ],
+    [
+      [122, 330, 172, 122],
+      [318, 292, 172, 122],
+      [514, 330, 172, 122],
+      [710, 292, 172, 122],
+    ],
+  ];
+  const leftReservedLayouts = [
+    [
+      [590, 188, 290, 82],
+      [590, 284, 290, 82],
+      [590, 380, 290, 82],
+    ],
+    [
+      [568, 190, 146, 118],
+      [734, 190, 146, 118],
+      [568, 332, 146, 118],
+      [734, 332, 146, 118],
+    ],
+  ];
+  const rightReservedLayouts = [
+    [
+      [120, 188, 290, 82],
+      [120, 284, 290, 82],
+      [120, 380, 290, 82],
+    ],
+    [
+      [120, 190, 146, 118],
+      [286, 190, 146, 118],
+      [120, 332, 146, 118],
+      [286, 332, 146, 118],
+    ],
+  ];
+  const layoutPack =
+    reservedSide === 'left'
+      ? leftReservedLayouts
+      : reservedSide === 'right'
+        ? rightReservedLayouts
+        : fullLayouts;
+  const layouts = layoutPack[stableIndexFromText(`${seed}:card-pattern`, layoutPack.length)];
+
+  cards.forEach((card, index) => {
+    const slot = layouts[index % layouts.length];
+    const offsetX = stableRange(seed, `card-${index}-x`, -8, 8);
+    const offsetY = stableRange(seed, `card-${index}-y`, -6, 6);
+    const [left, top, width, height] = slot;
+    elements.push(
+      createShapeElement(
+        left + offsetX,
+        top + offsetY,
+        width,
+        height,
+        palette[index % palette.length],
+        1,
+      ),
+    );
+    elements.push(
+      createTextElement(
+        `<strong>${escapeHtml(card.title)}</strong>`,
+        left + offsetX + 20,
+        top + offsetY + 18,
+        width - 40,
+        28,
+        {
+          fontSize: width < 190 ? 17 : 19,
+          color: colors[index % colors.length],
+        },
+      ),
+    );
+    elements.push(
+      createTextElement(
+        escapeHtml(card.desc),
+        left + offsetX + 20,
+        top + offsetY + 58,
+        width - 40,
+        Math.max(42, height - 72),
+        {
+          fontSize: width < 190 ? 14 : 16,
+          color: '#243044',
+        },
+      ),
+    );
+  });
+}
+
+function addConceptSummary(
+  elements: PPTElement[],
+  structured: Extract<StructuredContent, { type: 'concept' }>,
+  sectionTitle: string,
+  seed: string,
+): void {
+  const summary = structured.summary || structured.cards[0]?.desc || sectionTitle;
+  const placements = [
+    [150, 454, 700, 36],
+    [560, 410, 310, 58],
+    [124, 416, 338, 58],
+    [236, 466, 528, 34],
+  ];
+  const [left, top, width, height] =
+    placements[stableIndexFromText(`${seed}:summary`, placements.length)];
+  elements.push(createShapeElement(left - 18, top - 8, width + 36, height + 16, '#f1f5ff', 0.9));
+  elements.push(
+    createTextElement(
+      `<strong>Key idea:</strong> ${escapeHtml(summary)}`,
+      left,
+      top,
+      width,
+      height,
+      {
+        fontSize: width < 360 ? 15 : 16,
+        color: '#21446d',
+      },
+    ),
+  );
+}
+
+function addConceptAdaptiveLayout(
+  elements: PPTElement[],
+  structured: Extract<StructuredContent, { type: 'concept' }>,
+  sectionTitle: string,
+): void {
+  const seed = structuredLayoutSeed(structured, sectionTitle);
+  const reservedSide = addConceptFocusVisual(elements, structured, sectionTitle, seed);
+  addAdaptiveConceptCards(elements, structured, seed, reservedSide);
+  addConceptSummary(elements, structured, sectionTitle, seed);
+}
+
+function createOpenMaicStyleSlide(structured: StructuredContent, sectionTitle: string): Slide {
+  const title = 'title' in structured && structured.title ? structured.title : sectionTitle;
+  const elements: PPTElement[] = [
+    createTextElement(`<strong>${escapeHtml(title)}</strong>`, 105, 76, 790, 70, {
+      fontSize: 34,
+      color: '#17233c',
+      textType: 'title',
+    }),
+    createRuleElement(105, 154, 790),
+  ];
+
+  const addFooter = () => {
+    elements.push(createShapeElement(105, 492, 790, 28, '#e8f2ff', 0.9));
+    elements.push(
+      createTextElement(escapeHtml(sectionTitle), 128, 496, 500, 22, {
+        fontSize: 14,
+        color: '#53657d',
+      }),
+    );
+  };
+
+  switch (structured.type) {
+    case 'concept': {
+      addConceptAdaptiveLayout(elements, structured, sectionTitle);
+      break;
+    }
+    case 'compare': {
+      elements.push(createShapeElement(112, 190, 350, 220, '#f8fbff', 1));
+      elements.push(createShapeElement(538, 190, 350, 220, '#fffaf2', 1));
+      elements.push(
+        createTextElement(
+          `<strong>${escapeHtml(structured.left.title)}</strong>`,
+          138,
+          210,
+          300,
+          34,
+          {
+            fontSize: 20,
+            color: '#17335c',
+          },
+        ),
+      );
+      elements.push(
+        createTextElement(
+          `<strong>${escapeHtml(structured.right.title)}</strong>`,
+          564,
+          210,
+          300,
+          34,
+          {
+            fontSize: 20,
+            color: '#7a4217',
+          },
+        ),
+      );
+      elements.push(
+        createTextElement(
+          bulletsHtml(
+            structured.left.items.map((desc) => ({ desc })),
+            5,
+          ),
+          138,
+          260,
+          300,
+          112,
+          { fontSize: 16 },
+        ),
+      );
+      elements.push(
+        createTextElement(
+          bulletsHtml(
+            structured.right.items.map((desc) => ({ desc })),
+            5,
+          ),
+          564,
+          260,
+          300,
+          112,
+          { fontSize: 16 },
+        ),
+      );
+      elements.push(createShapeElement(112, 424, 776, 44, '#eaf4ff', 0.95));
+      elements.push(
+        createTextElement(
+          `<strong>Key takeaway:</strong> ${escapeHtml(structured.conclusion)}`,
+          138,
+          432,
+          720,
+          30,
+          {
+            fontSize: 16,
+            color: '#1f456e',
+          },
+        ),
+      );
+      break;
+    }
+    case 'process': {
+      const steps = structured.steps.slice(0, 5);
+      const gap = 680 / Math.max(steps.length - 1, 1);
+      elements.push(createRuleElement(160, 278, 680, '#a8bed6'));
+      steps.forEach((step, index) => {
+        const x = 135 + index * gap;
+        elements.push(createShapeElement(x, 248, 58, 58, '#eaf1ff', 1));
+        elements.push(
+          createTextElement(`<strong>${escapeHtml(step.num)}</strong>`, x + 18, 262, 28, 24, {
+            fontSize: 18,
+            color: '#2f54c9',
+          }),
+        );
+        elements.push(
+          createTextElement(
+            `<strong>${escapeHtml(step.title)}</strong><br/>${escapeHtml(step.desc)}`,
+            x - 36,
+            330,
+            130,
+            92,
+            { fontSize: 14, color: '#283344' },
+          ),
+        );
+      });
+      if (structured.formulas?.[0]) {
+        elements.push(createLatexElement(structured.formulas[0].latex, 420, 160));
+      }
+      break;
+    }
+    case 'formula': {
+      elements.push(createShapeElement(112, 188, 776, 105, '#f8fbff', 1));
+      elements.push(createLatexElement(structured.mainFormula, 208, 160));
+      elements.push(
+        createTextElement(
+          bulletsHtml(splitSentences(structured.derivation), 4),
+          124,
+          325,
+          420,
+          120,
+          {
+            fontSize: 17,
+          },
+        ),
+      );
+      if (structured.application) {
+        elements.push(createShapeElement(590, 326, 298, 112, '#fff7ec', 1));
+        elements.push(
+          createTextElement(
+            `<strong>Application</strong><br/>${escapeHtml(structured.application)}`,
+            618,
+            344,
+            244,
+            72,
+            { fontSize: 16, color: '#674313' },
+          ),
+        );
+      }
+      break;
+    }
+    case 'case': {
+      const scenario = structured.scenarios[0];
+      elements.push(createShapeElement(112, 184, 370, 230, '#fff7ec', 1));
+      elements.push(createShapeElement(520, 184, 370, 230, '#eef7ff', 1));
+      elements.push(
+        createTextElement(
+          `<strong>Problem</strong><br/>${escapeHtml(scenario.problem)}`,
+          142,
+          214,
+          310,
+          150,
+          {
+            fontSize: 17,
+            color: '#4a3218',
+          },
+        ),
+      );
+      elements.push(
+        createTextElement(
+          `<strong>Solution</strong><br/>${escapeHtml(scenario.solution)}`,
+          550,
+          214,
+          310,
+          150,
+          {
+            fontSize: 17,
+            color: '#173b63',
+          },
+        ),
+      );
+      if (structured.highlight) {
+        elements.push(
+          createTextElement(`"${escapeHtml(structured.highlight)}"`, 156, 428, 680, 40, {
+            fontSize: 17,
+            color: '#2c5f9c',
+            italic: true,
+          }),
+        );
+      }
+      break;
+    }
+    case 'summary': {
+      elements.push(
+        createTextElement(
+          bulletsHtml(
+            structured.keyPoints.map((desc) => ({ desc })),
+            6,
+          ),
+          130,
+          190,
+          520,
+          240,
+          {
+            fontSize: 19,
+            color: '#20242d',
+          },
+        ),
+      );
+      if (structured.preview) {
+        elements.push(createShapeElement(690, 214, 190, 165, '#f5f0ff', 1));
+        elements.push(
+          createTextElement(
+            `<strong>Next</strong><br/>${escapeHtml(structured.preview)}`,
+            716,
+            242,
+            138,
+            96,
+            {
+              fontSize: 17,
+              color: '#4b2f84',
+            },
+          ),
+        );
+      }
+      break;
+    }
+    case 'quote': {
+      elements.push(
+        createTextElement(`"${escapeHtml(structured.body)}"`, 170, 212, 660, 130, {
+          fontSize: 27,
+          color: '#1d2b44',
+          italic: true,
+        }),
+      );
+      elements.push(createRuleElement(280, 368, 440, '#cbd8e8'));
+      if (structured.caption) {
+        elements.push(
+          createTextElement(escapeHtml(structured.caption), 360, 390, 280, 35, {
+            fontSize: 17,
+            color: '#68758a',
+          }),
+        );
+      }
+      break;
+    }
+    case 'sidebar': {
+      elements.push(createShapeElement(112, 188, 270, 240, '#eef7ff', 1));
+      elements.push(
+        createTextElement(`"${escapeHtml(structured.body)}"`, 142, 225, 210, 130, {
+          fontSize: 19,
+          color: '#17456e',
+          italic: true,
+        }),
+      );
+      elements.push(
+        createTextElement(escapeHtml(structured.main_body), 430, 205, 430, 190, {
+          fontSize: 20,
+          color: '#20242d',
+        }),
+      );
+      break;
+    }
+    case 'image_half':
+    case 'image_large': {
+      const imageSrc = structured.image_url;
+      const hasImage = /^(https?:|data:|\/)/.test(imageSrc);
+      if (hasImage) {
+        const imageWidth = structured.type === 'image_large' ? 640 : 410;
+        elements.push(createImageElement(imageSrc, 112, 184, imageWidth, 245));
+      }
+      const textLeft = structured.type === 'image_large' ? 170 : 560;
+      const textTop = structured.type === 'image_large' ? 444 : 210;
+      const caption = structured.image_caption || '';
+      const body = structured.type === 'image_half' ? structured.body : caption;
+      elements.push(
+        createTextElement(
+          escapeHtml(body || caption || sectionTitle),
+          textLeft,
+          textTop,
+          330,
+          130,
+          {
+            fontSize: 18,
+            color: '#2b3443',
+            italic: structured.type === 'image_large',
+          },
+        ),
+      );
+      break;
+    }
+    case 'table': {
+      const colCount = Math.min(structured.headers.length, 4);
+      const rowCount = Math.min(structured.rows.length, 5);
+      const tableLeft = 120;
+      const tableTop = 190;
+      const cellW = 760 / colCount;
+      const cellH = 42;
+      structured.headers.slice(0, colCount).forEach((header, i) => {
+        elements.push(
+          createShapeElement(tableLeft + i * cellW, tableTop, cellW, cellH, '#eaf4ff', 1),
+        );
+        elements.push(
+          createTextElement(
+            `<strong>${escapeHtml(header)}</strong>`,
+            tableLeft + i * cellW + 10,
+            tableTop + 10,
+            cellW - 20,
+            20,
+            {
+              fontSize: 14,
+              color: '#1f456e',
+            },
+          ),
+        );
+      });
+      structured.rows.slice(0, rowCount).forEach((row, r) => {
+        row.slice(0, colCount).forEach((cell, c) => {
+          elements.push(
+            createShapeElement(
+              tableLeft + c * cellW,
+              tableTop + (r + 1) * cellH,
+              cellW,
+              cellH,
+              r % 2 ? '#ffffff' : '#f8fbff',
+              1,
+            ),
+          );
+          elements.push(
+            createTextElement(
+              escapeHtml(cell),
+              tableLeft + c * cellW + 10,
+              tableTop + (r + 1) * cellH + 9,
+              cellW - 20,
+              22,
+              {
+                fontSize: 13,
+                color: '#2b3443',
+              },
+            ),
+          );
+        });
+      });
+      elements.push(
+        createTextElement(escapeHtml(structured.summary), 140, 455, 720, 30, {
+          fontSize: 15,
+          color: '#53657d',
+        }),
+      );
+      break;
+    }
+    default: {
+      elements.push(
+        createTextElement(escapeHtml(sectionTitle), 140, 205, 700, 190, {
+          fontSize: 22,
+          color: '#20242d',
+        }),
+      );
+      break;
+    }
+  }
+
+  addFooter();
+
+  return {
+    id: createId('slide'),
+    viewportSize: CANVAS_W,
+    viewportRatio: CANVAS_H / CANVAS_W,
+    theme: DEFAULT_THEME,
+    elements,
+    background: { type: 'solid', color: '#ffffff' },
+    type: 'content',
+  };
+}
+
+/** Convert StructuredContent into a local element slide when the OpenMAIC agent is unavailable. */
+export function createStructuredFallbackSlide(
+  structured: StructuredContent,
+  sectionTitle: string,
+): Slide | null {
   try {
-    const templateName = selectTemplateForOutline(sectionTitle);
-    const templateData = await layoutContentWithTemplate(structured, templateName);
-    return {
-      id: createId('slide'),
-      viewportSize: CANVAS_W,
-      viewportRatio: CANVAS_H / CANVAS_W,
-      theme: DEFAULT_THEME,
-      elements: templateData.page.elements as unknown as PPTElement[],
-      background: (templateData.page.background as unknown as SlideBackground) ?? DEFAULT_BACKGROUND,
-      type: 'content',
-    };
+    return polishSlide(createOpenMaicStyleSlide(structured, sectionTitle), { title: sectionTitle });
   } catch (err) {
-    log.warn(`[ToClassroom] Layout Agent failed for "${sectionTitle}":`, err);
+    log.warn(`[ToClassroom] OpenMAIC-style layout failed for "${sectionTitle}":`, err);
+    return null;
+  }
+}
+
+async function getTeachingSlideAiCall(): Promise<AICallFn | null> {
+  teachingSlideAiCallPromise ??= (async () => {
+    try {
+      const { model, modelInfo } = await resolveModel({});
+      return async (systemPrompt, userPrompt) => {
+        const result = await callLLM(
+          {
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            maxOutputTokens: modelInfo?.outputWindow,
+          },
+          'teaching-to-classroom-slide',
+        );
+        return result.text;
+      };
+    } catch (err) {
+      log.warn('[ToClassroom] Unable to initialize element-level slide generator:', err);
+      return null;
+    }
+  })();
+
+  return teachingSlideAiCallPromise;
+}
+
+function compactText(value: string, max = 120): string {
+  return value
+    .replace(/[#*_`>\-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
+
+function structuredKeyPoints(structured?: StructuredContent): string[] {
+  if (!structured) return [];
+
+  switch (structured.type) {
+    case 'concept':
+      return structured.cards.map((card) => `${card.title}: ${card.desc}`);
+    case 'compare':
+      return [structured.left.title, structured.right.title, structured.conclusion];
+    case 'process':
+      return structured.steps.map((step) => `${step.num}. ${step.title}: ${step.desc}`);
+    case 'formula':
+      return [structured.mainFormula, structured.derivation, structured.application ?? ''];
+    case 'case':
+      return structured.scenarios.flatMap((scenario) => [scenario.problem, scenario.solution]);
+    case 'summary':
+      return structured.keyPoints;
+    case 'quote':
+      return [structured.body, structured.caption ?? ''];
+    case 'sidebar':
+      return [structured.body, structured.main_body];
+    case 'image_half':
+      return [structured.body, structured.image_caption ?? ''];
+    case 'image_large':
+      return [structured.image_caption ?? ''];
+    case 'table':
+      return [structured.summary, ...structured.headers];
+    default:
+      return [];
+  }
+}
+
+function buildSectionOutline(sectionData: GeneratedSectionData, order: number): SceneOutline {
+  const { section, chunks, structured } = sectionData;
+  const chunkPoints = chunks
+    .filter((chunk) => chunk.type !== 'quiz' && !chunk.failed)
+    .map((chunk) => compactText(chunk.content))
+    .filter(Boolean);
+
+  const keyPoints = [
+    ...section.knowledgePoints,
+    ...structuredKeyPoints(structured).map((point) => compactText(point)),
+    ...chunkPoints,
+  ]
+    .filter(Boolean)
+    .slice(0, 6);
+
+  return {
+    id: section.id,
+    type: 'slide',
+    title: section.title,
+    description: `${section.contentType} section for ${section.depth} learners. Focus on ${
+      section.knowledgePoints.join(', ') || section.title
+    }.`,
+    keyPoints: keyPoints.length > 0 ? keyPoints : [section.title],
+    teachingObjective: section.knowledgePoints.join(', '),
+    estimatedDuration: section.estimatedDuration * 60,
+    order: order + 1,
+  };
+}
+
+async function generateElementSlideForSection(
+  sectionData: GeneratedSectionData,
+  order: number,
+): Promise<Slide | null> {
+  const aiCall = await getTeachingSlideAiCall();
+  if (!aiCall) return null;
+
+  try {
+    const content = await generateSlideContent(
+      buildSectionOutline(sectionData, order),
+      aiCall,
+      undefined,
+      undefined,
+      false,
+      undefined,
+      undefined,
+      'Use the same language as the section title and key points.',
+    );
+
+    if (!content || content.elements.length === 0) return null;
+
+    return polishSlide(
+      {
+        id: createId('slide'),
+        viewportSize: CANVAS_W,
+        viewportRatio: CANVAS_H / CANVAS_W,
+        theme: DEFAULT_THEME,
+        elements: content.elements,
+        background: content.background ?? DEFAULT_BACKGROUND,
+        type: 'content',
+      },
+      {
+        title: sectionData.section.title,
+        keyPoints: sectionData.section.knowledgePoints,
+        decorate: false,
+      },
+    );
+  } catch (err) {
+    log.warn(
+      `[ToClassroom] Element-level slide generation failed for "${sectionData.section.title}":`,
+      err,
+    );
     return null;
   }
 }
@@ -452,9 +1429,11 @@ export async function convertSectionToScenes(
   const hasQuizChunks = chunks.some((c) => c.type === 'quiz');
   const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
 
-  // ── Path 1: Structured content → Layout Agent (rich template slides) ──
-  if (structured && !isTestEnv) {
-    const slide = await structuredToSlide(structured, section.title);
+  // Path 1: OpenMAIC element-level slide generator, with local structured fallback.
+  if (!isTestEnv) {
+    const slide =
+      (await generateElementSlideForSection(sectionData, order)) ??
+      (structured ? createStructuredFallbackSlide(structured, section.title) : null);
     if (slide) {
       const richActions: Action[] = [];
       const richKpText = section.knowledgePoints?.length
@@ -478,7 +1457,7 @@ export async function convertSectionToScenes(
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-      log.info(`[ToClassroom] Layout Agent produced rich slide for: ${section.title}`);
+      log.info(`[ToClassroom] OpenMAIC-style slide produced for: ${section.title}`);
     }
   }
 
@@ -502,15 +1481,18 @@ export async function convertSectionToScenes(
         ),
       );
     }
-    const summarySlide: Slide = {
-      id: createId('slide'),
-      viewportSize: CANVAS_W,
-      viewportRatio: CANVAS_H / CANVAS_W,
-      theme: DEFAULT_THEME,
-      elements: summaryElements,
-      background: DEFAULT_BACKGROUND,
-      type: 'content',
-    };
+    const summarySlide: Slide = polishSlide(
+      {
+        id: createId('slide'),
+        viewportSize: CANVAS_W,
+        viewportRatio: CANVAS_H / CANVAS_W,
+        theme: DEFAULT_THEME,
+        elements: summaryElements,
+        background: DEFAULT_BACKGROUND,
+        type: 'content',
+      },
+      { title: section.title, keyPoints: section.knowledgePoints },
+    );
     const summaryActions: Action[] = [];
     const sumKpText = section.knowledgePoints?.length
       ? `本节重点：${section.knowledgePoints.join('、')}。`
@@ -618,7 +1600,10 @@ export async function convertTeachingJobToStage(
 
   if (job.plan?.focusPoints?.length) {
     const badges = job.plan.focusPoints
-      .map((fp) => `<span style="display:inline-block;background:#DBEAFE;color:#1E40AF;padding:4px 12px;border-radius:9999px;font-size:13px;margin:4px;font-family:Microsoft YaHei;">${escapeHtml(fp)}</span>`)
+      .map(
+        (fp) =>
+          `<span style="display:inline-block;background:#DBEAFE;color:#1E40AF;padding:4px 12px;border-radius:9999px;font-size:13px;margin:4px;font-family:Microsoft YaHei;">${escapeHtml(fp)}</span>`,
+      )
       .join('');
     coverElements.push({
       id: createId('el'),
@@ -637,15 +1622,18 @@ export async function convertTeachingJobToStage(
     });
   }
 
-  const coverSlide: Slide = {
-    id: createId('slide'),
-    viewportSize: CANVAS_W,
-    viewportRatio: CANVAS_H / CANVAS_W,
-    theme: DEFAULT_THEME,
-    elements: coverElements,
-    background: { type: 'solid', color: '#f0f9ff' },
-    type: 'cover',
-  };
+  const coverSlide: Slide = polishSlide(
+    {
+      id: createId('slide'),
+      viewportSize: CANVAS_W,
+      viewportRatio: CANVAS_H / CANVAS_W,
+      theme: DEFAULT_THEME,
+      elements: coverElements,
+      background: { type: 'solid', color: '#f0f9ff' },
+      type: 'cover',
+    },
+    { title: coverTitleText, keyPoints: job.plan?.focusPoints },
+  );
 
   const coverActions: Action[] = [];
   const introText = `同学们好，今天我们要学习的是《${job.plan?.title ?? job.topic ?? '教案课堂'}》。本节课共 ${job.plan?.sections.length ?? (job.sections ?? []).length} 个章节，${job.plan?.estimatedDuration ? `预计用时 ${job.plan.estimatedDuration} 分钟。` : ''}${job.plan?.focusPoints?.length ? `重点内容：${job.plan.focusPoints.join('、')}。` : ''}让我们一起开始吧！`;
@@ -734,15 +1722,18 @@ export async function convertTeachingJobToStage(
     },
   ];
 
-  const endSlide: Slide = {
-    id: createId('slide'),
-    viewportSize: CANVAS_W,
-    viewportRatio: CANVAS_H / CANVAS_W,
-    theme: DEFAULT_THEME,
-    elements: endElements,
-    background: { type: 'solid', color: '#f0f9ff' },
-    type: 'end',
-  };
+  const endSlide: Slide = polishSlide(
+    {
+      id: createId('slide'),
+      viewportSize: CANVAS_W,
+      viewportRatio: CANVAS_H / CANVAS_W,
+      theme: DEFAULT_THEME,
+      elements: endElements,
+      background: { type: 'solid', color: '#f0f9ff' },
+      type: 'end',
+    },
+    { title: '课程结束', keyPoints: job.plan?.focusPoints },
+  );
 
   const endActions: Action[] = [
     {

@@ -1,0 +1,654 @@
+{
+  "id": "5W0mFS5sH2",
+  "userId": "admin-default",
+  "topic": "不等式",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "教案生成完成",
+  "createdAt": "2026-06-25T12:01:59.483Z",
+  "updatedAt": "2026-06-25T12:02:41.677Z",
+  "sectionsCompleted": 7,
+  "totalSections": 7,
+  "startedAt": "2026-06-25T12:01:59.499Z",
+  "plan": {
+    "title": "不等式基础巩固与进阶",
+    "sections": [
+      {
+        "id": "section-1",
+        "title": "不等式基本概念与性质",
+        "contentType": "explanation",
+        "depth": "basic",
+        "knowledgePoints": [
+          "不等式的定义",
+          "不等式的性质"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": false
+      },
+      {
+        "id": "section-2",
+        "title": "不等式基本性质随堂测",
+        "contentType": "quiz",
+        "depth": "basic",
+        "knowledgePoints": [
+          "不等式的性质"
+        ],
+        "estimatedDuration": 2,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-3",
+        "title": "一元一次不等式解法",
+        "contentType": "explanation",
+        "depth": "basic",
+        "knowledgePoints": [
+          "一元一次不等式",
+          "移项法则",
+          "系数化1"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": false
+      },
+      {
+        "id": "section-4",
+        "title": "一元一次不等式解法随堂测",
+        "contentType": "quiz",
+        "depth": "basic",
+        "knowledgePoints": [
+          "一元一次不等式"
+        ],
+        "estimatedDuration": 2,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-5",
+        "title": "因式分解与不等式结合",
+        "contentType": "explanation",
+        "depth": "basic",
+        "knowledgePoints": [
+          "因式分解",
+          "一元二次不等式"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": false
+      },
+      {
+        "id": "section-6",
+        "title": "因式分解与不等式随堂测",
+        "contentType": "quiz",
+        "depth": "basic",
+        "knowledgePoints": [
+          "因式分解",
+          "一元二次不等式"
+        ],
+        "estimatedDuration": 2,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-7",
+        "title": "不等式综合应用（极值问题）",
+        "contentType": "example",
+        "depth": "advanced",
+        "knowledgePoints": [
+          "极值",
+          "不等式性质"
+        ],
+        "estimatedDuration": 5,
+        "hasQuiz": false
+      }
+    ],
+    "estimatedDuration": 35,
+    "focusPoints": [
+      "不等式的性质",
+      "一元一次不等式解法",
+      "因式分解与不等式",
+      "极值问题"
+    ]
+  },
+  "sections": [
+    {
+      "section": {
+        "id": "section-1",
+        "title": "不等式基本概念与性质",
+        "contentType": "explanation",
+        "depth": "basic",
+        "knowledgePoints": [
+          "不等式的定义",
+          "不等式的性质"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": false
+      },
+      "chunks": [
+        {
+          "sectionId": "section-1",
+          "type": "text",
+          "content": "## 一、不等式的定义\n\n不等式是用来描述两个量之间大小关系的数学式子。就像天平的两端，一端重一端轻，不等号告诉我们哪边更大或更小。\n\n**基本不等号**：\n- $a > b$：$a$ 大于 $b$\n- $a < b$：$a$ 小于 $b$\n- $a \\geq b$：$a$ 大于或等于 $b$\n- $a \\leq b$：$a$ 小于或等于 $b$\n\n**类比**：不等式就像比较两个人的身高——小明比小红高，可以写成“小明身高 $>$ 小红身高”。如果两人一样高，就是相等。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-1",
+          "type": "text",
+          "content": "## 二、不等式的性质（核心）\n\n性质是解不等式的基础，就像游戏规则。我们重点学习三条基本性质：\n\n**性质1：加法性质**\n> 如果 $a > b$，那么 $a + c > b + c$（两边同时加同一个数，不等号方向不变）\n\n**性质2：乘法性质（正数）**\n> 如果 $a > b$ 且 $c > 0$，那么 $ac > bc$（两边同乘正数，不等号方向不变）\n\n**性质3：乘法性质（负数）**\n> 如果 $a > b$ 且 $c < 0$，那么 $ac < bc$（两边同乘负数，不等号方向反转！）\n\n**特别注意**：乘以或除以负数时，不等号要调头——这是最容易出错的地方。",
+          "order": 2
+        },
+        {
+          "sectionId": "section-1",
+          "type": "formula",
+          "content": "$$\n\\begin{aligned}\n&\\text{性质1：} a > b \\Rightarrow a + c > b + c \\\\\n&\\text{性质2：} a > b, \\, c > 0 \\Rightarrow ac > bc \\\\\n&\\text{性质3：} a > b, \\, c < 0 \\Rightarrow ac < bc\n\\end{aligned}\n$$",
+          "order": 3
+        },
+        {
+          "sectionId": "section-1",
+          "type": "example",
+          "content": "## 例题：解不等式 $2x - 3 < 5$，并写出完整步骤。\n\n**解**：\n\n**步骤1**：利用性质1，两边同时加3（移项）\n$$2x - 3 + 3 < 5 + 3$$\n$$2x < 8$$\n\n**步骤2**：利用性质2，两边同时除以2（正数，不等号不变）\n$$\\frac{2x}{2} < \\frac{8}{2}$$\n$$x < 4$$\n\n**步骤3**：写出解集\n$$x \\in (-\\infty, 4)$$\n\n**检验**：取 $x=0$（小于4），代入原式：$2\\cdot0 - 3 = -3 < 5$，成立。取 $x=5$（大于4），代入：$2\\cdot5 - 3 = 7$，$7 < 5$ 不成立。正确！",
+          "order": 4
+        },
+        {
+          "sectionId": "section-1",
+          "type": "text",
+          "content": "**另一个例子（注意反转）**：解 $-3x \\leq 6$\n\n**步骤1**：两边同时除以 $-3$（负数，不等号反转）\n$$\\frac{-3x}{-3} \\geq \\frac{6}{-3}$$\n$$x \\geq -2$$\n\n**解集**：$x \\in [-2, +\\infty)$",
+          "order": 5
+        },
+        {
+          "sectionId": "section-1",
+          "type": "quiz",
+          "content": "## 随堂测验\n\n**题目**：解不等式 $-2x + 1 > 5$，并写出解集。\n\n提示：先移项，再除以负数，注意不等号方向。\n\n**参考答案**：\n\n步骤1：两边减1\n$$-2x + 1 - 1 > 5 - 1$$\n$$-2x > 4$$\n\n步骤2：两边除以 $-2$（负数，不等号反转）\n$$\\frac{-2x}{-2} < \\frac{4}{-2}$$\n$$x < -2$$\n\n解集：$x \\in (-\\infty, -2)$",
+          "order": 6
+        }
+      ]
+    },
+    {
+      "section": {
+        "id": "section-2",
+        "title": "不等式基本性质随堂测",
+        "contentType": "quiz",
+        "depth": "basic",
+        "knowledgePoints": [
+          "不等式的性质"
+        ],
+        "estimatedDuration": 2,
+        "hasQuiz": true
+      },
+      "chunks": [
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "## 不等式基本性质随堂测\n\n同学们，我们已经学习了不等式的定义和基本性质。现在，让我们通过一组随堂测验来检验对这些性质的理解和运用。请仔细阅读题目，选择正确的选项。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-2",
+          "type": "quiz",
+          "content": "**参考答案：A**\n\n**解析：**\n\n根据不等式的基本性质：\n- **性质1（加法单调性）**：如果 $a > b$，那么 $a + c > b + c$。这里 $c = 3$，所以 $a + 3 > b + 3$ 一定成立。选项A正确。\n- 选项B：$a - 3 < b - 3$ 违反了加法单调性，应为 $a - 3 > b - 3$。\n- 选项C：$-a > -b$ 等价于乘以 $-1$，根据乘法单调性（乘以负数不等号反向），应为 $-a < -b$。\n- 选项D：$3a < 3b$ 违反了乘法单调性（乘以正数不等号方向不变），应为 $3a > 3b$。",
+          "order": 2,
+          "question": "已知 $a > b$，下列哪个不等式一定成立？",
+          "options": [
+            "$a + 3 > b + 3$",
+            "$a - 3 < b - 3$",
+            "$-a > -b$",
+            "$3a < 3b$"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "sectionId": "section-2",
+          "type": "quiz",
+          "content": "**参考答案：B**\n\n**解析：**\n\n- 选项A：根据加法单调性，$x < y$ 两边同时加 $c$ 得 $x + c < y + c$，而不是 $>$。错误。\n- 选项B：$x - c < y - c$ 等价于 $x + (-c) < y + (-c)$，符合加法单调性。正确。\n- 选项C：$c$ 是实数，若 $c$ 为负数，则 $cx > cy$；若 $c=0$，则 $cx = cy$。不一定成立。\n- 选项D：$c$ 可能为负或零。若 $c=0$，除法无意义；若 $c<0$，不等号反向。不一定成立。\n\n**类比**：想象两个数 $x=2$, $y=5$。$2<5$。两边同时减去同一个数（比如 $3$），$2-3=-1$, $5-3=2$，$-1<2$ 仍然成立。",
+          "order": 3,
+          "question": "若 $x < y$ 且 $c$ 是实数，下列结论正确的是？",
+          "options": [
+            "$x + c > y + c$",
+            "$x - c < y - c$",
+            "$cx < cy$ 一定成立",
+            "$\\frac{x}{c} < \\frac{y}{c}$ 一定成立"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "sectionId": "section-2",
+          "type": "quiz",
+          "content": "**参考答案：C**\n\n**解析：**\n\n- 选项A：$a > b > 0$，两边同乘以正数 $a$ 得 $a^2 > ab$，再乘以 $b$ 得 $ab > b^2$，所以 $a^2 > b^2$。A错误。\n- 选项B：$a > b > 0$，取倒数得 $\\frac{1}{a} < \\frac{1}{b}$（正数越大，倒数越小）。B错误。\n- 选项C：由上述推导，$a^2 > b^2$ 正确。\n- 选项D：$a > b$ 两边乘以 $-1$ 得 $-a < -b$。D错误。\n\n**步骤演示：**\n1. 已知 $a > b > 0$\n2. 两边同乘以 $a$（正数）：$a \\cdot a > b \\cdot a$，即 $a^2 > ab$\n3. 两边同乘以 $b$（正数）：$a \\cdot b > b \\cdot b$，即 $ab > b^2$\n4. 由传递性：$a^2 > ab$ 且 $ab > b^2$，得 $a^2 > b^2$",
+          "order": 4,
+          "question": "已知 $a > b > 0$，则下列不等式中正确的是？",
+          "options": [
+            "$a^2 < b^2$",
+            "$\\frac{1}{a} > \\frac{1}{b}$",
+            "$a^2 > b^2$",
+            "$-a > -b$"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "sectionId": "section-2",
+          "type": "quiz",
+          "content": "**参考答案：C**\n\n**解析：**\n\n- 选项A：两个负数，绝对值大的反而小。$a < b < 0$ 意味着 $|a| > |b|$，所以 $a^2 > b^2$。A错误。\n- 选项B：$a$ 和 $b$ 都是负数，负数乘负数得正数，所以 $ab > 0$。B错误。\n- 选项C：两个负数相加还是负数，所以 $a + b < 0$ 正确。\n- 选项D：$a < b < 0$，取倒数（注意负数取倒数后不等号反向），得 $\\frac{1}{a} > \\frac{1}{b}$。D错误。\n\n**类比**：$a=-5$, $b=-3$，则 $a < b$。$a+b = -8 < 0$ 成立。$a^2=25$, $b^2=9$，所以 $a^2 > b^2$。",
+          "order": 5,
+          "question": "若 $a < b < 0$，则下列不等式正确的是？",
+          "options": [
+            "$a^2 < b^2$",
+            "$ab < 0$",
+            "$a + b < 0$",
+            "$\\frac{1}{a} < \\frac{1}{b}$"
+          ],
+          "correctAnswer": 2
+        }
+      ]
+    },
+    {
+      "section": {
+        "id": "section-3",
+        "title": "一元一次不等式解法",
+        "contentType": "explanation",
+        "depth": "basic",
+        "knowledgePoints": [
+          "一元一次不等式",
+          "移项法则",
+          "系数化1"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": false
+      },
+      "chunks": [
+        {
+          "sectionId": "section-3",
+          "type": "text",
+          "content": "## 二、一元一次不等式解法\n\n### 1. 什么是一元一次不等式？\n\n在上一节，我们认识了不等式的基本概念和性质。现在，我们来学习一种最简单、最基础的不等式——**一元一次不等式**。\n\n**定义**：只含有一个未知数，且未知数的最高次数是1的不等式，叫做一元一次不等式。\n\n**类比**：它就像一元一次方程的“兄弟”。方程是问“两边相等时未知数是多少”，而不等式则是问“两边满足大小关系时未知数在什么范围”。例如：\n- 方程：$2x + 3 = 7$ → 解是 $x = 2$（一个点）\n- 不等式：$2x + 3 > 7$ → 解是 $x > 2$（一个范围）",
+          "order": 1
+        },
+        {
+          "sectionId": "section-3",
+          "type": "text",
+          "content": "### 2. 解一元一次不等式的核心步骤\n\n解一元一次不等式和解一元一次方程非常相似，主要区别在于**不等号方向**的处理。\n\n**标准形式**：$ax + b > 0$（或 $<, \\geq, \\leq$），其中 $a \\neq 0$。\n\n**解题步骤**（以 $ax + b > 0$ 为例）：\n\n1. **去分母**（如果系数是分数）：两边同乘分母的最小公倍数（注意：若乘负数，不等号方向要改变！）\n2. **去括号**：运用分配律\n3. **移项**：将含未知数的项移到左边，常数项移到右边（**移项要变号**，但不等号方向不变）\n4. **合并同类项**：化简为 $ax > c$ 的形式\n5. **系数化1**：两边同除以 $a$（**若 $a < 0$，不等号方向要反转**）",
+          "order": 2
+        },
+        {
+          "sectionId": "section-3",
+          "type": "formula",
+          "content": "$$\\text{若 } a > 0, \\text{则 } x > \\frac{c}{a} \\quad \\text{（不等号方向不变）}$$\n\n$$\\text{若 } a < 0, \\text{则 } x < \\frac{c}{a} \\quad \\text{（不等号方向反转）}$$",
+          "order": 3
+        },
+        {
+          "sectionId": "section-3",
+          "type": "text",
+          "content": "**关键提醒**：\n- 移项法则：移项时改变该项的符号，但不等号方向**不变**。\n- 系数化1：当两边同除以一个**负数**时，不等号方向**必须反转**。这是与方程最大的不同！",
+          "order": 4
+        },
+        {
+          "sectionId": "section-3",
+          "type": "example",
+          "content": "### 例题1：解不等式 $2x - 5 > 3$\n\n**解**：\n\n**步骤1**：移项（将常数项-5移到右边，变号）\n$$2x > 3 + 5$$\n\n**步骤2**：合并同类项\n$$2x > 8$$\n\n**步骤3**：系数化1（两边同除以2，$2 > 0$，不等号方向不变）\n$$x > 4$$\n\n**解集**：$\\{x \\mid x > 4\\}$，在数轴上表示为从4向右的射线（4处为空心圆圈）。",
+          "order": 5
+        },
+        {
+          "sectionId": "section-3",
+          "type": "example",
+          "content": "### 例题2：解不等式 $-3x + 6 \\leq 0$\n\n**解**：\n\n**步骤1**：移项（将常数项6移到右边，变号）\n$$-3x \\leq -6$$\n\n**步骤2**：系数化1（两边同除以-3，$-3 < 0$，不等号方向反转）\n$$x \\geq 2$$\n\n**解集**：$\\{x \\mid x \\geq 2\\}$，在数轴上表示为从2向右的射线（2处为实心圆点）。",
+          "order": 6
+        },
+        {
+          "sectionId": "section-3",
+          "type": "text",
+          "content": "### 3. 常见错误提醒\n\n根据同学们的学习数据，以下错误需要特别注意：\n- **移项不变号**：例如 $2x - 5 > 3$ 误写成 $2x > 3 - 5$（正确应为 $2x > 3 + 5$）\n- **系数为负时不反转不等号**：例如 $-3x \\leq -6$ 误写成 $x \\leq 2$（正确应为 $x \\geq 2$）\n\n**记忆口诀**：\n> 移项要变号，不等号不动；\n> 除以负数时，不等号反转。",
+          "order": 7
+        },
+        {
+          "sectionId": "section-3",
+          "type": "quiz",
+          "content": "### 随堂测验\n\n**题目**：解不等式 $-5x + 10 > 0$，并写出解集。\n\n请写出完整的解题步骤。",
+          "order": 8
+        },
+        {
+          "sectionId": "section-3",
+          "type": "text",
+          "content": "**参考答案**：\n\n**解**：\n\n移项：$-5x > -10$\n\n系数化1（两边同除以-5，不等号方向反转）：\n$$x < 2$$\n\n解集：$\\{x \\mid x < 2\\}$",
+          "order": 9
+        }
+      ],
+      "structured": {
+        "type": "concept",
+        "title": "一元一次不等式解法",
+        "cards": [
+          {
+            "title": "一元一次不等式的定义",
+            "desc": "一元一次不等式是只含有一个未知数，且未知数的最高次数为1的不等式。其标准形式为 $ax + b > 0$、$ax + b < 0$、$ax + b \\geq 0$ 或 $ax + b \\leq 0$，其中 $a \\neq 0$。它和一元一次方程类似，只是将等号换成了不等号。"
+          },
+          {
+            "title": "移项法则",
+            "desc": "解不等式时，可以将一项从不等号的一边移到另一边，但要改变该项的符号。移项的依据是不等式的基本性质：不等号两边同时加上（或减去）同一个数，不等号方向不变。例如，由 $3x - 5 > 10$ 移项得 $3x > 10 + 5$，即 $3x > 15$。"
+          },
+          {
+            "title": "系数化1",
+            "desc": "将未知数的系数化为1是解不等式的最后一步。当系数为正时，两边同时除以系数，不等号方向不变；当系数为负时，两边同时除以系数，不等号方向必须反转。例如，解 $-2x < 6$ 时，两边同除以 $-2$，得 $x > -3$。"
+          },
+          {
+            "title": "解集在数轴上的表示",
+            "desc": "一元一次不等式的解集通常是一个区间，可以在数轴上直观表示。用空心圆圈表示不包括端点（$>$ 或 $<$），用实心圆圈表示包括端点（$\\geq$ 或 $\\leq$），并用射线标出解的范围。例如，$x > 2$ 在数轴上表示为从2向右的射线，2处画空心圆。"
+          }
+        ],
+        "summary": "解一元一次不等式的核心步骤：去分母、去括号、移项、合并同类项、系数化1（注意系数为负时不等号方向反转）。最终解集可在数轴上用区间表示。",
+        "formulas": [
+          {
+            "label": "移项法则",
+            "latex": "$a + b > c \\Rightarrow a > c - b$"
+          },
+          {
+            "label": "系数化1（正系数）",
+            "latex": "$ax > b \\ (a > 0) \\Rightarrow x > \\frac{b}{a}$"
+          },
+          {
+            "label": "系数化1（负系数）",
+            "latex": "$ax > b \\ (a < 0) \\Rightarrow x < \\frac{b}{a}$"
+          }
+        ]
+      }
+    },
+    {
+      "section": {
+        "id": "section-4",
+        "title": "一元一次不等式解法随堂测",
+        "contentType": "quiz",
+        "depth": "basic",
+        "knowledgePoints": [
+          "一元一次不等式"
+        ],
+        "estimatedDuration": 2,
+        "hasQuiz": true
+      },
+      "chunks": [
+        {
+          "sectionId": "section-4",
+          "type": "text",
+          "content": "## 一元一次不等式解法随堂测\n\n同学们，我们已经学习了不等式的基本概念和性质，现在来检验一下大家对一元一次不等式解法的掌握情况。一元一次不等式就像解方程一样，但要注意不等号的方向变化。下面有5道题，请认真完成。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-4",
+          "type": "quiz",
+          "content": "**解析**：\n1. 移项：$3x > 7 + 5$ → $3x > 12$\n2. 两边除以3（正数，不等号方向不变）：$x > 4$\n3. 所以解集为 $x > 4$，对应选项A。",
+          "order": 2,
+          "question": "解不等式：$3x - 5 > 7$，解集为？",
+          "options": [
+            "$x > 4$",
+            "$x < 4$",
+            "$x > \\frac{2}{3}$",
+            "$x < \\frac{2}{3}$"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "sectionId": "section-4",
+          "type": "quiz",
+          "content": "**解析**：\n1. 移项：$-2x \\leq 5 - 1$ → $-2x \\leq 4$\n2. 两边除以 $-2$（负数，不等号方向反转）：$x \\geq -2$\n3. 所以解集为 $x \\geq -2$，对应选项B。注意：除以负数时要变号！",
+          "order": 3,
+          "question": "解不等式：$-2x + 1 \\leq 5$，解集为？",
+          "options": [
+            "$x \\leq -2$",
+            "$x \\geq -2$",
+            "$x \\leq 2$",
+            "$x \\geq 2$"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "sectionId": "section-4",
+          "type": "quiz",
+          "content": "**解析**：\n1. 去括号：$4x - 12 < 2x + 6$\n2. 移项：$4x - 2x < 6 + 12$ → $2x < 18$\n3. 两边除以2（正数，不变号）：$x < 9$\n4. 所以解集为 $x < 9$，对应选项A。",
+          "order": 4,
+          "question": "解不等式：$4(x - 3) < 2x + 6$，解集为？",
+          "options": [
+            "$x < 9$",
+            "$x > 9$",
+            "$x < 3$",
+            "$x > 3$"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "sectionId": "section-4",
+          "type": "quiz",
+          "content": "**解析**：\n1. 两边乘以3（正数，不变号）：$2x - 1 \\geq 3$\n2. 移项：$2x \\geq 4$\n3. 两边除以2（正数，不变号）：$x \\geq 2$\n4. 所以解集为 $x \\geq 2$，对应选项B。",
+          "order": 5,
+          "question": "不等式 $\\frac{2x - 1}{3} \\geq 1$ 的解集为？",
+          "options": [
+            "$x \\geq 1$",
+            "$x \\geq 2$",
+            "$x \\leq 2$",
+            "$x \\geq -1$"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "sectionId": "section-4",
+          "type": "quiz",
+          "content": "**解析**：\n1. 移项：$-3x - 2x > 10 - 5$ → $-5x > 5$\n2. 两边除以 $-5$（负数，不等号方向反转）：$x < -1$\n3. 所以解集为 $x < -1$，对应选项B。注意：移项时符号变化要小心，除以负数要变号。",
+          "order": 6,
+          "question": "不等式 $5 - 3x > 2x + 10$ 的解集为？",
+          "options": [
+            "$x > -1$",
+            "$x < -1$",
+            "$x > 3$",
+            "$x < 3$"
+          ],
+          "correctAnswer": 1
+        }
+      ]
+    },
+    {
+      "section": {
+        "id": "section-5",
+        "title": "因式分解与不等式结合",
+        "contentType": "explanation",
+        "depth": "basic",
+        "knowledgePoints": [
+          "因式分解",
+          "一元二次不等式"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": false
+      },
+      "chunks": [
+        {
+          "sectionId": "section-5",
+          "type": "text",
+          "content": "## 三、因式分解与一元二次不等式\n\n同学们，我们已经学会了如何解一元一次不等式。现在，让我们把目光投向更常见也更实用的一类不等式——**一元二次不等式**。\n\n**一元二次不等式**：含有一个未知数，且未知数的最高次数是2的不等式。例如：$x^2 - 5x + 6 > 0$。\n\n**关键思想**：解一元二次不等式的核心是**因式分解**。因式分解能把一个二次式变成两个一次式的乘积，就像把一块蛋糕切成两块，然后分别判断每块是正还是负。\n\n**类比**：因式分解好比“拆解密码”——把复杂的二次式 $x^2 - 5x + 6$ 拆成两个“一次因子” $(x-2)(x-3)$。然后，我们通过分析每个因子的正负，就能知道整个乘积的正负，从而解出不等式。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-5",
+          "type": "formula",
+          "content": "$$x^2 - 5x + 6 = (x-2)(x-3)$$",
+          "order": 2
+        },
+        {
+          "sectionId": "section-5",
+          "type": "text",
+          "content": "### 解题步骤（三步法）\n\n1. **移项**：将所有项移到不等号左边，右边为0。\n2. **因式分解**：将左边分解为两个一次因式的乘积。\n3. **分析符号**：利用“同号得正，异号得负”判断乘积的正负，写出解集。\n\n下面我们通过例题来演示。",
+          "order": 3
+        },
+        {
+          "sectionId": "section-5",
+          "type": "example",
+          "content": "**例题**：解不等式 $x^2 - 5x + 6 > 0$。\n\n**解**：\n\n**步骤1**：移项。\n不等式已经是 $x^2 - 5x + 6 > 0$，左边已整理好。\n\n**步骤2**：因式分解。\n寻找两个数，乘积为6，和为-5，它们是-2和-3。\n所以：$x^2 - 5x + 6 = (x-2)(x-3)$。\n\n**步骤3**：分析符号。\n我们要找 $(x-2)(x-3) > 0$ 的 $x$ 范围。\n\n> **口诀**：同号得正，异号得负。\n> 两个因式相乘为正，说明它们**同号**（都正或都负）。\n\n- **情况1：都为正**\n  $$\\begin{cases} x-2 > 0 \\\\ x-3 > 0 \\end{cases} \\Rightarrow \\begin{cases} x > 2 \\\\ x > 3 \\end{cases} \\Rightarrow x > 3$$\n\n- **情况2：都为负**\n  $$\\begin{cases} x-2 < 0 \\\\ x-3 < 0 \\end{cases} \\Rightarrow \\begin{cases} x < 2 \\\\ x < 3 \\end{cases} \\Rightarrow x < 2$$\n\n所以解集为：$x < 2$ 或 $x > 3$。\n\n**数轴表示**：\n```\n<---●---●--->\n    2   3\n（空心点，表示不包含2和3）\n```",
+          "order": 4
+        },
+        {
+          "sectionId": "section-5",
+          "type": "quiz",
+          "content": "**随堂测**：解不等式 $x^2 - 4x + 3 \\leq 0$。\n\n请同学们按照三步法，先因式分解，再分析符号，写出解集。\n\n**参考答案**：\n1. 因式分解：$x^2 - 4x + 3 = (x-1)(x-3)$。\n2. 不等式为 $(x-1)(x-3) \\leq 0$，要求乘积为非正（≤0），即两个因式**异号**或等于0。\n3. 异号情况：$\\begin{cases} x-1 \\geq 0 \\\\ x-3 \\leq 0 \\end{cases}$ 或 $\\begin{cases} x-1 \\leq 0 \\\\ x-3 \\geq 0 \\end{cases}$。\n   解得 $1 \\leq x \\leq 3$（注意包含等于的情况）。\n4. 解集：$[1, 3]$。",
+          "order": 5
+        },
+        {
+          "sectionId": "section-5",
+          "type": "text",
+          "content": "**总结**：因式分解是解一元二次不等式的“金钥匙”。只要掌握了因式分解，再配合符号分析，就能轻松求解。下一节我们将学习更复杂的二次不等式，比如当因式分解遇到困难时，如何用求根公式来帮忙。",
+          "order": 6
+        }
+      ],
+      "structured": {
+        "type": "concept",
+        "title": "因式分解与不等式结合",
+        "cards": [
+          {
+            "title": "因式分解回顾",
+            "desc": "因式分解是把一个多项式写成几个整式的乘积形式，例如 $x^2 - 5x + 6 = (x-2)(x-3)$。因式分解的核心是“化积”，这为解不等式提供了关键工具——通过乘积的符号判断原式的正负。"
+          },
+          {
+            "title": "一元二次不等式与因式分解的关系",
+            "desc": "解一元二次不等式 $ax^2+bx+c>0$（或 $<0$）时，若二次项系数 $a>0$，则先对左边因式分解，得到形如 $(x-x_1)(x-x_2)>0$ 的形式。然后利用“同号得正、异号得负”的乘积符号法则，将二次不等式转化为两个一次不等式组的解集问题。"
+          },
+          {
+            "title": "乘积符号法则",
+            "desc": "对于两个因式的乘积 $A \\cdot B > 0$，意味着 $A$ 与 $B$ 同号（都为正或都为负）；$A \\cdot B < 0$ 意味着 $A$ 与 $B$ 异号（一正一负）。这个法则将二次不等式转化为两个一次不等式组，是解法的核心。"
+          },
+          {
+            "title": "数轴标根法（穿针引线）",
+            "desc": "将因式分解后的各个根标在数轴上，从右上方向左下方依次穿过每个根（奇穿偶不穿），数轴上方对应 $>0$ 的区域，下方对应 $<0$ 的区域。例如 $(x-1)(x-3)>0$，根为1和3，从右上方开始，穿过3到下方，再穿过1到上方，得到解集 $x<1$ 或 $x>3$。"
+          }
+        ],
+        "summary": "因式分解将二次不等式化为乘积形式，利用乘积符号法则或数轴标根法确定解集。掌握因式分解是解一元二次不等式的基础，数轴标根法能直观、快速地得到答案。",
+        "formulas": [
+          {
+            "label": "因式分解形式",
+            "latex": "ax^2 + bx + c = a(x - x_1)(x - x_2)"
+          },
+          {
+            "label": "乘积符号法则",
+            "latex": "A \\cdot B > 0 \\iff (A>0 \\text{且} B>0) \\text{或} (A<0 \\text{且} B<0)"
+          },
+          {
+            "label": "一元二次不等式解集示例",
+            "latex": "(x-1)(x-3) > 0 \\Rightarrow x < 1 \\text{ 或 } x > 3"
+          }
+        ]
+      }
+    },
+    {
+      "section": {
+        "id": "section-6",
+        "title": "因式分解与不等式随堂测",
+        "contentType": "quiz",
+        "depth": "basic",
+        "knowledgePoints": [
+          "因式分解",
+          "一元二次不等式"
+        ],
+        "estimatedDuration": 2,
+        "hasQuiz": true
+      },
+      "chunks": [
+        {
+          "sectionId": "section-6",
+          "type": "text",
+          "content": "## 因式分解与一元二次不等式随堂测\n\n同学们，我们已经学习了一元一次不等式的解法。现在，我们将因式分解与不等式结合起来，解决更复杂的一元二次不等式问题。\n\n**回顾因式分解**：因式分解就像“拆解积木”——把一个多项式拆成几个整式的乘积。例如：\n- $x^2 - 5x + 6 = (x - 2)(x - 3)$\n- $x^2 - 9 = (x - 3)(x + 3)$\n\n**类比桥梁**：解一元二次不等式 $ax^2 + bx + c > 0$ 时，先将其因式分解为 $a(x - x_1)(x - x_2) > 0$，然后利用“数轴穿根法”或“符号表”找到解集。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-6",
+          "type": "example",
+          "content": "## 例题：解不等式 $x^2 - 5x + 6 > 0$\n\n**步骤1：因式分解**\n将左边多项式分解：\n$$x^2 - 5x + 6 = (x - 2)(x - 3)$$\n\n**步骤2：求根**\n令 $(x - 2)(x - 3) = 0$，解得 $x_1 = 2$，$x_2 = 3$。\n\n**步骤3：画数轴，确定符号区间**\n将两个根标在数轴上，它们将数轴分成三个区间：$(-\\infty, 2)$，$(2, 3)$，$(3, +\\infty)$。\n\n在区间 $(-\\infty, 2)$ 取 $x = 0$：$(0-2)(0-3) = (-2)(-3) = 6 > 0$，符号为正。\n在区间 $(2, 3)$ 取 $x = 2.5$：$(2.5-2)(2.5-3) = (0.5)(-0.5) = -0.25 < 0$，符号为负。\n在区间 $(3, +\\infty)$ 取 $x = 4$：$(4-2)(4-3) = (2)(1) = 2 > 0$，符号为正。\n\n**步骤4：写出解集**\n不等式要求大于0，所以取符号为正的区间：\n$$x \\in (-\\infty, 2) \\cup (3, +\\infty)$$\n\n**参考答案**：$x < 2$ 或 $x > 3$（用区间表示为 $(-\\infty, 2) \\cup (3, +\\infty)$）",
+          "order": 2
+        },
+        {
+          "sectionId": "section-6",
+          "type": "text",
+          "content": "**关键提醒**：如果二次项系数为负数，先乘以-1将系数变正，注意不等号方向要反转。例如：$-x^2 + 5x - 6 > 0$ 等价于 $x^2 - 5x + 6 < 0$。",
+          "order": 3
+        },
+        {
+          "sectionId": "section-6",
+          "type": "quiz",
+          "content": "**参考答案**：B\n\n**解析**：\n1. 因式分解：$x^2 - x - 12 = (x - 4)(x + 3)$\n2. 求根：$x_1 = 4$，$x_2 = -3$\n3. 数轴分区间：$(-\\infty, -3)$，$(-3, 4)$，$(4, +\\infty)$\n   - 取 $x = -4$：$(-4-4)(-4+3) = (-8)(-1) = 8 > 0$\n   - 取 $x = 0$：$(0-4)(0+3) = (-4)(3) = -12 < 0$\n   - 取 $x = 5$：$(5-4)(5+3) = (1)(8) = 8 > 0$\n4. 不等式要求小于0，取中间区间 $(-3, 4)$\n\n注意：选项A是大于0的解集，易混淆。",
+          "order": 4,
+          "question": "解不等式 $x^2 - x - 12 < 0$，其解集为？",
+          "options": [
+            "$(-\\infty, -3) \\cup (4, +\\infty)$",
+            "$(-3, 4)$",
+            "$(-\\infty, -4) \\cup (3, +\\infty)$",
+            "$(-4, 3)$"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "sectionId": "section-6",
+          "type": "quiz",
+          "content": "**参考答案**：C\n\n**解析**：\n1. 因式分解：$2x^2 - 5x - 3 = (2x + 1)(x - 3)$\n2. 求根：令 $(2x + 1)(x - 3) = 0$，得 $x_1 = -\\frac{1}{2}$，$x_2 = 3$\n3. 数轴分区间：$(-\\infty, -\\frac{1}{2})$，$(-\\frac{1}{2}, 3)$，$(3, +\\infty)$\n   - 取 $x = -1$：$(-2+1)(-1-3) = (-1)(-4) = 4 > 0$\n   - 取 $x = 0$：$(0+1)(0-3) = (1)(-3) = -3 < 0$\n   - 取 $x = 4$：$(8+1)(4-3) = (9)(1) = 9 > 0$\n4. 不等式要求小于等于0，取中间区间 $[-\\frac{1}{2}, 3]$\n5. 整数解：$0, 1, 2, 3$（注意 $-\\frac{1}{2}$ 不是整数，且3包含在内），共4个。",
+          "order": 5,
+          "question": "若不等式 $2x^2 - 5x - 3 \\leq 0$，则满足条件的整数解有几个？",
+          "options": [
+            "2个",
+            "3个",
+            "4个",
+            "5个"
+          ],
+          "correctAnswer": 2
+        }
+      ]
+    },
+    {
+      "section": {
+        "id": "section-7",
+        "title": "不等式综合应用（极值问题）",
+        "contentType": "example",
+        "depth": "advanced",
+        "knowledgePoints": [
+          "极值",
+          "不等式性质"
+        ],
+        "estimatedDuration": 5,
+        "hasQuiz": false
+      },
+      "chunks": [
+        {
+          "sectionId": "section-7",
+          "type": "example",
+          "content": "## 例题：不等式综合应用（极值问题）\n\n**题目**：\n已知正实数 $x, y$ 满足 $x + y + \\frac{1}{x} + \\frac{1}{y} = 5$，求 $x + y$ 的最小值。\n\n**解题步骤**：\n\n**第一步：观察与换元**\n由 $x, y > 0$，且条件中含有 $x + y$ 与 $\\frac{1}{x} + \\frac{1}{y}$，考虑设 $t = x + y$，则 $\\frac{1}{x} + \\frac{1}{y} = \\frac{x + y}{xy} = \\frac{t}{xy}$。条件化为\n$$\nt + \\frac{t}{xy} = 5.\n$$\n\n**第二步：利用均值不等式**\n由均值不等式，$xy \\leq \\left( \\frac{x + y}{2} \\right)^2 = \\frac{t^2}{4}$，因此 $\\frac{1}{xy} \\geq \\frac{4}{t^2}$，于是\n$$\n\\frac{t}{xy} \\geq \\frac{4}{t}.\n$$\n代入条件得\n$$\nt + \\frac{4}{t} \\leq 5.\n$$\n\n**第三步：解不等式求范围**\n由 $t > 0$，不等式 $t + \\frac{4}{t} \\leq 5$ 两边乘以 $t$ 得 $t^2 - 5t + 4 \\leq 0$，即 $(t - 1)(t - 4) \\leq 0$，解得 $1 \\leq t \\leq 4$。\n\n**第四步：验证取等条件**\n当 $t = 1$ 时，$x + y = 1$，由均值不等式取等条件 $x = y$，则 $x = y = \\frac{1}{2}$，此时 $\\frac{1}{x} + \\frac{1}{y} = 4$，条件 $1 + 4 = 5$ 成立。因此 $t = 1$ 可以取到。\n\n**答案**：$x + y$ 的最小值为 $\\boxed{1}$。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-7",
+          "type": "text",
+          "content": "**思路总结**：\n本题的关键在于通过换元将条件转化为关于 $t = x + y$ 的不等式，再利用均值不等式建立 $xy$ 与 $t$ 的关系，最终解出 $t$ 的范围。注意取等条件的验证，确保最小值能够取到。",
+          "order": 2
+        },
+        {
+          "sectionId": "section-7",
+          "type": "quiz",
+          "content": "## 随堂测：不等式极值应用\n\n**题目**：\n已知正实数 $a, b$ 满足 $a + b + \\frac{1}{a} + \\frac{1}{b} = 6$，求 $a + b$ 的最小值。\n\n**参考答案**：\n设 $t = a + b$，则 $\\frac{1}{a} + \\frac{1}{b} = \\frac{t}{ab}$。由均值不等式 $ab \\leq \\frac{t^2}{4}$，得 $\\frac{t}{ab} \\geq \\frac{4}{t}$。代入条件得 $t + \\frac{4}{t} \\leq 6$，即 $t^2 - 6t + 4 \\leq 0$，解得 $3 - \\sqrt{5} \\leq t \\leq 3 + \\sqrt{5}$。取等条件为 $a = b$，此时 $2a + \\frac{2}{a} = 6$，即 $a + \\frac{1}{a} = 3$，解得 $a = \\frac{3 \\pm \\sqrt{5}}{2}$，均为正数，故 $t_{\\min} = 3 - \\sqrt{5}$。\n\n**答案**：$\\boxed{3 - \\sqrt{5}}$",
+          "order": 3
+        }
+      ],
+      "structured": {
+        "type": "case",
+        "title": "不等式综合应用（极值问题）",
+        "scenarios": [
+          {
+            "problem": "已知 $x > 0$，$y > 0$，且 $x + y = 1$，求 $\\frac{1}{x} + \\frac{4}{y}$ 的最小值。",
+            "solution": "由 $x + y = 1$，将目标式变形为 $\\frac{x+y}{x} + \\frac{4(x+y)}{y} = 1 + \\frac{y}{x} + 4 + \\frac{4x}{y} = 5 + \\left(\\frac{y}{x} + \\frac{4x}{y}\\right)$。由均值不等式，$\\frac{y}{x} + \\frac{4x}{y} \\geq 2\\sqrt{\\frac{y}{x} \\cdot \\frac{4x}{y}} = 4$，当且仅当 $\\frac{y}{x} = \\frac{4x}{y}$ 即 $y = 2x$ 时取等。代入 $x + y = 1$ 得 $x = \\frac{1}{3}$，$y = \\frac{2}{3}$。因此最小值为 $5 + 4 = 9$。"
+          },
+          {
+            "problem": "设 $a > 0$，$b > 0$，且 $a + b = 2$，求 $a^2 + b^2$ 的最小值。",
+            "solution": "方法一：利用不等式 $a^2 + b^2 \\geq \\frac{(a+b)^2}{2} = \\frac{2^2}{2} = 2$，当且仅当 $a = b = 1$ 时取等。方法二：由 $b = 2 - a$，代入得 $a^2 + (2-a)^2 = 2a^2 - 4a + 4 = 2(a-1)^2 + 2$，当 $a=1$ 时取最小值2。故最小值为2。"
+          },
+          {
+            "problem": "已知 $x > 0$，$y > 0$，且 $\\frac{1}{x} + \\frac{2}{y} = 1$，求 $x + y$ 的最小值。",
+            "solution": "利用常数代换：$x + y = (x+y)\\left(\\frac{1}{x} + \\frac{2}{y}\\right) = 1 + \\frac{2x}{y} + \\frac{y}{x} + 2 = 3 + \\frac{2x}{y} + \\frac{y}{x}$。由均值不等式，$\\frac{2x}{y} + \\frac{y}{x} \\geq 2\\sqrt{\\frac{2x}{y} \\cdot \\frac{y}{x}} = 2\\sqrt{2}$，当且仅当 $\\frac{2x}{y} = \\frac{y}{x}$ 即 $y = \\sqrt{2}x$ 时取等。代入 $\\frac{1}{x} + \\frac{2}{y} = 1$ 得 $x = 1 + \\frac{\\sqrt{2}}{2}$，$y = \\sqrt{2} + 1$。因此最小值为 $3 + 2\\sqrt{2}$。"
+          }
+        ],
+        "highlight": "核心技巧：通过常数代换或配凑，将目标式转化为可用均值不等式的形式，注意取等条件必须满足已知约束。",
+        "formulas": [
+          {
+            "label": "均值不等式",
+            "latex": "\\frac{a+b}{2} \\geq \\sqrt{ab}, \\quad a,b \\geq 0"
+          },
+          {
+            "label": "平方和不等式",
+            "latex": "a^2 + b^2 \\geq \\frac{(a+b)^2}{2}"
+          }
+        ]
+      }
+    }
+  ],
+  "completedAt": "2026-06-25T12:02:41.677Z"
+}

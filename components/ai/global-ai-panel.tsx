@@ -35,12 +35,15 @@ export function GlobalAIPanel() {
     }
   }, [messages]);
 
-  const handleAsk = useCallback((text: string) => {
-    setOpen(true);
-    setMessages((prev) => [...prev, { role: 'user', content: text }]);
-    setLoading(true);
-    sendMessage([...messages, { role: 'user' as const, content: text }]);
-  }, [messages]);
+  const handleAsk = useCallback(
+    (text: string) => {
+      setOpen(true);
+      setMessages((prev) => [...prev, { role: 'user', content: text }]);
+      setLoading(true);
+      sendMessage([...messages, { role: 'user' as const, content: text }]);
+    },
+    [messages],
+  );
 
   const sendMessage = async (msgs: ChatMessage[]) => {
     if (abortRef.current) abortRef.current.abort();
@@ -59,7 +62,10 @@ export function GlobalAIPanel() {
       });
 
       if (!res.ok || !res.body) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: '抱歉，AI 助手暂时无法响应。' }]);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: '抱歉，AI 助手暂时无法响应。' },
+        ]);
         setLoading(false);
         return;
       }
@@ -86,7 +92,9 @@ export function GlobalAIPanel() {
                 return copy;
               });
             }
-          } catch { /* partial chunk */ }
+          } catch {
+            /* partial chunk */
+          }
         }
       }
     } catch (err) {
@@ -125,15 +133,15 @@ export function GlobalAIPanel() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 flex h-[520px] w-[400px] flex-col rounded-xl bg-white shadow-2xl border border-gray-200">
+        <div className="fixed bottom-6 right-6 z-50 flex h-[520px] w-[400px] flex-col rounded-xl bg-white dark:bg-slate-900 shadow-2xl border border-gray-200 dark:border-slate-700">
           {/* Header */}
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <span className="font-semibold text-gray-800">AI 助手</span>
+          <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 px-4 py-3">
+            <span className="font-semibold text-gray-800 dark:text-slate-100">AI 助手</span>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Ctrl+Shift+A</span>
+              <span className="text-xs text-gray-400 dark:text-slate-500">Ctrl+Shift+A</span>
               <button
                 onClick={() => setOpen(false)}
-                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                className="rounded-lg p-1 text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-600 dark:hover:text-slate-300"
               >
                 ✕
               </button>
@@ -143,7 +151,7 @@ export function GlobalAIPanel() {
           {/* Messages */}
           <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {messages.length === 0 && (
-              <div className="py-8 text-center text-sm text-gray-400">
+              <div className="py-8 text-center text-sm text-gray-400 dark:text-slate-500">
                 <div className="mb-2 text-3xl">💡</div>
                 <p>AI 助手已就绪</p>
                 <p className="mt-1 text-xs">选中页面上任意文字，或直接输入问题</p>
@@ -158,7 +166,7 @@ export function GlobalAIPanel() {
                   className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
                     m.role === 'user'
                       ? 'bg-[#4A90D9] text-white'
-                      : 'bg-gray-100 text-gray-800'
+                      : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-100'
                   }`}
                 >
                   {m.content || (loading && m.role === 'assistant' ? '...' : '')}
@@ -167,7 +175,7 @@ export function GlobalAIPanel() {
             ))}
             {loading && messages[messages.length - 1]?.role !== 'assistant' && (
               <div className="flex justify-start">
-                <div className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-400">
+                <div className="rounded-lg bg-gray-100 dark:bg-slate-800 px-3 py-2 text-sm text-gray-400 dark:text-slate-500">
                   思考中...
                 </div>
               </div>
@@ -175,14 +183,19 @@ export function GlobalAIPanel() {
           </div>
 
           {/* Input */}
-          <div className="border-t px-3 py-2">
+          <div className="border-t border-gray-200 dark:border-slate-700 px-3 py-2">
             <div className="flex gap-2">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
                 placeholder="输入问题..."
-                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#4A90D9]"
+                className="flex-1 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-gray-800 dark:text-slate-100 outline-none focus:border-[#4A90D9] placeholder:text-gray-400 dark:placeholder:text-slate-500"
               />
               <button
                 onClick={handleSubmit}

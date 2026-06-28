@@ -63,11 +63,7 @@ describe('generateSlides', () => {
   it('returns valid SlideGenerationResult on successful AI response', async () => {
     const { aiCall } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(6)));
 
-    const result = await generateSlides(
-      'Quadratic Functions',
-      { difficulty: 'senior' },
-      aiCall,
-    );
+    const result = await generateSlides('Quadratic Functions', { difficulty: 'senior' }, aiCall);
 
     expect(result.slides).toHaveLength(6);
     expect(result.generationTime).toBeGreaterThan(0);
@@ -83,9 +79,7 @@ describe('generateSlides', () => {
   });
 
   it('inserts topic into user prompt', async () => {
-    const { aiCall, lastUser } = makeCapturingAiCall(
-      JSON.stringify(makeFakeDeck(6)),
-    );
+    const { aiCall, lastUser } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(6)));
 
     await generateSlides('Quadratic Functions', { difficulty: 'senior' }, aiCall);
 
@@ -111,9 +105,7 @@ describe('generateSlides', () => {
     const counts: number[] = [];
 
     for (const diff of ['junior', 'senior', 'college'] as const) {
-      const { aiCall, lastUser } = makeCapturingAiCall(
-        JSON.stringify(makeFakeDeck(12)),
-      );
+      const { aiCall, lastUser } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(12)));
       await generateSlides('Topic', { difficulty: diff }, aiCall);
       const match = lastUser().match(/Number of slides: (\d+)/);
       if (match) counts.push(parseInt(match[1], 10));
@@ -123,23 +115,15 @@ describe('generateSlides', () => {
   });
 
   it('respects explicit slideCount override', async () => {
-    const { aiCall, lastUser } = makeCapturingAiCall(
-      JSON.stringify(makeFakeDeck(10)),
-    );
+    const { aiCall, lastUser } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(10)));
 
-    await generateSlides(
-      'Topic',
-      { difficulty: 'senior', slideCount: 10 },
-      aiCall,
-    );
+    await generateSlides('Topic', { difficulty: 'senior', slideCount: 10 }, aiCall);
 
     expect(lastUser()).toContain('Number of slides: 10');
   });
 
   it('excludes media conditionals from system prompt', async () => {
-    const { aiCall, lastSystem } = makeCapturingAiCall(
-      JSON.stringify(makeFakeDeck(6)),
-    );
+    const { aiCall, lastSystem } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(6)));
 
     await generateSlides('Topic', { difficulty: 'senior' }, aiCall);
 
@@ -152,6 +136,34 @@ describe('generateSlides', () => {
     expect(sys).not.toContain('slide-generated-image-instructions');
   });
 
+  it('uses the OpenMAIC element-level prompt instead of template-driven mode', async () => {
+    const { aiCall, lastSystem, lastUser } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(6)));
+
+    await generateSlides('Topic', { difficulty: 'senior' }, aiCall);
+
+    expect(lastSystem()).toContain('Slide Content Generator');
+    expect(lastSystem()).toContain('TextElement');
+    expect(lastSystem()).toContain('ShapeElement');
+    expect(lastSystem()).toContain('LatexElement');
+    expect(lastSystem()).not.toContain('Template-Driven Mode');
+    expect(lastUser()).toContain('"slides"');
+    expect(lastUser()).toContain('OpenMAIC compositions');
+    expect(lastUser()).toContain('Do NOT use the old card-panel template');
+    expect(lastUser()).not.toContain('side-by-side');
+    expect(lastUser()).not.toContain('Simple Layout Mode');
+    expect(lastUser()).not.toContain('Assigned page type');
+  });
+
+  it('recognizes Chinese calculus topics as math and asks for formula-led composition', async () => {
+    const { aiCall, lastUser } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(6)));
+
+    await generateSlides('三次函数的导数与单调性', { difficulty: 'senior' }, aiCall);
+
+    expect(lastUser()).toContain('This is a MATH topic');
+    expect(lastUser()).toContain('Key formula with LaTeX');
+    expect(lastUser()).toContain('formula/graph anchor');
+  });
+
   it('returns empty slides array on unparseable AI response', async () => {
     const { aiCall } = makeCapturingAiCall('not valid json at all');
 
@@ -161,9 +173,7 @@ describe('generateSlides', () => {
   });
 
   it('returns empty slides array when parsed.slides is not array', async () => {
-    const { aiCall } = makeCapturingAiCall(
-      JSON.stringify({ slides: 'not-an-array' }),
-    );
+    const { aiCall } = makeCapturingAiCall(JSON.stringify({ slides: 'not-an-array' }));
 
     const result = await generateSlides('Topic', { difficulty: 'senior' }, aiCall);
 
@@ -196,9 +206,7 @@ describe('generateSlides', () => {
   });
 
   it('language directive is threaded into prompt', async () => {
-    const { aiCall, lastUser } = makeCapturingAiCall(
-      JSON.stringify(makeFakeDeck(6)),
-    );
+    const { aiCall, lastUser } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(6)));
 
     const directive = 'Use Simplified Chinese (zh-CN) for all content';
     await generateSlides('Topic', { language: directive }, aiCall);
@@ -208,9 +216,7 @@ describe('generateSlides', () => {
   });
 
   it('system prompt includes canvas dimensions', async () => {
-    const { aiCall, lastSystem } = makeCapturingAiCall(
-      JSON.stringify(makeFakeDeck(6)),
-    );
+    const { aiCall, lastSystem } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(6)));
 
     await generateSlides('Topic', { difficulty: 'senior' }, aiCall);
 
@@ -219,9 +225,7 @@ describe('generateSlides', () => {
   });
 
   it('system prompt includes text height lookup table', async () => {
-    const { aiCall, lastSystem } = makeCapturingAiCall(
-      JSON.stringify(makeFakeDeck(6)),
-    );
+    const { aiCall, lastSystem } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(6)));
 
     await generateSlides('Topic', { difficulty: 'senior' }, aiCall);
 
@@ -230,11 +234,7 @@ describe('generateSlides', () => {
 
   it('returns empty slides array on null prompt (unlikely but safe)', async () => {
     // Test that returns early when buildPrompt fails (shouldn't happen in practice)
-    const result = await generateSlides(
-      'Topic',
-      { difficulty: 'senior' },
-      async () => '',
-    );
+    const result = await generateSlides('Topic', { difficulty: 'senior' }, async () => '');
 
     // Even with a broken aiCall, the prompt should build successfully
     // This test verifies the null guard exists

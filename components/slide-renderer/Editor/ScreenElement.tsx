@@ -21,6 +21,37 @@ interface ScreenElementProps {
   readonly animate?: boolean;
 }
 
+const SLIDE_FONT_STACK =
+  'Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif';
+
+function hasShapeText(elementInfo: PPTElement): boolean {
+  if (elementInfo.type !== ElementTypes.SHAPE) return false;
+  const text = (elementInfo as { text?: { content?: string } }).text;
+  return !!text?.content?.replace(/<[^>]+>/g, '').trim();
+}
+
+function getElementLayer(elementInfo: PPTElement, elementIndex: number): number {
+  const order = elementIndex;
+  switch (elementInfo.type) {
+    case ElementTypes.LINE:
+      return 1000 + order;
+    case ElementTypes.SHAPE:
+      return (hasShapeText(elementInfo) ? 7200 : 2000) + order;
+    case ElementTypes.IMAGE:
+    case ElementTypes.VIDEO:
+    case ElementTypes.CHART:
+      return 4000 + order;
+    case ElementTypes.TABLE:
+      return 6200 + order;
+    case ElementTypes.TEXT:
+    case ElementTypes.LATEX:
+    case ElementTypes.CODE:
+      return 8000 + order;
+    default:
+      return 5000 + order;
+  }
+}
+
 export function ScreenElement({ elementInfo, elementIndex, animate }: ScreenElementProps) {
   const CurrentElementComponent = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- element components have varying prop signatures
@@ -47,23 +78,16 @@ export function ScreenElement({ elementInfo, elementIndex, animate }: ScreenElem
       }
       return {
         fontColor: '#333333',
-        fontName: 'Microsoft YaHei',
+        fontName: SLIDE_FONT_STACK,
       };
     },
   );
-
-  if (!CurrentElementComponent) {
-    return null;
-  }
 
   const isAnimating = animate;
 
   const elevationShadow = useMemo(() => {
     switch (elementInfo.type) {
-      case ElementTypes.TEXT:
-        return '0 1px 3px rgba(0,0,0,0.08)';
       case ElementTypes.IMAGE:
-      case ElementTypes.SHAPE:
       case ElementTypes.CHART:
       case ElementTypes.TABLE:
         return '0 4px 12px rgba(0,0,0,0.12)';
@@ -76,22 +100,28 @@ export function ScreenElement({ elementInfo, elementIndex, animate }: ScreenElem
     }
   }, [elementInfo.type]);
 
-  const gpuTransform = elementInfo.type === ElementTypes.VIDEO || elementInfo.type === ElementTypes.CHART
-    ? 'translateZ(0)'
-    : undefined;
+  const gpuTransform =
+    elementInfo.type === ElementTypes.VIDEO || elementInfo.type === ElementTypes.CHART
+      ? 'translateZ(0)'
+      : undefined;
+
+  if (!CurrentElementComponent) {
+    return null;
+  }
 
   return (
     <div
       className={`screen-element absolute ${isAnimating ? 'animate-fade-in-up' : ''}`}
       id={`screen-element-${elementInfo.id}`}
       style={{
-        zIndex: elementIndex,
+        zIndex: getElementLayer(elementInfo, elementIndex),
         left: `${elementInfo.left}px`,
         top: `${elementInfo.top}px`,
         width: `${elementInfo.width}px`,
         height: `${'height' in elementInfo ? elementInfo.height : Math.abs((elementInfo as PPTLineElement).end[1] - (elementInfo as PPTLineElement).start[1]) || 24}px`,
         color: theme.fontColor,
-        fontFamily: theme.fontName,
+        fontFamily:
+          theme.fontName === 'SimSun' ? SLIDE_FONT_STACK : theme.fontName || SLIDE_FONT_STACK,
         animationDelay: isAnimating ? `${elementIndex * 80}ms` : undefined,
         boxShadow: elevationShadow,
         willChange: isAnimating ? 'transform' : undefined,

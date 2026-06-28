@@ -11,6 +11,7 @@ import type {
   GeneratedInteractiveContent,
   GeneratedPBLContent,
 } from '@/lib/types/generation';
+import { auditSlideLayout } from '@/lib/slides/agent/layout-guard-agent';
 
 export interface QualityScore {
   overall: number;
@@ -42,7 +43,7 @@ function weightedAverage(scores: [number, number][]): number {
 
 export function scoreSlideContent(
   content: GeneratedSlideContent,
-  options?: QualityScorerOptions,
+  _options?: QualityScorerOptions,
 ): QualityScore {
   const issues: string[] = [];
   const warnings: string[] = [];
@@ -116,7 +117,88 @@ export function scoreSlideContent(
       issues.push(`${zeroSize.length} elements have zero width or height`);
       coherence -= zeroSize.length * 0.1;
     }
+
+    const layoutIssues = auditSlideLayout(elements, { includeRichness: true });
+    const hasMissingVisualAnchor = layoutIssues.some(
+      (issue) => issue.type === 'missing_visual_anchor',
+    );
+    const hasLowContentRichness = layoutIssues.some(
+      (issue) => issue.type === 'low_content_richness',
+    );
+    const hasWeakHierarchy = layoutIssues.some((issue) => issue.type === 'weak_visual_hierarchy');
+    const hasForegroundOverlayCollision = layoutIssues.some(
+      (issue) => issue.type === 'foreground_overlay_collision',
+    );
+    const hasExcessiveColoredPanels = layoutIssues.some(
+      (issue) => issue.type === 'excessive_colored_panels',
+    );
+    const hasUnlabeledVisualPlaceholder = layoutIssues.some(
+      (issue) => issue.type === 'unlabeled_visual_placeholder',
+    );
+    const hasReadableOverlap = layoutIssues.some(
+      (issue) => issue.type === 'readable_element_overlap',
+    );
+    const hasLatexSizingIssue = layoutIssues.some(
+      (issue) => issue.type === 'latex_box_too_small',
+    );
+    const hasUnsafeBounds = layoutIssues.some((issue) => issue.type === 'unsafe_bottom_zone');
+    const hasMisalignedParallelGroup = layoutIssues.some(
+      (issue) => issue.type === 'misaligned_parallel_group',
+    );
+    const readabilityIssues = layoutIssues.filter((issue) =>
+      ['text_outside_background', 'text_too_small', 'low_text_contrast'].includes(issue.type),
+    );
+
+    if (hasMissingVisualAnchor) {
+      issues.push('Slide is missing a dominant visual anchor');
+      elementDiversity = Math.min(elementDiversity, 0.45);
+      coherence -= 0.12;
+    }
+    if (hasLowContentRichness) {
+      warnings.push('Slide has too few learning blocks for a rich classroom page');
+      completeness -= 0.18;
+      elementDiversity = Math.min(elementDiversity, 0.5);
+    }
+    if (hasWeakHierarchy) {
+      warnings.push('Slide typography has weak visual hierarchy');
+      coherence -= 0.1;
+    }
+    if (hasForegroundOverlayCollision) {
+      issues.push('foreground overlay collision detected');
+      coherence -= 0.14;
+    }
+    if (hasExcessiveColoredPanels) {
+      warnings.push('Slide uses too many colored background boxes for the clean OpenMAIC style');
+      coherence -= 0.1;
+      elementDiversity = Math.min(elementDiversity, 0.82);
+    }
+    if (hasUnlabeledVisualPlaceholder) {
+      warnings.push('Slide has an unlabeled visual placeholder instead of a meaningful diagram');
+      coherence -= 0.12;
+      elementDiversity = Math.min(elementDiversity, 0.72);
+    }
+    if (hasReadableOverlap) {
+      issues.push('Readable slide elements overlap');
+      coherence -= 0.18;
+    }
+    if (hasLatexSizingIssue) {
+      issues.push('Formula box is too small for reliable rendering');
+      coherence -= 0.14;
+    }
+    if (hasUnsafeBounds) {
+      issues.push('Slide content exceeds classroom safe bounds');
+      coherence -= 0.12;
+    }
+    if (hasMisalignedParallelGroup) {
+      warnings.push('Parallel slide elements are not evenly aligned');
+      coherence -= 0.08;
+    }
+    if (readabilityIssues.length > 0) {
+      issues.push(`${readabilityIssues.length} slide readability issue(s) detected`);
+      coherence -= readabilityIssues.length * 0.08;
+    }
   }
+  completeness = clamp(completeness);
   coherence = clamp(coherence);
 
   const overall = weightedAverage([
@@ -132,7 +214,7 @@ export function scoreSlideContent(
 
 export function scoreQuizContent(
   content: GeneratedQuizContent,
-  options?: QualityScorerOptions,
+  _options?: QualityScorerOptions,
 ): QualityScore {
   const issues: string[] = [];
   const warnings: string[] = [];
@@ -184,7 +266,7 @@ export function scoreQuizContent(
 
 export function scoreInteractiveContent(
   content: GeneratedInteractiveContent,
-  options?: QualityScorerOptions,
+  _options?: QualityScorerOptions,
 ): QualityScore {
   const issues: string[] = [];
   const warnings: string[] = [];
@@ -229,7 +311,7 @@ export function scoreInteractiveContent(
 
 export function scorePBLContent(
   content: GeneratedPBLContent,
-  options?: QualityScorerOptions,
+  _options?: QualityScorerOptions,
 ): QualityScore {
   const issues: string[] = [];
   const warnings: string[] = [];
@@ -300,4 +382,47 @@ export function scoreContent(
 export function isAcceptable(score: QualityScore, minAcceptable?: number): boolean {
   const threshold = minAcceptable ?? DEFAULT_MIN_ACCEPTABLE;
   return score.overall >= threshold && score.completeness >= threshold;
+}
+
+export function scoreQuality(
+  content:
+    | GeneratedSlideContent
+    | GeneratedQuizContent
+    | GeneratedInteractiveContent
+    | GeneratedPBLContent,
+  type: ScorableContent['type'],
+  options?: QualityScorerOptions,
+): QualityScore {
+  switch (type) {
+    case 'slide':
+      return scoreSlideContent(content as GeneratedSlideContent, options);
+    case 'quiz':
+      return scoreQuizContent(content as GeneratedQuizContent, options);
+    case 'interactive':
+      return scoreInteractiveContent(content as GeneratedInteractiveContent, options);
+    case 'pbl':
+      return scorePBLContent(content as GeneratedPBLContent, options);
+  }
+}
+
+export function dispatchScorer(
+  content:
+    | GeneratedSlideContent
+    | GeneratedQuizContent
+    | GeneratedInteractiveContent
+    | GeneratedPBLContent,
+  type: ScorableContent['type'],
+  options?: QualityScorerOptions,
+): QualityScore {
+  if (!['slide', 'quiz', 'interactive', 'pbl'].includes(type)) {
+    return {
+      overall: 0,
+      completeness: 0,
+      coherence: 0,
+      elementDiversity: 0,
+      issues: [`Unknown content type: ${String(type)}`],
+      warnings: [],
+    };
+  }
+  return scoreQuality(content, type, options);
 }
