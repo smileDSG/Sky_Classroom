@@ -254,7 +254,7 @@ function normalizeSnapshotMistake(mistake: WorkshopSnapshot['mistakes'][number])
   };
 }
 
-export function WorkshopTestPage() {
+export function WorkshopPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const detailSectionRef = useRef<HTMLElement | null>(null);
