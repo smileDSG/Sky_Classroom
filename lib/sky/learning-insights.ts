@@ -372,7 +372,7 @@ export function buildLearningInsights(
       {
         label: '进入复习',
         description: dueReviewCount > 0 ? `处理 ${dueReviewCount} 道到期错题` : '检查复习计划',
-        href: '/sky/learning?tab=review',
+        href: '/sky/learning/review',
         tone: 'review',
       },
       {
