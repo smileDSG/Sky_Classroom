@@ -106,7 +106,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
 
       {/* 白色圆形扩散 — 书停稳后从书底端开始，盖住一切 */}
       <motion.div
-        className="absolute inset-0 bg-white dark:bg-slate-950"
+        className="absolute inset-0 bg-white"
         style={{ zIndex: 50 }}
         initial={{ clipPath: 'circle(0% at 50% 65%)' }}
         animate={{ clipPath: 'circle(150% at 50% 65%)' }}
