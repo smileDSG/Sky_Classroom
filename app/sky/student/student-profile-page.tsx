@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Loader2, AlertCircle, RefreshCw, UserCheck } from 'lucide-react';
+import Link from 'next/link';
+import { Loader2, AlertCircle, RefreshCw, UserCheck, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { StudentProfileDisplay } from '@/components/sky/solve/student-profile';
@@ -62,12 +63,19 @@ export function StudentProfilePage() {
   return (
     <div className="mx-auto max-w-5xl">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/20">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href="/sky/learning"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            返回天梯工坊
+          </Link>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/20">
             <UserCheck className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h2 className="text-xl font-bold">学情分析</h2>
             <p className="text-sm text-muted-foreground">
               基于你的做题数据，自动生成学科掌握度与薄弱点分析

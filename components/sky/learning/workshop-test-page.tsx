@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -57,6 +57,15 @@ interface MissionStep {
   href: string;
   icon: typeof CalendarClock;
   tone: MissionTone;
+}
+
+interface DailyTaskAction {
+  title: string;
+  detail: string;
+  href: string;
+  icon: typeof CalendarClock;
+  tab?: DetailTabKey;
+  autoStartReview?: boolean;
 }
 
 const toneClasses: Record<MissionTone, { chip: string; text: string; line: string }> = {
@@ -162,10 +171,57 @@ function fallbackTopics(insights: LearningInsights): LearningInsightTopic[] {
   ];
 }
 
+function buildDailyTaskAction(
+  insights: LearningInsights,
+  missionSteps: MissionStep[],
+): DailyTaskAction {
+  if (insights.metrics.dueReviewCount > 0) {
+    return {
+      title: `处理 ${insights.metrics.dueReviewCount} 道到期复习`,
+      detail:
+        insights.metrics.overdueReviewCount > 0
+          ? `其中 ${insights.metrics.overdueReviewCount} 道已逾期，点击后直接进入沉浸复习`
+          : '点击后直接进入今日沉浸复习',
+      href: '/sky/learning?tab=review&dailyTask=1',
+      icon: CalendarClock,
+      tab: 'review',
+      autoStartReview: true,
+    };
+  }
+
+  if (insights.metrics.reviewBacklogCount > 0) {
+    return {
+      title: `补齐 ${insights.metrics.reviewBacklogCount} 道错题闭环`,
+      detail: '先进入复习计划，确认下一轮复习节奏',
+      href: '/sky/learning?tab=review',
+      icon: BookOpenCheck,
+      tab: 'review',
+    };
+  }
+
+  if (insights.topTopics.length > 0) {
+    const quizStep = missionSteps.find((step) => step.id === 'quiz') ?? missionSteps[1];
+    return {
+      title: `围绕「${insights.focusTopic}」做针对练习`,
+      detail: '用一组同类题验证薄弱点是否真正补上',
+      href: quizStep.href,
+      icon: Target,
+    };
+  }
+
+  return {
+    title: '先完成一次诊断采样',
+    detail: '通过拍照搜题或手动输入题目，让系统生成你的学习画像',
+    href: '/sky/cloud-mind/solve?source=workshop-daily',
+    icon: Sparkles,
+  };
+}
+
 export function WorkshopTestPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const detailSectionRef = useRef<HTMLElement | null>(null);
+  const [autoStartReview, setAutoStartReview] = useState(false);
   const mistakes = useSkyClassroomStore((state) => state.mistakes);
   const memoryProgress = useSkyClassroomStore((state) => state.memoryProgress);
   const prioritizeReview = useSkyClassroomStore((state) => state.prioritizeReview);
@@ -178,6 +234,10 @@ export function WorkshopTestPage() {
     [mistakes, memoryProgress],
   );
   const missionSteps = useMemo(() => buildMissionSteps(insights), [insights]);
+  const dailyTaskAction = useMemo(
+    () => buildDailyTaskAction(insights, missionSteps),
+    [insights, missionSteps],
+  );
   const routeTopics = useMemo(() => fallbackTopics(insights).slice(0, 5), [insights]);
   const priorityTopics = insights.topTopics.map((topic) => topic.name);
   const weakPoints = useMemo(() => {
@@ -212,8 +272,7 @@ export function WorkshopTestPage() {
       });
   }, []);
 
-  const mainAction = missionSteps[0];
-  const MainIcon = mainAction.icon;
+  const MainIcon = dailyTaskAction.icon;
 
   const scrollToDetailSection = () => {
     window.setTimeout(() => {
@@ -229,17 +288,39 @@ export function WorkshopTestPage() {
   };
 
   const handleStartDailyTask = () => {
-    const tab = new URLSearchParams(mainAction.href.split('?')[1] ?? '').get('tab');
-    if (tab && DETAIL_TABS.some((item) => item.key === tab)) {
-      handleTabChange(tab as DetailTabKey, true);
+    try {
+      localStorage.setItem('sky-workshop-daily-task-started', new Date().toISOString());
+    } catch {
+      /* non-critical */
+    }
+
+    if (dailyTaskAction.tab) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', dailyTaskAction.tab);
+      if (dailyTaskAction.autoStartReview) {
+        params.set('dailyTask', '1');
+        setAutoStartReview(true);
+      } else {
+        params.delete('dailyTask');
+      }
+      router.replace(`/sky/learning?${params.toString()}`, { scroll: false });
+      scrollToDetailSection();
       return;
     }
-    router.push(mainAction.href);
+    router.push(dailyTaskAction.href);
   };
 
   const handleOpenFullProfile = () => {
-    handleTabChange('profile', true);
+    router.push('/sky/student');
   };
+
+  const handleReviewAutoStartConsumed = useCallback(() => {
+    setAutoStartReview(false);
+    if (searchParams.get('dailyTask') !== '1') return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('dailyTask');
+    router.replace(`/sky/learning?${params.toString()}`, { scroll: false });
+  }, [router, searchParams]);
 
   return (
     <SkyAppShell>
@@ -278,7 +359,7 @@ export function WorkshopTestPage() {
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_10px_30px_rgba(52,211,153,0.18)] transition-transform hover:-translate-y-0.5"
               >
                 <MainIcon className="h-4 w-4" />
-                开始每日任务
+                开始今日任务
               </button>
               <button
                 type="button"
@@ -288,6 +369,12 @@ export function WorkshopTestPage() {
                 <ShieldCheck className="h-4 w-4 text-indigo-100" />
                 查看完整画像
               </button>
+            </div>
+            <div className="mt-3 rounded-2xl border border-emerald-200/15 bg-emerald-300/[0.06] px-3 py-2 text-xs leading-5 text-emerald-50/85">
+              <span className="font-semibold text-emerald-100">今日任务：</span>
+              {dailyTaskAction.title}
+              <span className="mx-1 text-emerald-100/45">·</span>
+              {dailyTaskAction.detail}
             </div>
           </div>
 
@@ -473,7 +560,12 @@ export function WorkshopTestPage() {
 
           <div className="rounded-2xl border border-cyan-100/10 bg-slate-950/20 p-4">
             {activeTab === 'mistakes' && <MistakeBook />}
-            {activeTab === 'review' && <ReviewPlan />}
+            {activeTab === 'review' && (
+              <ReviewPlan
+                autoStart={autoStartReview || searchParams.get('dailyTask') === '1'}
+                onAutoStartConsumed={handleReviewAutoStartConsumed}
+              />
+            )}
             {activeTab === 'graph' && (
               <div className="space-y-4">
                 <KnowledgeGraphView />
