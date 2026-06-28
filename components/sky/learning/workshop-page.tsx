@@ -14,6 +14,7 @@ import {
   GraduationCap,
   Layers,
   Network,
+  RefreshCw,
   Route,
   ShieldCheck,
   Sparkles,
@@ -68,6 +69,42 @@ interface DailyTaskAction {
   autoStartReview?: boolean;
 }
 
+interface WorkshopSnapshot {
+  generatedAt: number;
+  mistakes: WorkshopMistakeSnapshot[];
+  review?: {
+    dueCount?: number;
+    overdue?: number;
+    completed?: number;
+    total?: number;
+  };
+  learningStats?: {
+    masteryPercent?: number;
+    todayStudyMinutes?: number;
+    streakDays?: number;
+    problemsAttempted?: number;
+    problemsCorrect?: number;
+    scenesCompleted?: number;
+  } | null;
+  profile?: {
+    masteryByKnowledge?: Record<string, number>;
+    weakPoints?: string[];
+    strongPoints?: string[];
+    errorPatterns?: Array<{
+      knowledgePoint: string;
+      errorType: MistakeCause | string;
+      frequency: number;
+    }>;
+    totalQuestions?: number;
+    totalCorrect?: number;
+  } | null;
+}
+
+interface WorkshopMistakeSnapshot extends Omit<MistakeRecord, 'solvedAt' | 'source'> {
+  solvedAt: string | number;
+  source?: MistakeRecord['source'] | 'classroom-diagnostic';
+}
+
 const toneClasses: Record<MissionTone, { chip: string; text: string; line: string }> = {
   amber: {
     chip: 'border-amber-200/25 bg-amber-300/10 text-amber-100',
@@ -90,17 +127,6 @@ const toneClasses: Record<MissionTone, { chip: string; text: string; line: strin
     line: 'from-rose-300/50',
   },
 };
-
-function errorTypeToCause(errorType: string): MistakeCause {
-  const map: Record<string, MistakeCause> = {
-    concept: 'concept-unclear',
-    calculation: 'calculation-error',
-    reading: 'misreading',
-    reasoning: 'method-wrong',
-    careless: 'careless',
-  };
-  return map[errorType] ?? 'concept-unclear';
-}
 
 function buildMemoryHref(topic: string, topics: string[]): string {
   const content = topics.length
@@ -217,11 +243,25 @@ function buildDailyTaskAction(
   };
 }
 
-export function WorkshopTestPage() {
+function normalizeSnapshotMistake(mistake: WorkshopSnapshot['mistakes'][number]): MistakeRecord {
+  return {
+    ...mistake,
+    solvedAt: new Date(mistake.solvedAt),
+    source:
+      mistake.source === 'classroom-diagnostic'
+        ? 'classroom-quiz'
+        : (mistake.source as MistakeRecord['source']),
+  };
+}
+
+export function WorkshopPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const detailSectionRef = useRef<HTMLElement | null>(null);
   const [autoStartReview, setAutoStartReview] = useState(false);
+  const [snapshot, setSnapshot] = useState<WorkshopSnapshot | null>(null);
+  const [loadingSnapshot, setLoadingSnapshot] = useState(true);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
   const mistakes = useSkyClassroomStore((state) => state.mistakes);
   const memoryProgress = useSkyClassroomStore((state) => state.memoryProgress);
   const prioritizeReview = useSkyClassroomStore((state) => state.prioritizeReview);
@@ -229,9 +269,19 @@ export function WorkshopTestPage() {
   const activeTab: DetailTabKey = DETAIL_TABS.some((tab) => tab.key === tabParam)
     ? (tabParam as DetailTabKey)
     : 'mistakes';
+  const snapshotMistakes = useMemo(
+    () => snapshot?.mistakes.map(normalizeSnapshotMistake) ?? null,
+    [snapshot],
+  );
+  const effectiveMistakes = snapshotMistakes ?? mistakes;
   const insights = useMemo(
-    () => buildLearningInsights(mistakes, memoryProgress),
-    [mistakes, memoryProgress],
+    () =>
+      buildLearningInsights(effectiveMistakes, memoryProgress, Date.now(), {
+        profile: snapshot?.profile,
+        learningStats: snapshot?.learningStats,
+        review: snapshot?.review,
+      }),
+    [effectiveMistakes, memoryProgress, snapshot],
   );
   const missionSteps = useMemo(() => buildMissionSteps(insights), [insights]);
   const dailyTaskAction = useMemo(
@@ -241,36 +291,46 @@ export function WorkshopTestPage() {
   const routeTopics = useMemo(() => fallbackTopics(insights).slice(0, 5), [insights]);
   const priorityTopics = insights.topTopics.map((topic) => topic.name);
   const weakPoints = useMemo(() => {
-    if (mistakes.length === 0) return [];
-    return buildKnowledgeGraph(mistakes).weakPoints;
-  }, [mistakes]);
+    if (effectiveMistakes.length === 0) return snapshot?.profile?.weakPoints ?? [];
+    const graphWeakPoints = buildKnowledgeGraph(effectiveMistakes).weakPoints;
+    return graphWeakPoints.length > 0 ? graphWeakPoints : (snapshot?.profile?.weakPoints ?? []);
+  }, [effectiveMistakes, snapshot]);
+
+  const loadWorkshopSnapshot = useCallback(async (forceRefresh = false) => {
+    setLoadingSnapshot(true);
+    setSnapshotError(null);
+    try {
+      syncMistakesFromQuizzes();
+      const response = await fetch(`/api/sky/workshop${forceRefresh ? '?force=true' : ''}`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error ?? '天梯工坊数据加载失败');
+      }
+
+      const nextSnapshot: WorkshopSnapshot = {
+        generatedAt: data.generatedAt ?? Date.now(),
+        mistakes: Array.isArray(data.mistakes) ? data.mistakes : [],
+        review: data.review ?? null,
+        learningStats: data.learningStats ?? null,
+        profile: data.profile ?? null,
+      };
+      setSnapshot(nextSnapshot);
+      useSkyClassroomStore
+        .getState()
+        .mergeMistakes(nextSnapshot.mistakes.map(normalizeSnapshotMistake));
+    } catch (error) {
+      setSnapshotError(error instanceof Error ? error.message : '天梯工坊数据加载失败');
+    } finally {
+      setLoadingSnapshot(false);
+    }
+  }, []);
 
   useEffect(() => {
-    syncMistakesFromQuizzes();
-
-    fetch('/api/sky/mistakes?pageSize=9999', { credentials: 'include' })
-      .then((response) => response.json())
-      .then((data) => {
-        if (!data?.success || !Array.isArray(data.items)) return;
-        const serverMistakes: MistakeRecord[] = data.items.map(
-          (entry: Record<string, unknown>) => ({
-            id: entry.id as string,
-            problem: entry.problemText as string,
-            userAnswer: entry.userAnswer as string,
-            correctAnswer: entry.correctAnswer as string,
-            cause: errorTypeToCause(entry.errorType as string),
-            solvedAt: entry.lastReview ? new Date(entry.lastReview as number) : new Date(),
-            reviewed: entry.reviewed as boolean,
-            reviewCount: entry.reviewCount as number,
-            knowledgePoints: (entry.knowledgePoints as string[]) ?? [],
-          }),
-        );
-        useSkyClassroomStore.getState().mergeMistakes(serverMistakes);
-      })
-      .catch(() => {
-        /* local data is enough for the prototype */
-      });
-  }, []);
+    void loadWorkshopSnapshot();
+  }, [loadWorkshopSnapshot]);
 
   const MainIcon = dailyTaskAction.icon;
 
@@ -375,6 +435,25 @@ export function WorkshopTestPage() {
               {dailyTaskAction.title}
               <span className="mx-1 text-emerald-100/45">·</span>
               {dailyTaskAction.detail}
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-300">
+              <span>
+                数据来源：
+                {snapshot ? '云端实时快照' : '本地学习缓存'}
+                {snapshot?.generatedAt
+                  ? ` · ${new Date(snapshot.generatedAt).toLocaleTimeString()} 更新`
+                  : ''}
+              </span>
+              {snapshotError && <span className="text-amber-100">· {snapshotError}</span>}
+              <button
+                type="button"
+                onClick={() => loadWorkshopSnapshot(true)}
+                disabled={loadingSnapshot}
+                className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-2 py-1 font-medium text-slate-100 transition-colors hover:bg-white/[0.08] disabled:opacity-60"
+              >
+                <RefreshCw className={cn('h-3 w-3', loadingSnapshot && 'animate-spin')} />
+                刷新数据
+              </button>
             </div>
           </div>
 

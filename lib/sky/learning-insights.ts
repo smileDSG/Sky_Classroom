@@ -67,6 +67,41 @@ export interface LearningInsights {
 const DEFAULT_TOPIC = '综合诊断';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+export interface LearningInsightProfile {
+  masteryByKnowledge?: Record<string, number>;
+  weakPoints?: string[];
+  strongPoints?: string[];
+  errorPatterns?: Array<{
+    knowledgePoint: string;
+    errorType: MistakeCause | string;
+    frequency: number;
+  }>;
+  totalQuestions?: number;
+  totalCorrect?: number;
+}
+
+export interface LearningInsightStats {
+  masteryPercent?: number;
+  todayStudyMinutes?: number;
+  streakDays?: number;
+  problemsAttempted?: number;
+  problemsCorrect?: number;
+  scenesCompleted?: number;
+}
+
+export interface LearningInsightReviewSnapshot {
+  dueCount?: number;
+  overdue?: number;
+  completed?: number;
+  total?: number;
+}
+
+export interface LearningInsightContext {
+  profile?: LearningInsightProfile | null;
+  learningStats?: LearningInsightStats | null;
+  review?: LearningInsightReviewSnapshot | null;
+}
+
 const CAUSE_LABELS: Record<MistakeCause, string> = {
   'concept-unclear': '概念不清',
   'calculation-error': '计算失误',
@@ -99,6 +134,11 @@ function isOverdue(mistake: MistakeRecord, now: number): boolean {
 
 function getDominantCause(causes: Map<MistakeCause, number>): MistakeCause | null {
   return [...causes.entries()].sort(([, a], [, b]) => b - a)[0]?.[0] ?? null;
+}
+
+function average(values: number[]): number {
+  if (values.length === 0) return 0;
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
 function buildMemoryHref(topic: string, topics: string[]): string {
@@ -158,6 +198,7 @@ export function buildLearningInsights(
     lastStudied: null,
   },
   now = Date.now(),
+  context: LearningInsightContext = {},
 ): LearningInsights {
   const graph = mistakes.length > 0 ? buildKnowledgeGraph(mistakes) : null;
   const summary = graph ? getMasterySummary(graph) : null;
@@ -172,16 +213,18 @@ export function buildLearningInsights(
     }
   >();
   const causeCounts = new Map<MistakeCause, number>();
-  let dueReviewCount = 0;
-  let overdueReviewCount = 0;
+  let dueReviewCount = context.review?.dueCount ?? 0;
+  let overdueReviewCount = context.review?.overdue ?? 0;
   let reviewBacklogCount = 0;
 
   for (const mistake of mistakes) {
     const due = isDue(mistake, now);
     const overdue = isOverdue(mistake, now);
     const recent = now - toTime(mistake.solvedAt) <= 7 * DAY_MS;
-    if (due) dueReviewCount += 1;
-    if (overdue) overdueReviewCount += 1;
+    if (!context.review) {
+      if (due) dueReviewCount += 1;
+      if (overdue) overdueReviewCount += 1;
+    }
     if (!mistake.reviewed) reviewBacklogCount += 1;
     causeCounts.set(mistake.cause, (causeCounts.get(mistake.cause) ?? 0) + 1);
 
@@ -203,7 +246,7 @@ export function buildLearningInsights(
   }
 
   const nodeMap = new Map((graph?.nodes ?? []).map((node) => [node.name, node]));
-  const topTopics = [...topicMap.entries()]
+  const topTopicsFromMistakes = [...topicMap.entries()]
     .map(([name, data]) => {
       const mastery = nodeMap.get(name)?.mastery ?? Math.max(0, 100 - data.mistakeCount * 12);
       const dominantCause = getDominantCause(data.causes);
@@ -231,11 +274,49 @@ export function buildLearningInsights(
         reason,
       };
     })
+    .sort((a, b) => b.score - a.score);
+
+  const existingTopics = new Set(topTopicsFromMistakes.map((topic) => topic.name));
+  const profileTopics = Object.entries(context.profile?.masteryByKnowledge ?? {})
+    .filter(([name]) => !existingTopics.has(name))
+    .map(([name, mastery]) => {
+      const weakRank = context.profile?.weakPoints?.indexOf(name) ?? -1;
+      const pattern = context.profile?.errorPatterns?.find((item) => item.knowledgePoint === name);
+      const score = Math.round(
+        (100 - mastery) * 0.55 +
+          (weakRank >= 0 ? 30 - weakRank * 3 : 0) +
+          (pattern?.frequency ?? 0) * 8,
+      );
+      return {
+        name,
+        score,
+        mastery,
+        mistakeCount: pattern?.frequency ?? 0,
+        dueCount: 0,
+        unreviewedCount: 0,
+        dominantCause: (pattern?.errorType as MistakeCause | undefined) ?? null,
+        reason:
+          pattern && pattern.frequency > 0
+            ? `画像显示该点出现 ${pattern.frequency} 次错误模式`
+            : mastery < 60
+              ? `画像掌握度 ${mastery}%`
+              : '画像建议持续巩固',
+      };
+    });
+
+  const topTopics = [...topTopicsFromMistakes, ...profileTopics]
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
 
   const focusTopic = topTopics[0]?.name ?? graph?.weakPoints[0] ?? DEFAULT_TOPIC;
-  const hasSignals = mistakes.length > 0 || memoryProgress.topicCount > 0;
+  const profileQuestionCount = context.profile?.totalQuestions ?? 0;
+  const statsQuestionCount = context.learningStats?.problemsAttempted ?? 0;
+  const hasSignals =
+    mistakes.length > 0 ||
+    memoryProgress.topicCount > 0 ||
+    topTopics.length > 0 ||
+    profileQuestionCount > 0 ||
+    statsQuestionCount > 0;
   const strategyLabel =
     dueReviewCount > 0
       ? '复习到期优先'
@@ -263,7 +344,10 @@ export function buildLearningInsights(
       overdueReviewCount,
       reviewBacklogCount,
       weakPointCount: graph?.weakPoints.length ?? 0,
-      averageMastery: summary?.overallMastery ?? 0,
+      averageMastery:
+        summary?.overallMastery ??
+        context.learningStats?.masteryPercent ??
+        average(Object.values(context.profile?.masteryByKnowledge ?? {})),
       masteredPointCount: summary?.masteredCount ?? 0,
       knowledgePointCount: summary?.totalCount ?? 0,
       memoryTopicCount: memoryProgress.topicCount,
