@@ -278,6 +278,15 @@ function overlappingTextResponse(): string {
         height: 110,
         content: '<p style="font-size:20px;">Gradient direction tells us how to move.</p>',
       },
+      {
+        id: 'formula',
+        type: 'latex',
+        left: 560,
+        top: 220,
+        width: 320,
+        height: 90,
+        latex: '\\theta_{t+1}=\\theta_t-\\eta\\nabla J(\\theta_t)',
+      },
     ],
     remark: 'bad overlapping draft',
   });

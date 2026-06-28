@@ -541,6 +541,22 @@ function isQuadraticApplicationTitle(text: string): boolean {
   return /(综合应用|实际问题|二次函数建模|应用题|变式训练)/i.test(text);
 }
 
+function shouldUsePythonVariablesLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  const source = getLayoutSignalText(elements, context);
+  const title = getSlideTitle(elements, context);
+  const combined = `${title} ${source}`;
+  const hasVariableSignal = /(变量|variable)/i.test(combined);
+  const hasDataTypeSignal = /(数据类型|常见数据类型|int|float|str|bool|type\(\)|data type)/i.test(
+    combined,
+  );
+  const hasNamingSignal = /(命名规则|不能以数字开头|下划线|区分大小写|naming)/i.test(combined);
+
+  return hasVariableSignal && hasDataTypeSignal && hasNamingSignal;
+}
+
 function referenceHeaderElements(
   prefix: string,
   title: string,
@@ -984,6 +1000,405 @@ function quadraticApplicationReferenceLayout(
       undefined,
       1.1,
     ),
+  ];
+}
+
+function pythonVariablesReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const prefix = 'polish_ref_python_vars';
+  const typeCards = [
+    { id: 'int', title: '整数 int', fill: '#dbeafe', color: '#1e40af' },
+    { id: 'float', title: '浮点 float', fill: '#dcfce7', color: '#166534' },
+    { id: 'str', title: '字符串 str', fill: '#fef3c7', color: '#92400e' },
+    { id: 'bool', title: '布尔 bool', fill: '#fce4ec', color: '#881337' },
+  ];
+  const cardWidth = 190;
+  const cardGap = 24;
+  const cardTop = 438;
+  const cardLeft = 82;
+
+  return [
+    ...referenceHeaderElements(
+      prefix,
+      title,
+      '变量负责命名和保存数据，数据类型决定值可以怎样参与运算',
+      theme,
+    ),
+    shapeElement(`${prefix}_variable_panel`, 82, 210, 394, 208, '#f8fafc', 1),
+    shapeElement(`${prefix}_variable_bar`, 82, 230, 8, 138, theme.accent, 1),
+    textElement(
+      `${prefix}_variable_title`,
+      '<strong>变量：数据容器</strong>',
+      116,
+      232,
+      320,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_variable_code`,
+      'name = "小明"',
+      116,
+      284,
+      320,
+      34,
+      24,
+      '#1d4ed8',
+      undefined,
+      1.08,
+    ),
+    textElement(
+      `${prefix}_variable_body`,
+      '可随时重新赋值。',
+      116,
+      344,
+      316,
+      40,
+      19,
+      theme.textBody,
+      undefined,
+      1.16,
+    ),
+    shapeElement(`${prefix}_naming_panel`, 520, 210, 398, 208, '#fff7ed', 1),
+    shapeElement(`${prefix}_naming_bar`, 520, 230, 8, 138, theme.accentSecondary, 1),
+    textElement(
+      `${prefix}_naming_title`,
+      '<strong>命名规则</strong>',
+      554,
+      232,
+      316,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_naming_body`,
+      '字母、数字、下划线<br/>不能以数字开头<br/>区分大小写：name ≠ Name',
+      554,
+      300,
+      318,
+      86,
+      19,
+      theme.textBody,
+      undefined,
+      1.24,
+    ),
+    textElement(
+      `${prefix}_type_callout`,
+      '<strong>常见数据类型</strong> · <code>type(42)</code> → <code>int</code>',
+      82,
+      402,
+      836,
+      30,
+      18,
+      '#334155',
+      undefined,
+      1.1,
+    ),
+    ...typeCards.flatMap((card, index) => {
+      const left = cardLeft + index * (cardWidth + cardGap);
+      return [
+        shapeElement(`${prefix}_type_card_${card.id}`, left, cardTop, cardWidth, 76, card.fill, 1),
+        textElement(
+          `${prefix}_type_label_${card.id}`,
+          `<strong>${card.title}</strong>`,
+          left + 18,
+          cardTop + 14,
+          cardWidth - 36,
+          38,
+          20,
+          card.color,
+          undefined,
+          1.1,
+        ),
+      ];
+    }),
+  ];
+}
+
+type CanonicalTextBlock = {
+  heading?: string;
+  body: string;
+};
+
+function splitCanonicalTextLines(element: SlideLikeElement): string[] {
+  const record = element as Record<string, unknown>;
+  const html =
+    element.type === 'shape'
+      ? String((record['text'] as { content?: string } | undefined)?.content ?? '')
+      : String(record['content'] ?? '');
+
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .split(/\n+/)
+    .map((line) =>
+      line
+        .replace(/^[•·\-\s]+/, '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
+    .filter((line) => line.length >= 3);
+}
+
+function getCanonicalSubtitle(elements: SlideLikeElement[], title: string): string {
+  const titlePlain = stripHtml(title);
+  const subtitle = elements
+    .filter((element) => element.type === 'text')
+    .filter((element) => element.top >= 96 && element.top < 190)
+    .flatMap(splitCanonicalTextLines)
+    .find((line) => line !== titlePlain && line.length <= 72);
+
+  return subtitle ?? '把核心概念、方法和例子整理成稳定的课堂页面';
+}
+
+function isLikelyCanonicalHeading(line: string): boolean {
+  const compact = line.replace(/\s+/g, '');
+  if (compact.length < 3 || compact.length > 18) return false;
+  if (/[。.!?！？；;，,]/.test(compact)) return false;
+  return true;
+}
+
+function extractCanonicalLines(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): string[] {
+  const title = stripHtml(getSlideTitle(elements, context));
+  const subtitle = getCanonicalSubtitle(elements, title);
+  const seen = new Set<string>();
+
+  return elements
+    .filter((element) => isReadableElement(element))
+    .filter((element) => getElementBox(element).top >= 170)
+    .sort((a, b) => a.top - b.top || a.left - b.left)
+    .flatMap(splitCanonicalTextLines)
+    .map((line) => line.trim())
+    .filter((line) => line && line !== title && line !== subtitle)
+    .filter((line) => {
+      const key = line.replace(/\s+/g, '').toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+function extractCanonicalBlocks(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): CanonicalTextBlock[] {
+  const lines = extractCanonicalLines(elements, context);
+  const blocks: CanonicalTextBlock[] = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const next = lines[index + 1];
+    if (isLikelyCanonicalHeading(line) && next) {
+      blocks.push({
+        heading: line,
+        body: next,
+      });
+      index += 1;
+    } else {
+      blocks.push({
+        body: line,
+      });
+    }
+  }
+
+  return blocks.filter((block) => block.body.length >= 3).slice(0, 5);
+}
+
+function extractCanonicalStepLines(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): string[] {
+  return extractCanonicalLines(elements, context)
+    .filter((line) => /[①②③④⑤⑥⑦⑧⑨]|(^|\s)\d+[.、]/.test(line))
+    .map((line, index) =>
+      /^[①②③④⑤⑥⑦⑧⑨]/.test(line) || /(^|\s)\d+[.、]/.test(line) ? line : `${index + 1}. ${line}`,
+    )
+    .slice(0, 5);
+}
+
+function shouldUseCanonicalTextLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return false;
+  if (
+    elements.some(
+      (element) =>
+        element.id?.startsWith('polish_quad_') ||
+        element.id?.startsWith('polish_visual_') ||
+        element.id?.startsWith('polish_density_'),
+    )
+  ) {
+    return false;
+  }
+
+  const hasStrongMedia = elements.some((element) =>
+    ['image', 'video', 'chart', 'table', 'latex', 'code'].includes(element.type),
+  );
+  if (hasStrongMedia) return false;
+
+  const generatedLikeCount = elements.filter((element) =>
+    /^(text|shape|line|image|video|chart|table|latex)_[\w-]+$/i.test(element.id ?? ''),
+  ).length;
+  if (generatedLikeCount < Math.max(3, Math.ceil(elements.length * 0.6))) return false;
+
+  const title = getSlideTitle(elements, context);
+  if (/(谢谢|结束|目录|大纲|封面|小测验|测验|quiz|thanks|outline)/i.test(title)) return false;
+
+  const blocks = extractCanonicalBlocks(elements, context);
+  return blocks.length >= 2;
+}
+
+function canonicalStepsReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const subtitle = getCanonicalSubtitle(elements, title);
+  const prefix = 'polish_ref_canonical_steps';
+  const steps = extractCanonicalStepLines(elements, context);
+  const blocks = extractCanonicalBlocks(elements, context);
+  const note = blocks.find((block) => !steps.some((step) => step.includes(block.body)))?.body;
+
+  return [
+    ...referenceHeaderElements(prefix, title, subtitle, theme),
+    shapeElement(`${prefix}_goal_panel`, 82, 210, 352, 264, '#f8fafc', 1),
+    shapeElement(`${prefix}_goal_bar`, 82, 232, 8, 164, theme.accent, 1),
+    textElement(
+      `${prefix}_goal_title`,
+      '<strong>学习目标</strong>',
+      116,
+      238,
+      270,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_goal_body`,
+      escapeHtmlShort(note ?? subtitle, 78),
+      116,
+      304,
+      270,
+      96,
+      20,
+      theme.textBody,
+      undefined,
+      1.2,
+    ),
+    shapeElement(`${prefix}_steps_panel`, 486, 210, 432, 264, '#eef6ff', 1),
+    textElement(
+      `${prefix}_steps_title`,
+      '<strong>关键步骤</strong>',
+      520,
+      236,
+      350,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_steps_body`,
+      steps.map((step) => escapeHtmlShort(step, 46)).join('<br/>'),
+      520,
+      294,
+      344,
+      136,
+      18,
+      '#1e3a5f',
+      undefined,
+      1.34,
+    ),
+  ];
+}
+
+function canonicalTextReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const steps = extractCanonicalStepLines(elements, context);
+  if (steps.length >= 2) return canonicalStepsReferenceLayout(elements, context);
+
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const subtitle = getCanonicalSubtitle(elements, title);
+  const prefix = 'polish_ref_canonical';
+  const blocks = extractCanonicalBlocks(elements, context);
+  const first = blocks[0] ?? { heading: '核心概念', body: subtitle };
+  const rightBlocks = blocks.slice(1, 4);
+  const bandTop = 204;
+  const bandHeight = 96;
+  const bandGap = 16;
+
+  return [
+    ...referenceHeaderElements(prefix, title, subtitle, theme),
+    shapeElement(`${prefix}_anchor_panel`, 82, 210, 330, 276, '#f8fafc', 1),
+    shapeElement(`${prefix}_anchor_bar`, 82, 236, 8, 172, theme.accent, 1),
+    textElement(
+      `${prefix}_anchor_title`,
+      `<strong>${escapeHtmlShort(first.heading ?? '核心概念', 20)}</strong>`,
+      116,
+      242,
+      246,
+      38,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_anchor_body`,
+      escapeHtmlShort(first.body, 82),
+      116,
+      316,
+      246,
+      92,
+      20,
+      theme.textBody,
+      undefined,
+      1.2,
+    ),
+    ...rightBlocks.flatMap((block, index) => {
+      const top = bandTop + index * (bandHeight + bandGap);
+      return [
+        shapeElement(`${prefix}_band_${index}`, 452, top, 466, bandHeight, '#eef6ff', 1),
+        textElement(
+          `${prefix}_band_text_${index}`,
+          `<strong>${escapeHtmlShort(block.heading ?? `要点 ${index + 1}`, 20)}</strong>：${escapeHtmlShort(block.body, 46)}`,
+          478,
+          top + 12,
+          410,
+          70,
+          18,
+          '#1e3a5f',
+          undefined,
+          1.18,
+        ),
+      ];
+    }),
   ];
 }
 
@@ -1511,6 +1926,9 @@ function referenceLayoutElements<T extends SlideLikeElement>(
       return quadraticApplicationReferenceLayout(elements, context) as T[];
     }
   }
+  if (shouldUsePythonVariablesLayout(elements, context)) {
+    return pythonVariablesReferenceLayout(elements, context) as T[];
+  }
   if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return elements;
   if (shouldUseCubicIntroLayout(elements, context)) {
     return cubicIntroReferenceLayout(elements, context) as T[];
@@ -1537,6 +1955,9 @@ function referenceLayoutElements<T extends SlideLikeElement>(
   }
   if (shouldUseVertexFormLayout(elements, context)) {
     return vertexFormReferenceLayout(elements, context) as T[];
+  }
+  if (shouldUseCanonicalTextLayout(elements, context)) {
+    return canonicalTextReferenceLayout(elements, context) as T[];
   }
   return null;
 }
