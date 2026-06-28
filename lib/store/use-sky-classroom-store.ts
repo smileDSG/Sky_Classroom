@@ -8,6 +8,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { EBBINGHAUS_INTERVALS } from '@/lib/storage/dao/mistakes';
 import type {
   SolveState,
   GradeResult,
@@ -176,7 +177,7 @@ interface MistakesSlice {
   activeFilter: MistakeFilter | null;
 
   addMistake: (mistake: MistakeRecord) => void;
-  markReviewed: (id: string) => void;
+  markReviewed: (id: string, correct?: boolean) => void;
   setFilter: (filter: MistakeFilter | null) => void;
   setKnowledgeGraph: (graph: KnowledgeGraph) => void;
   deleteMistake: (id: string) => void;
@@ -201,11 +202,36 @@ const createMistakesSlice = (
     });
     syncAddToServer(m);
   },
-  markReviewed: (id) => {
+  markReviewed: (id, correct = true) => {
+    const now = Date.now();
     set((s) => ({
-      mistakes: s.mistakes.map((m) =>
-        m.id === id ? { ...m, reviewed: true, reviewCount: m.reviewCount + 1 } : m,
-      ),
+      mistakes: s.mistakes.map((m) => {
+        if (m.id !== id) return m;
+        if (!correct) {
+          return {
+            ...m,
+            reviewed: false,
+            reviewCount: 0,
+            masteryLevel: 0,
+            lastReview: now,
+            nextReview: now + 86400000,
+          };
+        }
+
+        const reviewCount = m.reviewCount + 1;
+        const mastered = reviewCount >= EBBINGHAUS_INTERVALS.length;
+        const intervalIdx = Math.min(reviewCount, EBBINGHAUS_INTERVALS.length - 1);
+        return {
+          ...m,
+          reviewed: mastered,
+          reviewCount,
+          masteryLevel: reviewCount,
+          lastReview: now,
+          nextReview: mastered
+            ? Number.MAX_SAFE_INTEGER
+            : now + EBBINGHAUS_INTERVALS[intervalIdx] * 86400000,
+        };
+      }),
     }));
     syncReviewToServer(id);
   },
