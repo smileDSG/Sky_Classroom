@@ -157,11 +157,11 @@ function syncAddToServer(m: MistakeRecord): void {
 }
 
 /** Fire-and-forget: PATCH mistake review on server */
-function syncReviewToServer(id: string): void {
+function syncReviewToServer(id: string, correct: boolean): void {
   fetch('/api/sky/mistakes', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id }),
+    body: JSON.stringify({ id, correct }),
   }).catch(() => {});
 }
 
@@ -235,7 +235,7 @@ const createMistakesSlice = (
         };
       }),
     }));
-    syncReviewToServer(id);
+    syncReviewToServer(id, correct);
   },
   setFilter: (filter) => set({ activeFilter: filter }),
   setKnowledgeGraph: (graph) => set({ knowledgeGraph: graph }),
