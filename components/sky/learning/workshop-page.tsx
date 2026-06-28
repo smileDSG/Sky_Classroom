@@ -107,24 +107,24 @@ interface WorkshopMistakeSnapshot extends Omit<MistakeRecord, 'solvedAt' | 'sour
 
 const toneClasses: Record<MissionTone, { chip: string; text: string; line: string }> = {
   amber: {
-    chip: 'border-amber-200/25 bg-amber-300/10 text-amber-100',
-    text: 'text-amber-100',
-    line: 'from-amber-300/50',
+    chip: 'border-amber-200 bg-amber-50 text-amber-700',
+    text: 'text-amber-700',
+    line: 'from-amber-200',
   },
   violet: {
-    chip: 'border-violet-200/25 bg-violet-300/10 text-violet-100',
-    text: 'text-violet-100',
-    line: 'from-violet-300/50',
+    chip: 'border-violet-200 bg-violet-50 text-violet-700',
+    text: 'text-violet-700',
+    line: 'from-violet-200',
   },
   emerald: {
-    chip: 'border-emerald-200/25 bg-emerald-300/10 text-emerald-100',
-    text: 'text-emerald-100',
-    line: 'from-emerald-300/50',
+    chip: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    text: 'text-emerald-700',
+    line: 'from-emerald-200',
   },
   rose: {
-    chip: 'border-rose-200/25 bg-rose-300/10 text-rose-100',
-    text: 'text-rose-100',
-    line: 'from-rose-300/50',
+    chip: 'border-rose-200 bg-rose-50 text-rose-700',
+    text: 'text-rose-700',
+    line: 'from-rose-200',
   },
 };
 
@@ -385,28 +385,28 @@ export function WorkshopPage() {
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-5xl space-y-5 pb-12">
-        <section className="rounded-[28px] border border-emerald-200/20 bg-[#06101d] shadow-[0_26px_90px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.05)]">
-          <div className="border-b border-emerald-200/15 bg-[linear-gradient(135deg,#123346_0%,#0e2741_45%,#111b36_100%)] px-6 py-5">
+        <section className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_22px_70px_rgba(15,23,42,0.08)]">
+          <div className="border-b border-slate-200/80 bg-[linear-gradient(135deg,#f7fffb_0%,#f7fbff_48%,#f8f7ff_100%)] px-6 py-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200/30 bg-emerald-300/10">
-                    <Sparkles className="h-4 w-4 text-emerald-100" />
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50">
+                    <Sparkles className="h-4 w-4 text-emerald-600" />
                   </span>
-                  <span className="rounded-full border border-emerald-200/25 bg-emerald-300/10 px-2.5 py-1 text-xs font-semibold text-emerald-100">
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                     天梯工坊
                   </span>
                 </div>
-                <h1 className="mt-4 text-2xl font-semibold text-white md:text-3xl">
+                <h1 className="mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
                   {insights.headline}
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-200">
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                   {insights.focusReason}
                 </p>
               </div>
-              <div className="rounded-2xl border border-emerald-200/25 bg-[#07111f]/75 px-4 py-3 text-right">
-                <div className="text-[11px] font-medium text-emerald-100/75">策略判断</div>
-                <div className="mt-0.5 text-base font-semibold text-white">
+              <div className="rounded-2xl border border-emerald-200 bg-white/85 px-4 py-3 text-right shadow-sm">
+                <div className="text-[11px] font-medium text-emerald-700">策略判断</div>
+                <div className="mt-0.5 text-base font-semibold text-slate-950">
                   {insights.strategyLabel}
                 </div>
               </div>
@@ -416,7 +416,7 @@ export function WorkshopPage() {
               <button
                 type="button"
                 onClick={handleStartDailyTask}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_10px_30px_rgba(52,211,153,0.18)] transition-transform hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(5,150,105,0.18)] transition-transform hover:-translate-y-0.5 hover:bg-emerald-700"
               >
                 <MainIcon className="h-4 w-4" />
                 开始今日任务
@@ -424,19 +424,19 @@ export function WorkshopPage() {
               <button
                 type="button"
                 onClick={handleOpenFullProfile}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-slate-100 transition-colors hover:border-indigo-200/40 hover:bg-white/[0.09]"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-700"
               >
-                <ShieldCheck className="h-4 w-4 text-indigo-100" />
+                <ShieldCheck className="h-4 w-4 text-indigo-500" />
                 查看完整画像
               </button>
             </div>
-            <div className="mt-3 rounded-2xl border border-emerald-200/15 bg-emerald-300/[0.06] px-3 py-2 text-xs leading-5 text-emerald-50/85">
-              <span className="font-semibold text-emerald-100">今日任务：</span>
+            <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-800">
+              <span className="font-semibold text-emerald-700">今日任务：</span>
               {dailyTaskAction.title}
-              <span className="mx-1 text-emerald-100/45">·</span>
+              <span className="mx-1 text-emerald-500">·</span>
               {dailyTaskAction.detail}
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-300">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
               <span>
                 数据来源：
                 {snapshot ? '云端实时快照' : '本地学习缓存'}
@@ -444,12 +444,12 @@ export function WorkshopPage() {
                   ? ` · ${new Date(snapshot.generatedAt).toLocaleTimeString()} 更新`
                   : ''}
               </span>
-              {snapshotError && <span className="text-amber-100">· {snapshotError}</span>}
+              {snapshotError && <span className="text-amber-600">· {snapshotError}</span>}
               <button
                 type="button"
                 onClick={() => loadWorkshopSnapshot(true)}
                 disabled={loadingSnapshot}
-                className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-2 py-1 font-medium text-slate-100 transition-colors hover:bg-white/[0.08] disabled:opacity-60"
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-60"
               >
                 <RefreshCw className={cn('h-3 w-3', loadingSnapshot && 'animate-spin')} />
                 刷新数据
@@ -457,7 +457,7 @@ export function WorkshopPage() {
             </div>
           </div>
 
-          <div className="space-y-5 bg-[#07111f] p-5">
+          <div className="space-y-5 bg-slate-50/80 p-5">
             <div className="grid gap-3 md:grid-cols-4">
               <MetricTile
                 icon={CalendarClock}
@@ -486,7 +486,7 @@ export function WorkshopPage() {
             </div>
 
             <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-              <div className="rounded-2xl border border-cyan-100/10 bg-[#0b1729]/80 p-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <SectionTitle icon={Route} title="今日 15 分钟任务链" aside="按顺序推进" />
                 <div className="mt-4 space-y-3">
                   {missionSteps.map((step, index) => (
@@ -499,7 +499,7 @@ export function WorkshopPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-cyan-100/10 bg-[#0b1729]/80 p-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <SectionTitle
                   icon={Activity}
                   title="推荐理由证据链"
@@ -516,8 +516,8 @@ export function WorkshopPage() {
                           )}
                         />
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold text-slate-100">{signal.label}</div>
-                          <div className="mt-0.5 text-xs text-slate-400">{signal.detail}</div>
+                          <div className="text-sm font-semibold text-slate-800">{signal.label}</div>
+                          <div className="mt-0.5 text-xs text-slate-500">{signal.detail}</div>
                         </div>
                       </div>
                     </div>
@@ -529,7 +529,7 @@ export function WorkshopPage() {
                       <Link
                         key={cause.cause}
                         href="/sky/learning?tab=stats"
-                        className="rounded-full border border-cyan-100/10 bg-white/[0.045] px-2.5 py-1 text-xs font-medium text-slate-200 hover:border-indigo-200/35"
+                        className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 hover:border-indigo-200 hover:bg-indigo-50"
                       >
                         {cause.label} {cause.count}
                       </Link>
@@ -539,7 +539,7 @@ export function WorkshopPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-cyan-100/10 bg-[#0b1729]/80 p-4">
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <SectionTitle icon={Network} title="天梯路线预览" aside="薄弱点优先" />
               <div className="mt-4 space-y-3">
                 {routeTopics.map((topic, index) => (
@@ -555,7 +555,7 @@ export function WorkshopPage() {
                 <button
                   type="button"
                   onClick={() => prioritizeReview(priorityTopics)}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl border border-emerald-200/25 bg-emerald-300/10 px-3 py-2 text-sm font-semibold text-emerald-100 transition-colors hover:bg-emerald-300/15"
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
                 >
                   <CalendarClock className="h-4 w-4" />
                   把路线薄弱点加入复习
@@ -594,16 +594,16 @@ export function WorkshopPage() {
 
         <section
           ref={detailSectionRef}
-          className="rounded-[24px] border border-cyan-100/10 bg-[#07111f]/90 p-4 shadow-[0_18px_55px_rgba(0,0,0,0.26),inset_0_1px_0_rgba(255,255,255,0.035)]"
+          className="rounded-[24px] border border-slate-200/80 bg-white p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)]"
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold text-slate-100">完整功能区</div>
-              <div className="mt-1 text-xs text-slate-400">
+              <div className="text-sm font-semibold text-slate-900">完整功能区</div>
+              <div className="mt-1 text-xs text-slate-500">
                 决策区负责推荐，下面保留原有错题、复习、图谱、统计和学情功能。
               </div>
             </div>
-            <div className="flex rounded-2xl border border-cyan-100/10 bg-[#0b1729] p-1">
+            <div className="flex rounded-2xl border border-slate-200 bg-slate-100/80 p-1">
               {DETAIL_TABS.map((tab) => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.key;
@@ -615,8 +615,8 @@ export function WorkshopPage() {
                     className={cn(
                       'flex min-w-0 items-center gap-2 rounded-xl px-3 py-2 text-left transition-colors',
                       active
-                        ? 'bg-emerald-300 text-slate-950 shadow-[0_8px_24px_rgba(52,211,153,0.14)]'
-                        : 'text-slate-300 hover:bg-white/[0.05] hover:text-slate-100',
+                        ? 'bg-white text-emerald-700 shadow-sm'
+                        : 'text-slate-500 hover:bg-white/70 hover:text-slate-800',
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -625,7 +625,7 @@ export function WorkshopPage() {
                       <span
                         className={cn(
                           'block truncate text-[10px]',
-                          active ? 'text-slate-700' : 'text-slate-500',
+                          active ? 'text-emerald-600' : 'text-slate-400',
                         )}
                       >
                         {tab.desc}
@@ -637,7 +637,7 @@ export function WorkshopPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-cyan-100/10 bg-slate-950/20 p-4">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
             {activeTab === 'mistakes' && <MistakeBook />}
             {activeTab === 'review' && (
               <ReviewPlan
@@ -649,13 +649,13 @@ export function WorkshopPage() {
               <div className="space-y-4">
                 <KnowledgeGraphView />
                 {weakPoints.length > 0 && (
-                  <div className="rounded-2xl border border-rose-200/15 bg-rose-300/10 p-4">
-                    <div className="text-sm font-semibold text-rose-100">薄弱知识点针对性复习</div>
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                    <div className="text-sm font-semibold text-rose-700">薄弱知识点针对性复习</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {weakPoints.map((point) => (
                         <span
                           key={point}
-                          className="rounded-full border border-rose-200/20 bg-rose-300/10 px-3 py-1 text-xs font-medium text-rose-100"
+                          className="rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-700"
                         >
                           {point}
                         </span>
@@ -706,11 +706,11 @@ function SectionTitle({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
-        <Icon className="h-4 w-4 text-emerald-100" />
+      <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+        <Icon className="h-4 w-4 text-emerald-600" />
         {title}
       </div>
-      <span className="text-xs font-medium text-slate-400">{aside}</span>
+      <span className="text-xs font-medium text-slate-500">{aside}</span>
     </div>
   );
 }
@@ -727,16 +727,16 @@ function MetricTile({
   unit: string;
 }) {
   return (
-    <div className="rounded-2xl border border-cyan-100/10 bg-[#0c182b] p-4">
-      <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-cyan-100/12 bg-cyan-200/10 text-cyan-100">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-sky-600">
           <Icon className="h-3.5 w-3.5" />
         </span>
         {label}
       </div>
       <div className="mt-3 flex items-baseline gap-1">
-        <span className="text-3xl font-semibold tabular-nums text-white">{value}</span>
-        <span className="text-xs font-medium text-slate-300">{unit}</span>
+        <span className="text-3xl font-semibold tabular-nums text-slate-950">{value}</span>
+        <span className="text-xs font-medium text-slate-500">{unit}</span>
       </div>
     </div>
   );
@@ -762,12 +762,12 @@ function MissionStepRow({ step, isLast }: { step: MissionStep; isLast: boolean }
           />
         )}
       </div>
-      <div className="rounded-xl border border-cyan-100/10 bg-[#081423] px-3 py-2.5 transition-colors group-hover:border-emerald-200/35 group-hover:bg-[#0f2238]">
+      <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm transition-colors group-hover:border-emerald-200 group-hover:bg-emerald-50/50">
         <div className={cn('text-[11px] font-semibold', tone.text)}>{step.label}</div>
-        <div className="mt-0.5 text-sm font-semibold text-slate-100">{step.title}</div>
-        <div className="mt-1 text-xs leading-5 text-slate-400">{step.detail}</div>
+        <div className="mt-0.5 text-sm font-semibold text-slate-800">{step.title}</div>
+        <div className="mt-1 text-xs leading-5 text-slate-500">{step.detail}</div>
       </div>
-      <ArrowRight className="mt-5 h-4 w-4 text-slate-500 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-100" />
+      <ArrowRight className="mt-5 h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-600" />
     </Link>
   );
 }
@@ -784,22 +784,22 @@ function RouteNode({
   return (
     <Link
       href="/sky/learning?tab=graph"
-      className="group grid grid-cols-[36px_1fr_auto] gap-3 rounded-xl border border-cyan-100/10 bg-[#081423] px-3 py-3 transition-colors hover:border-emerald-200/35 hover:bg-[#0f2238]"
+      className="group grid grid-cols-[36px_1fr_auto] gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50/50"
     >
       <div className="relative flex justify-center">
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-100/12 bg-cyan-200/10 text-xs font-semibold text-cyan-100">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 text-xs font-semibold text-sky-600">
           {index + 1}
         </span>
-        {!isLast && <span className="absolute top-9 h-8 w-px bg-cyan-100/12" />}
+        {!isLast && <span className="absolute top-9 h-8 w-px bg-slate-200" />}
       </div>
       <div className="min-w-0">
-        <div className="truncate text-sm font-semibold text-slate-100">{topic.name}</div>
-        <div className="mt-1 line-clamp-1 text-xs text-slate-400">
+        <div className="truncate text-sm font-semibold text-slate-800">{topic.name}</div>
+        <div className="mt-1 line-clamp-1 text-xs text-slate-500">
           {topic.reason} · {topic.mistakeCount} 题样本
         </div>
       </div>
       <div className="flex items-center">
-        <span className="rounded-full border border-cyan-100/10 bg-white/[0.04] px-2 py-1 text-xs font-semibold text-slate-200">
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600">
           {topic.mastery}%
         </span>
       </div>
@@ -821,16 +821,16 @@ function FeatureLink({
   return (
     <Link
       href={href}
-      className="group rounded-2xl border border-cyan-100/10 bg-[#0c182b] p-4 transition-colors hover:border-emerald-200/35 hover:bg-[#10223a]"
+      className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50/50"
     >
       <div className="flex items-center justify-between gap-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-100/12 bg-cyan-200/10 text-cyan-100">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 text-sky-600">
           <Icon className="h-4 w-4" />
         </span>
-        <ArrowRight className="h-4 w-4 text-slate-500 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-100" />
+        <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-600" />
       </div>
-      <div className="mt-3 text-sm font-semibold text-slate-100">{title}</div>
-      <div className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{desc}</div>
+      <div className="mt-3 text-sm font-semibold text-slate-800">{title}</div>
+      <div className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{desc}</div>
     </Link>
   );
 }

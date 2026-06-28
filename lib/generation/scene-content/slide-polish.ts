@@ -21,6 +21,7 @@ type SlideLikeElement = {
 export interface SlidePolishContext {
   title?: string;
   keyPoints?: string[];
+  order?: number;
   decorate?: boolean;
   themeSelection?: ClassroomThemeSelection;
 }
@@ -387,6 +388,17 @@ function polishLatexElement<T extends SlideLikeElement>(element: T): T {
   const latexElement = element as T & Record<string, unknown>;
   const latex = String(latexElement.latex ?? '');
   const complex = latex.length > 42 || /\\(frac|sum|int|lim|begin|sqrt)/.test(latex);
+  if (latexElement['preserveBox']) {
+    return {
+      ...element,
+      left: clamp(element.left, MARGIN, CANVAS_WIDTH - MARGIN - element.width),
+      top: clamp(element.top, MARGIN + 96, CANVAS_HEIGHT - MARGIN - Number(element.height ?? 76)),
+      width: clamp(element.width, complex ? 360 : 220, CANVAS_WIDTH - MARGIN * 2),
+      height: clamp(Number(element.height ?? 0), complex ? 92 : 64, 156),
+      color: latexElement.color || '#1f2937',
+      align: 'center',
+    };
+  }
   const width = clamp(Math.max(element.width, complex ? 760 : 420), 240, CANVAS_WIDTH - MARGIN * 2);
   const height = clamp(Math.max(Number(element.height ?? 0), complex ? 118 : 76), 60, 156);
   const left = clamp((CANVAS_WIDTH - width) / 2, MARGIN, CANVAS_WIDTH - MARGIN - width);
@@ -1267,6 +1279,674 @@ function shouldUseCanonicalTextLayout(
   return blocks.length >= 2;
 }
 
+const CANONICAL_TEXT_VARIANT_COUNT = 5;
+const CANONICAL_STEP_VARIANT_COUNT = 3;
+const CANONICAL_FORMULA_VARIANT_COUNT = 3;
+const CANONICAL_DATA_VARIANT_COUNT = 3;
+const CANONICAL_MEDIA_VARIANT_COUNT = 3;
+
+function stableHashNumber(text: string): number {
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash * 31 + text.charCodeAt(index)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function canonicalOrderVariant(
+  context: SlidePolishContext | undefined,
+  count: number,
+): number | null {
+  const order = context?.order;
+  if (typeof order !== 'number' || !Number.isFinite(order) || order <= 0) return null;
+  return (Math.floor(order) - 1) % count;
+}
+
+function canonicalSignature(
+  elements: SlideLikeElement[],
+  context: SlidePolishContext | undefined,
+  blocks: CanonicalTextBlock[],
+): string {
+  return [
+    context?.order,
+    context?.title,
+    ...(context?.keyPoints ?? []),
+    ...blocks.flatMap((block) => [block.heading, block.body]),
+    ...extractCanonicalLines(elements, context).slice(0, 6),
+  ]
+    .filter(Boolean)
+    .join('|');
+}
+
+function chooseCanonicalTextVariant(
+  elements: SlideLikeElement[],
+  context: SlidePolishContext | undefined,
+  blocks: CanonicalTextBlock[],
+): number {
+  const signal = getLayoutSignalText(elements, context);
+  if (/(对比|比较|区别|异同|差异|versus| vs\.? )/i.test(signal)) return 2;
+  if (/(流程|过程|路径|演进|阶段|从.+到|回调|callback|promise|async\/await)/i.test(signal)) {
+    return 3;
+  }
+  if (/(工具|类型|分类|方式|三大|四种|常见|模块|模式)/i.test(signal)) return 1;
+  if (/(原因|根因|关键|重点|核心|原则)/i.test(signal)) return 4;
+
+  const orderVariant = canonicalOrderVariant(context, CANONICAL_TEXT_VARIANT_COUNT);
+  if (orderVariant !== null) return orderVariant;
+
+  return (
+    stableHashNumber(canonicalSignature(elements, context, blocks)) % CANONICAL_TEXT_VARIANT_COUNT
+  );
+}
+
+function chooseCanonicalStepVariant(
+  elements: SlideLikeElement[],
+  context: SlidePolishContext | undefined,
+  blocks: CanonicalTextBlock[],
+): number {
+  const orderVariant = canonicalOrderVariant(context, CANONICAL_STEP_VARIANT_COUNT);
+  if (orderVariant !== null) return orderVariant;
+  return (
+    stableHashNumber(canonicalSignature(elements, context, blocks)) % CANONICAL_STEP_VARIANT_COUNT
+  );
+}
+
+function canonicalBlock(
+  blocks: CanonicalTextBlock[],
+  index: number,
+  fallbackHeading: string,
+  fallbackBody: string,
+): CanonicalTextBlock {
+  return blocks[index] ?? { heading: fallbackHeading, body: fallbackBody };
+}
+
+function canonicalHeading(block: CanonicalTextBlock, fallback: string, max = 20): string {
+  return escapeHtmlShort(block.heading ?? fallback, max);
+}
+
+function canonicalBody(block: CanonicalTextBlock, max: number): string {
+  return escapeHtmlShort(block.body, max);
+}
+
+function extractMediaElements(
+  elements: SlideLikeElement[],
+): Array<SlideLikeElement & Record<string, unknown>> {
+  return elements
+    .filter((element) => element.type === 'image' || element.type === 'video')
+    .map((element) => element as SlideLikeElement & Record<string, unknown>)
+    .slice(0, 2);
+}
+
+function mediaElementFrom(
+  source: SlideLikeElement & Record<string, unknown>,
+  id: string,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+): SlideLikeElement & Record<string, unknown> {
+  return {
+    ...source,
+    id,
+    left,
+    top,
+    width,
+    height,
+    rotate: 0,
+  };
+}
+
+function shouldUseCanonicalMediaLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return false;
+  if (elements.some((element) => element.id?.startsWith('polish_quad_'))) return false;
+
+  const mediaElements = extractMediaElements(elements);
+  if (mediaElements.length === 0) return false;
+
+  const hasBlockingStructure = elements.some((element) =>
+    ['chart', 'table', 'latex', 'code'].includes(element.type),
+  );
+  if (hasBlockingStructure) return false;
+
+  const generatedLikeCount = elements.filter((element) =>
+    /^(text|shape|line|image|video|chart|table|latex)_[\w-]+$/i.test(element.id ?? ''),
+  ).length;
+  if (generatedLikeCount < Math.max(3, Math.ceil(elements.length * 0.55))) return false;
+
+  const title = getSlideTitle(elements, context);
+  if (/(谢谢|结束|目录|大纲|封面|小测验|测验|quiz|thanks|outline)/i.test(title)) return false;
+
+  return true;
+}
+
+function chooseCanonicalMediaVariant(
+  elements: SlideLikeElement[],
+  context: SlidePolishContext | undefined,
+  blocks: CanonicalTextBlock[],
+): number {
+  const orderVariant = canonicalOrderVariant(context, CANONICAL_MEDIA_VARIANT_COUNT);
+  if (orderVariant !== null) return orderVariant;
+  return (
+    stableHashNumber(canonicalSignature(elements, context, blocks)) % CANONICAL_MEDIA_VARIANT_COUNT
+  );
+}
+
+function canonicalMediaReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const subtitle = getCanonicalSubtitle(elements, title);
+  const mediaElements = extractMediaElements(elements);
+  const blocks = extractCanonicalBlocks(elements, context);
+  const variant = chooseCanonicalMediaVariant(elements, context, blocks);
+  const mainMedia = mediaElements[0];
+  const first = canonicalBlock(blocks, 0, '观察重点', subtitle);
+  const second = canonicalBlock(blocks, 1, '课堂提示', context?.keyPoints?.[0] ?? subtitle);
+  const third = canonicalBlock(blocks, 2, '追问', context?.keyPoints?.[1] ?? first.body);
+
+  if (variant === 1) {
+    const prefix = 'polish_ref_canonical_media_v1';
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      mediaElementFrom(mainMedia, `${prefix}_media_main`, 82, 216, 546, 274),
+      shapeElement(`${prefix}_right_rule`, 678, 222, 3, 236, theme.accent, 0.9),
+      textElement(
+        `${prefix}_right_title`,
+        `<strong>${canonicalHeading(first, '观察重点', 18)}</strong>`,
+        706,
+        238,
+        190,
+        42,
+        24,
+        theme.textPrimary,
+        undefined,
+        1.1,
+      ),
+      textElement(
+        `${prefix}_right_body`,
+        canonicalBody(first, 36),
+        706,
+        324,
+        190,
+        86,
+        19,
+        theme.textBody,
+        undefined,
+        1.2,
+      ),
+    ];
+  }
+
+  if (variant === 2) {
+    const prefix = 'polish_ref_canonical_media_v2';
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      shapeElement(`${prefix}_left_rule`, 82, 220, 3, 232, theme.accentSecondary, 0.9),
+      textElement(
+        `${prefix}_left_title`,
+        `<strong>${canonicalHeading(second, '先看什么', 18)}</strong>`,
+        112,
+        236,
+        230,
+        42,
+        24,
+        theme.textPrimary,
+        undefined,
+        1.1,
+      ),
+      textElement(
+        `${prefix}_left_body`,
+        canonicalBody(second, 42),
+        112,
+        320,
+        230,
+        84,
+        19,
+        theme.textBody,
+        undefined,
+        1.2,
+      ),
+      mediaElementFrom(mainMedia, `${prefix}_media_right`, 404, 216, 514, 274),
+    ];
+  }
+
+  const prefix = 'polish_ref_canonical_media_v0';
+
+  return [
+    ...referenceHeaderElements(prefix, title, subtitle, theme),
+    mediaElementFrom(mainMedia, `${prefix}_media_top`, 132, 204, 736, 214),
+    shapeElement(`${prefix}_bottom_rule`, 132, 452, 736, 3, theme.accent, 0.9),
+    textElement(
+      `${prefix}_bottom_note`,
+      `<strong>${canonicalHeading(third, '观察后追问', 16)}</strong>：${canonicalBody(third, 36)}`,
+      164,
+      466,
+      672,
+      36,
+      18,
+      theme.textBody,
+      undefined,
+      1.12,
+    ),
+  ];
+}
+
+function extractDataElements(
+  elements: SlideLikeElement[],
+): Array<SlideLikeElement & Record<string, unknown>> {
+  return elements
+    .filter((element) => element.type === 'table' || element.type === 'chart')
+    .map((element) => element as SlideLikeElement & Record<string, unknown>)
+    .slice(0, 2);
+}
+
+function dataElementFrom(
+  source: SlideLikeElement & Record<string, unknown>,
+  id: string,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+): SlideLikeElement & Record<string, unknown> {
+  return {
+    ...source,
+    id,
+    left,
+    top,
+    width,
+    height,
+    rotate: 0,
+  };
+}
+
+function shouldUseCanonicalDataLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return false;
+  if (elements.some((element) => element.id?.startsWith('polish_quad_'))) return false;
+
+  const dataElements = extractDataElements(elements);
+  if (dataElements.length === 0) return false;
+
+  const hasBlockingMedia = elements.some((element) =>
+    ['image', 'video', 'latex', 'code'].includes(element.type),
+  );
+  if (hasBlockingMedia) return false;
+
+  const generatedLikeCount = elements.filter((element) =>
+    /^(text|shape|line|image|video|chart|table|latex)_[\w-]+$/i.test(element.id ?? ''),
+  ).length;
+  if (generatedLikeCount < Math.max(3, Math.ceil(elements.length * 0.55))) return false;
+
+  const title = getSlideTitle(elements, context);
+  if (/(谢谢|结束|目录|大纲|封面|小测验|测验|quiz|thanks|outline)/i.test(title)) return false;
+
+  return true;
+}
+
+function chooseCanonicalDataVariant(
+  elements: SlideLikeElement[],
+  context: SlidePolishContext | undefined,
+  blocks: CanonicalTextBlock[],
+): number {
+  const orderVariant = canonicalOrderVariant(context, CANONICAL_DATA_VARIANT_COUNT);
+  if (orderVariant !== null) return orderVariant;
+  return (
+    stableHashNumber(canonicalSignature(elements, context, blocks)) % CANONICAL_DATA_VARIANT_COUNT
+  );
+}
+
+function canonicalDataReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const subtitle = getCanonicalSubtitle(elements, title);
+  const dataElements = extractDataElements(elements);
+  const blocks = extractCanonicalBlocks(elements, context);
+  const variant = chooseCanonicalDataVariant(elements, context, blocks);
+  const mainData = dataElements[0];
+  const secondData = dataElements[1] ?? dataElements[0];
+  const first = canonicalBlock(blocks, 0, '观察对象', subtitle);
+  const second = canonicalBlock(blocks, 1, '对比结论', context?.keyPoints?.[0] ?? subtitle);
+  const third = canonicalBlock(blocks, 2, '课堂提问', context?.keyPoints?.[1] ?? first.body);
+
+  if (variant === 1) {
+    const prefix = 'polish_ref_canonical_data_v1';
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      dataElementFrom(mainData, `${prefix}_data_main`, 82, 214, 520, 248),
+      shapeElement(`${prefix}_right_rule`, 652, 218, 3, 230, theme.accent, 0.9),
+      textElement(
+        `${prefix}_right_title`,
+        `<strong>${canonicalHeading(first, '读表/读图', 16)}</strong>`,
+        682,
+        232,
+        220,
+        38,
+        24,
+        theme.textPrimary,
+        undefined,
+        1.1,
+      ),
+      textElement(
+        `${prefix}_right_body`,
+        canonicalBody(first, 44),
+        682,
+        310,
+        220,
+        86,
+        19,
+        theme.textBody,
+        undefined,
+        1.2,
+      ),
+      shapeElement(`${prefix}_bottom_rule`, 82, 490, 836, 3, theme.accentSecondary, 0.9),
+    ];
+  }
+
+  if (variant === 2) {
+    const prefix = 'polish_ref_canonical_data_v2';
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      shapeElement(`${prefix}_top_rule`, 82, 210, 836, 3, theme.accent, 0.9),
+      dataElementFrom(mainData, `${prefix}_data_top`, 116, 236, 768, 176),
+      textElement(
+        `${prefix}_left_note`,
+        `<strong>${canonicalHeading(second, '结论', 14)}</strong>：${canonicalBody(second, 28)}`,
+        116,
+        438,
+        330,
+        50,
+        18,
+        theme.textBody,
+        undefined,
+        1.16,
+      ),
+      textElement(
+        `${prefix}_right_note`,
+        `<strong>${canonicalHeading(third, '追问', 14)}</strong>：${canonicalBody(third, 28)}`,
+        554,
+        438,
+        330,
+        50,
+        18,
+        '#7c3f00',
+        undefined,
+        1.16,
+      ),
+    ];
+  }
+
+  const prefix = 'polish_ref_canonical_data_v0';
+
+  return [
+    ...referenceHeaderElements(prefix, title, subtitle, theme),
+    shapeElement(`${prefix}_left_rule`, 82, 222, 3, 230, theme.accent, 0.9),
+    textElement(
+      `${prefix}_left_title`,
+      `<strong>${canonicalHeading(first, '数据视角', 18)}</strong>`,
+      112,
+      234,
+      252,
+      38,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_left_body`,
+      canonicalBody(first, 44),
+      112,
+      312,
+      252,
+      84,
+      19,
+      theme.textBody,
+      undefined,
+      1.2,
+    ),
+    dataElementFrom(secondData, `${prefix}_data_right`, 430, 218, 488, 250),
+    shapeElement(`${prefix}_takeaway_rule`, 430, 492, 488, 3, theme.accentSecondary, 0.9),
+  ];
+}
+
+function extractFormulaElements(
+  elements: SlideLikeElement[],
+): Array<SlideLikeElement & Record<string, unknown>> {
+  return elements
+    .filter((element) => element.type === 'latex')
+    .map((element) => element as SlideLikeElement & Record<string, unknown>)
+    .filter((element) => String(element['latex'] ?? '').trim().length > 0)
+    .slice(0, 3);
+}
+
+function formulaElementFrom(
+  source: SlideLikeElement & Record<string, unknown>,
+  id: string,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+): SlideLikeElement & Record<string, unknown> {
+  return {
+    ...source,
+    id,
+    type: 'latex',
+    left,
+    top,
+    width,
+    height,
+    rotate: 0,
+    align: 'center',
+    preserveBox: true,
+  };
+}
+
+function shouldUseCanonicalFormulaLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return false;
+  if (elements.some((element) => element.id?.startsWith('polish_quad_'))) return false;
+  if (elements.some((element) => element.id?.startsWith('polish_visual_'))) return false;
+
+  const formulas = extractFormulaElements(elements);
+  if (formulas.length === 0) return false;
+
+  const source = getLayoutSignalText(elements, context);
+  const hasFormulaPageSignal =
+    formulas.length >= 2 ||
+    /(公式|方程|关系式|推导|等式|定理|formula|equation|derivation)/i.test(source);
+  if (!hasFormulaPageSignal) return false;
+
+  const hasBlockingMedia = elements.some((element) =>
+    ['image', 'video', 'chart', 'table', 'code'].includes(element.type),
+  );
+  if (hasBlockingMedia) return false;
+
+  const generatedLikeCount = elements.filter((element) =>
+    /^(text|shape|line|image|video|chart|table|latex)_[\w-]+$/i.test(element.id ?? ''),
+  ).length;
+  if (generatedLikeCount < Math.max(3, Math.ceil(elements.length * 0.55))) return false;
+
+  const title = getSlideTitle(elements, context);
+  if (/(谢谢|结束|目录|大纲|封面|小测验|测验|quiz|thanks|outline)/i.test(title)) return false;
+
+  return true;
+}
+
+function chooseCanonicalFormulaVariant(
+  elements: SlideLikeElement[],
+  context: SlidePolishContext | undefined,
+  blocks: CanonicalTextBlock[],
+): number {
+  const orderVariant = canonicalOrderVariant(context, CANONICAL_FORMULA_VARIANT_COUNT);
+  if (orderVariant !== null) return orderVariant;
+  return (
+    stableHashNumber(canonicalSignature(elements, context, blocks)) %
+    CANONICAL_FORMULA_VARIANT_COUNT
+  );
+}
+
+function canonicalFormulaReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const subtitle = getCanonicalSubtitle(elements, title);
+  const formulas = extractFormulaElements(elements);
+  const blocks = extractCanonicalBlocks(elements, context);
+  const variant = chooseCanonicalFormulaVariant(elements, context, blocks);
+  const mainFormula = formulas[0];
+  const secondFormula = formulas[1] ?? formulas[0];
+  const thirdFormula = formulas[2] ?? formulas[1] ?? formulas[0];
+  const mainBlock = canonicalBlock(blocks, 0, '公式含义', subtitle);
+  const secondBlock = canonicalBlock(blocks, 1, '使用条件', context?.keyPoints?.[0] ?? subtitle);
+  const thirdBlock = canonicalBlock(
+    blocks,
+    2,
+    '课堂检查',
+    context?.keyPoints?.[1] ?? mainBlock.body,
+  );
+
+  if (variant === 1) {
+    const prefix = 'polish_ref_canonical_formula_v1';
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      shapeElement(`${prefix}_rail`, 96, 218, 3, 224, theme.accent, 0.9),
+      ...[mainFormula, secondFormula, thirdFormula]
+        .slice(0, Math.min(3, formulas.length))
+        .flatMap((formula, index) => {
+          const top = 202 + index * 98;
+          const block = canonicalBlock(blocks, index, `步骤 ${index + 1}`, subtitle);
+          return [
+            shapeElement(`${prefix}_formula_panel_${index}`, 128, top, 426, 82, '#f8fafc', 1),
+            formulaElementFrom(formula, `${prefix}_formula_${index}`, 148, top + 9, 386, 64),
+            shapeElement(
+              `${prefix}_note_line_${index}`,
+              596,
+              top + 8,
+              3,
+              66,
+              theme.accentSecondary,
+              0.88,
+            ),
+            textElement(
+              `${prefix}_note_${index}`,
+              `<strong>${canonicalHeading(block, `说明 ${index + 1}`, 14)}</strong>：${canonicalBody(block, 22)}`,
+              622,
+              top + 14,
+              260,
+              46,
+              18,
+              theme.textBody,
+              undefined,
+              1.14,
+            ),
+          ];
+        }),
+    ];
+  }
+
+  if (variant === 2) {
+    const prefix = 'polish_ref_canonical_formula_v2';
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      shapeElement(`${prefix}_left_panel`, 82, 210, 366, 264, '#f8fafc', 1),
+      shapeElement(`${prefix}_left_bar`, 82, 236, 8, 162, theme.accent, 1),
+      textElement(
+        `${prefix}_left_title`,
+        `<strong>${canonicalHeading(mainBlock, '公式含义', 18)}</strong>`,
+        116,
+        242,
+        270,
+        42,
+        24,
+        theme.textPrimary,
+        undefined,
+        1.1,
+      ),
+      textElement(
+        `${prefix}_left_body`,
+        canonicalBody(mainBlock, 44),
+        116,
+        322,
+        270,
+        82,
+        19,
+        theme.textBody,
+        undefined,
+        1.2,
+      ),
+      shapeElement(`${prefix}_formula_panel`, 500, 218, 418, 156, '#eef6ff', 1),
+      formulaElementFrom(mainFormula, `${prefix}_formula_main`, 526, 248, 366, 96),
+      shapeElement(`${prefix}_bottom_rule`, 500, 418, 418, 3, theme.accentSecondary, 0.9),
+      textElement(
+        `${prefix}_bottom_note`,
+        `<strong>${canonicalHeading(secondBlock, '代入检查', 14)}</strong>：${canonicalBody(secondBlock, 30)}`,
+        526,
+        438,
+        340,
+        44,
+        18,
+        '#7c3f00',
+        undefined,
+        1.14,
+      ),
+    ];
+  }
+
+  const prefix = 'polish_ref_canonical_formula_v0';
+
+  return [
+    ...referenceHeaderElements(prefix, title, subtitle, theme),
+    shapeElement(`${prefix}_formula_panel`, 128, 206, 744, 132, '#f8fafc', 1),
+    formulaElementFrom(mainFormula, `${prefix}_formula_main`, 164, 232, 672, 82),
+    shapeElement(`${prefix}_left_rule`, 128, 374, 330, 3, theme.accent, 0.9),
+    textElement(
+      `${prefix}_left_note`,
+      `<strong>${canonicalHeading(mainBlock, '读公式', 14)}</strong>：${canonicalBody(mainBlock, 28)}`,
+      128,
+      394,
+      330,
+      62,
+      18,
+      theme.textBody,
+      undefined,
+      1.18,
+    ),
+    shapeElement(`${prefix}_right_rule`, 542, 374, 330, 3, theme.accentSecondary, 0.9),
+    textElement(
+      `${prefix}_right_note`,
+      `<strong>${canonicalHeading(secondBlock, '用公式', 14)}</strong>：${canonicalBody(secondBlock, 28)}`,
+      542,
+      394,
+      330,
+      62,
+      18,
+      '#7c3f00',
+      undefined,
+      1.18,
+    ),
+  ];
+}
+
 function canonicalStepsReferenceLayout(
   elements: SlideLikeElement[],
   context?: SlidePolishContext,
@@ -1274,9 +1954,129 @@ function canonicalStepsReferenceLayout(
   const theme = getPolishTheme(context);
   const title = getSlideTitle(elements, context);
   const subtitle = getCanonicalSubtitle(elements, title);
-  const prefix = 'polish_ref_canonical_steps';
   const steps = extractCanonicalStepLines(elements, context);
   const blocks = extractCanonicalBlocks(elements, context);
+  const variant = chooseCanonicalStepVariant(elements, context, blocks);
+
+  if (variant === 1) {
+    const prefix = 'polish_ref_canonical_steps_v1';
+    const processSteps = steps.slice(0, 3);
+    const cardWidth = 254;
+    const cardGap = 43;
+    const cardTop = 236;
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...processSteps.flatMap((step, index) => {
+        const left = 82 + index * (cardWidth + cardGap);
+        return [
+          shapeElement(`${prefix}_card_${index}`, left, cardTop, cardWidth, 190, '#f8fafc', 1),
+          circleElement(`${prefix}_dot_${index}`, left + 24, cardTop + 26, 40, theme.accent, 0.95),
+          textElement(
+            `${prefix}_step_${index}`,
+            `<strong>${index + 1}</strong> ${escapeHtmlShort(step.replace(/^[①②③④⑤⑥⑦⑧⑨]|\d+[.、]\s*/, ''), 20)}`,
+            left + 30,
+            cardTop + 76,
+            cardWidth - 60,
+            96,
+            18,
+            theme.textBody,
+            undefined,
+            1.2,
+          ),
+        ];
+      }),
+      shapeElement(`${prefix}_takeaway_panel`, 132, 442, 736, 3, theme.accent, 0.9),
+      textElement(
+        `${prefix}_takeaway`,
+        `<strong>课堂抓手</strong>：${escapeHtmlShort(blocks[0]?.body ?? subtitle, 24)}`,
+        166,
+        452,
+        668,
+        52,
+        18,
+        '#1e3a5f',
+        undefined,
+        1.12,
+      ),
+    ];
+  }
+
+  if (variant === 2) {
+    const prefix = 'polish_ref_canonical_steps_v2';
+    const stepBody = steps.map((step) => `✓ ${escapeHtmlShort(step, 44)}`).join('<br/>');
+    const note = blocks.find((block) => !steps.some((step) => step.includes(block.body)))?.body;
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      shapeElement(`${prefix}_check_panel`, 82, 212, 420, 282, '#f8fafc', 1),
+      shapeElement(`${prefix}_check_bar`, 82, 232, 8, 180, theme.accent, 1),
+      textElement(
+        `${prefix}_check_title`,
+        '<strong>执行清单</strong>',
+        116,
+        236,
+        318,
+        34,
+        24,
+        theme.textPrimary,
+        undefined,
+        1.1,
+      ),
+      textElement(
+        `${prefix}_check_body`,
+        stepBody,
+        116,
+        298,
+        332,
+        154,
+        18,
+        theme.textBody,
+        undefined,
+        1.32,
+      ),
+      shapeElement(`${prefix}_focus_panel`, 548, 212, 370, 154, '#eef6ff', 1),
+      textElement(
+        `${prefix}_focus_title`,
+        '<strong>先抓住目标</strong>',
+        582,
+        238,
+        286,
+        32,
+        23,
+        theme.textPrimary,
+        undefined,
+        1.1,
+      ),
+      textElement(
+        `${prefix}_focus_body`,
+        escapeHtmlShort(note ?? subtitle, 70),
+        582,
+        302,
+        286,
+        42,
+        19,
+        '#1e3a5f',
+        undefined,
+        1.16,
+      ),
+      shapeElement(`${prefix}_result_panel`, 548, 398, 370, 3, theme.accentSecondary, 0.9),
+      textElement(
+        `${prefix}_result`,
+        `<strong>最后检查</strong>：${escapeHtmlShort(blocks[1]?.body ?? '能否独立复述每一步的作用', 46)}`,
+        582,
+        418,
+        286,
+        48,
+        18,
+        '#7c3f00',
+        undefined,
+        1.18,
+      ),
+    ];
+  }
+
+  const prefix = 'polish_ref_canonical_steps_v0';
   const note = blocks.find((block) => !steps.some((step) => step.includes(block.body)))?.body;
 
   return [
@@ -1345,9 +2145,254 @@ function canonicalTextReferenceLayout(
   const theme = getPolishTheme(context);
   const title = getSlideTitle(elements, context);
   const subtitle = getCanonicalSubtitle(elements, title);
-  const prefix = 'polish_ref_canonical';
   const blocks = extractCanonicalBlocks(elements, context);
   const first = blocks[0] ?? { heading: '核心概念', body: subtitle };
+  const variant = chooseCanonicalTextVariant(elements, context, blocks);
+
+  if (variant === 1) {
+    const prefix = 'polish_ref_canonical_v1';
+    const cards = [
+      canonicalBlock(blocks, 0, '要点一', subtitle),
+      canonicalBlock(blocks, 1, '要点二', context?.keyPoints?.[0] ?? subtitle),
+      canonicalBlock(blocks, 2, '要点三', context?.keyPoints?.[1] ?? subtitle),
+    ];
+    const fills = ['#f8fafc', '#eef6ff', '#fff7ed'];
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...cards.flatMap((block, index) => {
+        const left = 82 + index * 290;
+        return [
+          shapeElement(`${prefix}_card_${index}`, left, 214, 256, 228, fills[index], 1),
+          shapeElement(`${prefix}_card_rule_${index}`, left + 28, 244, 76, 4, theme.accent, 0.9),
+          textElement(
+            `${prefix}_card_title_${index}`,
+            `<strong>${canonicalHeading(block, `要点 ${index + 1}`, 10)}</strong>`,
+            left + 28,
+            268,
+            196,
+            66,
+            23,
+            theme.textPrimary,
+            undefined,
+            1.1,
+          ),
+          textElement(
+            `${prefix}_card_body_${index}`,
+            canonicalBody(block, 24),
+            left + 28,
+            336,
+            196,
+            92,
+            18,
+            theme.textBody,
+            undefined,
+            1.18,
+          ),
+        ];
+      }),
+      shapeElement(`${prefix}_takeaway_panel`, 126, 438, 748, 3, theme.accent, 0.9),
+      textElement(
+        `${prefix}_takeaway`,
+        `<strong>连接起来看</strong>：${escapeHtmlShort(blocks[3]?.body ?? first.body, 34)}`,
+        158,
+        448,
+        684,
+        52,
+        18,
+        '#1e3a5f',
+        undefined,
+        1.12,
+      ),
+    ];
+  }
+
+  if (variant === 2) {
+    const prefix = 'polish_ref_canonical_v2';
+    const leftBlock = canonicalBlock(blocks, 0, '视角 A', subtitle);
+    const rightBlock = canonicalBlock(blocks, 1, '视角 B', context?.keyPoints?.[0] ?? subtitle);
+    const bottomBlock = canonicalBlock(blocks, 2, '结论', context?.keyPoints?.[1] ?? first.body);
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      shapeElement(`${prefix}_left_panel`, 82, 212, 398, 246, '#f8fafc', 1),
+      shapeElement(`${prefix}_left_bar`, 82, 236, 8, 154, theme.accent, 1),
+      textElement(
+        `${prefix}_left_title`,
+        `<strong>${canonicalHeading(leftBlock, '视角 A', 20)}</strong>`,
+        116,
+        244,
+        302,
+        36,
+        24,
+        theme.textPrimary,
+        undefined,
+        1.1,
+      ),
+      textElement(
+        `${prefix}_left_body`,
+        canonicalBody(leftBlock, 34),
+        116,
+        318,
+        302,
+        96,
+        19,
+        theme.textBody,
+        undefined,
+        1.2,
+      ),
+      shapeElement(`${prefix}_right_panel`, 520, 212, 398, 246, '#eef6ff', 1),
+      shapeElement(`${prefix}_right_bar`, 910, 236, 8, 154, theme.accentSecondary, 1),
+      textElement(
+        `${prefix}_right_title`,
+        `<strong>${canonicalHeading(rightBlock, '视角 B', 20)}</strong>`,
+        554,
+        244,
+        302,
+        36,
+        24,
+        theme.textPrimary,
+        undefined,
+        1.1,
+      ),
+      textElement(
+        `${prefix}_right_body`,
+        canonicalBody(rightBlock, 34),
+        554,
+        318,
+        302,
+        96,
+        19,
+        '#1e3a5f',
+        undefined,
+        1.2,
+      ),
+      shapeElement(`${prefix}_bridge`, 170, 440, 660, 3, theme.accentSecondary, 0.9),
+      textElement(
+        `${prefix}_bridge_text`,
+        `<strong>${canonicalHeading(bottomBlock, '结论', 14)}</strong>：${canonicalBody(bottomBlock, 28)}`,
+        204,
+        450,
+        592,
+        52,
+        18,
+        '#7c3f00',
+        undefined,
+        1.05,
+      ),
+    ];
+  }
+
+  if (variant === 3) {
+    const prefix = 'polish_ref_canonical_v3';
+    const timelineBlocks = [
+      canonicalBlock(blocks, 0, '起点', subtitle),
+      canonicalBlock(blocks, 1, '变化', context?.keyPoints?.[0] ?? subtitle),
+      canonicalBlock(blocks, 2, '方法', context?.keyPoints?.[1] ?? subtitle),
+      canonicalBlock(blocks, 3, '结果', context?.keyPoints?.[2] ?? first.body),
+    ];
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      shapeElement(`${prefix}_rail_panel`, 82, 210, 142, 278, '#f8fafc', 1),
+      shapeElement(`${prefix}_rail`, 144, 238, 8, 206, theme.accent, 0.9),
+      ...timelineBlocks.flatMap((block, index) => {
+        const top = 206 + index * 72;
+        return [
+          circleElement(`${prefix}_node_${index}`, 130, top + 20, 36, theme.accent, 0.95),
+          shapeElement(
+            `${prefix}_item_${index}`,
+            270,
+            top,
+            648,
+            72,
+            index % 2 ? '#eef6ff' : '#f8fafc',
+            1,
+          ),
+          textElement(
+            `${prefix}_item_text_${index}`,
+            `<strong>${canonicalHeading(block, `阶段 ${index + 1}`, 12)}</strong>：${canonicalBody(block, 16)}`,
+            300,
+            top + 10,
+            580,
+            50,
+            18,
+            index % 2 ? '#1e3a5f' : theme.textBody,
+            undefined,
+            1.12,
+          ),
+        ];
+      }),
+    ];
+  }
+
+  if (variant === 4) {
+    const prefix = 'polish_ref_canonical_v4';
+    const focusBlock = canonicalBlock(blocks, 0, '核心抓手', subtitle);
+    const leftBlocks = [
+      canonicalBlock(blocks, 1, '要点一', context?.keyPoints?.[0] ?? subtitle),
+      canonicalBlock(blocks, 2, '要点二', context?.keyPoints?.[1] ?? subtitle),
+      canonicalBlock(blocks, 3, '要点三', context?.keyPoints?.[2] ?? first.body),
+    ];
+
+    return [
+      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...leftBlocks.flatMap((block, index) => {
+        const top = 212 + index * 96;
+        return [
+          shapeElement(
+            `${prefix}_left_band_${index}`,
+            82,
+            top,
+            390,
+            92,
+            index % 2 ? '#eef6ff' : '#f8fafc',
+            1,
+          ),
+          textElement(
+            `${prefix}_left_text_${index}`,
+            `<strong>${canonicalHeading(block, `要点 ${index + 1}`, 16)}</strong>：${canonicalBody(block, 12)}`,
+            110,
+            top + 12,
+            330,
+            70,
+            18,
+            index % 2 ? '#1e3a5f' : theme.textBody,
+            undefined,
+            1.15,
+          ),
+        ];
+      }),
+      shapeElement(`${prefix}_focus_panel`, 520, 210, 398, 278, '#fff7ed', 1),
+      shapeElement(`${prefix}_focus_bar`, 520, 236, 8, 176, theme.accentSecondary, 1),
+      textElement(
+        `${prefix}_focus_title`,
+        `<strong>${canonicalHeading(focusBlock, '核心抓手', 20)}</strong>`,
+        556,
+        246,
+        300,
+        38,
+        25,
+        theme.textPrimary,
+        undefined,
+        1.1,
+      ),
+      textElement(
+        `${prefix}_focus_body`,
+        canonicalBody(focusBlock, 88),
+        556,
+        328,
+        302,
+        92,
+        20,
+        '#7c3f00',
+        undefined,
+        1.2,
+      ),
+    ];
+  }
+
+  const prefix = 'polish_ref_canonical_v0';
   const rightBlocks = blocks.slice(1, 4);
   const bandTop = 204;
   const bandHeight = 96;
@@ -1387,7 +2432,7 @@ function canonicalTextReferenceLayout(
         shapeElement(`${prefix}_band_${index}`, 452, top, 466, bandHeight, '#eef6ff', 1),
         textElement(
           `${prefix}_band_text_${index}`,
-          `<strong>${escapeHtmlShort(block.heading ?? `要点 ${index + 1}`, 20)}</strong>：${escapeHtmlShort(block.body, 46)}`,
+          `<strong>${escapeHtmlShort(block.heading ?? `要点 ${index + 1}`, 18)}</strong>：${escapeHtmlShort(block.body, 34)}`,
           478,
           top + 12,
           410,
@@ -1955,6 +3000,15 @@ function referenceLayoutElements<T extends SlideLikeElement>(
   }
   if (shouldUseVertexFormLayout(elements, context)) {
     return vertexFormReferenceLayout(elements, context) as T[];
+  }
+  if (shouldUseCanonicalMediaLayout(elements, context)) {
+    return canonicalMediaReferenceLayout(elements, context) as T[];
+  }
+  if (shouldUseCanonicalDataLayout(elements, context)) {
+    return canonicalDataReferenceLayout(elements, context) as T[];
+  }
+  if (shouldUseCanonicalFormulaLayout(elements, context)) {
+    return canonicalFormulaReferenceLayout(elements, context) as T[];
   }
   if (shouldUseCanonicalTextLayout(elements, context)) {
     return canonicalTextReferenceLayout(elements, context) as T[];

@@ -1494,6 +1494,101 @@ describe('slide polish', () => {
     expect(auditSlideLayout(polished)).toEqual([]);
   });
 
+  it('rotates generic generated text pages through multiple stable canonical layouts', () => {
+    const makeElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 60,
+        top: 48,
+        width: 880,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 60,
+        top: 124,
+        width: 880,
+        height: 56,
+        content: '<p style="font-size:20px;">整理概念、方法、例子与课堂检查点</p>',
+      },
+      {
+        id: 'text_a_heading',
+        type: 'text',
+        left: 70,
+        top: 216,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>概念入口</strong></p>',
+      },
+      {
+        id: 'text_a_body',
+        type: 'text',
+        left: 70,
+        top: 258,
+        width: 760,
+        height: 58,
+        content: '<p style="font-size:18px;">先把本页要解决的问题说清楚。</p>',
+      },
+      {
+        id: 'text_b_heading',
+        type: 'text',
+        left: 70,
+        top: 326,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>方法抓手</strong></p>',
+      },
+      {
+        id: 'text_b_body',
+        type: 'text',
+        left: 70,
+        top: 368,
+        width: 760,
+        height: 58,
+        content: '<p style="font-size:18px;">再用一个稳定步骤连接输入与输出。</p>',
+      },
+      {
+        id: 'text_c_heading',
+        type: 'text',
+        left: 70,
+        top: 438,
+        width: 760,
+        height: 36,
+        content: '<p style="font-size:20px;"><strong>课堂检查</strong></p>',
+      },
+      {
+        id: 'text_c_body',
+        type: 'text',
+        left: 70,
+        top: 474,
+        width: 760,
+        height: 34,
+        content: '<p style="font-size:18px;">最后让学生复述判断依据。</p>',
+      },
+    ];
+
+    const variants = [1, 2, 3, 4, 5].map((order) => {
+      const polished = polishSlideElements(makeElements(`普通文本页 ${order}`), {
+        title: `普通文本页 ${order}`,
+        keyPoints: ['概念入口', '方法抓手', '课堂检查'],
+        order,
+        decorate: false,
+      });
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_v\d+_/.test(element.id ?? ''),
+      )?.id;
+
+      expect(variantId).toBeTruthy();
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return variantId?.match(/polish_ref_canonical_v\d+/)?.[0];
+    });
+
+    expect(new Set(variants)).toHaveProperty('size', 5);
+  });
+
   it('rewrites generic step-heavy generated pages into a canonical steps layout', () => {
     const polished = polishSlideElements(
       [
@@ -1548,6 +1643,315 @@ describe('slide polish', () => {
     expect(combinedText).toContain('def 写函数名');
     expect(combinedText).toContain('return 返回结果');
     expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('rotates generated step pages through multiple stable canonical step layouts', () => {
+    const makeStepElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 62,
+        top: 48,
+        width: 860,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 62,
+        top: 124,
+        width: 860,
+        height: 56,
+        content: '<p style="font-size:20px;">把操作流程拆成可执行的课堂步骤</p>',
+      },
+      {
+        id: 'text_steps',
+        type: 'text',
+        left: 160,
+        top: 246,
+        width: 680,
+        height: 160,
+        content:
+          '<p style="font-size:18px;">① 明确输入与目标</p><p style="font-size:18px;">② 拆分可执行步骤</p><p style="font-size:18px;">③ 检查结果是否符合预期</p>',
+      },
+      {
+        id: 'text_note',
+        type: 'text',
+        left: 160,
+        top: 430,
+        width: 680,
+        height: 52,
+        content: '<p style="font-size:18px;">每一步都要能被学生复述。</p>',
+      },
+    ];
+
+    const variants = [1, 2, 3].map((order) => {
+      const polished = polishSlideElements(makeStepElements(`流程页 ${order}`), {
+        title: `流程页 ${order}`,
+        keyPoints: ['明确输入', '拆分步骤', '检查结果'],
+        order,
+        decorate: false,
+      });
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_steps_v\d+_/.test(element.id ?? ''),
+      )?.id;
+
+      expect(variantId).toBeTruthy();
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return variantId?.match(/polish_ref_canonical_steps_v\d+/)?.[0];
+    });
+
+    expect(new Set(variants)).toHaveProperty('size', 3);
+  });
+
+  it('rotates generated formula pages through multiple stable canonical formula layouts', () => {
+    const makeFormulaElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 60,
+        top: 48,
+        width: 880,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 60,
+        top: 124,
+        width: 880,
+        height: 56,
+        content: '<p style="font-size:20px;">用公式连接条件、变量与结果</p>',
+      },
+      {
+        id: 'text_meaning_heading',
+        type: 'text',
+        left: 72,
+        top: 214,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>公式含义</strong></p>',
+      },
+      {
+        id: 'text_meaning_body',
+        type: 'text',
+        left: 72,
+        top: 258,
+        width: 760,
+        height: 58,
+        content: '<p style="font-size:18px;">每一项都对应一个可解释的量。</p>',
+      },
+      {
+        id: 'latex_formula_1',
+        type: 'latex',
+        left: 180,
+        top: 316,
+        width: 460,
+        height: 80,
+        latex: 'S = v_0t + \\frac{1}{2}at^2',
+      },
+      {
+        id: 'text_check_heading',
+        type: 'text',
+        left: 72,
+        top: 410,
+        width: 760,
+        height: 38,
+        content: '<p style="font-size:20px;"><strong>代入检查</strong></p>',
+      },
+      {
+        id: 'text_check_body',
+        type: 'text',
+        left: 72,
+        top: 452,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:18px;">先看单位，再看边界条件。</p>',
+      },
+    ];
+
+    const variants = [1, 2, 3].map((order) => {
+      const polished = polishSlideElements(makeFormulaElements(`公式页 ${order}`), {
+        title: `公式页 ${order}`,
+        keyPoints: ['公式含义', '代入检查', '边界条件'],
+        order,
+        decorate: false,
+      });
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_formula_v\d+_/.test(element.id ?? ''),
+      )?.id;
+
+      expect(variantId).toBeTruthy();
+      expect(polished.some((element) => element.type === 'latex')).toBe(true);
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return variantId?.match(/polish_ref_canonical_formula_v\d+/)?.[0];
+    });
+
+    expect(new Set(variants)).toHaveProperty('size', 3);
+  });
+
+  it('rotates generated data pages through multiple stable canonical data layouts', () => {
+    const makeDataElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 60,
+        top: 48,
+        width: 880,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 60,
+        top: 124,
+        width: 880,
+        height: 56,
+        content: '<p style="font-size:20px;">用数据变化支撑课堂判断</p>',
+      },
+      {
+        id: 'text_observe_heading',
+        type: 'text',
+        left: 70,
+        top: 214,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>观察对象</strong></p>',
+      },
+      {
+        id: 'text_observe_body',
+        type: 'text',
+        left: 70,
+        top: 258,
+        width: 760,
+        height: 58,
+        content: '<p style="font-size:18px;">先比较不同组数据的变化趋势。</p>',
+      },
+      {
+        id: 'chart_main',
+        type: 'chart',
+        left: 160,
+        top: 318,
+        width: 560,
+        height: 150,
+        chartType: 'bar',
+        data: {
+          labels: ['A', 'B', 'C'],
+          legends: ['实验组'],
+          series: [[12, 18, 26]],
+        },
+        themeColors: ['#2f80d1'],
+      },
+      {
+        id: 'text_conclusion',
+        type: 'text',
+        left: 70,
+        top: 478,
+        width: 760,
+        height: 34,
+        content: '<p style="font-size:18px;">结论要回到横轴、纵轴和单位。</p>',
+      },
+    ];
+
+    const variants = [1, 2, 3].map((order) => {
+      const polished = polishSlideElements(makeDataElements(`数据页 ${order}`), {
+        title: `数据页 ${order}`,
+        keyPoints: ['观察对象', '变化趋势', '课堂判断'],
+        order,
+        decorate: false,
+      });
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_data_v\d+_/.test(element.id ?? ''),
+      )?.id;
+
+      expect(variantId).toBeTruthy();
+      expect(polished.some((element) => element.type === 'chart')).toBe(true);
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return variantId?.match(/polish_ref_canonical_data_v\d+/)?.[0];
+    });
+
+    expect(new Set(variants)).toHaveProperty('size', 3);
+  });
+
+  it('rotates generated media pages through multiple stable canonical media layouts', () => {
+    const makeMediaElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 60,
+        top: 48,
+        width: 880,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 60,
+        top: 124,
+        width: 880,
+        height: 56,
+        content: '<p style="font-size:20px;">围绕视觉材料组织观察和讨论</p>',
+      },
+      {
+        id: 'image_main',
+        type: 'image',
+        left: 140,
+        top: 220,
+        width: 520,
+        height: 230,
+        src: '/assets/demo.png',
+      },
+      {
+        id: 'text_focus_heading',
+        type: 'text',
+        left: 700,
+        top: 220,
+        width: 220,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>观察重点</strong></p>',
+      },
+      {
+        id: 'text_focus_body',
+        type: 'text',
+        left: 700,
+        top: 270,
+        width: 220,
+        height: 80,
+        content: '<p style="font-size:18px;">先看结构，再看变化细节。</p>',
+      },
+      {
+        id: 'text_question',
+        type: 'text',
+        left: 700,
+        top: 380,
+        width: 220,
+        height: 60,
+        content: '<p style="font-size:18px;">你能指出最关键的差异吗？</p>',
+      },
+    ];
+
+    const variants = [1, 2, 3].map((order) => {
+      const polished = polishSlideElements(makeMediaElements(`视觉页 ${order}`), {
+        title: `视觉页 ${order}`,
+        keyPoints: ['观察重点', '结构变化', '课堂追问'],
+        order,
+        decorate: false,
+      });
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_media_v\d+_/.test(element.id ?? ''),
+      )?.id;
+
+      expect(variantId).toBeTruthy();
+      expect(polished.some((element) => element.type === 'image')).toBe(true);
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return variantId?.match(/polish_ref_canonical_media_v\d+/)?.[0];
+    });
+
+    expect(new Set(variants)).toHaveProperty('size', 3);
   });
 
   it('repairs stale vertex reference slides when the title is about real applications', () => {
