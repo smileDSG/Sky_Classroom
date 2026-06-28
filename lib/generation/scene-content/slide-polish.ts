@@ -414,14 +414,17 @@ function polishBoxElement<T extends SlideLikeElement>(element: T): T {
   const width = clamp(element.width, 16, CANVAS_WIDTH - MARGIN * 2);
   const minHeight = isThinDecorativeElement(element) ? 1 : 8;
   const rawHeight = Number(element.height ?? 16);
+  const elementId = String(element.id ?? '');
+  const isFormulaPanel = /formula_panel/i.test(elementId);
   const isWideBottomBand =
     element.type === 'shape' &&
     !hasShapeText(element) &&
     element.top > 400 &&
     width >= 700 &&
     rawHeight >= 24;
+  const maxWideBottomBandHeight = isFormulaPanel ? 96 : 56;
   const height = isWideBottomBand
-    ? clamp(rawHeight, minHeight, 56)
+    ? clamp(rawHeight, minHeight, maxWideBottomBandHeight)
     : clamp(rawHeight, minHeight, CANVAS_HEIGHT - MARGIN * 2);
   return {
     ...element,
@@ -518,7 +521,9 @@ function shouldUseVertexFormLayout(
   context?: SlidePolishContext,
 ): boolean {
   const source = getLayoutSignalText(elements, context);
+  const title = getSlideTitle(elements, context);
   if (!isQuadraticTopicText(source)) return false;
+  if (isQuadraticParameterTitle(title) || isQuadraticApplicationTitle(title)) return false;
 
   return hasAnySignal(source, [
     /顶点式|\u9876\u70b9\u5f0f/i,
@@ -526,6 +531,14 @@ function shouldUseVertexFormLayout(
     /a\s*\(\s*x\s*[-−]\s*h\s*\)\s*\^?\s*2/i,
     /a\s*\(\s*x\s*[-−]\s*3\s*\)\s*\^?\s*2/i,
   ]);
+}
+
+function isQuadraticParameterTitle(text: string): boolean {
+  return /(参数\s*c.*b|参数\s*b.*c|系数\s*c.*b|系数\s*b.*c|探索参数|探索系数)/i.test(text);
+}
+
+function isQuadraticApplicationTitle(text: string): boolean {
+  return /(综合应用|实际问题|二次函数建模|应用题|变式训练)/i.test(text);
 }
 
 function referenceHeaderElements(
@@ -764,6 +777,212 @@ function vertexFormReferenceLayout(
       theme.textPrimary,
       undefined,
       1.16,
+    ),
+  ];
+}
+
+function quadraticParameterReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const prefix = 'polish_ref_quad_coeff';
+
+  return [
+    ...referenceHeaderElements(
+      prefix,
+      title,
+      '看 c 决定 y 轴截距，看 b 与 a 一起决定对称轴位置',
+      theme,
+    ),
+    shapeElement(`${prefix}_c_panel`, 82, 210, 392, 212, '#f8fafc', 1),
+    shapeElement(`${prefix}_c_bar`, 82, 228, 8, 154, theme.accent, 1),
+    textElement(
+      `${prefix}_c_title`,
+      '<strong>参数 c：上下位置</strong>',
+      118,
+      226,
+      322,
+      36,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_c_key`,
+      '当 x = 0 时，y = c',
+      118,
+      292,
+      322,
+      34,
+      24,
+      '#1d4ed8',
+      undefined,
+      1.08,
+    ),
+    textElement(
+      `${prefix}_c_body`,
+      '交点沿 y 轴上下移动。',
+      118,
+      354,
+      318,
+      52,
+      20,
+      theme.textBody,
+      undefined,
+      1.18,
+    ),
+    shapeElement(`${prefix}_b_panel`, 526, 210, 392, 212, '#eaf4fb', 1),
+    shapeElement(`${prefix}_b_bar`, 526, 228, 8, 154, theme.accentSecondary, 1),
+    textElement(
+      `${prefix}_b_title`,
+      '<strong>参数 b：左右位置</strong>',
+      562,
+      226,
+      322,
+      36,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_b_key`,
+      '对称轴：x = -b / 2a',
+      562,
+      292,
+      322,
+      34,
+      24,
+      '#9a3412',
+      undefined,
+      1.08,
+    ),
+    textElement(
+      `${prefix}_b_body`,
+      '对称轴左右移动。',
+      562,
+      354,
+      318,
+      52,
+      20,
+      theme.textBody,
+      undefined,
+      1.18,
+    ),
+    shapeElement(`${prefix}_formula_panel`, 112, 424, 776, 86, '#fff7ed', 1),
+    textElement(
+      `${prefix}_formula`,
+      '顶点：(-b/2a，(4ac-b²)/4a)',
+      150,
+      440,
+      700,
+      54,
+      23,
+      '#7c3f00',
+      undefined,
+      1.1,
+    ),
+  ];
+}
+
+function quadraticApplicationReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const prefix = 'polish_ref_quad_application';
+  const steps = [
+    ['1', '建立坐标系', '把拱桥、利润或轨迹问题转成坐标图像。'],
+    ['2', '设函数模型', '根据条件选择一般式、顶点式或交点式。'],
+    ['3', '代入求参数', '用已知点、顶点或交点求出未知系数。'],
+    ['4', '回到题意', '读最大值、最小值、宽度或高度，并检查定义域。'],
+  ];
+
+  return [
+    ...referenceHeaderElements(
+      prefix,
+      title,
+      '把真实情境转成二次函数模型，再用图像特征回答问题',
+      theme,
+    ),
+    shapeElement(`${prefix}_problem_panel`, 82, 206, 300, 218, '#f8fafc', 1),
+    textElement(
+      `${prefix}_problem_title`,
+      '<strong>实际问题</strong>',
+      112,
+      230,
+      236,
+      34,
+      23,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_problem_body`,
+      '常见情境：拱桥通行、利润最大、投篮轨迹。<br/><br/>目标不是背公式，而是把题意翻译成函数。',
+      112,
+      292,
+      224,
+      92,
+      18,
+      theme.textBody,
+      undefined,
+      1.16,
+    ),
+    shapeElement(`${prefix}_steps_panel`, 426, 206, 492, 218, '#eaf4fb', 1),
+    textElement(
+      `${prefix}_steps_title`,
+      '<strong>建模步骤</strong>',
+      456,
+      228,
+      406,
+      34,
+      23,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_steps_body`,
+      steps
+        .map(([number, heading]) => {
+          const shortBody =
+            number === '1'
+              ? '把情境画成图像'
+              : number === '2'
+                ? '选一般式/顶点式'
+                : number === '3'
+                  ? '代入已知点'
+                  : '读最值、宽度或高度';
+          return `<strong>${number}. ${heading}</strong>：${shortBody}`;
+        })
+        .join('<br/>'),
+      456,
+      278,
+      406,
+      126,
+      18,
+      theme.textBody,
+      undefined,
+      1.28,
+    ),
+    shapeElement(`${prefix}_takeaway_rule`, 82, 456, 836, 3, theme.accentSecondary, 0.9),
+    textElement(
+      `${prefix}_takeaway`,
+      '关键检查：单位、定义域、答案是否符合真实情境。',
+      112,
+      472,
+      776,
+      28,
+      18,
+      theme.textPrimary,
+      undefined,
+      1.1,
     ),
   ];
 }
@@ -1152,10 +1371,146 @@ function cubicCoefficientReferenceLayout(
   ];
 }
 
+function shouldUseCubicSummaryFormulaLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  const source = getLayoutSignalText(elements, context);
+  const title = getSlideTitle(elements, context);
+  const hasSummaryTitle =
+    /(总结.*关键公式|关键公式|课堂小结|\u603b\u7ed3.*\u5173\u952e\u516c\u5f0f)/.test(title) ||
+    /(总结.*关键公式|关键公式|课堂小结|\u603b\u7ed3.*\u5173\u952e\u516c\u5f0f)/.test(source);
+  const hasCubicFormula = /(ax\^3|x³|x\^3|3ax\^2|\\frac\{b\}\{3a\})/i.test(source);
+  const hasFlow = /(解题流程|求导数|单调区间|极值点|拐点)/.test(source);
+
+  return hasSummaryTitle && hasCubicFormula && hasFlow;
+}
+
+function cubicSummaryFormulaReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const title = getSlideTitle(elements, context);
+  const prefix = 'polish_ref_cubic_summary';
+  const left = 82;
+  const right = 520;
+  const panelTop = 164;
+  const panelHeight = 336;
+  const panelWidth = 398;
+  const steps = [
+    "① 求导：f'(x)=3ax²+2bx+c",
+    '② 解方程定位极值候选点',
+    '③ 列表分析单调区间',
+    '④ 看 a 的符号判断走势',
+    '⑤ 画草图，标注极值与拐点',
+  ];
+
+  return [
+    textElement(
+      `${prefix}_title`,
+      `<strong>${title}</strong>`,
+      82,
+      48,
+      836,
+      56,
+      34,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    shapeElement(`${prefix}_rule`, 82, 132, 836, 3, theme.accent, 0.85),
+    shapeElement(`${prefix}_formula_panel`, left, panelTop, panelWidth, panelHeight, '#f8faff', 1),
+    textElement(
+      `${prefix}_formula_heading`,
+      '<strong>核心公式</strong>',
+      left + 28,
+      panelTop + 22,
+      panelWidth - 56,
+      52,
+      22,
+      theme.textPrimary,
+      undefined,
+      1.12,
+    ),
+    textElement(
+      `${prefix}_formula_1`,
+      'f(x) = ax<sup>3</sup> + bx<sup>2</sup> + cx + d&nbsp;&nbsp;(a ≠ 0)',
+      left + 38,
+      236,
+      panelWidth - 76,
+      54,
+      22,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_formula_2`,
+      "f'(x) = 3ax<sup>2</sup> + 2bx + c = 0",
+      left + 38,
+      314,
+      panelWidth - 76,
+      54,
+      22,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_formula_3`,
+      'x = -<span style="display:inline-block;text-align:center;vertical-align:middle;"><span style="display:block;border-bottom:1px solid currentColor;padding:0 6px;">b</span><span style="display:block;padding:0 6px;">3a</span></span>',
+      left + 120,
+      388,
+      180,
+      58,
+      22,
+      theme.textPrimary,
+      undefined,
+      1.05,
+    ),
+    shapeElement(`${prefix}_flow_panel`, right, panelTop, panelWidth, panelHeight, '#f0f4ff', 1),
+    textElement(
+      `${prefix}_flow_heading`,
+      '<strong>解题流程</strong>',
+      right + 28,
+      panelTop + 22,
+      panelWidth - 56,
+      52,
+      22,
+      theme.textPrimary,
+      undefined,
+      1.12,
+    ),
+    shapeElement(`${prefix}_flow_list_card`, right + 26, 236, 346, 248, '#dbeafe', 1),
+    textElement(
+      `${prefix}_flow_steps`,
+      steps.join('<br/>'),
+      right + 48,
+      254,
+      300,
+      202,
+      18,
+      '#1e3a5f',
+      undefined,
+      1.45,
+    ),
+  ];
+}
+
 function referenceLayoutElements<T extends SlideLikeElement>(
   elements: T[],
   context?: SlidePolishContext,
 ): T[] | null {
+  const title = getSlideTitle(elements, context);
+  if (elements.some((element) => element.id?.startsWith('polish_ref_vertex_'))) {
+    if (isQuadraticParameterTitle(title)) {
+      return quadraticParameterReferenceLayout(elements, context) as T[];
+    }
+    if (isQuadraticApplicationTitle(title)) {
+      return quadraticApplicationReferenceLayout(elements, context) as T[];
+    }
+  }
   if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return elements;
   if (shouldUseCubicIntroLayout(elements, context)) {
     return cubicIntroReferenceLayout(elements, context) as T[];
@@ -1166,8 +1521,19 @@ function referenceLayoutElements<T extends SlideLikeElement>(
   if (shouldUseCubicCoefficientLayout(elements, context)) {
     return cubicCoefficientReferenceLayout(elements, context) as T[];
   }
+  if (shouldUseCubicSummaryFormulaLayout(elements, context)) {
+    return cubicSummaryFormulaReferenceLayout(elements, context) as T[];
+  }
   if (shouldUseEquationRelationLayout(elements, context)) {
     return equationRelationReferenceLayout(elements, context) as T[];
+  }
+  if (isQuadraticTopicText(getLayoutSignalText(elements, context))) {
+    if (isQuadraticParameterTitle(title)) {
+      return quadraticParameterReferenceLayout(elements, context) as T[];
+    }
+    if (isQuadraticApplicationTitle(title)) {
+      return quadraticApplicationReferenceLayout(elements, context) as T[];
+    }
   }
   if (shouldUseVertexFormLayout(elements, context)) {
     return vertexFormReferenceLayout(elements, context) as T[];
@@ -1662,7 +2028,7 @@ export function polishSlideElements<T extends SlideLikeElement>(
     }
   });
 
-  return protectReadableLayout(polished);
+  return protectReadableLayout(polished, context);
 }
 
 function polishReferenceLayoutElements<T extends SlideLikeElement>(
@@ -1692,7 +2058,10 @@ function polishReferenceLayoutElements<T extends SlideLikeElement>(
   return enforceReadableSafeBounds(polished);
 }
 
-function protectReadableLayout<T extends SlideLikeElement>(elements: T[]): T[] {
+function protectReadableLayout<T extends SlideLikeElement>(
+  elements: T[],
+  context?: SlidePolishContext,
+): T[] {
   const compacted = compactTitleWhitespace(elements);
   const cardOwned = normalizeCardTextOwnership(compacted);
   const parallelAligned = normalizeParallelRows(cardOwned);
@@ -1713,7 +2082,286 @@ function protectReadableLayout<T extends SlideLikeElement>(elements: T[]): T[] {
       ),
     ),
   );
-  return reserveBottomCalloutSpace(normalizeStepSections(normalizeCardTextOwnership(finalSpaced)));
+  const finalLayout = reserveBottomCalloutSpace(
+    normalizeStepSections(normalizeCardTextOwnership(finalSpaced)),
+  );
+  const densityOptimized = optimizeSparseLayout(finalLayout, context);
+  if (densityOptimized === finalLayout) return finalLayout;
+
+  return enforceReadableSafeBounds(resolveVerticalReadableOverlaps(densityOptimized));
+}
+
+function getTitleElement<T extends SlideLikeElement>(elements: T[]): T | undefined {
+  return elements
+    .filter((element) => element.type === 'text')
+    .filter((element) => {
+      const text = getTextContent(element);
+      const box = getElementBox(element);
+      return box.top < 140 && box.width >= 420 && text.length > 0 && text.length <= 48;
+    })
+    .sort((a, b) => a.top - b.top || b.width - a.width)[0];
+}
+
+function isTitleZoneElement(element: SlideLikeElement, title?: SlideLikeElement): boolean {
+  if (element === title) return true;
+  const box = getElementBox(element);
+  return box.top < 160 && (element.type === 'text' || isThinDecorativeElement(element));
+}
+
+function isDensityGeneratedElement(element: SlideLikeElement): boolean {
+  return Boolean(element.id?.startsWith('polish_density_'));
+}
+
+function isStrongMediaElement(element: SlideLikeElement): boolean {
+  return ['image', 'video', 'chart', 'table', 'latex'].includes(element.type);
+}
+
+function isDensityProtectedElement(element: SlideLikeElement): boolean {
+  return Boolean(
+    element.id?.startsWith('polish_ref_') ||
+    element.id?.startsWith('polish_quad_') ||
+    element.id?.startsWith('polish_visual_'),
+  );
+}
+
+function getContentBounds(elements: SlideLikeElement[]): ElementBox | null {
+  if (elements.length === 0) return null;
+
+  const boxes = elements.map(getElementBox);
+  const left = Math.min(...boxes.map((box) => box.left));
+  const top = Math.min(...boxes.map((box) => box.top));
+  const right = Math.max(...boxes.map((box) => box.right));
+  const bottom = Math.max(...boxes.map((box) => box.bottom));
+  return toBox(left, top, right - left, bottom - top);
+}
+
+function getDensityOccupiedRatio(elements: SlideLikeElement[]): number {
+  const measurable = elements.filter((element) => {
+    if (isThinDecorativeElement(element)) return false;
+    if (isDensityGeneratedElement(element)) return false;
+    if (
+      element.type === 'shape' &&
+      !hasShapeText(element) &&
+      !(element as Record<string, unknown>).fill
+    ) {
+      return false;
+    }
+    return (
+      isReadableElement(element) ||
+      ['shape', 'image', 'video', 'chart', 'table'].includes(element.type)
+    );
+  });
+
+  const occupiedArea = measurable.reduce((total, element) => {
+    const box = getElementBox(element);
+    return total + Math.min(box.width * box.height, CANVAS_WIDTH * CANVAS_HEIGHT * 0.35);
+  }, 0);
+
+  return occupiedArea / (CANVAS_WIDTH * CANVAS_HEIGHT);
+}
+
+function isSummaryBandText(element: SlideLikeElement): boolean {
+  if (element.type !== 'text') return false;
+  const text = getTextContent(element);
+  return /^(课堂小结|核心思想|本页要点|关键结论|总结|Takeaway|Core idea|Learning goal|Next)/i.test(
+    text,
+  );
+}
+
+function getDensityMainElements(
+  elements: SlideLikeElement[],
+  title?: SlideLikeElement,
+): SlideLikeElement[] {
+  return elements.filter((element) => {
+    if (isTitleZoneElement(element, title)) return false;
+    if (isSummaryBandText(element)) return false;
+    if (isThinDecorativeElement(element)) return false;
+    if (isDensityGeneratedElement(element)) return false;
+    const box = getElementBox(element);
+    return box.top >= 170 && (isReadableElement(element) || isBackgroundShapeLike(element));
+  });
+}
+
+function shouldOptimizeSparseLayout(
+  elements: SlideLikeElement[],
+  mainElements: SlideLikeElement[],
+): boolean {
+  if (elements.some(isDensityGeneratedElement)) return false;
+  if (elements.some(isDensityProtectedElement)) return false;
+  if (mainElements.length === 0) return false;
+
+  const bounds = getContentBounds(mainElements);
+  if (!bounds) return false;
+
+  const topGap = bounds.top - 150;
+  const bottomBlank = CANVAS_HEIGHT - MARGIN - bounds.bottom;
+  const occupiedRatio = getDensityOccupiedRatio(elements);
+
+  return occupiedRatio < 0.24 && (topGap > 58 || bottomBlank > 94);
+}
+
+function getDensityKeywords(elements: SlideLikeElement[], context?: SlidePolishContext): string[] {
+  const keywords = extractSlideKeywords(elements, context);
+  if (keywords.length > 0) return keywords.slice(0, 3);
+  return ['核心概念', '关键方法', '结果检验'];
+}
+
+function densityAnchorElements(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const theme = getPolishTheme(context);
+  const keywords = getDensityKeywords(elements, context);
+  const prefix = 'polish_density_anchor';
+
+  return [
+    shapeElement(`${prefix}_panel`, 82, 178, 318, 232, theme.panel, 0.64),
+    lineElement(`${prefix}_spine`, 124, 220, [0, 0], [0, 146], 3, theme.accent, {
+      points: ['', 'arrow'],
+    }),
+    ...keywords.flatMap((keyword, index) => {
+      const top = 206 + index * 62;
+      return [
+        shapeElement(`${prefix}_label_pad_${index}`, 154, top, 208, 50, '#ffffff', 0.94),
+        textElement(
+          `${prefix}_label_${index}`,
+          escapeHtmlShort(keyword, 24),
+          174,
+          top + 11,
+          168,
+          28,
+          18,
+          theme.textBody,
+          undefined,
+          1.1,
+        ),
+      ];
+    }),
+  ];
+}
+
+function applySparseTwoBandLayout<T extends SlideLikeElement>(
+  elements: T[],
+  mainTexts: T[],
+  context?: SlidePolishContext,
+): T[] {
+  const theme = getPolishTheme(context);
+  const bandLeft = 452;
+  const bandTop = 178;
+  const bandWidth = 466;
+  const bandHeight = 92;
+  const bandGap = 22;
+  const textTargets = new Map<
+    string | undefined,
+    Partial<SlideLikeElement> & { content?: string; paragraphSpace?: number; lineHeight?: number }
+  >();
+  const bandShapes = mainTexts.map((text, index) => {
+    const top = bandTop + index * (bandHeight + bandGap);
+    textTargets.set(text.id, {
+      left: bandLeft + 28,
+      top: top + 16,
+      width: bandWidth - 56,
+      height: 58,
+      content: setFontSize(String((text as Record<string, unknown>).content ?? ''), 20),
+      paragraphSpace: 0,
+      lineHeight: 1.18,
+    });
+    return shapeElement(
+      `polish_density_band_${index}`,
+      bandLeft,
+      top,
+      bandWidth,
+      bandHeight,
+      '#f8fafc',
+      1,
+    );
+  });
+
+  return [
+    ...(densityAnchorElements(elements, context) as T[]),
+    ...(bandShapes as T[]),
+    ...elements.map((element) => {
+      const target = textTargets.get(element.id);
+      if (!target) return element;
+      return {
+        ...element,
+        ...target,
+        defaultColor: (element as Record<string, unknown>)['defaultColor'] || theme.textBody,
+      };
+    }),
+  ] as T[];
+}
+
+function expandSparseSummaryBand<T extends SlideLikeElement>(elements: T[]): T[] {
+  const summary = elements
+    .filter(isSummaryBandText)
+    .filter((element) => {
+      const box = getElementBox(element);
+      return box.top >= 360 && (box.width < 700 || box.height < 56);
+    })
+    .sort((a, b) => getElementBox(b).top - getElementBox(a).top)[0];
+
+  if (!summary) return elements;
+
+  const summaryTop = CANVAS_HEIGHT - MARGIN - 64;
+  return elements.map((element) => {
+    if (element !== summary) return element;
+    return {
+      ...element,
+      left: 105,
+      top: summaryTop,
+      width: 790,
+      height: 64,
+      fill: (element as Record<string, unknown>)['fill'] || '#f8fafc',
+      content: setFontSize(String((element as Record<string, unknown>).content ?? ''), 18),
+      paragraphSpace: 0,
+      lineHeight: 1.18,
+    };
+  }) as T[];
+}
+
+function liftSparseMainContent<T extends SlideLikeElement>(
+  elements: T[],
+  mainElements: SlideLikeElement[],
+): T[] {
+  const bounds = getContentBounds(mainElements);
+  if (!bounds || bounds.top <= 188) return elements;
+
+  const lift = Math.min(bounds.top - 188, 56);
+  if (lift <= 0) return elements;
+
+  const mainIds = new Set(mainElements.map((element) => element.id));
+  return elements.map((element) => {
+    if (!mainIds.has(element.id)) return element;
+    return {
+      ...element,
+      top: Math.max(168, element.top - lift),
+    };
+  }) as T[];
+}
+
+function optimizeSparseLayout<T extends SlideLikeElement>(
+  elements: T[],
+  context?: SlidePolishContext,
+): T[] {
+  const title = getTitleElement(elements);
+  if (!title) return elements;
+
+  const mainElements = getDensityMainElements(elements, title);
+  if (!shouldOptimizeSparseLayout(elements, mainElements)) return elements;
+
+  const hasStrongMedia = elements.some(isStrongMediaElement);
+  const backgroundCount = elements.filter(isBackgroundShapeLike).length;
+  const mainTexts = mainElements.filter(
+    (element): element is T => element.type === 'text' && !isSummaryBandText(element),
+  );
+
+  if (!hasStrongMedia && backgroundCount <= 1 && mainTexts.length >= 2 && mainTexts.length <= 3) {
+    return applySparseTwoBandLayout(elements, mainTexts, context);
+  }
+
+  const lifted = liftSparseMainContent(elements, mainElements);
+  return expandSparseSummaryBand(lifted);
 }
 
 function compactTitleWhitespace<T extends SlideLikeElement>(elements: T[]): T[] {
@@ -2039,14 +2687,15 @@ function fitElementInsideCardBand<T extends SlideLikeElement>(
     ...fitted,
     top: minTop,
     height,
-  } as T & Record<string, unknown>;
+  };
 
-  if (next.type === 'text') {
-    next['paragraphSpace'] = 0;
-    next['lineHeight'] = cardBox.height <= 72 ? 1.12 : 1.16;
-  }
+  if (next.type !== 'text') return next as T;
 
-  return next as T;
+  return {
+    ...next,
+    paragraphSpace: 0,
+    lineHeight: cardBox.height <= 72 ? 1.12 : 1.16,
+  } as T;
 }
 
 function findSectionHeadingAboveCardRow<T extends SlideLikeElement>(

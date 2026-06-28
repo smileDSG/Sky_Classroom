@@ -6,6 +6,7 @@ import type { PPTElement, PPTVideoElement, Slide } from '@/lib/types/slides';
 import type { PPTVideoElement as MaicVideoElement, Slide as MaicSlide } from '@maic/dsl';
 import { SlideCanvas } from '@maic/renderer';
 import { useMediaStageId } from '@/lib/contexts/media-stage-context';
+import { polishSlideElements } from '@/lib/generation/scene-content/slide-polish';
 import { getVideoMediaRefForElement } from '@/lib/media/video-manifest';
 import { isMediaPlaceholder, useMediaGenerationStore } from '@/lib/store/media-generation';
 
@@ -26,6 +27,15 @@ function mediaTaskKeyFor(el: PPTElement): string | undefined {
   if (el.type === 'video') return getVideoMediaRefForElement(el);
   if (el.type === 'image' && el.src && isMediaPlaceholder(el.src)) return el.src;
   return undefined;
+}
+
+function inferSlideTitle(slide: Slide): string | undefined {
+  return slide.elements
+    .filter((element) => element.type === 'text' && element.top < 170)
+    .map((element) =>
+      String((element as { content?: string }).content ?? '').replace(/<[^>]+>/g, ''),
+    )
+    .find((text) => text.trim().length > 0);
 }
 
 function useResolvedSlide(slide: Slide): Slide {
@@ -97,8 +107,23 @@ function renderThumbnailVideo(element: MaicVideoElement) {
   );
 }
 
-export function ThumbnailSlide({ slide, size, viewportRatio, visible = true }: ThumbnailSlideProps) {
+export function ThumbnailSlide({
+  slide,
+  size,
+  viewportRatio,
+  visible = true,
+}: ThumbnailSlideProps) {
   const resolvedSlide = useResolvedSlide(slide);
+  const displaySlide = useMemo<Slide>(() => {
+    const title = inferSlideTitle(resolvedSlide);
+    return {
+      ...resolvedSlide,
+      elements: polishSlideElements(resolvedSlide.elements, {
+        title,
+        decorate: false,
+      }) as PPTElement[],
+    };
+  }, [resolvedSlide]);
   const autoSize = size === undefined;
 
   const containerClass = autoSize
@@ -121,7 +146,7 @@ export function ThumbnailSlide({ slide, size, viewportRatio, visible = true }: T
   return (
     <div className={containerClass} style={containerStyle}>
       <SlideCanvas
-        slide={resolvedSlide as unknown as MaicSlide}
+        slide={displaySlide as unknown as MaicSlide}
         chrome={false}
         renderVideo={renderThumbnailVideo}
       />

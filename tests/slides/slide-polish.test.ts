@@ -569,6 +569,99 @@ describe('slide polish', () => {
     expect(overlaps(cardSummary, nextStep)).toBe(false);
   });
 
+  it('densifies sparse text-only slides into a two-band layout with a visual anchor', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 90,
+          top: 78,
+          width: 760,
+          height: 64,
+          content: '<p style="font-size:32px;"><strong>三次函数建模回顾</strong></p>',
+        },
+        {
+          id: 'concept',
+          type: 'text',
+          left: 145,
+          top: 286,
+          width: 320,
+          height: 70,
+          content:
+            '<p style="font-size:18px;"><strong>模型入口</strong><br/>先识别最高次数项。</p>',
+        },
+        {
+          id: 'method',
+          type: 'text',
+          left: 535,
+          top: 356,
+          width: 320,
+          height: 70,
+          content: '<p style="font-size:18px;"><strong>分析方法</strong><br/>用导数判断走势。</p>',
+        },
+      ],
+      {
+        title: '三次函数建模回顾',
+        keyPoints: ['最高次数项', '导数判断走势', '草图验证结果'],
+        decorate: false,
+      },
+    );
+
+    const concept = polished.find((element) => element.id === 'concept')!;
+    const method = polished.find((element) => element.id === 'method')!;
+
+    expect(polished.some((element) => element.id?.startsWith('polish_density_anchor_'))).toBe(true);
+    expect(concept.left).toBeGreaterThanOrEqual(430);
+    expect(method.left).toBe(concept.left);
+    expect(concept.top).toBeLessThanOrEqual(205);
+    expect(method.top).toBeGreaterThan(concept.top);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('expands sparse summary notes into a wider bottom information band', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 90,
+          top: 70,
+          width: 760,
+          height: 64,
+          content: '<p style="font-size:32px;"><strong>课堂总结</strong></p>',
+        },
+        {
+          id: 'main-point',
+          type: 'text',
+          left: 160,
+          top: 230,
+          width: 420,
+          height: 70,
+          content: '<p style="font-size:18px;">先抓住函数结构，再决定图像走势。</p>',
+        },
+        {
+          id: 'summary-note',
+          type: 'text',
+          left: 380,
+          top: 392,
+          width: 300,
+          height: 42,
+          content: '<p style="font-size:18px;">课堂小结：公式、导数、草图三步一起看。</p>',
+        },
+      ],
+      { title: '课堂总结', decorate: false },
+    );
+
+    const note = polished.find((element) => element.id === 'summary-note')!;
+
+    expect(note.left).toBe(105);
+    expect(note.width).toBe(790);
+    expect(Number(note.height)).toBeGreaterThanOrEqual(56);
+    expect(Number(note.top) + Number(note.height)).toBeLessThanOrEqual(514.5);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
   it('shrinks stacked readable blocks in the same column so they do not overlap', () => {
     const polished = polishSlideElements(
       [
@@ -1075,6 +1168,121 @@ describe('slide polish', () => {
     expect(polished.every((element) => element.top + Number(element.height ?? 0) <= 514.5)).toBe(
       true,
     );
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('repairs stale vertex reference slides when the title is about parameters c and b', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'polish_ref_vertex_title',
+          type: 'text',
+          left: 82,
+          top: 42,
+          width: 836,
+          height: 58,
+          content: '<p style="font-size:34px;"><strong>探索参数c与b</strong></p>',
+        },
+        {
+          id: 'polish_ref_vertex_subtitle',
+          type: 'text',
+          left: 82,
+          top: 122,
+          width: 836,
+          height: 38,
+          content: '<p style="font-size:22px;">从顶点式直接读出顶点、对称轴和图像平移</p>',
+        },
+        {
+          id: 'polish_ref_vertex_definition_title',
+          type: 'text',
+          left: 112,
+          top: 216,
+          width: 320,
+          height: 36,
+          content: '<p style="font-size:24px;"><strong>顶点式定义</strong></p>',
+        },
+      ],
+      { title: '探索参数c与b', decorate: false },
+    );
+
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+    const byId = (id: string) => {
+      const element = polished.find((item) => item.id === id);
+      expect(element).toBeTruthy();
+      return element as NonNullable<(typeof polished)[number]>;
+    };
+    const cKey = byId('polish_ref_quad_coeff_c_key');
+    const cBody = byId('polish_ref_quad_coeff_c_body');
+    const bKey = byId('polish_ref_quad_coeff_b_key');
+    const bBody = byId('polish_ref_quad_coeff_b_body');
+    const formula = byId('polish_ref_quad_coeff_formula');
+    const formulaPanel = byId('polish_ref_quad_coeff_formula_panel');
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_quad_coeff_'))).toBe(true);
+    expect(combinedText).toContain('参数 c');
+    expect(combinedText).toContain('参数 b');
+    expect(combinedText).toContain('x = -');
+    expect(combinedText).not.toContain('顶点式定义');
+    expect(String(cKey.content)).toContain('font-size:24px');
+    expect(String(cBody.content)).toContain('font-size:20px');
+    expect(cBody.top).toBeLessThanOrEqual(354);
+    expect(String(bKey.content)).toContain('font-size:24px');
+    expect(String(bKey.content)).not.toContain('inline-block');
+    expect(String(bBody.content)).toContain('font-size:20px');
+    expect(bBody.top).toBeLessThanOrEqual(354);
+    expect(String(formula.content)).toContain('font-size:23px');
+    expect(formula.top).toBeLessThanOrEqual(440);
+    expect(Number(formulaPanel.height ?? 0)).toBeGreaterThanOrEqual(86);
+    expect(Number(formulaPanel.height ?? 0)).toBeLessThanOrEqual(90);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('repairs stale vertex reference slides when the title is about real applications', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'polish_ref_vertex_title',
+          type: 'text',
+          left: 82,
+          top: 42,
+          width: 836,
+          height: 58,
+          content: '<p style="font-size:34px;"><strong>综合应用：解决实际问题</strong></p>',
+        },
+        {
+          id: 'polish_ref_vertex_subtitle',
+          type: 'text',
+          left: 82,
+          top: 122,
+          width: 836,
+          height: 38,
+          content: '<p style="font-size:22px;">从顶点式直接读出顶点、对称轴和图像平移</p>',
+        },
+        {
+          id: 'polish_ref_vertex_definition_title',
+          type: 'text',
+          left: 112,
+          top: 216,
+          width: 320,
+          height: 36,
+          content: '<p style="font-size:24px;"><strong>顶点式定义</strong></p>',
+        },
+      ],
+      { title: '综合应用：解决实际问题', decorate: false },
+    );
+
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_quad_application_'))).toBe(
+      true,
+    );
+    expect(combinedText).toContain('建模步骤');
+    expect(combinedText).toContain('实际问题');
+    expect(combinedText).not.toContain('顶点式定义');
     expect(auditSlideLayout(polished)).toEqual([]);
   });
 
@@ -1884,6 +2092,128 @@ describe('slide polish', () => {
     expect(polished.some((element) => element.id?.startsWith('polish_ref_cubic_coeff_'))).toBe(
       true,
     );
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('rewrites cubic summary formula pages with aligned flow steps', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 76,
+          content: '<p style="font-size:30px;"><strong>总结与关键公式</strong></p>',
+        },
+        {
+          id: 'formula-heading',
+          type: 'text',
+          left: 80,
+          top: 178,
+          width: 380,
+          height: 48,
+          content: '<p style="font-size:20px;"><strong>核心公式</strong></p>',
+        },
+        {
+          id: 'formula-a',
+          type: 'latex',
+          left: 120,
+          top: 234,
+          width: 388,
+          height: 66,
+          latex: 'f(x) = ax^3 + bx^2 + cx + d \\quad (a \\neq 0)',
+        },
+        {
+          id: 'formula-b',
+          type: 'latex',
+          left: 140,
+          top: 308,
+          width: 378,
+          height: 66,
+          latex: "f'(x) = 3ax^2 + 2bx + c = 0",
+        },
+        {
+          id: 'formula-c',
+          type: 'latex',
+          left: 120,
+          top: 382,
+          width: 398,
+          height: 71,
+          latex: 'x = -\\frac{b}{3a}',
+        },
+        {
+          id: 'flow-heading',
+          type: 'text',
+          left: 540,
+          top: 178,
+          width: 380,
+          height: 51,
+          content: '<p style="font-size:20px;"><strong>解题流程</strong></p>',
+        },
+        {
+          id: 'step-1',
+          type: 'text',
+          left: 550,
+          top: 237,
+          width: 360,
+          height: 38,
+          content: '<p style="font-size:18px;">① 求导数 f\'(x) = 3ax² + 2bx + c</p>',
+        },
+        {
+          id: 'step-2',
+          type: 'text',
+          left: 550,
+          top: 283,
+          width: 360,
+          height: 38,
+          content: '<p style="font-size:18px;">② 解方程得极值点与拐点</p>',
+        },
+        {
+          id: 'step-3',
+          type: 'text',
+          left: 550,
+          top: 329,
+          width: 360,
+          height: 38,
+          content: '<p style="font-size:18px;">③ 列表分析单调区间</p>',
+        },
+        {
+          id: 'step-4',
+          type: 'text',
+          left: 550,
+          top: 375,
+          width: 360,
+          height: 38,
+          content: '<p style="font-size:18px;">④ 根据 a 符号判断走势</p>',
+        },
+        {
+          id: 'step-5',
+          type: 'text',
+          left: 550,
+          top: 421,
+          width: 360,
+          height: 53,
+          content: '<p style="font-size:18px;">⑤ 画草图，标注极值与拐点</p>',
+        },
+      ],
+      { title: '总结与关键公式', decorate: false },
+    );
+
+    const flowSteps = polished.find(
+      (element) => element.id === 'polish_ref_cubic_summary_flow_steps',
+    ) as ((typeof polished)[number] & Record<string, unknown>) | undefined;
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_cubic_summary_'))).toBe(
+      true,
+    );
+    expect(flowSteps).toBeDefined();
+    expect(flowSteps?.left).toBe(568);
+    expect(flowSteps?.width).toBe(300);
+    expect(String(flowSteps?.content ?? '')).toContain('font-size:18px');
+    expect(String(flowSteps?.content ?? '')).toContain('① 求导');
+    expect(String(flowSteps?.content ?? '')).toContain('⑤ 画草图');
     expect(auditSlideLayout(polished)).toEqual([]);
   });
 
