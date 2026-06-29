@@ -45,7 +45,7 @@
 - UI：React 19、Tailwind CSS 4、shadcn/ui、Radix、lucide-react。
 - 状态：Zustand store 位于 `lib/store/`。
 - AI 与业务：生成、课堂、云端智囊、天梯工坊、解题、课件均已有 Web 端业务能力。
-- 测试：Vitest + Playwright，CI 顺序为 `pnpm check`、`pnpm lint`、`npx tsc --noEmit`、`pnpm check:i18n-keys`、`pnpm test`。
+- 测试：Vitest + Playwright，建议检查顺序为 `pnpm check`、`pnpm lint`、`npx tsc --noEmit`、`pnpm test`。
 
 ### 2.2 当前移动端改造对象
 
@@ -65,6 +65,18 @@
 | 设置 | `app/settings/page.tsx` | 基础设置入口，高级设置提示到桌面端 | P2 | 成员 A |
 
 说明：`/sky/learning` 已经是正式天梯工坊入口，不再保留或依赖 `/sky/learning/test` 测试页。
+
+### 2.3 项目文档依据
+
+本方案对齐以下项目文档和约束：
+
+- `AGENTS.md`：Next.js 16、React 19、TypeScript 5、项目结构、CI、代码风格、Zustand、shadcn/ui、Tailwind CSS 4。
+- `CONTRIBUTING.md`：PR 聚焦单一目标、UI 改动提供截图、合并前完成本地验证。
+- `docs/features/core/sky-classroom-design.md`：天空课堂模块 A/B/C 架构、Zustand + IndexedDB、错题/知识图谱/AI 助手跨模块联动。
+- `docs/cloud-mind-personalized-tools-plan.md`：云端智囊作为 AI 工具集，消费天梯工坊学情数据，不重复学情驾驶舱。
+- `docs/cloud-mind-personalized-tools-implementation.md`：五个核心工具已接入 `PersonalizationContext`。
+- `docs/learning-workshop-optimization.md`：天梯工坊数据质量、知识图谱、学习统计和学习路径优化方向。
+- `docs/testing/testing-guide.md`：全量检查存在既有问题时，应说明本次改动是否新增问题。
 
 ## 3. 总体技术路线
 
@@ -160,6 +172,18 @@ e2e/tests/mobile/
 - 不让每个页面各自实现一套底部导航、抽屉、空状态、错误态。
 - 不为了移动端删除桌面端已有能力。
 - 不把测试页或实验路由作为正式移动端入口。
+
+### 3.5 工程红线
+
+移动端改造必须遵守项目文档中的“功能零回归、向后兼容、可回滚”原则：
+
+- 不改变现有 API 路径、请求字段、响应结构和错误码语义。
+- 不随意改动已有 localStorage、IndexedDB、Zustand persist key。
+- 不改变桌面端用户可见行为，除非该 PR 明确以桌面端优化为目标。
+- 每个 PR 聚焦一个目标，尽量能独立 revert。
+- 涉及加载时机、轮询、缓存、生成任务恢复的改动必须手测关键路径。
+- 涉及核心数据流、状态管理、复习调度、课堂播放的改动必须补测试或手测记录。
+- 发现主干已有类型错误或测试失败时，PR 描述要明确区分“既有问题”和“本次改动影响”。
 
 ## 4. 功能完整性规划
 
@@ -353,6 +377,20 @@ P1 保证移动端不仅能看课堂，也能完成日常学习工具。
 - 离线学习包。
 - 推送通知。
 - 原生 App 壳。
+
+### 4.4 云端智囊与天梯工坊边界
+
+移动端必须延续项目文档中的产品分工：
+
+- 天梯工坊负责“看见学生状态”：学情画像、知识图谱、错题、复习队列、成长路径。
+- 云端智囊负责“基于学生状态行动”：拍照搜题、PPT 课件生成、智能出题、记忆卡片、智能授课。
+- 云端智囊移动首页只展示轻推荐和工具入口，不复制天梯工坊的完整学情驾驶舱。
+- 工具页可以展示个性化原因，但不展开完整薄弱点、正确率、最近记录等大面板。
+- 五个核心工具的默认主题、难度、推荐动作优先复用 `/api/sky/cloud-mind/personalization-context`。
+- URL 参数和用户手动输入优先级高于个性化上下文，不覆盖用户选择。
+- 工具产生的答题、复习、错题和学习反馈要写回天梯工坊数据闭环。
+
+天梯工坊若出现“假数据感”或推荐不准，不应在移动 UI 中硬编码补数据，而应按 `docs/learning-workshop-optimization.md` 推进数据质量任务，例如 mastery 算法、知识图谱边生成、学习统计趋势、学科维度和学习路径展示。
 
 ## 5. 两人低耦合分工
 
@@ -747,7 +785,17 @@ type ApiResult<T> =
 
 ## 8. PR 拆分
 
-### PR 1：移动端壳层与公共组件
+### 8.1 PR 提交规范
+
+- 每个 PR 聚焦一个目标，不混入无关文件和本地缓存数据。
+- 若团队使用 issue 跟踪，PR 描述应关联对应 issue 或任务编号。
+- UI 改动必须提供移动端截图，建议包含 375px、390px 和桌面回归截图。
+- 涉及交互流程的 PR 必须写明手测路径、通过结果和已知限制。
+- AI 辅助生成的 PR 需要提交前自审，确认代码符合项目结构和现有模式。
+- 如果全量检查因主干既有问题失败，PR 描述必须列出局部通过的检查和失败原因。
+- PR 合并顺序按壳层、账号首页、P0 业务闭环、P1 工具、稳定性收口推进，避免多人同时大改同一文件。
+
+### 8.2 PR 1：移动端壳层与公共组件
 
 标题：
 
@@ -771,7 +819,7 @@ feat: add mobile shell and shared mobile UI
 - 桌面端无明显回归。
 - safe-area 初步可用。
 
-### PR 2：账号、移动首页与 PWA 基础
+### 8.3 PR 2：账号、移动首页与 PWA 基础
 
 标题：
 
@@ -795,7 +843,7 @@ feat: add mobile account home and pwa basics
 - 首页入口完整。
 - 可添加到桌面。
 
-### PR 3：AI 授课与课堂移动端
+### 8.4 PR 3：AI 授课与课堂移动端
 
 标题：
 
@@ -817,7 +865,7 @@ feat: adapt teaching and classroom for mobile
 - P0 授课闭环可用。
 - 课堂移动端可消费内容。
 
-### PR 4：AI 助手、天梯工坊与复习闭环
+### 8.5 PR 4：AI 助手、天梯工坊与复习闭环
 
 标题：
 
@@ -840,7 +888,7 @@ feat: adapt assistant workshop and review flows for mobile
 - 天梯工坊正式页移动端可用。
 - 今日任务和完整画像闭环可用。
 
-### PR 5：解题、测验、记忆卡片与课件预览
+### 8.6 PR 5：解题、测验、记忆卡片与课件预览
 
 标题：
 
@@ -865,7 +913,7 @@ feat: adapt solve quiz memory and slides for mobile
 - 可答题、可看记忆卡片。
 - 可查看课件预览。
 
-### PR 6：稳定性、e2e 与视觉收口
+### 8.7 PR 6：稳定性、e2e 与视觉收口
 
 标题：
 
@@ -898,7 +946,6 @@ fix: polish mobile stability and regression coverage
 pnpm check
 pnpm lint
 npx tsc --noEmit
-pnpm check:i18n-keys
 pnpm test
 ```
 

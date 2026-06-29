@@ -542,7 +542,6 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 - **语音合成（TTS）** — 多种语音服务商，支持自定义音色
 - **语音识别** — 通过麦克风与 AI 老师对话
 - **网络搜索** — 智能体在课堂中搜索网络获取最新信息
-- **国际化** — 界面支持中文、英文、日文和俄文
 - **暗色模式** — 深夜学习更护眼
 
 ---
@@ -617,7 +616,6 @@ OpenMAIC/
 │   ├── media/                  #   图片 & 视频生成服务商
 │   ├── export/                 #   PPTX & HTML 导出
 │   ├── hooks/                  #   React 自定义 Hooks（55+）
-│   ├── i18n/                   #   国际化（zh-CN, en-US）
 │   └── ...                     #   prosemirror, storage, pdf, web-search, utils
 │
 ├── components/                 # React UI 组件

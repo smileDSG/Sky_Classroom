@@ -174,18 +174,12 @@ START → checkSolveCache → checkQuestionBank → routeToAgent → solveWithAg
 | 登录 | `auth/login` | JWT 认证 |
 | 密码重置 | `auth/forgot-password` / `reset-password` | 邮箱验证码 |
 | 个人中心 | `user/profile` | 用户信息管理 |
-| 个性化 | `user/personalization` | 主题偏好、语言设置 |
+| 个性化 | `user/personalization` | 主题偏好 |
 | 头像 | `user/avatar` | 头像上传 |
 | 用量统计 | `usage/check` | 使用量追踪 |
 | 套餐计费 | `billing/orders` | 计划管理 |
 
-### 2.10 多语言支持 (i18n)
-
-- 支持 6 种语言：中文、英文、日文、俄文等
-- i18next + react-i18next
-- Prompt 模板 i18n (`lib/prompts/i18n/`)
-
-### 2.11 其他功能
+### 2.10 其他功能
 
 | 功能 | 说明 |
 |------|------|
@@ -277,7 +271,6 @@ START → checkSolveCache → checkQuestionBank → routeToAgent → solveWithAg
 | 05-21 | `7bb6573` | 模板选择器 + 计费 UI 接入首页 |
 | 05-23 | `f22fd68` | **虚拟形象气泡弹窗** — AgentSpeechPopup 组件 |
 | 05-23 | `ac2953a` | **PPT 导出三模式** + WPS 模板 + 虚拟形象系统 |
-| 05-23 | `707af03` | **i18n 全覆盖** — 6 语言、RTL 支持 |
 
 ### 第四阶段：高级功能 (2026-05-24 ~ 2026-05-27)
 
@@ -455,7 +448,6 @@ sky-classroom/
 │   ├── prompts/                  # Prompt 工程
 │   │   ├── core/                 # 核心 Prompt
 │   │   ├── generators/           # 生成器 Prompt
-│   │   ├── i18n/                 # 多语言 Prompt
 │   │   ├── roles/                # 角色 Prompt
 │   │   ├── snippets/             # Prompt 片段
 │   │   ├── student-personas/     # 学生人设
@@ -466,7 +458,6 @@ sky-classroom/
 │   ├── classroom/                # 课堂会话管理
 │   ├── store/                    # Zustand 状态管理
 │   ├── hooks/                    # React Hooks
-│   ├── i18n/                     # 国际化
 │   └── ...                       # 其他工具库
 ├── docs/                         # 文档
 ├── migrations/                   # 数据库迁移
