@@ -315,6 +315,7 @@ function finalizeSlideElements(
   return polishSlideElements(processedElements, {
     title: outline.title,
     keyPoints: outline.keyPoints,
+    order: outline.order,
     decorate: false,
   }) as PPTElement[];
 }

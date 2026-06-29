@@ -141,7 +141,7 @@ describe('slide polish', () => {
     const enriched = enrichSlideElements(
       [
         {
-          id: 'title',
+          id: 'text_title',
           type: 'text',
           left: 90,
           top: 80,
@@ -1237,6 +1237,721 @@ describe('slide polish', () => {
     expect(Number(formulaPanel.height ?? 0)).toBeGreaterThanOrEqual(86);
     expect(Number(formulaPanel.height ?? 0)).toBeLessThanOrEqual(90);
     expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('rewrites crowded Python variable/data-type pages into a stable reference layout', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>变量与数据类型</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content:
+            '<p style="font-size:20px;">理解变量的概念、命名规则及 Python 中的常见数据类型</p>',
+        },
+        {
+          id: 'variable-heading',
+          type: 'text',
+          left: 60,
+          top: 208,
+          width: 880,
+          height: 44,
+          content: '<p style="font-size:20px;"><strong>什么是变量？</strong></p>',
+        },
+        {
+          id: 'variable-body',
+          type: 'text',
+          left: 60,
+          top: 260,
+          width: 880,
+          height: 64,
+          content: '<p style="font-size:18px;">• 变量是存储数据的“容器”，其值可以随时改变</p>',
+        },
+        {
+          id: 'naming-heading',
+          type: 'text',
+          left: 60,
+          top: 338,
+          width: 880,
+          height: 44,
+          content: '<p style="font-size:20px;"><strong>变量命名规则</strong></p>',
+        },
+        {
+          id: 'naming-body',
+          type: 'text',
+          left: 60,
+          top: 390,
+          width: 880,
+          height: 36.5,
+          content:
+            '<p style="font-size:18px;">• 由字母、数字、下划线组成</p><p style="font-size:18px;">• 不能以数字开头</p><p style="font-size:18px;">• 区分大小写，如 name 和 Name 是不同的变量</p>',
+        },
+        {
+          id: 'data-types-heading',
+          type: 'text',
+          left: 80,
+          top: 435,
+          width: 160,
+          height: 42,
+          content: '<p style="font-size:18px;"><strong>常见数据类型</strong></p>',
+        },
+        ...[60, 280, 500, 720].map((left, index) => ({
+          id: `type-card-${index}`,
+          type: 'shape',
+          left,
+          top: 423,
+          width: 200,
+          height: 92,
+          fill: ['#dbeafe', '#dcfce7', '#fef3c7', '#fce4ec'][index],
+        })),
+        {
+          id: 'int-label',
+          type: 'text',
+          left: 300,
+          top: 435,
+          width: 160,
+          height: 42,
+          content: '<p style="font-size:18px; text-align: center;">整数 (int)</p>',
+        },
+        {
+          id: 'float-label',
+          type: 'text',
+          left: 520,
+          top: 435,
+          width: 160,
+          height: 42,
+          content: '<p style="font-size:18px; text-align: center;">浮点数 (float)</p>',
+        },
+        {
+          id: 'str-label',
+          type: 'text',
+          left: 740,
+          top: 435,
+          width: 160,
+          height: 42,
+          content: '<p style="font-size:18px; text-align: center;">字符串 (str)</p>',
+        },
+        {
+          id: 'bool-label',
+          type: 'text',
+          left: 80,
+          top: 469,
+          width: 160,
+          height: 30,
+          content: '<p style="font-size:18px; text-align: center;">布尔值 (bool)</p>',
+        },
+        {
+          id: 'type-heading',
+          type: 'text',
+          left: 80,
+          top: 469,
+          width: 160,
+          height: 30,
+          content: '<p style="font-size:18px;"><strong>查看变量类型：type()</strong></p>',
+        },
+        {
+          id: 'type-overlay',
+          type: 'shape',
+          left: 60,
+          top: 456.5,
+          width: 880,
+          height: 56,
+          fill: '#f8f9fa',
+        },
+        {
+          id: 'type-example',
+          type: 'text',
+          left: 80,
+          top: 469,
+          width: 160,
+          height: 30,
+          content:
+            '<p style="font-size:18px; color:#172033;"><code>type(42)</code> → <code>&lt;class \'int\'&gt;</code></p>',
+        },
+      ],
+      { title: '变量与数据类型', decorate: false },
+    );
+
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+    const cards = polished.filter((element) =>
+      element.id?.startsWith('polish_ref_python_vars_type_card_'),
+    );
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_python_vars_'))).toBe(
+      true,
+    );
+    expect(polished.some((element) => element.id === 'type-overlay')).toBe(false);
+    expect(cards).toHaveLength(4);
+    expect(new Set(cards.map((element) => element.top))).toHaveProperty('size', 1);
+    expect(combinedText).toContain('变量：数据容器');
+    expect(combinedText).toContain('命名规则');
+    expect(combinedText).toContain('type(42)');
+    expect(combinedText).toContain('布尔 bool');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('rewrites generic text-only generated pages into a canonical template layout', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>条件语句与循环</strong></p>',
+        },
+        {
+          id: 'subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">理解程序如何根据条件分支，并重复执行任务</p>',
+        },
+        {
+          id: 'text_if_heading',
+          type: 'text',
+          left: 78,
+          top: 216,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:20px;"><strong>条件语句</strong></p>',
+        },
+        {
+          id: 'text_if_body',
+          type: 'text',
+          left: 76,
+          top: 260,
+          width: 760,
+          height: 58,
+          content: '<p style="font-size:18px;">if 根据 True 或 False 选择执行不同代码块。</p>',
+        },
+        {
+          id: 'text_loop_heading',
+          type: 'text',
+          left: 74,
+          top: 340,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:20px;"><strong>循环语句</strong></p>',
+        },
+        {
+          id: 'text_loop_body',
+          type: 'text',
+          left: 76,
+          top: 386,
+          width: 760,
+          height: 58,
+          content: '<p style="font-size:18px;">for 遍历序列，while 在条件成立时持续执行。</p>',
+        },
+        {
+          id: 'shape_bad_overlay',
+          type: 'shape',
+          left: 60,
+          top: 438,
+          width: 880,
+          height: 66,
+          fill: '#f8f9fa',
+        },
+        {
+          id: 'text_bad_bottom',
+          type: 'text',
+          left: 88,
+          top: 454,
+          width: 240,
+          height: 38,
+          content: '<p style="font-size:18px;">口诀：先判断，再重复</p>',
+        },
+      ],
+      { title: '条件语句与循环', decorate: false },
+    );
+
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_canonical_'))).toBe(true);
+    expect(polished.some((element) => element.id === 'shape_bad_overlay')).toBe(false);
+    expect(combinedText).toContain('条件语句');
+    expect(combinedText).toContain('循环语句');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('rotates generic generated text pages through multiple stable canonical layouts', () => {
+    const makeElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 60,
+        top: 48,
+        width: 880,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 60,
+        top: 124,
+        width: 880,
+        height: 56,
+        content: '<p style="font-size:20px;">整理概念、方法、例子与课堂检查点</p>',
+      },
+      {
+        id: 'text_a_heading',
+        type: 'text',
+        left: 70,
+        top: 216,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>概念入口</strong></p>',
+      },
+      {
+        id: 'text_a_body',
+        type: 'text',
+        left: 70,
+        top: 258,
+        width: 760,
+        height: 58,
+        content: '<p style="font-size:18px;">先把本页要解决的问题说清楚。</p>',
+      },
+      {
+        id: 'text_b_heading',
+        type: 'text',
+        left: 70,
+        top: 326,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>方法抓手</strong></p>',
+      },
+      {
+        id: 'text_b_body',
+        type: 'text',
+        left: 70,
+        top: 368,
+        width: 760,
+        height: 58,
+        content: '<p style="font-size:18px;">再用一个稳定步骤连接输入与输出。</p>',
+      },
+      {
+        id: 'text_c_heading',
+        type: 'text',
+        left: 70,
+        top: 438,
+        width: 760,
+        height: 36,
+        content: '<p style="font-size:20px;"><strong>课堂检查</strong></p>',
+      },
+      {
+        id: 'text_c_body',
+        type: 'text',
+        left: 70,
+        top: 474,
+        width: 760,
+        height: 34,
+        content: '<p style="font-size:18px;">最后让学生复述判断依据。</p>',
+      },
+    ];
+
+    const variants = [1, 2, 3, 4, 5].map((order) => {
+      const polished = polishSlideElements(makeElements(`普通文本页 ${order}`), {
+        title: `普通文本页 ${order}`,
+        keyPoints: ['概念入口', '方法抓手', '课堂检查'],
+        order,
+        decorate: false,
+      });
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_v\d+_/.test(element.id ?? ''),
+      )?.id;
+
+      expect(variantId).toBeTruthy();
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return variantId?.match(/polish_ref_canonical_v\d+/)?.[0];
+    });
+
+    expect(new Set(variants)).toHaveProperty('size', 5);
+  });
+
+  it('rewrites generic step-heavy generated pages into a canonical steps layout', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 62,
+          top: 48,
+          width: 860,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>函数定义与调用</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 62,
+          top: 124,
+          width: 860,
+          height: 56,
+          content: '<p style="font-size:20px;">掌握函数的定义、参数传递与返回值</p>',
+        },
+        {
+          id: 'text_steps',
+          type: 'text',
+          left: 180,
+          top: 268,
+          width: 650,
+          height: 150,
+          content:
+            '<p style="font-size:18px;">① 使用 def 写函数名</p><p style="font-size:18px;">② 在括号中声明参数</p><p style="font-size:18px;">③ 用 return 返回结果</p>',
+        },
+        {
+          id: 'text_note',
+          type: 'text',
+          left: 160,
+          top: 432,
+          width: 620,
+          height: 58,
+          content: '<p style="font-size:18px;">调用函数时，实参会传给形参。</p>',
+        },
+      ],
+      { title: '函数定义与调用', decorate: false },
+    );
+
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_canonical_steps_'))).toBe(
+      true,
+    );
+    expect(combinedText).toContain('def 写函数名');
+    expect(combinedText).toContain('return 返回结果');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('rotates generated step pages through multiple stable canonical step layouts', () => {
+    const makeStepElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 62,
+        top: 48,
+        width: 860,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 62,
+        top: 124,
+        width: 860,
+        height: 56,
+        content: '<p style="font-size:20px;">把操作流程拆成可执行的课堂步骤</p>',
+      },
+      {
+        id: 'text_steps',
+        type: 'text',
+        left: 160,
+        top: 246,
+        width: 680,
+        height: 160,
+        content:
+          '<p style="font-size:18px;">① 明确输入与目标</p><p style="font-size:18px;">② 拆分可执行步骤</p><p style="font-size:18px;">③ 检查结果是否符合预期</p>',
+      },
+      {
+        id: 'text_note',
+        type: 'text',
+        left: 160,
+        top: 430,
+        width: 680,
+        height: 52,
+        content: '<p style="font-size:18px;">每一步都要能被学生复述。</p>',
+      },
+    ];
+
+    const variants = [1, 2, 3].map((order) => {
+      const polished = polishSlideElements(makeStepElements(`流程页 ${order}`), {
+        title: `流程页 ${order}`,
+        keyPoints: ['明确输入', '拆分步骤', '检查结果'],
+        order,
+        decorate: false,
+      });
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_steps_v\d+_/.test(element.id ?? ''),
+      )?.id;
+
+      expect(variantId).toBeTruthy();
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return variantId?.match(/polish_ref_canonical_steps_v\d+/)?.[0];
+    });
+
+    expect(new Set(variants)).toHaveProperty('size', 3);
+  });
+
+  it('rotates generated formula pages through multiple stable canonical formula layouts', () => {
+    const makeFormulaElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 60,
+        top: 48,
+        width: 880,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 60,
+        top: 124,
+        width: 880,
+        height: 56,
+        content: '<p style="font-size:20px;">用公式连接条件、变量与结果</p>',
+      },
+      {
+        id: 'text_meaning_heading',
+        type: 'text',
+        left: 72,
+        top: 214,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>公式含义</strong></p>',
+      },
+      {
+        id: 'text_meaning_body',
+        type: 'text',
+        left: 72,
+        top: 258,
+        width: 760,
+        height: 58,
+        content: '<p style="font-size:18px;">每一项都对应一个可解释的量。</p>',
+      },
+      {
+        id: 'latex_formula_1',
+        type: 'latex',
+        left: 180,
+        top: 316,
+        width: 460,
+        height: 80,
+        latex: 'S = v_0t + \\frac{1}{2}at^2',
+      },
+      {
+        id: 'text_check_heading',
+        type: 'text',
+        left: 72,
+        top: 410,
+        width: 760,
+        height: 38,
+        content: '<p style="font-size:20px;"><strong>代入检查</strong></p>',
+      },
+      {
+        id: 'text_check_body',
+        type: 'text',
+        left: 72,
+        top: 452,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:18px;">先看单位，再看边界条件。</p>',
+      },
+    ];
+
+    const variants = [1, 2, 3].map((order) => {
+      const polished = polishSlideElements(makeFormulaElements(`公式页 ${order}`), {
+        title: `公式页 ${order}`,
+        keyPoints: ['公式含义', '代入检查', '边界条件'],
+        order,
+        decorate: false,
+      });
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_formula_v\d+_/.test(element.id ?? ''),
+      )?.id;
+
+      expect(variantId).toBeTruthy();
+      expect(polished.some((element) => element.type === 'latex')).toBe(true);
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return variantId?.match(/polish_ref_canonical_formula_v\d+/)?.[0];
+    });
+
+    expect(new Set(variants)).toHaveProperty('size', 3);
+  });
+
+  it('rotates generated data pages through multiple stable canonical data layouts', () => {
+    const makeDataElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 60,
+        top: 48,
+        width: 880,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 60,
+        top: 124,
+        width: 880,
+        height: 56,
+        content: '<p style="font-size:20px;">用数据变化支撑课堂判断</p>',
+      },
+      {
+        id: 'text_observe_heading',
+        type: 'text',
+        left: 70,
+        top: 214,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>观察对象</strong></p>',
+      },
+      {
+        id: 'text_observe_body',
+        type: 'text',
+        left: 70,
+        top: 258,
+        width: 760,
+        height: 58,
+        content: '<p style="font-size:18px;">先比较不同组数据的变化趋势。</p>',
+      },
+      {
+        id: 'chart_main',
+        type: 'chart',
+        left: 160,
+        top: 318,
+        width: 560,
+        height: 150,
+        chartType: 'bar',
+        data: {
+          labels: ['A', 'B', 'C'],
+          legends: ['实验组'],
+          series: [[12, 18, 26]],
+        },
+        themeColors: ['#2f80d1'],
+      },
+      {
+        id: 'text_conclusion',
+        type: 'text',
+        left: 70,
+        top: 478,
+        width: 760,
+        height: 34,
+        content: '<p style="font-size:18px;">结论要回到横轴、纵轴和单位。</p>',
+      },
+    ];
+
+    const variants = [1, 2, 3].map((order) => {
+      const polished = polishSlideElements(makeDataElements(`数据页 ${order}`), {
+        title: `数据页 ${order}`,
+        keyPoints: ['观察对象', '变化趋势', '课堂判断'],
+        order,
+        decorate: false,
+      });
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_data_v\d+_/.test(element.id ?? ''),
+      )?.id;
+
+      expect(variantId).toBeTruthy();
+      expect(polished.some((element) => element.type === 'chart')).toBe(true);
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return variantId?.match(/polish_ref_canonical_data_v\d+/)?.[0];
+    });
+
+    expect(new Set(variants)).toHaveProperty('size', 3);
+  });
+
+  it('rotates generated media pages through multiple stable canonical media layouts', () => {
+    const makeMediaElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 60,
+        top: 48,
+        width: 880,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 60,
+        top: 124,
+        width: 880,
+        height: 56,
+        content: '<p style="font-size:20px;">围绕视觉材料组织观察和讨论</p>',
+      },
+      {
+        id: 'image_main',
+        type: 'image',
+        left: 140,
+        top: 220,
+        width: 520,
+        height: 230,
+        src: '/assets/demo.png',
+      },
+      {
+        id: 'text_focus_heading',
+        type: 'text',
+        left: 700,
+        top: 220,
+        width: 220,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>观察重点</strong></p>',
+      },
+      {
+        id: 'text_focus_body',
+        type: 'text',
+        left: 700,
+        top: 270,
+        width: 220,
+        height: 80,
+        content: '<p style="font-size:18px;">先看结构，再看变化细节。</p>',
+      },
+      {
+        id: 'text_question',
+        type: 'text',
+        left: 700,
+        top: 380,
+        width: 220,
+        height: 60,
+        content: '<p style="font-size:18px;">你能指出最关键的差异吗？</p>',
+      },
+    ];
+
+    const variants = [1, 2, 3].map((order) => {
+      const polished = polishSlideElements(makeMediaElements(`视觉页 ${order}`), {
+        title: `视觉页 ${order}`,
+        keyPoints: ['观察重点', '结构变化', '课堂追问'],
+        order,
+        decorate: false,
+      });
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_media_v\d+_/.test(element.id ?? ''),
+      )?.id;
+
+      expect(variantId).toBeTruthy();
+      expect(polished.some((element) => element.type === 'image')).toBe(true);
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return variantId?.match(/polish_ref_canonical_media_v\d+/)?.[0];
+    });
+
+    expect(new Set(variants)).toHaveProperty('size', 3);
   });
 
   it('repairs stale vertex reference slides when the title is about real applications', () => {
