@@ -60,6 +60,7 @@ docs/
 | 有哪些已知问题 | `testing/problem.txt` |
 | 云端智囊工具个性化教学方案 | `cloud-mind-personalized-tools-plan.md` |
 | 云端智囊个性化工具实施记录 | `cloud-mind-personalized-tools-implementation.md` |
+| 移动端实施方案 | `../MOBILE_APP_PLAN.md` |
 
 ## 文档命名规范
 

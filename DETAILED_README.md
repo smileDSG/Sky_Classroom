@@ -152,7 +152,6 @@
 | **媒体服务** | `lib/media/` | 图像和视频生成 |
 | **音频服务** | `lib/audio/` | TTS 和 ASR |
 | **导出模块** | `lib/export/` | PPTX 和 HTML 导出 |
-| **国际化** | `lib/i18n/` | 中文、英文、日文、俄文 |
 
 ---
 
@@ -637,7 +636,6 @@ OpenMAIC/
 │   ├── media/                    #   图像 & 视频生成
 │   ├── export/                   #   PPTX & HTML 导出
 │   ├── hooks/                    #   React Hooks (55+)
-│   ├── i18n/                     #   国际化
 │   ├── prompts/                  #   Prompt 模板
 │   └── pdf/                      #   PDF 处理
 │
@@ -661,7 +659,6 @@ OpenMAIC/
 │
 ├── configs/                      # 共享常量
 ├── public/                       # 静态资源
-├── messages/                     # i18n 翻译文件
 ├── tests/                        # 测试文件
 ├── eval/                         # 评测脚本
 ├── scripts/                      # 工具脚本
@@ -703,9 +700,6 @@ pnpm lint --fix                   # 自动修复
 
 # TypeScript 类型检查
 npx tsc --noEmit
-
-# i18n Key 对齐检查
-pnpm check:i18n-keys
 ```
 
 ### 提交规范

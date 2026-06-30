@@ -1099,7 +1099,7 @@ Next.js 的 `<Link>` 组件默认在链接进入视口时 prefetch 目标页面�
 
 `app/layout.tsx` 中嵌套了多层 Provider:
 ```
-ThemeProvider → I18nProvider → AuthProvider → ServerProvidersInit → SkyClassroomEntry → KagamiPanel → ClassroomJobPoller → AccessCodeGuard
+ThemeProvider → AuthProvider → ServerProvidersInit → SkyClassroomEntry → KagamiPanel → ClassroomJobPoller → AccessCodeGuard
 ```
 
 每个 Provider 初始化都需要时间。`ClassroomJobPoller` 挂载后立即开始轮询 (每 2 秒)，即使当前用户没有任何 job。

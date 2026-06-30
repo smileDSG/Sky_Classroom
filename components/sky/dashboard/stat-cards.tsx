@@ -105,7 +105,6 @@ interface StatCardsProps {
 export function StatCards({ mistakes }: StatCardsProps) {
   const todayCount = mistakes.filter((m) => isToday(m.solvedAt)).length;
   const toReviewCount = mistakes.filter((m) => !m.reviewed).length;
-  const reviewedCount = mistakes.filter((m) => m.reviewed).length;
   const masterySummary = useMemo(() => {
     if (mistakes.length === 0)
       return { overallMastery: 0, weakCount: 0, masteredCount: 0, totalCount: 0 };
@@ -228,7 +227,7 @@ const actions = [
   {
     icon: BarChart3,
     label: '学习数据',
-    href: '/sky/learning?tab=stats',
+    href: '/sky/learning/stats',
     color: 'text-emerald-400',
     bg: 'bg-emerald-500/10 hover:bg-emerald-500/20',
   },
@@ -380,13 +379,13 @@ export function ActivityTimeline({ mistakes }: ActivityTimelineProps) {
                       </div>
                       <div className="flex gap-2 pt-0.5">
                         <Link
-                          href={`/sky/learning?tab=review&highlight=${m.id}`}
+                          href={`/sky/learning/review?highlight=${m.id}`}
                           className="rounded-md bg-violet-500/8 hover:bg-violet-500/15 px-2.5 py-1 text-[10px] font-medium text-violet-700 dark:text-violet-400 transition-colors"
                         >
                           去复习
                         </Link>
                         <Link
-                          href={`/sky/learning?tab=mistakes&highlight=${m.id}`}
+                          href={`/sky/learning/mistakes?highlight=${m.id}`}
                           className="rounded-md bg-slate-500/8 hover:bg-slate-500/15 px-2.5 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-400 transition-colors"
                         >
                           查看详情

@@ -13,10 +13,12 @@ import { getLearningStats } from '@/lib/server/learning-stats';
 import { buildStudentProfile, invalidateProfileCache } from '@/lib/student/profile-builder';
 import { createMistakeBookDAO, type ErrorType } from '@/lib/storage/dao/mistakes';
 import { buildReviewSchedule, getMasteryProgress } from '@/lib/schedule/review-scheduler';
+import type { MemoryReviewRecord } from '@/lib/cloud-mind/types';
 import type { MistakeCause } from '@/lib/solve/types';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:SkyWorkshop');
+const MEMORY_REVIEWS_TABLE = 'cloud_mind_memory_reviews';
 
 function causeFromErrorType(errorType: ErrorType): MistakeCause {
   const map: Record<ErrorType, MistakeCause> = {
@@ -41,6 +43,30 @@ async function resolveUserId(): Promise<string> {
   }
 }
 
+function toTimestamp(value: string | undefined): number | null {
+  if (!value) return null;
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function buildMemoryProgress(memoryReviews: MemoryReviewRecord[]) {
+  const deckIds = new Set(memoryReviews.map((review) => review.deckId).filter(Boolean));
+  const lastStudied = memoryReviews.reduce<number | null>((latest, review) => {
+    const reviewedAt = toTimestamp(review.lastReviewedAt);
+    if (reviewedAt === null) return latest;
+    return latest === null ? reviewedAt : Math.max(latest, reviewedAt);
+  }, null);
+
+  return {
+    totalFlipped: memoryReviews.reduce(
+      (total, review) => total + Math.max(1, review.reviewCount ?? 1),
+      0,
+    ),
+    topicCount: deckIds.size,
+    lastStudied,
+  };
+}
+
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
@@ -53,20 +79,28 @@ export async function GET(req: NextRequest) {
     const storage = await getServerStorage();
     const mistakeDAO = createMistakeBookDAO(storage);
 
-    const [{ items: mistakeEntries, total }, learningStats, profile] = await Promise.all([
-      mistakeDAO.list({ pageSize: 9999 }),
-      getLearningStats(userId).catch((error) => {
-        log.warn('Learning stats unavailable:', error);
-        return null;
-      }),
-      buildStudentProfile(userId).catch((error) => {
-        log.warn('Student profile unavailable:', error);
-        return null;
-      }),
-    ]);
+    const [{ items: mistakeEntries, total }, learningStats, profile, memoryReviewEntries] =
+      await Promise.all([
+        mistakeDAO.list({ pageSize: 9999 }),
+        getLearningStats(userId).catch((error) => {
+          log.warn('Learning stats unavailable:', error);
+          return null;
+        }),
+        buildStudentProfile(userId).catch((error) => {
+          log.warn('Student profile unavailable:', error);
+          return null;
+        }),
+        storage
+          .getAll<MemoryReviewRecord>(MEMORY_REVIEWS_TABLE, (entry) => entry.data.userId === userId)
+          .catch((error) => {
+            log.warn('Memory reviews unavailable:', error);
+            return [];
+          }),
+      ]);
 
     const reviewSchedule = buildReviewSchedule(mistakeEntries);
     const masteryProgress = getMasteryProgress(mistakeEntries);
+    const memoryProgress = buildMemoryProgress(memoryReviewEntries.map((entry) => entry.data));
     const mistakes = mistakeEntries.map((entry) => ({
       id: entry.id,
       problem: entry.problemText,
@@ -103,11 +137,13 @@ export async function GET(req: NextRequest) {
       },
       learningStats,
       profile,
+      memoryProgress,
       dataSources: {
         mistakes: 'server',
         review: 'server',
         learningStats: learningStats ? 'server' : 'unavailable',
         profile: profile ? 'server' : 'unavailable',
+        memoryProgress: memoryReviewEntries.length > 0 ? 'server' : 'empty',
       },
     });
   } catch (error) {

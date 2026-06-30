@@ -15,15 +15,14 @@ pnpm test             # vitest unit tests
 pnpm test:e2e         # playwright e2e (needs dev server on :3002)
 ```
 
-## CI Pipeline Order (enforced in .github/workflows/ci.yml)
+## Recommended Local Check Order
 
 1. `pnpm check` (prettier)
 2. `pnpm lint` (eslint)
 3. `npx tsc --noEmit` (typecheck)
-4. `pnpm check:i18n-keys` (i18n translation key alignment)
-5. `pnpm test` (vitest unit)
+4. `pnpm test` (vitest unit)
 
-All must pass. Run locally before pushing.
+Run locally before pushing.
 
 ## Project Structure
 

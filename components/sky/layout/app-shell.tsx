@@ -158,7 +158,7 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
   }, [user, checkedIn, checkingIn]);
 
   return (
-    <div className="relative flex h-screen w-full flex-col overflow-x-hidden">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
       <AtmosphericBackground />
 
       {/* Header */}

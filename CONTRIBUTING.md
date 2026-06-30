@@ -94,7 +94,6 @@ If you have not completed local verification, keep your PR in **Draft** status. 
 - **Describe what and why** — fill out the [PR template](.github/pull_request_template.md)
 - **Include screenshots** — for UI changes, show before/after
 - **Ensure CI passes** before requesting review
-- **All UI text must be internationalized (i18n)** — do not hardcode user-facing strings
 
 ## Commit Message Convention
 
@@ -137,7 +136,6 @@ OpenMAIC/
 ├── lib/              # Shared utilities and core logic
 ├── packages/         # Internal packages (mathml2omml, pptxgenjs)
 ├── public/           # Static assets
-├── messages/         # i18n translation files
 └── .github/          # Issue templates, PR template, CI workflows
 ```
 
