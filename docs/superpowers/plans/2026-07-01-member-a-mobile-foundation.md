@@ -104,8 +104,8 @@ mkdir lib/mobile
 - [ ] Step 2: Create `lib/mobile/navigation.ts`.
 
 ```ts
-import type { LucideIcon } from 'lucide-react';
-import { Brain, Feather, Home, Star, TrendingUp, User } from 'lucide-react';
+import type { LucideIcon } from "lucide-react";
+import { Brain, Feather, Home, Star, TrendingUp, User } from "lucide-react";
 
 export interface MobileNavItem {
   label: string;
@@ -115,20 +115,23 @@ export interface MobileNavItem {
 }
 
 export const MOBILE_NAV_ITEMS: MobileNavItem[] = [
-  { label: '首页', href: '/sky', icon: Home, exact: true },
-  { label: '智囊', href: '/sky/cloud-mind', icon: Brain },
-  { label: '工坊', href: '/sky/learning', icon: TrendingUp },
-  { label: '助手', href: '/sky/assistant', icon: Feather },
-  { label: '我的', href: '/account', icon: User, exact: true },
+  { label: "首页", href: "/sky", icon: Home, exact: true },
+  { label: "智囊", href: "/sky/cloud-mind", icon: Brain },
+  { label: "工坊", href: "/sky/learning", icon: TrendingUp },
+  { label: "助手", href: "/sky/assistant", icon: Feather },
+  { label: "我的", href: "/account", icon: User, exact: true },
 ];
 
 export const MOBILE_PRIMARY_ACTION = {
-  label: '生成台',
-  href: '/sky/study-lab',
+  label: "生成台",
+  href: "/sky/study-lab",
   icon: Star,
 };
 
-export function isMobileNavActive(pathname: string, item: MobileNavItem): boolean {
+export function isMobileNavActive(
+  pathname: string,
+  item: MobileNavItem,
+): boolean {
   if (item.exact) return pathname === item.href;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
@@ -138,53 +141,53 @@ export function isMobileNavActive(pathname: string, item: MobileNavItem): boolea
 
 ```ts
 export const MOBILE_VIEWPORTS = [
-  { name: 'mobile-320', width: 320, height: 568 },
-  { name: 'mobile-375', width: 375, height: 667 },
-  { name: 'mobile-390', width: 390, height: 844 },
-  { name: 'mobile-412', width: 412, height: 915 },
-  { name: 'mobile-landscape', width: 667, height: 375 },
-  { name: 'desktop', width: 1440, height: 900 },
+  { name: "mobile-320", width: 320, height: 568 },
+  { name: "mobile-375", width: 375, height: 667 },
+  { name: "mobile-390", width: 390, height: 844 },
+  { name: "mobile-412", width: 412, height: 915 },
+  { name: "mobile-landscape", width: 667, height: 375 },
+  { name: "desktop", width: 1440, height: 900 },
 ] as const;
 
-export type MobileViewportName = (typeof MOBILE_VIEWPORTS)[number]['name'];
+export type MobileViewportName = (typeof MOBILE_VIEWPORTS)[number]["name"];
 ```
 
 - [ ] Step 4: Create placeholder exports.
 
 ```ts
 // components/mobile/index.ts
-export * from './shell';
-export * from './ui';
-export * from './hooks';
+export * from "./shell";
+export * from "./ui";
+export * from "./hooks";
 ```
 
 ```ts
 // components/mobile/shell/index.ts
-export * from './mobile-bottom-nav';
-export * from './mobile-page';
-export * from './mobile-sky-shell';
-export * from './mobile-sticky-action-bar';
-export * from './mobile-top-bar';
+export * from "./mobile-bottom-nav";
+export * from "./mobile-page";
+export * from "./mobile-sky-shell";
+export * from "./mobile-sticky-action-bar";
+export * from "./mobile-top-bar";
 ```
 
 ```ts
 // components/mobile/ui/index.ts
-export * from './mobile-action-menu';
-export * from './mobile-agent-progress';
-export * from './mobile-confidence-badge';
-export * from './mobile-empty-state';
-export * from './mobile-error-state';
-export * from './mobile-sheet';
-export * from './mobile-skeleton';
-export * from './mobile-source-list';
-export * from './mobile-upload-button';
+export * from "./mobile-action-menu";
+export * from "./mobile-agent-progress";
+export * from "./mobile-confidence-badge";
+export * from "./mobile-empty-state";
+export * from "./mobile-error-state";
+export * from "./mobile-sheet";
+export * from "./mobile-skeleton";
+export * from "./mobile-source-list";
+export * from "./mobile-upload-button";
 ```
 
 ```ts
 // components/mobile/hooks/index.ts
-export * from './use-is-mobile';
-export * from './use-keyboard-inset';
-export * from './use-mobile-viewport';
+export * from "./use-is-mobile";
+export * from "./use-keyboard-inset";
+export * from "./use-mobile-viewport";
 ```
 
 - [ ] Step 5: Run TypeScript after component files exist in later tasks. Do not run now because barrel exports intentionally point to files created in later tasks.
@@ -205,19 +208,25 @@ export * from './use-mobile-viewport';
 - [ ] Step 1: Write failing tests in `tests/mobile/hooks.test.tsx`.
 
 ```tsx
-import { renderHook, act } from '@testing-library/react';
-import { describe, expect, test, vi } from 'vitest';
-import { useIsMobile } from '@/components/mobile/hooks/use-is-mobile';
-import { useMobileViewport } from '@/components/mobile/hooks/use-mobile-viewport';
+import { renderHook, act } from "@testing-library/react";
+import { describe, expect, test, vi } from "vitest";
+import { useIsMobile } from "@/components/mobile/hooks/use-is-mobile";
+import { useMobileViewport } from "@/components/mobile/hooks/use-mobile-viewport";
 
 function resizeTo(width: number, height: number) {
-  Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
-  Object.defineProperty(window, 'innerHeight', { configurable: true, value: height });
-  window.dispatchEvent(new Event('resize'));
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    value: width,
+  });
+  Object.defineProperty(window, "innerHeight", {
+    configurable: true,
+    value: height,
+  });
+  window.dispatchEvent(new Event("resize"));
 }
 
-describe('mobile hooks', () => {
-  test('useIsMobile returns true under the md breakpoint after mount', () => {
+describe("mobile hooks", () => {
+  test("useIsMobile returns true under the md breakpoint after mount", () => {
     resizeTo(390, 844);
 
     const { result } = renderHook(() => useIsMobile());
@@ -225,7 +234,7 @@ describe('mobile hooks', () => {
     expect(result.current).toBe(true);
   });
 
-  test('useIsMobile returns false at desktop width', () => {
+  test("useIsMobile returns false at desktop width", () => {
     resizeTo(1024, 768);
 
     const { result } = renderHook(() => useIsMobile());
@@ -233,20 +242,20 @@ describe('mobile hooks', () => {
     expect(result.current).toBe(false);
   });
 
-  test('useMobileViewport tracks width height and orientation', () => {
+  test("useMobileViewport tracks width height and orientation", () => {
     resizeTo(667, 375);
 
     const { result } = renderHook(() => useMobileViewport());
 
     expect(result.current.width).toBe(667);
     expect(result.current.height).toBe(375);
-    expect(result.current.orientation).toBe('landscape');
+    expect(result.current.orientation).toBe("landscape");
 
     act(() => resizeTo(390, 844));
 
     expect(result.current.width).toBe(390);
     expect(result.current.height).toBe(844);
-    expect(result.current.orientation).toBe('portrait');
+    expect(result.current.orientation).toBe("portrait");
   });
 });
 ```
@@ -262,9 +271,9 @@ Expected: FAIL because the hook files do not exist.
 - [ ] Step 3: Implement `components/mobile/hooks/use-is-mobile.ts`.
 
 ```ts
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(false);
@@ -272,8 +281,8 @@ export function useIsMobile(breakpoint = 768) {
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth < breakpoint);
     update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, [breakpoint]);
 
   return isMobile;
@@ -283,14 +292,14 @@ export function useIsMobile(breakpoint = 768) {
 - [ ] Step 4: Implement `components/mobile/hooks/use-mobile-viewport.ts`.
 
 ```ts
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export interface MobileViewportState {
   width: number;
   height: number;
-  orientation: 'portrait' | 'landscape';
+  orientation: "portrait" | "landscape";
 }
 
 function readViewport(): MobileViewportState {
@@ -299,7 +308,7 @@ function readViewport(): MobileViewportState {
   return {
     width,
     height,
-    orientation: width > height ? 'landscape' : 'portrait',
+    orientation: width > height ? "landscape" : "portrait",
   };
 }
 
@@ -307,17 +316,17 @@ export function useMobileViewport(): MobileViewportState {
   const [viewport, setViewport] = useState<MobileViewportState>({
     width: 0,
     height: 0,
-    orientation: 'portrait',
+    orientation: "portrait",
   });
 
   useEffect(() => {
     const update = () => setViewport(readViewport());
     update();
-    window.addEventListener('resize', update);
-    window.visualViewport?.addEventListener('resize', update);
+    window.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
     return () => {
-      window.removeEventListener('resize', update);
-      window.visualViewport?.removeEventListener('resize', update);
+      window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
     };
   }, []);
 
@@ -328,9 +337,9 @@ export function useMobileViewport(): MobileViewportState {
 - [ ] Step 5: Implement `components/mobile/hooks/use-keyboard-inset.ts`.
 
 ```ts
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export function useKeyboardInset() {
   const [keyboardInset, setKeyboardInset] = useState(0);
@@ -340,16 +349,19 @@ export function useKeyboardInset() {
     if (!visualViewport) return;
 
     const update = () => {
-      const inset = Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop);
+      const inset = Math.max(
+        0,
+        window.innerHeight - visualViewport.height - visualViewport.offsetTop,
+      );
       setKeyboardInset(Math.round(inset));
     };
 
     update();
-    visualViewport.addEventListener('resize', update);
-    visualViewport.addEventListener('scroll', update);
+    visualViewport.addEventListener("resize", update);
+    visualViewport.addEventListener("scroll", update);
     return () => {
-      visualViewport.removeEventListener('resize', update);
-      visualViewport.removeEventListener('scroll', update);
+      visualViewport.removeEventListener("resize", update);
+      visualViewport.removeEventListener("scroll", update);
     };
   }, []);
 
@@ -383,32 +395,50 @@ Expected: PASS.
 - [ ] Step 1: Write failing tests in `tests/mobile/shell.test.tsx`.
 
 ```tsx
-import { render, screen } from '@testing-library/react';
-import { describe, expect, test, vi } from 'vitest';
-import { MobileBottomNav } from '@/components/mobile/shell/mobile-bottom-nav';
-import { MobilePage } from '@/components/mobile/shell/mobile-page';
+import { render, screen } from "@testing-library/react";
+import { describe, expect, test, vi } from "vitest";
+import { MobileBottomNav } from "@/components/mobile/shell/mobile-bottom-nav";
+import { MobilePage } from "@/components/mobile/shell/mobile-page";
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/sky/learning',
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/sky/learning",
 }));
 
-describe('mobile shell', () => {
-  test('bottom nav renders core routes and highlights active route', () => {
+describe("mobile shell", () => {
+  test("bottom nav renders core routes and highlights active route", () => {
     render(<MobileBottomNav />);
 
-    expect(screen.getByRole('link', { name: /首页/ })).toHaveAttribute('href', '/sky');
-    expect(screen.getByRole('link', { name: /智囊/ })).toHaveAttribute('href', '/sky/cloud-mind');
-    expect(screen.getByRole('link', { name: /工坊/ })).toHaveAttribute('href', '/sky/learning');
-    expect(screen.getByRole('link', { name: /助手/ })).toHaveAttribute('href', '/sky/assistant');
-    expect(screen.getByRole('link', { name: /我的/ })).toHaveAttribute('href', '/account');
-    expect(screen.getByRole('link', { name: /工坊/ })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole("link", { name: /首页/ })).toHaveAttribute(
+      "href",
+      "/sky",
+    );
+    expect(screen.getByRole("link", { name: /智囊/ })).toHaveAttribute(
+      "href",
+      "/sky/cloud-mind",
+    );
+    expect(screen.getByRole("link", { name: /工坊/ })).toHaveAttribute(
+      "href",
+      "/sky/learning",
+    );
+    expect(screen.getByRole("link", { name: /助手/ })).toHaveAttribute(
+      "href",
+      "/sky/assistant",
+    );
+    expect(screen.getByRole("link", { name: /我的/ })).toHaveAttribute(
+      "href",
+      "/account",
+    );
+    expect(screen.getByRole("link", { name: /工坊/ })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
-  test('mobile page applies bottom spacing for fixed navigation', () => {
+  test("mobile page applies bottom spacing for fixed navigation", () => {
     render(<MobilePage title="测试页">正文</MobilePage>);
 
-    expect(screen.getByRole('heading', { name: '测试页' })).toBeInTheDocument();
-    expect(screen.getByText('正文')).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "测试页" })).toBeInTheDocument();
+    expect(screen.getByText("正文")).toBeInTheDocument();
   });
 });
 ```
@@ -424,17 +454,17 @@ Expected: FAIL because shell components do not exist.
 - [ ] Step 3: Implement `mobile-top-bar.tsx`.
 
 ```tsx
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Bell, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import { Bell, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface MobileTopBarProps {
   title?: string;
 }
 
-export function MobileTopBar({ title = '天空课堂' }: MobileTopBarProps) {
+export function MobileTopBar({ title = "天空课堂" }: MobileTopBarProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 px-4 py-3 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-950/85">
       <div className="flex min-h-11 items-center justify-between gap-3">
@@ -445,10 +475,21 @@ export function MobileTopBar({ title = '天空课堂' }: MobileTopBarProps) {
           </span>
         </Link>
         <div className="flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="icon" className="size-10" aria-label="通知">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-10"
+            aria-label="通知"
+          >
             <Bell className="size-4" />
           </Button>
-          <Button asChild variant="ghost" size="icon" className="size-10" aria-label="设置">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="size-10"
+            aria-label="设置"
+          >
             <Link href="/settings">
               <Settings className="size-4" />
             </Link>
@@ -463,12 +504,12 @@ export function MobileTopBar({ title = '天空课堂' }: MobileTopBarProps) {
 - [ ] Step 4: Implement `mobile-bottom-nav.tsx`.
 
 ```tsx
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { MOBILE_NAV_ITEMS, isMobileNavActive } from '@/lib/mobile/navigation';
-import { cn } from '@/lib/utils';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { MOBILE_NAV_ITEMS, isMobileNavActive } from "@/lib/mobile/navigation";
+import { cn } from "@/lib/utils";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -486,12 +527,12 @@ export function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              aria-current={active ? 'page' : undefined}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                'flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[11px] font-medium transition-colors',
+                "flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[11px] font-medium transition-colors",
                 active
-                  ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300'
-                  : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900',
+                  ? "bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300"
+                  : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900",
               )}
             >
               <Icon className="size-4" />
@@ -508,7 +549,7 @@ export function MobileBottomNav() {
 - [ ] Step 5: Implement `mobile-page.tsx`.
 
 ```tsx
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface MobilePageProps {
   title?: string;
@@ -526,7 +567,9 @@ export function MobilePage({
   contentClassName,
 }: MobilePageProps) {
   return (
-    <section className={cn('min-h-[calc(100dvh-4rem)] px-4 pb-24 pt-4', className)}>
+    <section
+      className={cn("min-h-[calc(100dvh-4rem)] px-4 pb-24 pt-4", className)}
+    >
       {(title || description) && (
         <div className="mb-4 space-y-1">
           {title && (
@@ -535,11 +578,13 @@ export function MobilePage({
             </h1>
           )}
           {description && (
-            <p className="text-sm leading-6 text-slate-600 dark:text-slate-400">{description}</p>
+            <p className="text-sm leading-6 text-slate-600 dark:text-slate-400">
+              {description}
+            </p>
           )}
         </div>
       )}
-      <div className={cn('space-y-4', contentClassName)}>{children}</div>
+      <div className={cn("space-y-4", contentClassName)}>{children}</div>
     </section>
   );
 }
@@ -548,18 +593,21 @@ export function MobilePage({
 - [ ] Step 6: Implement `mobile-sticky-action-bar.tsx`.
 
 ```tsx
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface MobileStickyActionBarProps {
   children: React.ReactNode;
   className?: string;
 }
 
-export function MobileStickyActionBar({ children, className }: MobileStickyActionBarProps) {
+export function MobileStickyActionBar({
+  children,
+  className,
+}: MobileStickyActionBarProps) {
   return (
     <div
       className={cn(
-        'fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.35rem)] z-40 border-t border-slate-200/70 bg-white/90 p-3 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-950/90',
+        "fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.35rem)] z-40 border-t border-slate-200/70 bg-white/90 p-3 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-950/90",
         className,
       )}
     >
@@ -572,10 +620,10 @@ export function MobileStickyActionBar({ children, className }: MobileStickyActio
 - [ ] Step 7: Implement `mobile-sky-shell.tsx`.
 
 ```tsx
-'use client';
+"use client";
 
-import { MobileBottomNav } from './mobile-bottom-nav';
-import { MobileTopBar } from './mobile-top-bar';
+import { MobileBottomNav } from "./mobile-bottom-nav";
+import { MobileTopBar } from "./mobile-top-bar";
 
 interface MobileSkyShellProps {
   children: React.ReactNode;
@@ -622,26 +670,26 @@ Expected: PASS.
 - [ ] Step 1: Write failing tests in `tests/mobile/ui.test.tsx`.
 
 ```tsx
-import { render, screen } from '@testing-library/react';
-import { describe, expect, test } from 'vitest';
-import { MobileAgentProgress } from '@/components/mobile/ui/mobile-agent-progress';
-import { MobileConfidenceBadge } from '@/components/mobile/ui/mobile-confidence-badge';
-import { MobileEmptyState } from '@/components/mobile/ui/mobile-empty-state';
-import { MobileErrorState } from '@/components/mobile/ui/mobile-error-state';
-import { MobileSourceList } from '@/components/mobile/ui/mobile-source-list';
+import { render, screen } from "@testing-library/react";
+import { describe, expect, test } from "vitest";
+import { MobileAgentProgress } from "@/components/mobile/ui/mobile-agent-progress";
+import { MobileConfidenceBadge } from "@/components/mobile/ui/mobile-confidence-badge";
+import { MobileEmptyState } from "@/components/mobile/ui/mobile-empty-state";
+import { MobileErrorState } from "@/components/mobile/ui/mobile-error-state";
+import { MobileSourceList } from "@/components/mobile/ui/mobile-source-list";
 
-describe('mobile shared UI', () => {
-  test('empty and error states render accessible messages', () => {
+describe("mobile shared UI", () => {
+  test("empty and error states render accessible messages", () => {
     render(<MobileEmptyState title="暂无资源" description="稍后再试" />);
-    expect(screen.getByText('暂无资源')).toBeInTheDocument();
-    expect(screen.getByText('稍后再试')).toBeInTheDocument();
+    expect(screen.getByText("暂无资源")).toBeInTheDocument();
+    expect(screen.getByText("稍后再试")).toBeInTheDocument();
 
     render(<MobileErrorState title="加载失败" description="网络错误" />);
-    expect(screen.getByText('加载失败')).toBeInTheDocument();
-    expect(screen.getByText('网络错误')).toBeInTheDocument();
+    expect(screen.getByText("加载失败")).toBeInTheDocument();
+    expect(screen.getByText("网络错误")).toBeInTheDocument();
   });
 
-  test('confidence badge labels review state', () => {
+  test("confidence badge labels review state", () => {
     const { rerender } = render(<MobileConfidenceBadge value={0.82} />);
     expect(screen.getByText(/82%/)).toBeInTheDocument();
     expect(screen.getByText(/可信/)).toBeInTheDocument();
@@ -651,31 +699,35 @@ describe('mobile shared UI', () => {
     expect(screen.getByText(/需复核/)).toBeInTheDocument();
   });
 
-  test('source list renders sources', () => {
+  test("source list renders sources", () => {
     render(
       <MobileSourceList
         sources={[
-          { title: '人工智能导论 第一章', excerpt: '机器学习基础', href: '/source/1' },
+          {
+            title: "人工智能导论 第一章",
+            excerpt: "机器学习基础",
+            href: "/source/1",
+          },
         ]}
       />,
     );
 
-    expect(screen.getByText('人工智能导论 第一章')).toBeInTheDocument();
-    expect(screen.getByText('机器学习基础')).toBeInTheDocument();
+    expect(screen.getByText("人工智能导论 第一章")).toBeInTheDocument();
+    expect(screen.getByText("机器学习基础")).toBeInTheDocument();
   });
 
-  test('agent progress renders stages', () => {
+  test("agent progress renders stages", () => {
     render(
       <MobileAgentProgress
         stages={[
-          { id: 'profile', label: '画像分析', status: 'done' },
-          { id: 'generate', label: '资源生成', status: 'active' },
+          { id: "profile", label: "画像分析", status: "done" },
+          { id: "generate", label: "资源生成", status: "active" },
         ]}
       />,
     );
 
-    expect(screen.getByText('画像分析')).toBeInTheDocument();
-    expect(screen.getByText('资源生成')).toBeInTheDocument();
+    expect(screen.getByText("画像分析")).toBeInTheDocument();
+    expect(screen.getByText("资源生成")).toBeInTheDocument();
   });
 });
 ```
@@ -708,7 +760,7 @@ export interface MobileSource {
   href?: string;
 }
 
-export type MobileAgentStageStatus = 'pending' | 'active' | 'done' | 'error';
+export type MobileAgentStageStatus = "pending" | "active" | "done" | "error";
 
 export interface MobileAgentStage {
   id: string;
@@ -748,36 +800,36 @@ Expected: PASS, or report existing unrelated failures with exact messages.
 - [ ] Step 1: Write failing test in `tests/mobile/sky-app-shell.test.tsx`.
 
 ```tsx
-import { render, screen } from '@testing-library/react';
-import { describe, expect, test, vi } from 'vitest';
-import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { render, screen } from "@testing-library/react";
+import { describe, expect, test, vi } from "vitest";
+import { SkyAppShell } from "@/components/sky/layout/app-shell";
 
-vi.mock('@/components/auth/auth-provider', () => ({
+vi.mock("@/components/auth/auth-provider", () => ({
   useAuth: () => ({ user: null, refresh: vi.fn() }),
 }));
 
-vi.mock('@/lib/hooks/use-study-timer', () => ({
+vi.mock("@/lib/hooks/use-study-timer", () => ({
   useStudyTimer: vi.fn(),
 }));
 
-vi.mock('@/lib/hooks/use-theme', () => ({
-  useTheme: () => ({ resolvedTheme: 'light', isMounted: false }),
+vi.mock("@/lib/hooks/use-theme", () => ({
+  useTheme: () => ({ resolvedTheme: "light", isMounted: false }),
 }));
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/sky',
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/sky",
 }));
 
-describe('SkyAppShell mobile integration', () => {
-  test('renders desktop and mobile shell containers without duplicating business children visibly', () => {
+describe("SkyAppShell mobile integration", () => {
+  test("renders desktop and mobile shell containers without duplicating business children visibly", () => {
     render(
       <SkyAppShell>
         <div>页面正文</div>
       </SkyAppShell>,
     );
 
-    expect(screen.getAllByText('页面正文')).toHaveLength(2);
-    expect(screen.getByLabelText('移动端主导航')).toBeInTheDocument();
+    expect(screen.getAllByText("页面正文")).toHaveLength(2);
+    expect(screen.getByLabelText("移动端主导航")).toBeInTheDocument();
   });
 });
 ```
@@ -864,50 +916,54 @@ Expected:
 - [ ] Step 1: Write failing test for mobile account navigation.
 
 ```tsx
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, expect, test, vi } from 'vitest';
-import AccountPage from '@/app/account/page';
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, test, vi } from "vitest";
+import AccountPage from "@/app/account/page";
 
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-vi.mock('@/components/auth/auth-provider', () => ({
+vi.mock("@/components/auth/auth-provider", () => ({
   useAuth: () => ({
     isLoading: false,
-    user: { id: 'u1', username: 'tester', planType: 'free' },
+    user: { id: "u1", username: "tester", planType: "free" },
   }),
 }));
 
-vi.mock('@/components/account/profile-form', () => ({
+vi.mock("@/components/account/profile-form", () => ({
   ProfileForm: () => <div>个人资料表单</div>,
 }));
-vi.mock('@/components/account/personalization-form', () => ({
+vi.mock("@/components/account/personalization-form", () => ({
   PersonalizationForm: () => <div>个性化表单</div>,
 }));
-vi.mock('@/components/account/account-info', () => ({
+vi.mock("@/components/account/account-info", () => ({
   AccountInfo: () => <div>账户信息</div>,
 }));
-vi.mock('@/components/account/security-form', () => ({
+vi.mock("@/components/account/security-form", () => ({
   SecurityForm: () => <div>安全设置</div>,
 }));
-vi.mock('@/components/account/plan-billing-section', () => ({
+vi.mock("@/components/account/plan-billing-section", () => ({
   PlanBillingSection: () => <div>套餐信息</div>,
 }));
-vi.mock('@/components/account/sidebar-nav', () => ({
-  SidebarNav: ({ active, onChange }: { active: string; onChange: (value: string) => void }) => (
-    <button onClick={() => onChange('security')}>切换安全</button>
-  ),
+vi.mock("@/components/account/sidebar-nav", () => ({
+  SidebarNav: ({
+    active,
+    onChange,
+  }: {
+    active: string;
+    onChange: (value: string) => void;
+  }) => <button onClick={() => onChange("security")}>切换安全</button>,
 }));
 
-describe('mobile account page', () => {
-  test('renders account content and can switch sections', async () => {
+describe("mobile account page", () => {
+  test("renders account content and can switch sections", async () => {
     render(<AccountPage />);
 
-    expect(screen.getByText('个人资料表单')).toBeInTheDocument();
-    await userEvent.click(screen.getByText('切换安全'));
-    expect(screen.getByText('安全设置')).toBeInTheDocument();
+    expect(screen.getByText("个人资料表单")).toBeInTheDocument();
+    await userEvent.click(screen.getByText("切换安全"));
+    expect(screen.getByText("安全设置")).toBeInTheDocument();
   });
 });
 ```
@@ -962,14 +1018,14 @@ Expected: PASS.
 - [ ] Step 1: Write failing or confirming manifest test.
 
 ```ts
-import fs from 'node:fs';
-import path from 'node:path';
-import { describe, expect, test } from 'vitest';
+import fs from "node:fs";
+import path from "node:path";
+import { describe, expect, test } from "vitest";
 
-describe('mobile PWA manifest', () => {
-  test('public manifest contains installable mobile basics', () => {
-    const manifestPath = path.join(process.cwd(), 'public', 'manifest.json');
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+describe("mobile PWA manifest", () => {
+  test("public manifest contains installable mobile basics", () => {
+    const manifestPath = path.join(process.cwd(), "public", "manifest.json");
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
 
     expect(manifest.name).toBeTruthy();
     expect(manifest.short_name).toBeTruthy();
@@ -1036,7 +1092,7 @@ Expected: PASS.
 - [ ] Step 1: Create Playwright smoke test.
 
 ```ts
-import { expect, test } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
 const mobileViewports = [
   { width: 320, height: 568 },
@@ -1046,27 +1102,33 @@ const mobileViewports = [
 ];
 
 for (const viewport of mobileViewports) {
-  test(`mobile shell works at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+  test(`mobile shell works at ${viewport.width}x${viewport.height}`, async ({
+    page,
+  }) => {
     await page.setViewportSize(viewport);
-    await page.goto('/sky');
+    await page.goto("/sky");
 
-    await expect(page.getByRole('navigation', { name: '移动端主导航' })).toBeVisible();
-    await expect(page.getByRole('link', { name: /工坊/ })).toBeVisible();
-    await expect(page.getByRole('link', { name: /助手/ })).toBeVisible();
+    await expect(
+      page.getByRole("navigation", { name: "移动端主导航" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: /工坊/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /助手/ })).toBeVisible();
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    );
     expect(overflow).toBe(false);
   });
 }
 
-test('mobile login page accepts input', async ({ page }) => {
+test("mobile login page accepts input", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/auth/login');
+  await page.goto("/auth/login");
 
-  await page.getByLabel(/用户名/).fill('admin');
-  await page.getByLabel(/密码/).fill('123');
+  await page.getByLabel(/用户名/).fill("admin");
+  await page.getByLabel(/密码/).fill("123");
 
-  await expect(page.getByRole('button', { name: /登录/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /登录/ })).toBeVisible();
 });
 ```
 
@@ -1102,7 +1164,7 @@ Required sections:
 
 Example content:
 
-```md
+````md
 # Mobile Foundation
 
 Use these components for mobile Sky Classroom pages. They handle safe-area, spacing,
@@ -1115,6 +1177,7 @@ touch sizing, empty/error/loading states, and common competition presentation UI
   <MobileAgentProgress stages={stages} />
 </MobilePage>
 ```
+````
 
 ## Confidence
 
@@ -1125,9 +1188,12 @@ touch sizing, empty/error/loading states, and common competition presentation UI
 ## Sources
 
 ```tsx
-<MobileSourceList sources={[{ title: '人工智能导论 第一章', excerpt: '机器学习基础' }]} />
+<MobileSourceList
+  sources={[{ title: "人工智能导论 第一章", excerpt: "机器学习基础" }]}
+/>
 ```
-```
+
+````
 
 - [ ] Step 2: Ask Member B to review README before building business pages.
 
@@ -1143,7 +1209,7 @@ pnpm lint
 npx tsc --noEmit
 pnpm test
 pnpm test:e2e -- e2e/tests/mobile/smoke.spec.ts
-```
+````
 
 If any command fails because of existing main-branch issues:
 

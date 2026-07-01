@@ -17,8 +17,9 @@ for (const viewport of mobileViewports) {
     await expect(
       page.getByRole("navigation", { name: "移动端主导航" }),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: /工坊/ })).toBeVisible();
-    await expect(page.getByRole("link", { name: /助手/ })).toBeVisible();
+    const bottomNav = page.getByRole("navigation", { name: "移动端主导航" });
+    await expect(bottomNav.getByRole("link", { name: /工坊/ })).toBeVisible();
+    await expect(bottomNav.getByRole("link", { name: /助手/ })).toBeVisible();
 
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
@@ -34,5 +35,5 @@ test("mobile login page accepts input", async ({ page }) => {
   await page.getByLabel(/用户名/).fill("admin");
   await page.getByLabel(/密码/).fill("123");
 
-  await expect(page.getByRole("button", { name: /登录/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /登\s*录/ })).toBeVisible();
 });

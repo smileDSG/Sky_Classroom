@@ -6,13 +6,14 @@
  */
 
 export const MOBILE_SKY_ROUTES = {
-  home: '/sky',
-  cloudMind: '/sky/cloud-mind',
-  learning: '/sky/learning',
-  assistant: '/sky/assistant',
-  account: '/account',
-  studyLab: '/sky/study-lab',
-  settings: '/settings',
+  home: "/sky",
+  cloudMind: "/sky/cloud-mind",
+  learning: "/sky/learning",
+  assistant: "/sky/assistant",
+  account: "/account",
+  studyLab: "/sky/study-lab",
+  settings: "/settings",
 } as const;
 
-export type MobileSkyRoute = (typeof MOBILE_SKY_ROUTES)[keyof typeof MOBILE_SKY_ROUTES];
+export type MobileSkyRoute =
+  (typeof MOBILE_SKY_ROUTES)[keyof typeof MOBILE_SKY_ROUTES];
