@@ -10,6 +10,7 @@ import {
   BookOpenCheck,
   CalendarClock,
   CheckCircle2,
+  BrainCircuit,
   GraduationCap,
   Layers,
   Network,
@@ -579,6 +580,14 @@ export function WorkshopPage() {
                   画像
                 </button>
               </div>
+              <Link
+                href="/sky/study-lab"
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white/85 px-3 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-200/25 dark:bg-white/[0.06] dark:text-emerald-50 dark:shadow-none dark:hover:bg-white/[0.09]"
+              >
+                <BrainCircuit className="h-4 w-4" />
+                个性化学习工作台
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </aside>
           </div>
 
