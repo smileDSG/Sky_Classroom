@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export function useKeyboardInset() {
   const [keyboardInset, setKeyboardInset] = useState(0);
@@ -10,16 +10,19 @@ export function useKeyboardInset() {
     if (!visualViewport) return;
 
     const update = () => {
-      const inset = Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop);
+      const inset = Math.max(
+        0,
+        window.innerHeight - visualViewport.height - visualViewport.offsetTop,
+      );
       setKeyboardInset(Math.round(inset));
     };
 
     update();
-    visualViewport.addEventListener('resize', update);
-    visualViewport.addEventListener('scroll', update);
+    visualViewport.addEventListener("resize", update);
+    visualViewport.addEventListener("scroll", update);
     return () => {
-      visualViewport.removeEventListener('resize', update);
-      visualViewport.removeEventListener('scroll', update);
+      visualViewport.removeEventListener("resize", update);
+      visualViewport.removeEventListener("scroll", update);
     };
   }, []);
 

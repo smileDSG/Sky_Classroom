@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { MobileBottomNav } from './mobile-bottom-nav';
-import { MobileTopBar } from './mobile-top-bar';
+import { MobileBottomNav } from "./mobile-bottom-nav";
+import { MobileTopBar } from "./mobile-top-bar";
 
 interface MobileSkyShellProps {
   children: React.ReactNode;

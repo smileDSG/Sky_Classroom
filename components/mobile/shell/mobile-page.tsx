@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface MobilePageProps {
   title?: string;
@@ -16,7 +16,9 @@ export function MobilePage({
   contentClassName,
 }: MobilePageProps) {
   return (
-    <section className={cn('min-h-[calc(100dvh-4rem)] px-4 pb-24 pt-4', className)}>
+    <section
+      className={cn("min-h-[calc(100dvh-4rem)] px-4 pb-24 pt-4", className)}
+    >
       {(title || description) && (
         <div className="mb-4 space-y-1">
           {title && (
@@ -25,11 +27,13 @@ export function MobilePage({
             </h1>
           )}
           {description && (
-            <p className="text-sm leading-6 text-slate-600 dark:text-slate-400">{description}</p>
+            <p className="text-sm leading-6 text-slate-600 dark:text-slate-400">
+              {description}
+            </p>
           )}
         </div>
       )}
-      <div className={cn('space-y-4', contentClassName)}>{children}</div>
+      <div className={cn("space-y-4", contentClassName)}>{children}</div>
     </section>
   );
 }

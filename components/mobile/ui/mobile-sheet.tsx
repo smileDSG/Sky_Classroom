@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
-import { X } from 'lucide-react';
+import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 
 interface MobileSheetProps {
   open: boolean;
@@ -39,16 +39,16 @@ export function MobileSheet({
     if (!dialog) return;
 
     const handleClose = () => onOpenChange(false);
-    dialog.addEventListener('close', handleClose);
-    return () => dialog.removeEventListener('close', handleClose);
+    dialog.addEventListener("close", handleClose);
+    return () => dialog.removeEventListener("close", handleClose);
   }, [onOpenChange]);
 
   return (
     <dialog
       ref={dialogRef}
       className={cn(
-        'm-0 max-h-[85dvh] w-full max-w-none translate-y-full rounded-t-2xl bg-white p-0 shadow-2xl backdrop:bg-black/40 dark:bg-slate-950',
-        'open:translate-y-0 open:transition-transform open:duration-300 open:ease-out',
+        "m-0 max-h-[85dvh] w-full max-w-none translate-y-full rounded-t-2xl bg-white p-0 shadow-2xl backdrop:bg-black/40 dark:bg-slate-950",
+        "open:translate-y-0 open:transition-transform open:duration-300 open:ease-out",
         className,
       )}
       onClick={(e) => {
@@ -61,10 +61,14 @@ export function MobileSheet({
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
           <div className="min-w-0 flex-1">
             {title && (
-              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                {title}
+              </h2>
             )}
             {description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {description}
+              </p>
             )}
           </div>
           <button

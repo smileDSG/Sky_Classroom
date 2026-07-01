@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { MOBILE_NAV_ITEMS, isMobileNavActive } from '@/lib/mobile/navigation';
-import { cn } from '@/lib/utils';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { MOBILE_NAV_ITEMS, isMobileNavActive } from "@/lib/mobile/navigation";
+import { cn } from "@/lib/utils";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -21,12 +21,12 @@ export function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              aria-current={active ? 'page' : undefined}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                'flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[11px] font-medium transition-colors',
+                "flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[11px] font-medium transition-colors",
                 active
-                  ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300'
-                  : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900',
+                  ? "bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300"
+                  : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900",
               )}
             >
               <Icon className="size-4" />

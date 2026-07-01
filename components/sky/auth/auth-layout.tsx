@@ -1,23 +1,37 @@
-'use client';
+"use client";
 
-import { motion } from 'motion/react';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { motion } from "motion/react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 // ── Decorative elements ──────────────────────────────────────────
 
-function FloatingCloud({ delay = 0, duration = 25, y = 0, scale = 1, opacity = 0.4 }: {
-  delay?: number; duration?: number; y?: number; scale?: number; opacity?: number;
+function FloatingCloud({
+  delay = 0,
+  duration = 25,
+  y = 0,
+  scale = 1,
+  opacity = 0.4,
+}: {
+  delay?: number;
+  duration?: number;
+  y?: number;
+  scale?: number;
+  opacity?: number;
 }) {
   return (
     <motion.div
       className="absolute pointer-events-none"
-      initial={{ x: '-100%', y: `${y}%` }}
-      animate={{ x: 'calc(100vw + 100%)' }}
-      transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
+      initial={{ x: "-100%", y: `${y}%` }}
+      animate={{ x: "calc(100vw + 100%)" }}
+      transition={{ duration, delay, repeat: Infinity, ease: "linear" }}
       style={{ scale, opacity }}
     >
-      <svg viewBox="0 0 200 100" className="w-24 h-12 md:w-36 md:h-18 text-white/40 dark:text-white/15" fill="currentColor">
+      <svg
+        viewBox="0 0 200 100"
+        className="w-24 h-12 md:w-36 md:h-18 text-white/40 dark:text-white/15"
+        fill="currentColor"
+      >
         <ellipse cx="50" cy="60" rx="35" ry="25" />
         <ellipse cx="90" cy="45" rx="45" ry="35" />
         <ellipse cx="140" cy="55" rx="40" ry="28" />
@@ -26,15 +40,29 @@ function FloatingCloud({ delay = 0, duration = 25, y = 0, scale = 1, opacity = 0
   );
 }
 
-function TwinklingStar({ x, y, delay = 0, size = 2 }: {
-  x: string; y: string; delay?: number; size?: number;
+function TwinklingStar({
+  x,
+  y,
+  delay = 0,
+  size = 2,
+}: {
+  x: string;
+  y: string;
+  delay?: number;
+  size?: number;
 }) {
   return (
     <motion.div
       className="absolute rounded-full bg-white dark:bg-sky-200 pointer-events-none"
-      style={{ left: x, top: y, width: size, height: size, boxShadow: '0 0 6px 2px rgba(255,255,255,0.4)' }}
+      style={{
+        left: x,
+        top: y,
+        width: size,
+        height: size,
+        boxShadow: "0 0 6px 2px rgba(255,255,255,0.4)",
+      }}
       animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8] }}
-      transition={{ duration: 3, delay, repeat: Infinity, ease: 'easeInOut' }}
+      transition={{ duration: 3, delay, repeat: Infinity, ease: "easeInOut" }}
     />
   );
 }
@@ -48,9 +76,13 @@ interface AuthLayoutProps {
   maxWidth?: string;
 }
 
-export function AuthLayout({ children, className, maxWidth = 'max-w-md' }: AuthLayoutProps) {
+export function AuthLayout({
+  children,
+  className,
+  maxWidth = "max-w-md",
+}: AuthLayoutProps) {
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-x-hidden p-4 py-6 sm:py-10">
       {/* ── Sky gradient background ── */}
       <div className="fixed inset-0 bg-gradient-to-b from-sky-200 via-sky-100 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
 
@@ -67,9 +99,21 @@ export function AuthLayout({ children, className, maxWidth = 'max-w-md' }: AuthL
 
       {/* ── Floating clouds (light mode) ── */}
       <div className="fixed inset-0 dark:hidden pointer-events-none">
-        <FloatingCloud delay={0} duration={35} y={10} scale={0.7} opacity={0.35} />
+        <FloatingCloud
+          delay={0}
+          duration={35}
+          y={10}
+          scale={0.7}
+          opacity={0.35}
+        />
         <FloatingCloud delay={8} duration={45} y={30} scale={1} opacity={0.3} />
-        <FloatingCloud delay={18} duration={40} y={60} scale={0.5} opacity={0.25} />
+        <FloatingCloud
+          delay={18}
+          duration={40}
+          y={60}
+          scale={0.5}
+          opacity={0.25}
+        />
       </div>
 
       {/* ── Twinkling stars (dark mode) ── */}
@@ -92,12 +136,12 @@ export function AuthLayout({ children, className, maxWidth = 'max-w-md' }: AuthL
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          'relative w-full',
+          "relative w-full",
           maxWidth,
-          'rounded-2xl border border-white/40 dark:border-slate-700/40',
-          'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl',
-          'shadow-xl shadow-sky-200/30 dark:shadow-slate-950/50',
-          'p-6 sm:p-8',
+          "rounded-2xl border border-white/40 dark:border-slate-700/40",
+          "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl",
+          "shadow-xl shadow-sky-200/30 dark:shadow-slate-950/50",
+          "p-6 sm:p-8",
           className,
         )}
       >
