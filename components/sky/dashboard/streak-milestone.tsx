@@ -54,7 +54,7 @@ export function StreakMilestone() {
           </span>
         </div>
         <Link
-          href="/sky/learning?tab=stats"
+          href="/sky/learning/stats"
           className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
         >
           查看详情 →
@@ -63,9 +63,7 @@ export function StreakMilestone() {
 
       {/* Current streak display */}
       <div className="flex items-baseline gap-1.5 mb-4">
-        <span className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-          {streakDays}
-        </span>
+        <span className="text-3xl font-bold text-slate-800 dark:text-slate-100">{streakDays}</span>
         <span className="text-sm text-slate-500 dark:text-slate-400">天连续打卡</span>
         {nextMilestone && (
           <span className="ml-auto text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
@@ -90,22 +88,11 @@ export function StreakMilestone() {
           const achieved = streakDays >= m.days;
           const isCurrent = nextMilestone?.days === m.days;
           return (
-            <div
-              key={m.days}
-              className="flex flex-col items-center gap-1"
-            >
+            <div key={m.days} className="flex flex-col items-center gap-1">
               <motion.span
                 className={`text-lg ${achieved ? '' : 'grayscale opacity-40'}`}
-                animate={
-                  isCurrent
-                    ? { scale: [1, 1.2, 1] }
-                    : undefined
-                }
-                transition={
-                  isCurrent
-                    ? { duration: 2, repeat: Infinity }
-                    : undefined
-                }
+                animate={isCurrent ? { scale: [1, 1.2, 1] } : undefined}
+                transition={isCurrent ? { duration: 2, repeat: Infinity } : undefined}
               >
                 {m.icon}
               </motion.span>
