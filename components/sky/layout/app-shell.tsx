@@ -14,6 +14,7 @@ import { useStudyTimer } from '@/lib/hooks/use-study-timer';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { CheckCircle2, Sparkles } from 'lucide-react';
+import { MobileSkyShell } from '@/components/mobile/shell/mobile-sky-shell';
 
 interface SkyAppShellProps {
   children: React.ReactNode;
@@ -102,7 +103,7 @@ function Logo() {
   );
 }
 
-export function SkyAppShell({ children }: SkyAppShellProps) {
+function DesktopSkyShell({ children }: SkyAppShellProps) {
   const { user, refresh } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -222,5 +223,18 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
         onPlanChanged={refresh}
       />
     </div>
+  );
+}
+
+export function SkyAppShell({ children }: SkyAppShellProps) {
+  return (
+    <>
+      <div className="hidden md:block">
+        <DesktopSkyShell>{children}</DesktopSkyShell>
+      </div>
+      <div className="md:hidden">
+        <MobileSkyShell>{children}</MobileSkyShell>
+      </div>
+    </>
   );
 }
