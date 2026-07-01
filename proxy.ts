@@ -27,11 +27,16 @@ function isApiRoute(pathname: string): boolean {
   return pathname.startsWith('/api/');
 }
 
+function isPublicReadRequest(request: NextRequest): boolean {
+  const { pathname } = request.nextUrl;
+  return request.method === 'GET' && pathname === '/api/classroom';
+}
+
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip public routes and static assets
-  if (isPublicPath(pathname)) {
+  if (isPublicPath(pathname) || isPublicReadRequest(request)) {
     return NextResponse.next();
   }
 

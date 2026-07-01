@@ -29,6 +29,9 @@ import {
 import { parseJsonResponse } from '../json-repair';
 import { polishSlideElements } from './slide-polish';
 import { auditSlideLayout } from '@/lib/slides/agent/layout-guard-agent';
+import { DEFAULT_LANGUAGE_DIRECTIVE } from '@/lib/generation/outline-generator';
+import { auditGeneratedSlideContent } from './classroom-slide-qa';
+import { buildSlideStyleContract } from './slide-style-contract';
 
 const log = createLogger('Generation');
 
@@ -287,12 +290,65 @@ function getBlockingLayoutIssueDetails(elements: PPTElement[]): string[] {
     );
 }
 
+function getRawDesignBlockingLayoutIssueDetails(
+  elements: GeneratedSlideData['elements'],
+): string[] {
+  const numericElements = elements.filter(
+    (element) =>
+      typeof element.left === 'number' &&
+      typeof element.top === 'number' &&
+      typeof element.width === 'number',
+  ) as unknown as PPTElement[];
+
+  return auditSlideLayout(numericElements)
+    .filter((issue) =>
+      ['readable_element_overlap', 'foreground_overlay_collision'].includes(issue.type),
+    )
+    .map((issue) =>
+      [
+        issue.type,
+        issue.textId ? `textId=${issue.textId}` : '',
+        issue.backgroundId ? `backgroundId=${issue.backgroundId}` : '',
+        issue.detail,
+      ]
+        .filter(Boolean)
+        .join(' | '),
+    );
+}
+
+function uniqueIssueDetails(issues: string[]): string[] {
+  return [...new Set(issues)];
+}
+
+function stripGeneratedHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<\/p>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getGeneratedChineseTitle(generatedData: GeneratedSlideData): string | undefined {
+  const title = generatedData.elements
+    .filter((element) => element.type === 'text')
+    .sort((a, b) => Number(a.top ?? 0) - Number(b.top ?? 0))
+    .map((element) =>
+      stripGeneratedHtml(String((element as Record<string, unknown>).content ?? '')),
+    )
+    .find((text) => /[\u4e00-\u9fff]/.test(text));
+
+  return title || undefined;
+}
+
 function finalizeSlideElements(
   generatedData: GeneratedSlideData,
   outline: SceneOutline,
   assignedImages: PdfImage[] | undefined,
   imageMapping: ImageMapping | undefined,
   generatedMediaMapping: ImageMapping | undefined,
+  options: { polish?: boolean } = {},
 ): PPTElement[] {
   const fixedElements = fixElementDefaults(generatedData.elements, assignedImages);
   const latexProcessedElements = processLatexElements(fixedElements);
@@ -312,8 +368,10 @@ function finalizeSlideElements(
     rotate: 0,
   })) as PPTElement[];
 
+  if (options.polish === false) return processedElements;
+
   return polishSlideElements(processedElements, {
-    title: outline.title,
+    title: getGeneratedChineseTitle(generatedData) ?? outline.title,
     keyPoints: outline.keyPoints,
     order: outline.order,
     decorate: false,
@@ -328,7 +386,7 @@ export async function generateSlideContent(
   visionEnabled?: boolean,
   generatedMediaMapping?: ImageMapping,
   agents?: AgentInfo[],
-  languageDirective?: string,
+  _languageDirective?: string,
   _themeSelection?: ClassroomThemeSelection,
 ): Promise<GeneratedSlideContent | null> {
   let assignedImagesText = 'No images available. Do not insert any image elements.';
@@ -395,16 +453,19 @@ export async function generateSlideContent(
   const canvasWidth = 1000;
   const canvasHeight = 562.5;
   const teacherContext = formatTeacherPersonaForPrompt(agents);
+  const effectiveLanguageDirective = DEFAULT_LANGUAGE_DIRECTIVE;
   const prompts = buildPrompt(PROMPT_IDS.SLIDE_CONTENT, {
     title: outline.title,
+    order: outline.order,
     description: outline.description,
     keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
+    layoutContract: buildSlideStyleContract(outline),
     elements: '(Generate from the key points)',
     assignedImages: assignedImagesText,
     canvas_width: canvasWidth,
     canvas_height: canvasHeight,
     teacherContext,
-    languageDirective: languageDirective || '',
+    languageDirective: effectiveLanguageDirective,
     imageElementEnabled,
     generatedImageEnabled,
     generatedVideoEnabled,
@@ -444,6 +505,7 @@ Your previous response did not match the OpenMAIC slide schema. Return the slide
 }
 
 Hard rules:
+- All visible slide text must follow this language directive: ${effectiveLanguageDirective}
 - Do NOT return plan fields such as "layout", "bullets", "visual", or "takeaway" unless they are inside a rendered element's text.
 - Every visible item must be an element in the "elements" array with left/top/width/height.
 - Use separate "latex" elements for formulas.
@@ -465,7 +527,10 @@ Hard rules:
     imageMapping,
     generatedMediaMapping,
   );
-  let blockingIssues = getBlockingLayoutIssueDetails(polishedElements);
+  let blockingIssues = uniqueIssueDetails([
+    ...getRawDesignBlockingLayoutIssueDetails(generatedData.elements),
+    ...getBlockingLayoutIssueDetails(polishedElements),
+  ]);
 
   if (blockingIssues.length > 0) {
     log.warn(
@@ -484,6 +549,7 @@ Previous slide JSON:
 ${JSON.stringify(generatedData).slice(0, 12000)}
 
 Hard layout rules for the retry:
+- All visible slide text must follow this language directive: ${effectiveLanguageDirective}
 - If you create 2-4 card backgrounds in a row, each card's icon/title/body/formula must be inside that same card's left/top/width/height.
 - Do not reuse the same left/top coordinates for different card labels.
 - Keep formulas in a latex element with enough height; simple formulas need at least 64px height.
@@ -503,7 +569,10 @@ Hard layout rules for the retry:
         imageMapping,
         generatedMediaMapping,
       );
-      const retryIssues = getBlockingLayoutIssueDetails(retryElements);
+      const retryIssues = uniqueIssueDetails([
+        ...getRawDesignBlockingLayoutIssueDetails(retryData.elements),
+        ...getBlockingLayoutIssueDetails(retryElements),
+      ]);
       if (retryIssues.length <= blockingIssues.length) {
         generatedData = retryData;
         polishedElements = retryElements;
@@ -514,9 +583,77 @@ Hard layout rules for the retry:
     }
   }
 
-  return {
+  let slideContent: GeneratedSlideContent = {
     elements: polishedElements,
     background: toSlideBackground(generatedData.background),
     remark: generatedData.remark || outline.description,
+  };
+  let slideQa = auditGeneratedSlideContent(slideContent);
+
+  if (!slideQa.pass) {
+    const blockingQaIssues = slideQa.issues.filter((issue) => issue.severity === 'blocking');
+    log.warn(
+      `OpenMAIC slide QA found ${blockingQaIssues.length} blocking content issue(s) for "${outline.title}"; retrying content design.`,
+    );
+    const retryPrompt = `${prompts.user}
+
+## OPENMAIC QA CONTENT RETRY
+
+Your previous slide JSON failed the classroom quality gate. Regenerate the full slide as pure JSON.
+
+Blocking issues:
+${blockingQaIssues
+  .map((issue, index) => {
+    const element = issue.elementId ? ` element=${issue.elementId}` : '';
+    return `${index + 1}. ${issue.type}${element}: ${issue.detail}`;
+  })
+  .join('\n')}
+
+Previous slide JSON:
+${JSON.stringify(generatedData).slice(0, 12000)}
+
+Hard content rules for the retry:
+- All visible slide text must be Simplified Chinese. Keep English technical tokens only inside Chinese explanations.
+- Replace generic labels such as "要点一", "要点二", "Step 1", or "Advanced Features" with concrete Chinese teaching headings.
+- Do not make a thin page. Excluding the title/subtitle, provide at least 4 concrete teaching units.
+- If the topic is programming or Redis, use a command sequence, scenario explanation, caution point, and summary.
+- Include a semantic visual anchor when content is short: table, flow, command diagram, formula, or code block.
+- Keep all readable content inside the safe area: left >= 48, right <= 952, top >= 48, bottom <= 514.5.
+- Return the same top-level schema: { "background": ..., "elements": [...], "remark": "..." }.
+- Return pure JSON only.`;
+
+    const retryResponse = await aiCall(prompts.system, retryPrompt, visionImages);
+    const retryData = parseJsonResponse<GeneratedSlideData>(retryResponse);
+
+    if (retryData?.elements && Array.isArray(retryData.elements)) {
+      const retryElements = finalizeSlideElements(
+        retryData,
+        outline,
+        assignedImages,
+        imageMapping,
+        generatedMediaMapping,
+        { polish: false },
+      );
+      const retrySlideContent: GeneratedSlideContent = {
+        elements: retryElements,
+        background: toSlideBackground(retryData.background),
+        remark: retryData.remark || outline.description,
+      };
+      const retryQa = auditGeneratedSlideContent(retrySlideContent);
+      if (retryQa.blockingIssueCount <= slideQa.blockingIssueCount) {
+        generatedData = retryData;
+        slideContent = retrySlideContent;
+        slideQa = retryQa;
+      }
+    } else {
+      log.warn(
+        `OpenMAIC slide content QA retry for "${outline.title}" did not return valid elements.`,
+      );
+    }
+  }
+
+  return {
+    ...slideContent,
+    qa: slideQa,
   };
 }

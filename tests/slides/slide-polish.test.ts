@@ -177,7 +177,7 @@ describe('slide polish', () => {
     const enriched = enrichSlideElements(
       [
         {
-          id: 'title',
+          id: 'text_title',
           type: 'text',
           left: 105,
           top: 78,
@@ -1587,6 +1587,439 @@ describe('slide polish', () => {
     });
 
     expect(new Set(variants)).toHaveProperty('size', 5);
+  });
+
+  it('adds page-order visual signatures across canonical text pages', () => {
+    const makeElements = (title: string) => [
+      {
+        id: 'text_title',
+        type: 'text',
+        left: 60,
+        top: 48,
+        width: 880,
+        height: 68,
+        content: `<p style="font-size:32px;"><strong>${title}</strong></p>`,
+      },
+      {
+        id: 'text_subtitle',
+        type: 'text',
+        left: 60,
+        top: 124,
+        width: 880,
+        height: 56,
+        content: '<p style="font-size:20px;">Concept, method, example, and classroom check</p>',
+      },
+      {
+        id: 'text_a_heading',
+        type: 'text',
+        left: 70,
+        top: 216,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>Entry</strong></p>',
+      },
+      {
+        id: 'text_a_body',
+        type: 'text',
+        left: 70,
+        top: 258,
+        width: 760,
+        height: 58,
+        content: '<p style="font-size:18px;">Clarify the problem for this page.</p>',
+      },
+      {
+        id: 'text_b_heading',
+        type: 'text',
+        left: 70,
+        top: 326,
+        width: 760,
+        height: 42,
+        content: '<p style="font-size:20px;"><strong>Method</strong></p>',
+      },
+      {
+        id: 'text_b_body',
+        type: 'text',
+        left: 70,
+        top: 368,
+        width: 760,
+        height: 58,
+        content: '<p style="font-size:18px;">Connect the input and output with stable steps.</p>',
+      },
+    ];
+
+    const visualSignatures = [1, 2, 3, 4, 5, 6].map((order) => {
+      const polished = polishSlideElements(makeElements(`Text page ${order}`), {
+        title: `Text page ${order}`,
+        keyPoints: ['Entry', 'Method', 'Check'],
+        order,
+        decorate: false,
+      });
+      const visualId = polished.find((element) => element.id?.includes('_visual_'))?.id;
+
+      expect(visualId).toBeTruthy();
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return visualId?.replace(/^.*?_visual_/, 'visual_');
+    });
+
+    expect(new Set(visualSignatures)).toHaveProperty('size', 6);
+  });
+
+  it('keeps canonical focus-list content specific instead of truncating it into generic points', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>核心概念：文档、集合与数据库</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">MongoDB 的逻辑结构</p>',
+        },
+        {
+          id: 'text_a',
+          type: 'text',
+          left: 70,
+          top: 216,
+          width: 760,
+          height: 48,
+          content: '<p style="font-size:18px;">集合 (Collection)：相当于关系数据库中的表</p>',
+        },
+        {
+          id: 'text_b',
+          type: 'text',
+          left: 70,
+          top: 286,
+          width: 760,
+          height: 48,
+          content: '<p style="font-size:18px;">数据库 (Database)：多个集合的逻辑容器</p>',
+        },
+        {
+          id: 'text_c',
+          type: 'text',
+          left: 70,
+          top: 356,
+          width: 760,
+          height: 48,
+          content: '<p style="font-size:18px;">示例：一个 users 集合保存用户文档</p>',
+        },
+        {
+          id: 'text_d',
+          type: 'text',
+          left: 70,
+          top: 426,
+          width: 760,
+          height: 48,
+          content: '<p style="font-size:18px;">文档 (Document)：基本数据单元，类似 JSON 对象</p>',
+        },
+      ],
+      {
+        title: '核心概念：文档、集合与数据库',
+        keyPoints: ['集合 (Collection)', '数据库 (Database)', '示例：users 集合'],
+        order: 5,
+        decorate: false,
+      },
+    );
+
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+
+    expect(combinedText).toContain('Collection');
+    expect(combinedText).toContain('Database');
+    expect(combinedText).toContain('users');
+    expect(combinedText).not.toContain('数据库 (Databas</p>');
+    expect(combinedText).not.toContain('集合 (Collecti</p>');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('replaces generic focus body labels with concrete canonical content', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content:
+            '<p style="font-size:32px;"><strong>项目挑战：构建一个简单的博客系统</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">使用 MongoDB 存储数据 · 后端逻辑设计</p>',
+        },
+        {
+          id: 'text_focus_title',
+          type: 'text',
+          left: 70,
+          top: 216,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:20px;"><strong>\'posts\' 集合设计</strong></p>',
+        },
+        {
+          id: 'text_focus_body',
+          type: 'text',
+          left: 70,
+          top: 258,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:18px;">核心功能</p>',
+        },
+        {
+          id: 'text_a',
+          type: 'text',
+          left: 70,
+          top: 326,
+          width: 760,
+          height: 42,
+          content:
+            '<p style="font-size:18px;">标题、内容、作者、创建时间：按作者查询与聚合统计</p>',
+        },
+        {
+          id: 'text_b',
+          type: 'text',
+          left: 70,
+          top: 386,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:18px;">聚合管道 & 索引策略：聚合管道统计每个作者</p>',
+        },
+      ],
+      {
+        title: '项目挑战：构建一个简单的博客系统',
+        keyPoints: ['posts 集合字段设计', '按作者查询', '聚合统计与索引策略'],
+        order: 5,
+        decorate: false,
+      },
+    );
+
+    const focusBody = polished.find((element) =>
+      element.id?.startsWith('polish_ref_canonical_v4_focus_body'),
+    ) as { content?: string } | undefined;
+
+    expect(focusBody?.content).not.toContain('核心功能');
+    expect(focusBody?.content).toMatch(/posts|作者|聚合|索引/);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('expands a lone comparison table to use the main slide area', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 82,
+          top: 52,
+          width: 760,
+          height: 58,
+          content: '<p style="font-size:32px;"><strong>SQL 与 NoSQL 对比</strong></p>',
+        },
+        {
+          id: 'rule',
+          type: 'shape',
+          left: 82,
+          top: 138,
+          width: 760,
+          height: 3,
+          fill: '#2f80d1',
+        },
+        {
+          id: 'comparison-table',
+          type: 'table',
+          left: 92,
+          top: 176,
+          width: 390,
+          height: 250,
+          outline: { color: '#cccccc', width: 1 },
+          colWidths: [0.33, 0.33, 0.34],
+          cellMinHeight: 56,
+          data: [
+            [{ text: '维度' }, { text: 'SQL 数据库' }, { text: 'NoSQL (MongoDB)' }],
+            [{ text: '数据模型' }, { text: '行 / 表' }, { text: '文档 / 集合' }],
+            [{ text: '扩展方式' }, { text: '垂直扩展' }, { text: '水平扩展' }],
+            [{ text: '数据结构' }, { text: '严格 Schema' }, { text: '灵活 BSON' }],
+          ],
+        },
+      ],
+      { title: 'SQL 与 NoSQL 对比', decorate: false },
+    );
+
+    const table = polished.find((element) => element.id === 'comparison-table')!;
+
+    expect(table.left).toBeLessThanOrEqual(92);
+    expect(table.width).toBeGreaterThanOrEqual(760);
+    expect(Number(table.height)).toBeGreaterThanOrEqual(286);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('uses a wide data table and preserves bottom derivation text on formula table pages', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content:
+            '<p style="font-size:32px;"><strong>诱导公式系列（一）：关于原点对称 (π+α)</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content:
+            '<p style="font-size:20px;">利用单位圆上两点关于原点对称的性质（点 P vs 点 P\'）</p>',
+        },
+        {
+          id: 'table_formula',
+          type: 'table',
+          left: 100,
+          top: 245,
+          width: 610,
+          height: 176,
+          outline: { color: '#cccccc', width: 1 },
+          colWidths: [0.33, 0.33, 0.34],
+          cellMinHeight: 76,
+          data: [
+            [{ text: 'sin(π+α)' }, { text: 'cos(π+α)' }, { text: 'tan(π+α)' }],
+            [{ text: '- sin α' }, { text: '- cos α' }, { text: 'tan α' }],
+          ],
+        },
+        {
+          id: 'text_note_a',
+          type: 'text',
+          left: 112,
+          top: 448,
+          width: 360,
+          height: 48,
+          content: '<p style="font-size:18px;"><strong>公式推导：</strong> sin(π+α) = -sin α</p>',
+        },
+        {
+          id: 'text_note_b',
+          type: 'text',
+          left: 548,
+          top: 448,
+          width: 360,
+          height: 48,
+          content:
+            '<p style="font-size:18px;"><strong>cos(π+α) = -cos α：</strong>推导 tan(π+α) = (-sin α) / (-cos α)</p>',
+        },
+      ],
+      {
+        title: '诱导公式系列（一）：关于原点对称 (π+α)',
+        keyPoints: ['sin(π+α) = -sin α', 'cos(π+α) = -cos α', 'tan(π+α) = tan α'],
+        order: 3,
+        decorate: false,
+      },
+    );
+
+    const table = polished.find(
+      (element) => element.id === 'polish_ref_canonical_data_v2_data_top',
+    );
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+
+    expect(table?.width).toBeGreaterThanOrEqual(820);
+    expect(Number(table?.height ?? 0)).toBeGreaterThanOrEqual(210);
+    expect(combinedText).toContain('cos(π+α) = -cos α');
+    expect(combinedText).toContain('tan(π+α)');
+    expect(combinedText).not.toContain('= -co</p>');
+    expect(combinedText).not.toContain('/ (-c</p>');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('treats English colon-prefixed setup steps as a step layout instead of generic perspective cards', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>Installing PostgreSQL</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">Step-by-step setup guide</p>',
+        },
+        {
+          id: 'text_step_1',
+          type: 'text',
+          left: 70,
+          top: 216,
+          width: 760,
+          height: 58,
+          content:
+            '<p style="font-size:18px;">Step 1: Download the installer from the official website</p>',
+        },
+        {
+          id: 'text_step_2',
+          type: 'text',
+          left: 70,
+          top: 296,
+          width: 760,
+          height: 58,
+          content: '<p style="font-size:18px;">Step 2: Follow the installation wizard</p>',
+        },
+        {
+          id: 'text_step_3',
+          type: 'text',
+          left: 70,
+          top: 376,
+          width: 760,
+          height: 58,
+          content: '<p style="font-size:18px;">Step 3: Set a password for the postgres user</p>',
+        },
+      ],
+      {
+        title: 'Installing PostgreSQL',
+        keyPoints: [
+          'Step 1: Download the installer',
+          'Step 2: Follow the installation wizard',
+          'Step 3: Set a password',
+        ],
+        order: 3,
+        decorate: false,
+      },
+    );
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_canonical_steps_'))).toBe(
+      true,
+    );
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_canonical_v2_'))).toBe(
+      false,
+    );
+    expect(auditSlideLayout(polished)).toEqual([]);
   });
 
   it('rewrites generic step-heavy generated pages into a canonical steps layout', () => {
@@ -3093,5 +3526,1157 @@ describe('slide polish', () => {
     expect(labelC.left).toBeGreaterThanOrEqual(660);
     expect(caption.top + Number(caption.height ?? 0)).toBeLessThanOrEqual(stepA.top);
     expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('quality gate rebuilds pages that only contain generic template labels', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 56,
+          width: 860,
+          height: 64,
+          content: '<p style="font-size:34px;"><strong>Function download workflow</strong></p>',
+        },
+        {
+          id: 'shape_card_a',
+          type: 'shape',
+          left: 80,
+          top: 180,
+          width: 250,
+          height: 210,
+          fill: '#f3f7ff',
+        },
+        {
+          id: 'text_perspective_a',
+          type: 'text',
+          left: 104,
+          top: 210,
+          width: 190,
+          height: 34,
+          content: '<p style="font-size:18px;">Perspective A</p>',
+        },
+        {
+          id: 'shape_card_b',
+          type: 'shape',
+          left: 374,
+          top: 180,
+          width: 250,
+          height: 210,
+          fill: '#f3f7ff',
+        },
+        {
+          id: 'text_core',
+          type: 'text',
+          left: 398,
+          top: 210,
+          width: 190,
+          height: 34,
+          content: '<p style="font-size:18px;">Core Feature</p>',
+        },
+        {
+          id: 'shape_card_c',
+          type: 'shape',
+          left: 668,
+          top: 180,
+          width: 250,
+          height: 210,
+          fill: '#f3f7ff',
+        },
+        {
+          id: 'text_step',
+          type: 'text',
+          left: 692,
+          top: 210,
+          width: 190,
+          height: 34,
+          content: '<p style="font-size:18px;">Step 1</p>',
+        },
+      ],
+      {
+        title: 'Download workflow',
+        keyPoints: [
+          'Choose the target resource and verify its source.',
+          'Start the download and watch the progress state.',
+          'Open the saved file after the task finishes.',
+        ],
+        order: 2,
+        decorate: false,
+      },
+    );
+
+    const plain = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+
+    expect(plain).not.toMatch(/Perspective A|Core Feature|Step 1/);
+    expect(plain).toMatch(/target resource|download|saved file/i);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('quality gate expands table-first pages instead of leaving a tiny table in a corner', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 62,
+          top: 54,
+          width: 860,
+          height: 66,
+          content: '<p style="font-size:34px;"><strong>Parameter comparison table</strong></p>',
+        },
+        {
+          id: 'text_caption',
+          type: 'text',
+          left: 620,
+          top: 260,
+          width: 230,
+          height: 32,
+          content: '<p style="font-size:18px;">Comparison table</p>',
+        },
+        {
+          id: 'table_data',
+          type: 'table',
+          left: 620,
+          top: 298,
+          width: 230,
+          height: 96,
+          data: [
+            ['a', 'effect'],
+            ['positive', 'opens up'],
+            ['negative', 'opens down'],
+          ],
+        },
+        {
+          id: 'text_body',
+          type: 'text',
+          left: 86,
+          top: 210,
+          width: 360,
+          height: 96,
+          content:
+            '<p style="font-size:19px;">Use the table to compare how parameters change the graph.</p>',
+        },
+      ],
+      {
+        title: 'Parameter comparison table',
+        keyPoints: ['Compare parameter signs.', 'Read graph changes from the table.'],
+        order: 3,
+        decorate: false,
+      },
+    );
+
+    const table = polished.find((element) => element.type === 'table')!;
+
+    expect(table.width).toBeGreaterThanOrEqual(488);
+    expect(Number(table.height ?? 0)).toBeGreaterThanOrEqual(218);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('quality gate does not return overlapping readable text blocks', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title',
+          type: 'text',
+          left: 60,
+          top: 56,
+          width: 860,
+          height: 64,
+          content: '<p style="font-size:34px;"><strong>Derivative rules</strong></p>',
+        },
+        {
+          id: 'text_a',
+          type: 'text',
+          left: 120,
+          top: 220,
+          width: 520,
+          height: 130,
+          content:
+            '<p style="font-size:19px;">Power rule: reduce the exponent by one and multiply by the original exponent.</p>',
+        },
+        {
+          id: 'text_b',
+          type: 'text',
+          left: 150,
+          top: 250,
+          width: 520,
+          height: 130,
+          content:
+            '<p style="font-size:19px;">Chain rule: keep the outside derivative and multiply by the inside derivative.</p>',
+        },
+        {
+          id: 'text_c',
+          type: 'text',
+          left: 180,
+          top: 280,
+          width: 520,
+          height: 130,
+          content:
+            '<p style="font-size:19px;">Product rule: differentiate each factor once and add the two products.</p>',
+        },
+      ],
+      {
+        title: 'Derivative rules',
+        keyPoints: ['Power rule', 'Chain rule', 'Product rule'],
+        order: 4,
+        decorate: false,
+      },
+    );
+
+    expect(auditSlideLayout(polished)).toEqual([]);
+    const readable = polished.filter((element) => element.type === 'text');
+    for (let i = 0; i < readable.length; i += 1) {
+      for (let j = i + 1; j < readable.length; j += 1) {
+        expect(overlaps(readable[i], readable[j])).toBe(false);
+      }
+    }
+  });
+
+  it('keeps Java primitive type cards aligned and keeps bottom text inside safe boxes', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>Java 基础语法：变量与数据类型</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">Java 是强类型语言，变量必须先声明后使用</p>',
+        },
+        {
+          id: 'text_overview',
+          type: 'text',
+          left: 80,
+          top: 220,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:18px;"><strong>基本数据类型（8种）</strong></p>',
+        },
+        {
+          id: 'text_int_heading',
+          type: 'text',
+          left: 80,
+          top: 274,
+          width: 760,
+          height: 38,
+          content: '<p style="font-size:18px;">整数型</p>',
+        },
+        {
+          id: 'text_int_body',
+          type: 'text',
+          left: 80,
+          top: 326,
+          width: 760,
+          height: 38,
+          content: '<p style="font-size:18px;">byte, short, int, long</p>',
+        },
+        {
+          id: 'text_float_heading',
+          type: 'text',
+          left: 80,
+          top: 378,
+          width: 760,
+          height: 38,
+          content: '<p style="font-size:18px;">浮点型</p>',
+        },
+        {
+          id: 'text_float_body',
+          type: 'text',
+          left: 80,
+          top: 430,
+          width: 760,
+          height: 38,
+          content: '<p style="font-size:18px;">float, double</p>',
+        },
+        {
+          id: 'text_rest',
+          type: 'text',
+          left: 80,
+          top: 482,
+          width: 760,
+          height: 38,
+          content: '<p style="font-size:18px;">char, boolean 也属于基本类型</p>',
+        },
+      ],
+      {
+        title: 'Java 基础语法：变量与数据类型',
+        keyPoints: ['整数型：byte, short, int, long', '浮点型：float, double', '字符与布尔类型'],
+        order: 2,
+        decorate: false,
+      },
+    );
+
+    const cardTitles = polished.filter((element) =>
+      element.id?.startsWith('polish_ref_canonical_v1_card_title_'),
+    );
+    const thirdBody = polished.find(
+      (element) => element.id === 'polish_ref_canonical_v1_card_body_2',
+    )!;
+    const thirdCard = polished.find((element) => element.id === 'polish_ref_canonical_v1_card_2')!;
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+
+    expect(cardTitles).toHaveLength(3);
+    expect(
+      new Set(
+        cardTitles.map(
+          (element) =>
+            String((element as Record<string, unknown>).content ?? '').match(
+              /font-size:(\d+)px/,
+            )?.[1],
+        ),
+      ),
+    ).toEqual(new Set(['22']));
+    expect(combinedText).toContain('整数型');
+    expect(combinedText).toContain('byte, short, int, long');
+    expect(combinedText).toContain('浮点型');
+    expect(combinedText).toContain('float, double');
+    expect(combinedText).not.toContain('要点 2');
+    expect(thirdBody.top + Number(thirdBody.height ?? 0)).toBeLessThanOrEqual(
+      thirdCard.top + Number(thirdCard.height ?? 0),
+    );
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('does not truncate do-while into a broken token on loop slides', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>控制流程：循环</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">for 循环</p>',
+        },
+        {
+          id: 'text_for_title',
+          type: 'text',
+          left: 80,
+          top: 220,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:18px;"><strong>要点一</strong></p>',
+        },
+        {
+          id: 'text_for_body',
+          type: 'text',
+          left: 80,
+          top: 274,
+          width: 760,
+          height: 58,
+          content: '<p style="font-size:18px;">for (初始化; 条件; 迭代) { // 循环体 }</p>',
+        },
+        {
+          id: 'text_order_title',
+          type: 'text',
+          left: 80,
+          top: 346,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:18px;"><strong>要点二</strong></p>',
+        },
+        {
+          id: 'text_order_body',
+          type: 'text',
+          left: 80,
+          top: 398,
+          width: 760,
+          height: 58,
+          content: '<p style="font-size:18px;">初始化 → 条件判断 → 循环体 → 迭代 → 条件判断...</p>',
+        },
+        {
+          id: 'text_while',
+          type: 'text',
+          left: 80,
+          top: 466,
+          width: 760,
+          height: 42,
+          content:
+            '<p style="font-size:18px;">while 与 do-while：while 先判断，do-while 至少执行一次</p>',
+        },
+      ],
+      {
+        title: '控制流程：循环',
+        keyPoints: ['for 循环', 'while 与 do-while', '循环执行顺序'],
+        order: 3,
+        decorate: false,
+      },
+    );
+
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+
+    expect(combinedText).toContain('do-while');
+    expect(combinedText).not.toMatch(/do-whi(?!le)/i);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('expands text boxes that would be clipped by real browser rendering', () => {
+    const longBody =
+      'Java 的变量声明需要同时关注类型、变量名、初始值和作用域；如果这些信息没有放在同一张概念卡片中，学生很难建立稳定的语法结构。';
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>Java 变量声明</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">变量声明的核心组成</p>',
+        },
+        {
+          id: 'text_a_title',
+          type: 'text',
+          left: 80,
+          top: 220,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:18px;"><strong>变量类型</strong></p>',
+        },
+        {
+          id: 'text_a_body',
+          type: 'text',
+          left: 80,
+          top: 274,
+          width: 760,
+          height: 58,
+          content: `<p style="font-size:18px;">${longBody}</p>`,
+        },
+        {
+          id: 'text_b_title',
+          type: 'text',
+          left: 80,
+          top: 346,
+          width: 760,
+          height: 42,
+          content: '<p style="font-size:18px;"><strong>变量名</strong></p>',
+        },
+        {
+          id: 'text_b_body',
+          type: 'text',
+          left: 80,
+          top: 398,
+          width: 760,
+          height: 58,
+          content: '<p style="font-size:18px;">变量名用于在后续代码中访问这块数据。</p>',
+        },
+      ],
+      {
+        title: 'Java 变量声明',
+        keyPoints: ['变量类型', '变量名', '初始值与作用域'],
+        order: 2,
+        decorate: false,
+      },
+    );
+
+    const longBodyElement = polished.find(
+      (element) => element.id === 'polish_ref_canonical_v1_card_body_0',
+    )!;
+
+    expect(Number(longBodyElement.height ?? 0)).toBeGreaterThan(88);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('adds deterministic visual diagrams for sparse Redis data structure pages', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 72,
+          top: 62,
+          width: 840,
+          height: 70,
+          content:
+            '<p style="font-size:34px;"><strong>核心数据结构：它们是构建块的钥匙</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 72,
+          top: 150,
+          width: 840,
+          height: 42,
+          content: '<p style="font-size:22px;">五种最常用的 Redis 数据结构及典型应用场景</p>',
+        },
+        {
+          id: 'shape_card_0',
+          type: 'shape',
+          left: 82,
+          top: 232,
+          width: 256,
+          height: 198,
+          fill: '#f8fafc',
+        },
+        {
+          id: 'text_card_0',
+          type: 'text',
+          left: 118,
+          top: 326,
+          width: 180,
+          height: 42,
+          content: '<p style="font-size:18px;">1 Set</p>',
+        },
+        {
+          id: 'shape_card_1',
+          type: 'shape',
+          left: 372,
+          top: 232,
+          width: 256,
+          height: 198,
+          fill: '#f8fafc',
+        },
+        {
+          id: 'text_card_1',
+          type: 'text',
+          left: 410,
+          top: 326,
+          width: 180,
+          height: 42,
+          content: '<p style="font-size:18px;">2 Sorted Set</p>',
+        },
+        {
+          id: 'shape_card_2',
+          type: 'shape',
+          left: 662,
+          top: 232,
+          width: 256,
+          height: 198,
+          fill: '#f8fafc',
+        },
+        {
+          id: 'text_card_2',
+          type: 'text',
+          left: 700,
+          top: 326,
+          width: 180,
+          height: 58,
+          content: '<p style="font-size:18px;">3 Set（集合）：无序、唯一的数据集合</p>',
+        },
+      ],
+      {
+        title: '核心数据结构：它们是构建块的钥匙',
+        keyPoints: ['Redis 数据结构', 'Set', 'Sorted Set'],
+        order: 2,
+        decorate: false,
+      },
+    );
+
+    const ids = polished.map((element) => element.id ?? '');
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+
+    expect(ids.some((id) => id.startsWith('polish_ref_redis_ds_visual_'))).toBe(false);
+    expect(ids).toContain('polish_ref_redis_ds_overview_table');
+    expect(ids).toContain('polish_ref_redis_ds_scenario_table');
+    const tableText = polished
+      .filter((element) =>
+        ['polish_ref_redis_ds_overview_table', 'polish_ref_redis_ds_scenario_table'].includes(
+          element.id ?? '',
+        ),
+      )
+      .flatMap(
+        (element) =>
+          ((element as Record<string, unknown>).data as
+            | Array<Array<{ text?: string }>>
+            | undefined) ?? [],
+      )
+      .flatMap((row) => row.map((cell) => cell.text ?? ''))
+      .join(' ');
+    expect(combinedText).toContain('五种结构对照');
+    expect(combinedText).toContain('按场景选择');
+    expect(tableText).toContain('单值与计数');
+    expect(tableText).toContain('顺序处理');
+    expect(tableText).toContain('对象与集合');
+    expect(tableText).toContain('String');
+    expect(tableText).toContain('List');
+    expect(tableText).toContain('Hash');
+    expect(tableText).toContain('Set');
+    expect(tableText).toContain('Sorted Set');
+    expect(tableText).toContain('排行榜');
+    const redisColors = polished
+      .filter((element) => element.id?.startsWith('polish_ref_redis_ds_'))
+      .flatMap((element) => [
+        String((element as Record<string, unknown>).fill ?? ''),
+        String((element as Record<string, unknown>).color ?? ''),
+        String((element as Record<string, unknown>).defaultColor ?? ''),
+      ])
+      .join(' ')
+      .toLowerCase();
+    expect(redisColors).not.toContain('#f97316');
+    expect(redisColors).not.toContain('#fff7ed');
+    expect(redisColors).not.toContain('#f59e0b');
+    expect(auditSlideLayout(polished)).toEqual([]);
+    expect(auditSlideLayout(polished, { includeRichness: true })).toEqual([]);
+  });
+
+  it('uses different Redis structure layouts for focused pages instead of repeating overview', () => {
+    const focusedPages = [
+      ['string', 'String：键值缓存与计数器'],
+      ['list', 'List：有序列表的实现'],
+      ['hash', 'Hash：对象字段的存储'],
+      ['set', 'Set：集合去重与标签'],
+      ['zset', 'Sorted Set：排行榜排序'],
+    ] as const;
+
+    const signatures = focusedPages.map(([focus, title], index) => {
+      const polished = polishSlideElements(
+        [
+          {
+            id: 'text_title',
+            type: 'text',
+            left: 72,
+            top: 62,
+            width: 840,
+            height: 70,
+            content: `<p style="font-size:34px;"><strong>${title}</strong></p>`,
+          },
+          {
+            id: 'text_subtitle',
+            type: 'text',
+            left: 72,
+            top: 150,
+            width: 840,
+            height: 42,
+            content: '<p style="font-size:22px;">Redis 数据结构及应用场景</p>',
+          },
+          {
+            id: 'text_body',
+            type: 'text',
+            left: 82,
+            top: 244,
+            width: 760,
+            height: 72,
+            content: `<p style="font-size:18px;">Redis ${title} 的核心用法和典型场景</p>`,
+          },
+        ],
+        {
+          title,
+          keyPoints: ['Redis 数据结构', title],
+          order: index + 1,
+          decorate: false,
+        },
+      );
+
+      const ids = polished.map((element) => element.id ?? '');
+      const redisColors = polished
+        .filter((element) => element.id?.startsWith('polish_ref_redis_ds_'))
+        .flatMap((element) => [
+          String((element as Record<string, unknown>).fill ?? ''),
+          String((element as Record<string, unknown>).color ?? ''),
+          String((element as Record<string, unknown>).defaultColor ?? ''),
+        ])
+        .join(' ')
+        .toLowerCase();
+
+      expect(ids.some((id) => id.startsWith(`polish_ref_redis_ds_focus_${focus}_`))).toBe(true);
+      expect(ids.some((id) => id.startsWith('polish_ref_redis_ds_visual_connector_'))).toBe(false);
+      expect(redisColors).not.toContain('#f97316');
+      expect(redisColors).not.toContain('#fff7ed');
+      expect(redisColors).not.toContain('#f59e0b');
+      expect(auditSlideLayout(polished)).toEqual([]);
+
+      return ids.find((id) => id.startsWith(`polish_ref_redis_ds_focus_${focus}_`)) ?? '';
+    });
+
+    expect(new Set(signatures).size).toBe(focusedPages.length);
+  });
+
+  it('does not force Redis choice practice or summary pages into the repeated overview layout', () => {
+    const genericPages = [
+      ['Redis 数据结构选择指南', '先判断读写模式、排序需求和去重需求，再选择合适结构。'],
+      ['Redis 最佳实践', '围绕命名规范、过期策略、数据规模和监控排查组织内容。'],
+      ['Redis 数据结构总结', '回顾本课关键要点，把结构选择迁移到真实项目场景。'],
+      ['课后延伸与资源', '使用 DEBUG OBJECT 观察 Hash 从 listpack 切换到 dict 的条件。'],
+    ] as const;
+
+    for (const [title, body] of genericPages) {
+      const polished = polishSlideElements(
+        [
+          {
+            id: 'text_title',
+            type: 'text',
+            left: 72,
+            top: 62,
+            width: 840,
+            height: 70,
+            content: `<p style="font-size:34px;"><strong>${title}</strong></p>`,
+          },
+          {
+            id: 'text_subtitle',
+            type: 'text',
+            left: 72,
+            top: 150,
+            width: 840,
+            height: 42,
+            content: '<p style="font-size:22px;">Redis 数据结构课堂讲解</p>',
+          },
+          {
+            id: 'text_body',
+            type: 'text',
+            left: 82,
+            top: 244,
+            width: 760,
+            height: 72,
+            content: `<p style="font-size:20px;">${body}</p>`,
+          },
+        ],
+        {
+          title,
+          keyPoints: ['Redis 数据结构', '选择原则', '课堂总结'],
+          order: 8,
+          decorate: false,
+        },
+      );
+
+      const redisReferenceIds = polished
+        .map((element) => element.id ?? '')
+        .filter((id) => id.startsWith('polish_ref_redis_'));
+
+      expect(redisReferenceIds).toEqual([]);
+      expect(auditSlideLayout(polished)).toEqual([]);
+    }
+  });
+
+  it('uses semantic Redis internal diagrams instead of plain text blocks', () => {
+    const cases = [
+      {
+        title: '开篇：Redis 为什么这么快？ / String 类型与 SDS',
+        body: [
+          '高性能根源：基于内存读写，单线程无锁竞争，底层数据结构精心设计。',
+          'String 使用场景：缓存文本、整数计数器、设置过期缓存。',
+          'String vs C 字符串：C 用结束符，SDS 存长度并支持二进制安全。',
+          'SDS 核心优势：预分配空间，惰性释放，减少扩容开销。',
+        ],
+        expectedPrefix: 'polish_ref_redis_internal_sds_',
+        expectedLayoutMarker: 'polish_ref_redis_internal_sds_layout_memory_band',
+      },
+      {
+        title: 'String：最通用的数据结构 / SDS 内部实现',
+        body: [
+          'String 使用 SET/GET 保存文本、数字和序列化对象。',
+          'SDS 是 Redis String 的底层表示，记录长度、容量和字节数组。',
+          'INCR 和 DECR 适合计数器场景。',
+          'EXPIRE 可以给临时缓存设置过期时间。',
+        ],
+        expectedPrefix: 'polish_ref_redis_internal_sds_',
+        expectedLayoutMarker: 'polish_ref_redis_internal_sds_layout_memory_band',
+      },
+      {
+        title: 'List 类型与 quicklist',
+        body: [
+          'List 底层使用 quicklist，将多个 listpack 通过双向链表组织起来。',
+          '两端操作：LPUSH 和 RPOP 主要操作链表两端，适合队列模型。',
+          '内存优化：listpack 让多个小元素连续存放，减少指针开销。',
+          '典型场景：消息队列、时间线、任务缓冲都需要顺序访问。',
+        ],
+        expectedPrefix: 'polish_ref_redis_internal_list_',
+        expectedLayoutMarker: 'polish_ref_redis_internal_list_layout_left_diagram',
+      },
+      {
+        title: 'Hash 类型与 dict',
+        body: [
+          'Hash 把一个对象拆成多个 field/value 字段，适合保存用户资料。',
+          '小对象会使用 listpack 紧凑存储，字段多后切换为 dict。',
+          'dict 可以快速定位 field，常见读写接近 O(1)。',
+          '课堂总结：Hash 的关键不是大块文本，而是对象字段的局部更新。',
+        ],
+        expectedPrefix: 'polish_ref_redis_internal_hash_',
+        expectedLayoutMarker: 'polish_ref_redis_internal_hash_layout_split_left',
+      },
+      {
+        title: 'Set 类型与 intset / dict',
+        body: [
+          '编码选择依据：整数且少量使用 intset，其他情况自动升级为 dict。',
+          'intset 特点：连续内存、有序存储、查找 O(log n)。',
+          'dict 特点：哈希表实现，支持任意类型，平均 O(1)。',
+          '课堂总结：升级对应用透明，重点是理解编码切换条件。',
+        ],
+        expectedPrefix: 'polish_ref_redis_internal_set_',
+        expectedLayoutMarker: 'polish_ref_redis_internal_set_layout_center_stage',
+      },
+      {
+        title: 'ZSet 类型与 skiplist + dict',
+        body: [
+          '典型使用场景：排行榜按分数排序取前 N 名，实时比分快速查询分数。',
+          '关键命令与耗时：ZSCORE 走哈希表，ZRANGE 和 ZRANK 走跳表。',
+          '常见易错点：误以为 ZSet 只使用跳表实现。',
+          '课堂总结：跳表负责排序范围操作，哈希表负责快速定位。',
+        ],
+        expectedPrefix: 'polish_ref_redis_internal_zset_',
+        expectedLayoutMarker: 'polish_ref_redis_internal_zset_layout_rank_stage',
+      },
+    ] as const;
+    const focusLayoutMarkers = new Map<string, string>();
+
+    for (const [caseIndex, item] of cases.entries()) {
+      const polished = polishSlideElements(
+        [
+          {
+            id: 'text_title',
+            type: 'text',
+            left: 60,
+            top: 48,
+            width: 880,
+            height: 64,
+            content: `<p style="font-size:32px;"><strong>${item.title}</strong></p>`,
+          },
+          {
+            id: 'text_subtitle',
+            type: 'text',
+            left: 60,
+            top: 116,
+            width: 880,
+            height: 46,
+            content: '<p style="font-size:20px;">Redis 内部编码与结构关系</p>',
+          },
+          ...item.body.map((content, index) => ({
+            id: `text_body_${index}`,
+            type: 'text' as const,
+            left: index % 2 === 0 ? 60 : 520,
+            top: index < 2 ? 190 : 316,
+            width: 420,
+            height: 106,
+            content: `<p style="font-size:20px;">${content}</p>`,
+          })),
+        ],
+        {
+          title: item.title,
+          keyPoints: item.body,
+          order: caseIndex + 1,
+          decorate: false,
+        },
+      );
+
+      const ids = polished.map((element) => element.id ?? '');
+
+      expect(
+        ids.some((id) => id.startsWith(item.expectedPrefix)),
+        `${item.title}: ${ids
+          .filter((id) => id.startsWith('polish_ref_'))
+          .slice(0, 6)
+          .join(', ')}`,
+      ).toBe(true);
+      expect(ids.some((id) => id.startsWith('polish_ref_canonical_v'))).toBe(false);
+      expect(ids).toContain(item.expectedLayoutMarker);
+      expect(ids.some((id) => id.startsWith('polish_deck_signature_'))).toBe(false);
+      expect(auditSlideLayout(polished)).toEqual([]);
+      focusLayoutMarkers.set(item.expectedPrefix, item.expectedLayoutMarker);
+
+      if (item.expectedPrefix === 'polish_ref_redis_internal_sds_') {
+        expect(ids).not.toContain('polish_ref_redis_internal_sds_visual_bar');
+        expect(ids).not.toContain('polish_ref_redis_internal_sds_sds_rule');
+        expect(ids).not.toContain('polish_ref_redis_internal_sds_layout_bottom_rule');
+        const sdsNote = polished.find(
+          (element) => element.id === 'polish_ref_redis_internal_sds_sds_note',
+        )!;
+        expect(String(sdsNote.content)).toMatch(/font-size:22px/);
+        expect(String(sdsNote.content)).toContain('长度单独记录');
+
+        const detailRows = polished.filter((element) =>
+          element.id?.startsWith('polish_ref_redis_internal_sds_detail_row_text_'),
+        );
+        expect(detailRows).toHaveLength(4);
+        expect(new Set(detailRows.map((element) => Number(element.width))).size).toBe(1);
+        expect(
+          Math.min(...detailRows.map((element) => Number(element.width))),
+        ).toBeGreaterThanOrEqual(360);
+        expect(new Set(detailRows.map((element) => Math.round(Number(element.top)))).size).toBe(2);
+
+        const bottomBand = polished.find(
+          (element) => element.id === 'polish_ref_redis_internal_sds_layout_bottom_band',
+        )!;
+        expect(Number(bottomBand.width)).toBeGreaterThanOrEqual(800);
+        expect(Number(bottomBand.height)).toBeGreaterThanOrEqual(120);
+        expect(
+          Math.max(...detailRows.map((element) => Number(element.left) + Number(element.width))),
+        ).toBeLessThanOrEqual(Number(bottomBand.left) + Number(bottomBand.width));
+        expect(
+          Math.min(...detailRows.map((element) => Number(element.left))),
+        ).toBeGreaterThanOrEqual(Number(bottomBand.left));
+      }
+
+      if (item.expectedPrefix === 'polish_ref_redis_internal_set_') {
+        const upgradeBox = polished.find(
+          (element) => element.id === 'polish_ref_redis_internal_set_upgrade_box',
+        )!;
+        const upgradeLabel = polished.find(
+          (element) => element.id === 'polish_ref_redis_internal_set_upgrade_label',
+        )!;
+        const intsetBox = polished.find(
+          (element) => element.id === 'polish_ref_redis_internal_set_intset_box',
+        )!;
+        const dictBox = polished.find(
+          (element) => element.id === 'polish_ref_redis_internal_set_dict_box',
+        )!;
+
+        expect(Number(upgradeBox.top)).toBe(Number(intsetBox.top));
+        expect(Number(dictBox.top)).toBe(Number(intsetBox.top));
+        expect(Number(upgradeBox.width)).toBe(Number(intsetBox.width));
+        expect(Number(dictBox.width)).toBe(Number(intsetBox.width));
+        expect(Number(upgradeBox.height)).toBe(Number(intsetBox.height));
+        expect(Number(dictBox.height)).toBe(Number(intsetBox.height));
+        expect(Number(upgradeLabel.left)).toBeGreaterThanOrEqual(Number(upgradeBox.left));
+        expect(Number(upgradeLabel.left) + Number(upgradeLabel.width)).toBeLessThanOrEqual(
+          Number(upgradeBox.left) + Number(upgradeBox.width),
+        );
+        expect(Number(upgradeBox.left)).toBeGreaterThan(Number(intsetBox.left));
+        expect(Number(upgradeBox.left) + Number(upgradeBox.width)).toBeLessThan(
+          Number(dictBox.left),
+        );
+        expect(ids).not.toContain('polish_ref_redis_internal_set_layout_left_rule');
+        expect(ids).not.toContain('polish_ref_redis_internal_set_layout_right_rule');
+      }
+
+      if (item.expectedPrefix === 'polish_ref_redis_internal_zset_') {
+        const skiplistPanel = polished.find(
+          (element) => element.id === 'polish_ref_redis_internal_zset_skiplist_panel',
+        )!;
+        const dictPanel = polished.find(
+          (element) => element.id === 'polish_ref_redis_internal_zset_dict_panel',
+        )!;
+        const dictLabel = polished.find(
+          (element) => element.id === 'polish_ref_redis_internal_zset_dict_label',
+        )!;
+
+        expect(Number(skiplistPanel.width)).toBeGreaterThanOrEqual(260);
+        expect(skiplistPanel.fill).toBe('#f8fbff');
+        expect(Number(dictPanel.width)).toBeGreaterThanOrEqual(150);
+        expect(Number(dictLabel.width)).toBeGreaterThanOrEqual(110);
+        expect(String(dictLabel.content)).toMatch(/font-size:2[01]px/);
+        expect(ids.some((id) => id.startsWith('polish_ref_redis_internal_zset_visual_dot_'))).toBe(
+          false,
+        );
+        expect(
+          ids.some((id) => id.startsWith('polish_ref_redis_internal_zset_skiplist_node_')),
+        ).toBe(false);
+        expect(
+          ids.filter((id) => id.startsWith('polish_ref_redis_internal_zset_skiplist_lane_')),
+        ).toHaveLength(2);
+      }
+    }
+
+    expect(new Set(focusLayoutMarkers.values()).size).toBe(focusLayoutMarkers.size);
+  });
+
+  it('does not treat Python list or function lessons as Redis internal structure pages', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 64,
+          content: '<p style="font-size:32px;"><strong>函数：定义与调用</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 116,
+          width: 880,
+          height: 46,
+          content: '<p style="font-size:20px;">用代码块实现复用，完成订单金额计算</p>',
+        },
+        {
+          id: 'text_body_1',
+          type: 'text',
+          left: 70,
+          top: 198,
+          width: 390,
+          height: 96,
+          content:
+            '<p style="font-size:20px;">Python 函数用 def 定义，把重复逻辑封装成可调用的代码块。</p>',
+        },
+        {
+          id: 'text_body_2',
+          type: 'text',
+          left: 520,
+          top: 198,
+          width: 390,
+          height: 96,
+          content:
+            '<p style="font-size:20px;">参数可以接收数字、字符串或 list 列表，返回值用于后续计算。</p>',
+        },
+        {
+          id: 'text_body_3',
+          type: 'text',
+          left: 70,
+          top: 326,
+          width: 390,
+          height: 96,
+          content:
+            '<p style="font-size:20px;">练习时先写 add/subtract 函数，再用 if-elif 判断用户选择。</p>',
+        },
+      ],
+      {
+        title: '函数：定义与调用',
+        keyPoints: ['def 定义函数', '参数可以接收数字、字符串或 list 列表', '返回值用于后续计算'],
+        order: 15,
+        decorate: false,
+      },
+    );
+
+    const ids = polished.map((element) => element.id ?? '');
+    const combinedText = polished.map((element) => String(element.content ?? '')).join(' ');
+
+    expect(ids.some((id) => id.startsWith('polish_ref_redis_internal_'))).toBe(false);
+    expect(combinedText).not.toMatch(/quicklist|listpack|LPUSH|RPOP|SDS/i);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('keeps all four setup steps visible when the slide promises four steps', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>安装与运行环境设置</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">从下载到验证，四步完成 Python 环境搭建</p>',
+        },
+        ...[
+          '1. 下载安装包：从 Python 官网选择适合系统的安装包。',
+          '2. 安装配置：勾选 Add Python to PATH 后继续安装。',
+          '3. 编写代码：新建 hello.py 并写入 print("Hello Python")。',
+          '4. 运行验证：在终端执行 python hello.py 检查输出。',
+        ].map((content, index) => ({
+          id: `text_step_${index + 1}`,
+          type: 'text' as const,
+          left: 70,
+          top: 206 + index * 70,
+          width: 760,
+          height: 54,
+          content: `<p style="font-size:18px;">${content}</p>`,
+        })),
+      ],
+      {
+        title: '安装与运行环境设置',
+        keyPoints: ['1. 下载安装包', '2. 安装配置', '3. 编写代码', '4. 运行验证'],
+        order: 2,
+        decorate: false,
+      },
+    );
+
+    const stepTexts = polished.filter(
+      (element) =>
+        element.type === 'text' && element.id?.startsWith('polish_ref_canonical_steps_v1_step_'),
+    );
+    const combinedText = polished.map((element) => String(element.content ?? '')).join(' ');
+
+    expect(stepTexts).toHaveLength(4);
+    expect(combinedText).toContain('运行验证');
+    expect(combinedText).not.toContain('课堂抓手');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('adds deck-level visual signatures so repeated reference layouts do not look identical', () => {
+    const signatures = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((order) => {
+      const polished = polishSlideElements(
+        [
+          {
+            id: 'text_title',
+            type: 'text',
+            left: 72,
+            top: 62,
+            width: 840,
+            height: 70,
+            content: `<p style="font-size:34px;"><strong>Redis 数据结构总览 ${order}</strong></p>`,
+          },
+          {
+            id: 'text_subtitle',
+            type: 'text',
+            left: 72,
+            top: 150,
+            width: 840,
+            height: 42,
+            content: '<p style="font-size:22px;">Redis 五种常见数据结构的对照关系</p>',
+          },
+          {
+            id: 'text_body',
+            type: 'text',
+            left: 82,
+            top: 244,
+            width: 760,
+            height: 72,
+            content:
+              '<p style="font-size:18px;">String、List、Hash、Set、Sorted Set 都要结合业务场景选择。</p>',
+          },
+        ],
+        {
+          title: `Redis 数据结构总览 ${order}`,
+          keyPoints: [
+            'String 键值缓存',
+            'List 队列',
+            'Hash 对象字段',
+            'Set 去重',
+            'Sorted Set 排行榜',
+          ],
+          order,
+          decorate: false,
+        },
+      );
+
+      const signatureId = polished.find((element) =>
+        element.id?.startsWith('polish_deck_signature_v'),
+      )?.id;
+
+      expect(signatureId).toBeTruthy();
+      expect(auditSlideLayout(polished)).toEqual([]);
+      return signatureId?.match(/polish_deck_signature_v\d+/)?.[0];
+    });
+
+    expect(new Set(signatures).size).toBe(signatures.length);
   });
 });

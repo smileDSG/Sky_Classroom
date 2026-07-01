@@ -39,6 +39,7 @@ export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
   const { shadowStyle } = useElementShadow(elementInfo.shadow);
   const textRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [qaStatus, setQaStatus] = useState<'pass' | 'scale-down' | 'overflow'>('pass');
   const displayContent = useMemo(
     () => normalizeInlineTypography(elementInfo.content),
     [elementInfo.content],
@@ -59,8 +60,15 @@ export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
     if (naturalWidth <= 0 || naturalHeight <= 0) return;
 
     const nextScale = Math.min(1, availableWidth / naturalWidth, availableHeight / naturalHeight);
+    const safeScale = Number.isFinite(nextScale) ? Math.max(minScale, nextScale) : 1;
+    const hasUnresolvedOverflow =
+      nextScale < minScale &&
+      (naturalWidth * minScale > availableWidth + 1 ||
+        naturalHeight * minScale > availableHeight + 1);
+    const hasTinyReadableText = safeScale < 0.78;
     const frame = requestAnimationFrame(() => {
-      setScale(Number.isFinite(nextScale) ? Math.max(minScale, nextScale) : 1);
+      setScale(safeScale);
+      setQaStatus(hasUnresolvedOverflow ? 'overflow' : hasTinyReadableText ? 'scale-down' : 'pass');
     });
     return () => cancelAnimationFrame(frame);
   }, [
@@ -75,7 +83,14 @@ export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
   ]);
 
   return (
-    <div className="base-element-text relative w-full h-full overflow-hidden">
+    <div
+      className="base-element-text relative w-full h-full overflow-hidden"
+      data-slide-qa-element-id={elementInfo.id}
+      data-slide-qa-element-type="text"
+      data-slide-qa-status={qaStatus}
+      data-slide-qa-scale={scale.toFixed(3)}
+      data-slide-qa-overflow={qaStatus === 'overflow' ? 'true' : 'false'}
+    >
       <div
         className="rotate-wrapper w-full h-full"
         style={{ transform: `rotate(${elementInfo.rotate}deg)` }}

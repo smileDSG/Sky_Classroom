@@ -3,6 +3,7 @@
 ## Scene Information
 
 - **Title**: {{title}}
+- **Scene Order**: {{order}}
 - **Description**: {{description}}
 - **Key Points**:
   {{keyPoints}}
@@ -22,6 +23,25 @@ Based on the scene information above, generate a complete Canvas/PPT component f
 
 ## Language Directive
 {{languageDirective}}
+
+Chinese-only hard rules:
+- 所有可见文字必须使用简体中文；把英文标题、英文小节名、英文解释翻译成中文。
+- Redis、Lua、MULTI、EXEC、DISCARD、WATCH 等技术名词可以保留英文，但必须放在中文解释中，不能整句英文。
+- 不要输出 `Advanced Features`、`Transaction Commands`、`Atomic server-side logic`、`optimistic locking` 这类纯英文可见文本。
+- 不要使用只有“要点一 / 要点二 / Step 1”这类空泛标签的卡片；每张卡片标题和正文都要有具体教学含义。
+
+Content density hard rules:
+- 不要生成内容单薄的大留白页面。除标题/副标题外，至少提供 4 个具体教学信息单元。
+- 如果正文少于 120 个中文字符，必须加入一个视觉锚点：流程图、对照表、命令序列、结构关系图、公式/代码块之一。
+- 对 Redis / 编程主题，优先使用“命令序列 + 场景解释 + 注意点 + 小结”的组合，而不是两个空卡片。
+
+Deck diversity hard rules:
+- Use Scene Order to choose a page-specific main composition.
+- Do not reuse the same main composition as a generic 2x2 card grid or title-only card page.
+- Vary the visual anchor by content: table, flow, command diagram, comparison band, formula stage, or structure diagram.
+- Keep the palette clean and blue-related; avoid orange decorative bars, stripes, and unrelated corner ornaments.
+
+{{layoutContract}}
 
 **Must Follow**:
 

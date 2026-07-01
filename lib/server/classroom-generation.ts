@@ -32,10 +32,17 @@ import {
   generateTTSForClassroom,
 } from '@/lib/server/classroom-media-generation';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
-import type { SceneOutline, UserRequirements } from '@/lib/types/generation';
+import type { GeneratedSlideContent, SceneOutline, UserRequirements } from '@/lib/types/generation';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { AGENT_COLOR_PALETTE, AGENT_DEFAULT_AVATARS } from '@/lib/constants/agent-defaults';
 import { selectThemeForCourse } from '@/lib/generation/classroom-design-dna';
+import {
+  auditClassroomSlideContents,
+  auditGeneratedSlideContent,
+  formatClassroomSlideQAError,
+  type ClassroomSlideQAIssue,
+  type ClassroomSlideQAReport,
+} from '@/lib/generation/scene-content/classroom-slide-qa';
 
 const log = createLogger('Classroom');
 
@@ -57,6 +64,7 @@ export type ClassroomGenerationStep =
   | 'researching'
   | 'generating_outlines'
   | 'generating_scenes'
+  | 'qa_reviewing'
   | 'generating_media'
   | 'generating_tts'
   | 'persisting'
@@ -92,6 +100,7 @@ export interface GenerateClassroomResult {
   scenes: Scene[];
   scenesCount: number;
   createdAt: string;
+  slideQaReport?: ClassroomSlideQAReport;
 }
 
 const SCENE_PROGRESS_INITIAL = 31;
@@ -101,6 +110,11 @@ const SCENE_PROGRESS_CREATED_DONE = 90;
 
 type ProgressReporter = (progress: ClassroomGenerationProgress) => Promise<void> | void;
 type GeneratedSceneContent = NonNullable<Awaited<ReturnType<typeof generateSceneContent>>>;
+type GeneratedSceneContentResult = {
+  outline: SceneOutline;
+  content: GeneratedSceneContent;
+  index: number;
+};
 
 function createSlideFallbackOutline(outline: SceneOutline): SceneOutline {
   return {
@@ -146,6 +160,922 @@ async function generateSceneContentWithSlideFallback(
   }
 
   return null;
+}
+
+function isGeneratedSlideContent(content: unknown): content is GeneratedSlideContent {
+  return (
+    typeof content === 'object' &&
+    content !== null &&
+    Array.isArray((content as GeneratedSlideContent).elements)
+  );
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function compactText(text: string | undefined, fallback: string, maxLength = 64): string {
+  const cleaned = (text || fallback).replace(/\s+/g, ' ').trim();
+  if (cleaned.length <= maxLength) return cleaned;
+  return `${cleaned.slice(0, Math.max(0, maxLength - 1))}…`;
+}
+
+function buildSlideQARepairDirective(
+  outline: SceneOutline,
+  issues: ClassroomSlideQAIssue[],
+): string {
+  const issueDetails = issues
+    .map((issue, index) => {
+      const element = issue.elementId ? ` element=${issue.elementId}` : '';
+      return `${index + 1}. ${issue.type}${element}: ${issue.detail}`;
+    })
+    .join('\n');
+  const deckDiversityDirective = issues.some((issue) => issue.type === 'repeated_layout_signature')
+    ? `
+
+Deck diversity repair rules:
+- Do not reuse the same main composition, card grid, table position, or title/body coordinate rhythm from the failed slide.
+- Change the main element coordinates: move the visual anchor to a different side/row, change the card/table structure, and alter the background rhythm.
+- Prefer a different visual anchor for this page: flow, command diagram, comparison band, formula stage, or structure diagram.
+- This is a deck-level failure, so a page that only changes wording but keeps the same layout still fails.`
+    : '';
+
+  return `这页幻灯片没有通过 OpenMAIC 课堂级 QA，请基于当前页完整重做，而不是微调。主题：${outline.title}
+
+失败项：
+${issueDetails}
+${deckDiversityDirective}
+
+必须满足：
+- 所有可见文字以简体中文为主，Redis、String、List、Hash 等技术词只能放在中文句子里。
+- 不要使用“要点一 / Step 1 / 核心功能”等占位标题，标题必须和本页知识点直接相关。
+- 至少给出 4 个具体教学单元：使用场景、关键命令或步骤、易错点、课堂总结。
+- 使用蓝白清爽风格；不要使用橙色横条、橙色竖条、角标条纹或无关装饰。
+- 不要让任何文字互相重叠，也不要超出安全区 left>=48, top>=48, right<=952, bottom<=514.5。
+- 字号保持可读：标题约 30-34px，正文不低于 20px。
+- 如果内容较少，合并信息块，不要留下大面积空白。`;
+}
+
+type ClassroomQASafeIntent =
+  | 'string'
+  | 'list'
+  | 'hash'
+  | 'set'
+  | 'zset'
+  | 'choice'
+  | 'practice'
+  | 'summary'
+  | 'generic';
+
+type ClassroomQASafeBlock = {
+  label: string;
+  body: string;
+};
+
+type ClassroomQASafeProfile = {
+  intent: ClassroomQASafeIntent;
+  accent: string;
+  variant:
+    | 'anchor-left'
+    | 'top-table'
+    | 'anchor-right'
+    | 'split-bands'
+    | 'bottom-table'
+    | 'stack-left'
+    | 'stack-right'
+    | 'wide-bands'
+    | 'center-table'
+    | 'bottom-cards'
+    | 'table-right-low'
+    | 'table-left-low'
+    | 'full-ladder';
+  variantSeed?: number;
+  blocks: ClassroomQASafeBlock[];
+  tableRows: string[][];
+};
+
+const CLASSROOM_QA_SAFE_VARIANTS: ClassroomQASafeProfile['variant'][] = [
+  'anchor-left',
+  'top-table',
+  'anchor-right',
+  'split-bands',
+  'bottom-table',
+  'stack-left',
+  'stack-right',
+  'wide-bands',
+  'center-table',
+  'bottom-cards',
+  'table-right-low',
+  'table-left-low',
+  'full-ladder',
+];
+
+function withDeckDiversitySafeVariant(
+  profile: ClassroomQASafeProfile,
+  outline: SceneOutline,
+  issues: ClassroomSlideQAIssue[],
+): ClassroomQASafeProfile {
+  if (!issues.some((issue) => issue.type === 'repeated_layout_signature')) return profile;
+
+  const index = Math.max(0, Math.floor(outline.order || 1) - 1) % CLASSROOM_QA_SAFE_VARIANTS.length;
+  return {
+    ...profile,
+    variant: CLASSROOM_QA_SAFE_VARIANTS[index],
+    variantSeed: index,
+  };
+}
+
+function classifyClassroomQASafeIntent(outline: SceneOutline): ClassroomQASafeIntent {
+  const signal = [outline.title, outline.description, ...(outline.keyPoints ?? [])]
+    .join(' ')
+    .toLowerCase();
+
+  if (/sorted\s*set|zset|有序集合|排行榜|排行|权重|分数/.test(signal)) return 'zset';
+  if (/string|字符串|键值|计数器|验证码/.test(signal)) return 'string';
+  if (/list|列表|队列|时间线|两端/.test(signal)) return 'list';
+  if (/hash|哈希|散列|对象|字段/.test(signal)) return 'hash';
+  if (/(^|[^a-z])set([^a-z]|$)|集合|去重|标签|交集|并集/.test(signal)) return 'set';
+  if (/选择|怎么选|如何选|选型|指南|对比/.test(signal)) return 'choice';
+  if (/最佳实践|实践|规范|注意|避坑|进阶|优化/.test(signal)) return 'practice';
+  if (/总结|关键要点|回顾|复盘|收束/.test(signal)) return 'summary';
+  return 'generic';
+}
+
+function createClassroomQASafeProfile(outline: SceneOutline): ClassroomQASafeProfile {
+  const outlineSignal = [outline.title, outline.description, ...(outline.keyPoints ?? [])].join(
+    ' ',
+  );
+  const intent = /\bredis\b/i.test(outlineSignal)
+    ? classifyClassroomQASafeIntent(outline)
+    : 'generic';
+  const title = compactText(outline.title, '课堂重点', 36);
+  const description = compactText(outline.description, title, 42);
+  const keyPoints = outline.keyPoints?.filter((point) => point.trim().length > 0) ?? [];
+  const primary = compactText(keyPoints[0], description, 24);
+  const secondary = compactText(keyPoints[1], title, 24);
+
+  const commonRows = [
+    ['判断项', '课堂落点'],
+    ['先看对象', primary],
+    ['再看操作', secondary],
+    ['最后验证', '用一个例子说清输入、处理和结果'],
+  ];
+
+  const profiles: Record<ClassroomQASafeIntent, ClassroomQASafeProfile> = {
+    string: {
+      intent,
+      accent: '#2563eb',
+      variant: 'anchor-left',
+      blocks: [
+        { label: '键值模型', body: '一个 key 对应一个值，适合缓存配置、验证码和状态标记。' },
+        { label: '典型命令', body: 'SET 写入、GET 读取、INCR 计数，EXPIRE 控制有效期。' },
+        { label: '适合场景', body: `本页关注“${primary}”，先确认值是否足够简单。` },
+        { label: '避坑提醒', body: '字段很多的对象不要硬塞进 String，可改用 Hash 做局部更新。' },
+      ],
+      tableRows: [
+        ['判断项', 'String 讲解线索'],
+        ['数据形态', '单值、计数或短文本'],
+        ['操作重点', '读写、递增、过期时间'],
+        ['课堂产出', '说清 key、value 和 TTL'],
+      ],
+    },
+    list: {
+      intent,
+      accent: '#0ea5e9',
+      variant: 'top-table',
+      blocks: [
+        { label: '顺序结构', body: 'List 保留插入顺序，适合队列、时间线和最近记录。' },
+        { label: '两端操作', body: 'LPUSH、RPUSH、LPOP、RPOP 对应入队和出队过程。' },
+        { label: '场景判断', body: `当重点是“${primary}”时，要说明顺序为什么重要。` },
+        { label: '长度控制', body: '配合裁剪或分页，避免列表无限增长影响读取效率。' },
+      ],
+      tableRows: [
+        ['判断项', 'List 讲解线索'],
+        ['数据形态', '按顺序排列的一串元素'],
+        ['操作重点', '左进右出、右进左出'],
+        ['课堂产出', '能画出队列流向'],
+      ],
+    },
+    hash: {
+      intent,
+      accent: '#1d4ed8',
+      variant: 'split-bands',
+      blocks: [
+        { label: '对象字段', body: 'Hash 把一个对象拆成多个字段，适合资料、配置和状态集合。' },
+        { label: '局部更新', body: 'HSET、HGET、HDEL 可以只改某个字段，避免整对象重写。' },
+        { label: '资料场景', body: `围绕“${primary}”说明字段名、字段值和对象 key 的关系。` },
+        { label: '命名提醒', body: '字段命名保持稳定，避免同一对象里混入多套含义。' },
+      ],
+      tableRows: [
+        ['判断项', 'Hash 讲解线索'],
+        ['数据形态', '对象和字段集合'],
+        ['操作重点', '字段读写和局部删除'],
+        ['课堂产出', '能拆出对象 key 与字段'],
+      ],
+    },
+    set: {
+      intent,
+      accent: '#0284c7',
+      variant: 'anchor-left',
+      blocks: [
+        { label: '自动去重', body: 'Set 天然不保存重复成员，适合标签、黑名单和唯一集合。' },
+        { label: '集合运算', body: '交集、并集、差集能表达共同好友、共同标签等关系。' },
+        { label: '无序提醒', body: `讲“${primary}”时要提醒学生不要依赖成员顺序。` },
+        { label: '结果验证', body: '用是否存在、是否重复、集合关系三步检查选择是否正确。' },
+      ],
+      tableRows: [
+        ['判断项', 'Set 讲解线索'],
+        ['数据形态', '无序且不重复的成员'],
+        ['操作重点', '去重、存在判断、集合运算'],
+        ['课堂产出', '能解释为什么不需要顺序'],
+      ],
+    },
+    zset: {
+      intent,
+      accent: '#4f46e5',
+      variant: 'anchor-right',
+      blocks: [
+        { label: '分数排序', body: '每个成员带一个 score，Redis 按分数维护有序结果。' },
+        { label: '范围查询', body: 'ZADD 写入分数，ZRANGE 或 ZREVRANGE 取排名区间。' },
+        { label: '排行场景', body: `本页的“${primary}”要落到榜单、热度或优先级例子。` },
+        { label: '更新提醒', body: '分数变化要同步更新，否则排名结果会和业务状态不一致。' },
+      ],
+      tableRows: [
+        ['判断项', 'Sorted Set 讲解线索'],
+        ['数据形态', '成员加分数'],
+        ['操作重点', '写分数、取区间、查排名'],
+        ['课堂产出', '能解释排行榜为什么要 score'],
+      ],
+    },
+    choice: {
+      intent,
+      accent: '#0369a1',
+      variant: 'top-table',
+      blocks: [
+        { label: '读写模式', body: '先判断读多写少、频繁更新还是需要范围查询。' },
+        { label: '排序需求', body: '需要排名或时间顺序时，优先比较 List 与 Sorted Set。' },
+        { label: '去重需求', body: '需要唯一成员或集合关系时，Set 比列表更合适。' },
+        { label: '对象字段', body: '需要局部更新对象属性时，Hash 通常比 String 更清楚。' },
+      ],
+      tableRows: commonRows,
+    },
+    practice: {
+      intent,
+      accent: '#1e40af',
+      variant: 'split-bands',
+      blocks: [
+        { label: '命名规范', body: 'key 要体现业务、对象和粒度，方便排查和迁移。' },
+        { label: '过期策略', body: '缓存类数据要说明 TTL，长期数据要说明清理办法。' },
+        { label: '数据规模', body: '估算成员数量和读写频率，避免小例子放大后失控。' },
+        { label: '监控排查', body: '把慢查询、内存增长和命中率作为课堂延伸检查点。' },
+      ],
+      tableRows: commonRows,
+    },
+    summary: {
+      intent,
+      accent: '#075985',
+      variant: 'anchor-right',
+      blocks: [
+        { label: '选择原则', body: '从数据形态、访问方式和结果需求三步回顾结构选择。' },
+        { label: '命令线索', body: '每种结构至少对应一组高频命令，帮助学生形成操作记忆。' },
+        { label: '常见误区', body: '不要只背名称，要说清它解决了哪类业务问题。' },
+        { label: '迁移项目', body: '把课堂例子替换成真实需求，检查结构选择是否仍然成立。' },
+      ],
+      tableRows: commonRows,
+    },
+    generic: {
+      intent,
+      accent: '#2563eb',
+      variant: 'split-bands',
+      blocks: [
+        { label: '概念边界', body: `先把“${title}”限定到一个可讲清的课堂问题。` },
+        { label: '操作路径', body: '给出输入、处理、输出三段，让学生知道该怎么验证。' },
+        { label: '例子落地', body: `围绕“${primary}”补一个具体场景，避免停在名词解释。` },
+        { label: '课堂收束', body: '最后用一句话说明本页和下一页知识点的关系。' },
+      ],
+      tableRows: commonRows,
+    },
+  };
+
+  return profiles[intent];
+}
+
+function createQASafeTextElement(
+  id: string,
+  text: string,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  fontSize: number,
+  color: string,
+): GeneratedSlideContent['elements'][number] {
+  return {
+    id,
+    type: 'text',
+    left,
+    top,
+    width,
+    height,
+    rotate: 0,
+    defaultFontName: 'Microsoft YaHei',
+    defaultColor: color,
+    content: `<p style="font-size:${fontSize}px;line-height:1.25;">${escapeHtml(text)}</p>`,
+  } as GeneratedSlideContent['elements'][number];
+}
+
+function createQASafeTableElement(
+  id: string,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  rows: string[][],
+  accent: string,
+): GeneratedSlideContent['elements'][number] {
+  return {
+    id,
+    type: 'table',
+    left,
+    top,
+    width,
+    height,
+    rotate: 0,
+    outline: { color: '#cfe0f5', width: 1, style: 'solid' },
+    theme: { color: accent, rowHeader: true, rowFooter: false, colHeader: false, colFooter: false },
+    colWidths: [0.34, 0.66],
+    cellMinHeight: Math.max(34, Math.floor(height / Math.max(1, rows.length))),
+    data: rows.map((row, rowIndex) =>
+      row.map((text, cellIndex) => ({
+        id: `${id}_r${rowIndex}_c${cellIndex}`,
+        colspan: 1,
+        rowspan: 1,
+        text,
+        style: {
+          bold: rowIndex === 0 || cellIndex === 0,
+          color: rowIndex === 0 || cellIndex === 0 ? '#0f172a' : '#1e293b',
+          backcolor: rowIndex === 0 ? '#eaf4ff' : '#ffffff',
+          fontsize: rowIndex === 0 ? '18' : '17',
+          fontname: 'Microsoft YaHei',
+          align: 'left',
+        },
+      })),
+    ),
+  } as GeneratedSlideContent['elements'][number];
+}
+
+function createQASafeBlockElement(
+  outlineId: string,
+  block: ClassroomQASafeBlock,
+  index: number,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+): GeneratedSlideContent['elements'][number] {
+  return createQASafeTextElement(
+    `classroom_qa_safe_block_${outlineId}_${index}`,
+    `${block.label}：${block.body}`,
+    left,
+    top,
+    width,
+    height,
+    20,
+    '#1e293b',
+  );
+}
+
+function createQASafeLayoutElements(
+  outline: SceneOutline,
+  title: string,
+  profile: ClassroomQASafeProfile,
+): GeneratedSlideContent['elements'] {
+  const elements: GeneratedSlideContent['elements'] = [
+    createQASafeTextElement(
+      `classroom_qa_safe_title_${outline.id}`,
+      `本页主题：${title}`,
+      72,
+      58,
+      856,
+      56,
+      32,
+      '#0f172a',
+    ),
+  ];
+
+  if (profile.variant === 'anchor-left') {
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        82,
+        150,
+        348,
+        250,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    profile.blocks.forEach((block, index) => {
+      elements.push(
+        createQASafeBlockElement(outline.id, block, index, 470, 150 + index * 78, 448, 64),
+      );
+    });
+    return elements;
+  }
+
+  if (profile.variant === 'top-table') {
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        82,
+        140,
+        836,
+        108,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    profile.blocks.forEach((block, index) => {
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+      elements.push(
+        createQASafeBlockElement(
+          outline.id,
+          block,
+          index,
+          col === 0 ? 82 : 520,
+          row === 0 ? 278 : 388,
+          398,
+          78,
+        ),
+      );
+    });
+    return elements;
+  }
+
+  if (profile.variant === 'anchor-right') {
+    profile.blocks.forEach((block, index) => {
+      elements.push(
+        createQASafeBlockElement(outline.id, block, index, 82, 148 + index * 76, 420, 62),
+      );
+    });
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        548,
+        158,
+        370,
+        250,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    return elements;
+  }
+
+  if (profile.variant === 'bottom-table') {
+    profile.blocks.forEach((block, index) => {
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+      elements.push(
+        createQASafeBlockElement(
+          outline.id,
+          block,
+          index,
+          col === 0 ? 82 : 520,
+          row === 0 ? 148 : 252,
+          398,
+          76,
+        ),
+      );
+    });
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        82,
+        374,
+        836,
+        110,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    return elements;
+  }
+
+  if (profile.variant === 'stack-left') {
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        82,
+        148,
+        286,
+        286,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    profile.blocks.forEach((block, index) => {
+      elements.push(
+        createQASafeBlockElement(outline.id, block, index, 410, 148 + index * 75, 508, 62),
+      );
+    });
+    return elements;
+  }
+
+  if (profile.variant === 'stack-right') {
+    profile.blocks.forEach((block, index) => {
+      elements.push(
+        createQASafeBlockElement(outline.id, block, index, 82, 146 + index * 75, 500, 62),
+      );
+    });
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        628,
+        152,
+        290,
+        286,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    return elements;
+  }
+
+  if (profile.variant === 'wide-bands') {
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        82,
+        138,
+        836,
+        92,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    profile.blocks.forEach((block, index) => {
+      elements.push(
+        createQASafeBlockElement(outline.id, block, index, 82, 254 + index * 68, 836, 52),
+      );
+    });
+    return elements;
+  }
+
+  if (profile.variant === 'center-table') {
+    profile.blocks.slice(0, 2).forEach((block, index) => {
+      elements.push(
+        createQASafeBlockElement(outline.id, block, index, index === 0 ? 82 : 528, 140, 390, 58),
+      );
+    });
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        194,
+        224,
+        612,
+        120,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    profile.blocks.slice(2).forEach((block, index) => {
+      elements.push(
+        createQASafeBlockElement(
+          outline.id,
+          block,
+          index + 2,
+          index === 0 ? 82 : 528,
+          382,
+          390,
+          76,
+        ),
+      );
+    });
+    return elements;
+  }
+
+  if (profile.variant === 'bottom-cards') {
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        82,
+        142,
+        376,
+        246,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    profile.blocks.slice(0, 3).forEach((block, index) => {
+      elements.push(
+        createQASafeBlockElement(outline.id, block, index, 500, 142 + index * 82, 418, 66),
+      );
+    });
+    elements.push(createQASafeBlockElement(outline.id, profile.blocks[3], 3, 82, 420, 836, 64));
+    return elements;
+  }
+
+  if (profile.variant === 'table-right-low') {
+    profile.blocks.forEach((block, index) => {
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+      elements.push(
+        createQASafeBlockElement(
+          outline.id,
+          block,
+          index,
+          col === 0 ? 82 : 520,
+          row === 0 ? 148 : 246,
+          398,
+          72,
+        ),
+      );
+    });
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        330,
+        360,
+        588,
+        126,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    return elements;
+  }
+
+  if (profile.variant === 'table-left-low') {
+    profile.blocks.forEach((block, index) => {
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+      elements.push(
+        createQASafeBlockElement(
+          outline.id,
+          block,
+          index,
+          col === 0 ? 82 : 520,
+          row === 0 ? 144 : 244,
+          398,
+          72,
+        ),
+      );
+    });
+    elements.push(
+      createQASafeTableElement(
+        `classroom_qa_safe_table_${outline.id}`,
+        82,
+        362,
+        560,
+        124,
+        profile.tableRows,
+        profile.accent,
+      ),
+    );
+    return elements;
+  }
+
+  if (profile.variant === 'full-ladder') {
+    profile.blocks.forEach((block, index) => {
+      elements.push(
+        createQASafeBlockElement(outline.id, block, index, 82, 142 + index * 80, 836, 62),
+      );
+    });
+    return elements;
+  }
+
+  elements.push(
+    createQASafeTableElement(
+      `classroom_qa_safe_table_${outline.id}`,
+      82,
+      148,
+      376,
+      286,
+      profile.tableRows,
+      profile.accent,
+    ),
+  );
+  profile.blocks.forEach((block, index) => {
+    elements.push(
+      createQASafeBlockElement(outline.id, block, index, 500, 148 + index * 76, 418, 62),
+    );
+  });
+  return elements;
+}
+
+function createClassroomQASafeSlideContent(
+  outline: SceneOutline,
+  issues: ClassroomSlideQAIssue[],
+): GeneratedSlideContent {
+  const title = compactText(outline.title, '课堂重点', 42);
+  const issueTypes = [...new Set(issues.map((issue) => issue.type))].join('、') || '版面问题';
+  const profile = withDeckDiversitySafeVariant(
+    createClassroomQASafeProfile(outline),
+    outline,
+    issues,
+  );
+
+  return {
+    background: { type: 'solid', color: '#f7fbff' },
+    remark: `QA safe fallback for ${outline.title}. Previous blocking issues: ${issueTypes}.`,
+    elements: createQASafeLayoutElements(outline, title, profile),
+  };
+}
+
+function groupBlockingSlideQAIssuesByScene(
+  report: ClassroomSlideQAReport,
+): Map<string, ClassroomSlideQAIssue[]> {
+  const grouped = new Map<string, ClassroomSlideQAIssue[]>();
+  for (const issue of report.issues) {
+    if (issue.severity !== 'blocking') continue;
+    grouped.set(issue.sceneId, [...(grouped.get(issue.sceneId) ?? []), issue]);
+  }
+  return grouped;
+}
+
+function replaceBlockingSlidesWithQASafeFallback(
+  contentResults: Array<GeneratedSceneContentResult | null>,
+  report: ClassroomSlideQAReport,
+): {
+  contentResults: Array<GeneratedSceneContentResult | null>;
+  replacementCount: number;
+} {
+  const issuesByScene = groupBlockingSlideQAIssuesByScene(report);
+  if (issuesByScene.size === 0) return { contentResults, replacementCount: 0 };
+
+  const nextResults = [...contentResults];
+  let replacementCount = 0;
+  for (let index = 0; index < nextResults.length; index += 1) {
+    const result = nextResults[index];
+    if (!result || result.outline.type !== 'slide' || !isGeneratedSlideContent(result.content)) {
+      continue;
+    }
+
+    const issues = issuesByScene.get(result.outline.id);
+    if (!issues || issues.length === 0) continue;
+
+    const safeContent = createClassroomQASafeSlideContent(result.outline, issues);
+    const safeQa = auditGeneratedSlideContent(safeContent);
+    nextResults[index] = {
+      ...result,
+      content: { ...safeContent, qa: safeQa },
+    };
+    replacementCount += 1;
+  }
+
+  return { contentResults: nextResults, replacementCount };
+}
+
+async function reviewAndRepairClassroomSlideQA(
+  contentResults: Array<GeneratedSceneContentResult | null>,
+  aiCall: AICallFn,
+  options: {
+    sceneContentOptions: SceneContentOptions;
+    onProgress?: ProgressReporter;
+    totalScenes: number;
+    concurrency: number;
+  },
+): Promise<{
+  contentResults: Array<GeneratedSceneContentResult | null>;
+  slideQaReport: ClassroomSlideQAReport;
+}> {
+  let slideQaReport = auditClassroomSlideContents(contentResults);
+  if (slideQaReport.pass) {
+    return { contentResults, slideQaReport };
+  }
+
+  const initialMessage = formatClassroomSlideQAError(slideQaReport);
+  log.warn(`${initialMessage}; attempting classroom-level slide repair.`);
+
+  const blockingIssues = slideQaReport.issues.filter((issue) => issue.severity === 'blocking');
+  const blockingSceneIds = new Set(blockingIssues.map((issue) => issue.sceneId));
+  const repairTargets = contentResults
+    .map((result, resultIndex) => ({ result, resultIndex }))
+    .filter(
+      (entry): entry is { result: GeneratedSceneContentResult; resultIndex: number } =>
+        !!entry.result &&
+        entry.result.outline.type === 'slide' &&
+        blockingSceneIds.has(entry.result.outline.id) &&
+        isGeneratedSlideContent(entry.result.content),
+    );
+
+  if (repairTargets.length === 0) {
+    return { contentResults, slideQaReport };
+  }
+
+  await options.onProgress?.({
+    step: 'qa_reviewing',
+    progress: SCENE_PROGRESS_CONTENT_DONE + 1,
+    message: `Repairing ${repairTargets.length} slide layout/content issue(s)`,
+    scenesGenerated: 0,
+    totalScenes: options.totalScenes,
+  });
+
+  const repairedEntries = await pMap(
+    repairTargets,
+    async ({ result, resultIndex }) => {
+      const issues = blockingIssues.filter((issue) => issue.sceneId === result.outline.id);
+      const baselineContent = result.content as GeneratedSlideContent;
+      const editDirective = buildSlideQARepairDirective(result.outline, issues);
+      const requiresDeckDiversityReview = issues.some(
+        (issue) => issue.type === 'repeated_layout_signature',
+      );
+
+      try {
+        const regenerated = await generateSceneContentWithSlideFallback(result.outline, aiCall, {
+          ...options.sceneContentOptions,
+          editDirective,
+          baselineContent,
+        });
+
+        if (regenerated && isGeneratedSlideContent(regenerated.content)) {
+          const regeneratedQa = auditGeneratedSlideContent(regenerated.content);
+          if (regeneratedQa.pass) {
+            const candidateContent = { ...regenerated.content, qa: regeneratedQa };
+            const candidateResults = [...contentResults];
+            candidateResults[resultIndex] = {
+              ...result,
+              outline: regenerated.outline,
+              content: candidateContent,
+            };
+            const candidateDeckQa = requiresDeckDiversityReview
+              ? auditClassroomSlideContents(candidateResults)
+              : null;
+            const candidateSceneStillBlocked =
+              candidateDeckQa?.issues.some(
+                (issue) => issue.severity === 'blocking' && issue.sceneId === result.outline.id,
+              ) ?? false;
+
+            if (candidateSceneStillBlocked) {
+              log.warn(
+                `Classroom slide QA repair for "${result.outline.title}" still repeats a deck layout; using safe fallback layout.`,
+              );
+            } else {
+              log.info(`Classroom slide QA repair succeeded for "${result.outline.title}"`);
+              return {
+                resultIndex,
+                result: {
+                  ...result,
+                  outline: regenerated.outline,
+                  content: candidateContent,
+                },
+              };
+            }
+          }
+
+          if (!regeneratedQa.pass) {
+            log.warn(
+              `Classroom slide QA repair for "${result.outline.title}" still has ${regeneratedQa.blockingIssueCount} blocking issue(s); using safe fallback layout.`,
+            );
+          }
+        }
+      } catch (err) {
+        log.warn(`Classroom slide QA repair generation failed for "${result.outline.title}":`, err);
+      }
+
+      const safeContent = createClassroomQASafeSlideContent(result.outline, issues);
+      const safeQa = auditGeneratedSlideContent(safeContent);
+      return {
+        resultIndex,
+        result: {
+          ...result,
+          content: { ...safeContent, qa: safeQa },
+        },
+      };
+    },
+    { concurrency: options.concurrency },
+  );
+
+  let repairedResults = [...contentResults];
+  for (const entry of repairedEntries) {
+    repairedResults[entry.resultIndex] = entry.result;
+  }
+
+  slideQaReport = auditClassroomSlideContents(repairedResults);
+  if (!slideQaReport.pass) {
+    const finalFallback = replaceBlockingSlidesWithQASafeFallback(repairedResults, slideQaReport);
+    if (finalFallback.replacementCount > 0) {
+      log.warn(
+        `${formatClassroomSlideQAError(
+          slideQaReport,
+        )}; forcing ${finalFallback.replacementCount} remaining slide(s) into QA safe fallback layouts.`,
+      );
+      repairedResults = finalFallback.contentResults;
+      slideQaReport = auditClassroomSlideContents(repairedResults);
+    }
+  }
+
+  if (!slideQaReport.pass) {
+    log.warn(formatClassroomSlideQAError(slideQaReport));
+  }
+
+  return { contentResults: repairedResults, slideQaReport };
 }
 
 function progressInRange(start: number, end: number, completed: number, total: number): number {
@@ -562,7 +1492,7 @@ export async function generateClassroom(
 
   // Phase A: Generate all scene content in parallel
   let contentProcessed = 0;
-  const contentResults = await pMap(
+  let contentResults = await pMap(
     outlines,
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
@@ -608,6 +1538,30 @@ export async function generateClassroom(
         .map((outline) => outline.title)
         .join(', ')}`,
     );
+  }
+
+  await options.onProgress?.({
+    step: 'qa_reviewing',
+    progress: SCENE_PROGRESS_CONTENT_DONE,
+    message: 'Checking generated slide layouts',
+    scenesGenerated: 0,
+    totalScenes: outlines.length,
+  });
+  const qaResult = await reviewAndRepairClassroomSlideQA(contentResults, aiCall, {
+    sceneContentOptions: {
+      agents,
+      languageDirective,
+      themeSelection: courseTheme,
+    },
+    onProgress: options.onProgress,
+    totalScenes: outlines.length,
+    concurrency,
+  });
+  contentResults = qaResult.contentResults;
+  const slideQaReport = qaResult.slideQaReport;
+  if (!slideQaReport.pass) {
+    const message = formatClassroomSlideQAError(slideQaReport);
+    throw new Error(message);
   }
 
   // Phase B: Generate all scene actions in parallel (content already available)
@@ -752,6 +1706,7 @@ export async function generateClassroom(
     scenes,
     scenesCount: scenes.length,
     createdAt: persisted.createdAt,
+    slideQaReport,
   };
 }
 
@@ -828,7 +1783,7 @@ export async function generateClassroomContinue(
 
   // Phase A: Generate all scene content in parallel
   let contentProcessed = 0;
-  const contentResults = await pMap(
+  let contentResults = await pMap(
     outlines,
     async (outline, index) => {
       const safeOutline = applyOutlineFallbacks(outline, true);
@@ -874,6 +1829,30 @@ export async function generateClassroomContinue(
         .map((outline) => outline.title)
         .join(', ')}`,
     );
+  }
+
+  await options.onProgress?.({
+    step: 'qa_reviewing',
+    progress: SCENE_PROGRESS_CONTENT_DONE,
+    message: 'Checking generated slide layouts',
+    scenesGenerated: 0,
+    totalScenes: outlines.length,
+  });
+  const qaResult = await reviewAndRepairClassroomSlideQA(contentResults, aiCall, {
+    sceneContentOptions: {
+      agents,
+      languageDirective,
+      themeSelection: courseTheme,
+    },
+    onProgress: options.onProgress,
+    totalScenes: outlines.length,
+    concurrency,
+  });
+  contentResults = qaResult.contentResults;
+  const slideQaReport = qaResult.slideQaReport;
+  if (!slideQaReport.pass) {
+    const message = formatClassroomSlideQAError(slideQaReport);
+    throw new Error(message);
   }
 
   // Phase B: Generate all scene actions in parallel (content already available)
@@ -1017,5 +1996,6 @@ export async function generateClassroomContinue(
     scenes,
     scenesCount: scenes.length,
     createdAt: persisted.createdAt,
+    slideQaReport,
   };
 }
