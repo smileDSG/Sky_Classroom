@@ -76,7 +76,7 @@ function directElementsResponse(backgroundColor = '#ffffff'): string {
         top: 50,
         width: 880,
         height: 76,
-        content: '<p style="font-size:32px;"><strong>Gradient Descent</strong></p>',
+        content: '<p style="font-size:32px;"><strong>梯度下降的核心直觉</strong></p>',
         defaultFontName: '',
         defaultColor: '#333333',
       },
@@ -97,7 +97,7 @@ function directElementsResponse(backgroundColor = '#ffffff'): string {
         width: 430,
         height: 130,
         content:
-          '<p style="font-size:18px;">- Loss surface</p><p style="font-size:18px;">- Gradient direction</p><p style="font-size:18px;">- Step size</p>',
+          '<p style="font-size:18px;">- 损失曲面表示模型误差</p><p style="font-size:18px;">- 梯度方向提示最快上升方向</p><p style="font-size:18px;">- 学习率决定每次移动步长</p>',
         defaultFontName: '',
         defaultColor: '#333333',
       },
@@ -107,11 +107,11 @@ function directElementsResponse(backgroundColor = '#ffffff'): string {
         left: 535,
         top: 185,
         width: 360,
-        height: 90,
+        height: 92,
         latex: '\\theta_{t+1}=\\theta_t-\\eta\\nabla J(\\theta_t)',
       },
     ],
-    remark: 'Explain gradient descent intuition.',
+    remark: '讲解梯度下降的直觉。',
   });
 }
 
@@ -125,6 +125,101 @@ function planShapedResponse(): string {
       latex: '\\theta_{t+1}=\\theta_t-\\eta\\nabla J(\\theta_t)',
     },
     takeaway: 'Step size controls update stability.',
+  });
+}
+
+function englishThinResponse(): string {
+  return JSON.stringify({
+    background: { type: 'solid', color: '#ffffff' },
+    elements: [
+      {
+        id: 'title_001',
+        type: 'text',
+        left: 70,
+        top: 60,
+        width: 860,
+        height: 70,
+        content:
+          '<p style="font-size:32px;"><strong>Advanced Features: Transactions & Lua</strong></p>',
+      },
+      {
+        id: 'body_001',
+        type: 'text',
+        left: 90,
+        top: 210,
+        width: 760,
+        height: 110,
+        content: '<p style="font-size:22px;">Transaction commands and atomic server-side logic</p>',
+      },
+    ],
+    remark: 'thin English response',
+  });
+}
+
+function chineseDenseResponse(): string {
+  return JSON.stringify({
+    background: { type: 'solid', color: '#ffffff' },
+    elements: [
+      {
+        id: 'title_001',
+        type: 'text',
+        left: 70,
+        top: 50,
+        width: 860,
+        height: 72,
+        content: '<p style="font-size:32px;"><strong>Redis 事务与 Lua 脚本</strong></p>',
+      },
+      {
+        id: 'flow_001',
+        type: 'text',
+        left: 75,
+        top: 150,
+        width: 390,
+        height: 150,
+        content:
+          '<p style="font-size:22px;"><strong>命令序列</strong></p><p style="font-size:20px;">MULTI 开启队列，SET/INCR 入队，EXEC 一次提交执行，DISCARD 可放弃队列。</p>',
+      },
+      {
+        id: 'case_001',
+        type: 'text',
+        left: 535,
+        top: 150,
+        width: 390,
+        height: 150,
+        content:
+          '<p style="font-size:22px;"><strong>适用场景</strong></p><p style="font-size:20px;">库存扣减、积分累计、排行榜更新等需要把多步操作看成一个整体。</p>',
+      },
+      {
+        id: 'warn_001',
+        type: 'text',
+        left: 75,
+        top: 330,
+        width: 390,
+        height: 96,
+        content:
+          '<p style="font-size:22px;"><strong>注意点</strong></p><p style="font-size:20px;">Redis 事务不自动回滚；需要用 WATCH 做乐观锁，或用 Lua 保证服务端原子执行。</p>',
+      },
+      {
+        id: 'summary_001',
+        type: 'text',
+        left: 535,
+        top: 330,
+        width: 390,
+        height: 96,
+        content:
+          '<p style="font-size:22px;"><strong>课堂小结</strong></p><p style="font-size:20px;">事务适合批量提交，Lua 适合封装复杂逻辑；选择依据是逻辑复杂度和并发风险。</p>',
+      },
+      {
+        id: 'formula_001',
+        type: 'latex',
+        left: 70,
+        top: 420,
+        width: 860,
+        height: 92,
+        latex: '\\text{MULTI} \\rightarrow \\text{commands} \\rightarrow \\text{EXEC}',
+      },
+    ],
+    remark: 'dense Chinese response',
   });
 }
 
@@ -258,7 +353,7 @@ function overlappingTextResponse(): string {
         top: 50,
         width: 880,
         height: 72,
-        content: '<p style="font-size:32px;"><strong>Gradient Descent</strong></p>',
+        content: '<p style="font-size:32px;"><strong>梯度下降的排版示例</strong></p>',
       },
       {
         id: 'overlap-a',
@@ -303,7 +398,7 @@ function nonOverlappingTextResponse(): string {
         top: 50,
         width: 880,
         height: 72,
-        content: '<p style="font-size:32px;"><strong>Gradient Descent</strong></p>',
+        content: '<p style="font-size:32px;"><strong>梯度下降的排版示例</strong></p>',
       },
       {
         id: 'panel-a',
@@ -321,7 +416,8 @@ function nonOverlappingTextResponse(): string {
         top: 220,
         width: 320,
         height: 80,
-        content: '<p style="font-size:20px;">Loss surface shows model error.</p>',
+        content:
+          '<p style="font-size:20px;">损失曲面表示模型当前误差，曲面越高说明预测偏差越大。</p>',
       },
       {
         id: 'panel-b',
@@ -339,7 +435,17 @@ function nonOverlappingTextResponse(): string {
         top: 220,
         width: 320,
         height: 80,
-        content: '<p style="font-size:20px;">Gradient direction tells us how to move.</p>',
+        content:
+          '<p style="font-size:20px;">梯度方向提示误差上升最快的方向，更新时要沿反方向移动。</p>',
+      },
+      {
+        id: 'formula',
+        type: 'latex',
+        left: 100,
+        top: 370,
+        width: 800,
+        height: 90,
+        latex: '\\theta_{t+1}=\\theta_t-\\eta\\nabla J(\\theta_t)',
       },
     ],
     remark: 'fixed layout',
@@ -357,11 +463,48 @@ describe('OpenMAIC original classroom slide generation', () => {
     expect(result?.elements.length).toBeGreaterThanOrEqual(4);
     expect(lastUser()).toContain('# Generation Requirements');
     expect(lastUser()).toContain('generate a complete Canvas/PPT component');
+    expect(lastUser()).toContain('使用中文进行教学');
     expect(lastUser()).not.toContain('Course Theme');
     expect(lastUser()).not.toContain('themeDirective');
     expect(lastUser()).not.toContain('OpenMAIC Classroom Slide Directive');
     expect(lastUser()).not.toContain('slides.gif classic classroom composition');
     expect(lastSystem()).not.toContain('Slide Richness Contract');
+  });
+
+  it('forces Chinese slide text even when upstream language directive says English', async () => {
+    const { aiCall, lastUser } = makeAiCall(directElementsResponse());
+
+    const result = await generateSlideContent(
+      makeOutline(),
+      aiCall,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'Use English.',
+    );
+
+    expect(result).not.toBeNull();
+    expect(lastUser()).toContain('所有可见文字必须使用简体中文');
+    expect(lastUser()).toContain('把英文标题、英文小节名、英文解释翻译成中文');
+    expect(lastUser()).not.toContain('Use English.');
+  });
+
+  it('passes scene order into the slide prompt for deck-level layout diversity', async () => {
+    const { aiCall, lastUser } = makeAiCall(directElementsResponse());
+
+    const result = await generateSlideContent({ ...makeOutline(), order: 7 }, aiCall);
+
+    expect(result).not.toBeNull();
+    expect(lastUser()).toContain('Scene Order');
+    expect(lastUser()).toContain('7');
+    expect(lastUser()).toContain('Deck diversity hard rules');
+    expect(lastUser()).toContain('Do not reuse the same main composition');
+    expect(lastUser()).toContain('OpenMAIC golden sample style contract');
+    expect(lastUser()).toContain('Page-specific composition for this page');
+    expect(lastUser()).toContain('center-stage');
+    expect(lastUser()).toContain('Do not use orange bars');
   });
 
   it('keeps model-generated elements directly and only applies OpenMAIC post-processing', async () => {
@@ -372,9 +515,14 @@ describe('OpenMAIC original classroom slide generation', () => {
 
     expect(result?.background).toEqual({ type: 'solid', color: '#ffffff' });
     expect(elements.some((element) => element.id === 'title_001')).toBe(false);
-    expect(elements.every((element) => /^.+_[\w-]{8}$/.test(element.id))).toBe(true);
+    expect(
+      elements.every(
+        (element) =>
+          /^.+_[\w-]{8}$/.test(element.id) || element.id.startsWith('polish_deck_signature_'),
+      ),
+    ).toBe(true);
     expect(elements.some((element) => element.id.startsWith('formula_list_'))).toBe(false);
-    expect(elements.some((element) => element.id.startsWith('polish_'))).toBe(false);
+    expect(elements.some((element) => element.id.startsWith('polish_ref_'))).toBe(false);
 
     const latex = elements.find((element) => element.type === 'latex') as
       | (GeneratedSlideContent['elements'][number] & { html?: string; fixedRatio?: boolean })
@@ -382,7 +530,9 @@ describe('OpenMAIC original classroom slide generation', () => {
     expect(latex?.html).toContain('katex');
     expect(latex?.fixedRatio).toBe(true);
 
-    const shape = elements.find((element) => element.type === 'shape') as
+    const shape = elements.find(
+      (element) => element.type === 'shape' && !element.id.startsWith('polish_deck_signature_'),
+    ) as
       | (GeneratedSlideContent['elements'][number] & { viewBox?: unknown; fixedRatio?: boolean })
       | undefined;
     expect(shape?.viewBox).toBe('0 0 880 3');
@@ -412,13 +562,58 @@ describe('OpenMAIC original classroom slide generation', () => {
   it('routes the OpenMAIC-main scene branch through the original element generator', async () => {
     const { aiCall, lastUser, callCount } = makeAiCall(directElementsResponse());
 
-    const result = await generateOpenMaicMainSceneContent(makeOutline(), aiCall);
+    const result = await generateOpenMaicMainSceneContent(makeOutline(), aiCall, {
+      languageDirective: 'Use English.',
+    });
 
     expect(result).not.toBeNull();
     expect(callCount()).toBe(1);
     expect(lastUser()).toContain('# Generation Requirements');
     expect(lastUser()).not.toContain('OpenMAIC Classroom Slide Directive');
-    expect((result as GeneratedSlideContent).elements).toHaveLength(4);
+    expect(lastUser()).not.toContain('Use English.');
+    expect((result as GeneratedSlideContent).elements.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('forces Chinese in the OpenMAIC edit scene branch too', async () => {
+    const { aiCall, lastUser } = makeAiCall(directElementsResponse());
+
+    const result = await generateOpenMaicMainSceneContent(makeOutline(), aiCall, {
+      languageDirective: 'Use English.',
+      editDirective: '重新排版并补充教学内容',
+      baselineContent: {
+        elements: [],
+        background: { type: 'solid', color: '#ffffff' },
+        remark: 'baseline',
+      },
+    });
+
+    expect(result).not.toBeNull();
+    expect(lastUser()).toContain('All visible slide text must follow this language directive');
+    expect(lastUser()).not.toContain('Use English.');
+    expect((result as GeneratedSlideContent).qa).toBeDefined();
+  });
+
+  it('retries OpenMAIC edit branch content when QA blocks the first draft', async () => {
+    const { aiCall, users, callCount } = makeAiCallSequence([
+      englishThinResponse(),
+      chineseDenseResponse(),
+    ]);
+
+    const result = await generateOpenMaicMainSceneContent(makeOutline(), aiCall, {
+      editDirective: '重新排版并补充教学内容',
+      baselineContent: {
+        elements: [],
+        background: { type: 'solid', color: '#ffffff' },
+        remark: 'baseline',
+      },
+    });
+
+    expect(result).not.toBeNull();
+    expect(callCount()).toBe(2);
+    expect(users()[1]).toContain('OPENMAIC QA CONTENT RETRY');
+    expect(users()[1]).toContain('mostly_non_chinese_text');
+    expect((result as GeneratedSlideContent).qa?.pass).toBe(true);
+    expect((result as GeneratedSlideContent).remark).toBe('dense Chinese response');
   });
 
   it('repairs plan-shaped responses by retrying the original element schema', async () => {
@@ -451,6 +646,23 @@ describe('OpenMAIC original classroom slide generation', () => {
     expect(users()[1]).toContain('readable_element_overlap');
     expect(auditSlideLayout(result?.elements ?? [])).toEqual([]);
     expect(result?.remark).toBe('fixed layout');
+  });
+
+  it('retries OpenMAIC slide content when language or density QA blocks the first draft', async () => {
+    const { aiCall, users, callCount } = makeAiCallSequence([
+      englishThinResponse(),
+      chineseDenseResponse(),
+    ]);
+
+    const result = await generateSlideContent(makeOutline(), aiCall);
+
+    expect(result).not.toBeNull();
+    expect(callCount()).toBe(2);
+    expect(users()[1]).toContain('OPENMAIC QA CONTENT RETRY');
+    expect(users()[1]).toContain('mostly_non_chinese_text');
+    expect(users()[1]).toContain('thin_teaching_content');
+    expect(result?.qa?.pass).toBe(true);
+    expect(result?.remark).toBe('dense Chinese response');
   });
 
   it('normalizes messy OpenMAIC element coordinates before classroom playback', async () => {

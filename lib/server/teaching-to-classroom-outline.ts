@@ -13,7 +13,10 @@ import type { OutlineOnlyResult } from '@/lib/server/classroom-generation';
 import type { AgentInfo } from '@/lib/generation/pipeline-types';
 import { getDefaultAgents } from '@/lib/orchestration/registry/store';
 import { buildVideoManifestFromOutlines } from '@/lib/media/video-manifest';
-import { DEFAULT_LANGUAGE_DIRECTIVE } from '@/lib/generation/outline-generator';
+import {
+  DEFAULT_LANGUAGE_DIRECTIVE,
+  mergeSparseSlideOutlines,
+} from '@/lib/generation/outline-generator';
 import type { TeachingToClassroomConfig } from '@/lib/teaching/classroom-config-recommendation';
 
 function createId(prefix: string): string {
@@ -40,9 +43,7 @@ function sectionToSceneOutline(data: GeneratedSectionData, index: number): Scene
   const structuredKeyPoints: string[] = [];
   if (structured) {
     if (structured.type === 'concept' && structured.cards?.length) {
-      structuredKeyPoints.push(
-        ...structured.cards.map((c) => truncate(`${c.title}：${c.desc}`)),
-      );
+      structuredKeyPoints.push(...structured.cards.map((c) => truncate(`${c.title}：${c.desc}`)));
     } else if (structured.type === 'case' && structured.scenarios?.length) {
       structuredKeyPoints.push(...structured.scenarios.map((s) => truncate(`例题：${s.problem}`)));
     } else if (structured.type === 'process' && structured.steps?.length) {
@@ -50,9 +51,12 @@ function sectionToSceneOutline(data: GeneratedSectionData, index: number): Scene
         ...structured.steps.map((s) => truncate(`${s.num}. ${s.title}：${s.desc}`)),
       );
     } else if (structured.type === 'formula') {
-      if (structured.mainFormula) structuredKeyPoints.push(truncate(`公式：${structured.mainFormula}`));
-      if (structured.derivation) structuredKeyPoints.push(truncate(`推导：${structured.derivation}`));
-      if (structured.application) structuredKeyPoints.push(truncate(`应用：${structured.application}`));
+      if (structured.mainFormula)
+        structuredKeyPoints.push(truncate(`公式：${structured.mainFormula}`));
+      if (structured.derivation)
+        structuredKeyPoints.push(truncate(`推导：${structured.derivation}`));
+      if (structured.application)
+        structuredKeyPoints.push(truncate(`应用：${structured.application}`));
     } else if (structured.type === 'summary' && structured.keyPoints?.length) {
       structuredKeyPoints.push(...structured.keyPoints.map((kp) => truncate(kp)));
     }
@@ -99,9 +103,7 @@ function resolveSelectedAgents(config: TeachingToClassroomConfig): AgentInfo[] {
   const selectedIds = [config.selectedTeacherId, ...config.selectedStudentIds];
   const uniqueIds = Array.from(new Set(selectedIds));
   const map = new Map(allDefaults.map((a) => [a.id, a]));
-  return uniqueIds
-    .map((id) => map.get(id))
-    .filter((a): a is AgentInfo => a !== undefined);
+  return uniqueIds.map((id) => map.get(id)).filter((a): a is AgentInfo => a !== undefined);
 }
 
 /**
@@ -116,9 +118,10 @@ export function buildOutlineOnlyResultFromTeachingJob(
   const sections = job.sections ?? [];
   const plan = job.plan;
 
-  const outlines: SceneOutline[] = sections.map((sectionData, index) =>
+  const rawOutlines: SceneOutline[] = sections.map((sectionData, index) =>
     sectionToSceneOutline(sectionData, index),
   );
+  const outlines = mergeSparseSlideOutlines(rawOutlines);
 
   const agents = resolveSelectedAgents(config);
   const stageId = createId('stage');

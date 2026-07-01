@@ -30,6 +30,8 @@ import { postProcessInteractiveHtml } from './interactive-post-processor';
 import { parseActionsFromStructuredOutput } from './action-parser';
 import { parseJsonResponse } from './json-repair';
 import { generateSlideContent as generateStrictOpenMaicSlideContent } from './scene-content/slide-generator';
+import { auditGeneratedSlideContent } from './scene-content/classroom-slide-qa';
+import { buildSlideStyleContract } from './scene-content/slide-style-contract';
 import {
   buildCourseContext,
   formatAgentsForPrompt,
@@ -769,17 +771,20 @@ async function generateSlideContent(
   const canvasHeight = 562.5;
 
   const teacherContext = formatTeacherPersonaForPrompt(agents);
+  const effectiveLanguageDirective = DEFAULT_LANGUAGE_DIRECTIVE;
 
   const prompts = buildPrompt(PROMPT_IDS.SLIDE_CONTENT, {
     title: outline.title,
+    order: outline.order,
     description: outline.description,
     keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
+    layoutContract: buildSlideStyleContract(outline),
     elements: '（根据要点自动生成）',
     assignedImages: assignedImagesText,
     canvas_width: canvasWidth,
     canvas_height: canvasHeight,
     teacherContext,
-    languageDirective: languageDirective || '',
+    languageDirective: effectiveLanguageDirective,
     imageElementEnabled,
     generatedImageEnabled,
     generatedVideoEnabled,
@@ -830,11 +835,13 @@ async function generateSlideContent(
       `You are EDITING this existing slide, not creating a new one from scratch.${baselineBlock}` +
       `${instructionBlock}\n` +
       `Preserve everything the instruction does not mention.${imageRule} ` +
+      `All visible slide text must follow this language directive: ${effectiveLanguageDirective}. ` +
+      `Translate any English baseline title, section label, or explanation into Chinese unless it is a technical token inside a Chinese sentence. ` +
       `Return the full updated slide content in the same schema.`;
   }
 
   const response = await aiCall(prompts.system, userPrompt, visionImages);
-  const generatedData = parseJsonResponse<GeneratedSlideData>(response);
+  let generatedData = parseJsonResponse<GeneratedSlideData>(response);
 
   if (!generatedData || !generatedData.elements || !Array.isArray(generatedData.elements)) {
     log.error(`Failed to parse AI response for: ${outline.title}`);
@@ -900,10 +907,98 @@ async function generateSlideContent(
     }
   }
 
-  return {
+  let slideContent: GeneratedSlideContent = {
     elements: processedElements,
     background,
     remark: generatedData.remark || outline.description,
+  };
+  let slideQa = auditGeneratedSlideContent(slideContent);
+
+  if (!slideQa.pass) {
+    const blockingQaIssues = slideQa.issues.filter((issue) => issue.severity === 'blocking');
+    log.warn(
+      `OpenMAIC edit slide QA found ${blockingQaIssues.length} blocking content issue(s) for "${outline.title}"; retrying content design.`,
+    );
+    const retryPrompt = `${userPrompt}
+
+## OPENMAIC QA CONTENT RETRY
+
+Your previous slide JSON failed the classroom quality gate. Regenerate the full slide as pure JSON.
+
+Blocking issues:
+${blockingQaIssues
+  .map((issue, index) => {
+    const element = issue.elementId ? ` element=${issue.elementId}` : '';
+    return `${index + 1}. ${issue.type}${element}: ${issue.detail}`;
+  })
+  .join('\n')}
+
+Previous slide JSON:
+${JSON.stringify(generatedData).slice(0, 12000)}
+
+Hard content rules for the retry:
+- All visible slide text must be Simplified Chinese. Keep English technical tokens only inside Chinese explanations.
+- Replace generic labels such as "要点一", "要点二", "Step 1", or "Advanced Features" with concrete Chinese teaching headings.
+- Do not make a thin page. Excluding the title/subtitle, provide at least 4 concrete teaching units.
+- If the topic is programming or Redis, use a command sequence, scenario explanation, caution point, and summary.
+- Include a semantic visual anchor when content is short: table, flow, command diagram, formula, or code block.
+- Keep all readable content inside the safe area: left >= 48, right <= 952, top >= 48, bottom <= 514.5.
+- Return the same top-level schema: { "background": ..., "elements": [...], "remark": "..." }.
+- Return pure JSON only.`;
+
+    const retryResponse = await aiCall(prompts.system, retryPrompt, visionImages);
+    const retryData = parseJsonResponse<GeneratedSlideData>(retryResponse);
+    if (retryData?.elements && Array.isArray(retryData.elements)) {
+      const retryFixedElements = fixElementDefaults(retryData.elements, assignedImages);
+      const retryLatexProcessedElements = processLatexElements(retryFixedElements);
+      const retryResolvedElements = resolveImageIds(
+        retryLatexProcessedElements,
+        imageMapping,
+        generatedMediaMapping,
+      );
+      const retryVideoNormalizedElements = normalizeGeneratedVideoRefs(
+        retryResolvedElements,
+        outline.mediaGenerations,
+      );
+      const retryProcessedElements: PPTElement[] = retryVideoNormalizedElements.map((el) => ({
+        ...el,
+        id: `${el.type}_${nanoid(8)}`,
+        rotate: 0,
+      })) as PPTElement[];
+
+      let retryBackground: SlideBackground | undefined;
+      if (retryData.background) {
+        if (retryData.background.type === 'solid' && retryData.background.color) {
+          retryBackground = { type: 'solid', color: retryData.background.color };
+        } else if (retryData.background.type === 'gradient' && retryData.background.gradient) {
+          retryBackground = {
+            type: 'gradient',
+            gradient: retryData.background.gradient,
+          };
+        }
+      }
+
+      const retrySlideContent: GeneratedSlideContent = {
+        elements: retryProcessedElements,
+        background: retryBackground,
+        remark: retryData.remark || outline.description,
+      };
+      const retryQa = auditGeneratedSlideContent(retrySlideContent);
+      if (retryQa.blockingIssueCount <= slideQa.blockingIssueCount) {
+        generatedData = retryData;
+        slideContent = retrySlideContent;
+        slideQa = retryQa;
+      }
+    } else {
+      log.warn(
+        `OpenMAIC edit slide content QA retry for "${outline.title}" did not return valid elements.`,
+      );
+    }
+  }
+
+  return {
+    ...slideContent,
+    qa: slideQa,
   };
 }
 

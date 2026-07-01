@@ -12,8 +12,18 @@ import { useWhiteboardHistoryStore } from '@/lib/store/whiteboard-history';
 import { createLogger } from '@/lib/logger';
 import { MediaStageProvider } from '@/lib/contexts/media-stage-context';
 import { generateMediaForOutlines } from '@/lib/media/media-orchestrator';
+import { shouldUseServerClassroom } from '@/lib/classroom/server-classroom-sync';
+import type { Scene, Stage as ClassroomStage } from '@/lib/types/stage';
 
 const log = createLogger('Classroom');
+
+interface ServerClassroomPayload {
+  id?: string;
+  stage: ClassroomStage;
+  scenes: Scene[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export default function ClassroomDetailPage() {
   const params = useParams();
@@ -36,35 +46,51 @@ export default function ClassroomDetailPage() {
     try {
       await loadFromStorage(classroomId);
 
-      // If IndexedDB had no data for this URL id, try server-side storage (API-generated classrooms).
-      if (useStageStore.getState().stage?.id !== classroomId) {
-        log.info('No IndexedDB data, trying server-side storage for:', classroomId);
-        try {
-          const res = await fetch(`/api/classroom?id=${encodeURIComponent(classroomId)}`);
-          if (res.ok) {
-            const json = await res.json();
-            if (json.success && json.classroom) {
-              const { stage, scenes } = json.classroom;
-              useStageStore.getState().setStage(stage);
-              useStageStore.setState({
-                scenes,
-                currentSceneId: scenes[0]?.id ?? null,
-              });
-              log.info('Loaded from server-side storage:', classroomId);
+      // Server-side JSON is the source of truth for API-generated classrooms.
+      // Always check it because a stale IndexedDB copy can otherwise hide repaired classrooms.
+      try {
+        const res = await fetch(`/api/classroom?id=${encodeURIComponent(classroomId)}`, {
+          cache: 'no-store',
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const classroom = json.classroom as ServerClassroomPayload | undefined;
+          const localStage = useStageStore.getState().stage;
 
-              // Hydrate server-generated agents into IndexedDB + registry.
-              // Don't set selectedAgentIds here — the general agent
-              // restoration logic below (Path 2) handles it uniformly.
-              if (stage.generatedAgentConfigs?.length) {
-                const { saveGeneratedAgents } = await import('@/lib/orchestration/registry/store');
-                await saveGeneratedAgents(stage.id, stage.generatedAgentConfigs);
-                log.info('Hydrated server-generated agents for stage:', stage.id);
-              }
+          if (json.success && classroom && shouldUseServerClassroom(classroom, localStage)) {
+            const { stage, scenes } = classroom;
+            const localCurrentSceneId = useStageStore.getState().currentSceneId;
+            const nextCurrentSceneId = scenes.some((scene) => scene.id === localCurrentSceneId)
+              ? localCurrentSceneId
+              : (scenes[0]?.id ?? null);
+            useStageStore.setState((state) => ({
+              stage,
+              scenes,
+              currentSceneId: nextCurrentSceneId,
+              chats: [],
+              outlines: [],
+              generatingOutlines: [],
+              generationEpoch: state.generationEpoch + 1,
+              generationStatus: 'idle' as const,
+              currentGeneratingOrder: -1,
+              failedOutlines: [],
+            }));
+            await useStageStore.getState().saveToStorage();
+            log.info('Loaded from server-side storage:', classroomId);
+
+            // Hydrate server-generated agents into IndexedDB + registry.
+            // Don't set selectedAgentIds here — the general agent
+            // restoration logic below (Path 2) handles it uniformly.
+            if (stage.generatedAgentConfigs?.length) {
+              const { saveGeneratedAgents } = await import('@/lib/orchestration/registry/store');
+              await saveGeneratedAgents(stage.id, stage.generatedAgentConfigs);
+              log.info('Hydrated server-generated agents for stage:', stage.id);
             }
           }
-        } catch (fetchErr) {
-          log.warn('Server-side storage fetch failed:', fetchErr);
         }
+      } catch (fetchErr) {
+        log.warn('Server-side storage fetch failed:', fetchErr);
       }
 
       // Restore completed media generation tasks from IndexedDB

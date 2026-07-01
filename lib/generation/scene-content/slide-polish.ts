@@ -1,6 +1,10 @@
 import type { GeneratedSlideData } from '@/lib/generation/pipeline-types';
 import type { PPTElement, PPTTextElement, Slide } from '@/lib/types/slides';
-import { repairSlideLayout } from '@/lib/slides/agent/layout-guard-agent';
+import {
+  auditSlideLayout,
+  repairSlideLayout,
+  type LayoutGuardIssue,
+} from '@/lib/slides/agent/layout-guard-agent';
 import type { ClassroomThemeSelection } from '@/lib/generation/classroom-design-dna';
 
 const CANVAS_WIDTH = 1000;
@@ -40,13 +44,25 @@ function withHash(color: string | undefined, fallback: string): string {
   return color.startsWith('#') ? color : `#${color}`;
 }
 
+function avoidWarmAccent(color: string): string {
+  const normalized = color.toLowerCase();
+  if (
+    ['#f97316', '#f59e0b', '#ed7d31', '#ffc000', '#fef3e2', '#fff7ed', '#7c3f00'].includes(
+      normalized,
+    )
+  ) {
+    return '#38bdf8';
+  }
+  return color;
+}
+
 function getPolishTheme(context?: SlidePolishContext): SlidePolishTheme {
   const palette = context?.themeSelection?.palette;
   return {
     background: withHash(palette?.contentBg, '#ffffff'),
     panel: withHash(palette?.accentLight, '#f5f9ff'),
     accent: withHash(palette?.accent, '#2f80d1'),
-    accentSecondary: withHash(palette?.accentSecondary, '#f97316'),
+    accentSecondary: avoidWarmAccent(withHash(palette?.accentSecondary, '#38bdf8')),
     textPrimary: withHash(palette?.textPrimary, '#17233c'),
     textBody: withHash(palette?.textBody, '#263244'),
   };
@@ -241,6 +257,53 @@ function lineElement(
     color,
     points: ['', ''],
     ...extra,
+  };
+}
+
+function tableElement(
+  id: string,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  rows: string[][],
+  colWidths: number[],
+  themeColor = '#2f80d1',
+): SlideLikeElement & Record<string, unknown> {
+  return {
+    id,
+    type: 'table',
+    left,
+    top,
+    width,
+    height,
+    rotate: 0,
+    outline: { color: '#dbe3ef', width: 1, style: 'solid' },
+    theme: {
+      color: themeColor,
+      rowHeader: true,
+      rowFooter: false,
+      colHeader: false,
+      colFooter: false,
+    },
+    colWidths,
+    cellMinHeight: Math.max(34, Math.floor(height / Math.max(1, rows.length))),
+    data: rows.map((row, rowIndex) =>
+      row.map((text, cellIndex) => ({
+        id: `${id}_r${rowIndex}_c${cellIndex}`,
+        colspan: 1,
+        rowspan: 1,
+        text,
+        style: {
+          bold: rowIndex === 0 || cellIndex === 0,
+          color: rowIndex === 0 || cellIndex === 0 ? '#17233c' : '#263244',
+          backcolor: rowIndex === 0 ? '#eff6ff' : '#ffffff',
+          fontsize: rowIndex === 0 ? '17' : '16',
+          fontname: FONT_STACK,
+          align: 'left',
+        },
+      })),
+    ),
   };
 }
 
@@ -574,8 +637,10 @@ function referenceHeaderElements(
   title: string,
   subtitle: string,
   theme: SlidePolishTheme,
+  context?: SlidePolishContext,
 ): Array<SlideLikeElement & Record<string, unknown>> {
-  return [
+  const visualVariant = referenceVisualVariant(prefix, context);
+  const headerElements = [
     textElement(
       `${prefix}_title`,
       `<strong>${title}</strong>`,
@@ -602,6 +667,226 @@ function referenceHeaderElements(
     ),
     shapeElement(`${prefix}_rule`, 82, 188, 836, 3, theme.accent, 0.95),
   ];
+
+  return [...headerElements, ...referenceHeaderVisualSignature(prefix, theme, visualVariant)];
+}
+
+function referenceVisualVariant(prefix: string, context?: SlidePolishContext): number {
+  if (typeof context?.order === 'number' && Number.isFinite(context.order) && context.order > 0) {
+    return (Math.floor(context.order) - 1) % 6;
+  }
+  return stableHashNumber(`${prefix}|${context?.title ?? ''}`) % 6;
+}
+
+function referenceHeaderVisualSignature(
+  prefix: string,
+  theme: SlidePolishTheme,
+  variant: number,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  if (variant === 1) {
+    return [
+      circleElement(`${prefix}_visual_dot_0`, 50, 52, 12, theme.accent, 0.95),
+      circleElement(`${prefix}_visual_dot_1`, 50, 78, 12, theme.accentSecondary, 0.85),
+      circleElement(`${prefix}_visual_dot_2`, 50, 104, 12, theme.accent, 0.7),
+    ];
+  }
+
+  if (variant === 2) {
+    return [
+      shapeElement(`${prefix}_visual_top_rail`, 82, 28, 278, 4, theme.accentSecondary, 0.9),
+      shapeElement(`${prefix}_visual_top_tick`, 378, 28, 46, 4, theme.accent, 0.8),
+    ];
+  }
+
+  if (variant === 3) {
+    return [
+      shapeElement(`${prefix}_visual_corner_a`, 874, 28, 44, 4, theme.accent, 0.9),
+      shapeElement(`${prefix}_visual_corner_b`, 914, 32, 4, 46, theme.accentSecondary, 0.85),
+    ];
+  }
+
+  if (variant === 4) {
+    return [
+      shapeElement(`${prefix}_visual_subtitle_bar`, 82, 170, 226, 4, theme.accentSecondary, 0.85),
+      shapeElement(`${prefix}_visual_subtitle_tail`, 324, 170, 58, 4, theme.accent, 0.75),
+    ];
+  }
+
+  if (variant === 5) {
+    return [
+      shapeElement(`${prefix}_visual_bottom_mark`, 782, 508, 136, 4, theme.accentSecondary, 0.85),
+      circleElement(`${prefix}_visual_bottom_dot`, 752, 504, 12, theme.accent, 0.9),
+    ];
+  }
+
+  return [shapeElement(`${prefix}_visual_side_rule`, 944, 54, 6, 96, theme.accentSecondary, 0.9)];
+}
+
+function deckDiversitySignatureVariant(context?: SlidePolishContext): number | null {
+  const order = context?.order;
+  if (typeof order !== 'number' || !Number.isFinite(order) || order <= 0) return null;
+  return ((Math.floor(order) - 1) % 18) + 1;
+}
+
+function deckDiversitySignatureElements(
+  theme: SlidePolishTheme,
+  variant: number,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const prefix = `polish_deck_signature_v${variant}`;
+
+  if (variant === 1) {
+    return [
+      shapeElement(`${prefix}_rail`, 50, 214, 8, 232, theme.accent, 0.55),
+      shapeElement(`${prefix}_cap`, 50, 190, 58, 8, theme.accentSecondary, 0.45),
+    ];
+  }
+
+  if (variant === 2) {
+    return [
+      shapeElement(`${prefix}_top`, 620, 30, 236, 8, theme.accentSecondary, 0.5),
+      circleElement(`${prefix}_dot`, 874, 26, 14, theme.accent, 0.6),
+    ];
+  }
+
+  if (variant === 3) {
+    return [
+      shapeElement(`${prefix}_corner_x`, 894, 206, 8, 156, theme.accent, 0.45),
+      shapeElement(`${prefix}_corner_y`, 828, 206, 74, 8, theme.accentSecondary, 0.42),
+    ];
+  }
+
+  if (variant === 4) {
+    return [
+      shapeElement(`${prefix}_bottom`, 142, 506, 268, 7, theme.accentSecondary, 0.5),
+      shapeElement(`${prefix}_bottom_tail`, 430, 506, 66, 7, theme.accent, 0.42),
+    ];
+  }
+
+  if (variant === 5) {
+    return [
+      circleElement(`${prefix}_node_a`, 48, 56, 14, theme.accent, 0.6),
+      circleElement(`${prefix}_node_b`, 72, 56, 14, theme.accentSecondary, 0.52),
+      shapeElement(`${prefix}_node_line`, 96, 61, 96, 4, theme.accent, 0.35),
+    ];
+  }
+
+  if (variant === 6) {
+    return [
+      shapeElement(`${prefix}_side_block`, 928, 382, 18, 86, theme.accentSecondary, 0.42),
+      shapeElement(`${prefix}_side_rule`, 894, 464, 52, 6, theme.accent, 0.5),
+    ];
+  }
+
+  if (variant === 7) {
+    return [
+      shapeElement(`${prefix}_left_step_a`, 48, 248, 44, 6, theme.accentSecondary, 0.42),
+      shapeElement(`${prefix}_left_step_b`, 48, 276, 76, 6, theme.accent, 0.34),
+      shapeElement(`${prefix}_left_step_c`, 48, 304, 106, 6, theme.accentSecondary, 0.28),
+    ];
+  }
+
+  if (variant === 8) {
+    return [
+      shapeElement(`${prefix}_top_dash_a`, 694, 48, 88, 5, theme.accent, 0.36),
+      shapeElement(`${prefix}_top_dash_b`, 802, 48, 116, 5, theme.accentSecondary, 0.36),
+      circleElement(`${prefix}_top_dot`, 646, 42, 16, theme.accentSecondary, 0.4),
+    ];
+  }
+
+  if (variant === 9) {
+    return [
+      shapeElement(`${prefix}_right_ladder_a`, 918, 224, 6, 68, theme.accent, 0.32),
+      shapeElement(`${prefix}_right_ladder_b`, 886, 290, 38, 6, theme.accentSecondary, 0.38),
+      shapeElement(`${prefix}_right_ladder_c`, 858, 318, 66, 6, theme.accent, 0.28),
+    ];
+  }
+
+  if (variant === 10) {
+    return [
+      shapeElement(`${prefix}_baseline_a`, 78, 488, 156, 5, theme.accentSecondary, 0.34),
+      shapeElement(`${prefix}_baseline_b`, 252, 488, 84, 5, theme.accent, 0.32),
+      circleElement(`${prefix}_baseline_dot`, 354, 482, 16, theme.accentSecondary, 0.4),
+    ];
+  }
+
+  if (variant === 11) {
+    return [
+      circleElement(`${prefix}_halo_a`, 870, 86, 18, theme.accent, 0.34),
+      circleElement(`${prefix}_halo_b`, 898, 86, 18, theme.accentSecondary, 0.34),
+      shapeElement(`${prefix}_halo_rule`, 766, 95, 84, 4, theme.accent, 0.28),
+    ];
+  }
+
+  if (variant === 12) {
+    return [
+      shapeElement(`${prefix}_side_block`, 928, 382, 18, 86, theme.accentSecondary, 0.42),
+      shapeElement(`${prefix}_side_rule`, 872, 382, 56, 6, theme.accent, 0.34),
+      shapeElement(`${prefix}_side_rule_low`, 850, 468, 96, 6, theme.accentSecondary, 0.3),
+    ];
+  }
+
+  if (variant === 13) {
+    return [
+      shapeElement(`${prefix}_top_left_a`, 82, 34, 142, 5, theme.accentSecondary, 0.36),
+      shapeElement(`${prefix}_top_left_b`, 242, 34, 64, 5, theme.accent, 0.3),
+      circleElement(`${prefix}_top_left_dot`, 322, 28, 16, theme.accentSecondary, 0.34),
+    ];
+  }
+
+  if (variant === 14) {
+    return [
+      circleElement(`${prefix}_right_dot_a`, 918, 212, 14, theme.accent, 0.32),
+      circleElement(`${prefix}_right_dot_b`, 918, 246, 14, theme.accentSecondary, 0.34),
+      circleElement(`${prefix}_right_dot_c`, 918, 280, 14, theme.accent, 0.24),
+    ];
+  }
+
+  if (variant === 15) {
+    return [
+      shapeElement(`${prefix}_corner_low_x`, 776, 504, 140, 5, theme.accentSecondary, 0.34),
+      shapeElement(`${prefix}_corner_low_y`, 916, 446, 5, 63, theme.accent, 0.3),
+    ];
+  }
+
+  if (variant === 16) {
+    return [
+      circleElement(`${prefix}_left_dot_a`, 54, 382, 14, theme.accentSecondary, 0.34),
+      circleElement(`${prefix}_left_dot_b`, 54, 414, 14, theme.accent, 0.28),
+      shapeElement(`${prefix}_left_dot_rule`, 76, 420, 86, 4, theme.accentSecondary, 0.26),
+    ];
+  }
+
+  if (variant === 17) {
+    return [
+      shapeElement(`${prefix}_top_center_a`, 402, 28, 96, 4, theme.accent, 0.28),
+      shapeElement(`${prefix}_top_center_b`, 518, 28, 128, 4, theme.accentSecondary, 0.34),
+      circleElement(`${prefix}_top_center_dot`, 666, 22, 16, theme.accent, 0.3),
+    ];
+  }
+
+  return [
+    shapeElement(`${prefix}_bottom_center_a`, 408, 506, 124, 5, theme.accentSecondary, 0.34),
+    shapeElement(`${prefix}_bottom_center_b`, 552, 506, 72, 5, theme.accent, 0.28),
+    circleElement(`${prefix}_bottom_center_dot`, 636, 500, 16, theme.accentSecondary, 0.3),
+  ];
+}
+
+function addDeckDiversitySignature<T extends SlideLikeElement>(
+  elements: T[],
+  context?: SlidePolishContext,
+): T[] {
+  if (elements.some((element) => element.id?.startsWith('polish_deck_signature_'))) {
+    return elements;
+  }
+  if (elements.some((element) => element.id?.startsWith('polish_ref_redis_internal_'))) {
+    return elements;
+  }
+
+  const variant = deckDiversitySignatureVariant(context);
+  if (variant === null) return elements;
+
+  const theme = getPolishTheme(context);
+  return [...deckDiversitySignatureElements(theme, variant), ...elements] as T[];
 }
 
 function equationRelationReferenceLayout(
@@ -1178,6 +1463,23 @@ function getCanonicalSubtitle(elements: SlideLikeElement[], title: string): stri
   return subtitle ?? '把核心概念、方法和例子整理成稳定的课堂页面';
 }
 
+function canonicalTopicLabel(title: string, fallback = '本页'): string {
+  const plain = stripHtml(title)
+    .replace(/[?？].*$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const parts = plain
+    .split(/[：:]/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const topic = parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  return escapeHtmlShort(topic || fallback, 12);
+}
+
+function stepPanelHeading(title: string, suffix: string): string {
+  return `${canonicalTopicLabel(title)}${suffix}`;
+}
+
 function isLikelyCanonicalHeading(line: string): boolean {
   const compact = line.replace(/\s+/g, '');
   if (compact.length < 3 || compact.length > 18) return false;
@@ -1231,10 +1533,47 @@ function extractCanonicalBlocks(
     }
   }
 
-  return blocks.filter((block) => block.body.length >= 3).slice(0, 5);
+  return normalizeCanonicalBlocks(blocks)
+    .filter((block) => block.body.length >= 3)
+    .slice(0, 5);
 }
 
-function extractCanonicalStepLines(
+function normalizeCanonicalBlocks(blocks: CanonicalTextBlock[]): CanonicalTextBlock[] {
+  const normalized: CanonicalTextBlock[] = [];
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index];
+    const next = blocks[index + 1];
+    const heading = stripHtml(block.heading ?? '');
+    const body = stripHtml(block.body);
+    const nextBody = stripHtml(next?.body ?? '');
+
+    const overviewHeading =
+      /(基本数据类型|数据类型|基础类型|primitive|data\s*types?)/i.test(heading) &&
+      body.length > 0 &&
+      body.length <= 10;
+    const nextIsValueList =
+      !!next &&
+      !next.heading &&
+      /[,，、/]|byte|short|int|long|float|double|char|boolean|string/i.test(nextBody) &&
+      nextBody.length <= 60;
+
+    if (overviewHeading && nextIsValueList) {
+      normalized.push({
+        heading: body,
+        body: next.body,
+      });
+      index += 1;
+      continue;
+    }
+
+    normalized.push(block);
+  }
+
+  return normalized;
+}
+
+function _extractCanonicalStepLines(
   elements: SlideLikeElement[],
   context?: SlidePolishContext,
 ): string[] {
@@ -1243,6 +1582,47 @@ function extractCanonicalStepLines(
     .map((line, index) =>
       /^[①②③④⑤⑥⑦⑧⑨]/.test(line) || /(^|\s)\d+[.、]/.test(line) ? line : `${index + 1}. ${line}`,
     )
+    .slice(0, 5);
+}
+
+function hasRobustStepPrefix(line: string): boolean {
+  return (
+    /^[①②③④⑤⑥⑦⑧⑨]/.test(line) ||
+    /(^|\s)\d+\s*[.、:：)]/.test(line) ||
+    /(^|\s)(step|steps)\s*\d+\s*[.、:：)]/i.test(line) ||
+    /(^|\s)(步骤|第)\s*[一二三四五六七八九十\d]+\s*(步|[.、:：)])/i.test(line)
+  );
+}
+
+function isRobustCanonicalStepLine(line: string): boolean {
+  const compact = line.trim();
+  if (!compact) return false;
+  if (/step-by-step/i.test(compact) && !/\bstep\s*\d+/i.test(compact)) return false;
+  return (
+    hasRobustStepPrefix(compact) ||
+    /(^|\s)(download|install|configure|verify|start|stop|restart|create|set|follow)\b/i.test(
+      compact,
+    )
+  );
+}
+
+function extractRobustCanonicalStepLines(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): string[] {
+  const lines = [...extractCanonicalLines(elements, context), ...(context?.keyPoints ?? [])];
+  const seen = new Set<string>();
+
+  return lines
+    .map((line) => line.trim())
+    .filter(isRobustCanonicalStepLine)
+    .filter((line) => {
+      const key = line.replace(/\s+/g, '').toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((line, index) => (hasRobustStepPrefix(line) ? line : `${index + 1}. ${line}`))
     .slice(0, 5);
 }
 
@@ -1368,6 +1748,55 @@ function canonicalBody(block: CanonicalTextBlock, max: number): string {
   return escapeHtmlShort(block.body, max);
 }
 
+function isGenericCanonicalText(text: string | undefined): boolean {
+  if (!text) return true;
+  const normalized = stripHtml(text).replace(/\s+/g, '');
+  if (!normalized) return true;
+  return /^(核心功能|核心抓手|学习目标|本页要点|关键结论|课堂小结|小结|结论|要点[一二三四五六\d]*|重点[一二三四五六\d]*|方法|结果|观察|追问)$/i.test(
+    normalized,
+  );
+}
+
+function canonicalConcreteBody(block: CanonicalTextBlock, fallback: string, max: number): string {
+  const body = isStrictGenericCanonicalText(block.body) ? fallback : block.body;
+  return escapeHtmlShort(body, max);
+}
+
+function isStrictGenericCanonicalText(text: string | undefined): boolean {
+  if (isGenericCanonicalText(text)) return true;
+  const normalized = stripHtml(text ?? '').replace(/\s+/g, '');
+  return /^(核心功能|核心抓手|学习目标|本页要点|关键结论|课堂小结|小结|结论|视角[A-C]|观点[A-C]|Perspective[A-C]|CoreFeature|KeyPoint|Conclusion|Step\d{1,2})$/i.test(
+    normalized,
+  );
+}
+
+function canonicalBandText(block: CanonicalTextBlock, fallback: string, max: number): string {
+  const heading = !isStrictGenericCanonicalText(block.heading) ? block.heading : undefined;
+  const body = isStrictGenericCanonicalText(block.body) ? fallback : block.body;
+  if (heading && body && heading !== body) {
+    return `<strong>${escapeHtmlShort(heading, 18)}</strong>：${escapeHtmlShort(body, max)}`;
+  }
+  return escapeHtmlShort(body || heading || fallback, max + 18);
+}
+
+function concreteCanonicalTextCandidates(
+  blocks: CanonicalTextBlock[],
+  context?: SlidePolishContext,
+): string[] {
+  return [
+    ...(context?.keyPoints ?? []),
+    ...blocks.flatMap((block) => [block.heading, block.body]),
+  ].filter((value): value is string => !!value && !isStrictGenericCanonicalText(value));
+}
+
+function concreteCanonicalTextFallback(
+  blocks: CanonicalTextBlock[],
+  context: SlidePolishContext | undefined,
+  fallback: string,
+): string {
+  return concreteCanonicalTextCandidates(blocks, context)[0] ?? fallback;
+}
+
 function extractMediaElements(
   elements: SlideLikeElement[],
 ): Array<SlideLikeElement & Record<string, unknown>> {
@@ -1453,7 +1882,7 @@ function canonicalMediaReferenceLayout(
     const prefix = 'polish_ref_canonical_media_v1';
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       mediaElementFrom(mainMedia, `${prefix}_media_main`, 82, 216, 546, 274),
       shapeElement(`${prefix}_right_rule`, 678, 222, 3, 236, theme.accent, 0.9),
       textElement(
@@ -1487,7 +1916,7 @@ function canonicalMediaReferenceLayout(
     const prefix = 'polish_ref_canonical_media_v2';
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       shapeElement(`${prefix}_left_rule`, 82, 220, 3, 232, theme.accentSecondary, 0.9),
       textElement(
         `${prefix}_left_title`,
@@ -1520,7 +1949,7 @@ function canonicalMediaReferenceLayout(
   const prefix = 'polish_ref_canonical_media_v0';
 
   return [
-    ...referenceHeaderElements(prefix, title, subtitle, theme),
+    ...referenceHeaderElements(prefix, title, subtitle, theme, context),
     mediaElementFrom(mainMedia, `${prefix}_media_top`, 132, 204, 736, 214),
     shapeElement(`${prefix}_bottom_rule`, 132, 452, 736, 3, theme.accent, 0.9),
     textElement(
@@ -1624,7 +2053,7 @@ function canonicalDataReferenceLayout(
     const prefix = 'polish_ref_canonical_data_v1';
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       dataElementFrom(mainData, `${prefix}_data_main`, 82, 214, 520, 248),
       shapeElement(`${prefix}_right_rule`, 652, 218, 3, 230, theme.accent, 0.9),
       textElement(
@@ -1659,32 +2088,32 @@ function canonicalDataReferenceLayout(
     const prefix = 'polish_ref_canonical_data_v2';
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       shapeElement(`${prefix}_top_rule`, 82, 210, 836, 3, theme.accent, 0.9),
-      dataElementFrom(mainData, `${prefix}_data_top`, 116, 236, 768, 176),
+      dataElementFrom(mainData, `${prefix}_data_top`, 82, 236, 836, 218),
       textElement(
         `${prefix}_left_note`,
-        `<strong>${canonicalHeading(second, '结论', 14)}</strong>：${canonicalBody(second, 28)}`,
-        116,
-        438,
-        330,
-        50,
-        18,
+        `<strong>${canonicalHeading(second, '公式推导', 16)}</strong>：${canonicalConcreteBody(second, context?.keyPoints?.[0] ?? subtitle, 52)}`,
+        92,
+        470,
+        388,
+        42,
+        17,
         theme.textBody,
         undefined,
-        1.16,
+        1.1,
       ),
       textElement(
         `${prefix}_right_note`,
-        `<strong>${canonicalHeading(third, '追问', 14)}</strong>：${canonicalBody(third, 28)}`,
-        554,
-        438,
-        330,
-        50,
-        18,
-        '#7c3f00',
+        `<strong>${canonicalHeading(third, '继续推导', 16)}</strong>：${canonicalConcreteBody(third, context?.keyPoints?.[1] ?? first.body, 58)}`,
+        512,
+        470,
+        396,
+        42,
+        17,
+        '#1e3a5f',
         undefined,
-        1.16,
+        1.1,
       ),
     ];
   }
@@ -1692,7 +2121,7 @@ function canonicalDataReferenceLayout(
   const prefix = 'polish_ref_canonical_data_v0';
 
   return [
-    ...referenceHeaderElements(prefix, title, subtitle, theme),
+    ...referenceHeaderElements(prefix, title, subtitle, theme, context),
     shapeElement(`${prefix}_left_rule`, 82, 222, 3, 230, theme.accent, 0.9),
     textElement(
       `${prefix}_left_title`,
@@ -1816,7 +2245,7 @@ function canonicalFormulaReferenceLayout(
   const thirdFormula = formulas[2] ?? formulas[1] ?? formulas[0];
   const mainBlock = canonicalBlock(blocks, 0, '公式含义', subtitle);
   const secondBlock = canonicalBlock(blocks, 1, '使用条件', context?.keyPoints?.[0] ?? subtitle);
-  const thirdBlock = canonicalBlock(
+  const _thirdBlock = canonicalBlock(
     blocks,
     2,
     '课堂检查',
@@ -1827,7 +2256,7 @@ function canonicalFormulaReferenceLayout(
     const prefix = 'polish_ref_canonical_formula_v1';
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       shapeElement(`${prefix}_rail`, 96, 218, 3, 224, theme.accent, 0.9),
       ...[mainFormula, secondFormula, thirdFormula]
         .slice(0, Math.min(3, formulas.length))
@@ -1867,7 +2296,7 @@ function canonicalFormulaReferenceLayout(
     const prefix = 'polish_ref_canonical_formula_v2';
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       shapeElement(`${prefix}_left_panel`, 82, 210, 366, 264, '#f8fafc', 1),
       shapeElement(`${prefix}_left_bar`, 82, 236, 8, 162, theme.accent, 1),
       textElement(
@@ -1915,7 +2344,7 @@ function canonicalFormulaReferenceLayout(
   const prefix = 'polish_ref_canonical_formula_v0';
 
   return [
-    ...referenceHeaderElements(prefix, title, subtitle, theme),
+    ...referenceHeaderElements(prefix, title, subtitle, theme, context),
     shapeElement(`${prefix}_formula_panel`, 128, 206, 744, 132, '#f8fafc', 1),
     formulaElementFrom(mainFormula, `${prefix}_formula_main`, 164, 232, 672, 82),
     shapeElement(`${prefix}_left_rule`, 128, 374, 330, 3, theme.accent, 0.9),
@@ -1954,19 +2383,64 @@ function canonicalStepsReferenceLayout(
   const theme = getPolishTheme(context);
   const title = getSlideTitle(elements, context);
   const subtitle = getCanonicalSubtitle(elements, title);
-  const steps = extractCanonicalStepLines(elements, context);
+  const steps = extractRobustCanonicalStepLines(elements, context);
   const blocks = extractCanonicalBlocks(elements, context);
   const variant = chooseCanonicalStepVariant(elements, context, blocks);
+  const stepTopic = canonicalTopicLabel(title);
 
   if (variant === 1) {
     const prefix = 'polish_ref_canonical_steps_v1';
-    const processSteps = steps.slice(0, 3);
+    const processSteps = steps.slice(0, steps.length >= 4 ? 4 : 3);
+    if (processSteps.length >= 4) {
+      const positions = [
+        [82, 222],
+        [520, 222],
+        [82, 348],
+        [520, 348],
+      ] as const;
+
+      return [
+        ...referenceHeaderElements(prefix, title, subtitle, theme, context),
+        ...processSteps.flatMap((step, index) => {
+          const [left, top] = positions[index];
+          return [
+            shapeElement(`${prefix}_card_${index}`, left, top, 398, 100, '#f8fafc', 1),
+            circleElement(`${prefix}_dot_${index}`, left + 22, top + 22, 34, theme.accent, 0.95),
+            textElement(
+              `${prefix}_step_${index}`,
+              `<strong>${index + 1}</strong> ${escapeHtmlShort(step.replace(/^[①②③④⑤⑥⑦⑧⑨]|\d+[.、]\s*/, ''), 30)}`,
+              left + 68,
+              top + 24,
+              300,
+              58,
+              18,
+              theme.textBody,
+              undefined,
+              1.18,
+            ),
+          ];
+        }),
+        shapeElement(`${prefix}_takeaway_panel`, 132, 482, 736, 3, theme.accent, 0.85),
+        textElement(
+          `${prefix}_takeaway`,
+          `<strong>${stepTopic}检查</strong>：${escapeHtmlShort(blocks[0]?.body ?? subtitle, 34)}`,
+          166,
+          492,
+          668,
+          28,
+          17,
+          '#1e3a5f',
+          undefined,
+          1.08,
+        ),
+      ];
+    }
     const cardWidth = 254;
     const cardGap = 43;
     const cardTop = 236;
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       ...processSteps.flatMap((step, index) => {
         const left = 82 + index * (cardWidth + cardGap);
         return [
@@ -1989,7 +2463,7 @@ function canonicalStepsReferenceLayout(
       shapeElement(`${prefix}_takeaway_panel`, 132, 442, 736, 3, theme.accent, 0.9),
       textElement(
         `${prefix}_takeaway`,
-        `<strong>课堂抓手</strong>：${escapeHtmlShort(blocks[0]?.body ?? subtitle, 24)}`,
+        `<strong>${stepTopic}检查</strong>：${escapeHtmlShort(blocks[0]?.body ?? subtitle, 24)}`,
         166,
         452,
         668,
@@ -2004,16 +2478,16 @@ function canonicalStepsReferenceLayout(
 
   if (variant === 2) {
     const prefix = 'polish_ref_canonical_steps_v2';
-    const stepBody = steps.map((step) => `✓ ${escapeHtmlShort(step, 44)}`).join('<br/>');
+    const stepBody = steps.map((step) => `✓ ${escapeHtmlShort(step, 34)}`).join('<br/>');
     const note = blocks.find((block) => !steps.some((step) => step.includes(block.body)))?.body;
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       shapeElement(`${prefix}_check_panel`, 82, 212, 420, 282, '#f8fafc', 1),
       shapeElement(`${prefix}_check_bar`, 82, 232, 8, 180, theme.accent, 1),
       textElement(
         `${prefix}_check_title`,
-        '<strong>执行清单</strong>',
+        `<strong>${stepPanelHeading(title, '清单')}</strong>`,
         116,
         236,
         318,
@@ -2027,18 +2501,18 @@ function canonicalStepsReferenceLayout(
         `${prefix}_check_body`,
         stepBody,
         116,
-        298,
+        288,
         332,
-        154,
-        18,
+        184,
+        17,
         theme.textBody,
         undefined,
-        1.32,
+        1.2,
       ),
-      shapeElement(`${prefix}_focus_panel`, 548, 212, 370, 154, '#eef6ff', 1),
+      shapeElement(`${prefix}_focus_panel`, 548, 212, 370, 178, '#eef6ff', 1),
       textElement(
         `${prefix}_focus_title`,
-        '<strong>先抓住目标</strong>',
+        `<strong>${stepPanelHeading(title, '目标')}</strong>`,
         582,
         238,
         286,
@@ -2052,13 +2526,13 @@ function canonicalStepsReferenceLayout(
         `${prefix}_focus_body`,
         escapeHtmlShort(note ?? subtitle, 70),
         582,
-        302,
+        294,
         286,
-        42,
-        19,
+        70,
+        18,
         '#1e3a5f',
         undefined,
-        1.16,
+        1.15,
       ),
       shapeElement(`${prefix}_result_panel`, 548, 398, 370, 3, theme.accentSecondary, 0.9),
       textElement(
@@ -2080,12 +2554,12 @@ function canonicalStepsReferenceLayout(
   const note = blocks.find((block) => !steps.some((step) => step.includes(block.body)))?.body;
 
   return [
-    ...referenceHeaderElements(prefix, title, subtitle, theme),
+    ...referenceHeaderElements(prefix, title, subtitle, theme, context),
     shapeElement(`${prefix}_goal_panel`, 82, 210, 352, 264, '#f8fafc', 1),
     shapeElement(`${prefix}_goal_bar`, 82, 232, 8, 164, theme.accent, 1),
     textElement(
       `${prefix}_goal_title`,
-      '<strong>学习目标</strong>',
+      `<strong>${stepPanelHeading(title, '目标')}</strong>`,
       116,
       238,
       270,
@@ -2110,7 +2584,7 @@ function canonicalStepsReferenceLayout(
     shapeElement(`${prefix}_steps_panel`, 486, 210, 432, 264, '#eef6ff', 1),
     textElement(
       `${prefix}_steps_title`,
-      '<strong>关键步骤</strong>',
+      `<strong>${stepPanelHeading(title, '步骤')}</strong>`,
       520,
       236,
       350,
@@ -2139,7 +2613,7 @@ function canonicalTextReferenceLayout(
   elements: SlideLikeElement[],
   context?: SlidePolishContext,
 ): Array<SlideLikeElement & Record<string, unknown>> {
-  const steps = extractCanonicalStepLines(elements, context);
+  const steps = extractRobustCanonicalStepLines(elements, context);
   if (steps.length >= 2) return canonicalStepsReferenceLayout(elements, context);
 
   const theme = getPolishTheme(context);
@@ -2159,31 +2633,31 @@ function canonicalTextReferenceLayout(
     const fills = ['#f8fafc', '#eef6ff', '#fff7ed'];
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       ...cards.flatMap((block, index) => {
         const left = 82 + index * 290;
         return [
-          shapeElement(`${prefix}_card_${index}`, left, 214, 256, 228, fills[index], 1),
+          shapeElement(`${prefix}_card_${index}`, left, 214, 256, 238, fills[index], 1),
           shapeElement(`${prefix}_card_rule_${index}`, left + 28, 244, 76, 4, theme.accent, 0.9),
           textElement(
             `${prefix}_card_title_${index}`,
             `<strong>${canonicalHeading(block, `要点 ${index + 1}`, 10)}</strong>`,
             left + 28,
-            268,
+            266,
             196,
-            66,
-            23,
+            58,
+            22,
             theme.textPrimary,
             undefined,
-            1.1,
+            1.06,
           ),
           textElement(
             `${prefix}_card_body_${index}`,
-            canonicalBody(block, 24),
+            canonicalBody(block, 34),
             left + 28,
-            336,
+            342,
             196,
-            92,
+            88,
             18,
             theme.textBody,
             undefined,
@@ -2196,30 +2670,30 @@ function canonicalTextReferenceLayout(
         `${prefix}_takeaway`,
         `<strong>连接起来看</strong>：${escapeHtmlShort(blocks[3]?.body ?? first.body, 34)}`,
         158,
-        448,
+        458,
         684,
-        52,
+        48,
         18,
         '#1e3a5f',
         undefined,
-        1.12,
+        1.08,
       ),
     ];
   }
 
   if (variant === 2) {
     const prefix = 'polish_ref_canonical_v2';
-    const leftBlock = canonicalBlock(blocks, 0, '视角 A', subtitle);
-    const rightBlock = canonicalBlock(blocks, 1, '视角 B', context?.keyPoints?.[0] ?? subtitle);
-    const bottomBlock = canonicalBlock(blocks, 2, '结论', context?.keyPoints?.[1] ?? first.body);
+    const leftBlock = canonicalBlock(blocks, 0, '要点一', subtitle);
+    const rightBlock = canonicalBlock(blocks, 1, '要点二', context?.keyPoints?.[0] ?? subtitle);
+    const bottomBlock = canonicalBlock(blocks, 2, '小结', context?.keyPoints?.[1] ?? first.body);
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       shapeElement(`${prefix}_left_panel`, 82, 212, 398, 246, '#f8fafc', 1),
       shapeElement(`${prefix}_left_bar`, 82, 236, 8, 154, theme.accent, 1),
       textElement(
         `${prefix}_left_title`,
-        `<strong>${canonicalHeading(leftBlock, '视角 A', 20)}</strong>`,
+        `<strong>${canonicalHeading(leftBlock, '要点一', 20)}</strong>`,
         116,
         244,
         302,
@@ -2245,7 +2719,7 @@ function canonicalTextReferenceLayout(
       shapeElement(`${prefix}_right_bar`, 910, 236, 8, 154, theme.accentSecondary, 1),
       textElement(
         `${prefix}_right_title`,
-        `<strong>${canonicalHeading(rightBlock, '视角 B', 20)}</strong>`,
+        `<strong>${canonicalHeading(rightBlock, '要点二', 20)}</strong>`,
         554,
         244,
         302,
@@ -2270,7 +2744,7 @@ function canonicalTextReferenceLayout(
       shapeElement(`${prefix}_bridge`, 170, 440, 660, 3, theme.accentSecondary, 0.9),
       textElement(
         `${prefix}_bridge_text`,
-        `<strong>${canonicalHeading(bottomBlock, '结论', 14)}</strong>：${canonicalBody(bottomBlock, 28)}`,
+        `<strong>${canonicalHeading(bottomBlock, '小结', 14)}</strong>：${canonicalBody(bottomBlock, 28)}`,
         204,
         450,
         592,
@@ -2293,7 +2767,7 @@ function canonicalTextReferenceLayout(
     ];
 
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
       shapeElement(`${prefix}_rail_panel`, 82, 210, 142, 278, '#f8fafc', 1),
       shapeElement(`${prefix}_rail`, 144, 238, 8, 206, theme.accent, 0.9),
       ...timelineBlocks.flatMap((block, index) => {
@@ -2335,9 +2809,21 @@ function canonicalTextReferenceLayout(
       canonicalBlock(blocks, 3, '要点三', context?.keyPoints?.[2] ?? first.body),
     ];
 
+    const concreteCandidates = concreteCanonicalTextCandidates(blocks, context);
+    const v4LeftBlocks =
+      (context?.keyPoints?.length ?? 0) >= 2
+        ? context!.keyPoints!.slice(0, 3).map((point) => ({ body: point }))
+        : leftBlocks.map((block, index) => ({
+            ...block,
+            body: isGenericCanonicalText(block.body)
+              ? (concreteCandidates[index + 1] ?? context?.keyPoints?.[index] ?? block.body)
+              : block.body,
+          }));
+    const focusFallback = concreteCanonicalTextFallback(blocks, context, subtitle);
+
     return [
-      ...referenceHeaderElements(prefix, title, subtitle, theme),
-      ...leftBlocks.flatMap((block, index) => {
+      ...referenceHeaderElements(prefix, title, subtitle, theme, context),
+      ...v4LeftBlocks.flatMap((block, index) => {
         const top = 212 + index * 96;
         return [
           shapeElement(
@@ -2351,7 +2837,7 @@ function canonicalTextReferenceLayout(
           ),
           textElement(
             `${prefix}_left_text_${index}`,
-            `<strong>${canonicalHeading(block, `要点 ${index + 1}`, 16)}</strong>：${canonicalBody(block, 12)}`,
+            canonicalBandText(block, context?.keyPoints?.[index] ?? `要点 ${index + 1}`, 44),
             110,
             top + 12,
             330,
@@ -2379,7 +2865,7 @@ function canonicalTextReferenceLayout(
       ),
       textElement(
         `${prefix}_focus_body`,
-        canonicalBody(focusBlock, 88),
+        canonicalConcreteBody(focusBlock, focusFallback, 88),
         556,
         328,
         302,
@@ -2399,7 +2885,7 @@ function canonicalTextReferenceLayout(
   const bandGap = 16;
 
   return [
-    ...referenceHeaderElements(prefix, title, subtitle, theme),
+    ...referenceHeaderElements(prefix, title, subtitle, theme, context),
     shapeElement(`${prefix}_anchor_panel`, 82, 210, 330, 276, '#f8fafc', 1),
     shapeElement(`${prefix}_anchor_bar`, 82, 236, 8, 172, theme.accent, 1),
     textElement(
@@ -2444,6 +2930,1429 @@ function canonicalTextReferenceLayout(
         ),
       ];
     }),
+  ];
+}
+
+type RedisInternalFocus = 'sds' | 'list' | 'hash' | 'set' | 'zset';
+
+function getRedisInternalFocus(text: string): RedisInternalFocus | null {
+  const normalized = stripHtml(text).replace(/\s+/g, ' ');
+  if (
+    /^\s*(?:String|\u5b57\u7b26\u4e32)(?:\s|[:：])/i.test(normalized) &&
+    /(\bsds\b|internal|\u5185\u90e8|\u5e95\u5c42|\u6700\u901a\u7528\u7684\u6570\u636e\u7ed3\u6784)/i.test(
+      normalized,
+    )
+  ) {
+    return 'sds';
+  }
+  if (
+    /^\s*(?:Sorted\s*Set|ZSet|\u6709\u5e8f\u96c6\u5408)(?:\s|[:：])/i.test(normalized) &&
+    /(skiplist|dict|\u8df3\u8868|\u53cc\u7d22\u5f15|\u5185\u90e8|\u5e95\u5c42|\u5e55\u540e\u82f1\u96c4)/i.test(
+      normalized,
+    )
+  ) {
+    return 'zset';
+  }
+
+  const hasSortedSetSignal = /(zset|sorted\s*set|\u6709\u5e8f\u96c6\u5408)/i.test(normalized);
+  if (
+    /(skiplist|\u8df3\u8868)/i.test(normalized) ||
+    (hasSortedSetSignal &&
+      /(dict|\u54c8\u5e0c\u8868|\u5b57\u5178|skiplist|\u8df3\u8868|\u53cc\u7d22\u5f15|\u5e95\u5c42|\u5185\u90e8)/i.test(
+        normalized,
+      ))
+  ) {
+    return 'zset';
+  }
+  if (
+    !hasSortedSetSignal &&
+    (/(\bsds\b|simple\s*dynamic\s*string|set\s*\/\s*get|get\s*\/\s*set)/i.test(normalized) ||
+      (/\bstring\b/i.test(normalized) &&
+        /(\u5185\u90e8|\u5e95\u5c42|\u7f16\u7801|\u7de8\u78bc|\u5b9e\u73b0|\u5be6\u73fe|internal|encoding|implementation)/i.test(
+          normalized,
+        )))
+  ) {
+    return 'sds';
+  }
+  if (/(intset|\u6574\u6570\u96c6\u5408)/i.test(normalized)) {
+    return 'set';
+  }
+  if (
+    (/\bhash\b|\u54c8\u5e0c|\u6563\u5217/i.test(normalized) &&
+      /(\bdict\b|hashtable|\u5b57\u5178|\u54c8\u5e0c\u8868|\u5e95\u5c42|\u5185\u90e8|\u7f16\u7801|\u7de8\u78bc|listpack|ziplist)/i.test(
+        normalized,
+      )) ||
+    (/\bdict\b|\u5b57\u5178/i.test(normalized) &&
+      /(\bhash\b|\u54c8\u5e0c|\u6563\u5217|\u5b57\u6bb5|field|value|\u5bf9\u8c61|\u5c0d\u8c61)/i.test(
+        normalized,
+      ))
+  ) {
+    return 'hash';
+  }
+  if (
+    /(quicklist|listpack|ziplist|\u538b\u7f29\u5217\u8868|\u7d27\u51d1\u5217\u8868)/i.test(
+      normalized,
+    ) ||
+    (/\blist\b|\u5217\u8868|\u961f\u5217|\u6642\u95f4\u7ebf|\u65f6\u95f4\u7ebf/i.test(normalized) &&
+      /(\u5e95\u5c42|\u5185\u90e8|\u7f16\u7801|\u7de8\u78bc|\u94fe\u8868|\u96d9\u5411|quicklist|listpack|ziplist)/i.test(
+        normalized,
+      ))
+  ) {
+    return 'list';
+  }
+  if (
+    /(intset|\u6574\u6570\u96c6\u5408)/i.test(normalized) ||
+    (/set/i.test(normalized) &&
+      /(dict|\u5b57\u5178|\u7f16\u7801|\u7de8\u78bc|\u81ea\u52a8\u5207\u6362|\u81ea\u52d5\u5207\u63db|\u5347\u7ea7)/i.test(
+        normalized,
+      ))
+  ) {
+    return 'set';
+  }
+  if (
+    /(sds|simple\s*dynamic\s*string|string.{0,18}sds|\u5b57\u7b26\u4e32.{0,18}sds)/i.test(
+      normalized,
+    )
+  ) {
+    return 'sds';
+  }
+  return null;
+}
+
+function hasExplicitRedisSignal(text: string): boolean {
+  return /\bredis\b/i.test(text);
+}
+
+function shouldUseRedisInternalStructureLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  if (elements.some((element) => element.id?.startsWith('polish_ref_redis_internal_'))) {
+    return false;
+  }
+  if (
+    elements.some(
+      (element) =>
+        element.id?.startsWith('polish_ref_') && !element.id?.startsWith('polish_ref_canonical_'),
+    )
+  ) {
+    return false;
+  }
+  if (
+    elements.some((element) =>
+      ['image', 'video', 'chart', 'table', 'latex', 'code'].includes(element.type),
+    )
+  ) {
+    return false;
+  }
+
+  const source = getLayoutSignalText(elements, context);
+  const title = getSlideTitle(elements, context);
+  if (!hasExplicitRedisSignal(source)) return false;
+  if (hasRedisChoicePracticeSummarySignal(title) && !getRedisInternalFocus(title)) return false;
+  const titleFocus = getRedisInternalFocus(title);
+  if (
+    !titleFocus &&
+    (hasRedisOverviewSignal(source) || getRedisMentionedSpecificFocuses(source).size >= 3)
+  ) {
+    return false;
+  }
+
+  const focus = getRedisInternalFocus(source);
+  if (!focus) return false;
+
+  const generatedLikeCount = elements.filter((element) =>
+    /^(text|shape|line|image|video|chart|table|latex)_[\w-]+$/i.test(element.id ?? ''),
+  ).length;
+  const readableCount = elements.filter(isReadableElement).length;
+  return generatedLikeCount >= Math.max(3, Math.ceil(elements.length * 0.45)) || readableCount >= 3;
+}
+
+function redisInternalTheme(context?: SlidePolishContext): SlidePolishTheme {
+  const baseTheme = getPolishTheme(context);
+  return {
+    ...baseTheme,
+    accent: '#2563eb',
+    accentSecondary: '#38bdf8',
+    panel: '#eff6ff',
+  };
+}
+
+function redisInternalHeaderElements(
+  prefix: string,
+  title: string,
+  subtitle: string,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  return [
+    textElement(
+      `${prefix}_title`,
+      `<strong>${title}</strong>`,
+      82,
+      48,
+      836,
+      58,
+      34,
+      theme.textPrimary,
+      undefined,
+      1.12,
+    ),
+    textElement(
+      `${prefix}_subtitle`,
+      subtitle,
+      82,
+      122,
+      836,
+      38,
+      22,
+      theme.textBody,
+      undefined,
+      1.15,
+    ),
+    shapeElement(`${prefix}_rule`, 82, 188, 836, 3, theme.accent, 0.95),
+  ];
+}
+
+function redisInternalBlocks(focus: RedisInternalFocus): Array<{ heading: string; body: string }> {
+  if (focus === 'sds') {
+    return [
+      { heading: '为什么快', body: '内存读写少，单线程少锁。' },
+      { heading: 'SDS 结构', body: 'len、alloc、buf 分开记录。' },
+      { heading: '安全性', body: '不依赖结束符，可存二进制。' },
+      { heading: '性能策略', body: '预分配与惰性释放降开销。' },
+    ];
+  }
+
+  if (focus === 'set') {
+    return [
+      { heading: '编码条件', body: '成员都是整数且数量较少时使用 intset。' },
+      { heading: 'intset 优势', body: '连续内存、有序存储，适合小规模整数集合。' },
+      { heading: 'dict 优势', body: '支持任意成员类型，平均查找复杂度为 O(1)。' },
+      { heading: '升级规则', body: '插入字符串或规模变大时自动迁移到 dict。' },
+    ];
+  }
+
+  if (focus === 'list') {
+    return [
+      { heading: '结构组合', body: 'quicklist 把多个 listpack 串成双向链表。' },
+      { heading: '两端操作', body: 'LPUSH、RPOP 等命令主要在链表两端移动。' },
+      { heading: '内存控制', body: 'listpack 让小元素连续存放，减少指针开销。' },
+      { heading: '适用场景', body: '队列、消息缓冲和时间线都依赖顺序访问。' },
+    ];
+  }
+
+  if (focus === 'hash') {
+    return [
+      { heading: '对象拆分', body: '一个 key 下保存多个 field/value 字段。' },
+      { heading: '小对象优化', body: '字段少且短时可用 listpack 紧凑存储。' },
+      { heading: '规模扩大', body: '字段变多后切换 dict，保持快速定位。' },
+      { heading: '业务价值', body: '适合用户资料、配置项和对象局部更新。' },
+    ];
+  }
+
+  return [
+    { heading: '双结构协同', body: '跳表负责排序范围查询，哈希表负责单点查分。' },
+    { heading: '命令路径', body: 'ZSCORE 走 dict，ZRANGE 和 ZRANK 走 skiplist。' },
+    { heading: '一致性', body: '两个结构共享 member，写入时必须同步维护。' },
+    { heading: '适用场景', body: '排行榜、热度排序和实时积分都依赖分数顺序。' },
+  ];
+}
+
+function _redisInternalDetailElements(
+  prefix: string,
+  focus: RedisInternalFocus,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const blocks = redisInternalBlocks(focus);
+  return blocks.flatMap((block, index) => {
+    const top = 214 + index * 70;
+    return [
+      shapeElement(`${prefix}_detail_bar_${index}`, 536, top + 8, 5, 46, blueAccent(index), 0.95),
+      textElement(
+        `${prefix}_detail_text_${index}`,
+        `<strong>${escapeHtmlShort(block.heading, 12)}</strong>：${escapeHtmlShort(block.body, 34)}`,
+        558,
+        top + 8,
+        334,
+        46,
+        18,
+        theme.textBody,
+        undefined,
+        1.12,
+      ),
+    ];
+  });
+}
+
+function redisInternalSdsVisual(
+  prefix: string,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  return [
+    shapeElement(`${prefix}_visual_panel`, 82, 210, 440, 184, '#ffffff', 1),
+    textElement(
+      `${prefix}_visual_title`,
+      '<strong>SDS 内存结构示意</strong>',
+      112,
+      230,
+      338,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    ...[
+      ['len', '当前长度'],
+      ['alloc', '已分配容量'],
+      ['buf[]', '真实字节数组'],
+    ].flatMap(([label, desc], index) => {
+      const left = 116 + index * 118;
+      const width = index === 2 ? 126 : 104;
+      return [
+        shapeElement(`${prefix}_sds_box_${index}`, left, 292, width, 64, '#eff6ff', 1),
+        textElement(
+          `${prefix}_sds_label_${index}`,
+          `<strong>${label}</strong><br/>${desc}`,
+          left + 14,
+          304,
+          width - 28,
+          42,
+          18,
+          '#1e3a5f',
+          undefined,
+          1.1,
+        ),
+      ];
+    }),
+    textElement(
+      `${prefix}_sds_note`,
+      '<strong>长度单独记录</strong>：O(1) 取长度',
+      102,
+      358,
+      400,
+      38,
+      22,
+      theme.textBody,
+      undefined,
+      1.08,
+    ),
+  ];
+}
+
+function redisInternalListVisual(
+  prefix: string,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const nodeLefts = [116, 252, 388];
+  return [
+    shapeElement(`${prefix}_visual_panel`, 82, 210, 414, 292, '#ffffff', 1),
+    shapeElement(`${prefix}_visual_bar`, 82, 236, 5, 222, theme.accent, 0.96),
+    textElement(
+      `${prefix}_visual_title`,
+      '<strong>quicklist 存储链路</strong>',
+      112,
+      230,
+      338,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    ...nodeLefts.flatMap((left, index) => [
+      shapeElement(`${prefix}_quick_node_${index}`, left, 306, 92, 82, '#eff6ff', 1),
+      shapeElement(`${prefix}_quick_bar_${index}`, left, 316, 6, 54, blueAccent(index), 0.95),
+      textElement(
+        `${prefix}_quick_label_${index}`,
+        `<strong>node ${index + 1}</strong><br/>元素 A/B`,
+        left + 10,
+        312,
+        72,
+        54,
+        16,
+        '#1e3a5f',
+        undefined,
+        1.06,
+      ),
+    ]),
+    lineElement(`${prefix}_quick_arrow_0`, 214, 348, [0, 0], [26, 0], 2, '#93c5fd', {
+      points: ['', 'arrow'],
+    }),
+    lineElement(`${prefix}_quick_arrow_1`, 350, 348, [0, 0], [26, 0], 2, '#93c5fd', {
+      points: ['', 'arrow'],
+    }),
+    textElement(
+      `${prefix}_listpack_label`,
+      '每个节点内部用 listpack 紧凑存储多个元素',
+      116,
+      416,
+      352,
+      44,
+      19,
+      theme.textBody,
+      undefined,
+      1.16,
+    ),
+    shapeElement(`${prefix}_list_rule`, 116, 484, 352, 3, '#0ea5e9', 0.9),
+  ];
+}
+
+function redisInternalHashVisual(
+  prefix: string,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const buckets = ['0', '1', '2'];
+  const rows = [
+    ['name', 'Alice'],
+    ['age', '20'],
+    ['city', '杭州'],
+  ] as const;
+  return [
+    shapeElement(`${prefix}_visual_panel`, 82, 210, 414, 292, '#ffffff', 1),
+    shapeElement(`${prefix}_visual_bar`, 82, 236, 5, 222, theme.accent, 0.96),
+    textElement(
+      `${prefix}_visual_title`,
+      '<strong>Hash 字段索引结构</strong>',
+      112,
+      230,
+      338,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    shapeElement(`${prefix}_bucket_column`, 116, 300, 112, 194, '#eff6ff', 1),
+    shapeElement(`${prefix}_bucket_sep_0`, 116, 366, 112, 2, '#dbeafe', 1),
+    shapeElement(`${prefix}_bucket_sep_1`, 116, 432, 112, 2, '#dbeafe', 1),
+    ...buckets.map((bucket, index) =>
+      textElement(
+        `${prefix}_bucket_label_${index}`,
+        `槽 ${bucket}`,
+        146,
+        306 + index * 64,
+        58,
+        48,
+        22,
+        '#1e3a5f',
+      ),
+    ),
+    ...rows.flatMap(([field, value], index) => {
+      const top = 300 + index * 64;
+      return [
+        lineElement(`${prefix}_field_link_${index}`, 232, top + 30, [0, 0], [18, 0], 2, '#93c5fd', {
+          points: ['', 'arrow'],
+        }),
+        shapeElement(
+          `${prefix}_field_node_${index}`,
+          260,
+          top,
+          176,
+          58,
+          index === 1 ? '#dbeafe' : '#eff6ff',
+          1,
+        ),
+        textElement(
+          `${prefix}_field_text_${index}`,
+          `<strong>${field}</strong> → ${value}`,
+          276,
+          top + 5,
+          136,
+          50,
+          18,
+          '#1e3a5f',
+          undefined,
+          1.05,
+        ),
+      ];
+    }),
+    shapeElement(`${prefix}_hash_rule`, 116, 496, 320, 3, '#0ea5e9', 0.9),
+  ];
+}
+
+function redisInternalSetVisual(
+  prefix: string,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  return [
+    shapeElement(`${prefix}_visual_panel`, 82, 210, 414, 292, '#ffffff', 1),
+    textElement(
+      `${prefix}_visual_title`,
+      '<strong>Set 编码切换路径</strong>',
+      112,
+      230,
+      338,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    shapeElement(`${prefix}_intset_box`, 96, 302, 148, 92, '#eff6ff', 1),
+    textElement(
+      `${prefix}_intset_text`,
+      '<strong>intset</strong><br/>整数且少量',
+      116,
+      318,
+      108,
+      52,
+      20,
+      '#1e3a5f',
+      undefined,
+      1.12,
+    ),
+    lineElement(`${prefix}_upgrade_arrow_0`, 250, 348, [0, 0], [18, 0], 2, '#93c5fd', {
+      points: ['', 'arrow'],
+    }),
+    shapeElement(`${prefix}_upgrade_box`, 274, 302, 148, 92, '#dbeafe', 1),
+    textElement(
+      `${prefix}_upgrade_label`,
+      '自动升级',
+      294,
+      329,
+      108,
+      30,
+      20,
+      '#1e3a5f',
+      undefined,
+      1.08,
+    ),
+    lineElement(`${prefix}_upgrade_arrow_1`, 428, 348, [0, 0], [18, 0], 2, '#93c5fd', {
+      points: ['', 'arrow'],
+    }),
+    shapeElement(`${prefix}_dict_box`, 452, 302, 148, 92, '#dbeafe', 1),
+    textElement(
+      `${prefix}_dict_text`,
+      '<strong>dict</strong><br/>通用集合',
+      472,
+      318,
+      108,
+      52,
+      20,
+      '#1e3a5f',
+      undefined,
+      1.12,
+    ),
+    textElement(
+      `${prefix}_set_note`,
+      '插入字符串或成员增多时，Redis 自动迁移编码，应用层无感知。',
+      118,
+      420,
+      334,
+      48,
+      19,
+      theme.textBody,
+      undefined,
+      1.16,
+    ),
+  ];
+}
+
+function redisInternalZsetVisual(
+  prefix: string,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  return [
+    shapeElement(`${prefix}_visual_panel`, 82, 210, 440, 292, '#ffffff', 1),
+    textElement(
+      `${prefix}_visual_title`,
+      '<strong>ZSet 双索引结构</strong>',
+      112,
+      230,
+      338,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    shapeElement(`${prefix}_skiplist_panel`, 112, 286, 286, 96, '#f8fbff', 1),
+    textElement(
+      `${prefix}_skiplist_label`,
+      '<strong>skiplist</strong>：范围排序',
+      132,
+      298,
+      232,
+      28,
+      20,
+      '#1e3a5f',
+      undefined,
+      1.05,
+    ),
+    ...[0, 1].map((index) =>
+      shapeElement(
+        `${prefix}_skiplist_lane_${index}`,
+        132,
+        342 + index * 22,
+        216 - index * 44,
+        3,
+        '#60a5fa',
+        index === 0 ? 0.72 : 0.5,
+      ),
+    ),
+    shapeElement(`${prefix}_dict_panel`, 430, 286, 188, 96, '#dbeafe', 1),
+    textElement(
+      `${prefix}_dict_label`,
+      '<strong>dict</strong><br/>member → score',
+      448,
+      306,
+      150,
+      58,
+      21,
+      '#1e3a5f',
+      undefined,
+      1.12,
+    ),
+    lineElement(`${prefix}_shared_member`, 400, 334, [0, 0], [24, 0], 2, '#2563eb', {
+      points: ['', 'arrow'],
+    }),
+    textElement(
+      `${prefix}_zset_note`,
+      'member 同步维护',
+      318,
+      414,
+      174,
+      36,
+      20,
+      '#2563eb',
+      undefined,
+      1.1,
+    ),
+  ];
+}
+
+function redisInternalVisualElements(
+  prefix: string,
+  focus: RedisInternalFocus,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  if (focus === 'sds') return redisInternalSdsVisual(prefix, theme);
+  if (focus === 'list') return redisInternalListVisual(prefix, theme);
+  if (focus === 'hash') return redisInternalHashVisual(prefix, theme);
+  if (focus === 'set') return redisInternalSetVisual(prefix, theme);
+  return redisInternalZsetVisual(prefix, theme);
+}
+
+function translateRedisInternalElements(
+  elements: Array<SlideLikeElement & Record<string, unknown>>,
+  dx: number,
+  dy: number,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  return elements.map((element) => ({
+    ...element,
+    left: element.left + dx,
+    top: element.top + dy,
+  }));
+}
+
+function redisInternalDetailCards(
+  prefix: string,
+  focus: RedisInternalFocus,
+  theme: SlidePolishTheme,
+  positions: Array<{ left: number; top: number; width: number; height: number }>,
+  options: {
+    bodyChars?: number;
+    lineHeight?: number;
+    insetX?: number;
+    insetY?: number;
+    fontSize?: number;
+  } = {},
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const blocks = redisInternalBlocks(focus).slice(0, positions.length);
+  const bodyChars = options.bodyChars ?? 34;
+  const lineHeight = options.lineHeight ?? 1.08;
+  const insetX = options.insetX ?? 18;
+  const insetY = options.insetY ?? 10;
+  const fontSize = options.fontSize ?? 18;
+
+  return blocks.flatMap((block, index) => {
+    const pos = positions[index];
+    return [
+      shapeElement(
+        `${prefix}_detail_card_${index}`,
+        pos.left,
+        pos.top,
+        pos.width,
+        pos.height,
+        '#ffffff',
+        1,
+      ),
+      shapeElement(
+        `${prefix}_detail_bar_${index}`,
+        pos.left,
+        pos.top + 12,
+        5,
+        Math.max(36, pos.height - 24),
+        blueAccent(index),
+        0.95,
+      ),
+      textElement(
+        `${prefix}_detail_text_${index}`,
+        `<strong>${escapeHtmlShort(block.heading, 12)}</strong>：${escapeHtmlShort(block.body, bodyChars)}`,
+        pos.left + insetX,
+        pos.top + insetY,
+        pos.width - insetX - 14,
+        pos.height - insetY - 8,
+        fontSize,
+        theme.textBody,
+        undefined,
+        lineHeight,
+      ),
+    ];
+  });
+}
+
+function redisInternalDetailRows(
+  prefix: string,
+  focus: RedisInternalFocus,
+  theme: SlidePolishTheme,
+  rows: Array<{ left: number; top: number; width: number; height: number }>,
+  options: {
+    bodyChars?: number;
+    lineHeight?: number;
+  } = {},
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const blocks = redisInternalBlocks(focus).slice(0, rows.length);
+  const bodyChars = options.bodyChars ?? 28;
+  const lineHeight = options.lineHeight ?? 1.06;
+
+  return blocks.flatMap((block, index) => {
+    const row = rows[index];
+    return [
+      shapeElement(
+        `${prefix}_detail_row_bar_${index}`,
+        row.left,
+        row.top + 9,
+        5,
+        Math.max(32, row.height - 18),
+        blueAccent(index),
+        0.95,
+      ),
+      textElement(
+        `${prefix}_detail_row_text_${index}`,
+        `<strong>${escapeHtmlShort(block.heading, 12)}</strong>：${escapeHtmlShort(block.body, bodyChars)}`,
+        row.left + 18,
+        row.top + 6,
+        row.width - 26,
+        row.height - 12,
+        18,
+        theme.textBody,
+        undefined,
+        lineHeight,
+      ),
+    ];
+  });
+}
+
+function redisInternalVariantLayout(
+  focus: RedisInternalFocus,
+  prefix: string,
+  title: string,
+  subtitle: string,
+  theme: SlidePolishTheme,
+  _context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const header = redisInternalHeaderElements(prefix, title, subtitle, theme);
+  const visual = redisInternalVisualElements(prefix, focus, theme);
+
+  if (focus === 'hash') {
+    return [
+      ...header,
+      shapeElement(`${prefix}_layout_split_left`, 70, 212, 390, 286, '#eff6ff', 0.72),
+      ...redisInternalDetailRows(
+        prefix,
+        focus,
+        theme,
+        [
+          { left: 92, top: 230, width: 334, height: 48 },
+          { left: 92, top: 294, width: 334, height: 48 },
+          { left: 92, top: 358, width: 334, height: 48 },
+          { left: 92, top: 422, width: 334, height: 48 },
+        ],
+        {
+          bodyChars: 30,
+          lineHeight: 1.04,
+        },
+      ),
+      ...translateRedisInternalElements(visual, 430, 0),
+      shapeElement(`${prefix}_layout_rule`, 488, 224, 3, 264, theme.accentSecondary, 0.85),
+    ];
+  }
+
+  if (focus === 'list') {
+    const compactVisual = visual.filter(
+      (element) => !element.id?.endsWith('_listpack_label') && !element.id?.endsWith('_list_rule'),
+    );
+
+    return [
+      ...header,
+      shapeElement(`${prefix}_layout_left_diagram`, 70, 212, 468, 286, '#ffffff', 1),
+      ...compactVisual,
+      shapeElement(`${prefix}_layout_right_stack`, 566, 212, 352, 286, '#eff6ff', 0.72),
+      ...redisInternalDetailRows(
+        prefix,
+        focus,
+        theme,
+        [
+          { left: 588, top: 230, width: 308, height: 48 },
+          { left: 588, top: 294, width: 308, height: 48 },
+          { left: 588, top: 358, width: 308, height: 48 },
+          { left: 588, top: 422, width: 308, height: 48 },
+        ],
+        {
+          bodyChars: 28,
+          lineHeight: 1.04,
+        },
+      ),
+      shapeElement(`${prefix}_layout_join_rule`, 548, 234, 3, 242, theme.accent, 0.72),
+    ];
+  }
+
+  if (focus === 'set') {
+    const compactVisual = visual.filter(
+      (element) => !element.id?.endsWith('_visual_panel') && !element.id?.endsWith('_set_note'),
+    );
+
+    return [
+      ...header,
+      shapeElement(`${prefix}_layout_center_stage`, 138, 212, 724, 184, '#ffffff', 1),
+      ...translateRedisInternalElements(compactVisual, 160, -4),
+      ...redisInternalDetailCards(prefix, focus, theme, [
+        { left: 82, top: 420, width: 398, height: 74 },
+        { left: 520, top: 420, width: 398, height: 74 },
+      ]),
+    ];
+  }
+
+  if (focus === 'zset') {
+    const compactVisual = visual.filter(
+      (element) => !element.id?.endsWith('_visual_panel') && !element.id?.endsWith('_zset_note'),
+    );
+
+    return [
+      ...header,
+      shapeElement(`${prefix}_layout_rank_stage`, 70, 212, 860, 182, '#ffffff', 1),
+      ...translateRedisInternalElements(compactVisual, 178, -18),
+      shapeElement(`${prefix}_layout_bottom_band`, 70, 402, 860, 96, '#eff6ff', 0.72),
+      ...redisInternalDetailRows(
+        prefix,
+        focus,
+        theme,
+        [
+          { left: 92, top: 416, width: 248, height: 56 },
+          { left: 376, top: 416, width: 248, height: 56 },
+          { left: 660, top: 416, width: 248, height: 56 },
+        ],
+        {
+          bodyChars: 16,
+          lineHeight: 1.04,
+        },
+      ),
+      shapeElement(`${prefix}_layout_rank_rule`, 104, 398, 792, 3, theme.accent, 0.78),
+    ];
+  }
+
+  return [
+    ...header,
+    shapeElement(`${prefix}_layout_memory_band`, 70, 214, 860, 160, '#ffffff', 1),
+    ...translateRedisInternalElements(visual, 176, -8),
+    shapeElement(`${prefix}_layout_bottom_band`, 70, 376, 860, 138, '#eff6ff', 0.72),
+    ...redisInternalDetailRows(
+      prefix,
+      focus,
+      theme,
+      [
+        { left: 92, top: 398, width: 392, height: 52 },
+        { left: 516, top: 398, width: 392, height: 52 },
+        { left: 92, top: 453, width: 392, height: 52 },
+        { left: 516, top: 453, width: 392, height: 52 },
+      ],
+      {
+        bodyChars: 18,
+        lineHeight: 1.04,
+      },
+    ),
+  ];
+}
+
+function redisInternalStructureReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const focus = getRedisInternalFocus(getLayoutSignalText(elements, context)) ?? 'sds';
+  const theme = redisInternalTheme(context);
+  const title = getSlideTitle(elements, context);
+  const subtitle = getCanonicalSubtitle(elements, title);
+  const prefix = `polish_ref_redis_internal_${focus}`;
+
+  return redisInternalVariantLayout(focus, prefix, title, subtitle, theme, context);
+}
+
+function shouldUseRedisDataStructureLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  if (elements.some((element) => element.id?.startsWith('polish_ref_redis_ds_'))) return false;
+
+  const source = getLayoutSignalText(elements, context);
+  const hasRedis = /redis/i.test(source);
+  const hasDataStructure =
+    /(数据结构|data\s*structure|String|List|Hash|Set|Sorted\s*Set|ZSet|排行榜|队列|集合)/i.test(
+      source,
+    );
+  if (!hasRedis || !hasDataStructure) return false;
+
+  const title = getSlideTitle(elements, context);
+  const titleFocus = getRedisSpecificFocusFromText(title);
+  const hasOverviewSignal = hasRedisOverviewSignal(source);
+  const hasChoicePracticeSummarySignal = hasRedisChoicePracticeSummarySignal(`${title} ${source}`);
+  const mentionedFocuses = getRedisMentionedSpecificFocuses(source);
+
+  if (hasChoicePracticeSummarySignal && !titleFocus && !hasOverviewSignal) return false;
+  if (!titleFocus && !hasOverviewSignal && mentionedFocuses.size < 2) return false;
+
+  const generatedLikeCount = elements.filter((element) =>
+    /^(text|shape|line|image|video|chart|table|latex)_[\w-]+$/i.test(element.id ?? ''),
+  ).length;
+  const isGeneratedLike = generatedLikeCount >= Math.max(3, Math.ceil(elements.length * 0.45));
+  const hasSparseCards =
+    elements.filter((element) => element.type === 'shape' && Number(element.height ?? 0) >= 140)
+      .length >= 2;
+
+  return isGeneratedLike || hasSparseCards || elements.length < 14;
+}
+
+type RedisDataStructureFocus = 'overview' | 'string' | 'list' | 'hash' | 'set' | 'zset';
+
+type RedisDataStructureItem = {
+  id: RedisDataStructureFocus;
+  name: string;
+  desc: string;
+  color: string;
+  node: readonly [number, number, number, number];
+};
+
+function hasRedisOverviewSignal(text: string): boolean {
+  const normalized = stripHtml(text).replace(/\s+/g, ' ');
+  return (
+    /(data\s*structure\s*(overview|map|comparison)|redis\s*(overview|data\s*structures?))/i.test(
+      normalized,
+    ) ||
+    /(\u6838\u5fc3|\u5e38\u7528|\u4e94\u79cd|\u4e3b\u8981|\u57fa\u672c).{0,8}\u6570\u636e\u7ed3\u6784/i.test(
+      normalized,
+    ) ||
+    /(鏍稿績|甯哥敤|浜旂|涓昏|鍩烘湰).{0,12}鏁版嵁缁撴瀯/i.test(normalized) ||
+    /鏁版嵁缁撴瀯.{0,12}(姒傝堪|姒傝|鎬昏|瀵圭収|鍦板浘|姣旇緝)/i.test(normalized) ||
+    /\u6570\u636e\u7ed3\u6784.{0,8}(\u6982\u8ff0|\u6982\u89c8|\u603b\u89c8|\u5bf9\u7167|\u5730\u56fe|\u6bd4\u8f83)/i.test(
+      normalized,
+    )
+  );
+}
+
+function hasRedisChoicePracticeSummarySignal(text: string): boolean {
+  const normalized = stripHtml(text).replace(/\s+/g, ' ');
+  return (
+    /(\u9009\u62e9|\u9009\u6750|\u600e\u4e48\u9009|\u5982\u4f55\u9009|\u6307\u5357|\u5efa\u8bae|\u6700\u4f73\u5b9e\u8df5|\u5b9e\u8df5|\u603b\u7ed3|\u5c0f\u7ed3|\u5173\u952e\u8981\u70b9|\u56de\u987e|\u8fdb\u9636|\u8d44\u6e90|\u8bfe\u540e|\u5ef6\u4f38|\u6ce8\u610f\u4e8b\u9879|\u907f\u5751|\u89c4\u8303)/i.test(
+      normalized,
+    ) ||
+    /(choose|choice|selection|recommendations?|resources?|best\s*practice|summary|recap|advanced|guidelines?|pitfall)/i.test(
+      normalized,
+    )
+  );
+}
+
+function getRedisMentionedSpecificFocuses(
+  text: string,
+): Set<Exclude<RedisDataStructureFocus, 'overview'>> {
+  const mentioned = new Set<Exclude<RedisDataStructureFocus, 'overview'>>();
+  const sourceWithoutSortedSet = text.replace(/sorted\s*set|zset/gi, ' ');
+  for (const focus of ['string', 'list', 'hash', 'set', 'zset'] as const) {
+    const focusSource = focus === 'set' ? sourceWithoutSortedSet : text;
+    if (getRedisSpecificFocusFromText(focusSource, focus)) mentioned.add(focus);
+  }
+  return mentioned;
+}
+
+function getRedisDataStructureFocus(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): RedisDataStructureFocus {
+  const title = getSlideTitle(elements, context);
+  const source = `${title} ${getLayoutSignalText(elements, context)}`;
+  const titleHasOverviewSignal = hasRedisOverviewSignal(title);
+  const sourceHasOverviewSignal = hasRedisOverviewSignal(source);
+  const titleFocus = getRedisSpecificFocusFromText(title);
+  if (titleHasOverviewSignal || (sourceHasOverviewSignal && !titleFocus)) return 'overview';
+  if (titleFocus) return titleFocus;
+
+  const mentioned = getRedisMentionedSpecificFocuses(source);
+  if (!titleFocus && /redis/i.test(source) && mentioned.size >= 2) return 'overview';
+  if (sourceHasOverviewSignal) return 'overview';
+  if (
+    mentioned.size >= 3 ||
+    /(核心数据结构|常用.*数据结构|五种.*数据结构|data\s*structure\s*overview)/i.test(source)
+  ) {
+    return 'overview';
+  }
+
+  return getRedisSpecificFocusFromText(source) ?? 'overview';
+}
+
+function getRedisSpecificFocusFromText(
+  text: string,
+  only?: Exclude<RedisDataStructureFocus, 'overview'>,
+): Exclude<RedisDataStructureFocus, 'overview'> | null {
+  const checks: Array<[Exclude<RedisDataStructureFocus, 'overview'>, RegExp]> = [
+    ['zset', /(sorted\s*set|zset|有序集合|排行榜|权重|排名)/i],
+    ['string', /(string|字符串|键值|计数器|验证码)/i],
+    ['list', /(list|列表|有序列表|队列|时间线|消息列表)/i],
+    ['hash', /(hash|哈希|散列|对象|字段)/i],
+    ['set', /(^|[^a-z])set([^a-z]|$)|集合|去重|标签|交集|并集/i],
+  ];
+
+  for (const [focus, pattern] of checks) {
+    if (only && focus !== only) continue;
+    if (pattern.test(text)) return focus;
+  }
+  return null;
+}
+
+function redisHeaderElements(
+  prefix: string,
+  title: string,
+  subtitle: string,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  return [
+    textElement(
+      `${prefix}_title`,
+      `<strong>${title}</strong>`,
+      82,
+      42,
+      836,
+      58,
+      34,
+      theme.textPrimary,
+      undefined,
+      1.12,
+    ),
+    textElement(
+      `${prefix}_subtitle`,
+      subtitle,
+      82,
+      122,
+      836,
+      38,
+      22,
+      theme.textBody,
+      undefined,
+      1.15,
+    ),
+    shapeElement(`${prefix}_rule`, 82, 188, 836, 3, theme.accent, 0.95),
+  ];
+}
+
+function redisDataStructureReferenceLayout(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  const baseTheme = getPolishTheme(context);
+  const theme: SlidePolishTheme = {
+    ...baseTheme,
+    accent: '#2f80d1',
+    accentSecondary: '#38bdf8',
+    panel: '#eff6ff',
+  };
+  const title = getSlideTitle(elements, context);
+  const subtitle = getCanonicalSubtitle(elements, title);
+  const prefix = 'polish_ref_redis_ds';
+  const structures: RedisDataStructureItem[] = [
+    {
+      id: 'string',
+      name: 'String',
+      desc: '缓存值 / 计数器',
+      color: '#2f80d1',
+      node: [132, 340, 112, 44],
+    },
+    {
+      id: 'list',
+      name: 'List',
+      desc: '队列 / 时间线',
+      color: '#0ea5e9',
+      node: [132, 398, 112, 44],
+    },
+    {
+      id: 'hash',
+      name: 'Hash',
+      desc: '对象字段集合',
+      color: '#2563eb',
+      node: [334, 340, 112, 44],
+    },
+    {
+      id: 'set',
+      name: 'Set',
+      desc: '去重 / 标签',
+      color: '#38bdf8',
+      node: [334, 398, 112, 44],
+    },
+    {
+      id: 'zset',
+      name: 'Sorted Set',
+      desc: '排行榜 / 权重',
+      color: '#4f46e5',
+      node: [232, 456, 112, 44],
+    },
+  ];
+
+  const focus = getRedisDataStructureFocus(elements, context);
+  if (focus !== 'overview') {
+    return redisFocusedDataStructureReferenceLayout({
+      prefix,
+      focus,
+      structures,
+      theme,
+      title,
+      subtitle,
+      context,
+    });
+  }
+
+  return [
+    ...redisHeaderElements(prefix, title, subtitle, theme),
+    shapeElement(`${prefix}_backplate`, 64, 196, 872, 318, '#ffffff', 1),
+    shapeElement(`${prefix}_overview_top_rule`, 112, 258, 392, 3, '#dbeafe', 1),
+    textElement(
+      `${prefix}_overview_heading`,
+      '<strong>五种结构对照</strong>',
+      112,
+      214,
+      390,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    tableElement(
+      `${prefix}_overview_table`,
+      112,
+      274,
+      392,
+      218,
+      [['结构', '典型场景'], ...structures.map((item) => [item.name, item.desc])],
+      [0.36, 0.64],
+      '#2f80d1',
+    ),
+    shapeElement(`${prefix}_scenario_top_rule`, 598, 258, 292, 3, '#dbeafe', 1),
+    textElement(
+      `${prefix}_scenario_heading`,
+      '<strong>按场景选择</strong>',
+      598,
+      214,
+      290,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    tableElement(
+      `${prefix}_scenario_table`,
+      598,
+      292,
+      292,
+      158,
+      [
+        ['场景', '结构'],
+        ['单值与计数', 'String'],
+        ['顺序处理', 'List / Sorted Set'],
+        ['对象与集合', 'Hash / Set'],
+      ],
+      [0.46, 0.54],
+      '#0ea5e9',
+    ),
+    textElement(
+      `${prefix}_summary_note`,
+      '先判断读写模型，再选择对应结构',
+      520,
+      458,
+      370,
+      30,
+      18,
+      theme.textBody,
+      undefined,
+      1.08,
+    ),
+    shapeElement(`${prefix}_bottom_rule`, 112, 508, 778, 3, '#0ea5e9', 0.9),
+  ];
+}
+
+function redisFocusedDataStructureReferenceLayout(args: {
+  prefix: string;
+  focus: Exclude<RedisDataStructureFocus, 'overview'>;
+  structures: RedisDataStructureItem[];
+  theme: SlidePolishTheme;
+  title: string;
+  subtitle: string;
+  context?: SlidePolishContext;
+}): Array<SlideLikeElement & Record<string, unknown>> {
+  const { prefix: basePrefix, focus, structures, theme, title, subtitle, context: _context } = args;
+  const prefix = `${basePrefix}_focus_${focus}`;
+  const item = structures.find((candidate) => candidate.id === focus) ?? structures[0];
+  const details: Record<Exclude<RedisDataStructureFocus, 'overview'>, string[]> = {
+    string: ['保存单个值', '原子计数', '设置过期时间'],
+    list: ['按插入顺序保存', '适合队列和时间线', '两端都能快速操作'],
+    hash: ['把对象拆成字段', '适合用户资料', '局部字段可单独更新'],
+    set: ['自动去重', '适合标签集合', '支持交集和并集'],
+    zset: ['每个成员带分数', '按分数排序', '适合排行榜'],
+  };
+
+  const visualElements = redisFocusedVisualElements(prefix, focus, item, theme);
+  const detailRows = details[focus];
+
+  return [
+    ...redisHeaderElements(prefix, title, subtitle, theme),
+    shapeElement(`${prefix}_backplate`, 64, 196, 872, 330, '#ffffff', 1),
+    shapeElement(`${prefix}_visual_panel`, 82, 204, 456, 310, '#ffffff', 1),
+    shapeElement(`${prefix}_visual_bar`, 82, 228, 5, 244, '#2f80d1', 0.95),
+    textElement(
+      `${prefix}_visual_title`,
+      `<strong>${item.name} 的结构视图</strong>`,
+      112,
+      224,
+      390,
+      34,
+      24,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    ...visualElements,
+    shapeElement(`${prefix}_detail_panel`, 572, 214, 346, 300, '#ffffff', 1),
+    shapeElement(`${prefix}_detail_panel_bar`, 572, 238, 5, 248, '#2f80d1', 0.95),
+    textElement(
+      `${prefix}_detail_heading`,
+      '<strong>这一页只讲什么</strong>',
+      598,
+      232,
+      290,
+      32,
+      22,
+      theme.textPrimary,
+      undefined,
+      1.1,
+    ),
+    textElement(
+      `${prefix}_detail_focus`,
+      `<strong>${item.name}</strong>：${item.desc}`,
+      598,
+      282,
+      290,
+      38,
+      18,
+      '#1e3a5f',
+      undefined,
+      1.12,
+    ),
+    ...detailRows.flatMap((detail, index) => {
+      const top = 342 + index * 56;
+      return [
+        circleElement(`${prefix}_detail_dot_${index}`, 600, top + 9, 14, blueAccent(index), 0.95),
+        textElement(
+          `${prefix}_detail_text_${index}`,
+          detail,
+          626,
+          top,
+          252,
+          32,
+          18,
+          theme.textBody,
+          undefined,
+          1.1,
+        ),
+      ];
+    }),
+    shapeElement(`${prefix}_scenario_rule`, 572, 506, 346, 3, '#0ea5e9', 0.9),
+  ];
+}
+
+function blueAccent(index: number): string {
+  return ['#2f80d1', '#0ea5e9', '#2563eb', '#38bdf8', '#4f46e5'][index % 5];
+}
+
+function redisFocusedVisualElements(
+  prefix: string,
+  focus: Exclude<RedisDataStructureFocus, 'overview'>,
+  item: RedisDataStructureItem,
+  theme: SlidePolishTheme,
+): Array<SlideLikeElement & Record<string, unknown>> {
+  if (focus === 'string') {
+    return [
+      shapeElement(`${prefix}_string_key_box`, 116, 316, 126, 58, '#ffffff', 1),
+      shapeElement(`${prefix}_string_key_bar`, 116, 326, 6, 36, item.color, 0.95),
+      textElement(
+        `${prefix}_string_key`,
+        '<strong>key</strong>',
+        138,
+        326,
+        74,
+        34,
+        18,
+        theme.textPrimary,
+      ),
+      lineElement(`${prefix}_string_arrow`, 254, 345, [0, 0], [76, 0], 2, '#93c5fd', {
+        points: ['', 'arrow'],
+      }),
+      shapeElement(`${prefix}_string_value_box`, 346, 316, 140, 58, '#ffffff', 1),
+      shapeElement(`${prefix}_string_value_bar`, 346, 326, 6, 36, '#0ea5e9', 0.95),
+      textElement(
+        `${prefix}_string_value`,
+        '<strong>value</strong>',
+        368,
+        326,
+        86,
+        34,
+        18,
+        theme.textPrimary,
+      ),
+      ...['SET', 'INCR', 'EXPIRE'].flatMap((label, index) => {
+        const left = 116 + index * 124;
+        return [
+          shapeElement(`${prefix}_string_op_box_${index}`, left, 424, 98, 42, '#ffffff', 1),
+          textElement(`${prefix}_string_op_${index}`, label, left + 16, 430, 66, 28, 18, '#1e3a5f'),
+        ];
+      }),
+      shapeElement(`${prefix}_string_rule`, 116, 492, 370, 3, '#0ea5e9', 0.9),
+    ];
+  }
+
+  if (focus === 'list') {
+    return [
+      shapeElement(`${prefix}_list_rail`, 116, 352, 374, 4, '#bfdbfe', 1),
+      lineElement(`${prefix}_list_flow`, 116, 354, [0, 0], [374, 0], 2, '#93c5fd', {
+        points: ['', 'arrow'],
+      }),
+      ...['LPUSH', '元素', 'RPOP'].flatMap((label, index) => {
+        const left = 116 + index * 136;
+        return [
+          shapeElement(`${prefix}_list_step_${index}`, left, 318, 108, 70, '#ffffff', 1),
+          shapeElement(
+            `${prefix}_list_step_bar_${index}`,
+            left,
+            328,
+            6,
+            42,
+            blueAccent(index),
+            0.95,
+          ),
+          textElement(
+            `${prefix}_list_step_text_${index}`,
+            `<strong>${label}</strong>`,
+            left + 18,
+            337,
+            74,
+            32,
+            18,
+            theme.textPrimary,
+          ),
+        ];
+      }),
+      textElement(
+        `${prefix}_list_note`,
+        '左进右出，形成有序处理链',
+        116,
+        428,
+        374,
+        34,
+        18,
+        theme.textBody,
+        undefined,
+        1.12,
+      ),
+      shapeElement(`${prefix}_list_rule`, 116, 492, 374, 3, '#0ea5e9', 0.9),
+    ];
+  }
+
+  if (focus === 'hash') {
+    return [
+      shapeElement(`${prefix}_hash_table`, 116, 312, 370, 136, '#ffffff', 1),
+      shapeElement(`${prefix}_hash_header_rule`, 116, 312, 370, 4, '#bfdbfe', 1),
+      lineElement(`${prefix}_hash_col`, 274, 312, [0, 0], [0, 136], 1, '#cbd5e1'),
+      lineElement(`${prefix}_hash_row`, 116, 350, [0, 0], [370, 0], 1, '#dbe3ef'),
+      textElement(
+        `${prefix}_hash_fields`,
+        '<strong>field</strong><br/>name<br/>level',
+        142,
+        318,
+        90,
+        112,
+        18,
+        theme.textPrimary,
+        undefined,
+        1.22,
+      ),
+      textElement(
+        `${prefix}_hash_values`,
+        '<strong>value</strong><br/>Alice<br/>12',
+        306,
+        318,
+        90,
+        112,
+        18,
+        theme.textPrimary,
+        undefined,
+        1.22,
+      ),
+      shapeElement(`${prefix}_hash_rule`, 116, 492, 370, 3, '#0ea5e9', 0.9),
+    ];
+  }
+
+  if (focus === 'set') {
+    return [
+      circleElement(`${prefix}_set_circle_a`, 154, 326, 132, '#dbeafe', 0.92),
+      circleElement(`${prefix}_set_circle_b`, 236, 326, 132, '#e0f2fe', 0.92),
+      textElement(`${prefix}_set_a`, '<strong>A</strong>', 146, 304, 54, 28, 18, '#1e3a5f'),
+      textElement(`${prefix}_set_b`, '<strong>B</strong>', 398, 304, 54, 28, 18, '#1e3a5f'),
+      textElement(`${prefix}_set_middle`, '交集', 256, 374, 74, 28, 18, theme.textPrimary),
+      shapeElement(`${prefix}_set_rule`, 116, 492, 374, 3, '#0ea5e9', 0.9),
+    ];
+  }
+
+  return [
+    ...[
+      ['01', 'user:8', '98.5'],
+      ['02', 'user:3', '91.0'],
+      ['03', 'user:6', '86.0'],
+    ].flatMap(([rank, member, score], index) => {
+      const top = 306 + index * 66;
+      const barWidth = 304 - index * 44;
+      return [
+        textElement(`${prefix}_zset_rank_${index}`, rank, 116, top + 8, 42, 28, 18, '#1e3a5f'),
+        shapeElement(`${prefix}_zset_bar_${index}`, 168, top + 24, barWidth, 10, '#dbeafe', 1),
+        shapeElement(
+          `${prefix}_zset_bar_accent_${index}`,
+          168,
+          top + 24,
+          52,
+          10,
+          blueAccent(index),
+          0.95,
+        ),
+        textElement(
+          `${prefix}_zset_member_${index}`,
+          member,
+          190,
+          top + 5,
+          104,
+          28,
+          18,
+          theme.textPrimary,
+        ),
+        textElement(`${prefix}_zset_score_${index}`, score, 356, top + 5, 76, 28, 18, '#1e3a5f'),
+      ];
+    }),
+    shapeElement(`${prefix}_zset_rule`, 116, 506, 374, 3, '#0ea5e9', 0.9),
   ];
 }
 
@@ -2974,6 +4883,9 @@ function referenceLayoutElements<T extends SlideLikeElement>(
   if (shouldUsePythonVariablesLayout(elements, context)) {
     return pythonVariablesReferenceLayout(elements, context) as T[];
   }
+  if (shouldUseRedisInternalStructureLayout(elements, context)) {
+    return redisInternalStructureReferenceLayout(elements, context) as T[];
+  }
   if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return elements;
   if (shouldUseCubicIntroLayout(elements, context)) {
     return cubicIntroReferenceLayout(elements, context) as T[];
@@ -3000,6 +4912,9 @@ function referenceLayoutElements<T extends SlideLikeElement>(
   }
   if (shouldUseVertexFormLayout(elements, context)) {
     return vertexFormReferenceLayout(elements, context) as T[];
+  }
+  if (shouldUseRedisDataStructureLayout(elements, context)) {
+    return redisDataStructureReferenceLayout(elements, context) as T[];
   }
   if (shouldUseCanonicalMediaLayout(elements, context)) {
     return canonicalMediaReferenceLayout(elements, context) as T[];
@@ -3429,12 +5344,45 @@ function createRichnessLayer(
 }
 
 function escapeHtmlShort(text: string, max: number): string {
-  return text
-    .slice(0, max)
+  const boundedText = truncateReadableText(text, max);
+  return boundedText
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function truncateReadableText(text: string, max: number): string {
+  if (text.length <= max) return text;
+
+  const codeTokenMatch = text.match(
+    /\b(?:do-while|while|for|switch|case|break|continue|boolean|double|float|byte|short|int|long|char|String)\b/i,
+  );
+  let limit = max;
+  if (codeTokenMatch && codeTokenMatch.index !== undefined) {
+    const tokenEnd = codeTokenMatch.index + codeTokenMatch[0].length;
+    if (tokenEnd > max && tokenEnd <= max + 18) {
+      limit = tokenEnd;
+    }
+  }
+
+  if (/[A-Za-z0-9_-]/.test(text[limit - 1] ?? '') && /[A-Za-z0-9_-]/.test(text[limit] ?? '')) {
+    const tokenEnd = text.slice(limit).search(/[^A-Za-z0-9_-]/);
+    if (tokenEnd >= 0 && tokenEnd <= 18) {
+      limit += tokenEnd;
+    } else {
+      const tokenStart = text.slice(0, limit).search(/[A-Za-z0-9_-]+$/);
+      if (tokenStart >= 0 && limit - tokenStart >= 4) {
+        limit = tokenStart;
+      }
+    }
+  }
+
+  const clipped = text
+    .slice(0, limit)
+    .replace(/[，,、:：；;+\-*/=([{（\s]+$/g, '')
+    .trimEnd();
+  return clipped || text.slice(0, max);
 }
 
 export function enrichSlideElements<T extends SlideLikeElement>(
@@ -3456,6 +5404,347 @@ export function enrichSlideElements<T extends SlideLikeElement>(
   return [...elements, ...createRichnessLayer(elements, context)] as T[];
 }
 
+type SlideQualityIssue = {
+  type:
+    | 'blocking_layout'
+    | 'tiny_text'
+    | 'generic_template_label'
+    | 'likely_truncated_text'
+    | 'underfilled_table'
+    | 'excessive_blank_space'
+    | 'render_clip_risk';
+  detail: string;
+};
+
+const QUALITY_BLOCKING_LAYOUT_TYPES = new Set<LayoutGuardIssue['type']>([
+  'readable_element_overlap',
+  'foreground_overlay_collision',
+  'latex_box_too_small',
+  'unsafe_bottom_zone',
+  'text_outside_background',
+]);
+
+function getElementPlainText(element: SlideLikeElement): string {
+  if (element.type === 'latex') {
+    return String((element as Record<string, unknown>)['latex'] ?? '');
+  }
+  if (element.type === 'shape') {
+    const text = (element as Record<string, unknown>)['text'] as { content?: string } | undefined;
+    return stripHtml(String(text?.content ?? ''));
+  }
+  return stripHtml(getTextContent(element));
+}
+
+function isGenericTemplateLabelText(text: string): boolean {
+  const normalized = text.replace(/\s+/g, '').trim();
+  if (!normalized) return false;
+
+  if (
+    /^(核心功能|核心抓手|视角[A-C]|观点[A-C]|Perspective[A-C]|CoreFeature|KeyPoint|Conclusion)$/i.test(
+      normalized,
+    )
+  ) {
+    return true;
+  }
+
+  if (/^Step\d{1,2}$/i.test(normalized)) return true;
+
+  return false;
+}
+
+function findGenericTemplateLabelIssues(elements: SlideLikeElement[]): SlideQualityIssue[] {
+  return elements
+    .filter((element) => element.type === 'text' || hasShapeText(element))
+    .map((element) => ({ element, text: getElementPlainText(element) }))
+    .filter(({ text }) => isGenericTemplateLabelText(text))
+    .map(({ element, text }) => ({
+      type: 'generic_template_label' as const,
+      detail: `${element.id ?? 'text'} is a template label without concrete teaching content: ${text}`,
+    }));
+}
+
+function containsDangerousGenericTemplateText(text: string): boolean {
+  return /(Perspective\s*[A-C]|Core\s*Feature|Key\s*Point|Conclusion|Step\s*\d{1,2}|核心功能|视角\s*[A-C])/i.test(
+    text,
+  );
+}
+
+function contextualReplacementText(context: SlidePolishContext | undefined, index: number): string {
+  const candidates = [
+    ...(context?.keyPoints ?? []),
+    context?.title,
+    '把本页概念、方法和例子整理成可讲解的课堂内容。',
+  ].filter((value): value is string => !!value && !isStrictGenericCanonicalText(value));
+
+  return candidates[index % candidates.length] ?? '把本页概念、方法和例子整理成可讲解的课堂内容。';
+}
+
+function replaceGenericTemplateLabels<T extends SlideLikeElement>(
+  elements: T[],
+  context?: SlidePolishContext,
+): T[] {
+  let replacementIndex = 0;
+
+  return elements.map((element) => {
+    if (element.type !== 'text') return element;
+
+    const plain = getElementPlainText(element);
+    if (!isGenericTemplateLabelText(plain) && !containsDangerousGenericTemplateText(plain)) {
+      return element;
+    }
+
+    const content = String((element as Record<string, unknown>)['content'] ?? '');
+    const fontSize = getFontSize(content, element.top < 150 ? 28 : 18);
+    const replacement = contextualReplacementText(context, replacementIndex);
+    replacementIndex += 1;
+
+    return {
+      ...element,
+      content: `<p style="font-size:${fontSize}px;font-family:${FONT_STACK};line-height:1.2;">${escapeHtmlShort(
+        replacement,
+        element.top < 150 ? 42 : 82,
+      )}</p>`,
+    };
+  });
+}
+
+function hasLikelyDanglingEnding(text: string): boolean {
+  const normalized = text.trim();
+  if (!normalized) return false;
+  if (/[，,、:：；;+\-*/=([{（]$/.test(normalized)) return true;
+  if (/(^|[\s<])(?:Databas|Conclusio|Perspectiv|Featur|Functio|Formul)$/i.test(normalized)) {
+    return true;
+  }
+  if (/[A-Za-z]{5,}$/.test(normalized) && !/[.!?。！？）)]$/.test(normalized)) {
+    const lastWord = normalized.match(/[A-Za-z]+$/)?.[0] ?? '';
+    return /^(databas|conclusio|perspectiv|functio|formul|paramet|variab|derivat)$/i.test(lastWord);
+  }
+  return false;
+}
+
+function findLikelyTruncatedTextIssues(elements: SlideLikeElement[]): SlideQualityIssue[] {
+  return elements
+    .filter(
+      (element) => element.type === 'text' || element.type === 'latex' || hasShapeText(element),
+    )
+    .map((element) => ({ element, text: getElementPlainText(element) }))
+    .filter(({ text }) => hasLikelyDanglingEnding(text))
+    .map(({ element, text }) => ({
+      type: 'likely_truncated_text' as const,
+      detail: `${element.id ?? 'text'} looks truncated near: ${text.slice(-32)}`,
+    }));
+}
+
+function findUnderfilledTableIssues(elements: SlideLikeElement[]): SlideQualityIssue[] {
+  const tables = elements.filter((element) => element.type === 'table');
+  if (tables.length !== 1) return [];
+
+  const hasCompetingVisual = elements.some((element) =>
+    ['image', 'video', 'chart', 'latex', 'code'].includes(element.type),
+  );
+  if (hasCompetingVisual) return [];
+
+  const table = tables[0];
+  const box = getElementBox(table);
+  const area = box.width * box.height;
+  if (box.width >= 720 && box.height >= 250 && area >= 190000) return [];
+
+  return [
+    {
+      type: 'underfilled_table',
+      detail: `${table.id ?? 'table'} occupies ${Math.round(area)}px^2; table-first pages need a larger table block`,
+    },
+  ];
+}
+
+function findExcessiveBlankSpaceIssues(elements: SlideLikeElement[]): SlideQualityIssue[] {
+  const meaningful = elements.filter((element) => {
+    if (isThinDecorativeElement(element)) return false;
+    if (element.id?.startsWith('polish_density_')) return false;
+    return (
+      isReadableElement(element) || ['image', 'video', 'chart', 'table'].includes(element.type)
+    );
+  });
+  if (meaningful.length < 3) return [];
+
+  const occupiedRatio = getDensityOccupiedRatio(elements);
+  if (occupiedRatio >= 0.16) return [];
+
+  return [
+    {
+      type: 'excessive_blank_space',
+      detail: `Slide occupied ratio ${occupiedRatio.toFixed(2)} is too low after density optimization`,
+    },
+  ];
+}
+
+function findRenderClipRiskIssues(elements: SlideLikeElement[]): SlideQualityIssue[] {
+  return elements
+    .filter((element) => element.type === 'text')
+    .map((element) => {
+      const content = getTextContent(element);
+      const plain = stripHtml(content);
+      const fontSize = getFontSize(content, element.top < 150 ? 32 : 18);
+      const lineHeight = Number((element as Record<string, unknown>)['lineHeight'] ?? 1.35);
+      const estimatedHeight = estimateTextHeight(content, element.width, fontSize, lineHeight) - 20;
+      const availableHeight = Math.max(1, Number(element.height ?? 24) - 20);
+      const requiredScale = availableHeight / Math.max(1, estimatedHeight);
+      const minimumScale = element.top < 150 ? 0.8 : 0.62;
+      return {
+        element,
+        content,
+        plain,
+        estimatedHeight,
+        availableHeight,
+        requiredScale,
+        minimumScale,
+      };
+    })
+    .filter(({ content, plain }) => plain.length >= 42 || /<br\s*\/?>|<\/p>\s*<p\b/i.test(content))
+    .filter(
+      ({ estimatedHeight, availableHeight, requiredScale, minimumScale }) =>
+        estimatedHeight * minimumScale > availableHeight + 4 || requiredScale < 0.72,
+    )
+    .map(({ element, estimatedHeight, availableHeight, requiredScale }) => ({
+      type: 'render_clip_risk' as const,
+      detail: `${element.id ?? 'text'} estimated text height ${Math.round(
+        estimatedHeight,
+      )} exceeds render box ${Math.round(availableHeight)} at scale ${requiredScale.toFixed(2)}`,
+    }));
+}
+
+function auditSlideQualityGate(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): SlideQualityIssue[] {
+  const layoutIssues = auditSlideLayout(elements)
+    .filter(
+      (issue) => QUALITY_BLOCKING_LAYOUT_TYPES.has(issue.type) || issue.type === 'text_too_small',
+    )
+    .map((issue) => ({
+      type: issue.type === 'text_too_small' ? ('tiny_text' as const) : ('blocking_layout' as const),
+      detail: issue.detail,
+    }));
+
+  return [
+    ...layoutIssues,
+    ...findGenericTemplateLabelIssues(elements),
+    ...findLikelyTruncatedTextIssues(elements),
+    ...findUnderfilledTableIssues(elements),
+    ...findRenderClipRiskIssues(elements),
+    ...findExcessiveBlankSpaceIssues(elements),
+  ].filter((issue) => {
+    if (issue.type !== 'excessive_blank_space') return true;
+    const title = getSlideTitle(elements, context);
+    return !/(封面|目录|谢谢|结束|outline|thanks|quiz)/i.test(title);
+  });
+}
+
+function isOpenMaicGeneratedElementSet(elements: SlideLikeElement[]): boolean {
+  if (elements.length === 0) return false;
+  const generatedLikeCount = elements.filter((element) =>
+    /^(text|shape|line|image|video|chart|table|latex)_[\w-]+$/i.test(element.id ?? ''),
+  ).length;
+  return generatedLikeCount >= Math.max(3, Math.ceil(elements.length * 0.55));
+}
+
+function repairQualityGateLayout<T extends SlideLikeElement>(elements: T[]): T[] {
+  const renderFitAdjusted = expandTextBoxesForRenderFit(elements);
+  const repaired = repairSlideLayout(
+    enforceReadableSafeBounds(
+      resolveVerticalReadableOverlaps(
+        normalizeStepSections(normalizeCardTextOwnership(normalizeParallelRows(renderFitAdjusted))),
+      ),
+    ),
+  );
+
+  return reserveBottomCalloutSpace(
+    enforceReadableSafeBounds(
+      resolveVerticalReadableOverlaps(
+        normalizeStepSections(normalizeCardTextOwnership(normalizeParallelRows(repaired))),
+      ),
+    ),
+  );
+}
+
+function expandTextBoxesForRenderFit<T extends SlideLikeElement>(elements: T[]): T[] {
+  return elements.map((element) => {
+    if (element.type !== 'text') return element;
+
+    const content = getTextContent(element);
+    const plain = stripHtml(content);
+    if (plain.length < 42 && !/<br\s*\/?>|<\/p>\s*<p\b/i.test(content)) return element;
+
+    const fontSize = getFontSize(content, element.top < 150 ? 32 : 18);
+    const lineHeight = Number((element as Record<string, unknown>)['lineHeight'] ?? 1.35);
+    const estimatedHeight = estimateTextHeight(content, element.width, fontSize, lineHeight);
+    const currentHeight = Number(element.height ?? 24);
+    if (estimatedHeight <= currentHeight) return element;
+
+    const safeBottom = CANVAS_HEIGHT - MARGIN;
+    const availableHeight = safeBottom - element.top;
+    if (availableHeight < Math.max(48, currentHeight)) return element;
+
+    return {
+      ...element,
+      height: Math.min(availableHeight, Math.max(currentHeight, estimatedHeight)),
+    };
+  });
+}
+
+function qualityFallbackReferenceLayout<T extends SlideLikeElement>(
+  elements: T[],
+  context?: SlidePolishContext,
+): T[] {
+  if (elements.some((element) => element.type === 'image' || element.type === 'video')) {
+    return canonicalMediaReferenceLayout(elements, context) as T[];
+  }
+  if (elements.some((element) => element.type === 'table' || element.type === 'chart')) {
+    return canonicalDataReferenceLayout(elements, context) as T[];
+  }
+  if (elements.some((element) => element.type === 'latex' || element.type === 'code')) {
+    return canonicalFormulaReferenceLayout(elements, context) as T[];
+  }
+  return canonicalTextReferenceLayout(elements, context) as T[];
+}
+
+function applySlideQualityGate<T extends SlideLikeElement>(
+  elements: T[],
+  sourceElements: T[],
+  context?: SlidePolishContext,
+): T[] {
+  const sanitized = replaceGenericTemplateLabels(elements, context);
+  const issues = auditSlideQualityGate(sanitized, context);
+  if (issues.length === 0) return sanitized;
+
+  const repaired = replaceGenericTemplateLabels(repairQualityGateLayout(sanitized), context);
+  const repairedIssues = auditSlideQualityGate(repaired, context);
+  const requiresFallback = issues.some(
+    (issue) =>
+      issue.type === 'generic_template_label' ||
+      issue.type === 'underfilled_table' ||
+      issue.type === 'likely_truncated_text' ||
+      issue.type === 'render_clip_risk',
+  );
+  if (!requiresFallback && (repairedIssues.length === 0 || repairedIssues.length < issues.length)) {
+    return repaired;
+  }
+
+  if (!isOpenMaicGeneratedElementSet(sourceElements)) return repaired;
+
+  const fallback = qualityFallbackReferenceLayout(sourceElements, context);
+  const polishedFallback = replaceGenericTemplateLabels(
+    polishReferenceLayoutElements(fallback, context),
+    context,
+  );
+  const fallbackIssues = auditSlideQualityGate(polishedFallback, context).filter(
+    (issue) => issue.type !== 'excessive_blank_space',
+  );
+
+  if (fallbackIssues.length < issues.length) return polishedFallback as T[];
+  return repaired;
+}
+
 export function polishSlideElements<T extends SlideLikeElement>(
   elements: T[],
   context?: SlidePolishContext,
@@ -3463,7 +5752,14 @@ export function polishSlideElements<T extends SlideLikeElement>(
   const baseElements = elements.filter((element) => !element.id?.startsWith('polish_rich_'));
   const referenceElements = referenceLayoutElements(baseElements, context);
   if (referenceElements) {
-    return polishReferenceLayoutElements(referenceElements, context);
+    return addDeckDiversitySignature(
+      applySlideQualityGate(
+        polishReferenceLayoutElements(referenceElements, context),
+        baseElements,
+        context,
+      ),
+      context,
+    );
   }
 
   const shouldDecorate = context?.decorate !== false;
@@ -3503,7 +5799,10 @@ export function polishSlideElements<T extends SlideLikeElement>(
     }
   });
 
-  return protectReadableLayout(polished, context);
+  return addDeckDiversitySignature(
+    applySlideQualityGate(protectReadableLayout(polished, context), baseElements, context),
+    context,
+  );
 }
 
 function polishReferenceLayoutElements<T extends SlideLikeElement>(
@@ -3533,6 +5832,56 @@ function polishReferenceLayoutElements<T extends SlideLikeElement>(
   return enforceReadableSafeBounds(polished);
 }
 
+function optimizeDominantTableDensity<T extends SlideLikeElement>(elements: T[]): T[] {
+  const tables = elements.filter((element) => element.type === 'table');
+  if (tables.length !== 1) return elements;
+
+  const hasCompetingVisual = elements.some((element) =>
+    ['image', 'video', 'chart', 'latex', 'code'].includes(element.type),
+  );
+  if (hasCompetingVisual) return elements;
+
+  const table = tables[0];
+  const tableBox = getElementBox(table);
+  const hasTableCaption = elements.some((element) => {
+    if (element.type !== 'text') return false;
+    const box = getElementBox(element);
+    const horizontalOverlap =
+      Math.min(box.right, tableBox.right) - Math.max(box.left, tableBox.left);
+    return (
+      horizontalOverlap >= tableBox.width * 0.45 &&
+      box.top < tableBox.top &&
+      tableBox.top - box.top <= 100
+    );
+  });
+  if (hasTableCaption) return elements;
+
+  const tableArea = tableBox.width * tableBox.height;
+  if (tableBox.width >= 700 && tableBox.height >= 280) return elements;
+  if (tableArea >= 240000) return elements;
+
+  const title = getTitleElement(elements);
+  const titleBottom = title ? getElementBox(title).bottom : 128;
+  const top = Math.max(168, titleBottom + 44);
+  const bottom = 486;
+  const targetHeight = Math.max(286, bottom - top);
+
+  return elements.map((element) => {
+    if (element !== table) return element;
+    return {
+      ...element,
+      left: 92,
+      top,
+      width: 816,
+      height: targetHeight,
+      cellMinHeight: Math.max(
+        Number((element as Record<string, unknown>).cellMinHeight ?? 0),
+        Math.floor(targetHeight / 5),
+      ),
+    };
+  });
+}
+
 function protectReadableLayout<T extends SlideLikeElement>(
   elements: T[],
   context?: SlidePolishContext,
@@ -3543,7 +5892,9 @@ function protectReadableLayout<T extends SlideLikeElement>(
   const stepAdjusted = normalizeStepSections(parallelAligned);
   const bottomAdjusted = fitBottomReadableRows(stepAdjusted);
   const tableCaptionAdjusted = fitTableCaptionsAboveTables(bottomAdjusted);
-  const latexAdjusted = fitLatexAroundRightColumn(tableCaptionAdjusted);
+  const tableDensityAdjusted = optimizeDominantTableDensity(tableCaptionAdjusted);
+  const tableCaptionReadjusted = fitTableCaptionsAboveTables(tableDensityAdjusted);
+  const latexAdjusted = fitLatexAroundRightColumn(tableCaptionReadjusted);
   const rightColumnAdjusted = fitRightColumnAboveTables(latexAdjusted);
   const cleaned = removeDecorationsCoveringReadableContent(rightColumnAdjusted);
   const calloutReserved = reserveBottomCalloutSpace(cleaned);
@@ -4367,7 +6718,7 @@ function normalizeCardTextOwnership<T extends SlideLikeElement>(elements: T[]): 
     for (const rawBand of groupCardCandidatesByTop(indexedCandidates)) {
       if (!shouldDistributeBandAcrossCards(cards, rawBand)) continue;
 
-      let band = [...rawBand];
+      const band = [...rawBand];
       if (band.length === cards.length + 1) {
         const captionIndex = band.findIndex(({ element }) => isLikelyCardRowCaption(element));
         if (captionIndex >= 0) {

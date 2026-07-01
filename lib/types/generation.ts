@@ -138,6 +138,22 @@ export interface GeneratedSlideContent {
   background?: SlideBackground;
   remark?: string;
   templateData?: TemplateSlideData;
+  qa?: GeneratedSlideQAReport;
+}
+
+export interface GeneratedSlideQAIssue {
+  type: string;
+  severity: 'blocking' | 'warning';
+  detail: string;
+  elementId?: string;
+  backgroundId?: string;
+}
+
+export interface GeneratedSlideQAReport {
+  pass: boolean;
+  blockingIssueCount: number;
+  warningIssueCount: number;
+  issues: GeneratedSlideQAIssue[];
 }
 
 /**

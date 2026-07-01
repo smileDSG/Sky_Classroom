@@ -89,7 +89,8 @@ export function CanvasArea({
       <div
         className={cn(
           'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-2 transition-colors duration-500 md:p-3 xl:p-4',
-          reserveFloatingControls && 'pb-[76px] md:pb-20',
+          reserveFloatingControls &&
+            (currentScene?.type === 'interactive' ? 'pb-[112px] md:pb-28' : 'pb-[76px] md:pb-20'),
           currentScene?.type === 'interactive'
             ? 'bg-[linear-gradient(180deg,#effcff_0%,#f8feff_100%)] dark:bg-cyan-950/10'
             : 'bg-[linear-gradient(180deg,#e9f8ff_0%,#ffffff_58%,#f2fbff_100%)] dark:bg-slate-950/70',

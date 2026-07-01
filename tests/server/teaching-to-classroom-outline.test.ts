@@ -4,7 +4,10 @@
 
 import { describe, it, expect } from 'vitest';
 import { buildOutlineOnlyResultFromTeachingJob } from '@/lib/server/teaching-to-classroom-outline';
-import { recommendAgentsFromLessonPlan, type TeachingToClassroomConfig } from '@/lib/teaching/classroom-config-recommendation';
+import {
+  recommendAgentsFromLessonPlan,
+  type TeachingToClassroomConfig,
+} from '@/lib/teaching/classroom-config-recommendation';
 import type { TeachingJob, GeneratedSectionData } from '@/lib/server/teaching-job-store';
 import type { LessonPlan } from '@/lib/teaching/lesson-types';
 
@@ -92,6 +95,43 @@ describe('buildOutlineOnlyResultFromTeachingJob', () => {
     expect(result.outlines[1].quizConfig!.difficulty).toBe('medium');
   });
 
+  it('merges adjacent sparse teaching sections before classroom generation', () => {
+    const sections: GeneratedSectionData[] = [
+      {
+        section: {
+          id: 'sec_1',
+          title: 'Definition',
+          contentType: 'explanation',
+          depth: 'basic',
+          knowledgePoints: ['Core form'],
+          estimatedDuration: 2,
+          hasQuiz: false,
+        },
+        chunks: [{ sectionId: 'sec_1', type: 'text', content: 'Define the concept.', order: 0 }],
+      },
+      {
+        section: {
+          id: 'sec_2',
+          title: 'Example',
+          contentType: 'explanation',
+          depth: 'basic',
+          knowledgePoints: ['One example'],
+          estimatedDuration: 2,
+          hasQuiz: false,
+        },
+        chunks: [{ sectionId: 'sec_2', type: 'text', content: 'Show one example.', order: 0 }],
+      },
+    ];
+
+    const job = makeMockJob(sections);
+    const result = buildOutlineOnlyResultFromTeachingJob(job, baseConfig);
+
+    expect(result.outlines).toHaveLength(1);
+    expect(result.outlines[0].title).toBe('Definition / Example');
+    expect(result.outlines[0].keyPoints).toEqual(['Core form', 'One example']);
+    expect(result.outlines[0].order).toBe(1);
+  });
+
   it('carries multimedia flags from config', () => {
     const sections: GeneratedSectionData[] = [
       {
@@ -142,7 +182,12 @@ describe('buildOutlineOnlyResultFromTeachingJob', () => {
     });
 
     expect(result.stage.agentIds).toEqual(['default-1', 'default-3', 'default-4', 'default-5']);
-    expect(result.agents.map((a) => a.id)).toEqual(['default-1', 'default-3', 'default-4', 'default-5']);
+    expect(result.agents.map((a) => a.id)).toEqual([
+      'default-1',
+      'default-3',
+      'default-4',
+      'default-5',
+    ]);
   });
 
   it('falls back description to title when no text chunk exists', () => {
@@ -197,7 +242,10 @@ describe('buildOutlineOnlyResultFromTeachingJob', () => {
 
 describe('recommendAgentsFromLessonPlan', () => {
   it('defaults to teacher-1 + curious + analytical students', () => {
-    const rec = recommendAgentsFromLessonPlan({ title: '未知主题', sections: [], estimatedDuration: 10, focusPoints: [] }, []);
+    const rec = recommendAgentsFromLessonPlan(
+      { title: '未知主题', sections: [], estimatedDuration: 10, focusPoints: [] },
+      [],
+    );
     expect(rec.teacherId).toBe('default-1');
     expect(rec.studentIds).toContain('default-3');
     expect(rec.studentIds).toContain('default-4');
