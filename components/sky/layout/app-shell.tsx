@@ -1,19 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useTheme } from '@/lib/hooks/use-theme';
-import { motion } from 'motion/react';
-import { HeaderControls } from '@/components/sky/home/header-controls';
-import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
-import { SettingsDialog } from '@/components/settings';
-import { UpgradeDialog } from '@/components/billing/upgrade-dialog';
-import { SkyTabBar } from './sky-tab-bar';
-import { BackgroundTasksIndicator } from './background-tasks-indicator';
-import { useAuth } from '@/components/auth/auth-provider';
-import { useStudyTimer } from '@/lib/hooks/use-study-timer';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { CheckCircle2, Sparkles } from 'lucide-react';
+import { useState, useEffect, useCallback } from "react";
+import { useTheme } from "@/lib/hooks/use-theme";
+import { motion } from "motion/react";
+import { HeaderControls } from "@/components/sky/home/header-controls";
+import { FloatingUserCard } from "@/components/sky/home/floating-user-card";
+import { SettingsDialog } from "@/components/settings";
+import { UpgradeDialog } from "@/components/billing/upgrade-dialog";
+import { SkyTabBar } from "./sky-tab-bar";
+import { BackgroundTasksIndicator } from "./background-tasks-indicator";
+import { useAuth } from "@/components/auth/auth-provider";
+import { useStudyTimer } from "@/lib/hooks/use-study-timer";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { CheckCircle2, Sparkles } from "lucide-react";
+import { MobileSkyShell } from "@/components/mobile/shell/mobile-sky-shell";
 
 interface SkyAppShellProps {
   children: React.ReactNode;
@@ -33,7 +34,7 @@ function AtmosphericBackground() {
   // During SSR and hydration: return null → no mismatch
   if (!isMounted) return null;
 
-  const isDark = resolvedTheme === 'dark';
+  const isDark = resolvedTheme === "dark";
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
@@ -42,8 +43,8 @@ function AtmosphericBackground() {
         className="absolute inset-0"
         style={{
           background: isDark
-            ? 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)'
-            : '#FAFBFC',
+            ? "linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)"
+            : "#FAFBFC",
         }}
       />
 
@@ -86,7 +87,7 @@ function Logo() {
           alt="天空课堂"
           className="w-7 h-7"
           whileHover={{ scale: 1.08, rotate: 3 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
         />
         <div className="absolute inset-0 rounded-lg bg-sky-400/0 group-hover:bg-sky-400/10 transition-colors duration-300 -z-10 blur-md" />
       </div>
@@ -102,7 +103,7 @@ function Logo() {
   );
 }
 
-export function SkyAppShell({ children }: SkyAppShellProps) {
+function DesktopSkyShell({ children }: SkyAppShellProps) {
   const { user, refresh } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -116,15 +117,15 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Check today's check-in status
   useEffect(() => {
     if (!user) return;
 
-    fetch('/api/sky/learning-stats', { credentials: 'include' })
+    fetch("/api/sky/learning-stats", { credentials: "include" })
       .then((r) => r.json())
       .then((data) => {
         if (data?.success) {
@@ -140,9 +141,9 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
 
     setCheckingIn(true);
     try {
-      const res = await fetch('/api/sky/check-in', {
-        method: 'POST',
-        credentials: 'include',
+      const res = await fetch("/api/sky/check-in", {
+        method: "POST",
+        credentials: "include",
       });
       const data = await res.json();
 
@@ -165,8 +166,8 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
       <header
         className={`sticky top-0 z-50 flex shrink-0 flex-wrap items-center gap-3 px-4 py-3 transition-all duration-500 md:grid md:h-16 md:grid-cols-3 md:gap-0 md:px-6 md:py-0 ${
           scrolled
-            ? 'bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0_1px_20px_-8px_rgba(15,23,42,0.08)] dark:shadow-[0_1px_20px_-8px_rgba(0,0,0,0.2)] border-b border-slate-200/40 dark:border-slate-700/20'
-            : 'bg-transparent'
+            ? "bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0_1px_20px_-8px_rgba(15,23,42,0.08)] dark:shadow-[0_1px_20px_-8px_rgba(0,0,0,0.2)] border-b border-slate-200/40 dark:border-slate-700/20"
+            : "bg-transparent"
         }`}
       >
         {/* Top accent line on scroll */}
@@ -196,13 +197,13 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
               className="hidden md:flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg shadow-rose-500/25"
             >
               <CheckCircle2 className="h-4 w-4" />
-              {checkingIn ? '打卡中...' : '今日打卡'}
+              {checkingIn ? "打卡中..." : "今日打卡"}
             </Button>
           )}
           {user && checkedIn && (
             <div className="hidden md:flex items-center gap-1.5 text-sm text-rose-500 font-medium">
               <Sparkles className="h-4 w-4" />
-              <span>{streakDays > 0 ? `${streakDays} 天` : '已打卡'}</span>
+              <span>{streakDays > 0 ? `${streakDays} 天` : "已打卡"}</span>
             </div>
           )}
           <HeaderControls />
@@ -218,9 +219,22 @@ export function SkyAppShell({ children }: SkyAppShellProps) {
       <UpgradeDialog
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        currentPlan={user?.planType ?? 'free'}
+        currentPlan={user?.planType ?? "free"}
         onPlanChanged={refresh}
       />
     </div>
+  );
+}
+
+export function SkyAppShell({ children }: SkyAppShellProps) {
+  return (
+    <>
+      <div className="hidden md:block">
+        <DesktopSkyShell>{children}</DesktopSkyShell>
+      </div>
+      <div className="md:hidden">
+        <MobileSkyShell>{children}</MobileSkyShell>
+      </div>
+    </>
   );
 }
