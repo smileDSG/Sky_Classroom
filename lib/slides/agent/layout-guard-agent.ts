@@ -210,6 +210,9 @@ function hasShapeText(element: LayoutElement): boolean {
 }
 
 function isBackgroundShape(element: LayoutElement): boolean {
+  const id = String((element as Record<string, unknown>).id ?? '');
+  if (id.startsWith('classroom_qa_safe_card_')) return false;
+
   const box = getElementBox(element);
   return (
     element.type === 'shape' &&
@@ -468,7 +471,10 @@ function groupParallelRows<T extends LayoutElement>(elements: T[]): T[][] {
   for (const candidate of candidates) {
     const row = rows.find((group) => {
       const first = group[0];
-      return candidate.type === first.type && Math.abs(candidate.top - first.top) <= PARALLEL_GROUP_TOLERANCE;
+      return (
+        candidate.type === first.type &&
+        Math.abs(candidate.top - first.top) <= PARALLEL_GROUP_TOLERANCE
+      );
     });
     if (row) {
       row.push(candidate);
@@ -493,7 +499,8 @@ function auditParallelAlignment<T extends LayoutElement>(elements: T[]): LayoutG
 
   for (const row of groupParallelRows(elements)) {
     const boxes = row.map(getElementBox);
-    const topRange = Math.max(...boxes.map((box) => box.top)) - Math.min(...boxes.map((box) => box.top));
+    const topRange =
+      Math.max(...boxes.map((box) => box.top)) - Math.min(...boxes.map((box) => box.top));
     const heightRange =
       Math.max(...boxes.map((box) => box.height)) - Math.min(...boxes.map((box) => box.height));
     const widthRange =
@@ -656,11 +663,15 @@ function auditSlideRichness<T extends LayoutElement>(elements: T[]): LayoutGuard
   if (!hasDominantVisualAnchor(elements)) {
     issues.push({
       type: 'missing_visual_anchor',
-      detail: 'Slide is missing a dominant visual anchor such as an image, diagram, chart, table, or formula block',
+      detail:
+        'Slide is missing a dominant visual anchor such as an image, diagram, chart, table, or formula block',
     });
   }
 
-  if (elements.length < MIN_RICH_ELEMENT_COUNT || learningBlocks.length < MIN_LEARNING_TEXT_BLOCKS) {
+  if (
+    elements.length < MIN_RICH_ELEMENT_COUNT ||
+    learningBlocks.length < MIN_LEARNING_TEXT_BLOCKS
+  ) {
     issues.push({
       type: 'low_content_richness',
       detail: `Slide has ${elements.length} elements and ${learningBlocks.length} learning blocks; expected at least ${MIN_RICH_ELEMENT_COUNT} elements and ${MIN_LEARNING_TEXT_BLOCKS} learning blocks`,

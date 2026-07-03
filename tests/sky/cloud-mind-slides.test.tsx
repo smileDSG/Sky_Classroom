@@ -72,6 +72,7 @@ describe('CloudMindSlidesPage', () => {
 
   it('prefills the PPT topic from the personalization context', async () => {
     const topic = '\u4e8c\u6b21\u51fd\u6570';
+    const policyTopic = 'vector retrieval';
     mockFetch.mockResolvedValue({
       json: async () => ({
         success: true,
@@ -90,6 +91,15 @@ describe('CloudMindSlidesPage', () => {
             reason: 'active path',
           },
           preferredDifficulty: 'medium',
+          tutoringPolicy: {
+            targetTopic: policyTopic,
+            difficulty: 'medium',
+            explanationStyle: 'example_first',
+            resourceFormats: ['code_case', 'diagram'],
+            pacing: 'steady',
+            directives: ['围绕 vector retrieval 组织讲解和练习。'],
+            evidence: [],
+          },
           recommendation: null,
         },
       }),
@@ -98,9 +108,9 @@ describe('CloudMindSlidesPage', () => {
     render(<CloudMindSlidesPage />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('slides-topic')).toHaveTextContent(topic);
+      expect(screen.getByTestId('slides-topic')).toHaveTextContent(policyTopic);
     });
-    expect(screen.getByTestId('slides-notice')).toHaveTextContent(topic);
+    expect(screen.getByTestId('slides-notice')).toHaveTextContent(policyTopic);
     expect(mockFetch).toHaveBeenCalledWith('/api/sky/cloud-mind/personalization-context');
   });
 });

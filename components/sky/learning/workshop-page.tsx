@@ -10,7 +10,6 @@ import {
   BookOpenCheck,
   CalendarClock,
   CheckCircle2,
-  BrainCircuit,
   GraduationCap,
   Layers,
   Network,
@@ -176,6 +175,25 @@ function estimateReviewDuration(insights: LearningInsights): DurationRange {
   return { min: 3, max: 5 };
 }
 
+function withQueryParam(href: string, key: string, value: string): string {
+  const [path, query = ''] = href.split('?');
+  const params = new URLSearchParams(query);
+  params.set(key, value);
+  const nextQuery = params.toString();
+
+  return `${path}${nextQuery ? `?${nextQuery}` : ''}`;
+}
+
+function appendQueryString(href: string, query: string): string {
+  if (!query) return href;
+  return `${href}${href.includes('?') ? '&' : '?'}${query}`;
+}
+
+function getWorkshopFeatureHref(key: LearningFeatureKey): string {
+  const href = getLearningFeatureHref(key);
+  return key === 'profile' ? withQueryParam(href, 'from', 'learning') : href;
+}
+
 function buildMissionSteps(insights: LearningInsights): MissionStep[] {
   const topic = insights.focusTopic;
   const relatedTopics = insights.topTopics.map((item) => item.name);
@@ -199,7 +217,7 @@ function buildMissionSteps(insights: LearningInsights): MissionStep[] {
         label: '第二步',
         title: '生成学情画像',
         detail: '查看题目、正确率和薄弱点是否已经被系统识别',
-        href: getLearningFeatureHref('profile'),
+        href: getWorkshopFeatureHref('profile'),
         icon: ShieldCheck,
         tone: 'violet',
         feature: 'profile',
@@ -210,7 +228,7 @@ function buildMissionSteps(insights: LearningInsights): MissionStep[] {
         label: '第三步',
         title: '查看天梯路线',
         detail: '确认薄弱点和先修关系，决定下一轮练习方向',
-        href: getLearningFeatureHref('graph'),
+        href: getWorkshopFeatureHref('graph'),
         icon: Network,
         tone: 'amber',
         feature: 'graph',
@@ -238,7 +256,7 @@ function buildMissionSteps(insights: LearningInsights): MissionStep[] {
         insights.metrics.dueReviewCount > 0
           ? `${insights.metrics.dueReviewCount} 道错题处于复习窗口`
           : '先确认今天是否有需要回看内容',
-      href: getLearningFeatureHref('review'),
+      href: getWorkshopFeatureHref('review'),
       icon: CalendarClock,
       tone: 'amber',
       feature: 'review',
@@ -304,7 +322,7 @@ function buildDailyTaskAction(
         insights.metrics.overdueReviewCount > 0
           ? `其中 ${insights.metrics.overdueReviewCount} 道已逾期，点击后直接进入沉浸复习`
           : '点击后直接进入今日沉浸复习',
-      href: `${getLearningFeatureHref('review')}?dailyTask=1`,
+      href: withQueryParam(getWorkshopFeatureHref('review'), 'dailyTask', '1'),
       icon: CalendarClock,
       feature: 'review',
       autoStartReview: true,
@@ -318,7 +336,7 @@ function buildDailyTaskAction(
     return {
       title: `补齐 ${insights.metrics.reviewBacklogCount} 道错题闭环`,
       detail: '先进入复习计划，确认下一轮复习节奏',
-      href: getLearningFeatureHref('review'),
+      href: getWorkshopFeatureHref('review'),
       icon: BookOpenCheck,
       feature: 'review',
       duration:
@@ -365,6 +383,7 @@ export function WorkshopPage() {
   const [snapshot, setSnapshot] = useState<WorkshopSnapshot | null>(null);
   const [loadingSnapshot, setLoadingSnapshot] = useState(true);
   const [snapshotError, setSnapshotError] = useState<string | null>(null);
+  const [toolsExpanded, setToolsExpanded] = useState(false);
   const mistakes = useSkyClassroomStore((state) => state.mistakes);
   const memoryProgress = useSkyClassroomStore((state) => state.memoryProgress);
   const prioritizeReview = useSkyClassroomStore((state) => state.prioritizeReview);
@@ -466,7 +485,7 @@ export function WorkshopPage() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('tab');
     const query = params.toString();
-    router.replace(`${getLearningFeatureHref(tabParam)}${query ? `?${query}` : ''}`, {
+    router.replace(appendQueryString(getWorkshopFeatureHref(tabParam), query), {
       scroll: false,
     });
   }, [router, searchParams, tabParam]);
@@ -481,9 +500,10 @@ export function WorkshopPage() {
     }
 
     if (dailyTaskAction.feature) {
+      const featureHref = getWorkshopFeatureHref(dailyTaskAction.feature);
       const href = dailyTaskAction.autoStartReview
-        ? `${getLearningFeatureHref(dailyTaskAction.feature)}?dailyTask=1`
-        : getLearningFeatureHref(dailyTaskAction.feature);
+        ? withQueryParam(featureHref, 'dailyTask', '1')
+        : featureHref;
       router.push(href);
       return;
     }
@@ -491,7 +511,7 @@ export function WorkshopPage() {
   };
 
   const handleOpenFullProfile = () => {
-    router.push(getLearningFeatureHref('profile'));
+    router.push(getWorkshopFeatureHref('profile'));
   };
 
   return (
@@ -580,21 +600,21 @@ export function WorkshopPage() {
                   画像
                 </button>
               </div>
-              <Link
-                href="/sky/study-lab"
-                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white/85 px-3 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-200/25 dark:bg-white/[0.06] dark:text-emerald-50 dark:shadow-none dark:hover:bg-white/[0.09]"
-              >
-                <BrainCircuit className="h-4 w-4" />
-                个性化学习工作台
-                <ArrowRight className="h-4 w-4" />
-              </Link>
             </aside>
           </div>
 
-          <div className="space-y-5 p-5">
-            <section>
-              <SectionTitle icon={BarChart3} title="学习状态" aside="实时概览" />
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex flex-col gap-5 p-5">
+            <details className="order-2 rounded-2xl border border-slate-200 bg-white/70 shadow-sm dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:shadow-none">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-white/[0.05]">
+                <span className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-100" />
+                  学习状态
+                </span>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  展开实时概览
+                </span>
+              </summary>
+              <div className="grid gap-3 border-t border-slate-200/70 p-4 dark:border-cyan-100/10 sm:grid-cols-2 lg:grid-cols-4">
                 <MetricTile
                   icon={CalendarClock}
                   label="到期复习"
@@ -620,14 +640,10 @@ export function WorkshopPage() {
                   unit="个"
                 />
               </div>
-            </section>
+            </details>
 
-            <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:shadow-none">
-              <SectionTitle
-                icon={Route}
-                title="今日学习路径"
-                aside={formatDuration(missionDuration)}
-              />
+            <section className="order-1 rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:shadow-none">
+              <SectionTitle icon={Route} title="学习路线" aside={formatDuration(missionDuration)} />
               <div className="mt-4 grid auto-rows-fr gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {missionSteps.map((step, index) => (
                   <MissionStepCard
@@ -640,91 +656,118 @@ export function WorkshopPage() {
               </div>
             </section>
 
-            <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-              <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:shadow-none">
-                <SectionTitle icon={Activity} title="推荐依据" aside={insights.dataHealth.label} />
-                <div className="mt-3 grid gap-2 md:grid-cols-3 lg:grid-cols-1">
-                  {visibleSignals.map((signal) => (
-                    <EvidenceSignal key={signal.label} signal={signal} />
-                  ))}
-                </div>
-                {insights.causeSummary.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {insights.causeSummary.slice(0, 3).map((cause) => (
-                      <Link
-                        key={cause.cause}
-                        href={getLearningFeatureHref('stats')}
-                        className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 dark:border-cyan-100/10 dark:bg-white/[0.045] dark:text-slate-200 dark:hover:border-indigo-200/35"
-                      >
-                        {cause.label} {cause.count}
-                      </Link>
+            <details className="order-3 rounded-2xl border border-slate-200 bg-white/70 shadow-sm dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:shadow-none">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-white/[0.05]">
+                <span className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-100" />
+                  路线依据和完整路线
+                </span>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">展开</span>
+              </summary>
+              <div className="grid gap-4 border-t border-slate-200/70 p-4 dark:border-cyan-100/10 lg:grid-cols-[minmax(0,1fr)_360px]">
+                <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:shadow-none">
+                  <SectionTitle
+                    icon={Activity}
+                    title="推荐依据"
+                    aside={insights.dataHealth.label}
+                  />
+                  <div className="mt-3 grid gap-2 md:grid-cols-3 lg:grid-cols-1">
+                    {visibleSignals.map((signal) => (
+                      <EvidenceSignal key={signal.label} signal={signal} />
                     ))}
-                    {insights.causeSummary.length > 3 && (
-                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500 dark:border-cyan-100/10 dark:bg-white/[0.035] dark:text-slate-400">
-                        +{insights.causeSummary.length - 3}
-                      </span>
-                    )}
                   </div>
-                )}
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:shadow-none">
-                <SectionTitle
-                  icon={Network}
-                  title="天梯路线"
-                  aside={routeOverflowCount > 0 ? `另有 ${routeOverflowCount} 个` : '薄弱点优先'}
-                />
-                <div className="mt-3 space-y-2">
-                  {routeTopics.map((topic, index) => (
-                    <RoutePreviewCard key={`${topic.name}-${index}`} topic={topic} index={index} />
-                  ))}
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => router.push(getLearningFeatureHref('graph'))}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/60 dark:border-cyan-100/10 dark:bg-white/[0.045] dark:text-slate-100 dark:shadow-none dark:hover:border-indigo-200/35 dark:hover:bg-white/[0.07]"
-                  >
-                    <Network className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
-                    查看完整路线
-                  </button>
-                  {priorityTopics.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => prioritizeReview(priorityTopics)}
-                      className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-200/25 dark:bg-emerald-300/10 dark:text-emerald-100 dark:hover:bg-emerald-300/15"
-                    >
-                      <CalendarClock className="h-4 w-4" />
-                      加入复习
-                    </button>
+                  {insights.causeSummary.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {insights.causeSummary.slice(0, 3).map((cause) => (
+                        <Link
+                          key={cause.cause}
+                          href={getWorkshopFeatureHref('stats')}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 dark:border-cyan-100/10 dark:bg-white/[0.045] dark:text-slate-200 dark:hover:border-indigo-200/35"
+                        >
+                          {cause.label} {cause.count}
+                        </Link>
+                      ))}
+                      {insights.causeSummary.length > 3 && (
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500 dark:border-cyan-100/10 dark:bg-white/[0.035] dark:text-slate-400">
+                          +{insights.causeSummary.length - 3}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:shadow-none">
+                  <SectionTitle
+                    icon={Network}
+                    title="天梯路线"
+                    aside={routeOverflowCount > 0 ? `另有 ${routeOverflowCount} 个` : '薄弱点优先'}
+                  />
+                  <div className="mt-3 space-y-2">
+                    {routeTopics.map((topic, index) => (
+                      <RoutePreviewCard
+                        key={`${topic.name}-${index}`}
+                        topic={topic}
+                        index={index}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => router.push(getWorkshopFeatureHref('graph'))}
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/60 dark:border-cyan-100/10 dark:bg-white/[0.045] dark:text-slate-100 dark:shadow-none dark:hover:border-indigo-200/35 dark:hover:bg-white/[0.07]"
+                    >
+                      <Network className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
+                      查看完整路线
+                    </button>
+                    {priorityTopics.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => prioritizeReview(priorityTopics)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-200/25 dark:bg-emerald-300/10 dark:text-emerald-100 dark:hover:bg-emerald-300/15"
+                      >
+                        <CalendarClock className="h-4 w-4" />
+                        加入复习
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </section>
+            </details>
           </div>
         </section>
 
         <section className="relative overflow-hidden rounded-[24px] border border-emerald-200 bg-white/85 shadow-[0_18px_55px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-emerald-200/20 dark:bg-[#07111f]/95 dark:shadow-[0_18px_55px_rgba(0,0,0,0.26),inset_0_1px_0_rgba(255,255,255,0.04)]">
           <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent dark:via-emerald-300/70" />
-          <div className="border-b border-slate-200/70 bg-slate-50/70 p-5 dark:border-cyan-100/10 dark:bg-[#0b1729]/80 md:p-6">
-            <div>
-              <div className="flex items-center gap-3 text-base font-semibold text-slate-950 dark:text-white">
+          <button
+            type="button"
+            onClick={() => setToolsExpanded((value) => !value)}
+            aria-expanded={toolsExpanded}
+            className="flex min-h-16 w-full items-center justify-between gap-3 border-b border-slate-200/70 bg-slate-50/70 p-5 text-left transition-colors hover:bg-slate-100/70 dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:hover:bg-[#10223a] md:p-6"
+          >
+            <span className="min-w-0">
+              <span className="flex items-center gap-3 text-base font-semibold text-slate-950 dark:text-white">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-200/25 dark:bg-emerald-300/10 dark:text-emerald-100">
                   <BookOpenCheck className="h-4 w-4" />
                 </span>
-                学习工具入口
-              </div>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-300">
-                天梯工坊负责判断下一步，具体学习动作进入对应工具完成。
-              </p>
-            </div>
-          </div>
+                更多工具
+              </span>
+              <span className="mt-2 block max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-300">
+                有明确目标时再打开工具，今日任务会优先带你进入最合适的一项。
+              </span>
+            </span>
+            <span className="shrink-0 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-300">
+              {toolsExpanded ? '收起' : '展开'}
+            </span>
+          </button>
 
-          <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5">
-            {LEARNING_FEATURES.map((feature) => (
-              <FeatureEntryCard key={feature.key} feature={feature} />
-            ))}
-          </div>
+          {toolsExpanded && (
+            <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5">
+              {LEARNING_FEATURES.map((feature) => (
+                <FeatureEntryCard key={feature.key} feature={feature} />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </SkyAppShell>
@@ -837,7 +880,7 @@ function MissionStepCard({
 function RoutePreviewCard({ topic, index }: { topic: LearningInsightTopic; index: number }) {
   return (
     <Link
-      href={getLearningFeatureHref('graph')}
+      href={getWorkshopFeatureHref('graph')}
       className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50/40 dark:border-cyan-100/10 dark:bg-[#081423] dark:shadow-none dark:hover:border-emerald-200/35 dark:hover:bg-[#0f2238]"
     >
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 text-xs font-semibold text-cyan-700 dark:border-cyan-100/12 dark:bg-cyan-200/10 dark:text-cyan-100">
@@ -861,9 +904,11 @@ function RoutePreviewCard({ topic, index }: { topic: LearningInsightTopic; index
 
 function FeatureEntryCard({ feature }: { feature: (typeof LEARNING_FEATURES)[number] }) {
   const Icon = feature.icon;
+  const href = getWorkshopFeatureHref(feature.key);
+
   return (
     <Link
-      href={feature.href}
+      href={href}
       className="group relative flex min-h-[168px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50/40 hover:shadow-[0_16px_38px_rgba(15,23,42,0.08)] dark:border-cyan-100/10 dark:bg-[#081423] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] dark:hover:border-emerald-200/40 dark:hover:bg-[#10223a] dark:hover:shadow-[0_16px_38px_rgba(0,0,0,0.22)]"
     >
       <span className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-emerald-300/70 to-transparent dark:via-emerald-200/55" />

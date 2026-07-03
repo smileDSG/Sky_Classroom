@@ -35,7 +35,10 @@ export default function CloudMindTeachingRoute() {
       .then((json: { success?: boolean; data?: PersonalizationContext }) => {
         if (cancelled || !json.success || !json.data) return;
         const context = json.data;
-        const topic = context.learningPath?.next ?? context.weakPoints[0]?.knowledgePoint;
+        const topic =
+          context.tutoringPolicy?.targetTopic ??
+          context.learningPath?.next ??
+          context.weakPoints[0]?.knowledgePoint;
         if (!topic) return;
         setContextTopic(topic);
         setPersonalizationNotice(

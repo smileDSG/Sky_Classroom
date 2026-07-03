@@ -18,7 +18,9 @@ export default function CloudMindSlidesPage() {
 
         const context = json.data;
         const recommendedTopic =
-          context.learningPath?.next ?? context.weakPoints[0]?.knowledgePoint;
+          context.tutoringPolicy?.targetTopic ??
+          context.learningPath?.next ??
+          context.weakPoints[0]?.knowledgePoint;
 
         if (recommendedTopic) {
           setInitialTopic(recommendedTopic);

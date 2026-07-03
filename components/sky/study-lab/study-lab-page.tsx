@@ -15,10 +15,8 @@ import {
 } from '@/lib/sky/study-lab-data';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { cn } from '@/lib/utils';
-import { CourseKnowledgePanel } from './course-knowledge-panel';
 import { LearningPathTimeline } from './learning-path-timeline';
 import { ProfileSummaryPanel } from './profile-summary-panel';
-import { ResourceCardGrid } from './resource-card-grid';
 import { TodayMissionPanel } from './today-mission-panel';
 import { TrustReviewPanel } from './trust-review-panel';
 
@@ -159,17 +157,17 @@ export function StudyLabPage() {
                   <BrainCircuit className="h-4 w-4" />
                 </span>
                 <span className="rounded-full border border-emerald-200 bg-white/80 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-200/20 dark:bg-white/[0.08] dark:text-emerald-50">
-                  个性化学习工作台
+                  学习数据详情
                 </span>
                 <span className="rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-xs text-slate-500 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300">
-                  队员 B 业务闭环
+                  隐藏详情页
                 </span>
               </div>
               <h1 className="mt-3 text-2xl font-semibold leading-tight text-slate-950 dark:text-white sm:text-3xl">
-                从画像到资源，再到学习路径
+                学习画像、路线和数据来源
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-200">
-                复用天梯工坊、云端智囊和学习路径真实数据，手机端优先跑通比赛主线。
+                这里保留个性化学习的详细数据，主流程请从今日学习和学习路线进入。
               </p>
             </div>
 
@@ -212,14 +210,10 @@ export function StudyLabPage() {
                 profile={viewModel.profile}
                 error={viewModel.errors.personalization}
               />
-              <CourseKnowledgePanel />
               <LearningPathTimeline
                 learningPath={viewModel.learningPath}
                 error={viewModel.errors.learningPath}
               />
-              <div className="lg:col-span-2">
-                <ResourceCardGrid />
-              </div>
               <div className="lg:col-span-2">
                 <TrustReviewPanel viewModel={viewModel} />
               </div>

@@ -16,6 +16,8 @@
     "check": "prettier . --check",
     "format": "prettier . --write",
     "test": "vitest run",
+    "test:slides:quality": "vitest run tests/slides/slide-polish.test.ts tests/slides/agent/layout-guard-agent.test.ts tests/generation/classroom-slide-qa-deck.test.ts tests/generation/classroom-slide-openmaic-first.test.ts tests/generation/quality-scorer.test.ts tests/prompts/slide-richness-contract.test.ts tests/server/classroom-generation-progress.test.ts",
+    "qa:classroom:visual": "node scripts/verify-classroom-visual-qa.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "setup:lo": "node scripts/setup-libreoffice.js",

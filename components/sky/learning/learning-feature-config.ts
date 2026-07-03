@@ -33,7 +33,7 @@ export const LEARNING_FEATURES = [
     key: 'profile',
     label: '学情分析',
     desc: '生成多维能力画像和个性建议',
-    href: '/sky/learning/profile',
+    href: '/sky/learning/profile?from=learning',
     icon: ShieldCheck,
   },
 ] as const;

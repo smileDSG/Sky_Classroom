@@ -117,6 +117,7 @@ export function ScreenCanvas() {
           />
         ) : (
           <div
+            data-classroom-slide-canvas="true"
             className="absolute top-0 left-0 origin-top-left"
             style={{
               width: `${viewportStyles.width}px`,

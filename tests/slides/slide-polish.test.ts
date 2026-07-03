@@ -214,6 +214,69 @@ describe('slide polish', () => {
     expect(ids).not.toContain('polish_rich_strip');
     expect(ids).not.toContain('polish_rich_side_card');
     expect(largeFilledBoxes).toHaveLength(0);
+    expect(JSON.stringify(enriched)).not.toContain('Takeaway');
+    expect(JSON.stringify(enriched)).toContain('本页要点');
+  });
+
+  it('adds a quiet blue card layer to plain text-heavy slides', () => {
+    const polished = polishSlideElements([
+      {
+        id: 'custom-title',
+        type: 'text',
+        left: 86,
+        top: 58,
+        width: 820,
+        height: 58,
+        content: '<p style="font-size:32px;">CRUD 操作概览</p>',
+      },
+      {
+        id: 'custom-subtitle',
+        type: 'text',
+        left: 98,
+        top: 138,
+        width: 760,
+        height: 44,
+        content: '<p style="font-size:20px;">围绕 Create、Read、Update、Delete 建立操作全景。</p>',
+      },
+      {
+        id: 'custom-body-a',
+        type: 'text',
+        left: 112,
+        top: 216,
+        width: 760,
+        height: 54,
+        content: '<p style="font-size:20px;">Create：使用新增语句把对象写入数据表或集合。</p>',
+      },
+      {
+        id: 'custom-body-b',
+        type: 'text',
+        left: 112,
+        top: 306,
+        width: 760,
+        height: 54,
+        content: '<p style="font-size:20px;">Read：通过条件过滤和排序找到需要的记录。</p>',
+      },
+      {
+        id: 'custom-body-c',
+        type: 'text',
+        left: 112,
+        top: 396,
+        width: 760,
+        height: 54,
+        content: '<p style="font-size:20px;">检查：确认字段名、条件范围和执行结果是否一致。</p>',
+      },
+    ]);
+
+    const ids = polished.map((element) => element.id);
+    const fills = polished
+      .filter((element) => element.id?.startsWith('polish_plain_'))
+      .map((element) => String((element as Record<string, unknown>).fill ?? '').toLowerCase());
+
+    expect(ids).toContain('polish_plain_title_rule');
+    expect(ids.filter((id) => id?.startsWith('polish_plain_card_'))).toHaveLength(4);
+    expect(fills).not.toContain('#fff7ed');
+    expect(polished.find((element) => element.id === 'custom-body-a')?.left).toBe(112);
+    expect(auditSlideLayout(polished)).toEqual([]);
   });
 
   it('rebuilds weak quadratic pages into a dense safe teaching layout', () => {
@@ -1589,7 +1652,7 @@ describe('slide polish', () => {
     expect(new Set(variants)).toHaveProperty('size', 5);
   });
 
-  it('adds page-order visual signatures across canonical text pages', () => {
+  it('does not add page-order ornamental visual signatures across canonical text pages', () => {
     const makeElements = (title: string) => [
       {
         id: 'text_title',
@@ -1647,21 +1710,27 @@ describe('slide polish', () => {
       },
     ];
 
-    const visualSignatures = [1, 2, 3, 4, 5, 6].map((order) => {
+    const variants = [1, 2, 3, 4, 5, 6].map((order) => {
       const polished = polishSlideElements(makeElements(`Text page ${order}`), {
         title: `Text page ${order}`,
         keyPoints: ['Entry', 'Method', 'Check'],
         order,
         decorate: false,
       });
-      const visualId = polished.find((element) => element.id?.includes('_visual_'))?.id;
+      const variantId = polished.find((element) =>
+        /^polish_ref_canonical_v\d+_/.test(element.id ?? ''),
+      )?.id;
 
-      expect(visualId).toBeTruthy();
+      expect(variantId).toBeTruthy();
+      expect(polished.some((element) => element.id?.includes('_visual_'))).toBe(false);
+      expect(polished.some((element) => element.id?.startsWith('polish_deck_signature_'))).toBe(
+        false,
+      );
       expect(auditSlideLayout(polished)).toEqual([]);
-      return visualId?.replace(/^.*?_visual_/, 'visual_');
+      return variantId?.match(/polish_ref_canonical_v\d+/)?.[0];
     });
 
-    expect(new Set(visualSignatures)).toHaveProperty('size', 6);
+    expect(new Set(variants).size).toBeGreaterThanOrEqual(5);
   });
 
   it('keeps canonical focus-list content specific instead of truncating it into generic points', () => {
@@ -3938,6 +4007,588 @@ describe('slide polish', () => {
     expect(auditSlideLayout(polished)).toEqual([]);
   });
 
+  it('does not truncate while into a broken token on summary slides', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>课程总结与下一步</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">回顾已学内容，规划进阶方向</p>',
+        },
+        ...[
+          '已掌握的基础：下一阶段目标',
+          '变量与数据类型：输入输出操作',
+          '第一个Python程序：条件判断：if / else',
+          '循环：for / while：试试写一个简单的加法计算器',
+        ].map((content, index) => ({
+          id: `text_summary_${index}`,
+          type: 'text' as const,
+          left: 80,
+          top: 218 + index * 68,
+          width: 760,
+          height: 44,
+          content: `<p style="font-size:18px;">${content}</p>`,
+        })),
+      ],
+      {
+        title: '课程总结与下一步',
+        keyPoints: [
+          '已掌握的基础：下一阶段目标',
+          '变量与数据类型：输入输出操作',
+          '第一个Python程序：条件判断：if / else',
+          '循环：for / while：试试写一个简单的加法计算器',
+        ],
+        order: 10,
+        decorate: false,
+      },
+    );
+
+    const combinedText = polished
+      .map((element) => String((element as Record<string, unknown>).content ?? ''))
+      .join(' ');
+
+    expect(combinedText).toContain('for / while');
+    expect(combinedText).not.toMatch(/for\s*\/\s*whi(?!le)/i);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('removes short ornamental header marks and caps vertical chrome to one rule', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 72,
+          top: 62,
+          width: 840,
+          height: 70,
+          content: '<p style="font-size:34px;"><strong>欢迎学习 Python 基础</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 72,
+          top: 150,
+          width: 840,
+          height: 42,
+          content: '<p style="font-size:22px;">从零开始，掌握编程的核心工具</p>',
+        },
+        {
+          id: 'table_goals',
+          type: 'table',
+          left: 120,
+          top: 230,
+          width: 720,
+          height: 210,
+          data: [
+            [
+              { id: 'h1', text: '主题' },
+              { id: 'h2', text: '具体目标' },
+            ],
+            [
+              { id: 'r1c1', text: '变量与数据类型' },
+              { id: 'r1c2', text: '能够声明变量并正确使用数字、字符串、布尔值' },
+            ],
+            [
+              { id: 'r2c1', text: '循环结构' },
+              { id: 'r2c2', text: '能够使用 for 和 while 重复执行任务' },
+            ],
+          ],
+        },
+      ],
+      {
+        title: '欢迎学习 Python 基础',
+        keyPoints: ['变量与数据类型', '条件判断', '循环结构'],
+        order: 1,
+        decorate: false,
+      },
+    );
+
+    const shortHeaderMarks = polished.filter(
+      (element) =>
+        element.type === 'shape' &&
+        Number(element.top) < 130 &&
+        Number(element.width) < 320 &&
+        Number(element.height ?? 0) <= 12,
+    );
+    const verticalChrome = polished.filter(
+      (element) =>
+        element.type === 'shape' &&
+        Number(element.width) <= 20 &&
+        Number(element.height ?? 0) >= 40,
+    );
+
+    expect(polished.some((element) => element.id?.startsWith('polish_deck_signature_'))).toBe(
+      false,
+    );
+    expect(polished.some((element) => element.id?.includes('_visual_'))).toBe(false);
+    expect(shortHeaderMarks).toEqual([]);
+    expect(verticalChrome.length).toBeLessThanOrEqual(1);
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('docks small card accent rules to the bottom of card panels', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 48,
+          width: 880,
+          height: 68,
+          content: '<p style="font-size:32px;"><strong>输入与输出</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 124,
+          width: 880,
+          height: 56,
+          content: '<p style="font-size:20px;">input() 获取用户输入，print() 输出结果</p>',
+        },
+        ...[
+          '使用场景：获取用户输入。input() 返回字符串，可传入提示文字。',
+          '类型转换：字符串转数字。用 int() 或 float() 转换后参与运算。',
+          "组合使用：f-string 输出。print(f'你好，{name}')",
+        ].map((content, index) => ({
+          id: `text_io_${index}`,
+          type: 'text' as const,
+          left: 80,
+          top: 220 + index * 72,
+          width: 760,
+          height: 54,
+          content: `<p style="font-size:18px;">${content}</p>`,
+        })),
+      ],
+      {
+        title: '输入与输出',
+        keyPoints: ['使用场景：获取用户输入', '类型转换：字符串转数字', '组合使用：f-string 输出'],
+        order: 8,
+        decorate: false,
+      },
+    );
+
+    const cards = polished.filter(
+      (element) =>
+        element.type === 'shape' &&
+        Number(element.width) >= 220 &&
+        Number(element.width) <= 320 &&
+        Number(element.height ?? 0) >= 180,
+    );
+    const accentRules = polished.filter(
+      (element) =>
+        element.type === 'shape' &&
+        Number(element.width) >= 40 &&
+        Number(element.width) <= 120 &&
+        Number(element.height ?? 0) <= 8 &&
+        Number(element.top) > 180,
+    );
+
+    expect(cards.length).toBeGreaterThanOrEqual(3);
+    expect(accentRules.length).toBeGreaterThanOrEqual(3);
+    for (const rule of accentRules) {
+      const card = cards.find(
+        (candidate) =>
+          Number(rule.left) >= Number(candidate.left) &&
+          Number(rule.left) + Number(rule.width) <=
+            Number(candidate.left) + Number(candidate.width),
+      );
+      expect(card).toBeTruthy();
+      expect(Number(rule.top)).toBeGreaterThanOrEqual(
+        Number(card!.top) + Number(card!.height) - 22,
+      );
+    }
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('removes freestanding horizontal accent rules that compete with card bottoms', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'card_a',
+          type: 'shape',
+          left: 82,
+          top: 214,
+          width: 256,
+          height: 238,
+          fill: '#f8fafc',
+        },
+        {
+          id: 'card_b',
+          type: 'shape',
+          left: 372,
+          top: 214,
+          width: 256,
+          height: 238,
+          fill: '#eef6ff',
+        },
+        {
+          id: 'card_a_rule',
+          type: 'shape',
+          left: 110,
+          top: 300,
+          width: 76,
+          height: 4,
+          fill: '#2f80d1',
+        },
+        {
+          id: 'card_b_rule',
+          type: 'shape',
+          left: 400,
+          top: 300,
+          width: 76,
+          height: 4,
+          fill: '#2f80d1',
+        },
+        {
+          id: 'floating_rule',
+          type: 'shape',
+          left: 126,
+          top: 438,
+          width: 748,
+          height: 3,
+          fill: '#2f80d1',
+        },
+      ],
+      { decorate: false },
+    );
+
+    const ids = polished.map((element) => element.id);
+
+    expect(ids).toContain('card_a_rule');
+    expect(ids).toContain('card_b_rule');
+    expect(ids).not.toContain('floating_rule');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('removes unowned content-area horizontal accent rules while keeping the header rule', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'title_rule',
+          type: 'shape',
+          left: 82,
+          top: 188,
+          width: 836,
+          height: 3,
+          fill: '#2f80d1',
+        },
+        {
+          id: 'takeaway_rule',
+          type: 'shape',
+          left: 430,
+          top: 492,
+          width: 488,
+          height: 3,
+          fill: '#38bdf8',
+        },
+        {
+          id: 'text_body',
+          type: 'text',
+          left: 82,
+          top: 232,
+          width: 720,
+          height: 96,
+          content: '<p style="font-size:20px;">A clean content block without extra chrome.</p>',
+        },
+      ],
+      { decorate: false },
+    );
+
+    const ids = polished.map((element) => element.id);
+
+    expect(ids).toContain('title_rule');
+    expect(ids).not.toContain('takeaway_rule');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('does not re-template an already composed three-card slide', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 82,
+          top: 48,
+          width: 836,
+          height: 67,
+          content: '<p style="font-size:34px;"><strong>输入与输出</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 82,
+          top: 122,
+          width: 836,
+          height: 54,
+          content: '<p style="font-size:22px;">input() 获取用户输入，print() 输出结果</p>',
+        },
+        {
+          id: 'shape_header_rule',
+          type: 'shape',
+          left: 82,
+          top: 188,
+          width: 836,
+          height: 3,
+          fill: '#2f80d1',
+        },
+        ...[
+          ['a', 82, '#f8fafc', '使用场景：获取用户输入', 'input() 返回字符串，可传入提示文字'],
+          ['b', 372, '#eef6ff', '类型转换：字符串→数字', '用 int() 或 float() 转换后参与运算'],
+          ['c', 662, '#f8fafc', '组合使用：f-string 输出', "print(f'你好，{name}')"],
+        ].flatMap(([id, left, fill, heading, body]) => [
+          {
+            id: `shape_card_${id}`,
+            type: 'shape' as const,
+            left: Number(left),
+            top: 214,
+            width: 256,
+            height: 238,
+            fill: String(fill),
+          },
+          {
+            id: `shape_rule_${id}`,
+            type: 'shape' as const,
+            left: Number(left) + 28,
+            top: 434,
+            width: 76,
+            height: 4,
+            fill: '#2f80d1',
+          },
+          {
+            id: `text_heading_${id}`,
+            type: 'text' as const,
+            left: Number(left) + 28,
+            top: 266,
+            width: 196,
+            height: 75,
+            content: `<p style="font-size:22px;"><strong>${heading}</strong></p>`,
+          },
+          {
+            id: `text_body_${id}`,
+            type: 'text' as const,
+            left: Number(left) + 28,
+            top: 342,
+            width: 196,
+            height: 88,
+            content: `<p style="font-size:18px;">${body}</p>`,
+          },
+        ]),
+      ],
+      {
+        title: '输入与输出',
+        keyPoints: ['使用场景：获取用户输入', '类型转换：字符串转数字', '组合使用：f-string 输出'],
+        decorate: false,
+      },
+    );
+
+    const ids = polished.map((element) => element.id);
+    const combinedText = polished.map((element) => String(element.content ?? '')).join(' ');
+    const firstBody = polished.find((element) => element.id === 'text_body_a');
+
+    expect(ids).toContain('shape_card_a');
+    expect(ids.some((id) => id?.startsWith('polish_ref_canonical_'))).toBe(false);
+    expect(combinedText).not.toContain('要点二');
+    expect(combinedText).not.toContain('连接起来看');
+    expect(firstBody?.content).toContain('input() 返回字符串');
+    expect(firstBody?.content).not.toContain('类型转换');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('aligns two stacked teaching bands and keeps their body text equally readable', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 60,
+          top: 50,
+          width: 880,
+          height: 76,
+          content: '<p style="font-size:32px;"><strong>变量与赋值</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 60,
+          top: 126,
+          width: 880,
+          height: 58,
+          content:
+            '<p style="font-size:20px;color:#555555;">变量是容器，赋值是操作——理解两者的区别</p>',
+        },
+        {
+          id: 'shape_top_panel',
+          type: 'shape',
+          left: 60,
+          top: 204,
+          width: 880,
+          height: 148,
+          fill: '#f0f6fc',
+        },
+        {
+          id: 'text_top_heading',
+          type: 'text',
+          left: 80,
+          top: 214,
+          width: 840,
+          height: 46,
+          content: '<p style="font-size:20px;"><strong>变量（容器） vs 赋值（操作）</strong></p>',
+        },
+        {
+          id: 'text_top_body',
+          type: 'text',
+          left: 80,
+          top: 262,
+          width: 840,
+          height: 76,
+          content:
+            '<p style="font-size:16px;">• <strong>变量</strong>：内存中存放数据的命名容器，如 <code>name</code>、<code>age</code></p><p style="font-size:16px;">• <strong>赋值</strong>：用 = 将数据放入变量，例：<code>name = \'Alice\'</code> → name 指向 \'Alice\'</p>',
+        },
+        {
+          id: 'shape_bottom_panel',
+          type: 'shape',
+          left: 60,
+          top: 372,
+          width: 880,
+          height: 148,
+          fill: '#e6f0fa',
+        },
+        {
+          id: 'text_bottom_heading',
+          type: 'text',
+          left: 80,
+          top: 392,
+          width: 840,
+          height: 46,
+          content: '<p style="font-size:20px;"><strong>命名规则 vs 动态类型</strong></p>',
+        },
+        {
+          id: 'text_bottom_body',
+          type: 'text',
+          left: 80,
+          top: 442,
+          width: 840,
+          height: 76,
+          content:
+            '<p style="font-size:16px;">• <strong>命名规则</strong>：字母、数字、下划线，<strong>不能以数字开头</strong>；区分大小写（<code>age</code> ≠ <code>Age</code>）</p><p style="font-size:16px;">• <strong>动态类型</strong>：Python 自动推断类型，不须声明；同一变量可先后赋予不同类型，如 <code>x = 5</code> 后 <code>x = \'hello\'</code></p>',
+        },
+      ],
+      {
+        title: '变量与赋值',
+        keyPoints: ['变量与赋值', '命名规则与动态类型'],
+        decorate: false,
+      },
+    );
+
+    const topPanel = polished.find((element) => element.id === 'shape_top_panel')!;
+    const bottomPanel = polished.find((element) => element.id === 'shape_bottom_panel')!;
+    const topHeading = polished.find((element) => element.id === 'text_top_heading')!;
+    const bottomHeading = polished.find((element) => element.id === 'text_bottom_heading')!;
+    const topBody = polished.find((element) => element.id === 'text_top_body')!;
+    const bottomBody = polished.find((element) => element.id === 'text_bottom_body')!;
+
+    expect(topPanel.left).toBe(bottomPanel.left);
+    expect(topPanel.width).toBe(bottomPanel.width);
+    expect(topPanel.height).toBe(bottomPanel.height);
+    expect(topHeading.left).toBe(bottomHeading.left);
+    expect(topHeading.width).toBe(bottomHeading.width);
+    expect(topHeading.top - topPanel.top).toBe(bottomHeading.top - bottomPanel.top);
+    expect(String(topHeading.content)).toContain('font-size:22px');
+    expect(String(bottomHeading.content)).toContain('font-size:22px');
+    expect(String(topBody.content)).toContain('font-size:19px');
+    expect(String(bottomBody.content)).toContain('font-size:19px');
+    expect(bottomBody.height).toBeGreaterThanOrEqual(topBody.height);
+    expect(bottomBody.top + Number(bottomBody.height ?? 0)).toBeLessThanOrEqual(
+      bottomPanel.top + Number(bottomPanel.height ?? 0) - 12,
+    );
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
+  it('uses concrete headings instead of generic labels in canonical card layouts', () => {
+    const polished = polishSlideElements(
+      [
+        {
+          id: 'text_title',
+          type: 'text',
+          left: 72,
+          top: 54,
+          width: 840,
+          height: 64,
+          content: '<p style="font-size:34px;"><strong>输入与输出</strong></p>',
+        },
+        {
+          id: 'text_subtitle',
+          type: 'text',
+          left: 72,
+          top: 130,
+          width: 840,
+          height: 44,
+          content: '<p style="font-size:22px;">理解 input 类型、转换方式和输出格式</p>',
+        },
+        {
+          id: 'text_body_1',
+          type: 'text',
+          left: 82,
+          top: 220,
+          width: 760,
+          height: 48,
+          content: '<p style="font-size:18px;">input() 返回字符串，可传入提示文字。</p>',
+        },
+        {
+          id: 'text_body_2',
+          type: 'text',
+          left: 82,
+          top: 286,
+          width: 760,
+          height: 48,
+          content: '<p style="font-size:18px;">用 int() 或 float() 转换后参与运算。</p>',
+        },
+        {
+          id: 'text_body_3',
+          type: 'text',
+          left: 82,
+          top: 352,
+          width: 760,
+          height: 48,
+          content: '<p style="font-size:18px;">print(f\'你好，{name}\') 可以组合输出。</p>',
+        },
+      ],
+      {
+        title: '输入与输出',
+        keyPoints: ['获取用户输入', '类型转换', '格式化输出'],
+        decorate: false,
+      },
+    );
+
+    const combinedText = polished.map((element) => String(element.content ?? '')).join(' ');
+
+    expect(polished.some((element) => element.id?.startsWith('polish_ref_canonical_v1'))).toBe(
+      true,
+    );
+    expect(combinedText).toContain('获取用户输入');
+    expect(combinedText).toContain('类型转换');
+    expect(combinedText).toContain('格式化输出');
+    expect(combinedText).not.toMatch(/要点[一二三四五六\d\s]*/);
+    expect(combinedText).not.toContain('连接起来看');
+    expect(auditSlideLayout(polished)).toEqual([]);
+  });
+
   it('expands text boxes that would be clipped by real browser rendering', () => {
     const longBody =
       'Java 的变量声明需要同时关注类型、变量名、初始值和作用域；如果这些信息没有放在同一张概念卡片中，学生很难建立稳定的语法结构。';
@@ -4621,8 +5272,8 @@ describe('slide polish', () => {
     expect(auditSlideLayout(polished)).toEqual([]);
   });
 
-  it('adds deck-level visual signatures so repeated reference layouts do not look identical', () => {
-    const signatures = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((order) => {
+  it('does not add ornamental deck signatures to force visual difference', () => {
+    const outputs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((order) => {
       const polished = polishSlideElements(
         [
           {
@@ -4672,11 +5323,12 @@ describe('slide polish', () => {
         element.id?.startsWith('polish_deck_signature_v'),
       )?.id;
 
-      expect(signatureId).toBeTruthy();
+      expect(signatureId).toBeUndefined();
+      expect(polished.some((element) => element.id?.includes('_visual_'))).toBe(false);
       expect(auditSlideLayout(polished)).toEqual([]);
-      return signatureId?.match(/polish_deck_signature_v\d+/)?.[0];
+      return polished.map((element) => element.id ?? '').join('|');
     });
 
-    expect(new Set(signatures).size).toBe(signatures.length);
+    expect(outputs).toHaveLength(13);
   });
 });

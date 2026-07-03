@@ -591,6 +591,11 @@ Optional config in `~/.openclaw/openclaw.json`:
 
 We welcome contributions from the community! Whether it's bug reports, feature ideas, or pull requests — every bit helps.
 
+### Documentation
+
+- Project documentation index: [`docs/README.md`](docs/README.md)
+- Conversational student profile design: [`docs/conversational-student-profile-design.md`](docs/conversational-student-profile-design.md)
+
 ### Project Structure
 
 ```

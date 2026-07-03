@@ -98,7 +98,7 @@ Tune these conservatively. Raising them too far can reject valid minimalist page
 Run the focused suite after changing slide generation, polish, guard, or prompt contracts:
 
 ```bash
-pnpm vitest run tests/slides/agent/layout-guard-agent.test.ts tests/generation/quality-scorer.test.ts tests/prompts/slide-richness-contract.test.ts
+pnpm test:slides:quality
 ```
 
 Run ESLint on touched TypeScript files:
@@ -106,3 +106,63 @@ Run ESLint on touched TypeScript files:
 ```bash
 pnpm exec eslint lib/slides/agent/layout-guard-agent.ts lib/generation/quality-scorer.ts tests/slides/agent/layout-guard-agent.test.ts tests/generation/quality-scorer.test.ts tests/prompts/slide-richness-contract.test.ts
 ```
+
+## Current Prevention Rules
+
+This section records the problems found during recent classroom deck reviews and the rules that must prevent them from returning.
+
+### Root Causes
+
+- Template forcing: some pages used fixed labels such as "Step 1", "Core Feature", "Perspective A", "Learning goal", or "课堂抓手" even when those labels did not match the lesson.
+- Decoration over content: short blue rules, vertical stripes, corner bars, and orange marks were placed as background decoration but later covered text, tables, or diagrams.
+- Repeated composition: multiple pages reused the same main structure and only changed the title, so a deck looked like one repeated template.
+- Thin teaching content: pages with one title and one small block left too much empty space and did not provide a useful visual anchor.
+- Unsafe text sizing: generated text could drop below classroom-readable size, and sibling blocks sometimes used visibly different font sizes.
+- Missing layout ownership: text boxes were placed over decorative shapes without reserving enough space, which caused clipping, hidden characters, or overlap.
+- Language drift: model output sometimes mixed English headings with Chinese lesson content.
+- Semantic drift: Redis fallback terms could appear on Python slides, or a slide could promise four steps while rendering only three.
+
+### Hard Rules
+
+- Use simplified Chinese for every visible teaching label, heading, note, and fallback title unless the lesson content is a code keyword or command.
+- Use blue-related accents only. Orange bars, stripes, corner marks, and unrelated decorative elements are blocking issues.
+- Do not add more than one purely structural vertical line on a page. Short decorative horizontal rules inside the content area are removed unless they belong to a card boundary or a title divider.
+- Every card-like text block must own its background: the text must sit inside the padded card bounds, and the card cannot be reused as a decorative backdrop for unrelated text.
+- A page may not use generic labels unless the generated content explicitly supports them. Prefer labels derived from the outline, key points, or the visible body text.
+- A deck must not repeat the same main layout signature across adjacent teaching pages. If the topic changes, the visual structure must change too.
+- Sparse pages must be expanded with a real teaching visual: table, formula, flow, comparison grid, data-structure diagram, code-flow diagram, or a simple generated visual anchor.
+- Body text should stay at 18px or above; important paired headings and paired body blocks must use consistent sizes and aligned positions.
+- Tables and diagrams must fill their intended region and may not leave broken lower-right cells, clipped labels, or truncated keywords such as "whi".
+- If a slide claims a number of steps, the rendered step cards must match that number.
+- The slide QA retry must run before a classroom is accepted. Blocking layout, language, density, semantic, and repeated-template issues should trigger regeneration/editing instead of shipping the draft.
+
+### Required Quality Gate
+
+Run this command after changing any slide prompt, generation branch, polish repair, QA audit, classroom generation retry logic, or template-like fallback:
+
+```bash
+pnpm test:slides:quality
+```
+
+For a generated classroom that needs visual acceptance, also run the browser-level gate against the real rendered page:
+
+```bash
+pnpm qa:classroom:visual -- <classroom-id>
+```
+
+This opens `/classroom/<classroom-id>` with Playwright, clicks through every slide scene, saves screenshots to `tmp/visual-qa/<classroom-id>/`, and fails if rendered text is clipped, below the classroom-readable font threshold, outside the slide frame, or overlapping another text-bearing element. This catches the class of bugs that static JSON checks cannot see: font fallback differences, runtime scaling, z-index collisions, parent clipping, and text boxes covering decorative backgrounds.
+
+The suite covers:
+
+- overlap and foreground overlay detection
+- minimum readable font size
+- Chinese-only generation and retry
+- sparse page detection
+- semantic domain mismatch detection
+- promised step count mismatch detection
+- repeated layout signature detection
+- orange/decorative chrome blocking
+- OpenMAIC-first element generation and QA retry
+- current polish repairs for Redis, Python, Java, functions, formulas, tables, and stacked teaching bands
+
+When a user reports a new bad slide, add a focused regression case first, then adjust `slide-polish`, `classroom-slide-qa`, `layout-guard-agent`, or the prompt contract until the new case passes.

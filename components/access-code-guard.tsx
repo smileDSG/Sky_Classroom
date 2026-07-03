@@ -1,9 +1,21 @@
 'use client';
 
 import { useEffect, useState, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { AccessCodeModal } from '@/components/access-code-modal';
 
+function isPublicSkyLearningRoute(pathname?: string | null): boolean {
+  return (
+    pathname?.startsWith('/sky/software-cup') ||
+    pathname?.startsWith('/sky/cloud-mind/course-studio') ||
+    pathname?.startsWith('/sky/study-lab') ||
+    false
+  );
+}
+
 export function AccessCodeGuard({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const skipAccessCode = isPublicSkyLearningRoute(pathname);
   const [status, setStatus] = useState<{
     enabled: boolean;
     authenticated: boolean;
@@ -11,6 +23,10 @@ export function AccessCodeGuard({ children }: { children: ReactNode }) {
   }>({ enabled: false, authenticated: false, loading: true });
 
   useEffect(() => {
+    if (skipAccessCode) {
+      return;
+    }
+
     let cancelled = false;
     fetch('/api/access-code/status')
       .then((res) => res.json())
@@ -32,9 +48,13 @@ export function AccessCodeGuard({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [skipAccessCode]);
 
   const needsAuth = !status.loading && status.enabled && !status.authenticated;
+
+  if (skipAccessCode) {
+    return <>{children}</>;
+  }
 
   return (
     <>

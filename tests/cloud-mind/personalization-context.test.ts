@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildPersonalizationContext } from '@/lib/cloud-mind/personalization-context';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
+import type { ProfileSignal } from '@/lib/student/profile-signals';
 import type { StudentProfile } from '@/lib/student/profile-types';
 import type { LearningPath } from '@/lib/teaching/learning-path-types';
 
@@ -95,6 +96,80 @@ describe('cloud mind personalization context', () => {
     });
   });
 
+  it('includes conversation profile signals before behavioral learning data exists', () => {
+    const profileSignals: ProfileSignal[] = [
+      {
+        id: 'goal',
+        userId: 'new-user',
+        dimension: 'learningGoal',
+        value: 'finish a RAG project',
+        source: 'onboarding_chat',
+        confidence: 0.9,
+        evidence: ['I need a RAG project'],
+        createdAt: 1000,
+      },
+      {
+        id: 'weak',
+        userId: 'new-user',
+        dimension: 'knowledgeBase',
+        value: {
+          strongPoints: ['Python'],
+          weakPoints: ['vector retrieval'],
+        },
+        source: 'onboarding_chat',
+        confidence: 0.82,
+        evidence: ['vector retrieval is confusing'],
+        createdAt: 1001,
+      },
+      {
+        id: 'pref',
+        userId: 'new-user',
+        dimension: 'resourcePreference',
+        value: ['code cases', 'diagrams'],
+        source: 'onboarding_chat',
+        confidence: 0.8,
+        evidence: ['prefers code and diagrams'],
+        createdAt: 1002,
+      },
+    ];
+
+    const context = buildPersonalizationContext({
+      userId: 'new-user',
+      profile: null,
+      mistakes: [],
+      dueMistakes: [],
+      recentAttempts: [],
+      learningPath: null,
+      profileSignals,
+    });
+
+    expect(context.hasLearningData).toBe(false);
+    expect(context.hasPersonalizationSignals).toBe(true);
+    expect(context.conversationProfile?.learningGoal?.value).toBe('finish a RAG project');
+    expect(context.conversationProfile?.knowledgeBase?.weakPoints).toEqual(['vector retrieval']);
+    expect(context.conversationProfile?.resourcePreference?.value).toEqual([
+      'code cases',
+      'diagrams',
+    ]);
+    expect(context.tutoringPolicy).toMatchObject({
+      targetTopic: 'vector retrieval',
+      difficulty: 'medium',
+      explanationStyle: 'example_first',
+      resourceFormats: ['code_case', 'diagram'],
+      pacing: 'steady',
+    });
+    expect(context.tutoringPolicy?.directives).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('vector retrieval'),
+        expect.stringContaining('code cases'),
+      ]),
+    );
+    expect(context.recommendation).toMatchObject({
+      targetTool: 'quiz',
+    });
+    expect(context.recommendation?.href).toContain('topic=vector+retrieval');
+  });
+
   it('uses profile data for weak points, recent accuracy, difficulty, and error patterns', () => {
     const context = buildPersonalizationContext({
       userId: 'u1',
@@ -113,6 +188,18 @@ describe('cloud mind personalization context', () => {
     expect(context.masteryByKnowledge).toMatchObject({ 二次函数: 42 });
     expect(context.recentAccuracy).toBe(52);
     expect(context.preferredDifficulty).toBe('easy');
+    expect(context.tutoringPolicy).toMatchObject({
+      targetTopic: '二次函数',
+      difficulty: 'easy',
+      explanationStyle: 'step_first',
+      pacing: 'remedial',
+    });
+    expect(context.tutoringPolicy?.directives).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('低负荷'),
+        expect.stringContaining('二次函数'),
+      ]),
+    );
     expect(context.errorPatterns[0]).toMatchObject({
       knowledgePoint: '二次函数',
       errorType: 'concept-unclear',

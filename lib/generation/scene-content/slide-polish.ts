@@ -889,6 +889,144 @@ function addDeckDiversitySignature<T extends SlideLikeElement>(
   return [...deckDiversitySignatureElements(theme, variant), ...elements] as T[];
 }
 
+function sanitizeDecorativeChrome<T extends SlideLikeElement>(elements: T[]): T[] {
+  if (elements.some((element) => element.id?.startsWith('polish_ref_redis_internal_'))) {
+    return elements;
+  }
+
+  const stripped = elements.filter(
+    (element) =>
+      !isOrnamentalSignatureElement(element) &&
+      !isShortHeaderOrnament(element) &&
+      !isTinyHeaderOrnament(element),
+  );
+  const docked = dockCardAccentRules(stripped);
+  const withoutFloatingRules = removeFreestandingHorizontalAccentRules(docked);
+  return limitVerticalChrome(withoutFloatingRules);
+}
+
+function isOrnamentalSignatureElement(element: SlideLikeElement): boolean {
+  const id = element.id ?? '';
+  return (
+    id.startsWith('polish_deck_signature_') ||
+    (id.startsWith('polish_ref_') && id.includes('_visual_'))
+  );
+}
+
+function isShortHeaderOrnament(element: SlideLikeElement): boolean {
+  if (element.id === 'polish_plain_title_rule') return false;
+  if (element.type !== 'shape' || hasShapeText(element)) return false;
+  const box = getElementBox(element);
+  return box.top < 130 && box.width < 320 && box.height <= 12;
+}
+
+function isTinyHeaderOrnament(element: SlideLikeElement): boolean {
+  if (element.type !== 'shape' || hasShapeText(element)) return false;
+  const box = getElementBox(element);
+  return box.top < 130 && box.width <= 24 && box.height <= 24;
+}
+
+function isDecorativeVerticalChrome(element: SlideLikeElement): boolean {
+  if (element.type !== 'shape' || hasShapeText(element)) return false;
+  const box = getElementBox(element);
+  if (box.width > 20 || box.height < 40) return false;
+  if (box.width * box.height > 6000) return false;
+  return true;
+}
+
+function limitVerticalChrome<T extends SlideLikeElement>(elements: T[]): T[] {
+  const candidates = elements.filter(isDecorativeVerticalChrome);
+  if (candidates.length <= 1) return elements;
+
+  const keep = [...candidates].sort((a, b) => {
+    const aBox = getElementBox(a);
+    const bBox = getElementBox(b);
+    return bBox.height - aBox.height || aBox.left - bBox.left;
+  })[0];
+
+  return elements.filter((element) => element === keep || !isDecorativeVerticalChrome(element));
+}
+
+function isCardPanelForAccent(element: SlideLikeElement): boolean {
+  if (!isBackgroundShapeLike(element)) return false;
+  const box = getElementBox(element);
+  if (box.top < 160 || box.top > 460) return false;
+  if (box.width < 160 || box.width > 360) return false;
+  return box.height >= 96 && box.height <= 300;
+}
+
+function isSmallCardAccentRule(element: SlideLikeElement): boolean {
+  if (element.type !== 'shape' || hasShapeText(element)) return false;
+  const box = getElementBox(element);
+  return box.top >= 160 && box.width >= 36 && box.width <= 140 && box.height <= 8;
+}
+
+function dockCardAccentRules<T extends SlideLikeElement>(elements: T[]): T[] {
+  const cards = elements.filter(isCardPanelForAccent);
+  if (cards.length === 0) return elements;
+
+  return elements.map((element) => {
+    if (!isSmallCardAccentRule(element)) return element;
+    const box = getElementBox(element);
+    const owner = cards.find((card) => {
+      const cardBox = getElementBox(card);
+      return (
+        box.left >= cardBox.left &&
+        box.right <= cardBox.right &&
+        box.top >= cardBox.top &&
+        box.top <= cardBox.bottom
+      );
+    });
+    if (!owner) return element;
+
+    const ownerBox = getElementBox(owner);
+    return {
+      ...element,
+      top: Math.max(ownerBox.top + 12, ownerBox.bottom - 18),
+    };
+  });
+}
+
+function isHorizontalAccentRule(element: SlideLikeElement): boolean {
+  if (element.type !== 'shape' || hasShapeText(element)) return false;
+  const box = getElementBox(element);
+  return box.height <= 8 && box.width >= 360;
+}
+
+function isNamedDecorativeHorizontalRule(element: SlideLikeElement): boolean {
+  const id = element.id ?? '';
+  return /(?:_rule|_panel|_bridge)$/.test(id);
+}
+
+function removeFreestandingHorizontalAccentRules<T extends SlideLikeElement>(elements: T[]): T[] {
+  const cards = elements.filter(isCardPanelForAccent);
+
+  return elements.filter((element) => {
+    if (!isHorizontalAccentRule(element)) return true;
+    const box = getElementBox(element);
+
+    const owner = cards.find((card) => {
+      const cardBox = getElementBox(card);
+      return (
+        box.left >= cardBox.left &&
+        box.right <= cardBox.right &&
+        box.top >= cardBox.top &&
+        box.top <= cardBox.bottom
+      );
+    });
+
+    if (owner) return true;
+
+    const crossesCardBand = cards.some((card) => {
+      const cardBox = getElementBox(card);
+      return box.top >= cardBox.top && box.top <= cardBox.bottom;
+    });
+    const isContentAreaChrome = box.top >= 220 && isNamedDecorativeHorizontalRule(element);
+
+    return !crossesCardBand && !isContentAreaChrome;
+  });
+}
+
 function equationRelationReferenceLayout(
   elements: SlideLikeElement[],
   context?: SlidePolishContext,
@@ -1659,6 +1797,127 @@ function shouldUseCanonicalTextLayout(
   return blocks.length >= 2;
 }
 
+function shouldPreserveComposedTeachingLayout(elements: SlideLikeElement[]): boolean {
+  const panels = elements.filter((element) => {
+    if (!isBackgroundShapeLike(element)) return false;
+    const box = getElementBox(element);
+    if (box.top < 180 || box.top > 500) return false;
+    if (box.width < 160 || box.height < 88) return false;
+    if (box.width > 920 || box.height > 360) return false;
+    return true;
+  });
+  if (panels.length < 2) return false;
+
+  const textBoxes = elements.filter(isReadableElement);
+  const panelsWithStructuredText = panels.filter((panel) => {
+    const panelBox = getElementBox(panel);
+    const containedTextCount = textBoxes.filter((text) => {
+      const textBox = getElementBox(text);
+      return (
+        textBox.left >= panelBox.left &&
+        textBox.right <= panelBox.right &&
+        textBox.top >= panelBox.top &&
+        textBox.bottom <= panelBox.bottom + 24
+      );
+    }).length;
+    return containedTextCount >= 2;
+  });
+
+  const hasCardGrid = panels.filter((panel) => getElementBox(panel).width <= 360).length >= 3;
+  const hasStackedBands = panels.filter((panel) => getElementBox(panel).width >= 520).length >= 2;
+
+  return panelsWithStructuredText.length >= 2 && (hasCardGrid || hasStackedBands);
+}
+
+function normalizeStackedTeachingBands<T extends SlideLikeElement>(elements: T[]): T[] {
+  const panels = elements
+    .filter((element) => {
+      if (!isBackgroundShapeLike(element)) return false;
+      const box = getElementBox(element);
+      return box.top >= 180 && box.width >= 760 && box.height >= 120;
+    })
+    .sort((a, b) => a.top - b.top);
+  if (panels.length !== 2) return elements;
+
+  const textBoxes = elements.filter(isReadableElement);
+  const panelTextGroups = panels.map((panel) => {
+    const panelBox = getElementBox(panel);
+    return textBoxes
+      .filter((text) => {
+        const textBox = getElementBox(text);
+        return (
+          textBox.left >= panelBox.left &&
+          textBox.right <= panelBox.right &&
+          textBox.top >= panelBox.top &&
+          textBox.top <= panelBox.bottom
+        );
+      })
+      .sort((a, b) => a.top - b.top || a.left - b.left);
+  });
+  if (panelTextGroups.some((group) => group.length < 2)) return elements;
+
+  const left = Math.min(...panels.map((panel) => getElementBox(panel).left));
+  const width = Math.max(...panels.map((panel) => getElementBox(panel).width));
+  const firstTop = clamp(Math.min(getElementBox(panels[0]).top, 188), 180, 196);
+  const panelHeight = 156;
+  const panelGap = 8;
+  const headingLeft = left + 36;
+  const textWidth = width - 72;
+
+  const panelGeometry = panels.map((_panel, index) => ({
+    top: firstTop + index * (panelHeight + panelGap),
+  }));
+
+  return elements.map((element) => {
+    const panelIndex = panels.findIndex((panel) => panel.id === element.id);
+    if (panelIndex >= 0) {
+      return {
+        ...element,
+        left,
+        top: panelGeometry[panelIndex].top,
+        width,
+        height: panelHeight,
+      };
+    }
+
+    const headingIndex = panelTextGroups.findIndex((group) => group[0]?.id === element.id);
+    if (headingIndex >= 0 && 'content' in element) {
+      return {
+        ...element,
+        left: headingLeft,
+        top: panelGeometry[headingIndex].top + 18,
+        width: textWidth,
+        height: 38,
+        content: setFontSize(String((element as Record<string, unknown>).content ?? ''), 22),
+        defaultFontName: FONT_STACK,
+        defaultColor: '#1e4f7a',
+        lineHeight: 1.08,
+        paragraphSpace: 0,
+      } as T;
+    }
+
+    const bodyPanelIndex = panelTextGroups.findIndex((group) =>
+      group.slice(1).some((text) => text.id === element.id),
+    );
+    if (bodyPanelIndex >= 0 && 'content' in element) {
+      return {
+        ...element,
+        left: headingLeft,
+        top: panelGeometry[bodyPanelIndex].top + 58,
+        width: textWidth,
+        height: 86,
+        content: setFontSize(String((element as Record<string, unknown>).content ?? ''), 19),
+        defaultFontName: FONT_STACK,
+        defaultColor: '#263244',
+        lineHeight: 1.06,
+        paragraphSpace: 0,
+      } as T;
+    }
+
+    return element;
+  });
+}
+
 const CANONICAL_TEXT_VARIANT_COUNT = 5;
 const CANONICAL_STEP_VARIANT_COUNT = 3;
 const CANONICAL_FORMULA_VARIANT_COUNT = 3;
@@ -1741,11 +2000,22 @@ function canonicalBlock(
 }
 
 function canonicalHeading(block: CanonicalTextBlock, fallback: string, max = 20): string {
-  return escapeHtmlShort(block.heading ?? fallback, max);
+  const heading = !isStrictGenericCanonicalText(block.heading) ? block.heading : undefined;
+  const fallbackHeading = !isStrictGenericCanonicalText(fallback) ? fallback : undefined;
+  return escapeHtmlShort(heading ?? fallbackHeading ?? deriveCanonicalHeading(block.body), max);
 }
 
 function canonicalBody(block: CanonicalTextBlock, max: number): string {
   return escapeHtmlShort(block.body, max);
+}
+
+function deriveCanonicalHeading(text: string): string {
+  const clean = stripHtml(text).replace(/\s+/g, ' ').trim();
+  const colonLead = clean.split(/[：:]/)[0]?.trim();
+  if (colonLead && colonLead.length >= 3 && colonLead.length <= 18) return colonLead;
+  const sentenceLead = clean.split(/[。.!?！？；;，,]/)[0]?.trim();
+  if (sentenceLead && sentenceLead.length >= 3) return sentenceLead;
+  return clean || '本页内容';
 }
 
 function isGenericCanonicalText(text: string | undefined): boolean {
@@ -2626,9 +2896,9 @@ function canonicalTextReferenceLayout(
   if (variant === 1) {
     const prefix = 'polish_ref_canonical_v1';
     const cards = [
-      canonicalBlock(blocks, 0, '要点一', subtitle),
-      canonicalBlock(blocks, 1, '要点二', context?.keyPoints?.[0] ?? subtitle),
-      canonicalBlock(blocks, 2, '要点三', context?.keyPoints?.[1] ?? subtitle),
+      canonicalBlock(blocks, 0, context?.keyPoints?.[0] ?? '课堂入口', subtitle),
+      canonicalBlock(blocks, 1, context?.keyPoints?.[1] ?? '操作方法', subtitle),
+      canonicalBlock(blocks, 2, context?.keyPoints?.[2] ?? '结果检查', subtitle),
     ];
     const fills = ['#f8fafc', '#eef6ff', '#fff7ed'];
 
@@ -2641,23 +2911,23 @@ function canonicalTextReferenceLayout(
           shapeElement(`${prefix}_card_rule_${index}`, left + 28, 244, 76, 4, theme.accent, 0.9),
           textElement(
             `${prefix}_card_title_${index}`,
-            `<strong>${canonicalHeading(block, `要点 ${index + 1}`, 10)}</strong>`,
-            left + 28,
+            `<strong>${canonicalHeading(block, context?.keyPoints?.[index] ?? block.body, 18)}</strong>`,
+            left + 24,
             266,
-            196,
-            58,
+            208,
+            68,
             22,
             theme.textPrimary,
             undefined,
-            1.06,
+            1.08,
           ),
           textElement(
             `${prefix}_card_body_${index}`,
             canonicalBody(block, 34),
             left + 28,
-            342,
+            346,
             196,
-            88,
+            82,
             18,
             theme.textBody,
             undefined,
@@ -2665,19 +2935,6 @@ function canonicalTextReferenceLayout(
           ),
         ];
       }),
-      shapeElement(`${prefix}_takeaway_panel`, 126, 438, 748, 3, theme.accent, 0.9),
-      textElement(
-        `${prefix}_takeaway`,
-        `<strong>连接起来看</strong>：${escapeHtmlShort(blocks[3]?.body ?? first.body, 34)}`,
-        158,
-        458,
-        684,
-        48,
-        18,
-        '#1e3a5f',
-        undefined,
-        1.08,
-      ),
     ];
   }
 
@@ -4880,13 +5137,14 @@ function referenceLayoutElements<T extends SlideLikeElement>(
       return quadraticApplicationReferenceLayout(elements, context) as T[];
     }
   }
+  if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return elements;
+  if (shouldPreserveComposedTeachingLayout(elements)) return null;
   if (shouldUsePythonVariablesLayout(elements, context)) {
     return pythonVariablesReferenceLayout(elements, context) as T[];
   }
   if (shouldUseRedisInternalStructureLayout(elements, context)) {
     return redisInternalStructureReferenceLayout(elements, context) as T[];
   }
-  if (elements.some((element) => element.id?.startsWith('polish_ref_'))) return elements;
   if (shouldUseCubicIntroLayout(elements, context)) {
     return cubicIntroReferenceLayout(elements, context) as T[];
   }
@@ -5263,7 +5521,7 @@ function createRichnessLayer(
     layer.push(
       textElement(
         `${prefix}_takeaway_text`,
-        `<strong>Takeaway</strong> ${keywords.map((keyword) => escapeHtmlShort(keyword, 18)).join(' / ')}`,
+        `<strong>本页要点</strong> ${keywords.map((keyword) => escapeHtmlShort(keyword, 18)).join(' / ')}`,
         112,
         462,
         776,
@@ -5402,6 +5660,93 @@ export function enrichSlideElements<T extends SlideLikeElement>(
 
   if (!shouldEnrich) return elements;
   return [...elements, ...createRichnessLayer(elements, context)] as T[];
+}
+
+function isPlainTextCardProtectedElement(element: SlideLikeElement): boolean {
+  return Boolean(
+    element.id?.startsWith('polish_ref_') ||
+    element.id?.startsWith('polish_quad_') ||
+    element.id?.startsWith('polish_visual_') ||
+    element.id?.startsWith('polish_density_') ||
+    element.id?.startsWith('polish_plain_') ||
+    element.id?.startsWith('classroom_qa_safe_'),
+  );
+}
+
+function getPlainTextCardTargets(elements: SlideLikeElement[]): SlideLikeElement[] {
+  const title = getTitleElement(elements);
+  return elements
+    .filter((element) => {
+      if (element === title) return false;
+      if (element.type !== 'text') return false;
+      if ((element as Record<string, unknown>)['fill']) return false;
+
+      const box = getElementBox(element);
+      const text = getTextContent(element).replace(/\s+/g, '');
+      return (
+        box.top >= 128 &&
+        box.top <= 448 &&
+        box.width >= 240 &&
+        box.height >= 32 &&
+        text.length >= 10
+      );
+    })
+    .sort((a, b) => a.top - b.top)
+    .slice(0, 5);
+}
+
+function shouldAddPlainTextCardLayer(
+  elements: SlideLikeElement[],
+  context?: SlidePolishContext,
+): boolean {
+  if (context?.decorate === false) return false;
+  if (elements.some(isPlainTextCardProtectedElement)) return false;
+  if (elements.some(isStrongMediaElement)) return false;
+  if (elements.filter(isBackgroundShapeLike).length > 0) return false;
+  if (!getTitleElement(elements)) return false;
+
+  const textCount = elements.filter((element) => element.type === 'text').length;
+  const targets = getPlainTextCardTargets(elements);
+  return textCount >= 4 && targets.length >= 3 && targets.length <= 5;
+}
+
+function addPlainTextCardLayer<T extends SlideLikeElement>(
+  elements: T[],
+  context?: SlidePolishContext,
+): T[] {
+  if (!shouldAddPlainTextCardLayer(elements, context)) return elements;
+
+  const theme = getPolishTheme(context);
+  const targets = getPlainTextCardTargets(elements);
+  const cards = targets.map((element, index) => {
+    const box = getElementBox(element);
+    return shapeElement(
+      `polish_plain_card_${index}`,
+      Math.max(MARGIN, box.left - 18),
+      Math.max(118, box.top - 12),
+      Math.min(CANVAS_WIDTH - MARGIN * 2, box.width + 36),
+      box.height + 26,
+      index % 2 === 0 ? '#ffffff' : '#f3f9ff',
+      0.96,
+    );
+  });
+  const accents = targets.map((element, index) => {
+    const box = getElementBox(element);
+    return shapeElement(
+      `polish_plain_accent_${index}`,
+      Math.max(MARGIN, box.left - 18),
+      box.top + 10,
+      4,
+      Math.max(30, box.height - 20),
+      index % 2 === 0 ? theme.accent : theme.accentSecondary,
+      0.86,
+    );
+  });
+  const titleRule = hasTitleDivider(elements)
+    ? []
+    : [shapeElement('polish_plain_title_rule', 86, 126, 260, 4, theme.accent, 0.9)];
+
+  return [...titleRule, ...cards, ...accents, ...elements] as T[];
 }
 
 type SlideQualityIssue = {
@@ -5752,13 +6097,15 @@ export function polishSlideElements<T extends SlideLikeElement>(
   const baseElements = elements.filter((element) => !element.id?.startsWith('polish_rich_'));
   const referenceElements = referenceLayoutElements(baseElements, context);
   if (referenceElements) {
-    return addDeckDiversitySignature(
-      applySlideQualityGate(
-        polishReferenceLayoutElements(referenceElements, context),
-        baseElements,
+    return sanitizeDecorativeChrome(
+      addDeckDiversitySignature(
+        applySlideQualityGate(
+          polishReferenceLayoutElements(referenceElements, context),
+          baseElements,
+          context,
+        ),
         context,
       ),
-      context,
     );
   }
 
@@ -5767,11 +6114,14 @@ export function polishSlideElements<T extends SlideLikeElement>(
     shouldDecorate && shouldUseQuadraticTeachingLayout(baseElements, context)
       ? (quadraticTeachingLayout(baseElements, context) as T[])
       : baseElements;
+  const prefersPlainTextCardLayer =
+    shouldDecorate && shouldAddPlainTextCardLayer(layoutElements, context);
   const shapeCount = layoutElements.filter((element) => element.type === 'shape').length;
   const hasStrongVisual = layoutElements.some((element) =>
     ['image', 'video', 'chart', 'table', 'latex'].includes(element.type),
   );
-  const needsVisualAnchor = shouldDecorate && !hasStrongVisual && shapeCount < 3;
+  const needsVisualAnchor =
+    shouldDecorate && !prefersPlainTextCardLayer && !hasStrongVisual && shapeCount < 3;
   const anchoredElements = needsVisualAnchor
     ? ([...visualAnchorElements(context), ...layoutElements] as T[])
     : layoutElements;
@@ -5799,10 +6149,13 @@ export function polishSlideElements<T extends SlideLikeElement>(
     }
   });
 
-  return addDeckDiversitySignature(
-    applySlideQualityGate(protectReadableLayout(polished, context), baseElements, context),
-    context,
-  );
+  const readableLayout = protectReadableLayout(polished, context);
+  const normalizedBands = normalizeStackedTeachingBands(readableLayout);
+  const qualityAdjusted = applySlideQualityGate(normalizedBands, baseElements, context);
+  const finalBands = normalizeStackedTeachingBands(qualityAdjusted);
+  const visuallyLayered = shouldDecorate ? addPlainTextCardLayer(finalBands, context) : finalBands;
+
+  return sanitizeDecorativeChrome(addDeckDiversitySignature(visuallyLayered, context));
 }
 
 function polishReferenceLayoutElements<T extends SlideLikeElement>(

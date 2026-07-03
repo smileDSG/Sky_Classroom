@@ -99,6 +99,7 @@ export function CanvasArea({
         <div className="pointer-events-none absolute inset-x-8 top-8 h-px bg-white/80 dark:bg-slate-800/70" />
         <div className="pointer-events-none absolute inset-x-16 bottom-10 h-10 bg-[linear-gradient(180deg,rgba(186,230,253,0)_0%,rgba(255,255,255,0.54)_50%,rgba(186,230,253,0)_100%)] dark:bg-none" />
         <div
+          data-classroom-slide-frame="true"
           className={cn(
             'relative aspect-[16/9] h-full max-h-full max-w-[min(100%,1800px)] overflow-hidden rounded-[18px] bg-white shadow-[0_24px_70px_rgba(14,116,144,0.14)] ring-1 ring-sky-900/10 transition-all duration-700 dark:bg-gray-800 dark:ring-white/10',
             showControls && !isLiveSession && currentScene?.type === 'slide' && 'cursor-pointer',

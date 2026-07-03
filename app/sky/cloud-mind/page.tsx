@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import {
@@ -9,6 +9,7 @@ import {
   Brain,
   Camera,
   FileQuestion,
+  Layers,
   Loader2,
   Presentation,
   Sparkles,
@@ -76,6 +77,16 @@ const TOOLS: Array<{
     gradient: 'from-amber-500 to-orange-600',
     stats: 'AI 教学助手',
     badge: '新',
+  },
+  {
+    id: 'course-studio',
+    label: '课程资源工坊',
+    description: '结合课程知识库和学习画像，生成讲义、题库、导图、实操案例和视频脚本',
+    href: '/sky/cloud-mind/course-studio',
+    icon: Layers,
+    gradient: 'from-emerald-500 to-teal-600',
+    stats: 'AI 导论知识库',
+    badge: '个性化',
   },
 ];
 
@@ -218,7 +229,7 @@ export default function CloudMindPage() {
             <h1 className="mb-3 text-3xl font-bold text-white md:text-4xl">云端智囊</h1>
             <p className="max-w-xl text-base leading-relaxed text-indigo-100 md:text-lg">
               汇聚 AI
-              之力，为你的学习保驾护航。拍照搜题、PPT课件生成、智能出题、记忆卡片、智能授课，一站直达。
+              之力，为你的学习保驾护航。拍照搜题、PPT课件生成、智能出题、记忆卡片、智能授课、课程资源，一站直达。
             </p>
 
             <div className="mt-6 flex items-center gap-4">
@@ -284,7 +295,7 @@ export default function CloudMindPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">全部工具</h2>
-            <p className="text-sm text-slate-500">保留当前 5 个核心入口</p>
+            <p className="text-sm text-slate-500">围绕学习任务组织核心入口</p>
           </div>
           <span className="rounded-full border border-slate-200/80 bg-white/85 px-3 py-1 text-xs font-semibold text-slate-500 dark:border-slate-700/40 dark:bg-slate-900/55 dark:text-slate-400">
             {TOOLS.length} 个工具

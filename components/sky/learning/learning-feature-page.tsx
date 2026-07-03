@@ -91,31 +91,33 @@ export function LearningFeaturePage({ activeFeature }: LearningFeaturePageProps)
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-6xl space-y-5 pb-8">
-        <section className="overflow-hidden rounded-[24px] border border-cyan-100/10 bg-[#07111f]/95 shadow-[0_24px_72px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
-          <div className="flex flex-col gap-4 border-b border-cyan-100/10 bg-[linear-gradient(135deg,#123346_0%,#0d2438_52%,#0b1729_100%)] px-5 py-5 md:px-6 lg:flex-row lg:items-center lg:justify-between">
+        <section className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/90 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-cyan-100/10 dark:bg-[#07111f]/95 dark:shadow-[0_24px_72px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
+          <div className="flex flex-col gap-4 border-b border-slate-200/70 bg-[linear-gradient(135deg,#f0fdf4_0%,#f0f9ff_52%,#f8fafc_100%)] px-5 py-5 dark:border-cyan-100/10 dark:bg-[linear-gradient(135deg,#123346_0%,#0d2438_52%,#0b1729_100%)] md:px-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <Link
                 href="/sky/learning"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-slate-100 transition-colors hover:bg-white/[0.09]"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-white dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:shadow-none dark:hover:bg-white/[0.09]"
               >
                 <ArrowLeft className="h-4 w-4" />
                 返回天梯工坊
               </Link>
               <div className="mt-4 flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-200/25 bg-emerald-300/10 text-emerald-100">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-[0_10px_28px_rgba(16,185,129,0.08)] dark:border-emerald-200/25 dark:bg-emerald-300/10 dark:text-emerald-100 dark:shadow-none">
                   <ActiveIcon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
-                  <h1 className="text-2xl font-semibold leading-tight text-white">
+                  <h1 className="text-2xl font-semibold leading-tight text-slate-950 dark:text-white">
                     {activeMeta.label}
                   </h1>
-                  <p className="mt-1 text-sm text-slate-300">{activeMeta.desc}</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                    {activeMeta.desc}
+                  </p>
                 </div>
               </div>
             </div>
 
             <nav className="max-w-full overflow-x-auto">
-              <div className="flex min-w-max rounded-2xl border border-cyan-100/10 bg-[#081423]/80 p-1">
+              <div className="flex min-w-max rounded-2xl border border-slate-200 bg-white/80 p-1 shadow-sm dark:border-cyan-100/10 dark:bg-[#081423]/80 dark:shadow-none">
                 {LEARNING_FEATURES.map((feature) => {
                   const Icon = feature.icon;
                   const active = feature.key === activeFeature;
@@ -126,8 +128,8 @@ export function LearningFeaturePage({ activeFeature }: LearningFeaturePageProps)
                       className={cn(
                         'flex min-w-[112px] items-center gap-2 rounded-xl px-3 py-2 text-left transition-colors',
                         active
-                          ? 'bg-emerald-300 text-slate-950 shadow-[0_8px_24px_rgba(52,211,153,0.14)]'
-                          : 'text-slate-300 hover:bg-white/[0.05] hover:text-slate-100',
+                          ? 'bg-emerald-100 text-emerald-800 shadow-[0_8px_24px_rgba(16,185,129,0.12)] dark:bg-emerald-300 dark:text-slate-950 dark:shadow-[0_8px_24px_rgba(52,211,153,0.14)]'
+                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/[0.05] dark:hover:text-slate-100',
                       )}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
@@ -139,8 +141,8 @@ export function LearningFeaturePage({ activeFeature }: LearningFeaturePageProps)
             </nav>
           </div>
 
-          <div className="bg-[#07111f]/70 p-4">
-            <div className="rounded-2xl border border-cyan-100/10 bg-slate-950/20 p-3 lg:p-4">
+          <div className="bg-slate-50/70 p-4 dark:bg-[#07111f]/70">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-inner shadow-slate-200/30 dark:border-cyan-100/10 dark:bg-slate-950/20 dark:shadow-none lg:p-4">
               {activeFeature === 'mistakes' && <MistakeBook />}
               {activeFeature === 'review' && (
                 <ReviewPlan
@@ -152,15 +154,15 @@ export function LearningFeaturePage({ activeFeature }: LearningFeaturePageProps)
                 <div className="space-y-4">
                   <KnowledgeGraphView />
                   {weakPoints.length > 0 && (
-                    <div className="rounded-2xl border border-rose-200/15 bg-rose-300/10 p-4">
-                      <div className="text-sm font-semibold text-rose-100">
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-200/15 dark:bg-rose-300/10">
+                      <div className="text-sm font-semibold text-rose-700 dark:text-rose-100">
                         薄弱知识点针对性复习
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {weakPoints.map((point) => (
                           <span
                             key={point}
-                            className="rounded-full border border-rose-200/20 bg-rose-300/10 px-3 py-1 text-xs font-medium text-rose-100"
+                            className="rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-700 dark:border-rose-200/20 dark:bg-rose-300/10 dark:text-rose-100"
                           >
                             {point}
                           </span>

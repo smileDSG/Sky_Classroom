@@ -209,6 +209,39 @@ describe('classroom slide deck QA', () => {
     expect(report.issues.some((issue) => issue.type === 'thin_teaching_content')).toBe(true);
   });
 
+  it('blocks keyword-only SQL pages that have layout but no real teaching substance', () => {
+    const content: GeneratedSlideContent = {
+      background: { type: 'solid', color: '#ffffff' },
+      remark: 'keyword-only SQL page',
+      elements: [
+        text('sql_title', 72, 54, 856, 58, '查询数据：SELECT 语句', 32),
+        text('sql_subtitle', 72, 118, 856, 42, '从表中检索数据 - 列选择、条件过滤、结果排序', 20),
+        shape('sql_card_a', 82, 190, 390, 180),
+        shape('sql_card_b', 528, 190, 390, 180, '#eaf4ff'),
+        text('sql_select', 124, 234, 260, 42, 'SELECT', 28),
+        text('sql_from', 124, 314, 260, 34, 'FROM', 18),
+        text('sql_where', 570, 234, 260, 42, 'WHERE', 28),
+        text('sql_order', 570, 314, 260, 34, 'ORDER BY', 18),
+        text('sql_note', 216, 390, 568, 42, '指定要查询的列：* 表示全部列', 18),
+      ],
+    };
+    const sqlOutline: SceneOutline = {
+      id: 'sql_select',
+      type: 'slide',
+      title: '查询数据：SELECT 语句',
+      description: '讲解 SQL 查询语句的列选择、条件过滤和排序。',
+      keyPoints: ['SELECT 指定列', 'FROM 指定表', 'WHERE 过滤行', 'ORDER BY 排序结果'],
+      order: 1,
+    };
+
+    const report = auditClassroomSlideContents([{ outline: sqlOutline, content }]);
+
+    expect(report.pass).toBe(false);
+    expect(report.issues.some((issue) => issue.type === 'insufficient_teaching_substance')).toBe(
+      true,
+    );
+  });
+
   it('blocks Redis-specific fallback text on a Python slide', () => {
     const content: GeneratedSlideContent = {
       background: { type: 'solid', color: '#ffffff' },
@@ -294,5 +327,39 @@ describe('classroom slide deck QA', () => {
 
     expect(report.pass).toBe(false);
     expect(report.issues.some((issue) => issue.type === 'step_count_mismatch')).toBe(true);
+  });
+
+  it('blocks unsafe QA safe fallback geometry before classroom persistence', () => {
+    const content: GeneratedSlideContent = {
+      background: { type: 'solid', color: '#ffffff' },
+      remark: 'unsafe qa safe fallback',
+      elements: [
+        text(
+          'classroom_qa_safe_block_scene_1_0',
+          82,
+          148,
+          398,
+          62,
+          '\u6838\u5fc3\u5185\u5bb9\uff1a\u8fd9\u4e2a\u6587\u5b57\u5757\u5bb9\u5668\u592a\u77ee\u4e14\u5b57\u53f7\u592a\u5c0f\u3002',
+          20,
+        ),
+        {
+          ...table('classroom_qa_safe_table_scene_1'),
+          top: 360,
+          height: 110,
+          cellMinHeight: 27,
+        } as PPTElement,
+      ],
+    };
+
+    const report = auditClassroomSlideContents([{ outline: outline(1), content }]);
+
+    expect(report.pass).toBe(false);
+    expect(report.issues.some((issue) => issue.type === 'qa_safe_fallback_text_too_small')).toBe(
+      true,
+    );
+    expect(report.issues.some((issue) => issue.type === 'qa_safe_fallback_table_too_short')).toBe(
+      true,
+    );
   });
 });

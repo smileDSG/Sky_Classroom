@@ -1,0 +1,55 @@
+{
+  "userId": "software-cup-demo-student",
+  "sourceInput": "data/demo/software-cup/student-input.txt",
+  "profileVersion": "v0.1.0",
+  "lastUpdated": "2026-07-01",
+  "dimensions": {
+    "majorBackground": {
+      "value": "软件工程大二学生",
+      "confidence": 0.95,
+      "evidence": ["用户自述：我是软件工程大二学生"]
+    },
+    "learningGoal": {
+      "value": "两周内补上机器学习基础和大模型智能体",
+      "confidence": 0.92,
+      "evidence": ["用户自述：希望两周内补上机器学习基础和大模型智能体"]
+    },
+    "knowledgeBase": {
+      "strongPoints": ["Python 基础"],
+      "weakPoints": ["线性代数熟练度", "过拟合", "模型评估", "RAG"],
+      "confidence": 0.88,
+      "evidence": ["用户自述：Python 基础还可以", "用户自述：最困惑的是过拟合、模型评估和 RAG"]
+    },
+    "cognitiveStyle": {
+      "value": "图解 + 代码案例驱动",
+      "confidence": 0.9,
+      "evidence": ["用户自述：偏好图解、代码案例"]
+    },
+    "errorPatternPreference": {
+      "value": ["概念边界混淆", "公式与代码连接弱", "评价指标选择不稳"],
+      "confidence": 0.8,
+      "evidence": ["用户自述：不太会把概念和代码联系起来"]
+    },
+    "resourcePreference": {
+      "value": ["图解讲义", "代码实操案例", "分层练习题", "学习路径"],
+      "confidence": 0.92,
+      "evidence": ["用户自述：偏好图解、代码案例和分层练习题"]
+    },
+    "learningPace": {
+      "value": "每天约 45 分钟，两周完成一轮补强",
+      "confidence": 0.95,
+      "evidence": ["用户自述：每天大概能学 45 分钟"]
+    },
+    "currentLearningState": {
+      "value": "机器学习基础薄弱点集中在泛化评估，大模型方向集中在 RAG 与智能体",
+      "confidence": 0.82,
+      "evidence": ["由学习目标和薄弱点综合推断"]
+    }
+  },
+  "updatePolicy": {
+    "quizAccuracyBelow60": "降低难度并补充前置知识",
+    "codeErrorsRepeated": "推送分步调试提示和最小可运行案例",
+    "resourceFeedbackTooHard": "插入图解讲义和基础题",
+    "masteryAbove85": "推送拓展阅读和项目任务"
+  }
+}
