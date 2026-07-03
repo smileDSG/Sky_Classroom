@@ -182,6 +182,7 @@ interface AssistantPanelProps {
   externalLoadConvId?: string | null;
   onConversationLoaded?: () => void;
   accentColor?: string;
+  initialPrompt?: string | null;
 }
 
 export function AssistantPanel({
@@ -190,6 +191,7 @@ export function AssistantPanel({
   externalLoadConvId,
   onConversationLoaded,
   accentColor: externalAccent,
+  initialPrompt,
 }: AssistantPanelProps = {}) {
   const [accent, setAccent] = useState(externalAccent || THEME_MAP.sky);
   useEffect(() => {
@@ -211,6 +213,7 @@ export function AssistantPanel({
   const [showHistory, setShowHistory] = useState(false);
   const [conversations, setConversations] = useState<AssistantConversationRecord[]>([]);
   const [memoryContextStr, setMemoryContextStr] = useState<string>('');
+  const consumedInitialPromptRef = useRef<string | null>(null);
 
   // Current conversation ID for persistence
   const currentConvIdRef = useRef<string | null>(null);
@@ -532,6 +535,14 @@ export function AssistantPanel({
     },
     [handleSend],
   );
+
+  useEffect(() => {
+    const prompt = initialPrompt?.trim();
+    if (!prompt || consumedInitialPromptRef.current === prompt) return;
+    if (loading) return;
+    consumedInitialPromptRef.current = prompt;
+    handleSend(prompt);
+  }, [handleSend, initialPrompt, loading]);
 
   const hasUserMessages = messages.some((m) => m.role === 'user');
 

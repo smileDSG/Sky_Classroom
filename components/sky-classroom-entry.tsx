@@ -83,13 +83,18 @@ export function SkyClassroomEntry() {
     setCollapsed((prev) => !prev);
   }, []);
 
-  // Hide on sky classroom pages, homepage, and the presentation classroom itself.
+  // Hide on sky classroom pages, mobile pages, homepage, and the presentation classroom itself.
   const hidden =
-    pathname.startsWith('/sky') || pathname.startsWith('/classroom') || pathname === '/';
+    !pathname ||
+    pathname.startsWith('/sky') ||
+    pathname.startsWith('/m') ||
+    pathname.startsWith('/classroom') ||
+    pathname === '/';
   if (hidden) return null;
 
   return (
     <div
+      data-sky-classroom-entry
       ref={containerRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
