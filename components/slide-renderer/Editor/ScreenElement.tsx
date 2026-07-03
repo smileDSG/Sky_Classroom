@@ -112,6 +112,9 @@ export function ScreenElement({ elementInfo, elementIndex, animate }: ScreenElem
   return (
     <div
       className={`screen-element absolute ${isAnimating ? 'animate-fade-in-up' : ''}`}
+      data-classroom-slide-element="true"
+      data-element-id={elementInfo.id}
+      data-element-type={elementInfo.type}
       id={`screen-element-${elementInfo.id}`}
       style={{
         zIndex: getElementLayer(elementInfo, elementIndex),

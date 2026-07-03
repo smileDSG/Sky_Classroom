@@ -37,6 +37,8 @@ export function auditGeneratedSlideContent(content: GeneratedSlideContent): Gene
     ...auditSlideLanguage(content),
     ...auditSlideVisualStyle(content),
     ...auditSlideTeachingDensity(content),
+    ...auditSlideTeachingSubstance(content),
+    ...auditQASafeFallbackGeometry(content),
   ];
   const blockingIssueCount = issues.filter((issue) => issue.severity === 'blocking').length;
 
@@ -165,6 +167,129 @@ function auditSlideTeachingDensity(content: GeneratedSlideContent): GeneratedSli
         'Slide has too little concrete teaching content; add Chinese explanations, examples, checks, or a richer table/flow/command/structure diagram.',
     },
   ];
+}
+
+function auditSlideTeachingSubstance(content: GeneratedSlideContent): GeneratedSlideQAIssue[] {
+  const visibleText = getVisibleTextItems(content)
+    .map(({ text }) => text)
+    .join(' ');
+  const compactText = visibleText.replace(/\s+/g, '');
+
+  if (!isOperationalKnowledgeSlide(visibleText)) return [];
+  if (compactText.length < 36) return [];
+
+  const facets = getOperationalTeachingFacets(visibleText);
+  const facetCount = Object.values(facets).filter(Boolean).length;
+  const teachingUnitCount = getVisibleTextItems(content).reduce(
+    (sum, { text }) => sum + countConcreteTeachingUnits(text),
+    0,
+  );
+
+  const hasWorkedTeachingExample = facets.workedExample;
+  const hasEnoughLongFormTeaching =
+    compactText.length >= 150 && teachingUnitCount >= 4 && facetCount >= 4;
+  const hasExampleBackedTeaching = hasWorkedTeachingExample && facetCount >= 3;
+
+  if (hasEnoughLongFormTeaching || hasExampleBackedTeaching) return [];
+
+  return [
+    {
+      type: 'insufficient_teaching_substance',
+      severity: 'blocking',
+      detail:
+        'Operational knowledge slide is keyword-only; add a concrete syntax/command example plus meaning, scenario, result, or caution/checkpoint text.',
+    },
+  ];
+}
+
+function isOperationalKnowledgeSlide(text: string): boolean {
+  return /\b(sql|select|from|where|order\s+by|group\s+by|insert|update|delete|join|python|javascript|typescript|java|redis|mongodb|mysql|postgresql|api|http|print\s*\(|input\s*\(|def\s+\w+|for\s+\w+|while\s*\(|if\s*\(|class\s+\w+|SELECT|FROM|WHERE|ORDER\s+BY)\b|查询|数据库|数据表|字段|索引|变量|函数|循环|条件语句|命令|语法|代码|脚本|缓存|队列|事务|接口/i.test(
+    text,
+  );
+}
+
+function getOperationalTeachingFacets(text: string): Record<string, boolean> {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  return {
+    syntaxOrCommand: hasOperationalSyntaxOrCommand(normalized),
+    workedExample: hasWorkedOperationalExample(normalized),
+    meaning:
+      /作用|用于|表示|指定|过滤|排序|返回|输出|执行|含义|解释|条件|字段|列|行|读取|写入|更新|删除|统计|匹配|遍历|调用|赋值/i.test(
+        normalized,
+      ),
+    scenario: /场景|适用|当.+时|如果.+就|业务|项目|需求|常用于|适合|用于.+时|从.+中|在.+里/i.test(
+      normalized,
+    ),
+    result: /结果|得到|查出|返回|输出|命中|保留|排除|降序|升序|成功|失败|影响|变化|最终/i.test(
+      normalized,
+    ),
+    cautionOrCheckpoint:
+      /注意|易错|不要|避免|检查|确认|必须|不能|建议|真实项目|生产环境|先.+后|优先|区别|否则|风险|边界|空值|性能/i.test(
+        normalized,
+      ),
+  };
+}
+
+function hasOperationalSyntaxOrCommand(text: string): boolean {
+  return /\bSELECT\b.+\bFROM\b|\bWHERE\b|\bORDER\s+BY\b|\bGROUP\s+BY\b|\bJOIN\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bSET\b|\bGET\b|\bHSET\b|\bLPUSH\b|\bZADD\b|print\s*\(|input\s*\(|def\s+\w+\s*\(|for\s+\w+\s+in|while\s+.+:|if\s+.+:|=\s*[^=]/i.test(
+    text,
+  );
+}
+
+function hasWorkedOperationalExample(text: string): boolean {
+  return /示例|例子|例如|比如|以.+为例|假设|样例|演示|实战|练习|students|users|orders|score|name|age|SELECT\s+[\w*,\s]+\s+FROM\s+\w+|print\s*\([^)]{1,80}\)|def\s+\w+\s*\([^)]*\)\s*:/i.test(
+    text,
+  );
+}
+
+function auditQASafeFallbackGeometry(content: GeneratedSlideContent): GeneratedSlideQAIssue[] {
+  const issues: GeneratedSlideQAIssue[] = [];
+
+  for (const element of content.elements) {
+    const id = element.id ?? '';
+    if (!id.startsWith('classroom_qa_safe_')) continue;
+
+    const bottom = element.top + toFiniteNumber(element.height, 24);
+    if (bottom > 514.5) {
+      issues.push({
+        type: 'qa_safe_fallback_overflow',
+        severity: 'blocking',
+        detail: `QA safe fallback element exceeds the classroom safe bottom: ${id}`,
+        elementId: id,
+      });
+    }
+
+    if (element.type === 'text' && id.includes('_block_')) {
+      const height = toFiniteNumber(element.height, 0);
+      const fontSize = getFontSize(String((element as Record<string, unknown>).content ?? ''));
+      if (height < 84 || fontSize < 22) {
+        issues.push({
+          type: 'qa_safe_fallback_text_too_small',
+          severity: 'blocking',
+          detail: `QA safe fallback text block must use at least 22px text and 84px height: ${id}`,
+          elementId: id,
+        });
+      }
+    }
+
+    if (element.type === 'table' && id.startsWith('classroom_qa_safe_table_')) {
+      const data = (element as Record<string, unknown>).data;
+      const rowCount = Array.isArray(data) ? data.length : 0;
+      const minHeight = Math.max(rowCount * 44, 44);
+      const height = toFiniteNumber(element.height, 0);
+      const cellMinHeight = toFiniteNumber((element as Record<string, unknown>).cellMinHeight, 0);
+      if (height < minHeight || cellMinHeight < 44) {
+        issues.push({
+          type: 'qa_safe_fallback_table_too_short',
+          severity: 'blocking',
+          detail: `QA safe fallback table must reserve at least 44px per row: ${id}`,
+          elementId: id,
+        });
+      }
+    }
+  }
+
+  return issues;
 }
 
 function auditSlideSemanticConsistency(
@@ -337,7 +462,11 @@ function isMainLayoutSignatureElement(element: SlideElement): boolean {
   if (
     id.startsWith('polish_deck_signature_') ||
     id.startsWith('polish_density_') ||
-    id.startsWith('polish_rich_')
+    id.startsWith('polish_rich_') ||
+    id.startsWith('polish_plain_') ||
+    id.startsWith('classroom_qa_safe_card_') ||
+    id.startsWith('classroom_qa_safe_accent_') ||
+    id.startsWith('classroom_qa_safe_title_rule_')
   ) {
     return false;
   }

@@ -129,7 +129,7 @@ const denseSlideContent: GeneratedSlideContent = {
       defaultFontName: 'Microsoft YaHei',
       defaultColor: '#1e293b',
       content:
-        '<p style="font-size:22px;">命令线索：SET 写入键值，GET 读取内容，EXPIRE 控制有效期。</p>',
+        '<p style="font-size:22px;">示例：SET cache:user:1 Tom，GET 返回 Tom，EXPIRE 设置过期。</p>',
     },
     {
       id: 'block_c',
@@ -155,7 +155,7 @@ const denseSlideContent: GeneratedSlideContent = {
       defaultFontName: 'Microsoft YaHei',
       defaultColor: '#1e293b',
       content:
-        '<p style="font-size:22px;">课堂总结：先判断读写模式，再选择能表达结构关系的数据类型。</p>',
+        '<p style="font-size:22px;">结果：先判断读写模式，再选择能表达结构关系的数据类型。</p>',
     },
   ] as GeneratedSlideContent['elements'],
   background: { type: 'solid', color: '#f8fbff' },
@@ -319,6 +319,44 @@ function expectSafeFallbackSlideContent(content: unknown) {
   const slide = content as GeneratedSlideContent;
   expect(slide.qa?.pass).toBe(true);
   expect(slide.elements.some((element) => element.id.startsWith('classroom_qa_safe_'))).toBe(true);
+  expectSafeFallbackReadableGeometry(slide);
+  expectSafeFallbackVisualPolish(slide);
+}
+
+function expectSafeFallbackReadableGeometry(slide: GeneratedSlideContent) {
+  const safeElements = slide.elements.filter((element) =>
+    element.id.startsWith('classroom_qa_safe_'),
+  );
+
+  for (const element of safeElements) {
+    expect(Number(element.top) + Number(element.height ?? 24)).toBeLessThanOrEqual(514.5);
+
+    if (element.type === 'text' && element.id.includes('_block_')) {
+      expect(Number(element.height)).toBeGreaterThanOrEqual(84);
+      expect(String(element.content ?? '')).toMatch(/font-size:2[2-9]px/);
+    }
+
+    if (element.type === 'table') {
+      const rowCount = Array.isArray(element.data) ? element.data.length : 0;
+      expect(Number(element.height)).toBeGreaterThanOrEqual(rowCount * 44);
+      expect(Number(element.cellMinHeight ?? 0)).toBeGreaterThanOrEqual(44);
+    }
+  }
+}
+
+function expectSafeFallbackVisualPolish(slide: GeneratedSlideContent) {
+  const safeShapes = slide.elements.filter(
+    (element) => element.type === 'shape' && element.id.startsWith('classroom_qa_safe_'),
+  );
+  const blockCount = slide.elements.filter(
+    (element) => element.type === 'text' && element.id.includes('_block_'),
+  ).length;
+
+  expect(safeShapes.some((element) => element.id.includes('_title_rule_'))).toBe(true);
+  expect(safeShapes.filter((element) => element.id.includes('_card_'))).toHaveLength(blockCount);
+  expect(safeShapes.map((element) => String(element.fill ?? '').toLowerCase())).not.toContain(
+    '#fff7ed',
+  );
 }
 
 function safeFallbackLayoutSignature(content: unknown): string {
@@ -844,6 +882,65 @@ describe('classroom generation progress', () => {
     }
     expect(safeFallbackContents).toHaveLength(12);
     expect(new Set(safeFallbackContents.map(safeFallbackLayoutSignature)).size).toBe(12);
+  });
+
+  test('uses topic-specific QA safe labels instead of generic labels for Python concurrency', async () => {
+    const pythonOutlines: SceneOutline[] = [
+      {
+        id: 'py-threading',
+        type: 'slide',
+        title: 'Python \u591a\u7ebf\u7a0b\u57fa\u7840',
+        description: '\u8bf4\u660e threading \u9002\u5408 I/O \u5bc6\u96c6\u578b\u4efb\u52a1\u3002',
+        keyPoints: [
+          'I/O \u5bc6\u96c6\u578b\u4efb\u52a1',
+          'threading \u542f\u52a8\u5e76\u53d1\u4efb\u52a1',
+          'GIL \u5f71\u54cd CPU \u5bc6\u96c6\u578b\u8ba1\u7b97',
+        ],
+        order: 1,
+      },
+      {
+        id: 'py-multiprocessing',
+        type: 'slide',
+        title: 'Python \u591a\u8fdb\u7a0b\u5b9e\u6218',
+        description: '\u8bf4\u660e multiprocessing \u5982\u4f55\u5229\u7528\u591a\u6838 CPU\u3002',
+        keyPoints: [
+          'CPU \u5bc6\u96c6\u578b\u4efb\u52a1',
+          'multiprocessing \u8df3\u8fc7 GIL \u9650\u5236',
+          '\u8fdb\u7a0b\u95f4\u901a\u4fe1\u6709\u989d\u5916\u6210\u672c',
+        ],
+        order: 2,
+      },
+    ];
+
+    sceneGeneratorMocks.generateSceneContent.mockImplementation(async (outline: SceneOutline) =>
+      repeatedDeckSlideContent(outline.order),
+    );
+
+    const result = await generateClassroomContinue(
+      {
+        ...savedOutlineResult(),
+        outlines: pythonOutlines,
+      },
+      {
+        baseUrl: 'http://localhost',
+      },
+    );
+
+    const actionContents = sceneGeneratorMocks.generateSceneActions.mock.calls.map(
+      ([, content]) => content as GeneratedSlideContent,
+    );
+    const fallbackText = actionContents
+      .filter((content) =>
+        content.elements.some((element) => element.id.startsWith('classroom_qa_safe_')),
+      )
+      .flatMap((content) => content.elements.map((element) => String(element.content ?? '')))
+      .join(' ');
+
+    expect(result.slideQaReport?.pass).toBe(true);
+    expect(fallbackText).toContain('\u5e76\u53d1\u6a21\u578b');
+    expect(fallbackText).toContain('\u9002\u7528\u573a\u666f');
+    expect(fallbackText).not.toContain('\u6838\u5fc3\u5b9a\u4e49');
+    expect(fallbackText).not.toContain('\u8bfe\u5802\u4f8b\u5b50');
   });
 
   test('forces a final safe fallback when parallel repairs introduce a repeated deck layout', async () => {

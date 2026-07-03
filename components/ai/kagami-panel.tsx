@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { InlineMath } from '@/components/ui/inline-math';
 import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
 
@@ -103,6 +105,7 @@ interface Message {
 }
 
 export function KagamiPanel() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scene, setScene] = useState<Scene>('idle');
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -524,7 +527,7 @@ export function KagamiPanel() {
   // Play voice when panel opens
   useEffect(() => {
     if (open) playVoice('idle');
-  }, [open]);
+  }, [open, playVoice]);
 
   // Switch to teaching scene ONLY when solving a problem and streaming explanation
   useEffect(() => {
@@ -534,7 +537,7 @@ export function KagamiPanel() {
       }
       // For casual chat: stay in thinking scene, go directly to done when finished
     }
-  }, [loading, messages.length]);
+  }, [changeScene, loading, messages]);
 
   // Auto-return to idle from done after 5s
   useEffect(() => {
@@ -543,6 +546,14 @@ export function KagamiPanel() {
       return () => clearTimeout(timer);
     }
   }, [scene, loading, changeScene]);
+
+  if (
+    pathname?.startsWith('/sky/software-cup') ||
+    pathname?.startsWith('/sky/cloud-mind/course-studio') ||
+    pathname?.startsWith('/sky/study-lab')
+  ) {
+    return null;
+  }
 
   return (
     <>
@@ -745,7 +756,6 @@ export function KagamiPanel() {
       {tlPopup &&
         typeof window !== 'undefined' &&
         (() => {
-          const { createPortal } = require('react-dom');
           return createPortal(
             <div
               className="fixed inset-0 z-[99999]"

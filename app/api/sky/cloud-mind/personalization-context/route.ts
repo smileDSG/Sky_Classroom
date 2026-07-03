@@ -9,6 +9,7 @@ import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
+import { createProfileSignalDAO } from '@/lib/student/profile-signals';
 import { buildPersonalizationContext } from '@/lib/cloud-mind/personalization-context';
 import { createLogger } from '@/lib/logger';
 import type { ProfileCacheEntry, StudentProfile } from '@/lib/student/profile-types';
@@ -100,14 +101,17 @@ export async function GET(req: NextRequest) {
     const mistakeDAO = createMistakeBookDAO(storage);
     const quizAttemptDAO = createQuizAttemptDAO(storage);
     const learningPathDAO = createLearningPathDAO(storage);
+    const profileSignalDAO = createProfileSignalDAO(storage);
 
-    const [profile, mistakesResult, dueMistakes, recentAttempts, learningPath] = await Promise.all([
-      resolveProfile(userId),
-      mistakeDAO.list({ page: 1, pageSize: 50 }),
-      mistakeDAO.getDueForReview(),
-      quizAttemptDAO.list({ userId, recentDays: 14 }),
-      learningPathDAO.getActiveByUser(userId),
-    ]);
+    const [profile, mistakesResult, dueMistakes, recentAttempts, learningPath, profileSignals] =
+      await Promise.all([
+        resolveProfile(userId),
+        mistakeDAO.list({ page: 1, pageSize: 50 }),
+        mistakeDAO.getDueForReview(),
+        quizAttemptDAO.list({ userId, recentDays: 14 }),
+        learningPathDAO.getActiveByUser(userId),
+        profileSignalDAO.listByUser(userId),
+      ]);
 
     const context = buildPersonalizationContext({
       userId,
@@ -116,6 +120,7 @@ export async function GET(req: NextRequest) {
       dueMistakes,
       recentAttempts,
       learningPath,
+      profileSignals,
     });
 
     return apiSuccess({ data: context });

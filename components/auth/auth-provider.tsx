@@ -5,6 +5,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { useUserProfileStore } from '@/lib/store/user-profile';
 import { ensureAdminUserClient } from '@/lib/client/admin-seed';
 import { installFetchInterceptor } from '@/lib/client/fetch-interceptor';
@@ -38,6 +39,15 @@ interface RegisterData {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function isPublicSkyLearningRoute(pathname?: string | null): boolean {
+  return (
+    pathname?.startsWith('/sky/software-cup') ||
+    pathname?.startsWith('/sky/cloud-mind/course-studio') ||
+    pathname?.startsWith('/sky/study-lab') ||
+    false
+  );
+}
+
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
@@ -45,8 +55,10 @@ export function useAuth(): AuthContextValue {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const skipAuthBootstrap = isPublicSkyLearningRoute(pathname);
 
   const fetchUser = useCallback(async () => {
     try {
@@ -66,15 +78,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     installFetchInterceptor();
+    if (skipAuthBootstrap) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
     ensureAdminUserClient().then(() => fetchUser());
-  }, [fetchUser]);
+  }, [fetchUser, skipAuthBootstrap]);
 
   // Auto-refresh access token every 10 minutes
   useEffect(() => {
     if (!user) return;
-    const interval = setInterval(() => {
-      fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' }).catch(() => {});
-    }, 10 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' }).catch(() => {});
+      },
+      10 * 60 * 1000,
+    );
     return () => clearInterval(interval);
   }, [user]);
 

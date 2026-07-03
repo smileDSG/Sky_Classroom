@@ -617,6 +617,8 @@ Hard content rules for the retry:
 - Replace generic labels such as "要点一", "要点二", "Step 1", or "Advanced Features" with concrete Chinese teaching headings.
 - Do not make a thin page. Excluding the title/subtitle, provide at least 4 concrete teaching units.
 - If the topic is programming or Redis, use a command sequence, scenario explanation, caution point, and summary.
+- If the topic is SQL, database, API, or programming operations, include a realistic syntax/command example, explain what the key parts do, describe the result or execution order, and add one caution/checkpoint.
+- Do not rely on visual anchors alone. A card, flow, table, or diagram with only keywords is still a failed thin page.
 - Include a semantic visual anchor when content is short: table, flow, command diagram, formula, or code block.
 - Keep all readable content inside the safe area: left >= 48, right <= 952, top >= 48, bottom <= 514.5.
 - Return the same top-level schema: { "background": ..., "elements": [...], "remark": "..." }.

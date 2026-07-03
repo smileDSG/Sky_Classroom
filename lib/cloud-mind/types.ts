@@ -1,4 +1,5 @@
 import type { KBStats } from '@/lib/knowledge-base/types';
+import type { ConversationProfileSummary } from '@/lib/student/profile-signals';
 
 export type EvidenceType = 'mistake' | 'profile' | 'memory' | 'knowledge' | 'behavior';
 
@@ -95,10 +96,42 @@ export type PersonalizationDifficulty = 'easy' | 'medium' | 'hard';
 
 export type CloudMindToolTarget = 'solve' | 'slides' | 'quiz' | 'memory' | 'teaching';
 
+export type TutoringExplanationStyle =
+  | 'step_first'
+  | 'principle_first'
+  | 'example_first'
+  | 'practice_first';
+
+export type TutoringPacing = 'remedial' | 'steady' | 'sprint';
+
+export type TutoringResourceFormat =
+  | 'worked_example'
+  | 'code_case'
+  | 'diagram'
+  | 'practice'
+  | 'video'
+  | 'summary';
+
+export interface TutoringPolicy {
+  targetTopic?: string;
+  difficulty: PersonalizationDifficulty;
+  explanationStyle: TutoringExplanationStyle;
+  resourceFormats: TutoringResourceFormat[];
+  pacing: TutoringPacing;
+  directives: string[];
+  evidence: Array<{
+    source: 'profile' | 'performance' | 'path';
+    summary: string;
+    confidence?: number;
+  }>;
+}
+
 export interface PersonalizationContext {
   userId: string;
   generatedAt: number;
   hasLearningData: boolean;
+  hasPersonalizationSignals?: boolean;
+  conversationProfile?: ConversationProfileSummary;
   weakPoints: WeakPointSummary[];
   masteryByKnowledge: Record<string, number>;
   recentAccuracy: number | null;
@@ -116,6 +149,7 @@ export interface PersonalizationContext {
     reason: string;
   };
   preferredDifficulty: PersonalizationDifficulty;
+  tutoringPolicy?: TutoringPolicy;
   recommendation: {
     title: string;
     reason: string;

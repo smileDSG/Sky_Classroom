@@ -2,7 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/server/auth/jwt';
 
 /** Routes that don't require authentication */
-const PUBLIC_PATHS = ['/', '/auth', '/api/auth', '/api/sky/solve/clear', '/api/sky/enrichment'];
+const PUBLIC_PATHS = [
+  '/',
+  '/auth',
+  '/api/auth',
+  '/api/sky/solve/clear',
+  '/api/sky/enrichment',
+  '/sky/software-cup',
+  '/sky/cloud-mind/course-studio',
+  '/sky/study-lab',
+  '/api/sky/cloud-mind/personalization-context',
+  '/api/sky/workshop',
+  '/api/sky/learning-path',
+  '/api/sky/content-safety',
+  '/api/sky/course-knowledge',
+  '/api/sky/learning-effect',
+  '/api/sky/resource-generation',
+  '/api/sky/student/profile/conversation',
+];
 
 /** Static asset prefixes to always skip */
 const STATIC_PREFIXES = [

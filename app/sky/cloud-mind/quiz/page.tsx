@@ -273,17 +273,21 @@ export default function CloudMindQuizPage() {
         if (cancelled || !json.success || !context) return;
 
         const recommendedTopic =
-          context.weakPoints[0]?.knowledgePoint ?? context.learningPath?.next;
+          context.tutoringPolicy?.targetTopic ??
+          context.weakPoints[0]?.knowledgePoint ??
+          context.learningPath?.next;
+        const recommendedDifficulty =
+          context.tutoringPolicy?.difficulty ?? context.preferredDifficulty;
         if (recommendedTopic && !userEditedTopicRef.current) {
           setTopic(recommendedTopic);
         }
         if (!userEditedDifficultyRef.current) {
-          setDifficulty(context.preferredDifficulty);
+          setDifficulty(recommendedDifficulty);
         }
 
         const difficultyLabel =
-          DIFFICULTIES.find((item) => item.id === context.preferredDifficulty)?.label ??
-          context.preferredDifficulty;
+          DIFFICULTIES.find((item) => item.id === recommendedDifficulty)?.label ??
+          recommendedDifficulty;
         setNotice(
           `已根据天梯工坊为你预设：${recommendedTopic ?? '入门诊断'} / ${difficultyLabel}难度`,
         );

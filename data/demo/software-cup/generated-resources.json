@@ -1,0 +1,115 @@
+{
+  "demoId": "software-cup-ai-intro-demo-001",
+  "courseId": "ai-intro-2026",
+  "studentProfile": "data/demo/software-cup/student-profile-sample.json",
+  "agentTrace": [
+    { "agent": "Director", "status": "completed", "output": "拆解为画像构建、课程检索、资源生成、审核、路径规划五个阶段。" },
+    { "agent": "ProfileAgent", "status": "completed", "output": "生成 8 维学习画像，识别过拟合、模型评估、RAG 为薄弱点。" },
+    { "agent": "CourseUnderstandingAgent", "status": "completed", "output": "命中第 4 章机器学习基础、第 10 章大模型与智能体、第 11 章 AI 安全。" },
+    { "agent": "ResourceDesignAgent", "status": "completed", "output": "选择讲义、PPT 大纲、题库、思维导图、代码案例、视频脚本六类资源。" },
+    { "agent": "QualityReviewAgent", "status": "completed", "output": "所有核心事实均绑定课程章节，RAG 防幻觉内容标记为高置信。" },
+    { "agent": "LearningPathAgent", "status": "completed", "output": "生成 14 天学习路径，先补机器学习评估，再进入 RAG 与智能体。" }
+  ],
+  "resources": [
+    {
+      "id": "res-lecture-overfitting-rag",
+      "type": "markdown_lecture",
+      "title": "从过拟合到 RAG：可信 AI 学习闭环",
+      "personalizationReason": "学生偏好图解和代码，且薄弱点集中在过拟合、模型评估、RAG。",
+      "sourceCitations": ["chapters/04-machine-learning-basics.md", "chapters/10-large-models-and-agents.md"],
+      "contentPreview": "先用训练集/测试集解释泛化，再用 RAG 解释为什么课程问答助手需要检索来源，最后把二者统一到可信 AI 评价中。",
+      "trust": { "confidence": 0.9, "status": "verified" }
+    },
+    {
+      "id": "res-ppt-outline",
+      "type": "ppt_outline",
+      "title": "机器学习基础与 RAG 智能体复习课",
+      "slides": [
+        "学习目标与画像摘要",
+        "机器学习流程总览",
+        "训练集、验证集、测试集",
+        "过拟合现象与诊断",
+        "评价指标选择",
+        "大模型为什么会幻觉",
+        "RAG 流程图",
+        "多智能体资源生成流程",
+        "两周学习路径",
+        "练习与项目任务"
+      ],
+      "sourceCitations": ["syllabus.md", "chapters/04-machine-learning-basics.md", "chapters/10-large-models-and-agents.md"],
+      "trust": { "confidence": 0.87, "status": "verified" }
+    },
+    {
+      "id": "res-mindmap",
+      "type": "mind_map",
+      "title": "过拟合、评价指标与 RAG 知识导图",
+      "format": "mermaid",
+      "content": "mindmap\n  root((AI导论补强))\n    机器学习基础\n      训练集/验证集/测试集\n      泛化能力\n      过拟合\n      评价指标\n    大模型应用\n      Prompt\n      RAG\n      来源引用\n      幻觉控制\n    实践任务\n      KNN案例\n      决策树案例\n      RAG课程助手",
+      "sourceCitations": ["knowledge-graph.json"],
+      "trust": { "confidence": 0.86, "status": "verified" }
+    },
+    {
+      "id": "res-quiz",
+      "type": "quiz_bank",
+      "title": "机器学习评估与 RAG 诊断题",
+      "questionIds": ["ai-04-002", "ai-04-003", "ai-04-004", "ai-10-002", "ai-10-003", "ai-11-001"],
+      "sourceCitations": ["question-bank.json"],
+      "trust": { "confidence": 0.91, "status": "verified" }
+    },
+    {
+      "id": "res-code-case-rag",
+      "type": "code_case",
+      "title": "RAG 课程问答助手最小案例",
+      "caseFile": "cases/rag-course-assistant.md",
+      "personalizationReason": "学生希望把概念和代码联系起来，且对 RAG 薄弱。",
+      "sourceCitations": ["cases/rag-course-assistant.md", "chapters/10-large-models-and-agents.md"],
+      "trust": { "confidence": 0.88, "status": "verified" }
+    },
+    {
+      "id": "res-video-script",
+      "type": "video_script",
+      "title": "如何判断模型过拟合",
+      "scriptFile": "media-scripts/chapter-04-video-script.md",
+      "sourceCitations": ["media-scripts/chapter-04-video-script.md", "chapters/04-machine-learning-basics.md"],
+      "trust": { "confidence": 0.9, "status": "verified" }
+    }
+  ],
+  "learningPath": [
+    {
+      "dayRange": "Day 1-2",
+      "goal": "补齐训练集、验证集、测试集概念",
+      "resources": ["res-lecture-overfitting-rag", "res-quiz"],
+      "reason": "这是理解过拟合和模型评估的前置知识。"
+    },
+    {
+      "dayRange": "Day 3-5",
+      "goal": "掌握过拟合诊断和评价指标",
+      "resources": ["res-video-script", "res-mindmap"],
+      "reason": "学生对评估薄弱，先用图解和诊断题建立判断能力。"
+    },
+    {
+      "dayRange": "Day 6-9",
+      "goal": "完成 KNN 或决策树代码案例",
+      "resources": ["cases/knn-classification.md", "cases/decision-tree-iris.md"],
+      "reason": "用代码把概念落到实验。"
+    },
+    {
+      "dayRange": "Day 10-12",
+      "goal": "理解 RAG 流程和来源引用",
+      "resources": ["res-code-case-rag", "res-ppt-outline"],
+      "reason": "进入大模型智能体主题，并强化防幻觉意识。"
+    },
+    {
+      "dayRange": "Day 13-14",
+      "goal": "完成课程问答助手小项目说明",
+      "resources": ["assessment-rubric.md", "chapters/12-course-project.md"],
+      "reason": "用项目输出检验学习效果。"
+    }
+  ],
+  "reviewResult": {
+    "passed": true,
+    "confidence": 0.89,
+    "issues": [],
+    "suggestions": ["后续接入真实模型时应保留来源片段和人工复核入口。"]
+  }
+}

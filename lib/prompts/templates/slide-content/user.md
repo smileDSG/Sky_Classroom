@@ -35,6 +35,11 @@ Content density hard rules:
 - 如果正文少于 120 个中文字符，必须加入一个视觉锚点：流程图、对照表、命令序列、结构关系图、公式/代码块之一。
 - 对 Redis / 编程主题，优先使用“命令序列 + 场景解释 + 注意点 + 小结”的组合，而不是两个空卡片。
 
+Operational teaching substance hard rules:
+- For SQL / database / programming operation slides, never show only keywords such as SELECT, FROM, WHERE, ORDER BY, Step 1, or API names.
+- Such slides must include one realistic syntax/command example, one short explanation of what each key part does, one result/execution-order note, and one caution or checkpoint.
+- A visual anchor does not count as teaching substance by itself. Every keyword in a card, flow, table, or diagram must be paired with a short explanation, example, result, or caution.
+- Prefer compact teaching text over empty cards: syntax + example + meaning + check is better than two large cards with only labels.
 Deck diversity hard rules:
 - Use Scene Order to choose a page-specific main composition.
 - Do not reuse the same main composition as a generic 2x2 card grid or title-only card page.

@@ -31,10 +31,17 @@ export default function CloudMindSolvePage() {
 
         const context = json.data;
         const weakPoints = context.weakPoints.map((item) => item.knowledgePoint);
-        const primaryTopic = weakPoints[0] ?? context.learningPath?.next;
+        const primaryTopic =
+          context.tutoringPolicy?.targetTopic ?? weakPoints[0] ?? context.learningPath?.next;
+        const personalizedWeakPoints =
+          primaryTopic && !weakPoints.includes(primaryTopic)
+            ? [primaryTopic, ...weakPoints]
+            : weakPoints;
+        const personalizedDifficulty =
+          context.tutoringPolicy?.difficulty ?? context.preferredDifficulty;
 
-        setWeakPointNames(weakPoints);
-        setPreferredDifficulty(context.preferredDifficulty);
+        setWeakPointNames(personalizedWeakPoints);
+        setPreferredDifficulty(personalizedDifficulty);
 
         if (primaryTopic) {
           setPersonalizationNotice(

@@ -45,6 +45,11 @@ import {
 } from '@/lib/generation/scene-content/classroom-slide-qa';
 
 const log = createLogger('Classroom');
+const CLASSROOM_QA_SAFE_FONT =
+  'Noto Sans SC, Microsoft YaHei, PingFang SC, Source Han Sans SC, Arial, sans-serif';
+const CLASSROOM_QA_SAFE_BLOCK_FONT_SIZE = 22;
+const CLASSROOM_QA_SAFE_MIN_BLOCK_HEIGHT = 84;
+const CLASSROOM_QA_SAFE_TABLE_ROW_HEIGHT = 44;
 
 export interface GenerateClassroomInput {
   requirement: string;
@@ -274,6 +279,118 @@ const CLASSROOM_QA_SAFE_VARIANTS: ClassroomQASafeProfile['variant'][] = [
   'full-ladder',
 ];
 
+function deriveGenericQASafeBlocks(
+  outline: SceneOutline,
+  title: string,
+  description: string,
+  keyPoints: string[],
+): ClassroomQASafeBlock[] {
+  const signal = [outline.title, outline.description, ...keyPoints].join(' ').toLowerCase();
+  const primary = compactText(keyPoints[0], description, 24);
+  const point = (index: number, fallback: string, maxLength = 52) =>
+    compactText(keyPoints[index], fallback, maxLength);
+
+  if (/\bredis\b|缓存|键值|数据结构|队列|排行榜|去重|过期/i.test(signal)) {
+    return [
+      { label: '结构选择', body: `场景：围绕“${primary}”先判断值、列表、字段还是排行。` },
+      { label: '示例操作', body: '示例：SET cache:user:1 Tom，GET 返回 Tom，EXPIRE 设置过期。' },
+      { label: '结果解释', body: '结果：说清 key、value、field、TTL 或 score 对应的业务含义。' },
+      { label: '检查提醒', body: '注意不要只背名称，检查顺序、去重、过期和更新成本。' },
+    ];
+  }
+
+  if (/\bsql\b|select|from|where|order\s+by|数据库|数据表|查询|字段|索引/i.test(signal)) {
+    return [
+      { label: '查询目标', body: `场景：从“${primary}”里找出要看的列、行和排序规则。` },
+      {
+        label: '语法示例',
+        body: '示例：SELECT name, score FROM students WHERE score >= 60 ORDER BY score DESC。',
+      },
+      { label: '执行结果', body: '结果：FROM 找表，WHERE 过滤行，SELECT 取列，ORDER BY 排序。' },
+      { label: '检查提醒', body: '注意字段名、表名和排序方向，避免只堆 SELECT 等关键词。' },
+    ];
+  }
+
+  if (
+    /并发|concurrent|thread|线程|process|进程|multiprocessing|async|asyncio|异步|gil/i.test(signal)
+  ) {
+    return [
+      { label: '并发模型', body: description },
+      { label: '适用场景', body: `场景：${point(0, '区分 I/O 密集、CPU 密集和事件循环任务。')}` },
+      { label: '示例代码', body: '示例：for task in tasks 提交 I/O 任务，等待返回结果。' },
+      { label: '检查提醒', body: '结果可重叠；注意 GIL、共享状态和异常回收。' },
+    ];
+  }
+
+  if (
+    /\bpython\b|javascript|typescript|java|变量|函数|循环|条件语句|代码|脚本|语法|print\s*\(|input\s*\(/i.test(
+      signal,
+    )
+  ) {
+    return [
+      { label: '语法目标', body: `场景：围绕“${primary}”说明输入、判断和输出。` },
+      { label: '代码示例', body: '示例：if score >= 60: print("通过")，条件成立才输出结果。' },
+      { label: '结果解释', body: '结果：变量保存数据，条件决定路径，函数封装可复用步骤。' },
+      { label: '检查提醒', body: '注意缩进、变量名和边界条件，避免只列关键词。' },
+    ];
+  }
+
+  if (/\bapi\b|http|接口|请求|响应|json|状态码/i.test(signal)) {
+    return [
+      { label: '接口场景', body: `场景：围绕“${primary}”说明谁请求、传什么、返回什么。` },
+      { label: '请求示例', body: '示例：GET /api/users?role=student 返回学生列表 JSON。' },
+      { label: '结果解释', body: '结果：状态码说明成功或失败，响应体承载业务数据。' },
+      { label: '检查提醒', body: '注意鉴权、参数校验和错误码，避免只画接口框。' },
+    ];
+  }
+
+  if (/项目|实践|实战|练习|下载|download|project|pbl|动手|实现/i.test(signal)) {
+    return [
+      { label: '项目目标', body: description },
+      { label: '实现步骤', body: point(0, '把任务拆成输入、处理、输出三步完成。') },
+      { label: '关键风险', body: point(1, '检查边界条件、失败重试和资源释放。') },
+      { label: '验收标准', body: point(2, `完成后能运行并解释“${title}”的结果。`) },
+    ];
+  }
+
+  if (/总结|回顾|扩展|复盘|summary|review|next/i.test(signal)) {
+    return [
+      { label: '知识回顾', body: point(0, description) },
+      { label: '对比结论', body: point(1, '把本课多个概念放在同一张判断表里比较。') },
+      { label: '迁移建议', body: point(2, '换一个真实任务检查这些方法是否仍然成立。') },
+      { label: '下一步', body: point(3, `围绕“${title}”继续做练习或阅读扩展资料。`) },
+    ];
+  }
+
+  if (/安装|环境|配置|setup|install|运行环境|开发环境/i.test(signal)) {
+    return [
+      { label: '准备目标', body: description },
+      { label: '安装步骤', body: point(0, '下载工具并按课程要求完成安装配置。') },
+      { label: '验证命令', body: point(1, '用版本检查或最小示例确认环境可用。') },
+      { label: '常见问题', body: point(2, '记录路径、权限和依赖版本带来的错误。') },
+    ];
+  }
+
+  const fallbackLabels = ['学习目标', '关键方法', '课堂例题', '检查任务'];
+  const labels = keyPoints.slice(0, 4).map((value, index) => {
+    const cleaned = value
+      .replace(/<[^>]+>/g, '')
+      .replace(/[：:，,。；;].*$/g, '')
+      .replace(/[（(].*?[）)]/g, '')
+      .trim();
+    const fallback = fallbackLabels[index];
+    if (/[a-zA-Z]{3,}/.test(cleaned)) return fallback;
+    return compactText(cleaned, fallback, 8);
+  });
+
+  return [
+    { label: labels[0] ?? '学习目标', body: point(0, description) },
+    { label: labels[1] ?? '关键方法', body: point(1, '说明本页概念如何运行或如何判断。') },
+    { label: labels[2] ?? '课堂例题', body: point(2, `用一个小例子验证“${title}”。`) },
+    { label: labels[3] ?? '检查任务', body: point(3, `学完后能解释“${title}”的用途和边界。`) },
+  ];
+}
+
 function withDeckDiversitySafeVariant(
   profile: ClassroomQASafeProfile,
   outline: SceneOutline,
@@ -451,12 +568,7 @@ function createClassroomQASafeProfile(outline: SceneOutline): ClassroomQASafePro
       intent,
       accent: '#2563eb',
       variant: 'split-bands',
-      blocks: [
-        { label: '概念边界', body: `先把“${title}”限定到一个可讲清的课堂问题。` },
-        { label: '操作路径', body: '给出输入、处理、输出三段，让学生知道该怎么验证。' },
-        { label: '例子落地', body: `围绕“${primary}”补一个具体场景，避免停在名词解释。` },
-        { label: '课堂收束', body: '最后用一句话说明本页和下一页知识点的关系。' },
-      ],
+      blocks: deriveGenericQASafeBlocks(outline, title, description, keyPoints),
       tableRows: commonRows,
     },
   };
@@ -482,9 +594,9 @@ function createQASafeTextElement(
     width,
     height,
     rotate: 0,
-    defaultFontName: 'Microsoft YaHei',
+    defaultFontName: CLASSROOM_QA_SAFE_FONT,
     defaultColor: color,
-    content: `<p style="font-size:${fontSize}px;line-height:1.25;">${escapeHtml(text)}</p>`,
+    content: `<p style="font-size:${fontSize}px;line-height:1.25;font-family:${CLASSROOM_QA_SAFE_FONT};">${escapeHtml(text)}</p>`,
   } as GeneratedSlideContent['elements'][number];
 }
 
@@ -497,18 +609,19 @@ function createQASafeTableElement(
   rows: string[][],
   accent: string,
 ): GeneratedSlideContent['elements'][number] {
+  const safeHeight = Math.max(height, rows.length * CLASSROOM_QA_SAFE_TABLE_ROW_HEIGHT);
   return {
     id,
     type: 'table',
     left,
     top,
     width,
-    height,
+    height: safeHeight,
     rotate: 0,
     outline: { color: '#cfe0f5', width: 1, style: 'solid' },
     theme: { color: accent, rowHeader: true, rowFooter: false, colHeader: false, colFooter: false },
     colWidths: [0.34, 0.66],
-    cellMinHeight: Math.max(34, Math.floor(height / Math.max(1, rows.length))),
+    cellMinHeight: Math.floor(safeHeight / Math.max(1, rows.length)),
     data: rows.map((row, rowIndex) =>
       row.map((text, cellIndex) => ({
         id: `${id}_r${rowIndex}_c${cellIndex}`,
@@ -520,11 +633,38 @@ function createQASafeTableElement(
           color: rowIndex === 0 || cellIndex === 0 ? '#0f172a' : '#1e293b',
           backcolor: rowIndex === 0 ? '#eaf4ff' : '#ffffff',
           fontsize: rowIndex === 0 ? '18' : '17',
-          fontname: 'Microsoft YaHei',
+          fontname: CLASSROOM_QA_SAFE_FONT,
           align: 'left',
         },
       })),
     ),
+  } as GeneratedSlideContent['elements'][number];
+}
+
+function createQASafeShapeElement(
+  id: string,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  fill: string,
+  opacity = 1,
+  outlineColor = '#d8e8f8',
+): GeneratedSlideContent['elements'][number] {
+  return {
+    id,
+    type: 'shape',
+    left,
+    top,
+    width,
+    height,
+    rotate: 0,
+    path: 'M 0 0 L 1 0 L 1 1 L 0 1 Z',
+    viewBox: [1, 1],
+    fixedRatio: false,
+    fill,
+    opacity,
+    outline: { color: outlineColor, width: 1, style: 'solid' },
   } as GeneratedSlideContent['elements'][number];
 }
 
@@ -543,10 +683,70 @@ function createQASafeBlockElement(
     left,
     top,
     width,
-    height,
-    20,
+    Math.max(height, CLASSROOM_QA_SAFE_MIN_BLOCK_HEIGHT),
+    CLASSROOM_QA_SAFE_BLOCK_FONT_SIZE,
     '#1e293b',
   );
+}
+
+function addQASafeVisualPolish(
+  outline: SceneOutline,
+  elements: GeneratedSlideContent['elements'],
+  profile: ClassroomQASafeProfile,
+): GeneratedSlideContent['elements'] {
+  const blockElements = elements.filter(
+    (element) => element.type === 'text' && element.id.includes('_block_'),
+  );
+  const blockCards = blockElements.map((element, index) =>
+    createQASafeShapeElement(
+      `classroom_qa_safe_card_${outline.id}_${index}`,
+      Math.max(58, element.left - 14),
+      Math.max(128, element.top - 8),
+      element.width + 28,
+      element.height + 16,
+      index % 2 === 0 ? '#ffffff' : '#f3f9ff',
+      0.96,
+      '#dbeafe',
+    ),
+  );
+  const blockAccents = blockElements.map((element, index) =>
+    createQASafeShapeElement(
+      `classroom_qa_safe_accent_${outline.id}_${index}`,
+      Math.max(60, element.left - 14),
+      element.top + 12,
+      4,
+      Math.max(42, element.height - 24),
+      index % 2 === 0 ? profile.accent : '#0ea5e9',
+      0.8,
+      index % 2 === 0 ? profile.accent : '#0ea5e9',
+    ),
+  );
+
+  return [
+    createQASafeShapeElement(
+      `classroom_qa_safe_title_rule_${outline.id}`,
+      72,
+      126,
+      230,
+      4,
+      profile.accent,
+      0.9,
+      profile.accent,
+    ),
+    createQASafeShapeElement(
+      `classroom_qa_safe_title_rule_soft_${outline.id}`,
+      318,
+      126,
+      420,
+      2,
+      '#dbeafe',
+      0.7,
+      '#dbeafe',
+    ),
+    ...blockCards,
+    ...blockAccents,
+    ...elements,
+  ];
 }
 
 function createQASafeLayoutElements(
@@ -572,7 +772,7 @@ function createQASafeLayoutElements(
       createQASafeTableElement(
         `classroom_qa_safe_table_${outline.id}`,
         82,
-        150,
+        142,
         348,
         250,
         profile.tableRows,
@@ -581,10 +781,10 @@ function createQASafeLayoutElements(
     );
     profile.blocks.forEach((block, index) => {
       elements.push(
-        createQASafeBlockElement(outline.id, block, index, 470, 150 + index * 78, 448, 64),
+        createQASafeBlockElement(outline.id, block, index, 470, 142 + index * 90, 448, 84),
       );
     });
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'top-table') {
@@ -592,9 +792,9 @@ function createQASafeLayoutElements(
       createQASafeTableElement(
         `classroom_qa_safe_table_${outline.id}`,
         82,
-        140,
+        136,
         836,
-        108,
+        176,
         profile.tableRows,
         profile.accent,
       ),
@@ -608,33 +808,33 @@ function createQASafeLayoutElements(
           block,
           index,
           col === 0 ? 82 : 520,
-          row === 0 ? 278 : 388,
+          row === 0 ? 330 : 422,
           398,
-          78,
+          84,
         ),
       );
     });
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'anchor-right') {
     profile.blocks.forEach((block, index) => {
       elements.push(
-        createQASafeBlockElement(outline.id, block, index, 82, 148 + index * 76, 420, 62),
+        createQASafeBlockElement(outline.id, block, index, 82, 142 + index * 90, 420, 84),
       );
     });
     elements.push(
       createQASafeTableElement(
         `classroom_qa_safe_table_${outline.id}`,
         548,
-        158,
+        150,
         370,
         250,
         profile.tableRows,
         profile.accent,
       ),
     );
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'bottom-table') {
@@ -647,9 +847,9 @@ function createQASafeLayoutElements(
           block,
           index,
           col === 0 ? 82 : 520,
-          row === 0 ? 148 : 252,
+          row === 0 ? 142 : 236,
           398,
-          76,
+          84,
         ),
       );
     });
@@ -657,14 +857,14 @@ function createQASafeLayoutElements(
       createQASafeTableElement(
         `classroom_qa_safe_table_${outline.id}`,
         82,
-        374,
+        334,
         836,
-        110,
+        176,
         profile.tableRows,
         profile.accent,
       ),
     );
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'stack-left') {
@@ -681,16 +881,16 @@ function createQASafeLayoutElements(
     );
     profile.blocks.forEach((block, index) => {
       elements.push(
-        createQASafeBlockElement(outline.id, block, index, 410, 148 + index * 75, 508, 62),
+        createQASafeBlockElement(outline.id, block, index, 410, 142 + index * 90, 508, 84),
       );
     });
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'stack-right') {
     profile.blocks.forEach((block, index) => {
       elements.push(
-        createQASafeBlockElement(outline.id, block, index, 82, 146 + index * 75, 500, 62),
+        createQASafeBlockElement(outline.id, block, index, 82, 142 + index * 90, 500, 84),
       );
     });
     elements.push(
@@ -704,42 +904,31 @@ function createQASafeLayoutElements(
         profile.accent,
       ),
     );
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'wide-bands') {
-    elements.push(
-      createQASafeTableElement(
-        `classroom_qa_safe_table_${outline.id}`,
-        82,
-        138,
-        836,
-        92,
-        profile.tableRows,
-        profile.accent,
-      ),
-    );
     profile.blocks.forEach((block, index) => {
       elements.push(
-        createQASafeBlockElement(outline.id, block, index, 82, 254 + index * 68, 836, 52),
+        createQASafeBlockElement(outline.id, block, index, 82, 136 + index * 90, 836, 84),
       );
     });
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'center-table') {
     profile.blocks.slice(0, 2).forEach((block, index) => {
       elements.push(
-        createQASafeBlockElement(outline.id, block, index, index === 0 ? 82 : 528, 140, 390, 58),
+        createQASafeBlockElement(outline.id, block, index, index === 0 ? 82 : 528, 136, 390, 84),
       );
     });
     elements.push(
       createQASafeTableElement(
         `classroom_qa_safe_table_${outline.id}`,
         194,
-        224,
+        230,
         612,
-        120,
+        168,
         profile.tableRows,
         profile.accent,
       ),
@@ -751,13 +940,13 @@ function createQASafeLayoutElements(
           block,
           index + 2,
           index === 0 ? 82 : 528,
-          382,
+          414,
           390,
-          76,
+          84,
         ),
       );
     });
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'bottom-cards') {
@@ -774,11 +963,11 @@ function createQASafeLayoutElements(
     );
     profile.blocks.slice(0, 3).forEach((block, index) => {
       elements.push(
-        createQASafeBlockElement(outline.id, block, index, 500, 142 + index * 82, 418, 66),
+        createQASafeBlockElement(outline.id, block, index, 500, 142 + index * 90, 418, 84),
       );
     });
-    elements.push(createQASafeBlockElement(outline.id, profile.blocks[3], 3, 82, 420, 836, 64));
-    return elements;
+    elements.push(createQASafeBlockElement(outline.id, profile.blocks[3], 3, 82, 414, 836, 84));
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'table-right-low') {
@@ -791,9 +980,9 @@ function createQASafeLayoutElements(
           block,
           index,
           col === 0 ? 82 : 520,
-          row === 0 ? 148 : 246,
+          row === 0 ? 142 : 236,
           398,
-          72,
+          84,
         ),
       );
     });
@@ -801,14 +990,14 @@ function createQASafeLayoutElements(
       createQASafeTableElement(
         `classroom_qa_safe_table_${outline.id}`,
         330,
-        360,
+        326,
         588,
-        126,
+        176,
         profile.tableRows,
         profile.accent,
       ),
     );
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'table-left-low') {
@@ -821,9 +1010,9 @@ function createQASafeLayoutElements(
           block,
           index,
           col === 0 ? 82 : 520,
-          row === 0 ? 144 : 244,
+          row === 0 ? 142 : 236,
           398,
-          72,
+          84,
         ),
       );
     });
@@ -831,23 +1020,23 @@ function createQASafeLayoutElements(
       createQASafeTableElement(
         `classroom_qa_safe_table_${outline.id}`,
         82,
-        362,
+        326,
         560,
-        124,
+        176,
         profile.tableRows,
         profile.accent,
       ),
     );
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   if (profile.variant === 'full-ladder') {
     profile.blocks.forEach((block, index) => {
       elements.push(
-        createQASafeBlockElement(outline.id, block, index, 82, 142 + index * 80, 836, 62),
+        createQASafeBlockElement(outline.id, block, index, 82, 136 + index * 90, 836, 84),
       );
     });
-    return elements;
+    return addQASafeVisualPolish(outline, elements, profile);
   }
 
   elements.push(
@@ -863,23 +1052,29 @@ function createQASafeLayoutElements(
   );
   profile.blocks.forEach((block, index) => {
     elements.push(
-      createQASafeBlockElement(outline.id, block, index, 500, 148 + index * 76, 418, 62),
+      createQASafeBlockElement(outline.id, block, index, 500, 142 + index * 90, 418, 84),
     );
   });
-  return elements;
+  return addQASafeVisualPolish(outline, elements, profile);
 }
 
 function createClassroomQASafeSlideContent(
   outline: SceneOutline,
   issues: ClassroomSlideQAIssue[],
+  options?: {
+    variantOverride?: ClassroomQASafeProfile['variant'];
+  },
 ): GeneratedSlideContent {
   const title = compactText(outline.title, '课堂重点', 42);
   const issueTypes = [...new Set(issues.map((issue) => issue.type))].join('、') || '版面问题';
-  const profile = withDeckDiversitySafeVariant(
+  const baseProfile = withDeckDiversitySafeVariant(
     createClassroomQASafeProfile(outline),
     outline,
     issues,
   );
+  const profile = options?.variantOverride
+    ? { ...baseProfile, variant: options.variantOverride }
+    : baseProfile;
 
   return {
     background: { type: 'solid', color: '#f7fbff' },
@@ -899,6 +1094,56 @@ function groupBlockingSlideQAIssuesByScene(
   return grouped;
 }
 
+function doesIssueTargetResult(
+  issue: ClassroomSlideQAIssue,
+  result: GeneratedSceneContentResult,
+): boolean {
+  return (
+    issue.sceneId === result.outline.id ||
+    issue.sceneTitle === result.outline.title ||
+    issue.order === result.outline.order
+  );
+}
+
+function getBlockingIssuesForResult(
+  result: GeneratedSceneContentResult,
+  issuesByScene: Map<string, ClassroomSlideQAIssue[]>,
+  blockingIssues: ClassroomSlideQAIssue[],
+): ClassroomSlideQAIssue[] {
+  const byId = issuesByScene.get(result.outline.id);
+  if (byId && byId.length > 0) return byId;
+  return blockingIssues.filter((issue) => doesIssueTargetResult(issue, result));
+}
+
+function getQASafeFallbackVariantOrder(
+  outline: SceneOutline,
+  issues: ClassroomSlideQAIssue[],
+): ClassroomQASafeProfile['variant'][] {
+  const baseIndex =
+    Math.max(0, Math.floor(outline.order || 1) - 1) % CLASSROOM_QA_SAFE_VARIANTS.length;
+  const rotated = [
+    ...CLASSROOM_QA_SAFE_VARIANTS.slice(baseIndex),
+    ...CLASSROOM_QA_SAFE_VARIANTS.slice(0, baseIndex),
+  ];
+
+  if (!issues.some((issue) => issue.type === 'repeated_layout_signature')) {
+    return rotated;
+  }
+
+  // For repeated deck layouts, try the most structurally different safe
+  // variants early instead of only relying on scene order.
+  const diversityFirst: ClassroomQASafeProfile['variant'][] = [
+    'full-ladder',
+    'center-table',
+    'stack-left',
+    'stack-right',
+    'bottom-cards',
+    'table-right-low',
+    'table-left-low',
+  ];
+  return [...new Set([...diversityFirst, ...rotated])];
+}
+
 function replaceBlockingSlidesWithQASafeFallback(
   contentResults: Array<GeneratedSceneContentResult | null>,
   report: ClassroomSlideQAReport,
@@ -907,7 +1152,8 @@ function replaceBlockingSlidesWithQASafeFallback(
   replacementCount: number;
 } {
   const issuesByScene = groupBlockingSlideQAIssuesByScene(report);
-  if (issuesByScene.size === 0) return { contentResults, replacementCount: 0 };
+  const blockingIssues = report.issues.filter((issue) => issue.severity === 'blocking');
+  if (blockingIssues.length === 0) return { contentResults, replacementCount: 0 };
 
   const nextResults = [...contentResults];
   let replacementCount = 0;
@@ -917,16 +1163,45 @@ function replaceBlockingSlidesWithQASafeFallback(
       continue;
     }
 
-    const issues = issuesByScene.get(result.outline.id);
+    const issues = getBlockingIssuesForResult(result, issuesByScene, blockingIssues);
     if (!issues || issues.length === 0) continue;
 
-    const safeContent = createClassroomQASafeSlideContent(result.outline, issues);
-    const safeQa = auditGeneratedSlideContent(safeContent);
-    nextResults[index] = {
-      ...result,
-      content: { ...safeContent, qa: safeQa },
-    };
-    replacementCount += 1;
+    let bestCandidate = nextResults;
+    let bestBlockingCount = Number.POSITIVE_INFINITY;
+    let replaced = false;
+
+    for (const variant of getQASafeFallbackVariantOrder(result.outline, issues)) {
+      const safeContent = createClassroomQASafeSlideContent(result.outline, issues, {
+        variantOverride: variant,
+      });
+      const safeQa = auditGeneratedSlideContent(safeContent);
+      const candidateResults = [...nextResults];
+      candidateResults[index] = {
+        ...result,
+        content: { ...safeContent, qa: safeQa },
+      };
+      const candidateReport = auditClassroomSlideContents(candidateResults);
+      const candidateSceneStillBlocked = candidateReport.issues.some(
+        (issue) => issue.severity === 'blocking' && doesIssueTargetResult(issue, result),
+      );
+
+      if (candidateReport.blockingIssueCount < bestBlockingCount) {
+        bestCandidate = candidateResults;
+        bestBlockingCount = candidateReport.blockingIssueCount;
+      }
+
+      if (!candidateSceneStillBlocked) {
+        nextResults.splice(0, nextResults.length, ...candidateResults);
+        replacementCount += 1;
+        replaced = true;
+        break;
+      }
+    }
+
+    if (!replaced && bestCandidate !== nextResults) {
+      nextResults.splice(0, nextResults.length, ...bestCandidate);
+      replacementCount += 1;
+    }
   }
 
   return { contentResults: nextResults, replacementCount };
