@@ -2,20 +2,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
-  after: vi.fn(),
   readJob: vi.fn(),
   updateJob: vi.fn(),
   markResumed: vi.fn(),
   runContinue: vi.fn(),
 }));
-
-vi.mock('next/server', async () => {
-  const actual = await vi.importActual<typeof import('next/server')>('next/server');
-  return {
-    ...actual,
-    after: mocks.after,
-  };
-});
 
 vi.mock('@/lib/server/classroom-job-store-hybrid', () => ({
   isValidClassroomJobId: (jobId: string) => /^[a-zA-Z0-9_-]+$/.test(jobId),
@@ -43,7 +34,6 @@ function makeContext(jobId = 'job_1') {
 describe('classroom approve route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.after.mockImplementation((callback: () => void) => callback());
     mocks.updateJob.mockResolvedValue(undefined);
     mocks.markResumed.mockResolvedValue(undefined);
     mocks.runContinue.mockResolvedValue(undefined);
@@ -72,7 +62,6 @@ describe('classroom approve route', () => {
       step: 'generating_scenes',
     });
     expect(mocks.markResumed).not.toHaveBeenCalled();
-    expect(mocks.after).not.toHaveBeenCalled();
     expect(mocks.runContinue).not.toHaveBeenCalled();
   });
 
@@ -90,10 +79,36 @@ describe('classroom approve route', () => {
 
     expect(res.status).toBe(202);
     expect(mocks.markResumed).toHaveBeenCalledWith('job_1');
-    expect(mocks.after).toHaveBeenCalledTimes(1);
-    expect(mocks.runContinue).toHaveBeenCalledWith('job_1', 'http://localhost');
+    expect(mocks.runContinue).toHaveBeenCalledWith('job_1', 'http://localhost', undefined);
     expect(mocks.markResumed.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.after.mock.invocationCallOrder[0],
+      mocks.runContinue.mock.invocationCallOrder[0],
     );
+  });
+
+  test('passes request-scoped model config to the continue job', async () => {
+    mocks.readJob.mockResolvedValue({
+      status: 'awaiting_review',
+      step: 'generating_outlines',
+      progress: 30,
+      phaseOneResult: { outlines: [] },
+      outlinesMeta: { languageDirective: 'Use Chinese.', totalScenes: 1 },
+    });
+
+    const { POST } = await import('@/app/api/generate-classroom/[jobId]/approve/route');
+    const res = await POST(
+      makeRequest({
+        modelString: 'openai:gpt-4.1',
+        apiKey: 'sk-request-only',
+        baseUrl: 'https://private-proxy.example.com/v1',
+      }),
+      makeContext(),
+    );
+
+    expect(res.status).toBe(202);
+    expect(mocks.runContinue).toHaveBeenCalledWith('job_1', 'http://localhost', {
+      modelString: 'openai:gpt-4.1',
+      apiKey: 'sk-request-only',
+      baseUrl: 'https://private-proxy.example.com/v1',
+    });
   });
 });

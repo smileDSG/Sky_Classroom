@@ -145,7 +145,8 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                 cy="60"
                 r="52"
                 fill="url(#sunHalo)"
-                animate={{ r: [48, 54, 48], opacity: [0.6, 0.9, 0.6] }}
+                style={{ transformOrigin: '60px 60px' }}
+                animate={{ scale: [0.92, 1.04, 0.92], opacity: [0.6, 0.9, 0.6] }}
                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
               />
               {/* 光线 — 柔和的圆角矩形，缓慢旋转 */}
@@ -312,7 +313,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
 
       {/* 跳过按钮 */}
       <motion.button
-        className="absolute bottom-6 right-6 z-[60] flex items-center gap-2 px-4 py-2 rounded-full text-sm text-white/70 hover:text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all cursor-pointer"
+        className="absolute bottom-6 right-6 z-[60] flex min-h-11 min-w-11 items-center gap-2 rounded-full bg-white/20 px-5 py-2.5 text-sm text-white/70 backdrop-blur-sm transition-all hover:bg-white/30 hover:text-white cursor-pointer"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}

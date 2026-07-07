@@ -83,10 +83,6 @@ export function ThumbnailElement({ elementInfo, elementIndex }: ThumbnailElement
     return elementTypeMap[elementInfo.type] || null;
   }, [elementInfo.type]);
 
-  if (!CurrentElementComponent) {
-    return null;
-  }
-
   const thumbnailShadow = useMemo(() => {
     switch (elementInfo.type) {
       case ElementTypes.TEXT:
@@ -104,6 +100,10 @@ export function ThumbnailElement({ elementInfo, elementIndex }: ThumbnailElement
         return undefined;
     }
   }, [elementInfo.type]);
+
+  if (!CurrentElementComponent) {
+    return null;
+  }
 
   return (
     <div

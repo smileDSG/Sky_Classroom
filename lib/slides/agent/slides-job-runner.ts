@@ -4,14 +4,13 @@
  * Follows the same pattern as classroom-job-runner.ts.
  */
 import { createLogger } from '@/lib/logger';
-import { runPipeline, type GenerateOptions } from './pipeline';
+import { getJob, runPipeline, type GenerateOptions, type JobState } from './pipeline';
 import {
   markSlidesJobRunningHybrid,
   markSlidesJobSucceededHybrid,
   markSlidesJobFailedHybrid,
   readSlidesJobHybrid,
-  updateSlidesJobProgressHybrid,
-  type SlidesJob,
+  type QAReport,
 } from './slides-job-store-hybrid';
 
 const log = createLogger('SlidesJobRunner');
@@ -27,13 +26,31 @@ async function assertNotCancelled(jobId: string): Promise<void> {
   }
 }
 
+function normalizeQAReport(report: JobState['qaReport']): QAReport | undefined {
+  if (!report) return undefined;
+  return {
+    totalScore: report.totalScore,
+    pass: report.pass,
+    issues: report.issues.map((issue) => ({
+      pageNum: issue.pageNum,
+      severity: issue.severity === 'high' || issue.severity === 'medium' ? issue.severity : 'low',
+      type: issue.type,
+      layer:
+        issue.layer === 'structural' || issue.layer === 'content' || issue.layer === 'visual'
+          ? issue.layer
+          : 'content',
+      detail: issue.detail,
+    })),
+  };
+}
+
 /**
  * Run a slides generation job with hybrid store persistence.
  */
 export async function runSlidesGenerationJob(
   jobId: string,
   options: Omit<GenerateOptions, 'jobId'>,
-  modelConfig?: { modelString?: string; apiKey?: string; baseUrl?: string },
+  _modelConfig?: { modelString?: string; apiKey?: string; baseUrl?: string },
 ): Promise<void> {
   // Prevent duplicate runs
   const existing = runningJobs.get(jobId);
@@ -43,17 +60,23 @@ export async function runSlidesGenerationJob(
     try {
       await markSlidesJobRunningHybrid(jobId);
 
-      // Run pipeline with progress callback
+      await assertNotCancelled(jobId);
       await runPipeline({
         ...options,
         jobId,
-        onProgress: async (progress) => {
-          await assertNotCancelled(jobId);
-          await updateSlidesJobProgressHybrid(jobId, progress);
-        },
-        onComplete: async (result) => {
-          await markSlidesJobSucceededHybrid(jobId, result);
-        },
+      });
+
+      await assertNotCancelled(jobId);
+      const pipelineJob = getJob(jobId);
+      if (!pipelineJob?.pptxUrl || !pipelineJob.fileName) {
+        throw new Error('Slides pipeline finished without an exported PPTX result');
+      }
+
+      await markSlidesJobSucceededHybrid(jobId, {
+        pptxUrl: pipelineJob.pptxUrl,
+        fileName: pipelineJob.fileName,
+        ...(pipelineJob.previewImages ? { previewImages: pipelineJob.previewImages } : {}),
+        ...(pipelineJob.qaReport ? { qaReport: normalizeQAReport(pipelineJob.qaReport) } : {}),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

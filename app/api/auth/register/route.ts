@@ -91,22 +91,29 @@ export async function POST(request: Request) {
     const sessionId = crypto.randomUUID();
     const refreshToken = await signRefreshToken(user.id, sessionId);
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         success: true,
         user: { id: user.id, email: user.email, username: user.username, role: user.role },
       },
-      {
-        status: 201,
-        headers: {
-          'Set-Cookie': [
-            `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${ACCESS_COOKIE_MAX_AGE}`,
-            `refresh_token=${refreshToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${REFRESH_COOKIE_MAX_AGE}`,
-          ].join(', '),
-        },
-      },
+      { status: 201 },
     );
-  } catch (err) {
+    response.cookies.set('access_token', accessToken, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: ACCESS_COOKIE_MAX_AGE,
+    });
+    response.cookies.set('refresh_token', refreshToken, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: REFRESH_COOKIE_MAX_AGE,
+    });
+    return response;
+  } catch (_err) {
     return apiError('INTERNAL_ERROR', 500, 'Registration failed');
   }
 }

@@ -24,7 +24,7 @@ export function HeaderControls() {
       <button
         onClick={() => setShowThemeMenu(!showThemeMenu)}
         className={cn(
-          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg',
+          'flex min-h-11 min-w-11 items-center gap-1.5 rounded-lg px-3 py-2',
           'text-slate-700 dark:text-slate-300',
           'hover:bg-slate-100 dark:hover:bg-slate-700/50',
           'transition-colors',
@@ -68,7 +68,7 @@ export function HeaderControls() {
                   setShowThemeMenu(false);
                 }}
                 className={cn(
-                  'w-full flex items-center gap-3 px-4 py-2 text-left',
+                  'w-full flex min-h-11 items-center gap-3 px-4 py-2 text-left',
                   'text-sm transition-colors',
                   theme === t.id
                     ? 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400'
@@ -77,9 +77,7 @@ export function HeaderControls() {
               >
                 <t.icon className="w-4 h-4" />
                 <span>{t.label}</span>
-                {theme === t.id && (
-                  <div className="ml-auto w-2 h-2 rounded-full bg-sky-500" />
-                )}
+                {theme === t.id && <div className="ml-auto w-2 h-2 rounded-full bg-sky-500" />}
               </button>
             ))}
           </motion.div>

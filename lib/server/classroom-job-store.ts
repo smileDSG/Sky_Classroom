@@ -60,6 +60,28 @@ export interface ClassroomGenerationJob {
   error?: string;
 }
 
+type RuntimeModelConfig = NonNullable<ClassroomGenerationJob['modelConfig']>;
+
+function sanitizeModelConfig(
+  modelConfig: RuntimeModelConfig | undefined,
+): ClassroomGenerationJob['modelConfig'] | undefined {
+  const modelString = modelConfig?.modelString?.trim();
+  return modelString ? { modelString } : undefined;
+}
+
+function sanitizeInputForPersistence(input: GenerateClassroomInput): GenerateClassroomInput {
+  const { webSearchApiKey: _webSearchApiKey, ...safeInput } = input;
+  return safeInput;
+}
+
+function sanitizeJobForPersistence(job: ClassroomGenerationJob): ClassroomGenerationJob {
+  return {
+    ...job,
+    modelConfig: sanitizeModelConfig(job.modelConfig),
+    input: job.input ? sanitizeInputForPersistence(job.input) : undefined,
+  };
+}
+
 function jobFilePath(jobId: string) {
   return path.join(CLASSROOM_JOBS_DIR, `${jobId}.json`);
 }
@@ -174,12 +196,12 @@ export async function createClassroomGenerationJob(
     updatedAt: now,
     inputSummary: buildInputSummary(input),
     scenesGenerated: 0,
-    modelConfig,
-    input,
+    modelConfig: sanitizeModelConfig(modelConfig),
+    input: sanitizeInputForPersistence(input),
   };
 
   await ensureClassroomJobsDir();
-  await writeJsonFileAtomic(jobFilePath(jobId), job);
+  await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(job));
 
   // Lazy cleanup: remove terminal jobs older than 24h (don't block)
   cleanupOldClassroomJobs().catch(() => {});
@@ -212,13 +234,19 @@ export async function updateClassroomGenerationJob(
       throw new Error(`Classroom generation job not found: ${jobId}`);
     }
 
+    const safePatch: Partial<ClassroomGenerationJob> = {
+      ...patch,
+      ...(patch.modelConfig !== undefined ? { modelConfig: sanitizeModelConfig(patch.modelConfig) } : {}),
+      ...(patch.input !== undefined ? { input: sanitizeInputForPersistence(patch.input) } : {}),
+    };
+
     const updated: ClassroomGenerationJob = {
       ...existing,
-      ...patch,
+      ...safePatch,
       updatedAt: new Date().toISOString(),
     };
 
-    await writeJsonFileAtomic(jobFilePath(jobId), updated);
+    await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(updated));
     return updated;
   });
 }
@@ -240,7 +268,7 @@ export async function markClassroomGenerationJobRunning(
       updatedAt: new Date().toISOString(),
     };
 
-    await writeJsonFileAtomic(jobFilePath(jobId), updated);
+    await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(updated));
     return updated;
   });
 }

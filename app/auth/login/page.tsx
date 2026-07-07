@@ -62,12 +62,8 @@ function LoginForm() {
         >
           <CloudSun className="w-8 h-8 text-white" />
         </motion.div>
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-          欢迎回来
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          登录天空课堂，开启智能学习之旅
-        </p>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">欢迎回来</h1>
+        <p className="text-sm text-muted-foreground mt-1">登录天空课堂，开启智能学习之旅</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -110,7 +106,7 @@ function LoginForm() {
             </Label>
             <Link
               href="/auth/forgot-password"
-              className="text-xs text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+              className="inline-flex min-h-11 items-center rounded-md px-1 text-xs text-sky-600 transition-colors hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
             >
               忘记密码？
             </Link>
@@ -125,13 +121,12 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="new-password"
-              className="pl-10 pr-10 bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 focus-visible:ring-sky-400 h-11"
+              className="h-11 pl-10 pr-12 bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 focus-visible:ring-sky-400"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-              tabIndex={-1}
+              className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
@@ -192,7 +187,7 @@ function LoginForm() {
         还没有账号？{' '}
         <Link
           href="/auth/register"
-          className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+          className="inline-flex min-h-11 items-center rounded-md px-1 font-medium text-sky-600 transition-colors hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
         >
           注册一个
         </Link>

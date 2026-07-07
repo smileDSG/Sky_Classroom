@@ -27,7 +27,7 @@ export default function RegisterPage() {
   const hasUpper = /[A-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const strength = (hasLen ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNumber ? 1 : 0);
-  const strengthPercent = password.length === 0 ? 0 : [33, 66, 100][strength] ?? 33;
+  const strengthPercent = password.length === 0 ? 0 : ([33, 66, 100][strength] ?? 33);
   const strengthLabel = ['', 'Weak', 'Fair', 'Strong'][strength] ?? '';
   const strengthColor = ['', 'bg-red-500', 'bg-yellow-500', 'bg-green-500'][strength] ?? '';
 
@@ -140,13 +140,12 @@ export default function RegisterPage() {
               required
               minLength={8}
               autoComplete="new-password"
-              className="pl-10 pr-10 bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 focus-visible:ring-sky-400"
+              className="h-11 pl-10 pr-12 bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 focus-visible:ring-sky-400"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-              tabIndex={-1}
+              className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
@@ -166,15 +165,27 @@ export default function RegisterPage() {
               </div>
               <div className="flex gap-3 text-xs text-muted-foreground">
                 <span className={hasLen ? 'text-green-600 dark:text-green-400' : ''}>
-                  {hasLen ? <Check className="inline size-3 mr-0.5" /> : <X className="inline size-3 mr-0.5" />}
+                  {hasLen ? (
+                    <Check className="inline size-3 mr-0.5" />
+                  ) : (
+                    <X className="inline size-3 mr-0.5" />
+                  )}
                   8+ chars
                 </span>
                 <span className={hasUpper ? 'text-green-600 dark:text-green-400' : ''}>
-                  {hasUpper ? <Check className="inline size-3 mr-0.5" /> : <X className="inline size-3 mr-0.5" />}
+                  {hasUpper ? (
+                    <Check className="inline size-3 mr-0.5" />
+                  ) : (
+                    <X className="inline size-3 mr-0.5" />
+                  )}
                   Uppercase
                 </span>
                 <span className={hasNumber ? 'text-green-600 dark:text-green-400' : ''}>
-                  {hasNumber ? <Check className="inline size-3 mr-0.5" /> : <X className="inline size-3 mr-0.5" />}
+                  {hasNumber ? (
+                    <Check className="inline size-3 mr-0.5" />
+                  ) : (
+                    <X className="inline size-3 mr-0.5" />
+                  )}
                   Number
                 </span>
               </div>
@@ -209,9 +220,7 @@ export default function RegisterPage() {
               <Check className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-green-500" />
             )}
           </div>
-          {passwordsMismatch && (
-            <p className="text-xs text-red-500">Passwords do not match</p>
-          )}
+          {passwordsMismatch && <p className="text-xs text-red-500">Passwords do not match</p>}
         </div>
 
         {/* Submit */}
@@ -236,7 +245,7 @@ export default function RegisterPage() {
         Already have an account?{' '}
         <Link
           href="/auth/login"
-          className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+          className="inline-flex min-h-11 items-center rounded-md px-1 font-medium text-sky-600 transition-colors hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
         >
           Sign in
         </Link>

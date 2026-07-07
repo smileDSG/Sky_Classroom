@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { motion } from "motion/react";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { motion } from 'motion/react';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 // ── Decorative elements ──────────────────────────────────────────
 
@@ -22,9 +22,9 @@ function FloatingCloud({
   return (
     <motion.div
       className="absolute pointer-events-none"
-      initial={{ x: "-100%", y: `${y}%` }}
-      animate={{ x: "calc(100vw + 100%)" }}
-      transition={{ duration, delay, repeat: Infinity, ease: "linear" }}
+      initial={{ x: '-100%', y: `${y}%` }}
+      animate={{ x: 'calc(100vw + 100%)' }}
+      transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
       style={{ scale, opacity }}
     >
       <svg
@@ -59,10 +59,10 @@ function TwinklingStar({
         top: y,
         width: size,
         height: size,
-        boxShadow: "0 0 6px 2px rgba(255,255,255,0.4)",
+        boxShadow: '0 0 6px 2px rgba(255,255,255,0.4)',
       }}
       animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8] }}
-      transition={{ duration: 3, delay, repeat: Infinity, ease: "easeInOut" }}
+      transition={{ duration: 3, delay, repeat: Infinity, ease: 'easeInOut' }}
     />
   );
 }
@@ -76,11 +76,7 @@ interface AuthLayoutProps {
   maxWidth?: string;
 }
 
-export function AuthLayout({
-  children,
-  className,
-  maxWidth = "max-w-md",
-}: AuthLayoutProps) {
+export function AuthLayout({ children, className, maxWidth = 'max-w-md' }: AuthLayoutProps) {
   return (
     <div className="relative flex min-h-dvh items-center justify-center overflow-x-hidden p-4 py-6 sm:py-10">
       {/* ── Sky gradient background ── */}
@@ -99,21 +95,9 @@ export function AuthLayout({
 
       {/* ── Floating clouds (light mode) ── */}
       <div className="fixed inset-0 dark:hidden pointer-events-none">
-        <FloatingCloud
-          delay={0}
-          duration={35}
-          y={10}
-          scale={0.7}
-          opacity={0.35}
-        />
+        <FloatingCloud delay={0} duration={35} y={10} scale={0.7} opacity={0.35} />
         <FloatingCloud delay={8} duration={45} y={30} scale={1} opacity={0.3} />
-        <FloatingCloud
-          delay={18}
-          duration={40}
-          y={60}
-          scale={0.5}
-          opacity={0.25}
-        />
+        <FloatingCloud delay={18} duration={40} y={60} scale={0.5} opacity={0.25} />
       </div>
 
       {/* ── Twinkling stars (dark mode) ── */}
@@ -136,12 +120,12 @@ export function AuthLayout({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          "relative w-full",
+          'relative w-full',
           maxWidth,
-          "rounded-2xl border border-white/40 dark:border-slate-700/40",
-          "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl",
-          "shadow-xl shadow-sky-200/30 dark:shadow-slate-950/50",
-          "p-6 sm:p-8",
+          'rounded-2xl border border-white/40 dark:border-slate-700/40',
+          'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl',
+          'shadow-xl shadow-sky-200/30 dark:shadow-slate-950/50',
+          'p-6 sm:p-8',
           className,
         )}
       >
@@ -152,7 +136,7 @@ export function AuthLayout({
           transition={{ delay: 0.15, duration: 0.4 }}
           className="flex flex-col items-center mb-6"
         >
-          <Link href="/" className="flex items-center gap-2.5 group">
+          <Link href="/" className="flex min-h-11 items-center gap-2.5 rounded-xl px-1 group">
             <img
               src="/logo-icon.svg"
               alt="Sky Classroom"

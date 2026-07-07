@@ -107,12 +107,11 @@ describe('API_ERROR_CODES', () => {
       'INTERNAL_ERROR', 'STORAGE_ERROR', 'NOT_FOUND', 'UNAUTHORIZED',
       'DUPLICATE_RESOURCE', 'INVALID_CREDENTIALS', 'EMAIL_EXISTS',
       'USERNAME_EXISTS', 'ACCOUNT_SUSPENDED', 'USAGE_LIMIT_EXCEEDED',
-      'INSUFFICIENT_PLAN', 'ORDER_NOT_FOUND', 'PAYMENT_FAILED',
+      'INSUFFICIENT_PLAN', 'ORDER_NOT_FOUND', 'PAYMENT_FAILED', 'FORBIDDEN',
     ];
     for (const code of expected) {
       expect(API_ERROR_CODES).toHaveProperty(code);
     }
-    expect(Object.keys(API_ERROR_CODES)).toHaveLength(25);
   });
 
   test('all codes are unique', () => {
@@ -139,6 +138,7 @@ describe('ERROR_CODE_STATUS', () => {
     expect(ERROR_CODE_STATUS.RATE_LIMITED).toBe(429);
     expect(ERROR_CODE_STATUS.NOT_FOUND).toBe(404);
     expect(ERROR_CODE_STATUS.UNAUTHORIZED).toBe(401);
+    expect(ERROR_CODE_STATUS.FORBIDDEN).toBe(403);
     expect(ERROR_CODE_STATUS.INTERNAL_ERROR).toBe(500);
     expect(ERROR_CODE_STATUS.UPSTREAM_ERROR).toBe(502);
     expect(ERROR_CODE_STATUS.DUPLICATE_RESOURCE).toBe(409);

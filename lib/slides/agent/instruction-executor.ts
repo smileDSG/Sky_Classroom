@@ -5,13 +5,14 @@
  * This executor validates params, translates ops to pptxgenjs calls,
  * and handles errors gracefully (single instruction failure does not crash the page).
  */
-import pptxgen, { PresSlide } from 'pptxgenjs';
+import pptxgen from 'pptxgenjs';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 import { latexToOmml } from '@/lib/export/latex-to-omml';
 import { convertInlineLatexToUnicode } from './content-schemas';
 
 const log = createLogger('InstructionExecutor');
+type PptxSlide = ReturnType<pptxgen['addSlide']>;
 
 // ── Instruction Schemas ────────────────────────────────────────────
 
@@ -193,7 +194,7 @@ function isSafePath(p: string): boolean {
 
 export class InstructionExecutor {
   execute(
-    slide: PresSlide,
+    slide: PptxSlide,
     pres: pptxgen,
     instructions: Instruction[],
     pageNum: number,

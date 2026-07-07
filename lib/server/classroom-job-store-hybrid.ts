@@ -40,6 +40,28 @@ const TERMINAL_STATUSES: ClassroomGenerationJobStatus[] = [
   'awaiting_review',
 ];
 
+type RuntimeModelConfig = NonNullable<ClassroomGenerationJob['modelConfig']>;
+
+function sanitizeModelConfig(
+  modelConfig: RuntimeModelConfig | undefined,
+): ClassroomGenerationJob['modelConfig'] | undefined {
+  const modelString = modelConfig?.modelString?.trim();
+  return modelString ? { modelString } : undefined;
+}
+
+function sanitizeInputForPersistence(input: GenerateClassroomInput): GenerateClassroomInput {
+  const { webSearchApiKey: _webSearchApiKey, ...safeInput } = input;
+  return safeInput;
+}
+
+function sanitizeJobForPersistence(job: ClassroomGenerationJob): ClassroomGenerationJob {
+  return {
+    ...job,
+    modelConfig: sanitizeModelConfig(job.modelConfig),
+    input: job.input ? sanitizeInputForPersistence(job.input) : undefined,
+  };
+}
+
 /** Start the background flush timer if not already running. */
 function startFlushTimer() {
   if (flushTimer) return;
@@ -52,7 +74,7 @@ function startFlushTimer() {
       const job = inMemoryJobs.get(jobId);
       if (job) {
         try {
-          await writeJsonFileAtomic(jobFilePath(jobId), job);
+          await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(job));
         } catch {
           // Mark as dirty again to retry on next flush
           dirtyJobs.add(jobId);
@@ -79,7 +101,7 @@ export async function flushAllJobs(): Promise<void> {
   for (const jobId of toFlush) {
     const job = inMemoryJobs.get(jobId);
     if (job) {
-      await writeJsonFileAtomic(jobFilePath(jobId), job);
+      await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(job));
     }
   }
 }
@@ -158,12 +180,12 @@ export async function createClassroomGenerationJobHybrid(
       pdfImageCount: input.pdfContent?.images.length || 0,
     },
     scenesGenerated: 0,
-    modelConfig,
-    input,
+    modelConfig: sanitizeModelConfig(modelConfig),
+    input: sanitizeInputForPersistence(input),
   };
 
   await ensureClassroomJobsDir();
-  await writeJsonFileAtomic(jobFilePath(jobId), job);
+  await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(job));
   inMemoryJobs.set(jobId, job);
   return job;
 }
@@ -201,9 +223,15 @@ export async function updateClassroomGenerationJobHybrid(
     throw new Error(`Classroom generation job not found: ${jobId}`);
   }
 
+  const safePatch: Partial<ClassroomGenerationJob> = {
+    ...patch,
+    ...(patch.modelConfig !== undefined ? { modelConfig: sanitizeModelConfig(patch.modelConfig) } : {}),
+    ...(patch.input !== undefined ? { input: sanitizeInputForPersistence(patch.input) } : {}),
+  };
+
   const updated: ClassroomGenerationJob = {
     ...existing,
-    ...patch,
+    ...safePatch,
     updatedAt: new Date().toISOString(),
   };
 
@@ -219,7 +247,7 @@ export async function updateClassroomGenerationJobHybrid(
     patch.startedAt
   ) {
     try {
-      await writeJsonFileAtomic(jobFilePath(jobId), updated);
+      await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(updated));
       dirtyJobs.delete(jobId);
     } catch {
       // Will retry on next flush

@@ -76,4 +76,26 @@ describe('classroom job hybrid store', () => {
       result: { classroomId: 'classroom_1' },
     });
   });
+
+  test('does not persist request-scoped model secrets in classroom jobs', async () => {
+    const store = await import('@/lib/server/classroom-job-store-hybrid');
+    const input = {
+      requirement: 'Teach paper cutting',
+      webSearchApiKey: 'web-search-secret',
+    };
+
+    const created = await store.createClassroomGenerationJobHybrid('job_secret_1', input, {
+      modelString: 'openai:gpt-4.1',
+      apiKey: 'sk-user-secret',
+      baseUrl: 'https://private-proxy.example.com/v1',
+    });
+
+    expect(created.modelConfig).toEqual({ modelString: 'openai:gpt-4.1' });
+
+    const persisted = JSON.parse(
+      await fs.readFile(path.join(jobsDir, 'job_secret_1.json'), 'utf-8'),
+    ) as ClassroomGenerationJob;
+    expect(persisted.modelConfig).toEqual({ modelString: 'openai:gpt-4.1' });
+    expect(persisted.input).toEqual({ requirement: 'Teach paper cutting' });
+  });
 });

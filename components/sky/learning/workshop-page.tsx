@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -378,6 +378,22 @@ function normalizeSnapshotMistake(mistake: WorkshopSnapshot['mistakes'][number])
 }
 
 export function WorkshopPage() {
+  return (
+    <Suspense
+      fallback={
+        <SkyAppShell>
+          <div className="mx-auto flex min-h-[60vh] max-w-6xl items-center justify-center text-sm text-muted-foreground">
+            加载天梯工坊...
+          </div>
+        </SkyAppShell>
+      }
+    >
+      <WorkshopPageContent />
+    </Suspense>
+  );
+}
+
+function WorkshopPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [snapshot, setSnapshot] = useState<WorkshopSnapshot | null>(null);

@@ -15,6 +15,27 @@ const log = createLogger('ClassroomApprove API');
 
 export const maxDuration = 30;
 
+type RuntimeModelConfig = {
+  modelString?: string;
+  apiKey?: string;
+  baseUrl?: string;
+};
+
+function readOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+function buildRuntimeModelConfig(body: Record<string, unknown>): RuntimeModelConfig | undefined {
+  const runtimeModelConfig = {
+    modelString: readOptionalString(body.modelString),
+    apiKey: readOptionalString(body.apiKey),
+    baseUrl: readOptionalString(body.baseUrl),
+  };
+  return runtimeModelConfig.modelString || runtimeModelConfig.apiKey || runtimeModelConfig.baseUrl
+    ? runtimeModelConfig
+    : undefined;
+}
+
 export async function POST(req: NextRequest, context: { params: Promise<{ jobId: string }> }) {
   let resolvedJobId: string | undefined;
   try {
@@ -64,7 +85,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
     }
 
     // Accept user-edited outlines from request body
-    const body = await req.json().catch(() => ({}));
+    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     if (body.outlines && Array.isArray(body.outlines) && body.outlines.length > 0) {
       const userOutlines = body.outlines as SceneOutline[];
       if (job.phaseOneResult) {
@@ -84,7 +105,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
     await markClassroomGenerationJobResumedHybrid(jobId);
 
     // Start immediately; don't rely on after() in dev/Turbopack.
-    runClassroomContinueJob(jobId, baseUrl).catch((err) => {
+    runClassroomContinueJob(jobId, baseUrl, buildRuntimeModelConfig(body)).catch((err) => {
       log.error(`Classroom continue job failed for ${jobId}:`, err);
     });
 

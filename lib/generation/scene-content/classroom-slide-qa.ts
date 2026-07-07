@@ -8,6 +8,20 @@ import type {
 
 type SlideElement = GeneratedSlideContent['elements'][number];
 
+function elementRecord(element: SlideElement): Record<string, unknown> {
+  return element as unknown as Record<string, unknown>;
+}
+
+function getElementHeight(element: SlideElement, fallback: number): number {
+  if ('height' in element) {
+    return toFiniteNumber(element.height, fallback);
+  }
+  if (element.type === 'line') {
+    return toFiniteNumber(Math.abs(element.end[1] - element.start[1]), fallback);
+  }
+  return fallback;
+}
+
 const BLOCKING_LAYOUT_TYPES = new Set<LayoutGuardIssue['type']>([
   'readable_element_overlap',
   'foreground_overlay_collision',
@@ -249,7 +263,7 @@ function auditQASafeFallbackGeometry(content: GeneratedSlideContent): GeneratedS
     const id = element.id ?? '';
     if (!id.startsWith('classroom_qa_safe_')) continue;
 
-    const bottom = element.top + toFiniteNumber(element.height, 24);
+    const bottom = element.top + getElementHeight(element, 24);
     if (bottom > 514.5) {
       issues.push({
         type: 'qa_safe_fallback_overflow',
@@ -260,8 +274,8 @@ function auditQASafeFallbackGeometry(content: GeneratedSlideContent): GeneratedS
     }
 
     if (element.type === 'text' && id.includes('_block_')) {
-      const height = toFiniteNumber(element.height, 0);
-      const fontSize = getFontSize(String((element as Record<string, unknown>).content ?? ''));
+      const height = getElementHeight(element, 0);
+      const fontSize = getFontSize(String(element.content ?? ''));
       if (height < 84 || fontSize < 22) {
         issues.push({
           type: 'qa_safe_fallback_text_too_small',
@@ -273,11 +287,11 @@ function auditQASafeFallbackGeometry(content: GeneratedSlideContent): GeneratedS
     }
 
     if (element.type === 'table' && id.startsWith('classroom_qa_safe_table_')) {
-      const data = (element as Record<string, unknown>).data;
+      const data = element.data;
       const rowCount = Array.isArray(data) ? data.length : 0;
       const minHeight = Math.max(rowCount * 44, 44);
-      const height = toFiniteNumber(element.height, 0);
-      const cellMinHeight = toFiniteNumber((element as Record<string, unknown>).cellMinHeight, 0);
+      const height = getElementHeight(element, 0);
+      const cellMinHeight = toFiniteNumber(element.cellMinHeight, 0);
       if (height < minHeight || cellMinHeight < 44) {
         issues.push({
           type: 'qa_safe_fallback_table_too_short',
@@ -474,7 +488,7 @@ function isMainLayoutSignatureElement(element: SlideElement): boolean {
   if (element.type === 'line') return false;
 
   const width = toFiniteNumber(element.width, 0);
-  const height = toFiniteNumber(element.height, 24);
+  const height = getElementHeight(element, 24);
   if (width <= 0 || height <= 0) return false;
 
   if (element.type === 'shape') {
@@ -505,7 +519,7 @@ function isOrangeDecorativeElement(element: SlideElement): boolean {
   if (text.length >= 8) return false;
 
   const width = toFiniteNumber(element.width, 0);
-  const height = toFiniteNumber(element.height, 0);
+  const height = getElementHeight(element, 0);
   const isRuleLike = width <= 12 || height <= 12 || width / Math.max(height, 1) >= 8;
   const isSmallOrnament = width * height <= 9000;
 
@@ -593,19 +607,19 @@ function rgbToHue(r: number, g: number, b: number): number {
 }
 
 function hasShapeText(element: SlideElement): boolean {
-  const text = (element as Record<string, unknown>).text as { content?: string } | undefined;
+  const text = elementRecord(element).text as { content?: string } | undefined;
   return stripHtml(String(text?.content ?? '')).length > 0;
 }
 
 function getElementPlainText(element: SlideElement): string {
   if (element.type === 'latex') {
-    return String((element as Record<string, unknown>).latex ?? '');
+    return String(element.latex ?? '');
   }
   if (element.type === 'shape') {
-    const text = (element as Record<string, unknown>).text as { content?: string } | undefined;
+    const text = elementRecord(element).text as { content?: string } | undefined;
     return stripHtml(String(text?.content ?? ''));
   }
-  return stripHtml(String((element as Record<string, unknown>).content ?? ''));
+  return stripHtml(String(elementRecord(element).content ?? ''));
 }
 
 function toLayoutAtom(element: SlideElement): string {
@@ -613,14 +627,14 @@ function toLayoutAtom(element: SlideElement): string {
   const left = bucketPosition(element.left, 48);
   const top = bucketPosition(element.top, 42);
   const width = bucketPosition(element.width, 72);
-  const height = bucketPosition(toFiniteNumber(element.height, 24), 34);
+  const height = bucketPosition(getElementHeight(element, 24), 34);
 
   return `${role}@${left},${top},${width},${height}`;
 }
 
 function getLayoutRole(element: SlideElement): string {
   if (element.type === 'text') {
-    const content = String((element as Record<string, unknown>).content ?? '');
+    const content = String(element.content ?? '');
     const fontSize = getFontSize(content);
     if (element.top < 130 && (fontSize >= 26 || element.width >= 600)) return 'title';
     if (element.top < 180) return 'subtitle';

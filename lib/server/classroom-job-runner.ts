@@ -27,6 +27,16 @@ const runningJobs = new Map<string, Promise<void>>();
 const CLASSROOM_KB_SEARCH_TIMEOUT_MS = 2000;
 const KB_SEARCH_TIMEOUT = Symbol('KB_SEARCH_TIMEOUT');
 
+type RuntimeModelConfig = {
+  modelString?: string;
+  apiKey?: string;
+  baseUrl?: string;
+};
+
+function hasRuntimeModelConfig(modelConfig: RuntimeModelConfig | undefined): boolean {
+  return !!(modelConfig?.modelString || modelConfig?.apiKey || modelConfig?.baseUrl);
+}
+
 async function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
@@ -48,6 +58,7 @@ export function runClassroomGenerationJob(
   jobId: string,
   input: GenerateClassroomInput,
   baseUrl: string,
+  runtimeModelConfig?: RuntimeModelConfig,
 ): Promise<void> {
   const existing = runningJobs.get(jobId);
   if (existing) {
@@ -79,7 +90,9 @@ export function runClassroomGenerationJob(
       // resume the job.
       await markClassroomGenerationJobRunningHybrid(jobId);
 
-      const modelConfig = initialJob.modelConfig;
+      const modelConfig = hasRuntimeModelConfig(runtimeModelConfig)
+        ? runtimeModelConfig
+        : initialJob.modelConfig;
 
       // Search classroom KB for similar templates
       let kbContext = '';
@@ -239,7 +252,11 @@ export function resumeClassroomGenerationJob(jobId: string, baseUrl: string): Pr
   return jobPromise;
 }
 
-export async function runClassroomContinueJob(jobId: string, baseUrl: string): Promise<void> {
+export async function runClassroomContinueJob(
+  jobId: string,
+  baseUrl: string,
+  runtimeModelConfig?: RuntimeModelConfig,
+): Promise<void> {
   const existing = runningJobs.get(jobId);
   if (existing) {
     return existing;
@@ -258,7 +275,9 @@ export async function runClassroomContinueJob(jobId: string, baseUrl: string): P
 
       const saved = job.phaseOneResult as unknown as OutlineOnlyResult;
 
-      const modelConfig = job.modelConfig;
+      const modelConfig = hasRuntimeModelConfig(runtimeModelConfig)
+        ? runtimeModelConfig
+        : job.modelConfig;
 
       await markClassroomGenerationJobResumedHybrid(jobId);
 

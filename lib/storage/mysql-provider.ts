@@ -7,12 +7,13 @@
 
 import type { StorageProvider, StorageEntry } from './storage-types';
 import { createLogger } from '@/lib/logger';
+import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 
 const log = createLogger('Storage:MySQL');
 
-let _pool: any = null;
+let _pool: Pool | null = null;
 
-async function getPool(): Promise<any> {
+async function getPool(): Promise<Pool> {
   if (_pool) return _pool;
   const mysql = await import('mysql2/promise');
   _pool = mysql.createPool({
@@ -30,6 +31,10 @@ async function getPool(): Promise<any> {
 
 function toDatetime(ts: number): string {
   return new Date(ts).toISOString().slice(0, 19).replace('T', ' ');
+}
+
+function toOptionalDatetime(value: unknown): string | null {
+  return typeof value === 'number' && Number.isFinite(value) ? toDatetime(value) : null;
 }
 
 function toDate(ts: number): string {
@@ -143,7 +148,7 @@ const CREATE_TABLES_SQL = [
 
 // ── Data migration from storage_entries ─────────────────────────────
 
-async function migrateFromStorageEntries(pool: any): Promise<void> {
+async function migrateFromStorageEntries(pool: Pool): Promise<void> {
   const tables = [
     { table: 'users', key: 'users' },
     { table: 'user_checkins', key: 'user_checkins' },
@@ -154,13 +159,16 @@ async function migrateFromStorageEntries(pool: any): Promise<void> {
   for (const { table, key } of tables) {
     try {
       // Check if dedicated table is empty
-      const [countRows] = await pool.query(`SELECT COUNT(*) as cnt FROM ${table}`);
+      const [countRows] = await pool.query<RowDataPacket[]>(
+        `SELECT COUNT(*) as cnt FROM ${table}`,
+      );
       if (countRows[0].cnt > 0) continue;
 
       // Check if storage_entries has data for this table
-      const [oldRows] = await pool.query('SELECT * FROM storage_entries WHERE table_name = ?', [
-        key,
-      ]);
+      const [oldRows] = await pool.query<RowDataPacket[]>(
+        'SELECT * FROM storage_entries WHERE table_name = ?',
+        [key],
+      );
       if (oldRows.length === 0) continue;
 
       log.info(`Migrating ${oldRows.length} rows from storage_entries.${key} → ${table}`);
@@ -350,10 +358,10 @@ export class MySQLStorageProvider implements StorageProvider {
           data.emailVerified ?? false,
           data.emailVerifyToken ?? null,
           data.resetToken ?? null,
-          data.resetTokenExpiry ? toDatetime(data.resetTokenExpiry) : null,
+          toOptionalDatetime(data.resetTokenExpiry),
           toDatetime(entry.createdAt),
           toDatetime(entry.updatedAt),
-          data.lastLoginAt ? toDatetime(data.lastLoginAt as number) : null,
+          toOptionalDatetime(data.lastLoginAt),
         ],
       );
     } else if (table === 'user_checkins') {
@@ -445,31 +453,40 @@ export class MySQLStorageProvider implements StorageProvider {
     const pool = await getPool();
 
     if (table === 'users') {
-      const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
+      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM users WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToUserEntry(rows[0]) as StorageEntry<T>;
     }
 
     if (table === 'user_checkins') {
-      const [rows] = await pool.query('SELECT * FROM user_checkins WHERE id = ?', [id]);
+      const [rows] = await pool.query<RowDataPacket[]>(
+        'SELECT * FROM user_checkins WHERE id = ?',
+        [id],
+      );
       if (rows.length === 0) return null;
       return rowToCheckinEntry(rows[0]) as StorageEntry<T>;
     }
 
     if (table === 'user_stats') {
-      const [rows] = await pool.query('SELECT * FROM user_stats WHERE id = ?', [id]);
+      const [rows] = await pool.query<RowDataPacket[]>(
+        'SELECT * FROM user_stats WHERE id = ?',
+        [id],
+      );
       if (rows.length === 0) return null;
       return rowToStatsEntry(rows[0]) as StorageEntry<T>;
     }
 
     if (table === 'mistakes') {
-      const [rows] = await pool.query('SELECT * FROM mistakes WHERE id = ?', [id]);
+      const [rows] = await pool.query<RowDataPacket[]>(
+        'SELECT * FROM mistakes WHERE id = ?',
+        [id],
+      );
       if (rows.length === 0) return null;
       return rowToMistakeEntry(rows[0]) as StorageEntry<T>;
     }
 
     // Fallback
-    const [rows] = await pool.query(
+    const [rows] = await pool.query<RowDataPacket[]>(
       'SELECT * FROM storage_entries WHERE id = ? AND table_name = ?',
       [id, table],
     );
@@ -493,21 +510,22 @@ export class MySQLStorageProvider implements StorageProvider {
     let entries: StorageEntry<T>[];
 
     if (table === 'users') {
-      const [rows] = await pool.query('SELECT * FROM users');
+      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM users');
       entries = rows.map((r) => rowToUserEntry(r) as StorageEntry<T>);
     } else if (table === 'user_checkins') {
-      const [rows] = await pool.query('SELECT * FROM user_checkins');
+      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM user_checkins');
       entries = rows.map((r) => rowToCheckinEntry(r) as StorageEntry<T>);
     } else if (table === 'user_stats') {
-      const [rows] = await pool.query('SELECT * FROM user_stats');
+      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM user_stats');
       entries = rows.map((r) => rowToStatsEntry(r) as StorageEntry<T>);
     } else if (table === 'mistakes') {
-      const [rows] = await pool.query('SELECT * FROM mistakes');
+      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM mistakes');
       entries = rows.map((r) => rowToMistakeEntry(r) as StorageEntry<T>);
     } else {
-      const [rows] = await pool.query('SELECT * FROM storage_entries WHERE table_name = ?', [
-        table,
-      ]);
+      const [rows] = await pool.query<RowDataPacket[]>(
+        'SELECT * FROM storage_entries WHERE table_name = ?',
+        [table],
+      );
       entries = rows.map((row) => ({
         id: row.id as string,
         data: typeof row.data === 'string' ? JSON.parse(row.data) : row.data,
@@ -531,8 +549,8 @@ export class MySQLStorageProvider implements StorageProvider {
     };
     const sql = sqlMap[table] ?? 'DELETE FROM storage_entries WHERE id = ? AND table_name = ?';
     const params = sqlMap[table] ? [id] : [id, table];
-    const [result] = await pool.query(sql, params);
-    return (result as mysql.ResultSetHeader).affectedRows > 0;
+    const [result] = await pool.query<ResultSetHeader>(sql, params);
+    return result.affectedRows > 0;
   }
 
   // ── CLEAR ───────────────────────────────────────────────────────────
@@ -551,10 +569,10 @@ export class MySQLStorageProvider implements StorageProvider {
   async count(table: string): Promise<number> {
     const pool = await getPool();
     if (isDedicatedTable(table)) {
-      const [rows] = await pool.query(`SELECT COUNT(*) as cnt FROM ${table}`);
+      const [rows] = await pool.query<RowDataPacket[]>(`SELECT COUNT(*) as cnt FROM ${table}`);
       return rows[0].cnt as number;
     }
-    const [rows] = await pool.query(
+    const [rows] = await pool.query<RowDataPacket[]>(
       'SELECT COUNT(*) as cnt FROM storage_entries WHERE table_name = ?',
       [table],
     );

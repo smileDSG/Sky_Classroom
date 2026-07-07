@@ -17,6 +17,12 @@ export interface ClassroomJobState {
   done: boolean;
 }
 
+export interface ClassroomRuntimeModelConfig {
+  modelString?: string;
+  apiKey?: string;
+  baseUrl?: string;
+}
+
 const TRANSIENT_FETCH_ERROR_PATTERN =
   /failed to fetch|fetch failed|networkerror|load failed|network request failed/i;
 
@@ -173,11 +179,18 @@ export async function cancelClassroomJob(jobId: string): Promise<void> {
 export async function approveClassroomOutline(
   jobId: string,
   outlines?: import('@/lib/types/generation').SceneOutline[],
+  modelConfig?: ClassroomRuntimeModelConfig,
 ): Promise<void> {
+  const body = {
+    ...(outlines?.length ? { outlines } : {}),
+    ...(modelConfig?.modelString ? { modelString: modelConfig.modelString } : {}),
+    ...(modelConfig?.apiKey ? { apiKey: modelConfig.apiKey } : {}),
+    ...(modelConfig?.baseUrl ? { baseUrl: modelConfig.baseUrl } : {}),
+  };
   const res = await fetch(`/api/generate-classroom/${jobId}/approve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: outlines?.length ? JSON.stringify({ outlines }) : undefined,
+    body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
     let detail = '';

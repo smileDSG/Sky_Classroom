@@ -51,14 +51,18 @@ export async function POST(req: NextRequest) {
     const baseUrl = buildRequestOrigin(req);
     const jobId = nanoid(10);
 
-    // Extract model config from request body (client passes its selected model)
-    const modelConfig = {
+    // Keep request-scoped credentials in memory only; the job store persists
+    // modelString but must not write API keys or private base URLs to disk.
+    const runtimeModelConfig = {
       modelString: rawBody.modelString as string | undefined,
       apiKey: rawBody.apiKey as string | undefined,
       baseUrl: rawBody.baseUrl as string | undefined,
     };
+    const persistedModelConfig = runtimeModelConfig.modelString
+      ? { modelString: runtimeModelConfig.modelString }
+      : undefined;
 
-    const job = await createClassroomGenerationJobHybrid(jobId, body, modelConfig);
+    const job = await createClassroomGenerationJobHybrid(jobId, body, persistedModelConfig);
     const pollUrl = `${baseUrl}/api/generate-classroom/${jobId}`;
 
     // Record generation usage
@@ -67,7 +71,7 @@ export async function POST(req: NextRequest) {
     // Start generation immediately. Do not rely solely on after() because
     // Turbopack/dev-mode may drop or delay after() callbacks, leaving the
     // job stuck at 1% indefinitely.
-    runClassroomGenerationJob(jobId, body, baseUrl).catch((err) => {
+    runClassroomGenerationJob(jobId, body, baseUrl, runtimeModelConfig).catch((err) => {
       log.error(`runClassroomGenerationJob failed for ${jobId}:`, err);
     });
 

@@ -39,6 +39,8 @@ export const API_ERROR_CODES = {
   NOT_FOUND: 'NOT_FOUND',
   /** Unauthorized access */
   UNAUTHORIZED: 'UNAUTHORIZED',
+  /** Authenticated user is not allowed to access this resource */
+  FORBIDDEN: 'FORBIDDEN',
   /** Duplicate resource */
   DUPLICATE_RESOURCE: 'DUPLICATE_RESOURCE',
   /** Invalid login credentials */
@@ -89,6 +91,7 @@ export const ERROR_CODE_STATUS: Record<ApiErrorCode, number> = {
   STORAGE_ERROR: 500,
   NOT_FOUND: 404,
   UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
   DUPLICATE_RESOURCE: 409,
   INVALID_CREDENTIALS: 401,
   EMAIL_EXISTS: 409,
@@ -123,6 +126,7 @@ export const ERROR_CODE_MESSAGES: Record<ApiErrorCode, string> = {
   STORAGE_ERROR: 'Storage operation failed',
   NOT_FOUND: 'Resource not found',
   UNAUTHORIZED: 'Unauthorized',
+  FORBIDDEN: 'Forbidden',
   DUPLICATE_RESOURCE: 'Resource already exists',
   INVALID_CREDENTIALS: 'Invalid email or password',
   EMAIL_EXISTS: 'Email already registered',

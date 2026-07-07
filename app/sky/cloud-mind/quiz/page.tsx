@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { motion, AnimatePresence } from 'motion/react';
@@ -137,6 +137,27 @@ function sampleQuestions(questions: QuizQuestion[], count: number): QuizQuestion
 }
 
 export default function CloudMindQuizPage() {
+  return (
+    <Suspense fallback={<CloudMindQuizFallback />}>
+      <CloudMindQuizContent />
+    </Suspense>
+  );
+}
+
+function CloudMindQuizFallback() {
+  return (
+    <div className="min-h-screen bg-[#080b18] text-amber-100">
+      <div className="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4">
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-500/20 bg-slate-950/70 px-5 py-4 text-sm text-amber-200/70">
+          <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+          加载星际试炼场...
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CloudMindQuizContent() {
   const searchParams = useSearchParams();
   const querySubject = searchParams.get('subject');
   const queryDifficulty = searchParams.get('difficulty');

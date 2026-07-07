@@ -3,8 +3,13 @@ import 'server-only';
 import { promises as fs } from 'fs';
 import path from 'path';
 
+import { callLLM } from '@/lib/ai/llm';
+import { getModel } from '@/lib/ai/providers';
 import { searchAiIntroCourse, type AiIntroSearchHit } from '@/lib/course-knowledge/ai-intro-loader';
+import { parseJsonResponse } from '@/lib/generation/json-repair';
+import { createLogger } from '@/lib/logger';
 import { getServerStorage } from '@/lib/server/server-storage';
+import { resolveSolverModel } from '@/lib/solve/solver-constants';
 import {
   reviewGeneratedResources,
   type ResourceQualityCheck,
@@ -16,6 +21,11 @@ import {
   type ConversationProfileSummary,
   type ProfileSignal,
 } from '@/lib/student/profile-signals';
+import type { ThinkingConfig } from '@/lib/types/provider';
+
+const log = createLogger('SoftwareCupDemo');
+
+const DISABLE_THINKING: ThinkingConfig = { mode: 'disabled', enabled: false };
 
 export type SafetyRiskLevel = 'low' | 'medium' | 'high';
 export type AgentStatus = 'pending' | 'running' | 'completed' | 'need_review';
@@ -68,6 +78,7 @@ export interface GeneratedResource {
   id: string;
   type: string;
   title: string;
+  generationSource?: 'demo' | 'llm_rag';
   personalizationReason?: string;
   sourceCitations: string[];
   contentPreview?: string;
@@ -105,6 +116,12 @@ export interface SoftwareCupGenerationResult {
   jobId: string;
   status: 'completed';
   progress: number;
+  generationMode: 'llm_rag' | 'demo_fallback';
+  llmGeneration?: {
+    used: boolean;
+    reason?: string;
+    model?: string;
+  };
   courseId: string;
   generatedAt: string;
   studentProfile: SoftwareCupStudentProfile;
@@ -120,6 +137,36 @@ export interface SoftwareCupGenerationResult {
 export interface RunSoftwareCupGenerationOptions {
   userId?: string;
   profileSignals?: ProfileSignal[];
+  enableLlm?: boolean;
+}
+
+interface LlmResourcePatch {
+  id?: string;
+  type?: string;
+  title?: string;
+  content?: string;
+  contentPreview?: string;
+  personalizationReason?: string;
+  sourceCitations?: string[];
+}
+
+interface LlmReviewPatch {
+  confidence?: number;
+  issues?: string[];
+  suggestions?: string[];
+}
+
+interface LlmCourseStudioResponse {
+  resources?: LlmResourcePatch[];
+  reviewResult?: LlmReviewPatch;
+}
+
+interface LlmRagEnhancement {
+  resources: GeneratedResource[];
+  used: boolean;
+  reason?: string;
+  model?: string;
+  reviewPatch?: LlmReviewPatch;
 }
 
 const DEMO_ROOT = path.join(process.cwd(), 'data', 'demo', 'software-cup');
@@ -447,6 +494,206 @@ async function hydrateResourceArtifacts(
       };
     }),
   );
+}
+
+function stringifyProfileForPrompt(profile: SoftwareCupStudentProfile): string {
+  return JSON.stringify({
+    learningGoal: profile.dimensions.learningGoal.value,
+    weakPoints: profile.dimensions.knowledgeBase.weakPoints,
+    strongPoints: profile.dimensions.knowledgeBase.strongPoints,
+    resourcePreference: profile.dimensions.resourcePreference.value,
+    cognitiveStyle: profile.dimensions.cognitiveStyle.value,
+    learningPace: profile.dimensions.learningPace.value,
+    currentLearningState: profile.dimensions.currentLearningState.value,
+  });
+}
+
+async function buildRagContext(courseHits: AiIntroSearchHit[]): Promise<string> {
+  const contextItems = await Promise.all(
+    courseHits.slice(0, 6).map(async (hit, index) => {
+      const fullText = await readCourseKnowledgeFile(hit.document.file);
+      const excerpt = compactMarkdownExcerpt(fullText || hit.snippet, 1200);
+      return [
+        `Source ${index + 1}`,
+        `title: ${hit.document.title}`,
+        `kind: ${hit.document.kind}`,
+        `file: ${hit.document.file}`,
+        `score: ${hit.score}`,
+        `excerpt: ${excerpt}`,
+      ].join('\n');
+    }),
+  );
+
+  return contextItems.join('\n\n---\n\n');
+}
+
+function buildResourceBrief(resources: GeneratedResource[]): string {
+  return JSON.stringify(
+    resources.map((resource) => ({
+      id: resource.id,
+      type: resource.type,
+      title: resource.title,
+      contentPreview: resource.contentPreview,
+      sourceCitations: resource.sourceCitations,
+    })),
+  );
+}
+
+function toStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
+}
+
+function isUsefulResourcePatch(patch: LlmResourcePatch | undefined): patch is LlmResourcePatch {
+  if (!patch) return false;
+  return Boolean(
+    patch.title?.trim() ||
+    patch.content?.trim() ||
+    patch.contentPreview?.trim() ||
+    patch.personalizationReason?.trim(),
+  );
+}
+
+function mergeLlmResourcePatches(
+  resources: GeneratedResource[],
+  patches: LlmResourcePatch[],
+  courseHits: AiIntroSearchHit[],
+): { resources: GeneratedResource[]; applied: number } {
+  const citationsFromRag = courseHits.map((hit) => hit.document.file).filter(Boolean);
+  const patchesById = new Map(
+    patches.filter((patch) => patch.id).map((patch) => [patch.id as string, patch]),
+  );
+  const patchesByType = new Map(
+    patches.filter((patch) => patch.type).map((patch) => [patch.type as string, patch]),
+  );
+  let applied = 0;
+
+  const merged = resources.map((resource, index) => {
+    const patch =
+      patchesById.get(resource.id) ?? patchesByType.get(resource.type) ?? patches[index];
+    if (!isUsefulResourcePatch(patch)) {
+      return { ...resource, generationSource: 'demo' as const };
+    }
+
+    applied += 1;
+    return {
+      ...resource,
+      generationSource: 'llm_rag' as const,
+      title: patch.title?.trim() || resource.title,
+      content: patch.content?.trim() || resource.content,
+      contentPreview: patch.contentPreview?.trim() || resource.contentPreview,
+      personalizationReason: patch.personalizationReason?.trim() || resource.personalizationReason,
+      sourceCitations: unique([
+        ...resource.sourceCitations,
+        ...citationsFromRag,
+        ...toStringArray(patch.sourceCitations),
+      ]).slice(0, 8),
+      trust: {
+        ...resource.trust,
+        status: resource.trust.status === 'verified' ? 'verified_with_llm' : resource.trust.status,
+      },
+    };
+  });
+
+  return { resources: merged, applied };
+}
+
+function normalizeReviewPatch(value: unknown): LlmReviewPatch | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const review = value as Record<string, unknown>;
+  return {
+    confidence: typeof review.confidence === 'number' ? review.confidence : undefined,
+    issues: toStringArray(review.issues),
+    suggestions: toStringArray(review.suggestions),
+  };
+}
+
+async function enhanceResourcesWithLlmRag(params: {
+  input: string;
+  profile: SoftwareCupStudentProfile;
+  courseHits: AiIntroSearchHit[];
+  resources: GeneratedResource[];
+}): Promise<LlmRagEnhancement> {
+  try {
+    const modelConfig = resolveSolverModel('universal');
+    const { model } = getModel(modelConfig);
+    const ragContext = await buildRagContext(params.courseHits);
+    const prompt = [
+      'You are the Course Studio resource generation agent.',
+      'Generate grounded learning resources for a student. Use only the retrieved course evidence below for factual claims.',
+      'Return JSON only. Schema:',
+      '{ "resources": [{ "id": string, "type": string, "title": string, "contentPreview": string, "content": string, "personalizationReason": string, "sourceCitations": string[] }], "reviewResult": { "confidence": number, "issues": string[], "suggestions": string[] } }',
+      '',
+      'Student request:',
+      params.input,
+      '',
+      'Student profile:',
+      stringifyProfileForPrompt(params.profile),
+      '',
+      'Retrieved course evidence:',
+      ragContext || 'No matching course evidence was retrieved.',
+      '',
+      'Resource slots to fill:',
+      buildResourceBrief(params.resources),
+      '',
+      'Rules:',
+      '- Keep each resource grounded in sourceCitations.',
+      '- Preserve each resource id and type when possible.',
+      '- Write content in Chinese unless the source terms are English.',
+      '- Prefer concise, classroom-ready Markdown.',
+    ].join('\n');
+
+    const result = await callLLM(
+      {
+        model,
+        messages: [{ role: 'user', content: prompt }] as any,
+        temperature: 0.4,
+        maxOutputTokens: 6000,
+      },
+      'software-cup-course-studio-rag',
+      { retries: 1, timeoutMs: 25000 },
+      DISABLE_THINKING,
+      'You generate cited learning resources from retrieved course evidence. Return valid JSON only.',
+    );
+
+    const parsed = parseJsonResponse<LlmCourseStudioResponse>(result.text || '');
+    const patches = Array.isArray(parsed?.resources) ? parsed.resources : [];
+    const { resources, applied } = mergeLlmResourcePatches(
+      params.resources,
+      patches,
+      params.courseHits,
+    );
+
+    if (applied === 0) {
+      return {
+        resources: params.resources.map((resource) => ({
+          ...resource,
+          generationSource: 'demo',
+        })),
+        used: false,
+        reason: 'LLM returned no usable resource patches.',
+        model: `${modelConfig.providerId}:${modelConfig.modelId}`,
+      };
+    }
+
+    return {
+      resources,
+      used: true,
+      model: `${modelConfig.providerId}:${modelConfig.modelId}`,
+      reviewPatch: normalizeReviewPatch(parsed?.reviewResult),
+    };
+  } catch (error) {
+    log.warn('LLM RAG generation failed, falling back to deterministic resources:', error);
+    return {
+      resources: params.resources.map((resource) => ({
+        ...resource,
+        generationSource: 'demo',
+      })),
+      used: false,
+      reason: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 function inferMajor(input: string): string {
@@ -886,10 +1133,26 @@ export async function runSoftwareCupGeneration(
   const query = unique([...profile.dimensions.knowledgeBase.weakPoints, '人工智能导论']).join(' ');
   const courseHits = await searchAiIntroCourse(query, 6);
   const safety = checkSoftwareCupContentSafety(text);
-  const resources = await hydrateResourceArtifacts(
+  const fallbackResources = await hydrateResourceArtifacts(
     personalizeResources(demo.resources, profile, courseHits),
     profile,
   );
+  const llmGeneration: LlmRagEnhancement = options.enableLlm
+    ? await enhanceResourcesWithLlmRag({
+        input: text,
+        profile,
+        courseHits,
+        resources: fallbackResources,
+      })
+    : {
+        resources: fallbackResources.map((resource) => ({
+          ...resource,
+          generationSource: 'demo' as const,
+        })),
+        used: false,
+        reason: 'LLM generation disabled for this call.',
+      };
+  const resources = llmGeneration.resources;
   const qualityReview = reviewGeneratedResources({ resources, profile });
   const reviewedResources = qualityReview.resources;
   const review = await verifySoftwareCupAcademicContent({
@@ -899,6 +1162,17 @@ export async function runSoftwareCupGeneration(
       .join('\n'),
   });
   const learningPath = buildPersonalizedLearningPath(profile, reviewedResources);
+  const reviewConfidenceValues = [
+    demo.reviewResult.confidence,
+    review.confidence,
+    qualityReview.summary.confidence,
+    llmGeneration.reviewPatch?.confidence,
+  ].filter((value): value is number => typeof value === 'number');
+  const reviewConfidence = Number(
+    (
+      reviewConfidenceValues.reduce((sum, value) => sum + value, 0) / reviewConfidenceValues.length
+    ).toFixed(2),
+  );
 
   return {
     demoId: demo.demoId,
@@ -916,19 +1190,26 @@ export async function runSoftwareCupGeneration(
     reviewResult: {
       ...demo.reviewResult,
       passed: demo.reviewResult.passed && review.passed && qualityReview.summary.passed,
-      confidence: Number(
-        (
-          (demo.reviewResult.confidence + review.confidence + qualityReview.summary.confidence) /
-          3
-        ).toFixed(2),
-      ),
-      issues: [...demo.reviewResult.issues, ...review.issues, ...qualityReview.summary.issues],
+      confidence: reviewConfidence,
+      issues: [
+        ...demo.reviewResult.issues,
+        ...review.issues,
+        ...qualityReview.summary.issues,
+        ...(llmGeneration.reviewPatch?.issues ?? []),
+      ],
       suggestions: unique([
         ...demo.reviewResult.suggestions,
         ...review.suggestions,
         ...qualityReview.summary.suggestions,
+        ...(llmGeneration.reviewPatch?.suggestions ?? []),
       ]),
       resourceChecks: qualityReview.summary.resourceChecks,
+    },
+    generationMode: llmGeneration.used ? 'llm_rag' : 'demo_fallback',
+    llmGeneration: {
+      used: llmGeneration.used,
+      reason: llmGeneration.reason,
+      model: llmGeneration.model,
     },
     p2Enhancements: buildP2Enhancements({
       profile,

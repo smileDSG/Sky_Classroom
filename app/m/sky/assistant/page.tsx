@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -77,6 +77,20 @@ const difficultyOptions = [
 ];
 
 export default function MobileAssistantPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 px-4 py-6 text-sm font-semibold text-slate-400">
+          加载助手...
+        </div>
+      }
+    >
+      <MobileAssistantContent />
+    </Suspense>
+  );
+}
+
+function MobileAssistantContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const view = searchParams.get('view');

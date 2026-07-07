@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { Suspense, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CalendarClock } from 'lucide-react';
@@ -40,7 +40,23 @@ function normalizeSnapshotMistake(mistake: WorkshopMistakeSnapshot): MistakeReco
   };
 }
 
-export function LearningFeaturePage({ activeFeature }: LearningFeaturePageProps) {
+export function LearningFeaturePage(props: LearningFeaturePageProps) {
+  return (
+    <Suspense
+      fallback={
+        <SkyAppShell>
+          <div className="mx-auto flex min-h-[60vh] max-w-6xl items-center justify-center text-sm text-muted-foreground">
+            加载学习数据...
+          </div>
+        </SkyAppShell>
+      }
+    >
+      <LearningFeaturePageContent {...props} />
+    </Suspense>
+  );
+}
+
+function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

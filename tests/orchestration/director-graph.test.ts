@@ -4,11 +4,12 @@
  * Tests for director routing, stateless generation parsing,
  * and conversation summarization — currently zero coverage.
  */
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import {
   parseDirectorDecision,
   summarizeWhiteboardForDirector,
 } from '@/lib/orchestration/director-prompt';
+import { directorNode } from '@/lib/orchestration/director-node';
 import {
   createParserState,
   parseStructuredChunk,
@@ -44,9 +45,7 @@ describe('parseDirectorDecision', () => {
   });
 
   test('handles nested JSON objects', () => {
-    const r = parseDirectorDecision(
-      '{"params":{"key":"val"},"next_agent":"agent-3"}',
-    );
+    const r = parseDirectorDecision('{"params":{"key":"val"},"next_agent":"agent-3"}');
     expect(r.nextAgentId).toBe('agent-3');
   });
 
@@ -57,6 +56,74 @@ describe('parseDirectorDecision', () => {
 });
 
 // ─── Whiteboard Summarization ───
+
+describe('directorNode fast paths', () => {
+  test('routes QA sessions to an assistant without calling the LLM director', async () => {
+    const writer = vi.fn();
+    const result = await directorNode(
+      {
+        messages: [{ role: 'user', content: '请解释一下二次函数' }],
+        storeState: {
+          stage: null,
+          scenes: [],
+          currentSceneId: null,
+          mode: 'playback',
+          whiteboardOpen: false,
+        },
+        availableAgentIds: ['teacher-1', 'assistant-1'],
+        maxTurns: 1,
+        languageModel: {} as never,
+        thinkingConfig: null,
+        discussionContext: null,
+        triggerAgentId: null,
+        userProfile: null,
+        agentConfigOverrides: {
+          'teacher-1': {
+            id: 'teacher-1',
+            name: 'Teacher',
+            role: 'teacher',
+            persona: '',
+            avatar: '',
+            color: '#000',
+            allowedActions: [],
+            priority: 10,
+            isDefault: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          'assistant-1': {
+            id: 'assistant-1',
+            name: 'Assistant',
+            role: 'assistant',
+            persona: '',
+            avatar: '',
+            color: '#111',
+            allowedActions: [],
+            priority: 7,
+            isDefault: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+        currentAgentId: null,
+        turnCount: 0,
+        agentResponses: [],
+        whiteboardLedger: [],
+        shouldEnd: false,
+        totalActions: 0,
+        sessionType: 'qa',
+      } as never,
+      { writer } as never,
+    );
+
+    expect(result).toEqual({ currentAgentId: 'assistant-1', shouldEnd: false });
+    expect(writer).toHaveBeenCalledWith({
+      type: 'thinking',
+      data: { stage: 'agent_loading', agentId: 'assistant-1' },
+    });
+    expect(writer).not.toHaveBeenCalledWith({ type: 'thinking', data: { stage: 'director' } });
+  });
+});
 
 describe('summarizeWhiteboardForDirector', () => {
   function makeAction(
@@ -154,16 +221,16 @@ describe('stateless-generate parser', () => {
 
     test('extracts complete action object', () => {
       const state = createParserState();
-      const r = parseStructuredChunk(
-        '[{"type":"text","content":"Hello world"}]',
-        state,
-      );
+      const r = parseStructuredChunk('[{"type":"text","content":"Hello world"}]', state);
       expect(r.actions.length).toBeGreaterThanOrEqual(0);
     });
 
     test('handles text with action mixed chunks', () => {
       const state = createParserState();
-      parseStructuredChunk('[{"type":"action","name":"spotlight","params":{"elementId":"el1"}}', state);
+      parseStructuredChunk(
+        '[{"type":"action","name":"spotlight","params":{"elementId":"el1"}}',
+        state,
+      );
       const r = parseStructuredChunk(',{"type":"text","content":"Look here"}]', state);
       // Should have parsed at least one action
       expect(state.buffer).toBeDefined();

@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
   };
   const result = await runSoftwareCupGeneration(body.input || body.studentInput || '', {
     userId: body.userId,
+    enableLlm: true,
   });
 
   return Response.json({

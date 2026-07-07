@@ -15,9 +15,18 @@ const eslintConfig = defineConfig([
     // Vendored/generated code:
     'packages/**',
     // Claude Code local files:
+    '.agents/**',
     '.claude/**',
+    '.codex/**',
+    '.gstack/**',
+    '.mimocode/**',
     '.superpowers/**',
     '.worktrees/**',
+    // Local caches and runtime data:
+    '.pnpm-store/**',
+    'logs/**',
+    'memory/**',
+    'tmp/**',
     // Playwright e2e tests (not React code):
     'e2e/**',
   ]),
@@ -37,6 +46,28 @@ const eslintConfig = defineConfig([
           destructuredArrayIgnorePattern: '^_',
         },
       ],
+      // Legacy code still contains a fair amount of loose typing and older React
+      // patterns. Keep these visible, but don't make lint unusable while they are
+      // being paid down incrementally.
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-require-imports': 'warn',
+      'prefer-const': 'warn',
+      'react/no-unescaped-entities': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/refs': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/static-components': 'warn',
+    },
+  },
+  {
+    files: ['tests/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      // Tests often use deliberately loose doubles and fixtures. Keep strict
+      // production code rules, but don't let test scaffolding drown lint signal.
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 ]);

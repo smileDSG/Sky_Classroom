@@ -4,10 +4,11 @@
  * POST /api/dev/seed-mistakes
  * GET  /api/dev/seed-mistakes?clear=true to clear without seeding.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
+import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:SeedMistakes');
@@ -19,7 +20,7 @@ interface SeedMistake {
   correctAnswer: string;
   errorType: 'calculation' | 'concept' | 'reasoning' | 'reading' | 'careless';
   knowledgePoints: string[];
-  source: string;
+  source: NonNullable<MistakeBookEntry['source']>;
 }
 
 const SAMPLE_MISTAKES: SeedMistake[] = [
@@ -196,18 +197,14 @@ export async function POST(req: NextRequest) {
         correctAnswer: s.correctAnswer,
         errorType: s.errorType,
         knowledgePoints: s.knowledgePoints,
-        source: s.source as any,
+        source: s.source,
       });
 
       // Set a realistic lastReview / nextReview
-      const storage = await getServerStorage();
-      const entry = await storage.get(s.id);
-      if (entry) {
-        entry.data.lastReview = solvedAt;
-        entry.data.nextReview = solvedAt + 1 * 24 * 60 * 60 * 1000; // due tomorrow
-        entry.data.updatedAt = now;
-        await storage.set('mistakes', entry);
-      }
+      await dao.update(s.id, {
+        lastReview: solvedAt,
+        nextReview: solvedAt + 1 * 24 * 60 * 60 * 1000, // due tomorrow
+      });
 
       seeded++;
     }
@@ -253,18 +250,14 @@ export async function GET(req: NextRequest) {
         correctAnswer: s.correctAnswer,
         errorType: s.errorType,
         knowledgePoints: s.knowledgePoints,
-        source: s.source as any,
+        source: s.source,
       });
 
       // Set a realistic lastReview / nextReview
-      const storage = await getServerStorage();
-      const entry = await storage.get(s.id);
-      if (entry) {
-        entry.data.lastReview = solvedAt;
-        entry.data.nextReview = solvedAt + 1 * 24 * 60 * 60 * 1000;
-        entry.data.updatedAt = now;
-        await storage.set('mistakes', entry);
-      }
+      await dao.update(s.id, {
+        lastReview: solvedAt,
+        nextReview: solvedAt + 1 * 24 * 60 * 60 * 1000,
+      });
 
       seeded++;
     }

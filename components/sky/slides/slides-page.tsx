@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
@@ -48,7 +48,21 @@ interface SlidesPageProps {
   personalizationNotice?: string | null;
 }
 
-export default function SlidesPage({ initialTopic, personalizationNotice }: SlidesPageProps = {}) {
+export default function SlidesPage(props: SlidesPageProps = {}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">
+          加载课件工坊...
+        </div>
+      }
+    >
+      <SlidesPageContent {...props} />
+    </Suspense>
+  );
+}
+
+function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPageProps = {}) {
   const searchParams = useSearchParams();
   const urlTopic = searchParams.get('topic');
 

@@ -49,8 +49,8 @@ export function SkyClassroomEntry() {
       }
       if (!hasMovedRef.current) return;
 
-      const btnW = collapsed ? 36 : 120;
-      const btnH = 36;
+      const btnW = collapsed ? 44 : 168;
+      const btnH = 44;
       const newX = Math.max(
         0,
         Math.min(window.innerWidth - btnW, e.clientX - offsetRef.current.dx),
@@ -117,7 +117,7 @@ export function SkyClassroomEntry() {
             exit={{ opacity: 0, scale: 0.7 }}
             transition={{ duration: 0.15 }}
           >
-            <div className="w-9 h-9 rounded-full bg-[#4A90D9] text-white shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow pointer-events-none">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#4A90D9] text-white shadow-lg transition-shadow hover:shadow-xl pointer-events-none">
               <span className="text-base leading-none">☁️</span>
             </div>
           </motion.div>
@@ -130,16 +130,17 @@ export function SkyClassroomEntry() {
             transition={{ duration: 0.15 }}
             className="flex items-center gap-1.5"
           >
-            <div className="flex items-center gap-2 rounded-full bg-[#4A90D9] px-4 py-2 text-sm font-medium text-white shadow-lg hover:shadow-xl transition-shadow whitespace-nowrap pointer-events-none">
+            <div className="flex min-h-11 items-center gap-2 rounded-full bg-[#4A90D9] px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-shadow hover:shadow-xl whitespace-nowrap pointer-events-none">
               <span>☁️</span>
               <span>天空课堂</span>
             </div>
             <button
               data-toggle-collapse
+              aria-label="折叠天空课堂入口"
               onClick={handleToggleCollapse}
-              className="w-6 h-6 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 text-gray-500 dark:text-gray-400 flex items-center justify-center hover:bg-white dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 active:scale-90 transition-all shadow-sm"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200/60 bg-white/80 text-gray-500 shadow-sm backdrop-blur-sm transition-all hover:bg-white hover:text-gray-700 active:scale-95 dark:border-gray-700/60 dark:bg-gray-800/80 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
             >
-              <Minus className="w-2.5 h-2.5" />
+              <Minus className="h-3.5 w-3.5" />
             </button>
           </motion.div>
         )}

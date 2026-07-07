@@ -548,6 +548,7 @@ export function KagamiPanel() {
   }, [scene, loading, changeScene]);
 
   if (
+    pathname?.startsWith('/auth') ||
     pathname?.startsWith('/sky/software-cup') ||
     pathname?.startsWith('/sky/cloud-mind/course-studio') ||
     pathname?.startsWith('/sky/study-lab')
@@ -576,6 +577,7 @@ export function KagamiPanel() {
       {/* FAB — always rendered, hidden via CSS when panel open (so listeners persist) */}
       <button
         ref={fabRef}
+        aria-label={mode === 'anime' ? '打开小镜课堂' : '打开 AI 学习助手'}
         className={`fixed z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${open ? 'hidden' : ''}`}
         style={hasDragged ? { left: pos.x, top: pos.y } : { right: 24, bottom: 24 }}
         title={

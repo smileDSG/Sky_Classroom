@@ -5,12 +5,29 @@ import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial
 import { motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTheme } from '@/lib/hooks/use-theme';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 
 export default function CloudMindTeachingRoute() {
+  return (
+    <Suspense fallback={<CloudMindTeachingFallback />}>
+      <CloudMindTeachingContent />
+    </Suspense>
+  );
+}
+
+function CloudMindTeachingFallback() {
+  return (
+    <div
+      className="relative min-h-screen dark"
+      style={{ background: 'linear-gradient(180deg, #070E0C 0%, #0D1A17 50%, #070E0C 100%)' }}
+    />
+  );
+}
+
+function CloudMindTeachingContent() {
   const { setForceDark } = useTheme();
   const searchParams = useSearchParams();
   const queryTopic = searchParams.get('topic');

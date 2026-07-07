@@ -6,6 +6,8 @@ const PUBLIC_PATHS = [
   '/',
   '/auth',
   '/api/auth',
+  '/api/access-code/status',
+  '/api/server-providers',
   '/api/sky/solve/clear',
   '/api/sky/enrichment',
   '/sky/software-cup',

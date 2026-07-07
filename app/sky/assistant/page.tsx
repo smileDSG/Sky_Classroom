@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
@@ -26,6 +26,22 @@ const SIDEBAR_ITEMS = [
 ] as const;
 
 export default function AssistantPage() {
+  return (
+    <Suspense
+      fallback={
+        <SkyAppShell>
+          <div className="mx-auto flex h-[calc(100vh-120px)] max-w-6xl items-center justify-center text-sm text-slate-500">
+            加载助手...
+          </div>
+        </SkyAppShell>
+      }
+    >
+      <AssistantContent />
+    </Suspense>
+  );
+}
+
+function AssistantContent() {
   const searchParams = useSearchParams();
   const initialView = searchParams.get('view');
   const initialPrompt = searchParams.get('q');

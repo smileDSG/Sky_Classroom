@@ -51,6 +51,15 @@ const CLASSROOM_QA_SAFE_BLOCK_FONT_SIZE = 22;
 const CLASSROOM_QA_SAFE_MIN_BLOCK_HEIGHT = 84;
 const CLASSROOM_QA_SAFE_TABLE_ROW_HEIGHT = 44;
 
+type ClassroomSlideElement = GeneratedSlideContent['elements'][number];
+type ClassroomSlideTextElement = Extract<ClassroomSlideElement, { type: 'text' }>;
+
+function isQASafeTextBlockElement(
+  element: ClassroomSlideElement,
+): element is ClassroomSlideTextElement {
+  return element.type === 'text' && element.id.includes('_block_');
+}
+
 export interface GenerateClassroomInput {
   requirement: string;
   pdfContent?: { text: string; images: string[] };
@@ -660,7 +669,7 @@ function createQASafeShapeElement(
     height,
     rotate: 0,
     path: 'M 0 0 L 1 0 L 1 1 L 0 1 Z',
-    viewBox: [1, 1],
+    viewBox: '0 0 1 1',
     fixedRatio: false,
     fill,
     opacity,
@@ -694,9 +703,7 @@ function addQASafeVisualPolish(
   elements: GeneratedSlideContent['elements'],
   profile: ClassroomQASafeProfile,
 ): GeneratedSlideContent['elements'] {
-  const blockElements = elements.filter(
-    (element) => element.type === 'text' && element.id.includes('_block_'),
-  );
+  const blockElements = elements.filter(isQASafeTextBlockElement);
   const blockCards = blockElements.map((element, index) =>
     createQASafeShapeElement(
       `classroom_qa_safe_card_${outline.id}_${index}`,
@@ -1402,39 +1409,13 @@ function createInMemoryStore(stage: Stage): StageStore {
   };
 }
 
-async function generateTopicSummary(
+export function generateTopicSummary(
   requirement: string,
   outlines: import('@/lib/types/generation').SceneOutline[],
-  aiCall: AICallFn,
-): Promise<string> {
-  const systemPrompt =
-    'You are a course topic summarizer. Output a concise topic title that captures the essence of the course.';
-
-  const outlineTitles = outlines
-    .slice(0, 5)
-    .map((o) => `- ${o.title}`)
-    .join('\n');
-
-  const userPrompt = `Summarize the following course into a short topic title (no more than 25 characters):
-
-User's requirement:
-${requirement.slice(0, 300)}
-
-Scene outline titles:
-${outlineTitles}
-
-Rules:
-- Output in the same language as the requirement.
-- Be concise and descriptive.
-- Return ONLY the topic title, no quotes, no prefixes, no extra text.`;
-
-  try {
-    const response = await aiCall(systemPrompt, userPrompt);
-    const cleaned = response.trim().replace(/^["']|["']$/g, '');
-    return cleaned.slice(0, 40);
-  } catch {
-    return outlines[0]?.title?.slice(0, 40) || requirement.slice(0, 40);
-  }
+): string {
+  const outlineTitle = outlines.find((outline) => outline.title.trim().length > 0)?.title;
+  const source = outlineTitle || requirement;
+  return source.replace(/\s+/g, ' ').trim().slice(0, 40);
 }
 
 function stripCodeFences(text: string): string {
@@ -1675,7 +1656,7 @@ export async function generateClassroom(
   const courseTheme = selectThemeForCourse(outlines);
 
   // Generate a short AI topic summary for display on progress cards
-  const topicSummary = await generateTopicSummary(requirement, outlines, aiCall);
+  const topicSummary = generateTopicSummary(requirement, outlines);
   log.info(`Topic summary: "${topicSummary}"`);
 
   await options.onProgress?.({

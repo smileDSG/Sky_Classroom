@@ -27,6 +27,13 @@ function getClient(): SupabaseClient {
   return _client;
 }
 
+function toIsoOrNull(value: unknown): string | null {
+  if (typeof value === 'number' || typeof value === 'string' || value instanceof Date) {
+    return new Date(value).toISOString();
+  }
+  return null;
+}
+
 export class SupabaseStorageProvider implements StorageProvider {
   private tableName: string;
 
@@ -179,7 +186,7 @@ export function createSupabaseUserDAO() {
           email_verified: user.emailVerified ?? false,
           email_verify_token: user.emailVerifyToken ?? null,
           reset_token: user.resetToken ?? null,
-          reset_token_expiry: user.resetTokenExpiry ?? null,
+          reset_token_expiry: toIsoOrNull(user.resetTokenExpiry),
           created_at: now,
           updated_at: now,
           last_login_at: null,
@@ -249,8 +256,12 @@ export function createSupabaseUserDAO() {
       if (updates.emailVerified !== undefined) mapped.email_verified = updates.emailVerified;
       if (updates.emailVerifyToken !== undefined) mapped.email_verify_token = updates.emailVerifyToken;
       if (updates.resetToken !== undefined) mapped.reset_token = updates.resetToken;
-      if (updates.resetTokenExpiry !== undefined) mapped.reset_token_expiry = updates.resetTokenExpiry;
-      if (updates.lastLoginAt !== undefined) mapped.last_login_at = updates.lastLoginAt ? new Date(updates.lastLoginAt).toISOString() : null;
+      if (updates.resetTokenExpiry !== undefined) {
+        mapped.reset_token_expiry = toIsoOrNull(updates.resetTokenExpiry);
+      }
+      if (updates.lastLoginAt !== undefined) {
+        mapped.last_login_at = toIsoOrNull(updates.lastLoginAt);
+      }
 
       const { data, error } = await client
         .from('users')
