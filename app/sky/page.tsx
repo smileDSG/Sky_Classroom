@@ -26,6 +26,7 @@ import {
   Search,
   Sun,
   Moon,
+  MessageCircle,
 } from 'lucide-react';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 
@@ -353,6 +354,12 @@ function CommonToolsSection({ weakPoints }: { weakPoints: PersonalizationContext
       desc: weakPointText ? `当前关注 ${weakPointText}` : '补全目标和偏好',
       href: '/sky/learning/profile',
     },
+    {
+      icon: MessageCircle,
+      title: 'AI 助手',
+      desc: '随时提问，智能答疑',
+      action: () => window.dispatchEvent(new CustomEvent('open-kagami-panel')),
+    },
   ];
 
   return (
@@ -366,15 +373,11 @@ function CommonToolsSection({ weakPoints }: { weakPoints: PersonalizationContext
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className="mt-4 grid gap-3 md:grid-cols-3 lg:grid-cols-4">
         {tools.map((item) => {
           const Icon = item.icon;
-          return (
-            <Link
-              key={item.title}
-              href={item.href}
-              className="group flex min-h-16 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-700/50 dark:bg-slate-950/35 dark:hover:border-indigo-300/30 dark:hover:bg-white/[0.06]"
-            >
+          const content = (
+            <>
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
                 <Icon className="h-4 w-4" />
               </span>
@@ -387,6 +390,26 @@ function CommonToolsSection({ weakPoints }: { weakPoints: PersonalizationContext
                 </span>
               </span>
               <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-500 dark:text-slate-600" />
+            </>
+          );
+          if (item.action) {
+            return (
+              <button
+                key={item.title}
+                onClick={item.action}
+                className="group flex min-h-16 w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-700/50 dark:bg-slate-950/35 dark:hover:border-indigo-300/30 dark:hover:bg-white/[0.06]"
+              >
+                {content}
+              </button>
+            );
+          }
+          return (
+            <Link
+              key={item.title}
+              href={item.href}
+              className="group flex min-h-16 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-700/50 dark:bg-slate-950/35 dark:hover:border-indigo-300/30 dark:hover:bg-white/[0.06]"
+            >
+              {content}
             </Link>
           );
         })}

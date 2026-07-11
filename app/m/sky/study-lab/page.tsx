@@ -6,21 +6,18 @@ import {
   ArrowRight,
   BarChart3,
   BookOpenCheck,
-  Brain,
   CalendarClock,
-  ChartNoAxesColumnIncreasing,
   GraduationCap,
   Layers,
   Network,
   Route,
   ShieldCheck,
   Sparkles,
-  Star,
   Target,
-  Telescope,
   type LucideIcon,
 } from 'lucide-react';
 import { MobileSkyShell } from '@/components/mobile/mobile-sky-shell';
+import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
 import { buildLearningInsights, type LearningInsights } from '@/lib/sky/learning-insights';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import type { MistakeCause } from '@/lib/solve/types';
@@ -78,14 +75,6 @@ interface PathStep {
   tone: string;
   duration: string;
 }
-
-const tabs: Array<{ label: string; href: string; icon: LucideIcon; active?: boolean }> = [
-  { label: '天穹授课', href: '/m/sky', icon: GraduationCap },
-  { label: '摘星锦囊', href: '/m/sky/learning/review', icon: Star },
-  { label: '云端智囊', href: '/m/sky/cloud-mind', icon: Brain },
-  { label: '天梯工坊', href: '/m/sky/study-lab', icon: ChartNoAxesColumnIncreasing, active: true },
-  { label: '云翼助手', href: '/m/sky/assistant', icon: Telescope },
-];
 
 const toolEntries: Array<{
   label: string;
@@ -312,101 +301,57 @@ export default function MobileStudyLabPage() {
       : insights.hasSignals
         ? Target
         : Sparkles;
-  const dailyTitle =
-    insights.metrics.dueReviewCount > 0
-      ? `处理 ${insights.metrics.dueReviewCount} 道到期复习`
-      : insights.hasSignals
-        ? `围绕「${insights.focusTopic}」训练`
-        : '先完成一次诊断采样';
-  const dailyDesc =
-    insights.metrics.dueReviewCount > 0
-      ? '优先清理今天进入复习窗口的内容'
-      : insights.hasSignals
-        ? '根据画像生成下一组针对练习'
-        : '拍照搜题后自动生成你的个人学习路径';
-
   return (
-    <MobileSkyShell>
-      <div className="space-y-2.5 pb-4">
-        <nav className="grid grid-cols-5 gap-1 rounded-[18px] border border-white/8 bg-white/[0.04] p-1.5">
-          {tabs.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex min-w-0 flex-col items-center gap-1 rounded-[14px] px-1 py-1.5 text-center ${
-                  item.active
-                    ? 'bg-white/10 text-white ring-1 ring-emerald-300/25'
-                    : 'text-slate-400 active:bg-white/7'
-                }`}
-              >
-                <Icon
-                  className={`size-3.5 ${item.active ? 'text-emerald-300' : 'text-slate-500'}`}
-                />
-                <span className="w-full truncate text-[10px] font-semibold leading-tight">
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
+    <MobileSkyShell fullBleed>
+      <div className="relative flex flex-col">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-emerald-600/30 via-teal-600/15 to-transparent" />
 
-        <section className="overflow-hidden rounded-[22px] border border-emerald-200/15 bg-[#0d1728] shadow-[0_18px_44px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.06)]">
-          <div className="relative p-3.5">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(16,185,129,0.22),rgba(8,47,73,0.18)_55%,rgba(15,23,42,0))]" />
-            <div className="absolute -right-12 -top-14 size-36 rounded-full bg-emerald-300/12 blur-3xl" />
-            <div className="relative">
-              <div className="flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/18 bg-emerald-300/10 px-2 py-0.5 text-[10px] font-extrabold text-emerald-100">
-                  <Sparkles className="size-3" />
-                  天梯工坊
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/[0.055] px-2 py-0.5 text-[9px] font-bold text-slate-300">
-                  {loading ? '同步中' : insights.strategyLabel}
-                </span>
-              </div>
-              <h1 className="mt-2.5 text-[23px] font-extrabold leading-tight text-white">
+        <section className="relative px-5 pb-6 pt-9">
+          <div className="mb-4 flex items-center gap-2.5">
+            <span className="flex size-8 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
+              <Sparkles className="size-4 text-white" />
+            </span>
+            <span className="text-[12px] font-semibold tracking-[0.2em] text-white/90">
+              天梯工坊
+            </span>
+          </div>
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-[28px] font-black leading-tight text-white">
                 {insights.hasSignals ? '个人学习路径' : '先采集一次诊断数据'}
               </h1>
-              <p className="mt-2 line-clamp-2 text-[11px] font-medium leading-5 text-emerald-50/80">
+              <p className="mt-3 max-w-[260px] text-[13px] leading-relaxed text-white/80">
                 {insights.focusReason}
               </p>
-              <div className="mt-2 flex items-center gap-2 text-[9px] font-semibold text-slate-400">
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[12px] text-white backdrop-blur-sm">
                 <span>{snapshot ? '云端快照' : '等待学习信号'}</span>
-                <span className="size-1 rounded-full bg-slate-600" />
-                <span>
+                <span className="h-3 w-px bg-white/25" />
+                <span className="max-w-[140px] truncate">
                   {snapshot?.generatedAt
                     ? `${new Date(snapshot.generatedAt).toLocaleTimeString()} 更新`
                     : error || '完成诊断后生成路线'}
                 </span>
               </div>
             </div>
-          </div>
 
-          <div className="border-t border-white/8 bg-emerald-300/[0.055] p-2.5">
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-[13px] bg-emerald-300 text-slate-950 shadow-lg shadow-emerald-950/20">
-                <DailyIcon className="size-4" />
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <span className="rounded-full border border-emerald-300/25 bg-emerald-300/15 px-2.5 py-1 text-[11px] font-bold text-emerald-100">
+                {loading ? '同步中' : insights.strategyLabel}
               </span>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-extrabold text-white">{dailyTitle}</div>
-                <div className="mt-0.5 truncate text-[10px] font-medium text-slate-400">
-                  {dailyDesc}
-                </div>
-              </div>
+              <Link
+                href={dailyHref}
+                className="mt-1 flex h-9 items-center justify-center gap-1.5 rounded-[12px] bg-emerald-300 px-3 text-[12px] font-extrabold text-slate-950 shadow-lg shadow-emerald-950/20 active:scale-[0.99]"
+              >
+                <DailyIcon className="size-3.5" />
+                今日任务
+                <ArrowRight className="size-3.5" />
+              </Link>
             </div>
-            <Link
-              href={dailyHref}
-              className="mt-2.5 flex h-8 items-center justify-center gap-2 rounded-[12px] bg-emerald-300 px-3 text-[12px] font-extrabold text-slate-950 shadow-lg shadow-emerald-950/20 active:scale-[0.99]"
-            >
-              <DailyIcon className="size-3.5" />
-              开始今日任务
-              <ArrowRight className="size-3.5" />
-            </Link>
           </div>
         </section>
 
+        <div className="relative space-y-2.5 px-4 pb-24">
         <section aria-label="学习状态" className="grid grid-cols-4 gap-1.5">
           <MetricPill icon={CalendarClock} label="到期" value={insights.metrics.dueReviewCount} />
           <MetricPill icon={BookOpenCheck} label="错题" value={insights.metrics.reviewBacklogCount} />
@@ -420,7 +365,7 @@ export default function MobileStudyLabPage() {
               <Route className="size-4 text-emerald-200" />
               今日学习路径
             </div>
-            <span className="rounded-full bg-white/7 px-2 py-0.5 text-[10px] font-bold text-slate-400">
+            <span className="rounded-full bg-white/7 px-2 py-0.5 text-[12px] font-bold text-slate-400">
               个性化
             </span>
           </div>
@@ -466,7 +411,7 @@ export default function MobileStudyLabPage() {
                       <span className="block truncate text-[13px] font-extrabold leading-tight text-white">
                         {tool.label}
                       </span>
-                      <span className="mt-0.5 block truncate text-[10px] font-semibold text-slate-400">
+                      <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-400">
                         {tool.desc}
                       </span>
                     </span>
@@ -482,6 +427,8 @@ export default function MobileStudyLabPage() {
           </div>
         </section>
       </div>
+      </div>
+      <MobileQuickEntranceNav />
     </MobileSkyShell>
   );
 }
@@ -502,9 +449,9 @@ function MetricPill({
       <Icon className="mx-auto size-3.5 text-emerald-200" />
       <div className="mt-1 text-[15px] font-extrabold leading-none text-white">
         {value}
-        <span className="text-[9px] text-slate-400">{unit}</span>
+        <span className="text-[11px] text-slate-400">{unit}</span>
       </div>
-      <div className="mt-1 truncate text-[9px] font-bold text-slate-500">{label}</div>
+      <div className="mt-1 truncate text-[11px] font-bold text-slate-500">{label}</div>
     </div>
   );
 }
@@ -525,7 +472,7 @@ function PathStepCard({ step }: { step: PathStep }) {
       href={step.href}
       className="group flex min-h-[58px] items-center gap-2.5 rounded-[15px] border border-white/9 bg-[#0d1728] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] active:scale-[0.99]"
     >
-      <span className="w-5 shrink-0 text-[10px] font-extrabold tabular-nums text-slate-500">
+      <span className="w-5 shrink-0 text-[11px] font-extrabold tabular-nums text-slate-500">
         {step.label}
       </span>
       <span
@@ -539,11 +486,11 @@ function PathStepCard({ step }: { step: PathStep }) {
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
           <span className="truncate text-[12px] font-extrabold text-white">{step.title}</span>
-          <span className="shrink-0 rounded-full bg-white/7 px-1.5 py-0.5 text-[8px] font-bold text-slate-400">
+          <span className="shrink-0 rounded-full bg-white/7 px-1.5 py-0.5 text-[11px] font-bold text-slate-400">
             {step.duration}
           </span>
         </span>
-        <span className="mt-0.5 block truncate text-[9px] font-medium text-slate-400">
+        <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-400">
           {step.desc}
         </span>
       </span>

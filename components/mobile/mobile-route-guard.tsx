@@ -3,9 +3,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-function toMobileHref(href: string): string | null {
+export function toMobileHref(href: string): string | null {
   if (href === '/') return '/m/sky';
+  if (href.startsWith('/auth/')) return `/m${href}`;
   if (href === '/sky') return '/m/sky';
+  if (href === '/sky/learning') return '/m/sky/study-lab';
   if (href.startsWith('/sky/')) return `/m${href}`;
   if (href.startsWith('/generation-progress')) return `/m${href}`;
   if (href.startsWith('/classroom/')) return `/m${href}`;
@@ -15,8 +17,15 @@ function toMobileHref(href: string): string | null {
   if (typeof window !== 'undefined' && href === `${window.location.origin}/`) {
     return `${window.location.origin}/m/sky`;
   }
+  if (typeof window !== 'undefined' && href.startsWith(`${window.location.origin}/auth/`)) {
+    const url = new URL(href);
+    return `${url.origin}/m${url.pathname}${url.search}${url.hash}`;
+  }
   if (typeof window !== 'undefined' && href.startsWith(`${window.location.origin}/sky/`)) {
     const url = new URL(href);
+    if (url.pathname === '/sky/learning') {
+      return `${url.origin}/m/sky/study-lab${url.search}${url.hash}`;
+    }
     return `${url.origin}/m${url.pathname}${url.search}`;
   }
   if (

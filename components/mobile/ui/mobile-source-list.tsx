@@ -20,7 +20,7 @@ export function MobileSourceList({
 }: MobileSourceListProps) {
   if (sources.length === 0) {
     return (
-      <p className="text-xs text-slate-500 dark:text-slate-400">暂无来源引用</p>
+      <p className="text-[13px] text-slate-500 dark:text-slate-400">暂无来源引用</p>
     );
   }
 
@@ -32,16 +32,16 @@ export function MobileSourceList({
             <div className="flex items-start gap-2">
               <BookOpen className="mt-0.5 size-3.5 shrink-0 text-slate-400" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                <p className="text-[13px] font-medium text-slate-800 dark:text-slate-200">
                   {source.title}
                 </p>
                 {source.excerpt && (
-                  <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 line-clamp-2 text-[12px] text-slate-500 dark:text-slate-400">
                     {source.excerpt}
                   </p>
                 )}
                 {source.chapter && (
-                  <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+                  <p className="mt-0.5 text-[12px] text-slate-400 dark:text-slate-500">
                     {source.chapter}
                   </p>
                 )}

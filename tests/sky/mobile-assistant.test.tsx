@@ -7,6 +7,7 @@ const pushMock = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock }),
+  usePathname: () => '/m/sky/assistant',
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -30,10 +31,7 @@ describe('MobileAssistantPage', () => {
     expect(screen.getByRole('heading', { name: '云翼助手' })).toBeInTheDocument();
     expect(screen.getByText('助手配置')).toBeInTheDocument();
     expect(screen.getAllByText('小镜课堂').length).toBeGreaterThan(0);
-    expect(screen.getByAltText('小镜头像')).toHaveAttribute(
-      'src',
-      '/avatars/kagami/chibi.png',
-    );
+    expect(screen.getByAltText('小镜头像')).toHaveAttribute('src', '/avatars/kagami/chibi.png');
     expect(screen.getByText('提示：小镜会记住你们的对话')).toBeInTheDocument();
 
     const nav = screen.getByLabelText('助手导航');

@@ -1,5 +1,5 @@
-﻿import { MobileSkyFrame } from '@/components/mobile/mobile-sky-frame';
+import { redirect } from 'next/navigation';
 
-export default function MobileSkyMirrorPage() {
-  return <MobileSkyFrame src="/sky/learning" />;
+export default function MobileLearningLegacyPage() {
+  redirect('/m/sky/study-lab');
 }

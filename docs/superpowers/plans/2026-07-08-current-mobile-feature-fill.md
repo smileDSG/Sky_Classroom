@@ -88,7 +88,6 @@ describe('MobileCloudMindPage tool shelf', () => {
       '/m/sky/cloud-mind/memory',
       '/m/sky/cloud-mind/teaching',
       '/m/sky/cloud-mind/course-studio',
-      '/m/sky/question-bank',
     ];
 
     for (const href of expectedRoutes) {
@@ -97,6 +96,8 @@ describe('MobileCloudMindPage tool shelf', () => {
         href,
       );
     }
+    const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
+    expect(hrefs).not.toContain('/m/sky/question-bank');
   });
 });
 ```
@@ -109,7 +110,7 @@ Run:
 E:\01_Work\sky-classroom\node_modules\.bin\vitest.cmd run tests/sky/mobile-cloud-mind-tools.test.tsx
 ```
 
-Expected: FAIL because `/m/sky/cloud-mind/course-studio` and `/m/sky/question-bank` are not yet present in the tool shelf.
+Expected: FAIL because `/m/sky/cloud-mind/course-studio` is not yet present in the tool shelf, or because the shelf still contains the disallowed `/m/sky/question-bank` route.
 
 - [ ] **Step 3: Update the cloud mind tool list**
 
@@ -123,7 +124,6 @@ import {
   Brain,
   Camera,
   FileQuestion,
-  Library,
   Presentation,
   Route,
   Sparkles,
@@ -187,17 +187,10 @@ const tools: Array<{
     icon: Route,
     color: 'from-sky-500 to-indigo-600',
   },
-  {
-    label: '题库',
-    desc: '搜索与管理题目',
-    href: '/m/sky/question-bank',
-    icon: Library,
-    color: 'from-lime-500 to-emerald-600',
-  },
 ];
 ```
 
-The existing grid can stay as-is. If the final item currently spans two columns by index, keep that behavior or change it to a stable class based on `tool.href === '/m/sky/question-bank'`.
+The existing grid can stay as-is. Do not add question bank to this cloud mind shelf; question bank remains outside the primary AI tools entry.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -920,7 +913,8 @@ describe('MobileCourseStudioPage', () => {
     expect(screen.getByRole('heading', { name: '课程工作室' })).toBeInTheDocument();
     expect(screen.getByText('讲义')).toBeInTheDocument();
     expect(screen.getByText('PPT')).toBeInTheDocument();
-    expect(screen.getByText('题库')).toBeInTheDocument();
+    expect(screen.getByText('导图')).toBeInTheDocument();
+    expect(screen.queryByText('题库')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('学习目标'), {
       target: { value: '两周内补上 RAG 和过拟合' },
@@ -928,7 +922,7 @@ describe('MobileCourseStudioPage', () => {
 
     expect(screen.getByRole('link', { name: /打开完整工作室/ })).toHaveAttribute(
       'href',
-      '/sky/cloud-mind/course-studio?goal=%E4%B8%A4%E5%91%A8%E5%86%85%E8%A1%A5%E4%B8%8A%20RAG%20%E5%92%8C%E8%BF%87%E6%8B%9F%E5%90%88&types=markdown_lecture%2Cppt_outline%2Cquiz_bank',
+      '/sky/cloud-mind/course-studio?goal=%E4%B8%A4%E5%91%A8%E5%86%85%E8%A1%A5%E4%B8%8A%20RAG%20%E5%92%8C%E8%BF%87%E6%8B%9F%E5%90%88&types=markdown_lecture%2Cppt_outline',
     );
   });
 });
@@ -953,7 +947,7 @@ Create `app/m/sky/cloud-mind/course-studio/page.tsx`:
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, FileQuestion, Map, Presentation, Route, Sparkles } from 'lucide-react';
+import { ArrowLeft, BookOpen, Map, Presentation, Route, Sparkles } from 'lucide-react';
 import { MobileSkyShell } from '@/components/mobile/mobile-sky-shell';
 import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
 import { cn } from '@/lib/utils';
@@ -961,17 +955,12 @@ import { cn } from '@/lib/utils';
 const resourceTypes = [
   { id: 'markdown_lecture', label: '讲义', icon: BookOpen },
   { id: 'ppt_outline', label: 'PPT', icon: Presentation },
-  { id: 'quiz_bank', label: '题库', icon: FileQuestion },
   { id: 'mind_map', label: '导图', icon: Map },
 ];
 
 export default function MobileCourseStudioPage() {
   const [goal, setGoal] = useState('两周内补上 RAG 和过拟合');
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([
-    'markdown_lecture',
-    'ppt_outline',
-    'quiz_bank',
-  ]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(['markdown_lecture', 'ppt_outline']);
 
   const advancedHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -1001,7 +990,7 @@ export default function MobileCourseStudioPage() {
             </span>
             <div>
               <h1 className="text-[24px] font-extrabold leading-none text-white">课程工作室</h1>
-              <p className="mt-1 text-[12px] font-semibold text-slate-400">基于画像生成讲义、课件、题库和学习路径。</p>
+              <p className="mt-1 text-[12px] font-semibold text-slate-400">基于画像生成讲义、课件、导图和学习路径。</p>
             </div>
           </div>
         </section>

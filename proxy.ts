@@ -5,6 +5,7 @@ import { verifyAccessToken } from '@/lib/server/auth/jwt';
 const PUBLIC_PATHS = [
   '/',
   '/auth',
+  '/m/auth',
   '/api/auth',
   '/api/access-code/status',
   '/api/server-providers',
@@ -46,9 +47,17 @@ function isApiRoute(pathname: string): boolean {
   return pathname.startsWith('/api/');
 }
 
+function getLoginPath(pathname: string): string {
+  return pathname === '/m' || pathname.startsWith('/m/') ? '/m/auth/login' : '/auth/login';
+}
+
 function isPublicReadRequest(request: NextRequest): boolean {
   const { pathname } = request.nextUrl;
   return request.method === 'GET' && pathname === '/api/classroom';
+}
+
+function normalizeMobileRedirectPath(pathname: string): string {
+  return pathname === '/m/sky/learning' ? '/m/sky/study-lab' : pathname;
 }
 
 export default async function proxy(request: NextRequest) {
@@ -85,9 +94,10 @@ export default async function proxy(request: NextRequest) {
  * so the user returns to exactly where they were after authenticating.
  */
 function redirectToLogin(request: NextRequest, pathname: string): NextResponse {
-  const loginUrl = new URL('/auth/login', request.url);
+  const redirectPathname = normalizeMobileRedirectPath(pathname);
+  const loginUrl = new URL(getLoginPath(redirectPathname), request.url);
   const { search } = request.nextUrl;
-  loginUrl.searchParams.set('redirect', search ? `${pathname}${search}` : pathname);
+  loginUrl.searchParams.set('redirect', search ? `${redirectPathname}${search}` : redirectPathname);
   loginUrl.searchParams.set('reason', 'login_required');
   return NextResponse.redirect(loginUrl);
 }

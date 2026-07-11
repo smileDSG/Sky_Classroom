@@ -5,10 +5,23 @@ import { cn } from '@/lib/utils';
 
 interface MobileSkyShellProps {
   children: ReactNode;
+  fullBleed?: boolean;
 }
 
-export function MobileSkyShell({ children }: MobileSkyShellProps) {
+export function MobileContentShell({ children, fullBleed = false }: MobileSkyShellProps) {
   return (
-    <main className={cn('px-4 pb-6 pt-3', 'space-y-3')}>{children}</main>
+    <main
+      className={cn(
+        'w-full pb-[calc(env(safe-area-inset-bottom)+5rem)]',
+        !fullBleed && ['px-4 pt-4', 'space-y-4'],
+        fullBleed && 'pt-0',
+      )}
+    >
+      {children}
+    </main>
   );
+}
+
+export function MobileSkyShell({ children, fullBleed = false }: MobileSkyShellProps) {
+  return <MobileContentShell fullBleed={fullBleed}>{children}</MobileContentShell>;
 }

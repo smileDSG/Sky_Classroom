@@ -844,7 +844,7 @@ function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPagePr
       {/* Top bar */}
       <header
         className="relative z-10 flex flex-shrink-0 items-center border-b border-[var(--celestial-haze)]/10 px-5 h-14 backdrop-blur-2xl"
-        style={{ background: 'rgba(11, 16, 33, 0.6)' }}
+        style={{ background: 'var(--celestial-surface)' }}
       >
         {/* Left: back + brand */}
         <div className="flex flex-shrink-0 items-center gap-2.5">
@@ -866,10 +866,10 @@ function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPagePr
           <div className="h-5 w-px bg-[var(--celestial-haze)]/20" />
           <div className="flex items-center gap-2">
             <div
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--celestial-starlight)]"
               style={{
                 background: 'linear-gradient(135deg, rgba(139,92,246,0.35), rgba(56,189,248,0.25))',
-                boxShadow: '0 0 10px rgba(139,92,246,0.25), inset 0 0 0 1px rgba(255,255,255,0.08)',
+                boxShadow: '0 0 10px rgba(139,92,246,0.25), inset 0 0 0 1px var(--celestial-border)',
               }}
             >
               <svg
@@ -1068,7 +1068,7 @@ function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPagePr
 
       {/* Cover Loading Overlay */}
       {coverLoading && (
-        <div className="fixed inset-0 z-[101] flex items-center justify-center bg-slate-950/30 backdrop-blur-sm animate-fade-in-scale">
+        <div className="fixed inset-0 z-[101] flex items-center justify-center bg-slate-400/30 backdrop-blur-sm animate-fade-in-scale dark:bg-slate-950/30">
           <div className="relative flex flex-col items-center gap-6 rounded-2xl bg-white/95 dark:bg-slate-900/95 p-8 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.2)] max-w-sm w-full mx-4 border border-slate-100 dark:border-slate-800">
             {/* Stage indicator */}
             <div className="flex items-center gap-2 w-full">

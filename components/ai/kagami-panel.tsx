@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { createPortal } from 'react-dom';
+import { BookOpen, Send, Sparkles, Volume2, VolumeX, X } from 'lucide-react';
 import { InlineMath } from '@/components/ui/inline-math';
 import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
 
@@ -104,8 +105,9 @@ interface Message {
   content: string;
 }
 
-export function KagamiPanel() {
+export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
+
   const [open, setOpen] = useState(false);
   const [scene, setScene] = useState<Scene>('idle');
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -344,16 +346,21 @@ export function KagamiPanel() {
     [voiceOn],
   );
 
-  // Keyboard shortcut
+  // Keyboard shortcut + custom event for opening from other components
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
         e.preventDefault();
         setOpen((v) => !v);
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    const onOpen = () => setOpen(true);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('open-kagami-panel', onOpen);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('open-kagami-panel', onOpen);
+    };
   }, []);
 
   // Auto-scroll
@@ -551,7 +558,8 @@ export function KagamiPanel() {
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/sky/software-cup') ||
     pathname?.startsWith('/sky/cloud-mind/course-studio') ||
-    pathname?.startsWith('/sky/study-lab')
+    pathname?.startsWith('/sky/study-lab') ||
+    (mobile && pathname === '/m/auth/login')
   ) {
     return null;
   }
@@ -578,7 +586,7 @@ export function KagamiPanel() {
       <button
         ref={fabRef}
         aria-label={mode === 'anime' ? '打开小镜课堂' : '打开 AI 学习助手'}
-        className={`fixed z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${open ? 'hidden' : ''}`}
+        className={`fixed z-50 h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${mobile || pathname?.startsWith('/m/') ? 'hidden' : 'flex'} ${open ? 'hidden' : ''}`}
         style={hasDragged ? { left: pos.x, top: pos.y } : { right: 24, bottom: 24 }}
         title={
           mode === 'anime'
@@ -596,58 +604,72 @@ export function KagamiPanel() {
 
       {/* Panel */}
       {open && (
-        <div
-          ref={panelRef}
-          className="fixed bottom-6 right-6 z-50 flex h-[560px] w-[420px] rounded-xl bg-white dark:bg-slate-900 shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden"
-        >
-          {/* Character area */}
-          <div
-            className={`relative flex w-[160px] flex-shrink-0 items-end overflow-hidden ${
-              mode === 'anime'
-                ? 'bg-gradient-to-b from-[#f0e6f6] to-[#e8d5f0] dark:from-slate-900 dark:to-slate-800'
-                : 'bg-gradient-to-b from-[#e0ecf8] to-[#d0dff0] dark:from-slate-900 dark:to-slate-800'
+        <>
+          {mobile && (
+            <button
+              type="button"
+              aria-label="关闭学习助手"
+              className="absolute inset-0 z-[99] cursor-default bg-slate-950/35 backdrop-blur-[2px]"
+              onClick={() => setOpen(false)}
+            />
+          )}
+          <section
+            ref={panelRef}
+            role="dialog"
+            aria-modal={mobile || undefined}
+            aria-label={mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}
+            className={`flex flex-col overflow-hidden border bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 ${
+              mobile
+                ? 'absolute inset-x-0 bottom-0 z-[100] h-[min(72dvh,620px)] rounded-t-3xl border-x-0 border-b-0'
+                : 'fixed bottom-4 right-4 z-50 h-[min(620px,calc(100dvh-2rem))] w-[min(420px,calc(100vw-2rem))] rounded-lg border-gray-200'
             }`}
           >
-            <div data-kagami className="absolute inset-0 flex items-center justify-center">
-              <img
-                key={sceneKey.current}
-                src={mode === 'anime' ? SCENES[scene] : NORMAL_SCENES[scene]}
-                alt="小镜"
-                className={`${mode === 'normal' ? 'drop-shadow-md' : ''} max-h-full w-auto object-contain`}
-                style={{
-                  animation: transition
-                    ? 'kagamiSlideOut 350ms ease-in forwards'
-                    : `kagamiSlideIn 400ms ease-out forwards ${mode === 'normal' ? ', avatarPulse 3s ease-in-out infinite' : ''}`,
-                }}
-              />
-            </div>
-            {/* Scene label */}
-            <div className="absolute bottom-2 left-0 right-0 text-center">
-              <span
-                className={`text-xs bg-white/70 dark:bg-slate-800/80 rounded-full px-2 py-0.5 ${
+            {mobile && (
+              <div className="flex h-5 shrink-0 items-center justify-center" aria-hidden="true">
+                <span className="h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-600" />
+              </div>
+            )}
+
+            {/* Header */}
+            <div className="flex min-h-16 shrink-0 items-center gap-3 border-b border-slate-200 px-4 dark:border-slate-700">
+              <div
+                data-kagami
+                className={`relative size-10 shrink-0 overflow-hidden rounded-full border ${
                   mode === 'anime'
-                    ? 'text-purple-400 dark:text-purple-300'
-                    : 'text-blue-500 dark:text-blue-300'
+                    ? 'border-violet-200 bg-violet-50 dark:border-violet-700 dark:bg-violet-950/40'
+                    : 'border-sky-200 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/40'
                 }`}
               >
-                {scene === 'idle' && (mode === 'anime' ? '……' : '待命中')}
-                {scene === 'thinking' && (mode === 'anime' ? '正在思考……' : '思考中...')}
-                {scene === 'teaching' && (mode === 'anime' ? '讲解中……' : '讲解中...')}
-                {scene === 'done' && (mode === 'anime' ? '哼，解决了。' : '已解答 ✅')}
-              </span>
-            </div>
-          </div>
-
-          {/* Chat area */}
-          <div className="flex flex-1 flex-col min-w-0">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 px-3 py-2.5">
-              <span className="font-semibold text-sm text-gray-800 dark:text-slate-100">
-                {mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}
-              </span>
-              <div className="flex items-center gap-1.5">
+                <img
+                  key={sceneKey.current}
+                  src={mode === 'anime' ? SCENES[scene] : NORMAL_SCENES[scene]}
+                  alt={mode === 'anime' ? '小镜头像' : 'AI 学习助手头像'}
+                  className={`size-full ${mode === 'normal' ? 'object-cover' : 'object-contain'}`}
+                  style={{
+                    animation: transition
+                      ? 'kagamiSlideOut 350ms ease-in forwards'
+                      : 'kagamiSlideIn 400ms ease-out forwards',
+                  }}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  {mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}
+                </h2>
+                <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <span
+                    className={`size-1.5 rounded-full ${loading ? 'animate-pulse bg-amber-400' : 'bg-emerald-500'}`}
+                  />
+                  {scene === 'idle' && '随时可以提问'}
+                  {scene === 'thinking' && '正在思考'}
+                  {scene === 'teaching' && '正在组织讲解'}
+                  {scene === 'done' && '解答完成'}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
                 {/* Mode toggle */}
                 <button
+                  type="button"
                   onClick={() => {
                     const next = mode === 'anime' ? 'normal' : 'anime';
                     setMode(next);
@@ -657,10 +679,10 @@ export function KagamiPanel() {
                       /* ignore */
                     }
                   }}
-                  className={`rounded px-1.5 py-0.5 text-xs transition-colors font-medium ${
+                  className={`flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors ${
                     mode === 'anime'
-                      ? 'bg-pink-100 text-pink-600 dark:bg-pink-950/30 dark:text-pink-300'
-                      : 'bg-blue-100 text-blue-600 dark:bg-blue-950/30 dark:text-blue-300'
+                      ? 'bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/40 dark:text-violet-300'
+                      : 'bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-950/40 dark:text-sky-300'
                   }`}
                   title={
                     mode === 'anime'
@@ -668,25 +690,36 @@ export function KagamiPanel() {
                       : '当前：常规版 — 点击切换二次元版'
                   }
                 >
-                  {mode === 'anime' ? '🌸 二次元' : '📖 常规'}
+                  {mode === 'anime' ? (
+                    <Sparkles className="size-4" />
+                  ) : (
+                    <BookOpen className="size-4" />
+                  )}
+                  <span className={mobile ? 'sr-only' : ''}>
+                    {mode === 'anime' ? '二次元' : '常规'}
+                  </span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setVoiceOn((v) => !v)}
-                  className={`rounded px-1.5 py-0.5 text-xs transition-colors ${
+                  aria-label={voiceOn ? '关闭语音' : '开启语音'}
+                  aria-pressed={voiceOn}
+                  className={`flex size-11 items-center justify-center rounded-md transition-colors ${
                     voiceOn
-                      ? 'bg-purple-100 text-purple-600 dark:bg-purple-950/30 dark:text-purple-300'
-                      : 'bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-500'
+                      ? 'text-violet-600 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-950/40'
+                      : 'text-slate-400 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-800'
                   }`}
                   title={voiceOn ? '语音已开启' : '语音已关闭'}
                 >
-                  {voiceOn ? '🔊' : '🔇'}
+                  {voiceOn ? <Volume2 className="size-5" /> : <VolumeX className="size-5" />}
                 </button>
-                <span className="text-[10px] text-gray-400">Ctrl+Shift+A</span>
                 <button
+                  type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded p-0.5 text-gray-400 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                  aria-label="关闭学习助手"
+                  className="flex size-11 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                 >
-                  ✕
+                  <X className="size-5" />
                 </button>
               </div>
             </div>
@@ -694,18 +727,32 @@ export function KagamiPanel() {
             {/* Messages */}
             <div
               ref={listRef}
-              className="flex-1 overflow-y-auto px-3 py-2 space-y-2"
+              className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"
               style={{ overscrollBehavior: 'contain' }}
             >
               {messages.length === 0 && (
-                <div className="py-6 text-center text-sm text-gray-400 dark:text-slate-400">
-                  <p className="text-lg mb-1">💜</p>
-                  <p className="text-xs">
+                <div className="flex min-h-full flex-col items-center justify-center py-4 text-center">
+                  <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-300">
+                    <Sparkles className="size-5" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
                     {mode === 'anime' ? '遇到不会的题目了？' : '有任何学习问题，尽管问我'}
                   </p>
-                  <p className="text-xs text-gray-300 dark:text-slate-500">
+                  <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
                     {mode === 'anime' ? '输入问题，小镜会帮你' : '输入题目，我会耐心解答'}
                   </p>
+                  <div className="mt-5 flex w-full max-w-[320px] flex-wrap justify-center gap-2">
+                    {['讲解这道题', '梳理知识点', '制定复习计划'].map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => setInput(prompt)}
+                        className="min-h-10 rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-violet-700 dark:hover:bg-violet-950/30"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
               {messages.map((m, i) => (
@@ -714,10 +761,10 @@ export function KagamiPanel() {
                   className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs leading-relaxed ${
+                    className={`max-w-[88%] rounded-lg px-3 py-2 text-sm leading-6 ${
                       m.role === 'user'
-                        ? 'bg-purple-500 text-white'
-                        : 'bg-purple-50 dark:bg-purple-950/30 text-gray-700 dark:text-slate-200'
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'
                     }`}
                   >
                     {m.content ? <InlineMath text={m.content} /> : loading ? '...' : ''}
@@ -727,9 +774,9 @@ export function KagamiPanel() {
             </div>
 
             {/* Input */}
-            <div className="border-t border-gray-200 dark:border-slate-700 px-2 py-2">
-              <div className="flex gap-1.5">
-                <input
+            <div className="shrink-0 border-t border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+              <div className="flex items-end gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1.5 transition-colors focus-within:border-violet-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-violet-100 dark:border-slate-700 dark:bg-slate-800 dark:focus-within:border-violet-500 dark:focus-within:bg-slate-900 dark:focus-within:ring-violet-950">
+                <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -739,19 +786,25 @@ export function KagamiPanel() {
                     }
                   }}
                   placeholder="输入题目……"
-                  className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-purple-400 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 dark:focus:border-purple-400"
+                  rows={1}
+                  className="max-h-24 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-5 text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
                 <button
+                  type="button"
                   onClick={handleSubmit}
                   disabled={!input.trim() || loading}
-                  className="rounded-lg bg-purple-500 px-3 py-1.5 text-xs text-white hover:bg-purple-600 disabled:opacity-50 transition-colors"
+                  aria-label="发送问题"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-md bg-violet-600 text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
                 >
-                  发送
+                  <Send className="size-4" />
                 </button>
               </div>
+              <p className="mt-1.5 px-1 text-[11px] text-slate-400 dark:text-slate-500">
+                Enter 发送，Shift + Enter 换行
+              </p>
             </div>
-          </div>
-        </div>
+          </section>
+        </>
       )}
 
       {/* ── translate popup (portal) ─────────────────────────── */}

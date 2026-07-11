@@ -33,6 +33,35 @@ describe('proxy public classroom reads', () => {
   });
 });
 
+describe('proxy mobile auth routing', () => {
+  test('allows mobile auth pages without an access token', async () => {
+    const response = await proxy(new NextRequest('http://localhost:3000/m/auth/login'));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+  });
+
+  test('redirects protected mobile pages to the mobile login route', async () => {
+    const response = await proxy(
+      new NextRequest('http://localhost:3000/m/sky/cloud-mind?tab=quiz'),
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:3000/m/auth/login?redirect=%2Fm%2Fsky%2Fcloud-mind%3Ftab%3Dquiz&reason=login_required',
+    );
+  });
+
+  test('normalizes the legacy mobile learning entry before preserving login redirect', async () => {
+    const response = await proxy(new NextRequest('http://localhost:3000/m/sky/learning'));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:3000/m/auth/login?redirect=%2Fm%2Fsky%2Fstudy-lab&reason=login_required',
+    );
+  });
+});
+
 describe('proxy public software cup demo routes', () => {
   test('allows the software cup showcase page without an access token', async () => {
     const response = await proxy(new NextRequest('http://localhost:3000/sky/software-cup'));

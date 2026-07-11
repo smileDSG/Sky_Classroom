@@ -83,9 +83,10 @@ export function SkyClassroomEntry() {
     setCollapsed((prev) => !prev);
   }, []);
 
-  // Hide on sky classroom pages, mobile pages, homepage, and the presentation classroom itself.
+  // Hide on app-owned pages where the global web shortcut would compete with page chrome.
   const hidden =
     !pathname ||
+    pathname.startsWith('/auth') ||
     pathname.startsWith('/sky') ||
     pathname.startsWith('/m') ||
     pathname.startsWith('/classroom') ||

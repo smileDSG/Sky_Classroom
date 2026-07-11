@@ -35,6 +35,7 @@ import { StudyGroupPanel } from './study-group-panel';
 import { TTSButton } from './tts-button';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useAuth } from '@/components/auth/auth-provider';
+import { getAuthLoginPath } from '@/lib/client/fetch-interceptor';
 import { toast } from 'sonner';
 import {
   submitTeachingJob,
@@ -775,7 +776,7 @@ export function TeachingPanel({
             },
           });
           setTimeout(() => {
-            window.location.href = '/auth/login';
+            window.location.href = getAuthLoginPath(window.location.pathname);
           }, 5000);
           return;
         }
@@ -867,7 +868,7 @@ export function TeachingPanel({
           });
           // Delay redirect to allow user to see the toast
           setTimeout(() => {
-            window.location.href = '/auth/login';
+            window.location.href = getAuthLoginPath(window.location.pathname);
           }, 5000);
           return;
         }

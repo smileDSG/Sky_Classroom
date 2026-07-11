@@ -858,6 +858,11 @@ export function SolvePage({
             </CardHeader>
             <CardContent className="p-4">
               <MultimodalInput
+                key={
+                  previewImage
+                    ? `${previewImage.length}:${previewImage.slice(0, 48)}`
+                    : 'empty-preview'
+                }
                 onSubmit={handleSubmit}
                 onGrade={state === 'success' ? handleGrade : undefined}
                 isLoading={isLoading}

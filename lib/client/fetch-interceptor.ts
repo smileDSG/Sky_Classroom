@@ -12,6 +12,14 @@ let installed = false;
 let refreshingPromise: Promise<boolean> | null = null;
 let redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
+export function getAuthLoginPath(pathname: string) {
+  return pathname === '/m' || pathname.startsWith('/m/') ? '/m/auth/login' : '/auth/login';
+}
+
+export function isAuthRoute(pathname: string) {
+  return pathname.startsWith('/auth/') || pathname.startsWith('/m/auth/');
+}
+
 /**
  * Attempt a token refresh. Returns true if refresh succeeded.
  * Concurrent callers share the same promise to avoid duplicate requests.
@@ -41,9 +49,11 @@ function scheduleRedirect() {
   if (redirectTimer) return; // already scheduled
   redirectTimer = setTimeout(() => {
     redirectTimer = null;
+    if (isAuthRoute(window.location.pathname)) return;
     toast.warning('请先登录后再操作');
-    const currentPath = window.location.pathname;
-    window.location.href = `/auth/login?redirect=${encodeURIComponent(currentPath)}&reason=login_required`;
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const loginPath = getAuthLoginPath(window.location.pathname);
+    window.location.href = `${loginPath}?redirect=${encodeURIComponent(currentPath)}&reason=login_required`;
   }, 500);
 }
 
@@ -65,7 +75,12 @@ export function installFetchInterceptor() {
     const res = await originalFetch(...args);
 
     if (res.status === 401) {
-      const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : args[0]?.url;
+      const url =
+        typeof args[0] === 'string'
+          ? args[0]
+          : args[0] instanceof URL
+            ? args[0].href
+            : args[0]?.url;
       const method = (
         typeof args[1] === 'object' && args[1] ? args[1].method : undefined
       )?.toUpperCase();

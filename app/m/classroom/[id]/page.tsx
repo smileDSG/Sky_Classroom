@@ -1,11 +1,19 @@
-import { MobileSkyFrame } from '@/components/mobile/mobile-sky-frame';
+'use client';
 
-export default async function MobileClassroomPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+import { useParams } from 'next/navigation';
+import { MobileClassroomPlayer } from '@/components/mobile/classroom/mobile-classroom-player';
 
-  return <MobileSkyFrame src={`/classroom/${encodeURIComponent(id)}`} />;
+export default function MobileClassroomPage() {
+  const params = useParams();
+  const classroomId = params?.id as string;
+
+  if (!classroomId) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-[#020817] text-slate-100">
+        <p className="text-sm text-slate-400">课堂 ID 无效</p>
+      </div>
+    );
+  }
+
+  return <MobileClassroomPlayer classroomId={classroomId} />;
 }

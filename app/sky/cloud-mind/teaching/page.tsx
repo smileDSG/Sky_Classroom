@@ -7,7 +7,6 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTheme } from '@/lib/hooks/use-theme';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 
 export default function CloudMindTeachingRoute() {
@@ -21,25 +20,18 @@ export default function CloudMindTeachingRoute() {
 function CloudMindTeachingFallback() {
   return (
     <div
-      className="relative min-h-screen dark"
-      style={{ background: 'linear-gradient(180deg, #070E0C 0%, #0D1A17 50%, #070E0C 100%)' }}
+      className="relative min-h-screen bg-[var(--teaching-void)]"
     />
   );
 }
 
 function CloudMindTeachingContent() {
-  const { setForceDark } = useTheme();
   const searchParams = useSearchParams();
   const queryTopic = searchParams.get('topic');
   const [contextTopic, setContextTopic] = useState('');
   const [personalizationNotice, setPersonalizationNotice] = useState<string | null>(null);
   const effectiveInitialTopic = queryTopic ?? contextTopic;
   const effectivePersonalizationNotice = queryTopic ? null : personalizationNotice;
-
-  useEffect(() => {
-    setForceDark(true);
-    return () => setForceDark(false);
-  }, [setForceDark]);
 
   useEffect(() => {
     if (queryTopic) {
@@ -71,10 +63,7 @@ function CloudMindTeachingContent() {
   }, [queryTopic]);
 
   return (
-    <div
-      className="relative min-h-screen dark"
-      style={{ background: 'linear-gradient(180deg, #070E0C 0%, #0D1A17 50%, #070E0C 100%)' }}
-    >
+    <div className="relative min-h-screen bg-[var(--teaching-void)]">
       {/* Deep space starfield */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <CelestialCanvas starCount={100} parallax={false} nebula grid={false} />
@@ -90,6 +79,7 @@ function CloudMindTeachingContent() {
       <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 pt-6 pb-12">
         {/* Back button */}
         <motion.div
+          data-sky-desktop-top-actions
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           className="mb-6"

@@ -2,26 +2,15 @@ import Link from 'next/link';
 import {
   ArrowRight,
   Bot,
-  Brain,
   CalendarClock,
   Camera,
-  ChartNoAxesColumnIncreasing,
-  GraduationCap,
   Moon,
   Presentation,
   Star,
-  Telescope,
   type LucideIcon,
 } from 'lucide-react';
 import { MobileSkyShell } from '@/components/mobile/mobile-sky-shell';
-
-const tabs: Array<{ label: string; href: string; icon: LucideIcon; active?: boolean }> = [
-  { label: '天穹授课', href: '/m/sky', icon: GraduationCap },
-  { label: '摘星锦囊', href: '/m/sky/learning/review', icon: Star, active: true },
-  { label: '云端智囊', href: '/m/sky/cloud-mind', icon: Brain },
-  { label: '天梯工坊', href: '/m/sky/study-lab', icon: ChartNoAxesColumnIncreasing },
-  { label: '云翼助手', href: '/m/sky/assistant', icon: Telescope },
-];
+import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
 
 const startActions: Array<{
   label: string;
@@ -67,30 +56,8 @@ const startActions: Array<{
 
 export default function MobileReviewPage() {
   return (
-    <MobileSkyShell>
-      <div className="space-y-2.5 pb-4">
-        <nav className="grid grid-cols-5 gap-1 rounded-[18px] border border-white/8 bg-white/[0.04] p-1.5">
-          {tabs.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex min-w-0 flex-col items-center gap-1 rounded-[14px] px-1 py-1.5 text-center ${
-                  item.active
-                    ? 'bg-white/10 text-white ring-1 ring-sky-300/25'
-                    : 'text-slate-400 active:bg-white/7'
-                }`}
-              >
-                <Icon className={`size-3.5 ${item.active ? 'text-sky-300' : 'text-slate-500'}`} />
-                <span className="w-full truncate text-[10px] font-semibold leading-tight">
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
-
+    <MobileSkyShell fullBleed>
+      <div className="space-y-2.5 px-4 pb-24">
         <section className="rounded-[18px] border border-white/8 bg-[#101a2b] px-3.5 py-3 shadow-lg shadow-slate-950/20">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2.5">
@@ -101,12 +68,12 @@ export default function MobileReviewPage() {
                 <span className="block truncate text-[19px] font-extrabold leading-tight text-white">
                   下午好，同学！
                 </span>
-                <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-400">
+                <span className="mt-0.5 block truncate text-[13px] font-medium text-slate-400">
                   开始你的第一道练习吧！
                 </span>
               </span>
             </div>
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/8 bg-white/[0.05] px-2 py-1 text-[11px] font-semibold text-slate-300">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/8 bg-white/[0.05] px-2 py-1 text-[12px] font-semibold text-slate-300">
               <span className="size-1.5 rounded-full bg-emerald-400" />
               学习中
             </span>
@@ -119,11 +86,11 @@ export default function MobileReviewPage() {
               <Star className="size-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-bold text-slate-400">新手起步</div>
+              <div className="text-[12px] font-bold text-slate-400">新手起步</div>
               <h1 className="mt-0.5 truncate text-[18px] font-extrabold text-white">
                 欢迎来到摘星锦囊
               </h1>
-              <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-slate-400">
+              <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-slate-400">
                 先完成一道练习，系统会在这里汇总错题、趋势和下一步建议。
               </p>
             </div>
@@ -169,7 +136,7 @@ export default function MobileReviewPage() {
                       <span className="block truncate text-[16px] font-extrabold leading-tight text-white">
                         {action.label}
                       </span>
-                      <span className="mt-1.5 block truncate text-[11px] font-semibold text-slate-400">
+                      <span className="mt-1.5 block truncate text-[13px] font-semibold text-slate-400">
                         {action.desc}
                       </span>
                     </span>
@@ -180,6 +147,7 @@ export default function MobileReviewPage() {
           </div>
         </section>
       </div>
+      <MobileQuickEntranceNav />
     </MobileSkyShell>
   );
 }

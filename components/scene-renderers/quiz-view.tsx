@@ -120,9 +120,9 @@ function QuizCover({
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-        className="w-16 h-16 bg-gradient-to-br from-violet-100 to-purple-50 dark:from-violet-900/50 dark:to-purple-900/30 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-100 dark:shadow-violet-900/30 ring-1 ring-violet-200/50 dark:ring-violet-700/50"
+        className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-violet-100 to-purple-50 dark:from-violet-900/50 dark:to-purple-900/30 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-100 dark:shadow-violet-900/30 ring-1 ring-violet-200/50 dark:ring-violet-700/50"
       >
-        <PieChart className="w-8 h-8 text-violet-500" />
+        <PieChart className="w-7 h-7 sm:w-8 sm:h-8 text-violet-500" />
       </motion.div>
 
       <motion.div
@@ -166,7 +166,7 @@ function QuizCover({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={onStart}
-        className="mt-1 px-8 py-2.5 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-full font-medium shadow-lg shadow-violet-200/50 dark:shadow-violet-900/50 hover:shadow-violet-300/50 transition-shadow z-10 flex items-center gap-2"
+        className="mt-1 px-7 py-3 sm:px-8 sm:py-2.5 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-full font-medium shadow-lg shadow-violet-200/50 dark:shadow-violet-900/50 hover:shadow-violet-300/50 transition-shadow z-10 flex items-center gap-2 min-h-[44px]"
       >
         {'开始答题'}
         <ChevronRight className="w-4 h-4" />
@@ -206,7 +206,7 @@ function SingleChoiceQuestion({
               disabled={disabled}
               onClick={() => !disabled && onChange(opt.value)}
               className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all text-sm',
+                'flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all text-sm min-h-[44px]',
                 // Default state
                 !isReview &&
                   !selected &&
@@ -312,7 +312,7 @@ function MultipleChoiceQuestion({
               disabled={disabled}
               onClick={() => toggle(opt.value)}
               className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all text-sm',
+                'flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all text-sm min-h-[44px]',
                 !isReview &&
                   !isSelected &&
                   'border-gray-200 dark:border-gray-600 hover:border-violet-200 dark:hover:border-violet-700 hover:bg-violet-50/50 dark:hover:bg-violet-900/30',
@@ -464,7 +464,7 @@ function QuestionCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       className={cn(
-        'bg-white dark:bg-gray-800 rounded-2xl border p-5 relative overflow-hidden',
+        'bg-white dark:bg-gray-800 rounded-2xl border p-4 sm:p-5 relative overflow-hidden',
         !isReview && 'border-gray-150 dark:border-gray-700 shadow-sm',
         isReview &&
           result.status === 'correct' &&
@@ -570,14 +570,14 @@ function ScoreBanner({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={cn('rounded-2xl p-6 bg-gradient-to-r text-white shadow-lg', c.bg, c.shadow)}
+      className={cn('rounded-2xl p-4 sm:p-6 bg-gradient-to-r text-white shadow-lg', c.bg, c.shadow)}
     >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-white/80 text-sm font-medium">{c.text}</p>
           <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-4xl font-black">{score}</span>
-            <span className="text-white/60 text-lg">/ {total}</span>
+            <span className="text-3xl sm:text-4xl font-black">{score}</span>
+            <span className="text-white/60 text-base sm:text-lg">/ {total}</span>
           </div>
           <div className="flex gap-3 mt-3 text-xs">
             <span className="flex items-center gap-1">
@@ -779,7 +779,7 @@ export function QuizView({
             className="flex-1 flex flex-col min-h-0"
           >
             {/* Header bar */}
-            <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur shrink-0">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur shrink-0">
               <div className="flex items-center gap-2">
                 <PieChart className="w-4 h-4 text-violet-500" />
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
@@ -811,7 +811,7 @@ export function QuizView({
             </div>
 
             {/* Questions */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
               {questions.map((q, i) => {
                 if (q.type === 'single') {
                   return (
@@ -894,7 +894,7 @@ export function QuizView({
             className="flex-1 flex flex-col min-h-0"
           >
             {/* Header bar */}
-            <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur shrink-0">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur shrink-0">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
@@ -911,7 +911,7 @@ export function QuizView({
             </div>
 
             {/* Results */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
               <ScoreBanner score={earnedScore} total={totalPoints} results={results} />
 
               {/* Knowledge Points Summary */}

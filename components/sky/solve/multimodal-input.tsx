@@ -33,6 +33,15 @@ function dataUrlToFile(dataUrl: string, filename = 'photo.png'): File {
   return new File([bytes], filename, { type: mime });
 }
 
+function getInitialImageFile(previewUrl?: string | null): File | null {
+  if (!previewUrl) return null;
+  try {
+    return dataUrlToFile(previewUrl);
+  } catch {
+    return null;
+  }
+}
+
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp';
 
 export function MultimodalInput({
@@ -43,28 +52,18 @@ export function MultimodalInput({
   initialPreviewUrl,
 }: MultimodalInputProps) {
   const [activeTab, setActiveTab] = useState<'camera' | 'voice' | 'text'>('camera');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(
+    () => initialPreviewUrl ?? null,
+  );
+  const [selectedFile, setSelectedFile] = useState<File | null>(() =>
+    getInitialImageFile(initialPreviewUrl),
+  );
   const [textInput, setTextInput] = useState('');
   const [userAnswer, setUserAnswer] = useState('');
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const hasInitialized = useRef(false);
-
-  // Restore image from parent after page navigation
-  useEffect(() => {
-    if (hasInitialized.current) return;
-    if (initialPreviewUrl) {
-      setSelectedImage(initialPreviewUrl);
-      try {
-        setSelectedFile(dataUrlToFile(initialPreviewUrl));
-      } catch {
-        // If data URL conversion fails, still show the image
-      }
-      hasInitialized.current = true;
-    }
-  }, [initialPreviewUrl]);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   /** Shared file processing: validate → read → store */
   const processFile = useCallback((file: File) => {
@@ -90,13 +89,17 @@ export function MultimodalInput({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) processFile(file);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      e.currentTarget.value = '';
     },
     [processFile],
   );
 
-  const triggerFileInput = useCallback(() => {
-    fileInputRef.current?.click();
+  const triggerCameraInput = useCallback(() => {
+    cameraInputRef.current?.click();
+  }, []);
+
+  const triggerGalleryInput = useCallback(() => {
+    galleryInputRef.current?.click();
   }, []);
 
   // ── Drag & drop ──
@@ -155,8 +158,11 @@ export function MultimodalInput({
     setSelectedImage(null);
     setSelectedFile(null);
     setImageError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = '';
     }
   }, []);
 
@@ -200,7 +206,13 @@ export function MultimodalInput({
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
-      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as typeof activeTab); setImageError(null); }}>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => {
+          setActiveTab(v as typeof activeTab);
+          setImageError(null);
+        }}
+      >
         <TabsList className="grid w-full grid-cols-3 probe-panel border-[var(--probe-border)] p-1 gap-1">
           <TabsTrigger
             value="camera"
@@ -236,12 +248,11 @@ export function MultimodalInput({
         <div className="space-y-3">
           {!selectedImage ? (
             <div
-              onClick={triggerFileInput}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={cn(
-                'cursor-pointer relative rounded-xl border-2 border-dashed p-8 transition-all overflow-hidden',
+                'relative overflow-hidden rounded-xl border-2 border-dashed p-5 transition-all sm:p-8',
                 isDraggingOver
                   ? 'border-[var(--probe-primary)] bg-gradient-to-br from-[var(--probe-primary)]/15 to-[var(--probe-accent)]/10 scale-[1.02] shadow-[0_0_24px_var(--probe-glow)]'
                   : 'border-[var(--probe-border-strong)] bg-gradient-to-br from-[var(--probe-primary)]/5 to-transparent hover:border-[var(--probe-primary)] hover:bg-[var(--probe-primary)]/10 hover:shadow-[0_0_12px_var(--probe-glow)]',
@@ -255,7 +266,7 @@ export function MultimodalInput({
                 <div className="absolute right-0 bottom-0 h-6 w-6 border-r-[3px] border-b-[3px] border-[var(--probe-primary-bright)] rounded-br-sm shadow-[0_0_6px_var(--probe-glow)]" />
               </div>
 
-              <div className="flex flex-col items-center gap-3 text-center pointer-events-none">
+              <div className="flex flex-col items-center gap-3 text-center">
                 <div
                   className={cn(
                     'flex h-16 w-16 items-center justify-center rounded-2xl transition-all border',
@@ -272,41 +283,84 @@ export function MultimodalInput({
                 </div>
                 <div>
                   <p className="font-medium text-[var(--probe-text)]">
-                    {isDraggingOver ? '松开放入信号源' : '点击、拖拽或粘贴信号图片'}
+                    {isDraggingOver ? '松开放入题目照片' : '拍照识题'}
                   </p>
-                  <p className="text-sm text-[var(--probe-muted)]">
-                    支持 JPEG、PNG、WebP 格式，最大 10MB
-                  </p>
+                  <p className="text-sm text-[var(--probe-muted)]">也可以从相册选择已有照片</p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 gap-2 border-[var(--probe-border-strong)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-primary)] hover:shadow-[0_0_8px_var(--probe-glow)]"
-                >
-                  <Upload className="h-4 w-4" />
-                  选择信号源
-                </Button>
+                <div className="mt-2 grid w-full gap-2 sm:grid-cols-[1fr_auto]">
+                  <Button
+                    type="button"
+                    onClick={triggerCameraInput}
+                    className="h-11 gap-2 probe-button-primary text-[var(--probe-primary-bright)] font-medium"
+                  >
+                    <Camera className="h-4 w-4" />
+                    拍照识题
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={triggerGalleryInput}
+                    className="h-11 gap-2 border-[var(--probe-border-strong)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-primary)] hover:shadow-[0_0_8px_var(--probe-glow)]"
+                  >
+                    <Upload className="h-4 w-4" />
+                    从相册选
+                  </Button>
+                </div>
+                <p className="text-xs text-[var(--probe-muted)]">
+                  支持 JPEG、PNG、WebP，最大 10MB；桌面端可拖拽或粘贴图片
+                </p>
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={ACCEPTED_TYPES}
-                className="hidden"
-                onChange={handleImageSelect}
-              />
             </div>
           ) : (
             <div className="relative overflow-hidden rounded-xl border border-[var(--probe-border-strong)] bg-[var(--probe-surface)] shadow-[0_0_12px_var(--probe-glow)]">
               <img src={selectedImage} alt="Selected problem" className="w-full object-contain" />
               <button
+                type="button"
+                aria-label="移除题目照片"
                 onClick={clearImage}
                 className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition-all hover:bg-[var(--probe-error)]/80 hover:shadow-[0_0_8px_rgba(248,113,113,0.3)]"
               >
                 <X className="h-4 w-4" />
               </button>
+              <div className="grid gap-2 border-t border-[var(--probe-border)] bg-[var(--probe-surface-elevated)]/70 p-3 sm:grid-cols-2">
+                <Button
+                  type="button"
+                  onClick={triggerCameraInput}
+                  className="h-10 gap-2 probe-button-primary text-[var(--probe-primary-bright)] font-medium"
+                >
+                  <Camera className="h-4 w-4" />
+                  重新拍照
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={triggerGalleryInput}
+                  className="h-10 gap-2 border-[var(--probe-border-strong)] text-[var(--probe-text)] hover:bg-[var(--probe-primary)]/15 hover:border-[var(--probe-primary)]"
+                >
+                  <Upload className="h-4 w-4" />
+                  更换照片
+                </Button>
+              </div>
             </div>
           )}
 
+          <input
+            ref={cameraInputRef}
+            aria-label="拍照识题"
+            type="file"
+            accept={ACCEPTED_TYPES}
+            capture="environment"
+            className="hidden"
+            onChange={handleImageSelect}
+          />
+          <input
+            ref={galleryInputRef}
+            aria-label="从相册选择题目照片"
+            type="file"
+            accept={ACCEPTED_TYPES}
+            className="hidden"
+            onChange={handleImageSelect}
+          />
         </div>
       )}
 
@@ -337,7 +391,10 @@ export function MultimodalInput({
                 <>
                   <span className="absolute inset-0 rounded-full border-2 border-[var(--probe-primary)] animate-ping opacity-25" />
                   <span className="absolute -inset-3 rounded-full border border-[var(--probe-primary)]/30 animate-pulse" />
-                  <span className="absolute -inset-6 rounded-full border border-[var(--probe-primary)]/15 animate-pulse" style={{ animationDelay: '0.5s' }} />
+                  <span
+                    className="absolute -inset-6 rounded-full border border-[var(--probe-primary)]/15 animate-pulse"
+                    style={{ animationDelay: '0.5s' }}
+                  />
                 </>
               )}
               {isProcessing ? (
@@ -349,7 +406,11 @@ export function MultimodalInput({
               )}
             </button>
             <p className="text-center font-medium text-[var(--probe-text)]">
-              {isProcessing ? '正在解码声纳信号...' : isRecording ? '点击停止声纳捕获' : '点击启动声纳捕获'}
+              {isProcessing
+                ? '正在解码声纳信号...'
+                : isRecording
+                  ? '点击停止声纳捕获'
+                  : '点击启动声纳捕获'}
             </p>
             <p className="text-center text-sm text-[var(--probe-muted)]">
               {isProcessing
@@ -365,7 +426,9 @@ export function MultimodalInput({
       {activeTab === 'text' && (
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-[var(--probe-primary-bright)]">题目信号内容</label>
+            <label className="text-sm font-medium text-[var(--probe-primary-bright)]">
+              题目信号内容
+            </label>
             <Textarea
               placeholder="请输入题目内容，支持数学公式（如：$x^2 + 2x + 1 = 0$）..."
               value={textInput}

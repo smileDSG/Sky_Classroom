@@ -7,26 +7,24 @@ import {
   Atom,
   ArrowUp,
   ArrowRight,
-  BookOpen,
-  Brain,
-  ChartNoAxesColumnIncreasing,
+  BookOpenCheck,
+  CalendarCheck,
+  Camera,
   ChevronDown,
   FileText,
   GraduationCap,
-  Lightbulb,
   MessageSquare,
   Presentation,
-  RefreshCw,
   Search,
   Sparkles,
-  Star,
-  Telescope,
+  UserRound,
   Wand2,
   X,
   Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MobileSkyShell } from '@/components/mobile/mobile-sky-shell';
+import { MobileThemeControl } from '@/components/mobile/mobile-theme-control';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useAuth } from '@/components/auth/auth-provider';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
@@ -37,6 +35,8 @@ import { useTaskStore } from '@/lib/store/use-task-store';
 import { storePdfBlob } from '@/lib/utils/image-storage';
 import { SpeechButton } from '@/components/audio/speech-button';
 import { STUDENT_OPTIONS, TEACHER_OPTIONS } from '@/components/sky/home/agent-selector';
+import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
+import { MobileStudyCompanionCarousel } from '@/components/mobile/home/mobile-study-companion-carousel';
 
 function getGreeting(isDark: boolean): string {
   const hour = new Date().getHours();
@@ -65,7 +65,7 @@ const cloudTools: {
   {
     icon: Presentation,
     label: 'PPT 课件',
-    desc: '一键生成精美课件',
+    desc: '整理成课堂课件',
     href: '/m/sky/cloud-mind/slides',
     gradient: 'from-sky-500/28 via-blue-500/22 to-cyan-400/24',
     glow: 'bg-sky-300/24',
@@ -75,7 +75,7 @@ const cloudTools: {
   {
     icon: Search,
     label: '拍照搜题',
-    desc: '拍照秒出解析答案',
+    desc: '拍照提取题目解析',
     href: '/m/sky/cloud-mind/solve',
     gradient: 'from-amber-500/26 via-orange-500/20 to-yellow-400/24',
     glow: 'bg-amber-300/22',
@@ -85,44 +85,12 @@ const cloudTools: {
   {
     icon: MessageSquare,
     label: '互动课堂',
-    desc: '沉浸式 AI 教学',
+    desc: '角色参与讲解',
     href: '/m/sky/assistant',
     gradient: 'from-emerald-500/28 via-teal-500/20 to-cyan-400/22',
     glow: 'bg-emerald-300/22',
     iconBg: 'bg-emerald-400/24 ring-emerald-300/40',
     iconColor: 'text-emerald-100',
-  },
-];
-
-const quickEntrances: {
-  icon: ElementType;
-  title: string;
-  href: string;
-  color: string;
-}[] = [
-  {
-    icon: Star,
-    title: '摘星锦囊',
-    href: '/m/sky/learning/review',
-    color: 'text-sky-300 bg-sky-400/12 ring-sky-300/25',
-  },
-  {
-    icon: Brain,
-    title: '云端智囊',
-    href: '/m/sky/cloud-mind',
-    color: 'text-violet-300 bg-violet-400/12 ring-violet-300/25',
-  },
-  {
-    icon: ChartNoAxesColumnIncreasing,
-    title: '天梯工坊',
-    href: '/m/sky/study-lab',
-    color: 'text-emerald-300 bg-emerald-400/12 ring-emerald-300/25',
-  },
-  {
-    icon: Telescope,
-    title: '云翼助手',
-    href: '/m/sky/assistant',
-    color: 'text-rose-300 bg-rose-400/12 ring-rose-300/25',
   },
 ];
 
@@ -147,14 +115,14 @@ const studyCards: {
   {
     icon: FileText,
     title: '错题复盘',
-    desc: '同步练习记录并生成复习建议',
+    desc: '同步练习记录并整理复习建议',
     href: '/m/sky/learning/mistakes',
     color: 'from-amber-500 to-orange-500',
     tag: '巩固',
     tagColor: 'bg-amber-500',
   },
   {
-    icon: Sparkles,
+    icon: UserRound,
     title: '学习档案',
     desc: '查看掌握度、打卡和成长轨迹',
     href: '/m/sky/learning/profile',
@@ -182,7 +150,8 @@ const mobileTemplates = [
   {
     title: 'Python 入门课',
     desc: '适合零基础，30 分钟做出第一个小程序',
-    prompt: '从零学 Python，30 分钟写出第一个程序。请用互动课堂方式讲解变量、输入输出和一个小游戏案例。',
+    prompt:
+      '从零学 Python，30 分钟写出第一个程序。请用互动课堂方式讲解变量、输入输出和一个小游戏案例。',
   },
   {
     title: '傅里叶变换',
@@ -198,15 +167,19 @@ const mobileTemplates = [
 
 function MobileCloudMindSection() {
   return (
-    <section className="space-y-2.5">
+    <section
+      data-testid="mobile-home-cloud-tools"
+      aria-label="云端智囊首页工具"
+      className="space-y-2.5"
+    >
       <div className="flex items-end justify-between px-0.5">
         <div>
-          <p className="text-[10px] tracking-[0.22em] text-sky-300/70">OPENMAIC</p>
+          <p className="text-[11px] tracking-[0.22em] text-sky-300/70">学习工具</p>
           <h2 className="mt-1 text-[18px] font-bold leading-none text-white">云端智囊</h2>
         </div>
         <Link
           href="/m/sky/cloud-mind"
-          className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400"
+          className="inline-flex items-center gap-1 text-[12px] font-medium text-slate-400"
         >
           全部能力
           <ArrowRight className="size-3.5" />
@@ -220,19 +193,21 @@ function MobileCloudMindSection() {
             <Link
               key={tool.label}
               href={tool.href}
-              className={`relative min-h-[92px] overflow-hidden rounded-[20px] border border-white/10 bg-gradient-to-br ${tool.gradient} p-2 shadow-lg shadow-black/16 transition-transform active:scale-[0.98]`}
+              className={`mobile-tactile-card relative min-h-[92px] overflow-hidden rounded-[20px] border border-white/10 bg-gradient-to-br ${tool.gradient} p-2 transition-transform duration-200 active:scale-[0.98] motion-safe:hover:-translate-y-0.5`}
             >
-              <div className={`absolute -right-7 -top-7 size-16 rounded-full ${tool.glow} blur-2xl`} />
+              <div
+                className={`absolute -right-7 -top-7 size-16 rounded-full ${tool.glow} blur-2xl`}
+              />
               <div className="absolute bottom-2 right-2 size-10 rounded-full bg-white/7" />
               <span
-                className={`relative flex size-8 items-center justify-center rounded-[14px] ring-1 ${tool.iconBg}`}
+                className={`mobile-tool-token relative flex size-8 items-center justify-center rounded-[14px] ring-1 ${tool.iconBg}`}
               >
                 <Icon className={`size-4 ${tool.iconColor}`} />
               </span>
-              <span className="relative mt-3.5 block text-[12px] font-extrabold leading-tight text-white">
+              <span className="relative mt-3.5 block text-[13px] font-extrabold leading-tight text-white">
                 {tool.label}
               </span>
-              <span className="relative mt-0.5 block text-[8px] leading-snug text-white/62">
+              <span className="relative mt-0.5 block text-[11px] leading-snug text-white/62">
                 {tool.desc}
               </span>
             </Link>
@@ -243,47 +218,20 @@ function MobileCloudMindSection() {
   );
 }
 
-function MobileQuickEntranceSection() {
-  return (
-    <nav className="fixed bottom-5 left-1/2 z-[80] w-[min(360px,calc(100vw_-_32px))] -translate-x-1/2 rounded-[22px] border border-white/10 bg-[#111d2d]/95 px-2 py-2 shadow-2xl shadow-black/35 backdrop-blur-xl">
-      <div className="grid grid-cols-4 gap-1">
-        {quickEntrances.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.title}
-              href={item.href}
-              className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 py-1 text-center active:bg-white/8"
-            >
-              <span
-                className={`flex size-8 items-center justify-center rounded-[14px] ring-1 ${item.color}`}
-              >
-                <Icon className="size-4" />
-              </span>
-              <span className="w-full truncate text-[10px] font-semibold text-slate-200">{item.title}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
-  );
-}
-
 function MobileStudyCompanionSection() {
   const quote = useMemo(() => {
     const today = new Date();
     return dailyQuotes[(today.getDate() + today.getMonth()) % dailyQuotes.length];
   }, []);
-  const [factIndex, setFactIndex] = useState(() => new Date().getDate() % funFacts.length);
-  const fact = funFacts[factIndex];
+  const initialFactIndex = useMemo(() => new Date().getDate() % funFacts.length, []);
 
   return (
     <section className="space-y-2.5">
       <div>
         <div className="mb-2 flex items-center gap-2 px-0.5">
           <GraduationCap className="size-3.5 text-sky-400" />
-          <h3 className="text-[13px] font-semibold text-slate-100">学习补给</h3>
-          <span className="text-[10px] text-slate-400">— 每天轻量复盘</span>
+          <h3 className="text-[14px] font-semibold text-slate-100">学习补给</h3>
+          <span className="text-[12px] text-slate-400">— 每天轻量复盘</span>
         </div>
         <div className="-mx-1 flex touch-pan-x snap-x gap-2 overflow-x-auto overscroll-x-contain px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {studyCards.map((topic) => {
@@ -292,7 +240,7 @@ function MobileStudyCompanionSection() {
               <Link
                 key={topic.title}
                 href={topic.href}
-                className={`relative min-h-[78px] w-[150px] shrink-0 snap-start overflow-hidden rounded-[16px] bg-gradient-to-br ${topic.color} p-2.5 shadow-lg`}
+                className={`mobile-tactile-card relative min-h-[78px] w-[150px] shrink-0 snap-start overflow-hidden rounded-[16px] bg-gradient-to-br ${topic.color} p-2.5 shadow-lg transition-transform duration-200 active:scale-[0.98] motion-safe:hover:-translate-y-0.5`}
               >
                 <div className="absolute -bottom-8 -right-8 size-24 rounded-full bg-white/10" />
                 <div
@@ -303,7 +251,7 @@ function MobileStudyCompanionSection() {
                   }}
                 />
                 <span
-                  className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[9px] font-bold text-white ${topic.tagColor}`}
+                  className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-bold text-white ${topic.tagColor}`}
                 >
                   {topic.tag}
                 </span>
@@ -311,83 +259,38 @@ function MobileStudyCompanionSection() {
                 <p className="relative line-clamp-2 text-[12px] font-bold leading-snug text-white">
                   {topic.title}
                 </p>
-                <p className="relative mt-0.5 truncate text-[9px] text-white/72">{topic.desc}</p>
+                <p className="relative mt-0.5 truncate text-[11px] text-white/72">{topic.desc}</p>
               </Link>
             );
           })}
         </div>
       </div>
 
-      <div className="grid gap-2">
-        <div className="relative overflow-hidden rounded-[16px] border border-white/10 bg-white/8 p-2.5">
-          <div className="absolute -left-1 -top-3 select-none font-serif text-6xl leading-none text-sky-400/10">
-            &ldquo;
-          </div>
-          <div className="relative flex items-center gap-2 text-[11px] font-medium text-slate-400">
-            <BookOpen className="size-3.5 text-sky-400" />
-            每日一句
-          </div>
-          <p className="relative mt-1.5 text-[12px] font-semibold italic leading-relaxed text-slate-100">
-            “{quote.text}”
-          </p>
-          <p className="relative mt-1 text-right text-[10px] text-slate-400">—— {quote.author}</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div className="relative overflow-hidden rounded-[16px] border border-white/10 bg-white/8 p-2.5">
-            <div className="absolute -right-8 -top-8 size-20 rounded-full bg-amber-400/10 blur-xl" />
-            <div className="relative flex items-center justify-between gap-2">
-              <span className="flex items-center gap-2 text-[11px] font-medium text-slate-400">
-                <Lightbulb className="size-3.5 text-amber-400" />
-                趣味知识
-              </span>
-              <button
-                type="button"
-                aria-label="刷新趣味知识"
-                onClick={() => setFactIndex((current) => (current + 1) % funFacts.length)}
-                className="flex size-7 items-center justify-center rounded-full text-slate-500 transition-colors active:bg-white/10 active:text-amber-300"
-              >
-                <RefreshCw className="size-3" />
-              </button>
-            </div>
-            <p className="relative mt-2 line-clamp-2 text-[12px] leading-relaxed text-slate-100">
-              {fact}
-            </p>
-          </div>
-
-          <div className="relative overflow-hidden rounded-[16px] border border-white/10 bg-white/8 p-2.5">
-            <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400">
-              <span className="flex size-7 items-center justify-center rounded-xl bg-slate-700/70">
-                <Star className="size-3.5 text-rose-400" />
-              </span>
-              学习提示
-            </div>
-            <p className="mt-2 line-clamp-2 text-[12px] leading-relaxed text-slate-100">
-              每天回顾昨天的内容，记忆更牢固
-            </p>
-          </div>
-        </div>
-      </div>
+      <MobileStudyCompanionCarousel
+        quote={quote}
+        facts={funFacts}
+        initialFactIndex={initialFactIndex}
+      />
     </section>
   );
 }
 
-function MobileSkyTeachingSection({
-  children,
-}: {
-  children: ReactNode;
-}) {
+function MobileSkyTeachingSection({ children }: { children: ReactNode }) {
   return (
-    <section className="relative overflow-hidden rounded-[24px] border border-white/8 bg-white/[0.04] p-2.5 shadow-xl shadow-black/18">
-      <div className="pointer-events-none absolute -right-14 -top-16 size-44 rounded-full bg-sky-400/10 blur-3xl" />
+    <section className="relative overflow-hidden rounded-[24px] border border-white/65 bg-white/55 p-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-sky-100/70 backdrop-blur-xl dark:border-sky-200/12 dark:bg-[#091523]/72 dark:shadow-[0_14px_34px_rgba(2,8,23,0.28)] dark:ring-sky-200/8">
+      <div className="pointer-events-none absolute -right-14 -top-16 size-36 rounded-full bg-sky-300/10 blur-3xl dark:bg-sky-400/8" />
       <div className="relative mb-2.5">
         <div className="flex items-center gap-2">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-[15px] border border-sky-300/25 bg-sky-400/12">
-            <GraduationCap className="size-4 text-sky-200" />
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-[15px] border border-sky-200/70 bg-sky-100/70 text-sky-600 shadow-sm shadow-sky-900/5 dark:border-sky-300/28 dark:bg-sky-400/14 dark:text-sky-200">
+            <GraduationCap className="size-4" />
           </span>
           <div className="min-w-0">
-            <h3 className="truncate text-[17px] font-extrabold leading-tight text-white">天穹授课</h3>
-            <p className="mt-0.5 text-[11px] text-slate-400">输入主题，生成一节可互动的 AI 课堂</p>
+            <h3 className="truncate text-[18px] font-extrabold leading-tight text-slate-900 dark:text-white">
+              天穹授课
+            </h3>
+            <p className="mt-0.5 text-[12px] text-slate-500 dark:text-slate-400">
+              输入主题，生成一节可互动的课堂
+            </p>
           </div>
         </div>
       </div>
@@ -430,7 +333,9 @@ function MobileCreateClassroomCard({
   const [rolePanelOpen, setRolePanelOpen] = useState(false);
   const [templatePanelOpen, setTemplatePanelOpen] = useState(false);
   const selectedTeacher = TEACHER_OPTIONS.find((teacher) => teacher.id === selectedTeacherId);
-  const selectedStudents = STUDENT_OPTIONS.filter((student) => selectedStudentIds.includes(student.id));
+  const selectedStudents = STUDENT_OPTIONS.filter((student) =>
+    selectedStudentIds.includes(student.id),
+  );
 
   const toggleStudent = (studentId: string) => {
     if (selectedStudentIds.includes(studentId)) {
@@ -447,7 +352,7 @@ function MobileCreateClassroomCard({
           <button
             type="button"
             onClick={() => setTemplatePanelOpen(true)}
-            className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/18 px-2.5 text-[11px] font-semibold text-violet-200"
+            className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/18 px-2.5 text-[12px] font-semibold text-violet-200"
           >
             <Wand2 className="size-3" />
             模板
@@ -455,8 +360,10 @@ function MobileCreateClassroomCard({
           <button
             type="button"
             onClick={() => onWebSearchChange(!webSearch)}
-            className={`inline-flex h-7 min-w-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium ${
-              webSearch ? 'bg-sky-500/18 text-sky-200 ring-1 ring-sky-400/30' : 'bg-slate-700/55 text-slate-300'
+            className={`inline-flex h-7 min-w-0 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium ${
+              webSearch
+                ? 'bg-sky-500/18 text-sky-200 ring-1 ring-sky-400/30'
+                : 'bg-slate-700/55 text-slate-300'
             }`}
           >
             <Search className="size-3 shrink-0 text-slate-400" />
@@ -467,7 +374,7 @@ function MobileCreateClassroomCard({
         <button
           type="button"
           onClick={() => onInteractiveModeChange(!interactiveMode)}
-          className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-semibold ${
+          className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[12px] font-semibold ${
             interactiveMode
               ? 'border-cyan-300/50 bg-cyan-500/18 text-cyan-100'
               : 'border-cyan-400/35 bg-cyan-500/12 text-cyan-200'
@@ -506,7 +413,7 @@ function MobileCreateClassroomCard({
             <p className="truncate text-[12px] font-semibold text-slate-100">
               {selectedTeacher?.name ?? '默认老师'} · {selectedStudentIds.length} 位学生
             </p>
-            <p className="mt-0.5 truncate text-[10px] text-slate-400">点击配置课堂角色</p>
+            <p className="mt-0.5 truncate text-[12px] text-slate-400">点击配置课堂角色</p>
           </div>
         </div>
         <ChevronDown className="size-4 shrink-0 text-slate-400" />
@@ -515,7 +422,7 @@ function MobileCreateClassroomCard({
       {rolePanelOpen && (
         <div className="space-y-3 border-b border-white/8 px-3 py-3">
           <div>
-            <p className="mb-2 text-[11px] font-semibold text-sky-200">选择老师</p>
+            <p className="mb-2 text-[12px] font-semibold text-sky-200">选择老师</p>
             <div className="grid grid-cols-2 gap-2">
               {TEACHER_OPTIONS.map((teacher) => (
                 <button
@@ -535,8 +442,10 @@ function MobileCreateClassroomCard({
                       className="size-8 shrink-0 rounded-xl object-cover"
                     />
                     <span className="min-w-0">
-                      <span className="block text-[12px] font-semibold text-white">{teacher.name}</span>
-                      <span className="mt-0.5 block truncate text-[10px] text-slate-400">
+                      <span className="block text-[12px] font-semibold text-white">
+                        {teacher.name}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[12px] text-slate-400">
                         {teacher.description}
                       </span>
                     </span>
@@ -547,7 +456,7 @@ function MobileCreateClassroomCard({
           </div>
 
           <div>
-            <p className="mb-2 text-[11px] font-semibold text-violet-200">选择同学</p>
+            <p className="mb-2 text-[12px] font-semibold text-violet-200">选择同学</p>
             <div className="grid grid-cols-2 gap-2">
               {STUDENT_OPTIONS.map((student) => {
                 const selected = selectedStudentIds.includes(student.id);
@@ -557,7 +466,9 @@ function MobileCreateClassroomCard({
                     type="button"
                     onClick={() => toggleStudent(student.id)}
                     className={`rounded-2xl border px-3 py-2 text-left ${
-                      selected ? 'border-violet-300/60 bg-violet-400/15' : 'border-white/10 bg-white/6'
+                      selected
+                        ? 'border-violet-300/60 bg-violet-400/15'
+                        : 'border-white/10 bg-white/6'
                     }`}
                   >
                     <span className="flex items-center gap-2">
@@ -567,8 +478,10 @@ function MobileCreateClassroomCard({
                         className="size-8 shrink-0 rounded-xl object-cover"
                       />
                       <span className="min-w-0">
-                        <span className="block text-[12px] font-semibold text-white">{student.name}</span>
-                        <span className="mt-0.5 block truncate text-[10px] text-slate-400">
+                        <span className="block text-[12px] font-semibold text-white">
+                          {student.name}
+                        </span>
+                        <span className="mt-0.5 block truncate text-[12px] text-slate-400">
                           {student.description}
                         </span>
                       </span>
@@ -596,12 +509,12 @@ function MobileCreateClassroomCard({
 「从零学 Python，30 分钟写出第一个程序」
 「用白板给我讲解傅里叶变换」
 「阿瓦隆桌游怎么玩」`}
-          className="min-h-[132px] w-full resize-none bg-transparent px-2.5 py-2.5 text-[12px] leading-5 text-slate-100 outline-none placeholder:text-slate-500"
+          className="min-h-[132px] w-full resize-none bg-transparent px-2.5 py-2.5 text-[14px] leading-5 text-slate-100 outline-none placeholder:text-slate-500"
         />
 
-        <div className="flex items-center justify-between gap-2 border-t border-white/8 px-2.5 py-1.5">
-          <div className="flex items-center gap-3 text-slate-400">
-            <label className="inline-flex h-8 cursor-pointer items-center gap-1.5 text-[11px] font-medium">
+        <div className="space-y-2 border-t border-white/8 px-2.5 py-2">
+          <div className="flex items-center justify-between gap-2 text-slate-400">
+            <label className="inline-flex h-8 cursor-pointer items-center gap-1.5 text-[12px] font-medium">
               <FileText className="size-3" />
               <span className="max-w-[70px] truncate">{pdfFile ? pdfFile.name : '上传 PDF'}</span>
               <input
@@ -626,18 +539,46 @@ function MobileCreateClassroomCard({
               onTranscription={(text) => onChange(value + (value ? ' ' : '') + text)}
             />
           </div>
+
           <button
             type="button"
+            aria-label="创建课堂主行动"
             onClick={onSubmit}
             disabled={!value.trim() || isSubmitting}
-            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-[11px] font-semibold ${
+            data-testid="mobile-create-classroom-action"
+            className={`mobile-tactile-button group flex min-h-[52px] w-full items-center gap-3 rounded-[16px] border px-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.055)] active:scale-[0.99] ${
               value.trim() && !isSubmitting
-                ? 'bg-sky-400 text-slate-950'
-                : 'bg-slate-500/45 text-slate-300'
+                ? 'border-violet-200/18 bg-[#0d1728] text-white'
+                : 'border-white/8 bg-[#0d1728]/70 text-slate-500'
             }`}
           >
-            {isSubmitting ? '提交中' : '创建课堂'}
-            <ArrowUp className="size-3" />
+            <span
+              className={`mobile-tool-token flex size-9 shrink-0 items-center justify-center rounded-[13px] ${
+                value.trim() && !isSubmitting
+                  ? 'bg-violet-400/18 text-violet-100 ring-1 ring-violet-200/25'
+                  : 'bg-white/7 text-slate-500'
+              }`}
+            >
+              {isSubmitting ? <ArrowUp className="size-4" /> : <Camera className="size-4" />}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[13px] font-extrabold">
+                {isSubmitting ? '正在提交课堂任务' : '创建互动课堂'}
+              </span>
+              <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-400">
+                根据输入准备课堂流程
+              </span>
+            </span>
+            <span
+              className={`flex h-8 shrink-0 items-center gap-1 rounded-[12px] px-2 text-[12px] font-extrabold ${
+                value.trim() && !isSubmitting
+                  ? 'bg-violet-500/18 text-violet-100'
+                  : 'bg-white/5 text-slate-500'
+              }`}
+            >
+              开始
+              <ArrowRight className="size-3.5" />
+            </span>
           </button>
         </div>
       </div>
@@ -646,7 +587,7 @@ function MobileCreateClassroomCard({
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 px-4 pb-4 sm:items-center">
           <div className="w-full max-w-[360px] rounded-[22px] border border-white/10 bg-[#142236] p-4 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">选择课堂模板</h3>
+              <h3 className="text-[15px] font-semibold text-white">选择课堂模板</h3>
               <button
                 type="button"
                 onClick={() => setTemplatePanelOpen(false)}
@@ -667,8 +608,10 @@ function MobileCreateClassroomCard({
                   }}
                   className="w-full rounded-2xl border border-white/10 bg-white/7 p-3 text-left active:bg-white/12"
                 >
-                  <span className="block text-[13px] font-semibold text-white">{template.title}</span>
-                  <span className="mt-1 block text-[11px] text-slate-400">{template.desc}</span>
+                  <span className="block text-[13px] font-semibold text-white">
+                    {template.title}
+                  </span>
+                  <span className="mt-1 block text-[12px] text-slate-400">{template.desc}</span>
                 </button>
               ))}
             </div>
@@ -812,7 +755,7 @@ export default function MobileSkyHomePage() {
       const message = error instanceof Error ? error.message : '创建课堂失败，请重试';
       if (message === 'User not found' || message.includes('Not authenticated')) {
         toast.error('登录已过期，请重新登录');
-        router.push('/auth/login?redirect=%2Fm%2Fsky');
+        router.push('/m/auth/login?redirect=%2Fm%2Fsky');
         return;
       }
       toast.error(message);
@@ -831,81 +774,102 @@ export default function MobileSkyHomePage() {
     {
       label: '打卡',
       value: stats.streakDays > 0 ? `${stats.streakDays}` : '-',
-      icon: Sparkles,
+      icon: CalendarCheck,
       iconClass: 'bg-pink-400/12 text-pink-300',
     },
     {
       label: '掌握',
       value: stats.masteryPercent > 0 ? `${stats.masteryPercent}%` : '-',
-      icon: Brain,
+      icon: BookOpenCheck,
       iconClass: 'bg-emerald-400/12 text-emerald-300',
     },
   ];
 
   return (
-    <MobileSkyShell>
-      <div className="space-y-4 pb-24">
-        <section className="relative overflow-hidden rounded-[20px] border border-white/8 bg-white/[0.04] px-3.5 py-2.5">
-          <div className="absolute right-3 top-2.5 flex items-start gap-1.5">
-            {compactStats.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.label}
-                  className="w-[42px] rounded-2xl border border-white/10 bg-[#142236]/82 px-1.5 py-1.5 text-center shadow-sm shadow-black/10 backdrop-blur"
-                >
-                  <div className="flex items-center justify-center gap-0.5">
-                    <span
-                      className={`flex size-4 shrink-0 items-center justify-center rounded-full ${item.iconClass}`}
-                    >
-                      <Icon className="size-2.5" />
-                    </span>
-                    <span className="truncate text-[10px] font-semibold leading-none text-white">
-                      {item.value}
-                    </span>
-                  </div>
-                  <div className="mt-1 truncate text-[8px] leading-none text-slate-300/75">
-                    {item.label}
-                  </div>
-                </div>
-              );
-            })}
+    <MobileSkyShell fullBleed>
+      <div className="relative flex flex-col">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-gradient-to-b from-sky-600/30 via-indigo-600/15 to-transparent" />
+
+        <section
+          data-testid="mobile-home-greeting"
+          aria-label="移动端首页问候与主题设置"
+          className="relative px-5 pb-6 pt-9"
+        >
+          <div className="mb-4 flex items-center gap-2.5">
+            <span className="flex size-8 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
+              <Sparkles className="size-4 text-white" />
+            </span>
+            <span className="text-[12px] font-semibold tracking-[0.2em] text-white/90">
+              今日问候
+            </span>
           </div>
 
-          <div className="min-w-0 pr-[136px]">
-            <p className="text-[10px] tracking-[0.2em] text-sky-300/75">今日问候</p>
-            <h2 className="mt-1 truncate text-[18px] font-semibold leading-tight text-white">
-              {greeting}
-            </h2>
-            <p className="mt-1 truncate text-[12px] text-slate-400">今天先从最重要的一步开始。</p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-[32px] font-extrabold leading-none text-white">{greeting}</h1>
+              <p className="mt-3 max-w-[260px] text-[13px] leading-relaxed text-white/80">
+                今天先从最重要的一步开始，让学习更有方向。
+              </p>
+            </div>
+
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <MobileThemeControl variant="toggle" />
+              <div className="grid w-[140px] grid-cols-3 gap-1.5">
+                <span className="sr-only">学习数据</span>
+                {compactStats.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.label}
+                      className="flex h-[38px] flex-col items-center justify-center rounded-[11px] border border-white/10 bg-[#0d1728]/72 px-1 py-0.5 text-center shadow-sm shadow-black/10 backdrop-blur"
+                    >
+                      <div className="flex items-center justify-center gap-0.5">
+                        <span
+                          className={`flex size-[14px] shrink-0 items-center justify-center rounded-full ${item.iconClass}`}
+                        >
+                          <Icon className="size-[8px]" />
+                        </span>
+                        <span className="text-[12px] font-bold leading-none text-white">
+                          {item.value}
+                        </span>
+                      </div>
+                      <div className="mt-0.5 truncate text-[10px] leading-none text-slate-300/80">
+                        {item.label}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </section>
 
-        <MobileCloudMindSection />
+        <div className="relative space-y-4 px-4 pb-24">
+          <MobileCloudMindSection />
 
-        <MobileSkyTeachingSection>
-          <MobileCreateClassroomCard
-            value={requirement}
-            onChange={handleRequirementChange}
-            onSubmit={handleCreateClassroom}
-            pdfFile={pdfFile}
-            onPdfChange={setPdfFile}
-            webSearch={webSearch}
-            onWebSearchChange={handleWebSearchChange}
-            interactiveMode={interactiveMode}
-            onInteractiveModeChange={handleInteractiveModeChange}
-            selectedTeacherId={selectedTeacherId}
-            selectedStudentIds={selectedStudentIds}
-            onTeacherChange={setSelectedTeacherId}
-            onStudentsChange={setSelectedStudentIds}
-            isSubmitting={isSubmitting}
-          />
-        </MobileSkyTeachingSection>
+          <MobileSkyTeachingSection>
+            <MobileCreateClassroomCard
+              value={requirement}
+              onChange={handleRequirementChange}
+              onSubmit={handleCreateClassroom}
+              pdfFile={pdfFile}
+              onPdfChange={setPdfFile}
+              webSearch={webSearch}
+              onWebSearchChange={handleWebSearchChange}
+              interactiveMode={interactiveMode}
+              onInteractiveModeChange={handleInteractiveModeChange}
+              selectedTeacherId={selectedTeacherId}
+              selectedStudentIds={selectedStudentIds}
+              onTeacherChange={setSelectedTeacherId}
+              onStudentsChange={setSelectedStudentIds}
+              isSubmitting={isSubmitting}
+            />
+          </MobileSkyTeachingSection>
 
-        <MobileStudyCompanionSection />
-
+          <MobileStudyCompanionSection />
+        </div>
       </div>
-      <MobileQuickEntranceSection />
+      <MobileQuickEntranceNav />
     </MobileSkyShell>
   );
 }

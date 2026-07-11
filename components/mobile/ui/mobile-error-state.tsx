@@ -27,11 +27,11 @@ export function MobileErrorState({
       <div className="mb-3 text-rose-500">
         <AlertCircle className="size-8" />
       </div>
-      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+      <h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
         {title}
       </h3>
       {description && (
-        <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
           {description}
         </p>
       )}

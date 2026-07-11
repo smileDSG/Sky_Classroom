@@ -72,19 +72,34 @@ function TwinklingStar({
 interface AuthLayoutProps {
   children: React.ReactNode;
   className?: string;
-  /** Override max-width of the card (default: max-w-md) */
+  /** Override max-width of the mobile auth viewport. */
   maxWidth?: string;
+  /** Keep the layout in phone mode even when the browser viewport is desktop-sized. */
+  mobileViewport?: boolean;
 }
 
-export function AuthLayout({ children, className, maxWidth = 'max-w-md' }: AuthLayoutProps) {
+export function AuthLayout({
+  children,
+  className,
+  maxWidth = 'max-w-[430px]',
+  mobileViewport = false,
+}: AuthLayoutProps) {
   return (
-    <div className="relative flex min-h-dvh items-center justify-center overflow-x-hidden p-4 py-6 sm:py-10">
+    <div
+      data-testid="auth-layout-root"
+      data-mobile-viewport={mobileViewport ? 'true' : undefined}
+      className={cn(
+        'relative flex min-h-dvh items-stretch justify-center overflow-x-hidden bg-sky-50',
+        mobileViewport && 'overflow-hidden rounded-[1.7rem]',
+        !mobileViewport && 'sm:items-center sm:p-6',
+      )}
+    >
       {/* ── Sky gradient background ── */}
-      <div className="fixed inset-0 bg-gradient-to-b from-sky-200 via-sky-100 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+      <div className="absolute inset-0 bg-gradient-to-b from-sky-200 via-sky-100 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
 
       {/* Sunrise/sunset glow */}
       <div
-        className="fixed inset-0 opacity-60 dark:opacity-30 pointer-events-none"
+        className="absolute inset-0 opacity-60 dark:opacity-30 pointer-events-none"
         style={{
           background: `
             radial-gradient(ellipse 120% 80% at 50% -20%, rgba(135,206,235,0.4) 0%, transparent 50%),
@@ -94,14 +109,14 @@ export function AuthLayout({ children, className, maxWidth = 'max-w-md' }: AuthL
       />
 
       {/* ── Floating clouds (light mode) ── */}
-      <div className="fixed inset-0 dark:hidden pointer-events-none">
+      <div className="absolute inset-0 dark:hidden pointer-events-none">
         <FloatingCloud delay={0} duration={35} y={10} scale={0.7} opacity={0.35} />
         <FloatingCloud delay={8} duration={45} y={30} scale={1} opacity={0.3} />
         <FloatingCloud delay={18} duration={40} y={60} scale={0.5} opacity={0.25} />
       </div>
 
       {/* ── Twinkling stars (dark mode) ── */}
-      <div className="fixed inset-0 hidden dark:block pointer-events-none">
+      <div className="absolute inset-0 hidden dark:block pointer-events-none">
         <TwinklingStar x="10%" y="15%" delay={0} size={2} />
         <TwinklingStar x="30%" y="8%" delay={0.5} size={3} />
         <TwinklingStar x="50%" y="22%" delay={1} size={2} />
@@ -112,20 +127,28 @@ export function AuthLayout({ children, className, maxWidth = 'max-w-md' }: AuthL
       </div>
 
       {/* ── Bottom gradient fade ── */}
-      <div className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/60 dark:from-slate-950/60 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/60 dark:from-slate-950/60 to-transparent pointer-events-none" />
 
       {/* ── Main card ── */}
       <motion.div
+        data-testid="auth-layout-viewport"
         initial={{ opacity: 0, y: 24, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          'relative w-full',
+          'relative z-10 flex min-h-dvh w-full flex-col overflow-y-auto',
           maxWidth,
-          'rounded-2xl border border-white/40 dark:border-slate-700/40',
+          !mobileViewport && 'sm:min-h-[min(844px,calc(100dvh-3rem))]',
+          mobileViewport
+            ? 'rounded-[1.7rem] border-0'
+            : 'border-x border-white/50 dark:border-slate-700/50 sm:rounded-[2rem] sm:border',
           'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl',
-          'shadow-xl shadow-sky-200/30 dark:shadow-slate-950/50',
-          'p-6 sm:p-8',
+          mobileViewport
+            ? 'shadow-none'
+            : 'shadow-none sm:shadow-2xl sm:shadow-sky-200/35 dark:sm:shadow-slate-950/60',
+          mobileViewport
+            ? 'px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]'
+            : 'px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] sm:p-7',
           className,
         )}
       >
@@ -134,15 +157,18 @@ export function AuthLayout({ children, className, maxWidth = 'max-w-md' }: AuthL
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.4 }}
-          className="flex flex-col items-center mb-6"
+          className="mb-7 flex flex-col items-center"
         >
-          <Link href="/" className="flex min-h-11 items-center gap-2.5 rounded-xl px-1 group">
+          <Link
+            href="/"
+            className="group flex min-h-14 items-center gap-3 rounded-2xl border border-white/80 bg-white/70 px-3.5 py-2 shadow-lg shadow-sky-200/45 backdrop-blur-md transition-transform active:scale-[0.99] dark:border-slate-700/70 dark:bg-slate-900/72 dark:shadow-slate-950/40"
+          >
             <img
               src="/logo-icon.svg"
               alt="Sky Classroom"
-              className="w-10 h-10 transition-transform group-hover:scale-110"
+              className="size-12 transition-transform group-hover:scale-105"
             />
-            <span className="text-xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
+            <span className="text-[22px] font-black leading-none text-slate-900 drop-shadow-[0_1px_0_rgba(255,255,255,0.7)] dark:text-sky-100">
               Sky Classroom
             </span>
           </Link>

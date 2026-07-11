@@ -146,10 +146,10 @@ export default function CloudMindQuizPage() {
 
 function CloudMindQuizFallback() {
   return (
-    <div className="min-h-screen bg-[#080b18] text-amber-100">
+    <div className="min-h-screen bg-[var(--quiz-void)] text-[var(--quiz-text)]">
       <div className="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4">
-        <div className="flex items-center gap-3 rounded-2xl border border-amber-500/20 bg-slate-950/70 px-5 py-4 text-sm text-amber-200/70">
-          <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+        <div className="flex items-center gap-3 rounded-2xl border border-[var(--quiz-border)] bg-[var(--quiz-surface)] px-5 py-4 text-sm text-[var(--quiz-muted)]">
+          <Loader2 className="h-4 w-4 animate-spin text-[var(--quiz-primary)]" />
           加载星际试炼场...
         </div>
       </div>
@@ -713,7 +713,7 @@ function CloudMindQuizContent() {
       desc: `${nextActionTopic} 专项练习`,
       href: `/sky/cloud-mind/quiz?topic=${encodeURIComponent(nextActionTopic)}&difficulty=${accuracy < 70 ? 'easy' : difficulty}&count=5`,
       icon: Target,
-      tone: 'text-amber-300 border-amber-500/25 bg-amber-500/8',
+      tone: 'text-[var(--quiz-primary-bright)] border-[var(--quiz-border)] bg-[var(--quiz-primary)]/8',
       disabled: false,
     },
     {
@@ -748,21 +748,21 @@ function CloudMindQuizContent() {
   ).length;
 
   const panelStyle: React.CSSProperties = {
-    background: 'rgba(15, 18, 35, 0.85)',
-    border: '1px solid rgba(251, 191, 36, 0.2)',
-    boxShadow: '0 0 20px -6px rgba(251, 191, 36, 0.08)',
+    background: 'var(--quiz-surface)',
+    border: '1px solid var(--quiz-border)',
+    boxShadow: '0 0 20px -6px var(--quiz-glow)',
   };
 
   const btnPrimary: React.CSSProperties = {
-    background: 'rgba(251, 191, 36, 0.15)',
-    border: '1px solid rgba(251, 191, 36, 0.45)',
-    color: '#FDE68A',
-    boxShadow: '0 0 12px rgba(251, 191, 36, 0.15)',
+    background: 'var(--quiz-primary-bg)',
+    border: '1px solid var(--quiz-border-strong)',
+    color: 'var(--quiz-primary-text)',
+    boxShadow: '0 0 12px var(--quiz-glow)',
   };
 
   const btnIdle: React.CSSProperties = {
-    border: '1px solid rgba(251, 191, 36, 0.2)',
-    color: 'rgba(253, 230, 138, 0.6)',
+    border: '1px solid var(--quiz-border)',
+    color: 'var(--quiz-muted)',
   };
 
   const configControls = (
@@ -778,7 +778,7 @@ function CloudMindQuizContent() {
               style={subject === s.id ? btnPrimary : btnIdle}
             >
               <span className={`h-2.5 w-2.5 rounded-full ${s.dot}`} />
-              <span className="text-amber-100">{s.label}</span>
+              <span className="text-[var(--quiz-text)]">{s.label}</span>
             </button>
           ))}
         </div>
@@ -787,7 +787,7 @@ function CloudMindQuizContent() {
       <QuizPanel
         title={
           <>
-            知识点 <span className="text-xs font-normal text-amber-200/40">(可选)</span>
+            知识点 <span className="text-xs font-normal text-[var(--quiz-muted)]">(可选)</span>
           </>
         }
       >
@@ -807,7 +807,7 @@ function CloudMindQuizContent() {
           }}
           placeholder="如：二次函数、牛顿第二定律……"
           disabled={state === 'generating'}
-          className="w-full bg-transparent border-b border-amber-500/20 px-1 py-3 text-sm text-amber-100 placeholder:text-amber-200/30 focus:border-amber-400 focus:outline-none transition-colors disabled:opacity-50"
+          className="w-full bg-transparent border-b border-[var(--quiz-border)] px-1 py-3 text-sm text-[var(--quiz-text)] placeholder:text-[var(--quiz-muted)] focus:border-[var(--quiz-primary)] focus:outline-none transition-colors disabled:opacity-50"
         />
       </QuizPanel>
 
@@ -824,9 +824,9 @@ function CloudMindQuizContent() {
               className="flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-all disabled:opacity-50"
               style={difficulty === d.id ? btnPrimary : btnIdle}
             >
-              <span className="text-base text-amber-400">{d.star}</span>
-              <span className="text-sm font-semibold text-amber-100">{d.label}</span>
-              <span className="text-[10px] text-amber-200/40">{d.desc}</span>
+              <span className="text-base text-[var(--quiz-primary)]">{d.star}</span>
+              <span className="text-sm font-semibold text-[var(--quiz-text)]">{d.label}</span>
+              <span className="text-[10px] text-[var(--quiz-muted)]">{d.desc}</span>
             </button>
           ))}
         </div>
@@ -853,35 +853,36 @@ function CloudMindQuizContent() {
   return (
     <div
       className="relative min-h-screen"
-      style={{ background: 'linear-gradient(180deg, #0B0D1A 0%, #121008 50%, #0B0D1A 100%)' }}
+      style={{ background: 'linear-gradient(180deg, var(--quiz-void) 0%, var(--quiz-horizon) 50%, var(--quiz-void) 100%)' }}
     >
       <div className="pointer-events-none fixed inset-0 z-0">
         <CelestialCanvas starCount={120} parallax={false} nebula grid={false} horizonGlow />
       </div>
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute top-0 left-1/3 h-[500px] w-[500px] rounded-full bg-amber-500/5 blur-[150px]" />
-        <div className="absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-sky-500/4 blur-[120px]" />
+        <div className="absolute top-0 left-1/3 h-[500px] w-[500px] rounded-full bg-[var(--quiz-primary)]/5 blur-[150px]" />
+        <div className="absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-[var(--quiz-accent)]/4 blur-[120px]" />
       </div>
 
       <BankInsufficientDialog dialog={bankDialog} onClose={() => setBankDialog(null)} />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-12 space-y-6 text-amber-50">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-12 space-y-6 text-[var(--quiz-text)]">
         {/* Top actions */}
         {state !== 'done' && (
           <motion.div
+            data-sky-desktop-top-actions
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             className="mb-2 flex flex-wrap items-center justify-between gap-3"
           >
             <Link
               href="/sky/cloud-mind"
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-amber-200/60 transition-all hover:text-amber-300 hover:bg-amber-500/10"
+              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-[var(--quiz-muted)] transition-all hover:text-[var(--quiz-primary-bright)] hover:bg-[var(--quiz-primary)]/10"
             >
               <ArrowLeft className="h-4 w-4" /> 返回
             </Link>
             <Link
               href="/sky/question-bank"
-              className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm text-amber-200/70 transition-all hover:text-amber-300 hover:border-amber-400/40 hover:bg-amber-500/15"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/10 px-4 py-2 text-sm text-[var(--quiz-muted)] transition-all hover:text-[var(--quiz-primary-bright)] hover:border-[var(--quiz-border-strong)] hover:bg-[var(--quiz-primary)]/15"
             >
               <BookOpen className="h-4 w-4" /> 题库中心
             </Link>
@@ -895,16 +896,16 @@ function CloudMindQuizContent() {
           className="rounded-2xl p-8 relative overflow-hidden"
           style={panelStyle}
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--quiz-primary)]/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
           <div className="relative z-10 flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/15 shadow-[0_0_16px_rgba(251,191,36,0.2)]">
-              <FileQuestion className="h-7 w-7 text-amber-400" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/15 shadow-[0_0_16px_var(--quiz-glow)]">
+              <FileQuestion className="h-7 w-7 text-[var(--quiz-primary)]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-amber-100 drop-shadow-[0_0_12px_rgba(251,191,36,0.5)]">
+              <h1 className="text-2xl font-bold text-[var(--quiz-text)] drop-shadow-[0_0_12px_var(--quiz-glow-strong)]">
                 星际试炼场
               </h1>
-              <p className="text-sm text-amber-200/50 mt-1">
+              <p className="text-sm text-[var(--quiz-muted)] mt-1">
                 选择你的星域与难度，AI 为你定制试炼挑战
               </p>
             </div>
@@ -988,19 +989,19 @@ function CloudMindQuizContent() {
                 {state === 'generating' ? (
                   <QuizPanel>
                     <div className="flex items-center gap-2 mb-5">
-                      <Loader2 className="h-4 w-4 text-amber-400 animate-spin" />
-                      <span className="text-sm font-medium text-amber-300">
+                      <Loader2 className="h-4 w-4 text-[var(--quiz-primary)] animate-spin" />
+                      <span className="text-sm font-medium text-[var(--quiz-primary-bright)]">
                         {quizMode === 'ai' ? 'AI 正在出题…' : '题库正在抽题…'}
                       </span>
                     </div>
                     <div className="space-y-4">
                       {Array.from({ length: count }).map((_, i) => (
                         <div key={i} className="space-y-2">
-                          <div className="h-4 rounded-lg animate-pulse w-full bg-amber-500/5" />
-                          <div className="h-4 rounded-lg animate-pulse w-3/4 bg-amber-500/4" />
+                          <div className="h-4 rounded-lg animate-pulse w-full bg-[var(--quiz-primary)]/5" />
+                          <div className="h-4 rounded-lg animate-pulse w-3/4 bg-[var(--quiz-primary)]/4" />
                           <div className="grid grid-cols-2 gap-2 mt-2">
-                            <div className="h-8 rounded-lg animate-pulse bg-amber-500/4" />
-                            <div className="h-8 rounded-lg animate-pulse bg-amber-500/4" />
+                            <div className="h-8 rounded-lg animate-pulse bg-[var(--quiz-primary)]/4" />
+                            <div className="h-8 rounded-lg animate-pulse bg-[var(--quiz-primary)]/4" />
                           </div>
                         </div>
                       ))}
@@ -1009,8 +1010,8 @@ function CloudMindQuizContent() {
                 ) : (
                   <QuizPanel>
                     <div className="flex items-center gap-2 mb-4">
-                      <Zap className="h-4 w-4 text-amber-400" />
-                      <h3 className="text-sm font-bold text-amber-100">
+                      <Zap className="h-4 w-4 text-[var(--quiz-primary)]" />
+                      <h3 className="text-sm font-bold text-[var(--quiz-text)]">
                         {quizMode === 'ai' ? '出题配置' : '题库抽题配置'}
                       </h3>
                     </div>
@@ -1024,21 +1025,21 @@ function CloudMindQuizContent() {
                         { label: '数量', value: `${count} 题` },
                       ].map((row) => (
                         <div key={row.label} className="flex items-center justify-between text-sm">
-                          <span className="text-amber-200/50">{row.label}</span>
-                          <span className="font-medium text-amber-100">{row.value}</span>
+                          <span className="text-[var(--quiz-muted)]">{row.label}</span>
+                          <span className="font-medium text-[var(--quiz-text)]">{row.value}</span>
                         </div>
                       ))}
                       {topic && (
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-amber-200/50">主题</span>
-                          <span className="font-medium text-amber-100 truncate ml-2 max-w-[180px]">
+                          <span className="text-[var(--quiz-muted)]">主题</span>
+                          <span className="font-medium text-[var(--quiz-text)] truncate ml-2 max-w-[180px]">
                             {topic}
                           </span>
                         </div>
                       )}
                     </div>
-                    <div className="mt-5 pt-4 border-t border-amber-500/15">
-                      <p className="text-xs text-amber-200/40 text-center">
+                    <div className="mt-5 pt-4 border-t border-[var(--quiz-border)]">
+                      <p className="text-xs text-[var(--quiz-muted)] text-center">
                         {quizMode === 'ai'
                           ? '支持 Ctrl+Enter 快捷生成'
                           : '按条件从题库随机抽取选择题'}
@@ -1061,7 +1062,7 @@ function CloudMindQuizContent() {
               {notice && <QuizNotice message={notice} />}
               {/* Constellation Progress */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-amber-200/50 shrink-0">
+                <span className="text-xs text-[var(--quiz-muted)] shrink-0">
                   {currentIdx + 1} / {questions.length}
                 </span>
                 <div className="flex-1 flex items-center gap-1">
@@ -1076,17 +1077,17 @@ function CloudMindQuizContent() {
                           style={{
                             background: isDone
                               ? isCorrect
-                                ? '#34D399'
-                                : '#F87171'
+                                ? 'var(--quiz-success)'
+                                : 'var(--quiz-error)'
                               : isCurrent
-                                ? 'rgba(251,191,36,0.5)'
-                                : 'rgba(251,191,36,0.1)',
+                                ? 'color-mix(in srgb, var(--quiz-primary) 50%, transparent)'
+                                : 'color-mix(in srgb, var(--quiz-primary) 10%, transparent)',
                             boxShadow: isDone
                               ? isCorrect
-                                ? '0 0 6px rgba(52,211,153,0.4)'
-                                : '0 0 6px rgba(248,113,113,0.4)'
+                                ? '0 0 6px color-mix(in srgb, var(--quiz-success) 40%, transparent)'
+                                : '0 0 6px color-mix(in srgb, var(--quiz-error) 40%, transparent)'
                               : isCurrent
-                                ? '0 0 8px rgba(251,191,36,0.4)'
+                                ? '0 0 8px color-mix(in srgb, var(--quiz-primary) 40%, transparent)'
                                 : 'none',
                           }}
                         />
@@ -1099,10 +1100,10 @@ function CloudMindQuizContent() {
               {/* Question Card */}
               <div className="rounded-2xl border p-6" style={panelStyle}>
                 <div className="flex items-center gap-2 mb-4">
-                  <Star className="h-4 w-4 text-amber-400" />
-                  <span className="text-xs text-amber-200/50">第 {currentIdx + 1} 题</span>
+                  <Star className="h-4 w-4 text-[var(--quiz-primary)]" />
+                  <span className="text-xs text-[var(--quiz-muted)]">第 {currentIdx + 1} 题</span>
                 </div>
-                <div className="text-base font-semibold text-amber-50 mb-5 leading-relaxed">
+                <div className="text-base font-semibold text-[var(--quiz-text)] mb-5 leading-relaxed">
                   <MathRenderer content={currentQ.question} />
                 </div>
 
@@ -1111,12 +1112,12 @@ function CloudMindQuizContent() {
                     const isSelected = selectedAnswer === i;
                     const isCorrectAnswer = i === currentQ.answer;
                     const showResult = selectedAnswer !== null;
-                    let border = 'border-amber-500/20 hover:border-amber-400/50';
+                    let border = 'border-[var(--quiz-border)] hover:border-[var(--quiz-border-strong)]';
                     if (showResult && isCorrectAnswer)
                       border = 'border-emerald-400/60 bg-emerald-500/10';
                     else if (showResult && isSelected && !isCorrectAnswer)
                       border = 'border-red-400/60 bg-red-500/10';
-                    else if (isSelected) border = 'border-amber-400/60 bg-amber-500/10';
+                    else if (isSelected) border = 'border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/10';
                     return (
                       <motion.button
                         key={i}
@@ -1131,20 +1132,20 @@ function CloudMindQuizContent() {
                             style={{
                               background:
                                 showResult && isCorrectAnswer
-                                  ? '#34D399'
+                                  ? 'var(--quiz-success)'
                                   : showResult && isSelected && !isCorrectAnswer
-                                    ? '#F87171'
-                                    : 'rgba(251,191,36,0.15)',
+                                    ? 'var(--quiz-error)'
+                                    : 'color-mix(in srgb, var(--quiz-primary) 15%, transparent)',
                               color:
                                 showResult && (isCorrectAnswer || (isSelected && !isCorrectAnswer))
                                   ? '#fff'
-                                  : '#FDE68A',
+                                  : 'var(--quiz-primary-bright)',
                             }}
                           >
                             {String.fromCharCode(65 + i)}
                           </span>
-                          <span className="text-sm text-amber-50">
-                            <MathRenderer content={option} className="text-sm text-amber-50" />
+                          <span className="text-sm text-[var(--quiz-text)]">
+                            <MathRenderer content={option} className="text-sm text-[var(--quiz-text)]" />
                           </span>
                         </div>
                       </motion.button>
@@ -1161,17 +1162,17 @@ function CloudMindQuizContent() {
                       className="overflow-hidden"
                     >
                       <div
-                        className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4"
-                        style={{ borderLeftWidth: '3px', borderLeftColor: '#FBBF24' }}
+                        className="mt-5 rounded-xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 p-4"
+                        style={{ borderLeftWidth: '3px', borderLeftColor: 'var(--quiz-primary)' }}
                       >
                         <div className="flex items-center gap-2 mb-2">
-                          <BookOpen className="h-4 w-4 text-amber-400" />
-                          <span className="text-xs font-semibold text-amber-300">解析星云</span>
+                          <BookOpen className="h-4 w-4 text-[var(--quiz-primary)]" />
+                          <span className="text-xs font-semibold text-[var(--quiz-primary-bright)]">解析星云</span>
                         </div>
-                        <p className="text-sm text-amber-100 leading-relaxed">
+                        <p className="text-sm text-[var(--quiz-text)] leading-relaxed">
                           <MathRenderer
                             content={currentQ.explanation}
-                            className="text-sm text-amber-100 leading-relaxed"
+                            className="text-sm text-[var(--quiz-text)] leading-relaxed"
                           />
                         </p>
                       </div>
@@ -1222,39 +1223,39 @@ function CloudMindQuizContent() {
                 style={panelStyle}
               >
                 <div className="relative inline-flex items-center justify-center mb-4">
-                  <div className="absolute h-28 w-28 rounded-full border-2 border-amber-500/20" />
+                  <div className="absolute h-28 w-28 rounded-full border-2 border-[var(--quiz-border)]" />
                   <div
                     className="h-24 w-24 rounded-full flex items-center justify-center"
                     style={{
-                      background: 'rgba(251,191,36,0.1)',
-                      border: '2px solid rgba(251,191,36,0.4)',
-                      boxShadow: '0 0 20px rgba(251,191,36,0.2)',
+                      background: 'color-mix(in srgb, var(--quiz-primary) 10%, transparent)',
+                      border: '2px solid color-mix(in srgb, var(--quiz-primary) 40%, transparent)',
+                      boxShadow: '0 0 20px var(--quiz-glow)',
                     }}
                   >
                     <div>
-                      <div className="text-3xl font-bold text-amber-300">{accuracy}</div>
-                      <div className="text-[10px] text-amber-200/50">分</div>
+                      <div className="text-3xl font-bold text-[var(--quiz-primary-bright)]">{accuracy}</div>
+                      <div className="text-[10px] text-[var(--quiz-muted)]">分</div>
                     </div>
                   </div>
                   <div
                     className="absolute h-28 w-28 animate-spin"
                     style={{ animationDuration: '8s' }}
                   >
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 h-2 w-2 rounded-full bg-amber-400" />
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 h-2 w-2 rounded-full bg-[var(--quiz-primary)]" />
                   </div>
                 </div>
-                <h2 className="text-xl font-bold text-amber-50 mb-1">
+                <h2 className="text-xl font-bold text-[var(--quiz-text)] mb-1">
                   {questions.length} 题中答对 {correctCount} 题
                 </h2>
                 <div className="mt-3 flex items-center justify-center gap-6 text-sm">
-                  <div className="flex items-center gap-1.5 text-emerald-400">
+                  <div className="flex items-center gap-1.5 text-[var(--quiz-success)]">
                     <CheckCircle2 className="h-4 w-4" /> 正确 {correctCount}
                   </div>
-                  <div className="flex items-center gap-1.5 text-red-400">
+                  <div className="flex items-center gap-1.5 text-[var(--quiz-error)]">
                     <XCircle className="h-4 w-4" /> 错误 {questions.length - correctCount}
                   </div>
                 </div>
-                <div className="mt-4 text-xs text-amber-200/50">
+                <div className="mt-4 text-xs text-[var(--quiz-muted)]">
                   {saveStatus === 'saving' && '正在写入学情分析…'}
                   {saveStatus === 'saved' && '已写入学情分析，返回学情页可查看各学科掌握度'}
                   {saveStatus === 'failed' && '成绩写入学情分析失败，可稍后重试'}
@@ -1262,8 +1263,8 @@ function CloudMindQuizContent() {
               </div>
 
               <div className="rounded-2xl border p-5" style={panelStyle}>
-                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-amber-100">
-                  <Zap className="h-4 w-4 text-amber-400" />
+                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
+                  <Zap className="h-4 w-4 text-[var(--quiz-primary)]" />
                   下一步学习动作
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1275,14 +1276,14 @@ function CloudMindQuizContent() {
                           <Icon className="h-4 w-4" />
                           <span className="text-sm font-semibold">{action.label}</span>
                         </div>
-                        <p className="mt-1 text-xs text-amber-100/55">{action.desc}</p>
+                        <p className="mt-1 text-xs text-[var(--quiz-text)]/55">{action.desc}</p>
                       </>
                     );
                     if (action.disabled) {
                       return (
                         <div
                           key={action.label}
-                          className="rounded-xl border border-amber-500/10 bg-amber-500/5 px-4 py-3 text-amber-100/35"
+                          className="rounded-xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 px-4 py-3 text-[var(--quiz-text)]/35"
                         >
                           {contentNode}
                         </div>
@@ -1305,16 +1306,16 @@ function CloudMindQuizContent() {
                 <div className="rounded-2xl border p-5" style={panelStyle}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <div className="flex items-center gap-2 text-sm font-semibold text-amber-100">
-                        <BookOpen className="h-4 w-4 text-amber-400" />将 AI 题目加入题库
+                      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
+                        <BookOpen className="h-4 w-4 text-[var(--quiz-primary)]" />将 AI 题目加入题库
                       </div>
-                      <p className="mt-1 text-xs text-amber-200/50">
+                      <p className="mt-1 text-xs text-[var(--quiz-muted)]">
                         本次 AI 生成的题目不会自动入库，可选择需要沉淀的题目。
                       </p>
                     </div>
                     <Link
                       href="/sky/question-bank"
-                      className="inline-flex items-center justify-center rounded-lg border border-amber-500/20 px-3 py-2 text-xs font-medium text-amber-200/70 transition-colors hover:border-amber-400/40 hover:text-amber-300"
+                      className="inline-flex items-center justify-center rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs font-medium text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)]"
                     >
                       进入题库中心
                     </Link>
@@ -1323,14 +1324,14 @@ function CloudMindQuizContent() {
                     <button
                       onClick={selectAllUnsavedForBank}
                       disabled={bankSaving}
-                      className="rounded-lg border border-amber-500/20 px-3 py-2 text-xs text-amber-200/70 transition-colors hover:border-amber-400/40 hover:text-amber-300 disabled:opacity-50"
+                      className="rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)] disabled:opacity-50"
                     >
                       全选未入库
                     </button>
                     <button
                       onClick={() => setSelectedForBank(new Set())}
                       disabled={bankSaving}
-                      className="rounded-lg border border-amber-500/20 px-3 py-2 text-xs text-amber-200/70 transition-colors hover:border-amber-400/40 hover:text-amber-300 disabled:opacity-50"
+                      className="rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)] disabled:opacity-50"
                     >
                       清空选择
                     </button>
@@ -1392,17 +1393,17 @@ function CloudMindQuizContent() {
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-3">
-                            <p className="text-sm font-medium text-amber-50 mb-1">
+                            <p className="text-sm font-medium text-[var(--quiz-text)] mb-1">
                               {i + 1}.{' '}
                               <MathRenderer
                                 content={q.question}
-                                className="text-sm font-medium text-amber-50"
+                                className="text-sm font-medium text-[var(--quiz-text)]"
                               />
                             </p>
                             {questionSource === 'ai' && (
                               <div className="flex shrink-0 items-center gap-2">
                                 <label
-                                  className={`flex items-center gap-1.5 text-xs ${canSelectForBank ? 'text-amber-200/70' : 'text-amber-200/30'}`}
+                                  className={`flex items-center gap-1.5 text-xs ${canSelectForBank ? 'text-[var(--quiz-muted)]' : 'text-[var(--quiz-muted)]'}`}
                                 >
                                   <input
                                     type="checkbox"
@@ -1420,7 +1421,7 @@ function CloudMindQuizContent() {
                                     bankStatus === 'saved' ||
                                     bankStatus === 'duplicate'
                                   }
-                                  className="inline-flex items-center gap-1 rounded-lg border border-amber-500/20 px-2.5 py-1.5 text-xs text-amber-200/70 transition-colors hover:border-amber-400/40 hover:text-amber-300 disabled:opacity-60"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-[var(--quiz-border)] px-2.5 py-1.5 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)] disabled:opacity-60"
                                 >
                                   {bankStatus === 'saving' && (
                                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -1430,23 +1431,23 @@ function CloudMindQuizContent() {
                               </div>
                             )}
                           </div>
-                          <p className="text-xs text-amber-200/50">
+                          <p className="text-xs text-[var(--quiz-muted)]">
                             你的答案：
                             <MathRenderer
                               content={userAnswer !== null ? q.options[userAnswer] : '未作答'}
-                              className="text-xs text-amber-200/50"
+                              className="text-xs text-[var(--quiz-muted)]"
                             />{' '}
                             · 正确答案：
                             <MathRenderer
                               content={q.options[q.answer]}
-                              className="text-xs text-amber-200/50"
+                              className="text-xs text-[var(--quiz-muted)]"
                             />
                           </p>
                           {!isCorrect && (
-                            <div className="text-xs text-amber-200/40 mt-1.5">
+                            <div className="text-xs text-[var(--quiz-muted)] mt-1.5">
                               <MathRenderer
                                 content={q.explanation}
-                                className="text-xs text-amber-200/40"
+                                className="text-xs text-[var(--quiz-muted)]"
                               />
                             </div>
                           )}
@@ -1467,13 +1468,13 @@ function CloudMindQuizContent() {
               <div className="flex gap-3">
                 <button
                   onClick={handleReset}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-amber-500/20 px-4 py-3 text-sm font-medium text-amber-200/60 hover:text-amber-300 hover:border-amber-400/40 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[var(--quiz-border)] px-4 py-3 text-sm font-medium text-[var(--quiz-muted)] hover:text-[var(--quiz-primary-bright)] hover:border-[var(--quiz-border-strong)] transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4" /> 返回星际试炼场
                 </button>
                 <button
                   onClick={handleReset}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/20 px-4 py-3 text-sm font-medium text-amber-200/60 hover:text-amber-300 hover:border-amber-400/40 transition-colors"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-[var(--quiz-border)] px-4 py-3 text-sm font-medium text-[var(--quiz-muted)] hover:text-[var(--quiz-primary-bright)] hover:border-[var(--quiz-border-strong)] transition-colors"
                 >
                   <RotateCcw className="h-4 w-4" /> 重新出题
                 </button>
@@ -1524,12 +1525,12 @@ function QuizPanel({ title, children }: { title?: React.ReactNode; children: Rea
     <div
       className="rounded-xl border p-5"
       style={{
-        background: 'rgba(15, 18, 35, 0.85)',
-        border: '1px solid rgba(251, 191, 36, 0.2)',
-        boxShadow: '0 0 16px -4px rgba(251, 191, 36, 0.06)',
+        background: 'var(--quiz-surface)',
+        border: '1px solid var(--quiz-border)',
+        boxShadow: '0 0 16px -4px var(--quiz-glow)',
       }}
     >
-      {title && <label className="text-sm font-semibold text-amber-100 mb-3 block">{title}</label>}
+      {title && <label className="text-sm font-semibold text-[var(--quiz-text)] mb-3 block">{title}</label>}
       {children}
     </div>
   );
@@ -1561,28 +1562,28 @@ function BankInsufficientDialog({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-400/70 px-4 backdrop-blur-sm dark:bg-slate-950/70"
           onClick={onClose}
         >
           <motion.div
             initial={{ scale: 0.94, y: 16, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.96, y: 10, opacity: 0 }}
-            className="relative w-full max-w-md overflow-hidden rounded-3xl border border-amber-500/25 bg-slate-950/95 p-6 text-amber-50 shadow-2xl shadow-amber-950/40"
+            className="relative w-full max-w-md overflow-hidden rounded-3xl border border-[var(--quiz-border)] bg-[var(--quiz-surface-elevated)] p-6 text-[var(--quiz-text)] shadow-2xl shadow-[var(--quiz-glow-strong)]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-amber-400/10 blur-3xl -translate-y-1/2 translate-x-1/3" />
+            <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-[var(--quiz-primary)]/10 blur-3xl -translate-y-1/2 translate-x-1/3" />
             <div className="relative z-10">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-500/10 shadow-[0_0_18px_rgba(251,191,36,0.16)]">
-                <BookOpen className="h-6 w-6 text-amber-300" />
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/10 shadow-[0_0_18px_var(--quiz-glow)]">
+                <BookOpen className="h-6 w-6 text-[var(--quiz-primary-bright)]" />
               </div>
-              <h3 className="text-lg font-bold text-amber-100 drop-shadow-[0_0_10px_rgba(251,191,36,0.35)]">
+              <h3 className="text-lg font-bold text-[var(--quiz-text)] drop-shadow-[0_0_10px_var(--quiz-glow-strong)]">
                 {dialog.title}
               </h3>
-              <p className="mt-3 text-sm leading-6 text-amber-100/65">{dialog.message}</p>
+              <p className="mt-3 text-sm leading-6 text-[var(--quiz-text)]/65">{dialog.message}</p>
               <button
                 onClick={onClose}
-                className="quiz-button-sweep mt-6 w-full rounded-xl border border-amber-400/45 bg-amber-500/15 px-4 py-3 text-sm font-medium text-amber-100 transition-all hover:bg-amber-500/20"
+                className="quiz-button-sweep mt-6 w-full rounded-xl border border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/15 px-4 py-3 text-sm font-medium text-[var(--quiz-text)] transition-all hover:bg-[var(--quiz-primary)]/20"
               >
                 我知道了
               </button>

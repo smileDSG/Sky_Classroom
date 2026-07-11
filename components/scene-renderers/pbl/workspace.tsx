@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import type { PBLProjectConfig } from '@/lib/pbl/types';
 import { IssueboardPanel } from './issueboard-panel';
 import { ChatPanel } from './chat-panel';
 import { usePBLChat } from './use-pbl-chat';
 import { PBLGuidePanel } from './guide';
+
 interface PBLWorkspaceProps {
   readonly projectConfig: PBLProjectConfig;
   readonly userRole: string;
@@ -19,7 +20,9 @@ export function PBLWorkspace({
   userRole,
   onConfigUpdate,
   onReset,
-}: PBLWorkspaceProps) {const [showConfirm, setShowConfirm] = useState(false);
+}: PBLWorkspaceProps) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [issuesExpanded, setIssuesExpanded] = useState(true);
 
   const { messages, isLoading, sendMessage, currentIssue } = usePBLChat({
     projectConfig,
@@ -28,18 +31,23 @@ export function PBLWorkspace({
   });
 
   return (
-    <div className="flex h-full w-full">
-      {/* Left: Issueboard (~35%) */}
-      <div className="w-[35%] min-w-[280px] border-r overflow-hidden flex flex-col">
+    <div className="flex h-full w-full flex-col md:flex-row">
+      {/* Left: Issueboard */}
+      <div
+        className={`
+          flex flex-col overflow-hidden border-b bg-background md:w-[35%] md:min-w-[280px] md:border-b-0 md:border-r
+          ${issuesExpanded ? 'h-[45%] md:h-auto' : 'h-auto md:h-auto'}
+        `}
+      >
         {/* Back button bar */}
-        <div className="px-3 pt-2 flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 px-3 pt-2">
           {!showConfirm ? (
-            <div className="flex items-center gap-1 flex-1">
+            <div className="flex flex-1 items-center gap-1">
               <button
                 onClick={() => setShowConfirm(true)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1.5 py-1 rounded-md hover:bg-muted"
+                className="flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="h-3.5 w-3.5" />
                 <span>{'重新开始'}</span>
               </button>
               <div className="ml-auto">
@@ -54,27 +62,34 @@ export function PBLWorkspace({
                   setShowConfirm(false);
                   onReset();
                 }}
-                className="px-2 py-0.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+                className="rounded bg-destructive px-2 py-0.5 text-destructive-foreground transition-colors hover:bg-destructive/90"
               >
                 {'确定'}
               </button>
               <button
                 onClick={() => setShowConfirm(false)}
-                className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 transition-colors"
+                className="rounded bg-muted px-2 py-0.5 transition-colors hover:bg-muted/80"
               >
                 {'取消'}
               </button>
             </div>
           )}
+          <button
+            onClick={() => setIssuesExpanded((v) => !v)}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted md:hidden"
+            aria-label={issuesExpanded ? '收起任务看板' : '展开任务看板'}
+          >
+            {issuesExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
         </div>
 
-        <div className="flex-1 overflow-hidden">
+        <div className={`flex-1 overflow-hidden ${issuesExpanded ? 'block' : 'hidden md:block'}`}>
           <IssueboardPanel issueboard={projectConfig.issueboard} />
         </div>
       </div>
 
-      {/* Right: Chat (~65%) */}
-      <div className="flex-1 overflow-hidden">
+      {/* Right: Chat */}
+      <div className="flex flex-1 flex-col overflow-hidden">
         <ChatPanel
           messages={messages}
           currentIssue={currentIssue}

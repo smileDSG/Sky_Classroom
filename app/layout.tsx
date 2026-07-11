@@ -11,7 +11,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ServerProvidersInit } from '@/components/server-providers-init';
 import { AccessCodeGuard } from '@/components/access-code-guard';
 import { SkyClassroomEntry } from '@/components/sky-classroom-entry';
-import { KagamiPanel } from '@/components/ai/kagami-panel';
+import { KagamiPanelGuard } from '@/components/ai/kagami-panel-guard';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { ClassroomJobPoller } from '@/components/classroom-job-poller';
 import { SlidesJobPoller } from '@/components/slides-job-poller';
@@ -47,7 +47,7 @@ export default function RootLayout({
             <ServerProvidersInit />
             <ServiceWorkerReset />
             <SkyClassroomEntry />
-            <KagamiPanel />
+            <KagamiPanelGuard />
             <ClassroomJobPoller />
             <SlidesJobPoller />
             <AccessCodeGuard>{children}</AccessCodeGuard>

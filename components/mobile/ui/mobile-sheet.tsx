@@ -66,7 +66,7 @@ export function MobileSheet({
               </h2>
             )}
             {description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-[13px] text-slate-500 dark:text-slate-400">
                 {description}
               </p>
             )}
