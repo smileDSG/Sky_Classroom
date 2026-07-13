@@ -65,6 +65,17 @@ function makeRow(overrides: Record<string, unknown> = {}) {
 // ── Tests ───────────────────────────────────────────────────────────
 
 describe('QuestionBank DAO', () => {
+  test('ensureTable uses MySQL-compatible TEXT and JSON column definitions', async () => {
+    mockQuery.mockResolvedValueOnce([{}, []]);
+
+    const { ensureTable } = await import('@/lib/question-bank/dao');
+    await ensureTable();
+
+    const createTableSql = String(mockQuery.mock.calls[0]?.[0] ?? '');
+    expect(createTableSql).not.toMatch(/TEXT\s+NOT NULL\s+DEFAULT/i);
+    expect(createTableSql).not.toMatch(/JSON\s+NOT NULL\s+DEFAULT/i);
+  });
+
   test('insertOne: generates id and hash, calls INSERT', async () => {
     // Ensure table returns OK
     mockQuery.mockResolvedValueOnce([{}, []]); // CREATE TABLE
