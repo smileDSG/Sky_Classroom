@@ -16,6 +16,7 @@ tsconfig.tsbuildinfo
 .kimi/
 .gstack/
 .superpowers/
+.worktrees/
 .data
 tmp/
 # Local runtime data (generated jobs, classrooms, teaching sessions)
