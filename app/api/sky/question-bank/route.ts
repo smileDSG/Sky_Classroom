@@ -1,12 +1,8 @@
 /**
- * GET/POST/DELETE /api/sky/question-bank
- *
- * Query and manage questions in the dedicated MySQL question_bank table.
- * Replaces the legacy KB-backed question bank with the new relational schema.
+ * GET/POST /api/sky/question-bank
+ * Question bank query and auto-save endpoint.
  */
-
-import { NextRequest } from 'next/server';
-import { apiSuccess, apiError } from '@/lib/server/api-response';
+import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { hashProblemText } from '@/lib/solve/question-bank-utils';
 import {
@@ -53,9 +49,7 @@ function normalizeOptions(value: unknown): string[] | undefined {
   return options.length > 0 ? options : undefined;
 }
 
-// ── GET ─────────────────────────────────────────────────────────────
-
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const query = url.searchParams.get('query') || '';
@@ -97,47 +91,12 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const idsParam = searchParams.get('ids');
-    const ids = idsParam
-      ? idsParam.split(',').map((s) => s.trim()).filter(Boolean)
-      : undefined;
-
-    const filter = {
-      keyword: searchParams.get('query') || searchParams.get('keyword') || undefined,
-      subject: searchParams.get('subject') || undefined,
-      grade: searchParams.get('grade') || undefined,
-      difficulty: (searchParams.get('difficulty') as 'easy' | 'medium' | 'hard') || undefined,
-      questionType: (searchParams.get('questionType') as 'choice' | 'fill' | 'solve' | 'judge') || undefined,
-      verified: searchParams.has('verified')
-        ? searchParams.get('verified') === 'true'
-        : undefined,
-      tags: searchParams.get('tags')
-        ? searchParams.get('tags')!.split(',').map((t) => t.trim()).filter(Boolean)
-        : undefined,
-      ids,
-      limit: Math.min(100, Math.max(1, Number(searchParams.get('limit') || '20'))),
-      offset: Math.max(0, (Number(searchParams.get('page') || '1') - 1) * Number(searchParams.get('limit') || '20')),
-    };
-
-    const [questions, total] = await Promise.all([
-      search(filter),
-      count({
-        subject: filter.subject,
-        grade: filter.grade,
-        difficulty: filter.difficulty,
-        questionType: filter.questionType,
-        verified: filter.verified,
-        keyword: filter.keyword,
-        ids,
-      }),
-    ]);
-
     return apiSuccess({
       questions,
       total,
-      page: Math.floor(filter.offset / filter.limit) + 1,
-      limit: filter.limit,
-      totalPages: Math.ceil(total / filter.limit),
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -189,7 +148,7 @@ export async function DELETE(req: Request) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Record<string, unknown>;
     const content = String(body.content ?? body.problemText ?? '').trim();
@@ -238,67 +197,13 @@ export async function POST(req: NextRequest) {
       saved: true,
       duplicated: false,
     });
-  } catch (err: any) {
+  } catch (err) {
     log.error('Question bank POST error:', err);
-    if (err.message?.includes('Duplicate entry') || err.message?.includes('uq_problem_hash')) {
-      return apiSuccess({ id: '', saved: false, duplicated: true, message: '题目已存在于题库中' });
-    }
-    return apiError('INTERNAL_ERROR', 500, '题库保存失败', err.message);
-  }
-}
-
-// ── DELETE ──────────────────────────────────────────────────────────
-
-export async function DELETE(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const idsParam = searchParams.get('ids');
-    const id = searchParams.get('id');
-
-    if (idsParam) {
-      const ids = idsParam.split(',').map((s) => s.trim()).filter(Boolean);
-      if (ids.length === 0) {
-        return apiError('MISSING_REQUIRED_FIELD', 400, '缺少 id 参数');
-      }
-      const deleted = await deleteByIds(ids);
-      return apiSuccess({ deleted, ids });
-    }
-
-    if (!id) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, '缺少 id 参数');
-    }
-
-    const ok = await deleteById(id);
-    if (!ok) {
-      return apiError('NOT_FOUND', 404, '题目不存在');
-    }
-
-    return apiSuccess({ deleted: true });
-  } catch (err: any) {
-    log.error('Question bank DELETE error:', err);
-    return apiError('INTERNAL_ERROR', 500, '题库删除失败', err.message);
-  }
-}
-
-// ── PATCH ───────────────────────────────────────────────────────────
-
-export async function PATCH(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-    if (!id) {
-      return apiError('MISSING_REQUIRED_FIELD', 400, '缺少 id 参数');
-    }
-
-    const body = await req.json();
-    const ok = await update(id, body);
-    if (!ok) {
-      return apiError('NOT_FOUND', 404, '题目不存在');
-    }
-
-    return apiSuccess({ updated: true });
-  } catch (err: any) {
-    log.error('Question bank PATCH error:', err);
-    return apiError('INTERNAL_ERROR', 500, '题库更新失败', err.message);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      '题库保存失败',
+      err instanceof Error ? err.message : undefined,
+    );
   }
 }
