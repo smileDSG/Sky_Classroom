@@ -34,7 +34,7 @@ interface StageTiming {
   durationMs?: number;
 }
 
-interface GeneratingStateProps {
+export interface GeneratingStateProps {
   stage: string;
   progress: number;
   status?: string;

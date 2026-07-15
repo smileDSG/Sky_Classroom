@@ -4,7 +4,7 @@
  */
 
 import { createUserDAO } from '@/lib/storage/dao/users';
-import { hashPassword, verifyPassword } from '@/lib/server/auth';
+import { hashPassword } from '@/lib/server/auth';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('AdminSeed');
@@ -21,19 +21,16 @@ export async function ensureAdminUser(): Promise<void> {
     const dao = await createUserDAO();
     const existing = await dao.getByUsername(ADMIN_USERNAME);
     if (existing) {
-      // Verify password hash is valid — reset if corrupted
+      // Only (re)set the password when the hash is missing/corrupt — never
+      // overwrite a hash simply because it doesn't match the default, since
+      // the admin may have changed their password on purpose.
       if (existing.passwordHash) {
-        const valid = await verifyPassword(ADMIN_PASSWORD, existing.passwordHash);
-        if (valid) {
-          seeded = true;
-          return;
-        }
-        log.warn('Admin password hash invalid — resetting');
+        seeded = true;
+        return;
       }
-      // Hash missing or invalid — reset password
+      log.warn('Admin password hash missing — resetting to default');
       const passwordHash = await hashPassword(ADMIN_PASSWORD);
       await dao.update(existing.id, { passwordHash });
-      log.info('Admin password reset to default');
       seeded = true;
       return;
     }

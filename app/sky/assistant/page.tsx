@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { AssistantPanel } from '@/components/sky/assistant/assistant-panel';
 import { AssistantConfig } from '@/components/sky/assistant/assistant-config';
 import { AssistantHistory } from '@/components/sky/assistant/assistant-history';
 import { AssistantSettings } from '@/components/sky/assistant/assistant-settings';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import {
   Feather,
   Wind,
@@ -24,17 +26,47 @@ const SIDEBAR_ITEMS = [
 ] as const;
 
 export default function AssistantPage() {
-  const [activeSidebar, setActiveSidebar] = useState<string>('chat');
-  const [mode, setMode] = useState<'anime' | 'normal'>('anime');
-  const [loadConvId, setLoadConvId] = useState<string | null>(null);
+  return (
+    <Suspense
+      fallback={
+        <SkyAppShell>
+          <div className="mx-auto flex h-[calc(100vh-120px)] max-w-6xl items-center justify-center text-sm text-slate-500">
+            加载助手...
+          </div>
+        </SkyAppShell>
+      }
+    >
+      <AssistantContent />
+    </Suspense>
+  );
+}
 
-  // Hydrate mode from localStorage after mount to avoid SSR mismatch
-  useEffect(() => {
+function AssistantContent() {
+  const searchParams = useSearchParams();
+  const initialView = searchParams.get('view');
+  const initialPrompt = searchParams.get('q');
+  const subjectParam = searchParams.get('subject');
+  const styleParam = searchParams.get('style');
+  const difficultyParam = searchParams.get('difficulty');
+  const modeParam = searchParams.get('mode');
+  const setSubject = useSkyClassroomStore((s) => s.setSubject);
+  const setStyle = useSkyClassroomStore((s) => s.setStyle);
+  const setDifficulty = useSkyClassroomStore((s) => s.setDifficulty);
+  const [activeSidebar, setActiveSidebar] = useState<string>(
+    initialView === 'history' || initialView === 'settings' ? initialView : 'chat',
+  );
+  const [mode, setMode] = useState<'anime' | 'normal'>(() => {
+    if (modeParam === 'normal' || modeParam === 'anime') return modeParam;
+    if (typeof window === 'undefined') return 'anime';
     try {
       const saved = localStorage.getItem('assistant-panel-mode');
-      if (saved === 'normal' || saved === 'anime') setMode(saved);
-    } catch { /* ignore */ }
-  }, []);
+      if (saved === 'normal' || saved === 'anime') return saved;
+    } catch {
+      /* ignore */
+    }
+    return 'anime';
+  });
+  const [loadConvId, setLoadConvId] = useState<string | null>(null);
 
   const handleLoadConversation = useCallback((messages: { id: string; role: 'user' | 'assistant'; content: string }[], convId: string) => {
     setLoadConvId(convId);
@@ -44,6 +76,12 @@ export default function AssistantPage() {
   const handleConversationLoaded = useCallback(() => {
     setLoadConvId(null);
   }, []);
+
+  useEffect(() => {
+    if (subjectParam) setSubject(subjectParam);
+    if (styleParam) setStyle(styleParam);
+    if (difficultyParam) setDifficulty(difficultyParam);
+  }, [difficultyParam, setDifficulty, setStyle, setSubject, styleParam, subjectParam]);
 
   const handleModeChange = useCallback((newMode: 'anime' | 'normal') => {
     setMode(newMode);
@@ -167,6 +205,7 @@ export default function AssistantPage() {
                   onModeChange={handleModeChange}
                   externalLoadConvId={loadConvId}
                   onConversationLoaded={handleConversationLoaded}
+                  initialPrompt={initialPrompt}
                 />
               </div>
             </>

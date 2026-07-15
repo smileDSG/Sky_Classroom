@@ -4,6 +4,7 @@
  */
 
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { getPerfMonitor } from '@/lib/monitoring/performance';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -17,6 +18,7 @@ export async function GET(request: Request) {
     return apiSuccess({
       range,
       health: healthData,
+      performance: getPerfMonitor().export(),
       timestamp: Date.now(),
     });
   } catch (err) {

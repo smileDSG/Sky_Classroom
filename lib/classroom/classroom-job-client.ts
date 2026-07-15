@@ -17,6 +17,44 @@ export interface ClassroomJobState {
   done: boolean;
 }
 
+export interface ClassroomRuntimeModelConfig {
+  modelString?: string;
+  apiKey?: string;
+  baseUrl?: string;
+}
+
+const TRANSIENT_FETCH_ERROR_PATTERN =
+  /failed to fetch|fetch failed|networkerror|load failed|network request failed/i;
+
+export function isClassroomPollAbort(error: unknown): boolean {
+  return (
+    typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError'
+  );
+}
+
+export function isTransientClassroomPollError(error: unknown): boolean {
+  if (isClassroomPollAbort(error)) return false;
+  if (error instanceof TypeError && !error.message) return true;
+  return error instanceof Error && TRANSIENT_FETCH_ERROR_PATTERN.test(error.message);
+}
+
+function waitForNextPoll(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    const timeout = setTimeout(resolve, ms);
+
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timeout);
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
+
 export async function submitClassroomJob(body: Record<string, unknown>): Promise<string> {
   const opts: RequestInit = {
     method: 'POST',
@@ -42,14 +80,24 @@ export async function submitClassroomJob(body: Record<string, unknown>): Promise
     } catch {
       /* ignore */
     }
+    // Surface auth errors so callers can redirect to login
+    if (res.status === 401) {
+      throw new Error(detail || 'User not found');
+    }
     throw new Error(detail || '提交课堂生成作业失败');
   }
   const json = await res.json();
   return json.data?.jobId ?? json.jobId;
 }
 
-export async function fetchClassroomJob(jobId: string): Promise<ClassroomJobState | null> {
-  const res = await fetch(`/api/generate-classroom/${jobId}`);
+export async function fetchClassroomJob(
+  jobId: string,
+  signal?: AbortSignal,
+): Promise<ClassroomJobState | null> {
+  const init: RequestInit = { cache: 'no-store' };
+  if (signal) init.signal = signal;
+
+  const res = await fetch(`/api/generate-classroom/${jobId}`, init);
   if (!res.ok) {
     if (res.status === 404) return null;
     let detail = '';
@@ -71,9 +119,23 @@ export async function pollClassroomJob(
   signal: AbortSignal,
 ): Promise<void> {
   const pollUrl = `/api/generate-classroom/${jobId}`;
+  let transientFailureCount = 0;
 
   while (!signal.aborted) {
-    const res = await fetch(pollUrl, { signal });
+    let res: Response;
+    try {
+      res = await fetch(pollUrl, { cache: 'no-store', signal });
+      transientFailureCount = 0;
+    } catch (error) {
+      if (signal.aborted || isClassroomPollAbort(error)) return;
+      if (isTransientClassroomPollError(error)) {
+        transientFailureCount += 1;
+        await waitForNextPoll(Math.min(8000, 1000 + transientFailureCount * 1000), signal);
+        continue;
+      }
+      throw error;
+    }
+
     if (!res.ok) {
       let detail = '';
       try {
@@ -90,16 +152,11 @@ export async function pollClassroomJob(
 
     onUpdate(data);
 
-    if (data.done) {
-      if (data.status === 'failed') {
-        throw new Error(json.data?.error ?? json.error ?? '课堂生成失败');
-      }
-      return;
-    }
+    if (data.done) return;
 
     if (data.status === 'awaiting_review') return;
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await waitForNextPoll(1500, signal);
   }
 }
 
@@ -122,11 +179,18 @@ export async function cancelClassroomJob(jobId: string): Promise<void> {
 export async function approveClassroomOutline(
   jobId: string,
   outlines?: import('@/lib/types/generation').SceneOutline[],
+  modelConfig?: ClassroomRuntimeModelConfig,
 ): Promise<void> {
+  const body = {
+    ...(outlines?.length ? { outlines } : {}),
+    ...(modelConfig?.modelString ? { modelString: modelConfig.modelString } : {}),
+    ...(modelConfig?.apiKey ? { apiKey: modelConfig.apiKey } : {}),
+    ...(modelConfig?.baseUrl ? { baseUrl: modelConfig.baseUrl } : {}),
+  };
   const res = await fetch(`/api/generate-classroom/${jobId}/approve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: outlines?.length ? JSON.stringify({ outlines }) : undefined,
+    body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
     let detail = '';

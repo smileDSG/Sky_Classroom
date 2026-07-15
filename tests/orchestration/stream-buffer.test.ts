@@ -356,5 +356,24 @@ describe('StreamBuffer', () => {
       expect(cb.onLiveSpeech).toHaveBeenCalledWith('Hello world', 'agent-1');
       buf.shutdown();
     });
+
+    test('keeps the final text visible until it is fully revealed before done fires', () => {
+      const cb = makeCallbacks();
+      const buf = new StreamBuffer(cb, { tickMs: 10, charsPerTick: 2 });
+
+      buf.pushAgentStart({ messageId: 'msg-1', agentId: 'agent-1', agentName: 'Assistant' });
+      buf.pushText('msg-1', 'Answer please', 'agent-1');
+      buf.sealText('msg-1');
+      buf.pushDone({ totalActions: 0, totalAgents: 1 });
+
+      buf.start();
+      vi.advanceTimersByTime(30);
+      expect(cb.onDone).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(100);
+      expect(cb.onLiveSpeech).toHaveBeenCalledWith('Answer please', 'agent-1');
+      expect(cb.onDone).toHaveBeenCalled();
+      buf.shutdown();
+    });
   });
 });

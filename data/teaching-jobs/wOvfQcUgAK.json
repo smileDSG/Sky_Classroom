@@ -1,0 +1,355 @@
+{
+  "id": "wOvfQcUgAK",
+  "userId": "admin-default",
+  "topic": "级数",
+  "status": "running",
+  "step": "completed",
+  "progress": 100,
+  "message": "教案生成完成",
+  "createdAt": "2026-06-17T03:33:25.285Z",
+  "updatedAt": "2026-06-18T15:27:43.959Z",
+  "sectionsCompleted": 3,
+  "totalSections": 3,
+  "startedAt": "2026-06-17T03:33:25.294Z",
+  "plan": {
+    "title": "级数 授课计划",
+    "sections": [
+      {
+        "id": "section-1",
+        "title": "级数 基础讲解",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "级数"
+        ],
+        "estimatedDuration": 10,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-2",
+        "title": "级数 例题讲解",
+        "contentType": "example",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "级数"
+        ],
+        "estimatedDuration": 10,
+        "hasQuiz": false
+      },
+      {
+        "id": "section-3",
+        "title": "级数 随堂检测",
+        "contentType": "quiz",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "级数"
+        ],
+        "estimatedDuration": 5,
+        "hasQuiz": true
+      }
+    ],
+    "estimatedDuration": 25,
+    "focusPoints": []
+  },
+  "sections": [
+    {
+      "section": {
+        "id": "section-1",
+        "title": "级数 基础讲解",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "级数"
+        ],
+        "estimatedDuration": 10,
+        "hasQuiz": true
+      },
+      "chunks": [
+        {
+          "sectionId": "section-1",
+          "type": "text",
+          "content": "## 级数的基本概念\n\n**级数**（Series）是将无穷多个数按顺序相加得到的表达式，通常写作：\n$$\\sum_{n=1}^{\\infty} a_n = a_1 + a_2 + a_3 + \\cdots + a_n + \\cdots$$\n其中 $a_n$ 称为级数的**通项**。级数的核心问题是判断这个无穷和是否等于一个有限数。为此，我们引入**部分和**的概念：\n$$S_n = a_1 + a_2 + \\cdots + a_n = \\sum_{k=1}^{n} a_k$$\n即前 $n$ 项的和。级数的收敛性由部分和序列 $\\{S_n\\}$ 的极限决定。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-1",
+          "type": "formula",
+          "content": "## 收敛与发散的判定\n\n如果极限 $\\displaystyle \\lim_{n \\to \\infty} S_n = S$ 存在且有限，则称级数**收敛**，其和为 $S$；否则称级数**发散**。\n\n一个重要的**必要条件**是：若级数 $\\sum a_n$ 收敛，则通项必须趋于零，即 $\\displaystyle \\lim_{n \\to \\infty} a_n = 0$。\n$\\boxed{\\text{若 } \\sum a_n \\text{ 收敛，则 } a_n \\to 0}$。\n\n**注意：** 该条件只是必要，而非充分。例如调和级数 $\\sum \\frac{1}{n}$ 的通项 $\\frac{1}{n} \\to 0$，但级数本身发散。",
+          "order": 2
+        },
+        {
+          "sectionId": "section-1",
+          "type": "example",
+          "content": "## 例题：判断级数的收敛性\n\n**题目：** 判断下列级数的敛散性：\n$$\\sum_{n=1}^{\\infty} \\frac{n}{2n+1}$$\n\n**解：**\n\n1. 考察通项 $a_n = \\dfrac{n}{2n+1}$。\n2. 计算极限：\n   $$\\lim_{n \\to \\infty} a_n = \\lim_{n \\to \\infty} \\frac{n}{2n+1} = \\frac{1}{2} \\neq 0$$\n3. 根据收敛的必要条件，若级数收敛则通项必须趋于 $0$，而此处极限不为 $0$，故该级数**发散**。\n\n**说明：** 本题仅使用必要条件即可判定，无需计算部分和。但需注意，当通项趋于 $0$ 时，不能直接断定收敛，需进一步用其他审敛法。",
+          "order": 3
+        },
+        {
+          "sectionId": "section-1",
+          "type": "text",
+          "content": "## 易错点提醒\n\n- 常见的错误：误将“通项趋于 $0$”当作级数收敛的充分条件。例如调和级数 $\\sum \\frac{1}{n}$ 通项趋于 $0$，但发散。\n- 正确做法：若通项不趋于 $0$，则级数必发散（这是充分条件）；若通项趋于 $0$，则级数可能收敛也可能发散，需要进一步使用比较法、比值法、积分判别法等。\n- 变式训练：比较级数 $\\sum \\frac{1}{n^p}$（**p-级数**）：当 $p>1$ 时收敛，$p \\le 1$ 时发散。特别地，$p=1$ 是调和级数。",
+          "order": 4
+        },
+        {
+          "sectionId": "section-1",
+          "type": "text",
+          "content": "## 变式训练（思考题）\n\n判断下列级数的敛散性：\n\n1. $\\displaystyle \\sum_{n=1}^{\\infty} \\sin\\frac{1}{n}$\n2. $\\displaystyle \\sum_{n=1}^{\\infty} \\frac{1}{n^{0.5}}$\n\n提示：第一个可用比较判别法（$\\sin \\frac{1}{n} \\sim \\frac{1}{n}$），第二个为 $p=0.5$ 的 $p$ 级数，发散。",
+          "order": 5
+        },
+        {
+          "sectionId": "section-1",
+          "type": "quiz",
+          "content": "该级数为 $p$ 级数，$p = \\frac{1}{2} \\le 1$，因此发散。正确选项为 B。",
+          "order": 6,
+          "question": "级数 $\\displaystyle \\sum_{n=1}^{\\infty} \\frac{1}{\\sqrt{n}}$ 是收敛还是发散？",
+          "options": [
+            "收敛",
+            "发散",
+            "需要更多信息",
+            "绝对收敛"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "sectionId": "section-1",
+          "type": "quiz",
+          "content": "级数收敛的必要条件是通项趋于 $0$，因此 A 正确。B、C、D 均不一定成立。正确选项为 A。",
+          "order": 7,
+          "question": "若级数 $\\sum a_n$ 收敛，下列结论中一定正确的是？",
+          "options": [
+            "$a_n \\to 0$",
+            "$a_n$ 单调递减",
+            "$\\sum a_n$ 绝对收敛",
+            "$a_n > 0$"
+          ],
+          "correctAnswer": 0
+        }
+      ],
+      "structured": {
+        "type": "concept",
+        "title": "级数 基础讲解",
+        "cards": [
+          {
+            "title": "级数的定义",
+            "desc": "无穷级数是指将无穷多个数 $a_1, a_2, a_3, \\dots$ 依次相加的形式 $\\sum_{n=1}^{\\infty} a_n$。部分和 $S_N = \\sum_{n=1}^{N} a_n$ 是前 $N$ 项的和，级数的收敛性由部分和序列的极限决定。通项 $a_n$ 一般由函数或数列给出。"
+          },
+          {
+            "title": "收敛与发散",
+            "desc": "如果部分和序列 $\\{S_N\\}$ 收敛于有限极限 $S$，则称级数收敛，否则发散。收敛的必要条件是通项趋于零：$\\lim_{n\\to\\infty} a_n = 0$（但非充分，例如调和级数发散）。例如，$\\sum_{n=1}^{\\infty} \\frac{1}{n}$ 发散，而 $\\sum_{n=1}^{\\infty} \\frac{1}{n^2}$ 收敛。"
+          },
+          {
+            "title": "几何级数",
+            "desc": "形如 $\\sum_{n=0}^{\\infty} ar^n$ 的级数称为几何级数，其中 $a \\neq 0$，$r$ 为公比。当 $|r|<1$ 时，级数收敛于 $\\frac{a}{1-r}$；当 $|r| \\geq 1$ 时，级数发散。这是最基本的级数之一，常用于比较审敛。"
+          },
+          {
+            "title": "p-级数",
+            "desc": "形如 $\\sum_{n=1}^{\\infty} \\frac{1}{n^p}$ 的级数称为 p-级数，其中 $p$ 为实常数。当 $p>1$ 时收敛，$p \\leq 1$ 时发散。特别地，$p=1$ 对应调和级数（发散），$p=2$ 对应 $\\sum 1/n^2$（收敛到 $\\pi^2/6$）。p-级数是比较审敛的基准。"
+          },
+          {
+            "title": "比较审敛法",
+            "desc": "对于正项级数 $\\sum a_n$ 和 $\\sum b_n$，若存在常数 $c>0$ 使得 $0 \\le a_n \\le c b_n$ 对所有 $n$ 充分大成立，则 $\\sum b_n$ 收敛推出 $\\sum a_n$ 收敛；$\\sum a_n$ 发散推出 $\\sum b_n$ 发散。常用几何级数或 p-级数作为比较对象。"
+          },
+          {
+            "title": "比值审敛法（达朗贝尔判别法）",
+            "desc": "对于正项级数 $\\sum a_n$，若极限 $\\rho = \\lim_{n\\to\\infty} \\frac{a_{n+1}}{a_n}$ 存在，则当 $\\rho < 1$ 时级数收敛，$\\rho > 1$ 时发散，$\\rho = 1$ 时失效。该方法适用于通项含阶乘或指数函数的级数，例如 $\\sum \\frac{x^n}{n!}$ 收敛（$\\rho=0$）。"
+          }
+        ],
+        "summary": "本节介绍了级数的基本概念（定义、收敛与发散）、两种基本级数（几何级数、p-级数）以及两种常用的正项级数审敛法（比较审敛法和比值审敛法）。掌握这些内容是进一步学习函数项级数、幂级数和傅里叶级数的基础。",
+        "formulas": [
+          {
+            "label": "几何级数和",
+            "latex": "$$\\sum_{n=0}^{\\infty} ar^n = \\frac{a}{1-r},\\quad |r|<1$$"
+          },
+          {
+            "label": "p-级数收敛条件",
+            "latex": "$$\\sum_{n=1}^{\\infty} \\frac{1}{n^p} \\begin{cases} \\text{收敛}, & p>1 \\\\ \\text{发散}, & p \\leq 1 \\end{cases}$$"
+          },
+          {
+            "label": "比值审敛法",
+            "latex": "$$\\rho = \\lim_{n\\to\\infty} \\frac{a_{n+1}}{a_n},\\quad \\begin{cases} \\rho<1 & \\text{收敛} \\\\ \\rho>1 & \\text{发散} \\\\ \\rho=1 & \\text{失效} \\end{cases}$$"
+          }
+        ]
+      }
+    },
+    {
+      "section": {
+        "id": "section-2",
+        "title": "级数 例题讲解",
+        "contentType": "example",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "级数"
+        ],
+        "estimatedDuration": 10,
+        "hasQuiz": false
+      },
+      "chunks": [
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "**例题1** 判断级数 $\\sum_{n=1}^{\\infty} \\frac{1}{n(n+1)}$ 的敛散性，若收敛，求其和。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "**解：** 考虑部分和 $S_n = \\sum_{k=1}^{n} \\frac{1}{k(k+1)}$。",
+          "order": 2
+        },
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "利用裂项法：$\\frac{1}{k(k+1)} = \\frac{1}{k} - \\frac{1}{k+1}$。",
+          "order": 3
+        },
+        {
+          "sectionId": "section-2",
+          "type": "formula",
+          "content": "$$S_n = \\left(1 - \\frac12\\right) + \\left(\\frac12 - \\frac13\\right) + \\cdots + \\left(\\frac1n - \\frac{1}{n+1}\\right) = 1 - \\frac{1}{n+1}$$",
+          "order": 4
+        },
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "于是 $\\lim_{n\\to\\infty} S_n = \\lim_{n\\to\\infty} \\left(1 - \\frac{1}{n+1}\\right) = 1$，故级数收敛，且和为 $1$。",
+          "order": 5
+        },
+        {
+          "sectionId": "section-2",
+          "type": "text",
+          "content": "**易错点提醒：**\n- 裂项时要注意系数，例如 $\\frac{1}{k(k+1)}$ 裂为 $\\frac{1}{k} - \\frac{1}{k+1}$ 是正确的，无需乘系数；若分母相差 $d$，则需乘以 $\\frac{1}{d}$。\n- 部分和求极限时，要正确写出求和后的表达式，避免符号错误。",
+          "order": 6
+        },
+        {
+          "sectionId": "section-2",
+          "type": "example",
+          "content": "**变式训练：** 判断级数 $\\sum_{n=1}^{\\infty} \\frac{1}{n(n+2)}$ 的敛散性，并求和。\n\n**提示：** 裂项为 $\\frac{1}{2}\\left(\\frac{1}{n} - \\frac{1}{n+2}\\right)$，部分和为 $\\frac{1}{2}\\left(1+\\frac12 - \\frac{1}{n+1} - \\frac{1}{n+2}\\right)$，极限为 $\\frac34$。",
+          "order": 7
+        }
+      ],
+      "structured": {
+        "type": "case",
+        "title": "级数 例题讲解",
+        "scenarios": [
+          {
+            "problem": "判断级数 $\\sum_{n=1}^{\\infty} \\frac{1}{n^p}$ 的收敛性，其中 $p$ 为实数。",
+            "solution": "利用积分判别法：考虑函数 $f(x)=\\frac{1}{x^p}$，在 $[1,\\infty)$ 上单调递减且非负。级数的收敛性与广义积分 $\\int_1^\\infty \\frac{1}{x^p} \\, dx$ 的敛散性相同。积分当 $p>1$ 时收敛，$p\\leq 1$ 时发散。因此，级数 $\\sum 1/n^p$ 当 $p>1$ 时收敛，$p\\leq 1$ 时发散。特别地，$p=1$ 时称为调和级数，发散。"
+          },
+          {
+            "problem": "判断交错级数 $\\sum_{n=1}^{\\infty} (-1)^{n+1} \\frac{1}{n}$ 是否收敛？若收敛，是条件收敛还是绝对收敛？",
+            "solution": "先考虑绝对收敛：$\\sum |(-1)^{n+1}/n| = \\sum 1/n$ 发散（调和级数），故非绝对收敛。再考虑条件收敛：该级数为交错级数，满足莱布尼茨判别法条件：(1) $a_n = 1/n$ 单调递减；(2) $\\lim_{n\\to\\infty} a_n = 0$。因此级数条件收敛。注意：去掉绝对值后收敛，加上绝对值发散，故为条件收敛。"
+          }
+        ],
+        "highlight": "注意比较判别法和积分判别法的适用条件；交错级数需考虑绝对收敛与条件收敛的区别。",
+        "formulas": [
+          {
+            "label": "p-级数收敛性",
+            "latex": "\\sum_{n=1}^\\infty \\frac{1}{n^p} \\text{ 收敛当且仅当 } p>1"
+          },
+          {
+            "label": "莱布尼茨判别法",
+            "latex": "\\text{若 } a_n \\downarrow 0, \\text{则 } \\sum (-1)^n a_n \\text{ 收敛}"
+          }
+        ]
+      }
+    },
+    {
+      "section": {
+        "id": "section-3",
+        "title": "级数 随堂检测",
+        "contentType": "quiz",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "级数"
+        ],
+        "estimatedDuration": 5,
+        "hasQuiz": true
+      },
+      "chunks": [
+        {
+          "sectionId": "section-3",
+          "type": "text",
+          "content": "## 随堂检测：级数收敛性判断\n\n本次检测重点考察级数收敛性的基本判别方法，注意以下易错点：\n- **通项趋于0是级数收敛的必要条件，而非充分条件**（调和级数 $\\sum_{n=1}^{\\infty}\\frac{1}{n}$ 是典型反例）。\n- 正项级数比较判别法需选择恰当的参考级数（如 $p$-级数）。\n- 交错级数使用莱布尼茨判别法时，必须验证通项绝对值单调递减且趋于0。\n\n请完成以下3道选择题，每题10分。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-3",
+          "type": "quiz",
+          "content": "**答案：C**\n\n**解析**：$\\lim_{n\\to\\infty} a_n = 0$ 是级数收敛的必要条件，但不是充分条件。例如调和级数 $\\sum_{n=1}^{\\infty}\\frac{1}{n}$ 通项趋于0但发散；而几何级数 $\\sum_{n=1}^{\\infty}\\frac{1}{2^n}$ 通项趋于0且收敛。因此可能收敛也可能发散。易错点：误以为通项趋于0即收敛。\n\n**变式训练**：若已知 $\\lim_{n\\to\\infty} a_n \\neq 0$，则级数 $\\sum a_n$ 的敛散性如何？答案：必发散（通项不趋于0是发散的充分条件）。",
+          "order": 2,
+          "question": "已知级数 $\\sum_{n=1}^{\\infty} a_n$ 满足 $\\lim_{n\\to\\infty} a_n = 0$，则下列结论正确的是",
+          "options": [
+            "该级数一定收敛",
+            "该级数一定发散",
+            "该级数可能收敛也可能发散",
+            "该级数绝对收敛"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "sectionId": "section-3",
+          "type": "quiz",
+          "content": "**答案：B**\n\n**解析**：这是 $p$-级数 $\\sum_{n=1}^{\\infty}\\frac{1}{n^p}$ 的敛散性问题。当 $p>1$ 时收敛，$p\\le1$ 时发散。\n- A: $p=0.5$，发散\n- B: $p=1.5>1$，收敛\n- C: $p=1$，发散（调和级数）\n- D: $p=0.5$，发散（与A相同）\n\n易错点：混淆 $p$ 与 $1/p$ 的关系，或误以为 $p=1$ 时收敛。\n\n**变式训练**：判断 $\\sum_{n=1}^{\\infty} \\frac{1}{\\sqrt[3]{n^2}}$ 的敛散性。答案：$\\frac{1}{\\sqrt[3]{n^2}} = n^{-2/3}$，$p=2/3<1$，发散。",
+          "order": 3,
+          "question": "下列级数中收敛的是",
+          "options": [
+            "$\\sum_{n=1}^{\\infty} \\frac{1}{\\sqrt{n}}$",
+            "$\\sum_{n=1}^{\\infty} \\frac{1}{n^{1.5}}$",
+            "$\\sum_{n=1}^{\\infty} \\frac{1}{n}$",
+            "$\\sum_{n=1}^{\\infty} \\frac{1}{n^{0.5}}$"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "sectionId": "section-3",
+          "type": "quiz",
+          "content": "**答案：B（条件收敛）**\n\n**解析**：\n首先，该级数是交错级数，且通项 $b_n = \\frac{1}{\\sqrt[3]{n}}$ 单调递减趋于0（因为 $b_n = n^{-1/3}$，$b_{n+1}<b_n$ 且 $\\lim b_n=0$），由莱布尼茨判别法，原级数收敛。\n其次，考虑绝对值级数 $\\sum_{n=1}^{\\infty} \\frac{1}{\\sqrt[3]{n}} = \\sum \\frac{1}{n^{1/3}}$，这是 $p=1/3$ 的 $p$-级数，发散。因此原级数条件收敛。\n\n易错点：忘记检验绝对值级数的敛散性，直接认为交错级数收敛即为绝对收敛；或误判绝对值级数收敛。\n\n**变式训练**：若将通项改为 $(-1)^{n+1} \\frac{1}{n^{4/3}}$，则敛散性如何？答案：$p=4/3>1$，绝对值级数收敛，故原级数绝对收敛。",
+          "order": 4,
+          "question": "交错级数 $\\sum_{n=1}^{\\infty} (-1)^{n+1} \\frac{1}{\\sqrt[3]{n}}$ 的敛散性是",
+          "options": [
+            "绝对收敛",
+            "条件收敛",
+            "发散",
+            "无法判断"
+          ],
+          "correctAnswer": 1
+        }
+      ]
+    }
+  ],
+  "completedAt": "2026-06-17T03:36:19.545Z",
+  "sectionFeedbacks": [
+    {
+      "sectionId": "section-3",
+      "feedbackType": "mastered",
+      "knowledgePoints": [
+        "级数"
+      ],
+      "timestamp": 1781667412413
+    },
+    {
+      "sectionId": "section-3",
+      "feedbackType": "mastered",
+      "knowledgePoints": [
+        "级数"
+      ],
+      "timestamp": 1781667412542
+    },
+    {
+      "sectionId": "section-3",
+      "feedbackType": "needs_review",
+      "knowledgePoints": [
+        "级数"
+      ],
+      "timestamp": 1781667414076
+    },
+    {
+      "sectionId": "section-3",
+      "feedbackType": "needs_review",
+      "knowledgePoints": [
+        "级数"
+      ],
+      "timestamp": 1781667415336
+    }
+  ],
+  "isFavorited": true
+}

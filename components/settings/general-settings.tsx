@@ -14,22 +14,18 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
 import { Loader2, Trash2, AlertTriangle } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { clearDatabase } from '@/lib/utils/database';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('GeneralSettings');
 
-export function GeneralSettings() {
-  const { t } = useI18n();
-
-  // Clear cache state
+export function GeneralSettings() {// Clear cache state
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [confirmInput, setConfirmInput] = useState('');
   const [clearing, setClearing] = useState(false);
 
-  const confirmPhrase = t('settings.clearCacheConfirmPhrase');
+  const confirmPhrase = '确认删除';
   const isConfirmValid = confirmInput === confirmPhrase;
 
   const handleClearCache = useCallback(async () => {
@@ -43,7 +39,7 @@ export function GeneralSettings() {
       // 3. Clear sessionStorage
       sessionStorage.clear();
 
-      toast.success(t('settings.clearCacheSuccess'));
+      toast.success('缓存已清空，页面即将刷新');
 
       // Reload page after a short delay
       setTimeout(() => {
@@ -51,15 +47,15 @@ export function GeneralSettings() {
       }, 1000);
     } catch (error) {
       log.error('Failed to clear cache:', error);
-      toast.error(t('settings.clearCacheFailed'));
+      toast.error('清空缓存失败，请重试');
       setClearing(false);
     }
-  }, [isConfirmValid, t]);
+  }, [isConfirmValid]);
 
   const clearCacheItems =
-    t('settings.clearCacheConfirmItems').split('、').length > 1
-      ? t('settings.clearCacheConfirmItems').split('、')
-      : t('settings.clearCacheConfirmItems').split(', ');
+    '课堂和场景数据、对话历史记录、音频和图片缓存、应用设置和偏好'.split('、').length > 1
+      ? '课堂和场景数据、对话历史记录、音频和图片缓存、应用设置和偏好'.split('、')
+      : '课堂和场景数据、对话历史记录、音频和图片缓存、应用设置和偏好'.split(', ');
 
   return (
     <div className="flex flex-col gap-8">
@@ -85,15 +81,15 @@ export function GeneralSettings() {
             <div className="p-1.5 rounded-md bg-destructive/10 text-destructive">
               <AlertTriangle className="w-4 h-4" />
             </div>
-            <h3 className="text-sm font-semibold text-destructive">{t('settings.dangerZone')}</h3>
+            <h3 className="text-sm font-semibold text-destructive">{'危险区域'}</h3>
           </div>
 
           {/* Content */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">{t('settings.clearCache')}</p>
+              <p className="text-sm font-medium">{'清空本地缓存'}</p>
               <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                {t('settings.clearCacheDescription')}
+                {'删除所有本地存储的数据，包括课堂记录、对话历史、音频缓存和应用配置。此操作不可撤销。'}
               </p>
             </div>
             <Button
@@ -106,7 +102,7 @@ export function GeneralSettings() {
               }}
             >
               <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-              {t('settings.clearCache')}
+              {'清空本地缓存'}
             </Button>
           </div>
         </div>
@@ -126,11 +122,11 @@ export function GeneralSettings() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />
-              {t('settings.clearCacheConfirmTitle')}
+              {'确定要清空所有缓存吗？'}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
-                <p>{t('settings.clearCacheConfirmDescription')}</p>
+                <p>{'此操作将永久删除以下所有数据，且无法恢复：'}</p>
                 <ul className="space-y-1.5 ml-1">
                   {clearCacheItems.map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm">
@@ -141,7 +137,7 @@ export function GeneralSettings() {
                 </ul>
                 <div className="pt-1">
                   <Label className="text-xs font-medium text-foreground">
-                    {t('settings.clearCacheConfirmInput')}
+                    {'请输入「确认删除」以继续'}
                   </Label>
                   <Input
                     className="mt-1.5 h-9 text-sm"
@@ -160,7 +156,7 @@ export function GeneralSettings() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={clearing}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={clearing}>{'取消'}</AlertDialogCancel>
             <Button
               variant="destructive"
               disabled={!isConfirmValid || clearing}
@@ -171,7 +167,7 @@ export function GeneralSettings() {
               ) : (
                 <Trash2 className="w-4 h-4 mr-1.5" />
               )}
-              {t('settings.clearCacheButton')}
+              {'永久删除所有数据'}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

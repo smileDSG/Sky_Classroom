@@ -1,0 +1,496 @@
+{
+  "courseId": "ai-intro-2026",
+  "version": "v0.1.0",
+  "nodes": [
+    {
+      "id": "ai-definition",
+      "name": "人工智能定义",
+      "chapter": "01-ai-overview",
+      "difficulty": 1,
+      "prerequisites": [],
+      "masteryCriteria": ["能说明 AI 的研究对象", "能举出至少三个 AI 应用场景"],
+      "commonMisconceptions": ["把 AI 等同于单个模型或软件"]
+    },
+    {
+      "id": "ai-ml-dl-llm-agent",
+      "name": "AI、ML、DL、LLM、Agent 关系",
+      "chapter": "01-ai-overview",
+      "difficulty": 2,
+      "prerequisites": ["ai-definition"],
+      "masteryCriteria": ["能画出五个概念的层次关系", "能解释智能体与普通问答模型的差异"],
+      "commonMisconceptions": ["认为大模型就是全部人工智能"]
+    },
+    {
+      "id": "ai-system-elements",
+      "name": "AI 系统四要素",
+      "chapter": "01-ai-overview",
+      "difficulty": 2,
+      "prerequisites": ["ai-definition"],
+      "masteryCriteria": ["能从任务、数据、模型、评价四方面分析 AI 系统"],
+      "commonMisconceptions": ["只关注模型而忽视数据和评价"]
+    },
+    {
+      "id": "trustworthy-ai-intro",
+      "name": "可信 AI 入门",
+      "chapter": "01-ai-overview",
+      "difficulty": 2,
+      "prerequisites": ["ai-system-elements"],
+      "masteryCriteria": ["能说明可信 AI 为什么需要来源、评价和安全约束"],
+      "commonMisconceptions": ["认为输出流畅就等于可靠"]
+    },
+    {
+      "id": "state-space",
+      "name": "状态空间",
+      "chapter": "02-search-and-problem-solving",
+      "difficulty": 2,
+      "prerequisites": ["ai-definition"],
+      "masteryCriteria": ["能用状态、动作、目标描述搜索问题"],
+      "commonMisconceptions": ["把状态和动作混为一谈"]
+    },
+    {
+      "id": "bfs-dfs",
+      "name": "BFS 与 DFS",
+      "chapter": "02-search-and-problem-solving",
+      "difficulty": 2,
+      "prerequisites": ["state-space"],
+      "masteryCriteria": ["能比较 BFS 与 DFS 的扩展顺序和适用场景"],
+      "commonMisconceptions": ["认为 DFS 一定比 BFS 快"]
+    },
+    {
+      "id": "heuristic-search",
+      "name": "启发式搜索",
+      "chapter": "02-search-and-problem-solving",
+      "difficulty": 3,
+      "prerequisites": ["state-space"],
+      "masteryCriteria": ["能解释启发函数的作用", "能设计简单启发函数"],
+      "commonMisconceptions": ["认为启发函数越复杂越好"]
+    },
+    {
+      "id": "a-star",
+      "name": "A* 搜索",
+      "chapter": "02-search-and-problem-solving",
+      "difficulty": 3,
+      "prerequisites": ["heuristic-search"],
+      "masteryCriteria": ["能解释 f(n)=g(n)+h(n)", "能说明 A* 最优性的条件"],
+      "commonMisconceptions": ["认为 A* 在任何启发函数下都最优"]
+    },
+    {
+      "id": "propositional-logic",
+      "name": "命题逻辑",
+      "chapter": "03-knowledge-representation",
+      "difficulty": 2,
+      "prerequisites": ["ai-definition"],
+      "masteryCriteria": ["能用命题和连接词表达简单规则"],
+      "commonMisconceptions": ["把自然语言句子直接当作机器可推理知识"]
+    },
+    {
+      "id": "production-rules",
+      "name": "产生式规则",
+      "chapter": "03-knowledge-representation",
+      "difficulty": 2,
+      "prerequisites": ["propositional-logic"],
+      "masteryCriteria": ["能写出 IF-THEN 形式规则"],
+      "commonMisconceptions": ["认为规则系统可以覆盖所有模糊场景"]
+    },
+    {
+      "id": "ontology",
+      "name": "本体与概念层级",
+      "chapter": "03-knowledge-representation",
+      "difficulty": 3,
+      "prerequisites": ["production-rules"],
+      "masteryCriteria": ["能说明类、实例和关系的差异"],
+      "commonMisconceptions": ["把本体等同于普通分类目录"]
+    },
+    {
+      "id": "knowledge-graph",
+      "name": "知识图谱",
+      "chapter": "03-knowledge-representation",
+      "difficulty": 3,
+      "prerequisites": ["ontology"],
+      "masteryCriteria": ["能用节点和边表达课程知识点关系"],
+      "commonMisconceptions": ["认为知识图谱只是展示用图片"]
+    },
+    {
+      "id": "ml-workflow",
+      "name": "机器学习流程",
+      "chapter": "04-machine-learning-basics",
+      "difficulty": 2,
+      "prerequisites": ["ai-ml-dl-llm-agent"],
+      "masteryCriteria": ["能列出数据、特征、训练、评价、部署流程"],
+      "commonMisconceptions": ["直接训练模型而不做数据和评价设计"]
+    },
+    {
+      "id": "train-validation-test",
+      "name": "训练集、验证集、测试集",
+      "chapter": "04-machine-learning-basics",
+      "difficulty": 2,
+      "prerequisites": ["ml-workflow"],
+      "masteryCriteria": ["能说明三类数据集的不同用途"],
+      "commonMisconceptions": ["反复用测试集调参"]
+    },
+    {
+      "id": "overfitting-generalization",
+      "name": "过拟合与泛化能力",
+      "chapter": "04-machine-learning-basics",
+      "difficulty": 3,
+      "prerequisites": ["train-validation-test"],
+      "masteryCriteria": ["能根据训练/测试表现判断过拟合", "能提出缓解策略"],
+      "commonMisconceptions": ["认为训练集准确率越高模型越好"]
+    },
+    {
+      "id": "classification-metrics",
+      "name": "分类评价指标",
+      "chapter": "04-machine-learning-basics",
+      "difficulty": 3,
+      "prerequisites": ["train-validation-test"],
+      "masteryCriteria": ["能解释准确率、精确率、召回率和 F1"],
+      "commonMisconceptions": ["类别不平衡时仍只看准确率"]
+    },
+    {
+      "id": "supervised-learning",
+      "name": "监督学习",
+      "chapter": "05-supervised-learning",
+      "difficulty": 2,
+      "prerequisites": ["ml-workflow"],
+      "masteryCriteria": ["能区分监督学习和无监督学习"],
+      "commonMisconceptions": ["认为所有学习任务都有标签"]
+    },
+    {
+      "id": "classification-regression",
+      "name": "分类与回归",
+      "chapter": "05-supervised-learning",
+      "difficulty": 2,
+      "prerequisites": ["supervised-learning"],
+      "masteryCriteria": ["能根据标签类型判断分类或回归"],
+      "commonMisconceptions": ["看到逻辑回归就误认为是回归任务"]
+    },
+    {
+      "id": "knn",
+      "name": "KNN",
+      "chapter": "05-supervised-learning",
+      "difficulty": 2,
+      "prerequisites": ["classification-regression"],
+      "masteryCriteria": ["能说明 K 值、距离度量和特征缩放的影响"],
+      "commonMisconceptions": ["忽略特征尺度对距离的影响"]
+    },
+    {
+      "id": "decision-tree",
+      "name": "决策树",
+      "chapter": "05-supervised-learning",
+      "difficulty": 3,
+      "prerequisites": ["classification-regression", "overfitting-generalization"],
+      "masteryCriteria": ["能解释树的划分规则和过拟合风险"],
+      "commonMisconceptions": ["认为决策树越深越好"]
+    },
+    {
+      "id": "neuron-activation",
+      "name": "神经元与激活函数",
+      "chapter": "06-neural-networks",
+      "difficulty": 2,
+      "prerequisites": ["classification-regression"],
+      "masteryCriteria": ["能解释加权求和和非线性激活的作用"],
+      "commonMisconceptions": ["认为神经元等同于生物神经元"]
+    },
+    {
+      "id": "forward-loss",
+      "name": "前向传播与损失函数",
+      "chapter": "06-neural-networks",
+      "difficulty": 2,
+      "prerequisites": ["neuron-activation"],
+      "masteryCriteria": ["能说明预测值如何通过损失函数被评价"],
+      "commonMisconceptions": ["只看输出不理解损失含义"]
+    },
+    {
+      "id": "backprop-gradient",
+      "name": "反向传播与梯度下降",
+      "chapter": "06-neural-networks",
+      "difficulty": 4,
+      "prerequisites": ["forward-loss"],
+      "masteryCriteria": ["能用直觉解释梯度如何指导参数更新"],
+      "commonMisconceptions": ["把反向传播理解为反向运行网络"]
+    },
+    {
+      "id": "cnn",
+      "name": "卷积神经网络",
+      "chapter": "06-neural-networks",
+      "difficulty": 3,
+      "prerequisites": ["neuron-activation"],
+      "masteryCriteria": ["能说明卷积核、池化和局部特征"],
+      "commonMisconceptions": ["认为 CNN 只能记忆图片像素"]
+    },
+    {
+      "id": "nlp-tasks",
+      "name": "NLP 任务",
+      "chapter": "07-natural-language-processing",
+      "difficulty": 2,
+      "prerequisites": ["ai-ml-dl-llm-agent"],
+      "masteryCriteria": ["能举出文本分类、问答、摘要等任务"],
+      "commonMisconceptions": ["把 NLP 仅理解为聊天"]
+    },
+    {
+      "id": "text-representation",
+      "name": "文本表示",
+      "chapter": "07-natural-language-processing",
+      "difficulty": 2,
+      "prerequisites": ["nlp-tasks"],
+      "masteryCriteria": ["能比较词袋模型和词向量"],
+      "commonMisconceptions": ["认为词频越高语义越重要"]
+    },
+    {
+      "id": "attention",
+      "name": "注意力机制",
+      "chapter": "07-natural-language-processing",
+      "difficulty": 4,
+      "prerequisites": ["text-representation"],
+      "masteryCriteria": ["能解释模型为什么需要关注不同上下文位置"],
+      "commonMisconceptions": ["把注意力权重直接等同于因果解释"]
+    },
+    {
+      "id": "transformer",
+      "name": "Transformer",
+      "chapter": "07-natural-language-processing",
+      "difficulty": 4,
+      "prerequisites": ["attention"],
+      "masteryCriteria": ["能说明自注意力和并行训练优势"],
+      "commonMisconceptions": ["认为 Transformer 只用于文本"]
+    },
+    {
+      "id": "cv-tasks",
+      "name": "计算机视觉任务",
+      "chapter": "08-computer-vision",
+      "difficulty": 2,
+      "prerequisites": ["cnn"],
+      "masteryCriteria": ["能区分分类、检测、分割和生成"],
+      "commonMisconceptions": ["把所有视觉任务都当成分类"]
+    },
+    {
+      "id": "image-features",
+      "name": "图像特征",
+      "chapter": "08-computer-vision",
+      "difficulty": 3,
+      "prerequisites": ["cv-tasks"],
+      "masteryCriteria": ["能说明边缘、纹理、形状等层级特征"],
+      "commonMisconceptions": ["认为像素矩阵天然包含语义"]
+    },
+    {
+      "id": "data-augmentation",
+      "name": "数据增强",
+      "chapter": "08-computer-vision",
+      "difficulty": 2,
+      "prerequisites": ["image-features", "overfitting-generalization"],
+      "masteryCriteria": ["能说明翻转、裁剪、颜色扰动的作用"],
+      "commonMisconceptions": ["认为增强越多越一定好"]
+    },
+    {
+      "id": "transfer-learning",
+      "name": "迁移学习",
+      "chapter": "08-computer-vision",
+      "difficulty": 3,
+      "prerequisites": ["cnn"],
+      "masteryCriteria": ["能说明预训练模型和微调的意义"],
+      "commonMisconceptions": ["认为迁移学习不需要关注新数据分布"]
+    },
+    {
+      "id": "rl-agent-env",
+      "name": "强化学习智能体与环境",
+      "chapter": "09-reinforcement-learning",
+      "difficulty": 2,
+      "prerequisites": ["ai-ml-dl-llm-agent"],
+      "masteryCriteria": ["能说明状态、动作、奖励和策略"],
+      "commonMisconceptions": ["认为强化学习有每步标准答案"]
+    },
+    {
+      "id": "mdp",
+      "name": "马尔可夫决策过程",
+      "chapter": "09-reinforcement-learning",
+      "difficulty": 3,
+      "prerequisites": ["rl-agent-env"],
+      "masteryCriteria": ["能列出 MDP 的组成要素"],
+      "commonMisconceptions": ["忽略转移概率和奖励函数"]
+    },
+    {
+      "id": "q-learning",
+      "name": "Q-learning",
+      "chapter": "09-reinforcement-learning",
+      "difficulty": 4,
+      "prerequisites": ["mdp"],
+      "masteryCriteria": ["能解释 Q 值更新的目标"],
+      "commonMisconceptions": ["把 Q 值当成立即奖励"]
+    },
+    {
+      "id": "exploration-exploitation",
+      "name": "探索与利用",
+      "chapter": "09-reinforcement-learning",
+      "difficulty": 3,
+      "prerequisites": ["rl-agent-env"],
+      "masteryCriteria": ["能解释 epsilon-greedy 的直觉"],
+      "commonMisconceptions": ["认为总选当前最优动作一定最好"]
+    },
+    {
+      "id": "prompting",
+      "name": "Prompt 设计",
+      "chapter": "10-large-models-and-agents",
+      "difficulty": 2,
+      "prerequisites": ["transformer"],
+      "masteryCriteria": ["能写出包含角色、目标、约束、输出格式的 Prompt"],
+      "commonMisconceptions": ["认为 Prompt 可以替代知识库"]
+    },
+    {
+      "id": "rag",
+      "name": "检索增强生成 RAG",
+      "chapter": "10-large-models-and-agents",
+      "difficulty": 3,
+      "prerequisites": ["prompting", "knowledge-graph"],
+      "masteryCriteria": ["能描述文档切分、检索、生成和引用流程"],
+      "commonMisconceptions": ["认为 RAG 能完全消除幻觉"]
+    },
+    {
+      "id": "tool-calling",
+      "name": "工具调用",
+      "chapter": "10-large-models-and-agents",
+      "difficulty": 3,
+      "prerequisites": ["prompting"],
+      "masteryCriteria": ["能说明模型何时需要调用外部工具"],
+      "commonMisconceptions": ["让模型凭空完成需要工具的数据任务"]
+    },
+    {
+      "id": "multi-agent-orchestration",
+      "name": "多智能体编排",
+      "chapter": "10-large-models-and-agents",
+      "difficulty": 4,
+      "prerequisites": ["rag", "tool-calling"],
+      "masteryCriteria": ["能说明 Director-Agent 分工和状态流转"],
+      "commonMisconceptions": ["把多个角色提示词当作完整多智能体系统"]
+    },
+    {
+      "id": "hallucination-control",
+      "name": "幻觉控制",
+      "chapter": "11-ai-safety-and-ethics",
+      "difficulty": 3,
+      "prerequisites": ["rag"],
+      "masteryCriteria": ["能提出来源引用、核验、置信度和拒答策略"],
+      "commonMisconceptions": ["认为引用存在就一定正确"]
+    },
+    {
+      "id": "bias-fairness",
+      "name": "偏见与公平",
+      "chapter": "11-ai-safety-and-ethics",
+      "difficulty": 3,
+      "prerequisites": ["ml-workflow"],
+      "masteryCriteria": ["能识别数据偏差和输出不公平风险"],
+      "commonMisconceptions": ["认为模型输出必然客观中立"]
+    },
+    {
+      "id": "privacy-security",
+      "name": "隐私与数据安全",
+      "chapter": "11-ai-safety-and-ethics",
+      "difficulty": 3,
+      "prerequisites": ["ai-system-elements"],
+      "masteryCriteria": ["能说明最小化收集、脱敏和访问控制"],
+      "commonMisconceptions": ["忽视学习记录中的个人隐私"]
+    },
+    {
+      "id": "academic-integrity",
+      "name": "学术诚信边界",
+      "chapter": "11-ai-safety-and-ethics",
+      "difficulty": 2,
+      "prerequisites": ["trustworthy-ai-intro"],
+      "masteryCriteria": ["能把代写请求转化为学习辅导请求"],
+      "commonMisconceptions": ["认为 AI 生成内容可以直接提交"]
+    },
+    {
+      "id": "project-scoping",
+      "name": "项目问题定义",
+      "chapter": "12-course-project",
+      "difficulty": 2,
+      "prerequisites": ["ai-system-elements"],
+      "masteryCriteria": ["能说明用户、痛点、输入、输出和边界"],
+      "commonMisconceptions": ["一开始就追求大而全功能"]
+    },
+    {
+      "id": "project-data-sources",
+      "name": "项目数据与知识来源",
+      "chapter": "12-course-project",
+      "difficulty": 2,
+      "prerequisites": ["project-scoping", "rag"],
+      "masteryCriteria": ["能标注数据来源、使用边界和预处理方式"],
+      "commonMisconceptions": ["不记录资料来源"]
+    },
+    {
+      "id": "project-evaluation",
+      "name": "项目评估",
+      "chapter": "12-course-project",
+      "difficulty": 3,
+      "prerequisites": ["classification-metrics", "hallucination-control"],
+      "masteryCriteria": ["能设计准确性、可引用性、用户反馈等指标"],
+      "commonMisconceptions": ["只展示界面不验证效果"]
+    },
+    {
+      "id": "project-demo",
+      "name": "项目演示与答辩",
+      "chapter": "12-course-project",
+      "difficulty": 2,
+      "prerequisites": ["project-evaluation"],
+      "masteryCriteria": ["能用 5 分钟说明闭环、亮点和风险控制"],
+      "commonMisconceptions": ["演示只有结果没有过程"]
+    }
+  ],
+  "edges": [
+    { "from": "ai-definition", "to": "ai-ml-dl-llm-agent", "relation": "prerequisite" },
+    { "from": "ai-definition", "to": "ai-system-elements", "relation": "prerequisite" },
+    { "from": "ai-system-elements", "to": "trustworthy-ai-intro", "relation": "prerequisite" },
+    { "from": "ai-definition", "to": "state-space", "relation": "prerequisite" },
+    { "from": "state-space", "to": "bfs-dfs", "relation": "prerequisite" },
+    { "from": "state-space", "to": "heuristic-search", "relation": "prerequisite" },
+    { "from": "heuristic-search", "to": "a-star", "relation": "prerequisite" },
+    { "from": "ai-definition", "to": "propositional-logic", "relation": "prerequisite" },
+    { "from": "propositional-logic", "to": "production-rules", "relation": "prerequisite" },
+    { "from": "production-rules", "to": "ontology", "relation": "prerequisite" },
+    { "from": "ontology", "to": "knowledge-graph", "relation": "prerequisite" },
+    { "from": "ai-ml-dl-llm-agent", "to": "ml-workflow", "relation": "prerequisite" },
+    { "from": "ml-workflow", "to": "train-validation-test", "relation": "prerequisite" },
+    { "from": "train-validation-test", "to": "overfitting-generalization", "relation": "prerequisite" },
+    { "from": "train-validation-test", "to": "classification-metrics", "relation": "prerequisite" },
+    { "from": "ml-workflow", "to": "supervised-learning", "relation": "prerequisite" },
+    { "from": "supervised-learning", "to": "classification-regression", "relation": "prerequisite" },
+    { "from": "classification-regression", "to": "knn", "relation": "prerequisite" },
+    { "from": "classification-regression", "to": "decision-tree", "relation": "prerequisite" },
+    { "from": "overfitting-generalization", "to": "decision-tree", "relation": "related_risk" },
+    { "from": "classification-regression", "to": "neuron-activation", "relation": "prerequisite" },
+    { "from": "neuron-activation", "to": "forward-loss", "relation": "prerequisite" },
+    { "from": "forward-loss", "to": "backprop-gradient", "relation": "prerequisite" },
+    { "from": "neuron-activation", "to": "cnn", "relation": "prerequisite" },
+    { "from": "ai-ml-dl-llm-agent", "to": "nlp-tasks", "relation": "prerequisite" },
+    { "from": "nlp-tasks", "to": "text-representation", "relation": "prerequisite" },
+    { "from": "text-representation", "to": "attention", "relation": "prerequisite" },
+    { "from": "attention", "to": "transformer", "relation": "prerequisite" },
+    { "from": "cnn", "to": "cv-tasks", "relation": "prerequisite" },
+    { "from": "cv-tasks", "to": "image-features", "relation": "prerequisite" },
+    { "from": "image-features", "to": "data-augmentation", "relation": "prerequisite" },
+    { "from": "overfitting-generalization", "to": "data-augmentation", "relation": "mitigation" },
+    { "from": "cnn", "to": "transfer-learning", "relation": "prerequisite" },
+    { "from": "ai-ml-dl-llm-agent", "to": "rl-agent-env", "relation": "prerequisite" },
+    { "from": "rl-agent-env", "to": "mdp", "relation": "prerequisite" },
+    { "from": "mdp", "to": "q-learning", "relation": "prerequisite" },
+    { "from": "rl-agent-env", "to": "exploration-exploitation", "relation": "prerequisite" },
+    { "from": "transformer", "to": "prompting", "relation": "prerequisite" },
+    { "from": "prompting", "to": "rag", "relation": "prerequisite" },
+    { "from": "knowledge-graph", "to": "rag", "relation": "support" },
+    { "from": "prompting", "to": "tool-calling", "relation": "prerequisite" },
+    { "from": "rag", "to": "multi-agent-orchestration", "relation": "prerequisite" },
+    { "from": "tool-calling", "to": "multi-agent-orchestration", "relation": "prerequisite" },
+    { "from": "rag", "to": "hallucination-control", "relation": "mitigation" },
+    { "from": "ml-workflow", "to": "bias-fairness", "relation": "related_risk" },
+    { "from": "ai-system-elements", "to": "privacy-security", "relation": "related_risk" },
+    { "from": "trustworthy-ai-intro", "to": "academic-integrity", "relation": "prerequisite" },
+    { "from": "ai-system-elements", "to": "project-scoping", "relation": "prerequisite" },
+    { "from": "project-scoping", "to": "project-data-sources", "relation": "prerequisite" },
+    { "from": "rag", "to": "project-data-sources", "relation": "support" },
+    { "from": "classification-metrics", "to": "project-evaluation", "relation": "support" },
+    { "from": "hallucination-control", "to": "project-evaluation", "relation": "support" },
+    { "from": "project-evaluation", "to": "project-demo", "relation": "prerequisite" },
+    { "from": "bfs-dfs", "to": "project-scoping", "relation": "transfer" },
+    { "from": "knowledge-graph", "to": "project-evaluation", "relation": "support" },
+    { "from": "multi-agent-orchestration", "to": "project-demo", "relation": "support" }
+  ]
+}

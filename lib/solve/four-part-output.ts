@@ -11,11 +11,7 @@
  *   - gradeResult, mistakeAnalysis, recommendedPractice
  */
 
-import type {
-  FourPartOutput,
-  GradedFourPartOutput,
-  GradeResult,
-} from './types';
+import type { FourPartOutput, GradedFourPartOutput, GradeResult } from './types';
 import { postProcessFourPartOutput } from './math-postprocessor';
 
 /**
@@ -23,6 +19,7 @@ import { postProcessFourPartOutput } from './math-postprocessor';
  * May come directly from LLM JSON output or from question bank.
  */
 interface RawSolution {
+  solution?: string;
   answer: string;
   steps?: { label: string; content: string; keyPoints?: string[] }[];
   knowledgePoints?: { name: string; description: string; difficulty?: string }[];
@@ -37,9 +34,10 @@ interface RawSolution {
  * Normalizes missing/invalid fields and ensures all arrays have sensible defaults.
  */
 export function generateFourPartOutput(raw: RawSolution): FourPartOutput {
-  const output: FourPartOutput = {
+  const output = {
+    solution: raw.solution || '',
     answer: formatAnswer(raw.answer),
-    steps: normalizeSteps(raw.steps, raw.answer),
+    steps: normalizeSteps(raw.steps, raw.answer, raw.solution),
     knowledgePoints: normalizeKnowledgePoints(raw.knowledgePoints),
     similarQuestions: normalizeSimilarQuestions(raw.similarQuestions),
     questionType: normalizeQuestionType(raw.questionType),
@@ -79,9 +77,13 @@ function formatAnswer(answer: string): string {
 function normalizeSteps(
   steps: { label: string; content: string; keyPoints?: string[] }[] | undefined,
   fallbackAnswer: string,
+  rawSolution?: string,
 ): FourPartOutput['steps'] {
   if (!steps || steps.length === 0) {
-    return [{ label: '解答', content: fallbackAnswer, keyPoints: [] }];
+    // Use full solution derivation when steps are absent (common for complex
+    // problems like series/calculation). Fall back to answer if solution empty.
+    const content = (rawSolution && rawSolution.trim()) ? rawSolution : fallbackAnswer;
+    return [{ label: '解答', content, keyPoints: [] }];
   }
 
   return steps.map((step, index) => ({
@@ -113,7 +115,7 @@ function normalizeDifficulty(raw?: string): 'easy' | 'medium' | 'hard' {
 }
 
 function normalizeSimilarQuestions(
-  questions: { problem: string; difficulty?: number; knowledgePoint?: string }[] | undefined,
+  questions: { problem: string; difficulty?: number; knowledgePoint?: string; answer?: string }[] | undefined,
 ): FourPartOutput['similarQuestions'] {
   if (!questions || questions.length === 0) {
     return [];
@@ -123,6 +125,7 @@ function normalizeSimilarQuestions(
     problem: q.problem || '',
     difficulty: typeof q.difficulty === 'number' ? q.difficulty : 0.5,
     knowledgePoint: q.knowledgePoint || '综合',
+    ...(q.answer ? { answer: q.answer } : {}),
   }));
 }
 
@@ -159,9 +162,9 @@ function buildMistakeAnalysis(gradeResult: GradeResult): string {
   const causeLabels: Record<string, string> = {
     'concept-unclear': '概念不清',
     'calculation-error': '计算失误',
-    'misreading': '审题错误',
+    misreading: '审题错误',
     'method-wrong': '方法错误',
-    'careless': '粗心',
+    careless: '粗心',
     'format-error': '格式错误',
   };
 
@@ -213,9 +216,9 @@ function generateRemedialQuestions(
   const causeAdvice: Record<string, string> = {
     'concept-unclear': '请复习相关概念后再尝试',
     'calculation-error': '请仔细检查计算步骤',
-    'misreading': '请仔细阅读题目条件',
+    misreading: '请仔细阅读题目条件',
     'method-wrong': '请学习正确的解题方法',
-    'careless': '请注意细节',
+    careless: '请注意细节',
     'format-error': '请注意答题格式',
   };
 

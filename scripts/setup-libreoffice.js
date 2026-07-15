@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Cross-platform LibreOffice setup checker.
  *
@@ -16,6 +17,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 const PLATFORM = process.platform;
 const ENV_OVERRIDE = process.env.LO_SOFFICE_PATH;
@@ -42,6 +44,12 @@ const INSTALL_COMMANDS = {
   linux: '  sudo apt-get update && sudo apt-get install -y libreoffice',
 };
 
+const WINDOWS_UNINSTALL_KEYS = [
+  'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+  'HKLM\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+  'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+];
+
 function fileExists(p) {
   try {
     fs.accessSync(p);
@@ -49,6 +57,35 @@ function fileExists(p) {
   } catch {
     return false;
   }
+}
+
+function getWindowsRegistryCandidates() {
+  if (PLATFORM !== 'win32') return [];
+
+  const candidates = new Set();
+  for (const key of WINDOWS_UNINSTALL_KEYS) {
+    try {
+      const stdout = execFileSync('reg', ['query', key, '/s'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+        timeout: 5000,
+        windowsHide: true,
+        maxBuffer: 5 * 1024 * 1024,
+      });
+
+      for (const block of stdout.split(/\r?\n\r?\n/)) {
+        if (!/DisplayName\s+REG_\w+\s+.*LibreOffice/i.test(block)) continue;
+        const match = block.match(/InstallLocation\s+REG_\w+\s+(.+)/i);
+        const installLocation = match?.[1]?.trim();
+        if (installLocation) {
+          candidates.add(path.join(installLocation, 'program', 'soffice.exe'));
+        }
+      }
+    } catch {
+      // Registry lookup is best-effort; explicit paths and LO_SOFFICE_PATH still apply.
+    }
+  }
+  return [...candidates];
 }
 
 function main() {
@@ -66,7 +103,10 @@ function main() {
   }
 
   // 2. Auto-detect
-  const candidates = CANDIDATES[PLATFORM] || [];
+  const candidates = [
+    ...(CANDIDATES[PLATFORM] || []),
+    ...getWindowsRegistryCandidates(),
+  ];
   for (const candidate of candidates) {
     if (fileExists(candidate)) {
       console.log(`✅ LibreOffice found:`);

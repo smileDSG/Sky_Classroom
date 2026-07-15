@@ -6,17 +6,13 @@
  * and handles errors gracefully (single instruction failure does not crash the page).
  */
 import pptxgen from 'pptxgenjs';
-
-// NOTE: pptxgenjs types export PresSlide/Slide via internal namespace that
-// TypeScript cannot reference directly, so we derive the slide type from
-// the addSlide() return type.
-export type Slide = ReturnType<InstanceType<typeof pptxgen>['addSlide']>;
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 import { convertInlineLatexToUnicode } from './content-schemas';
 import { renderLatexToPng } from '../latex-to-image';
 
 const log = createLogger('InstructionExecutor');
+type PptxSlide = ReturnType<pptxgen['addSlide']>;
 
 // ── Instruction Schemas ────────────────────────────────────────────
 
@@ -297,8 +293,8 @@ function clampInstructionsToSlide(instructions: Instruction[]): Instruction[] {
 }
 
 export class InstructionExecutor {
-  async execute(
-    slide: Slide,
+  execute(
+    slide: PptxSlide,
     pres: pptxgen,
     instructions: Instruction[],
     pageNum: number,

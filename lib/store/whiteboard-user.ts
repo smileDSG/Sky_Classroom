@@ -136,7 +136,6 @@ interface UserWhiteboardStore extends Record<string, unknown> {
   clearUserContent: () => void;
 
   // Text editing
-  editingTextId: string | null;
   setEditingTextId: (id: string | null) => void;
   updateTextContent: (id: string, content: string) => void;
 }

@@ -139,9 +139,7 @@ export function FeatureHighlights() {
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               {feature.title}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {feature.desc}
-            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{feature.desc}</p>
           </div>
         </motion.div>
       ))}

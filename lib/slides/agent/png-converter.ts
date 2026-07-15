@@ -10,13 +10,15 @@
  * - Semaphore limits concurrent instances to 3.
  * - 2 attempts with 2s backoff for transient LO failures.
  */
-import { spawn } from 'child_process';
+import { execFile, spawn } from 'child_process';
 import path from 'path';
 import os from 'os';
 import fs from 'fs/promises';
+import { promisify } from 'util';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('PngConverter');
+const execFileAsync = promisify(execFile);
 
 // ── Semaphore ─────────────────────────────────────────────────────────
 
@@ -63,22 +65,63 @@ const SOFFICE_CANDIDATES = [
   '/usr/lib64/libreoffice/program/soffice',
 ];
 
-const CONVERT_TIMEOUT_MS = 45_000;
+const WINDOWS_UNINSTALL_KEYS = [
+  'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+  'HKLM\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+  'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+];
+
+const CONVERT_TIMEOUT_MS = 15_000;
 const RETRY_DELAY_MS = 2_000;
 const MAX_RETRIES = 2;
 
 // ── LO discovery (lightweight, no execution) ──────────────────────────
 
 async function findLibreOffice(): Promise<string | null> {
-  for (const candidate of SOFFICE_CANDIDATES) {
+  const candidates = [
+    ...SOFFICE_CANDIDATES,
+    ...(await getWindowsRegistryCandidates()),
+  ];
+
+  for (const candidate of candidates) {
     try {
       await fs.access(candidate);
       log.info(`LibreOffice resolved: ${candidate}`);
       return candidate;
     } catch { /* not found */ }
   }
-  log.warn(`LibreOffice not found. Candidates checked: ${SOFFICE_CANDIDATES.length}. Set LO_SOFFICE_PATH env var to override.`);
+  log.warn(`LibreOffice not found. Candidates checked: ${candidates.length}. Set LO_SOFFICE_PATH env var to override.`);
   return null;
+}
+
+async function getWindowsRegistryCandidates(): Promise<string[]> {
+  if (process.platform !== 'win32') return [];
+
+  const candidates = new Set<string>();
+
+  for (const key of WINDOWS_UNINSTALL_KEYS) {
+    try {
+      const { stdout } = await execFileAsync('reg', ['query', key, '/s'], {
+        encoding: 'utf8',
+        timeout: 5_000,
+        windowsHide: true,
+        maxBuffer: 5 * 1024 * 1024,
+      });
+
+      for (const block of stdout.split(/\r?\n\r?\n/)) {
+        if (!/DisplayName\s+REG_\w+\s+.*LibreOffice/i.test(block)) continue;
+        const match = block.match(/InstallLocation\s+REG_\w+\s+(.+)/i);
+        const installLocation = match?.[1]?.trim();
+        if (installLocation) {
+          candidates.add(path.join(installLocation, 'program', 'soffice.exe'));
+        }
+      }
+    } catch {
+      // Registry access is best-effort; explicit paths and LO_SOFFICE_PATH still apply.
+    }
+  }
+
+  return [...candidates];
 }
 
 // ── Public types ──────────────────────────────────────────────────────

@@ -70,6 +70,57 @@ export interface PlaybackView {
   isTopicActive: boolean;
 }
 
+export interface CompactPopupTextState {
+  engineMode: EngineMode;
+  isInLiveFlow: boolean;
+  lectureSpeech: string | null;
+  currentSpeech: string | null;
+  userMessage: string | null;
+  sourceText: string;
+}
+
+export function getCompactPopupText({
+  engineMode,
+  isInLiveFlow,
+  lectureSpeech,
+  currentSpeech,
+  userMessage,
+  sourceText,
+}: CompactPopupTextState): string | null {
+  if (userMessage) return userMessage;
+  if (currentSpeech) return sourceText;
+  if (lectureSpeech) return lectureSpeech;
+  if (isInLiveFlow && sourceText.trim()) return sourceText;
+  if (engineMode === 'idle') return null;
+
+  return null;
+}
+
+export type SpeechAudioIndicatorState = 'idle' | 'generating' | 'playing' | 'paused' | 'error';
+
+export interface SpeechTextForViewState {
+  ttsEnabled: boolean;
+  ttsMuted: boolean;
+  audioIndicatorState: SpeechAudioIndicatorState;
+  audioSpeech: string | null;
+  liveSpeech: string | null;
+}
+
+export function getSpeechTextForView({
+  ttsEnabled,
+  ttsMuted,
+  audioIndicatorState,
+  audioSpeech,
+  liveSpeech,
+}: SpeechTextForViewState): string | null {
+  if (!ttsEnabled || ttsMuted) return liveSpeech;
+  if (audioIndicatorState === 'playing' || audioIndicatorState === 'paused') {
+    return audioSpeech;
+  }
+
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Pure computation
 // ---------------------------------------------------------------------------
@@ -135,6 +186,8 @@ export function computePlaybackView(raw: PlaybackRawState): PlaybackView {
     sourceText = lectureSpeech;
   } else if (phase === 'completed') {
     sourceText = '';
+  } else if (phase === 'lecturePlaying' || phase === 'lecturePaused') {
+    sourceText = '';
   } else {
     sourceText = idleText || '';
   }
@@ -175,7 +228,7 @@ export function computePlaybackView(raw: PlaybackRawState): PlaybackView {
     bubbleRole = null;
   } else if (isCueUser) {
     bubbleRole = null;
-  } else if (lectureSpeech || idleText) {
+  } else if (lectureSpeech || (phase === 'idle' && idleText)) {
     bubbleRole = 'teacher';
   } else {
     bubbleRole = null;

@@ -1,0 +1,58 @@
+{
+  "courseId": "ai-intro-2026",
+  "title": "人工智能导论",
+  "englishTitle": "Introduction to Artificial Intelligence",
+  "courseType": "高校计算机类专业基础课",
+  "targetMajors": [
+    "人工智能",
+    "计算机科学与技术",
+    "软件工程",
+    "电子信息",
+    "数据科学与大数据技术"
+  ],
+  "suggestedSemester": "大二下或大三上",
+  "suggestedHours": 48,
+  "suggestedCredits": 3,
+  "prerequisiteKnowledge": [
+    "Python 程序设计基础",
+    "离散数学基础",
+    "线性代数基础",
+    "概率统计基础",
+    "数据结构基础"
+  ],
+  "coursePositioning": "面向本科生建立人工智能核心概念、典型算法、工程实践和可信治理意识的入门课程。",
+  "learningOutcomes": [
+    "理解人工智能的问题建模、搜索、知识表示、机器学习、深度学习、强化学习、大模型与智能体等基本概念。",
+    "能够把实际问题抽象为状态空间、监督学习任务、检索增强生成任务或智能体任务。",
+    "能够阅读和解释基础 AI 算法流程，完成简单的 Python 实操案例。",
+    "能够识别过拟合、数据泄露、幻觉、偏见、隐私等常见风险，并提出基本缓解措施。",
+    "能够完成一个小型课程项目，如课程知识问答助手或个性化学习资源生成原型。"
+  ],
+  "knowledgeBaseVersion": "v0.1.0",
+  "updatedAt": "2026-07-01",
+  "authorNote": "本知识库由参赛项目自行整理，内容为原创改写，外部资料仅作为课程结构、术语和参考阅读来源。",
+  "sourceRegistry": "data/source-materials/ai-intro/source-links.md",
+  "recommendedResourceTypes": [
+    "markdown_lecture",
+    "mind_map",
+    "quiz_bank",
+    "ppt_outline",
+    "video_script",
+    "code_case",
+    "project_material"
+  ],
+  "ragImportHints": {
+    "chunkBy": ["chapter", "section"],
+    "preferredChunkSize": 900,
+    "preferredOverlap": 120,
+    "citationFields": ["file", "chapter", "section", "knowledgeTags"],
+    "lowConfidencePolicy": "无课程来源或来源不足时标记为 need_review，不直接作为确定事实输出。"
+  },
+  "assessmentStructure": {
+    "diagnosticQuiz": 10,
+    "chapterPractice": 30,
+    "codeLabs": 25,
+    "courseProject": 25,
+    "participationAndReflection": 10
+  }
+}

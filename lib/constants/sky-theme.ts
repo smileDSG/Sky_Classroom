@@ -12,7 +12,7 @@
 export const SKY_COLORS = {
   // 主色 — 星空蓝紫渐变系
   primary: {
-    50:  '#f0f4ff',
+    50: '#f0f4ff',
     100: '#e0e9ff',
     200: '#c7d7fe',
     300: '#a5b8fc',
@@ -27,7 +27,7 @@ export const SKY_COLORS = {
 
   //  accent — 星光金/琥珀
   accent: {
-    50:  '#fffbeb',
+    50: '#fffbeb',
     100: '#fef3c7',
     200: '#fde68a',
     300: '#fcd34d',
@@ -131,7 +131,13 @@ export interface NavItem {
 /** 主导航 — 云端智囊模块 */
 export const MAIN_NAV_ITEMS: NavItem[] = [
   { label: '首页', href: '/sky', icon: 'Home', description: '学习概览' },
-  { label: '云端智囊', href: '/sky/cloud-mind', icon: 'Brain', description: 'AI 工具集', badge: 'New' },
+  {
+    label: '云端智囊',
+    href: '/sky/cloud-mind',
+    icon: 'Brain',
+    description: 'AI 工具集',
+    badge: 'New',
+  },
   { label: '学习数据', href: '/sky/learning', icon: 'BarChart3', description: '知识图谱' },
   { label: '小镜课堂', href: '/sky/assistant', icon: 'Sparkles', description: 'AI 助教' },
 ];
@@ -157,15 +163,6 @@ export const CLOUD_MIND_TOOLS = [
     bgGlow: 'cyan',
   },
   {
-    id: 'write',
-    label: '智能写作',
-    description: 'AI 辅助作文、论文写作',
-    href: '/sky/cloud-mind/write',
-    icon: 'PenTool',
-    color: 'from-emerald-500 to-teal-600',
-    bgGlow: 'emerald',
-  },
-  {
     id: 'quiz',
     label: '智能出题',
     description: '根据知识点自动生成练习',
@@ -182,14 +179,5 @@ export const CLOUD_MIND_TOOLS = [
     icon: 'Brain',
     color: 'from-rose-500 to-pink-600',
     bgGlow: 'rose',
-  },
-  {
-    id: 'translate',
-    label: '智能翻译',
-    description: '多语言翻译，学术用语精准',
-    href: '/sky/cloud-mind/translate',
-    icon: 'Languages',
-    color: 'from-indigo-500 to-violet-600',
-    bgGlow: 'indigo',
   },
 ];

@@ -63,6 +63,7 @@ export interface PersistedClassroomData {
   stage: Stage;
   scenes: Scene[];
   createdAt: string;
+  updatedAt: string;
 }
 
 export function isValidClassroomId(id: string): boolean {
@@ -72,8 +73,12 @@ export function isValidClassroomId(id: string): boolean {
 export async function readClassroom(id: string): Promise<PersistedClassroomData | null> {
   const filePath = path.join(CLASSROOMS_DIR, `${id}.json`);
   try {
-    const content = await fs.readFile(filePath, 'utf-8');
-    return JSON.parse(content) as PersistedClassroomData;
+    const [content, stat] = await Promise.all([fs.readFile(filePath, 'utf-8'), fs.stat(filePath)]);
+    const parsed = JSON.parse(content) as PersistedClassroomData;
+    return {
+      ...parsed,
+      updatedAt: parsed.updatedAt ?? stat.mtime.toISOString(),
+    };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return null;
@@ -95,6 +100,7 @@ export async function persistClassroom(
     stage: data.stage,
     scenes: data.scenes,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   await ensureClassroomsDir();

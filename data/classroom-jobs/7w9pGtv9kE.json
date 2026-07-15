@@ -1,0 +1,371 @@
+{
+  "id": "7w9pGtv9kE",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-17T01:53:22.256Z",
+  "updatedAt": "2026-06-17T01:54:37.869Z",
+  "inputSummary": {
+    "requirementPreview": "二次函数\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 3,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-17T01:53:22.272Z",
+  "totalScenes": 7,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "什么是二次函数？",
+        "description": "引入二次函数的概念，通过生活中的例子建立直观感受。",
+        "keyPoints": [
+          "二次函数的一般形式：y = ax² + bx + c (a ≠ 0)",
+          "生活中的抛物线例子：投篮轨迹、喷泉水柱",
+          "a、b、c 三个系数的角色初步介绍"
+        ],
+        "teachingObjective": "理解二次函数的基本定义及其与一次函数的区别。",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "二次函数的图像：抛物线",
+        "description": "通过具体函数举例，展示二次函数图像（抛物线）的形状和基本性质。",
+        "keyPoints": [
+          "二次函数图像是一条抛物线",
+          "a 的正负决定抛物线开口方向（a>0开口向上，a<0开口向下）",
+          "|a| 的大小决定开口的宽窄"
+        ],
+        "teachingObjective": "了解二次函数图像的基本特征，建立形与数的联系。",
+        "estimatedDuration": 150,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "探索抛物线：调节系数影响",
+        "description": "通过交互式模拟器，动态调整 a、b、c 的值，实时观察抛物线形状的变化。",
+        "keyPoints": [
+          "用滑块调节 a 值，观察开口方向和宽窄的变化",
+          "调节 b 值，观察对称轴如何左右移动",
+          "调节 c 值，观察抛物线的上下平移"
+        ],
+        "teachingObjective": "通过直接操作深入理解 a、b、c 系数对图像的具体影响。",
+        "estimatedDuration": 180,
+        "order": 3,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "二次函数的系数与图像变化关系",
+          "keyVariables": [
+            {
+              "name": "a",
+              "range": "-5 到 5 (步长 0.1，跳过 0)",
+              "description": "控制抛物线开口方向和宽窄"
+            },
+            {
+              "name": "b",
+              "range": "-10 到 10 (步长 0.5)",
+              "description": "控制对称轴的水平位置（配合 a 影响顶点）"
+            },
+            {
+              "name": "c",
+              "range": "-10 到 10 (步长 0.5)",
+              "description": "控制抛物线与 y 轴的交点（上下平移）"
+            }
+          ]
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "quiz",
+        "title": "基础知识小测",
+        "description": "通过选择题和简答题，检查对二次函数基本概念和图像性质的理解。",
+        "keyPoints": [
+          "二次函数的形式判断",
+          "开口方向由 a 决定",
+          "对称轴和顶点是核心要素"
+        ],
+        "teachingObjective": "巩固二次函数图像的基本性质。",
+        "estimatedDuration": 120,
+        "order": 4,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "二次函数的顶点式与一般式",
+        "description": "讲解二次函数的两种常见表达形式及其转换方法。",
+        "keyPoints": [
+          "顶点式：y = a(x - h)² + k，顶点为 (h, k)",
+          "一般式如何通过配方法转化为顶点式",
+          "利用顶点式快速确定抛物线的顶点和对称轴"
+        ],
+        "teachingObjective": "掌握二次函数顶点式与一般式的互化。",
+        "estimatedDuration": 150,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "二次函数的简单应用",
+        "description": "介绍二次函数在实际问题中的应用，包括求最小值或最大值问题以及抛物线的轨迹模型。",
+        "keyPoints": [
+          "[Table] 应用场景对比：最大利润问题与抛物线形拱桥",
+          "利用顶点式求实际问题中的最大值或最小值",
+          "将实际数据代入一般式求解析式，再求解"
+        ],
+        "teachingObjective": "学会将实际问题抽象为二次函数模型并求解。",
+        "estimatedDuration": 180,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "综合提升小测",
+        "description": "检查对顶点式、一般式互化以及实际应用的掌握情况。",
+        "keyPoints": [
+          "顶点式与一般式的互化步骤",
+          "利用二次函数解决最大值或最小值问题",
+          "实际问题的数学建模思路"
+        ],
+        "teachingObjective": "综合评估学习者对二次函数核心内容的理解与应用能力。",
+        "estimatedDuration": 150,
+        "order": 7,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "hard",
+          "questionTypes": [
+            "multiple",
+            "short_answer",
+            "single"
+          ]
+        }
+      }
+    ],
+    "languageDirective": "Use simplified Chinese as the teaching language. All scene content, explanations, and quizzes must be in Chinese. Mathematical terms like '二次函数' (quadratic function), '抛物线' (parabola), '顶点' (vertex), and '对称轴' (axis of symmetry) should use their standard Chinese translations. Programming or tool names are not applicable here.",
+    "topicSummary": "二次函数基础",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "3t73kPExLX",
+      "name": "什么是二次函数？",
+      "languageDirective": "Use simplified Chinese as the teaching language. All scene content, explanations, and quizzes must be in Chinese. Mathematical terms like '二次函数' (quadratic function), '抛物线' (parabola), '顶点' (vertex), and '对称轴' (axis of symmetry) should use their standard Chinese translations. Programming or tool names are not applicable here.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1781661213630,
+      "updatedAt": 1781661213630,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "二次函数\n\n\n【参考已有课堂模板】\n{\"requirement\":\"二次函数\\n\",\"topicSummary\":\"二次函数基础\",\"outlines\":[{\"id\":\"scene_1\",\"type\":\"slide\",\"title\":\"什么是二次函数？\",\"description\":\"引入二次函数的概念，通过生活中的例子建立直观感受。\",\"keyPoints\":[\"二次函数的一般形式：y = ax² + bx + c (a ≠ 0)\",\"生活中的抛物线例子：投篮轨迹、喷泉水柱\",\"a、b、c 三个系数的角色初步介绍\"],\"teachingObjective\":\"理解二次函数的基本定义及其与一次函数的区别。\",\"estimatedDuration\":120,\"order\":1},{\"id\":\"scene_2\",\"type\":\"slide\",\"title\":\"二次函数的图像：抛物线\",\"description\":\"通过具体函数举例，展示二次函数图像（抛物线）的形状和基本性质\n---\n,\"顶点坐标与对称轴的计算\"],\"teachingObjective\":\"巩固二次函数图像的基本性质。\",\"estimatedDuration\":120,\"order\":4,\"quizConfig\":{\"questionCount\":2,\"difficulty\":\"medium\",\"questionTypes\":[\"single\",\"short_answer\"]}},{\"id\":\"scene_5\",\"type\":\"slide\",\"title\":\"二次函数的顶点式与一般式\",\"description\":\"讲解二次函数的两种常见表达形式及其转换方法。\",\"keyPoints\":[\"顶点式：y = a(x - h)² + k，顶点为 (h, k)\",\"一般式如何通过配方法转化为顶点式\",\"利用顶点式快速确定抛物线的顶点和对称轴\"],\"teachingObjective\":\"掌握二次函数顶点式与一般式的互化。\",\"estimatedDuration\":150,\"order\":5},{\"id\":\"scene_6\",\"type\":\"slide\",\"title\":\"二次函数的简单应用\",\"description\":\"介绍二次函数在实际问题中的应用，包括最小值或最大值问题",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "什么是二次函数？",
+      "description": "引入二次函数的概念，通过生活中的例子建立直观感受。",
+      "keyPoints": [
+        "二次函数的一般形式：y = ax² + bx + c (a ≠ 0)",
+        "生活中的抛物线例子：投篮轨迹、喷泉水柱",
+        "a、b、c 三个系数的角色初步介绍"
+      ],
+      "teachingObjective": "理解二次函数的基本定义及其与一次函数的区别。",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "二次函数的图像：抛物线",
+      "description": "通过具体函数举例，展示二次函数图像（抛物线）的形状和基本性质。",
+      "keyPoints": [
+        "二次函数图像是一条抛物线",
+        "a 的正负决定抛物线开口方向（a>0开口向上，a<0开口向下）",
+        "|a| 的大小决定开口的宽窄"
+      ],
+      "teachingObjective": "了解二次函数图像的基本特征，建立形与数的联系。",
+      "estimatedDuration": 150,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "探索抛物线：调节系数影响",
+      "description": "通过交互式模拟器，动态调整 a、b、c 的值，实时观察抛物线形状的变化。",
+      "keyPoints": [
+        "用滑块调节 a 值，观察开口方向和宽窄的变化",
+        "调节 b 值，观察对称轴如何左右移动",
+        "调节 c 值，观察抛物线的上下平移"
+      ],
+      "teachingObjective": "通过直接操作深入理解 a、b、c 系数对图像的具体影响。",
+      "estimatedDuration": 180,
+      "order": 3,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "二次函数的系数与图像变化关系",
+        "keyVariables": [
+          {
+            "name": "a",
+            "range": "-5 到 5 (步长 0.1，跳过 0)",
+            "description": "控制抛物线开口方向和宽窄"
+          },
+          {
+            "name": "b",
+            "range": "-10 到 10 (步长 0.5)",
+            "description": "控制对称轴的水平位置（配合 a 影响顶点）"
+          },
+          {
+            "name": "c",
+            "range": "-10 到 10 (步长 0.5)",
+            "description": "控制抛物线与 y 轴的交点（上下平移）"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "quiz",
+      "title": "基础知识小测",
+      "description": "通过选择题和简答题，检查对二次函数基本概念和图像性质的理解。",
+      "keyPoints": [
+        "二次函数的形式判断",
+        "开口方向由 a 决定",
+        "对称轴和顶点是核心要素"
+      ],
+      "teachingObjective": "巩固二次函数图像的基本性质。",
+      "estimatedDuration": 120,
+      "order": 4,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "二次函数的顶点式与一般式",
+      "description": "讲解二次函数的两种常见表达形式及其转换方法。",
+      "keyPoints": [
+        "顶点式：y = a(x - h)² + k，顶点为 (h, k)",
+        "一般式如何通过配方法转化为顶点式",
+        "利用顶点式快速确定抛物线的顶点和对称轴"
+      ],
+      "teachingObjective": "掌握二次函数顶点式与一般式的互化。",
+      "estimatedDuration": 150,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "二次函数的简单应用",
+      "description": "介绍二次函数在实际问题中的应用，包括求最小值或最大值问题以及抛物线的轨迹模型。",
+      "keyPoints": [
+        "[Table] 应用场景对比：最大利润问题与抛物线形拱桥",
+        "利用顶点式求实际问题中的最大值或最小值",
+        "将实际数据代入一般式求解析式，再求解"
+      ],
+      "teachingObjective": "学会将实际问题抽象为二次函数模型并求解。",
+      "estimatedDuration": 180,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "综合提升小测",
+      "description": "检查对顶点式、一般式互化以及实际应用的掌握情况。",
+      "keyPoints": [
+        "顶点式与一般式的互化步骤",
+        "利用二次函数解决最大值或最小值问题",
+        "实际问题的数学建模思路"
+      ],
+      "teachingObjective": "综合评估学习者对二次函数核心内容的理解与应用能力。",
+      "estimatedDuration": 150,
+      "order": 7,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "hard",
+        "questionTypes": [
+          "multiple",
+          "short_answer",
+          "single"
+        ]
+      }
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "Use simplified Chinese as the teaching language. All scene content, explanations, and quizzes must be in Chinese. Mathematical terms like '二次函数' (quadratic function), '抛物线' (parabola), '顶点' (vertex), and '对称轴' (axis of symmetry) should use their standard Chinese translations. Programming or tool names are not applicable here.",
+    "totalScenes": 7
+  },
+  "topicSummary": "二次函数基础",
+  "completedAt": "2026-06-17T01:54:37.869Z",
+  "result": {
+    "classroomId": "3t73kPExLX",
+    "url": "http://localhost:3001/classroom/3t73kPExLX",
+    "scenesCount": 3
+  }
+}

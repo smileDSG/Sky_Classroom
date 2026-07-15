@@ -2,8 +2,8 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : 'standalone',
-  transpilePackages: ['mathml2omml', 'pptxgenjs', 'lucide-react'],
-  serverExternalPackages: ['@napi-rs/canvas', 'mathjax', 'mysql2'],
+  transpilePackages: ['mathml2omml', 'pptxgenjs', '@maic/dsl', '@maic/renderer'],
+  serverExternalPackages: ['better-sqlite3', '@napi-rs/canvas', 'mysql2'],
 
   // Image optimization: prefer AVIF/WebP for smaller payloads
   images: {
@@ -34,11 +34,18 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // Static assets: immutable cache (webpack content-hashed)
+      // In development, Turbopack chunk URLs can outlive the current module graph.
+      // Do not let the browser keep stale chunks across HMR rebuilds.
       {
         source: '/_next/static/:path*',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          {
+            key: 'Cache-Control',
+            value:
+              process.env.NODE_ENV === 'development'
+                ? 'no-store, no-cache, must-revalidate'
+                : 'public, max-age=31536000, immutable',
+          },
         ],
       },
       // Avatars & logos: long cache with stale-while-revalidate

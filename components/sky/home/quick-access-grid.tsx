@@ -2,12 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import {
-  Presentation,
-  Search,
-  Brain,
-  MessageSquare,
-} from 'lucide-react';
+import { Presentation, Search, Brain, MessageSquare } from 'lucide-react';
 
 const quickAccessItems = [
   {
@@ -26,7 +21,7 @@ const quickAccessItems = [
     color: 'text-violet-500',
     bg: 'bg-violet-500/10 hover:bg-violet-500/20',
     border: 'border-violet-200/50 dark:border-violet-800/30',
-    href: '/sky/solve',
+    href: '/sky/cloud-mind/solve',
   },
   {
     icon: Brain,
@@ -80,16 +75,16 @@ export function QuickAccessGrid() {
             {/* Decorative corner dot */}
             <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-current opacity-20 group-hover:opacity-50 transition-opacity" />
 
-            <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${item.bg} group-hover:scale-110 transition-transform duration-300`}>
+            <div
+              className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${item.bg} group-hover:scale-110 transition-transform duration-300`}
+            >
               <Icon className={`h-5 w-5 ${item.color}`} />
             </div>
             <div className="min-w-0 relative">
               <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
                 {item.title}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                {item.desc}
-              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{item.desc}</p>
             </div>
           </motion.div>
         );

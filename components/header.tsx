@@ -1,33 +1,27 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  Settings,
-  Sun,
-  Moon,
-  Monitor,
+  Archive,
   ArrowLeft,
-  Loader2,
   Download,
   FileDown,
+  Layers3,
+  Loader2,
+  Monitor,
+  Moon,
   Package,
-  Archive,
-  PanelLeftClose,
-  ChevronDown,
-  ChevronUp,
-  GripHorizontal,
+  Settings,
+  Sun,
 } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
-import { useTheme } from '@/lib/hooks/use-theme';
-import { LanguageSwitcher } from './language-switcher';
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { SettingsDialog } from './settings';
-import { cn } from '@/lib/utils';
-import { useStageStore } from '@/lib/store/stage';
-import { useMediaGenerationStore } from '@/lib/store/media-generation';
-import { useExportPPTX } from '@/lib/export/use-export-pptx';
+import { useTheme } from '@/lib/hooks/use-theme';
 import { useExportClassroom } from '@/lib/export/use-export-classroom';
-import { SceneTimeline } from '@/components/stage/scene-timeline';
+import { useExportPPTX } from '@/lib/export/use-export-pptx';
+import { useMediaGenerationStore } from '@/lib/store/media-generation';
+import { useStageStore } from '@/lib/store/stage';
+import { cn } from '@/lib/utils';
 
 interface HeaderProps {
   readonly currentSceneTitle: string;
@@ -40,313 +34,207 @@ interface HeaderProps {
 
 export function Header({
   currentSceneTitle,
-  timelineCollapsed,
-  onTimelineCollapseChange,
-  onSceneSelect,
-  onRetryOutline,
-  isCourseComplete,
+  timelineCollapsed: _timelineCollapsed,
+  onTimelineCollapseChange: _onTimelineCollapseChange,
 }: HeaderProps) {
-  const { t } = useI18n();
-  const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(100);
-  const [isResizing, setIsResizing] = useState(false);
-  const headerRef = useRef<HTMLElement>(null);
-  const resizeStartY = useRef(0);
-  const resizeStartHeight = useRef(0);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const themeRef = useRef<HTMLDivElement>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
 
-  // Export
   const { exporting: isExporting, exportPPTX, exportResourcePack } = useExportPPTX();
   const { exporting: isExportingZip, exportClassroomZip } = useExportClassroom();
-  const [exportMenuOpen, setExportMenuOpen] = useState(false);
-  const exportRef = useRef<HTMLDivElement>(null);
-  const scenes = useStageStore((s) => s.scenes);
-  const generatingOutlines = useStageStore((s) => s.generatingOutlines);
-  const failedOutlines = useStageStore((s) => s.failedOutlines);
-  const mediaTasks = useMediaGenerationStore((s) => s.tasks);
+  const scenes = useStageStore((state) => state.scenes);
+  const currentSceneId = useStageStore((state) => state.currentSceneId);
+  const generatingOutlines = useStageStore((state) => state.generatingOutlines);
+  const failedOutlines = useStageStore((state) => state.failedOutlines);
+  const mediaTasks = useMediaGenerationStore((state) => state.tasks);
 
+  const currentSceneIndex = scenes.findIndex((scene) => scene.id === currentSceneId);
+  const progressLabel =
+    currentSceneIndex >= 0 ? `${currentSceneIndex + 1}/${Math.max(scenes.length, 1)}` : '--';
   const canExport =
     scenes.length > 0 &&
     generatingOutlines.length === 0 &&
     failedOutlines.length === 0 &&
     Object.values(mediaTasks).every((task) => task.status === 'done' || task.status === 'failed');
 
-  const themeRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
   const handleClickOutside = useCallback(
-    (e: MouseEvent) => {
-      if (themeOpen && themeRef.current && !themeRef.current.contains(e.target as Node)) {
+    (event: MouseEvent) => {
+      if (themeOpen && themeRef.current && !themeRef.current.contains(event.target as Node)) {
         setThemeOpen(false);
       }
-      if (exportMenuOpen && exportRef.current && !exportRef.current.contains(e.target as Node)) {
+      if (
+        exportMenuOpen &&
+        exportRef.current &&
+        !exportRef.current.contains(event.target as Node)
+      ) {
         setExportMenuOpen(false);
       }
     },
-    [themeOpen, exportMenuOpen],
+    [exportMenuOpen, themeOpen],
   );
 
   useEffect(() => {
-    if (themeOpen || exportMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [themeOpen, exportMenuOpen, handleClickOutside]);
+    if (!themeOpen && !exportMenuOpen) return;
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [exportMenuOpen, handleClickOutside, themeOpen]);
 
-  // Resize handlers
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    resizeStartY.current = e.clientY;
-    resizeStartHeight.current = headerHeight;
-    document.body.style.cursor = 'ns-resize';
-    document.body.style.userSelect = 'none';
-  }, [headerHeight]);
-
-  const handleResizeMove = useCallback((e: MouseEvent) => {
-    if (!isResizing) return;
-    const delta = e.clientY - resizeStartY.current;
-    const newHeight = Math.max(48, Math.min(200, resizeStartHeight.current + delta));
-    setHeaderHeight(newHeight);
-  }, [isResizing]);
-
-  const handleResizeEnd = useCallback(() => {
-    setIsResizing(false);
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  }, []);
-
-  useEffect(() => {
-    if (isResizing) {
-      document.addEventListener('mousemove', handleResizeMove);
-      document.addEventListener('mouseup', handleResizeEnd);
-      return () => {
-        document.removeEventListener('mousemove', handleResizeMove);
-        document.removeEventListener('mouseup', handleResizeEnd);
-      };
-    }
-  }, [isResizing, handleResizeMove, handleResizeEnd]);
-
-  const isCompact = headerHeight < 70;
+  const themeIcon = (() => {
+    if (theme === 'light') return <Sun className="h-4 w-4" />;
+    if (theme === 'dark') return <Moon className="h-4 w-4" />;
+    return <Monitor className="h-4 w-4" />;
+  })();
 
   return (
     <>
-      <header
-        ref={headerRef}
-        style={{ height: headerHeight }}
-        className="relative px-6 py-2 flex flex-col gap-2 z-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md shrink-0 sticky top-0 transition-colors duration-200"
-      >
-        {/* Main header content */}
-        <div className="flex items-center gap-4 flex-1 min-h-0">
-          {/* Left: Back + Title - fixed width */}
-          <div className="flex items-center gap-3 shrink-0" style={{ width: 180 }}>
-            <button
-              onClick={() => router.push('/')}
-              className="shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              title={t('generation.backToHome')}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500 mb-0.5">
-                {t('stage.currentScene')}
-              </span>
-              <h1
-                className="text-sm font-bold text-gray-800 dark:text-gray-200 tracking-tight truncate"
-                suppressHydrationWarning
-              >
-                {currentSceneTitle || t('common.loading')}
-              </h1>
+      <header className="relative z-30 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-sky-100/80 bg-white/76 px-4 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/92">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => router.push('/')}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sky-800/70 transition-colors hover:bg-white/85 hover:text-sky-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            title="Back"
+            aria-label="Back"
+          >
+            <ArrowLeft className="h-4.5 w-4.5" />
+          </button>
+
+          <div className="min-w-0">
+            <h1 className="truncate text-sm font-semibold text-slate-950 dark:text-slate-100">
+              {currentSceneTitle || 'Loading slide'}
+            </h1>
+            <div className="mt-0.5 flex items-center gap-2 text-[11px] font-medium text-sky-800/60 dark:text-slate-400">
+              <span>Slide {progressLabel}</span>
+              {generatingOutlines.length > 0 && <span>Building {generatingOutlines.length}</span>}
             </div>
           </div>
+        </div>
 
-          {/* Center: Timeline - fills available space */}
-          <div
-            className={cn(
-              'flex-1 min-w-0 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-slate-900/50 overflow-hidden transition-all duration-200',
-              isCompact ? 'h-[28px]' : 'h-full'
-            )}
-          >
-            <SceneTimeline
-              collapsed={isCompact}
-              onCollapseChange={onTimelineCollapseChange}
-              onSceneSelect={onSceneSelect}
-              onRetryOutline={onRetryOutline}
-              isCourseComplete={isCourseComplete}
-            />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <div className="hidden items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-800/75 dark:bg-slate-900 dark:text-slate-400 sm:flex">
+            <Layers3 className="h-3.5 w-3.5" />
+            {scenes.length}
           </div>
 
-          {/* Right: Controls */}
-          <div className="flex items-center gap-3 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md px-2 py-1.5 rounded-full border border-gray-100/50 dark:border-gray-700/50 shadow-sm shrink-0">
-          {/* Language Selector */}
-          <LanguageSwitcher onOpen={() => setThemeOpen(false)} />
-
-          <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
-
-          {/* Theme Selector */}
           <div className="relative" ref={themeRef}>
             <button
-              onClick={() => {
-                setThemeOpen(!themeOpen);
-              }}
-              className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all group"
+              type="button"
+              onClick={() => setThemeOpen((open) => !open)}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-sky-800/70 transition-colors hover:bg-white/85 hover:text-sky-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+              title="Theme"
+              aria-label="Theme"
             >
-              {theme === 'light' && <Sun className="w-4 h-4" />}
-              {theme === 'dark' && <Moon className="w-4 h-4" />}
-              {theme === 'system' && <Monitor className="w-4 h-4" />}
+              {themeIcon}
             </button>
             {themeOpen && (
-              <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[140px]">
-                <button
-                  onClick={() => {
-                    setTheme('light');
-                    setThemeOpen(false);
-                  }}
-                  className={cn(
-                    'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
-                    theme === 'light' &&
-                      'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                  )}
-                >
-                  <Sun className="w-4 h-4" />
-                  {t('settings.themeOptions.light')}
-                </button>
-                <button
-                  onClick={() => {
-                    setTheme('dark');
-                    setThemeOpen(false);
-                  }}
-                  className={cn(
-                    'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
-                    theme === 'dark' &&
-                      'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                  )}
-                >
-                  <Moon className="w-4 h-4" />
-                  {t('settings.themeOptions.dark')}
-                </button>
-                <button
-                  onClick={() => {
-                    setTheme('system');
-                    setThemeOpen(false);
-                  }}
-                  className={cn(
-                    'w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2',
-                    theme === 'system' &&
-                      'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                  )}
-                >
-                  <Monitor className="w-4 h-4" />
-                  {t('settings.themeOptions.system')}
-                </button>
+              <div className="absolute right-0 top-full z-50 mt-2 min-w-36 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+                {[
+                  { id: 'light', label: 'Light', icon: Sun },
+                  { id: 'dark', label: 'Dark', icon: Moon },
+                  { id: 'system', label: 'System', icon: Monitor },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setTheme(item.id as 'light' | 'dark' | 'system');
+                        setThemeOpen(false);
+                      }}
+                      className={cn(
+                        'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-800',
+                        theme === item.id
+                          ? 'text-slate-950 dark:text-slate-100'
+                          : 'text-slate-600 dark:text-slate-300',
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700" />
-
-          {/* Settings Button */}
-          <div className="relative">
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all group"
-            >
-              <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
-            </button>
-          </div>
-        </div>
-
-        {/* Export Dropdown */}
-        <div className="relative" ref={exportRef}>
           <button
-            onClick={() => {
-              if (canExport && !isExporting && !isExportingZip) setExportMenuOpen(!exportMenuOpen);
-            }}
-            disabled={!canExport || isExporting || isExportingZip}
-            title={
-              canExport
-                ? isExporting || isExportingZip
-                  ? t('export.exporting')
-                  : t('export.pptx')
-                : t('share.notReady')
-            }
-            className={cn(
-              'shrink-0 p-2 rounded-full transition-all',
-              canExport && !isExporting && !isExportingZip
-                ? 'text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm'
-                : 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50',
-            )}
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-sky-800/70 transition-colors hover:bg-white/85 hover:text-sky-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            title="Settings"
+            aria-label="Settings"
           >
-            {isExporting || isExportingZip ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
+            <Settings className="h-4 w-4" />
           </button>
-          {exportMenuOpen && (
-            <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 min-w-[200px]">
-              <button
-                onClick={() => {
-                  setExportMenuOpen(false);
-                  exportPPTX();
-                }}
-                className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
-              >
-                <FileDown className="w-4 h-4 text-gray-400 shrink-0" />
-                <span>{t('export.pptx')}</span>
-              </button>
-              <button
-                onClick={() => {
-                  setExportMenuOpen(false);
-                  exportResourcePack();
-                }}
-                className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
-              >
-                <Package className="w-4 h-4 text-gray-400 shrink-0" />
-                <div>
-                  <div>{t('export.resourcePack')}</div>
-                  <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                    {t('export.resourcePackDesc')}
-                  </div>
-                </div>
-              </button>
-              <button
-                onClick={() => {
-                  setExportMenuOpen(false);
-                  exportClassroomZip();
-                }}
-                disabled={isExportingZip}
-                className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2.5"
-              >
-                <Archive className="w-4 h-4 text-gray-400 shrink-0" />
-                <div>
-                  <div>{t('export.classroomZip')}</div>
-                  <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                    {t('export.classroomZipDesc')}
-                  </div>
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
 
-        {/* Main header content closing */}
-        </div>
+          <div className="relative" ref={exportRef}>
+            <button
+              type="button"
+              onClick={() => {
+                if (canExport && !isExporting && !isExportingZip) {
+                  setExportMenuOpen((open) => !open);
+                }
+              }}
+              disabled={!canExport || isExporting || isExportingZip}
+              className={cn(
+                'flex h-9 items-center gap-2 rounded-full px-3 text-xs font-semibold transition-colors',
+                canExport && !isExporting && !isExportingZip
+                  ? 'bg-sky-600 text-white shadow-sm shadow-sky-500/20 hover:bg-sky-500 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white'
+                  : 'cursor-not-allowed bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
+              )}
+              title={canExport ? 'Export' : 'Available after generation'}
+            >
+              {isExporting || isExportingZip ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">Export</span>
+            </button>
 
-        {/* Resize handle at bottom */}
-        <div
-          onMouseDown={handleResizeStart}
-          className={cn(
-            'absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center',
-            'opacity-0 hover:opacity-100 transition-opacity',
-            isResizing && 'opacity-100'
-          )}
-          style={{ transform: 'translateY(50%)' }}
-        >
-          <div className="w-16 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-            <GripHorizontal className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+            {exportMenuOpen && (
+              <div className="absolute right-0 top-full z-50 mt-2 min-w-56 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    exportPPTX();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <FileDown className="h-4 w-4 text-slate-400" />
+                  PPTX
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    exportResourcePack();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <Package className="h-4 w-4 text-slate-400" />
+                  Resource pack
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    exportClassroomZip();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <Archive className="h-4 w-4 text-slate-400" />
+                  Classroom ZIP
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>

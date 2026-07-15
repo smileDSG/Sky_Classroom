@@ -16,3 +16,20 @@ tsconfig.tsbuildinfo
 .kimi/
 .gstack/
 .superpowers/
+.worktrees/
+.data
+tmp/
+# Local runtime data (generated jobs, classrooms, teaching sessions)
+data/classroom-jobs/
+data/classrooms/
+data/slides-jobs/
+data/teaching-jobs/
+data/teaching-feedback/
+# Tool caches and local memory
+.codex/
+.pnpm-store/
+memory/
+__pycache__/
+*.pyc
+cookies.txt
+*.pptx

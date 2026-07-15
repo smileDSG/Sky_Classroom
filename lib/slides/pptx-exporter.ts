@@ -27,6 +27,7 @@ import { addChartToSlide } from './pptx-chart-handler';
 import type { ThemeToken, PptxThemeId } from './types';
 import type { PPTElement, PPTTextElement, PPTChartElement, Slide } from '@/lib/types/slides';
 import type { AvatarSpeech } from './types';
+import type { TemplateElement, PPTDManifest } from '@/lib/templates/pptd-types';
 import { getTheme } from './pptx-themes';
 import { createLogger } from '@/lib/logger';
 import { toPptxHex, toPptxColor, resolveTextColor } from './color-utils';
@@ -50,12 +51,50 @@ function resolveBgImagePath(src: string): string | null {
   return src;
 }
 
+function applySlideBackground(
+  pptxSlide: pptxgen.Slide,
+  slide: Slide | undefined,
+  fallbackColor: string,
+): void {
+  const bg = slide?.background;
+  if (!bg) {
+    pptxSlide.background = { color: toPptxHex(fallbackColor) };
+    return;
+  }
+
+  if (bg.type === 'image' && bg.image?.src) {
+    const bgSrc = resolveBgImagePath(bg.image.src);
+    if (bgSrc) {
+      pptxSlide.background = { path: bgSrc };
+      return;
+    }
+  }
+
+  if (bg.type === 'solid' && bg.color) {
+    pptxSlide.background = { color: toPptxHex(bg.color) };
+    return;
+  }
+
+  if (bg.type === 'gradient' && bg.gradient?.colors?.length) {
+    pptxSlide.background = { color: toPptxHex(bg.gradient.colors[0].color) };
+    return;
+  }
+
+  pptxSlide.background = { color: toPptxHex(fallbackColor) };
+}
 
 /** Merge pptx color transparency with element opacity. */
-function mergeTransparency(pptxColor: { color: string; transparency?: number }, opacity?: number): { color: string; transparency?: number } {
+function mergeTransparency(
+  pptxColor: { color: string; transparency?: number },
+  opacity?: number,
+): { color: string; transparency?: number } {
   if (opacity !== undefined && opacity < 1) {
     const t = (1 - opacity) * 100;
-    return { color: pptxColor.color, transparency: pptxColor.transparency !== undefined ? Math.min(100, t + pptxColor.transparency) : t };
+    return {
+      color: pptxColor.color,
+      transparency:
+        pptxColor.transparency !== undefined ? Math.min(100, t + pptxColor.transparency) : t,
+    };
   }
   return pptxColor;
 }
@@ -100,9 +139,11 @@ export async function exportPptx(options: PptxExportOptions): Promise<PptxExport
     avatarSpeech,
     includeSpeakerNotes,
     resolvedImages,
+    layoutMode,
   } = options;
 
   const theme = getTheme(options.theme || 'sky-blue');
+  const useAiLayout = layoutMode === 'ai';
   const startTime = Date.now();
   const totalSlides = slides.length;
 
@@ -125,17 +166,23 @@ export async function exportPptx(options: PptxExportOptions): Promise<PptxExport
   pptx.defineSlideMaster({
     title: 'sky-content-master',
     background: { color: toPptxHex(theme.contentBg) },
-    margin: [theme.pageMargin / 96, theme.pageMargin / 96, theme.pageMargin / 96, theme.pageMargin / 96],
+    margin: [
+      theme.pageMargin / 96,
+      theme.pageMargin / 96,
+      theme.pageMargin / 96,
+      theme.pageMargin / 96,
+    ],
     objects: [],
   });
 
   // ── Cover Slide ──────────────────────────────────────────────────
   const coverSlide = pptx.addSlide();
-  if (aiCover?.background?.type === 'image' && aiCover.background.image?.src) {
-    const bgSrc = resolveBgImagePath(aiCover.background.image.src);
-    if (bgSrc) coverSlide.background = { path: bgSrc };
+  if (useAiLayout && aiCover) {
+    applySlideBackground(coverSlide, aiCover, theme.coverBg);
+    renderContentSlide(coverSlide, aiCover, theme, resolvedImages);
+  } else {
+    renderCoverSlide(coverSlide, coverTitle, coverSubtitle, theme);
   }
-  renderCoverSlide(coverSlide, coverTitle, coverSubtitle, theme);
 
   // ── Content Slides ───────────────────────────────────────────────
   for (let i = 0; i < slides.length; i++) {
@@ -143,10 +190,7 @@ export async function exportPptx(options: PptxExportOptions): Promise<PptxExport
     if (slide.type === 'cover' || slide.type === 'end') continue;
 
     const pptxSlide = pptx.addSlide({ masterName: 'sky-content-master' });
-    if (slide.background?.type === 'image' && slide.background.image?.src) {
-      const bgSrc = resolveBgImagePath(slide.background.image.src);
-      if (bgSrc) pptxSlide.background = { path: bgSrc };
-    }
+    applySlideBackground(pptxSlide, slide, theme.contentBg);
     renderContentSlide(pptxSlide, slide, theme, resolvedImages);
 
     // Page number
@@ -171,11 +215,12 @@ export async function exportPptx(options: PptxExportOptions): Promise<PptxExport
   // ── End Slide ────────────────────────────────────────────────────
   const endSlide = pptx.addSlide();
   const aiEnd = slides.find((s) => s.type === 'end');
-  if (aiEnd?.background?.type === 'image' && aiEnd.background.image?.src) {
-    const bgSrc = resolveBgImagePath(aiEnd.background.image.src);
-    if (bgSrc) endSlide.background = { path: bgSrc };
+  if (useAiLayout && aiEnd) {
+    applySlideBackground(endSlide, aiEnd, theme.coverBg);
+    renderContentSlide(endSlide, aiEnd, theme, resolvedImages);
+  } else {
+    renderEndSlide(endSlide, title, theme);
   }
-  renderEndSlide(endSlide, title, theme);
 
   // ── Write ────────────────────────────────────────────────────────
   const buffer = (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;
@@ -262,9 +307,13 @@ function renderContentSlide(
   theme: ThemeToken,
   resolvedImages?: Map<string, string>,
 ): void {
-  // Background is inherited from master slide (sky-content-master)
-  // Individual slides can override: pptxSlide.background = { color: '...' }
+  // Template-driven rendering
+  if (slide.templateData) {
+    renderTemplateSlide(pptxSlide, slide.templateData, theme);
+    return;
+  }
 
+  // Legacy element rendering
   const viewportSize = slide.viewportSize || 1000;
   const ratioPx2Inch = 96 * (viewportSize / 960);
   const ratioPx2Pt = (96 / 72) * (viewportSize / 960);
@@ -309,11 +358,7 @@ function renderContentSlide(
   }
 }
 
-function renderEndSlide(
-  pptxSlide: pptxgen.Slide,
-  title: string,
-  theme: ThemeToken,
-): void {
+function renderEndSlide(pptxSlide: pptxgen.Slide, title: string, theme: ThemeToken): void {
   // Background
   if (theme.coverBgGradient) {
     pptxSlide.background = {
@@ -356,11 +401,7 @@ function renderEndSlide(
 
 // ── Element Dispatcher ─────────────────────────────────────────────
 
-function renderElement(
-  el: PPTElement,
-  ctx: ElementRendererContext,
-  isTitle: boolean,
-): void {
+function renderElement(el: PPTElement, ctx: ElementRendererContext, isTitle: boolean): void {
   switch (el.type) {
     case 'text':
       renderTextElement(el as PPTTextElement, ctx, isTitle);
@@ -404,12 +445,13 @@ function renderTextElement(
   const text = stripHtml(el.content || '');
   if (!text) return;
 
-  const fontSize = isTitle ? theme.titleFontSize : theme.bodyFontSize;
+  const inlineStyle = extractInlineTextStyle(el.content || '', ratioPx2Pt);
+  const fontSize = inlineStyle.fontSize ?? (isTitle ? theme.titleFontSize : theme.bodyFontSize);
 
   // Determine effective background for contrast check
   const bgColor = theme.contentBg;
   const themeColor = isTitle ? theme.coverTitleColor : theme.bodyColor;
-  const resolved = resolveTextColor(el.defaultColor, themeColor, bgColor);
+  const resolved = resolveTextColor(inlineStyle.color || el.defaultColor, themeColor, bgColor);
   const color = toPptxHex(resolved);
 
   pptxSlide.addText(text, {
@@ -420,7 +462,8 @@ function renderTextElement(
     fontSize,
     fontFace: el.defaultFontName || theme.fontFamily,
     color,
-    bold: isTitle,
+    bold: isTitle || inlineStyle.bold,
+    align: inlineStyle.align,
     rotate: el.rotate || 0,
     ...(el.fill ? { fill: { color: toPptxHex(el.fill) } } : {}),
   });
@@ -445,7 +488,9 @@ function renderShapeElement(el: PPTElement, ctx: ElementRendererContext): void {
   };
 
   const path = shapeEl.path || '';
-  const viewBox = shapeEl.viewBox || `0 0 ${el.width} ${(el as unknown as { height?: number }).height ?? el.width}`;
+  const viewBox =
+    shapeEl.viewBox ||
+    `0 0 ${el.width} ${(el as unknown as { height?: number }).height ?? el.width}`;
 
   // Try native shape mapping first
   const mapping = mapShapeToPptx(path, viewBox);
@@ -455,44 +500,50 @@ function renderShapeElement(el: PPTElement, ctx: ElementRendererContext): void {
     const fillColor = shapeEl.fill || theme.accent;
     const fillHex = toPptxColor(fillColor).color;
 
-    pptxSlide.addShape(mapping.shapeType as never, {
-      x,
-      y,
-      w,
-      h,
-      rotate: shapeEl.rotate || 0,
-      fill: { color: fillHex, transparency: (1 - (shapeEl.opacity || 1)) * 100 },
-      ...(shapeEl.outline
-        ? {
-            line: {
-              color: toPptxHex(shapeEl.outline.color || theme.shapeOutlineColor),
-              width: (shapeEl.outline.width || 1) / (96 / 72),
-            },
-          }
-        : {}),
-    } as never);
+    pptxSlide.addShape(
+      mapping.shapeType as never,
+      {
+        x,
+        y,
+        w,
+        h,
+        rotate: shapeEl.rotate || 0,
+        fill: { color: fillHex, transparency: (1 - (shapeEl.opacity || 1)) * 100 },
+        ...(shapeEl.outline
+          ? {
+              line: {
+                color: toPptxHex(shapeEl.outline.color || theme.shapeOutlineColor),
+                width: (shapeEl.outline.width || 1) / (96 / 72),
+              },
+            }
+          : {}),
+      } as never,
+    );
   } else {
     // Fallback: simple rect with fill
     const fillColor = shapeEl.fill || theme.accent;
-    pptxSlide.addShape('rect' as never, {
-      x,
-      y,
-      w,
-      h,
-      rotate: shapeEl.rotate || 0,
-      fill: {
-        color: toPptxColor(fillColor).color,
-        transparency: (1 - (shapeEl.opacity || 1)) * 100,
-      },
-      ...(shapeEl.outline
-        ? {
-            line: {
-              color: toPptxHex(shapeEl.outline.color || theme.shapeOutlineColor),
-              width: (shapeEl.outline.width || 1) / (96 / 72),
-            },
-          }
-        : {}),
-    } as never);
+    pptxSlide.addShape(
+      'rect' as never,
+      {
+        x,
+        y,
+        w,
+        h,
+        rotate: shapeEl.rotate || 0,
+        fill: {
+          color: toPptxColor(fillColor).color,
+          transparency: (1 - (shapeEl.opacity || 1)) * 100,
+        },
+        ...(shapeEl.outline
+          ? {
+              line: {
+                color: toPptxHex(shapeEl.outline.color || theme.shapeOutlineColor),
+                width: (shapeEl.outline.width || 1) / (96 / 72),
+              },
+            }
+          : {}),
+      } as never,
+    );
   }
 }
 
@@ -511,20 +562,25 @@ function renderLineElement(el: PPTElement, ctx: ElementRendererContext): void {
     rotate?: number;
     height?: number;
   };
-  const h = (lineData.height ?? Math.abs((lineData.end?.[1] ?? 0) - (lineData.start?.[1] ?? 0))) / ratioPx2Inch;
+  const h =
+    (lineData.height ?? Math.abs((lineData.end?.[1] ?? 0) - (lineData.start?.[1] ?? 0))) /
+    ratioPx2Inch;
 
-  const color = toPptxHex((lineData.color || theme.dividerColor));
+  const color = toPptxHex(lineData.color || theme.dividerColor);
   const lineWidth = 2 / (96 / 72);
 
   // Use native line shape
-  pptxSlide.addShape('line' as never, {
-    x,
-    y,
-    w,
-    h,
-    rotate: lineData.rotate || 0,
-    line: { color, width: lineWidth },
-  } as never);
+  pptxSlide.addShape(
+    'line' as never,
+    {
+      x,
+      y,
+      w,
+      h,
+      rotate: lineData.rotate || 0,
+      line: { color, width: lineWidth },
+    } as never,
+  );
 }
 
 // ── LaTeX ──────────────────────────────────────────────────────────
@@ -587,28 +643,20 @@ function renderLatexElement(el: PPTElement, ctx: ElementRendererContext): void {
 // ── Image ──────────────────────────────────────────────────────────
 
 function renderImageElement(el: PPTElement, ctx: ElementRendererContext): void {
-  addImageToSlide(
-    ctx.pptxSlide,
-    el as Parameters<typeof addImageToSlide>[1],
-    {
-      theme: ctx.theme,
-      ratioPx2Inch: ctx.ratioPx2Inch,
-      resolvedImages: ctx.resolvedImages,
-    },
-  );
+  addImageToSlide(ctx.pptxSlide, el as Parameters<typeof addImageToSlide>[1], {
+    theme: ctx.theme,
+    ratioPx2Inch: ctx.ratioPx2Inch,
+    resolvedImages: ctx.resolvedImages,
+  });
 }
 
 // ── Table ──────────────────────────────────────────────────────────
 
 function renderTableElement(el: PPTElement, ctx: ElementRendererContext): void {
-  addTableToSlide(
-    ctx.pptxSlide,
-    el as Parameters<typeof addTableToSlide>[1],
-    {
-      theme: ctx.theme,
-      ratioPx2Inch: ctx.ratioPx2Inch,
-    },
-  );
+  addTableToSlide(ctx.pptxSlide, el as Parameters<typeof addTableToSlide>[1], {
+    theme: ctx.theme,
+    ratioPx2Inch: ctx.ratioPx2Inch,
+  });
 }
 
 function renderChartElement(el: PPTChartElement, ctx: ElementRendererContext): void {
@@ -640,25 +688,31 @@ function renderDecoration(
     const opacity = (style.opacity as number) || 0.1;
     const shape = (style.shape as string) || 'rect';
 
-    pptxSlide.addShape((shape === 'ellipse' ? 'ellipse' : 'rect') as never, {
-      x,
-      y,
-      w,
-      h,
-      fill: { color: toPptxHex(fill), transparency: (1 - opacity) * 100 },
-    } as never);
+    pptxSlide.addShape(
+      (shape === 'ellipse' ? 'ellipse' : 'rect') as never,
+      {
+        x,
+        y,
+        w,
+        h,
+        fill: { color: toPptxHex(fill), transparency: (1 - opacity) * 100 },
+      } as never,
+    );
   } else if (dec.type === 'line') {
     const style = dec.style as Record<string, unknown>;
     const color = (style.color as string) || theme.accent;
     const width = (style.width as number) || 2;
 
-    pptxSlide.addShape('line' as never, {
-      x,
-      y,
-      w,
-      h,
-      line: { color: toPptxHex(color), width: width / (96 / 72) },
-    } as never);
+    pptxSlide.addShape(
+      'line' as never,
+      {
+        x,
+        y,
+        w,
+        h,
+        line: { color: toPptxHex(color), width: width / (96 / 72) },
+      } as never,
+    );
   }
 }
 
@@ -693,6 +747,41 @@ function adjustForOverlap(
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();
+}
+
+function extractInlineTextStyle(
+  html: string,
+  ratioPx2Pt: number,
+): {
+  fontSize?: number;
+  color?: string;
+  bold?: boolean;
+  align?: 'left' | 'center' | 'right';
+} {
+  const styles = Array.from(html.matchAll(/style=["']([^"']+)["']/gi))
+    .map((match) => match[1])
+    .join(';');
+
+  const sizeMatch = styles.match(/font-size\s*:\s*([\d.]+)\s*(px|pt)?/i);
+  const sizeValue = sizeMatch ? Number(sizeMatch[1]) : undefined;
+  const sizeUnit = sizeMatch?.[2]?.toLowerCase();
+  const fontSize =
+    sizeValue && Number.isFinite(sizeValue)
+      ? sizeUnit === 'pt'
+        ? sizeValue
+        : Math.max(6, Math.round(sizeValue / ratioPx2Pt))
+      : undefined;
+
+  const colorMatch = styles.match(/(?:^|;)\s*color\s*:\s*(#[0-9a-f]{3,8})/i);
+  const alignMatch = styles.match(/text-align\s*:\s*(left|center|right)/i);
+  const weightMatch = styles.match(/font-weight\s*:\s*(bold|[6-9]00)/i);
+
+  return {
+    fontSize,
+    color: colorMatch?.[1],
+    bold: Boolean(weightMatch || /<(strong|b)\b/i.test(html)),
+    align: alignMatch?.[1] as 'left' | 'center' | 'right' | undefined,
+  };
 }
 
 function extractTitleFromSlide(slide: Slide | undefined): string {
@@ -753,24 +842,258 @@ function latexToPlainText(latex: string): string {
   const SUPER_DIGITS = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'] as const;
   const SUB_DIGITS = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'] as const;
 
-  return (
-    latex
-      .replace(/\^{(\d+)}/g, (_, d) => SUPER_DIGITS[parseInt(d)] ?? `^${d}`)
-      .replace(/_{(\d+)}/g, (_, d) => SUB_DIGITS[parseInt(d)] ?? `_${d}`)
-      .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
-      .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-      .replace(/\\times/g, '×')
-      .replace(/\\cdot/g, '·')
-      .replace(/\\pm/g, '±')
-      .replace(/\\infty/g, '∞')
-      .replace(/\\pi/g, 'π')
-      .replace(/\\theta/g, 'θ')
-      .replace(/\\alpha/g, 'α')
-      .replace(/\\beta/g, 'β')
-      .replace(/\\gamma/g, 'γ')
-      .replace(/\\sum/g, 'Σ')
-      .replace(/\\int/g, '∫')
-      .replace(/[\\{}]/g, '')
-      .trim()
-  );
+  return latex
+    .replace(/\^{(\d+)}/g, (_, d) => SUPER_DIGITS[parseInt(d)] ?? `^${d}`)
+    .replace(/_{(\d+)}/g, (_, d) => SUB_DIGITS[parseInt(d)] ?? `_${d}`)
+    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+    .replace(/\\times/g, '×')
+    .replace(/\\cdot/g, '·')
+    .replace(/\\pm/g, '±')
+    .replace(/\\infty/g, '∞')
+    .replace(/\\pi/g, 'π')
+    .replace(/\\theta/g, 'θ')
+    .replace(/\\alpha/g, 'α')
+    .replace(/\\beta/g, 'β')
+    .replace(/\\gamma/g, 'γ')
+    .replace(/\\sum/g, 'Σ')
+    .replace(/\\int/g, '∫')
+    .replace(/[\\{}]/g, '')
+    .trim();
+}
+
+// ── Template-to-PPTX Conversion ───────────────────────────────────────
+
+const TEMPLATE_SCALE = 128; // 1280px = 10inch
+
+function renderTemplateSlide(
+  pptxSlide: pptxgen.Slide,
+  templateData: import('@/lib/templates/pptd-types').TemplateSlideData,
+  theme: ThemeToken,
+) {
+  const page = templateData.page;
+  const manifestTheme = templateData.theme;
+
+  // Background
+  if (page.background) {
+    if (page.background.type === 'solid' && page.background.color) {
+      const bgC = resolveTemplateColor(
+        page.background.color,
+        manifestTheme,
+        toPptxHex(theme.contentBg),
+      );
+      pptxSlide.background = {
+        color: bgC.color,
+        ...(bgC.transparency !== undefined ? { transparency: bgC.transparency } : {}),
+      };
+    } else if (
+      page.background.type === 'gradient' &&
+      page.background.stops &&
+      page.background.stops.length > 0
+    ) {
+      const bgC = resolveTemplateColor(
+        page.background.stops[0].color,
+        manifestTheme,
+        toPptxHex(theme.contentBg),
+      );
+      pptxSlide.background = {
+        color: bgC.color,
+        ...(bgC.transparency !== undefined ? { transparency: bgC.transparency } : {}),
+      };
+    }
+  }
+
+  for (const el of page.elements) {
+    try {
+      convertTemplateElement(pptxSlide, el, manifestTheme, theme);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'unknown';
+      log.warn(`Skipping template element ${el.elementId} (type=${el.elementType}): ${msg}`);
+    }
+  }
+}
+
+function resolveTemplateColor(
+  color: string | undefined,
+  manifestTheme: PPTDManifest['theme'] | undefined,
+  fallback: string,
+): { color: string; transparency?: number } {
+  let resolved = fallback;
+  if (color) {
+    if (color.startsWith('$')) {
+      const key = color.slice(1);
+      resolved = manifestTheme?.colors?.[key] || fallback;
+    } else {
+      resolved = color;
+    }
+  }
+  return toPptxColor(resolved);
+}
+
+function convertTemplateElement(
+  pptxSlide: pptxgen.Slide,
+  el: TemplateElement,
+  manifestTheme: PPTDManifest['theme'],
+  theme: ThemeToken,
+) {
+  const [x, y, w, h] = el.bounds;
+  const inchX = x / TEMPLATE_SCALE;
+  const inchY = y / TEMPLATE_SCALE;
+  const inchW = w / TEMPLATE_SCALE;
+  const inchH = h / TEMPLATE_SCALE;
+
+  switch (el.elementType) {
+    case 'text': {
+      const rawText = el.content?.text || '';
+      const text = rawText
+        .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<[^>]*>/g, '')
+        .trim();
+      if (!text) return;
+
+      const colorC = resolveTemplateColor(
+        el.content?.color,
+        manifestTheme,
+        toPptxHex(theme.bodyColor),
+      );
+      const align = (el.content?.align?.[0] as 'left' | 'center' | 'right') || 'left';
+      const valign = (el.content?.align?.[1] as 'top' | 'middle' | 'bottom') || 'top';
+
+      let fontSize = theme.bodyFontSize;
+      const styleRef = el.content?.style;
+      if (styleRef && styleRef.startsWith('$') && manifestTheme?.textStyles) {
+        const styleName = styleRef.slice(1);
+        const style = manifestTheme.textStyles[styleName];
+        if (style?.fontSize) {
+          fontSize = Math.round(style.fontSize * 0.6);
+        }
+      }
+
+      pptxSlide.addText(text, {
+        x: inchX,
+        y: inchY,
+        w: inchW,
+        h: inchH,
+        fontSize,
+        fontFace: theme.fontFamily,
+        color: colorC.color,
+        align,
+        valign,
+        wrap: el.content?.wrap !== false,
+      });
+      break;
+    }
+
+    case 'shape': {
+      const shapeType =
+        el.shapeName === 'ellipse'
+          ? 'ellipse'
+          : el.shapeName === 'roundRect'
+            ? 'roundRect'
+            : 'rect';
+      const fillC = resolveTemplateColor(el.fill?.color, manifestTheme, theme.accent);
+      const lineC = el.border
+        ? resolveTemplateColor(el.border.color, manifestTheme, theme.dividerColor)
+        : undefined;
+      const shadowC = el.shadow
+        ? resolveTemplateColor(el.shadow.color, manifestTheme, '#000000')
+        : undefined;
+
+      pptxSlide.addShape(
+        shapeType as never,
+        {
+          x: inchX,
+          y: inchY,
+          w: inchW,
+          h: inchH,
+          fill: {
+            color: fillC.color,
+            ...(fillC.transparency !== undefined ? { transparency: fillC.transparency } : {}),
+          },
+          ...(el.border && lineC
+            ? {
+                line: {
+                  color: lineC.color,
+                  ...(lineC.transparency !== undefined ? { transparency: lineC.transparency } : {}),
+                  width: el.border.width / TEMPLATE_SCALE,
+                },
+              }
+            : {}),
+          ...(el.shadow && shadowC
+            ? {
+                shadow: {
+                  type: 'outer',
+                  blur: el.shadow.blur / TEMPLATE_SCALE,
+                  color: shadowC.color,
+                  opacity: shadowC.transparency !== undefined ? 1 - shadowC.transparency / 100 : 1,
+                  offset: el.shadow.offset[0] / TEMPLATE_SCALE,
+                  angle: 45,
+                },
+              }
+            : {}),
+        } as never,
+      );
+      break;
+    }
+
+    case 'line': {
+      const lineC = el.border
+        ? resolveTemplateColor(el.border.color, manifestTheme, toPptxHex(theme.dividerColor))
+        : toPptxColor(toPptxHex(theme.dividerColor));
+      pptxSlide.addShape(
+        'line' as never,
+        {
+          x: inchX,
+          y: inchY,
+          w: inchW,
+          h: inchH,
+          line: {
+            color: lineC.color,
+            ...(lineC.transparency !== undefined ? { transparency: lineC.transparency } : {}),
+            width: el.border ? el.border.width / TEMPLATE_SCALE : 1,
+          },
+        } as never,
+      );
+      break;
+    }
+
+    case 'image': {
+      if (el.src && !el.src.startsWith('placeholder:')) {
+        pptxSlide.addImage({
+          path: el.src,
+          x: inchX,
+          y: inchY,
+          w: inchW,
+          h: inchH,
+        });
+      }
+      break;
+    }
+
+    case 'icon': {
+      if (el.iconName) {
+        const iconC = resolveTemplateColor(
+          el.fill?.color,
+          manifestTheme,
+          toPptxHex(theme.pageNumColor),
+        );
+        pptxSlide.addText(`[${el.iconName}]`, {
+          x: inchX,
+          y: inchY,
+          w: inchW,
+          h: inchH,
+          fontSize: 10,
+          fontFace: theme.fontFamily,
+          color: iconC.color,
+          align: 'center',
+          valign: 'middle',
+        });
+      }
+      break;
+    }
+
+    default:
+      log.warn(`Unsupported template element type: ${(el as { elementType: string }).elementType}`);
+  }
 }

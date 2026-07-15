@@ -15,18 +15,18 @@ const demoMistakes: MistakeRecord[] = [
 
 describe('LearningTrendChart', () => {
   const mockData = [
-    { day: '周一', count: 3 },
-    { day: '周二', count: 5 },
-    { day: '周三', count: 2 },
-    { day: '周四', count: 8 },
-    { day: '周五', count: 4 },
-    { day: '周六', count: 6 },
-    { day: '周日', count: 1 },
+    { day: '周一', total: 3, reviewed: 1 },
+    { day: '周二', total: 5, reviewed: 3 },
+    { day: '周三', total: 2, reviewed: 2 },
+    { day: '周四', total: 8, reviewed: 4 },
+    { day: '周五', total: 4, reviewed: 2 },
+    { day: '周六', total: 6, reviewed: 5 },
+    { day: '周日', total: 1, reviewed: 1 },
   ];
 
   it('renders chart title and axis labels', () => {
     render(<LearningTrendChart data={mockData} />);
-    expect(screen.getByText('近7天学习趋势')).toBeInTheDocument();
+    expect(screen.getByText('近14天学习趋势')).toBeInTheDocument();
     expect(screen.getByText('周日')).toBeInTheDocument();
   });
 
@@ -37,7 +37,7 @@ describe('LearningTrendChart', () => {
 
   it('renders empty state when no data', () => {
     render(<LearningTrendChart data={[]} />);
-    expect(screen.getByText('暂无数据')).toBeInTheDocument();
+    expect(screen.getByText('暂无数据，去搜题页开始练习')).toBeInTheDocument();
   });
 });
 

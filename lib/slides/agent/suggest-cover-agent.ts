@@ -182,7 +182,16 @@ export async function suggestCoverStyle(
       { retries: 2, timeoutMs: 60000, validate: (text) => text.trim().length > 200 && text.includes('paletteId') },
     );
     const llmDuration = Date.now() - llmStart;
-    log.info(`[suggestCoverStyle] LLM done in ${llmDuration}ms, tokens=${(result.usage as unknown as Record<string, number> | undefined)?.completionTokens ?? '?'}`);
+    const usage = result.usage as unknown as
+      | { completionTokens?: unknown; outputTokens?: unknown }
+      | undefined;
+    const completionTokens =
+      typeof usage?.completionTokens === 'number'
+        ? usage.completionTokens
+        : typeof usage?.outputTokens === 'number'
+          ? usage.outputTokens
+          : '?';
+    log.info(`[suggestCoverStyle] LLM done in ${llmDuration}ms, tokens=${completionTokens}`);
 
     const jsonText = cleanJsonText(result.text);
     let parsed: Record<string, unknown> | undefined;

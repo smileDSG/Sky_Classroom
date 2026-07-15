@@ -8,6 +8,7 @@ interface EmptyStateProps {
   topic: string;
   difficulty: 'junior' | 'senior' | 'college';
   generating: boolean;
+  personalizationNotice?: string | null;
   onTopicChange: (t: string) => void;
   onDifficultyChange: (d: 'junior' | 'senior' | 'college') => void;
   onGenerate: () => void;
@@ -23,6 +24,7 @@ export function EmptyState({
   topic,
   difficulty,
   generating,
+  personalizationNotice,
   onTopicChange,
   onDifficultyChange,
   onGenerate,
@@ -62,6 +64,12 @@ export function EmptyState({
         </div>
 
         {/* Topic input — focus ring style */}
+        {personalizationNotice && (
+          <div className="w-full rounded-xl border border-[var(--celestial-dawn)]/20 bg-[var(--celestial-dawn)]/8 px-4 py-3 text-sm text-[var(--celestial-starlight)]/75">
+            {personalizationNotice}
+          </div>
+        )}
+
         <div className="w-full">
           <label className="mb-2 block text-[11px] font-medium uppercase tracking-[0.15em] text-[var(--celestial-starlight)]/40">
             课件主题
@@ -118,10 +126,14 @@ export function EmptyState({
                   </div>
                   {/* Label */}
                   <div className="flex items-center gap-1.5">
-                    <Icon className={`h-3.5 w-3.5 transition-colors duration-300 ${isActive ? 'text-[var(--celestial-dawn)]' : 'text-[var(--celestial-starlight)]/25 group-hover:text-[var(--celestial-starlight)]/50'}`} />
+                    <Icon
+                      className={`h-3.5 w-3.5 transition-colors duration-300 ${isActive ? 'text-[var(--celestial-dawn)]' : 'text-[var(--celestial-starlight)]/25 group-hover:text-[var(--celestial-starlight)]/50'}`}
+                    />
                     <span
                       className={`text-xs font-medium transition-colors duration-300 ${
-                        isActive ? 'text-[var(--celestial-starlight)]' : 'text-[var(--celestial-starlight)]/30 group-hover:text-[var(--celestial-starlight)]/60'
+                        isActive
+                          ? 'text-[var(--celestial-starlight)]'
+                          : 'text-[var(--celestial-starlight)]/30 group-hover:text-[var(--celestial-starlight)]/60'
                       }`}
                     >
                       {d.label}

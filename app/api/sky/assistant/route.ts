@@ -12,6 +12,21 @@ import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildGraphFromMistakes } from '@/lib/graph/builder';
 import { buildSystemPrompt } from '@/lib/assistant/context-injector';
+import {
+  buildAssistantActionPlan,
+  buildAssistantPersonalizationPrompt,
+  buildAssistantRagEvidence,
+  buildAssistantStrategy,
+  pickPersonalizationFromUser,
+} from '@/lib/assistant/personalization';
+import { apiError, API_ERROR_CODES } from '@/lib/server/api-response';
+import { getCurrentUser } from '@/lib/server/auth/helpers';
+import { buildStudentProfile } from '@/lib/student/profile-builder';
+import type { GraphNode } from '@/lib/graph/types';
+import type { StudentProfile } from '@/lib/student/profile-types';
+import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
+import type { UserEntry } from '@/lib/storage/dao/users';
+import type { QuestionBankEntry } from '@/lib/solve/types';
 
 const log = createLogger('API:SkyAssistant');
 
@@ -41,11 +56,18 @@ export async function POST(req: NextRequest) {
     };
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return new Response(JSON.stringify({ error: 'messages is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'messages is required');
     }
+
+    // Convert messages — exclude system messages since we pass via system param
+    const aiMessages = messages
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+    const latestUserMessage =
+      [...aiMessages].reverse().find((m) => m.role === 'user')?.content ?? '';
 
     const { model, modelInfo, thinkingConfig } = await resolveModel({
       modelString: body.model || 'openrouter:deepseek-v4-pro',
@@ -55,9 +77,25 @@ export async function POST(req: NextRequest) {
     });
 
     // Load student context for personalised responses
-    let mistakes = null;
-    let graphNodes = null;
-    let solveHistory = null;
+    let currentUser: UserEntry | null = null;
+    let profile: StudentProfile | null = null;
+    try {
+      currentUser = await getCurrentUser();
+      const personalization = pickPersonalizationFromUser(currentUser);
+      if (currentUser && personalization.enableMemory !== false) {
+        profile = await buildStudentProfile(currentUser.id);
+      }
+    } catch (err) {
+      log.warn('Failed to load user profile context, continuing without it:', err);
+    }
+
+    const personalization = pickPersonalizationFromUser(currentUser);
+    const allowMemory = personalization.enableMemory !== false;
+    const allowRag = personalization.enableRAG !== false;
+
+    let mistakes: MistakeBookEntry[] | null = null;
+    let graphNodes: GraphNode[] | null = null;
+    let solveHistory: QuestionBankEntry[] | null = null;
     try {
       const dao = await getDAO();
       const result = await dao.list({ pageSize: 9999 });
@@ -85,19 +123,19 @@ export async function POST(req: NextRequest) {
     if (clientSystemMsg) {
       // Use client's system message as base, append learning context
       systemPrompt = clientSystemMsg.content;
-      if (mistakes && mistakes.length > 0) {
+      if (allowMemory && mistakes && mistakes.length > 0) {
         const ctx = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
           mistakes: mistakes,
           graphNodes: graphNodes ?? undefined,
-          solveHistory: solveHistory ?? undefined,
+          solveHistory: allowRag ? (solveHistory ?? undefined) : undefined,
         });
         systemPrompt += '\n\n' + ctx.split('\n').slice(1).join('\n'); // append context without duplicating base
       }
     } else {
       systemPrompt = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
-        mistakes: mistakes ?? undefined,
-        graphNodes: graphNodes ?? undefined,
-        solveHistory: solveHistory ?? undefined,
+        mistakes: allowMemory ? (mistakes ?? undefined) : undefined,
+        graphNodes: allowMemory ? (graphNodes ?? undefined) : undefined,
+        solveHistory: allowRag ? (solveHistory ?? undefined) : undefined,
       });
     }
 
@@ -106,13 +144,28 @@ export async function POST(req: NextRequest) {
       systemPrompt += '\n\n' + memoryContext;
     }
 
-    // Convert messages — exclude system messages since we pass via system param
-    const aiMessages = messages
-      .filter((m) => m.role !== 'system')
-      .map((m) => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      }));
+    const strategy = buildAssistantStrategy({
+      userMessage: latestUserMessage,
+      style: style || 'detailed',
+      profile: allowMemory ? profile : null,
+      personalization,
+    });
+    const evidence = allowRag
+      ? buildAssistantRagEvidence({
+          userMessage: latestUserMessage,
+          mistakes: allowMemory ? mistakes : null,
+          graphNodes: allowMemory ? graphNodes : null,
+          solveHistory,
+        })
+      : null;
+    const actionPlan = buildAssistantActionPlan(latestUserMessage);
+    systemPrompt += buildAssistantPersonalizationPrompt({
+      userMessage: latestUserMessage,
+      strategy,
+      evidence,
+      actionPlan,
+      personalization,
+    });
 
     const result = streamLLM(
       {
@@ -162,9 +215,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     log.error('Assistant API error:', err);
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : 'AI 助手响应失败' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      err instanceof Error ? err.message : 'AI 助手响应失败',
     );
   }
 }

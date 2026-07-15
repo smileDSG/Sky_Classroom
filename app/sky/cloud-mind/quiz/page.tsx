@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { QuestionBankRow } from '@/lib/question-bank/types';
 import { useTaskStore } from '@/lib/store/use-task-store';
-import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import {
@@ -19,24 +18,36 @@ import {
   Trophy,
   Target,
   BookOpen,
+  Brain,
+  Lightbulb,
   Loader2,
   Zap,
+  Star,
 } from 'lucide-react';
+import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial-canvas';
+import { deriveQuizParamsFromProfile } from '@/lib/student/quiz-param-deriver';
+import {
+  SUBJECT_CONFIG,
+  DIFFICULTY_CONFIG,
+  QUIZ_COUNT_OPTIONS,
+} from '@/lib/student/profile-config';
+import { MathRenderer } from '@/components/sky/solve/math-renderer';
+import type { QuestionBankRow } from '@/lib/question-bank/types';
+import type { PersonalizationContext } from '@/lib/cloud-mind/types';
+import type { StudentProfile } from '@/lib/student/profile-types';
 
-const SUBJECTS = [
-  { id: 'math', label: '数学', color: 'text-violet-500', bg: 'bg-violet-500' },
-  { id: 'physics', label: '物理', color: 'text-sky-500', bg: 'bg-sky-500' },
-  { id: 'chemistry', label: '化学', color: 'text-emerald-500', bg: 'bg-emerald-500' },
-  { id: 'biology', label: '生物', color: 'text-green-500', bg: 'bg-green-500' },
-  { id: 'chinese', label: '语文', color: 'text-rose-500', bg: 'bg-rose-500' },
-  { id: 'english', label: '英语', color: 'text-amber-500', bg: 'bg-amber-500' },
-];
+const SUBJECTS = SUBJECT_CONFIG.map((s) => ({ id: s.id, label: s.label, dot: s.dot }));
 
-const DIFFICULTIES = [
-  { id: 'easy', label: '基础', desc: '巩固基础概念', color: 'bg-emerald-500' },
-  { id: 'medium', label: '进阶', desc: '提升应用能力', color: 'bg-amber-500' },
-  { id: 'hard', label: '挑战', desc: '拓展思维深度', color: 'bg-rose-500' },
-];
+const DIFFICULTIES = DIFFICULTY_CONFIG.map((d, i) => ({
+  id: d.id,
+  label: d.label,
+  desc: d.desc,
+  star: '★'.repeat(i + 1),
+}));
+
+const SUBJECT_LABEL_BY_ID = Object.fromEntries(
+  SUBJECTS.map((subject) => [subject.id, subject.label]),
+);
 
 interface QuizQuestion {
   id: number;
@@ -47,6 +58,84 @@ interface QuizQuestion {
 }
 
 type QuizState = 'idle' | 'generating' | 'answering' | 'done';
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'failed';
+type QuestionSource = 'ai' | 'bank';
+type BankSaveStatus = 'idle' | 'saving' | 'saved' | 'duplicate' | 'failed';
+
+function stripOptionPrefix(option: string): string {
+  return option.replace(/^\s*[A-DＡ-Ｄ][\.．、:]\s*/i, '').trim();
+}
+
+function answerIndexToLetter(index: number): string {
+  return String.fromCharCode(65 + Math.min(Math.max(index, 0), 3));
+}
+
+function answerToIndex(answer: string, options: string[]): number | null {
+  const normalized = answer.trim();
+  const letterMatch = normalized.match(/[A-DＡ-Ｄ]/i);
+  if (letterMatch) {
+    const letter = letterMatch[0].toUpperCase();
+    const index = 'ABCD'.indexOf(letter);
+    if (index >= 0) return index;
+  }
+
+  if (/^[0-3]$/.test(normalized)) return Number(normalized);
+
+  const optionIndex = options.findIndex(
+    (option) => stripOptionPrefix(option) === stripOptionPrefix(normalized),
+  );
+  return optionIndex >= 0 ? optionIndex : null;
+}
+
+function normalizeQuizQuestions(rawQuestions: unknown): QuizQuestion[] {
+  if (!Array.isArray(rawQuestions)) return [];
+
+  return rawQuestions
+    .map((raw, index) => {
+      const item = raw as Partial<QuizQuestion>;
+      const options = Array.isArray(item.options)
+        ? item.options.map((option) => stripOptionPrefix(String(option))).filter(Boolean)
+        : [];
+      const answer =
+        typeof item.answer === 'number'
+          ? item.answer
+          : answerToIndex(String(item.answer ?? ''), options);
+
+      if (!item.question || options.length !== 4 || answer === null || answer < 0 || answer > 3)
+        return null;
+
+      return {
+        id: index + 1,
+        question: String(item.question),
+        options,
+        answer,
+        explanation: String(item.explanation ?? '暂无解析'),
+      };
+    })
+    .filter((question): question is QuizQuestion => question !== null);
+}
+
+function bankRowToQuizQuestion(row: QuestionBankRow, index: number): QuizQuestion | null {
+  if (!row.options || row.options.length !== 4) return null;
+  const options = row.options.map(stripOptionPrefix);
+  const answer = answerToIndex(row.answer, options);
+  if (answer === null || answer < 0 || answer > 3) return null;
+
+  return {
+    id: index + 1,
+    question: row.content,
+    options,
+    answer,
+    explanation: row.explanation || row.answer,
+  };
+}
+
+function sampleQuestions(questions: QuizQuestion[], count: number): QuizQuestion[] {
+  return [...questions]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, count)
+    .map((question, index) => ({ ...question, id: index + 1 }));
+}
 
 function mapBankRowToQuiz(row: QuestionBankRow, index: number): QuizQuestion {
   if (row.questionType === 'choice' && row.options && row.options.length >= 2) {
@@ -81,7 +170,32 @@ function mapBankRowToQuiz(row: QuestionBankRow, index: number): QuizQuestion {
 }
 
 export default function CloudMindQuizPage() {
+  return (
+    <Suspense fallback={<CloudMindQuizFallback />}>
+      <CloudMindQuizContent />
+    </Suspense>
+  );
+}
+
+function CloudMindQuizFallback() {
+  return (
+    <div className="min-h-screen bg-[var(--quiz-void)] text-[var(--quiz-text)]">
+      <div className="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4">
+        <div className="flex items-center gap-3 rounded-2xl border border-[var(--quiz-border)] bg-[var(--quiz-surface)] px-5 py-4 text-sm text-[var(--quiz-muted)]">
+          <Loader2 className="h-4 w-4 animate-spin text-[var(--quiz-primary)]" />
+          加载星际试炼场...
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CloudMindQuizContent() {
   const searchParams = useSearchParams();
+  const querySubject = searchParams.get('subject');
+  const queryDifficulty = searchParams.get('difficulty');
+  const queryTopic = searchParams.get('topic');
+  const queryCount = searchParams.get('count');
   const [quizMode, setQuizMode] = useState<'ai' | 'bank'>('ai');
   const [subject, setSubject] = useState('math');
   const [difficulty, setDifficulty] = useState('medium');
@@ -94,188 +208,286 @@ export default function CloudMindQuizPage() {
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [showExplanation, setShowExplanation] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
-  const bankAutoLoadedRef = useRef(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [attemptSaved, setAttemptSaved] = useState(false);
+  const [questionSource, setQuestionSource] = useState<QuestionSource>('ai');
+  const [selectedForBank, setSelectedForBank] = useState<Set<number>>(new Set());
+  const [bankSaveStatusById, setBankSaveStatusById] = useState<Record<number, BankSaveStatus>>({});
+  const [bankSaveMessageById, setBankSaveMessageById] = useState<Record<number, string>>({});
+  const [bankDialog, setBankDialog] = useState<{ title: string; message: string } | null>(null);
+  const savePromiseRef = useRef<Promise<void> | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userEditedTopicRef = useRef(false);
+  const userEditedDifficultyRef = useRef(false);
 
-  const handleLoadFromBank = useCallback(async () => {
-    setState('generating');
-    setError(null);
-    try {
-      const ids = searchParams.get('ids');
-      const startFrom = searchParams.get('startFrom');
-      const subject = searchParams.get('subject') || undefined;
-      const difficulty = searchParams.get('difficulty') || undefined;
-      const questionType = searchParams.get('questionType') || undefined;
-      const verified = searchParams.has('verified')
-        ? searchParams.get('verified') === 'true'
-        : undefined;
-      const keyword = searchParams.get('keyword') || undefined;
-
-      let rows: QuestionBankRow[] = [];
-
-      if (ids) {
-        const res = await fetch(`/api/sky/question-bank?ids=${encodeURIComponent(ids)}&limit=100`);
-        const json = await res.json();
-        if (!json.success) throw new Error(json.error || '加载失败');
-        rows = (json.questions as QuestionBankRow[]) ?? [];
-      } else if (startFrom) {
-        const [startRes, listRes] = await Promise.all([
-          fetch(`/api/sky/question-bank?id=${encodeURIComponent(startFrom)}`),
-          fetch(
-            `/api/sky/question-bank?${new URLSearchParams({
-              ...(subject ? { subject } : {}),
-              ...(difficulty ? { difficulty } : {}),
-              questionType: 'choice',
-              ...(verified !== undefined ? { verified: String(verified) } : {}),
-              ...(keyword ? { keyword } : {}),
-              limit: String(Math.max(1, count - 1)),
-            }).toString()}`
-          ),
-        ]);
-        const startJson = await startRes.json();
-        const listJson = await listRes.json();
-        if (!startJson.success) throw new Error(startJson.error || '加载失败');
-        const startRow = startJson.question as QuestionBankRow | undefined;
-        const extraRows = (listJson.questions as QuestionBankRow[]) ?? [];
-        rows = startRow
-          ? [startRow, ...extraRows.filter((r) => r.id !== startRow.id)]
-          : extraRows;
-        rows = rows.slice(0, count);
-      } else {
-        const params = new URLSearchParams();
-        if (subject) params.set('subject', subject);
-        if (difficulty) params.set('difficulty', difficulty);
-        if (questionType) params.set('questionType', questionType);
-        else params.set('questionType', 'choice');
-        if (verified !== undefined) params.set('verified', String(verified));
-        if (keyword) params.set('keyword', keyword);
-        params.set('limit', String(count));
-        const res = await fetch(`/api/sky/question-bank?${params.toString()}`);
-        const json = await res.json();
-        if (!json.success) throw new Error(json.error || '加载失败');
-        rows = (json.questions as QuestionBankRow[]) ?? [];
-      }
-
-      if (rows.length === 0) {
-        setError('题库为空或没有符合筛选条件的题目');
-        setState('idle');
-        return;
-      }
-
-      const bankQuestions: QuizQuestion[] = rows
-        .slice(0, count)
-        .map((e, i) => mapBankRowToQuiz(e, i));
-      setQuestions(bankQuestions);
-      setAnswers(new Array(bankQuestions.length).fill(null));
-      setCurrentIdx(0);
-      setSelectedAnswer(null);
-      setShowExplanation(false);
-      setState('answering');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '加载题库失败');
-      setState('idle');
-    }
-  }, [count, searchParams]);
-
-  // Pre-fill from URL query params (e.g., from slides/learning page)
-  useEffect(() => {
-    const qTopic = searchParams.get('topic');
-    if (qTopic) setTopic(qTopic);
-  }, [searchParams]);
-
-  // Auto-enter bank mode and load when URL carries bank params
-  useEffect(() => {
-    if (bankAutoLoadedRef.current) return;
-    const mode = searchParams.get('mode');
-    if (mode !== 'bank') return;
-    setQuizMode('bank');
-    const ids = searchParams.get('ids');
-    const startFrom = searchParams.get('startFrom');
-    const hasFilters =
-      searchParams.get('subject') ||
-      searchParams.get('difficulty') ||
-      searchParams.get('questionType') ||
-      searchParams.has('verified') ||
-      searchParams.get('keyword');
-    if (ids || startFrom || hasFilters) {
-      bankAutoLoadedRef.current = true;
-      handleLoadFromBank();
-    }
-  }, [searchParams, handleLoadFromBank]);
-
-  // Restore state from background task on mount
-  useEffect(() => {
-    const store = useTaskStore.getState();
-    const quizTasks = Object.values(store.tasks).filter(
-      (t) => t.type === 'quiz' && t.status !== 'failed'
+  const startAnswering = useCallback((nextQuestions: QuizQuestion[], source: QuestionSource) => {
+    setQuestions(nextQuestions);
+    setAnswers(new Array(nextQuestions.length).fill(null));
+    setCurrentIdx(0);
+    setSelectedAnswer(null);
+    setShowExplanation(false);
+    setSaveStatus('idle');
+    setAttemptSaved(false);
+    setQuestionSource(source);
+    setSelectedForBank(
+      source === 'ai' ? new Set(nextQuestions.map((question) => question.id)) : new Set(),
     );
-    if (quizTasks.length === 0) return;
-    const task = quizTasks[quizTasks.length - 1]; // latest
-    setActiveTaskId(task.id);
+    setBankSaveStatusById({});
+    setBankSaveMessageById({});
+    savePromiseRef.current = null;
+    setState('answering');
+  }, []);
 
-    if (task.status === 'running') {
-      setState('generating');
-    } else if (task.status === 'completed' && task.result) {
-      const data = task.result as { questions: QuizQuestion[] };
-      setQuestions(data.questions);
-      setAnswers(new Array(data.questions.length).fill(null));
-      setCurrentIdx(0);
-      setSelectedAnswer(null);
-      setShowExplanation(false);
-      setState('answering');
-      store.removeTask(task.id);
-      setActiveTaskId(null);
+  const stopPolling = useCallback(() => {
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
     }
   }, []);
 
-  // Watch task for completion while on this page
+  const pollQuizJob = useCallback(
+    async (taskId: string, jobId: string) => {
+      try {
+        const res = await fetch(`/api/sky/cloud-mind/quiz?jobId=${encodeURIComponent(jobId)}`);
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || '????????');
+        }
+
+        const task = useTaskStore.getState().getTask(taskId);
+        if (task) {
+          useTaskStore.getState().updateTask(taskId, {
+            progress: typeof json.progress === 'number' ? json.progress : task.progress,
+            phase: typeof json.phase === 'string' ? json.phase : task.phase,
+          });
+        }
+
+        if (json.done) {
+          stopPolling();
+          if (json.status === 'completed' && json.result) {
+            const generatedQuestions = normalizeQuizQuestions(json.result.questions);
+            if (generatedQuestions.length === 0) throw new Error('AI ????????????');
+            startAnswering(generatedQuestions, 'ai');
+            useTaskStore.getState().updateTask(taskId, {
+              status: 'completed',
+              progress: 100,
+              phase: '????',
+              result: { questions: generatedQuestions, source: 'ai' },
+            });
+          } else {
+            throw new Error(json.error || '????????');
+          }
+          useTaskStore.getState().removeTask(taskId);
+          setActiveTaskId(null);
+          return;
+        }
+
+        pollTimerRef.current = setTimeout(() => {
+          void pollQuizJob(taskId, jobId);
+        }, 2000);
+      } catch (err) {
+        stopPolling();
+        const msg = err instanceof Error ? err.message : '????';
+        useTaskStore.getState().updateTask(taskId, {
+          status: 'failed',
+          progress: 0,
+          phase: '????',
+          error: msg,
+        });
+        setError(msg);
+        setState('idle');
+      }
+    },
+    [startAnswering, stopPolling],
+  );
+  useEffect(() => {
+    if (querySubject) setSubject(querySubject);
+    if (queryDifficulty) setDifficulty(queryDifficulty);
+    if (queryTopic) setTopic(queryTopic);
+    if (queryCount) setCount(Number(queryCount));
+  }, [queryCount, queryDifficulty, querySubject, queryTopic]);
+
+  // Auto-fill from CloudMind personalization context when no URL params are present.
+  useEffect(() => {
+    const hasUrlParams = querySubject || queryDifficulty || queryTopic;
+    if (hasUrlParams) return;
+    let cancelled = false;
+
+    async function loadAutoParams() {
+      try {
+        const res = await fetch('/api/sky/cloud-mind/personalization-context');
+        if (!res.ok) throw new Error('context unavailable');
+        const json = (await res.json()) as {
+          success?: boolean;
+          data?: PersonalizationContext;
+        };
+        const context = json.data;
+        if (cancelled || !json.success || !context) return;
+
+        const recommendedTopic =
+          context.tutoringPolicy?.targetTopic ??
+          context.weakPoints[0]?.knowledgePoint ??
+          context.learningPath?.next;
+        const recommendedDifficulty =
+          context.tutoringPolicy?.difficulty ?? context.preferredDifficulty;
+        if (recommendedTopic && !userEditedTopicRef.current) {
+          setTopic(recommendedTopic);
+        }
+        if (!userEditedDifficultyRef.current) {
+          setDifficulty(recommendedDifficulty);
+        }
+
+        const difficultyLabel =
+          DIFFICULTIES.find((item) => item.id === recommendedDifficulty)?.label ??
+          recommendedDifficulty;
+        setNotice(
+          `已根据天梯工坊为你预设：${recommendedTopic ?? '入门诊断'} / ${difficultyLabel}难度`,
+        );
+      } catch {
+        try {
+          const res = await fetch('/api/student/profile');
+          if (!res.ok) return;
+          const json = await res.json();
+          const profile = json?.data?.hasProfile
+            ? {
+                userId: '',
+                masteryBySubject: {} as StudentProfile['masteryBySubject'],
+                masteryByKnowledge: json.data.masteryByKnowledge ?? {},
+                weakPoints: json.data.weakPoints ?? [],
+                strongPoints: [],
+                errorPatterns: json.data.errorPatterns ?? [],
+                totalQuestions: 0,
+                totalCorrect: 0,
+                lastUpdated: new Date(),
+              }
+            : null;
+          if (cancelled || !profile) return;
+          const params = deriveQuizParamsFromProfile(profile);
+          setSubject(params.subject);
+          if (!userEditedDifficultyRef.current) setDifficulty(params.difficulty);
+          if (!userEditedTopicRef.current) setTopic(params.topic);
+          setCount(params.count);
+        } catch {
+          // Ignore auto-fill errors; keep manual defaults.
+        }
+      }
+    }
+    loadAutoParams();
+    return () => {
+      cancelled = true;
+    };
+  }, [queryDifficulty, querySubject, queryTopic]);
+
+  useEffect(() => {
+    const store = useTaskStore.getState();
+    const quizTasks = Object.values(store.tasks).filter(
+      (t) => t.type === 'quiz' && t.status !== 'failed',
+    );
+    if (quizTasks.length === 0) return;
+    const task = quizTasks[quizTasks.length - 1];
+    setActiveTaskId(task.id);
+    if (task.status === 'running') setState('generating');
+    else if (task.status === 'completed' && task.result) {
+      const data = task.result as { questions: QuizQuestion[]; source?: QuestionSource };
+      startAnswering(data.questions, data.source ?? 'ai');
+      store.removeTask(task.id);
+      setActiveTaskId(null);
+    }
+    if (task.status === 'running' && task.jobId) {
+      void pollQuizJob(task.id, task.jobId);
+    }
+  }, [pollQuizJob, startAnswering]);
+
   useEffect(() => {
     if (!activeTaskId) return;
-    const unsub = useTaskStore.subscribe((state) => {
-      const task = state.tasks[activeTaskId];
+    const unsub = useTaskStore.subscribe((s) => {
+      const task = s.tasks[activeTaskId];
       if (!task) {
         setActiveTaskId(null);
-        setState('idle');
         return;
       }
       if (task.status === 'completed' && task.result) {
-        const data = task.result as { questions: QuizQuestion[] };
-        setQuestions(data.questions);
-        setAnswers(new Array(data.questions.length).fill(null));
-        setCurrentIdx(0);
-        setSelectedAnswer(null);
-        setShowExplanation(false);
-        setState('answering');
+        const data = task.result as { questions: QuizQuestion[]; source?: QuestionSource };
+        startAnswering(data.questions, data.source ?? 'ai');
         useTaskStore.getState().removeTask(task.id);
         setActiveTaskId(null);
       } else if (task.status === 'failed') {
-        setError(task.error || '生成失败，请重试');
+        setError(task.error || '????????');
         setState('idle');
         useTaskStore.getState().removeTask(task.id);
         setActiveTaskId(null);
       }
     });
     return unsub;
-  }, [activeTaskId]);
+  }, [activeTaskId, startAnswering]);
+
+  useEffect(() => () => stopPolling(), [stopPolling]);
+  const handleLoadFromBank = useCallback(async () => {
+    setState('generating');
+    setError(null);
+    setNotice(null);
+    setBankDialog(null);
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', '100');
+      params.set('subject', SUBJECT_LABEL_BY_ID[subject] || subject);
+      params.set('difficulty', difficulty);
+      params.set('questionType', 'choice');
+      if (topic.trim()) params.set('knowledgePoint', topic.trim());
+
+      const res = await fetch(`/api/sky/question-bank?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.details || '加载题库失败');
+      if (!data.success) throw new Error(data.error || '加载题库失败');
+
+      const entries = (data.questions ?? []) as QuestionBankRow[];
+      const availableQuestions = entries
+        .map((entry, index) => bankRowToQuizQuestion(entry, index))
+        .filter((question): question is QuizQuestion => question !== null);
+
+      if (availableQuestions.length < count) {
+        const subjectLabel = SUBJECTS.find((item) => item.id === subject)?.label ?? subject;
+        const difficultyLabel =
+          DIFFICULTIES.find((item) => item.id === difficulty)?.label ?? difficulty;
+        const topicLabel = topic.trim() ? ` · ${topic.trim()}` : '';
+        setBankDialog({
+          title: availableQuestions.length === 0 ? '星域题库暂未点亮' : '题库题量不足',
+          message: `${subjectLabel} · ${difficultyLabel}${topicLabel} 当前仅有 ${availableQuestions.length} 道可用选择题，少于本次需要的 ${count} 道。请降低题量、切换条件，或先用 AI 出题补充题库。`,
+        });
+        setState('idle');
+        return;
+      }
+
+      startAnswering(sampleQuestions(availableQuestions, count), 'bank');
+    } catch (err) {
+      setBankDialog({
+        title: '题库星门暂时失联',
+        message: err instanceof Error ? err.message : '加载题库失败，请稍后再试。',
+      });
+      setState('idle');
+    }
+  }, [count, difficulty, startAnswering, subject, topic]);
 
   const handleGenerate = useCallback(async () => {
     setState('generating');
     setError(null);
-
+    setNotice(null);
+    stopPolling();
     const taskId = `quiz_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const subjectLabel = SUBJECTS.find((s) => s.id === subject)?.label || subject;
     setActiveTaskId(taskId);
-
     useTaskStore.getState().addTask({
       id: taskId,
       type: 'quiz',
-      label: `智能出题: ${topic || SUBJECTS.find(s => s.id === subject)?.label || ''} ${DIFFICULTIES.find(d => d.id === difficulty)?.label || ''}`,
+      label: `智能出题: ${topic || subjectLabel}`,
       status: 'running',
       progress: 30,
-      phase: 'AI 正在出题中…',
+      phase: 'AI 出题中…',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
-
     try {
       const res = await fetch('/api/sky/cloud-mind/quiz', {
         method: 'POST',
@@ -283,48 +495,211 @@ export default function CloudMindQuizPage() {
         body: JSON.stringify({ subject, difficulty, topic: topic || undefined, count }),
       });
       const json = await res.json();
-      if (!json.success) {
-        throw new Error(json.error || '生成失败');
-      }
-      const generatedQuestions = json.data.questions;
-
+      if (!json.success) throw new Error(json.error || '生成失败');
+      const jobId = typeof json.jobId === 'string' ? json.jobId : null;
+      if (!jobId) throw new Error('缺少 jobId');
       useTaskStore.getState().updateTask(taskId, {
-        status: 'completed',
-        progress: 100,
-        phase: '出题完成',
-        result: { questions: generatedQuestions },
+        jobId,
+        progress: typeof json.progress === 'number' ? json.progress : 0,
+        phase: typeof json.phase === 'string' ? json.phase : '等待执行',
       });
+      void pollQuizJob(taskId, jobId);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '生成失败，请重试';
+      const msg = err instanceof Error ? err.message : '生成失败';
       useTaskStore.getState().updateTask(taskId, {
         status: 'failed',
         progress: 0,
         phase: '出题失败',
         error: msg,
       });
+      setError(msg);
+      setState('idle');
     }
-  }, [count, subject, difficulty, topic]);
+  }, [count, difficulty, pollQuizJob, stopPolling, subject, topic]);
+  const saveQuizAttempt = useCallback(
+    (finalAnswers: (number | null)[]) => {
+      if (savePromiseRef.current) return savePromiseRef.current;
 
-  const handleAnswer = useCallback((idx: number) => {
-    if (selectedAnswer !== null) return;
-    setSelectedAnswer(idx);
-    setShowExplanation(true);
-    const newAnswers = [...answers];
-    newAnswers[currentIdx] = idx;
-    setAnswers(newAnswers);
-  }, [selectedAnswer, answers, currentIdx]);
+      setSaveStatus('saving');
+      const request = (async () => {
+        try {
+          const knowledgePoints = topic.trim() ? [topic.trim()] : [];
+          const res = await fetch('/api/sky/cloud-mind/quiz-attempts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subject,
+              difficulty,
+              topic,
+              source: quizMode,
+              questions: questions.map((question, index) => ({
+                question: question.question,
+                options: question.options,
+                answer: question.answer,
+                userAnswer: finalAnswers[index],
+                isCorrect: finalAnswers[index] === question.answer,
+                explanation: question.explanation,
+                knowledgePoints,
+              })),
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || '成绩保存失败');
+          setAttemptSaved(true);
+          setSaveStatus('saved');
+        } catch {
+          setSaveStatus('failed');
+          savePromiseRef.current = null;
+        }
+      })();
+      savePromiseRef.current = request;
+      return request;
+    },
+    [attemptSaved, difficulty, questions, quizMode, subject, topic],
+  );
 
-  const handleNext = useCallback(() => {
+  const handleAnswer = useCallback(
+    (idx: number) => {
+      if (selectedAnswer !== null) return;
+      setSelectedAnswer(idx);
+      setShowExplanation(true);
+      const na = [...answers];
+      na[currentIdx] = idx;
+      setAnswers(na);
+      if (currentIdx === questions.length - 1) {
+        void saveQuizAttempt(na);
+      }
+    },
+    [selectedAnswer, answers, currentIdx, questions.length, saveQuizAttempt],
+  );
+
+  const handleNext = useCallback(async () => {
     if (currentIdx < questions.length - 1) {
       setCurrentIdx((i) => i + 1);
       setSelectedAnswer(null);
       setShowExplanation(false);
     } else {
+      await saveQuizAttempt(answers);
       setState('done');
     }
-  }, [currentIdx, questions.length]);
+  }, [answers, currentIdx, questions.length, saveQuizAttempt]);
+
+  const toggleQuestionForBank = useCallback(
+    (questionId: number) => {
+      const status = bankSaveStatusById[questionId] ?? 'idle';
+      if (status === 'saving' || status === 'saved' || status === 'duplicate') return;
+
+      setSelectedForBank((prev) => {
+        const next = new Set(prev);
+        if (next.has(questionId)) next.delete(questionId);
+        else next.add(questionId);
+        return next;
+      });
+    },
+    [bankSaveStatusById],
+  );
+
+  const buildQuestionBankPayload = useCallback(
+    (question: QuizQuestion) => ({
+      subject: SUBJECT_LABEL_BY_ID[subject] || subject,
+      grade: '',
+      difficulty,
+      questionType: 'choice',
+      content: question.question,
+      answer: answerIndexToLetter(question.answer),
+      explanation: question.explanation,
+      knowledgePoints: topic.trim() ? [topic.trim()] : [],
+      options: question.options.map(stripOptionPrefix),
+      source: 'AI智能出题',
+      tags: ['AI生成', '智能出题'],
+      verified: true,
+    }),
+    [difficulty, subject, topic],
+  );
+
+  const handleSaveQuestionToBank = useCallback(
+    async (question: QuizQuestion) => {
+      if (questionSource !== 'ai') return;
+      const currentStatus = bankSaveStatusById[question.id] ?? 'idle';
+      if (currentStatus === 'saving' || currentStatus === 'saved' || currentStatus === 'duplicate')
+        return;
+
+      setBankSaveStatusById((prev) => ({ ...prev, [question.id]: 'saving' }));
+      setBankSaveMessageById((prev) => ({ ...prev, [question.id]: '' }));
+
+      try {
+        const res = await fetch('/api/sky/question-bank', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildQuestionBankPayload(question)),
+        });
+        const data = await res.json();
+
+        if (data.success && data.saved === true) {
+          setBankSaveStatusById((prev) => ({ ...prev, [question.id]: 'saved' }));
+          setSelectedForBank((prev) => {
+            const next = new Set(prev);
+            next.delete(question.id);
+            return next;
+          });
+          return;
+        }
+
+        if (data.success && data.duplicated === true) {
+          setBankSaveStatusById((prev) => ({ ...prev, [question.id]: 'duplicate' }));
+          setBankSaveMessageById((prev) => ({ ...prev, [question.id]: '题库中已存在' }));
+          setSelectedForBank((prev) => {
+            const next = new Set(prev);
+            next.delete(question.id);
+            return next;
+          });
+          return;
+        }
+
+        throw new Error(data.error || data.details || '加入题库失败');
+      } catch (err) {
+        setBankSaveStatusById((prev) => ({ ...prev, [question.id]: 'failed' }));
+        setBankSaveMessageById((prev) => ({
+          ...prev,
+          [question.id]: err instanceof Error ? err.message : '加入题库失败',
+        }));
+      }
+    },
+    [bankSaveStatusById, buildQuestionBankPayload, questionSource],
+  );
+
+  const selectAllUnsavedForBank = useCallback(() => {
+    setSelectedForBank(
+      new Set(
+        questions
+          .filter((question) => {
+            const status = bankSaveStatusById[question.id] ?? 'idle';
+            return status !== 'saving' && status !== 'saved' && status !== 'duplicate';
+          })
+          .map((question) => question.id),
+      ),
+    );
+  }, [bankSaveStatusById, questions]);
+
+  const handleSaveSelectedToBank = useCallback(async () => {
+    if (questionSource !== 'ai') return;
+    const targets = questions.filter((question) => {
+      const status = bankSaveStatusById[question.id] ?? 'idle';
+      return (
+        selectedForBank.has(question.id) &&
+        status !== 'saving' &&
+        status !== 'saved' &&
+        status !== 'duplicate'
+      );
+    });
+
+    for (const question of targets) {
+      await handleSaveQuestionToBank(question);
+    }
+  }, [bankSaveStatusById, handleSaveQuestionToBank, questionSource, questions, selectedForBank]);
 
   const handleReset = useCallback(() => {
+    stopPolling();
     if (activeTaskId) {
       useTaskStore.getState().removeTask(activeTaskId);
       setActiveTaskId(null);
@@ -336,554 +711,931 @@ export default function CloudMindQuizPage() {
     setCurrentIdx(0);
     setSelectedAnswer(null);
     setError(null);
-  }, [activeTaskId]);
+    setNotice(null);
+    setSaveStatus('idle');
+    setAttemptSaved(false);
+    setQuestionSource('ai');
+    setSelectedForBank(new Set());
+    setBankSaveStatusById({});
+    setBankSaveMessageById({});
+    savePromiseRef.current = null;
+  }, [activeTaskId, stopPolling]);
 
   const correctCount = answers.filter((a, i) => a === questions[i]?.answer).length;
   const accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
-
   const currentQ = questions[currentIdx];
+  const wrongQuestions = questions.filter((question, index) => answers[index] !== question.answer);
+  const nextActionTopic = topic.trim() || SUBJECT_LABEL_BY_ID[subject] || subject;
+  const wrongQuestionContent = wrongQuestions
+    .map(
+      (question, index) =>
+        `错题 ${index + 1}：${question.question}\n正确答案：${question.options[question.answer]}\n解析：${question.explanation}`,
+    )
+    .join('\n\n');
+  const nextActionLinks = [
+    {
+      label: '复习错题',
+      desc: `${wrongQuestions.length} 道错题需要回看`,
+      href: '/sky/learning',
+      icon: BookOpen,
+      tone: 'text-rose-300 border-rose-500/25 bg-rose-500/8',
+      disabled: wrongQuestions.length === 0,
+    },
+    {
+      label: '生成同类题',
+      desc: `${nextActionTopic} 专项练习`,
+      href: `/sky/cloud-mind/quiz?topic=${encodeURIComponent(nextActionTopic)}&difficulty=${accuracy < 70 ? 'easy' : difficulty}&count=5`,
+      icon: Target,
+      tone: 'text-[var(--quiz-primary-bright)] border-[var(--quiz-border)] bg-[var(--quiz-primary)]/8',
+      disabled: false,
+    },
+    {
+      label: '生成记忆卡',
+      desc: wrongQuestions.length > 0 ? '把错因转成复习卡' : '提炼本次练习要点',
+      href: `/sky/cloud-mind/memory?topic=${encodeURIComponent(nextActionTopic)}&content=${encodeURIComponent(wrongQuestionContent || `知识点：${nextActionTopic}`)}`,
+      icon: Brain,
+      tone: 'text-violet-300 border-violet-500/25 bg-violet-500/8',
+      disabled: false,
+    },
+    {
+      label: '进入微讲解',
+      desc: '生成一段针对性讲解',
+      href: `/sky/cloud-mind/teaching?topic=${encodeURIComponent(nextActionTopic)}&from=quiz`,
+      icon: Lightbulb,
+      tone: 'text-emerald-300 border-emerald-500/25 bg-emerald-500/8',
+      disabled: false,
+    },
+  ];
+  const selectedBankCount = questions.filter((question) => {
+    const status = bankSaveStatusById[question.id] ?? 'idle';
+    return (
+      selectedForBank.has(question.id) &&
+      status !== 'saving' &&
+      status !== 'saved' &&
+      status !== 'duplicate'
+    );
+  }).length;
+  const bankSaving = Object.values(bankSaveStatusById).some((status) => status === 'saving');
+  const bankHandledCount = Object.values(bankSaveStatusById).filter(
+    (status) => status === 'saved' || status === 'duplicate',
+  ).length;
+
+  const panelStyle: React.CSSProperties = {
+    background: 'var(--quiz-surface)',
+    border: '1px solid var(--quiz-border)',
+    boxShadow: '0 0 20px -6px var(--quiz-glow)',
+  };
+
+  const btnPrimary: React.CSSProperties = {
+    background: 'var(--quiz-primary-bg)',
+    border: '1px solid var(--quiz-border-strong)',
+    color: 'var(--quiz-primary-text)',
+    boxShadow: '0 0 12px var(--quiz-glow)',
+  };
+
+  const btnIdle: React.CSSProperties = {
+    border: '1px solid var(--quiz-border)',
+    color: 'var(--quiz-muted)',
+  };
+
+  const configControls = (
+    <div className="space-y-5">
+      <QuizPanel title="学科星域">
+        <div className="grid grid-cols-3 gap-2">
+          {SUBJECTS.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setSubject(s.id)}
+              disabled={state === 'generating'}
+              className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-all disabled:opacity-50"
+              style={subject === s.id ? btnPrimary : btnIdle}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${s.dot}`} />
+              <span className="text-[var(--quiz-text)]">{s.label}</span>
+            </button>
+          ))}
+        </div>
+      </QuizPanel>
+
+      <QuizPanel
+        title={
+          <>
+            知识点 <span className="text-xs font-normal text-[var(--quiz-muted)]">(可选)</span>
+          </>
+        }
+      >
+        <input
+          type="text"
+          value={topic}
+          onChange={(e) => {
+            userEditedTopicRef.current = true;
+            setTopic(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && state !== 'generating') {
+              e.preventDefault();
+              if (quizMode === 'ai') handleGenerate();
+              else handleLoadFromBank();
+            }
+          }}
+          placeholder="如：二次函数、牛顿第二定律……"
+          disabled={state === 'generating'}
+          className="w-full bg-transparent border-b border-[var(--quiz-border)] px-1 py-3 text-sm text-[var(--quiz-text)] placeholder:text-[var(--quiz-muted)] focus:border-[var(--quiz-primary)] focus:outline-none transition-colors disabled:opacity-50"
+        />
+      </QuizPanel>
+
+      <QuizPanel title="难度等级">
+        <div className="grid grid-cols-3 gap-3">
+          {DIFFICULTIES.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => {
+                userEditedDifficultyRef.current = true;
+                setDifficulty(d.id);
+              }}
+              disabled={state === 'generating'}
+              className="flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-all disabled:opacity-50"
+              style={difficulty === d.id ? btnPrimary : btnIdle}
+            >
+              <span className="text-base text-[var(--quiz-primary)]">{d.star}</span>
+              <span className="text-sm font-semibold text-[var(--quiz-text)]">{d.label}</span>
+              <span className="text-[10px] text-[var(--quiz-muted)]">{d.desc}</span>
+            </button>
+          ))}
+        </div>
+      </QuizPanel>
+
+      <QuizPanel title="题目数量">
+        <div className="flex gap-2">
+          {QUIZ_COUNT_OPTIONS.map((n) => (
+            <button
+              key={n}
+              onClick={() => setCount(n)}
+              disabled={state === 'generating'}
+              className="flex-1 rounded-lg py-2.5 text-sm font-medium transition-all disabled:opacity-50"
+              style={count === n ? btnPrimary : btnIdle}
+            >
+              {n} 题
+            </button>
+          ))}
+        </div>
+      </QuizPanel>
+    </div>
+  );
 
   return (
-    <SkyAppShell>
-      <div className="mx-auto max-w-6xl space-y-6">
-        {/* Breadcrumb */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3"
-        >
-          <Link
-            href="/sky/cloud-mind"
-            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-amber-600 transition-colors"
+    <div
+      className="relative min-h-screen"
+      style={{ background: 'linear-gradient(180deg, var(--quiz-void) 0%, var(--quiz-horizon) 50%, var(--quiz-void) 100%)' }}
+    >
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <CelestialCanvas starCount={120} parallax={false} nebula grid={false} horizonGlow />
+      </div>
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute top-0 left-1/3 h-[500px] w-[500px] rounded-full bg-[var(--quiz-primary)]/5 blur-[150px]" />
+        <div className="absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-[var(--quiz-accent)]/4 blur-[120px]" />
+      </div>
+
+      <BankInsufficientDialog dialog={bankDialog} onClose={() => setBankDialog(null)} />
+
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-12 space-y-6 text-[var(--quiz-text)]">
+        {/* Top actions */}
+        {state !== 'done' && (
+          <motion.div
+            data-sky-desktop-top-actions
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="mb-2 flex flex-wrap items-center justify-between gap-3"
           >
-            <ArrowLeft className="h-4 w-4" />
-            云端智囊
-          </Link>
-          <span className="text-slate-300">/</span>
-          <div className="flex items-center gap-2">
-            <FileQuestion className="h-4 w-4 text-amber-500" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">智能出题</span>
-          </div>
-        </motion.div>
+            <Link
+              href="/sky/cloud-mind"
+              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-[var(--quiz-muted)] transition-all hover:text-[var(--quiz-primary-bright)] hover:bg-[var(--quiz-primary)]/10"
+            >
+              <ArrowLeft className="h-4 w-4" /> 返回
+            </Link>
+            <Link
+              href="/sky/question-bank"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/10 px-4 py-2 text-sm text-[var(--quiz-muted)] transition-all hover:text-[var(--quiz-primary-bright)] hover:border-[var(--quiz-border-strong)] hover:bg-[var(--quiz-primary)]/15"
+            >
+              <BookOpen className="h-4 w-4" /> 题库中心
+            </Link>
+          </motion.div>
+        )}
 
         {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 p-8"
+          className="rounded-2xl p-8 relative overflow-hidden"
+          style={panelStyle}
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
-                <FileQuestion className="h-5 w-5 text-amber-200" />
-              </div>
-              <span className="text-xs font-medium text-amber-200 tracking-wider uppercase">AI 出题</span>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--quiz-primary)]/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/15 shadow-[0_0_16px_var(--quiz-glow)]">
+              <FileQuestion className="h-7 w-7 text-[var(--quiz-primary)]" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">智能出题</h1>
-            <p className="text-amber-100 text-base max-w-lg">
-              选择学科和难度，AI 为你量身定制高质量练习题，支持 6 大学科
-            </p>
+            <div>
+              <h1 className="text-2xl font-bold text-[var(--quiz-text)] drop-shadow-[0_0_12px_var(--quiz-glow-strong)]">
+                星际试炼场
+              </h1>
+              <p className="text-sm text-[var(--quiz-muted)] mt-1">
+                选择你的星域与难度，AI 为你定制试炼挑战
+              </p>
+            </div>
           </div>
         </motion.div>
 
-        {state === 'idle' || state === 'generating' ? (
-          <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-            {/* Left: Config */}
+        <AnimatePresence mode="wait">
+          {(state === 'idle' || state === 'generating') && (
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-5"
+              key="config"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="grid gap-6 lg:grid-cols-[1fr_340px]"
             >
-              {/* Mode Toggle */}
-              <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 block">出题模式</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setQuizMode('ai')}
-                    className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium transition-all ${
-                      quizMode === 'ai'
-                        ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-600 text-amber-700 dark:text-amber-300'
-                        : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-amber-200'
-                    }`}
-                  >
-                    <Wand2 className="h-4 w-4" />
-                    AI 出题
-                  </button>
-                  <button
-                    onClick={() => setQuizMode('bank')}
-                    className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium transition-all ${
-                      quizMode === 'bank'
-                        ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-600 text-amber-700 dark:text-amber-300'
-                        : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-amber-200'
-                    }`}
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    题库练习
-                  </button>
-                </div>
-              </div>
-
-              {/* Subject */}
-              {quizMode === 'ai' && (<>
-              <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 block">选择学科</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {SUBJECTS.map((s) => {
-                    const isActive = subject === s.id;
-                    return (
+              <div className="space-y-5">
+                {/* Mode */}
+                <QuizPanel title="出题模式">
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['ai', 'bank'] as const).map((mode) => (
                       <button
-                        key={s.id}
-                        onClick={() => setSubject(s.id)}
-                        disabled={state === 'generating'}
-                        className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium transition-all disabled:opacity-50 ${
-                          isActive
-                            ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-600 text-amber-700 dark:text-amber-300'
-                            : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-amber-200'
-                        }`}
+                        key={mode}
+                        onClick={() => setQuizMode(mode)}
+                        className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-all"
+                        style={quizMode === mode ? btnPrimary : btnIdle}
                       >
-                        <span className={`h-2 w-2 rounded-full ${s.bg}`} />
-                        {s.label}
+                        {mode === 'ai' ? (
+                          <Wand2 className="h-4 w-4" />
+                        ) : (
+                          <BookOpen className="h-4 w-4" />
+                        )}
+                        {mode === 'ai' ? 'AI 出题' : '题库练习'}
                       </button>
-                    );
-                  })}
-                </div>
-              </div>
+                    ))}
+                  </div>
+                </QuizPanel>
 
-              {/* Topic */}
-              <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2 block">
-                  知识点 / 主题 <span className="text-slate-400 font-normal">(可选)</span>
-                </label>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  onKeyDown={(e) => {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && state !== 'generating') {
-                      e.preventDefault();
-                      handleGenerate();
-                    }
-                  }}
-                  placeholder="如：二次函数、牛顿第二定律、氧化还原反应……"
-                  disabled={state === 'generating'}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400 transition-all disabled:opacity-50"
-                />
-              </div>
+                {configControls}
 
-              {/* Difficulty */}
-              <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 block">难度等级</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {DIFFICULTIES.map((d) => {
-                    const isActive = difficulty === d.id;
-                    return (
-                      <button
-                        key={d.id}
-                        onClick={() => setDifficulty(d.id)}
-                        disabled={state === 'generating'}
-                        className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-all disabled:opacity-50 ${
-                          isActive
-                            ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-600'
-                            : 'border-slate-200 dark:border-slate-600 hover:border-amber-200'
-                        }`}
-                      >
-                        <div className={`h-2.5 w-2.5 rounded-full ${d.color}`} />
-                        <span className={`text-sm font-semibold ${isActive ? 'text-amber-700 dark:text-amber-300' : 'text-slate-700 dark:text-slate-200'}`}>
-                          {d.label}
-                        </span>
-                        <span className="text-[10px] text-slate-400">{d.desc}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Count */}
-              <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2 block">题目数量</label>
-                <div className="flex gap-2">
-                  {[3, 5, 10, 15].map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => setCount(n)}
-                      disabled={state === 'generating'}
-                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all disabled:opacity-50 ${
-                        count === n
-                          ? 'bg-amber-500 text-white shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                      }`}
-                    >
-                      {n} 题
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Generate */}
-              <button
-                onClick={handleGenerate}
-                disabled={state === 'generating'}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3.5 text-white font-medium shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-              >
-                {state === 'generating' ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    AI 出题中…
-                  </>
+                {quizMode === 'ai' ? (
+                  <button
+                    onClick={handleGenerate}
+                    disabled={state === 'generating'}
+                    className="quiz-button-sweep w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={btnPrimary}
+                  >
+                    {state === 'generating' ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" /> AI 出题中…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-5 w-5" /> 启动试炼引擎
+                      </>
+                    )}
+                  </button>
                 ) : (
-                  <>
-                    <Wand2 className="h-5 w-5" />
-                    生成练习题
-                  </>
+                  <button
+                    onClick={handleLoadFromBank}
+                    disabled={state === 'generating'}
+                    className="quiz-button-sweep w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-medium transition-all disabled:opacity-50"
+                    style={btnPrimary}
+                  >
+                    {state === 'generating' ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" /> 题库抽取中…
+                      </>
+                    ) : (
+                      <>
+                        <BookOpen className="h-5 w-5" /> 从题库抽题
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
+                {notice && <QuizNotice message={notice} />}
+                {error && <QuizError message={error} />}
+              </div>
 
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 px-4 py-3 text-sm text-red-600 dark:text-red-400"
-                >
-                  {error}
+              {/* Right: Preview */}
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                {state === 'generating' ? (
+                  <QuizPanel>
+                    <div className="flex items-center gap-2 mb-5">
+                      <Loader2 className="h-4 w-4 text-[var(--quiz-primary)] animate-spin" />
+                      <span className="text-sm font-medium text-[var(--quiz-primary-bright)]">
+                        {quizMode === 'ai' ? 'AI 正在出题…' : '题库正在抽题…'}
+                      </span>
+                    </div>
+                    <div className="space-y-4">
+                      {Array.from({ length: count }).map((_, i) => (
+                        <div key={i} className="space-y-2">
+                          <div className="h-4 rounded-lg animate-pulse w-full bg-[var(--quiz-primary)]/5" />
+                          <div className="h-4 rounded-lg animate-pulse w-3/4 bg-[var(--quiz-primary)]/4" />
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            <div className="h-8 rounded-lg animate-pulse bg-[var(--quiz-primary)]/4" />
+                            <div className="h-8 rounded-lg animate-pulse bg-[var(--quiz-primary)]/4" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </QuizPanel>
+                ) : (
+                  <QuizPanel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Zap className="h-4 w-4 text-[var(--quiz-primary)]" />
+                      <h3 className="text-sm font-bold text-[var(--quiz-text)]">
+                        {quizMode === 'ai' ? '出题配置' : '题库抽题配置'}
+                      </h3>
+                    </div>
+                    <div className="space-y-3">
+                      {[
+                        { label: '学科', value: SUBJECTS.find((s) => s.id === subject)?.label },
+                        {
+                          label: '难度',
+                          value: DIFFICULTIES.find((d) => d.id === difficulty)?.label,
+                        },
+                        { label: '数量', value: `${count} 题` },
+                      ].map((row) => (
+                        <div key={row.label} className="flex items-center justify-between text-sm">
+                          <span className="text-[var(--quiz-muted)]">{row.label}</span>
+                          <span className="font-medium text-[var(--quiz-text)]">{row.value}</span>
+                        </div>
+                      ))}
+                      {topic && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[var(--quiz-muted)]">主题</span>
+                          <span className="font-medium text-[var(--quiz-text)] truncate ml-2 max-w-[180px]">
+                            {topic}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-5 pt-4 border-t border-[var(--quiz-border)]">
+                      <p className="text-xs text-[var(--quiz-muted)] text-center">
+                        {quizMode === 'ai'
+                          ? '支持 Ctrl+Enter 快捷生成'
+                          : '按条件从题库随机抽取选择题'}
+                      </p>
+                    </div>
+                  </QuizPanel>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Answering */}
+          {state === 'answering' && currentQ && (
+            <motion.div
+              key="answering"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-auto max-w-2xl space-y-6"
+            >
+              {notice && <QuizNotice message={notice} />}
+              {/* Constellation Progress */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[var(--quiz-muted)] shrink-0">
+                  {currentIdx + 1} / {questions.length}
+                </span>
+                <div className="flex-1 flex items-center gap-1">
+                  {questions.map((_, i) => {
+                    const isDone = answers[i] !== null;
+                    const isCurrent = i === currentIdx;
+                    const isCorrect = answers[i] === questions[i]?.answer;
+                    return (
+                      <div key={i} className="flex items-center flex-1">
+                        <div
+                          className={`h-2.5 flex-1 rounded-full transition-all duration-500 ${isCurrent ? 'quiz-star-pulse' : ''}`}
+                          style={{
+                            background: isDone
+                              ? isCorrect
+                                ? 'var(--quiz-success)'
+                                : 'var(--quiz-error)'
+                              : isCurrent
+                                ? 'color-mix(in srgb, var(--quiz-primary) 50%, transparent)'
+                                : 'color-mix(in srgb, var(--quiz-primary) 10%, transparent)',
+                            boxShadow: isDone
+                              ? isCorrect
+                                ? '0 0 6px color-mix(in srgb, var(--quiz-success) 40%, transparent)'
+                                : '0 0 6px color-mix(in srgb, var(--quiz-error) 40%, transparent)'
+                              : isCurrent
+                                ? '0 0 8px color-mix(in srgb, var(--quiz-primary) 40%, transparent)'
+                                : 'none',
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Question Card */}
+              <div className="rounded-2xl border p-6" style={panelStyle}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Star className="h-4 w-4 text-[var(--quiz-primary)]" />
+                  <span className="text-xs text-[var(--quiz-muted)]">第 {currentIdx + 1} 题</span>
+                </div>
+                <div className="text-base font-semibold text-[var(--quiz-text)] mb-5 leading-relaxed">
+                  <MathRenderer content={currentQ.question} />
+                </div>
+
+                <div className="space-y-3">
+                  {currentQ.options.map((option, i) => {
+                    const isSelected = selectedAnswer === i;
+                    const isCorrectAnswer = i === currentQ.answer;
+                    const showResult = selectedAnswer !== null;
+                    let border = 'border-[var(--quiz-border)] hover:border-[var(--quiz-border-strong)]';
+                    if (showResult && isCorrectAnswer)
+                      border = 'border-emerald-400/60 bg-emerald-500/10';
+                    else if (showResult && isSelected && !isCorrectAnswer)
+                      border = 'border-red-400/60 bg-red-500/10';
+                    else if (isSelected) border = 'border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/10';
+                    return (
+                      <motion.button
+                        key={i}
+                        onClick={() => handleAnswer(i)}
+                        disabled={selectedAnswer !== null}
+                        whileTap={selectedAnswer === null ? { scale: 0.98 } : undefined}
+                        className={`w-full text-left rounded-xl border p-4 transition-all disabled:cursor-default ${border}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-colors"
+                            style={{
+                              background:
+                                showResult && isCorrectAnswer
+                                  ? 'var(--quiz-success)'
+                                  : showResult && isSelected && !isCorrectAnswer
+                                    ? 'var(--quiz-error)'
+                                    : 'color-mix(in srgb, var(--quiz-primary) 15%, transparent)',
+                              color:
+                                showResult && (isCorrectAnswer || (isSelected && !isCorrectAnswer))
+                                  ? '#fff'
+                                  : 'var(--quiz-primary-bright)',
+                            }}
+                          >
+                            {String.fromCharCode(65 + i)}
+                          </span>
+                          <span className="text-sm text-[var(--quiz-text)]">
+                            <MathRenderer content={option} className="text-sm text-[var(--quiz-text)]" />
+                          </span>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+
+                <AnimatePresence>
+                  {showExplanation && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div
+                        className="mt-5 rounded-xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 p-4"
+                        style={{ borderLeftWidth: '3px', borderLeftColor: 'var(--quiz-primary)' }}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <BookOpen className="h-4 w-4 text-[var(--quiz-primary)]" />
+                          <span className="text-xs font-semibold text-[var(--quiz-primary-bright)]">解析星云</span>
+                        </div>
+                        <p className="text-sm text-[var(--quiz-text)] leading-relaxed">
+                          <MathRenderer
+                            content={currentQ.explanation}
+                            className="text-sm text-[var(--quiz-text)] leading-relaxed"
+                          />
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {selectedAnswer !== null && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                  <button
+                    onClick={handleNext}
+                    disabled={currentIdx === questions.length - 1 && saveStatus === 'saving'}
+                    className="quiz-button-sweep w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={btnPrimary}
+                  >
+                    {currentIdx < questions.length - 1 ? (
+                      <>
+                        <>下一题</>
+                        <ChevronRight className="h-4 w-4" />
+                      </>
+                    ) : saveStatus === 'saving' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> 正在写入学情…
+                      </>
+                    ) : (
+                      <>
+                        <>查看成绩</>
+                        <Trophy className="h-4 w-4" />
+                      </>
+                    )}
+                  </button>
                 </motion.div>
               )}
-              </>
-              )}
-
-              {/* Bank Mode */}
-              {quizMode === 'bank' && (
-              <div className="space-y-5">
-                <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-5">
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2 block">题目数量</label>
-                  <div className="flex gap-2">
-                    {[3, 5, 10, 15].map((n) => (
-                      <button
-                        key={n}
-                        onClick={() => setCount(n)}
-                        disabled={state === 'generating'}
-                        className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all disabled:opacity-50 ${
-                          count === n
-                            ? 'bg-amber-500 text-white shadow-sm'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                        }`}
-                      >
-                        {n} 题
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <button
-                  onClick={handleLoadFromBank}
-                  disabled={state === 'generating'}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3.5 text-white font-medium shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                >
-                  {state === 'generating' ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      加载中…
-                    </>
-                  ) : (
-                    <>
-                      <BookOpen className="h-5 w-5" />
-                      从题库出题
-                    </>
-                  )}
-                </button>
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 px-4 py-3 text-sm text-red-600 dark:text-red-400"
-                  >
-                    {error}
-                  </motion.div>
-                )}
-              </div>
-              )}
             </motion.div>
+          )}
 
-            {/* Right: Preview / Loading */}
+          {/* Done */}
+          {state === 'done' && (
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
+              key="done"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-auto max-w-2xl space-y-6"
             >
-              {state === 'generating' ? (
-                <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-6">
-                  <div className="flex items-center gap-2 mb-5">
-                    <Loader2 className="h-4 w-4 text-amber-500 animate-spin" />
-                    <span className="text-sm font-medium text-amber-600 dark:text-amber-400">AI 正在出题…</span>
+              <div
+                className="rounded-2xl border p-8 text-center quiz-score-appear"
+                style={panelStyle}
+              >
+                <div className="relative inline-flex items-center justify-center mb-4">
+                  <div className="absolute h-28 w-28 rounded-full border-2 border-[var(--quiz-border)]" />
+                  <div
+                    className="h-24 w-24 rounded-full flex items-center justify-center"
+                    style={{
+                      background: 'color-mix(in srgb, var(--quiz-primary) 10%, transparent)',
+                      border: '2px solid color-mix(in srgb, var(--quiz-primary) 40%, transparent)',
+                      boxShadow: '0 0 20px var(--quiz-glow)',
+                    }}
+                  >
+                    <div>
+                      <div className="text-3xl font-bold text-[var(--quiz-primary-bright)]">{accuracy}</div>
+                      <div className="text-[10px] text-[var(--quiz-muted)]">分</div>
+                    </div>
                   </div>
-                  <div className="space-y-4">
-                    {Array.from({ length: count }).map((_, i) => (
-                      <div key={i} className="space-y-2">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse w-full" />
-                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse w-3/4" />
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          <div className="h-8 bg-slate-100 dark:bg-slate-700/50 rounded-lg animate-pulse" />
-                          <div className="h-8 bg-slate-100 dark:bg-slate-700/50 rounded-lg animate-pulse" />
-                        </div>
-                      </div>
-                    ))}
+                  <div
+                    className="absolute h-28 w-28 animate-spin"
+                    style={{ animationDuration: '8s' }}
+                  >
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 h-2 w-2 rounded-full bg-[var(--quiz-primary)]" />
                   </div>
                 </div>
-              ) : (
-                <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-6">
-                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 mb-4">
-                    <Zap className="h-4 w-4 text-amber-500" />
-                    出题配置
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-500">学科</span>
-                      <span className="font-medium text-slate-700 dark:text-slate-200">{SUBJECTS.find(s => s.id === subject)?.label}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-500">难度</span>
-                      <span className="font-medium text-slate-700 dark:text-slate-200">{DIFFICULTIES.find(d => d.id === difficulty)?.label}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-500">数量</span>
-                      <span className="font-medium text-slate-700 dark:text-slate-200">{count} 题</span>
-                    </div>
-                    {topic && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-500">主题</span>
-                        <span className="font-medium text-slate-700 dark:text-slate-200 truncate ml-2">{topic}</span>
+                <h2 className="text-xl font-bold text-[var(--quiz-text)] mb-1">
+                  {questions.length} 题中答对 {correctCount} 题
+                </h2>
+                <div className="mt-3 flex items-center justify-center gap-6 text-sm">
+                  <div className="flex items-center gap-1.5 text-[var(--quiz-success)]">
+                    <CheckCircle2 className="h-4 w-4" /> 正确 {correctCount}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[var(--quiz-error)]">
+                    <XCircle className="h-4 w-4" /> 错误 {questions.length - correctCount}
+                  </div>
+                </div>
+                <div className="mt-4 text-xs text-[var(--quiz-muted)]">
+                  {saveStatus === 'saving' && '正在写入学情分析…'}
+                  {saveStatus === 'saved' && '已写入学情分析，返回学情页可查看各学科掌握度'}
+                  {saveStatus === 'failed' && '成绩写入学情分析失败，可稍后重试'}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border p-5" style={panelStyle}>
+                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
+                  <Zap className="h-4 w-4 text-[var(--quiz-primary)]" />
+                  下一步学习动作
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {nextActionLinks.map((action) => {
+                    const Icon = action.icon;
+                    const contentNode = (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          <span className="text-sm font-semibold">{action.label}</span>
+                        </div>
+                        <p className="mt-1 text-xs text-[var(--quiz-text)]/55">{action.desc}</p>
+                      </>
+                    );
+                    if (action.disabled) {
+                      return (
+                        <div
+                          key={action.label}
+                          className="rounded-xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 px-4 py-3 text-[var(--quiz-text)]/35"
+                        >
+                          {contentNode}
+                        </div>
+                      );
+                    }
+                    return (
+                      <Link
+                        key={action.label}
+                        href={action.href}
+                        className={`rounded-xl border px-4 py-3 transition-all hover:translate-y-[-1px] ${action.tone}`}
+                      >
+                        {contentNode}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {questionSource === 'ai' && (
+                <div className="rounded-2xl border p-5" style={panelStyle}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
+                        <BookOpen className="h-4 w-4 text-[var(--quiz-primary)]" />将 AI 题目加入题库
                       </div>
+                      <p className="mt-1 text-xs text-[var(--quiz-muted)]">
+                        本次 AI 生成的题目不会自动入库，可选择需要沉淀的题目。
+                      </p>
+                    </div>
+                    <Link
+                      href="/sky/question-bank"
+                      className="inline-flex items-center justify-center rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs font-medium text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)]"
+                    >
+                      进入题库中心
+                    </Link>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={selectAllUnsavedForBank}
+                      disabled={bankSaving}
+                      className="rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)] disabled:opacity-50"
+                    >
+                      全选未入库
+                    </button>
+                    <button
+                      onClick={() => setSelectedForBank(new Set())}
+                      disabled={bankSaving}
+                      className="rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)] disabled:opacity-50"
+                    >
+                      清空选择
+                    </button>
+                    <button
+                      onClick={handleSaveSelectedToBank}
+                      disabled={selectedBankCount === 0 || bankSaving}
+                      className="quiz-button-sweep inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all disabled:opacity-50"
+                      style={btnPrimary}
+                    >
+                      {bankSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      加入选中 {selectedBankCount} 题
+                    </button>
+                    {bankHandledCount > 0 && (
+                      <span className="text-xs text-emerald-300/80">
+                        已处理 {bankHandledCount} 题
+                      </span>
                     )}
                   </div>
-                  <div className="mt-5 pt-4 border-t border-slate-200/50 dark:border-slate-700/30">
-                    <p className="text-xs text-slate-400 text-center">
-                      支持 Ctrl+Enter 快捷生成
-                    </p>
-                  </div>
                 </div>
               )}
-            </motion.div>
-          </div>
-        ) : state === 'done' ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mx-auto max-w-2xl space-y-6"
-          >
-            {/* Score Card */}
-            <div className="rounded-3xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-8 text-center text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-              <div className="relative z-10">
-                <Trophy className="h-12 w-12 mx-auto mb-3 opacity-90" />
-                <h2 className="text-3xl font-bold mb-1">{accuracy} 分</h2>
-                <p className="text-amber-100 text-sm">
-                  {questions.length} 题中答对 {correctCount} 题
-                </p>
-                <div className="mt-4 flex items-center justify-center gap-6 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4" />
-                    正确 {correctCount}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <XCircle className="h-4 w-4" />
-                    错误 {questions.length - correctCount}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Review Answers */}
-            <div className="space-y-3">
-              {questions.map((q, i) => {
-                const userAnswer = answers[i];
-                const isCorrect = userAnswer === q.answer;
-                return (
-                  <motion.div
-                    key={q.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className={`rounded-xl border p-4 ${
-                      isCorrect
-                        ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20'
-                        : 'border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/20'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      {isCorrect ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-rose-500 mt-0.5 shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 dark:text-slate-100 mb-1">
-                          {i + 1}. {q.question}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          你的答案：{userAnswer !== null ? q.options[userAnswer] : '未作答'} · 正确答案：{q.options[q.answer]}
-                        </p>
-                        {!isCorrect && (
-                          <p className="text-xs text-slate-400 mt-1.5">{q.explanation}</p>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3">
-              <Link
-                href="/sky/cloud-mind"
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                返回云端智囊
-              </Link>
-              <button
-                onClick={handleReset}
-                className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-              >
-                <RotateCcw className="h-4 w-4" />
-                重新出题
-              </button>
-              <button
-                onClick={() => {
-                  setState('answering');
-                  setCurrentIdx(0);
-                  setSelectedAnswer(null);
-                  setShowExplanation(false);
-                  setAnswers(new Array(questions.length).fill(null));
-                }}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-amber-500/25 hover:shadow-xl transition-all"
-              >
-                <Target className="h-4 w-4" />
-                再做一次
-              </button>
-            </div>
-          </motion.div>
-        ) : (
-          /* Answering State */
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mx-auto max-w-2xl space-y-6"
-          >
-            {/* Progress */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500">
-                第 {currentIdx + 1} / {questions.length} 题
-              </span>
-              <div className="flex gap-1">
-                {questions.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1.5 w-8 rounded-full transition-colors ${
-                      i === currentIdx
-                        ? 'bg-amber-500'
-                        : answers[i] !== null
-                          ? answers[i] === questions[i].answer
-                            ? 'bg-emerald-400'
-                            : 'bg-rose-400'
-                          : 'bg-slate-200 dark:bg-slate-700'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Question Card */}
-            <div className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/30 p-6">
-              <p className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-5 leading-relaxed">
-                {currentQ.question}
-              </p>
 
               <div className="space-y-3">
-                {currentQ.options.map((option, i) => {
-                  const isSelected = selectedAnswer === i;
-                  const isCorrectAnswer = i === currentQ.answer;
-                  const showResult = selectedAnswer !== null;
-
-                  let optionStyle = 'border-slate-200 dark:border-slate-600 hover:border-amber-300 dark:hover:border-amber-600';
-                  if (showResult && isCorrectAnswer) {
-                    optionStyle = 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-600';
-                  } else if (showResult && isSelected && !isCorrectAnswer) {
-                    optionStyle = 'border-rose-400 bg-rose-50 dark:bg-rose-900/30 dark:border-rose-600';
-                  } else if (isSelected) {
-                    optionStyle = 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-600';
-                  }
-
+                {questions.map((q, i) => {
+                  const userAnswer = answers[i];
+                  const isCorrect = userAnswer === q.answer;
+                  const bankStatus = bankSaveStatusById[q.id] ?? 'idle';
+                  const canSelectForBank =
+                    questionSource === 'ai' &&
+                    bankStatus !== 'saving' &&
+                    bankStatus !== 'saved' &&
+                    bankStatus !== 'duplicate';
+                  const bankButtonLabel =
+                    bankStatus === 'saving'
+                      ? '加入中…'
+                      : bankStatus === 'saved'
+                        ? '已加入'
+                        : bankStatus === 'duplicate'
+                          ? '已存在'
+                          : bankStatus === 'failed'
+                            ? '重试'
+                            : '加入题库';
                   return (
-                    <motion.button
-                      key={i}
-                      onClick={() => handleAnswer(i)}
-                      disabled={selectedAnswer !== null}
-                      whileTap={selectedAnswer === null ? { scale: 0.98 } : undefined}
-                      className={`w-full text-left rounded-xl border p-4 transition-all ${optionStyle} disabled:cursor-default`}
+                    <motion.div
+                      key={q.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="rounded-xl border p-4"
+                      style={{
+                        borderColor: isCorrect ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)',
+                        background: isCorrect ? 'rgba(52,211,153,0.05)' : 'rgba(248,113,113,0.05)',
+                      }}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                          showResult && isCorrectAnswer
-                            ? 'bg-emerald-500 text-white'
-                            : showResult && isSelected && !isCorrectAnswer
-                              ? 'bg-rose-500 text-white'
-                              : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
-                        }`}>
-                          {String.fromCharCode(65 + i)}
-                        </span>
-                        <span className="text-sm text-slate-700 dark:text-slate-200">{option}</span>
+                      <div className="flex items-start gap-3">
+                        {isCorrect ? (
+                          <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-400 mt-0.5 shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-medium text-[var(--quiz-text)] mb-1">
+                              {i + 1}.{' '}
+                              <MathRenderer
+                                content={q.question}
+                                className="text-sm font-medium text-[var(--quiz-text)]"
+                              />
+                            </p>
+                            {questionSource === 'ai' && (
+                              <div className="flex shrink-0 items-center gap-2">
+                                <label
+                                  className={`flex items-center gap-1.5 text-xs ${canSelectForBank ? 'text-[var(--quiz-muted)]' : 'text-[var(--quiz-muted)]'}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedForBank.has(q.id)}
+                                    disabled={!canSelectForBank}
+                                    onChange={() => toggleQuestionForBank(q.id)}
+                                    className="h-3.5 w-3.5 accent-amber-400"
+                                  />
+                                  入库
+                                </label>
+                                <button
+                                  onClick={() => handleSaveQuestionToBank(q)}
+                                  disabled={
+                                    bankStatus === 'saving' ||
+                                    bankStatus === 'saved' ||
+                                    bankStatus === 'duplicate'
+                                  }
+                                  className="inline-flex items-center gap-1 rounded-lg border border-[var(--quiz-border)] px-2.5 py-1.5 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)] disabled:opacity-60"
+                                >
+                                  {bankStatus === 'saving' && (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  )}
+                                  {bankButtonLabel}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs text-[var(--quiz-muted)]">
+                            你的答案：
+                            <MathRenderer
+                              content={userAnswer !== null ? q.options[userAnswer] : '未作答'}
+                              className="text-xs text-[var(--quiz-muted)]"
+                            />{' '}
+                            · 正确答案：
+                            <MathRenderer
+                              content={q.options[q.answer]}
+                              className="text-xs text-[var(--quiz-muted)]"
+                            />
+                          </p>
+                          {!isCorrect && (
+                            <div className="text-xs text-[var(--quiz-muted)] mt-1.5">
+                              <MathRenderer
+                                content={q.explanation}
+                                className="text-xs text-[var(--quiz-muted)]"
+                              />
+                            </div>
+                          )}
+                          {questionSource === 'ai' && bankSaveMessageById[q.id] && (
+                            <p
+                              className={`mt-2 text-xs ${bankStatus === 'failed' ? 'text-red-300/80' : 'text-emerald-300/80'}`}
+                            >
+                              {bankSaveMessageById[q.id]}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </motion.button>
+                    </motion.div>
                   );
                 })}
               </div>
 
-              {/* Explanation */}
-              <AnimatePresence>
-                {showExplanation && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-5 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <BookOpen className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">解析</span>
-                      </div>
-                      <p className="text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
-                        {currentQ.explanation}
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Next Button */}
-            {selectedAnswer !== null && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="flex gap-3">
                 <button
-                  onClick={handleNext}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3.5 text-white font-medium shadow-lg shadow-amber-500/25 hover:shadow-xl transition-all"
+                  onClick={handleReset}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[var(--quiz-border)] px-4 py-3 text-sm font-medium text-[var(--quiz-muted)] hover:text-[var(--quiz-primary-bright)] hover:border-[var(--quiz-border-strong)] transition-colors"
                 >
-                  {currentIdx < questions.length - 1 ? (
-                    <>
-                      下一题
-                      <ChevronRight className="h-4 w-4" />
-                    </>
-                  ) : (
-                    <>
-                      查看成绩
-                      <Trophy className="h-4 w-4" />
-                    </>
-                  )}
+                  <ArrowLeft className="h-4 w-4" /> 返回星际试炼场
                 </button>
-              </motion.div>
-            )}
-          </motion.div>
-        )}
+                <button
+                  onClick={handleReset}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-[var(--quiz-border)] px-4 py-3 text-sm font-medium text-[var(--quiz-muted)] hover:text-[var(--quiz-primary-bright)] hover:border-[var(--quiz-border-strong)] transition-colors"
+                >
+                  <RotateCcw className="h-4 w-4" /> 重新出题
+                </button>
+                <button
+                  onClick={() => {
+                    setState('answering');
+                    setCurrentIdx(0);
+                    setSelectedAnswer(null);
+                    setShowExplanation(false);
+                    setAnswers(new Array(questions.length).fill(null));
+                    setSaveStatus('idle');
+                    setAttemptSaved(false);
+                    setSelectedForBank(
+                      new Set(
+                        questions
+                          .filter((question) => {
+                            const status = bankSaveStatusById[question.id] ?? 'idle';
+                            return (
+                              questionSource === 'ai' &&
+                              status !== 'saving' &&
+                              status !== 'saved' &&
+                              status !== 'duplicate'
+                            );
+                          })
+                          .map((question) => question.id),
+                      ),
+                    );
+                    savePromiseRef.current = null;
+                  }}
+                  className="quiz-button-sweep flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all"
+                  style={btnPrimary}
+                >
+                  <Target className="h-4 w-4" /> 再做一次
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </SkyAppShell>
+    </div>
+  );
+}
+
+/* ── Sub-components ──────────────────────────────────────────────── */
+
+function QuizPanel({ title, children }: { title?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-xl border p-5"
+      style={{
+        background: 'var(--quiz-surface)',
+        border: '1px solid var(--quiz-border)',
+        boxShadow: '0 0 16px -4px var(--quiz-glow)',
+      }}
+    >
+      {title && <label className="text-sm font-semibold text-[var(--quiz-text)] mb-3 block">{title}</label>}
+      {children}
+    </div>
+  );
+}
+
+function QuizNotice({ message }: { message: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -5 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-300"
+    >
+      {message}
+    </motion.div>
+  );
+}
+
+function BankInsufficientDialog({
+  dialog,
+  onClose,
+}: {
+  dialog: { title: string; message: string } | null;
+  onClose: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {dialog && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-400/70 px-4 backdrop-blur-sm dark:bg-slate-950/70"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.94, y: 16, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.96, y: 10, opacity: 0 }}
+            className="relative w-full max-w-md overflow-hidden rounded-3xl border border-[var(--quiz-border)] bg-[var(--quiz-surface-elevated)] p-6 text-[var(--quiz-text)] shadow-2xl shadow-[var(--quiz-glow-strong)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-[var(--quiz-primary)]/10 blur-3xl -translate-y-1/2 translate-x-1/3" />
+            <div className="relative z-10">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/10 shadow-[0_0_18px_var(--quiz-glow)]">
+                <BookOpen className="h-6 w-6 text-[var(--quiz-primary-bright)]" />
+              </div>
+              <h3 className="text-lg font-bold text-[var(--quiz-text)] drop-shadow-[0_0_10px_var(--quiz-glow-strong)]">
+                {dialog.title}
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-[var(--quiz-text)]/65">{dialog.message}</p>
+              <button
+                onClick={onClose}
+                className="quiz-button-sweep mt-6 w-full rounded-xl border border-[var(--quiz-border-strong)] bg-[var(--quiz-primary)]/15 px-4 py-3 text-sm font-medium text-[var(--quiz-text)] transition-all hover:bg-[var(--quiz-primary)]/20"
+              >
+                我知道了
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function QuizError({ message }: { message: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -5 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400"
+    >
+      {message}
+    </motion.div>
   );
 }

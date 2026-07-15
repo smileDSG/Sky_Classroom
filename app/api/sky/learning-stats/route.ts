@@ -4,30 +4,17 @@
  * Returns aggregated learning metrics from user_stats table:
  *  - todayStudyMinutes: real study time today (from user_stats)
  *  - streakDays: consecutive check-in days (from user_stats)
- *  - masteryPercent: comprehensive mastery score (from user_stats)
+ *  - masteryPercent: comprehensive mastery score (calculated from knowledge graph)
  *  - checkedInToday: whether user has checked in today
  */
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getServerStorage } from '@/lib/server/server-storage';
-import { createUserStatsDAO } from '@/lib/storage/dao/user-stats';
-import { createLogger } from '@/lib/logger';
+import { getLearningStats } from '@/lib/server/learning-stats';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
+import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:LearningStats');
-
-const CHECKIN_TABLE = 'user_checkins';
-
-interface CheckInEntry {
-  userId: string;
-  date: string;
-  timestamp: number;
-}
-
-function getTodayStr(): string {
-  return new Date().toISOString().split('T')[0];
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -55,26 +42,8 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const storage = await getServerStorage();
-    const statsDAO = createUserStatsDAO(storage);
-
-    // Get today's stats from user_stats table
-    const stats = await statsDAO.getOrCreate(userId);
-
-    // ── Checked in today ──
-    const todayStr = getTodayStr();
-    const checkInEntry = await storage.get<CheckInEntry>(CHECKIN_TABLE, `${userId}_${todayStr}`);
-    const checkedInToday = !!checkInEntry?.data;
-
-    return apiSuccess({
-      todayStudyMinutes: Math.round(stats.studySeconds / 60 * 10) / 10,
-      streakDays: stats.checkinStreak,
-      masteryPercent: stats.masteryScore,
-      checkedInToday,
-      problemsAttempted: stats.problemsAttempted,
-      problemsCorrect: stats.problemsCorrect,
-      scenesCompleted: stats.scenesCompleted,
-    });
+    const stats = await getLearningStats(userId);
+    return apiSuccess({ ...stats });
   } catch (err) {
     log.error('Learning stats error:', err);
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '学习统计查询失败');

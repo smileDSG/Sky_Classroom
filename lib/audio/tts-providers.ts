@@ -77,9 +77,6 @@
  *    case 'elevenlabs-tts':
  *      return await generateElevenLabsTTS(config, text);
  *
- * 5. Add i18n translations in lib/i18n.ts
- *    providerElevenLabsTTS: { zh: 'ElevenLabs TTS', en: 'ElevenLabs TTS' }
- *
  * Error Handling Patterns:
  * - Always validate API key if requiresApiKey is true
  * - Throw descriptive errors for API failures
@@ -831,7 +828,7 @@ async function generateDoubaoTTS(
   const appId = config.apiKey!.slice(0, colonIdx);
   const accessKey = config.apiKey!.slice(colonIdx + 1);
 
-  const baseUrl = config.baseUrl || TTS_PROVIDERS['doubao-tts'].defaultBaseUrl || 'https://openspeech.bytedance.com/api/v3/tts/unidirectional';
+  const baseUrl = config.baseUrl || TTS_PROVIDERS['doubao-tts'].defaultBaseUrl || '';
   const speechRate = Math.round(((config.speed || 1.0) - 1.0) * 100);
 
   const response = await fetch(baseUrl, {

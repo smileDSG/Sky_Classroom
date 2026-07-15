@@ -1,0 +1,22 @@
+{
+  "id": "UraH8EhVvj",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 23,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-05-31T03:20:16.061Z",
+  "updatedAt": "2026-05-31T03:20:24.866Z",
+  "inputSummary": {
+    "requirementPreview": "java入门",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-31T03:20:16.069Z",
+  "completedAt": "2026-05-31T03:20:24.866Z",
+  "error": "用户取消了生成"
+}

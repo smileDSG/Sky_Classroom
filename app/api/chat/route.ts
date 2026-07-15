@@ -61,9 +61,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Limit message history to prevent huge request bodies
-    const messages = body.messages.length > MAX_CHAT_MESSAGES
-      ? body.messages.slice(-MAX_CHAT_MESSAGES)
-      : body.messages;
+    const messages =
+      body.messages.length > MAX_CHAT_MESSAGES
+        ? body.messages.slice(-MAX_CHAT_MESSAGES)
+        : body.messages;
 
     if (!body.storeState) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Missing required field: storeState');

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/sky/slides/suggest-cover/route';
 import { NextRequest } from 'next/server';
+import { renderCoverPptx } from '@/lib/slides/agent/cover-renderer';
+import { convertPptxToPng } from '@/lib/slides/agent/png-converter';
 
 // Mock dependencies
 vi.mock('@/lib/server/resolve-model', () => ({
@@ -60,6 +62,17 @@ vi.mock('fs/promises', async () => {
 });
 
 describe('POST /api/sky/slides/suggest-cover', () => {
+  beforeEach(() => {
+    vi.mocked(renderCoverPptx).mockResolvedValue({
+      success: true,
+      pptxPath: '/tmp/test-cover.pptx',
+    });
+    vi.mocked(convertPptxToPng).mockResolvedValue({
+      success: true,
+      pngPath: '/tmp/test-cover.png',
+    });
+  });
+
   function makeRequest(body: Record<string, unknown>): NextRequest {
     return new NextRequest('http://localhost/api/sky/slides/suggest-cover', {
       method: 'POST',
@@ -95,6 +108,24 @@ describe('POST /api/sky/slides/suggest-cover', () => {
     expect(data.cover.designDNA.styleName).toBe('科技深蓝');
     expect(data.alternatives).toBeInstanceOf(Array);
     expect(data.alternatives.length).toBeGreaterThan(0);
+  });
+
+  it('returns the recommendation when LibreOffice preview conversion is unavailable', async () => {
+    vi.mocked(convertPptxToPng).mockResolvedValueOnce({
+      success: false,
+      error: 'LibreOffice not found. Install it, then restart the app.',
+    });
+
+    const req = makeRequest({ topic: '光合作用', difficulty: '高中' });
+    const res = await POST(req);
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.cover.designDNA).toBeDefined();
+    expect(data.cover.pngUrl).toBeNull();
+    expect(data.cover.previewAvailable).toBe(false);
+    expect(data.cover.previewError).toContain('LibreOffice not found');
   });
 
   it('uses default difficulty when not provided', async () => {

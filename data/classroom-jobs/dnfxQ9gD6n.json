@@ -1,0 +1,607 @@
+{
+  "id": "dnfxQ9gD6n",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-10T11:23:09.787Z",
+  "updatedAt": "2026-06-10T11:25:46.024Z",
+  "inputSummary": {
+    "requirementPreview": "python\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 5,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-10T11:23:09.891Z",
+  "totalScenes": 14,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "What is Python?",
+        "description": "Introduce Python as a programming language, its history, and why it is popular for beginners and professionals alike.",
+        "keyPoints": [
+          "Python is a high-level, interpreted programming language.",
+          "Created by Guido van Rossum and released in 1991.",
+          "Known for its simple, readable syntax similar to English.",
+          "Used in web development, data science, AI, automation, and more.",
+          "Large community and extensive library support."
+        ],
+        "teachingObjective": "Learners will be able to describe what Python is and list its key characteristics and applications.",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "Setting Up Your Environment",
+        "description": "Guide learners on how to install Python and choose an editor to start writing code.",
+        "keyPoints": [
+          "Download Python from the official website: python.org.",
+          "Installation steps for Windows, macOS, and Linux.",
+          "Introduction to IDEs like VS Code, PyCharm, and IDLE.",
+          "Writing and running a simple 'Hello, World!' program."
+        ],
+        "teachingObjective": "Learners will be able to install Python and create their first program.",
+        "estimatedDuration": 180,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "quiz",
+        "title": "Check Your Understanding: Python Basics",
+        "description": "Assess learner comprehension of Python's characteristics and setup.",
+        "keyPoints": [
+          "Recall key facts about Python.",
+          "Test readiness to proceed."
+        ],
+        "teachingObjective": "Reinforce the introductory concepts.",
+        "estimatedDuration": 70,
+        "order": 3,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single"
+          ]
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "Variables and Data Types",
+        "description": "Explain the concept of variables and the basic data types in Python: integers, floats, strings, and booleans.",
+        "keyPoints": [
+          "Variables are used to store data in memory.",
+          "No need to declare the data type explicitly (dynamic typing).",
+          "Common data types: int (integer), float (decimal), str (string), bool (boolean).",
+          "Use assignment operator (=) to assign values.",
+          "Type() function to check the data type of a variable."
+        ],
+        "teachingObjective": "Learners will be able to declare variables and understand the basic data types.",
+        "estimatedDuration": 150,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "Working with Lists and Dictionaries",
+        "description": "Introduce Python's fundamental collection data structures: lists and dictionaries.",
+        "keyPoints": [
+          "Lists: ordered, mutable collections of items, created with square brackets [ ].",
+          "Access, add, remove, and modify list elements.",
+          "Dictionaries: unordered, key-value pairs, created with curly braces { }.",
+          "Access and modify dictionary values using keys.",
+          "Common operations on lists and dictionaries."
+        ],
+        "teachingObjective": "Learners will be able to create and manipulate lists and dictionaries.",
+        "estimatedDuration": 180,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "interactive",
+        "title": "Play with Variables and Data Structures",
+        "description": "Let learners experiment with creating and modifying variables, lists, and dictionaries in a safe, simulated Python environment.",
+        "keyPoints": [
+          "Assign different data types to variables.",
+          "Create and manipulate a simple list.",
+          "Create and manipulate a simple dictionary.",
+          "See the output of their code in real-time."
+        ],
+        "teachingObjective": "Learners will apply their knowledge of variables, data types, and basic data structures through hands-on practice.",
+        "estimatedDuration": 240,
+        "order": 6,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python",
+          "goal": "Practice creating variables of different types, a list, and a dictionary."
+        }
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "Check Your Understanding: Data Structures",
+        "description": "Assess understanding of lists and dictionaries.",
+        "keyPoints": [
+          "Identify correct syntax for lists and dictionaries.",
+          "Apply knowledge of basic operations."
+        ],
+        "teachingObjective": "Reinforce concepts of data structures.",
+        "estimatedDuration": 90,
+        "order": 7,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "multiple",
+            "single"
+          ]
+        }
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "Control Flow: If-Else Statements",
+        "description": "Explain how to make decisions in code using conditionals.",
+        "keyPoints": [
+          "Decision making using `if`, `elif`, and `else` statements.",
+          "Boolean expressions and comparison operators.",
+          "Indentation is crucial in Python to define code blocks.",
+          "Logical operators: `and`, `or`, `not`.",
+          "Examples of decision making in real-world applications."
+        ],
+        "teachingObjective": "Learners will be able to write simple decision-making code using if-else statements.",
+        "estimatedDuration": 150,
+        "order": 8
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "Control Flow: Loops (For & While)",
+        "description": "Explain how to repeat actions using `for` and `while` loops.",
+        "keyPoints": [
+          "`for` loops: iterate over a sequence (like a list or string).",
+          "`while` loops: continue while a condition is true.",
+          "The `range()` function for generating sequences.",
+          "Loop control keywords `break` and `continue`.",
+          "Avoiding infinite loops."
+        ],
+        "teachingObjective": "Learners will be able to write loops to automate repetitive tasks.",
+        "estimatedDuration": 180,
+        "order": 9
+      },
+      {
+        "id": "scene_10",
+        "type": "interactive",
+        "title": "Mastering Control Flow",
+        "description": "A gamified environment where learners use conditionals and loops to navigate a simple character through a grid maze.",
+        "keyPoints": [
+          "Apply if/elif/else to make directional decisions.",
+          "Use loops to automate movement.",
+          "Debug a loop that doesn't end."
+        ],
+        "teachingObjective": "Learners will apply control flow concepts to solve a puzzle.",
+        "estimatedDuration": 300,
+        "order": 10,
+        "widgetType": "game",
+        "widgetOutline": {
+          "gameType": "maze",
+          "challenge": "Navigate a character to the goal using a sequence of if-else statements and a for loop."
+        }
+      },
+      {
+        "id": "scene_11",
+        "type": "slide",
+        "title": "Project: Build a Simple Calculator",
+        "description": "Introduce the final project where learners will create a command-line calculator that can perform basic arithmetic operations.",
+        "keyPoints": [
+          "Project goal: Build a simple calculator.",
+          "Required skills: variables, input/output, conditionals, and loops.",
+          "A step-by-step guide to structure the project.",
+          "Tips for handling user input and preventing errors."
+        ],
+        "teachingObjective": "Learners will synthesize previously learned concepts to build a functional program.",
+        "estimatedDuration": 60,
+        "order": 11
+      },
+      {
+        "id": "scene_12",
+        "type": "pbl",
+        "title": "Project: Python Calculator",
+        "description": "Learners will design and implement a simple command-line calculator program, practicing their Python skills in a project-based format.",
+        "keyPoints": [
+          "Define the calculator's features.",
+          "Plan the project structure.",
+          "Implement the code.",
+          "Test and debug the program."
+        ],
+        "teachingObjective": "Learners will be able to build a functional Python program.",
+        "estimatedDuration": 600,
+        "order": 12,
+        "pblConfig": {
+          "projectTopic": "Command-Line Calculator",
+          "projectDescription": "Create a Python program that acts as a simple calculator. The calculator should allow the user to choose an operation (add, subtract, multiply, divide) and then input two numbers. The program should display the result and continue asking until the user chooses to exit.",
+          "targetSkills": [
+            "Variable assignment",
+            "Conditional statements",
+            "Looping",
+            "User input/output",
+            "Basic debugging"
+          ],
+          "issueCount": 3
+        }
+      },
+      {
+        "id": "scene_13",
+        "type": "slide",
+        "title": "Key Takeaways & Next Steps",
+        "description": "Summarize the core concepts covered and suggest paths for further learning.",
+        "keyPoints": [
+          "Learned Python basics: variables, data types, and structures.",
+          "Mastered control flow with conditionals and loops.",
+          "Built a project: a working calculator.",
+          "Next steps: functions, modules, error handling, object-oriented programming."
+        ],
+        "teachingObjective": "Reinforce the course content and motivate continued learning.",
+        "estimatedDuration": 120,
+        "order": 13
+      },
+      {
+        "id": "scene_14",
+        "type": "quiz",
+        "title": "Final Assessment: Python Fundamentals",
+        "description": "Evaluate overall understanding of the course material.",
+        "keyPoints": [
+          "Assess comprehension across all modules.",
+          "Identify areas that may need review."
+        ],
+        "teachingObjective": "Test mastery of Python fundamentals.",
+        "estimatedDuration": 150,
+        "order": 14,
+        "quizConfig": {
+          "questionCount": 5,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        }
+      }
+    ],
+    "languageDirective": "The user requirement is in English, so the course will be taught in English. All scene content, including titles, descriptions, key points, and quiz questions, will be written in English. Programming terms like 'Python' will remain in English, as per standard practice. Simple and clear English will be used throughout.",
+    "topicSummary": "Python Fundamentals",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "3yzsFvmkyB",
+      "name": "What is Python?",
+      "languageDirective": "The user requirement is in English, so the course will be taught in English. All scene content, including titles, descriptions, key points, and quiz questions, will be written in English. Programming terms like 'Python' will remain in English, as per standard practice. Simple and clear English will be used throughout.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1781090616963,
+      "updatedAt": 1781090616963,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "What is Python?",
+      "description": "Introduce Python as a programming language, its history, and why it is popular for beginners and professionals alike.",
+      "keyPoints": [
+        "Python is a high-level, interpreted programming language.",
+        "Created by Guido van Rossum and released in 1991.",
+        "Known for its simple, readable syntax similar to English.",
+        "Used in web development, data science, AI, automation, and more.",
+        "Large community and extensive library support."
+      ],
+      "teachingObjective": "Learners will be able to describe what Python is and list its key characteristics and applications.",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "Setting Up Your Environment",
+      "description": "Guide learners on how to install Python and choose an editor to start writing code.",
+      "keyPoints": [
+        "Download Python from the official website: python.org.",
+        "Installation steps for Windows, macOS, and Linux.",
+        "Introduction to IDEs like VS Code, PyCharm, and IDLE.",
+        "Writing and running a simple 'Hello, World!' program."
+      ],
+      "teachingObjective": "Learners will be able to install Python and create their first program.",
+      "estimatedDuration": 180,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "quiz",
+      "title": "Check Your Understanding: Python Basics",
+      "description": "Assess learner comprehension of Python's characteristics and setup.",
+      "keyPoints": [
+        "Recall key facts about Python.",
+        "Test readiness to proceed."
+      ],
+      "teachingObjective": "Reinforce the introductory concepts.",
+      "estimatedDuration": 70,
+      "order": 3,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single"
+        ]
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "Variables and Data Types",
+      "description": "Explain the concept of variables and the basic data types in Python: integers, floats, strings, and booleans.",
+      "keyPoints": [
+        "Variables are used to store data in memory.",
+        "No need to declare the data type explicitly (dynamic typing).",
+        "Common data types: int (integer), float (decimal), str (string), bool (boolean).",
+        "Use assignment operator (=) to assign values.",
+        "Type() function to check the data type of a variable."
+      ],
+      "teachingObjective": "Learners will be able to declare variables and understand the basic data types.",
+      "estimatedDuration": 150,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "Working with Lists and Dictionaries",
+      "description": "Introduce Python's fundamental collection data structures: lists and dictionaries.",
+      "keyPoints": [
+        "Lists: ordered, mutable collections of items, created with square brackets [ ].",
+        "Access, add, remove, and modify list elements.",
+        "Dictionaries: unordered, key-value pairs, created with curly braces { }.",
+        "Access and modify dictionary values using keys.",
+        "Common operations on lists and dictionaries."
+      ],
+      "teachingObjective": "Learners will be able to create and manipulate lists and dictionaries.",
+      "estimatedDuration": 180,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "interactive",
+      "title": "Play with Variables and Data Structures",
+      "description": "Let learners experiment with creating and modifying variables, lists, and dictionaries in a safe, simulated Python environment.",
+      "keyPoints": [
+        "Assign different data types to variables.",
+        "Create and manipulate a simple list.",
+        "Create and manipulate a simple dictionary.",
+        "See the output of their code in real-time."
+      ],
+      "teachingObjective": "Learners will apply their knowledge of variables, data types, and basic data structures through hands-on practice.",
+      "estimatedDuration": 240,
+      "order": 6,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python",
+        "goal": "Practice creating variables of different types, a list, and a dictionary."
+      }
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "Check Your Understanding: Data Structures",
+      "description": "Assess understanding of lists and dictionaries.",
+      "keyPoints": [
+        "Identify correct syntax for lists and dictionaries.",
+        "Apply knowledge of basic operations."
+      ],
+      "teachingObjective": "Reinforce concepts of data structures.",
+      "estimatedDuration": 90,
+      "order": 7,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "multiple",
+          "single"
+        ]
+      }
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "Control Flow: If-Else Statements",
+      "description": "Explain how to make decisions in code using conditionals.",
+      "keyPoints": [
+        "Decision making using `if`, `elif`, and `else` statements.",
+        "Boolean expressions and comparison operators.",
+        "Indentation is crucial in Python to define code blocks.",
+        "Logical operators: `and`, `or`, `not`.",
+        "Examples of decision making in real-world applications."
+      ],
+      "teachingObjective": "Learners will be able to write simple decision-making code using if-else statements.",
+      "estimatedDuration": 150,
+      "order": 8
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "Control Flow: Loops (For & While)",
+      "description": "Explain how to repeat actions using `for` and `while` loops.",
+      "keyPoints": [
+        "`for` loops: iterate over a sequence (like a list or string).",
+        "`while` loops: continue while a condition is true.",
+        "The `range()` function for generating sequences.",
+        "Loop control keywords `break` and `continue`.",
+        "Avoiding infinite loops."
+      ],
+      "teachingObjective": "Learners will be able to write loops to automate repetitive tasks.",
+      "estimatedDuration": 180,
+      "order": 9
+    },
+    {
+      "id": "scene_10",
+      "type": "interactive",
+      "title": "Mastering Control Flow",
+      "description": "A gamified environment where learners use conditionals and loops to navigate a simple character through a grid maze.",
+      "keyPoints": [
+        "Apply if/elif/else to make directional decisions.",
+        "Use loops to automate movement.",
+        "Debug a loop that doesn't end."
+      ],
+      "teachingObjective": "Learners will apply control flow concepts to solve a puzzle.",
+      "estimatedDuration": 300,
+      "order": 10,
+      "widgetType": "game",
+      "widgetOutline": {
+        "gameType": "maze",
+        "challenge": "Navigate a character to the goal using a sequence of if-else statements and a for loop."
+      }
+    },
+    {
+      "id": "scene_11",
+      "type": "slide",
+      "title": "Project: Build a Simple Calculator",
+      "description": "Introduce the final project where learners will create a command-line calculator that can perform basic arithmetic operations.",
+      "keyPoints": [
+        "Project goal: Build a simple calculator.",
+        "Required skills: variables, input/output, conditionals, and loops.",
+        "A step-by-step guide to structure the project.",
+        "Tips for handling user input and preventing errors."
+      ],
+      "teachingObjective": "Learners will synthesize previously learned concepts to build a functional program.",
+      "estimatedDuration": 60,
+      "order": 11
+    },
+    {
+      "id": "scene_12",
+      "type": "pbl",
+      "title": "Project: Python Calculator",
+      "description": "Learners will design and implement a simple command-line calculator program, practicing their Python skills in a project-based format.",
+      "keyPoints": [
+        "Define the calculator's features.",
+        "Plan the project structure.",
+        "Implement the code.",
+        "Test and debug the program."
+      ],
+      "teachingObjective": "Learners will be able to build a functional Python program.",
+      "estimatedDuration": 600,
+      "order": 12,
+      "pblConfig": {
+        "projectTopic": "Command-Line Calculator",
+        "projectDescription": "Create a Python program that acts as a simple calculator. The calculator should allow the user to choose an operation (add, subtract, multiply, divide) and then input two numbers. The program should display the result and continue asking until the user chooses to exit.",
+        "targetSkills": [
+          "Variable assignment",
+          "Conditional statements",
+          "Looping",
+          "User input/output",
+          "Basic debugging"
+        ],
+        "issueCount": 3
+      }
+    },
+    {
+      "id": "scene_13",
+      "type": "slide",
+      "title": "Key Takeaways & Next Steps",
+      "description": "Summarize the core concepts covered and suggest paths for further learning.",
+      "keyPoints": [
+        "Learned Python basics: variables, data types, and structures.",
+        "Mastered control flow with conditionals and loops.",
+        "Built a project: a working calculator.",
+        "Next steps: functions, modules, error handling, object-oriented programming."
+      ],
+      "teachingObjective": "Reinforce the course content and motivate continued learning.",
+      "estimatedDuration": 120,
+      "order": 13
+    },
+    {
+      "id": "scene_14",
+      "type": "quiz",
+      "title": "Final Assessment: Python Fundamentals",
+      "description": "Evaluate overall understanding of the course material.",
+      "keyPoints": [
+        "Assess comprehension across all modules.",
+        "Identify areas that may need review."
+      ],
+      "teachingObjective": "Test mastery of Python fundamentals.",
+      "estimatedDuration": 150,
+      "order": 14,
+      "quizConfig": {
+        "questionCount": 5,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      }
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "The user requirement is in English, so the course will be taught in English. All scene content, including titles, descriptions, key points, and quiz questions, will be written in English. Programming terms like 'Python' will remain in English, as per standard practice. Simple and clear English will be used throughout.",
+    "totalScenes": 14
+  },
+  "topicSummary": "Python Fundamentals",
+  "completedAt": "2026-06-10T11:25:46.024Z",
+  "result": {
+    "classroomId": "3yzsFvmkyB",
+    "url": "http://localhost:3001/classroom/3yzsFvmkyB",
+    "scenesCount": 5
+  }
+}

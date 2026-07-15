@@ -11,7 +11,7 @@ import { cleanJsonText } from './content-schemas';
 
 const log = createLogger('PageDesignAgent');
 
-function buildSystemPrompt(designDNA: DesignDNA): string {
+export function buildSystemPrompt(designDNA: DesignDNA, educationLevel?: string): string {
   const { colors, fonts, decoration, components } = designDNA;
 
   const densityRules =
@@ -45,7 +45,7 @@ LAYOUT_WIDE: 13.33" × 7.5"
 
 ## 密度规则（严格遵守）
 ${densityRules}
-
+${educationLevel ? `\n## 受众适配\n本课件面向${educationLevel}学生。设计密度和视觉复杂度必须匹配该学段的认知负荷：${educationLevel === '小学' ? '尽量简洁直观，多用图形和色块，减少纯文字密度' : educationLevel === '研究生' ? '可以承载较高信息密度，允许复杂图表和多级内容' : '保持适中密度，图文结合，关键概念突出展示'}。\n` : '\n'}
 ## 可用指令
 1. setBackground: { "op":"setBackground", "params":{"color":"XXXXXX"} }
 2. addText: { "op":"addText", "params":{"text":"...", "x":0.8,"y":0.5,"w":11.7,"h":0.7, "fontSize":34,"fontFace":"...","color":"XXXXXX","bold":true,"align":"left"} }
@@ -166,12 +166,13 @@ function buildContentCompletenessHint(pageType: string, content: Record<string, 
   return hints.length > 0 ? '\n## 内容完整性要求（必须全部渲染，不可省略）\n' + hints.join('\n') : '';
 }
 
-function buildUserPrompt(
+export function buildUserPrompt(
   pageNum: number,
   pageType: string,
   content: Record<string, unknown>,
   totalPages: number,
   designDNA: DesignDNA,
+  educationLevel?: string,
 ): string {
   const formulaCount = Array.isArray(content.formulas) ? (content.formulas as Array<unknown>).length : 0;
   const formulaHint = formulaCount > 0
@@ -185,7 +186,7 @@ function buildUserPrompt(
     : '';
   const contentHint = buildContentCompletenessHint(pageType, content);
 
-  return `页号: ${pageNum} / ${totalPages}
+  return `页号: ${pageNum} / ${totalPages}${educationLevel ? `\n目标受众: ${educationLevel}` : ''}
 页面类型: ${pageType}
 背景色: ${pageNum === 1 || pageNum === totalPages ? designDNA.colors.coverBg : designDNA.colors.contentBg}
 页面内容: ${JSON.stringify(content)}${formulaHint}${mainFormulaHint}${tableHint}${contentHint}
@@ -222,10 +223,11 @@ export async function designPage(
   totalPages: number,
   designDNA: DesignDNA,
   languageModel: LanguageModel,
+  educationLevel?: string,
 ): Promise<PageDesignResult> {
   try {
-    const system = buildSystemPrompt(designDNA);
-    const user = buildUserPrompt(pageNum, pageType, content, totalPages, designDNA);
+    const system = buildSystemPrompt(designDNA, educationLevel);
+    const user = buildUserPrompt(pageNum, pageType, content, totalPages, designDNA, educationLevel);
 
     log.info(`Designing page ${pageNum} (${pageType})`);
 

@@ -1,18 +1,15 @@
 /**
  * tests/sky/learning-stats.test.tsx
  *
- * 测试 Sky Classroom 学习统计组件：
- *   - LearningStats (统计卡 + 错因分布条形图)
+ * Tests the Sky Classroom learning stats dashboard.
  */
 
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { LearningStats } from '@/components/sky/learning/learning-stats';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import type { MistakeRecord } from '@/lib/mistakes/types';
-
-// ── Helpers ──────────────────────────────────────────────────────────
 
 function makeMistake(overrides: Partial<MistakeRecord> = {}): MistakeRecord {
   return {
@@ -21,7 +18,7 @@ function makeMistake(overrides: Partial<MistakeRecord> = {}): MistakeRecord {
     userAnswer: 'x = 2',
     correctAnswer: 'x = 3',
     cause: 'calculation-error',
-    solvedAt: new Date('2025-06-01T10:00:00Z'),
+    solvedAt: new Date(),
     reviewed: false,
     reviewCount: 0,
     knowledgePoints: ['一元一次方程'],
@@ -35,28 +32,29 @@ function resetStore() {
     mistakes: [],
     knowledgeGraph: null,
     activeFilter: null,
+    memoryProgress: {
+      totalFlipped: 0,
+      topicCount: 0,
+      lastStudied: null,
+    },
   });
 }
-
-// ── Tests ────────────────────────────────────────────────────────────
 
 describe('LearningStats', () => {
   beforeEach(() => {
     resetStore();
   });
 
-  // ── 1. 空状态渲染 ─────────────────────────────────────────────
-  it('空状态渲染 → 显示"还没有学习数据"', () => {
+  it('renders the useful empty state with practice actions', () => {
     render(<LearningStats />);
 
     expect(screen.getByText('还没有学习数据')).toBeDefined();
-    expect(
-      screen.getByText(/完成一些搜题练习后/),
-    ).toBeDefined();
+    expect(screen.getByText(/完成搜题、练习或复习后/)).toBeDefined();
+    expect(screen.getByText('去搜题练习')).toBeDefined();
+    expect(screen.getByText('AI 出题')).toBeDefined();
   });
 
-  // ── 2. 有数据时渲染统计卡片 ─────────────────────────────────
-  it('有数据时渲染统计卡片 → 总错题数/已复习/薄弱点数', () => {
+  it('renders the diagnosis banner and key metrics when data exists', () => {
     useSkyClassroomStore.setState({
       mistakes: [
         makeMistake({ id: 'm1', reviewed: false }),
@@ -69,53 +67,60 @@ describe('LearningStats', () => {
           knowledgePoints: ['导数'],
         }),
       ],
+      memoryProgress: {
+        totalFlipped: 6,
+        topicCount: 2,
+        lastStudied: new Date('2026-07-01T08:00:00Z').getTime(),
+      },
     });
 
     render(<LearningStats />);
 
-    // 总错题数 = 2
-    expect(screen.getByText('2')).toBeDefined();
-    expect(screen.getByText('总错题数')).toBeDefined();
-
-    // 已复习数 = 1
-    expect(screen.getByText('已复习 · 复习率 50%')).toBeDefined();
-
-    // 薄弱知识点: knowledge-graph 基于 mistakes 构建
-    // 2 个不同的 KP（一元一次方程 / 导数），每个 mastery = 100 - mistakeCount * 20 = 100 - 20 = 80
-    // mastery >= 80 → 不是 weak, weakPoints = []
-    // weakCount = 0
-    expect(screen.getByText('薄弱知识点')).toBeDefined();
+    expect(screen.getByText('今日学习诊断')).toBeDefined();
+    expect(screen.getByText('总错题')).toBeDefined();
+    expect(screen.getAllByText('待复习').length).toBeGreaterThan(0);
+    expect(screen.getByText('掌握度')).toBeDefined();
+    expect(screen.getByText('记忆卡片')).toBeDefined();
+    expect(screen.getByText('近 7 天新增 2 道，今日 2 道')).toBeDefined();
+    expect(screen.getByText('已复习 1 道，复习率 50%')).toBeDefined();
+    expect(screen.getByText(/2 个主题/)).toBeDefined();
   });
 
-  // ── 3. 错因分布条形图 ───────────────────────────────────────
-  it('有数据时渲染错因分布条形图', () => {
+  it('renders trend, cause priority, subject distribution, and recent mistakes', () => {
     useSkyClassroomStore.setState({
       mistakes: [
-        makeMistake({ id: 'm1', cause: 'calculation-error' }),
+        makeMistake({
+          id: 'm1',
+          cause: 'calculation-error',
+          problem: '在 $\\triangle ABC$ 中，$\\angle A = 40^\\circ$',
+          knowledgePoints: ['一元一次方程'],
+        }),
+        makeMistake({
+          id: 'm2',
+          cause: 'calculation-error',
+          problem: '导数计算题',
+          knowledgePoints: ['导数'],
+        }),
+        makeMistake({
+          id: 'm3',
+          cause: 'misreading',
+          problem: '概率审题题',
+          knowledgePoints: ['概率'],
+          reviewed: true,
+          reviewCount: 1,
+        }),
       ],
     });
 
-    render(<LearningStats />);
+    const { container } = render(<LearningStats />);
 
-    // 条形图标题
-    expect(screen.getByText('错因分布')).toBeDefined();
-
-    // 每种错因标签都在 DOM 中
-    const causeLabels = [
-      '概念不清',
-      '计算失误',
-      '审题错误',
-      '方法错误',
-      '粗心',
-      '格式错误',
-    ];
-    for (const label of causeLabels) {
-      expect(screen.getByText(label)).toBeDefined();
-    }
-
-    // 对应计数: calculation-error = 1, 其余 = 0
-    // 计数 "1" 在 stat card (总错题数) 和条形图 (计算失误计数) 各出现一次
-    const ones = screen.getAllByText('1');
-    expect(ones.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('最近 14 天练习热度')).toBeDefined();
+    expect(screen.getByText('错因优先级')).toBeDefined();
+    expect(screen.getByText('学科薄弱分布')).toBeDefined();
+    expect(screen.getByText('最近错题动态')).toBeDefined();
+    expect(screen.getAllByText('计算失误').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('审题错误').length).toBeGreaterThan(0);
+    expect(container.querySelector('.katex')).not.toBeNull();
+    expect(screen.getByText('导数计算题')).toBeDefined();
   });
 });

@@ -1,0 +1,22 @@
+{
+  "id": "wc76IP5lc-",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 23,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-06-25T11:56:29.659Z",
+  "updatedAt": "2026-06-25T11:56:39.289Z",
+  "inputSummary": {
+    "requirementPreview": "二次函数\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-25T11:56:29.690Z",
+  "completedAt": "2026-06-25T11:56:39.289Z",
+  "error": "用户取消了生成"
+}

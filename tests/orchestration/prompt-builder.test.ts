@@ -19,20 +19,27 @@ function makeStoreState(overrides?: Partial<StatelessChatRequest['storeState']>)
       name: '光合作用课程',
       description: '初中生物',
       languageDirective: '请用中文回答',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     },
     scenes: [
       {
         id: 'scene-1',
+        stageId: 'stage-1',
         title: '什么是光合作用',
         type: 'slide',
         order: 0,
         content: {
           type: 'slide',
           canvas: {
+            id: 'canvas-1',
+            viewportSize: 1000,
+            viewportRatio: 0.5625,
+            theme: { backgroundColor: '#ffffff', themeColors: ['#3b82f6'], fontColor: '#333', fontName: 'Arial' },
             elements: [
-              { id: 'el-1', type: 'text', content: '<p>光合作用定义</p>', left: 0, top: 0, width: 100, height: 50 },
-              { id: 'el-2', type: 'image', src: 'https://example.com/img.png', left: 0, top: 60, width: 200, height: 150 },
-              { id: 'el-3', type: 'text', content: '<p>反应方程式</p>', left: 0, top: 220, width: 100, height: 50 },
+              { id: 'el-1', type: 'text', content: '<p>光合作用定义</p>', left: 0, top: 0, width: 100, height: 50, defaultFontName: '', defaultColor: '#333', rotate: 0 },
+              { id: 'el-2', type: 'image', src: 'https://example.com/img.png', left: 0, top: 60, width: 200, height: 150, fixedRatio: true, rotate: 0 },
+              { id: 'el-3', type: 'text', content: '<p>反应方程式</p>', left: 0, top: 220, width: 100, height: 50, defaultFontName: '', defaultColor: '#333', rotate: 0 },
             ],
           },
         },
@@ -41,14 +48,15 @@ function makeStoreState(overrides?: Partial<StatelessChatRequest['storeState']>)
       },
       {
         id: 'scene-2',
+        stageId: 'stage-1',
         title: '随堂测验',
         type: 'quiz',
         order: 1,
         content: {
           type: 'quiz',
           questions: [
-            { type: 'single', question: '光合作用的产物是什么？', options: ['葡萄糖', '氨基酸', '脂肪酸'], answer: 0 },
-            { type: 'single', question: '光合作用发生在哪个细胞器？', options: ['线粒体', '叶绿体', '核糖体'], answer: 1 },
+            { type: 'single', question: '光合作用的产物是什么？', options: [{ label: '葡萄糖', value: 'A' }, { label: '氨基酸', value: 'B' }, { label: '脂肪酸', value: 'C' }], answer: ['A'] },
+            { type: 'single', question: '光合作用发生在哪个细胞器？', options: [{ label: '线粒体', value: 'A' }, { label: '叶绿体', value: 'B' }, { label: '核糖体', value: 'C' }], answer: ['B'] },
           ],
         },
         createdAt: Date.now(),
@@ -56,12 +64,19 @@ function makeStoreState(overrides?: Partial<StatelessChatRequest['storeState']>)
       },
       {
         id: 'scene-3',
+        stageId: 'stage-1',
         title: '光合作用的意义',
         type: 'slide',
         order: 2,
         content: {
           type: 'slide',
-          canvas: { elements: [] },
+          canvas: {
+            id: 'canvas-3',
+            viewportSize: 1000,
+            viewportRatio: 0.5625,
+            theme: { backgroundColor: '#ffffff', themeColors: ['#3b82f6'], fontColor: '#333', fontName: 'Arial' },
+            elements: [],
+          },
         },
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -183,6 +198,10 @@ describe('buildStructuredPrompt', () => {
       allowedActions: ['spotlight', 'laser', 'wb_open', 'wb_draw_text'],
       priority: 10,
       avatar: '/avatars/teacher.svg',
+      color: '#3b82f6',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDefault: true,
     };
     const storeState = makeStoreState();
 
@@ -201,6 +220,11 @@ describe('buildStructuredPrompt', () => {
       persona: '耐心细致的老师',
       allowedActions: ['spotlight'],
       priority: 10,
+      avatar: '/avatars/teacher.svg',
+      color: '#3b82f6',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDefault: true,
     };
     const storeState = makeStoreState();
 
@@ -222,6 +246,11 @@ describe('buildStructuredPrompt', () => {
       persona: '耐心细致的老师',
       allowedActions: [],
       priority: 10,
+      avatar: '/avatars/teacher.svg',
+      color: '#3b82f6',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDefault: true,
     };
     const storeState = makeStoreState();
 
@@ -245,6 +274,11 @@ describe('buildStructuredPrompt', () => {
       persona: '',
       allowedActions: ['spotlight'],
       priority: 10,
+      avatar: '/avatars/teacher.svg',
+      color: '#3b82f6',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDefault: true,
     };
     const studentConfig = {
       id: 'student-1',
@@ -253,6 +287,11 @@ describe('buildStructuredPrompt', () => {
       persona: '',
       allowedActions: [],
       priority: 1,
+      avatar: '/avatars/student.svg',
+      color: '#60a5fa',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDefault: true,
     };
     const storeState = makeStoreState();
 
@@ -270,8 +309,8 @@ describe('buildDirectorPrompt', () => {
   test('produces a non-empty director prompt', async () => {
     const { buildDirectorPrompt } = await import('@/lib/orchestration/director-prompt');
     const agents = [
-      { id: 'teacher-1', role: 'teacher' as const, name: '王老师', persona: '', allowedActions: [], priority: 10 },
-      { id: 'student-1', role: 'student' as const, name: '小明', persona: '', allowedActions: [], priority: 1 },
+      { id: 'teacher-1', role: 'teacher' as const, name: '王老师', persona: '', allowedActions: [], priority: 10, avatar: '/avatars/teacher.svg', color: '#3b82f6', createdAt: new Date(), updatedAt: new Date(), isDefault: true },
+      { id: 'student-1', role: 'student' as const, name: '小明', persona: '', allowedActions: [], priority: 1, avatar: '/avatars/student.svg', color: '#60a5fa', createdAt: new Date(), updatedAt: new Date(), isDefault: true },
     ];
 
     const prompt = buildDirectorPrompt(
@@ -288,7 +327,7 @@ describe('buildDirectorPrompt', () => {
   test('includes conversation summary', async () => {
     const { buildDirectorPrompt } = await import('@/lib/orchestration/director-prompt');
     const agents = [
-      { id: 'teacher-1', role: 'teacher' as const, name: '老师', persona: '', allowedActions: [], priority: 10 },
+      { id: 'teacher-1', role: 'teacher' as const, name: '老师', persona: '', allowedActions: [], priority: 10, avatar: '/avatars/teacher.svg', color: '#3b82f6', createdAt: new Date(), updatedAt: new Date(), isDefault: true },
     ];
 
     const prompt = buildDirectorPrompt(
@@ -303,7 +342,7 @@ describe('buildDirectorPrompt', () => {
   test('includes discussion context', async () => {
     const { buildDirectorPrompt } = await import('@/lib/orchestration/director-prompt');
     const agents = [
-      { id: 'teacher-1', role: 'teacher' as const, name: '老师', persona: '', allowedActions: [], priority: 10 },
+      { id: 'teacher-1', role: 'teacher' as const, name: '老师', persona: '', allowedActions: [], priority: 10, avatar: '/avatars/teacher.svg', color: '#3b82f6', createdAt: new Date(), updatedAt: new Date(), isDefault: true },
     ];
 
     const prompt = buildDirectorPrompt(

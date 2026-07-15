@@ -4,8 +4,6 @@ import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
-
 interface AgentRevealModalProps {
   agents: Array<{
     id: string;
@@ -42,9 +40,13 @@ const ROLE_ICONS: Record<string, string> = {
   student: '🎓',
 };
 
-export function AgentRevealModal({ agents, open, onClose, onAllRevealed }: AgentRevealModalProps) {
-  const { t } = useI18n();
-  const [revealedCount, setRevealedCount] = useState(0);
+const ROLE_NAMES: Record<string, string> = {
+  teacher: '老师',
+  assistant: '助手',
+  student: '学生',
+};
+
+export function AgentRevealModal({ agents, open, onClose, onAllRevealed }: AgentRevealModalProps) {const [revealedCount, setRevealedCount] = useState(0);
   const [flipsComplete, setFlipsComplete] = useState(false);
   const allRevealedFiredRef = useRef(false);
   const onAllRevealedRef = useRef(onAllRevealed);
@@ -133,7 +135,7 @@ export function AgentRevealModal({ agents, open, onClose, onAllRevealed }: Agent
             transition={{ delay: 0.1, duration: 0.4 }}
           >
             <Sparkles className="mr-2 inline-block size-6 text-amber-500 dark:text-yellow-400" />
-            {t('generation.agentRevealTitle')}
+            {'你的课堂角色'}
           </motion.h2>
 
           {/* Cards */}
@@ -260,7 +262,7 @@ export function AgentRevealModal({ agents, open, onClose, onAllRevealed }: Agent
                               }}
                             >
                               <span className="text-[9px]">{roleIcon}</span>
-                              {t(`settings.agentRoles.${agent.role}`)}
+                              {ROLE_NAMES[agent.role] || agent.role}
                             </span>
                           </div>
 
@@ -392,7 +394,7 @@ export function AgentRevealModal({ agents, open, onClose, onAllRevealed }: Agent
                 transition={{ delay: 0.3, duration: 0.3 }}
                 onClick={onClose}
               >
-                {t('generation.continue')}
+                {'继续'}
               </motion.button>
             )}
           </motion.div>

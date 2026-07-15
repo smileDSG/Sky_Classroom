@@ -1,126 +1,85 @@
 /**
  * OpenMAIC Service Worker
  *
- * Cache strategies:
- * - cache-first: static assets (_next/static/*)
- * - network-first: API calls (/api/*)
- * - stale-while-revalidate: HTML pages
- *
- * DEV MODE: bypasses all caching for localhost so Turbopack HMR and
- * chunk invalidation work correctly. The static-cache strategy below
- * caused stale Next.js chunks to be served after rebuilds, leading to
- * "module factory is not available" errors (e.g., lucide-react Clock).
+ * Development note:
+ * Next/Turbopack chunks must never be served cache-first. Their URLs can remain
+ * referenced by a stale runtime while the dev server has rebuilt a different
+ * module graph, causing ChunkLoadError loops.
  */
 
-// Bump this version whenever the build output changes (e.g., after deploy/rebuild).
-// A new version forces the browser to install a fresh SW, which clears stale caches.
-const CACHE_VERSION = 'v2';
-const CACHE_NAME = `openmaic-${CACHE_VERSION}`;
-const STATIC_CACHE = `openmaic-static-${CACHE_VERSION}`;
-const API_CACHE = `openmaic-api-${CACHE_VERSION}`;
-
-const isDev =
-  self.location.hostname === 'localhost' ||
-  self.location.hostname === '127.0.0.1' ||
-  self.location.port === '3000' ||
-  self.location.port === '3001';
-
-// Pre-cache shell assets on install
+const CACHE_PREFIX = 'openmaic-';
+const STATIC_CACHE = 'openmaic-static-v2';
+const API_CACHE = 'openmaic-api-v2';
 const SHELL_ASSETS = ['/', '/manifest.json'];
 
-self.addEventListener('install', (event: ExtendableEvent) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(SHELL_ASSETS)),
-  );
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(SHELL_ASSETS)));
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event: ExtendableEvent) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names
-          .filter((n) => n !== CACHE_NAME && n !== STATIC_CACHE && n !== API_CACHE)
-          .map((n) => caches.delete(n)),
-      ),
-    ),
+    caches
+      .keys()
+      .then((names) =>
+        Promise.all(
+          names
+            .filter(
+              (name) =>
+                name.startsWith(CACHE_PREFIX) && name !== STATIC_CACHE && name !== API_CACHE,
+            )
+            .map((name) => caches.delete(name)),
+        ),
+      )
+      .then(() => self.clients.claim()),
   );
-  self.clients.claim();
 });
 
-self.addEventListener('fetch', (event: FetchEvent) => {
+self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // In development, never intercept Next.js chunks or pages so Turbopack
-  // can serve fresh modules on every rebuild.
-  if (isDev) return;
+  if (url.origin !== self.location.origin) {
+    return;
+  }
 
-  // Static assets — cache-first
   if (url.pathname.startsWith('/_next/static/')) {
-    event.respondWith(cacheFirst(request));
+    event.respondWith(networkOnly(request));
     return;
   }
 
-  // API calls — network-first with offline fallback
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirst(request));
+    event.respondWith(networkFirst(request, API_CACHE));
     return;
   }
 
-  // Pages — stale-while-revalidate
   if (request.mode === 'navigate') {
-    event.respondWith(staleWhileRevalidate(request));
+    event.respondWith(networkFirst(request, STATIC_CACHE));
     return;
   }
 
-  // Default — network-first
-  event.respondWith(networkFirst(request));
+  event.respondWith(networkFirst(request, STATIC_CACHE));
 });
 
-async function cacheFirst(request: Request): Promise<Response> {
-  const cached = await caches.match(request);
-  if (cached) return cached;
+async function networkOnly(request) {
   try {
-    const response = await fetch(request);
-    const cache = await caches.open(STATIC_CACHE);
-    cache.put(request, response.clone());
-    return response;
+    return await fetch(request);
   } catch {
     return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
   }
 }
 
-async function networkFirst(request: Request): Promise<Response> {
+async function networkFirst(request, cacheName) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(API_CACHE);
+    if (response.ok && request.method === 'GET') {
+      const cache = await caches.open(cacheName);
       cache.put(request, response.clone());
     }
     return response;
   } catch {
     const cached = await caches.match(request);
     if (cached) return cached;
-    return new Response(JSON.stringify({ success: false, error: 'You are offline' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
   }
 }
-
-async function staleWhileRevalidate(request: Request): Promise<Response> {
-  const cached = await caches.match(request);
-  const fetchPromise = fetch(request)
-    .then((response) => {
-      if (response.ok) {
-        caches.open(STATIC_CACHE).then((cache) => cache.put(request, response.clone()));
-      }
-      return response;
-    })
-    .catch(() => cached || new Response('Offline', { status: 503 }));
-
-  return cached || fetchPromise;
-}
-
-export {};

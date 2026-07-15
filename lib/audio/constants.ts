@@ -11,7 +11,6 @@
  * 1. Add the provider ID to TTSProviderId or ASRProviderId in types.ts
  * 2. Add provider configuration to TTS_PROVIDERS or ASR_PROVIDERS below
  * 3. Implement provider logic in tts-providers.ts or asr-providers.ts
- * 4. Add i18n translations in lib/i18n.ts
  *
  * Provider configuration should include:
  * - id: Unique identifier matching the type definition

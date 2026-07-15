@@ -1,7 +1,0 @@
-TOPIC: 勾股定理
-LENGTH: 15
-
---- RAW OUTPUT ---
-not json at all
-
---- END ---

@@ -74,11 +74,7 @@ import {
 
 // ── Migration ──────────────────────────────────────────────────────
 
-import {
-  migrateSettings,
-  mergeSettings,
-  migrateFromOldStorage,
-} from './settings/migration';
+import { migrateSettings, mergeSettings, migrateFromOldStorage } from './settings/migration';
 
 // ── Presets ────────────────────────────────────────────────────────
 
@@ -91,13 +87,7 @@ import {
 } from './settings/presets';
 
 // Re-export presets
-export {
-  type SettingsPreset,
-  EDUCATION_PRESET,
-  DEMO_PRESET,
-  DEVELOPMENT_PRESET,
-  ALL_PRESETS,
-};
+export { type SettingsPreset, EDUCATION_PRESET, DEMO_PRESET, DEVELOPMENT_PRESET, ALL_PRESETS };
 
 // ── Backward-compatible aliases ────────────────────────────────────
 
@@ -117,7 +107,8 @@ const log = createLogger('Settings');
 // ── Composed State type ────────────────────────────────────────────
 
 export interface SettingsState
-  extends LLMSettingsSlice,
+  extends
+    LLMSettingsSlice,
     AudioSettingsSlice,
     MediaSliceState,
     MediaSliceActions,
@@ -266,7 +257,9 @@ export const useSettingsStore = create<SettingsState>()(
                 const key = pid as ProviderId;
                 if (newProvidersConfig[key]) {
                   const currentModels = newProvidersConfig[key].models;
-                  const currentModelMap = new Map(currentModels.map((m: { id: string; name: string }) => [m.id, m]));
+                  const currentModelMap = new Map(
+                    currentModels.map((m: { id: string; name: string }) => [m.id, m]),
+                  );
                   const filteredModels = info.models?.length
                     ? info.models.map((id) => currentModelMap.get(id) ?? { id, name: id })
                     : currentModels;
@@ -690,7 +683,7 @@ export const useSettingsStore = create<SettingsState>()(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     {
       name: 'settings-storage',
-      version: 4,
+      version: 5,
       migrate: migrateSettings as any,
       merge: mergeSettings as any,
       // Recover from corrupted localStorage: clear the broken key so the

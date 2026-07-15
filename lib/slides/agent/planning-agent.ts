@@ -42,7 +42,7 @@ const pagePlanSchema = z.object({
 const sectionPlanSchema = z.object({
   sectionId: z.number(),
   title: z.string(),
-  pages: z.array(pagePlanSchema).min(1).max(10),
+  pages: z.array(pagePlanSchema).min(1).max(15),
 });
 
 export const outlineSchema = z.object({
@@ -69,10 +69,11 @@ export interface PlanningSkeleton {
   totalPages: number;
 }
 
-function buildLayer1SystemPrompt(
+export function buildLayer1SystemPrompt(
   pageTypes: string[],
   preference: string,
   designDNA?: import('./design-dna').DesignDNA,
+  educationLevel?: string,
 ): string {
   const pageTypeList = buildPageTypeList(pageTypes);
 
@@ -96,6 +97,10 @@ function buildLayer1SystemPrompt(
 `;
   }
 
+  const audienceHint = educationLevel
+    ? `\n## 目标受众\n本课件面向${educationLevel}学生设计，章节结构、页数分配和页型选择必须匹配该学段的认知水平和学习节奏。\n`
+    : '';
+
   return `## 角色
 你是一位教学设计师，为课程规划章节结构和页数分配。
 
@@ -108,21 +113,22 @@ ${pageTypeList}
 - 当内容涉及3个及以上并列对比项时，该章节必须分配 table 页型
 - concept 必须在 case 之前
 - 同一章节内避免连续3页以上相同页型
-
+${audienceHint}
 ## 页型选择偏好
 ${preference}${styleInjection}
 
 ## 输出格式（纯JSON）`;
 }
 
-function buildLayer1UserPrompt(
+export function buildLayer1UserPrompt(
   topic: string,
   difficulty: string,
   minPages: number,
   maxPages: number,
+  educationLevel?: string,
 ): string {
   return `主题：${topic}
-学段：${difficulty}
+内容难度：${difficulty}${educationLevel ? `\n目标受众：${educationLevel}` : ''}
 页数范围：${minPages}-${maxPages} 页
 
 请规划章节结构。输出每个章节的标题、核心主题、建议页数和页型序列。
@@ -155,11 +161,12 @@ export async function planSections(
   maxPages: number,
   designDNA: DesignDNA,
   languageModel: LanguageModel,
+  educationLevel?: string,
 ): Promise<SectionSkeletonResult> {
   try {
     const subjectCtx = getSubjectContext(topic);
-    const system = buildLayer1SystemPrompt(subjectCtx.pageTypes, subjectCtx.preference, designDNA);
-    const user = buildLayer1UserPrompt(topic, difficulty, minPages, maxPages);
+    const system = buildLayer1SystemPrompt(subjectCtx.pageTypes, subjectCtx.preference, designDNA, educationLevel);
+    const user = buildLayer1UserPrompt(topic, difficulty, minPages, maxPages, educationLevel);
 
     log.info(`[Layer1] Planning sections for "${topic}" [${minPages}-${maxPages}p]`);
 
@@ -198,7 +205,14 @@ export async function planSections(
     log.info(`[Layer1] Skeleton planned: ${skeletons.length} sections, ${totalPages} pages total`);
     return { success: true, skeleton: { sectionSkeletons: skeletons, totalPages } };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const rawMsg = err instanceof Error ? err.message : String(err);
+    const msg = rawMsg.includes('Failed to process successful response')
+      ? 'LLM 响应处理失败（可能是响应过大或格式异常），请重试'
+      : rawMsg.includes('timeout') || rawMsg.includes('超时')
+        ? 'LLM 调用超时，请稍后重试'
+        : /terminated|aborted|ECONNRESET|ETIMEDOUT/i.test(rawMsg)
+          ? 'LLM 连接被中断（网络波动或并发过高），请重试'
+          : rawMsg;
     log.error(`[Layer1] Failed: ${msg}`);
     return { success: false, error: msg };
   }
@@ -261,9 +275,10 @@ function buildLayer2UserPrompt(
   topic: string,
   difficulty: string,
   startPageNum: number,
+  educationLevel?: string,
 ): string {
   return `主题：${topic}
-学段：${difficulty}
+内容难度：${difficulty}${educationLevel ? `\n目标受众：${educationLevel}` : ''}
 章节：${skeleton.title}
 本章 focus：${skeleton.focus}
 建议页型序列：${skeleton.pageTypeHints.join(' → ')}
@@ -286,10 +301,11 @@ export async function planSectionPages(
   designDNA: DesignDNA,
   languageModel: LanguageModel,
   startPageNum: number,
+  educationLevel?: string,
 ): Promise<SectionPagesResult> {
   try {
     const system = buildLayer2SystemPrompt();
-    const user = buildLayer2UserPrompt(skeleton, topic, difficulty, startPageNum);
+    const user = buildLayer2UserPrompt(skeleton, topic, difficulty, startPageNum, educationLevel);
 
     log.info(`[Layer2] Planning pages for section ${skeleton.sectionId} "${skeleton.title}" [${skeleton.suggestedPages} pages, start=${startPageNum}]`);
 
@@ -393,7 +409,9 @@ export async function planSectionPages(
       ? 'LLM 响应处理失败（可能是响应过大或格式异常），请重试'
       : rawMsg.includes('timeout') || rawMsg.includes('超时')
         ? 'LLM 调用超时，请稍后重试'
-        : rawMsg;
+        : /terminated|aborted|ECONNRESET|ETIMEDOUT/i.test(rawMsg)
+          ? 'LLM 连接被中断（网络波动或并发过高），系统会自动重试'
+          : rawMsg;
     log.error(`[Layer2] Section ${skeleton.sectionId} failed: ${msg}`);
     return { success: false, error: msg };
   }
@@ -481,10 +499,11 @@ export async function planOutline(
   maxPages: number,
   designDNA: DesignDNA,
   languageModel: LanguageModel,
+  educationLevel?: string,
 ): Promise<PlanningResult> {
   try {
     // ══ Step 1: Layer 1 — Section Skeleton ══
-    const skeletonResult = await planSections(topic, difficulty, minPages, maxPages, designDNA, languageModel);
+    const skeletonResult = await planSections(topic, difficulty, minPages, maxPages, designDNA, languageModel, educationLevel);
     if (!skeletonResult.success || !skeletonResult.skeleton) {
       return { success: false, error: skeletonResult.error || '大纲骨架规划失败' };
     }
@@ -522,10 +541,11 @@ export async function planOutline(
     }
 
     // ══ Step 3: Layer 2 — Concurrent section page planning ══
-    log.info(`[Planning] Starting Layer 2 for ${sectionSkeletons.length} sections with concurrency=12`);
+    // Concurrency=3 to avoid provider-side connection saturation / termination
+    log.info(`[Planning] Starting Layer 2 for ${sectionSkeletons.length} sections with concurrency=3`);
     const sectionResults = await withConcurrencyLimit(
       sectionSkeletons,
-      12,
+      3,
       async (skeleton) => {
         return await planSectionPages(
           skeleton,
@@ -534,6 +554,7 @@ export async function planOutline(
           designDNA,
           languageModel,
           skeleton.startPageNum!,
+          educationLevel,
         );
       },
       900_000,

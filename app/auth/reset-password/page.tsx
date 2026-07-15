@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Eye, EyeOff, Loader2, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
@@ -13,6 +13,20 @@ import { Label } from '@/components/ui/label';
 type Status = 'form' | 'loading' | 'success' | 'error';
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthLayout>
+          <Loader2 className="mx-auto size-8 animate-spin text-sky-500" />
+        </AuthLayout>
+      }
+    >
+      <ResetPasswordContent />
+    </Suspense>
+  );
+}
+
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -22,6 +36,9 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<Status>('form');
   const [error, setError] = useState('');
+  const missingToken = !token;
+  const displayStatus: Status = missingToken ? 'error' : status;
+  const displayError = missingToken ? 'No reset token provided' : error;
 
   const hasLen = password.length >= 8;
   const hasUpper = /[A-Z]/.test(password);
@@ -29,13 +46,6 @@ export default function ResetPasswordPage() {
   const strength = (hasLen ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNumber ? 1 : 0);
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
-
-  useEffect(() => {
-    if (!token) {
-      setStatus('error');
-      setError('No reset token provided');
-    }
-  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +84,7 @@ export default function ResetPasswordPage() {
   };
 
   // Success state
-  if (status === 'success') {
+  if (displayStatus === 'success') {
     return (
       <AuthLayout>
         <motion.div
@@ -105,7 +115,7 @@ export default function ResetPasswordPage() {
   }
 
   // Error state (no token)
-  if (status === 'error' && !token) {
+  if (displayStatus === 'error' && missingToken) {
     return (
       <AuthLayout>
         <motion.div
@@ -120,7 +130,7 @@ export default function ResetPasswordPage() {
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
             Invalid Link
           </h1>
-          <p className="text-sm text-muted-foreground mb-6">{error}</p>
+          <p className="text-sm text-muted-foreground mb-6">{displayError}</p>
           <Link href="/auth/forgot-password" className="w-full">
             <Button variant="outline" className="w-full h-11 rounded-xl">
               Request New Link
@@ -167,13 +177,12 @@ export default function ResetPasswordPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
-              className="pl-10 pr-10 bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 focus-visible:ring-sky-400"
+              className="h-11 pl-10 pr-12 bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 focus-visible:ring-sky-400"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-              tabIndex={-1}
+              className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
@@ -185,7 +194,11 @@ export default function ResetPasswordPage() {
                   key={i}
                   className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
                     i <= strength
-                      ? strength === 1 ? 'bg-red-500' : strength === 2 ? 'bg-yellow-500' : 'bg-green-500'
+                      ? strength === 1
+                        ? 'bg-red-500'
+                        : strength === 2
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
                       : 'bg-slate-200 dark:bg-slate-700'
                   }`}
                 />
@@ -220,9 +233,7 @@ export default function ResetPasswordPage() {
               <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-green-500" />
             )}
           </div>
-          {passwordsMismatch && (
-            <p className="text-xs text-red-500">Passwords do not match</p>
-          )}
+          {passwordsMismatch && <p className="text-xs text-red-500">Passwords do not match</p>}
         </div>
 
         <Button

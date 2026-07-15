@@ -10,14 +10,11 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { toast } from 'sonner';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 import { processAvatarUpload, isCustomAvatar } from '@/lib/utils/avatar-upload';
 
-export function ProfileForm() {
-  const { t } = useI18n();
-  const avatar = useUserProfileStore((s) => s.avatar);
+export function ProfileForm() {const avatar = useUserProfileStore((s) => s.avatar);
   const nickname = useUserProfileStore((s) => s.nickname);
   const bio = useUserProfileStore((s) => s.bio);
   const setAvatar = useUserProfileStore((s) => s.setAvatar);
@@ -39,7 +36,7 @@ export function ProfileForm() {
     if (editingName) nameInputRef.current?.focus();
   }, [editingName]);
 
-  const displayName = nickname || t('profile.defaultNickname');
+  const displayName = nickname || '同学';
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,7 +45,7 @@ export function ProfileForm() {
       const dataUrl = await processAvatarUpload(file);
       setAvatar(dataUrl);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('profile.fileTooLarge'));
+      toast.error(err instanceof Error ? err.message : '图片过大，请选择小于 5MB 的图片');
     }
     e.target.value = '';
   };
@@ -96,7 +93,7 @@ export function ProfileForm() {
                   }}
                   onBlur={commitName}
                   maxLength={20}
-                  placeholder={t('account.nicknamePlaceholder')}
+                  placeholder={'输入你的昵称'}
                   className="flex-1 h-9 bg-transparent border-b-2 border-violet-400 text-base font-semibold text-foreground outline-none"
                 />
               </div>
@@ -109,7 +106,7 @@ export function ProfileForm() {
               </button>
             )}
             <p className="text-xs text-muted-foreground/60 mt-1">
-              {t('profile.avatarHint')}
+              {'你的头像将显示在课堂讨论和对话中'}
             </p>
           </div>
         </div>
@@ -148,7 +145,7 @@ export function ProfileForm() {
                       ? 'ring-2 ring-violet-400 dark:ring-violet-500 border-violet-300 dark:border-violet-600 bg-violet-50 dark:bg-violet-900/30'
                       : 'border-muted-foreground/30 text-muted-foreground/50',
                   )}
-                  title={t('profile.uploadAvatar')}
+                  title={'上传'}
                 >
                   <input
                     ref={fileInputRef}
@@ -167,11 +164,11 @@ export function ProfileForm() {
 
       {/* Bio */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">{t('account.bio')}</label>
+        <label className="text-sm font-medium">{'个人简介'}</label>
         <Textarea
           value={bio}
           onChange={(e) => setBio(e.target.value)}
-          placeholder={t('account.bioPlaceholder')}
+          placeholder={'介绍一下自己吧'}
           maxLength={200}
           rows={4}
           className="resize-none"

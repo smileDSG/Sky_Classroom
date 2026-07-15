@@ -12,10 +12,12 @@
 import type {
   ClassroomGenerationJob,
   ClassroomGenerationJobStatus,
+} from '@/lib/server/classroom-job-store';
+import type {
   ClassroomGenerationProgress,
   GenerateClassroomInput,
   GenerateClassroomResult,
-} from '@/lib/server/classroom-job-store';
+} from '@/lib/server/classroom-generation';
 import {
   CLASSROOM_JOBS_DIR,
   ensureClassroomJobsDir,
@@ -31,6 +33,34 @@ let flushTimer: ReturnType<typeof setInterval> | null = null;
 let isFlushing = false;
 
 const FLUSH_INTERVAL_MS = 5000; // Flush every 5 seconds
+const TERMINAL_STATUSES: ClassroomGenerationJobStatus[] = [
+  'succeeded',
+  'failed',
+  'cancelled',
+  'awaiting_review',
+];
+
+type RuntimeModelConfig = NonNullable<ClassroomGenerationJob['modelConfig']>;
+
+function sanitizeModelConfig(
+  modelConfig: RuntimeModelConfig | undefined,
+): ClassroomGenerationJob['modelConfig'] | undefined {
+  const modelString = modelConfig?.modelString?.trim();
+  return modelString ? { modelString } : undefined;
+}
+
+function sanitizeInputForPersistence(input: GenerateClassroomInput): GenerateClassroomInput {
+  const { webSearchApiKey: _webSearchApiKey, ...safeInput } = input;
+  return safeInput;
+}
+
+function sanitizeJobForPersistence(job: ClassroomGenerationJob): ClassroomGenerationJob {
+  return {
+    ...job,
+    modelConfig: sanitizeModelConfig(job.modelConfig),
+    input: job.input ? sanitizeInputForPersistence(job.input) : undefined,
+  };
+}
 
 /** Start the background flush timer if not already running. */
 function startFlushTimer() {
@@ -44,7 +74,7 @@ function startFlushTimer() {
       const job = inMemoryJobs.get(jobId);
       if (job) {
         try {
-          await writeJsonFileAtomic(jobFilePath(jobId), job);
+          await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(job));
         } catch {
           // Mark as dirty again to retry on next flush
           dirtyJobs.add(jobId);
@@ -71,13 +101,35 @@ export async function flushAllJobs(): Promise<void> {
   for (const jobId of toFlush) {
     const job = inMemoryJobs.get(jobId);
     if (job) {
-      await writeJsonFileAtomic(jobFilePath(jobId), job);
+      await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(job));
     }
   }
 }
 
 function jobFilePath(jobId: string) {
   return path.join(CLASSROOM_JOBS_DIR, `${jobId}.json`);
+}
+
+async function readJobFromDisk(jobId: string): Promise<ClassroomGenerationJob | null> {
+  try {
+    const content = await fs.readFile(jobFilePath(jobId), 'utf-8');
+    return JSON.parse(content) as ClassroomGenerationJob;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function isDiskJobNewerOrMoreComplete(
+  cached: ClassroomGenerationJob,
+  disk: ClassroomGenerationJob,
+): boolean {
+  if (disk.id !== cached.id) return false;
+  if (new Date(disk.updatedAt).getTime() > new Date(cached.updatedAt).getTime()) return true;
+  if (TERMINAL_STATUSES.includes(disk.status) && disk.status !== cached.status) return true;
+  return disk.progress > cached.progress;
 }
 
 /** Mark stale jobs as failed if no progress for 30 min. */
@@ -112,25 +164,28 @@ export async function createClassroomGenerationJobHybrid(
   const now = new Date().toISOString();
   const job: ClassroomGenerationJob = {
     id: jobId,
-    status: 'queued',
-    step: 'queued',
-    progress: 0,
-    message: 'Classroom generation job queued',
+    status: 'initializing',
+    step: 'initializing',
+    progress: 1,
+    message: 'Starting classroom generation',
     createdAt: now,
     updatedAt: now,
     inputSummary: {
       requirementPreview:
-        input.requirement.length > 200 ? `${input.requirement.slice(0, 197)}...` : input.requirement,
+        input.requirement.length > 200
+          ? `${input.requirement.slice(0, 197)}...`
+          : input.requirement,
       hasPdf: !!input.pdfContent,
       pdfTextLength: input.pdfContent?.text.length || 0,
       pdfImageCount: input.pdfContent?.images.length || 0,
     },
     scenesGenerated: 0,
-    modelConfig,
+    modelConfig: sanitizeModelConfig(modelConfig),
+    input: sanitizeInputForPersistence(input),
   };
 
   await ensureClassroomJobsDir();
-  await writeJsonFileAtomic(jobFilePath(jobId), job);
+  await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(job));
   inMemoryJobs.set(jobId, job);
   return job;
 }
@@ -141,22 +196,22 @@ export async function readClassroomGenerationJobHybrid(
   // Check memory first
   const cached = inMemoryJobs.get(jobId);
   if (cached) {
+    if (!TERMINAL_STATUSES.includes(cached.status)) {
+      const diskJob = await readJobFromDisk(jobId);
+      if (diskJob && isDiskJobNewerOrMoreComplete(cached, diskJob)) {
+        inMemoryJobs.set(jobId, diskJob);
+        return markStaleIfNeeded(diskJob);
+      }
+    }
     return markStaleIfNeeded(cached);
   }
 
   // Fallback to disk
-  try {
-    const content = await fs.readFile(jobFilePath(jobId), 'utf-8');
-    const job = JSON.parse(content) as ClassroomGenerationJob;
-    // Load into memory for future reads
-    inMemoryJobs.set(jobId, job);
-    return markStaleIfNeeded(job);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return null;
-    }
-    throw error;
-  }
+  const job = await readJobFromDisk(jobId);
+  if (!job) return null;
+  // Load into memory for future reads
+  inMemoryJobs.set(jobId, job);
+  return markStaleIfNeeded(job);
 }
 
 export async function updateClassroomGenerationJobHybrid(
@@ -168,9 +223,15 @@ export async function updateClassroomGenerationJobHybrid(
     throw new Error(`Classroom generation job not found: ${jobId}`);
   }
 
+  const safePatch: Partial<ClassroomGenerationJob> = {
+    ...patch,
+    ...(patch.modelConfig !== undefined ? { modelConfig: sanitizeModelConfig(patch.modelConfig) } : {}),
+    ...(patch.input !== undefined ? { input: sanitizeInputForPersistence(patch.input) } : {}),
+  };
+
   const updated: ClassroomGenerationJob = {
     ...existing,
-    ...patch,
+    ...safePatch,
     updatedAt: new Date().toISOString(),
   };
 
@@ -179,9 +240,14 @@ export async function updateClassroomGenerationJobHybrid(
   startFlushTimer();
 
   // If terminal state, flush immediately
-  if (patch.status === 'succeeded' || patch.status === 'failed' || patch.status === 'cancelled') {
+  if (
+    patch.status === 'succeeded' ||
+    patch.status === 'failed' ||
+    patch.status === 'cancelled' ||
+    patch.startedAt
+  ) {
     try {
-      await writeJsonFileAtomic(jobFilePath(jobId), updated);
+      await writeJsonFileAtomic(jobFilePath(jobId), sanitizeJobForPersistence(updated));
       dirtyJobs.delete(jobId);
     } catch {
       // Will retry on next flush

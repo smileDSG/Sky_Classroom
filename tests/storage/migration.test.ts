@@ -57,7 +57,7 @@ describe('createMigrationManager', () => {
       await manager.setCurrentVersion(3);
       // Read directly from storage to verify persistence
       const entry = await storage.get('__migrations', 'current');
-      expect(entry?.data.version).toBe(3);
+      expect((entry?.data as { version: number }).version).toBe(3);
     });
   });
 

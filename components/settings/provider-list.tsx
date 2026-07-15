@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button';
 import { Box, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import type { ProviderId, ProviderConfig } from '@/lib/ai/providers';
 import { MONO_LOGO_PROVIDERS } from '@/lib/ai/providers';
 
@@ -17,6 +16,7 @@ interface ProviderListProps {
   onSelect: (providerId: ProviderId) => void;
   onAddProvider: () => void;
   width?: number;
+  t?: (key: string) => string;
 }
 
 export function ProviderList({
@@ -25,10 +25,8 @@ export function ProviderList({
   onSelect,
   onAddProvider,
   width,
-}: ProviderListProps) {
-  const { t } = useI18n();
-
-  // Helper function to get translated provider name
+  t = (key: string) => key,
+}: ProviderListProps) {// Helper function to get translated provider name
   const getProviderDisplayName = (provider: ProviderConfig) => {
     const translationKey = `settings.providerNames.${provider.id}`;
     const translated = t(translationKey);
@@ -70,7 +68,7 @@ export function ProviderList({
             </span>
             {provider.isServerConfigured && (
               <span className="text-[10px] px-1 py-0 h-4 leading-4 rounded shrink-0 bg-muted text-muted-foreground">
-                {t('settings.serverConfigured')}
+                {'服务端'}
               </span>
             )}
           </button>
@@ -81,7 +79,7 @@ export function ProviderList({
       <div className="p-3 border-t">
         <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={onAddProvider}>
           <Plus className="h-3.5 w-3.5" />
-          {t('settings.addProviderButton')}
+          {'添加'}
         </Button>
       </div>
     </div>

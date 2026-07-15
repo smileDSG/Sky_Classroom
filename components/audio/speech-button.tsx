@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Mic, Loader2 } from 'lucide-react';
 import { useAudioRecorder } from '@/lib/hooks/use-audio-recorder';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
@@ -20,10 +19,7 @@ export function SpeechButton({
   className,
   disabled,
   size = 'sm',
-}: SpeechButtonProps) {
-  const { t } = useI18n();
-
-  // Ref to always call the latest onTranscription, avoiding stale closures
+}: SpeechButtonProps) {// Ref to always call the latest onTranscription, avoiding stale closures
   const onTranscriptionRef = useRef(onTranscription);
   useEffect(() => {
     onTranscriptionRef.current = onTranscription;
@@ -131,10 +127,10 @@ export function SpeechButton({
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs">
         {isProcessing
-          ? t('roundtable.processing')
+          ? '处理中...'
           : isRecording
-            ? t('voice.stopListening')
-            : t('voice.startListening')}
+            ? '停止录音'
+            : '语音输入'}
       </TooltipContent>
     </Tooltip>
   );

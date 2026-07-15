@@ -30,6 +30,7 @@ export const OrchestratorState = Annotation.Root({
   languageModel: Annotation<LanguageModel>,
   thinkingConfig: Annotation<ThinkingConfig | null>,
   discussionContext: Annotation<{ topic: string; prompt?: string } | null>,
+  sessionType: Annotation<'qa' | 'discussion' | null>,
   triggerAgentId: Annotation<string | null>,
   userProfile: Annotation<{ nickname?: string; bio?: string } | null>,
   /** Request-scenced agent configs for generated agents (not in the default registry) */
@@ -92,6 +93,7 @@ export function buildInitialState(
     languageModel,
     thinkingConfig: thinkingConfig ?? null,
     discussionContext,
+    sessionType: request.config.sessionType ?? null,
     triggerAgentId: request.config.triggerAgentId || null,
     userProfile: request.userProfile || null,
     agentConfigOverrides,
@@ -124,7 +126,7 @@ export function resolveAgent(
   state: OrchestratorStateType,
   agentId: string,
 ): AgentConfig | undefined {
-  return state.agentConfigOverrides[agentId] ?? useAgentRegistrySafe()?.getAgent(agentId);
+  return state.agentConfigOverrides[agentId] ?? getAgentRegistrySafe()?.getAgent(agentId);
 }
 
 /**
@@ -132,7 +134,7 @@ export function resolveAgent(
  */
 let registryCache: { getAgent: (id: string) => AgentConfig | undefined } | null = null;
 
-function useAgentRegistrySafe() {
+function getAgentRegistrySafe() {
   if (!registryCache) {
     const { useAgentRegistry } = require('@/lib/orchestration/registry/store');
     registryCache = useAgentRegistry.getState();

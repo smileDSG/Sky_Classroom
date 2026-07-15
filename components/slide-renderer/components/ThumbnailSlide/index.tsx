@@ -1,80 +1,155 @@
-import { useMemo } from 'react';
-import type { Slide } from '@/lib/types/slides';
-import { useSlideBackgroundStyle } from '@/lib/hooks/use-slide-background-style';
-import { ThumbnailElement } from './ThumbnailElement';
+'use client';
+
+import { useMemo, type CSSProperties } from 'react';
+import { Play } from 'lucide-react';
+import type { PPTElement, PPTVideoElement, Slide } from '@/lib/types/slides';
+import type { PPTVideoElement as MaicVideoElement, Slide as MaicSlide } from '@maic/dsl';
+import { SlideCanvas } from '@maic/renderer';
+import { useMediaStageId } from '@/lib/contexts/media-stage-context';
+import { polishSlideElements } from '@/lib/generation/scene-content/slide-polish';
+import { getVideoMediaRefForElement } from '@/lib/media/video-manifest';
+import { isMediaPlaceholder, useMediaGenerationStore } from '@/lib/store/media-generation';
 
 interface ThumbnailSlideProps {
   /** Slide data */
   readonly slide: Slide;
-  /** Thumbnail width */
-  readonly size: number;
-  /** Viewport width base (default 1000px) */
-  readonly viewportSize: number;
-  /** Viewport aspect ratio (default 0.5625 i.e. 16:9) */
+  /** Thumbnail width. When omitted, the thumbnail fills its parent. */
+  readonly size?: number;
+  /** Viewport width base. Kept for call-site compatibility. */
+  readonly viewportSize?: number;
+  /** Viewport aspect ratio. */
   readonly viewportRatio: number;
   /** Whether visible (for lazy loading optimization) */
   readonly visible?: boolean;
 }
 
-/**
- * Thumbnail slide component
- *
- * Renders a thumbnail preview of a single slide
- * Uses CSS transform scale to resize the entire view for better performance
- */
+function mediaTaskKeyFor(el: PPTElement): string | undefined {
+  if (el.type === 'video') return getVideoMediaRefForElement(el);
+  if (el.type === 'image' && el.src && isMediaPlaceholder(el.src)) return el.src;
+  return undefined;
+}
+
+function inferSlideTitle(slide: Slide): string | undefined {
+  return slide.elements
+    .filter((element) => element.type === 'text' && element.top < 170)
+    .map((element) =>
+      String((element as { content?: string }).content ?? '').replace(/<[^>]+>/g, ''),
+    )
+    .find((text) => text.trim().length > 0);
+}
+
+function useResolvedSlide(slide: Slide): Slide {
+  const stageId = useMediaStageId();
+
+  const signature = useMediaGenerationStore((s) => {
+    if (!stageId) return '';
+    let sig = '';
+    for (const el of slide.elements) {
+      const key = mediaTaskKeyFor(el);
+      if (!key) continue;
+      const task = s.tasks[key];
+      const url =
+        task && task.stageId === stageId && task.status === 'done' && task.objectUrl
+          ? task.objectUrl
+          : '';
+      sig += `${key}|${url}|`;
+    }
+    return sig;
+  });
+
+  return useMemo(() => {
+    if (!stageId || !signature) return slide;
+    const { tasks } = useMediaGenerationStore.getState();
+    const elements = slide.elements.map((el) => {
+      const key = mediaTaskKeyFor(el);
+      if (!key) return el;
+      const task = tasks[key];
+      if (task && task.stageId === stageId && task.status === 'done' && task.objectUrl) {
+        return el.type === 'video'
+          ? ({ ...el, src: task.objectUrl, poster: task.poster ?? el.poster } as PPTVideoElement)
+          : { ...el, src: task.objectUrl };
+      }
+      if ((el.type === 'image' || el.type === 'video') && el.src && isMediaPlaceholder(el.src)) {
+        return { ...el, src: '' };
+      }
+      return el;
+    });
+    return { ...slide, elements };
+  }, [slide, stageId, signature]);
+}
+
+function renderThumbnailVideo(element: MaicVideoElement) {
+  const src = element.src && !isMediaPlaceholder(element.src) ? element.src : undefined;
+  return (
+    <>
+      {src ? (
+        <video
+          className="h-full w-full"
+          style={{ objectFit: 'contain' }}
+          src={src}
+          poster={element.poster}
+          preload="metadata"
+          muted
+          playsInline
+        />
+      ) : (
+        <div className="h-full w-full rounded bg-black/10" />
+      )}
+      <div
+        className="pointer-events-none absolute inset-0 flex items-center justify-center"
+        data-testid="thumbnail-video-indicator"
+      >
+        <div className="flex size-28 items-center justify-center rounded-full bg-black/45 shadow-lg ring-2 ring-white/85">
+          <Play className="ml-1 size-14 fill-white text-white" />
+        </div>
+      </div>
+    </>
+  );
+}
+
 export function ThumbnailSlide({
   slide,
   size,
-  viewportSize,
   viewportRatio,
   visible = true,
 }: ThumbnailSlideProps) {
-  // Calculate scale ratio
-  const scale = useMemo(() => size / viewportSize, [size, viewportSize]);
+  const resolvedSlide = useResolvedSlide(slide);
+  const displaySlide = useMemo<Slide>(() => {
+    const title = inferSlideTitle(resolvedSlide);
+    return {
+      ...resolvedSlide,
+      elements: polishSlideElements(resolvedSlide.elements, {
+        title,
+        decorate: false,
+      }) as PPTElement[],
+    };
+  }, [resolvedSlide]);
+  const autoSize = size === undefined;
 
-  // Get background style
-  const { backgroundStyle } = useSlideBackgroundStyle(slide.background);
+  const containerClass = autoSize
+    ? 'thumbnail-slide relative h-full w-full overflow-hidden bg-white select-none pointer-events-none'
+    : 'thumbnail-slide relative overflow-hidden bg-white select-none pointer-events-none';
+  const containerStyle: CSSProperties | undefined = autoSize
+    ? undefined
+    : { width: `${size}px`, height: `${size * viewportRatio}px` };
 
   if (!visible) {
     return (
-      <div
-        className="thumbnail-slide bg-white overflow-hidden select-none pointer-events-none"
-        style={{
-          width: `${size}px`,
-          height: `${size * viewportRatio}px`,
-        }}
-      >
-        <div className="placeholder w-full h-full flex justify-center items-center text-gray-400 text-sm">
-          加载中 ...
+      <div className={containerClass} style={containerStyle}>
+        <div className="placeholder flex h-full w-full items-center justify-center text-sm text-gray-400">
+          加载中...
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="thumbnail-slide bg-white overflow-hidden select-none pointer-events-none"
-      style={{
-        width: `${size}px`,
-        height: `${size * viewportRatio}px`,
-      }}
-    >
-      <div
-        className="elements origin-top-left"
-        style={{
-          width: `${viewportSize}px`,
-          height: `${viewportSize * viewportRatio}px`,
-          transform: `scale(${scale})`,
-        }}
-      >
-        {/* Background */}
-        <div className="background w-full h-full bg-center absolute" style={backgroundStyle} />
-
-        {/* Render all elements */}
-        {slide.elements.map((element, index) => (
-          <ThumbnailElement key={element.id} elementInfo={element} elementIndex={index + 1} />
-        ))}
-      </div>
+    <div className={containerClass} style={containerStyle}>
+      <SlideCanvas
+        slide={displaySlide as unknown as MaicSlide}
+        chrome={false}
+        renderVideo={renderThumbnailVideo}
+      />
     </div>
   );
 }

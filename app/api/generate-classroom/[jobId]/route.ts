@@ -26,9 +26,19 @@ export async function GET(req: NextRequest, context: { params: Promise<{ jobId: 
       return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
     }
 
+    // Lazily resume running/initializing jobs. In dev mode (Turbopack) the
+    // in-memory runner map is wiped on HMR, so a job that is still marked
+    // running on disk may have no active runner. This wakes it up.
+    if (job.status === 'running' || job.status === 'initializing') {
+      const baseUrl = buildRequestOrigin(req);
+      const { resumeClassroomGenerationJob } = await import('@/lib/server/classroom-job-runner');
+      resumeClassroomGenerationJob(jobId, baseUrl).catch(() => {});
+    }
+
     const pollUrl = `${buildRequestOrigin(req)}/api/generate-classroom/${jobId}`;
 
-    const isDone = job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled';
+    const isDone =
+      job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled';
 
     const response: Record<string, unknown> = {
       jobId: job.id,

@@ -48,6 +48,12 @@ export interface MistakeBookEntry {
   reviewed: boolean;
   /** Source: which solve session this came from */
   sourceSessionId?: string;
+  /** Source category of the mistake entry */
+  source?: 'classroom-quiz' | 'solve' | 'manual' | 'review' | 'classroom-diagnostic';
+  /** Step-by-step solution process (AI-generated) */
+  solutionSteps?: string[];
+  /** Tiered hints: [思路方向, 关键公式, 详细计算] */
+  hints?: string[];
 }
 
 const TABLE = 'mistakes';
@@ -83,7 +89,7 @@ export function createMistakeBookDAO(storage: StorageProvider) {
     /** Get a mistake by ID */
     async get(id: string): Promise<MistakeBookEntry | null> {
       const result = await storage.get<MistakeBookEntry>(TABLE, id);
-      return result?.data ?? null;
+      return result ? { ...result.data, id: result.id } : null;
     },
 
     /** Update a mistake */
@@ -106,6 +112,21 @@ export function createMistakeBookDAO(storage: StorageProvider) {
       existing.data.nextReview = nextReview;
       existing.data.masteryLevel = masteryLevel;
       existing.data.reviewed = masteryLevel >= EBBINGHAUS_INTERVALS.length;
+      existing.updatedAt = Date.now();
+
+      await storage.set(TABLE, existing);
+    },
+
+    /** Reset review progress after a wrong answer */
+    async resetReview(id: string): Promise<void> {
+      const existing = await storage.get<MistakeBookEntry>(TABLE, id);
+      if (!existing) throw new Error(`Mistake ${id} not found`);
+
+      existing.data.reviewCount = 0;
+      existing.data.masteryLevel = 0;
+      existing.data.lastReview = Date.now();
+      existing.data.nextReview = Date.now() + EBBINGHAUS_INTERVALS[0] * 24 * 60 * 60 * 1000;
+      existing.data.reviewed = false;
       existing.updatedAt = Date.now();
 
       await storage.set(TABLE, existing);
@@ -143,7 +164,7 @@ export function createMistakeBookDAO(storage: StorageProvider) {
       const start = (page - 1) * pageSize;
 
       return {
-        items: sorted.slice(start, start + pageSize).map((e) => e.data),
+        items: sorted.slice(start, start + pageSize).map((e) => ({ ...e.data, id: e.id })),
         total: sorted.length,
       };
     },
@@ -158,7 +179,7 @@ export function createMistakeBookDAO(storage: StorageProvider) {
           return !d.reviewed && d.nextReview !== undefined && d.nextReview <= now;
         })
         .sort((a, b) => (a.data.nextReview ?? 0) - (b.data.nextReview ?? 0))
-        .map((e) => e.data);
+        .map((e) => ({ ...e.data, id: e.id }));
     },
 
     /** Get mistakes by knowledge point */
@@ -170,7 +191,7 @@ export function createMistakeBookDAO(storage: StorageProvider) {
             (kp) => kp.toLowerCase().includes(point.toLowerCase()),
           ),
         )
-        .map((e) => e.data);
+        .map((e) => ({ ...e.data, id: e.id }));
     },
 
     /** Count total mistakes */

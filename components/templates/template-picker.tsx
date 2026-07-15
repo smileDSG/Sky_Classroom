@@ -16,8 +16,6 @@ import {
   getTemplateName,
   getTemplateDescription,
 } from '@/lib/templates/registry';
-import { useI18n } from '@/lib/hooks/use-i18n';
-
 const SUBJECTS: { key: 'all' | CourseTemplateSubject; label: Record<string, string>; icon: string }[] = [
   { key: 'all', label: { 'zh-CN': '全部', 'en-US': 'All' }, icon: '📚' },
   { key: 'math', label: { 'zh-CN': '数学', 'en-US': 'Math' }, icon: '📐' },
@@ -70,7 +68,7 @@ interface TemplatePickerProps {
 }
 
 export function TemplatePicker({ open, onClose, onSelect }: TemplatePickerProps) {
-  const { locale } = useI18n();
+  const locale = 'zh-CN';
   const [subject, setSubject] = useState('all');
   const [query, setQuery] = useState('');
 

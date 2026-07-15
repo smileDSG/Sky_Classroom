@@ -18,30 +18,16 @@ import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { buildSolverPrompt } from './solver-prompts';
 import { validateConfidence, MIN_VALIDATED_CONFIDENCE } from './confidence-validator';
+import {
+  AGENT_MODEL_MAP,
+  ENV_KEY_MAP,
+  ENV_URL_MAP,
+  VISION_MODELS,
+  resolveSolverModel,
+} from './solver-constants';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SolveGraph');
-
-// ── Agent → provider/model mapping ───────────────────────────────
-
-const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> = {
-  universal: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-  science: { providerId: 'glm', modelId: 'glm-5.1' },
-  humanities: { providerId: 'qwen', modelId: 'qwen3.6-plus' },
-  grading: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-};
-
-const ENV_KEY_MAP: Record<string, string> = {
-  deepseek: 'DEEPSEEK_API_KEY',
-  glm: 'GLM_API_KEY',
-  qwen: 'QWEN_API_KEY',
-};
-
-const ENV_URL_MAP: Record<string, string> = {
-  deepseek: 'DEEPSEEK_BASE_URL',
-  glm: 'GLM_BASE_URL',
-  qwen: 'QWEN_BASE_URL',
-};
 
 /**
  * Parsed solution from LLM response.
@@ -70,31 +56,6 @@ export function parseSolutionResponse(text: string): ParsedSolution | null {
 }
 
 /**
- * Resolve the ModelConfig for a given solver agent type.
- *
- * Agent type → provider/model mapping:
- *   universal   → deepseek / deepseek-v4-flash
- *   science     → glm / glm-5.1
- *   humanities  → qwen / qwen3.6-plus
- *   grading     → deepseek / deepseek-v4-flash
- *
- * API key and base URL come from environment variables.
- */
-function resolveSolverModel(agentType: SolverAgentType): Parameters<typeof getModel>[0] {
-  const { providerId, modelId } = AGENT_MODEL_MAP[agentType];
-  const apiKey = process.env[ENV_KEY_MAP[providerId] ?? ''] ?? '';
-  const baseUrl = process.env[ENV_URL_MAP[providerId] ?? ''];
-
-  return {
-    providerId,
-    modelId,
-    apiKey,
-    baseUrl: baseUrl || undefined,
-    providerType: 'openai',
-  };
-}
-
-/**
  * Solve with a single agent (primary or fallback).
  */
 async function solveOnce(
@@ -102,24 +63,67 @@ async function solveOnce(
   problemText: string,
   problemImage: string | null,
 ): Promise<ParsedSolution | null> {
-  const modelConfig = resolveSolverModel(agentType);
+  const t0 = Date.now();
+  // Only use image if a vision model is actually available
+  const visionAvailable = VISION_MODELS.some((vm) => !!process.env[ENV_KEY_MAP[vm.providerId]]);
+  const hasImage = !!problemImage && visionAvailable;
+  const modelConfig = resolveSolverModel(agentType, hasImage);
   const modelWithInfo = getModel(modelConfig);
 
   const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
+
+  // Build multimodal message: image + text when image is available
+  const userContent: any[] = [];
+  if (problemImage) {
+    userContent.push({ type: 'image', image: problemImage });
+  }
+  userContent.push({ type: 'text', text: problemText });
 
   const result = await callLLM(
     {
       model: modelWithInfo.model,
       system: systemPrompt,
-      messages: [{ role: 'user', content: problemText }] as any,
+      messages: [{ role: 'user', content: hasImage ? userContent : problemText }] as any,
       temperature: 0.3,
       maxOutputTokens: 4096,
     },
     'solve-agent',
-    { retries: 1 },
+    { retries: 1, timeoutMs: 90_000 },
   );
 
-  return parseSolutionResponse(result.text);
+  let parsed = parseSolutionResponse(result.text);
+  log.info(`[SolveAgent] ${agentType} LLM call took ${Date.now() - t0}ms, parsed=${!!parsed}`);
+
+  // Re-prompt with strict JSON constraint if parse failed
+  if (!parsed) {
+    log.warn('[SolveAgent] Initial parse failed, re-prompting with strict JSON prompt');
+    const t1 = Date.now();
+
+    const strictSystemPrompt = `${systemPrompt}
+
+【重要】你的回答必须是纯 JSON 对象，不要任何代码块标记（\`\`\`）、解释文字或问候语。
+JSON 必须包含：solution（字符串）、answer（字符串）、steps（数组）、knowledgePoints（数组）、similarQuestions（数组）。`;
+
+    const strictResult = await callLLM(
+      {
+        model: modelWithInfo.model,
+        system: strictSystemPrompt,
+        messages: [{ role: 'user', content: hasImage ? userContent : problemText }] as any,
+        temperature: 0.1,
+        maxOutputTokens: 4096,
+      },
+      'solve-agent-strict',
+      { retries: 0, timeoutMs: 60_000 },
+    );
+
+    parsed = parseSolutionResponse(strictResult.text);
+    log.info(`[SolveAgent] ${agentType} strict re-prompt took ${Date.now() - t1}ms, parsed=${!!parsed}`);
+    if (!parsed) {
+      log.warn('[SolveAgent] Strict re-prompt also failed, returning null');
+    }
+  }
+
+  return parsed;
 }
 
 /**
@@ -133,48 +137,94 @@ async function solveOnce(
  * 3. If low, call secondary agent
  * 4. If secondary also low, try tertiary as last resort
  */
-async function solveWithHybrid(
+export async function solveWithHybrid(
   primary: SolverAgentType,
   problemText: string,
   problemImage: string | null,
 ): Promise<{ solution: ParsedSolution; usedAgents: SolverAgentType[] }> {
+  const t0 = Date.now();
   // Primary
   const primaryResult = await solveOnce(primary, problemText, problemImage);
   if (primaryResult) {
     const validated = validateConfidence(primaryResult, primary);
+    log.info(`[SolveAgent] Primary (${primary}): confidence=${validated.toFixed(2)}, took ${Date.now() - t0}ms`);
     if (validated >= MIN_VALIDATED_CONFIDENCE) {
       return { solution: primaryResult, usedAgents: [primary] };
     }
   }
 
-  // Secondary fallback
-  const fallbacks: SolverAgentType[] = (['science', 'humanities', 'universal'] as SolverAgentType[]).filter(
-    (t) => t !== primary,
-  );
+  // Secondary fallback — only include providers with configured API keys
+  const allTypes: SolverAgentType[] = ['science', 'humanities', 'universal'];
+  const configuredFallbacks = allTypes.filter((t): t is SolverAgentType => {
+    if (t === primary) return false;
+    const { providerId } = AGENT_MODEL_MAP[t];
+    const key = process.env[ENV_KEY_MAP[providerId] ?? ''] ?? '';
+    return key.length > 0;
+  });
+  const fallbacks: SolverAgentType[] = configuredFallbacks.length > 0
+    ? configuredFallbacks
+    : (['universal'] as SolverAgentType[]).filter((t) => t !== primary);
 
-  const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
-  if (secondaryResult) {
-    const validated = validateConfidence(secondaryResult, fallbacks[0]);
-    if (validated >= MIN_VALIDATED_CONFIDENCE) {
-      return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
+  let secondaryResult: ParsedSolution | null = null;
+  if (fallbacks.length > 0) {
+    secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
+    if (secondaryResult) {
+      const validated = validateConfidence(secondaryResult, fallbacks[0]);
+      if (validated >= MIN_VALIDATED_CONFIDENCE) {
+        return { solution: secondaryResult, usedAgents: [primary, fallbacks[0]] };
+      }
+    }
+
+    // Tertiary: last resort — still validate, pick best of all three
+    if (fallbacks.length > 1) {
+      const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
+      if (tertiaryResult) {
+        const validated = validateConfidence(tertiaryResult, fallbacks[1]);
+        if (validated >= MIN_VALIDATED_CONFIDENCE) {
+          return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
+        }
+      }
+      // All three below threshold — return the one with highest validated confidence
+      const results = [
+        { result: primaryResult, agent: primary },
+        { result: secondaryResult, agent: fallbacks[0] },
+        { result: tertiaryResult, agent: fallbacks[1] },
+      ]
+        .filter((r) => r.result !== null)
+        .map((r) => ({
+          result: r.result!,
+          agent: r.agent,
+          score: validateConfidence(r.result!, r.agent),
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      if (results.length > 0) {
+        return { solution: results[0].result, usedAgents: results.map((r) => r.agent) };
+      }
     }
   }
 
-  // Tertiary: last resort — accept whatever we get
-  if (fallbacks.length > 1) {
-    const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
-    if (tertiaryResult) {
-      return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
-    }
+  // All failed — return the one with highest validated confidence
+  const results = [
+    { result: primaryResult, agent: primary },
+    { result: secondaryResult, agent: fallbacks[0] },
+    { result: fallbacks.length > 1 ? null : undefined, agent: fallbacks[1] ?? primary },
+  ]
+    .filter((r) => r.result !== null && r.result !== undefined)
+    .map((r) => ({
+      result: r.result!,
+      agent: r.agent,
+      score: validateConfidence(r.result!, r.agent),
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  if (results.length > 0) {
+    return { solution: results[0].result, usedAgents: results.map((r) => r.agent) };
   }
 
-  // All failed — return whatever we have
-  const calledAgents: SolverAgentType[] = fallbacks.length > 1
-    ? [primary, fallbacks[0], fallbacks[1]]
-    : [primary, fallbacks[0]];
-
+  // Truly nothing — return empty solution
   return {
-    solution: primaryResult ?? secondaryResult ?? {
+    solution: {
       solution: '',
       answer: '',
       confidence: 0,
@@ -182,7 +232,7 @@ async function solveWithHybrid(
       knowledgePoints: [],
       similarQuestions: [],
     },
-    usedAgents: calledAgents,
+    usedAgents: [primary, fallbacks[0], ...(fallbacks.length > 1 ? [fallbacks[1]] : [])],
   };
 }
 
@@ -207,7 +257,11 @@ export async function solveWithAgentNode(
   log.info(`[SolveGraph] Solving with agent: ${agentType}`);
 
   try {
-    const { solution, usedAgents } = await solveWithHybrid(agentType, problemText, problemImage);
+    const t0 = Date.now();
+    // Don't pass problemImage to solve — OCR already extracted the text.
+    // Passing image forces vision models which are slower and may timeout.
+    const { solution, usedAgents } = await solveWithHybrid(agentType, problemText, null);
+    log.info(`[SolveGraph] solveWithAgentNode completed in ${Date.now() - t0}ms, agents=${usedAgents.join(',')}`);
 
     return {
       solution: solution.solution,

@@ -20,23 +20,34 @@ interface MessageFiltersProps {
   className?: string;
 }
 
-const TYPE_FILTERS: { key: 'discussion' | 'lecture' | 'qa' | 'system'; label: string; icon: React.ReactNode }[] = [
-  { key: 'lecture', label: 'Lecture', icon: <BookOpen className="w-3 h-3" /> },
-  { key: 'discussion', label: 'Discussion', icon: <MessageSquare className="w-3 h-3" /> },
-  { key: 'qa', label: 'Q&A', icon: <HelpCircle className="w-3 h-3" /> },
-  { key: 'system', label: 'System', icon: <Bot className="w-3 h-3" /> },
+const TYPE_FILTERS: {
+  key: 'discussion' | 'lecture' | 'qa' | 'system';
+  label: string;
+  icon: React.ReactNode;
+}[] = [
+  { key: 'lecture', label: 'Lecture', icon: <BookOpen className="h-3.5 w-3.5" /> },
+  { key: 'discussion', label: 'Discussion', icon: <MessageSquare className="h-3.5 w-3.5" /> },
+  { key: 'qa', label: 'Q&A', icon: <HelpCircle className="h-3.5 w-3.5" /> },
+  { key: 'system', label: 'System', icon: <Bot className="h-3.5 w-3.5" /> },
 ];
 
-export function MessageFilters({ filters, onChange, availableAgents, className }: MessageFiltersProps) {
+export function MessageFilters({
+  filters,
+  onChange,
+  availableAgents,
+  className,
+}: MessageFiltersProps) {
   const toggleType = (type: MessageFilterState['types'] extends Set<infer U> ? U : never) => {
     const next = new Set(filters.types);
-    next.has(type) ? next.delete(type) : next.add(type);
+    if (next.has(type)) next.delete(type);
+    else next.add(type);
     onChange({ ...filters, types: next });
   };
 
   const toggleAgent = (agentId: string) => {
     const next = new Set(filters.agentIds);
-    next.has(agentId) ? next.delete(agentId) : next.add(agentId);
+    if (next.has(agentId)) next.delete(agentId);
+    else next.add(agentId);
     onChange({ ...filters, agentIds: next });
   };
 
@@ -47,13 +58,18 @@ export function MessageFilters({ filters, onChange, availableAgents, className }
   const isActive = filters.types.size > 0 || filters.agentIds.size > 0;
 
   return (
-    <div className={cn('flex flex-wrap gap-1.5 items-center px-2 py-1.5 border-b bg-muted/30', className)}>
+    <div
+      className={cn(
+        'flex flex-wrap gap-1.5 items-center px-2 py-1.5 border-b bg-muted/30',
+        className,
+      )}
+    >
       {TYPE_FILTERS.map((t) => (
         <Badge
           key={t.key}
           variant={filters.types.has(t.key) ? 'default' : 'outline'}
           className={cn(
-            'cursor-pointer text-xs gap-1 px-2 py-0.5 transition-colors',
+            'cursor-pointer gap-1 px-2 py-0.5 text-sm transition-colors',
             !filters.types.has(t.key) && 'opacity-60 hover:opacity-100',
           )}
           onClick={() => toggleType(t.key)}
@@ -68,7 +84,7 @@ export function MessageFilters({ filters, onChange, availableAgents, className }
           key={agent.id}
           variant={filters.agentIds.has(agent.id) ? 'default' : 'outline'}
           className={cn(
-            'cursor-pointer text-xs gap-1 px-2 py-0.5 transition-colors',
+            'cursor-pointer gap-1 px-2 py-0.5 text-sm transition-colors',
             !filters.agentIds.has(agent.id) && 'opacity-60 hover:opacity-100',
           )}
           onClick={() => toggleAgent(agent.id)}
@@ -78,7 +94,10 @@ export function MessageFilters({ filters, onChange, availableAgents, className }
       ))}
 
       {isActive && (
-        <button onClick={clearAll} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
+        <button
+          onClick={clearAll}
+          className="ml-auto text-sm text-muted-foreground hover:text-foreground"
+        >
           Clear all
         </button>
       )}

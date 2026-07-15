@@ -61,7 +61,11 @@ function DriftingCloud({
       }}
     >
       <CloudShape
-        style={{ width: size, height: size * 0.55, filter: 'drop-shadow(0 4px 6px rgba(147,197,253,0.4))' }}
+        style={{
+          width: size,
+          height: size * 0.55,
+          filter: 'drop-shadow(0 4px 6px rgba(147,197,253,0.4))',
+        }}
       />
     </motion.div>
   );
@@ -137,9 +141,12 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
               </defs>
               {/* 柔和光晕 — 呼吸动画 */}
               <motion.circle
-                cx="60" cy="60" r="52"
+                cx="60"
+                cy="60"
+                r="52"
                 fill="url(#sunHalo)"
-                animate={{ r: [48, 54, 48], opacity: [0.6, 0.9, 0.6] }}
+                style={{ transformOrigin: '60px 60px' }}
+                animate={{ scale: [0.92, 1.04, 0.92], opacity: [0.6, 0.9, 0.6] }}
                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
               />
               {/* 光线 — 柔和的圆角矩形，缓慢旋转 */}
@@ -169,22 +176,25 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
 
           {/* 云朵 — 大小不一，有阴影，向右飘动 */}
           <div style={{ zIndex: 15 }}>
-            <DriftingCloud top="4%"  startX="5%"  size={80}  opacity={0.5}  speed={38} />
-            <DriftingCloud top="10%" startX="60%" size={160} opacity={0.7}  speed={28} />
-            <DriftingCloud top="20%" startX="15%" size={200} opacity={0.8}  speed={24} />
+            <DriftingCloud top="4%" startX="5%" size={80} opacity={0.5} speed={38} />
+            <DriftingCloud top="10%" startX="60%" size={160} opacity={0.7} speed={28} />
+            <DriftingCloud top="20%" startX="15%" size={200} opacity={0.8} speed={24} />
             <DriftingCloud top="30%" startX="75%" size={100} opacity={0.55} speed={34} />
-            <DriftingCloud top="40%" startX="5%"  size={130} opacity={0.65} speed={30} />
+            <DriftingCloud top="40%" startX="5%" size={130} opacity={0.65} speed={30} />
             <DriftingCloud top="52%" startX="45%" size={180} opacity={0.75} speed={26} />
-            <DriftingCloud top="60%" startX="20%" size={70}  opacity={0.5}  speed={36} />
-            <DriftingCloud top="70%" startX="60%" size={150} opacity={0.7}  speed={22} />
-            <DriftingCloud top="82%" startX="10%" size={110} opacity={0.6}  speed={32} />
-            <DriftingCloud top="90%" startX="50%" size={190} opacity={0.8}  speed={20} />
+            <DriftingCloud top="60%" startX="20%" size={70} opacity={0.5} speed={36} />
+            <DriftingCloud top="70%" startX="60%" size={150} opacity={0.7} speed={22} />
+            <DriftingCloud top="82%" startX="10%" size={110} opacity={0.6} speed={32} />
+            <DriftingCloud top="90%" startX="50%" size={190} opacity={0.8} speed={20} />
           </div>
         </>
       )}
 
       {/* 书 + 涟漪 */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ zIndex: 20 }}>
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center"
+        style={{ zIndex: 20 }}
+      >
         <motion.div
           initial={{ y: -500, scale: 0.3, opacity: 0 }}
           animate={{ y: 0, scale: 1, opacity: 1 }}
@@ -200,7 +210,12 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
             }}
             transition={{ duration: 2, delay: 1.6, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <svg viewBox="0 0 200 160" className="w-44 h-36 md:w-60 md:h-48" fill="none" strokeWidth="2">
+            <svg
+              viewBox="0 0 200 160"
+              className="w-44 h-36 md:w-60 md:h-48"
+              fill="none"
+              strokeWidth="2"
+            >
               <defs>
                 <linearGradient id="bookFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#E3F2FD" />
@@ -211,15 +226,71 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                   <stop offset="100%" stopColor="#0D47A1" />
                 </linearGradient>
               </defs>
-              <path d="M100 25 Q65 12 10 30 L10 125 Q65 107 100 135Z" fill="url(#bookFill)" stroke="url(#bookEdge)" />
-              <path d="M100 25 Q135 12 190 30 L190 125 Q135 107 100 135Z" fill="url(#bookFill)" stroke="url(#bookEdge)" />
+              <path
+                d="M100 25 Q65 12 10 30 L10 125 Q65 107 100 135Z"
+                fill="url(#bookFill)"
+                stroke="url(#bookEdge)"
+              />
+              <path
+                d="M100 25 Q135 12 190 30 L190 125 Q135 107 100 135Z"
+                fill="url(#bookFill)"
+                stroke="url(#bookEdge)"
+              />
               <line x1="100" y1="25" x2="100" y2="135" stroke="url(#bookEdge)" strokeWidth="3" />
-              <line x1="35" y1="55" x2="80" y2="48" stroke="#1565C0" strokeWidth="1" opacity="0.3" />
-              <line x1="35" y1="70" x2="80" y2="63" stroke="#1565C0" strokeWidth="1" opacity="0.3" />
-              <line x1="35" y1="85" x2="80" y2="78" stroke="#1565C0" strokeWidth="1" opacity="0.3" />
-              <line x1="120" y1="48" x2="165" y2="55" stroke="#1565C0" strokeWidth="1" opacity="0.3" />
-              <line x1="120" y1="63" x2="165" y2="70" stroke="#1565C0" strokeWidth="1" opacity="0.3" />
-              <line x1="120" y1="78" x2="165" y2="85" stroke="#1565C0" strokeWidth="1" opacity="0.3" />
+              <line
+                x1="35"
+                y1="55"
+                x2="80"
+                y2="48"
+                stroke="#1565C0"
+                strokeWidth="1"
+                opacity="0.3"
+              />
+              <line
+                x1="35"
+                y1="70"
+                x2="80"
+                y2="63"
+                stroke="#1565C0"
+                strokeWidth="1"
+                opacity="0.3"
+              />
+              <line
+                x1="35"
+                y1="85"
+                x2="80"
+                y2="78"
+                stroke="#1565C0"
+                strokeWidth="1"
+                opacity="0.3"
+              />
+              <line
+                x1="120"
+                y1="48"
+                x2="165"
+                y2="55"
+                stroke="#1565C0"
+                strokeWidth="1"
+                opacity="0.3"
+              />
+              <line
+                x1="120"
+                y1="63"
+                x2="165"
+                y2="70"
+                stroke="#1565C0"
+                strokeWidth="1"
+                opacity="0.3"
+              />
+              <line
+                x1="120"
+                y1="78"
+                x2="165"
+                y2="85"
+                stroke="#1565C0"
+                strokeWidth="1"
+                opacity="0.3"
+              />
             </svg>
           </motion.div>
 
@@ -242,7 +313,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
 
       {/* 跳过按钮 */}
       <motion.button
-        className="absolute bottom-6 right-6 z-[60] flex items-center gap-2 px-4 py-2 rounded-full text-sm text-white/70 hover:text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all cursor-pointer"
+        className="absolute bottom-6 right-6 z-[60] flex min-h-11 min-w-11 items-center gap-2 rounded-full bg-white/20 px-5 py-2.5 text-sm text-white/70 backdrop-blur-sm transition-all hover:bg-white/30 hover:text-white cursor-pointer"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}

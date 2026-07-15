@@ -4,7 +4,7 @@
  * Builds personalised review plans from MistakeBookEntry[] data.
  * Pure functions — callers provide data, no I/O.
  */
-import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
+import { EBBINGHAUS_INTERVALS, type MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 
 export interface DailyReviewPlan {
   date: string;
@@ -27,7 +27,11 @@ export function buildReviewSchedule(mistakes: MistakeBookEntry[]): ReviewSchedul
   const dueItems = mistakes.filter(
     (m) => !m.reviewed && m.nextReview !== undefined && m.nextReview <= now,
   );
-  const overdue = dueItems.filter((m) => (m.nextReview ?? 0) < now - 24 * 60 * 60 * 1000).length;
+  const overdue = dueItems.filter((m) => {
+    const nr = m.nextReview ?? 0;
+    // New mistakes (nextReview=0) are due now but not overdue
+    return nr > 0 && nr < now - 24 * 60 * 60 * 1000;
+  }).length;
 
   const upcomingMap = new Map<string, MistakeBookEntry[]>();
 
@@ -80,13 +84,25 @@ export interface MasteryProgress {
   masteredCount: number;
   totalCount: number;
   percentComplete: number;
+  /** Total rounds completed across all items (each capped at EBBINGHAUS_INTERVALS.length) */
+  completedRounds: number;
+  /** Total rounds needed for all items to be fully mastered */
+  totalRounds: number;
 }
 
 export function getMasteryProgress(mistakes: MistakeBookEntry[]): MasteryProgress {
   const totalCount = mistakes.length;
   const masteredCount = mistakes.filter((m) => m.reviewed).length;
   const reviewedCount = mistakes.filter((m) => m.reviewCount > 0).length;
-  const percentComplete = totalCount > 0 ? Math.round((masteredCount / totalCount) * 100) : 100;
+  const maxRounds = EBBINGHAUS_INTERVALS.length;
+
+  // Sum up completed rounds per item (capped at maxRounds)
+  const completedRounds = mistakes.reduce(
+    (sum, m) => sum + Math.min(m.reviewCount, maxRounds),
+    0,
+  );
+  const totalRounds = totalCount * maxRounds;
+  const percentComplete = totalRounds > 0 ? Math.round((completedRounds / totalRounds) * 100) : 100;
 
   let label: string;
   if (totalCount === 0) label = '还没有错题记录。';
@@ -101,6 +117,8 @@ export function getMasteryProgress(mistakes: MistakeBookEntry[]): MasteryProgres
     masteredCount,
     totalCount,
     percentComplete,
+    completedRounds,
+    totalRounds,
   };
 }
 

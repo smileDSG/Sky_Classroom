@@ -1,0 +1,325 @@
+{
+  "id": "sveK7AZq_G",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-05-30T09:17:54.012Z",
+  "updatedAt": "2026-05-30T09:24:07.061Z",
+  "inputSummary": {
+    "requirementPreview": "python入门教学简单版",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 7,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-30T09:17:54.022Z",
+  "totalScenes": 7,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "欢迎来到Python世界",
+        "description": "介绍Python语言的特点、应用领域，以及本课程的学习目标，激发学习兴趣。",
+        "keyPoints": [
+          "Python是一种流行、易学的编程语言",
+          "Python可用于网站开发、数据分析、人工智能等多个领域",
+          "本课程将带你从零开始，掌握Python基础知识",
+          "你将学会编写简单的程序并与计算机交互"
+        ],
+        "teachingObjective": "让学习者了解课程概况，建立学习动机",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "准备开始：运行环境",
+        "description": "简单说明如何准备好Python运行环境，推荐使用在线编程工具，免去安装步骤。",
+        "keyPoints": [
+          "你可以使用本平台提供的内置代码编辑器",
+          "也可以下载安装Python IDLE或Anaconda等工具",
+          "本课程采用在线环境，确保大家即刻开始编码"
+        ],
+        "teachingObjective": "确保学习者能够顺利运行第一个程序",
+        "estimatedDuration": 100,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "你的第一行代码：print()",
+        "description": "演示如何使用print函数在屏幕上输出文字，并解释基本语法。",
+        "keyPoints": [
+          "print('Hello, World!') 是最简单的Python程序",
+          "print()是输出函数，括号内放要显示的内容",
+          "文本需要用引号括起来（单引号或双引号均可）",
+          "注意：所有标点符号必须为英文半角"
+        ],
+        "teachingObjective": "学会print函数的基本用法",
+        "estimatedDuration": 120,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "interactive",
+        "title": "动手试试：修改问候语",
+        "description": "提供一个Python代码交互框，允许学习者修改print中的文字并运行，观察输出变化。",
+        "keyPoints": [
+          "尝试将Hello, World!改成你自己的问候",
+          "运行代码，查看输出结果",
+          "不小心写错怎么办？修改后重新运行即可"
+        ],
+        "teachingObjective": "通过亲手操练巩固print函数的使用",
+        "estimatedDuration": 180,
+        "order": 4,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python"
+        }
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "认识变量与数据类型",
+        "description": "介绍变量的概念以及Python中常用的三种基本数据类型：整数、浮点数、字符串。",
+        "keyPoints": [
+          "变量就像一个有标签的盒子，用来存放数据",
+          "整数（int）：如 5, -10",
+          "浮点数（float）：如 3.14, -0.5",
+          "字符串（str）：用引号包裹的文本，如 '你好'",
+          "使用 = 给变量赋值，例：age = 10"
+        ],
+        "teachingObjective": "理解变量和基本数据类型",
+        "estimatedDuration": 150,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "让程序与用户对话：input()",
+        "description": "讲解如何使用input函数从键盘获取用户输入，并将输入内容存储在变量中。",
+        "keyPoints": [
+          "input()函数会等待用户输入并按下回车",
+          "可以将输入的内容存入变量，如 name = input('你叫什么名字？')",
+          "input获取的内容总是字符串类型",
+          "结合print可以完成简单的对话程序"
+        ],
+        "teachingObjective": "掌握基本的输入输出交互",
+        "estimatedDuration": 140,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "小测验：Python基础",
+        "description": "通过几道选择题检验对所学内容的理解，及时发现并巩固薄弱环节。",
+        "keyPoints": [
+          "包含print函数作用、变量赋值、input返回值类型等知识点",
+          "即时反馈答案对错并给出解释"
+        ],
+        "teachingObjective": "评估学习者对基础语法的掌握程度",
+        "estimatedDuration": 120,
+        "order": 7,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single"
+          ]
+        }
+      }
+    ],
+    "languageDirective": "本课程使用简体中文进行教学。Python关键字和函数名如print、input等保留英文，并在中文说明中解释其含义。所有幻灯片、小测验和交互提示均使用中文。",
+    "topicSummary": "Python入门基础",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "tuE8HGPa7m",
+      "name": "欢迎来到Python世界",
+      "languageDirective": "本课程使用简体中文进行教学。Python关键字和函数名如print、input等保留英文，并在中文说明中解释其含义。所有幻灯片、小测验和交互提示均使用中文。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780132716018,
+      "updatedAt": 1780132716019,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python入门教学简单版",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "欢迎来到Python世界",
+      "description": "介绍Python语言的特点、应用领域，以及本课程的学习目标，激发学习兴趣。",
+      "keyPoints": [
+        "Python是一种流行、易学的编程语言",
+        "Python可用于网站开发、数据分析、人工智能等多个领域",
+        "本课程将带你从零开始，掌握Python基础知识",
+        "你将学会编写简单的程序并与计算机交互"
+      ],
+      "teachingObjective": "让学习者了解课程概况，建立学习动机",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "准备开始：运行环境",
+      "description": "简单说明如何准备好Python运行环境，推荐使用在线编程工具，免去安装步骤。",
+      "keyPoints": [
+        "你可以使用本平台提供的内置代码编辑器",
+        "也可以下载安装Python IDLE或Anaconda等工具",
+        "本课程采用在线环境，确保大家即刻开始编码"
+      ],
+      "teachingObjective": "确保学习者能够顺利运行第一个程序",
+      "estimatedDuration": 100,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "你的第一行代码：print()",
+      "description": "演示如何使用print函数在屏幕上输出文字，并解释基本语法。",
+      "keyPoints": [
+        "print('Hello, World!') 是最简单的Python程序",
+        "print()是输出函数，括号内放要显示的内容",
+        "文本需要用引号括起来（单引号或双引号均可）",
+        "注意：所有标点符号必须为英文半角"
+      ],
+      "teachingObjective": "学会print函数的基本用法",
+      "estimatedDuration": 120,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "interactive",
+      "title": "动手试试：修改问候语",
+      "description": "提供一个Python代码交互框，允许学习者修改print中的文字并运行，观察输出变化。",
+      "keyPoints": [
+        "尝试将Hello, World!改成你自己的问候",
+        "运行代码，查看输出结果",
+        "不小心写错怎么办？修改后重新运行即可"
+      ],
+      "teachingObjective": "通过亲手操练巩固print函数的使用",
+      "estimatedDuration": 180,
+      "order": 4,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python"
+      }
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "认识变量与数据类型",
+      "description": "介绍变量的概念以及Python中常用的三种基本数据类型：整数、浮点数、字符串。",
+      "keyPoints": [
+        "变量就像一个有标签的盒子，用来存放数据",
+        "整数（int）：如 5, -10",
+        "浮点数（float）：如 3.14, -0.5",
+        "字符串（str）：用引号包裹的文本，如 '你好'",
+        "使用 = 给变量赋值，例：age = 10"
+      ],
+      "teachingObjective": "理解变量和基本数据类型",
+      "estimatedDuration": 150,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "让程序与用户对话：input()",
+      "description": "讲解如何使用input函数从键盘获取用户输入，并将输入内容存储在变量中。",
+      "keyPoints": [
+        "input()函数会等待用户输入并按下回车",
+        "可以将输入的内容存入变量，如 name = input('你叫什么名字？')",
+        "input获取的内容总是字符串类型",
+        "结合print可以完成简单的对话程序"
+      ],
+      "teachingObjective": "掌握基本的输入输出交互",
+      "estimatedDuration": 140,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "小测验：Python基础",
+      "description": "通过几道选择题检验对所学内容的理解，及时发现并巩固薄弱环节。",
+      "keyPoints": [
+        "包含print函数作用、变量赋值、input返回值类型等知识点",
+        "即时反馈答案对错并给出解释"
+      ],
+      "teachingObjective": "评估学习者对基础语法的掌握程度",
+      "estimatedDuration": 120,
+      "order": 7,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single"
+        ]
+      }
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本课程使用简体中文进行教学。Python关键字和函数名如print、input等保留英文，并在中文说明中解释其含义。所有幻灯片、小测验和交互提示均使用中文。",
+    "totalScenes": 7
+  },
+  "topicSummary": "Python入门基础",
+  "completedAt": "2026-05-30T09:24:07.061Z",
+  "result": {
+    "classroomId": "tuE8HGPa7m",
+    "url": "http://localhost:3000/classroom/tuE8HGPa7m",
+    "scenesCount": 7
+  }
+}

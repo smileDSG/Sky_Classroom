@@ -1,6 +1,5 @@
 'use client';
 
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { MessageSquare, Minus, Plus } from 'lucide-react';
 
 interface MaxTurnsStepperProps {
@@ -12,10 +11,7 @@ interface MaxTurnsStepperProps {
  * Compact +/- stepper with a numeric text input for setting the max conversation turns.
  * Clamped to the range 1–20. Non-digit characters are stripped on input.
  */
-export function MaxTurnsStepper({ maxTurns, onSetMaxTurns }: MaxTurnsStepperProps) {
-  const { t } = useI18n();
-
-  const handleMinus = () => {
+export function MaxTurnsStepper({ maxTurns, onSetMaxTurns }: MaxTurnsStepperProps) {const handleMinus = () => {
     const v = Math.max(1, parseInt(maxTurns || '1') - 1);
     onSetMaxTurns(String(v));
   };
@@ -43,7 +39,7 @@ export function MaxTurnsStepper({ maxTurns, onSetMaxTurns }: MaxTurnsStepperProp
     <div className="flex items-center gap-1.5 px-2 py-1 mt-1 border-t border-border/30">
       <MessageSquare className="size-3 text-muted-foreground/40 shrink-0" />
       <span className="text-[11px] text-muted-foreground/50 flex-1">
-        {t('settings.maxTurns')}
+        {'最大讨论轮数'}
       </span>
       <div className="flex items-center rounded-full bg-muted/50 h-5 shrink-0">
         <button

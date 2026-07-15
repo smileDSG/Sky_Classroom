@@ -1,0 +1,357 @@
+{
+  "id": "kKCqBrTjra",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-06-25T11:56:48.540Z",
+  "updatedAt": "2026-06-25T11:58:19.675Z",
+  "inputSummary": {
+    "requirementPreview": "二次函数",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 8,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-25T11:56:48.552Z",
+  "totalScenes": 8,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "什么是二次函数？",
+        "description": "引入二次函数的概念和一般形式，建立基础知识框架。",
+        "keyPoints": [
+          "二次函数是一种重要的多项式函数，最高次项为二次",
+          "一般形式：y = ax² + bx + c (a ≠ 0)",
+          "a、b、c 是常数，其中 a 决定了抛物线的开口方向和宽度"
+        ],
+        "teachingObjective": "学生能够理解二次函数的定义，并识别一般形式中的各项系数。",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "二次函数的图像——抛物线",
+        "description": "介绍二次函数的图像是一条抛物线，以及其关键特征。",
+        "keyPoints": [
+          "所有二次函数的图像都是抛物线（U形曲线）",
+          "抛物线关于一条直线（对称轴）对称",
+          "抛物线的最高点或最低点称为顶点"
+        ],
+        "teachingObjective": "学生能够描述二次函数图像的基本形状和特征。",
+        "estimatedDuration": 150,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "探索 y = ax² 的抛物线",
+        "description": "通过交互式模拟，直观感受参数 a 对抛物线开口方向和形状的影响。",
+        "keyPoints": [
+          "a 为正数时，抛物线开口向上；a 为负数时，开口向下",
+          "a 的绝对值越大，抛物线开口越窄",
+          "a 的绝对值越小，抛物线开口越宽"
+        ],
+        "teachingObjective": "学生能够通过调整参数得出 a 对抛物线影响的规律。",
+        "estimatedDuration": 180,
+        "order": 3,
+        "widgetType": "simulation",
+        "widgetOutline": {
+          "concept": "参数 a 对二次函数 y = ax² 图像的影响",
+          "keyVariables": [
+            "a (范围 -3 到 3，步长 0.1)"
+          ]
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "对称轴与顶点坐标",
+        "description": "介绍如何从二次函数的标准形式中推导对称轴和顶点坐标。",
+        "keyPoints": [
+          "对称轴方程：x = -b / 2a，抛物线关于此直线对称",
+          "顶点坐标：( -b/2a ，(4ac - b²) / 4a )",
+          "顶点是抛物线的最高点（开口向下）或最⛵低点（开口向上）"
+        ],
+        "teachingObjective": "学生能够计算任意二次函数的对称轴和顶点坐标。",
+        "estimatedDuration": 180,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "quiz",
+        "title": "基础检测：二次函数的定义与图像",
+        "description": "通过选择题和填空题，检验学生对二次函数基本概念和图像特征的掌握程度。",
+        "keyPoints": [
+          "识别二次函数的标准形式",
+          "判断抛物线开口方向",
+          "计算对称轴位置"
+        ],
+        "teachingObjective": "强化核心概念，检查学习效果。",
+        "estimatedDuration": 180,
+        "order": 5,
+        "quizConfig": {
+          "questionCount": 2,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "二次函数的一般式与顶点式",
+        "description": "介绍将一般式转换为顶点式 y = a(x - h)² + k 的方法及其优势。",
+        "keyPoints": [
+          "顶点式：y = a(x - h)² + k，其中 (h, k) 是顶点坐标",
+          "配方法是完成从一般式到顶点式转换的核心工具",
+          "顶点式可以快速确定抛物线的对称轴和顶点"
+        ],
+        "teachingObjective": "学生能够将一般式二次函数转化为顶点式，并理解其优点。",
+        "estimatedDuration": 180,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "绘制抛物线的五步法",
+        "description": "总结一个清晰的步骤，帮助学生独立、准确地绘制任意二次函数的图像。",
+        "keyPoints": [
+          "步骤一：确定开口方向（看 a 的符号）",
+          "步骤二：找到对称轴（x = -b/2a)",
+          "步骤三：找到顶点坐标",
+          "步骤四：找到与 y 轴的交点（c）以及与 x 轴的交点（解方程）",
+          "步骤五：平滑地连接这些关键点绘制曲线"
+        ],
+        "teachingObjective": "学生能够按照步骤准确绘制二次函数的图像。",
+        "estimatedDuration": 200,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "slide",
+        "title": "课堂总结与要点回顾",
+        "description": "总结本课程的核心知识点，强调关键公式和解题技巧，为后续学习打好基础。",
+        "keyPoints": [
+          "二次函数的一般式 (y=ax²+bx+c) 和顶点式 (y=a(x-h)²+k)",
+          "a 控制开口方向和宽度，对称轴 = -b/2a，顶点是关键点",
+          "配方法是学习和应用中的重要技能"
+        ],
+        "teachingObjective": "回顾并巩固整个课程的核心内容。",
+        "estimatedDuration": 120,
+        "order": 8
+      }
+    ],
+    "languageDirective": "This course should be taught entirely in Chinese (simplified). The topic is mathematical, specifically 'quadratic functions' (二次函数). All terminology should use the standard Chinese mathematical translations: '二次函数' for quadratic function, '顶点' for vertex, '对称轴' for axis of symmetry, '开口方向' for opening direction, etc. Since this is a foundational math concept, use clear, simple Chinese suitable for beginner-level learners of quadratic functions.",
+    "topicSummary": "二次函数基础",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "lPYnyl9k6x",
+      "name": "什么是二次函数？",
+      "languageDirective": "This course should be taught entirely in Chinese (simplified). The topic is mathematical, specifically 'quadratic functions' (二次函数). All terminology should use the standard Chinese mathematical translations: '二次函数' for quadratic function, '顶点' for vertex, '对称轴' for axis of symmetry, '开口方向' for opening direction, etc. Since this is a foundational math concept, use clear, simple Chinese suitable for beginner-level learners of quadratic functions.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782388622953,
+      "updatedAt": 1782388622953,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "二次函数",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "什么是二次函数？",
+      "description": "引入二次函数的概念和一般形式，建立基础知识框架。",
+      "keyPoints": [
+        "二次函数是一种重要的多项式函数，最高次项为二次",
+        "一般形式：y = ax² + bx + c (a ≠ 0)",
+        "a、b、c 是常数，其中 a 决定了抛物线的开口方向和宽度"
+      ],
+      "teachingObjective": "学生能够理解二次函数的定义，并识别一般形式中的各项系数。",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "二次函数的图像——抛物线",
+      "description": "介绍二次函数的图像是一条抛物线，以及其关键特征。",
+      "keyPoints": [
+        "所有二次函数的图像都是抛物线（U形曲线）",
+        "抛物线关于一条直线（对称轴）对称",
+        "抛物线的最高点或最低点称为顶点"
+      ],
+      "teachingObjective": "学生能够描述二次函数图像的基本形状和特征。",
+      "estimatedDuration": 150,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "探索 y = ax² 的抛物线",
+      "description": "通过交互式模拟，直观感受参数 a 对抛物线开口方向和形状的影响。",
+      "keyPoints": [
+        "a 为正数时，抛物线开口向上；a 为负数时，开口向下",
+        "a 的绝对值越大，抛物线开口越窄",
+        "a 的绝对值越小，抛物线开口越宽"
+      ],
+      "teachingObjective": "学生能够通过调整参数得出 a 对抛物线影响的规律。",
+      "estimatedDuration": 180,
+      "order": 3,
+      "widgetType": "simulation",
+      "widgetOutline": {
+        "concept": "参数 a 对二次函数 y = ax² 图像的影响",
+        "keyVariables": [
+          "a (范围 -3 到 3，步长 0.1)"
+        ]
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "对称轴与顶点坐标",
+      "description": "介绍如何从二次函数的标准形式中推导对称轴和顶点坐标。",
+      "keyPoints": [
+        "对称轴方程：x = -b / 2a，抛物线关于此直线对称",
+        "顶点坐标：( -b/2a ，(4ac - b²) / 4a )",
+        "顶点是抛物线的最高点（开口向下）或最⛵低点（开口向上）"
+      ],
+      "teachingObjective": "学生能够计算任意二次函数的对称轴和顶点坐标。",
+      "estimatedDuration": 180,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "quiz",
+      "title": "基础检测：二次函数的定义与图像",
+      "description": "通过选择题和填空题，检验学生对二次函数基本概念和图像特征的掌握程度。",
+      "keyPoints": [
+        "识别二次函数的标准形式",
+        "判断抛物线开口方向",
+        "计算对称轴位置"
+      ],
+      "teachingObjective": "强化核心概念，检查学习效果。",
+      "estimatedDuration": 180,
+      "order": 5,
+      "quizConfig": {
+        "questionCount": 2,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "二次函数的一般式与顶点式",
+      "description": "介绍将一般式转换为顶点式 y = a(x - h)² + k 的方法及其优势。",
+      "keyPoints": [
+        "顶点式：y = a(x - h)² + k，其中 (h, k) 是顶点坐标",
+        "配方法是完成从一般式到顶点式转换的核心工具",
+        "顶点式可以快速确定抛物线的对称轴和顶点"
+      ],
+      "teachingObjective": "学生能够将一般式二次函数转化为顶点式，并理解其优点。",
+      "estimatedDuration": 180,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "绘制抛物线的五步法",
+      "description": "总结一个清晰的步骤，帮助学生独立、准确地绘制任意二次函数的图像。",
+      "keyPoints": [
+        "步骤一：确定开口方向（看 a 的符号）",
+        "步骤二：找到对称轴（x = -b/2a)",
+        "步骤三：找到顶点坐标",
+        "步骤四：找到与 y 轴的交点（c）以及与 x 轴的交点（解方程）",
+        "步骤五：平滑地连接这些关键点绘制曲线"
+      ],
+      "teachingObjective": "学生能够按照步骤准确绘制二次函数的图像。",
+      "estimatedDuration": 200,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "slide",
+      "title": "课堂总结与要点回顾",
+      "description": "总结本课程的核心知识点，强调关键公式和解题技巧，为后续学习打好基础。",
+      "keyPoints": [
+        "二次函数的一般式 (y=ax²+bx+c) 和顶点式 (y=a(x-h)²+k)",
+        "a 控制开口方向和宽度，对称轴 = -b/2a，顶点是关键点",
+        "配方法是学习和应用中的重要技能"
+      ],
+      "teachingObjective": "回顾并巩固整个课程的核心内容。",
+      "estimatedDuration": 120,
+      "order": 8
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "This course should be taught entirely in Chinese (simplified). The topic is mathematical, specifically 'quadratic functions' (二次函数). All terminology should use the standard Chinese mathematical translations: '二次函数' for quadratic function, '顶点' for vertex, '对称轴' for axis of symmetry, '开口方向' for opening direction, etc. Since this is a foundational math concept, use clear, simple Chinese suitable for beginner-level learners of quadratic functions.",
+    "totalScenes": 8
+  },
+  "topicSummary": "二次函数基础",
+  "completedAt": "2026-06-25T11:58:19.675Z",
+  "result": {
+    "classroomId": "lPYnyl9k6x",
+    "url": "http://localhost:3000/classroom/lPYnyl9k6x",
+    "scenesCount": 8
+  }
+}

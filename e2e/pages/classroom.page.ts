@@ -1,5 +1,12 @@
 import type { Page, Locator } from '@playwright/test';
 
+export interface SlideRenderQaIssue {
+  elementId: string | null;
+  status: string | null;
+  scale: string | null;
+  text: string;
+}
+
 export class ClassroomPage {
   readonly page: Page;
   readonly loadingText: Locator;
@@ -26,5 +33,23 @@ export class ClassroomPage {
   /** Get scene title — it's the second span (first is the number badge) */
   getSceneTitle(index: number) {
     return this.sidebarScenes.nth(index).locator('[data-testid="scene-title"]');
+  }
+
+  async getSlideRenderQaIssues(): Promise<SlideRenderQaIssue[]> {
+    return this.page
+      .locator(
+        '[data-slide-qa-overflow="true"], [data-slide-qa-status="scale-down"]',
+      )
+      .evaluateAll((nodes) =>
+        nodes.map((node) => {
+          const element = node as HTMLElement;
+          return {
+            elementId: element.dataset.slideQaElementId ?? null,
+            status: element.dataset.slideQaStatus ?? null,
+            scale: element.dataset.slideQaScale ?? null,
+            text: element.innerText.replace(/\s+/g, ' ').trim().slice(0, 120),
+          };
+        }),
+      );
   }
 }

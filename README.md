@@ -544,7 +544,6 @@ Optional config in `~/.openclaw/openclaw.json`:
 - **Text-to-Speech** — Multiple voice providers with customizable voices
 - **Speech Recognition** — Talk to your AI teacher using your microphone
 - **Web Search** — Agents search the web for up-to-date information during class
-- **i18n** — Interface supports Chinese, English, Japanese, and Russian
 - **Dark Mode** — Easy on the eyes for late-night study sessions
 
 ---
@@ -592,6 +591,11 @@ Optional config in `~/.openclaw/openclaw.json`:
 
 We welcome contributions from the community! Whether it's bug reports, feature ideas, or pull requests — every bit helps.
 
+### Documentation
+
+- Project documentation index: [`docs/README.md`](docs/README.md)
+- Conversational student profile design: [`docs/conversational-student-profile-design.md`](docs/conversational-student-profile-design.md)
+
 ### Project Structure
 
 ```
@@ -619,7 +623,6 @@ OpenMAIC/
 │   ├── media/                  #   Image & video generation providers
 │   ├── export/                 #   PPTX & HTML export
 │   ├── hooks/                  #   React custom hooks (55+)
-│   ├── i18n/                   #   Internationalization (zh-CN, en-US)
 │   └── ...                     #   prosemirror, storage, pdf, web-search, utils
 │
 ├── components/                 # React UI components

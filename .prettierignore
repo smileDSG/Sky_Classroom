@@ -1,6 +1,7 @@
 # Dependencies & lock files
 pnpm-lock.yaml
 node_modules/
+software-cup-A3/
 
 # Vendor packages
 packages/pptxgenjs/
@@ -9,6 +10,7 @@ packages/mathml2omml/
 # Build output
 .next/
 out/
+.gstack/
 
 # Generated files
 *.min.js

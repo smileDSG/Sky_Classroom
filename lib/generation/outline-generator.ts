@@ -25,8 +25,7 @@ const log = createLogger('Generation');
  * still need *something* that steers the model toward the requirement's
  * language rather than defaulting to the training-distribution prior.
  */
-export const DEFAULT_LANGUAGE_DIRECTIVE =
-  'Teach in the language that matches the user requirement.';
+export const DEFAULT_LANGUAGE_DIRECTIVE = '使用中文进行教学。所有内容、标题、说明均使用中文输出。';
 
 /**
  * Generate scene outlines from user requirements
@@ -142,8 +141,10 @@ export async function generateSceneOutlinesFromRequirements(
       return { success: false, error: 'Failed to parse scene outlines response' };
     }
 
+    const mergedOutlines = mergeSparseSlideOutlines(rawOutlines);
+
     // Ensure IDs and order
-    const enriched = rawOutlines.map((outline, index) => ({
+    const enriched = mergedOutlines.map((outline, index) => ({
       ...outline,
       id: outline.id || nanoid(),
       order: index + 1,
@@ -151,6 +152,10 @@ export async function generateSceneOutlinesFromRequirements(
 
     // Replace sequential gen_img_N/gen_vid_N with globally unique IDs
     const result = uniquifyMediaElementIds(enriched);
+
+    log.info(
+      `[OutlineGen] Generated ${result.length} outlines. Titles: ${result.map((o) => `"${o.title}"[${o.type}]`).join(', ')}`,
+    );
 
     callbacks?.onProgress?.({
       currentStage: 1,
@@ -165,6 +170,143 @@ export async function generateSceneOutlinesFromRequirements(
   } catch (error) {
     return { success: false, error: String(error) };
   }
+}
+
+const SPARSE_SLIDE_TEXT_LIMIT = 170;
+const SPARSE_SLIDE_POINT_LIMIT = 3;
+const MERGED_SLIDE_POINT_LIMIT = 8;
+const MERGED_SLIDE_TEXT_LIMIT = 520;
+
+function normalizedTextLength(value: string | undefined): number {
+  return (value || '').replace(/\s+/g, '').length;
+}
+
+function outlineTextLength(outline: SceneOutline): number {
+  return (
+    normalizedTextLength(outline.title) +
+    normalizedTextLength(outline.description) +
+    normalizedTextLength(outline.teachingObjective) +
+    outline.keyPoints.reduce((sum, point) => sum + normalizedTextLength(point), 0)
+  );
+}
+
+function hasBoundMedia(outline: SceneOutline): boolean {
+  return (
+    (outline.suggestedImageIds?.length ?? 0) > 0 || (outline.mediaGenerations?.length ?? 0) > 0
+  );
+}
+
+function isSparseSlide(outline: SceneOutline): boolean {
+  if (outline.type !== 'slide' || hasBoundMedia(outline)) {
+    return false;
+  }
+
+  const pointCount = outline.keyPoints.length;
+  const textLength = outlineTextLength(outline);
+
+  return pointCount <= SPARSE_SLIDE_POINT_LIMIT && textLength <= SPARSE_SLIDE_TEXT_LIMIT;
+}
+
+function dedupeKeyPoints(points: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const point of points) {
+    const normalized = point.trim().replace(/\s+/g, ' ');
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    result.push(point);
+  }
+
+  return result;
+}
+
+function mergeOutlineTitle(first: SceneOutline, second: SceneOutline): string {
+  if (first.title === second.title) {
+    return first.title;
+  }
+
+  const slashTitle = `${first.title} / ${second.title}`;
+  if (normalizedTextLength(slashTitle) <= 34) {
+    return slashTitle;
+  }
+
+  const colonTitle = `${first.title}: ${second.title}`;
+  if (normalizedTextLength(colonTitle) <= 42) {
+    return colonTitle;
+  }
+
+  return first.title;
+}
+
+function mergeOptionalSentence(first?: string, second?: string): string | undefined {
+  const values = [first, second].map((value) => value?.trim()).filter(Boolean) as string[];
+  if (values.length === 0) {
+    return undefined;
+  }
+  if (values.length === 1 || values[0] === values[1]) {
+    return values[0];
+  }
+  return values.join(' ');
+}
+
+function canMergeSparseSlides(first: SceneOutline, second: SceneOutline): boolean {
+  if (!isSparseSlide(first) || !isSparseSlide(second)) {
+    return false;
+  }
+
+  const mergedPointCount = dedupeKeyPoints([...first.keyPoints, ...second.keyPoints]).length;
+  const mergedTextLength = outlineTextLength(first) + outlineTextLength(second);
+
+  return (
+    mergedPointCount <= MERGED_SLIDE_POINT_LIMIT && mergedTextLength <= MERGED_SLIDE_TEXT_LIMIT
+  );
+}
+
+function mergeSparseSlidePair(first: SceneOutline, second: SceneOutline): SceneOutline {
+  return {
+    ...first,
+    title: mergeOutlineTitle(first, second),
+    description:
+      mergeOptionalSentence(first.description, second.description) ||
+      mergeOutlineTitle(first, second),
+    keyPoints: dedupeKeyPoints([...first.keyPoints, ...second.keyPoints]),
+    teachingObjective: mergeOptionalSentence(first.teachingObjective, second.teachingObjective),
+    estimatedDuration:
+      typeof first.estimatedDuration === 'number' || typeof second.estimatedDuration === 'number'
+        ? (first.estimatedDuration || 0) + (second.estimatedDuration || 0)
+        : undefined,
+    languageNote: mergeOptionalSentence(first.languageNote, second.languageNote),
+  };
+}
+
+/**
+ * Merge adjacent, low-density slide outlines before scene generation.
+ *
+ * This reduces decks where the model splits tiny ideas into many almost-empty
+ * pages. Non-slide scenes and media-bound slides stay as hard boundaries.
+ */
+export function mergeSparseSlideOutlines(outlines: SceneOutline[]): SceneOutline[] {
+  const result: SceneOutline[] = [];
+  let index = 0;
+
+  while (index < outlines.length) {
+    const current = outlines[index];
+    const next = outlines[index + 1];
+
+    if (next && canMergeSparseSlides(current, next)) {
+      result.push(mergeSparseSlidePair(current, next));
+      index += 2;
+      continue;
+    }
+
+    result.push(current);
+    index += 1;
+  }
+
+  return result.map((outline, order) => ({ ...outline, order: order + 1 }));
 }
 
 /**

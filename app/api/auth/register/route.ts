@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, signRefreshToken, hashPassword } from '@/lib/server/auth';
+import { ACCESS_COOKIE_MAX_AGE, REFRESH_COOKIE_MAX_AGE } from '@/lib/server/auth/jwt';
 import { createUserDAO } from '@/lib/storage/dao/users';
 import { generateVerifyToken } from '@/lib/server/auth/tokens';
 import { sendVerificationEmail } from '@/lib/server/email';
@@ -82,23 +83,37 @@ export async function POST(request: Request) {
     }
 
     // Auto-login: generate tokens
-    const accessToken = await signAccessToken({ id: user.id, email: user.email ?? undefined, role: user.role });
+    const accessToken = await signAccessToken({
+      id: user.id,
+      email: user.email ?? undefined,
+      role: user.role,
+    });
     const sessionId = crypto.randomUUID();
     const refreshToken = await signRefreshToken(user.id, sessionId);
 
-    return NextResponse.json({
-      success: true,
-      user: { id: user.id, email: user.email, username: user.username, role: user.role },
-    }, {
-      status: 201,
-      headers: {
-        'Set-Cookie': [
-          `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${60 * 60}`,
-          `refresh_token=${refreshToken}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`,
-        ].join(', '),
+    const response = NextResponse.json(
+      {
+        success: true,
+        user: { id: user.id, email: user.email, username: user.username, role: user.role },
       },
+      { status: 201 },
+    );
+    response.cookies.set('access_token', accessToken, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: ACCESS_COOKIE_MAX_AGE,
     });
-  } catch (err) {
+    response.cookies.set('refresh_token', refreshToken, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: REFRESH_COOKIE_MAX_AGE,
+    });
+    return response;
+  } catch (_err) {
     return apiError('INTERNAL_ERROR', 500, 'Registration failed');
   }
 }

@@ -569,10 +569,8 @@ export function BaseCodeElement({ elementInfo, animate }: BaseCodeElementProps) 
   return (
     <div
       ref={wrapperRef}
-      className="base-element-code absolute"
+      className="base-element-code w-full h-full"
       style={{
-        top: `${elementInfo.top}px`,
-        left: `${elementInfo.left}px`,
         width: `${elementInfo.width}px`,
         height: `${elementInfo.height}px`,
       }}

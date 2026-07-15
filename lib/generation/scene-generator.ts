@@ -33,6 +33,7 @@ import { GENERATION_CONCURRENCY } from '@/lib/constants/generation';
 import { generationCache } from './cache';
 import { scoreContent, isAcceptable } from './quality-scorer';
 import { createLogger } from '@/lib/logger';
+import type { ClassroomThemeSelection } from './classroom-design-dna';
 
 // Content generators
 import { generateSlideContent } from './scene-content/slide-generator';
@@ -56,7 +57,7 @@ import { processActions } from './scene-actions/_shared';
 
 const log = createLogger('Generation');
 
-// ── Options interfaces ──
+// Options interfaces
 
 export interface SceneContentOptions {
   assignedImages?: PdfImage[];
@@ -67,6 +68,8 @@ export interface SceneContentOptions {
   agents?: AgentInfo[];
   languageDirective?: string;
   thinkingConfig?: ThinkingConfig;
+  themeSelection?: ClassroomThemeSelection;
+  courseTemplate?: string;
 }
 
 export interface SceneActionsOptions {
@@ -87,6 +90,8 @@ export async function generateFullScenes(
   aiCall: AICallFn,
   callbacks?: GenerationCallbacks,
   languageDirective?: string,
+  courseTemplate?: string,
+  themeSelection?: ClassroomThemeSelection,
 ): Promise<GenerationResult<string[]>> {
   const api = createStageAPI(store);
   const totalScenes = sceneOutlines.length;
@@ -105,7 +110,14 @@ export async function generateFullScenes(
     sceneOutlines,
     async (outline, index) => {
       try {
-        const sceneId = await generateSingleScene(outline, api, aiCall, languageDirective);
+        const sceneId = await generateSingleScene(
+          outline,
+          api,
+          aiCall,
+          languageDirective,
+          courseTemplate,
+          themeSelection,
+        );
 
         completedCount++;
         callbacks?.onProgress?.({
@@ -143,8 +155,14 @@ export async function generateSingleScene(
   api: ReturnType<typeof createStageAPI>,
   aiCall: AICallFn,
   languageDirective?: string,
+  courseTemplate?: string,
+  themeSelection?: ClassroomThemeSelection,
 ): Promise<string | null> {
-  const cacheKey = generationCache.buildKey(outline, { languageDirective });
+  const cacheKey = generationCache.buildKey(outline, {
+    languageDirective,
+    courseTemplate,
+    themeSelection: themeSelection?.paletteName,
+  });
 
   let content:
     | GeneratedSlideContent
@@ -156,15 +174,31 @@ export async function generateSingleScene(
 
   if (content && actions) {
     log.info(`Cache hit for: ${outline.title}`);
-    return createSceneWithActions(outline, content, actions, api);
+    return createSceneWithActions(outline, content, actions, api, themeSelection);
   }
 
   log.info(`Step 3.1: Generating content for: ${outline.title}`);
-  content = await generateSceneContent(outline, aiCall, { languageDirective });
+  content = await generateSceneContent(outline, aiCall, {
+    languageDirective,
+    courseTemplate,
+    themeSelection,
+  });
   if (!content) {
     log.error(`Failed to generate content for: ${outline.title}`);
     return null;
   }
+
+  // Log content generation result
+  if ('templateData' in content) {
+    log.info(
+      `[SingleScene] Content generated for "${outline.title}": hasTemplateData=${!!content.templateData}, legacyElements=${content.elements.length}`,
+    );
+  } else {
+    log.info(
+      `[SingleScene] Content generated for "${outline.title}": type=${outline.type}, no templateData field`,
+    );
+  }
+
   generationCache.set(`${cacheKey}:content`, content);
 
   // Quality scoring
@@ -185,7 +219,7 @@ export async function generateSingleScene(
   log.info(`Generated ${actions.length} actions for: ${outline.title}`);
   generationCache.set(`${cacheKey}:actions`, actions);
 
-  return createSceneWithActions(outline, content, actions, api);
+  return createSceneWithActions(outline, content, actions, api, themeSelection);
 }
 
 // ==================== Content Dispatcher ====================
@@ -210,7 +244,12 @@ export async function generateSceneContent(
     agents,
     languageDirective,
     thinkingConfig,
+    themeSelection,
   } = options;
+
+  log.info(
+    `[SceneContent] Generating content for "${outline.title}" (type=${outline.type}, order=${outline.order})`,
+  );
 
   // Unified path for interactive scenes (both normal and ultra mode)
   if (outline.type === 'interactive') {
@@ -244,6 +283,7 @@ export async function generateSceneContent(
         generatedMediaMapping,
         agents,
         languageDirective,
+        themeSelection,
       );
     case 'quiz':
       return generateQuizContent(outline, aiCall, languageDirective);
@@ -315,8 +355,10 @@ export function createSceneWithActions(
     | GeneratedPBLContent,
   actions: Action[],
   api: ReturnType<typeof createStageAPI>,
+  _themeSelection?: import('./classroom-design-dna').ClassroomThemeSelection,
 ): string | null {
   if (outline.type === 'slide' && 'elements' in content) {
+    const slideContent = content as GeneratedSlideContent;
     const defaultTheme: SlideTheme = {
       backgroundColor: '#ffffff',
       themeColors: ['#5b9bd5', '#ed7d31', '#a5a5a5', '#ffc000', '#4472c4'],
@@ -325,15 +367,20 @@ export function createSceneWithActions(
       outline: { color: '#d14424', width: 2, style: 'solid' },
       shadow: { h: 0, v: 0, blur: 10, color: '#000000' },
     };
+    log.info(
+      `[SceneCreate] Creating OpenMAIC-first slide for "${outline.title}": elements=${slideContent.elements.length}`,
+    );
 
     const slide: Slide = {
       id: nanoid(),
       viewportSize: 1000,
       viewportRatio: 0.5625,
       theme: defaultTheme,
-      elements: content.elements,
-      background: content.background,
+      elements: slideContent.elements,
+      background: slideContent.background,
     };
+
+    log.info(`[SceneCreate] OpenMAIC-first slide created: id=${slide.id}`);
 
     const sceneResult = api.scene.create({
       type: 'slide',
@@ -345,6 +392,16 @@ export function createSceneWithActions(
       },
       actions,
     });
+
+    if (!sceneResult.success) {
+      log.error(
+        `[SceneCreate] Failed to create scene for "${outline.title}": ${sceneResult.error}`,
+      );
+    } else {
+      log.info(
+        `[SceneCreate] Scene created successfully for "${outline.title}": sceneId=${sceneResult.data}`,
+      );
+    }
 
     return sceneResult.success ? (sceneResult.data ?? null) : null;
   }

@@ -37,7 +37,6 @@ export function SuggestingState({ progress, status }: SuggestingStateProps) {
   const clampedProgress = Math.min(progress, 100);
   const isComplete = clampedProgress >= 100;
 
-  // Star chart geometry
   const cx = 100;
   const cy = 100;
   const orbitR = 70;
@@ -46,17 +45,14 @@ export function SuggestingState({ progress, status }: SuggestingStateProps) {
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center gap-8 overflow-hidden">
-      {/* Deep space background */}
       <CelestialCanvas starCount={60} parallax={false} nebula grid={false} />
 
-      {/* Ambient nebula glow */}
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full animate-nebula-drift"
           style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.06), transparent 70%)', filter: 'blur(60px)' }}
         />
       </div>
 
-      {/* Completion warp-flash */}
       <AnimatePresence>
         {isComplete && (
           <motion.div
@@ -70,19 +66,13 @@ export function SuggestingState({ progress, status }: SuggestingStateProps) {
         )}
       </AnimatePresence>
 
-      {/* Star chart */}
       <div className="relative z-10 flex flex-col items-center gap-8">
         <div className="relative" style={{ width: 220, height: 220 }}>
           <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
-            {/* Rotating outer ring */}
             <g className="animate-orbit-slow" style={{ transformOrigin: '100px 100px' }}>
               <circle cx={cx} cy={cy} r={orbitR + 18} fill="none" stroke="rgba(245,230,200,0.06)" strokeWidth="0.5" strokeDasharray="4 6" />
             </g>
-
-            {/* Inner dashed ring */}
             <circle cx={cx} cy={cy} r={orbitR - 12} fill="none" stroke="rgba(245,230,200,0.04)" strokeWidth="0.5" strokeDasharray="2 8" />
-
-            {/* Connection lines between nodes */}
             {nodePositions.map((p, i) => {
               const next = nodePositions[(i + 1) % nodePositions.length];
               const isDone = clampedProgress >= STEPS[i].threshold;
@@ -97,29 +87,21 @@ export function SuggestingState({ progress, status }: SuggestingStateProps) {
                 />
               );
             })}
-
-            {/* Nodes */}
             {STEPS.map((step, i) => {
               const p = nodePositions[i];
               const isDone = clampedProgress >= step.threshold;
               const isActive = i === activeStep && !isDone;
-
               return (
                 <g key={step.key}>
-                  {/* Cross flare for active/done */}
                   {(isActive || isDone) && (
                     <g style={{ transformOrigin: `${p.x}px ${p.y}px` }} className={isActive ? 'animate-cross-flare' : ''}>
                       <line x1={p.x - 10} y1={p.y} x2={p.x + 10} y2={p.y} stroke={isActive ? 'rgba(255,140,105,0.4)' : 'rgba(245,230,200,0.15)'} strokeWidth="0.5" />
                       <line x1={p.x} y1={p.y - 10} x2={p.x} y2={p.y + 10} stroke={isActive ? 'rgba(255,140,105,0.4)' : 'rgba(245,230,200,0.15)'} strokeWidth="0.5" />
                     </g>
                   )}
-
-                  {/* Outer ring for active */}
                   {isActive && (
                     <circle cx={p.x} cy={p.y} r="12" fill="none" stroke="rgba(255,140,105,0.3)" strokeWidth="0.5" className="animate-ring-expand" style={{ transformOrigin: `${p.x}px ${p.y}px` }} />
                   )}
-
-                  {/* Node dot */}
                   <circle
                     cx={p.x} cy={p.y} r={isActive ? 5 : isDone ? 4 : 3}
                     fill={isActive ? '#FF8C69' : isDone ? '#F5E6C8' : 'none'}
@@ -127,8 +109,6 @@ export function SuggestingState({ progress, status }: SuggestingStateProps) {
                     strokeWidth={isDone || isActive ? 0 : 1}
                     style={{ transition: 'all 0.5s ease-out' }}
                   />
-
-                  {/* Glow for active/done */}
                   {(isActive || isDone) && (
                     <circle
                       cx={p.x} cy={p.y} r={isActive ? 10 : 6}
@@ -140,15 +120,12 @@ export function SuggestingState({ progress, status }: SuggestingStateProps) {
               );
             })}
           </svg>
-
-          {/* Floating icons at node positions (rotated back since SVG is rotated -90deg) */}
           <div className="absolute inset-0" style={{ transform: 'rotate(0deg)' }}>
             {STEPS.map((step, i) => {
               const p = nodePositions[i];
               const isDone = clampedProgress >= step.threshold;
               const isActive = i === activeStep && !isDone;
               const Icon = step.icon;
-
               return (
                 <div
                   key={`icon-${step.key}`}
@@ -170,7 +147,6 @@ export function SuggestingState({ progress, status }: SuggestingStateProps) {
           </div>
         </div>
 
-        {/* Step labels around the chart */}
         <div className="flex items-center gap-6">
           {STEPS.map((step, i) => {
             const isDone = clampedProgress >= step.threshold;
@@ -199,7 +175,6 @@ export function SuggestingState({ progress, status }: SuggestingStateProps) {
           })}
         </div>
 
-        {/* Current step detail — data stream style */}
         <AnimatePresence mode="wait">
           <motion.div
             key={isComplete ? 'complete' : STEPS[activeStep].key}
@@ -222,12 +197,10 @@ export function SuggestingState({ progress, status }: SuggestingStateProps) {
         </AnimatePresence>
       </div>
 
-      {/* Cover nebulae skeletons */}
       <div className="relative z-10 w-full max-w-md px-4">
         <SuggestingSkeleton progress={clampedProgress} />
       </div>
 
-      {/* Progress bar — star trail */}
       <div className="relative z-10 w-64 flex flex-col gap-2">
         <div className="w-full h-[2px] rounded-full overflow-hidden bg-[var(--celestial-haze)]/20">
           <motion.div

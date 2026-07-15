@@ -1,0 +1,325 @@
+{
+  "id": "pKcCeMRjKN",
+  "status": "awaiting_review",
+  "step": "generating_outlines",
+  "progress": 30,
+  "message": "大纲已生成，等待审阅",
+  "createdAt": "2026-05-31T03:14:29.169Z",
+  "updatedAt": "2026-05-31T03:15:19.796Z",
+  "inputSummary": {
+    "requirementPreview": "java入门",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-31T03:14:29.178Z",
+  "totalScenes": 7,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "欢迎来到Java入门",
+        "description": "介绍本课程的学习目标、Java语言的特点和应用场景，激发学习兴趣。",
+        "keyPoints": [
+          "Java的跨平台特性",
+          "Java的应用领域（Android开发、企业应用、大数据等）",
+          "本课程的学习路径：（环境搭建→基础语法→程序控制→面向对象入门）"
+        ],
+        "teachingObjective": "了解Java语言的价值和课程整体结构",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "搭建Java开发环境",
+        "description": "引导安装JDK和IDE，并验证环境是否就绪。",
+        "keyPoints": [
+          "安装JDK（推荐JDK 17或以上版本）",
+          "配置JAVA_HOME和Path环境变量",
+          "安装IntelliJ IDEA（社区版）或Eclipse",
+          "编译运行一段HelloWorld代码验证环境"
+        ],
+        "teachingObjective": "能够独立完成Java开发环境的搭建",
+        "estimatedDuration": 180,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "动手写HelloWorld",
+        "description": "在交互式代码编辑器中编写并运行经典的HelloWorld程序，体验Java程序的基本结构。",
+        "keyPoints": [
+          "类（class）与主方法（main）的定义",
+          "System.out.println的作用",
+          "代码编译与运行"
+        ],
+        "teachingObjective": "掌握Java程序的基础结构，能够编写并运行第一个程序",
+        "estimatedDuration": 180,
+        "order": 3,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "java",
+          "concept": "基本程序结构"
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "Java基础语法",
+        "description": "介绍Java中的基本数据类型、变量声明和常用运算符。",
+        "keyPoints": [
+          "基本数据类型：int, double, char, boolean",
+          "变量声明与赋值：类型 变量名 = 值;",
+          "算术运算符：+ - * / %",
+          "字符串String简介与拼接操作"
+        ],
+        "teachingObjective": "能正确声明变量并进行简单算术运算",
+        "estimatedDuration": 120,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "quiz",
+        "title": "测一测：基础语法",
+        "description": "通过几道题目检验对数据类型、变量和运算符的掌握情况。",
+        "keyPoints": [
+          "数据类型匹配",
+          "变量声明的正确形式",
+          "运算符优先级"
+        ],
+        "teachingObjective": "评估对基础语法知识的理解程度",
+        "estimatedDuration": 120,
+        "order": 5,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "条件与循环",
+        "description": "讲解if-else条件判断和for循环的基本用法，并通过简单示例演示。",
+        "keyPoints": [
+          "if-else语句的结构与执行流程",
+          "for循环语法：for(初始化; 条件; 更新) { }",
+          "示例：判断奇偶数",
+          "示例：计算1到100的和"
+        ],
+        "teachingObjective": "能够使用条件判断和循环解决简单逻辑问题",
+        "estimatedDuration": 150,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "课程总结与下一步",
+        "description": "回顾所学内容，指出后续学习方向，如面向对象编程。",
+        "keyPoints": [
+          "总结：环境搭建、基础语法、控制流程",
+          "下一步学习建议：类与对象、继承、多态",
+          "推荐实践项目：开发一个简单的计算器或学生信息管理程序",
+          "课程结束，感谢参与"
+        ],
+        "teachingObjective": "巩固所学，明确后续学习路径",
+        "estimatedDuration": 90,
+        "order": 7
+      }
+    ],
+    "languageDirective": "本课程使用中文教学。Java编程术语（如变量、方法、类等）将使用中文术语，但代码示例中的关键字和标识符保留英文。对于无标准翻译的新技术术语，采用中英双语标注。",
+    "topicSummary": "Java基础入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "YddixOvxSj",
+      "name": "欢迎来到Java入门",
+      "languageDirective": "本课程使用中文教学。Java编程术语（如变量、方法、类等）将使用中文术语，但代码示例中的关键字和标识符保留英文。对于无标准翻译的新技术术语，采用中英双语标注。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780197319794,
+      "updatedAt": 1780197319794,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "java入门",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "欢迎来到Java入门",
+      "description": "介绍本课程的学习目标、Java语言的特点和应用场景，激发学习兴趣。",
+      "keyPoints": [
+        "Java的跨平台特性",
+        "Java的应用领域（Android开发、企业应用、大数据等）",
+        "本课程的学习路径：（环境搭建→基础语法→程序控制→面向对象入门）"
+      ],
+      "teachingObjective": "了解Java语言的价值和课程整体结构",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "搭建Java开发环境",
+      "description": "引导安装JDK和IDE，并验证环境是否就绪。",
+      "keyPoints": [
+        "安装JDK（推荐JDK 17或以上版本）",
+        "配置JAVA_HOME和Path环境变量",
+        "安装IntelliJ IDEA（社区版）或Eclipse",
+        "编译运行一段HelloWorld代码验证环境"
+      ],
+      "teachingObjective": "能够独立完成Java开发环境的搭建",
+      "estimatedDuration": 180,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "动手写HelloWorld",
+      "description": "在交互式代码编辑器中编写并运行经典的HelloWorld程序，体验Java程序的基本结构。",
+      "keyPoints": [
+        "类（class）与主方法（main）的定义",
+        "System.out.println的作用",
+        "代码编译与运行"
+      ],
+      "teachingObjective": "掌握Java程序的基础结构，能够编写并运行第一个程序",
+      "estimatedDuration": 180,
+      "order": 3,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "java",
+        "concept": "基本程序结构"
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "Java基础语法",
+      "description": "介绍Java中的基本数据类型、变量声明和常用运算符。",
+      "keyPoints": [
+        "基本数据类型：int, double, char, boolean",
+        "变量声明与赋值：类型 变量名 = 值;",
+        "算术运算符：+ - * / %",
+        "字符串String简介与拼接操作"
+      ],
+      "teachingObjective": "能正确声明变量并进行简单算术运算",
+      "estimatedDuration": 120,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "quiz",
+      "title": "测一测：基础语法",
+      "description": "通过几道题目检验对数据类型、变量和运算符的掌握情况。",
+      "keyPoints": [
+        "数据类型匹配",
+        "变量声明的正确形式",
+        "运算符优先级"
+      ],
+      "teachingObjective": "评估对基础语法知识的理解程度",
+      "estimatedDuration": 120,
+      "order": 5,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "条件与循环",
+      "description": "讲解if-else条件判断和for循环的基本用法，并通过简单示例演示。",
+      "keyPoints": [
+        "if-else语句的结构与执行流程",
+        "for循环语法：for(初始化; 条件; 更新) { }",
+        "示例：判断奇偶数",
+        "示例：计算1到100的和"
+      ],
+      "teachingObjective": "能够使用条件判断和循环解决简单逻辑问题",
+      "estimatedDuration": 150,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "课程总结与下一步",
+      "description": "回顾所学内容，指出后续学习方向，如面向对象编程。",
+      "keyPoints": [
+        "总结：环境搭建、基础语法、控制流程",
+        "下一步学习建议：类与对象、继承、多态",
+        "推荐实践项目：开发一个简单的计算器或学生信息管理程序",
+        "课程结束，感谢参与"
+      ],
+      "teachingObjective": "巩固所学，明确后续学习路径",
+      "estimatedDuration": 90,
+      "order": 7
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本课程使用中文教学。Java编程术语（如变量、方法、类等）将使用中文术语，但代码示例中的关键字和标识符保留英文。对于无标准翻译的新技术术语，采用中英双语标注。",
+    "totalScenes": 7
+  },
+  "topicSummary": "Java基础入门"
+}

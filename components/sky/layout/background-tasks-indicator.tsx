@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Loader2,
   CheckCircle2,
@@ -16,7 +16,6 @@ import {
   FileQuestion,
   PenTool,
   Languages,
-  Search,
   Brain,
 } from 'lucide-react';
 import { useTaskStore, type BackgroundTask, type TaskType } from '@/lib/store/use-task-store';
@@ -24,44 +23,66 @@ import { useTaskStore, type BackgroundTask, type TaskType } from '@/lib/store/us
 const TASK_ICONS: Record<TaskType, React.ComponentType<{ className?: string }>> = {
   solve: Camera,
   slides: Presentation,
+  pptx: Presentation,
   quiz: FileQuestion,
   write: PenTool,
   translate: Languages,
   memory: Brain,
+  teaching: Brain,
   general: Zap,
 };
 
 const TASK_COLORS: Record<TaskType, string> = {
   solve: 'text-violet-500',
   slides: 'text-cyan-500',
+  pptx: 'text-cyan-500',
   quiz: 'text-amber-500',
   write: 'text-emerald-500',
   translate: 'text-indigo-500',
   memory: 'text-rose-500',
+  teaching: 'text-purple-500',
   general: 'text-sky-500',
 };
 
 const TASK_ROUTES: Record<TaskType, string> = {
   solve: '/sky/cloud-mind/solve',
-  slides: '/sky/cloud-mind/slides',
+  slides: '/sky/cloud-mind',
+  pptx: '/sky/cloud-mind',
   quiz: '/sky/cloud-mind/quiz',
-  write: '/sky/cloud-mind/write',
-  translate: '/sky/cloud-mind/translate',
+  write: '/sky/cloud-mind',
+  translate: '/sky/cloud-mind',
   memory: '/sky/cloud-mind/memory',
+  teaching: '/sky/teaching',
   general: '/sky/cloud-mind',
 };
 
 function TaskItem({ task }: { task: BackgroundTask }) {
   const router = useRouter();
-  const updateTask = useTaskStore((s) => s.updateTask);
   const removeTask = useTaskStore((s) => s.removeTask);
   const dismissTask = useTaskStore((s) => s.dismissTask);
+  const autoDismissTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const Icon = TASK_ICONS[task.type] || Zap;
   const color = TASK_COLORS[task.type] || 'text-slate-500';
   const isRunning = task.status === 'running';
   const isCompleted = task.status === 'completed';
   const isFailed = task.status === 'failed';
+
+  // Auto-dismiss completed tasks after 10 seconds
+  // Timer starts when the component mounts (when user sees the notification)
+  useEffect(() => {
+    if (isCompleted) {
+      autoDismissTimerRef.current = setTimeout(() => {
+        dismissTask(task.id);
+      }, 10000); // 10 seconds
+
+      return () => {
+        if (autoDismissTimerRef.current) {
+          clearTimeout(autoDismissTimerRef.current);
+        }
+      };
+    }
+  }, [isCompleted, task.id, dismissTask]);
 
   const handleClick = () => {
     if (isCompleted) {
@@ -73,6 +94,10 @@ function TaskItem({ task }: { task: BackgroundTask }) {
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Clear auto-dismiss timer if manually dismissed
+    if (autoDismissTimerRef.current) {
+      clearTimeout(autoDismissTimerRef.current);
+    }
     removeTask(task.id);
   };
 
@@ -119,12 +144,8 @@ function TaskItem({ task }: { task: BackgroundTask }) {
             <p className="text-[10px] text-slate-400 mt-0.5">{task.phase}</p>
           </div>
         )}
-        {isCompleted && (
-          <p className="text-[10px] text-emerald-500 mt-0.5">点击查看详情</p>
-        )}
-        {isFailed && (
-          <p className="text-[10px] text-rose-500 mt-0.5">{task.error || '任务失败'}</p>
-        )}
+        {isCompleted && <p className="text-[10px] text-emerald-500 mt-0.5">点击查看详情</p>}
+        {isFailed && <p className="text-[10px] text-rose-500 mt-0.5">{task.error || '任务失败'}</p>}
       </div>
 
       <button
@@ -141,15 +162,21 @@ export function BackgroundTasksIndicator() {
   const [expanded, setExpanded] = useState(true);
   const tasks = useTaskStore((s) => s.tasks);
   const dismissedIds = useTaskStore((s) => s.dismissedIds);
+  const dismissCompletedTasks = useTaskStore((s) => s.dismissCompletedTasks);
+  const pathname = usePathname();
 
+  // Hide tasks whose resultRoute matches the current page —
+  // those already have their own inline progress UI.
   const visibleTasks = Object.values(tasks).filter(
-    (t) => !dismissedIds.has(t.id)
+    (t) => !dismissedIds.has(t.id) && t.resultRoute !== pathname,
   );
 
   if (visibleTasks.length === 0) return null;
 
   const runningCount = visibleTasks.filter((t) => t.status === 'running').length;
-  const completedCount = visibleTasks.filter((t) => t.status === 'completed').length;
+  const completedCount = visibleTasks.filter(
+    (t) => t.status === 'completed' || t.status === 'failed',
+  ).length;
 
   return (
     <motion.div
@@ -164,9 +191,7 @@ export function BackgroundTasksIndicator() {
       >
         <div className="flex items-center gap-2">
           <Zap className="h-3.5 w-3.5 text-sky-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-            后台任务
-          </span>
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">后台任务</span>
           {runningCount > 0 && (
             <span className="flex items-center gap-1 rounded-full bg-sky-100 dark:bg-sky-900/30 px-1.5 py-0.5 text-[10px] font-medium text-sky-600 dark:text-sky-400">
               <Loader2 className="h-2.5 w-2.5 animate-spin" />
@@ -179,11 +204,32 @@ export function BackgroundTasksIndicator() {
             </span>
           )}
         </div>
-        {expanded ? (
-          <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-        ) : (
-          <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
-        )}
+        <div className="flex items-center gap-1">
+          {completedCount > 0 && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                dismissCompletedTasks();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                  dismissCompletedTasks();
+                }
+              }}
+              className="cursor-pointer rounded px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-600/50 transition-colors"
+            >
+              清除已完成
+            </span>
+          )}
+          {expanded ? (
+            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+          ) : (
+            <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+          )}
+        </div>
       </button>
 
       {/* Task List */}

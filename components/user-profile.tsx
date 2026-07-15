@@ -6,7 +6,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { toast } from 'sonner';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
 
@@ -20,9 +19,7 @@ const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const FILE_INPUT_ID = 'user-avatar-upload';
 
-export function UserProfileCard() {
-  const { t } = useI18n();
-  const avatar = useUserProfileStore((s) => s.avatar);
+export function UserProfileCard() {const avatar = useUserProfileStore((s) => s.avatar);
   const nickname = useUserProfileStore((s) => s.nickname);
   const bio = useUserProfileStore((s) => s.bio);
   const setAvatar = useUserProfileStore((s) => s.setAvatar);
@@ -43,7 +40,7 @@ export function UserProfileCard() {
     if (editingName) nameInputRef.current?.focus();
   }, [editingName]);
 
-  const displayName = nickname || t('profile.defaultNickname');
+  const displayName = nickname || '同学';
 
   const startEditName = () => {
     setNameDraft(nickname);
@@ -59,18 +56,18 @@ export function UserProfileCard() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_AVATAR_SIZE) {
-      toast.error(t('profile.fileTooLarge'));
+      toast.error('图片过大，请选择小于 5MB 的图片');
       return;
     }
     if (!file.type.startsWith('image/')) {
-      toast.error(t('profile.invalidFileType'));
+      toast.error('请选择图片文件');
       return;
     }
 
     // Upload to server
     const url = await useUserProfileStore.getState().uploadAvatar(file);
     if (url) {
-      toast.success(t('profile.avatarUpdated'));
+      toast.success('头像已更新');
     } else {
       // Fallback: local canvas resize
       const reader = new FileReader();
@@ -153,7 +150,7 @@ export function UserProfileCard() {
                 }}
                 onBlur={commitName}
                 maxLength={20}
-                placeholder={t('profile.defaultNickname')}
+                placeholder={'同学'}
                 className="flex-1 min-w-0 h-7 bg-transparent border-b-2 border-violet-400 dark:border-violet-500 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground/40"
               />
               <button
@@ -172,7 +169,7 @@ export function UserProfileCard() {
               <Pencil className="size-3 text-muted-foreground/40 opacity-0 group-hover/name:opacity-100 transition-opacity" />
             </button>
           )}
-          <p className="text-[10px] text-muted-foreground/50 mt-0.5">{t('profile.avatarHint')}</p>
+          <p className="text-[10px] text-muted-foreground/50 mt-0.5">{'你的头像将显示在课堂讨论和对话中'}</p>
         </div>
       </div>
 
@@ -214,7 +211,7 @@ export function UserProfileCard() {
                     ? 'ring-2 ring-violet-400 dark:ring-violet-500 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 border-violet-300 dark:border-violet-600 bg-violet-50 dark:bg-violet-900/30'
                     : 'border-muted-foreground/30 text-muted-foreground/50 hover:border-muted-foreground/50',
                 )}
-                title={t('profile.uploadAvatar')}
+                title={'上传'}
               >
                 <ImagePlus className="size-3.5" />
               </label>
@@ -227,7 +224,7 @@ export function UserProfileCard() {
       <Textarea
         value={bio}
         onChange={(e) => setBio(e.target.value)}
-        placeholder={t('profile.bioPlaceholder')}
+        placeholder={'介绍一下自己，AI老师会根据你的背景个性化教学...'}
         maxLength={200}
         rows={3}
         className="mt-3 resize-none bg-background/50 min-h-[80px]"

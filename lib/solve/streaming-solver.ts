@@ -9,7 +9,7 @@
 import { streamLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { buildSolverPrompt } from './solver-prompts';
-import { resolveSolverModel } from './solver-constants';
+import { resolveSolverModel, hasVisionModel } from './solver-constants';
 import type { SolverAgentType } from './types';
 import { createLogger } from '@/lib/logger';
 
@@ -31,16 +31,19 @@ const LATEX_LETTER = /[a-zA-Z]/;
 function fixLatexJsonEscapes(json: string): string {
   let changed = false;
   const fixed = json.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (_match, content) => {
-    const fixedContent = content.replace(/\\([a-zA-Z])/g, (_m: string, ch: string, offset: number, str: string) => {
-      const nextChar = str[offset + 2];
-      const isLatexCommand = nextChar != null && LATEX_LETTER.test(nextChar);
+    const fixedContent = content.replace(
+      /\\([a-zA-Z])/g,
+      (_m: string, ch: string, offset: number, str: string) => {
+        const nextChar = str[offset + 2];
+        const isLatexCommand = nextChar != null && LATEX_LETTER.test(nextChar);
 
-      if (VALID_JSON_ESCAPE.has(ch) && !isLatexCommand) {
-        return _m; // real JSON escape: \n, \t — keep as-is
-      }
-      changed = true;
-      return `\\\\${ch}`; // LaTeX command — double-escape for JSON
-    });
+        if (VALID_JSON_ESCAPE.has(ch) && !isLatexCommand) {
+          return _m; // real JSON escape: \n, \t — keep as-is
+        }
+        changed = true;
+        return `\\\\${ch}`; // LaTeX command — double-escape for JSON
+      },
+    );
     return `"${fixedContent}"`;
   });
   return changed ? fixed : json;
@@ -50,10 +53,15 @@ function fixLatexJsonEscapes(json: string): string {
 // LLMs emit messy LaTeX: stray newlines inside $...$, misplaced $,
 // \sqrtn (missing braces), etc. Clean before display.
 
-function cleanLatexContent(text: string): string {
+export function cleanLatexContent(text: string): string {
   if (!text) return text;
 
   let s = text;
+
+  // 0. Normalize double backslashes from JSON escaping.
+  // The streaming parser extracts raw content between JSON quotes without
+  // JSON.parse, so \\frac remains as literal double backslash characters.
+  s = s.replace(/\\\\([a-zA-Z]+)/g, (_m: string, cmd: string) => `\\${cmd}`);
 
   // 1. /sum → \sum, /frac → \frac (LLM sometimes emits forward slash)
   s = s.replace(
@@ -113,13 +121,22 @@ function cleanAnswer(raw: string): string {
   s = s.replace(EXPLANATION_PREFIXES, '').trim();
   // If the string contains both explanation and a LaTeX expression, extract the last expression
   const latexMatches = s.match(/\$[^$]+\$/g);
-  if (latexMatches && latexMatches.length > 0 && s.length > latexMatches[latexMatches.length - 1].length + 10) {
+  if (
+    latexMatches &&
+    latexMatches.length > 0 &&
+    s.length > latexMatches[latexMatches.length - 1].length + 10
+  ) {
     return latexMatches[latexMatches.length - 1];
   }
   return s;
 }
 
 // ── Event types emitted during streaming ─────────────────────────────
+
+export interface SolutionEvent {
+  type: 'solution';
+  solution: string;
+}
 
 export interface StepEvent {
   type: 'step';
@@ -148,24 +165,29 @@ export interface PhaseEvent {
   phase: string;
 }
 
-export interface MetadataEvent {
-  type: 'metadata';
-  questionType?: 'choice' | 'fill' | 'solve' | 'judge';
-  options?: string[];
+export interface FirstTokenEvent {
+  type: 'first_token';
 }
 
-export type StreamEvent = StepEvent | AnswerEvent | KnowledgeEvent | SimilarEvent | PhaseEvent | MetadataEvent;
+export type StreamEvent =
+  | SolutionEvent
+  | StepEvent
+  | AnswerEvent
+  | KnowledgeEvent
+  | SimilarEvent
+  | PhaseEvent
+  | FirstTokenEvent;
 
 // ── Streaming JSON parser state machine ──────────────────────────────
 
 type ParseState =
-  | 'init'          // looking for "steps" key
-  | 'in_steps'      // found "steps", looking for first {
-  | 'in_step'       // inside a step object, tracking braces
-  | 'after_steps'   // steps array closed, looking for "answer"
-  | 'in_answer'     // inside answer string
-  | 'in_knowledge'  // looking for knowledge array
-  | 'in_similar';   // looking for similar array
+  | 'init' // looking for "steps" key
+  | 'in_steps' // found "steps", looking for first {
+  | 'in_step' // inside a step object, tracking braces
+  | 'after_steps' // steps array closed, looking for "answer"
+  | 'in_answer' // inside answer string
+  | 'in_knowledge' // looking for knowledge array
+  | 'in_similar'; // looking for similar array
 
 /**
  * Lightweight streaming JSON step parser.
@@ -180,6 +202,7 @@ class StepStreamParser {
   private stepStart = -1;
 
   private steps: StepEvent[] = [];
+  private solution = '';
   private answer = '';
   private knowledge: KnowledgeEvent['points'] = [];
   private similar: SimilarEvent['questions'] = [];
@@ -219,10 +242,17 @@ class StepStreamParser {
   }
 
   /** Get all collected results at end of stream */
-  finalize(): { answer: string; steps: StepEvent[]; knowledge: KnowledgeEvent['points']; similar: SimilarEvent['questions']; questionType?: 'choice' | 'fill' | 'solve' | 'judge'; options?: string[] } {
+  finalize(): {
+    solution: string;
+    answer: string;
+    steps: StepEvent[];
+    knowledge: KnowledgeEvent['points'];
+    similar: SimilarEvent['questions'];
+  } {
     // Try to extract remaining data from buffer
     this.extractFallback();
     return {
+      solution: this.solution,
       answer: this.answer,
       steps: this.steps,
       knowledge: this.knowledge,
@@ -236,17 +266,48 @@ class StepStreamParser {
 
   private tryFindSteps(events: StreamEvent[]): void {
     const idx = this.buffer.indexOf('"steps"');
-    if (idx === -1) return;
+    if (idx !== -1) {
+      // Find the array opening after "steps"
+      const after = this.buffer.substring(idx + 7);
+      const bracketIdx = after.indexOf('[');
+      if (bracketIdx !== -1) {
+        this.state = 'in_steps';
+        this.buffer = after.substring(bracketIdx + 1);
+        // Try to immediately find a step
+        this.tryEnterStep(events);
+        return;
+      }
+    }
 
-    // Find the array opening after "steps"
-    const after = this.buffer.substring(idx + 7);
-    const bracketIdx = after.indexOf('[');
-    if (bracketIdx === -1) return;
+    // "steps" not found — check for "solution" as a fallback for the
+    // detailed derivation only. Do NOT push it into steps — that caused
+    // the solution text to appear twice (once in the solution block,
+    // once in the steps tab). Steps will be populated later from the
+    // actual "steps" array, or left empty so the UI shows a skeleton.
+    const solIdx = this.buffer.indexOf('"solution"');
+    if (solIdx !== -1) {
+      const after = this.buffer.substring(solIdx + 10);
+      const colonIdx = after.indexOf(':');
+      if (colonIdx !== -1) {
+        const valuePart = after.substring(colonIdx + 1).trim();
+        const match = valuePart.match(/"([^"]*)"/);
+        if (match) {
+          const solutionText = cleanLatexContent(match[1]);
+          // Store as detailed solution only — do NOT duplicate into steps
+          this.solution = solutionText;
+          events.push({ type: 'solution', solution: solutionText });
+        }
+      }
+    }
 
-    this.state = 'in_steps';
-    this.buffer = after.substring(bracketIdx + 1);
-    // Try to immediately find a step
-    this.tryEnterStep(events);
+    // Only transition to after_steps if buffer is large enough to be sure
+    // "steps" is genuinely absent (not just split across chunk boundaries).
+    // The word "steps" is 7 chars; a split could span up to ~50 chars of
+    // surrounding context. Wait until we have 200+ chars before giving up.
+    if (this.buffer.length > 200) {
+      this.state = 'after_steps';
+      this.tryFindAnswer(events);
+    }
   }
 
   private tryEnterStep(events: StreamEvent[]): void {
@@ -296,11 +357,26 @@ class StepStreamParser {
   }
 
   private tryFindAnswer(events: StreamEvent[]): void {
-    const idx = this.buffer.indexOf('"answer"');
-    if (idx === -1) return;
+    // Don't re-extract if answer already set
+    if (this.answer) return;
 
-    // Extract answer string value
-    const after = this.buffer.substring(idx + 8);
+    // Try "answer" first
+    let idx = this.buffer.indexOf('"answer"');
+    if (idx !== -1) {
+      this.extractAnswerFromKey(idx, events);
+      return;
+    }
+
+    // Fall back to "solution" only if "answer" not found and answer not yet set
+    const solIdx = this.buffer.indexOf('"solution"');
+    if (solIdx !== -1) {
+      this.extractAnswerFromKey(solIdx, events);
+    }
+  }
+
+  private extractAnswerFromKey(idx: number, events: StreamEvent[]): void {
+    // Skip past the key name and find the colon
+    const after = this.buffer.substring(idx);
     const colonIdx = after.indexOf(':');
     if (colonIdx === -1) return;
 
@@ -324,8 +400,12 @@ class StepStreamParser {
     if (idx === -1) {
       // Not yet in buffer — stay in in_knowledge to wait for more data
       // Only skip to similar if we've accumulated enough buffer to be sure
-      // the key is truly missing (e.g., buffer contains "similarQuestions")
-      if (this.buffer.indexOf('"similarQuestions"') !== -1) {
+      // the key is truly missing (e.g., buffer contains "similarQuestions"
+      // or "solution" which indicates knowledgePoints is absent)
+      if (
+        this.buffer.indexOf('"similarQuestions"') !== -1 ||
+        this.buffer.indexOf('"solution"') !== -1
+      ) {
         this.state = 'in_similar';
         this.tryFindSimilar(events);
       }
@@ -394,7 +474,9 @@ class StepStreamParser {
         type: 'step',
         label: String(obj.label),
         content: cleanLatexContent(String(obj.content)),
-        keyPoints: Array.isArray(obj.keyPoints) ? (obj.keyPoints as string[]).map(cleanLatexContent) : [],
+        keyPoints: Array.isArray(obj.keyPoints)
+          ? (obj.keyPoints as string[]).map(cleanLatexContent)
+          : [],
       };
     }
     return null;
@@ -423,7 +505,13 @@ class StepStreamParser {
 
   /** Last-resort: try to parse the entire buffer as JSON to extract data */
   private extractFallback(): void {
-    if (this.steps.length > 0 && this.answer && this.knowledge.length > 0 && this.similar.length > 0) return;
+    if (
+      this.steps.length > 0 &&
+      this.answer &&
+      this.knowledge.length > 0 &&
+      this.similar.length > 0
+    )
+      return;
 
     try {
       // Try to find a valid JSON object in the buffer
@@ -434,6 +522,13 @@ class StepStreamParser {
 
       if (!this.answer && obj.answer) {
         this.answer = cleanAnswer(obj.answer as string);
+      }
+      if (!this.solution && obj.solution && typeof obj.solution === 'string') {
+        this.solution = cleanLatexContent(obj.solution as string);
+      }
+      // "solution" as a string key is sometimes used instead of "answer"
+      if (!this.answer && obj.solution && typeof obj.solution === 'string') {
+        this.answer = cleanAnswer(obj.solution as string);
       }
       if (this.steps.length === 0 && Array.isArray(obj.steps)) {
         for (const s of obj.steps) {
@@ -484,7 +579,9 @@ export async function* streamSolve(
   problemText: string,
   problemImage: string | null,
 ): AsyncGenerator<StreamEvent> {
-  const modelConfig = resolveSolverModel(agentType);
+  // Only use image if a vision model is actually available
+  const hasImage = !!problemImage && hasVisionModel();
+  const modelConfig = resolveSolverModel(agentType, hasImage);
   const modelWithInfo = getModel(modelConfig);
 
   const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
@@ -494,11 +591,21 @@ export async function* streamSolve(
   // Dynamic token limit: short problems get fewer tokens for faster generation
   const maxTokens = problemText.length < 100 ? 2048 : problemText.length < 300 ? 3072 : 4096;
 
+  // Build multimodal message: image + text when image is available
+  const userContent: any[] = [];
+  if (problemImage) {
+    userContent.push({
+      type: 'image',
+      image: problemImage, // data URL (data:image/...;base64,...)
+    });
+  }
+  userContent.push({ type: 'text', text: problemText });
+
   const result = streamLLM(
     {
       model: modelWithInfo.model,
       system: systemPrompt,
-      messages: [{ role: 'user', content: problemText }] as any,
+      messages: [{ role: 'user', content: hasImage ? userContent : problemText }] as any,
       temperature: 0.3,
       maxOutputTokens: maxTokens,
     },
@@ -507,16 +614,28 @@ export async function* streamSolve(
   );
 
   const parser = new StepStreamParser();
+  let firstTokenEmitted = false;
+  const t_start = Date.now();
+  let chunkCount = 0;
 
   try {
     for await (const chunk of result.textStream) {
+      chunkCount++;
+      // Emit first_token event on first chunk received
+      if (!firstTokenEmitted) {
+        yield { type: 'first_token' };
+        firstTokenEmitted = true;
+        log.info(`[StreamingSolver] First token after ${Date.now() - t_start}ms`);
+      }
+
       const events = parser.feed(chunk);
       for (const event of events) {
         yield event;
       }
     }
+    log.info(`[StreamingSolver] Stream complete: ${chunkCount} chunks, ${Date.now() - t_start}ms total`);
   } catch (err) {
-    log.error('Stream solve error:', err);
+    log.error(`[StreamingSolver] Stream error after ${Date.now() - t_start}ms:`, err);
     throw err;
   }
 
@@ -527,6 +646,11 @@ export async function* streamSolve(
     // Streaming parse failed — try fallback with full text
     yield* fallbackSolve(agentType, problemText, problemImage);
     return;
+  }
+
+  // Emit solution if not already emitted during streaming
+  if (final.solution) {
+    yield { type: 'solution', solution: final.solution };
   }
 
   // Emit answer if not already emitted
@@ -559,15 +683,26 @@ async function* fallbackSolve(
   const { getModel: getModelFn } = await import('@/lib/ai/providers');
   const { parseJsonResponse } = await import('@/lib/generation/json-repair');
 
-  const modelConfig = resolveSolverModel(agentType);
+  const hasImage = !!problemImage && hasVisionModel();
+  const modelConfig = resolveSolverModel(agentType, hasImage);
   const modelWithInfo = getModelFn(modelConfig);
 
   const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
 
+  // Build multimodal message: image + text when image is available
+  const userContent: any[] = [];
+  if (problemImage) {
+    userContent.push({
+      type: 'image',
+      image: problemImage, // data URL
+    });
+  }
+  userContent.push({ type: 'text', text: problemText });
+
   const result = await callLLM(
     {
       model: modelWithInfo.model,
-      messages: [{ role: 'user', content: problemText }] as any,
+      messages: [{ role: 'user', content: hasImage ? userContent : problemText }] as any,
       temperature: 0.3,
       maxOutputTokens: 4096,
     },
@@ -591,6 +726,9 @@ async function* fallbackSolve(
           };
         }
       }
+    }
+    if (parsed.solution) {
+      yield { type: 'solution', solution: cleanLatexContent(parsed.solution) };
     }
     if (parsed.answer) {
       yield { type: 'answer', answer: cleanLatexContent(cleanAnswer(parsed.answer)) };
@@ -617,11 +755,72 @@ async function* fallbackSolve(
       };
     }
   } else {
-    // Raw text fallback
-    const text = result.text || '';
-    yield { type: 'step', label: '解答', content: text, keyPoints: [] };
-    yield { type: 'answer', answer: text };
-    yield { type: 'knowledge', points: [] };
-    yield { type: 'similar', questions: [] };
+    // JSON parse failed — re-prompt LLM with strict JSON constraint
+    log.warn('[StreamingSolver] Fallback JSON parse failed, re-prompting with strict JSON prompt');
+
+    const strictSystemPrompt = `${systemPrompt}
+
+【重要】你的回答必须是纯 JSON 对象，不要任何代码块标记（\`\`\`）、解释文字或问候语。
+JSON 必须包含：steps（数组）、answer（字符串）、knowledgePoints（数组）、similarQuestions（数组）。`;
+
+    const strictResult = await callLLM(
+      {
+        model: modelWithInfo.model,
+        system: strictSystemPrompt,
+        messages: [{ role: 'user', content: hasImage ? userContent : problemText }] as any,
+        temperature: 0.1,
+        maxOutputTokens: 4096,
+      },
+      'solve-fallback-strict',
+      { retries: 0 },
+      undefined,
+      undefined,
+    );
+
+    const strictParsed = parseJsonResponse<any>(strictResult.text || '');
+
+    if (strictParsed && (strictParsed.steps?.length > 0 || strictParsed.answer)) {
+      if (Array.isArray(strictParsed.steps)) {
+        for (const s of strictParsed.steps) {
+          if (s.label && s.content) {
+            yield {
+              type: 'step',
+              label: s.label,
+              content: cleanLatexContent(s.content),
+              keyPoints: Array.isArray(s.keyPoints) ? s.keyPoints.map(cleanLatexContent) : [],
+            };
+          }
+        }
+      }
+      if (strictParsed.solution) {
+        yield { type: 'solution', solution: cleanLatexContent(strictParsed.solution) };
+      }
+      if (strictParsed.answer) {
+        yield { type: 'answer', answer: cleanLatexContent(cleanAnswer(strictParsed.answer)) };
+      }
+      if (Array.isArray(strictParsed.knowledgePoints)) {
+        yield {
+          type: 'knowledge',
+          points: strictParsed.knowledgePoints.map((k: any) => ({
+            name: cleanLatexContent(k.name || ''),
+            description: cleanLatexContent(k.description || ''),
+            difficulty: k.difficulty || 'medium',
+          })),
+        };
+      }
+      if (Array.isArray(strictParsed.similarQuestions)) {
+        yield {
+          type: 'similar',
+          questions: strictParsed.similarQuestions.map((q: any) => ({
+            problem: cleanLatexContent(q.problem || ''),
+            difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
+            knowledgePoint: cleanLatexContent(q.knowledgePoint || ''),
+            ...(q.answer ? { answer: cleanLatexContent(q.answer) } : {}),
+          })),
+        };
+      }
+    } else {
+      throw new Error('AI 未能返回有效的 JSON 解题内容，请重试或换题');
+    }
   }
 }

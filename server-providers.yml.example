@@ -1,0 +1,32 @@
+# server-providers.yml — Server-side provider configuration
+# API keys never leave the server. Client only sees provider IDs and metadata.
+#
+# Copy this file to server-providers.yml and fill in your keys.
+#
+# Multi-key rotation: use apiKeys array (or comma-separated env vars)
+# to distribute LLM requests across multiple keys, bypassing per-key rate limits.
+
+providers:
+  # Example: single key (backward compatible)
+  openai:
+    apiKey: sk-xxxxx
+    baseUrl: https://api.openai.com/v1
+
+  # Example: multi-key rotation
+  deepseek:
+    apiKeys:
+      - sk-key1-xxxxx
+      - sk-key2-xxxxx
+      - sk-key3-xxxxx
+    baseUrl: https://api.deepseek.com
+
+  # Example: Qwen (Alibaba DashScope)
+  # qwen:
+  #   apiKeys:
+  #     - sk-key1
+  #     - sk-key2
+  #   baseUrl: https://dashscope.aliyuncs.com/compatible-mode/v1
+
+# Environment variable alternative (comma-separated):
+#   DEEPSEEK_API_KEY=sk-key1,sk-key2,sk-key3
+#   OPENAI_API_KEY=sk-only-one-key

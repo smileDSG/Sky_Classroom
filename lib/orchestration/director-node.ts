@@ -56,6 +56,12 @@ export async function directorNode(
     );
   }
 
+  // Multi-agent Q&A should feel as fast as single-agent chat. Route directly to
+  // the teaching assistant/teacher instead of spending a model call on routing.
+  if (state.sessionType === 'qa' && !state.discussionContext) {
+    return handleMultiAgentQA(state, write);
+  }
+
   // Multi agent: LLM-based decision
   return handleMultiAgent(state, config, write);
 }
@@ -92,6 +98,32 @@ function handleSingleAgent(
   log.info(`[Director] Single agent: cueing user after "${agentId}"`);
   write({ type: 'cue_user', data: { fromAgentId: agentId } });
   return { shouldEnd: true };
+}
+
+function handleMultiAgentQA(
+  state: OrchestratorStateType,
+  write: (chunk: StatelessEvent) => void,
+): Partial<OrchestratorStateType> {
+  if (state.turnCount > 0) {
+    write({ type: 'cue_user', data: { fromAgentId: state.currentAgentId || undefined } });
+    return { shouldEnd: true };
+  }
+
+  const agents = state.availableAgentIds
+    .map((id) => resolveAgent(state, id))
+    .filter((a): a is NonNullable<typeof a> => a != null);
+  const selected =
+    agents.find((agent) => agent.role === 'assistant') ??
+    agents.find((agent) => agent.role === 'teacher') ??
+    agents[0];
+
+  if (!selected) {
+    return { shouldEnd: true };
+  }
+
+  log.info(`[Director] QA fast-path: dispatching "${selected.id}"`);
+  write({ type: 'thinking', data: { stage: 'agent_loading', agentId: selected.id } });
+  return { currentAgentId: selected.id, shouldEnd: false };
 }
 
 async function handleMultiAgent(

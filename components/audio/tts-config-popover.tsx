@@ -14,7 +14,6 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { getTTSVoices } from '@/lib/audio/constants';
 import { useTTSPreview } from '@/lib/audio/use-tts-preview';
@@ -34,10 +33,9 @@ function getVoiceDisplayName(
   id: string,
   name: string,
   lang: string,
-  t: (key: string) => string,
 ): string {
   if (id === VOXCPM_AUTO_VOICE_ID) {
-    return t('settings.voxcpmAutoVoice');
+    return '自动音色';
   }
   if (lang === 'en-US') {
     const match = name.match(/\(([^)]+)\)/);
@@ -47,8 +45,7 @@ function getVoiceDisplayName(
 }
 
 export function TtsConfigPopover() {
-  const { t, locale } = useI18n();
-  const [open, setOpen] = useState(false);
+  const locale = 'zh-CN';const [open, setOpen] = useState(false);
   const { previewing, startPreview, stopPreview } = useTTSPreview();
 
   const ttsEnabled = useSettingsStore((s) => s.ttsEnabled);
@@ -73,9 +70,9 @@ export function TtsConfigPopover() {
     () =>
       voices.map((v) => ({
         ...v,
-        displayName: getVoiceDisplayName(v.id, v.name, locale, t),
+        displayName: getVoiceDisplayName(v.id, v.name, locale),
       })),
-    [voices, locale, t],
+    [voices, locale],
   );
 
   const pillCls =
@@ -88,7 +85,7 @@ export function TtsConfigPopover() {
       return;
     }
     if (!canPreview) {
-      toast.info(t('settings.voxcpmAutoVoiceNoPreview'));
+      toast.info('自动音色会根据 Agent 人设动态生成，无法单独试听');
       return;
     }
     try {
@@ -101,7 +98,7 @@ export function TtsConfigPopover() {
             }
           : undefined;
       await startPreview({
-        text: t('settings.ttsTestTextDefault'),
+        text: '你好，这是一段测试语音。',
         providerId: ttsProviderId,
         modelId: providerConfig?.modelId,
         voice: ttsVoice,
@@ -115,7 +112,7 @@ export function TtsConfigPopover() {
       });
     } catch (error) {
       const message =
-        error instanceof Error && error.message ? error.message : t('settings.ttsTestFailed');
+        error instanceof Error && error.message ? error.message : 'TTS 测试失败';
       toast.error(message);
     }
   }, [
@@ -123,7 +120,6 @@ export function TtsConfigPopover() {
     canPreview,
     startPreview,
     stopPreview,
-    t,
     locale,
     ttsProviderId,
     ttsProvidersConfig,
@@ -163,7 +159,7 @@ export function TtsConfigPopover() {
             </button>
           </PopoverTrigger>
         </TooltipTrigger>
-        <TooltipContent>{t('toolbar.ttsHint')}</TooltipContent>
+        <TooltipContent>{'选择 AI 教师的朗读音色'}</TooltipContent>
       </Tooltip>
       <PopoverContent align="start" className="w-[280px] p-0">
         {/* Header with toggle */}
@@ -177,7 +173,7 @@ export function TtsConfigPopover() {
           <span
             className={cn('flex-1 text-sm font-medium', !ttsEnabled && 'text-muted-foreground')}
           >
-            {t('toolbar.ttsTitle')}
+            {'语音合成'}
           </span>
           <Switch
             checked={ttsEnabled}
@@ -219,7 +215,7 @@ export function TtsConfigPopover() {
                 ) : (
                   <Play className="size-3" />
                 )}
-                {previewing ? t('toolbar.ttsPreviewing') : t('toolbar.ttsPreview')}
+                {previewing ? '播放中...' : '试听'}
               </button>
             </div>
           </div>

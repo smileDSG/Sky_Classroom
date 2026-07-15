@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { ASR_PROVIDERS } from '@/lib/audio/constants';
 import type { ASRProviderId } from '@/lib/audio/types';
@@ -38,10 +37,7 @@ interface ASRSettingsProps {
   selectedProviderId: ASRProviderId;
 }
 
-export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
-  const { t } = useI18n();
-
-  const asrLanguage = useSettingsStore((state) => state.asrLanguage);
+export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {const asrLanguage = useSettingsStore((state) => state.asrLanguage);
   const asrProvidersConfig = useSettingsStore((state) => state.asrProvidersConfig);
   const setASRProviderConfig = useSettingsStore((state) => state.setASRProviderConfig);
   const removeCustomASRProvider = useSettingsStore((state) => state.removeCustomASRProvider);
@@ -91,7 +87,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
           (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
         if (!SpeechRecognitionCtor) {
           setTestStatus('error');
-          setTestMessage(t('settings.asrNotSupported'));
+          setTestMessage('浏览器不支持语音识别 API');
           return;
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vendor-prefixed API without standard typings
@@ -105,11 +101,11 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
           const transcript = event.results[0][0].transcript;
           setASRResult(transcript);
           setTestStatus('success');
-          setTestMessage(t('settings.asrTestSuccess'));
+          setTestMessage('语音识别成功');
         };
         recognition.onerror = (event: { error: string }) => {
           setTestStatus('error');
-          setTestMessage(t('settings.asrTestFailed') + ': ' + event.error);
+          setTestMessage('语音识别失败' + ': ' + event.error);
         };
         recognition.onend = () => {
           setIsRecording(false);
@@ -161,25 +157,25 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
                 if (data.text?.trim()) {
                   setASRResult(data.text);
                   setTestStatus('success');
-                  setTestMessage(t('settings.asrTestSuccess'));
+                  setTestMessage('语音识别成功');
                 } else {
                   setTestStatus('error');
-                  setTestMessage(data.error || t('settings.asrNoTranscription'));
+                  setTestMessage(data.error || '未生成转写结果，请尝试说大声一些或说长一些。');
                 }
               } else {
                 setTestStatus('error');
                 const errorData = await response
                   .json()
                   .catch(() => ({ error: response.statusText }));
-                setTestMessage(errorData.details || errorData.error || t('settings.asrTestFailed'));
+                setTestMessage(errorData.details || errorData.error || '语音识别失败');
               }
             } catch (error) {
               log.error('ASR test failed:', error);
               setTestStatus('error');
               setTestMessage(
                 error instanceof Error && error.message
-                  ? `${t('settings.asrTestFailed')}: ${error.message}`
-                  : t('settings.asrTestFailed'),
+                  ? `${'语音识别失败'}: ${error.message}`
+                  : '语音识别失败',
               );
             } finally {
               setIsProcessing(false);
@@ -190,7 +186,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
         } catch (error) {
           log.error('Failed to access microphone:', error);
           setTestStatus('error');
-          setTestMessage(t('settings.microphoneAccessFailed'));
+          setTestMessage('无法访问麦克风');
         }
       }
     }
@@ -201,14 +197,14 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
       {/* Server-configured notice */}
       {isServerConfigured && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-3 text-sm text-blue-700 dark:text-blue-300">
-          {t('settings.serverConfiguredNotice')}
+          {'管理员已在服务端配置了此提供方的 API Key，可直接使用。也可输入自己的 Key 覆盖。'}
         </div>
       )}
 
       {/* No models warning for custom providers */}
       {isCustom && ((providerConfig?.customModels as Array<{ id: string }>) || []).length === 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-3 text-sm text-amber-700 dark:text-amber-300">
-          {t('settings.noModelsWarning')}
+          {'请先在下方添加至少一个模型，才能使用此服务。'}
         </div>
       )}
 
@@ -217,7 +213,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
         <>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm">{t('settings.asrApiKey')}</Label>
+              <Label className="text-sm">{'API 密钥'}</Label>
               <div className="relative">
                 <Input
                   name={`asr-api-key-${selectedProviderId}`}
@@ -227,7 +223,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
                   autoCorrect="off"
                   spellCheck={false}
                   placeholder={
-                    isServerConfigured ? t('settings.optionalOverride') : t('settings.enterApiKey')
+                    isServerConfigured ? '可选，留空则使用服务端配置' : '输入 API Key'
                   }
                   value={asrProvidersConfig[selectedProviderId]?.apiKey || ''}
                   onChange={(e) =>
@@ -247,7 +243,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm">{t('settings.asrBaseUrl')}</Label>
+              <Label className="text-sm">{'Base URL'}</Label>
               <Input
                 name={`asr-base-url-${selectedProviderId}`}
                 autoComplete="off"
@@ -257,7 +253,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
                 placeholder={
                   isCustom
                     ? providerConfig?.customDefaultBaseUrl || 'http://localhost:8000/v1'
-                    : asrProvider?.defaultBaseUrl || t('settings.enterCustomBaseUrl')
+                    : asrProvider?.defaultBaseUrl || '输入自定义 Base URL'
                 }
                 value={asrProvidersConfig[selectedProviderId]?.baseUrl || ''}
                 onChange={(e) =>
@@ -293,7 +289,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
             if (!endpointPath) return null;
             return (
               <p className="text-xs text-muted-foreground break-all">
-                {t('settings.requestUrl')}: {effectiveBaseUrl + endpointPath}
+                {'请求地址'}: {effectiveBaseUrl + endpointPath}
               </p>
             );
           })()}
@@ -302,12 +298,12 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
 
       {/* Test ASR */}
       <div className="space-y-2">
-        <Label className="text-sm">{t('settings.testASR')}</Label>
+        <Label className="text-sm">{'测试 ASR'}</Label>
         <div className="flex gap-2">
           <Input
             value={asrResult}
             readOnly
-            placeholder={t('settings.asrResultPlaceholder')}
+            placeholder={'录音后将显示识别结果'}
             className="flex-1 bg-muted/50"
           />
           <Button
@@ -323,17 +319,17 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
             {isProcessing ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {t('settings.asrProcessing')}
+                {'处理中...'}
               </>
             ) : isRecording ? (
               <>
                 <MicOff className="h-4 w-4" />
-                {t('settings.stopRecording')}
+                {'停止录音'}
               </>
             ) : (
               <>
                 <Mic className="h-4 w-4" />
-                {t('settings.startRecording')}
+                {'开始录音'}
               </>
             )}
           </Button>
@@ -361,7 +357,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
       {/* Model Selection — built-in providers */}
       {!isCustom && asrProvider?.models?.length > 0 && (
         <div className="space-y-2">
-          <Label className="text-sm">{t('settings.defaultModel')}</Label>
+          <Label className="text-sm">{'默认模型'}</Label>
           <Select
             value={asrProvidersConfig[selectedProviderId]?.modelId || asrProvider?.defaultModelId}
             onValueChange={(value) => setASRProviderConfig(selectedProviderId, { modelId: value })}
@@ -383,7 +379,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
       {/* Model Management — custom providers */}
       {isCustom && (
         <div className="space-y-3">
-          <Label className="text-sm">{t('settings.availableModels')}</Label>
+          <Label className="text-sm">{'可用模型'}</Label>
           {(() => {
             const customModels =
               (providerConfig?.customModels as Array<{ id: string; name: string }>) || [];
@@ -399,7 +395,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
                         ID
                       </span>
                       <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('settings.modelNamePlaceholder')}
+                        {'可选'}
                       </span>
                       <span />
                     </div>
@@ -458,7 +454,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground/50 italic">
-                    {t('settings.noModelsAdded')}
+                    {'暂无模型，请在下方添加以支持模型选择。'}
                   </p>
                 )}
                 <AddModelRow
@@ -481,7 +477,7 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
       {isCustom && (
         <div className="pt-4 border-t">
           <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)}>
-            {t('settings.deleteProvider')}
+            {'删除提供方'}
           </Button>
         </div>
       )}
@@ -493,18 +489,18 @@ export function ASRSettings({ selectedProviderId }: ASRSettingsProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('settings.deleteProvider')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('settings.deleteProviderConfirm')}</AlertDialogDescription>
+            <AlertDialogTitle>{'删除提供方'}</AlertDialogTitle>
+            <AlertDialogDescription>{'确定要删除此提供方吗？'}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('settings.cancelEdit')}</AlertDialogCancel>
+            <AlertDialogCancel>{'取消'}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 removeCustomASRProvider(selectedProviderId);
                 setShowDeleteConfirm(false);
               }}
             >
-              {t('settings.deleteProvider')}
+              {'删除提供方'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -519,9 +515,7 @@ function AddModelRow({
 }: {
   onAdd: (id: string, name: string) => void;
   existingIds: string[];
-}) {
-  const { t } = useI18n();
-  const [modelId, setModelId] = useState('');
+}) {const [modelId, setModelId] = useState('');
   const [modelName, setModelName] = useState('');
 
   const handleAdd = () => {
@@ -542,14 +536,14 @@ function AddModelRow({
         onChange={(e) => setModelId(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         className="text-sm font-mono"
-        placeholder={t('settings.modelIdPlaceholder')}
+        placeholder={'例如：gpt-4o'}
       />
       <Input
         value={modelName}
         onChange={(e) => setModelName(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         className="text-sm"
-        placeholder={t('settings.modelNamePlaceholder')}
+        placeholder={'可选'}
       />
       <Button
         variant="outline"
@@ -559,7 +553,7 @@ function AddModelRow({
         className="shrink-0 gap-1"
       >
         <Plus className="h-3.5 w-3.5" />
-        {t('settings.addModel')}
+        {'添加'}
       </Button>
     </div>
   );

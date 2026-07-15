@@ -5,7 +5,6 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { VIDEO_PROVIDERS } from '@/lib/media/video-providers';
 import {
@@ -26,10 +25,7 @@ interface VideoSettingsProps {
   selectedProviderId: VideoProviderId;
 }
 
-export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
-  const { t } = useI18n();
-
-  const videoModelId = useSettingsStore((state) => state.videoModelId);
+export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {const videoModelId = useSettingsStore((state) => state.videoModelId);
   const videoProvidersConfig = useSettingsStore((state) => state.videoProvidersConfig);
   const setVideoProviderConfig = useSettingsStore((state) => state.setVideoProviderConfig);
 
@@ -85,14 +81,14 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
       const data = await response.json();
       if (data.success) {
         setTestStatus('success');
-        setTestMessage(t('settings.videoConnectivitySuccess'));
+        setTestMessage('视频服务连接成功');
       } else {
         setTestStatus('error');
-        setTestMessage(`${t('settings.videoConnectivityFailed')}: ${data.message}`);
+        setTestMessage(`${'视频服务连接失败'}: ${data.message}`);
       }
     } catch (err) {
       setTestStatus('error');
-      setTestMessage(`${t('settings.videoConnectivityFailed')}: ${err}`);
+      setTestMessage(`${'视频服务连接失败'}: ${err}`);
     } finally {
       setTestLoading(false);
     }
@@ -143,7 +139,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
       {/* Server-configured notice */}
       {isServerConfigured && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-3 text-sm text-blue-700 dark:text-blue-300">
-          {t('settings.serverConfiguredNotice')}
+          {'管理员已在服务端配置了此提供方的 API Key，可直接使用。也可输入自己的 Key 覆盖。'}
         </div>
       )}
 
@@ -161,10 +157,10 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
               spellCheck={false}
               placeholder={
                 isServerConfigured
-                  ? t('settings.optionalOverride')
+                  ? '可选，留空则使用服务端配置'
                   : selectedProviderId === 'kling'
                     ? 'accessKey:secretKey'
-                    : t('settings.enterApiKey')
+                    : '输入 API Key'
               }
               value={currentConfig?.apiKey || ''}
               onChange={(e) => handleApiKeyChange(e.target.value)}
@@ -190,7 +186,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
             ) : (
               <>
                 <Zap className="h-3.5 w-3.5" />
-                {t('settings.testConnection')}
+                {'测试连接'}
               </>
             )}
           </Button>
@@ -229,7 +225,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
           placeholder={
             currentConfig?.serverBaseUrl ||
             currentProvider?.defaultBaseUrl ||
-            t('settings.enterCustomBaseUrl')
+            '输入自定义 Base URL'
           }
           className="h-8"
         />
@@ -242,7 +238,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
           if (!effectiveBaseUrl) return null;
           return (
             <p className="text-xs text-muted-foreground break-all">
-              {t('settings.requestUrl')}: {effectiveBaseUrl}
+              {'请求地址'}: {effectiveBaseUrl}
             </p>
           );
         })()}
@@ -251,10 +247,10 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
       {/* Model list */}
       <div className="space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <Label className="text-base">{t('settings.models')}</Label>
+          <Label className="text-base">{'模型'}</Label>
           <Button variant="outline" size="sm" onClick={handleOpenAddModel} className="gap-1.5">
             <Plus className="h-3.5 w-3.5" />
-            {t('settings.addNewModel')}
+            {'新建模型'}
           </Button>
         </div>
 
@@ -288,7 +284,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
                   size="sm"
                   className="h-8 px-2"
                   onClick={() => handleOpenEditModel(index)}
-                  title={t('settings.editModel')}
+                  title={'编辑模型'}
                 >
                   <Settings2 className="h-3.5 w-3.5" />
                 </Button>
@@ -297,7 +293,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
                   size="sm"
                   className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={() => handleDeleteModel(index)}
-                  title={t('settings.deleteModel')}
+                  title={'删除'}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -311,14 +307,14 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
       <Dialog open={showModelDialog} onOpenChange={setShowModelDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogTitle>
-            {editingModelIndex !== null ? t('settings.editModel') : t('settings.addNewModel')}
+            {editingModelIndex !== null ? '编辑模型' : '新建模型'}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            {editingModelIndex !== null ? t('settings.editModel') : t('settings.addNewModel')}
+            {editingModelIndex !== null ? '编辑模型' : '新建模型'}
           </DialogDescription>
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label>{t('settings.modelId')}</Label>
+              <Label>{'模型ID'}</Label>
               <Input
                 value={modelForm.id}
                 onChange={(e) => setModelForm((prev) => ({ ...prev, id: e.target.value }))}
@@ -327,7 +323,7 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('settings.modelName')}</Label>
+              <Label>{'显示名称'}</Label>
               <Input
                 value={modelForm.name}
                 onChange={(e) => setModelForm((prev) => ({ ...prev, name: e.target.value }))}
@@ -337,10 +333,10 @@ export function VideoSettings({ selectedProviderId }: VideoSettingsProps) {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setShowModelDialog(false)}>
-                {t('settings.cancelEdit')}
+                {'取消'}
               </Button>
               <Button size="sm" onClick={handleSaveModel} disabled={!modelForm.id.trim()}>
-                {t('settings.saveModel')}
+                {'保存'}
               </Button>
             </div>
           </div>

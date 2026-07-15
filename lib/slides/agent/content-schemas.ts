@@ -263,22 +263,17 @@ export function deepRepairContent(pageType: string, content: Record<string, unkn
     }
   }
 
-  // Truncate string fields to match updated schema limits
-  if (typeof fixed.title === 'string') fixed.title = trunc(fixed.title, 25);
-  const summaryMax = pageType === 'table' ? 150 : 200;
-  if (typeof fixed.summary === 'string') fixed.summary = trunc(fixed.summary, summaryMax);
-  if (typeof fixed.subtitle === 'string') fixed.subtitle = trunc(fixed.subtitle, 80);
-  if (typeof fixed.slogan === 'string') fixed.slogan = trunc(fixed.slogan, 20);
-  if (typeof fixed.thanks === 'string') fixed.thanks = trunc(fixed.thanks, 25);
-  if (typeof fixed.subtitle === 'string' && pageType === 'end') fixed.subtitle = trunc(fixed.subtitle, 40);
-  if (typeof fixed.tagline === 'string') fixed.tagline = trunc(fixed.tagline, 60);
-  if (typeof fixed.highlight === 'string') fixed.highlight = trunc(fixed.highlight, 60);
-  if (typeof fixed.preview === 'string') fixed.preview = trunc(fixed.preview, 80);
-  if (typeof fixed.derivation === 'string') fixed.derivation = trunc(fixed.derivation, 400);
-  if (typeof fixed.application === 'string') fixed.application = trunc(fixed.application, 300);
-  if (typeof fixed.mainFormula === 'string') fixed.mainFormula = trunc(fixed.mainFormula, 300);
-  if (typeof fixed.conclusion === 'string') fixed.conclusion = trunc(fixed.conclusion, 150);
-  if (typeof fixed.num === 'string') fixed.num = trunc(fixed.num, 4);
+  // Truncate string fields
+  if (typeof fixed.title === 'string') fixed.title = trunc(fixed.title, 12);
+  if (typeof fixed.summary === 'string') fixed.summary = trunc(fixed.summary, 120);
+  if (typeof fixed.subtitle === 'string') fixed.subtitle = trunc(fixed.subtitle, 25);
+  if (typeof fixed.tagline === 'string') fixed.tagline = trunc(fixed.tagline, 30);
+  if (typeof fixed.slogan === 'string') fixed.slogan = trunc(fixed.slogan, 15);
+  if (typeof fixed.highlight === 'string') fixed.highlight = trunc(fixed.highlight, 40);
+  if (typeof fixed.preview === 'string') fixed.preview = trunc(fixed.preview, 60);
+  if (typeof fixed.derivation === 'string') fixed.derivation = trunc(fixed.derivation, 300);
+  if (typeof fixed.application === 'string') fixed.application = trunc(fixed.application, 200);
+  if (typeof fixed.mainFormula === 'string') fixed.mainFormula = trunc(fixed.mainFormula, 200);
 
   // Fix arrays: cap at max + type coercion inside arrays
   const arrayCaps: Record<string, number> = { cards: 6, items: 6, scenarios: 3, steps: 8, rows: 8, questions: 5, events: 8, keyPoints: 6, options: 6, formulas: 3 };

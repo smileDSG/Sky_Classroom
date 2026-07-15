@@ -71,7 +71,8 @@ export interface QuestionBankFilter {
   difficulty?: 'easy' | 'medium' | 'hard';
   questionType?: 'choice' | 'fill' | 'solve' | 'judge';
   verified?: boolean;
-  keyword?: string;              // FULLTEXT search on content, with LIKE fallback
+  keyword?: string;              // FULLTEXT search on content
+  knowledgePoint?: string;       // match knowledge_points
   tags?: string[];               // match any tag
   ids?: string[];                // exact id list
   limit?: number;

@@ -7,6 +7,7 @@
  * load server-side code when actually called.
  */
 
+import 'server-only';
 import type { QuestionBankEntry } from './types';
 import { hashProblemText, textSimilarity } from './question-bank-utils';
 import { createLogger } from '@/lib/logger';
@@ -140,6 +141,9 @@ async function findSimilarFromKB(
       }
     }
     matches.sort((a, b) => ((b as any)._similarity || 0) - ((a as any)._similarity || 0));
+    log.info(
+      `[QuestionBank] Found ${matches.length} matches (vectorThreshold=${vectorThreshold.toFixed(2)})`,
+    );
     return matches;
   } catch (error) {
     log.error('[QuestionBank] findSimilarFromKB failed:', error);
@@ -159,14 +163,13 @@ export async function saveToQuestionBank(
       problemHash,
       problemText: entry.problemText,
       problemImage: entry.problemImage ?? undefined,
+      solution: 'solution' in entry ? ((entry as any).solution ?? '') : '',
       answer: entry.answer,
       knowledgePoints: entry.knowledgePoints,
       similarQuestions: entry.similarQuestions ?? [],
       agentId: entry.agentId,
       solvedAt: entry.solvedAt ?? Date.now(),
-      verified: entry.verified ?? false,
-      questionType: entry.questionType,
-      options: entry.options,
+      verified: entry.verified ?? true,
     };
 
     const { write, hasSource } = await import('@/lib/knowledge-base/kb-manager');
@@ -232,9 +235,7 @@ export async function deleteQuestionBankEntry(id: string): Promise<void> {
   }
 }
 
-export async function listQuestionBankEntries(
-  limit: number = 100,
-): Promise<QuestionBankEntry[]> {
+export async function listQuestionBankEntries(limit: number = 100): Promise<QuestionBankEntry[]> {
   try {
     const { search } = await import('@/lib/knowledge-base/kb-manager');
     const results = await search({
@@ -376,7 +377,12 @@ async function searchKBByKnowledgePoints(
     });
 
     const seen = new Set<string>();
-    const candidates: { problem: string; difficulty: number; knowledgePoint: string; answer: string }[] = [];
+    const candidates: {
+      problem: string;
+      difficulty: number;
+      knowledgePoint: string;
+      answer: string;
+    }[] = [];
 
     for (const result of results) {
       try {
@@ -391,9 +397,14 @@ async function searchKBByKnowledgePoints(
 
         candidates.push({
           problem: entry.problemText,
-          difficulty: entry.knowledgePoints?.[0]?.difficulty === 'easy' ? 3
-            : entry.knowledgePoints?.[0]?.difficulty === 'hard' ? 7 : 5,
-          knowledgePoint: overlap[0],
+          // Estimate difficulty from knowledge points if available, otherwise default
+          difficulty:
+            entry.knowledgePoints?.[0]?.difficulty === 'easy'
+              ? 3
+              : entry.knowledgePoints?.[0]?.difficulty === 'hard'
+                ? 7
+                : 5,
+          knowledgePoint: overlap[0], // Use the first overlapping knowledge point
           answer: entry.answer,
         });
 
@@ -402,6 +413,10 @@ async function searchKBByKnowledgePoints(
         // skip malformed
       }
     }
+
+    log.info(
+      `[QuestionBank] findSimilarByKnowledgePoints: ${candidates.length} results for KPs [${kpNames}]`,
+    );
     return candidates;
   } catch (error) {
     log.error('[QuestionBank] searchKBByKnowledgePoints failed:', error);

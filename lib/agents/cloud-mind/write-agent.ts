@@ -4,9 +4,9 @@
  * 根据主题、写作类型、字数要求，使用 AI 生成高质量文章。
  */
 
-import { streamText } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
 import { createLogger } from '@/lib/logger';
+import { streamLLM } from '@/lib/ai/llm';
+import { getModel } from '@/lib/ai/providers';
 import { resolveApiKey, resolveBaseUrl } from '@/lib/server/provider-config';
 
 const log = createLogger('WriteAgent');
@@ -55,7 +55,12 @@ export function streamWriting(
     throw new Error('DeepSeek API key is not configured. Set DEEPSEEK_API_KEY in .env.local.');
   }
 
-  const deepseek = createOpenAI({ apiKey, baseURL: baseUrl });
+  const { model } = getModel({
+    providerId: 'deepseek',
+    modelId: 'deepseek-chat',
+    apiKey,
+    baseUrl,
+  });
 
   const genreLabels: Record<string, string> = {
     essay: '作文（记叙文/议论文/说明文）',
@@ -77,13 +82,16 @@ ${requirements ? `【补充要求】${requirements}` : ''}
 
   log.info(`Streaming writing: topic="${topic}", genre=${genre}, wordCount=${wordCount}`);
 
-  const result = streamText({
-    model: deepseek.chat('deepseek-chat'),
-    system: WRITE_AGENT_SYSTEM_PROMPT,
-    prompt: userPrompt,
-    temperature: 0.8,
-    maxOutputTokens: 8192,
-  });
+  const result = streamLLM(
+    {
+      model,
+      system: WRITE_AGENT_SYSTEM_PROMPT,
+      prompt: userPrompt,
+      temperature: 0.8,
+      maxOutputTokens: 8192,
+    },
+    'cloud-mind-write-stream',
+  );
 
   return result.toTextStreamResponse().body!;
 }

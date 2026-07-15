@@ -5,13 +5,22 @@
  * 使用 AI 生成高效的记忆卡片（问答对 + 助记技巧）。
  */
 
-import { generateText } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
 import { createLogger } from '@/lib/logger';
+import { callLLM } from '@/lib/ai/llm';
+import { getModel } from '@/lib/ai/providers';
 import { resolveApiKey, resolveBaseUrl } from '@/lib/server/provider-config';
 import { retrieveRelevantContext } from '@/lib/agents/rag/retriever';
+import { buildProfileContextPrompt } from '@/lib/student/profile-prompts';
+import type { StudentProfile } from '@/lib/student/profile-types';
+import {
+  buildCloudMindCacheKey,
+  getCloudMindCache,
+  setCloudMindCache,
+} from '@/lib/agents/cloud-mind/cache';
 
 const log = createLogger('MemoryCardsAgent');
+
+export const MEMORY_CARDS_AGENT_PROMPT_VERSION = 'v2-profile-driven';
 
 // ── 输出结构 ───────────────────────────────────────────────────────
 
@@ -89,11 +98,17 @@ const MEMORY_CARDS_AGENT_SYSTEM_PROMPT = `你是一位专业的记忆术专家�
   "reviewIntervals": [1, 2, 4, 7, 15]
 }
 
-## 卡片数量建议
-- 简单主题：5-8 张卡片
-- 中等主题：8-15 张卡片
-- 复杂主题：15-25 张卡片
-- 确保每张卡片都有价值，不要为了凑数添加无用卡片`;
+## 学情感知
+- 如果调用方提供了学生学情上下文，请优先为薄弱知识点生成卡片
+- 针对高频错误模式设计纠错型卡片（正面写常见错误，背面写正确理解和避免方法）
+- 根据薄弱知识点的掌握度分布调整卡片难度：掌握度越低，卡片越基础、助记技巧越丰富
+- 复习间隔和卡片数量由学情上下文决定，不要自行套用固定值
+
+## 卡片数量原则
+- 确保每张卡片都有价值，不要为了凑数添加无用卡片
+- 薄弱知识点较多时适当增加卡片，已掌握知识点可减少或跳过
+
+<!-- prompt-version: ${MEMORY_CARDS_AGENT_PROMPT_VERSION} -->`;
 
 // ── Agent 核心函数 ─────────────────────────────────────────────────
 
@@ -101,6 +116,7 @@ export async function generateMemoryCards(
   contentText: string,
   topic?: string,
   cardCount?: number,
+  profile?: StudentProfile,
 ): Promise<MemoryCardDeck> {
   const apiKey = resolveApiKey('deepseek');
   const baseUrl = resolveBaseUrl('deepseek') || 'https://api.deepseek.com/v1';
@@ -109,7 +125,12 @@ export async function generateMemoryCards(
     throw new Error('DeepSeek API key is not configured. Set DEEPSEEK_API_KEY in .env.local.');
   }
 
-  const deepseek = createOpenAI({ apiKey, baseURL: baseUrl });
+  const { model } = getModel({
+    providerId: 'deepseek',
+    modelId: 'deepseek-chat',
+    apiKey,
+    baseUrl,
+  });
 
   // — RAG: 从知识库检索相关补充内容
   let ragContext = '';
@@ -126,17 +147,16 @@ export async function generateMemoryCards(
     });
 
     if (kbResults.length > 0) {
-      const contextParts = kbResults.map((r) =>
-        `【${r.chunk.docTitle}】\n${r.chunk.content}`
-      );
+      const contextParts = kbResults.map((r) => `【${r.chunk.docTitle}】\n${r.chunk.content}`);
       ragContext = `\n\n【参考卡片（来自已有卡片库）】\n${contextParts.join('\n---\n')}`;
       log.info(`Cards KB retrieved ${kbResults.length} chunks`);
     } else {
       // 2) Fall back to general RAG
-      const ragResult = await retrieveRelevantContext(
-        query,
-        { topK: 3, rerank: true, maxContextChars: 2000 },
-      );
+      const ragResult = await retrieveRelevantContext(query, {
+        topK: 3,
+        rerank: true,
+        maxContextChars: 2000,
+      });
       if (ragResult.contextText) {
         ragContext = `\n\n【补充参考资料（来自知识库）】\n${ragResult.contextText}`;
         log.info(`RAG retrieved ${ragResult.chunks.length} chunks for memory cards`);
@@ -146,22 +166,46 @@ export async function generateMemoryCards(
     log.warn('RAG retrieval failed for memory cards:', ragErr);
   }
 
-  let userPrompt: string;
-  if (topic) {
-    userPrompt = `请根据以下关于"${topic}"的内容，制作${cardCount ? `约${cardCount}张` : ''}记忆卡片：\n\n${contentText}${ragContext}`;
-  } else {
-    userPrompt = `请根据以下内容，制作${cardCount ? `约${cardCount}张` : ''}记忆卡片：\n\n${contentText}${ragContext}`;
+  const profileContext = profile
+    ? `\n\n${buildProfileContextPrompt(profile, { maxWeakPoints: 5, maxErrorPatterns: 3 })}`
+    : '';
+
+  const cacheKey = buildCloudMindCacheKey('memory-cards', {
+    version: MEMORY_CARDS_AGENT_PROMPT_VERSION,
+    contentText,
+    topic,
+    cardCount,
+    profileContext,
+    ragContext,
+  });
+  const cached = getCloudMindCache<MemoryCardDeck>(cacheKey);
+  if (cached) {
+    log.info(`Memory cards cache hit, topic: ${topic || 'auto-detect'}`);
+    return cached;
   }
 
-  log.info(`Generating memory cards, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}`);
+  let userPrompt: string;
+  if (topic) {
+    userPrompt = `请根据以下关于"${topic}"的内容，制作${cardCount ? `约${cardCount}张` : ''}记忆卡片：\n\n${contentText}${profileContext}${ragContext}`;
+  } else {
+    userPrompt = `请根据以下内容，制作${cardCount ? `约${cardCount}张` : ''}记忆卡片：\n\n${contentText}${profileContext}${ragContext}`;
+  }
 
-  const result = await generateText({
-    model: deepseek.chat('deepseek-chat'),
-    system: MEMORY_CARDS_AGENT_SYSTEM_PROMPT,
-    prompt: userPrompt,
-    temperature: 0.7,
-    maxOutputTokens: 8192,
-  });
+  log.info(
+    `Generating memory cards, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}, profile injected: ${Boolean(profile)}`,
+  );
+
+  const result = await callLLM(
+    {
+      model,
+      system: MEMORY_CARDS_AGENT_SYSTEM_PROMPT,
+      prompt: userPrompt,
+      temperature: 0.7,
+      maxOutputTokens: cardCount ? Math.min(8192, Math.max(2048, cardCount * 520)) : 4096,
+    },
+    'cloud-mind-memory-cards',
+    { retries: 1, timeoutMs: 60_000 },
+  );
 
   const text = result.text || '';
   log.info(`Memory cards generation complete, response length: ${text.length}`);
@@ -176,6 +220,7 @@ export async function generateMemoryCards(
       throw new Error('Invalid response structure');
     }
 
+    setCloudMindCache(cacheKey, parsed);
     return parsed;
   } catch (parseError) {
     log.error('Failed to parse memory cards response:', parseError);

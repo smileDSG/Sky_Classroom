@@ -31,11 +31,12 @@ export type SectionOutput = z.infer<typeof sectionOutputSchema>;
 
 // ── Prompt ────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(
+export function buildSystemPrompt(
   topic: string,
   difficulty: string,
   designDNA: DesignDNA,
   pageTypes: string[],
+  educationLevel?: string,
 ): string {
   // Only inject schemas relevant to this section
   const relevantSchemas = [...new Set(pageTypes)]
@@ -44,7 +45,7 @@ function buildSystemPrompt(
     .join('\n\n');
 
   return `## 角色
-你是一位${difficulty}学科教师，正在编写"${topic}"课程的课件内容。
+你是一位${difficulty}学科教师${educationLevel ? `，面向${educationLevel}学生授课` : ''}，正在编写"${topic}"课程的课件内容。
 
 ## 风格
 - 风格名：${designDNA.styleName}
@@ -61,7 +62,7 @@ ${relevantSchemas}
 4. 严格按照上面的 Schema 格式输出，字段名和类型必须完全匹配
 5. 字符串不能超过 Schema 中标注的字数上限
 6. 数组长度必须在 Schema 标注的范围内
-7. 匹配 ${difficulty} 学段难度
+7. 匹配 ${difficulty} 内容难度${educationLevel ? `，且内容必须适合${educationLevel}学生的认知水平` : ''}
 8. **公式输出规则（硬规则，不可违反）**
    - **formula 类型页面**（整页展示单一公式）：使用字段 mainFormula（主公式，标准 LaTeX）、derivation（推导说明）、application（应用说明）。禁止输出 formulas 字段。
    - **其他类型页面**（概念/案例/总结/流程等）：如需展示公式，使用 formulas 数组：[{ "label": "公式名≤20字", "latex": "标准 LaTeX，≤200字" }]。formulas 是可选字段，最多 3 条。
@@ -130,7 +131,7 @@ scenarios[0].solution: "选择这两个典故并非偶然。庄生梦蝶出自�
 { "sectionId": number, "pages": [{ "pageNum": number, "pageType": "concept", "content": { ... } }] }`;
 }
 
-export function buildUserPrompt(section: SectionPlan, topic: string, nextSectionTitle?: string): string {
+export function buildUserPrompt(section: SectionPlan, topic: string, nextSectionTitle?: string, educationLevel?: string): string {
   const pagesDesc = section.pages.map((p) => {
     const concepts = p.contentOutline.keyConcepts?.length
       ? `\n    - keyConcepts: ${p.contentOutline.keyConcepts.join(' / ')}`
@@ -145,7 +146,7 @@ export function buildUserPrompt(section: SectionPlan, topic: string, nextSection
     ? `\n## 下一章信息\nsummary 页面的 preview 字段必须基于下一章实际标题来写："${nextSectionTitle}"。严禁自行推测不存在的章节主题。`
     : '';
 
-  return `主题：${topic}
+  return `主题：${topic}${educationLevel ? `\n目标受众：${educationLevel}` : ''}
 章节编号：${section.sectionId}（本章在所有章节中的顺序编号，chapter 类型页面的 content.num 必须与此一致，如本章是第3章则 num="03"）
 章节标题：${section.title}（共 ${section.pages.length} 页）
 
@@ -678,10 +679,11 @@ export async function generateSectionContent(
   designDNA: DesignDNA,
   languageModel: LanguageModel,
   nextSectionTitle?: string,
+  educationLevel?: string,
 ): Promise<SectionResult> {
   const pageTypes = section.pages.map((p) => p.type);
-  const system = buildSystemPrompt(topic, difficulty, designDNA, pageTypes);
-  const user = buildUserPrompt(section, topic, nextSectionTitle);
+  const system = buildSystemPrompt(topic, difficulty, designDNA, pageTypes, educationLevel);
+  const user = buildUserPrompt(section, topic, nextSectionTitle, educationLevel);
 
   log.info(`Generating content for section ${section.sectionId} (${section.pages.length} pages) [types: ${pageTypes.join(',')}]`);
 

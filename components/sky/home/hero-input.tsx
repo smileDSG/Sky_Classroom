@@ -13,7 +13,6 @@ import {
   Search,
   Wand2,
 } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { cn } from '@/lib/utils';
 import { SpeechButton } from '@/components/audio/speech-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -54,9 +53,7 @@ export function HeroInput({
   selectedStudentIds: string[];
   onTeacherChange: (teacherId: string) => void;
   onStudentsChange: (studentIds: string[]) => void;
-}) {
-  const { t } = useI18n();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+}) {const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -215,7 +212,10 @@ export function HeroInput({
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            placeholder={t('upload.requirementPlaceholder')}
+            placeholder={`输入你想学的任何内容，例如：
+「从零学 Python，30 分钟写出第一个程序」
+「用白板给我讲解傅里叶变换」
+「阿瓦隆桌游怎么玩」`}
             className={cn(
               'w-full px-3 py-3 min-h-[226px] max-h-[400px]',
               'bg-transparent resize-none',

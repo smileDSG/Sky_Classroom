@@ -18,6 +18,12 @@ import { createLogger } from '@/lib/logger';
 import type { LanguageModel } from 'ai';
 import type { DesignDNA } from './design-dna';
 import { withConcurrencyLimit } from './concurrency';
+import { callLLM } from '@/lib/ai/llm';
+import { generateSlides } from '@/lib/slides/slide-generator';
+import { exportPptx } from '@/lib/slides/pptx-exporter';
+import type { PptxThemeId } from '@/lib/slides/types';
+import type { AICallFn } from '@/lib/generation/pipeline-types';
+import type { PPTTextElement, Slide } from '@/lib/types/slides';
 import {
   createAudit,
   startStep,
@@ -39,6 +45,8 @@ export interface GenerateOptions {
   designDNA: DesignDNA;
   languageModel: LanguageModel;
   jobId: string;
+  /** Target audience education level from user personalization */
+  educationLevel?: string;
 }
 
 export type PipelineStage =
@@ -65,6 +73,7 @@ export interface StageTiming {
 export interface JobState {
   jobId: string;
   stage: PipelineStage;
+  pipelineMode?: 'openmaic' | 'legacy';
   message: string;
   progress: number;
   totalPages: number;
@@ -77,7 +86,17 @@ export interface JobState {
   pptxUrl?: string;
   fileName?: string;
   previewImages?: string[];
-  qaReport?: { totalScore: number; pass: boolean; issues: Array<{ pageNum: number; severity: string; type: string; layer: string; detail: string }> };
+  qaReport?: {
+    totalScore: number;
+    pass: boolean;
+    issues: Array<{
+      pageNum: number;
+      severity: string;
+      type: string;
+      layer: string;
+      detail: string;
+    }>;
+  };
   error?: string;
   /** Per-stage timing for accurate ETA estimation */
   stageTimings?: Record<string, StageTiming>;
@@ -136,7 +155,9 @@ function logToFile(level: string, tag: string, message: string) {
   try {
     const line = `[${new Date().toISOString()}] [${level}] [${tag}] ${message}\n`;
     fsSync.appendFileSync(DIAGNOSTIC_LOG_PATH, line);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 export function updateJob(jobId: string, update: Partial<JobState>) {
@@ -152,7 +173,11 @@ export function updateJob(jobId: string, update: Partial<JobState>) {
     if (currentTiming && !currentTiming.endAt) {
       currentTiming.endAt = now;
       currentTiming.durationMs = now - currentTiming.startAt;
-      logToFile('INFO', 'PipelineTiming', `${jobId} stage=${job.stage} duration=${currentTiming.durationMs}ms`);
+      logToFile(
+        'INFO',
+        'PipelineTiming',
+        `${jobId} stage=${job.stage} duration=${currentTiming.durationMs}ms`,
+      );
     }
     // Open new stage
     if (!job.stageTimings[newStage]) {
@@ -199,23 +224,49 @@ setInterval(() => {
   }
 }, 60_000);
 
-
 // ── Pipeline ─────────────────────────────────────────────────────────
 
 export async function runPipeline(options: GenerateOptions): Promise<void> {
-  const { topic, difficulty, minPages, maxPages, designDNA, languageModel, jobId } = options;
+  const { topic, difficulty, minPages, maxPages, designDNA, languageModel, jobId, educationLevel } =
+    options;
 
   // Initialize audit
   createAudit(jobId, topic, difficulty);
   startStep(jobId, 'planning');
 
   try {
+    if (process.env.SKY_SLIDES_LEGACY_PIPELINE !== 'true') {
+      const openMaicResult = await runOpenMaicSlidesPipeline(options);
+      endStep(jobId, 'planning', {
+        totalPages: openMaicResult.totalPages,
+        mode: 'openmaic-element-level',
+      });
+      finalizeAudit(jobId, 'success', {
+        pageCount: openMaicResult.totalPages,
+        designDNA: {
+          styleName: designDNA.styleName,
+          mood: designDNA.mood,
+          density: designDNA.decoration.density,
+          layoutType: designDNA.layoutType,
+        },
+      });
+      log.info(
+        `[Pipeline:${jobId}] OpenMAIC complete: ${openMaicResult.pptxUrl} (${openMaicResult.totalPages} pages)`,
+      );
+      return;
+    }
+
     const publicDir = path.resolve(process.cwd(), 'public');
     const outputDir = path.join(publicDir, 'temp', 'pptx');
     await fs.mkdir(outputDir, { recursive: true });
 
     // ══ Step 1: Planning ══
-    updateJob(jobId, { stage: 'planning', message: '正在规划课程大纲...', progress: 5 });
+    updateJob(jobId, {
+      stage: 'planning',
+      pipelineMode: 'legacy',
+      message: '正在规划课程大纲...',
+      progress: 5,
+    });
     // Heartbeat: slowly increment progress while LLM runs
     let planningHeartbeat: ReturnType<typeof setInterval> | null = null;
     let planResult: Awaited<ReturnType<typeof planOutline>> | undefined;
@@ -226,14 +277,53 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
           updateJob(jobId, { progress: job.progress + 1 });
         }
       }, 10000); // +1% every 10s, up to 30%
-      planResult = await planOutline(topic, difficulty, minPages, maxPages, designDNA, languageModel);
+      planResult = await planOutline(
+        topic,
+        difficulty,
+        minPages,
+        maxPages,
+        designDNA,
+        languageModel,
+        educationLevel,
+      );
+
+      // Retry once on transient connection errors
+      if (
+        !planResult.success &&
+        planResult.error &&
+        /terminated|timeout|aborted|ECONNRESET|ETIMEDOUT/i.test(planResult.error)
+      ) {
+        log.warn(
+          `[Pipeline:${jobId}] Planning failed with "${planResult.error}", retrying once...`,
+        );
+        updateJob(jobId, { message: '大纲规划遇到网络波动，正在重试...', progress: 3 });
+        await new Promise((r) => setTimeout(r, 3000));
+        planResult = await planOutline(
+          topic,
+          difficulty,
+          minPages,
+          maxPages,
+          designDNA,
+          languageModel,
+          educationLevel,
+        );
+      }
+
       // Record planning LLM call (approximate from no direct access — logged in planning-agent)
       clearInterval(planningHeartbeat);
       planningHeartbeat = null;
 
       if (!planResult.success || !planResult.outline) {
         errorStep(jobId, 'planning', planResult.error || '大纲规划失败');
-        finalizeAudit(jobId, 'error', { error: planResult.error || '大纲规划失败', designDNA: { styleName: designDNA.styleName, mood: designDNA.mood, density: designDNA.decoration.density, layoutType: designDNA.layoutType } });
+        finalizeAudit(jobId, 'error', {
+          error: planResult.error || '大纲规划失败',
+          designDNA: {
+            styleName: designDNA.styleName,
+            mood: designDNA.mood,
+            density: designDNA.decoration.density,
+            layoutType: designDNA.layoutType,
+          },
+        });
         updateJob(jobId, { stage: 'done', progress: 0, error: planResult.error || '大纲规划失败' });
         return;
       }
@@ -241,14 +331,19 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
       if (planningHeartbeat) clearInterval(planningHeartbeat);
     }
 
-    endStep(jobId, 'planning', { totalPages: planResult.totalPages, sections: planResult.outline.sections.length });
+    endStep(jobId, 'planning', {
+      totalPages: planResult.totalPages,
+      sections: planResult.outline.sections.length,
+    });
 
     const outline = planResult.outline;
     const outlinePages = outline.sections.flatMap((s) =>
       s.pages.map((p) => ({ pageNum: p.pageNum, title: p.title, type: p.type })),
     );
     // eslint-disable-next-line no-console
-    console.log(`[Pipeline:${jobId}] Planning done. outlinePages count=${outlinePages.length}, totalPages=${planResult.totalPages}`);
+    console.log(
+      `[Pipeline:${jobId}] Planning done. outlinePages count=${outlinePages.length}, totalPages=${planResult.totalPages}`,
+    );
     updateJob(jobId, {
       stage: 'planning',
       message: `大纲规划完成，共 ${outline.sections.length} 章节 ${planResult.totalPages} 页`,
@@ -259,7 +354,11 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
 
     // ══ Step 2: Section Agents (concurrent, capped) ══
     startStep(jobId, 'sections', { sectionCount: outline.sections.length });
-    updateJob(jobId, { stage: 'sections_generating', message: `正在生成 ${outline.sections.length} 个章节内容...`, progress: 20 });
+    updateJob(jobId, {
+      stage: 'sections_generating',
+      message: `正在生成 ${outline.sections.length} 个章节内容...`,
+      progress: 20,
+    });
     let sectionsHeartbeat: ReturnType<typeof setInterval> | null = null;
     let completedSections = 0;
     try {
@@ -275,12 +374,34 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         4, // Reduced from 12 to avoid provider-side connection saturation / termination
         async (section, idx) => {
           const nextSectionTitle = outline.sections[idx + 1]?.title;
-          let result = await generateSectionContent(section, topic, difficulty, designDNA, languageModel, nextSectionTitle);
+          let result = await generateSectionContent(
+            section,
+            topic,
+            difficulty,
+            designDNA,
+            languageModel,
+            nextSectionTitle,
+            educationLevel,
+          );
           // Retry once on transient connection errors (terminated / timeout)
-          if (!result.success && result.error && /terminated|timeout|aborted|ECONNRESET|ETIMEDOUT/i.test(result.error)) {
-            log.warn(`[Pipeline:${jobId}] Section ${idx} "${section.title}" failed with "${result.error}", retrying once...`);
+          if (
+            !result.success &&
+            result.error &&
+            /terminated|timeout|aborted|ECONNRESET|ETIMEDOUT/i.test(result.error)
+          ) {
+            log.warn(
+              `[Pipeline:${jobId}] Section ${idx} "${section.title}" failed with "${result.error}", retrying once...`,
+            );
             await new Promise((r) => setTimeout(r, 3000));
-            result = await generateSectionContent(section, topic, difficulty, designDNA, languageModel, nextSectionTitle);
+            result = await generateSectionContent(
+              section,
+              topic,
+              difficulty,
+              designDNA,
+              languageModel,
+              nextSectionTitle,
+              educationLevel,
+            );
           }
           completedSections++;
           const sectionPages = section.pages.map((p) => ({
@@ -291,12 +412,14 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
           const job = getJob(jobId);
           const baseSlides = job?.completedSlides || [];
           const sectionPageNums = new Set(sectionPages.map((s) => s.pageNum));
-          const mergedSlides = baseSlides.filter((s) => !sectionPageNums.has(s.pageNum)).concat(sectionPages);
+          const mergedSlides = baseSlides
+            .filter((s) => !sectionPageNums.has(s.pageNum))
+            .concat(sectionPages);
           mergedSlides.sort((a, b) => a.pageNum - b.pageNum);
 
           updateJob(jobId, {
             message: `章节内容：${completedSections}/${outline.sections.length} — 第 ${idx + 1} 章「${section.title}」${result.success ? '✓' : '✗ 降级'} `,
-            progress: 20 + Math.round(completedSections / outline.sections.length * 20),
+            progress: 20 + Math.round((completedSections / outline.sections.length) * 20),
             completedSlides: mergedSlides,
           });
           return result;
@@ -335,7 +458,9 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
       startStep(jobId, 'page_design', { pageCount: allPages.length });
       // Track per-page completion for real progress feedback
       let designedPages = 0;
-      log.info(`[Pipeline:${jobId}] Starting page design for ${allPages.length} pages with concurrency=12 stagger=100ms`);
+      log.info(
+        `[Pipeline:${jobId}] Starting page design for ${allPages.length} pages with concurrency=12 stagger=100ms`,
+      );
       const designResults = await withConcurrencyLimit(
         allPages,
         12,
@@ -351,9 +476,19 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
 
           const designStart = Date.now();
           log.info(`[Pipeline:${jobId}] Designing page ${page.pageNum} (${page.pageType})`);
-          const result = await designPage(page.pageNum, page.pageType, page.content, allPages.length, designDNA, languageModel);
+          const result = await designPage(
+            page.pageNum,
+            page.pageType,
+            page.content,
+            allPages.length,
+            designDNA,
+            languageModel,
+            educationLevel,
+          );
           const designDuration = Date.now() - designStart;
-          log.info(`[Pipeline:${jobId}] Page ${page.pageNum} design done in ${designDuration}ms, success=${result.success}`);
+          log.info(
+            `[Pipeline:${jobId}] Page ${page.pageNum} design done in ${designDuration}ms, success=${result.success}`,
+          );
           // Note: token info not directly available from designPage; would need to pass through
           recordLLMCall(jobId, `page_design_${page.pageNum}`, 'design-page', designDuration);
           designedPages++;
@@ -374,7 +509,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
 
           updateJob(jobId, {
             message: `页面排版：${designedPages}/${allPages.length} — 第 ${page.pageNum} 页 (${page.pageType}) ${result.success ? '✓' : '✗ 降级'}`,
-            progress: 42 + Math.round(designedPages / allPages.length * 28),
+            progress: 42 + Math.round((designedPages / allPages.length) * 28),
             completedSlides: newSlides,
             currentPage: undefined,
           });
@@ -383,7 +518,9 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         900_000,
         150,
       );
-      log.info(`[Pipeline:${jobId}] All page design completed. Failed: ${designResults.filter((dr) => !dr.result.success).length}`);
+      log.info(
+        `[Pipeline:${jobId}] All page design completed. Failed: ${designResults.filter((dr) => !dr.result.success).length}`,
+      );
 
       // Handle any pages that used fallback layouts (designPage now auto-fallbacks instead of failing)
       const fallbackDesigns = designResults.filter((dr) => dr.result.fallback);
@@ -409,16 +546,30 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         allPages.length,
         languageModel,
         instructions,
+        educationLevel,
       );
 
-      endStep(jobId, 'qa', { score: qaReport.totalScore, passed: qaReport.pass, issueCount: qaReport.issues.length });
-      updateJob(jobId, { stage: 'qa_reviewing', message: `质检完成：评分 ${qaReport.totalScore}，${qaReport.pass ? '通过' : '需修复'} (${qaReport.issues.length} 个问题)`, progress: 78, qaReport });
+      endStep(jobId, 'qa', {
+        score: qaReport.totalScore,
+        passed: qaReport.pass,
+        issueCount: qaReport.issues.length,
+      });
+      updateJob(jobId, {
+        stage: 'qa_reviewing',
+        message: `质检完成：评分 ${qaReport.totalScore}，${qaReport.pass ? '通过' : '需修复'} (${qaReport.issues.length} 个问题)`,
+        progress: 78,
+        qaReport,
+      });
 
       // ══ Step 5: Repair structural issues (no LLM) ══
       const structuralIssues = qaReport.issues.filter((i) => i.layer === 'structural');
       startStep(jobId, 'repair', { structuralIssueCount: structuralIssues.length });
       if (structuralIssues.length > 0) {
-        updateJob(jobId, { stage: 'repairing', message: `正在修复 ${structuralIssues.length} 个结构问题...`, progress: 80 });
+        updateJob(jobId, {
+          stage: 'repairing',
+          message: `正在修复 ${structuralIssues.length} 个结构问题...`,
+          progress: 80,
+        });
 
         for (const issue of structuralIssues) {
           const idx = instructions.findIndex((x) => x.pageNum === issue.pageNum);
@@ -429,7 +580,25 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
                 pageNum: issue.pageNum,
                 instructions: [
                   { op: 'setBackground', params: { color: designDNA.colors.coverBg } },
-                  { op: 'addText', params: { text: issue.pageNum === 1 ? (allPages[0]?.content?.title as string || topic || '封面') : '课程结束', x: 1, y: 2, w: 11.3, h: 2, fontSize: 36, fontFace: designDNA.fonts.heading, color: designDNA.colors.textOnDark, bold: true, align: 'center', valign: 'middle' } },
+                  {
+                    op: 'addText',
+                    params: {
+                      text:
+                        issue.pageNum === 1
+                          ? (allPages[0]?.content?.title as string) || topic || '封面'
+                          : '课程结束',
+                      x: 1,
+                      y: 2,
+                      w: 11.3,
+                      h: 2,
+                      fontSize: 36,
+                      fontFace: designDNA.fonts.heading,
+                      color: designDNA.colors.textOnDark,
+                      bold: true,
+                      align: 'center',
+                      valign: 'middle',
+                    },
+                  },
                 ],
               };
             }
@@ -439,7 +608,24 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
               pageNum: issue.pageNum,
               instructions: [
                 { op: 'setBackground', params: { color: designDNA.colors.contentBg } },
-                { op: 'addText', params: { text: allPages.find((p) => p.pageNum === issue.pageNum)?.content?.title as string || `第 ${issue.pageNum} 页`, x: 1, y: 2, w: 11.3, h: 2, fontSize: 28, fontFace: designDNA.fonts.heading, color: designDNA.colors.textPrimary, bold: true, align: 'center', valign: 'middle' } },
+                {
+                  op: 'addText',
+                  params: {
+                    text:
+                      (allPages.find((p) => p.pageNum === issue.pageNum)?.content
+                        ?.title as string) || `第 ${issue.pageNum} 页`,
+                    x: 1,
+                    y: 2,
+                    w: 11.3,
+                    h: 2,
+                    fontSize: 28,
+                    fontFace: designDNA.fonts.heading,
+                    color: designDNA.colors.textPrimary,
+                    bold: true,
+                    align: 'center',
+                    valign: 'middle',
+                  },
+                },
               ],
             });
           } else if (issue.type === 'empty_content' && idx >= 0) {
@@ -448,7 +634,21 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
             if (!hasText) {
               instructions[idx].instructions.push({
                 op: 'addText',
-                params: { text: allPages.find((p) => p.pageNum === issue.pageNum)?.content?.title as string || `第 ${issue.pageNum} 页`, x: 1, y: 2, w: 11.3, h: 2, fontSize: 28, fontFace: designDNA.fonts.heading, color: designDNA.colors.textPrimary, bold: true, align: 'center', valign: 'middle' },
+                params: {
+                  text:
+                    (allPages.find((p) => p.pageNum === issue.pageNum)?.content?.title as string) ||
+                    `第 ${issue.pageNum} 页`,
+                  x: 1,
+                  y: 2,
+                  w: 11.3,
+                  h: 2,
+                  fontSize: 28,
+                  fontFace: designDNA.fonts.heading,
+                  color: designDNA.colors.textPrimary,
+                  bold: true,
+                  align: 'center',
+                  valign: 'middle',
+                },
               });
             }
           } else if (issue.type === 'missing_formula') {
@@ -457,9 +657,12 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
             const formulaEligibleTypes = ['concept', 'case', 'formula', 'process'];
             if (page && formulaEligibleTypes.includes(page.pageType)) {
               const content = page.content as Record<string, unknown>;
-              const fallbackLatex = (content.focus as string) || (content.notes as string) || '\\text{待补充公式}';
+              const fallbackLatex =
+                (content.focus as string) || (content.notes as string) || '\\text{待补充公式}';
               if (!content.formulas && page.pageType !== 'formula') {
-                content.formulas = [{ label: '相关方程式', latex: `\\text{${String(fallbackLatex).slice(0, 60)}}` }];
+                content.formulas = [
+                  { label: '相关方程式', latex: `\\text{${String(fallbackLatex).slice(0, 60)}}` },
+                ];
               }
               if (page.pageType === 'formula' && !content.mainFormula) {
                 content.mainFormula = `\\text{${String(fallbackLatex).slice(0, 60)}}`;
@@ -468,23 +671,61 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
                 // Inject a placeholder formula rendering into existing instructions
                 instructions[idx].instructions.push({
                   op: 'addText',
-                  params: { text: '相关方程式', x: 1, y: 4.5, w: 11.3, h: 0.5, fontSize: 14, fontFace: designDNA.fonts.heading, color: designDNA.colors.textMuted, bold: true, align: 'left' },
+                  params: {
+                    text: '相关方程式',
+                    x: 1,
+                    y: 4.5,
+                    w: 11.3,
+                    h: 0.5,
+                    fontSize: 14,
+                    fontFace: designDNA.fonts.heading,
+                    color: designDNA.colors.textMuted,
+                    bold: true,
+                    align: 'left',
+                  },
                 });
                 instructions[idx].instructions.push({
                   op: 'addFormula',
-                  params: { latex: '\\text{待补充公式}', x: 1, y: 5, w: 11.3, h: 1, fontSize: 16, color: designDNA.colors.textBody, align: 'center' },
+                  params: {
+                    latex: '\\text{待补充公式}',
+                    x: 1,
+                    y: 5,
+                    w: 11.3,
+                    h: 1,
+                    fontSize: 16,
+                    color: designDNA.colors.textBody,
+                    align: 'center',
+                  },
                 });
               }
             }
           } else if (issue.type === 'missing_title') {
             const page = allPages.find((p) => p.pageNum === issue.pageNum);
-            const titleText = (page?.content?.title as string) || (page?.content?.slogan as string) || `第 ${issue.pageNum} 页`;
+            const titleText =
+              (page?.content?.title as string) ||
+              (page?.content?.slogan as string) ||
+              `第 ${issue.pageNum} 页`;
             if (idx >= 0) {
-              const hasTitle = instructions[idx].instructions.some((inst) => inst.op === 'addText' && (inst.params as Record<string, unknown>)?.y === 0.5);
+              const hasTitle = instructions[idx].instructions.some(
+                (inst) =>
+                  inst.op === 'addText' && (inst.params as Record<string, unknown>)?.y === 0.5,
+              );
               if (!hasTitle) {
                 instructions[idx].instructions.unshift({
                   op: 'addText',
-                  params: { text: titleText, x: 1, y: 0.5, w: 11.3, h: 0.7, fontSize: 28, fontFace: designDNA.fonts.heading, color: designDNA.colors.textPrimary, bold: true, align: 'left', valign: 'middle' },
+                  params: {
+                    text: titleText,
+                    x: 1,
+                    y: 0.5,
+                    w: 11.3,
+                    h: 0.7,
+                    fontSize: 28,
+                    fontFace: designDNA.fonts.heading,
+                    color: designDNA.colors.textPrimary,
+                    bold: true,
+                    align: 'left',
+                    valign: 'middle',
+                  },
                 });
               }
             }
@@ -524,17 +765,27 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
       pres.title = topic;
 
       const sortedInstructions = instructions.sort((a, b) => a.pageNum - b.pageNum);
-      const allFormulas: Array<NonNullable<import('./instruction-executor').ExecutionResult['formulas']>[number]> = [];
+      const allFormulas: Array<Record<string, unknown>> = [];
       for (const page of sortedInstructions) {
         const slide = pres.addSlide();
-        const result = await instructionExecutor.execute(slide, pres, page.instructions, page.pageNum);
-        if (result.formulas && result.formulas.length > 0) {
-          allFormulas.push(...result.formulas);
+        const result = await instructionExecutor.execute(
+          slide,
+          pres,
+          page.instructions,
+          page.pageNum,
+        );
+        const resultWithFormulas = result as typeof result & {
+          formulas?: Array<Record<string, unknown>>;
+        };
+        if (resultWithFormulas.formulas && resultWithFormulas.formulas.length > 0) {
+          allFormulas.push(...resultWithFormulas.formulas);
         }
       }
 
       const safeTopic = topic.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '_').slice(0, 20);
-      const safeStyleName = designDNA.styleName.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '_').slice(0, 20);
+      const safeStyleName = designDNA.styleName
+        .replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '_')
+        .slice(0, 20);
       const fileName = `${safeTopic}_${safeStyleName}_${Date.now()}.pptx`;
       const pptxPath = path.join(outputDir, fileName);
       try {
@@ -552,13 +803,17 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
 
       const pptxUrl = `/temp/pptx/${fileName}`;
 
-      endStep(jobId, 'merge_render', { fileName, pageCount: instructions.length, formulaCount: allFormulas.length });
+      endStep(jobId, 'merge_render', {
+        fileName,
+        pageCount: instructions.length,
+        formulaCount: allFormulas.length,
+      });
 
       // ══ Step 5: Preview PNGs — per-slide via python-pptx + LibreOffice ══
       startStep(jobId, 'preview_png');
       updateJob(jobId, { stage: 'merging', message: '正在生成预览图...', progress: 85 });
 
-      const previewResult = await generatePreviewFromPptx(pptxUrl, undefined, sidecarPath);
+      const previewResult = await generatePreviewFromPptx(pptxUrl, undefined);
       const previewImages: string[] = previewResult.success ? previewResult.slideImages : [];
 
       endStep(jobId, 'preview_png', { previewCount: previewImages.length });
@@ -568,7 +823,12 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         pageCount: instructions.length,
         qaScore: qaReport.totalScore,
         qaPassed: qaReport.pass,
-        designDNA: { styleName: designDNA.styleName, mood: designDNA.mood, density: designDNA.decoration.density, layoutType: designDNA.layoutType },
+        designDNA: {
+          styleName: designDNA.styleName,
+          mood: designDNA.mood,
+          density: designDNA.decoration.density,
+          layoutType: designDNA.layoutType,
+        },
       });
 
       updateJob(jobId, {
@@ -586,20 +846,27 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
     } finally {
       if (sectionsHeartbeat) clearInterval(sectionsHeartbeat);
     }
-
-
   } catch (err) {
     const rawMsg = err instanceof Error ? err.message : String(err);
     // Friendly error message for common failure modes
-    const msg = rawMsg.includes('Section') && rawMsg.includes('failed')
-      ? rawMsg
-      : rawMsg.includes('timeout') || rawMsg.includes('超时')
-        ? '生成超时，请稍后重试。如果问题持续，请减少页数或选择较简单的主题。'
-        : rawMsg.includes('PPTX')
-          ? rawMsg
-          : `生成失败: ${rawMsg}`;
+    const msg =
+      rawMsg.includes('Section') && rawMsg.includes('failed')
+        ? rawMsg
+        : rawMsg.includes('timeout') || rawMsg.includes('超时')
+          ? '生成超时，请稍后重试。如果问题持续，请减少页数或选择较简单的主题。'
+          : rawMsg.includes('PPTX')
+            ? rawMsg
+            : `生成失败: ${rawMsg}`;
     errorStep(jobId, 'pipeline', msg);
-    finalizeAudit(jobId, 'error', { error: msg, designDNA: { styleName: designDNA.styleName, mood: designDNA.mood, density: designDNA.decoration.density, layoutType: designDNA.layoutType } });
+    finalizeAudit(jobId, 'error', {
+      error: msg,
+      designDNA: {
+        styleName: designDNA.styleName,
+        mood: designDNA.mood,
+        density: designDNA.decoration.density,
+        layoutType: designDNA.layoutType,
+      },
+    });
     log.error(`[Pipeline:${jobId}] failed: ${msg}`);
     logToFile('ERROR', 'Pipeline', `[${jobId}] failed: ${msg}`);
     updateJob(jobId, { stage: 'done', progress: 0, error: msg });
@@ -628,6 +895,209 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
  * 当引入消息队列后，Worker 进程调用此函数执行生成任务。
  * 与 runPipeline 行为完全一致，只是接口层面明确标识为"队列任务"。
  */
+export interface OpenMaicPipelineResult {
+  pptxUrl: string;
+  fileName: string;
+  previewImages: string[];
+  totalPages: number;
+  generationTime: number;
+}
+
+export async function runOpenMaicSlidesPipeline(
+  options: GenerateOptions,
+): Promise<OpenMaicPipelineResult> {
+  const { topic, difficulty, minPages, maxPages, designDNA, languageModel, jobId, educationLevel } =
+    options;
+  const publicDir = path.resolve(process.cwd(), 'public');
+  const outputDir = path.join(publicDir, 'temp', 'pptx');
+  await fs.mkdir(outputDir, { recursive: true });
+
+  const difficultyLevel = normalizeOpenMaicDifficulty(difficulty);
+  const slideCount = resolveOpenMaicSlideCount(difficultyLevel, minPages, maxPages);
+  const theme = selectOpenMaicExportTheme(designDNA);
+
+  updateJob(jobId, {
+    stage: 'planning',
+    pipelineMode: 'openmaic',
+    message: 'OpenMAIC element-level slide generation is starting...',
+    progress: 8,
+    totalPages: slideCount,
+  });
+
+  const aiCall: AICallFn = async (system, user) => {
+    const result = await callLLM(
+      {
+        model: languageModel,
+        system,
+        prompt: user,
+        maxOutputTokens: 32768,
+      },
+      'sky-slides-openmaic-element',
+      {
+        retries: 2,
+        timeoutMs: 180_000,
+        validate: (text) => text.trim().length > 100 && text.includes('"slides"'),
+      },
+    );
+    return result.text;
+  };
+
+  updateJob(jobId, {
+    stage: 'pages_designing',
+    message: `OpenMAIC is drawing ${slideCount} element-level slides...`,
+    progress: 20,
+  });
+
+  const generated = await generateSlides(
+    topic,
+    {
+      difficulty: difficultyLevel,
+      slideCount,
+      language: 'Use Simplified Chinese (zh-CN) for all slide text.',
+      personaPrompt: buildOpenMaicStyleDirective(designDNA, educationLevel),
+      themeId: theme,
+      educationLevel,
+    },
+    aiCall,
+  );
+
+  if (generated.slides.length === 0) {
+    throw new Error('OpenMAIC element-level generator returned no slides');
+  }
+
+  const slideSummaries = summarizeOpenMaicSlides(generated.slides, topic);
+  updateJob(jobId, {
+    stage: 'pages_designing',
+    message: `OpenMAIC generated ${generated.slides.length} slides; exporting PPTX...`,
+    progress: 70,
+    totalPages: generated.slides.length,
+    outline: slideSummaries,
+    completedSlides: slideSummaries,
+  });
+
+  const exportResult = await exportPptx({
+    title: topic,
+    slides: generated.slides,
+    theme,
+    layoutMode: 'ai',
+  });
+
+  const fileName = buildOpenMaicFileName(topic, theme);
+  const pptxPath = path.join(outputDir, fileName);
+  await fs.writeFile(pptxPath, exportResult.buffer);
+  const pptxUrl = `/temp/pptx/${fileName}`;
+
+  updateJob(jobId, {
+    stage: 'merging',
+    message: 'OpenMAIC PPTX exported; generating preview images...',
+    progress: 85,
+    pptxUrl,
+    fileName,
+  });
+
+  const previewResult = await generatePreviewFromPptx(pptxUrl);
+  const previewImages = previewResult.success ? previewResult.slideImages : [];
+
+  updateJob(jobId, {
+    stage: 'done',
+    progress: 100,
+    message: 'OpenMAIC slide deck generated',
+    pptxUrl,
+    fileName,
+    previewImages: previewImages.length > 0 ? previewImages : undefined,
+    finishedAt: Date.now(),
+  });
+
+  return {
+    pptxUrl,
+    fileName,
+    previewImages,
+    totalPages: generated.slides.length,
+    generationTime: generated.generationTime,
+  };
+}
+
+function normalizeOpenMaicDifficulty(difficulty: string): 'junior' | 'senior' | 'college' {
+  const value = difficulty.toLowerCase();
+  if (value.includes('junior')) return 'junior';
+  if (value.includes('college') || value.includes('university')) return 'college';
+  return 'senior';
+}
+
+function resolveOpenMaicSlideCount(
+  difficulty: 'junior' | 'senior' | 'college',
+  minPages: number,
+  maxPages: number,
+): number {
+  const defaults = { junior: 12, senior: 16, college: 20 } as const;
+  const min = Number.isFinite(minPages) ? Math.max(2, Math.floor(minPages)) : defaults[difficulty];
+  const max = Number.isFinite(maxPages)
+    ? Math.max(min, Math.floor(maxPages))
+    : defaults[difficulty];
+  return Math.max(2, Math.min(60, Math.round((min + max) / 2)));
+}
+
+function selectOpenMaicExportTheme(designDNA: DesignDNA): PptxThemeId {
+  const motif = designDNA.decoration?.motif;
+  if (motif === 'neon-grid') return 'tech-dark';
+  if (motif === 'organic-circles') return 'nature-fresh';
+  if (motif === 'ink-wash' || motif === 'chinese-seal') return 'academic';
+  if (motif === 'geometric-lines') return 'sky-blue';
+
+  const styleText = `${designDNA.styleName} ${designDNA.mood}`.toLowerCase();
+  if (/dark|tech|minimal|charcoal/.test(styleText)) return 'tech-dark';
+  if (/pink|cream|berry|soft/.test(styleText)) return 'macaron-pink';
+  return 'sky-blue';
+}
+
+function buildOpenMaicStyleDirective(designDNA: DesignDNA, educationLevel?: string): string {
+  const colors = designDNA.colors;
+  return [
+    'Use OpenMAIC-style element-level slide design, not template slots.',
+    'Create polished visual hierarchy with explicit TextElement, ShapeElement, LineElement, TableElement, ChartElement, and LatexElement objects when useful.',
+    'Use layered backgrounds, generous spacing, asymmetric balance, and varied compositions. Do not repeat the same title-body layout on every slide.',
+    'Hard ban: do not use the old Sky card-panel template. Avoid two equal rounded pastel cards, large colored content boxes, and formula blocks trapped inside cards.',
+    'Use at most one large pale panel on a slide. Prefer whitespace, thin accent geometry, callout labels, arrows, diagrams, timelines, tables, and one strong visual anchor.',
+    'Every content slide should include at least two non-text visual elements beyond the background, such as lines, shapes, chart/table structure, callout markers, or LatexElement formulas.',
+    'For math and science decks, make formulas large visual anchors with surrounding labels and worked-example steps; never put LaTeX inside TextElement HTML.',
+    `Visual mood: ${designDNA.styleName} / ${designDNA.mood}.`,
+    `Preferred palette: cover #${colors.coverBg}, content #${colors.contentBg}, accent #${colors.accent}, secondary #${colors.accentSecondary}.`,
+    educationLevel ? `Audience education level: ${educationLevel}.` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+function summarizeOpenMaicSlides(slides: Slide[], topic: string): JobOutlinePage[] {
+  return slides.map((slide, index) => ({
+    pageNum: index + 1,
+    title: extractOpenMaicSlideTitle(slide, index, topic),
+    type: slide.type || (index === 0 ? 'cover' : index === slides.length - 1 ? 'end' : 'content'),
+  }));
+}
+
+function extractOpenMaicSlideTitle(slide: Slide, index: number, topic: string): string {
+  const firstText = slide.elements.find((el): el is PPTTextElement => el.type === 'text');
+  const title = firstText ? stripOpenMaicHtml(firstText.content).replace(/\s+/g, ' ').trim() : '';
+  if (title) return title.slice(0, 48);
+  if (index === 0) return topic;
+  return `Slide ${index + 1}`;
+}
+
+function stripOpenMaicHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '').trim();
+}
+
+function buildOpenMaicFileName(topic: string, theme: PptxThemeId): string {
+  const safeTopic =
+    topic
+      .replace(/[^\u4e00-\u9fa5a-zA-Z0-9_-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 40) || 'openmaic_slides';
+  return `${safeTopic}_${theme}_${Date.now()}.pptx`;
+}
+
 export async function runPipelineTask(options: GenerateOptions): Promise<void> {
   return runPipeline(options);
 }

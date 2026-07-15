@@ -1,11 +1,17 @@
 /**
  * POST /api/auth/refresh
  * Refresh access token using a valid refresh token.
+ *
+ * Stateless: the refresh token is validated by signature only. Token
+ * revocation/rotation requires a persistent session store (MySQL/Supabase);
+ * re-enable sessions in login/register + the session lookup here once a
+ * persistent server store is configured.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, verifyRefreshToken } from '@/lib/server/auth';
+import { ACCESS_COOKIE_MAX_AGE } from '@/lib/server/auth/jwt';
 import { createUserDAO } from '@/lib/storage/dao/users';
 
 export async function POST(request: NextRequest) {
@@ -39,7 +45,7 @@ export async function POST(request: NextRequest) {
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60,
+      maxAge: ACCESS_COOKIE_MAX_AGE,
     });
     return response;
   } catch (err) {

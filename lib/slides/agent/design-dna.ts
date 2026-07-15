@@ -160,6 +160,10 @@ export const ALLOWED_DENSITIES = ['sparse', 'moderate', 'rich'] as const;
 
 export const ALLOWED_CORNER_WEIGHTS = ['top-right', 'scattered', 'centered', 'top-left', 'bottom-right'] as const;
 
+type DecorationMotif = (typeof ALLOWED_MOTIFS)[number];
+type DecorationDensity = (typeof ALLOWED_DENSITIES)[number];
+type DecorationCornerWeight = (typeof ALLOWED_CORNER_WEIGHTS)[number];
+
 export const ALLOWED_CARD_STYLES = [
   'accent-left-bar', 'top-accent-border', 'shadow-only', 'filled-accent',
 ] as const;
@@ -279,15 +283,23 @@ function sanitizeFonts(fonts: Record<string, unknown>): typeof DEFAULT_FONT_PAIR
   return DEFAULT_FONT_PAIR;
 }
 
-function sanitizeDecoration(dec: Record<string, unknown>) {
+function sanitizeDecoration(dec: Record<string, unknown>): {
+  motif: DecorationMotif;
+  density: DecorationDensity;
+  cornerWeight: DecorationCornerWeight;
+  replacementCount: number;
+} {
   let replacementCount = 0;
-  const motif = ALLOWED_MOTIFS.includes(dec.motif as typeof ALLOWED_MOTIFS[number])
-    ? dec.motif : (replacementCount++, 'geometric-lines');
-  const density = ALLOWED_DENSITIES.includes(dec.density as typeof ALLOWED_DENSITIES[number])
-    ? dec.density : (replacementCount++, 'moderate');
-  const cornerWeight = ALLOWED_CORNER_WEIGHTS.includes(dec.cornerWeight as typeof ALLOWED_CORNER_WEIGHTS[number])
-    ? dec.cornerWeight : (replacementCount++, 'top-right');
-  return { motif, density, cornerWeight: cornerWeight as string, replacementCount };
+  const motif = ALLOWED_MOTIFS.includes(dec.motif as DecorationMotif)
+    ? (dec.motif as DecorationMotif)
+    : (replacementCount++, 'geometric-lines');
+  const density = ALLOWED_DENSITIES.includes(dec.density as DecorationDensity)
+    ? (dec.density as DecorationDensity)
+    : (replacementCount++, 'moderate');
+  const cornerWeight = ALLOWED_CORNER_WEIGHTS.includes(dec.cornerWeight as DecorationCornerWeight)
+    ? (dec.cornerWeight as DecorationCornerWeight)
+    : (replacementCount++, 'top-right');
+  return { motif, density, cornerWeight, replacementCount };
 }
 
 function sanitizeComponents(comp: Record<string, unknown>) {
@@ -356,7 +368,11 @@ export function validateDesignDNA(raw: unknown): ValidationResult {
     ...d,
     colors: cleanColors as DesignDNA['colors'],
     fonts: cleanFonts,
-    decoration: { motif: decResult.motif as DesignDNA['decoration']['motif'], density: decResult.density as DesignDNA['decoration']['density'], cornerWeight: decResult.cornerWeight },
+    decoration: {
+      motif: decResult.motif,
+      density: decResult.density,
+      cornerWeight: decResult.cornerWeight,
+    },
     components: cleanComponents as DesignDNA['components'],
   };
 

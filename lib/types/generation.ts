@@ -127,6 +127,7 @@ export interface SceneOutline {
 // ==================== Stage 3 Output: Generated Content ====================
 
 import type { PPTElement, SlideBackground } from './slides';
+import type { TemplateSlideData } from '@/lib/templates/pptd-types';
 import type { QuizQuestion } from './stage';
 
 /**
@@ -136,6 +137,23 @@ export interface GeneratedSlideContent {
   elements: PPTElement[];
   background?: SlideBackground;
   remark?: string;
+  templateData?: TemplateSlideData;
+  qa?: GeneratedSlideQAReport;
+}
+
+export interface GeneratedSlideQAIssue {
+  type: string;
+  severity: 'blocking' | 'warning';
+  detail: string;
+  elementId?: string;
+  backgroundId?: string;
+}
+
+export interface GeneratedSlideQAReport {
+  pass: boolean;
+  blockingIssueCount: number;
+  warningIssueCount: number;
+  issues: GeneratedSlideQAIssue[];
 }
 
 /**

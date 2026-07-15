@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense, type ComponentProps } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { User, Lock, Eye, EyeOff, Loader2, CloudSun } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -12,9 +12,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-function LoginForm() {
+type AuthLayoutOptions = Omit<ComponentProps<typeof AuthLayout>, 'children'>;
+
+interface LoginPageContentProps {
+  authLayoutProps?: AuthLayoutOptions;
+  noAuthLayout?: boolean;
+}
+
+function LoginForm({ authLayoutProps, noAuthLayout }: LoginPageContentProps) {
   const { login, isGuest } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [emailOrUsername, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,6 +32,10 @@ function LoginForm() {
 
   const redirect = searchParams.get('redirect') || '/';
   const reason = searchParams.get('reason');
+  const isMobileAuthFlow =
+    pathname.startsWith('/m/auth') || redirect === '/m' || redirect.startsWith('/m/');
+  const forgotPasswordHref = isMobileAuthFlow ? '/m/auth/forgot-password' : '/auth/forgot-password';
+  const registerHref = isMobileAuthFlow ? '/m/auth/register' : '/auth/register';
 
   useEffect(() => {
     if (reason === 'login_required') {
@@ -50,8 +62,8 @@ function LoginForm() {
     if (!isGuest) router.push(redirect);
   }, [isGuest, router, redirect]);
 
-  return (
-    <AuthLayout>
+  const content = (
+    <>
       {/* Header */}
       <div className="flex flex-col items-center mb-6">
         <motion.div
@@ -62,12 +74,8 @@ function LoginForm() {
         >
           <CloudSun className="w-8 h-8 text-white" />
         </motion.div>
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-          欢迎回来
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          登录天空课堂，开启智能学习之旅
-        </p>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">欢迎回来</h1>
+        <p className="text-sm text-muted-foreground mt-1">登录天空课堂，开启智能学习之旅</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,8 +117,8 @@ function LoginForm() {
               密码
             </Label>
             <Link
-              href="/auth/forgot-password"
-              className="text-xs text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+              href={forgotPasswordHref}
+              className="inline-flex min-h-11 items-center rounded-md px-1 text-xs text-sky-600 transition-colors hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
             >
               忘记密码？
             </Link>
@@ -125,13 +133,12 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="new-password"
-              className="pl-10 pr-10 bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 focus-visible:ring-sky-400 h-11"
+              className="h-11 pl-10 pr-12 bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 focus-visible:ring-sky-400"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-              tabIndex={-1}
+              className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
@@ -191,20 +198,27 @@ function LoginForm() {
       <p className="text-sm text-center text-muted-foreground mt-6">
         还没有账号？{' '}
         <Link
-          href="/auth/register"
-          className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+          href={registerHref}
+          className="inline-flex min-h-11 items-center rounded-md px-1 font-medium text-sky-600 transition-colors hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
         >
           注册一个
         </Link>
       </p>
-    </AuthLayout>
+    </>
+  );
+
+  if (noAuthLayout) return content;
+  return <AuthLayout {...authLayoutProps}>{content}</AuthLayout>;
+}
+
+export function LoginPageContent({ authLayoutProps, noAuthLayout }: LoginPageContentProps = {}) {
+  return (
+    <Suspense>
+      <LoginForm authLayoutProps={authLayoutProps} noAuthLayout={noAuthLayout} />
+    </Suspense>
   );
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
-  );
+  return <LoginPageContent />;
 }

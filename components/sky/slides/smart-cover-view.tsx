@@ -34,11 +34,11 @@ interface SmartCoverViewProps {
 
 const QUICK_PALETTES = [
   'midnight-executive',
-  'forest-fresh',
-  'ocean-breeze',
-  'coral-warmth',
-  'lavender-dream',
-  'ember-glow',
+  'forest-moss',
+  'ocean-gradient',
+  'coral-energy',
+  'berry-cream',
+  'tech-dark-cn',
 ] as const;
 
 export function SmartCoverView({

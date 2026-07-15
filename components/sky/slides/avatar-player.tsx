@@ -15,13 +15,13 @@ export function AvatarPlayer({ avatar, speech }: AvatarPlayerProps) {
   return (
     <div className="absolute bottom-28 right-6 z-20 flex items-end gap-3">
       {hasSpeech && (
-        <div className="max-w-[280px] rounded-2xl rounded-br-md border border-white/20 bg-white/90 px-4 py-3 shadow-2xl backdrop-blur-xl">
+        <div className="max-w-[280px] rounded-2xl rounded-br-md border border-slate-200/60 dark:border-white/20 bg-white/95 dark:bg-slate-800/90 px-4 py-3 shadow-2xl backdrop-blur-xl">
           <div className="mb-1 flex items-center gap-1.5">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-blue-600">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-blue-600 dark:text-blue-400">
               {avatar.name}
             </span>
           </div>
-          <p className="text-sm leading-relaxed text-slate-700">
+          <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-100">
             {speech.segments[0]?.text}
           </p>
           <div className="mt-3 flex items-center gap-2">
@@ -38,7 +38,7 @@ export function AvatarPlayer({ avatar, speech }: AvatarPlayerProps) {
                 />
               ))}
             </div>
-            <span className="text-[10px] text-slate-400">讲解中</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-400">讲解中</span>
           </div>
         </div>
       )}
@@ -47,7 +47,7 @@ export function AvatarPlayer({ avatar, speech }: AvatarPlayerProps) {
         <img
           src={avatar.avatarUrl}
           alt={avatar.name}
-          className="relative h-14 w-14 rounded-full border-2 border-white object-cover shadow-xl"
+          className="relative h-14 w-14 rounded-full border-2 border-white dark:border-slate-700 object-cover shadow-xl"
         />
       </div>
     </div>

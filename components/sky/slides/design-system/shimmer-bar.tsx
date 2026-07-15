@@ -17,7 +17,6 @@ export function ShimmerBar({
 }: ShimmerBarProps) {
   return (
     <div
-      data-testid="shimmer-bar"
       className={`relative overflow-hidden rounded-full ${className}`}
       style={{ height, backgroundColor: bgColor }}
     >

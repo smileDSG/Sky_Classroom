@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { getAvailableProvidersWithVoices } from '@/lib/audio/voice-resolver';
@@ -25,8 +24,7 @@ import type { TTSProviderId } from '@/lib/audio/types';
 import type { ProviderWithVoices } from '@/lib/audio/voice-resolver';
 
 export function AgentBar() {
-  const { t } = useI18n();
-  const { listAgents } = useAgentRegistry();
+  const t = (key: string) => key;const { listAgents } = useAgentRegistry();
   const selectedAgentIds = useSettingsStore((s) => s.selectedAgentIds);
   const setSelectedAgentIds = useSettingsStore((s) => s.setSelectedAgentIds);
   const maxTurns = useSettingsStore((s) => s.maxTurns);
@@ -206,7 +204,7 @@ export function AgentBar() {
             onClick={() => setOpen(!open)}
           >
             <span className="text-xs text-muted-foreground/60 group-hover:text-muted-foreground transition-colors hidden sm:block font-medium flex-1 text-left truncate">
-              {open ? t('agentBar.expandedTitle') : t('agentBar.readyToLearn')}
+              {open ? '课堂角色配置' : '准备好一起学习了吗？'}
             </span>
             {avatarRow}
             {open ? (
@@ -218,7 +216,7 @@ export function AgentBar() {
         </TooltipTrigger>
         {!open && (
           <TooltipContent side="bottom" sideOffset={4}>
-            {t('agentBar.configTooltip')}
+            {'点击配置课堂角色'}
           </TooltipContent>
         )}
       </Tooltip>
@@ -269,7 +267,7 @@ export function AgentBar() {
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
-                  {t('settings.agentModePreset')}
+                  {'预设模式'}
                 </button>
                 <button
                   onClick={() => handleModeChange('auto')}
@@ -281,7 +279,7 @@ export function AgentBar() {
                   )}
                 >
                   <Sparkles className="h-3 w-3" />
-                  {t('settings.agentModeAuto')}
+                  {'自动生成'}
                 </button>
               </div>
 
@@ -315,10 +313,10 @@ export function AgentBar() {
                   <div className="flex-1" />
                   <div className="text-center space-y-1">
                     <p className="text-[11px] text-muted-foreground/60">
-                      {t('settings.agentModeAutoDesc')}
+                      {'AI 将根据课程内容自动生成适合的课堂角色'}
                     </p>
                     <p className="text-[10px] text-muted-foreground/40">
-                      {t('agentBar.voiceAutoAssign')}
+                      {'音色将自动分配'}
                     </p>
                   </div>
                 </div>

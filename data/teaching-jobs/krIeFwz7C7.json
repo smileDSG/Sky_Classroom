@@ -1,0 +1,154 @@
+{
+  "id": "krIeFwz7C7",
+  "userId": "admin-default",
+  "topic": "二次函数",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 24,
+  "message": "教案生成已取消",
+  "createdAt": "2026-06-08T12:18:58.513Z",
+  "updatedAt": "2026-06-08T12:19:36.780Z",
+  "sectionsCompleted": 1,
+  "totalSections": 6,
+  "startedAt": "2026-06-08T12:18:58.519Z",
+  "plan": {
+    "title": "二次函数核心概念与性质",
+    "sections": [
+      {
+        "id": "section-1",
+        "title": "二次函数的定义与基本形式",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "二次函数的定义",
+          "一般式 y=ax²+bx+c (a≠0)",
+          "二次项系数 a 的作用"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-1-quiz",
+        "title": "随堂测：定义与系数判断",
+        "contentType": "quiz",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "二次函数定义",
+          "系数非零条件"
+        ],
+        "estimatedDuration": 2,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-2",
+        "title": "图像与性质：顶点、对称轴、开口",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "配方法求顶点",
+          "对称轴公式 x=-b/(2a)",
+          "开口方向与 a 的关系",
+          "顶点坐标的实际意义"
+        ],
+        "estimatedDuration": 10,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-2-quiz",
+        "title": "随堂测：图像性质判断",
+        "contentType": "quiz",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "顶点坐标",
+          "对称轴",
+          "开口方向"
+        ],
+        "estimatedDuration": 2,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-3",
+        "title": "解析式的求法：待定系数法",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "一般式",
+          "顶点式 y=a(x-h)²+k",
+          "交点式 y=a(x-x₁)(x-x₂)"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-3-quiz",
+        "title": "随堂测：选择合适形式求解析式",
+        "contentType": "quiz",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "待定系数法",
+          "三种形式的适用条件"
+        ],
+        "estimatedDuration": 2,
+        "hasQuiz": true
+      }
+    ],
+    "estimatedDuration": 32,
+    "focusPoints": [
+      "二次项系数 a 对开口方向和宽窄的影响",
+      "顶点坐标 (h,k) 的几何意义与配方法",
+      "待定系数法中选择解析式形式的策略",
+      "对称轴与顶点在解题中的应用"
+    ]
+  },
+  "sections": [
+    {
+      "section": {
+        "id": "section-1",
+        "title": "二次函数的定义与基本形式",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "二次函数的定义",
+          "一般式 y=ax²+bx+c (a≠0)",
+          "二次项系数 a 的作用"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      "chunks": [
+        {
+          "sectionId": "section-1",
+          "type": "text",
+          "content": "## 二次函数的定义与基本形式\n\n### 1. 定义\n一般地，形如 \\( y = ax^2 + bx + c \\)（其中 \\( a \\), \\( b \\), \\( c \\) 是常数，**\\( a \\neq 0 \\)**）的函数叫做**二次函数**。其中 \\( x \\) 是自变量，\\( a \\) 是**二次项系数**，\\( b \\) 是一次项系数，\\( c \\) 是常数项。\n\n**关键点**：\n- 必须是整式（分母不含自变量，根号内不含自变量）。\n- 化简后，自变量的最高次数为 **2**，且二次项系数 **不为 0**。\n\n### 2. 二次项系数 \\( a \\) 的作用\n- 决定抛物线的开口方向：\n  - \\( a > 0 \\) → 开口向上；\n  - \\( a < 0 \\) → 开口向下。\n- 决定开口大小：\\( |a| \\) 越大，开口越小（越窄）；\\( |a| \\) 越小，开口越大（越宽）。",
+          "order": 1
+        },
+        {
+          "sectionId": "section-1",
+          "type": "example",
+          "content": "**例题 1**：判断下列函数是否为二次函数？若是指出二次项系数、一次项系数和常数项。\n\n1. \\( y = 3x^2 - 2x + 1 \\)\n2. \\( y = -x^2 + \\frac{1}{x} \\)\n3. \\( y = (x-1)^2 - x^2 \\)\n4. \\( y = (m^2+1)x^2 + 2x - 3 \\)（\\( m \\) 为常数）\n\n**解**：\n1. 是二次函数。\\( a = 3 \\), \\( b = -2 \\), \\( c = 1 \\)。\n2. 不是二次函数，因为分母含 \\( x \\)，不是整式。\n3. 化简：\\( y = (x^2 - 2x + 1) - x^2 = -2x + 1 \\)，最高次数为 1，不是二次函数。\n4. 是二次函数，因为 \\( m^2+1 \\geq 1 \\neq 0 \\)，所以 \\( a = m^2+1 \\), \\( b = 2 \\), \\( c = -3 \\)。",
+          "order": 2
+        },
+        {
+          "sectionId": "section-1",
+          "type": "text",
+          "content": "### 易错点提醒\n- **忽略二次项系数不为 0**：形如 \\( y = (a-1)x^2 + 2x \\)，当 \\( a = 1 \\) 时，二次项消失，此时不是二次函数。\n- **忘记化简**：如 \\( y = (x+2)(x-2) \\)，展开后为 \\( y = x^2 - 4 \\)，是二次函数；但若写成 \\( y = (x+2)(x-2) \\) 直接判断易误认为不是，需先化简。\n- **自变量的次数不是 2**：如 \\( y = 3x^2 + \\sqrt{x} \\) 含有根式，不是整式，故不是二次函数。",
+          "order": 3
+        },
+        {
+          "sectionId": "section-1",
+          "type": "example",
+          "content": "**例题 2**：已知函数 \\( y = (m-2)x^{m^2-2} + 3x + 1 \\) 是关于 \\( x \\) 的二次函数，求 \\( m \\) 的值。\n\n**解**：由二次函数的定义，需满足两个条件：\n1. 自变量最高次数为 2：\\( m^2 - 2 = 2 \\)；\n2. 二次项系数不为 0：\\( m - 2 \\neq 0 \\)。\n\n由 \\( m^2 - 2 = 2 \\) 得 \\( m^2 = 4 \\), 解得 \\( m = \\pm 2 \\)。\n又 \\( m - 2 \\neq 0 \\)，所以 \\( m \\neq 2 \\)。\n因此 \\( m = -2 \\) 符合要求。\n\n**答**：\\( m = -2 \\)。\n\n**变式**：若函数变为 \\( y = (m-2)x^{|m|} + 3x + 1 \\) 是二次函数，求 \\( m \\)。\n（提示：\\( |m| = 2 \\) 且 \\( m-2 \\neq 0 \\)，得 \\( m = -2 \\)。）",
+          "order": 4
+        },
+        {
+          "sectionId": "section-1",
+          "type": "quiz",
+          "content": "### 随堂测\n1. 下列函数中，一定是二次函数的是（  ）\n   A. \\( y = ax^2 + bx + c \\)\n   B. \\( y = x^2 - \\frac{1}{x} \\)\n   C. \\( y = (x-2)(x+2) - x^2 \\)\n   D. \\( y = (m^2+1)x^2 + 2 \\)（\\( m \\) 是常数）\n\n2. 若函数 \\( y = (k-3)x^{k^2-7} + 2x - 1 \\) 是二次函数，则 \\( k = \\)______。\n\n**参考答案**：1. D（A 中 \\( a \\) 可能为 0；B 不是整式；C 化简为 \\( y = -4 \\)，是一次函数常数函数；D 中 \\( m^2+1 > 0 \\) 恒成立，故选 D）。\n2. 由 \\( k^2-7=2 \\) 得 \\( k = \\pm 3 \\)，且 \\( k-3 \\neq 0 \\)，所以 \\( k = -3 \\)。",
+          "order": 5
+        }
+      ]
+    }
+  ],
+  "completedAt": "2026-06-08T12:19:36.780Z",
+  "error": "用户取消了生成"
+}

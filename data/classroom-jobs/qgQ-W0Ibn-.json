@@ -1,0 +1,205 @@
+{
+  "id": "qgQ-W0Ibn-",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-05-29T07:45:43.800Z",
+  "updatedAt": "2026-05-29T07:52:08.994Z",
+  "inputSummary": {
+    "requirementPreview": "python课程教学",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 1,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-29T07:45:43.809Z",
+  "totalScenes": 3,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "课程简介与学习目标",
+        "description": "简要介绍Python语言的背景、特点及本课程的学习目标，激发学习者兴趣。",
+        "keyPoints": [
+          "Python的诞生与发展历史",
+          "Python的主要特点：简洁、易读、跨平台、丰富的库",
+          "当今Python的应用领域：Web开发、数据科学、人工智能、自动化脚本",
+          "本课程的学习路线和预期收获"
+        ],
+        "teachingObjective": "了解Python语言的基本情况，建立学习预期",
+        "estimatedDuration": 60,
+        "order": 1
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "列表与字典入门",
+        "description": "讲解Python中两种最常用的复合数据结构——列表和字典。",
+        "keyPoints": [
+          "列表的创建、索引、切片操作",
+          "列表的常用方法：append、remove等",
+          "字典的键值对概念与创建",
+          "字典元素的存取与遍历"
+        ],
+        "teachingObjective": "能够使用列表和字典存储和处理数据",
+        "estimatedDuration": 90,
+        "order": 2
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "知识点检测",
+        "description": "通过几道选择题和简答题检验学习效果，覆盖变量、数据类型、控制流程等核心内容。",
+        "keyPoints": [
+          "整型变量赋值与运算",
+          "列表索引与切片",
+          "条件表达式的执行结果",
+          "循环次数分析"
+        ],
+        "teachingObjective": "评估学习掌握情况，发现薄弱环节",
+        "estimatedDuration": 120,
+        "order": 3,
+        "quizConfig": {
+          "questionCount": 4,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "short_answer"
+          ]
+        }
+      }
+    ],
+    "languageDirective": "课程教学语言为中文，所有讲解、标题、知识点均使用简体中文。Python关键字、代码、库名等保留英文原文，必要时在示例代码中附中文注释帮助理解。遇到新兴技术词汇时，以中英双语呈现。",
+    "topicSummary": "Python基础入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "DznMNsmymd",
+      "name": "课程简介与学习目标",
+      "languageDirective": "课程教学语言为中文，所有讲解、标题、知识点均使用简体中文。Python关键字、代码、库名等保留英文原文，必要时在示例代码中附中文注释帮助理解。遇到新兴技术词汇时，以中英双语呈现。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780040777541,
+      "updatedAt": 1780040777541,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python课程教学",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "课程简介与学习目标",
+      "description": "简要介绍Python语言的背景、特点及本课程的学习目标，激发学习者兴趣。",
+      "keyPoints": [
+        "Python的诞生与发展历史",
+        "Python的主要特点：简洁、易读、跨平台、丰富的库",
+        "当今Python的应用领域：Web开发、数据科学、人工智能、自动化脚本",
+        "本课程的学习路线和预期收获"
+      ],
+      "teachingObjective": "了解Python语言的基本情况，建立学习预期",
+      "estimatedDuration": 60,
+      "order": 1
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "列表与字典入门",
+      "description": "讲解Python中两种最常用的复合数据结构——列表和字典。",
+      "keyPoints": [
+        "列表的创建、索引、切片操作",
+        "列表的常用方法：append、remove等",
+        "字典的键值对概念与创建",
+        "字典元素的存取与遍历"
+      ],
+      "teachingObjective": "能够使用列表和字典存储和处理数据",
+      "estimatedDuration": 90,
+      "order": 2
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "知识点检测",
+      "description": "通过几道选择题和简答题检验学习效果，覆盖变量、数据类型、控制流程等核心内容。",
+      "keyPoints": [
+        "整型变量赋值与运算",
+        "列表索引与切片",
+        "条件表达式的执行结果",
+        "循环次数分析"
+      ],
+      "teachingObjective": "评估学习掌握情况，发现薄弱环节",
+      "estimatedDuration": 120,
+      "order": 3,
+      "quizConfig": {
+        "questionCount": 4,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "short_answer"
+        ]
+      }
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "课程教学语言为中文，所有讲解、标题、知识点均使用简体中文。Python关键字、代码、库名等保留英文原文，必要时在示例代码中附中文注释帮助理解。遇到新兴技术词汇时，以中英双语呈现。",
+    "totalScenes": 3
+  },
+  "topicSummary": "Python基础入门",
+  "completedAt": "2026-05-29T07:52:08.994Z",
+  "result": {
+    "classroomId": "DznMNsmymd",
+    "url": "http://localhost:3000/classroom/DznMNsmymd",
+    "scenesCount": 1
+  }
+}

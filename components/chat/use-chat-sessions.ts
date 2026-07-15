@@ -17,12 +17,12 @@ import { useCanvasStore } from '@/lib/store/canvas';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useUserProfileStore } from '@/lib/store/user-profile';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { USER_AVATAR } from '@/lib/types/roundtable';
 import { StreamBuffer } from '@/lib/buffer/stream-buffer';
 import type { AgentStartItem, ActionItem } from '@/lib/buffer/stream-buffer';
 import { runAgentLoop, type AgentLoopStoreState } from '@/lib/chat/agent-loop';
+import { getAgentIdsForSession, getTriggerAgentIdForSession } from '@/lib/chat/session-agents';
 import { ActionEngine } from '@/lib/action/engine';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
@@ -79,8 +79,6 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     options.onSegmentSealed,
     options.shouldHoldAfterReveal,
   ]);
-  const { t } = useI18n();
-
   // Track current stageId for data isolation
   const stageId = useStageStore((s) => s.stage?.id);
   const stageIdRef = useRef(stageId);
@@ -470,9 +468,15 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       }
 
       const defaultMaxTurns = requestTemplate.config.agentIds.length <= 1 ? 1 : 10;
-      const maxTurns = settingsState.maxTurns
+      const configuredMaxTurns = settingsState.maxTurns
         ? parseInt(settingsState.maxTurns, 10) || defaultMaxTurns
         : defaultMaxTurns;
+      const maxTurns =
+        requestTemplate.config.agentIds.length <= 1
+          ? 1
+          : sessionType === 'qa'
+            ? Math.min(configuredMaxTurns, 2)
+            : configuredMaxTurns;
 
       // Per-iteration buffer reference — set in onEvent, used in onIterationEnd
       let currentBuffer: StreamBuffer | null = null;
@@ -515,7 +519,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
               signal,
             });
             if (res.status === 401) {
-              const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+              const refreshRes = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                credentials: 'include',
+              });
               if (refreshRes.ok) {
                 res = await fetch('/api/chat', {
                   method: 'POST',
@@ -768,41 +775,44 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
   );
 
   /** Delete a session permanently from the list */
-  const deleteSession = useCallback((sessionId: string) => {
-    log.info(`[ChatArea] Deleting session: ${sessionId}`);
+  const deleteSession = useCallback(
+    (sessionId: string) => {
+      log.info(`[ChatArea] Deleting session: ${sessionId}`);
 
-    // Abort if currently streaming
-    if (abortControllerRef.current && streamingSessionIdRef.current === sessionId) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-      streamingSessionIdRef.current = null;
-      setIsStreaming(false);
-    }
+      // Abort if currently streaming
+      if (abortControllerRef.current && streamingSessionIdRef.current === sessionId) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+        streamingSessionIdRef.current = null;
+        setIsStreaming(false);
+      }
 
-    // Shutdown and remove buffer
-    const buf = buffersRef.current.get(sessionId);
-    if (buf) {
-      buf.shutdown();
-      buffersRef.current.delete(sessionId);
-    }
-    lectureMessageIds.current.delete(sessionId);
-    lectureLastActionIndexRef.current.delete(sessionId);
+      // Shutdown and remove buffer
+      const buf = buffersRef.current.get(sessionId);
+      if (buf) {
+        buf.shutdown();
+        buffersRef.current.delete(sessionId);
+      }
+      lectureMessageIds.current.delete(sessionId);
+      lectureLastActionIndexRef.current.delete(sessionId);
 
-    // Clear live state callbacks if deleting active session
-    if (activeSessionId === sessionId) {
-      setActiveSessionId(null);
-      onLiveSpeechRef.current?.(null, null);
-      onThinkingRef.current?.(null);
-    }
+      // Clear live state callbacks if deleting active session
+      if (activeSessionId === sessionId) {
+        setActiveSessionId(null);
+        onLiveSpeechRef.current?.(null, null);
+        onThinkingRef.current?.(null);
+      }
 
-    setExpandedSessionIds((prev) => {
-      const next = new Set(prev);
-      next.delete(sessionId);
-      return next;
-    });
+      setExpandedSessionIds((prev) => {
+        const next = new Set(prev);
+        next.delete(sessionId);
+        return next;
+      });
 
-    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-  }, [activeSessionId]);
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    },
+    [activeSessionId],
+  );
 
   /**
    * End the currently active QA/Discussion session (if any).
@@ -928,10 +938,11 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         const userProfileState = useUserProfileStore.getState();
         const mc = getCurrentModelConfig();
 
-        const agentIds =
-          useSettingsStore.getState().selectedAgentIds?.length > 0
-            ? useSettingsStore.getState().selectedAgentIds
-            : session.config.agentIds;
+        const selectedAgentIds = useSettingsStore.getState().selectedAgentIds;
+        const agentIds = getAgentIdsForSession(
+          session.type,
+          selectedAgentIds?.length > 0 ? selectedAgentIds : session.config.agentIds,
+        );
 
         await runAgentLoopFn(
           sessionId,
@@ -947,7 +958,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             config: {
               agentIds,
               sessionType: session.type,
-              triggerAgentId: 'default-2', // 恢复会话也让助教回答
+              triggerAgentId: getTriggerAgentIdForSession(session.type),
             },
             userProfile: {
               nickname: userProfileState.nickname || undefined,
@@ -1041,12 +1052,12 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       // Validate model configuration before sending
       const modelConfig = getCurrentModelConfig();
       if (!modelConfig.modelId) {
-        toast.error(t('settings.modelNotConfigured'));
+        toast.error('请选择一个模型以开始使用');
         return;
       }
       if (modelConfig.requiresApiKey && !modelConfig.apiKey && !modelConfig.isServerConfigured) {
-        toast.error(t('settings.setupNeeded'), {
-          description: t('settings.apiKeyDesc'),
+        toast.error('请先完成配置', {
+          description: '配置你的API密钥',
         });
         return;
       }
@@ -1065,7 +1076,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         for (const session of activeQAOrDiscussion) {
           await endSession(session.id);
         }
-        sessionId = await createSession('qa', content.length > 30 ? content.slice(0, 30) + '...' : content);
+        sessionId = await createSession(
+          'qa',
+          content.length > 30 ? content.slice(0, 30) + '...' : content,
+        );
       }
 
       const controller = new AbortController();
@@ -1076,17 +1090,12 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       const now = Date.now();
       const userMessageId = `user-${now}`;
 
-      // Read all selected agent IDs from settings store
-      const settingsState = useSettingsStore.getState();
-      const agentIds: string[] =
-        settingsState.selectedAgentIds?.length > 0 ? settingsState.selectedAgentIds : ['default-1'];
-
       const userMessage: UIMessage<ChatMessageMetadata> = {
         id: userMessageId,
         role: 'user',
         parts: [{ type: 'text', text: content }],
         metadata: {
-          senderName: t('common.you'),
+          senderName: '你',
           senderAvatar: USER_AVATAR,
           originalRole: 'user',
           createdAt: now,
@@ -1099,7 +1108,11 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       // When transitioning from lecture to QA, inject lecture messages as context
       // so the AI knows what was just taught and can answer questions about it.
       let lectureContextMessages: UIMessage<ChatMessageMetadata>[] = [];
-      if (needNewSession && activeSession?.type === 'lecture' && activeSession.messages.length > 0) {
+      if (
+        needNewSession &&
+        activeSession?.type === 'lecture' &&
+        activeSession.messages.length > 0
+      ) {
         lectureContextMessages = activeSession.messages;
       }
 
@@ -1107,6 +1120,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         ? [...lectureContextMessages, ...existingSession.messages, userMessage]
         : [...lectureContextMessages, userMessage];
       const sessionType: SessionType = existingSession?.type || 'qa';
+      const agentIds = getAgentIdsForSession(
+        sessionType,
+        existingSession?.config.agentIds ?? useSettingsStore.getState().selectedAgentIds,
+      );
 
       // Pure updater — no side effects
       setSessions((prev) => {
@@ -1173,7 +1190,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             config: {
               agentIds,
               sessionType,
-              triggerAgentId: 'default-2', // 用户提问后直接让 AI 助教回答
+              triggerAgentId: getTriggerAgentIdForSession(sessionType),
             },
             userProfile: {
               nickname: userProfileState.nickname || undefined,
@@ -1216,7 +1233,6 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       createSession,
       endSession,
       runAgentLoopFn,
-      t,
     ],
   );
 
@@ -1233,12 +1249,12 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       // Validate model configuration before starting discussion
       const modelConfig = getCurrentModelConfig();
       if (!modelConfig.modelId) {
-        toast.error(t('settings.modelNotConfigured'));
+        toast.error('请选择一个模型以开始使用');
         return;
       }
       if (modelConfig.requiresApiKey && !modelConfig.apiKey && !modelConfig.isServerConfigured) {
-        toast.error(t('settings.setupNeeded'), {
-          description: t('settings.apiKeyDesc'),
+        toast.error('请先完成配置', {
+          description: '配置你的API密钥',
         });
         return;
       }
@@ -1354,7 +1370,6 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- t is stable from i18n context
     [clearLiveSessionAfterError, endSession, runAgentLoopFn],
   );
 
@@ -1413,7 +1428,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       const messageId = `lecture-msg-${now}`;
 
       const scene = useStageStore.getState().scenes.find((s) => s.id === sceneId);
-      const title = scene?.title || t('chat.lecture');
+      const title = scene?.title || '授课';
 
       const agentConfig = useAgentRegistry.getState().getAgent('default-1');
 
@@ -1423,7 +1438,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         role: 'assistant',
         parts: [],
         metadata: {
-          senderName: agentConfig?.name || t('settings.agentNames.default-1'),
+          senderName: agentConfig?.name || 'AI教师',
           senderAvatar: agentConfig?.avatar,
           originalRole: 'teacher',
           agentId: 'default-1',
@@ -1459,7 +1474,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       log.info(`[ChatArea] Created lecture session: ${sessionId} for scene ${sceneId}`);
       return sessionId;
     },
-    [sessions, t],
+    [sessions],
   );
 
   /**

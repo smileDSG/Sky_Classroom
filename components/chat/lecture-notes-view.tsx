@@ -1,28 +1,31 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { BookOpen, MessageSquare, Flashlight, MousePointer2, Play, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { BookOpen, Flashlight, MessageSquare, MousePointer2, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import type { LectureNoteEntry } from '@/lib/types/chat';
 
-const ACTION_CONFIG: Record<string, { Icon: typeof Flashlight; label: string; style: string }> = {
-  spotlight: {
-    Icon: Flashlight,
-    label: '聚光灯',
-    style: 'bg-amber-100 dark:bg-amber-900/30 border-amber-300/40 dark:border-amber-500/30 text-amber-700 dark:text-amber-300',
-  },
-  laser: {
-    Icon: MousePointer2,
-    label: '激光笔',
-    style: 'bg-red-100 dark:bg-red-900/30 border-red-300/40 dark:border-red-500/30 text-red-600 dark:text-red-300',
-  },
-  play_video: {
-    Icon: Play,
-    label: '播放视频',
-    style: 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300/40 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300',
-  },
-};
+const ACTION_ICON_ONLY: Record<string, { Icon: typeof Flashlight; label: string; style: string }> =
+  {
+    spotlight: {
+      Icon: Flashlight,
+      label: '聚光',
+      style:
+        'bg-yellow-50 dark:bg-yellow-500/15 border-yellow-300/50 dark:border-yellow-500/30 text-yellow-700 dark:text-yellow-300',
+    },
+    laser: {
+      Icon: MousePointer2,
+      label: '激光笔',
+      style:
+        'bg-red-50 dark:bg-red-500/15 border-red-300/50 dark:border-red-500/30 text-red-600 dark:text-red-300',
+    },
+    play_video: {
+      Icon: Play,
+      label: '播放',
+      style:
+        'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-300/50 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300',
+    },
+  };
 
 interface LectureNotesViewProps {
   notes: LectureNoteEntry[];
@@ -30,107 +33,89 @@ interface LectureNotesViewProps {
 }
 
 export function LectureNotesView({ notes, currentSceneId }: LectureNotesViewProps) {
-  const { t } = useI18n();
-  const [expandedSceneId, setExpandedSceneId] = useState<string | null>(currentSceneId ?? null);
-  const filmstripRef = useRef<HTMLDivElement>(null);
-  const wheelThrottleRef = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sync expanded scene with currentSceneId
   useEffect(() => {
-    if (currentSceneId) {
-      setExpandedSceneId(currentSceneId);
-      // Scroll filmstrip to show current scene
-      requestAnimationFrame(() => {
-        const el = filmstripRef.current?.querySelector(`[data-film-scene="${currentSceneId}"]`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        }
-      });
-    }
+    if (!currentSceneId || !containerRef.current) return;
+    const el = containerRef.current.querySelector(`[data-scene-id="${currentSceneId}"]`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [currentSceneId]);
-
-  // Mouse wheel on filmstrip → switch scenes
-  const handleFilmstripWheel = useCallback(
-    (e: React.WheelEvent) => {
-      const now = Date.now();
-      if (now - wheelThrottleRef.current < 300) return; // throttle
-      wheelThrottleRef.current = now;
-
-      e.preventDefault();
-      const direction = e.deltaY > 0 || e.deltaX > 0 ? 1 : -1;
-      const activeIdx = notes.findIndex((n) => n.sceneId === expandedSceneId);
-      const nextIdx = Math.max(0, Math.min(notes.length - 1, activeIdx + direction));
-      const nextScene = notes[nextIdx]?.sceneId;
-      if (nextScene) {
-        setExpandedSceneId(nextScene);
-        // Scroll filmstrip to show the new active scene
-        requestAnimationFrame(() => {
-          const el = filmstripRef.current?.querySelector(`[data-film-scene="${nextScene}"]`);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-          }
-        });
-      }
-    },
-    [expandedSceneId, notes],
-  );
 
   if (notes.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-6">
-        <div className="w-16 h-16 bg-gradient-to-br from-sky-100 to-indigo-100 dark:from-sky-900/30 dark:to-indigo-900/30 rounded-2xl flex items-center justify-center mb-4 text-sky-400 dark:text-sky-500 shadow-inner">
-          <BookOpen className="w-8 h-8" />
+      <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-300 ring-1 ring-violet-100 dark:bg-violet-900/20 dark:text-violet-500 dark:ring-violet-800/30">
+          <BookOpen className="h-6 w-6" />
         </div>
-        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-          {t('chat.lectureNotes.empty')}
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          播放课程后，讲解笔记会显示在这里
         </p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
-          {t('chat.lectureNotes.emptyHint')}
-        </p>
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">点击播放按钮开始授课</p>
       </div>
     );
   }
 
-  const activeIdx = notes.findIndex((n) => n.sceneId === expandedSceneId);
-  const activeNote = activeIdx >= 0 ? notes[activeIdx] : null;
-
   return (
-    <div className="flex flex-col h-full">
-      {/* ── Stage: Current Scene Hero Card ── */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 scrollbar-hide">
-        {activeNote ? (
-          <div className="animate-fade-in-up">
-            {/* Scene header bar */}
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-sky-300/30">
-                {activeIdx + 1}
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                {t('chat.lectureNotes.pageLabel', { n: activeIdx + 1 })}
+    <div
+      ref={containerRef}
+      className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 scrollbar-hide"
+    >
+      {notes.map((note, index) => {
+        const isCurrent = note.sceneId === currentSceneId;
+        const pageNum = index + 1;
+
+        return (
+          <section
+            key={note.sceneId}
+            data-scene-id={note.sceneId}
+            className={cn(
+              'relative mb-3 rounded-xl px-3.5 py-3 transition-colors duration-200 last:mb-0',
+              isCurrent
+                ? 'bg-violet-50/80 ring-1 ring-violet-200/70 dark:bg-violet-950/25 dark:ring-violet-700/30'
+                : 'bg-slate-50/70 ring-1 ring-slate-200/60 dark:bg-slate-900/45 dark:ring-slate-800',
+            )}
+          >
+            <div className="mb-2 flex items-center gap-2">
+              <span
+                className={cn(
+                  'h-2.5 w-2.5 shrink-0 rounded-full',
+                  isCurrent
+                    ? 'bg-violet-500 shadow-sm shadow-violet-400/40'
+                    : 'bg-slate-300 dark:bg-slate-600',
+                )}
+              />
+              <span
+                className={cn(
+                  'text-xs font-semibold',
+                  isCurrent
+                    ? 'text-violet-600 dark:text-violet-300'
+                    : 'text-slate-400 dark:text-slate-500',
+                )}
+              >
+                Page {pageNum}
               </span>
-              {activeNote.sceneId === currentSceneId && (
-                <span className="ml-auto flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300">
-                  <Sparkles className="w-3 h-3" />
-                  当前页
+              {isCurrent && (
+                <span className="rounded-full bg-violet-100 px-1.5 py-px text-[11px] font-bold text-violet-600 dark:bg-violet-900/40 dark:text-violet-300">
+                  Current
                 </span>
               )}
             </div>
 
-            {/* Scene title */}
-            <h3 className="text-[18px] font-extrabold text-slate-800 dark:text-slate-100 mb-4 leading-tight">
-              {activeNote.sceneTitle}
-            </h3>
+            <h4 className="mb-2.5 pl-4 text-base font-bold leading-snug text-slate-900 dark:text-slate-100">
+              {note.sceneTitle}
+            </h4>
 
-            {/* Content items */}
-            <div className="space-y-3">
+            <div className="space-y-2 pl-4">
               {(() => {
                 type Row =
                   | { kind: 'speech'; inlineActions: string[]; text: string }
                   | { kind: 'discussion'; label?: string }
                   | { kind: 'trailing'; inlineActions: string[] };
+
                 const rows: Row[] = [];
                 let pendingInline: string[] = [];
-                for (const item of activeNote.items) {
+
+                for (const item of note.items) {
                   if (item.kind === 'action' && item.type === 'discussion') {
                     if (pendingInline.length > 0) {
                       rows.push({ kind: 'trailing', inlineActions: pendingInline });
@@ -144,117 +129,57 @@ export function LectureNotesView({ notes, currentSceneId }: LectureNotesViewProp
                     pendingInline = [];
                   }
                 }
+
                 if (pendingInline.length > 0) {
                   rows.push({ kind: 'trailing', inlineActions: pendingInline });
                 }
-                return rows.map((row, i) => {
+
+                return rows.map((row, rowIndex) => {
                   if (row.kind === 'discussion') {
                     return (
                       <div
-                        key={i}
-                        className="flex items-start gap-2.5 rounded-xl border border-amber-300/50 dark:border-amber-600/30 bg-gradient-to-r from-amber-50/80 to-amber-100/40 dark:from-amber-900/15 dark:to-transparent p-3.5"
+                        key={rowIndex}
+                        className="my-2 flex items-start gap-2 rounded-lg border border-amber-200/70 bg-amber-50/70 px-2.5 py-2 dark:border-amber-700/30 dark:bg-amber-900/10"
                       >
-                        <div className="h-7 w-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 mt-0.5">
-                          <MessageSquare className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-                        </div>
-                        <div>
-                          <div className="text-[11px] font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400 mb-0.5">课堂讨论</div>
-                          <div className="text-[14px] leading-snug text-amber-800 dark:text-amber-200 font-medium">
-                            {row.label}
-                          </div>
-                        </div>
+                        <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500 dark:text-amber-400" />
+                        <span className="text-sm leading-relaxed text-amber-800 dark:text-amber-300">
+                          {row.label}
+                        </span>
                       </div>
                     );
                   }
-                  const actions = row.inlineActions;
+
                   return (
-                    <div key={i} className="text-[14px] leading-[1.85] text-slate-700 dark:text-slate-300">
-                      {actions.map((a, j) => {
-                        const cfg = ACTION_CONFIG[a];
+                    <p
+                      key={rowIndex}
+                      className="text-sm leading-[1.8] text-slate-700 dark:text-slate-300"
+                    >
+                      {row.inlineActions.map((action, actionIndex) => {
+                        const cfg = ACTION_ICON_ONLY[action];
                         if (!cfg) return null;
                         const { Icon, label, style } = cfg;
                         return (
                           <span
-                            key={j}
+                            key={actionIndex}
                             className={cn(
-                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium mr-1.5 mb-1 align-middle',
+                              'mr-1 inline-flex h-4 w-4 items-center justify-center rounded-full border align-middle',
                               style,
                             )}
+                            title={label}
                           >
-                            <Icon className="w-3 h-3" />
-                            {label}
+                            <Icon className="h-2.5 w-2.5" />
                           </span>
                         );
                       })}
-                      {row.kind === 'speech' && (
-                        <span className="leading-[1.85]">{row.text}</span>
-                      )}
-                    </div>
+                      {row.kind === 'speech' ? row.text : null}
+                    </p>
                   );
                 });
               })()}
             </div>
-          </div>
-        ) : (
-          <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-            点击下方胶片条选择一页
-          </div>
-        )}
-      </div>
-
-      {/* ── Filmstrip: Horizontal Scene Navigation ── */}
-      <div className="shrink-0 border-t border-slate-200/60 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30">
-        <div
-          ref={filmstripRef}
-          onWheel={handleFilmstripWheel}
-          className="flex gap-2 overflow-x-auto scrollbar-hide p-2.5 px-3 group"
-        >
-          {notes.map((note, index) => {
-            const isActive = note.sceneId === expandedSceneId;
-            const isCurrent = note.sceneId === currentSceneId;
-            const pageNum = index + 1;
-
-            return (
-              <button
-                key={note.sceneId}
-                data-film-scene={note.sceneId}
-                onClick={() => setExpandedSceneId(note.sceneId)}
-                className={cn(
-                  'shrink-0 w-[100px] rounded-xl border-2 transition-all duration-200 overflow-hidden text-left group',
-                  isActive
-                    ? 'border-sky-400 dark:border-sky-500 shadow-md shadow-sky-200/40 dark:shadow-sky-900/30 scale-[1.02]'
-                    : 'border-slate-200/60 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm',
-                )}
-              >
-                {/* Mini thumbnail header */}
-                <div className={cn(
-                  'h-8 flex items-center justify-center text-xs font-bold transition-colors',
-                  isActive
-                    ? 'bg-gradient-to-r from-sky-500 to-indigo-500 text-white'
-                    : isCurrent
-                      ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400'
-                      : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400',
-                )}>
-                  <span className="flex items-center gap-1">
-                    <BookOpen className="w-3 h-3" />
-                    {pageNum}
-                  </span>
-                </div>
-
-                {/* Preview text */}
-                <div className="p-1.5">
-                  <div className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 truncate leading-tight">
-                    {note.sceneTitle}
-                  </div>
-                  <div className="text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                    {note.items.find((i) => i.kind === 'speech')?.text?.slice(0, 20) || '—'}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

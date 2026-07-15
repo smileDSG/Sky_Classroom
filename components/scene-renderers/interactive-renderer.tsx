@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo, useRef, useEffect, useCallback } from 'react';
+import { useMemo, useRef, useEffect, useCallback, useState } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import type { InteractiveContent } from '@/lib/types/stage';
 import { useWidgetIframeStore } from '@/lib/store/widget-iframe';
 import { patchHtmlForIframe } from '@/lib/utils/iframe';
+import { cn } from '@/lib/utils';
 
 interface InteractiveRendererProps {
   readonly content: InteractiveContent;
@@ -12,8 +14,10 @@ interface InteractiveRendererProps {
 
 export function InteractiveRenderer({ content, sceneId }: InteractiveRendererProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const registerIframe = useWidgetIframeStore((state) => state.registerIframe);
   const setActiveScene = useWidgetIframeStore((state) => state.setActiveScene);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const patchedHtml = useMemo(
     () => (content.html ? patchHtmlForIframe(content.html) : undefined),
@@ -37,8 +41,29 @@ export function InteractiveRenderer({ content, sceneId }: InteractiveRendererPro
     };
   }, [sceneId, registerIframe, sendMessageToIframe, setActiveScene]);
 
+  // Sync fullscreen state with document fullscreenchange events
+  useEffect(() => {
+    const onChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current?.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   return (
-    <div className="w-full h-full relative">
+    <div ref={containerRef} className="w-full h-full relative bg-black">
       <iframe
         ref={iframeRef}
         srcDoc={patchedHtml}
@@ -47,6 +72,20 @@ export function InteractiveRenderer({ content, sceneId }: InteractiveRendererPro
         title={`Interactive Scene ${sceneId}`}
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
       />
+
+      <button
+        type="button"
+        onClick={toggleFullscreen}
+        className={cn(
+          'absolute bottom-3 right-3 z-10 flex h-10 w-10 items-center justify-center rounded-full',
+          'bg-slate-900/70 text-white shadow-lg backdrop-blur-sm transition-colors',
+          'hover:bg-slate-800/90 active:scale-95',
+        )}
+        aria-label={isFullscreen ? '退出全屏' : '全屏'}
+        title={isFullscreen ? '退出全屏' : '全屏'}
+      >
+        {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+      </button>
     </div>
   );
 }

@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
+import { createPortal } from 'react-dom';
+import { BookOpen, Send, Sparkles, Volume2, VolumeX, X } from 'lucide-react';
 import { InlineMath } from '@/components/ui/inline-math';
 import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
 
@@ -11,7 +14,9 @@ function loadMode(): KagamiMode {
   try {
     const saved = localStorage.getItem('kagami-panel-mode');
     if (saved === 'normal' || saved === 'anime') return saved;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return 'anime';
 }
 
@@ -58,14 +63,18 @@ function pickOpening(): string {
 }
 
 function detectLang(text: string): string {
-  let cjk = 0, hira = 0, kata = 0, hang = 0, lat = 0;
+  let cjk = 0,
+    hira = 0,
+    kata = 0,
+    hang = 0,
+    lat = 0;
   for (const ch of text.slice(0, 500)) {
     const c = ch.charCodeAt(0);
-    if ((c >= 0x4E00 && c <= 0x9FFF) || (c >= 0x3400 && c <= 0x4DBF)) cjk++;
-    else if (c >= 0x3040 && c <= 0x309F) hira++;
-    else if (c >= 0x30A0 && c <= 0x30FF) kata++;
-    else if (c >= 0xAC00 && c <= 0xD7AF) hang++;
-    else if ((c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A)) lat++;
+    if ((c >= 0x4e00 && c <= 0x9fff) || (c >= 0x3400 && c <= 0x4dbf)) cjk++;
+    else if (c >= 0x3040 && c <= 0x309f) hira++;
+    else if (c >= 0x30a0 && c <= 0x30ff) kata++;
+    else if (c >= 0xac00 && c <= 0xd7af) hang++;
+    else if ((c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a)) lat++;
   }
   if (hira > 0 || kata > 0) return 'ja';
   if (hang > cjk && hang > lat) return 'ko';
@@ -96,7 +105,9 @@ interface Message {
   content: string;
 }
 
-export function KagamiPanel() {
+export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
+  const pathname = usePathname();
+
   const [open, setOpen] = useState(false);
   const [scene, setScene] = useState<Scene>('idle');
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -163,7 +174,12 @@ export function KagamiPanel() {
   const [voiceOn, setVoiceOn] = useState(true);
   const [mode, setMode] = useState<KagamiMode>('anime');
   // ── translate popup state ────────────────────────────────────
-  const [tlPopup, setTlPopup] = useState<{ text: string; src: string; x: number; y: number } | null>(null);
+  const [tlPopup, setTlPopup] = useState<{
+    text: string;
+    src: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const [tlResult, setTlResult] = useState('');
   const [tlLoading, setTlLoading] = useState(false);
 
@@ -181,7 +197,11 @@ export function KagamiPanel() {
       if (text.length < 2 || text.length > 3000) return;
 
       let rect: DOMRect;
-      try { rect = selObj.getRangeAt(0).getBoundingClientRect(); } catch { return; }
+      try {
+        rect = selObj.getRangeAt(0).getBoundingClientRect();
+      } catch {
+        return;
+      }
       const src = detectLang(text);
       const x = rect.left + rect.width / 2;
       const y = rect.top - 8;
@@ -193,23 +213,33 @@ export function KagamiPanel() {
         fetch('/api/sky/cloud-mind/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text.slice(0, 3000), sourceLang: src === 'auto' ? '' : src, targetLang: 'zh', stream: false }),
-        }).then(async (res) => {
-          const raw = await res.text();
-          try {
-            const j = JSON.parse(raw);
-            setTlResult(j?.success && j?.data?.translation ? j.data.translation : '翻译失败');
-          } catch {
-            setTlResult(raw.slice(0, 500));
-          }
-        }).catch(() => setTlResult('网络错误')).finally(() => setTlLoading(false));
+          body: JSON.stringify({
+            text: text.slice(0, 3000),
+            sourceLang: src === 'auto' ? '' : src,
+            targetLang: 'zh',
+            stream: false,
+          }),
+        })
+          .then(async (res) => {
+            const raw = await res.text();
+            try {
+              const j = JSON.parse(raw);
+              setTlResult(j?.success && j?.data?.translation ? j.data.translation : '翻译失败');
+            } catch {
+              setTlResult(raw.slice(0, 500));
+            }
+          })
+          .catch(() => setTlResult('网络错误'))
+          .finally(() => setTlLoading(false));
       }, 200);
     };
     window.addEventListener('mouseup', onMouseUp);
     return () => window.removeEventListener('mouseup', onMouseUp);
   }, []);
   // Hydrate mode from localStorage after mount (avoids SSR mismatch)
-  useEffect(() => { setMode(loadMode()); }, []);
+  useEffect(() => {
+    setMode(loadMode());
+  }, []);
   // Reset chat when mode switches
   const prevModeRef = useRef(mode);
   useEffect(() => {
@@ -229,7 +259,8 @@ export function KagamiPanel() {
     // Normal mode: always answer properly
     if (mode === 'normal') return true;
     // Anime mode: expanded keywords including educational questions
-    const problemKeywords = /题|题|题目|怎么做|解题|讲解|帮忙|这道|问一下|算|等于|方程|函数|几何|代数|三角|概率|求|证明|化简|因式分解|计算|面积|体积|角度|导数|积分|极限|矩阵|向量|怎么|帮我|什么是|什么叫|怎么理解|解释|区别|定义|概念|原理|定理|公式|方法|步骤|过程|级数|无穷|微积分|为什么/;
+    const problemKeywords =
+      /题|题|题目|怎么做|解题|讲解|帮忙|这道|问一下|算|等于|方程|函数|几何|代数|三角|概率|求|证明|化简|因式分解|计算|面积|体积|角度|导数|积分|极限|矩阵|向量|怎么|帮我|什么是|什么叫|怎么理解|解释|区别|定义|概念|原理|定理|公式|方法|步骤|过程|级数|无穷|微积分|为什么/;
     const mathExpr = /\d+[+\-×÷*^]\d+|[xXyYzZ]\s*=/i;
     return problemKeywords.test(msg) || mathExpr.test(msg);
   };
@@ -276,7 +307,8 @@ export function KagamiPanel() {
     '有什么问题随时问我，我会尽力帮你解答的。',
   ];
 
-  const pickNormalOpening = () => NORMAL_OPENING_LINES[Math.floor(Math.random() * NORMAL_OPENING_LINES.length)];
+  const pickNormalOpening = () =>
+    NORMAL_OPENING_LINES[Math.floor(Math.random() * NORMAL_OPENING_LINES.length)];
 
   const NORMAL_CHAT_REPLIES = [
     '如果有学习上的问题，随时可以来问我哦。',
@@ -287,35 +319,48 @@ export function KagamiPanel() {
     '加油！有不懂的地方就问我。',
   ];
 
-  const pickNormalReply = () => NORMAL_CHAT_REPLIES[Math.floor(Math.random() * NORMAL_CHAT_REPLIES.length)];
+  const pickNormalReply = () =>
+    NORMAL_CHAT_REPLIES[Math.floor(Math.random() * NORMAL_CHAT_REPLIES.length)];
 
   // Play voice clip for a scene
-  const playVoice = useCallback((s: Scene) => {
-    if (!voiceOn) return;
-    const src = VOICE_CLIPS[s];
-    if (!src) return;
-    try {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+  const playVoice = useCallback(
+    (s: Scene) => {
+      if (!voiceOn) return;
+      const src = VOICE_CLIPS[s];
+      if (!src) return;
+      try {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+        const audio = new Audio(src);
+        audio.volume = 0.7;
+        audio.play().catch(() => {
+          /* file missing — silent */
+        });
+        audioRef.current = audio;
+      } catch {
+        /* ignore */
       }
-      const audio = new Audio(src);
-      audio.volume = 0.7;
-      audio.play().catch(() => { /* file missing — silent */ });
-      audioRef.current = audio;
-    } catch { /* ignore */ }
-  }, [voiceOn]);
+    },
+    [voiceOn],
+  );
 
-  // Keyboard shortcut
+  // Keyboard shortcut + custom event for opening from other components
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
         e.preventDefault();
         setOpen((v) => !v);
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    const onOpen = () => setOpen(true);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('open-kagami-panel', onOpen);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('open-kagami-panel', onOpen);
+    };
   }, []);
 
   // Auto-scroll
@@ -332,18 +377,21 @@ export function KagamiPanel() {
 
   // Scene transition — smooth slide for galgame feel
   // Uses a two-layer approach: old image slides out, new image slides in
-  const changeScene = useCallback((next: Scene) => {
-    if (next === scene) return;
-    sceneKey.current += 1;
-    setTransition(true);  // start exit animation on current
-    setTimeout(() => {
-      setScene(next);
-      playVoice(next);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setTransition(false)); // enter animation on new
-      });
-    }, 350); // match CSS duration
-  }, [scene, playVoice]);
+  const changeScene = useCallback(
+    (next: Scene) => {
+      if (next === scene) return;
+      sceneKey.current += 1;
+      setTransition(true); // start exit animation on current
+      setTimeout(() => {
+        setScene(next);
+        playVoice(next);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => setTransition(false)); // enter animation on new
+        });
+      }, 350); // match CSS duration
+    },
+    [scene, playVoice],
+  );
 
   const sendMessage = async (msgs: Message[]) => {
     if (abortRef.current) abortRef.current.abort();
@@ -365,7 +413,14 @@ export function KagamiPanel() {
       });
 
       if (!res.ok || !res.body) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: mode === 'anime' ? '……信号不好，待会再说。' : '抱歉，网络连接异常，请稍后重试。' }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content:
+              mode === 'anime' ? '……信号不好，待会再说。' : '抱歉，网络连接异常，请稍后重试。',
+          },
+        ]);
         changeScene('idle');
         setLoading(false);
         return;
@@ -393,7 +448,9 @@ export function KagamiPanel() {
             if (event.type === 'done') {
               if (isSolving.current) changeScene('done');
             }
-          } catch { /* partial */ }
+          } catch {
+            /* partial */
+          }
         }
       };
 
@@ -409,7 +466,14 @@ export function KagamiPanel() {
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        setMessages((prev) => [...prev, { role: 'assistant', content: mode === 'anime' ? '……烦死了，网络又出问题了。' : '抱歉，网络出现问题，请稍后重试。' }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content:
+              mode === 'anime' ? '……烦死了，网络又出问题了。' : '抱歉，网络出现问题，请稍后重试。',
+          },
+        ]);
         changeScene('idle');
       }
     } finally {
@@ -470,7 +534,7 @@ export function KagamiPanel() {
   // Play voice when panel opens
   useEffect(() => {
     if (open) playVoice('idle');
-  }, [open]);
+  }, [open, playVoice]);
 
   // Switch to teaching scene ONLY when solving a problem and streaming explanation
   useEffect(() => {
@@ -480,7 +544,7 @@ export function KagamiPanel() {
       }
       // For casual chat: stay in thinking scene, go directly to done when finished
     }
-  }, [loading, messages.length]);
+  }, [changeScene, loading, messages]);
 
   // Auto-return to idle from done after 5s
   useEffect(() => {
@@ -489,6 +553,16 @@ export function KagamiPanel() {
       return () => clearTimeout(timer);
     }
   }, [scene, loading, changeScene]);
+
+  if (
+    pathname?.startsWith('/auth') ||
+    pathname?.startsWith('/sky/software-cup') ||
+    pathname?.startsWith('/sky/cloud-mind/course-studio') ||
+    pathname?.startsWith('/sky/study-lab') ||
+    (mobile && pathname === '/m/auth/login')
+  ) {
+    return null;
+  }
 
   return (
     <>
@@ -511,130 +585,198 @@ export function KagamiPanel() {
       {/* FAB — always rendered, hidden via CSS when panel open (so listeners persist) */}
       <button
         ref={fabRef}
-        className={`fixed z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${open ? 'hidden' : ''}`}
-        style={
-          hasDragged
-            ? { left: pos.x, top: pos.y }
-            : { right: 24, bottom: 24 }
+        aria-label={mode === 'anime' ? '打开小镜课堂' : '打开 AI 学习助手'}
+        className={`fixed z-50 h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg hover:scale-105 transition-transform cursor-grab active:cursor-grabbing select-none touch-none ${mobile || pathname?.startsWith('/m/') ? 'hidden' : 'flex'} ${open ? 'hidden' : ''}`}
+        style={hasDragged ? { left: pos.x, top: pos.y } : { right: 24, bottom: 24 }}
+        title={
+          mode === 'anime'
+            ? '小镜课堂 (Ctrl+Shift+A) — 点击打开 / 拖拽移动'
+            : 'AI 学习助手 (Ctrl+Shift+A) — 点击打开 / 拖拽移动'
         }
-        title={mode === 'anime' ? '小镜课堂 (Ctrl+Shift+A) — 点击打开 / 拖拽移动' : 'AI 学习助手 (Ctrl+Shift+A) — 点击打开 / 拖拽移动'}
       >
-        <img src={mode === 'anime' ? CHIBI : NORMAL_ICON} alt="小镜" draggable={false} className="h-full w-full object-cover pointer-events-none" />
+        <img
+          src={mode === 'anime' ? CHIBI : NORMAL_ICON}
+          alt="小镜"
+          draggable={false}
+          className="h-full w-full object-cover pointer-events-none"
+        />
       </button>
 
       {/* Panel */}
       {open && (
-        <div ref={panelRef} className="fixed bottom-6 right-6 z-50 flex h-[560px] w-[420px] rounded-xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
-          {/* Character area */}
-          <div className={`relative flex w-[160px] flex-shrink-0 items-end overflow-hidden ${
-            mode === 'anime'
-              ? 'bg-gradient-to-b from-[#f0e6f6] to-[#e8d5f0]'
-              : 'bg-gradient-to-b from-[#e0ecf8] to-[#d0dff0]'
-          }`}>
-            <div data-kagami className="absolute inset-0 flex items-center justify-center">
-              <img
-                key={sceneKey.current}
-                src={mode === 'anime' ? SCENES[scene] : NORMAL_SCENES[scene]}
-                alt="小镜"
-                className={`${mode === 'normal' ? 'drop-shadow-md' : ''} max-h-full w-auto object-contain`}
-                style={{
-                  animation: transition
-                    ? 'kagamiSlideOut 350ms ease-in forwards'
-                    : `kagamiSlideIn 400ms ease-out forwards ${mode === 'normal' ? ', avatarPulse 3s ease-in-out infinite' : ''}`,
-                }}
-              />
-            </div>
-            {/* Scene label */}
-            <div className="absolute bottom-2 left-0 right-0 text-center">
-              <span className={`text-xs bg-white/70 rounded-full px-2 py-0.5 ${
-                mode === 'anime' ? 'text-purple-400' : 'text-blue-500'
-              }`}>
-                {scene === 'idle' && (mode === 'anime' ? '……' : '待命中')}
-                {scene === 'thinking' && (mode === 'anime' ? '正在思考……' : '思考中...')}
-                {scene === 'teaching' && (mode === 'anime' ? '讲解中……' : '讲解中...')}
-                {scene === 'done' && (mode === 'anime' ? '哼，解决了。' : '已解答 ✅')}
-              </span>
-            </div>
-          </div>
+        <>
+          {mobile && (
+            <button
+              type="button"
+              aria-label="关闭学习助手"
+              className="absolute inset-0 z-[99] cursor-default bg-slate-950/35 backdrop-blur-[2px]"
+              onClick={() => setOpen(false)}
+            />
+          )}
+          <section
+            ref={panelRef}
+            role="dialog"
+            aria-modal={mobile || undefined}
+            aria-label={mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}
+            className={`flex flex-col overflow-hidden border bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 ${
+              mobile
+                ? 'absolute inset-x-0 bottom-0 z-[100] h-[min(72dvh,620px)] rounded-t-3xl border-x-0 border-b-0'
+                : 'fixed bottom-4 right-4 z-50 h-[min(620px,calc(100dvh-2rem))] w-[min(420px,calc(100vw-2rem))] rounded-lg border-gray-200'
+            }`}
+          >
+            {mobile && (
+              <div className="flex h-5 shrink-0 items-center justify-center" aria-hidden="true">
+                <span className="h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-600" />
+              </div>
+            )}
 
-          {/* Chat area */}
-          <div className="flex flex-1 flex-col min-w-0">
             {/* Header */}
-            <div className="flex items-center justify-between border-b px-3 py-2.5">
-              <span className="font-semibold text-sm text-gray-800">{mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}</span>
-              <div className="flex items-center gap-1.5">
+            <div className="flex min-h-16 shrink-0 items-center gap-3 border-b border-slate-200 px-4 dark:border-slate-700">
+              <div
+                data-kagami
+                className={`relative size-10 shrink-0 overflow-hidden rounded-full border ${
+                  mode === 'anime'
+                    ? 'border-violet-200 bg-violet-50 dark:border-violet-700 dark:bg-violet-950/40'
+                    : 'border-sky-200 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/40'
+                }`}
+              >
+                <img
+                  key={sceneKey.current}
+                  src={mode === 'anime' ? SCENES[scene] : NORMAL_SCENES[scene]}
+                  alt={mode === 'anime' ? '小镜头像' : 'AI 学习助手头像'}
+                  className={`size-full ${mode === 'normal' ? 'object-cover' : 'object-contain'}`}
+                  style={{
+                    animation: transition
+                      ? 'kagamiSlideOut 350ms ease-in forwards'
+                      : 'kagamiSlideIn 400ms ease-out forwards',
+                  }}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  {mode === 'anime' ? '小镜课堂' : 'AI 学习助手'}
+                </h2>
+                <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <span
+                    className={`size-1.5 rounded-full ${loading ? 'animate-pulse bg-amber-400' : 'bg-emerald-500'}`}
+                  />
+                  {scene === 'idle' && '随时可以提问'}
+                  {scene === 'thinking' && '正在思考'}
+                  {scene === 'teaching' && '正在组织讲解'}
+                  {scene === 'done' && '解答完成'}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
                 {/* Mode toggle */}
                 <button
+                  type="button"
                   onClick={() => {
                     const next = mode === 'anime' ? 'normal' : 'anime';
                     setMode(next);
-                    try { localStorage.setItem('kagami-panel-mode', next); } catch { /* ignore */ }
+                    try {
+                      localStorage.setItem('kagami-panel-mode', next);
+                    } catch {
+                      /* ignore */
+                    }
                   }}
-                  className={`rounded px-1.5 py-0.5 text-xs transition-colors font-medium ${
+                  className={`flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors ${
                     mode === 'anime'
-                      ? 'bg-pink-100 text-pink-600'
-                      : 'bg-blue-100 text-blue-600'
+                      ? 'bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/40 dark:text-violet-300'
+                      : 'bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-950/40 dark:text-sky-300'
                   }`}
-                  title={mode === 'anime' ? '当前：二次元版 — 点击切换常规版' : '当前：常规版 — 点击切换二次元版'}
+                  title={
+                    mode === 'anime'
+                      ? '当前：二次元版 — 点击切换常规版'
+                      : '当前：常规版 — 点击切换二次元版'
+                  }
                 >
-                  {mode === 'anime' ? '🌸 二次元' : '📖 常规'}
+                  {mode === 'anime' ? (
+                    <Sparkles className="size-4" />
+                  ) : (
+                    <BookOpen className="size-4" />
+                  )}
+                  <span className={mobile ? 'sr-only' : ''}>
+                    {mode === 'anime' ? '二次元' : '常规'}
+                  </span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setVoiceOn((v) => !v)}
-                  className={`rounded px-1.5 py-0.5 text-xs transition-colors ${
+                  aria-label={voiceOn ? '关闭语音' : '开启语音'}
+                  aria-pressed={voiceOn}
+                  className={`flex size-11 items-center justify-center rounded-md transition-colors ${
                     voiceOn
-                      ? 'bg-purple-100 text-purple-600'
-                      : 'bg-gray-100 text-gray-400'
+                      ? 'text-violet-600 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-950/40'
+                      : 'text-slate-400 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-800'
                   }`}
                   title={voiceOn ? '语音已开启' : '语音已关闭'}
                 >
-                  {voiceOn ? '🔊' : '🔇'}
+                  {voiceOn ? <Volume2 className="size-5" /> : <VolumeX className="size-5" />}
                 </button>
-                <span className="text-[10px] text-gray-400">Ctrl+Shift+A</span>
                 <button
+                  type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded p-0.5 text-gray-400 hover:bg-gray-100"
+                  aria-label="关闭学习助手"
+                  className="flex size-11 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                 >
-                  ✕
+                  <X className="size-5" />
                 </button>
               </div>
             </div>
 
             {/* Messages */}
-            <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2" style={{ overscrollBehavior: 'contain' }}>
-                {messages.length === 0 && (
-                  <div className="py-6 text-center text-sm text-gray-400">
-                    <p className="text-lg mb-1">💜</p>
-                    <p className="text-xs">
-                      {mode === 'anime' ? '遇到不会的题目了？' : '有任何学习问题，尽管问我'}
-                    </p>
-                    <p className="text-xs text-gray-300">
-                      {mode === 'anime' ? '输入问题，小镜会帮你' : '输入题目，我会耐心解答'}
-                    </p>
+            <div
+              ref={listRef}
+              className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"
+              style={{ overscrollBehavior: 'contain' }}
+            >
+              {messages.length === 0 && (
+                <div className="flex min-h-full flex-col items-center justify-center py-4 text-center">
+                  <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-300">
+                    <Sparkles className="size-5" />
                   </div>
-                )}
-                {messages.map((m, i) => (
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                    {mode === 'anime' ? '遇到不会的题目了？' : '有任何学习问题，尽管问我'}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    {mode === 'anime' ? '输入问题，小镜会帮你' : '输入题目，我会耐心解答'}
+                  </p>
+                  <div className="mt-5 flex w-full max-w-[320px] flex-wrap justify-center gap-2">
+                    {['讲解这道题', '梳理知识点', '制定复习计划'].map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => setInput(prompt)}
+                        className="min-h-10 rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-violet-700 dark:hover:bg-violet-950/30"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {messages.map((m, i) => (
+                <div
+                  key={i}
+                  className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
                   <div
-                    key={i}
-                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`max-w-[88%] rounded-lg px-3 py-2 text-sm leading-6 ${
+                      m.role === 'user'
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'
+                    }`}
                   >
-                    <div
-                      className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs leading-relaxed ${
-                        m.role === 'user'
-                          ? 'bg-purple-500 text-white'
-                          : 'bg-purple-50 text-gray-700'
-                      }`}
-                    >
-                      {m.content ? <InlineMath text={m.content} /> : (loading ? '...' : '')}
-                    </div>
+                    {m.content ? <InlineMath text={m.content} /> : loading ? '...' : ''}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
 
             {/* Input */}
-            <div className="border-t px-2 py-2">
-              <div className="flex gap-1.5">
-                <input
+            <div className="shrink-0 border-t border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+              <div className="flex items-end gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1.5 transition-colors focus-within:border-violet-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-violet-100 dark:border-slate-700 dark:bg-slate-800 dark:focus-within:border-violet-500 dark:focus-within:bg-slate-900 dark:focus-within:ring-violet-950">
+                <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -644,55 +786,91 @@ export function KagamiPanel() {
                     }
                   }}
                   placeholder="输入题目……"
-                  className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-purple-400"
+                  rows={1}
+                  className="max-h-24 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-5 text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
                 <button
+                  type="button"
                   onClick={handleSubmit}
                   disabled={!input.trim() || loading}
-                  className="rounded-lg bg-purple-500 px-3 py-1.5 text-xs text-white hover:bg-purple-600 disabled:opacity-50 transition-colors"
+                  aria-label="发送问题"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-md bg-violet-600 text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
                 >
-                  发送
+                  <Send className="size-4" />
                 </button>
               </div>
+              <p className="mt-1.5 px-1 text-[11px] text-slate-400 dark:text-slate-500">
+                Enter 发送，Shift + Enter 换行
+              </p>
             </div>
-          </div>
-        </div>
+          </section>
+        </>
       )}
 
       {/* ── translate popup (portal) ─────────────────────────── */}
-      {tlPopup && typeof window !== 'undefined' && (() => {
-        const { createPortal } = require('react-dom');
-        return createPortal(
-          <div className="fixed inset-0 z-[99999]" onClick={() => { setTlPopup(null); setTlResult(''); }}>
+      {tlPopup &&
+        typeof window !== 'undefined' &&
+        (() => {
+          return createPortal(
             <div
-              className="absolute w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-sky-200/60 bg-white shadow-2xl overflow-hidden"
-              style={{ left: Math.min(tlPopup.x, window.innerWidth - 330), top: Math.min(tlPopup.y, window.innerHeight - 200) }}
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              className="fixed inset-0 z-[99999]"
+              onClick={() => {
+                setTlPopup(null);
+                setTlResult('');
+              }}
             >
-              <div className="flex items-center justify-between px-3 py-2 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-blue-50">
-                <span className="text-xs font-medium text-sky-700">翻译</span>
-                <button onClick={() => { setTlPopup(null); setTlResult(''); }} className="text-slate-400 hover:text-slate-600 text-sm leading-none">&times;</button>
+              <div
+                className="absolute w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-sky-200/60 dark:border-sky-700/60 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden"
+                style={{
+                  left: Math.min(tlPopup.x, window.innerWidth - 330),
+                  top: Math.min(tlPopup.y, window.innerHeight - 200),
+                }}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-3 py-2 border-b border-sky-100 dark:border-slate-700 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-slate-800 dark:to-slate-700">
+                  <span className="text-xs font-medium text-sky-700 dark:text-sky-300">翻译</span>
+                  <button
+                    onClick={() => {
+                      setTlPopup(null);
+                      setTlResult('');
+                    }}
+                    className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 text-sm leading-none"
+                  >
+                    &times;
+                  </button>
+                </div>
+                <div className="p-3">
+                  <p className="text-xs text-slate-500 dark:text-slate-500 mb-2 line-clamp-3 italic border-l-2 border-sky-200 dark:border-slate-700 pl-2">
+                    {tlPopup.text}
+                  </p>
+                  <div className="h-px bg-sky-100 dark:bg-slate-700 mb-2" />
+                  {tlLoading && (
+                    <div className="flex items-center gap-1.5 py-2">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" />
+                      <span
+                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400"
+                        style={{ animationDelay: '120ms' }}
+                      />
+                      <span
+                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400"
+                        style={{ animationDelay: '240ms' }}
+                      />
+                      <span className="text-xs text-slate-400 dark:text-slate-400 ml-2">
+                        正在翻译…
+                      </span>
+                    </div>
+                  )}
+                  {!tlLoading && tlResult && (
+                    <p className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">
+                      {tlResult}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="p-3">
-                <p className="text-xs text-slate-500 mb-2 line-clamp-3 italic border-l-2 border-sky-200 pl-2">{tlPopup.text}</p>
-                <div className="h-px bg-sky-100 mb-2" />
-                {tlLoading && (
-                  <div className="flex items-center gap-1.5 py-2">
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '120ms' }} />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" style={{ animationDelay: '240ms' }} />
-                    <span className="text-xs text-slate-400 ml-2">正在翻译…</span>
-                  </div>
-                )}
-                {!tlLoading && tlResult && (
-                  <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">{tlResult}</p>
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body,
-        );
-      })()}
+            </div>,
+            document.body,
+          );
+        })()}
     </>
   );
 }

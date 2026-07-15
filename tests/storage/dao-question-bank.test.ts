@@ -14,7 +14,7 @@ function makeQuestion(overrides: Partial<QuestionBankEntry> = {}): QuestionBankE
     problemText: 'Solve for x: x + 1 = 2',
     answer: 'x = 1',
     steps: ['Subtract 1 from both sides', 'x = 1'],
-    knowledgePoints: ['linear equation', 'algebra'],
+    knowledgePoints: [{ name: 'linear equation', description: '', difficulty: 'easy' }, { name: 'algebra', description: '', difficulty: 'easy' }],
     agentId: 'science-agent',
     verified: false,
     ...overrides,
@@ -105,11 +105,11 @@ describe('QuestionBankDAO', () => {
     test('finds questions by knowledge point', async () => {
       await dao.upsert(makeQuestion({
         problemHash: 'h1',
-        knowledgePoints: ['algebra', 'equation'],
+        knowledgePoints: [{ name: 'algebra', description: '', difficulty: 'easy' }, { name: 'equation', description: '', difficulty: 'easy' }],
       }));
       await dao.upsert(makeQuestion({
         problemHash: 'h2',
-        knowledgePoints: ['geometry', 'triangle'],
+        knowledgePoints: [{ name: 'geometry', description: '', difficulty: 'easy' }, { name: 'triangle', description: '', difficulty: 'easy' }],
       }));
       const results = await dao.findByKnowledgePoint('algebra');
       expect(results).toHaveLength(1);
@@ -119,7 +119,7 @@ describe('QuestionBankDAO', () => {
     test('case-insensitive knowledge point match', async () => {
       await dao.upsert(makeQuestion({
         problemHash: 'h1',
-        knowledgePoints: ['Algebra'],
+        knowledgePoints: [{ name: 'Algebra', description: '', difficulty: 'easy' }],
       }));
       const results = await dao.findByKnowledgePoint('algebra');
       expect(results).toHaveLength(1);
@@ -129,7 +129,7 @@ describe('QuestionBankDAO', () => {
       for (let i = 0; i < 5; i++) {
         await dao.upsert(makeQuestion({
           problemHash: `h${i}`,
-          knowledgePoints: ['math'],
+          knowledgePoints: [{ name: 'math', description: '', difficulty: 'easy' }],
         }));
       }
       const results = await dao.findByKnowledgePoint('math', 3);

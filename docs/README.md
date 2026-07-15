@@ -5,6 +5,7 @@
 ```
 docs/
 ├── README.md                          # 文档索引（本文件）
+├── conversational-student-profile-design.md  # 对话式学习画像构建设计
 │
 ├── features/                          # 功能设计文档
 │   ├── core/                          # 核心架构与参考
@@ -58,6 +59,10 @@ docs/
 | 性能优化方案 | `features/core/performance-optimization-plan.md` |
 | 怎么跑测试 | `testing/testing-guide.md` |
 | 有哪些已知问题 | `testing/problem.txt` |
+| 对话式学习画像怎么设计和落地 | `conversational-student-profile-design.md` |
+| 云端智囊工具个性化教学方案 | `cloud-mind-personalized-tools-plan.md` |
+| 云端智囊个性化工具实施记录 | `cloud-mind-personalized-tools-implementation.md` |
+| 移动端实施方案 | `../MOBILE_APP_PLAN.md` |
 
 ## 文档命名规范
 

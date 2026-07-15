@@ -23,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { TTS_PROVIDERS, DEFAULT_TTS_VOICES } from '@/lib/audio/constants';
 import type { TTSProviderId } from '@/lib/audio/types';
@@ -73,9 +72,9 @@ interface TTSSettingsProps {
   selectedProviderId: TTSProviderId;
 }
 
-export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
-  const { t, locale } = useI18n();
-
+export function TTSSettings({
+  selectedProviderId }: TTSSettingsProps) {
+  const locale = 'zh-CN';
   const ttsVoice = useSettingsStore((state) => state.ttsVoice);
   const ttsSpeed = useSettingsStore((state) => state.ttsSpeed);
   const ttsProvidersConfig = useSettingsStore((state) => state.ttsProvidersConfig);
@@ -107,7 +106,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
 
   const [showApiKey, setShowApiKey] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [testText, setTestText] = useState(t('settings.ttsTestTextDefault'));
+  const [testText, setTestText] = useState('你好，这是一段测试语音。');
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
   const { previewing: testingTTS, startPreview, stopPreview } = useTTSPreview();
@@ -131,8 +130,8 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
 
   // Keep the sample text in sync with locale changes.
   useEffect(() => {
-    setTestText(t('settings.ttsTestTextDefault'));
-  }, [t]);
+    setTestText('你好，这是一段测试语音。');
+  }, []);
 
   // Reset transient UI state when switching providers.
   useEffect(() => {
@@ -172,14 +171,14 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
         providerOptions,
       });
       setTestStatus('success');
-      setTestMessage(t('settings.ttsTestSuccess'));
+      setTestMessage('TTS 测试成功，音频已播放');
     } catch (error) {
       log.error('TTS test failed:', error);
       setTestStatus('error');
       setTestMessage(
         error instanceof Error && error.message
-          ? `${t('settings.ttsTestFailed')}: ${error.message}`
-          : t('settings.ttsTestFailed'),
+          ? `${'TTS 测试失败'}: ${error.message}`
+          : 'TTS 测试失败',
       );
     }
   };
@@ -222,7 +221,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
       {/* Server-configured notice */}
       {isServerConfigured && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-3 text-sm text-blue-700 dark:text-blue-300">
-          {t('settings.serverConfiguredNotice')}
+          {'管理员已在服务端配置了此提供方的 API Key，可直接使用。也可输入自己的 Key 覆盖。'}
         </div>
       )}
 
@@ -234,7 +233,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
               <div className="min-w-0 md:w-[150px] md:shrink-0">
                 <Label className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
                   <Server className="h-3 w-3" />
-                  {t('settings.voxcpmBackend')}
+                  {'Backend'}
                 </Label>
                 <Select
                   value={voxcpmBackend}
@@ -262,7 +261,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
 
               <div className="min-w-0 md:flex-1">
                 <Label className="mb-1 block text-[11px] font-medium text-muted-foreground">
-                  {t('settings.ttsBaseUrl')}
+                  {'Base URL'}
                 </Label>
                 <Input
                   name={`tts-base-url-${selectedProviderId}`}
@@ -270,7 +269,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  placeholder={ttsProvider?.defaultBaseUrl || t('settings.enterCustomBaseUrl')}
+                  placeholder={ttsProvider?.defaultBaseUrl || '输入自定义 Base URL'}
                   value={ttsProvidersConfig[selectedProviderId]?.baseUrl || ''}
                   onChange={(e) =>
                     setTTSProviderConfig(selectedProviderId, {
@@ -284,7 +283,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
               {isVoxCPMVLLMOmni && (
                 <div className="min-w-0 md:w-[130px] md:shrink-0">
                   <Label className="mb-1 block text-[11px] font-medium text-muted-foreground">
-                    {t('media.model')}
+                    {'模型'}
                   </Label>
                   <Input
                     name={`tts-model-${selectedProviderId}`}
@@ -308,7 +307,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
             <div className="mt-2 flex min-w-0 items-center gap-2 rounded-md bg-muted/25 px-2.5 py-1.5 text-[11px] text-muted-foreground">
               <span className="inline-flex shrink-0 items-center gap-1.5 font-medium">
                 <Route className="h-3 w-3" />
-                {t('settings.requestUrl')}
+                {'请求地址'}
               </span>
               {requestUrl ? (
                 <code
@@ -319,7 +318,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
                 </code>
               ) : (
                 <span className="min-w-0 flex-1 truncate">
-                  {t('settings.voxcpmBaseUrlPending')}
+                  {'填写 Base URL 后生成'}
                 </span>
               )}
             </div>
@@ -330,7 +329,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
               {isDoubao ? (
                 <>
                   <div className="space-y-2">
-                    <Label className="text-sm">{t('settings.doubaoAppId')}</Label>
+                    <Label className="text-sm">{'App ID'}</Label>
                     <div className="relative">
                       <Input
                         name={`tts-app-id-${selectedProviderId}`}
@@ -341,8 +340,8 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
                         spellCheck={false}
                         placeholder={
                           isServerConfigured
-                            ? t('settings.optionalOverride')
-                            : t('settings.enterApiKey')
+                            ? '可选，留空则使用服务端配置'
+                            : '输入 API Key'
                         }
                         value={doubaoAppId}
                         onChange={(e) => setDoubaoCompoundKey(e.target.value, doubaoAccessKey)}
@@ -358,7 +357,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm">{t('settings.doubaoAccessKey')}</Label>
+                    <Label className="text-sm">{'Access Key'}</Label>
                     <div className="relative">
                       <Input
                         name={`tts-access-key-${selectedProviderId}`}
@@ -369,8 +368,8 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
                         spellCheck={false}
                         placeholder={
                           isServerConfigured
-                            ? t('settings.optionalOverride')
-                            : t('settings.enterApiKey')
+                            ? '可选，留空则使用服务端配置'
+                            : '输入 API Key'
                         }
                         value={doubaoAccessKey}
                         onChange={(e) => setDoubaoCompoundKey(doubaoAppId, e.target.value)}
@@ -388,7 +387,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
                 </>
               ) : (
                 <div className="space-y-2">
-                  <Label className="text-sm">{t('settings.ttsApiKey')}</Label>
+                  <Label className="text-sm">{'API 密钥'}</Label>
                   <div className="relative">
                     <Input
                       name={`tts-api-key-${selectedProviderId}`}
@@ -399,8 +398,8 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
                       spellCheck={false}
                       placeholder={
                         isServerConfigured
-                          ? t('settings.optionalOverride')
-                          : t('settings.enterApiKey')
+                          ? '可选，留空则使用服务端配置'
+                          : '输入 API Key'
                       }
                       value={ttsProvidersConfig[selectedProviderId]?.apiKey || ''}
                       onChange={(e) =>
@@ -421,7 +420,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
                 </div>
               )}
               <div className="space-y-2">
-                <Label className="text-sm">{t('settings.ttsBaseUrl')}</Label>
+                <Label className="text-sm">{'Base URL'}</Label>
                 <Input
                   name={`tts-base-url-${selectedProviderId}`}
                   autoComplete="off"
@@ -431,7 +430,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
                   placeholder={
                     isCustom
                       ? providerConfig?.customDefaultBaseUrl || 'http://localhost:8000/v1'
-                      : ttsProvider?.defaultBaseUrl || t('settings.enterCustomBaseUrl')
+                      : ttsProvider?.defaultBaseUrl || '输入自定义 Base URL'
                   }
                   value={ttsProvidersConfig[selectedProviderId]?.baseUrl || ''}
                   onChange={(e) =>
@@ -445,7 +444,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
             </div>
             {requestUrl && (
               <p className="break-all text-xs text-muted-foreground">
-                {t('settings.requestUrl')}: {requestUrl}
+                {'请求地址'}: {requestUrl}
               </p>
             )}
           </>
@@ -453,10 +452,10 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
 
       {/* Test TTS */}
       <div className="space-y-2">
-        <Label className="text-sm">{t('settings.testTTS')}</Label>
+        <Label className="text-sm">{'测试 TTS'}</Label>
         <div className="flex gap-2">
           <Input
-            placeholder={t('settings.ttsTestTextPlaceholder')}
+            placeholder={'输入要转换的文本'}
             value={testText}
             onChange={(e) => setTestText(e.target.value)}
             className="flex-1"
@@ -478,7 +477,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
             ) : (
               <Volume2 className="h-4 w-4" />
             )}
-            {t('settings.testTTS')}
+            {'测试 TTS'}
           </Button>
         </div>
       </div>
@@ -504,7 +503,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
       {/* Available Models */}
       {ttsProvider?.models?.length > 0 && !isVoxCPM && (
         <div className="space-y-2">
-          <Label className="text-sm text-muted-foreground">{t('settings.availableModels')}</Label>
+          <Label className="text-sm text-muted-foreground">{'可用模型'}</Label>
           <div className="flex flex-wrap gap-2">
             {ttsProvider.models.map((model) => (
               <div
@@ -517,7 +516,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
             ))}
           </div>
           <p className="text-[11px] text-muted-foreground/60">
-            {t('settings.modelSelectedViaVoice')}
+            {'模型随音色选择自动确定'}
           </p>
         </div>
       )}
@@ -527,7 +526,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
       {/* Custom Voice List Management */}
       {isCustom && (
         <div className="space-y-3">
-          <Label className="text-sm">{t('settings.customVoices')}</Label>
+          <Label className="text-sm">{'音色列表'}</Label>
           {(providerConfig?.customVoices as Array<{ id: string; name: string }> | undefined)
             ?.length ? (
             <div className="rounded-lg border border-border/60 overflow-hidden">
@@ -537,7 +536,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
                   ID
                 </span>
                 <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                  {t('settings.voiceNamePlaceholder')}
+                  {'显示名称'}
                 </span>
                 <span />
               </div>
@@ -582,7 +581,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground/50 italic">{t('settings.noVoicesAdded')}</p>
+            <p className="text-sm text-muted-foreground/50 italic">{'暂无音色，请在下方添加以支持 Agent 选择不同音色。'}</p>
           )}
           <AddVoiceRow
             existingIds={(
@@ -612,7 +611,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
       {isCustom && (
         <div className="pt-4 border-t">
           <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)}>
-            {t('settings.deleteProvider')}
+            {'删除提供方'}
           </Button>
         </div>
       )}
@@ -624,18 +623,18 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('settings.deleteProvider')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('settings.deleteProviderConfirm')}</AlertDialogDescription>
+            <AlertDialogTitle>{'删除提供方'}</AlertDialogTitle>
+            <AlertDialogDescription>{'确定要删除此提供方吗？'}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('settings.cancelEdit')}</AlertDialogCancel>
+            <AlertDialogCancel>{'取消'}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 removeCustomTTSProvider(selectedProviderId);
                 setShowDeleteConfirm(false);
               }}
             >
-              {t('settings.deleteProvider')}
+              {'删除提供方'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -645,7 +644,7 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
 }
 
 function VoxCPMVoiceManager() {
-  const { t, locale } = useI18n();
+  const locale = 'zh-CN';
   const { profiles, addPromptVoice, addCloneVoice, deleteVoice } = useVoxCPMVoiceProfiles();
   const ttsSpeed = useSettingsStore((state) => state.ttsSpeed);
   const ttsProvidersConfig = useSettingsStore((state) => state.ttsProvidersConfig);
@@ -686,7 +685,7 @@ function VoxCPMVoiceManager() {
   const startReferenceRecording = async () => {
     if (isRecordingReference) return;
     if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      toast.error(t('settings.voxcpmRecordingUnsupported'));
+      toast.error('当前浏览器不支持录音');
       return;
     }
 
@@ -715,10 +714,10 @@ function VoxCPMVoiceManager() {
                 type: referenceAudio.mimeType,
               });
               setCloneFile(file);
-              if (!cloneName.trim()) setCloneName(t('settings.voxcpmRecordedVoiceName'));
+              if (!cloneName.trim()) setCloneName('录制音色');
             } catch (error) {
               toast.error(
-                error instanceof Error ? error.message : t('settings.voxcpmRecordingFailed'),
+                error instanceof Error ? error.message : '录音转换失败',
               );
             }
           }
@@ -747,7 +746,7 @@ function VoxCPMVoiceManager() {
       stopRecordingTimer();
       stopRecordingStream();
       toast.error(
-        error instanceof Error ? error.message : t('settings.voxcpmRecordingStartFailed'),
+        error instanceof Error ? error.message : '无法开始录音',
       );
     }
   };
@@ -779,6 +778,7 @@ function VoxCPMVoiceManager() {
       return;
     }
 
+    const locale = 'zh-CN';
     const providerConfig = ttsProvidersConfig[VOXCPM_TTS_PROVIDER_ID];
     const baseUrl =
       providerConfig?.serverBaseUrl ||
@@ -786,7 +786,7 @@ function VoxCPMVoiceManager() {
       providerConfig?.customDefaultBaseUrl ||
       '';
     if (!baseUrl.trim()) {
-      toast.error(t('settings.voxcpmBaseUrlRequired'));
+      toast.error('请先填写 VoxCPM Base URL');
       return;
     }
 
@@ -797,7 +797,7 @@ function VoxCPMVoiceManager() {
         locale,
       });
       await startPreview({
-        text: t('settings.ttsTestTextDefault'),
+        text: '你好，这是一段测试语音。',
         providerId: VOXCPM_TTS_PROVIDER_ID,
         modelId:
           providerConfig?.modelId || TTS_PROVIDERS[VOXCPM_TTS_PROVIDER_ID]?.defaultModelId || '',
@@ -812,7 +812,7 @@ function VoxCPMVoiceManager() {
       });
     } catch (error) {
       setPreviewingVoiceId(null);
-      toast.error(error instanceof Error ? error.message : t('settings.voxcpmPreviewFailed'));
+      toast.error(error instanceof Error ? error.message : '试听失败');
     }
   };
 
@@ -826,9 +826,9 @@ function VoxCPMVoiceManager() {
       });
       setPromptName('');
       setVoicePrompt('');
-      toast.success(t('settings.voxcpmVoiceSaved'));
+      toast.success('已保存 VoxCPM 音色');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('settings.voxcpmVoiceSaveFailed'));
+      toast.error(error instanceof Error ? error.message : '保存音色失败');
     } finally {
       setSaving(null);
     }
@@ -845,7 +845,7 @@ function VoxCPMVoiceManager() {
     } catch (error) {
       setCloneFile(null);
       toast.error(
-        error instanceof Error ? error.message : t('settings.voxcpmReferenceAudioInvalid'),
+        error instanceof Error ? error.message : '参考音频无效',
       );
     }
   };
@@ -866,9 +866,9 @@ function VoxCPMVoiceManager() {
       setClonePromptText('');
       setCloneVoicePrompt('');
       setCloneFile(null);
-      toast.success(t('settings.voxcpmCloneSaved'));
+      toast.success('已保存 VoxCPM 克隆音色');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('settings.voxcpmCloneSaveFailed'));
+      toast.error(error instanceof Error ? error.message : '保存克隆音色失败');
     } finally {
       setSaving(null);
     }
@@ -881,24 +881,24 @@ function VoxCPMVoiceManager() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <Label className="text-base font-semibold">{t('settings.voxcpmVoicesTitle')}</Label>
+          <Label className="text-base font-semibold">{'VoxCPM 音色'}</Label>
           <p className="mt-1 text-xs text-muted-foreground">
-            {t('settings.voxcpmVoicesDescription')}
+            {'保存在当前浏览器，进入统一音色池后可在 Agent Bar 中使用。'}
           </p>
           <p className="mt-1 text-xs text-muted-foreground/70">
-            {t('settings.voxcpmAutoVoicePrivacyNote')}
+            {'自动音色会把 Agent 人设作为音色提示词发送到你配置的 VoxCPM 后端。'}
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className="rounded-md border border-border/60 px-2 py-1">
-            {t('settings.voxcpmPromptCount', { count: promptCount + 1 })}
+            {`Prompt ${promptCount + 1}`}
           </span>
           <span className="rounded-md border border-border/60 px-2 py-1">
-            {t('settings.voxcpmCloneCount', { count: cloneCount })}
+            {`克隆 ${cloneCount}`}
           </span>
           {!supportsReferenceAudio && (
             <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300">
-              {t('settings.voxcpmCloneUnsupported')}
+              {'当前后端不支持克隆'}
             </span>
           )}
         </div>
@@ -908,18 +908,18 @@ function VoxCPMVoiceManager() {
         <div className="grid lg:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.15fr)]">
           <section className="border-b border-border/60 lg:border-b-0 lg:border-r">
             <div className="flex h-12 items-center justify-between border-b border-border/60 px-4">
-              <span className="text-sm font-medium">{t('settings.voxcpmVoicePool')}</span>
+              <span className="text-sm font-medium">{'音色池'}</span>
               <span className="text-xs text-muted-foreground">
-                {t('settings.voxcpmVoiceCount', { count: profiles.length + 1 })}
+                {`${profiles.length + 1} 条`}
               </span>
             </div>
             <div className="max-h-[420px] overflow-y-auto">
               <VoiceProfileRow
                 icon={<Wand2 className="h-4 w-4" />}
-                title={t('settings.voxcpmAutoVoice')}
-                badge={t('toolbar.default')}
+                title={'自动音色'}
+                badge={'默认'}
                 badgeTone="default"
-                detail={t('settings.voxcpmAutoVoiceDescription')}
+                detail={'使用 Agent 人设作为音色 prompt'}
                 kind="auto"
               />
               {profiles.length > 0 ? (
@@ -939,9 +939,9 @@ function VoxCPMVoiceManager() {
                       title={profile.name}
                       badge={
                         profile.kind === 'clone' && !supportsReferenceAudio
-                          ? t('settings.voxcpmUnavailable')
+                          ? '不可用'
                           : profile.kind === 'clone'
-                            ? t('settings.voxcpmClone')
+                            ? '克隆'
                             : 'Prompt'
                       }
                       badgeTone={
@@ -949,7 +949,7 @@ function VoxCPMVoiceManager() {
                       }
                       detail={
                         profile.kind === 'clone' && !supportsReferenceAudio
-                          ? t('settings.voxcpmCloneUnsupportedDetail')
+                          ? '当前后端不支持克隆'
                           : profile.kind === 'clone'
                             ? profile.referenceAudioName || 'reference audio'
                             : profile.voicePrompt || ''
@@ -966,7 +966,7 @@ function VoxCPMVoiceManager() {
                 })
               ) : (
                 <div className="px-4 py-8 text-center text-sm text-muted-foreground/60">
-                  {t('settings.voxcpmNoCustomVoices')}
+                  {'暂无自定义音色'}
                 </div>
               )}
             </div>
@@ -985,12 +985,12 @@ function VoxCPMVoiceManager() {
                   </TabsTrigger>
                   <TabsTrigger value="clone" className="gap-1.5 rounded-sm px-3 text-sm">
                     <Upload className="h-3.5 w-3.5" />
-                    {t('settings.voxcpmClone')}
+                    {'克隆'}
                   </TabsTrigger>
                 </TabsList>
                 {createMode === 'clone' && !supportsReferenceAudio && (
                   <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300">
-                    {t('settings.voxcpmCloneSaveOnly')}
+                    {'当前后端仅保存'}
                   </span>
                 )}
               </div>
@@ -999,13 +999,13 @@ function VoxCPMVoiceManager() {
                 <Input
                   value={promptName}
                   onChange={(e) => setPromptName(e.target.value)}
-                  placeholder={t('settings.voxcpmVoiceNamePlaceholder')}
+                  placeholder={'音色名称'}
                   className="h-10 rounded-md text-sm"
                 />
                 <Textarea
                   value={voicePrompt}
                   onChange={(e) => setVoicePrompt(e.target.value)}
-                  placeholder={t('settings.voxcpmPromptPlaceholder')}
+                  placeholder={'例如：清晰自然的中文老师声音，语速适中'}
                   className="min-h-28 resize-none rounded-md text-sm"
                 />
                 <div className="flex justify-end">
@@ -1020,7 +1020,7 @@ function VoxCPMVoiceManager() {
                     ) : (
                       <Plus className="h-3.5 w-3.5" />
                     )}
-                    {t('settings.voxcpmAddVoice')}
+                    {'添加音色'}
                   </Button>
                 </div>
               </TabsContent>
@@ -1030,13 +1030,13 @@ function VoxCPMVoiceManager() {
                   <Input
                     value={cloneName}
                     onChange={(e) => setCloneName(e.target.value)}
-                    placeholder={t('settings.voxcpmCloneVoiceNamePlaceholder')}
+                    placeholder={'克隆音色名称'}
                     className="h-10 rounded-md text-sm"
                   />
                   <label className="inline-flex h-10 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm hover:bg-accent hover:text-accent-foreground">
                     <Upload className="h-3.5 w-3.5 shrink-0" />
                     <span className="max-w-[180px] truncate">
-                      {cloneFile ? cloneFile.name : t('settings.voxcpmUploadReferenceAudio')}
+                      {cloneFile ? cloneFile.name : '上传参考音频'}
                     </span>
                     <input
                       type="file"
@@ -1065,24 +1065,24 @@ function VoxCPMVoiceManager() {
                     ) : (
                       <>
                         <Mic className="h-3.5 w-3.5" />
-                        {t('settings.voxcpmRecord')}
+                        {'录制'}
                       </>
                     )}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground/70">
-                  {t('settings.voxcpmReferenceAudioLimitHint')}
+                  {'参考音频最大 10 MB / 60 秒，保存前会转换为 WAV。'}
                 </p>
                 <Textarea
                   value={clonePromptText}
                   onChange={(e) => setClonePromptText(e.target.value)}
-                  placeholder={t('settings.voxcpmReferenceTextPlaceholder')}
+                  placeholder={'参考音频对应文本，可选'}
                   className="min-h-20 resize-none rounded-md text-sm"
                 />
                 <Input
                   value={cloneVoicePrompt}
                   onChange={(e) => setCloneVoicePrompt(e.target.value)}
-                  placeholder={t('settings.voxcpmVoiceDescriptionPlaceholder')}
+                  placeholder={'音色描述，可选'}
                   className="h-10 rounded-md text-sm"
                 />
                 <div className="flex justify-end">
@@ -1097,7 +1097,7 @@ function VoxCPMVoiceManager() {
                     ) : (
                       <Plus className="h-3.5 w-3.5" />
                     )}
-                    {t('settings.voxcpmAddClone')}
+                    {'添加克隆'}
                   </Button>
                 </div>
               </TabsContent>
@@ -1149,10 +1149,7 @@ function VoiceProfileRow({
       ? 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800/70 dark:bg-violet-950/40 dark:text-violet-300'
       : badgeTone === 'warning'
         ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-300'
-        : 'border-border/70 bg-background text-muted-foreground';
-  const { t } = useI18n();
-
-  return (
+        : 'border-border/70 bg-background text-muted-foreground';return (
     <div
       className={cn(
         'group relative flex min-h-16 items-center gap-3 border-t border-border/50 px-4 py-3 first:border-t-0',
@@ -1187,7 +1184,7 @@ function VoiceProfileRow({
           size="icon"
           onClick={() => onPreview()}
           aria-label={
-            previewing ? t('settings.voxcpmStopPreview') : t('settings.voxcpmPreviewVoice')
+            previewing ? '停止试听' : '试听音色'
           }
           className="h-8 w-8 text-muted-foreground opacity-70 hover:text-foreground group-hover:opacity-100"
         >
@@ -1203,7 +1200,7 @@ function VoiceProfileRow({
           variant="ghost"
           size="icon"
           onClick={() => void onDelete()}
-          aria-label={t('settings.voxcpmDeleteVoice')}
+          aria-label={'删除音色'}
           className="h-8 w-8 text-muted-foreground opacity-70 hover:text-destructive group-hover:opacity-100"
         >
           <Trash2 className="h-3.5 w-3.5" />
@@ -1219,9 +1216,7 @@ function AddVoiceRow({
 }: {
   onAdd: (id: string, name: string) => void;
   existingIds: string[];
-}) {
-  const { t } = useI18n();
-  const [voiceId, setVoiceId] = useState('');
+}) {const [voiceId, setVoiceId] = useState('');
   const [voiceName, setVoiceName] = useState('');
 
   const handleAdd = () => {
@@ -1242,14 +1237,14 @@ function AddVoiceRow({
         onChange={(e) => setVoiceId(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         className="text-sm font-mono"
-        placeholder={t('settings.voiceIdPlaceholder')}
+        placeholder={'音色 ID（如 alloy）'}
       />
       <Input
         value={voiceName}
         onChange={(e) => setVoiceName(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         className="text-sm"
-        placeholder={t('settings.voiceNamePlaceholder')}
+        placeholder={'显示名称'}
       />
       <Button
         variant="outline"
@@ -1259,7 +1254,7 @@ function AddVoiceRow({
         className="shrink-0 gap-1"
       >
         <Plus className="h-3.5 w-3.5" />
-        {t('settings.addVoice')}
+        {'添加'}
       </Button>
     </div>
   );

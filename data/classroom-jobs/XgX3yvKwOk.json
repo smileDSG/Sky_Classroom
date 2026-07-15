@@ -1,0 +1,773 @@
+{
+  "id": "XgX3yvKwOk",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 33,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-06-25T10:14:48.506Z",
+  "updatedAt": "2026-06-25T10:15:52.300Z",
+  "inputSummary": {
+    "requirementPreview": "Rust语言",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-chat"
+  },
+  "startedAt": "2026-06-25T10:14:48.567Z",
+  "totalScenes": 20,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "Rust 简介与核心优势",
+        "description": "介绍 Rust 编程语言的起源、设计目标以及它相比其他语言的核心优势，如内存安全与性能。",
+        "keyPoints": [
+          "Rust 由 Mozilla 开发，旨在提供系统级编程的内存安全",
+          "零成本抽象：不因高级特性付出运行时性能代价",
+          "强大的类型系统和所有权模型，在编译期消除数据竞争",
+          "活跃的社区与工具链（Cargo, rustfmt, clippy）"
+        ],
+        "teachingObjective": "了解 Rust 的基本定位和学习价值",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "安装与第一个 Rust 程序",
+        "description": "指导学习者安装 Rust 环境，并通过经典的 'Hello, World!' 程序验证安装。",
+        "keyPoints": [
+          "使用 rustup 安装 Rust 工具链",
+          "使用 Cargo 创建新项目: cargo new hello_rust",
+          "Rust 程序入口: fn main()",
+          "使用 println! 宏输出文本",
+          "运行与编译: cargo run / cargo build"
+        ],
+        "teachingObjective": "能够搭建 Rust 开发环境并运行基础程序",
+        "estimatedDuration": 180,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "变量与可变性",
+        "description": "讲解 Rust 中变量默认不可变的特性以及如何声明可变变量，为理解所有权打下基础。",
+        "keyPoints": [
+          "变量默认不可变 (immutable)",
+          "使用 mut 关键字声明可变变量",
+          "常量 (const) 与变量的区别",
+          "变量遮蔽 (shadowing) 的概念与作用"
+        ],
+        "teachingObjective": "掌握 Rust 中变量的声明、可变性与遮蔽规则",
+        "estimatedDuration": 150,
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "interactive",
+        "title": "变量可变性实验场",
+        "description": "让学习者通过在线代码编辑器体验变量可变与不可变的不同编译时行为。",
+        "keyPoints": [
+          "尝试修改不可变变量时的编译错误",
+          "通过 mut 关键字允许修改",
+          "观察 shadowing 对类型的影响"
+        ],
+        "teachingObjective": "通过实践深刻理解变量可变性的编译时检查",
+        "estimatedDuration": 180,
+        "order": 4,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "rust",
+          "concept": "变量可变性与遮蔽",
+          "initialCode": "fn main() {\n    let x = 5;\n    println!(\"x is: {x}\");\n    // x = 6; // 尝试取消注释这行\n    let mut y = 10;\n    println!(\"y is: {y}\");\n    y = 20;\n    println!(\"y is now: {y}\");\n}"
+        }
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "基本数据类型",
+        "description": "介绍 Rust 的标量类型（整数、浮点数、布尔、字符）和复合类型（元组、数组）。",
+        "keyPoints": [
+          "标量类型: i32, u64, f64, bool, char",
+          "Rust 的类型推断与显式类型注解",
+          "复合类型: 元组 (tuple) 可以包含不同类型",
+          "复合类型: 数组 (array) 长度固定，类型相同"
+        ],
+        "teachingObjective": "熟悉 Rust 中常用的基本数据类型及其使用场景",
+        "estimatedDuration": 180,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "函数与注释",
+        "description": "讲解 Rust 中函数的定义、参数、返回值以及文档注释的规范。",
+        "keyPoints": [
+          "函数声明: fn function_name(param: type) -> return_type",
+          "表达式与语句的区别；函数体最后一个表达式作为返回值",
+          "文档注释: /// 生成 API 文档",
+          "使用 return 关键字提前返回"
+        ],
+        "teachingObjective": "能够编写 Rust 函数并理解其表达式导向的特性",
+        "estimatedDuration": 150,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "控制流：if 与循环",
+        "description": "展示 if 表达式、loop、while 和 for 循环在 Rust 中的使用方式。",
+        "keyPoints": [
+          "if 是一个表达式，可以赋值给变量",
+          "loop 无限循环，配合 break 退出",
+          "while 条件循环",
+          "for...in 循环遍历迭代器 (最常用)"
+        ],
+        "teachingObjective": "掌握 Rust 中条件判断和循环控制的使用方法",
+        "estimatedDuration": 180,
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "quiz",
+        "title": "基础阶段知识测验",
+        "description": "通过几个选择题和简答题，检验学习者对前七节基础内容的掌握程度。",
+        "keyPoints": [
+          "检查 Rust 变量特性",
+          "检查 Rust 数据类型理解",
+          "检查控制流知识"
+        ],
+        "teachingObjective": "巩固 Rust 基础语法概念",
+        "estimatedDuration": 180,
+        "order": 8,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "所有权系统：核心概念",
+        "description": "深入讲解 Rust 最核心的所有权系统，包括所有权规则、移动语义和 Clone。",
+        "keyPoints": [
+          "所有权规则：每个值有唯一所有者；所有者离开作用域值被丢弃",
+          "移动 (Move)：赋值或传参时数据的所有权转移",
+          "克隆 (Clone)：堆上数据的深拷贝",
+          "Copy trait：栈上数据的自动拷贝 (整数等标量)"
+        ],
+        "teachingObjective": "深刻理解 Rust 所有权系统的规则及其意义",
+        "estimatedDuration": 240,
+        "order": 9
+      },
+      {
+        "id": "scene_10",
+        "type": "slide",
+        "title": "引用与借用",
+        "description": "讲解如何通过引用（借用）在不转移所有权的情况下使用值，以及借用规则。",
+        "keyPoints": [
+          "引用 vs 解引用: & 和 *",
+          "不可变引用 (&T): 可以同时有多个",
+          "可变引用 (&mut T): 同一时间只能有一个",
+          "悬垂引用 (Dangling Reference): 编译器在编译期防止"
+        ],
+        "teachingObjective": "掌握引用的使用方法和借用规则",
+        "estimatedDuration": 200,
+        "order": 10
+      },
+      {
+        "id": "scene_11",
+        "type": "interactive",
+        "title": "所有权与借用实战演练",
+        "description": "提供一个在线代码沙盒，让学习者修改代码来体验所有权移动和引用的编译行为。",
+        "keyPoints": [
+          "观察所有权移动导致的编译错误",
+          "使用引用避免所有权转移",
+          "尝试在可变引用存在时创建新的引用"
+        ],
+        "teachingObjective": "通过动手操作深入理解所有权和借用规则",
+        "estimatedDuration": 240,
+        "order": 11,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "rust",
+          "concept": "所有权、移动与引用",
+          "initialCode": "fn main() {\n    let s1 = String::from(\"hello\");\n    let s2 = s1; // s1 移动到 s2\n    // println!(\"{s1}\"); // 取消注释以观察错误\n    println!(\"{s2}\");\n    \n    let s3 = String::from(\"world\");\n    let len = calculate_length(&s3);\n    println!(\"'{s3}' 的长度为 {len}。\");\n}\n\nfn calculate_length(s: &String) -> usize {\n    s.len()\n}"
+        }
+      },
+      {
+        "id": "scene_12",
+        "type": "slide",
+        "title": "切片 (Slice) 类型",
+        "description": "介绍切片这一没有所有权的数据类型，主要用于引用集合中的一段连续元素。",
+        "keyPoints": [
+          "字符串切片 &str 与字符串 String 的关系",
+          "数组切片 &[T]",
+          "切片作为函数参数的优势",
+          "通过范围语法获取切片: &s[0..5]"
+        ],
+        "teachingObjective": "理解切片的概念及其在函数参数中的典型应用",
+        "estimatedDuration": 180,
+        "order": 12
+      },
+      {
+        "id": "scene_13",
+        "type": "slide",
+        "title": "结构体 (Struct) 定义与方法",
+        "description": "讲解如何自定义数据类型：定义结构体、创建实例、访问字段，以及为结构体实现方法。",
+        "keyPoints": [
+          "结构体定义: struct User { ... }",
+          "创建实例: User { field1: value1, ... }",
+          "字段初始化简写与结构体更新语法",
+          "关联函数与 impl 块中的方法"
+        ],
+        "teachingObjective": "能够创建并使用结构体及其方法来组织数据",
+        "estimatedDuration": 200,
+        "order": 13
+      },
+      {
+        "id": "scene_14",
+        "type": "slide",
+        "title": "枚举 (Enum) 与模式匹配",
+        "description": "介绍 Rust 强大的枚举类型和 match 控制流运算符，强调其组合使用的安全性和表达力。",
+        "keyPoints": [
+          "定义枚举: enum IpAddrKind { V4, V6 }",
+          "枚举可以关联数据: Option<T>, Result<T, E>",
+          "match 表达式必须穷尽所有可能",
+          "通配符 _ 与 if let 简洁语法"
+        ],
+        "teachingObjective": "掌握枚举的定义和使用 match/if let 进行模式匹配",
+        "estimatedDuration": 200,
+        "order": 14
+      },
+      {
+        "id": "scene_15",
+        "type": "slide",
+        "title": "常用集合：Vec 与 HashMap",
+        "description": "讲解 Rust 标准库中最常用的两种集合类型：动态数组 Vec 和哈希映射 HashMap。",
+        "keyPoints": [
+          "创建与更新 Vec: vec! 宏, push",
+          "读取 Vec 元素: 索引与 get 方法",
+          "创建与更新 HashMap: insert, entry"
+        ],
+        "teachingObjective": "学会使用 Vec 和 HashMap 来存储和管理数据",
+        "estimatedDuration": 200,
+        "order": 15
+      },
+      {
+        "id": "scene_16",
+        "type": "slide",
+        "title": "错误处理：panic! 与 Result",
+        "description": "讲解 Rust 中的错误处理机制，区分不可恢复错误 (panic) 和可恢复错误 (Result)。",
+        "keyPoints": [
+          "panic! 宏：用于不可恢复的错误",
+          "Result<T, E> 枚举：用于可恢复的错误",
+          "unwrap 与 expect 快速处理 Result",
+          "传播错误：? 运算符"
+        ],
+        "teachingObjective": "能够使用 Result 和 ? 运算符编写健壮的错误处理代码",
+        "estimatedDuration": 200,
+        "order": 16
+      },
+      {
+        "id": "scene_17",
+        "type": "slide",
+        "title": "泛型与 Trait",
+        "description": "介绍 Rust 的泛型编程和 trait 特性。",
+        "keyPoints": [
+          "泛型函数定义: fn largest<T>(list: &[T]) -> &T",
+          "Trait 定义共享行为",
+          "Trait bound 语法",
+          "常用标准库 Trait: Display, Clone, Debug",
+          "泛型性能：单态化"
+        ],
+        "teachingObjective": "理解泛型和 trait 的概念，能编写简单的泛型代码",
+        "estimatedDuration": 220,
+        "order": 17
+      },
+      {
+        "id": "scene_18",
+        "type": "quiz",
+        "title": "核心概念综合测验",
+        "description": "针对所有权、借用、结构体、枚举、集合和错误处理等核心概念进行测验。",
+        "keyPoints": [
+          "所有权与借用规则",
+          "结构体与枚举的使用",
+          "Result 错误处理",
+          "集合操作"
+        ],
+        "teachingObjective": "系统性地评估对 Rust 核心概念的掌握",
+        "estimatedDuration": 240,
+        "order": 18,
+        "quizConfig": {
+          "questionCount": 4,
+          "difficulty": "medium",
+          "questionTypes": [
+            "single",
+            "multiple",
+            "short_answer"
+          ]
+        }
+      },
+      {
+        "id": "scene_19",
+        "type": "pbl",
+        "title": "迷你项目：命令行工具",
+        "description": "运用所学的 Rust 知识，完成一个简单的命令行工具，处理文件读取和简单统计。",
+        "keyPoints": [
+          "项目需求分析与设计",
+          "使用 std::fs 和 std::env",
+          "使用 Vec<String> 处理命令行参数",
+          "处理 Result 错误"
+        ],
+        "teachingObjective": "能够独立设计并实现一个简单的 Rust 命令行应用程序",
+        "estimatedDuration": 1200,
+        "order": 19,
+        "pblConfig": {
+          "projectTopic": "构建一个简单文本分析器",
+          "projectDescription": "开发一个 CLI 程序，接受一个文件路径作为参数，读取文件内容并统计：单词数、行数、字符数。",
+          "targetSkills": [
+            "使用标准库 I/O",
+            "错误处理与 Result",
+            "文件读取",
+            "基础字符串处理"
+          ],
+          "issueCount": 4
+        }
+      },
+      {
+        "id": "scene_20",
+        "type": "slide",
+        "title": "课程总结与下一步",
+        "description": "回顾 Rust 最核心的概念体系，并提供学习路径建议。",
+        "keyPoints": [
+          "复习核心概念: 所有权、借用、生命周期、trait",
+          "推荐官方书籍: The Book (The Rust Programming Language)",
+          "实践方向: 构建小项目、参与开源",
+          "社区资源: Rust 论坛、用户论坛、中文社区"
+        ],
+        "teachingObjective": "巩固学习成果并指导后续学习方向",
+        "estimatedDuration": 120,
+        "order": 20
+      }
+    ],
+    "languageDirective": "This course will be taught in Chinese (Simplified), as the user's requirement 'Rust语言' is written in Chinese. All explanations, annotations, and instructional text will be in Chinese. Key programming terminology (e.g., 'ownership', 'borrowing', 'lifetimes') will be kept in English on first mention with Chinese translation in parentheses, and then used primarily in English afterwards, as these are standard terms in the Rust ecosystem.",
+    "topicSummary": "Rust语言入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "BOhp59t8rc",
+      "name": "Rust 简介与核心优势",
+      "languageDirective": "This course will be taught in Chinese (Simplified), as the user's requirement 'Rust语言' is written in Chinese. All explanations, annotations, and instructional text will be in Chinese. Key programming terminology (e.g., 'ownership', 'borrowing', 'lifetimes') will be kept in English on first mention with Chinese translation in parentheses, and then used primarily in English afterwards, as these are standard terms in the Rust ecosystem.",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1782382520305,
+      "updatedAt": 1782382520305,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "Rust语言",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "Rust 简介与核心优势",
+      "description": "介绍 Rust 编程语言的起源、设计目标以及它相比其他语言的核心优势，如内存安全与性能。",
+      "keyPoints": [
+        "Rust 由 Mozilla 开发，旨在提供系统级编程的内存安全",
+        "零成本抽象：不因高级特性付出运行时性能代价",
+        "强大的类型系统和所有权模型，在编译期消除数据竞争",
+        "活跃的社区与工具链（Cargo, rustfmt, clippy）"
+      ],
+      "teachingObjective": "了解 Rust 的基本定位和学习价值",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "安装与第一个 Rust 程序",
+      "description": "指导学习者安装 Rust 环境，并通过经典的 'Hello, World!' 程序验证安装。",
+      "keyPoints": [
+        "使用 rustup 安装 Rust 工具链",
+        "使用 Cargo 创建新项目: cargo new hello_rust",
+        "Rust 程序入口: fn main()",
+        "使用 println! 宏输出文本",
+        "运行与编译: cargo run / cargo build"
+      ],
+      "teachingObjective": "能够搭建 Rust 开发环境并运行基础程序",
+      "estimatedDuration": 180,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "变量与可变性",
+      "description": "讲解 Rust 中变量默认不可变的特性以及如何声明可变变量，为理解所有权打下基础。",
+      "keyPoints": [
+        "变量默认不可变 (immutable)",
+        "使用 mut 关键字声明可变变量",
+        "常量 (const) 与变量的区别",
+        "变量遮蔽 (shadowing) 的概念与作用"
+      ],
+      "teachingObjective": "掌握 Rust 中变量的声明、可变性与遮蔽规则",
+      "estimatedDuration": 150,
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "interactive",
+      "title": "变量可变性实验场",
+      "description": "让学习者通过在线代码编辑器体验变量可变与不可变的不同编译时行为。",
+      "keyPoints": [
+        "尝试修改不可变变量时的编译错误",
+        "通过 mut 关键字允许修改",
+        "观察 shadowing 对类型的影响"
+      ],
+      "teachingObjective": "通过实践深刻理解变量可变性的编译时检查",
+      "estimatedDuration": 180,
+      "order": 4,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "rust",
+        "concept": "变量可变性与遮蔽",
+        "initialCode": "fn main() {\n    let x = 5;\n    println!(\"x is: {x}\");\n    // x = 6; // 尝试取消注释这行\n    let mut y = 10;\n    println!(\"y is: {y}\");\n    y = 20;\n    println!(\"y is now: {y}\");\n}"
+      }
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "基本数据类型",
+      "description": "介绍 Rust 的标量类型（整数、浮点数、布尔、字符）和复合类型（元组、数组）。",
+      "keyPoints": [
+        "标量类型: i32, u64, f64, bool, char",
+        "Rust 的类型推断与显式类型注解",
+        "复合类型: 元组 (tuple) 可以包含不同类型",
+        "复合类型: 数组 (array) 长度固定，类型相同"
+      ],
+      "teachingObjective": "熟悉 Rust 中常用的基本数据类型及其使用场景",
+      "estimatedDuration": 180,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "函数与注释",
+      "description": "讲解 Rust 中函数的定义、参数、返回值以及文档注释的规范。",
+      "keyPoints": [
+        "函数声明: fn function_name(param: type) -> return_type",
+        "表达式与语句的区别；函数体最后一个表达式作为返回值",
+        "文档注释: /// 生成 API 文档",
+        "使用 return 关键字提前返回"
+      ],
+      "teachingObjective": "能够编写 Rust 函数并理解其表达式导向的特性",
+      "estimatedDuration": 150,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "控制流：if 与循环",
+      "description": "展示 if 表达式、loop、while 和 for 循环在 Rust 中的使用方式。",
+      "keyPoints": [
+        "if 是一个表达式，可以赋值给变量",
+        "loop 无限循环，配合 break 退出",
+        "while 条件循环",
+        "for...in 循环遍历迭代器 (最常用)"
+      ],
+      "teachingObjective": "掌握 Rust 中条件判断和循环控制的使用方法",
+      "estimatedDuration": 180,
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "quiz",
+      "title": "基础阶段知识测验",
+      "description": "通过几个选择题和简答题，检验学习者对前七节基础内容的掌握程度。",
+      "keyPoints": [
+        "检查 Rust 变量特性",
+        "检查 Rust 数据类型理解",
+        "检查控制流知识"
+      ],
+      "teachingObjective": "巩固 Rust 基础语法概念",
+      "estimatedDuration": 180,
+      "order": 8,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "所有权系统：核心概念",
+      "description": "深入讲解 Rust 最核心的所有权系统，包括所有权规则、移动语义和 Clone。",
+      "keyPoints": [
+        "所有权规则：每个值有唯一所有者；所有者离开作用域值被丢弃",
+        "移动 (Move)：赋值或传参时数据的所有权转移",
+        "克隆 (Clone)：堆上数据的深拷贝",
+        "Copy trait：栈上数据的自动拷贝 (整数等标量)"
+      ],
+      "teachingObjective": "深刻理解 Rust 所有权系统的规则及其意义",
+      "estimatedDuration": 240,
+      "order": 9
+    },
+    {
+      "id": "scene_10",
+      "type": "slide",
+      "title": "引用与借用",
+      "description": "讲解如何通过引用（借用）在不转移所有权的情况下使用值，以及借用规则。",
+      "keyPoints": [
+        "引用 vs 解引用: & 和 *",
+        "不可变引用 (&T): 可以同时有多个",
+        "可变引用 (&mut T): 同一时间只能有一个",
+        "悬垂引用 (Dangling Reference): 编译器在编译期防止"
+      ],
+      "teachingObjective": "掌握引用的使用方法和借用规则",
+      "estimatedDuration": 200,
+      "order": 10
+    },
+    {
+      "id": "scene_11",
+      "type": "interactive",
+      "title": "所有权与借用实战演练",
+      "description": "提供一个在线代码沙盒，让学习者修改代码来体验所有权移动和引用的编译行为。",
+      "keyPoints": [
+        "观察所有权移动导致的编译错误",
+        "使用引用避免所有权转移",
+        "尝试在可变引用存在时创建新的引用"
+      ],
+      "teachingObjective": "通过动手操作深入理解所有权和借用规则",
+      "estimatedDuration": 240,
+      "order": 11,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "rust",
+        "concept": "所有权、移动与引用",
+        "initialCode": "fn main() {\n    let s1 = String::from(\"hello\");\n    let s2 = s1; // s1 移动到 s2\n    // println!(\"{s1}\"); // 取消注释以观察错误\n    println!(\"{s2}\");\n    \n    let s3 = String::from(\"world\");\n    let len = calculate_length(&s3);\n    println!(\"'{s3}' 的长度为 {len}。\");\n}\n\nfn calculate_length(s: &String) -> usize {\n    s.len()\n}"
+      }
+    },
+    {
+      "id": "scene_12",
+      "type": "slide",
+      "title": "切片 (Slice) 类型",
+      "description": "介绍切片这一没有所有权的数据类型，主要用于引用集合中的一段连续元素。",
+      "keyPoints": [
+        "字符串切片 &str 与字符串 String 的关系",
+        "数组切片 &[T]",
+        "切片作为函数参数的优势",
+        "通过范围语法获取切片: &s[0..5]"
+      ],
+      "teachingObjective": "理解切片的概念及其在函数参数中的典型应用",
+      "estimatedDuration": 180,
+      "order": 12
+    },
+    {
+      "id": "scene_13",
+      "type": "slide",
+      "title": "结构体 (Struct) 定义与方法",
+      "description": "讲解如何自定义数据类型：定义结构体、创建实例、访问字段，以及为结构体实现方法。",
+      "keyPoints": [
+        "结构体定义: struct User { ... }",
+        "创建实例: User { field1: value1, ... }",
+        "字段初始化简写与结构体更新语法",
+        "关联函数与 impl 块中的方法"
+      ],
+      "teachingObjective": "能够创建并使用结构体及其方法来组织数据",
+      "estimatedDuration": 200,
+      "order": 13
+    },
+    {
+      "id": "scene_14",
+      "type": "slide",
+      "title": "枚举 (Enum) 与模式匹配",
+      "description": "介绍 Rust 强大的枚举类型和 match 控制流运算符，强调其组合使用的安全性和表达力。",
+      "keyPoints": [
+        "定义枚举: enum IpAddrKind { V4, V6 }",
+        "枚举可以关联数据: Option<T>, Result<T, E>",
+        "match 表达式必须穷尽所有可能",
+        "通配符 _ 与 if let 简洁语法"
+      ],
+      "teachingObjective": "掌握枚举的定义和使用 match/if let 进行模式匹配",
+      "estimatedDuration": 200,
+      "order": 14
+    },
+    {
+      "id": "scene_15",
+      "type": "slide",
+      "title": "常用集合：Vec 与 HashMap",
+      "description": "讲解 Rust 标准库中最常用的两种集合类型：动态数组 Vec 和哈希映射 HashMap。",
+      "keyPoints": [
+        "创建与更新 Vec: vec! 宏, push",
+        "读取 Vec 元素: 索引与 get 方法",
+        "创建与更新 HashMap: insert, entry"
+      ],
+      "teachingObjective": "学会使用 Vec 和 HashMap 来存储和管理数据",
+      "estimatedDuration": 200,
+      "order": 15
+    },
+    {
+      "id": "scene_16",
+      "type": "slide",
+      "title": "错误处理：panic! 与 Result",
+      "description": "讲解 Rust 中的错误处理机制，区分不可恢复错误 (panic) 和可恢复错误 (Result)。",
+      "keyPoints": [
+        "panic! 宏：用于不可恢复的错误",
+        "Result<T, E> 枚举：用于可恢复的错误",
+        "unwrap 与 expect 快速处理 Result",
+        "传播错误：? 运算符"
+      ],
+      "teachingObjective": "能够使用 Result 和 ? 运算符编写健壮的错误处理代码",
+      "estimatedDuration": 200,
+      "order": 16
+    },
+    {
+      "id": "scene_17",
+      "type": "slide",
+      "title": "泛型与 Trait",
+      "description": "介绍 Rust 的泛型编程和 trait 特性。",
+      "keyPoints": [
+        "泛型函数定义: fn largest<T>(list: &[T]) -> &T",
+        "Trait 定义共享行为",
+        "Trait bound 语法",
+        "常用标准库 Trait: Display, Clone, Debug",
+        "泛型性能：单态化"
+      ],
+      "teachingObjective": "理解泛型和 trait 的概念，能编写简单的泛型代码",
+      "estimatedDuration": 220,
+      "order": 17
+    },
+    {
+      "id": "scene_18",
+      "type": "quiz",
+      "title": "核心概念综合测验",
+      "description": "针对所有权、借用、结构体、枚举、集合和错误处理等核心概念进行测验。",
+      "keyPoints": [
+        "所有权与借用规则",
+        "结构体与枚举的使用",
+        "Result 错误处理",
+        "集合操作"
+      ],
+      "teachingObjective": "系统性地评估对 Rust 核心概念的掌握",
+      "estimatedDuration": 240,
+      "order": 18,
+      "quizConfig": {
+        "questionCount": 4,
+        "difficulty": "medium",
+        "questionTypes": [
+          "single",
+          "multiple",
+          "short_answer"
+        ]
+      }
+    },
+    {
+      "id": "scene_19",
+      "type": "pbl",
+      "title": "迷你项目：命令行工具",
+      "description": "运用所学的 Rust 知识，完成一个简单的命令行工具，处理文件读取和简单统计。",
+      "keyPoints": [
+        "项目需求分析与设计",
+        "使用 std::fs 和 std::env",
+        "使用 Vec<String> 处理命令行参数",
+        "处理 Result 错误"
+      ],
+      "teachingObjective": "能够独立设计并实现一个简单的 Rust 命令行应用程序",
+      "estimatedDuration": 1200,
+      "order": 19,
+      "pblConfig": {
+        "projectTopic": "构建一个简单文本分析器",
+        "projectDescription": "开发一个 CLI 程序，接受一个文件路径作为参数，读取文件内容并统计：单词数、行数、字符数。",
+        "targetSkills": [
+          "使用标准库 I/O",
+          "错误处理与 Result",
+          "文件读取",
+          "基础字符串处理"
+        ],
+        "issueCount": 4
+      }
+    },
+    {
+      "id": "scene_20",
+      "type": "slide",
+      "title": "课程总结与下一步",
+      "description": "回顾 Rust 最核心的概念体系，并提供学习路径建议。",
+      "keyPoints": [
+        "复习核心概念: 所有权、借用、生命周期、trait",
+        "推荐官方书籍: The Book (The Rust Programming Language)",
+        "实践方向: 构建小项目、参与开源",
+        "社区资源: Rust 论坛、用户论坛、中文社区"
+      ],
+      "teachingObjective": "巩固学习成果并指导后续学习方向",
+      "estimatedDuration": 120,
+      "order": 20
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "This course will be taught in Chinese (Simplified), as the user's requirement 'Rust语言' is written in Chinese. All explanations, annotations, and instructional text will be in Chinese. Key programming terminology (e.g., 'ownership', 'borrowing', 'lifetimes') will be kept in English on first mention with Chinese translation in parentheses, and then used primarily in English afterwards, as these are standard terms in the Rust ecosystem.",
+    "totalScenes": 20
+  },
+  "topicSummary": "Rust语言入门",
+  "completedAt": "2026-06-25T10:15:52.300Z",
+  "error": "用户取消了生成"
+}

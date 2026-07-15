@@ -16,6 +16,22 @@ export interface MistakeRecord {
   reviewed: boolean;
   reviewCount: number;
   knowledgePoints: string[];
+  /** Timestamp of the most recent review */
+  lastReview?: number;
+  /** Computed next review timestamp (ms epoch) */
+  nextReview?: number;
+  /** Mastery level = reviewCount, capped at EBBINGHAUS_INTERVALS.length */
+  masteryLevel?: number;
+  /** Source of the mistake entry */
+  source?: 'classroom-quiz' | 'solve' | 'manual' | 'review';
+  /** Session ID (stageId or solve session) that produced this mistake */
+  sourceSessionId?: string;
+  /** Step-by-step solution process (AI-generated or manually entered) */
+  solutionSteps?: string[];
+  /** Tiered hints: [思路方向, 关键公式, 详细计算] */
+  hints?: string[];
+  /** Detailed explanation of why the user's answer was wrong */
+  errorExplanation?: string;
 }
 
 export type MistakeFilter =
@@ -31,32 +47,11 @@ export interface MistakeStats {
   recentCount: number;  // last 7 days
 }
 
-// ── Knowledge graph ──────────────────────────────────────────────
+// ── Knowledge graph (re-exported from unified module) ───────────
 
-export interface KnowledgeNode {
-  id: string;
-  name: string;
-  category: string;           // 代数/几何/概率...
-  mastery: number;            // 掌握度 0-100
-  problemCount: number;
-  mistakeCount: number;
-  children: string[];         // 子知识点 ID
-}
-
-export interface KnowledgeEdge {
-  from: string;
-  to: string;
-  relation: 'prerequisite' | 'related' | 'extension';
-}
-
-export interface KnowledgeGraph {
-  nodes: KnowledgeNode[];
-  edges: KnowledgeEdge[];
-  weakPoints: string[];       // 薄弱知识点（错误率 > 50%）
-}
-
-export interface LearningPath {
-  startNode: string;
-  nodes: string[];            // recommended learning order
-  reason: string;
-}
+export type {
+  KnowledgeNode,
+  KnowledgeEdge,
+  KnowledgeGraph,
+  LearningPath,
+} from '@/lib/knowledge-graph/types';

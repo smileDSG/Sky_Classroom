@@ -34,7 +34,7 @@ function ActionButton({
   );
 }
 
-interface SlideViewerProps {
+export interface SlideViewerProps {
   images: string[];
   activeIndex: number;
   onIndexChange: (index: number) => void;

@@ -31,7 +31,6 @@ import {
   FileText,
   Send,
 } from 'lucide-react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import type { ProviderConfig } from '@/lib/ai/providers';
 import type { ProvidersConfig } from '@/lib/types/settings';
 import { createVerifyModelRequest, formatContextWindow } from './utils';
@@ -65,10 +64,7 @@ export function ProviderConfigPanel({
   onAddModel,
   onResetToDefault,
   isBuiltIn,
-}: ProviderConfigPanelProps) {
-  const { t } = useI18n();
-
-  // Local state for this provider
+}: ProviderConfigPanelProps) {// Local state for this provider
   const [apiKey, setApiKey] = useState(initialApiKey);
   const [baseUrl, setBaseUrl] = useState(initialBaseUrl);
   const [requiresApiKey, setRequiresApiKey] = useState(initialRequiresApiKey);
@@ -115,7 +111,7 @@ export function ProviderConfigPanel({
 
     if (availableModels.length === 0) {
       setTestStatus('error');
-      setTestMessage(t('settings.noModelsAvailable') || 'No models available for testing');
+      setTestMessage('没有可用于测试的模型');
       return;
     }
 
@@ -141,16 +137,16 @@ export function ProviderConfigPanel({
 
       if (data.success) {
         setTestStatus('success');
-        setTestMessage(t('settings.connectionSuccess'));
+        setTestMessage('连接成功');
       } else {
         setTestStatus('error');
-        setTestMessage(data.error || t('settings.connectionFailed'));
+        setTestMessage(data.error || '连接失败');
       }
     } catch (_error) {
       setTestStatus('error');
-      setTestMessage(t('settings.connectionFailed'));
+      setTestMessage('连接失败');
     }
-  }, [apiKey, baseUrl, provider.id, provider.type, requiresApiKey, providersConfig, t]);
+  }, [apiKey, baseUrl, provider.id, provider.type, requiresApiKey, providersConfig]);
 
   const models = providersConfig[provider.id]?.models || [];
   const isServerConfigured = providersConfig[provider.id]?.isServerConfigured;
@@ -160,13 +156,13 @@ export function ProviderConfigPanel({
       {/* Server-configured notice */}
       {isServerConfigured && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-3 text-sm text-blue-700 dark:text-blue-300">
-          {t('settings.serverConfiguredNotice')}
+          {'管理员已在服务端配置了此提供方的 API Key，可直接使用。也可输入自己的 Key 覆盖。'}
         </div>
       )}
 
       {/* API Key */}
       <div className="space-y-2">
-        <Label>{t('settings.apiSecret')}</Label>
+        <Label>{'API 密钥'}</Label>
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Input
@@ -176,7 +172,7 @@ export function ProviderConfigPanel({
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              placeholder={isServerConfigured ? t('settings.optionalOverride') : 'sk-...'}
+              placeholder={isServerConfigured ? '可选，留空则使用服务端配置' : 'sk-...'}
               value={apiKey}
               onChange={(e) => handleApiKeyChange(e.target.value)}
               onBlur={onSave}
@@ -206,7 +202,7 @@ export function ProviderConfigPanel({
             ) : (
               <>
                 <Zap className="h-3.5 w-3.5" />
-                {t('settings.testConnection')}
+                {'测试连接'}
               </>
             )}
           </Button>
@@ -239,14 +235,14 @@ export function ProviderConfigPanel({
             htmlFor={`requires-api-key-${provider.id}`}
             className="text-sm cursor-pointer text-muted-foreground"
           >
-            {t('settings.requiresApiKey')}
+            {'需要 API 密钥'}
           </label>
         </div>
       </div>
 
       {/* API Host */}
       <div className="space-y-2">
-        <Label>{t('settings.apiHost')}</Label>
+        <Label>{'Base URL'}</Label>
         <Input
           name={`llm-base-url-${provider.id}`}
           type="url"
@@ -279,7 +275,7 @@ export function ProviderConfigPanel({
                       : 'bg-background text-muted-foreground border-border hover:bg-muted',
                   )}
                 >
-                  {t(alt.label)}
+                  {alt.label}
                 </button>
               );
             })}
@@ -309,7 +305,7 @@ export function ProviderConfigPanel({
 
           return (
             <p className="text-xs text-muted-foreground break-all">
-              {t('settings.requestUrl')}: {fullUrl}
+              {'请求地址'}: {fullUrl}
             </p>
           );
         })()}
@@ -318,7 +314,7 @@ export function ProviderConfigPanel({
       {/* Models - No selection state, just list for management */}
       <div className="space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <Label className="text-base">{t('settings.models')}</Label>
+          <Label className="text-base">{'模型'}</Label>
           <div className="flex items-center gap-2 flex-wrap">
             {isBuiltIn && onResetToDefault && (
               <Button
@@ -328,12 +324,12 @@ export function ProviderConfigPanel({
                 className="gap-1.5"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                {t('settings.reset')}
+                {'重置'}
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={onAddModel} className="gap-1.5">
               <Plus className="h-3.5 w-3.5" />
-              {t('settings.addNewModel')}
+              {'新建模型'}
             </Button>
           </div>
         </div>
@@ -350,17 +346,17 @@ export function ProviderConfigPanel({
                     {/* Capabilities */}
                     <div className="flex items-center gap-1">
                       {model.capabilities?.vision && (
-                        <div title={t('settings.capabilities.vision')}>
+                        <div title={'视觉'}>
                           <Sparkles className="h-3 w-3" />
                         </div>
                       )}
                       {model.capabilities?.tools && (
-                        <div title={t('settings.capabilities.tools')}>
+                        <div title={'工具'}>
                           <Wrench className="h-3 w-3" />
                         </div>
                       )}
                       {model.capabilities?.streaming && (
-                        <div title={t('settings.capabilities.streaming')}>
+                        <div title={'流式'}>
                           <Zap className="h-3 w-3" />
                         </div>
                       )}
@@ -393,7 +389,7 @@ export function ProviderConfigPanel({
                     size="sm"
                     className="h-8 px-2"
                     onClick={() => onEditModel(index)}
-                    title={t('settings.editModel')}
+                    title={'编辑模型'}
                   >
                     <Settings2 className="h-3.5 w-3.5" />
                   </Button>
@@ -402,7 +398,7 @@ export function ProviderConfigPanel({
                     size="sm"
                     className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={() => onDeleteModel(index)}
-                    title={t('settings.deleteModel')}
+                    title={'删除'}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -417,18 +413,18 @@ export function ProviderConfigPanel({
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('settings.resetToDefault')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('settings.resetConfirmDescription')}</AlertDialogDescription>
+            <AlertDialogTitle>{'重置为默认配置'}</AlertDialogTitle>
+            <AlertDialogDescription>{'此操作将清除所有自定义模型，恢复到内置的默认模型列表。API 密钥和 Base URL 将被保留。'}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('settings.cancelEdit')}</AlertDialogCancel>
+            <AlertDialogCancel>{'取消'}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setShowResetDialog(false);
                 onResetToDefault?.();
               }}
             >
-              {t('settings.confirmReset')}
+              {'确认重置'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

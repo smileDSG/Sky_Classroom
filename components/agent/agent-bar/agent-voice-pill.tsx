@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { resolveAgentVoice } from '@/lib/audio/voice-resolver';
@@ -30,9 +29,7 @@ export function AgentVoicePill({
   agentIndex,
   availableProviders,
   disabled,
-}: AgentVoicePillProps) {
-  const { t } = useI18n();
-  const updateAgent = useAgentRegistry((s) => s.updateAgent);
+}: AgentVoicePillProps) {const updateAgent = useAgentRegistry((s) => s.updateAgent);
 
   const resolved = resolveAgentVoice(agent, agentIndex, availableProviders);
 
@@ -60,11 +57,11 @@ export function AgentVoicePill({
     for (const p of availableProviders) {
       if (p.providerId === resolved.providerId) {
         const v = p.voices.find((voice) => voice.id === resolved.voiceId);
-        if (v) return v.id === VOXCPM_AUTO_VOICE_ID ? t('settings.voxcpmAutoVoice') : v.name;
+        if (v) return v.id === VOXCPM_AUTO_VOICE_ID ? '自动音色' : v.name;
       }
     }
     return resolved.voiceId;
-  }, [availableProviders, resolved.providerId, resolved.voiceId, t]);
+  }, [availableProviders, resolved.providerId, resolved.voiceId]);
 
   const isActive = useCallback(
     (providerId: TTSProviderId, voiceId: string, modelId: string) =>

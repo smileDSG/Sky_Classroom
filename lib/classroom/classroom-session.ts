@@ -8,6 +8,8 @@ const JOBS_KEY = 'activeClassroomJobIds';
 export interface StoredJobEntry {
   jobId: string;
   topic: string;
+  /** Client-side generation (no server job to poll) */
+  isClientSide?: boolean;
 }
 
 export function getActiveJobEntries(): StoredJobEntry[] {

@@ -2,27 +2,63 @@
  * POST /api/sky/cloud-mind/memory-cards
  *
  * 记忆卡片 Agent API
- * 接收知识点/学习内容，调用 DeepSeek 生成记忆卡片。
+ * 接收知识点/学习内容，或基于学情自动推导，调用 DeepSeek 生成记忆卡片。
  */
 
 import { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
 import { generateMemoryCards } from '@/lib/agents/cloud-mind/memory-cards-agent';
+import { buildStudentProfile } from '@/lib/student/profile-builder';
+import { deriveMemoryParamsFromProfile } from '@/lib/student/memory-param-deriver';
+import { verifyAccessToken } from '@/lib/server/auth';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:CloudMindMemoryCards');
 
 export const maxDuration = 60;
 
+async function resolveUserId(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access_token');
+    if (!accessToken) return null;
+    const payload = await verifyAccessToken(accessToken.value);
+    return payload?.sub ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { content, topic, cardCount } = body as {
-      content: string;
+    const { content, topic, cardCount, auto } = body as {
+      content?: string;
       topic?: string;
       cardCount?: number;
+      auto?: boolean;
     };
 
-    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+    const userId = await resolveUserId();
+    let profile = userId ? await buildStudentProfile(userId) : undefined;
+
+    // Auto-derive parameters from the student profile
+    let derived: ReturnType<typeof deriveMemoryParamsFromProfile> | undefined;
+    if (auto || !content) {
+      if (!profile) {
+        return new Response(
+          JSON.stringify({ error: '需要登录且存在学情数据才能自动生成卡片' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      derived = deriveMemoryParamsFromProfile(profile);
+    }
+
+    const finalContent = content || derived?.content || '';
+    const finalTopic = topic || derived?.topic;
+    const finalCardCount = cardCount || derived?.cardCount;
+
+    if (!finalContent || finalContent.trim().length === 0) {
       return new Response(JSON.stringify({ error: '学习内容不能为空' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -30,9 +66,14 @@ export async function POST(req: NextRequest) {
     }
 
     // 限制内容长度
-    const trimmedContent = content.slice(0, 30000);
+    const trimmedContent = finalContent.slice(0, 30000);
 
-    const result = await generateMemoryCards(trimmedContent, topic, cardCount);
+    const result = await generateMemoryCards(
+      trimmedContent,
+      finalTopic,
+      finalCardCount,
+      profile,
+    );
 
     // Save to cards knowledge base (fire and forget)
     try {
@@ -61,10 +102,24 @@ export async function POST(req: NextRequest) {
       // ignore KB save errors
     }
 
-    return new Response(JSON.stringify({ success: true, data: result }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: result,
+        meta: {
+          profileInjected: Boolean(profile),
+          derived: derived
+            ? {
+                topic: derived.topic,
+                cardCount: derived.cardCount,
+                difficulty: derived.difficulty,
+                reviewIntervals: derived.reviewIntervals,
+              }
+            : undefined,
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Memory cards generation failed:', message);

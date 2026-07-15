@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { toast } from 'sonner';
 import {
   useSettingsStore,
@@ -33,9 +32,7 @@ const DETAIL_LEVELS: DetailLevel[] = ['concise', 'standard', 'detailed', 'compre
 const AI_PERSONALITIES: AIPersonality[] = ['friendly', 'professional', 'encouraging', 'strict', 'humorous'];
 const EDUCATION_LEVELS: EducationLevel[] = ['primary', 'middle', 'high', 'undergraduate', 'graduate', 'other'];
 
-export function PersonalizationForm() {
-  const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<'profile' | 'learning' | 'ai' | 'features'>('profile');
+export function PersonalizationForm() {const [activeTab, setActiveTab] = useState<'profile' | 'learning' | 'ai' | 'features'>('profile');
 
   // Profile settings
   const educationLevel = useSettingsStore((s) => s.educationLevel);
@@ -73,17 +70,17 @@ export function PersonalizationForm() {
   const resetPersonalization = useSettingsStore((s) => s.resetPersonalization);
 
   const handleReset = () => {
-    if (confirm(t('personalization.resetConfirm') || '确定要重置所有个性化设置吗？')) {
+    if (confirm('确定要重置所有个性化设置吗？')) {
       resetPersonalization();
-      toast.success(t('personalization.resetSuccess') || '已重置为默认设置');
+      toast.success('已重置为默认设置');
     }
   };
 
   const tabs = [
-    { key: 'profile' as const, icon: BookOpen, label: t('personalization.tabs.profile') || '个人资料' },
-    { key: 'learning' as const, icon: Brain, label: t('personalization.tabs.learning') || '学习偏好' },
-    { key: 'ai' as const, icon: MessageCircle, label: t('personalization.tabs.ai') || 'AI 个性' },
-    { key: 'features' as const, icon: Settings2, label: t('personalization.tabs.features') || '功能设置' },
+    { key: 'profile' as const, icon: BookOpen, label: '个人资料' },
+    { key: 'learning' as const, icon: Brain, label: '学习偏好' },
+    { key: 'ai' as const, icon: MessageCircle, label: 'AI 个性' },
+    { key: 'features' as const, icon: Settings2, label: '功能设置' },
   ];
 
   return (
@@ -92,11 +89,11 @@ export function PersonalizationForm() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="size-5 text-violet-500" />
-          <h2 className="text-lg font-semibold">{t('personalization.title') || '个性化设置'}</h2>
+          <h2 className="text-lg font-semibold">{'个性化设置'}</h2>
         </div>
         <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground">
           <RotateCcw className="size-4 mr-1" />
-          {t('personalization.reset') || '重置'}
+          {'重置'}
         </Button>
       </div>
 
@@ -124,7 +121,7 @@ export function PersonalizationForm() {
         <div className="space-y-6">
           {/* Education Level */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.educationLevel') || '教育阶段'}</label>
+            <label className="text-sm font-medium">{'教育阶段'}</label>
             <div className="flex flex-wrap gap-2">
               {EDUCATION_LEVELS.map((level) => (
                 <button
@@ -145,19 +142,19 @@ export function PersonalizationForm() {
 
           {/* Grade */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.grade') || '年级'}</label>
+            <label className="text-sm font-medium">{'年级'}</label>
             <input
               type="text"
               value={grade}
               onChange={(e) => setGrade(e.target.value)}
-              placeholder={t('personalization.gradePlaceholder') || '例如：初二、高一、大三'}
+              placeholder={'例如：初二、高一、大三'}
               className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
             />
           </Card>
 
           {/* Favorite Subjects */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.favoriteSubjects') || '感兴趣的学科'}</label>
+            <label className="text-sm font-medium">{'感兴趣的学科'}</label>
             <div className="flex flex-wrap gap-2">
               {(favoriteSubjects.length > 0 ? favoriteSubjects : DEFAULT_SUBJECTS).map((subject) => (
                 <button
@@ -183,7 +180,7 @@ export function PersonalizationForm() {
         <div className="space-y-6">
           {/* Learning Style */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.learningStyle') || '学习风格'}</label>
+            <label className="text-sm font-medium">{'学习风格'}</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {LEARNING_STYLES.map((style) => (
                 <button
@@ -201,13 +198,13 @@ export function PersonalizationForm() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              {t('personalization.learningStyleHint') || '选择最适合你的学习方式，AI会据此调整讲解风格'}
+              {'选择最适合你的学习方式，AI会据此调整讲解风格'}
             </p>
           </Card>
 
           {/* Detail Level */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.detailLevel') || '回答详细程度'}</label>
+            <label className="text-sm font-medium">{'回答详细程度'}</label>
             <div className="flex flex-wrap gap-2">
               {DETAIL_LEVELS.map((level) => (
                 <button
@@ -228,7 +225,7 @@ export function PersonalizationForm() {
 
           {/* Preferred Language */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.preferredLanguage') || '首选语言'}</label>
+            <label className="text-sm font-medium">{'首选语言'}</label>
             <div className="flex gap-2">
               {[
                 { value: 'zh', label: '中文' },
@@ -257,12 +254,12 @@ export function PersonalizationForm() {
         <div className="space-y-6">
           {/* AI Name */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.aiName') || 'AI 助手名称'}</label>
+            <label className="text-sm font-medium">{'AI 助手名称'}</label>
             <input
               type="text"
               value={aiName}
               onChange={(e) => setAIName(e.target.value)}
-              placeholder={t('personalization.aiNamePlaceholder') || '给你的AI助手起个名字'}
+              placeholder={'给你的AI助手起个名字'}
               maxLength={20}
               className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
             />
@@ -270,7 +267,7 @@ export function PersonalizationForm() {
 
           {/* AI Personality */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.aiPersonality') || 'AI 性格风格'}</label>
+            <label className="text-sm font-medium">{'AI 性格风格'}</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {AI_PERSONALITIES.map((personality) => (
                 <button
@@ -291,11 +288,11 @@ export function PersonalizationForm() {
 
           {/* Custom Instructions */}
           <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.customInstructions') || '自定义指令'}</label>
+            <label className="text-sm font-medium">{'自定义指令'}</label>
             <Textarea
               value={customInstructions}
               onChange={(e) => setCustomInstructions(e.target.value)}
-              placeholder={t('personalization.customInstructionsPlaceholder') || '告诉AI你的特殊需求，例如：我更喜欢用图示理解概念；请多用例子说明；我对编程感兴趣...'}
+              placeholder={'告诉AI你的特殊需求，例如：我更喜欢用图示理解概念；请多用例子说明；我对编程感兴趣...'}
               maxLength={500}
               rows={4}
               className="resize-none"
@@ -311,8 +308,8 @@ export function PersonalizationForm() {
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <label className="text-sm font-medium">{t('personalization.autoGenerateQuiz') || '自动出题'}</label>
-                <p className="text-xs text-muted-foreground">{t('personalization.autoGenerateQuizHint') || '学习完成后自动生成练习题'}</p>
+                <label className="text-sm font-medium">{'自动出题'}</label>
+                <p className="text-xs text-muted-foreground">{'学习完成后自动生成练习题'}</p>
               </div>
               <Switch checked={autoGenerateQuiz} onCheckedChange={setAutoGenerateQuiz} />
             </div>
@@ -321,8 +318,8 @@ export function PersonalizationForm() {
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <label className="text-sm font-medium">{t('personalization.showStepByStep') || '分步解答'}</label>
-                <p className="text-xs text-muted-foreground">{t('personalization.showStepByStepHint') || '解题时显示详细步骤'}</p>
+                <label className="text-sm font-medium">{'分步解答'}</label>
+                <p className="text-xs text-muted-foreground">{'解题时显示详细步骤'}</p>
               </div>
               <Switch checked={showStepByStep} onCheckedChange={setShowStepByStep} />
             </div>
@@ -331,8 +328,8 @@ export function PersonalizationForm() {
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <label className="text-sm font-medium">{t('personalization.enableMemory') || '记忆功能'}</label>
-                <p className="text-xs text-muted-foreground">{t('personalization.enableMemoryHint') || 'AI记住你的学习历史和偏好'}</p>
+                <label className="text-sm font-medium">{'记忆功能'}</label>
+                <p className="text-xs text-muted-foreground">{'AI记住你的学习历史和偏好'}</p>
               </div>
               <Switch checked={enableMemory} onCheckedChange={setEnableMemory} />
             </div>
@@ -341,8 +338,8 @@ export function PersonalizationForm() {
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <label className="text-sm font-medium">{t('personalization.enableRAG') || '知识库增强'}</label>
-                <p className="text-xs text-muted-foreground">{t('personalization.enableRAGHint') || '使用上传的知识库辅助回答'}</p>
+                <label className="text-sm font-medium">{'知识库增强'}</label>
+                <p className="text-xs text-muted-foreground">{'使用上传的知识库辅助回答'}</p>
               </div>
               <Switch checked={enableRAG} onCheckedChange={setEnableRAG} />
             </div>

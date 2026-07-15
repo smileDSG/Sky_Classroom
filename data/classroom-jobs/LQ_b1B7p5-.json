@@ -1,0 +1,22 @@
+{
+  "id": "LQ_b1B7p5-",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 19,
+  "message": "课堂生成已取消",
+  "createdAt": "2026-05-31T03:01:22.006Z",
+  "updatedAt": "2026-05-31T03:01:26.792Z",
+  "inputSummary": {
+    "requirementPreview": "python入门教程",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-31T03:01:22.017Z",
+  "completedAt": "2026-05-31T03:01:26.792Z",
+  "error": "用户取消了生成"
+}

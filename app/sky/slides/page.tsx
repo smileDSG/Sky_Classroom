@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
-export default function LegacySlidesRedirect() {
+export default function SlidesPageRoute() {
   redirect('/sky/cloud-mind/slides');
 }

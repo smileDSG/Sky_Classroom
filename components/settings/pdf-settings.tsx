@@ -5,7 +5,6 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useI18n } from '@/lib/hooks/use-i18n';
 import { useSettingsStore } from '@/lib/store/settings';
 import { PDF_PROVIDERS } from '@/lib/pdf/constants';
 import type { PDFProviderId } from '@/lib/pdf/types';
@@ -17,12 +16,12 @@ import { cn } from '@/lib/utils';
  */
 function getFeatureLabel(feature: string, t: (key: string) => string): string {
   const labels: Record<string, string> = {
-    text: t('settings.featureText'),
-    images: t('settings.featureImages'),
-    tables: t('settings.featureTables'),
-    formulas: t('settings.featureFormulas'),
-    'layout-analysis': t('settings.featureLayoutAnalysis'),
-    metadata: t('settings.featureMetadata'),
+    text: '文本提取',
+    images: '图片提取',
+    tables: '表格提取',
+    formulas: '公式识别',
+    'layout-analysis': '布局分析',
+    metadata: '元数据',
   };
   return labels[feature] || feature;
 }
@@ -32,7 +31,7 @@ interface PDFSettingsProps {
 }
 
 export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
-  const { t } = useI18n();
+  const t = (key: string) => key;
   const [showApiKey, setShowApiKey] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
@@ -81,15 +80,15 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
 
       if (data.success) {
         setTestStatus('success');
-        setTestMessage(t('settings.connectionSuccess'));
+        setTestMessage('连接成功');
       } else {
         setTestStatus('error');
-        setTestMessage(`${t('settings.connectionFailed')}: ${data.error}`);
+        setTestMessage(`${'连接失败'}: ${data.error}`);
       }
     } catch (err) {
       setTestStatus('error');
       const message = err instanceof Error ? err.message : String(err);
-      setTestMessage(`${t('settings.connectionFailed')}: ${message}`);
+      setTestMessage(`${'连接失败'}: ${message}`);
     }
   };
 
@@ -98,7 +97,7 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
       {/* Server-configured notice */}
       {isServerConfigured && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-3 text-sm text-blue-700 dark:text-blue-300">
-          {t('settings.serverConfiguredNotice')}
+          {'管理员已在服务端配置了此提供方的 API Key，可直接使用。也可输入自己的 Key 覆盖。'}
         </div>
       )}
 
@@ -109,7 +108,7 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
             {/* API Key — shown first for cloud, second for self-hosted */}
             {isCloud && (
               <div className="space-y-2">
-                <Label className="text-sm">{t('settings.pdfApiKey')}</Label>
+                <Label className="text-sm">{'API Key'}</Label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
@@ -121,8 +120,8 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
                       spellCheck={false}
                       placeholder={
                         isServerConfigured
-                          ? t('settings.optionalOverride')
-                          : t('settings.mineruCloudApiKeyPlaceholder')
+                          ? '可选，留空则使用服务端配置'
+                          : '输入 MinerU Cloud API Key'
                       }
                       value={providerConfig?.apiKey || ''}
                       onChange={(e) =>
@@ -150,7 +149,7 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
                     ) : (
                       <>
                         <Zap className="h-3.5 w-3.5" />
-                        {t('settings.testConnection')}
+                        {'测试连接'}
                       </>
                     )}
                   </Button>
@@ -162,10 +161,10 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
             {(isSelfHosted || isCloud) && (
               <div className="space-y-2">
                 <Label className="text-sm">
-                  {t('settings.pdfBaseUrl')}
+                  {'Base URL'}
                   {isCloud && (
                     <span className="text-muted-foreground ml-1 font-normal">
-                      ({t('settings.optional')})
+                      ({'可选'})
                     </span>
                   )}
                 </Label>
@@ -197,7 +196,7 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
                       ) : (
                         <>
                           <Zap className="h-3.5 w-3.5" />
-                          {t('settings.testConnection')}
+                          {'测试连接'}
                         </>
                       )}
                     </Button>
@@ -210,9 +209,9 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
             {isSelfHosted && (
               <div className="space-y-2">
                 <Label className="text-sm">
-                  {t('settings.pdfApiKey')}
+                  {'API Key'}
                   <span className="text-muted-foreground ml-1 font-normal">
-                    ({t('settings.optional')})
+                    ({'可选'})
                   </span>
                 </Label>
                 <div className="relative">
@@ -225,8 +224,8 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
                     spellCheck={false}
                     placeholder={
                       isServerConfigured
-                        ? t('settings.optionalOverride')
-                        : t('settings.enterApiKey')
+                        ? '可选，留空则使用服务端配置'
+                        : '输入 API Key'
                     }
                     value={providerConfig?.apiKey || ''}
                     onChange={(e) =>
@@ -271,7 +270,7 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
               const base = providerConfig?.baseUrl || 'https://mineru.net/api/v4';
               return (
                 <p className="text-xs text-muted-foreground break-all">
-                  {t('settings.requestUrl')}: {base}/file-urls/batch
+                  {'请求地址'}: {base}/file-urls/batch
                 </p>
               );
             }
@@ -279,7 +278,7 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
             if (!effectiveBaseUrl) return null;
             return (
               <p className="text-xs text-muted-foreground break-all">
-                {t('settings.requestUrl')}: {effectiveBaseUrl}/file_parse
+                {'请求地址'}: {effectiveBaseUrl}/file_parse
               </p>
             );
           })()}
@@ -288,7 +287,7 @@ export function PDFSettings({ selectedProviderId }: PDFSettingsProps) {
 
       {/* Features List */}
       <div className="space-y-2">
-        <Label className="text-sm">{t('settings.pdfFeatures')}</Label>
+        <Label className="text-sm">{'支持功能'}</Label>
         <div className="flex flex-wrap gap-2">
           {pdfProvider.features.map((feature) => (
             <Badge key={feature} variant="secondary" className="font-normal">

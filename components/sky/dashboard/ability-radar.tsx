@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Brain } from 'lucide-react';
+import { Brain, Target } from 'lucide-react';
+import Link from 'next/link';
 
 interface RadarDimension {
   name: string;
@@ -13,7 +14,9 @@ interface AbilityRadarProps {
   data: RadarDimension[];
 }
 
-const CX = 140, CY = 130, R = 90; // center x, center y, max radius
+const CX = 140,
+  CY = 130,
+  R = 90; // center x, center y, max radius
 const LEVELS = 4;
 
 /** Generate polygon points for n vertices at given radius ratio */
@@ -33,32 +36,82 @@ function pointsToAttr(pts: { x: number; y: number }[]) {
 
 export function AbilityRadar({ data }: AbilityRadarProps) {
   const n = data.length;
-  const gridLevels = useMemo(() =>
-    Array.from({ length: LEVELS }).map((_, i) => ({
-      ratio: (i + 1) / LEVELS,
-      points: polygonPoints(n, (i + 1) / LEVELS),
-    })), [n]);
+  const allZero = data.every((d) => d.value === 0);
 
-  const valuePoints = useMemo(() =>
-    data.map((d) => ({
-      x: CX + R * (d.value / 100) * Math.cos((Math.PI * 2 * data.indexOf(d)) / n - Math.PI / 2),
-      y: CY + R * (d.value / 100) * Math.sin((Math.PI * 2 * data.indexOf(d)) / n - Math.PI / 2),
-    })), [data, n]);
+  const gridLevels = useMemo(
+    () =>
+      Array.from({ length: LEVELS }).map((_, i) => ({
+        ratio: (i + 1) / LEVELS,
+        points: polygonPoints(n, (i + 1) / LEVELS),
+      })),
+    [n],
+  );
 
-  const labelPoints = useMemo(() =>
-    polygonPoints(n, 1.18), [n]);
+  const valuePoints = useMemo(
+    () =>
+      data.map((d, i) => ({
+        x: CX + R * (d.value / 100) * Math.cos((Math.PI * 2 * i) / n - Math.PI / 2),
+        y: CY + R * (d.value / 100) * Math.sin((Math.PI * 2 * i) / n - Math.PI / 2),
+      })),
+    [data, n],
+  );
+
+  const labelPoints = useMemo(() => polygonPoints(n, 1.18), [n]);
+
+  if (allZero) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15 }}
+        className="group relative overflow-hidden rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-gradient-to-br from-emerald-50/40 via-white/50 to-violet-50/25 dark:from-slate-900/40 dark:via-slate-900/40 dark:to-slate-800/40 backdrop-blur-sm"
+      >
+        {/* Decorative background */}
+        <div className="absolute top-0 left-0 w-24 h-24 bg-emerald-400/8 rounded-full blur-xl -translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute bottom-0 right-0 w-20 h-20 bg-violet-400/8 rounded-full blur-xl translate-y-1/2 translate-x-1/2" />
+
+        <div className="relative z-10 flex flex-col items-center justify-center p-5">
+          <div className="mb-3 relative">
+            <div className="absolute inset-0 rounded-xl bg-emerald-500/15 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/8 ring-1 ring-emerald-400/20">
+              <Target className="h-6 w-6 text-emerald-500" />
+            </div>
+          </div>
+          <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+            能力雷达待激活
+          </h4>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center max-w-[160px] leading-relaxed">
+            完成更多练习后，这里会展示知识能力分布
+          </p>
+          <Link
+            href="/sky/cloud-mind/solve"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-emerald-500/8 hover:bg-emerald-500/15 px-3 py-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 transition-all hover:scale-[1.02]"
+          >
+            <Brain className="h-3 w-3" />
+            开始练习
+          </Link>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/50 p-5 backdrop-blur-sm"
+      transition={{ duration: 0.4, delay: 0.15 }}
+      className="rounded-xl border border-slate-200/50 dark:border-slate-700/30 bg-white/50 dark:bg-slate-900/40 px-4 py-3 backdrop-blur-sm"
     >
       {/* Header */}
-      <div className="mb-3 flex items-center gap-2">
-        <Brain className="w-4 h-4 text-violet-500 dark:text-violet-400" />
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">能力雷达图</h3>
+      <div className="mb-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Brain className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400" />
+          <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">能力雷达图</h3>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+          <span className="text-[9px] text-slate-400">{n} 维度</span>
+        </div>
       </div>
 
       {/* SVG Radar */}
@@ -77,7 +130,11 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
             points={pointsToAttr(level.points)}
             fill="none"
             stroke="currentColor"
-            className={i === LEVELS - 1 ? 'text-slate-400 dark:text-slate-500' : 'text-slate-300 dark:text-slate-600'}
+            className={
+              i === LEVELS - 1
+                ? 'text-slate-400 dark:text-slate-500'
+                : 'text-slate-300 dark:text-slate-600'
+            }
             strokeWidth={i === LEVELS - 1 ? 1 : 0.5}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -87,7 +144,15 @@ export function AbilityRadar({ data }: AbilityRadarProps) {
 
         {/* Axis lines */}
         {polygonPoints(n, 1).map((p, i) => (
-          <line key={i} x1={CX} y1={CY} x2={p.x} y2={p.y} className="stroke-slate-300 dark:stroke-slate-600" strokeWidth={0.5} />
+          <line
+            key={i}
+            x1={CX}
+            y1={CY}
+            x2={p.x}
+            y2={p.y}
+            className="stroke-slate-300 dark:stroke-slate-600"
+            strokeWidth={0.5}
+          />
         ))}
 
         {/* Data area */}

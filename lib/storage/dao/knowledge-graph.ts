@@ -103,7 +103,12 @@ export function createKnowledgeGraphDAO(storage: StorageProvider) {
       for (const m of mistakes) {
         for (const kp of m.knowledgePoints) {
           const key = kp.toLowerCase();
-          const existing = pointMap.get(key) ?? { name: kp, questions: 0, mistakes: 0, masterySum: 0 };
+          const existing = pointMap.get(key) ?? {
+            name: kp,
+            questions: 0,
+            mistakes: 0,
+            masterySum: 0,
+          };
           existing.mistakes += 1;
           // Mastery from mistake's masteryLevel (inverted — more mistakes = lower mastery)
           existing.masterySum += (6 - m.masteryLevel);

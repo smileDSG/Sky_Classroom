@@ -2,16 +2,18 @@
  * Knowledge Base — MySQL data access layer
  */
 
-import mysql, { type Pool, type RowDataPacket } from 'mysql2/promise';
+import 'server-only';
 import { createLogger } from '@/lib/logger';
 import type { KBChunk, KBType } from './types';
+import type { Pool, RowDataPacket } from 'mysql2/promise';
 
 const log = createLogger('KB:DAO');
 
 let _pool: Pool | null = null;
 
-function getPool(): Pool {
+async function getPool(): Promise<Pool> {
   if (_pool) return _pool;
+  const mysql = await import('mysql2/promise');
   _pool = mysql.createPool({
     host: process.env.MYSQL_HOST || 'localhost',
     port: Number(process.env.MYSQL_PORT || 3306),
@@ -21,6 +23,7 @@ function getPool(): Pool {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+    connectTimeout: 3000,
   });
   return _pool;
 }
@@ -61,7 +64,7 @@ function rowToChunk(row: KBRow): KBChunk {
 
 /** Ensure the table exists (auto-migrate) */
 export async function ensureTable(): Promise<void> {
-  const pool = getPool();
+  const pool = await getPool();
   await pool.query(`
     CREATE TABLE IF NOT EXISTS knowledge_base (
       id VARCHAR(64) NOT NULL,
@@ -88,7 +91,7 @@ export async function ensureTable(): Promise<void> {
 
 /** Insert or update a chunk */
 export async function upsertChunk(chunk: KBChunk): Promise<void> {
-  const pool = getPool();
+  const pool = await getPool();
   await pool.query(
     `INSERT INTO knowledge_base (id, kb_type, doc_id, doc_title, chunk_index, total_chunks, content, tags, source_id, verified, usage_count)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -107,7 +110,7 @@ export async function upsertChunk(chunk: KBChunk): Promise<void> {
 /** Bulk insert chunks */
 export async function upsertChunks(chunks: KBChunk[]): Promise<void> {
   if (chunks.length === 0) return;
-  const pool = getPool();
+  const pool = await getPool();
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
@@ -137,7 +140,7 @@ export async function upsertChunks(chunks: KBChunk[]): Promise<void> {
 
 /** Get all chunks for a kb_type */
 export async function getChunksByType(kbType: KBType): Promise<KBChunk[]> {
-  const pool = getPool();
+  const pool = await getPool();
   const [rows] = await pool.query<KBRow[]>(
     'SELECT * FROM knowledge_base WHERE kb_type = ?',
     [kbType],
@@ -147,7 +150,7 @@ export async function getChunksByType(kbType: KBType): Promise<KBChunk[]> {
 
 /** Get chunks by source_id */
 export async function getChunksBySource(kbType: KBType, sourceId: string): Promise<KBChunk[]> {
-  const pool = getPool();
+  const pool = await getPool();
   const [rows] = await pool.query<KBRow[]>(
     'SELECT * FROM knowledge_base WHERE kb_type = ? AND source_id = ?',
     [kbType, sourceId],
@@ -157,19 +160,19 @@ export async function getChunksBySource(kbType: KBType, sourceId: string): Promi
 
 /** Delete all chunks for a document */
 export async function deleteDocument(docId: string): Promise<void> {
-  const pool = getPool();
+  const pool = await getPool();
   await pool.query('DELETE FROM knowledge_base WHERE doc_id = ?', [docId]);
 }
 
 /** Delete all chunks for a kb_type */
 export async function deleteByType(kbType: KBType): Promise<void> {
-  const pool = getPool();
+  const pool = await getPool();
   await pool.query('DELETE FROM knowledge_base WHERE kb_type = ?', [kbType]);
 }
 
 /** Increment usage count for a chunk */
 export async function incrementUsage(chunkId: string): Promise<void> {
-  const pool = getPool();
+  const pool = await getPool();
   await pool.query(
     'UPDATE knowledge_base SET usage_count = usage_count + 1 WHERE id = ?',
     [chunkId],
@@ -178,7 +181,7 @@ export async function incrementUsage(chunkId: string): Promise<void> {
 
 /** Mark chunks as verified by source_id */
 export async function verifyBySource(sourceId: string): Promise<void> {
-  const pool = getPool();
+  const pool = await getPool();
   await pool.query(
     'UPDATE knowledge_base SET verified = 1 WHERE source_id = ?',
     [sourceId],
@@ -191,7 +194,7 @@ export async function getStats(): Promise<{
   totalDocuments: number;
   byType: Record<string, { chunks: number; documents: number }>;
 }> {
-  const pool = getPool();
+  const pool = await getPool();
 
   const [totalRows] = await pool.query<RowDataPacket[]>(
     'SELECT COUNT(*) as chunks, COUNT(DISTINCT doc_id) as docs FROM knowledge_base',
@@ -215,7 +218,7 @@ export async function getStats(): Promise<{
 
 /** Check if source already exists */
 export async function sourceExists(sourceId: string): Promise<boolean> {
-  const pool = getPool();
+  const pool = await getPool();
   const [rows] = await pool.query<RowDataPacket[]>(
     'SELECT 1 FROM knowledge_base WHERE source_id = ? LIMIT 1',
     [sourceId],

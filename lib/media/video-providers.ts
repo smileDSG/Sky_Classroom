@@ -9,16 +9,6 @@ import type {
   VideoGenerationResult,
   VideoProviderConfig,
 } from './types';
-import { generateWithSeedance, testSeedanceConnectivity } from './adapters/seedance-adapter';
-import { generateWithKling, testKlingConnectivity } from './adapters/kling-adapter';
-import { generateWithVeo, testVeoConnectivity } from './adapters/veo-adapter';
-import {
-  generateWithMiniMaxVideo,
-  testMiniMaxVideoConnectivity,
-} from './adapters/minimax-video-adapter';
-import { generateWithGrokVideo, testGrokVideoConnectivity } from './adapters/grok-video-adapter';
-import { generateWithHappyHorse, testHappyHorseConnectivity } from './adapters/happyhorse-adapter';
-
 export const VIDEO_PROVIDERS: Record<VideoProviderId, VideoProviderConfig> = {
   seedance: {
     id: 'seedance',
@@ -124,18 +114,30 @@ export async function testVideoConnectivity(
   config: VideoGenerationConfig,
 ): Promise<{ success: boolean; message: string }> {
   switch (config.providerId) {
-    case 'seedance':
+    case 'seedance': {
+      const { testSeedanceConnectivity } = await import('./adapters/seedance-adapter');
       return testSeedanceConnectivity(config);
-    case 'kling':
+    }
+    case 'kling': {
+      const { testKlingConnectivity } = await import('./adapters/kling-adapter');
       return testKlingConnectivity(config);
-    case 'veo':
+    }
+    case 'veo': {
+      const { testVeoConnectivity } = await import('./adapters/veo-adapter');
       return testVeoConnectivity(config);
-    case 'minimax-video':
+    }
+    case 'minimax-video': {
+      const { testMiniMaxVideoConnectivity } = await import('./adapters/minimax-video-adapter');
       return testMiniMaxVideoConnectivity(config);
-    case 'grok-video':
+    }
+    case 'grok-video': {
+      const { testGrokVideoConnectivity } = await import('./adapters/grok-video-adapter');
       return testGrokVideoConnectivity(config);
-    case 'happyhorse':
+    }
+    case 'happyhorse': {
+      const { testHappyHorseConnectivity } = await import('./adapters/happyhorse-adapter');
       return testHappyHorseConnectivity(config);
+    }
     default:
       return {
         success: false,
@@ -191,18 +193,30 @@ export async function generateVideo(
   options: VideoGenerationOptions,
 ): Promise<VideoGenerationResult> {
   switch (config.providerId) {
-    case 'seedance':
+    case 'seedance': {
+      const { generateWithSeedance } = await import('./adapters/seedance-adapter');
       return generateWithSeedance(config, options);
-    case 'kling':
+    }
+    case 'kling': {
+      const { generateWithKling } = await import('./adapters/kling-adapter');
       return generateWithKling(config, options);
-    case 'veo':
+    }
+    case 'veo': {
+      const { generateWithVeo } = await import('./adapters/veo-adapter');
       return generateWithVeo(config, options);
-    case 'minimax-video':
+    }
+    case 'minimax-video': {
+      const { generateWithMiniMaxVideo } = await import('./adapters/minimax-video-adapter');
       return generateWithMiniMaxVideo(config, options);
-    case 'grok-video':
+    }
+    case 'grok-video': {
+      const { generateWithGrokVideo } = await import('./adapters/grok-video-adapter');
       return generateWithGrokVideo(config, options);
-    case 'happyhorse':
+    }
+    case 'happyhorse': {
+      const { generateWithHappyHorse } = await import('./adapters/happyhorse-adapter');
       return generateWithHappyHorse(config, options);
+    }
     default:
       throw new Error(`Unsupported video provider: ${config.providerId}`);
   }

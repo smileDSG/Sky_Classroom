@@ -1,0 +1,76 @@
+{
+  "id": "452wmGbKQW",
+  "userId": "admin-default",
+  "topic": "二次函数",
+  "status": "cancelled",
+  "step": "failed",
+  "progress": 10,
+  "message": "教案生成已取消",
+  "createdAt": "2026-06-08T12:14:42.038Z",
+  "updatedAt": "2026-06-08T12:14:55.903Z",
+  "sectionsCompleted": 0,
+  "totalSections": 4,
+  "startedAt": "2026-06-08T12:14:42.049Z",
+  "plan": {
+    "title": "二次函数基础与性质（中级强化）",
+    "sections": [
+      {
+        "id": "section-1",
+        "title": "二次函数的定义与图像",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "二次函数的一般形式",
+          "抛物线开口方向与顶点"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-2",
+        "title": "二次函数图像的平移与对称轴",
+        "contentType": "example",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "顶点式与平移规律",
+          "对称轴求法"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-3",
+        "title": "二次函数的最值与实际应用",
+        "contentType": "explanation",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "配方法求最值",
+          "区间内最值问题"
+        ],
+        "estimatedDuration": 8,
+        "hasQuiz": true
+      },
+      {
+        "id": "section-4",
+        "title": "二次函数与一元二次方程的关系",
+        "contentType": "diagram",
+        "depth": "intermediate",
+        "knowledgePoints": [
+          "判别式与交点个数",
+          "韦达定理的简单应用"
+        ],
+        "estimatedDuration": 7,
+        "hasQuiz": true
+      }
+    ],
+    "estimatedDuration": 31,
+    "focusPoints": [
+      "二次函数的一般形式与顶点式",
+      "图像的平移规律",
+      "配方法求最值",
+      "判别式与图像交点"
+    ]
+  },
+  "completedAt": "2026-06-08T12:14:55.903Z",
+  "error": "用户取消了生成"
+}

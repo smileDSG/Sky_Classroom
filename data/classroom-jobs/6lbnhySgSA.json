@@ -1,0 +1,329 @@
+{
+  "id": "6lbnhySgSA",
+  "status": "succeeded",
+  "step": "completed",
+  "progress": 100,
+  "message": "Classroom generation completed",
+  "createdAt": "2026-05-30T09:45:41.217Z",
+  "updatedAt": "2026-05-30T09:50:43.403Z",
+  "inputSummary": {
+    "requirementPreview": "Java入门教程极简版",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 3,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-30T09:45:41.222Z",
+  "totalScenes": 7,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "什么是Java？",
+        "description": "介绍Java语言的基本概念、特点和应用领域，激发学习兴趣。",
+        "keyPoints": [
+          "Java是一种流行的面向对象编程语言",
+          "一次编写，到处运行（跨平台）",
+          "广泛用于Web、移动和企业开发"
+        ],
+        "teachingObjective": "了解Java语言的基本特性和应用场景",
+        "estimatedDuration": 120,
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "搭建开发环境",
+        "description": "简要说明JDK安装和IDE选择，为后续编程做准备。",
+        "keyPoints": [
+          "下载并安装JDK",
+          "配置环境变量",
+          "使用IntelliJ IDEA或Eclipse等IDE（可选）",
+          "理解Java源文件（.java）和字节码（.class）"
+        ],
+        "teachingObjective": "能够搭建基本的Java开发环境",
+        "estimatedDuration": 120,
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "interactive",
+        "title": "Hello World!",
+        "description": "动手编写并运行第一个Java程序，体验代码编译执行过程。",
+        "keyPoints": [
+          "编写简单的HelloWorld程序",
+          "理解main方法作为程序入口",
+          "使用System.out.println输出文本"
+        ],
+        "teachingObjective": "能够编写并运行一个简单的Java程序",
+        "estimatedDuration": 180,
+        "order": 3,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "java"
+        }
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "Java基本语法",
+        "description": "讲解Java程序结构、标识符、关键字和注释等基础语法。",
+        "keyPoints": [
+          "类与方法的定义",
+          "Java的关键字（如public, class, static, void）",
+          "单行和多行注释",
+          "代码块和缩进"
+        ],
+        "teachingObjective": "理解Java程序的基本结构和语法规则",
+        "estimatedDuration": 150,
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "slide",
+        "title": "变量与数据类型",
+        "description": "介绍Java中的基本数据类型、变量声明和命名规范。",
+        "keyPoints": [
+          "8种基本数据类型：int, double, char, boolean等",
+          "变量声明与初始化",
+          "驼峰命名法",
+          "字符串类型String"
+        ],
+        "teachingObjective": "能够声明和使用基本类型的变量",
+        "estimatedDuration": 150,
+        "order": 5
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "简单输入输出",
+        "description": "学习控制台输出和简单的输入方法，为交互程序打基础。",
+        "keyPoints": [
+          "System.out.println输出",
+          "使用Scanner类获取用户输入",
+          "import语句",
+          "基本的数据类型转换"
+        ],
+        "teachingObjective": "实现基本的控制台输入输出功能",
+        "estimatedDuration": 150,
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "quiz",
+        "title": "小测验",
+        "description": "通过几道选择题，检验对Java基础知识的掌握。",
+        "keyPoints": [
+          "Java特点",
+          "基本程序结构",
+          "变量和数据类型",
+          "输入输出"
+        ],
+        "teachingObjective": "巩固本章所学知识",
+        "estimatedDuration": 120,
+        "order": 7,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple"
+          ]
+        }
+      }
+    ],
+    "languageDirective": "使用中文进行教学，Java术语和代码保持英文，确保初学者能够轻松理解。解释用词简明扼要，避免复杂术语。",
+    "topicSummary": "Java入门教程极简版",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "FdkQF75zOR",
+      "name": "什么是Java？",
+      "languageDirective": "使用中文进行教学，Java术语和代码保持英文，确保初学者能够轻松理解。解释用词简明扼要，避免复杂术语。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780134387135,
+      "updatedAt": 1780134387135,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "Java入门教程极简版",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "什么是Java？",
+      "description": "介绍Java语言的基本概念、特点和应用领域，激发学习兴趣。",
+      "keyPoints": [
+        "Java是一种流行的面向对象编程语言",
+        "一次编写，到处运行（跨平台）",
+        "广泛用于Web、移动和企业开发"
+      ],
+      "teachingObjective": "了解Java语言的基本特性和应用场景",
+      "estimatedDuration": 120,
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "搭建开发环境",
+      "description": "简要说明JDK安装和IDE选择，为后续编程做准备。",
+      "keyPoints": [
+        "下载并安装JDK",
+        "配置环境变量",
+        "使用IntelliJ IDEA或Eclipse等IDE（可选）",
+        "理解Java源文件（.java）和字节码（.class）"
+      ],
+      "teachingObjective": "能够搭建基本的Java开发环境",
+      "estimatedDuration": 120,
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "interactive",
+      "title": "Hello World!",
+      "description": "动手编写并运行第一个Java程序，体验代码编译执行过程。",
+      "keyPoints": [
+        "编写简单的HelloWorld程序",
+        "理解main方法作为程序入口",
+        "使用System.out.println输出文本"
+      ],
+      "teachingObjective": "能够编写并运行一个简单的Java程序",
+      "estimatedDuration": 180,
+      "order": 3,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "java"
+      }
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "Java基本语法",
+      "description": "讲解Java程序结构、标识符、关键字和注释等基础语法。",
+      "keyPoints": [
+        "类与方法的定义",
+        "Java的关键字（如public, class, static, void）",
+        "单行和多行注释",
+        "代码块和缩进"
+      ],
+      "teachingObjective": "理解Java程序的基本结构和语法规则",
+      "estimatedDuration": 150,
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "slide",
+      "title": "变量与数据类型",
+      "description": "介绍Java中的基本数据类型、变量声明和命名规范。",
+      "keyPoints": [
+        "8种基本数据类型：int, double, char, boolean等",
+        "变量声明与初始化",
+        "驼峰命名法",
+        "字符串类型String"
+      ],
+      "teachingObjective": "能够声明和使用基本类型的变量",
+      "estimatedDuration": 150,
+      "order": 5
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "简单输入输出",
+      "description": "学习控制台输出和简单的输入方法，为交互程序打基础。",
+      "keyPoints": [
+        "System.out.println输出",
+        "使用Scanner类获取用户输入",
+        "import语句",
+        "基本的数据类型转换"
+      ],
+      "teachingObjective": "实现基本的控制台输入输出功能",
+      "estimatedDuration": 150,
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "quiz",
+      "title": "小测验",
+      "description": "通过几道选择题，检验对Java基础知识的掌握。",
+      "keyPoints": [
+        "Java特点",
+        "基本程序结构",
+        "变量和数据类型",
+        "输入输出"
+      ],
+      "teachingObjective": "巩固本章所学知识",
+      "estimatedDuration": 120,
+      "order": 7,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple"
+        ]
+      }
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "使用中文进行教学，Java术语和代码保持英文，确保初学者能够轻松理解。解释用词简明扼要，避免复杂术语。",
+    "totalScenes": 7
+  },
+  "topicSummary": "Java入门教程极简版",
+  "completedAt": "2026-05-30T09:50:43.403Z",
+  "result": {
+    "classroomId": "FdkQF75zOR",
+    "url": "http://localhost:3000/classroom/FdkQF75zOR",
+    "scenesCount": 3
+  }
+}

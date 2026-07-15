@@ -8,17 +8,32 @@ import { useSlideBackgroundStyle } from '@/lib/hooks/use-slide-background-style'
 import { useCanvasStore } from '@/lib/store';
 import { useSceneSelector } from '@/lib/contexts/scene-context';
 import { findElementGeometry } from '@/lib/utils/geometry';
-import type { SlideContent } from '@/lib/types/stage';
+import { polishSlideElements } from '@/lib/generation/scene-content/slide-polish';
 import type { PPTElement, SlideBackground } from '@/lib/types/slides';
+import type { SlideContent } from '@/lib/types/stage';
 import type { PercentageGeometry } from '@/lib/types/action';
 import { useViewportSize } from './Canvas/hooks/useViewportSize';
 import { useRef, useMemo } from 'react';
 import { AnimatePresence } from 'motion/react';
+import { TemplateCanvas } from '../TemplateCanvas';
+import type { TemplateSlideData } from '@/lib/templates/pptd-types';
 
 export function ScreenCanvas() {
   const canvasScale = useCanvasStore.use.canvasScale();
   const elements = useSceneSelector<SlideContent, PPTElement[]>(
     (content) => content.canvas.elements,
+  );
+  const sceneTitle = useSceneSelector<SlideContent, string | undefined>(
+    (content) =>
+      content.canvas.elements
+        .filter((element) => element.type === 'text' && element.top < 170)
+        .map((element) =>
+          String((element as { content?: string }).content ?? '').replace(/<[^>]+>/g, ''),
+        )[0],
+  );
+  const displayElements = useMemo(
+    () => polishSlideElements(elements, { title: sceneTitle, decorate: false }),
+    [elements, sceneTitle],
   );
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +45,9 @@ export function ScreenCanvas() {
     (content) => content.canvas.background,
   );
   const { backgroundStyle } = useSlideBackgroundStyle(background);
+  const templateData = useSceneSelector<SlideContent, TemplateSlideData | undefined>(
+    (content) => content.canvas.templateData,
+  );
 
   // Get visual effect state
   const laserElementId = useCanvasStore.use.laserElementId();
@@ -39,24 +57,30 @@ export function ScreenCanvas() {
   // Compute laser pointer geometry
   const laserGeometry = useMemo<PercentageGeometry | null>(() => {
     if (!laserElementId) return null;
-    const element = elements.find((el) => el.id === laserElementId);
+    const element = displayElements.find((el) => el.id === laserElementId);
     if (!element) return null;
     return findElementGeometry(
-      { type: 'slide', content: { canvas: { elements } } } as Record<string, unknown>,
+      { type: 'slide', content: { canvas: { elements: displayElements } } } as Record<
+        string,
+        unknown
+      >,
       laserElementId,
     );
-  }, [laserElementId, elements]);
+  }, [laserElementId, displayElements]);
 
   // Compute zoom target geometry
   const zoomGeometry = useMemo<PercentageGeometry | null>(() => {
     if (!zoomTarget) return null;
-    const element = elements.find((el) => el.id === zoomTarget.elementId);
+    const element = displayElements.find((el) => el.id === zoomTarget.elementId);
     if (!element) return null;
     return findElementGeometry(
-      { type: 'slide', content: { canvas: { elements } } } as Record<string, unknown>,
+      { type: 'slide', content: { canvas: { elements: displayElements } } } as Record<
+        string,
+        unknown
+      >,
       zoomTarget.elementId,
     );
-  }, [zoomTarget, elements]);
+  }, [zoomTarget, displayElements]);
 
   return (
     <div className="relative h-full w-full overflow-hidden select-none" ref={canvasRef}>
@@ -76,27 +100,38 @@ export function ScreenCanvas() {
         }}
       >
         {/* Background layer */}
-        <div
-          className="w-full h-full bg-position-center rounded-lg"
-          style={{ ...backgroundStyle }}
-        ></div>
+        {!templateData && (
+          <div
+            className="w-full h-full bg-position-center rounded-lg"
+            style={{ ...backgroundStyle }}
+          />
+        )}
 
         {/* Content layer - scaled */}
-        <div
-          className="absolute top-0 left-0 origin-top-left"
-          style={{
-            width: `${viewportStyles.width}px`,
-            height: `${viewportStyles.height}px`,
-            transform: `scale(${canvasScale})`,
-          }}
-        >
-          {elements.map((element, index) => (
-            <ScreenElement key={element.id} elementInfo={element} elementIndex={index + 1} />
-          ))}
-
-          {/* Highlight overlay - stacked above elements */}
-          <HighlightOverlay />
-        </div>
+        {templateData ? (
+          <TemplateCanvas
+            page={templateData.page}
+            manifestTheme={templateData.theme}
+            canvasWidth={viewportStyles.width * canvasScale}
+            canvasHeight={viewportStyles.height * canvasScale}
+          />
+        ) : (
+          <div
+            data-classroom-slide-canvas="true"
+            className="absolute top-0 left-0 origin-top-left"
+            style={{
+              width: `${viewportStyles.width}px`,
+              height: `${viewportStyles.height}px`,
+              transform: `scale(${canvasScale})`,
+            }}
+          >
+            {displayElements.map((element, index) => (
+              <ScreenElement key={element.id} elementInfo={element} elementIndex={index + 1} />
+            ))}
+            {/* Highlight overlay - stacked above elements */}
+            <HighlightOverlay />
+          </div>
+        )}
 
         {/* Spotlight overlay - covers the entire slide, positioned via DOM measurement */}
         <SpotlightOverlay />

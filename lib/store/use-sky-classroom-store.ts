@@ -8,6 +8,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { EBBINGHAUS_INTERVALS } from '@/lib/storage/dao/mistakes';
 import type {
   SolveState,
   GradeResult,
@@ -15,9 +16,15 @@ import type {
   QuestionBankEntry,
   SolverAgentType,
 } from '@/lib/solve/types';
-import type { AvatarConfig, AvatarSpeech, SlideGenerationOptions, SlideGenerationResult } from '@/lib/slides/types';
+import type {
+  AvatarConfig,
+  AvatarSpeech,
+  SlideGenerationOptions,
+  SlideGenerationResult,
+} from '@/lib/slides/types';
 import type { MistakeRecord, KnowledgeGraph, MistakeFilter } from '@/lib/mistakes/types';
 import type { Slide } from '@/lib/types/slides';
+import type { MemoryReviewRecord } from '@/lib/cloud-mind/types';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SkyClassroomStore');
@@ -123,9 +130,9 @@ function causeToErrorType(cause: MistakeRecord['cause']): string {
   const map: Record<string, string> = {
     'concept-unclear': 'concept',
     'calculation-error': 'calculation',
-    'misreading': 'reading',
+    misreading: 'reading',
     'method-wrong': 'reasoning',
-    'careless': 'careless',
+    careless: 'careless',
     'format-error': 'careless',
   };
   return map[cause] ?? 'concept';
@@ -142,16 +149,20 @@ function syncAddToServer(m: MistakeRecord): void {
       correctAnswer: m.correctAnswer,
       errorType: causeToErrorType(m.cause),
       knowledgePoints: m.knowledgePoints,
+      source: m.source,
+      sourceSessionId: m.sourceSessionId,
     }),
-  }).catch(() => { /* ignore — local store is source of truth for UI */ });
+  }).catch(() => {
+    /* ignore — local store is source of truth for UI */
+  });
 }
 
 /** Fire-and-forget: PATCH mistake review on server */
-function syncReviewToServer(id: string): void {
+function syncReviewToServer(id: string, correct: boolean): void {
   fetch('/api/sky/mistakes', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id }),
+    body: JSON.stringify({ id, correct }),
   }).catch(() => {});
 }
 
@@ -166,14 +177,21 @@ interface MistakesSlice {
   activeFilter: MistakeFilter | null;
 
   addMistake: (mistake: MistakeRecord) => void;
-  markReviewed: (id: string) => void;
+  markReviewed: (id: string, correct?: boolean) => void;
   setFilter: (filter: MistakeFilter | null) => void;
   setKnowledgeGraph: (graph: KnowledgeGraph) => void;
   deleteMistake: (id: string) => void;
   mergeMistakes: (serverMistakes: MistakeRecord[]) => void;
+  /** Set nextReview=now for all mistakes matching the given knowledge points */
+  prioritizeReview: (knowledgePoints: string[]) => void;
+  /** Cache AI-generated solution data for a mistake */
+  updateMistakeSolution: (id: string, data: { solutionSteps?: string[]; hints?: string[]; errorExplanation?: string }) => void;
 }
 
-const createMistakesSlice = (set: SetFn<MistakesSlice>, get: () => SkyClassroomStore): MistakesSlice => ({
+const createMistakesSlice = (
+  set: SetFn<MistakesSlice>,
+  get: () => SkyClassroomStore,
+): MistakesSlice => ({
   mistakes: [],
   knowledgeGraph: null,
   activeFilter: null,
@@ -184,9 +202,38 @@ const createMistakesSlice = (set: SetFn<MistakesSlice>, get: () => SkyClassroomS
     });
     syncAddToServer(m);
   },
-  markReviewed: (id) => {
-    set((s) => ({ mistakes: s.mistakes.map((m) => m.id === id ? { ...m, reviewed: true, reviewCount: m.reviewCount + 1 } : m) }));
-    syncReviewToServer(id);
+  markReviewed: (id, correct = true) => {
+    const now = Date.now();
+    set((s) => ({
+      mistakes: s.mistakes.map((m) => {
+        if (m.id !== id) return m;
+        if (!correct) {
+          return {
+            ...m,
+            reviewed: false,
+            reviewCount: 0,
+            masteryLevel: 0,
+            lastReview: now,
+            nextReview: now + 86400000,
+          };
+        }
+
+        const reviewCount = m.reviewCount + 1;
+        const mastered = reviewCount >= EBBINGHAUS_INTERVALS.length;
+        const intervalIdx = Math.min(reviewCount, EBBINGHAUS_INTERVALS.length - 1);
+        return {
+          ...m,
+          reviewed: mastered,
+          reviewCount,
+          masteryLevel: reviewCount,
+          lastReview: now,
+          nextReview: mastered
+            ? Number.MAX_SAFE_INTEGER
+            : now + EBBINGHAUS_INTERVALS[intervalIdx] * 86400000,
+        };
+      }),
+    }));
+    syncReviewToServer(id, correct);
   },
   setFilter: (filter) => set({ activeFilter: filter }),
   setKnowledgeGraph: (graph) => set({ knowledgeGraph: graph }),
@@ -206,6 +253,24 @@ const createMistakesSlice = (set: SetFn<MistakesSlice>, get: () => SkyClassroomS
     if (newFromServer.length > 0 || dedupedLocal.length !== local.length) {
       set({ mistakes: [...dedupedLocal, ...newFromServer] });
     }
+  },
+  prioritizeReview: (knowledgePoints) => {
+    const kpSet = new Set(knowledgePoints);
+    set((s) => ({
+      mistakes: s.mistakes.map((m) => {
+        if (m.reviewed) return m;
+        const matches = m.knowledgePoints.some((kp) => kpSet.has(kp));
+        if (!matches) return m;
+        return { ...m, nextReview: Date.now() };
+      }),
+    }));
+  },
+  updateMistakeSolution: (id, data) => {
+    set((s) => ({
+      mistakes: s.mistakes.map((m) =>
+        m.id === id ? { ...m, ...data } : m,
+      ),
+    }));
   },
 });
 
@@ -234,9 +299,47 @@ const createAssistantSlice = (set: SetFn<AssistantSlice>): AssistantSlice => ({
   setDifficulty: (difficulty) => set({ difficulty }),
 });
 
+// ── Memory Slice ──────────────────────────────────────────────────
+
+interface MemorySlice {
+  memoryProgress: {
+    totalFlipped: number;
+    topicCount: number;
+    lastStudied: number | null;
+  };
+  memoryReviews: MemoryReviewRecord[];
+  updateMemoryProgress: (data: Partial<MemorySlice['memoryProgress']>) => void;
+  recordMemoryReview: (review: MemoryReviewRecord) => void;
+  clearMemoryReviews: () => void;
+}
+
+const createMemorySlice = (set: SetFn<MemorySlice>): MemorySlice => ({
+  memoryProgress: {
+    totalFlipped: 0,
+    topicCount: 0,
+    lastStudied: null,
+  },
+  memoryReviews: [],
+  updateMemoryProgress: (data) =>
+    set((s) => ({
+      memoryProgress: { ...s.memoryProgress, ...data },
+    })),
+  recordMemoryReview: (review) =>
+    set((s) => {
+      const existingIndex = s.memoryReviews.findIndex((item) => item.id === review.id);
+      if (existingIndex < 0) {
+        return { memoryReviews: [...s.memoryReviews, review] };
+      }
+      const next = [...s.memoryReviews];
+      next[existingIndex] = review;
+      return { memoryReviews: next };
+    }),
+  clearMemoryReviews: () => set({ memoryReviews: [] }),
+});
+
 // ── Combined Store ─────────────────────────────────────────────────
 
-export type SkyClassroomStore = SolveSlice & SlidesSlice & MistakesSlice & AssistantSlice;
+export type SkyClassroomStore = SolveSlice & SlidesSlice & MistakesSlice & AssistantSlice & MemorySlice;
 
 export const useSkyClassroomStore = create<SkyClassroomStore>()(
   persist(
@@ -249,12 +352,18 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
       ...createMistakesSlice(set, get),
       // Assistant
       ...createAssistantSlice(set),
+      // Memory
+      ...createMemorySlice(set),
     }),
     {
       name: 'sky-classroom-storage',
-      version: 1,
+      version: 2,
       migrate: (persistedState: unknown) => {
-        if (!persistedState || typeof persistedState !== 'object' || Array.isArray(persistedState)) {
+        if (
+          !persistedState ||
+          typeof persistedState !== 'object' ||
+          Array.isArray(persistedState)
+        ) {
           return {} as unknown as SkyClassroomStore;
         }
         const s = persistedState as Record<string, unknown>;
@@ -277,6 +386,16 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
             return true;
           });
         }
+        if (!Array.isArray(s.memoryReviews)) {
+          s.memoryReviews = [];
+        }
+        if (!s.memoryProgress || typeof s.memoryProgress !== 'object') {
+          s.memoryProgress = {
+            totalFlipped: 0,
+            topicCount: 0,
+            lastStudied: null,
+          };
+        }
         return s as unknown as SkyClassroomStore;
       },
       partialize: (state) => ({
@@ -287,6 +406,8 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
         style: state.style,
         difficulty: state.difficulty,
         mistakes: state.mistakes,
+        memoryProgress: state.memoryProgress,
+        memoryReviews: state.memoryReviews,
       }),
     },
   ),

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ElementTypes, type PPTElement, type PPTVideoElement } from '@/lib/types/slides';
+import { ElementTypes, type PPTElement, type PPTVideoElement, type PPTLineElement } from '@/lib/types/slides';
 import { isMediaPlaceholder } from '@/lib/store/media-generation';
 import { Play } from 'lucide-react';
 
@@ -34,11 +34,9 @@ function ThumbnailVideoElement({ elementInfo }: { readonly elementInfo: PPTVideo
 
   return (
     <div
-      className="element-content absolute"
+      className="element-content w-full h-full"
       data-video-element
       style={{
-        top: `${elementInfo.top}px`,
-        left: `${elementInfo.left}px`,
         width: `${elementInfo.width}px`,
         height: `${elementInfo.height}px`,
       }}
@@ -85,15 +83,38 @@ export function ThumbnailElement({ elementInfo, elementIndex }: ThumbnailElement
     return elementTypeMap[elementInfo.type] || null;
   }, [elementInfo.type]);
 
+  const thumbnailShadow = useMemo(() => {
+    switch (elementInfo.type) {
+      case ElementTypes.TEXT:
+        return '0 1px 3px rgba(0,0,0,0.04)';
+      case ElementTypes.IMAGE:
+      case ElementTypes.SHAPE:
+      case ElementTypes.CHART:
+      case ElementTypes.TABLE:
+        return '0 4px 12px rgba(0,0,0,0.06)';
+      case ElementTypes.VIDEO:
+        return '0 8px 24px rgba(0,0,0,0.08)';
+      case ElementTypes.LINE:
+        return undefined;
+      default:
+        return undefined;
+    }
+  }, [elementInfo.type]);
+
   if (!CurrentElementComponent) {
     return null;
   }
 
   return (
     <div
-      className={`base-element base-element-${elementInfo.id}`}
+      className={`base-element base-element-${elementInfo.id} absolute`}
       style={{
         zIndex: elementIndex,
+        left: `${elementInfo.left}px`,
+        top: `${elementInfo.top}px`,
+        width: `${elementInfo.width}px`,
+        height: `${'height' in elementInfo ? elementInfo.height : Math.abs((elementInfo as PPTLineElement).end[1] - (elementInfo as PPTLineElement).start[1]) || 24}px`,
+        boxShadow: thumbnailShadow,
       }}
     >
       <CurrentElementComponent elementInfo={elementInfo} target="thumbnail" />

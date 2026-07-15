@@ -7,11 +7,11 @@ import { PENDING_SCENE_ID } from '@/lib/store/stage';
 import { useCanvasStore } from '@/lib/store/canvas';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import { SceneTimeline } from './stage/scene-timeline';
+import { SceneSidebar } from './stage/scene-sidebar';
 import { Header } from './header';
 import { CanvasArea } from '@/components/canvas/canvas-area';
 import { Roundtable } from '@/components/roundtable';
-import { PlaybackEngine, computePlaybackView } from '@/lib/playback';
+import { PlaybackEngine, computePlaybackView, getSpeechTextForView } from '@/lib/playback';
 import type { EngineMode, TriggerEvent, Effect } from '@/lib/playback';
 import { ActionEngine } from '@/lib/action/engine';
 import { createAudioPlayer } from '@/lib/utils/audio-player';
@@ -34,7 +34,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { AlertTriangle, BookOpen, Image } from 'lucide-react';
+import { AlertTriangle, LayoutList, MessageSquare } from 'lucide-react';
 import { PptViewer } from '@/components/classroom/ppt-viewer';
 import { VisuallyHidden } from 'radix-ui';
 
@@ -151,13 +151,20 @@ export function Stage({
   // Discussion TTS: audio indicator state
   const [audioIndicatorState, setAudioIndicatorState] = useState<AudioIndicatorState>('idle');
   const [audioAgentId, setAudioAgentId] = useState<string | null>(null);
+  const [audioSpeech, setAudioSpeech] = useState<string | null>(null);
 
   const discussionTTS = useDiscussionTTS({
     enabled: ttsEnabled && !ttsMuted,
     agents: selectedAgents,
-    onAudioStateChange: (agentId, state) => {
+    onAudioStateChange: (agentId, state, text) => {
       setAudioAgentId(agentId);
       setAudioIndicatorState(state);
+      if (state === 'playing' && text) {
+        setAudioSpeech(text);
+        setSpeakingAgentId(agentId);
+      } else if (state === 'idle') {
+        setAudioSpeech(null);
+      }
     },
   });
 
@@ -188,6 +195,7 @@ export function Stage({
   const stageRef = useRef<HTMLDivElement>(null);
   // Guard to prevent double flash when manual stop triggers onDiscussionEnd
   const manualStopRef = useRef(false);
+  const liveCleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Monotonic counter incremented on each scene switch — used to discard stale SSE callbacks
   const sceneEpochRef = useRef(0);
   // When true, the next engine init will auto-start playback (for auto-play scene advance)
@@ -215,7 +223,12 @@ export function Stage({
 
   /** Reset all live/discussion state (shared by doSessionCleanup & onDiscussionEnd) */
   const resetLiveState = useCallback(() => {
+    if (liveCleanupTimerRef.current) {
+      clearTimeout(liveCleanupTimerRef.current);
+      liveCleanupTimerRef.current = null;
+    }
     setLiveSpeech(null);
+    setAudioSpeech(null);
     setSpeakingAgentId(null);
     setSpeechProgress(null);
     setThinkingState(null);
@@ -248,7 +261,7 @@ export function Stage({
    * Unified session cleanup — called by both roundtable stop button and chat area end button.
    * Handles: engine transition, flash, roundtable state clearing.
    */
-  const doSessionCleanup = useCallback(() => {
+  const doSessionCleanup = useCallback((options?: { preserveQaBubble?: boolean }) => {
     const activeType = chatSessionType;
 
     // Engine cleanup — guard to avoid double flash from onDiscussionEnd
@@ -261,6 +274,23 @@ export function Stage({
       setEndFlashSessionType(activeType);
       setShowEndFlash(true);
       setTimeout(() => setShowEndFlash(false), 1800);
+    }
+
+    if (activeType === 'qa' && options?.preserveQaBubble) {
+      setChatIsStreaming(false);
+      setChatSessionType(null);
+      setThinkingState(null);
+      setIsCueUser(false);
+      setIsTopicPending(false);
+      setIsDiscussionPaused(false);
+      setSpeechProgress(null);
+      liveCleanupTimerRef.current = setTimeout(() => {
+        liveCleanupTimerRef.current = null;
+        setLiveSpeech(null);
+        setAudioSpeech(null);
+        setSpeakingAgentId(null);
+      }, 6000);
+      return;
     }
 
     // Stop any in-flight discussion TTS audio
@@ -304,19 +334,22 @@ export function Stage({
     setChatIsStreaming(true);
     setChatSessionType('qa');
     setThinkingState({ stage: 'director' });
-  }, [askInputValue]);
+  }, [askInputValue, setChatAreaCollapsed]);
 
   // Handle key down in ask dialog
-  const handleAskInputKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-      e.preventDefault();
-      handleSendQuestion();
-    }
-    if (e.key === 'Escape') {
-      setIsAskDialogOpen(false);
-      setAskInputValue('');
-    }
-  }, [handleSendQuestion]);
+  const handleAskInputKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+        e.preventDefault();
+        handleSendQuestion();
+      }
+      if (e.key === 'Escape') {
+        setIsAskDialogOpen(false);
+        setAskInputValue('');
+      }
+    },
+    [handleSendQuestion],
+  );
 
   const clearPresentationIdleTimer = useCallback(() => {
     if (presentationIdleTimerRef.current) {
@@ -480,9 +513,7 @@ export function Stage({
         }
       },
       onSpeechEnd: () => {
-        // Don't clear lectureSpeech — let it persist until the next
-        // onSpeechStart replaces it or the scene transitions.
-        // Clearing here causes fallback to idleText (first sentence).
+        setLectureSpeech(null);
         setActiveBubbleId(null);
       },
       onEffectFire: (effect: Effect) => {
@@ -691,13 +722,21 @@ export function Stage({
     return agent?.role !== 'teacher';
   }, [speakingAgentId]);
 
+  const speechTextForView = getSpeechTextForView({
+    ttsEnabled,
+    ttsMuted,
+    audioIndicatorState,
+    audioSpeech,
+    liveSpeech,
+  });
+
   // Centralised derived playback view
   const playbackView = useMemo(
     () =>
       computePlaybackView({
         engineMode,
         lectureSpeech,
-        liveSpeech,
+        liveSpeech: speechTextForView,
         speakingAgentId,
         thinkingState,
         isCueUser,
@@ -712,7 +751,7 @@ export function Stage({
     [
       engineMode,
       lectureSpeech,
-      liveSpeech,
+      speechTextForView,
       speakingAgentId,
       thinkingState,
       isCueUser,
@@ -725,6 +764,7 @@ export function Stage({
       chatSessionType,
     ],
   );
+  const activeSpeechTextForView = playbackView.isInLiveFlow ? speechTextForView : lectureSpeech;
 
   const isTopicActive = playbackView.isTopicActive;
 
@@ -1008,20 +1048,24 @@ export function Stage({
     <div
       ref={stageRef}
       className={cn(
-        'flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950',
+        'flex-1 flex flex-col overflow-hidden bg-[#e6f6ff] text-slate-900 dark:bg-slate-950 dark:text-slate-100',
         isPresenting && !controlsVisible && 'cursor-none',
       )}
     >
-      {/* Main Content Area — Layout: Roundtable(left) | Canvas(center) | Chat(right) */}
-      <div className="flex-1 flex flex-row overflow-hidden min-w-0 relative bg-white dark:bg-slate-950">
+      {/* Main Content Area — sky presentation stage */}
+      <div className="relative flex min-w-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,#dff4ff_0%,#f7fcff_46%,#eef8ff_100%)] p-3 dark:bg-[linear-gradient(180deg,#07111f_0%,#020617_100%)] md:p-4">
+        <div className="pointer-events-none absolute inset-x-0 top-14 h-px bg-white/75 dark:bg-slate-800/70" />
+        <div className="pointer-events-none absolute inset-x-16 top-28 h-px bg-sky-100/90 dark:bg-slate-800/60" />
+        <div className="pointer-events-none absolute inset-x-8 bottom-24 h-16 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.34)_62%,rgba(255,255,255,0)_100%)] dark:bg-[linear-gradient(180deg,rgba(15,23,42,0)_0%,rgba(15,23,42,0.42)_62%,rgba(15,23,42,0)_100%)]" />
         {/* Left: Roundtable Character Strip — extends full height */}
         {mode === 'playback' && (
-          <div className="w-14 shrink-0 flex flex-col h-full overflow-hidden">
+          <div className="absolute bottom-4 left-4 top-[76px] z-30 flex w-16 shrink-0 flex-col overflow-visible">
             <Roundtable
+              compactDock
               mode={mode}
               initialParticipants={participants}
               playbackView={playbackView}
-              currentSpeech={liveSpeech}
+              currentSpeech={activeSpeechTextForView}
               lectureSpeech={lectureSpeech}
               idleText={firstSpeechText}
               playbackCompleted={playbackCompleted}
@@ -1116,14 +1160,57 @@ export function Stage({
           </div>
         )}
 
-        {/* Center: Canvas Area — Video content with golden ratio */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative bg-white dark:bg-slate-950">
+        {!isPresenting && timelineCollapsed && (
+          <button
+            type="button"
+            onClick={() => setTimelineCollapsed(false)}
+            className="absolute left-4 top-4 z-40 flex h-11 items-center gap-2 rounded-full border border-white/75 bg-white/72 px-3 text-xs font-semibold text-sky-900 shadow-[0_12px_34px_rgba(14,116,144,0.12)] backdrop-blur-xl transition hover:bg-white dark:border-slate-800 dark:bg-slate-950/80 dark:text-sky-200"
+            aria-label="Open slide map"
+            title="Open slide map"
+          >
+            <LayoutList className="h-4 w-4" />
+            <span className="tabular-nums">
+              {currentSceneIndex >= 0 ? currentSceneIndex + 1 : '-'} / {totalScenesCount}
+            </span>
+          </button>
+        )}
+
+        {!isPresenting && chatAreaCollapsed && (
+          <button
+            type="button"
+            onClick={() => setChatAreaCollapsed(false)}
+            className="absolute right-4 top-[76px] z-40 flex h-11 items-center gap-2 rounded-full border border-white/75 bg-white/72 px-3 text-xs font-semibold text-sky-900 shadow-[0_12px_34px_rgba(14,116,144,0.12)] backdrop-blur-xl transition hover:bg-white dark:border-slate-800 dark:bg-slate-950/80 dark:text-sky-200"
+            aria-label="Open learning assistant"
+            title="Open learning assistant"
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span>助手</span>
+          </button>
+        )}
+
+        {!isPresenting && (
+          <SceneSidebar
+            collapsed={timelineCollapsed}
+            onCollapseChange={setTimelineCollapsed}
+            onSceneSelect={gatedSceneSwitch}
+            onRetryOutline={onRetryOutline}
+            isCourseComplete={isCourseComplete}
+          />
+        )}
+
+        {/* Center: Canvas Area — presentation stage */}
+        <div
+          className={cn(
+            'relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-white/80 bg-white/48 shadow-[0_24px_76px_rgba(14,116,144,0.11)] backdrop-blur-xl transition-[margin] duration-300 dark:border-slate-800 dark:bg-slate-950/82 dark:shadow-none',
+            !isPresenting && mode === 'playback' && 'ml-20',
+            !isPresenting && !chatAreaCollapsed && 'xl:mr-[412px]',
+          )}
+        >
           {/* Header */}
           {!isPresenting && (
             <Header
               currentSceneTitle={
-                currentScene?.title ||
-                (isCourseComplete && isPendingScene ? t('stage.courseComplete') : '')
+                currentScene?.title || (isCourseComplete && isPendingScene ? 'Complete' : '')
               }
               timelineCollapsed={timelineCollapsed}
               onTimelineCollapseChange={setTimelineCollapsed}
@@ -1134,7 +1221,7 @@ export function Stage({
           )}
 
           {/* Canvas Area — Golden ratio centered */}
-          <div className="flex-1 overflow-hidden relative flex flex-col">
+          <div className="relative flex flex-1 flex-col overflow-hidden">
             <CanvasArea
               currentScene={currentScene}
               currentSceneIndex={currentSceneIndex}
@@ -1177,6 +1264,7 @@ export function Stage({
           {/* Bottom: Playback Controls */}
           {mode === 'playback' && !isPresenting && (
             <BottomToolbar
+              className="absolute bottom-3 left-0 right-0 z-40"
               currentSceneIndex={currentSceneIndex}
               scenesCount={totalScenesCount}
               engineState={canvasEngineState}
@@ -1209,18 +1297,27 @@ export function Stage({
                 useSettingsStore.getState().setPlaybackSpeed(nextSpeed);
               }}
               autoPlayLecture={useSettingsStore.getState().autoPlayLecture}
-              onToggleAutoPlay={() => useSettingsStore.getState().setAutoPlayLecture(!useSettingsStore.getState().autoPlayLecture)}
+              onToggleAutoPlay={() =>
+                useSettingsStore
+                  .getState()
+                  .setAutoPlayLecture(!useSettingsStore.getState().autoPlayLecture)
+              }
             />
           )}
         </div>
 
-        {/* Right Panel — Chat/Dialogue Area */}
+        {/* Right Panel — floating notes and dialogue */}
         <ChatArea
           ref={chatAreaRef}
-          width={chatAreaWidth}
+          width={Math.min(Math.max(chatAreaWidth, 340), 380)}
           onWidthChange={setChatAreaWidth}
           collapsed={chatAreaCollapsed}
           onCollapseChange={setChatAreaCollapsed}
+          className={cn(
+            'absolute bottom-4 right-4 top-4 z-50 shadow-[0_20px_58px_rgba(14,116,144,0.16)]',
+            chatAreaCollapsed &&
+              'pointer-events-none border-transparent bg-transparent shadow-none',
+          )}
           activeBubbleId={activeBubbleId}
           onActiveBubble={(id) => setActiveBubbleId(id)}
           currentSceneId={currentSceneId}
@@ -1259,7 +1356,7 @@ export function Stage({
             setIsCueUser(true);
           }}
           onLiveSessionError={handleLiveSessionError}
-          onStopSession={doSessionCleanup}
+          onStopSession={() => doSessionCleanup({ preserveQaBubble: true })}
           onSegmentSealed={discussionTTS.handleSegmentSealed}
           shouldHoldAfterReveal={discussionTTS.shouldHold}
           enableFilters
@@ -1326,20 +1423,16 @@ export function Stage({
                       transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                       className="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-sky-400/50"
                     >
-                      <img
-                        src={userAvatar}
-                        alt={t('roundtable.you')}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={userAvatar} alt={'你'} className="w-full h-full object-cover" />
                     </motion.div>
                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-slate-900" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {t('roundtable.askTeacher')}
+                      {'向老师提问'}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {t('stage.speakingToTeacher')}
+                      {'正在向老师提问...'}
                     </p>
                   </div>
                   <button
@@ -1350,7 +1443,12 @@ export function Stage({
                     className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -1363,10 +1461,15 @@ export function Stage({
                       value={askInputValue}
                       onChange={(e) => setAskInputValue(e.target.value)}
                       onKeyDown={handleAskInputKeyDown}
-                      placeholder={t('roundtable.inputPlaceholder')}
+                      placeholder={'输入你的消息...'}
                       rows={1}
                       className="w-full resize-none bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 pl-4 pr-12 py-3.5 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500/50 transition-all"
-                      style={{ fieldSizing: 'content', minHeight: '52px', maxHeight: '120px' } as Record<string, string>}
+                      style={
+                        { fieldSizing: 'content', minHeight: '52px', maxHeight: '120px' } as Record<
+                          string,
+                          string
+                        >
+                      }
                     />
 
                     {/* Send Button - Inside Input */}
@@ -1377,11 +1480,21 @@ export function Stage({
                         'absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl flex items-center justify-center transition-all',
                         askInputValue.trim()
                           ? 'bg-sky-500 text-white hover:bg-sky-400 shadow-lg shadow-sky-500/30 active:scale-95'
-                          : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed',
                       )}
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2.5}
+                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -1390,19 +1503,27 @@ export function Stage({
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center gap-2">
                       {/* Voice Input */}
-                      <button
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                          />
                         </svg>
-                        {t('roundtable.voiceInput')}
+                        {'语音输入'}
                       </button>
                     </div>
 
                     {/* Hint Text */}
                     <p className="text-xs text-slate-400 dark:text-slate-500">
-                      Enter {t('common.send')} · Esc {t('common.cancel')}
+                      Enter {'发送'} · Esc {'取消'}
                     </p>
                   </div>
                 </div>
@@ -1410,8 +1531,13 @@ export function Stage({
                 {/* Quick Suggestions - Optional */}
                 <div className="px-4 pb-4">
                   <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    <span className="text-xs text-slate-400 whitespace-nowrap">{t('stage.quickQuestions')}:</span>
-                    {['这个知识点能再解释一下吗？', '可以举个例子吗？', '我没听明白', '这和之前学的有什么联系？'].map((q, i) => (
+                    <span className="text-xs text-slate-400 whitespace-nowrap">{'快速提问'}:</span>
+                    {[
+                      '这个知识点能再解释一下吗？',
+                      '可以举个例子吗？',
+                      '我没听明白',
+                      '这和之前学的有什么联系？',
+                    ].map((q, i) => (
                       <button
                         key={i}
                         onClick={() => {
@@ -1443,7 +1569,7 @@ export function Stage({
           className="max-w-sm rounded-2xl p-0 overflow-hidden border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.5)]"
         >
           <VisuallyHidden.Root>
-            <AlertDialogTitle>{t('stage.confirmSwitchTitle')}</AlertDialogTitle>
+            <AlertDialogTitle>{'切换页面'}</AlertDialogTitle>
           </VisuallyHidden.Root>
           {/* Top accent bar */}
           <div className="h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-red-400" />
@@ -1454,24 +1580,25 @@ export function Stage({
               <AlertTriangle className="w-6 h-6 text-amber-400" />
             </div>
             {/* Title */}
-            <h3 className="text-base font-bold text-slate-100 mb-1.5">
-              {t('stage.confirmSwitchTitle')}
-            </h3>
+            <h3 className="text-base font-bold text-slate-100 mb-1.5">{'切换页面'}</h3>
             {/* Description */}
             <p className="text-sm text-slate-400 leading-relaxed">
-              {t('stage.confirmSwitchMessage')}
+              {'当前话题正在进行中，切换页面将结束当前话题。确定要切换吗？'}
             </p>
           </div>
 
           <AlertDialogFooter className="px-6 pb-5 pt-3 flex-row gap-3 border-t border-white/5">
-            <AlertDialogCancel onClick={cancelSceneSwitch} className="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border-white/10">
-              {t('common.cancel')}
+            <AlertDialogCancel
+              onClick={cancelSceneSwitch}
+              className="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border-white/10"
+            >
+              {'取消'}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmSceneSwitch}
               className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shadow-lg shadow-amber-500/20"
             >
-              {t('common.confirm')}
+              {'确定'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

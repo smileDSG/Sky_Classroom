@@ -12,6 +12,7 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 
 import { generateSceneContent, generateSceneActions } from '@/lib/generation/scene-generator';
 import { buildSceneFromOutline } from '@/lib/generation/scene-builder';
+import { selectThemeForTemplate } from '@/lib/generation/classroom-design-dna';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type {
   SceneOutline,
@@ -54,11 +55,118 @@ function baseOutline(overrides: Partial<SceneOutline> = {}): SceneOutline {
   };
 }
 
+function validSlideResponse(): string {
+  return JSON.stringify({
+    background: { type: 'solid', color: '#f8fbff' },
+    elements: [
+      {
+        id: 'title',
+        type: 'text',
+        left: 80,
+        top: 56,
+        width: 720,
+        height: 76,
+        content: '<p style="font-size:34px;"><strong>Test Scene</strong></p>',
+        defaultFontName: '',
+        defaultColor: '#111827',
+      },
+      {
+        id: 'panel',
+        type: 'shape',
+        left: 96,
+        top: 180,
+        width: 410,
+        height: 230,
+        fill: '#2f80d1',
+      },
+      {
+        id: 'node-a',
+        type: 'shape',
+        left: 132,
+        top: 250,
+        width: 86,
+        height: 58,
+        fill: '#ffffff',
+      },
+      {
+        id: 'node-b',
+        type: 'shape',
+        left: 330,
+        top: 250,
+        width: 86,
+        height: 58,
+        fill: '#ffffff',
+      },
+      {
+        id: 'arrow',
+        type: 'line',
+        left: 230,
+        top: 280,
+        width: 3,
+        height: 1,
+        start: [0, 0],
+        end: [84, 0],
+        style: 'solid',
+        color: '#2f80d1',
+        points: ['', 'arrow'],
+      },
+      {
+        id: 'focus',
+        type: 'text',
+        left: 585,
+        top: 190,
+        width: 300,
+        height: 58,
+        content: '<p style="font-size:22px;"><strong>Focus point</strong></p>',
+        defaultFontName: '',
+        defaultColor: '#111827',
+      },
+      {
+        id: 'detail',
+        type: 'text',
+        left: 585,
+        top: 268,
+        width: 300,
+        height: 58,
+        content:
+          '<p style="font-size:18px;">Explain the idea with one compact visual relation.</p>',
+        defaultFontName: '',
+        defaultColor: '#333333',
+      },
+      {
+        id: 'takeaway',
+        type: 'text',
+        left: 110,
+        top: 460,
+        width: 760,
+        height: 42,
+        content:
+          '<p style="font-size:18px;">Takeaway: the structure controls the interpretation.</p>',
+      },
+    ],
+    remark: 'A valid OpenMAIC-style classroom slide.',
+  });
+}
+
 describe('scene-generator language directive threading (issue #472)', () => {
   describe('content generation', () => {
     it('threads languageDirective into slide content prompt', async () => {
       const { aiCall, lastUser, lastSystem } = makeCapturingAiCall(
-        JSON.stringify({ elements: [], background: null, remark: '' }),
+        JSON.stringify({
+          type: 'concept',
+          title: 'Test Scene',
+          cards: [
+            {
+              title: 'A',
+              desc: 'Description of point a with enough length to pass validation and be meaningful for the test.',
+            },
+            {
+              title: 'B',
+              desc: 'Description of point b with enough length to pass validation and be meaningful for the test.',
+            },
+          ],
+          summary: 'This is a comprehensive summary that meets the minimum length requirement.',
+        }),
       );
 
       await generateSceneContent(baseOutline({ type: 'slide' }), aiCall, {
@@ -69,6 +177,26 @@ describe('scene-generator language directive threading (issue #472)', () => {
       const combined = lastSystem() + lastUser();
       expect(combined).toContain(DIRECTIVE);
       expect(combined).not.toContain('{{languageDirective}}');
+    });
+
+    it('threads course theme tokens into slide content prompt and polish', async () => {
+      const themeSelection = selectThemeForTemplate('tech_dark_blue');
+      const { aiCall, lastUser, lastSystem } = makeCapturingAiCall(validSlideResponse());
+
+      const content = await generateSceneContent(baseOutline({ type: 'slide' }), aiCall, {
+        languageDirective: DIRECTIVE,
+        themeSelection,
+      });
+
+      const combined = lastSystem() + lastUser();
+      expect(combined).toContain('tech-dark-cn');
+      expect(combined).toContain('#00D4FF');
+      expect(combined).toContain('#E8F4FF');
+      expect(combined).not.toContain('{{themeDirective}}');
+      const elements = content && 'elements' in content ? content.elements : [];
+      expect(elements.some((element) => (element as { fill?: string }).fill === '#00D4FF')).toBe(
+        true,
+      );
     });
 
     it('threads languageDirective into quiz content prompt', async () => {
@@ -234,10 +362,8 @@ describe('scene-generator language directive threading (issue #472)', () => {
       // so we check the combined system + user content.
       const aiCall: AICallFn = async (system, user) => {
         captured.push(system + user);
-        // First call is content (expects JSON); second is actions (expects array)
-        return captured.length === 1
-          ? JSON.stringify({ elements: [], background: null, remark: '' })
-          : '[]';
+        // First call is slide content JSON; second is actions (expects array)
+        return captured.length === 1 ? validSlideResponse() : '[]';
       };
 
       await buildSceneFromOutline(

@@ -188,10 +188,11 @@ function buildContentQASystemPrompt(): string {
 - contentScore < 75 → 不合格`;
 }
 
-function buildContentQAUserPrompt(
+export function buildContentQAUserPrompt(
   topic: string,
   difficulty: string,
   allContent: SectionOutput[],
+  educationLevel?: string,
 ): string {
   const pages = allContent.flatMap((s) => s.pages);
   const summaries = pages.map((p) => {
@@ -203,7 +204,7 @@ function buildContentQAUserPrompt(
   });
 
   return `主题：${topic}
-学段：${difficulty}
+内容难度：${difficulty}${educationLevel ? `\n目标受众学段：${educationLevel}` : ''}
 总页数：${pages.length}
 
 ## 页面内容摘要
@@ -222,6 +223,7 @@ export async function runQA(
   totalPages: number,
   languageModel: LanguageModel,
   instructions?: PageInstructions[],
+  educationLevel?: string,
 ): Promise<QAReport> {
   // Layer 1: Structural (always runs, 0 LLM)
   const structuralIssues = structuralQA(outline, allContent, instructions, totalPages);
@@ -255,7 +257,7 @@ export async function runQA(
       {
         model: languageModel,
         system: buildContentQASystemPrompt(),
-        prompt: buildContentQAUserPrompt(topic, difficulty, allContent),
+        prompt: buildContentQAUserPrompt(topic, difficulty, allContent, educationLevel),
         maxOutputTokens: 4096,
         temperature: 0.2,
       },

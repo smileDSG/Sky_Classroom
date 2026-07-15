@@ -7,11 +7,11 @@ interface SkyTopBarProps {
 
 export function SkyTopBar({ sidebarCollapsed, onToggleSidebar }: SkyTopBarProps) {
   return (
-    <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm">
+    <header className="flex h-14 items-center justify-between border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 shadow-sm">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
-          className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          className="rounded-md p-1.5 text-gray-500 dark:text-slate-400 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-700 dark:hover:text-slate-200"
           aria-label={sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}
         >
           {sidebarCollapsed ? '☰' : '◀'}
@@ -24,12 +24,12 @@ export function SkyTopBar({ sidebarCollapsed, onToggleSidebar }: SkyTopBarProps)
 
       <div className="flex items-center gap-3">
         <button
-          className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          className="rounded-md p-2 text-gray-500 dark:text-slate-400 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-700 dark:hover:text-slate-200"
           aria-label="切换主题"
         >
           🌙
         </button>
-        <div className="h-8 w-8 rounded-full bg-[#4A90D9]/20 flex items-center justify-center text-sm text-[#4A90D9] font-semibold">
+        <div className="h-8 w-8 rounded-full bg-[#4A90D9]/20 dark:bg-[#4A90D9]/30 flex items-center justify-center text-sm text-[#4A90D9] dark:text-[#6FAEED] font-semibold">
           👤
         </div>
       </div>

@@ -2,18 +2,18 @@
  * Phase 1 (B-003): Monitoring infrastructure tests
  */
 
-import { describe, test, expect, beforeEach } from 'vitest';
-import {
-  PerformanceMonitor,
-  resetPerfMonitor,
-  getPerfMonitor,
-} from '@/lib/monitoring/performance';
-import {
-  ErrorTracker,
-  resetErrorTracker,
-  getErrorTracker,
-} from '@/lib/monitoring/error-tracker';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
+import { PerformanceMonitor, resetPerfMonitor, getPerfMonitor } from '@/lib/monitoring/performance';
+import { ErrorTracker, resetErrorTracker, getErrorTracker } from '@/lib/monitoring/error-tracker';
 import { validateEnvironment } from '@/lib/monitoring/env-validator';
+import { GET as getAdminPerformance } from '@/app/api/admin/performance/route';
+
+const originalFetch = global.fetch;
+
+afterEach(() => {
+  global.fetch = originalFetch;
+  vi.restoreAllMocks();
+});
 
 // ─── Performance Monitor ───
 
@@ -106,18 +106,53 @@ describe('PerformanceMonitor', () => {
 
   test('totalTokens sums prompt + completion', () => {
     monitor.recordLLMCall({
-      model: 'x', source: 'test', durationMs: 100, success: true,
-      promptTokens: 100, completionTokens: 200,
+      model: 'x',
+      source: 'test',
+      durationMs: 100,
+      success: true,
+      promptTokens: 100,
+      completionTokens: 200,
     });
     monitor.recordLLMCall({
-      model: 'x', source: 'test', durationMs: 100, success: true,
-      promptTokens: 50, completionTokens: 50,
+      model: 'x',
+      source: 'test',
+      durationMs: 100,
+      success: true,
+      promptTokens: 50,
+      completionTokens: 50,
     });
     expect(monitor.getStats().totalTokens).toBe(400);
   });
 });
 
 // ─── Error Tracker ───
+
+describe('admin performance route', () => {
+  beforeEach(() => {
+    resetPerfMonitor();
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ success: true, status: 'ok' }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as unknown as typeof fetch;
+  });
+
+  test('returns the in-process LLM performance snapshot', async () => {
+    getPerfMonitor().recordLLMCall({
+      model: 'test-model',
+      source: 'director',
+      durationMs: 1234,
+      success: true,
+    });
+
+    const res = await getAdminPerformance(new Request('http://localhost/api/admin/performance'));
+    const json = await res.json();
+
+    expect(json.success).toBe(true);
+    expect(json.performance.totalCalls).toBe(1);
+    expect(json.performance.bySource.director.avgDurationMs).toBe(1234);
+  });
+});
 
 describe('ErrorTracker', () => {
   let tracker: ErrorTracker;

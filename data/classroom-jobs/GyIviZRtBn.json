@@ -1,0 +1,349 @@
+{
+  "id": "GyIviZRtBn",
+  "status": "awaiting_review",
+  "step": "generating_outlines",
+  "progress": 30,
+  "message": "大纲已生成，等待审阅",
+  "createdAt": "2026-05-31T03:11:33.046Z",
+  "updatedAt": "2026-05-31T03:12:27.964Z",
+  "inputSummary": {
+    "requirementPreview": "python入门\n",
+    "hasPdf": false,
+    "pdfTextLength": 0,
+    "pdfImageCount": 0
+  },
+  "scenesGenerated": 0,
+  "modelConfig": {
+    "modelString": "deepseek:deepseek-v4-pro"
+  },
+  "startedAt": "2026-05-31T03:11:33.056Z",
+  "totalScenes": 9,
+  "phaseOneResult": {
+    "outlines": [
+      {
+        "id": "scene_1",
+        "type": "slide",
+        "title": "Python 入门概览",
+        "description": "介绍本课程的学习目标、Python 语言的特点及其广泛的应用领域。",
+        "keyPoints": [
+          "Python 是什么：一门简洁、易读的高级编程语言",
+          "Python 的三大特点：简单易学、跨平台、丰富的库",
+          "学习路线概览：基础语法 → 数据处理 → 项目实践"
+        ],
+        "order": 1
+      },
+      {
+        "id": "scene_2",
+        "type": "slide",
+        "title": "环境准备",
+        "description": "指导学习者完成 Python 的安装和开发工具的选择，确保后续实操顺畅。",
+        "keyPoints": [
+          "从 python.org 下载最新版 Python",
+          "安装时勾选“Add Python to PATH”",
+          "推荐使用 IDLE 或 VS Code 作为初学编辑器",
+          "验证安装：打开命令行输入 python --version"
+        ],
+        "order": 2
+      },
+      {
+        "id": "scene_3",
+        "type": "slide",
+        "title": "第一个 Python 程序",
+        "description": "编写并运行经典的“Hello, World!”程序，迈出编程第一步。",
+        "keyPoints": [
+          "用 print() 函数输出文字",
+          "在编辑器中编写代码并保存为 .py 文件",
+          "在终端运行 python 文件名.py 查看结果",
+          "常见错误：缺少括号、中英文符号混淆"
+        ],
+        "order": 3
+      },
+      {
+        "id": "scene_4",
+        "type": "slide",
+        "title": "变量与数据类型",
+        "description": "学习如何命名变量、进行赋值，以及 Python 中最基础的数据类型。",
+        "keyPoints": [
+          "变量名规则：字母、数字、下划线，不能以数字开头",
+          "使用 = 赋值，变量无需事先声明类型",
+          "常用数据类型：int、float、str、bool",
+          "用 type() 查看变量类型"
+        ],
+        "order": 4
+      },
+      {
+        "id": "scene_5",
+        "type": "interactive",
+        "title": "练一练：编写简单代码",
+        "description": "在交互式代码编辑器中亲手输入代码，体验变量、输出和输入操作。",
+        "keyPoints": [
+          "练习：创建字符串变量，用 print 输出",
+          "尝试让用户输入姓名并打招呼（input + print）",
+          "观察代码运行结果，理解语句顺序",
+          "感受即时反馈，加深理解"
+        ],
+        "order": 5,
+        "widgetType": "code",
+        "widgetOutline": {
+          "language": "python"
+        }
+      },
+      {
+        "id": "scene_6",
+        "type": "slide",
+        "title": "基本运算符",
+        "description": "掌握算术运算符、比较运算符和逻辑运算符的使用。",
+        "keyPoints": [
+          "算术运算符：+、-、*、/、//（整除）、%（取余）",
+          "比较运算符：==、!=、>、<、>=、<=",
+          "逻辑运算符：and、or、not",
+          "运算符优先级与括号的使用"
+        ],
+        "order": 6
+      },
+      {
+        "id": "scene_7",
+        "type": "slide",
+        "title": "条件判断 if-elif-else",
+        "description": "使用条件语句实现程序的分支逻辑，让代码能够做决策。",
+        "keyPoints": [
+          "if 条件: 执行的代码块（注意冒号和缩进）",
+          "使用 elif 添加多个分支",
+          "else 处理所有未满足的情况",
+          "实例：根据分数输出等级（优秀/良好/及格/不及格）"
+        ],
+        "order": 7
+      },
+      {
+        "id": "scene_8",
+        "type": "quiz",
+        "title": "Python 基础小测验",
+        "description": "通过几道选择题和多项选择题，快速检验对前面所学核心知识的掌握情况。",
+        "keyPoints": [
+          "print 函数的使用",
+          "变量的命名与赋值",
+          "常见数据类型区分",
+          "基本运算符的结果"
+        ],
+        "order": 8,
+        "quizConfig": {
+          "questionCount": 3,
+          "difficulty": "easy",
+          "questionTypes": [
+            "single",
+            "multiple"
+          ]
+        }
+      },
+      {
+        "id": "scene_9",
+        "type": "slide",
+        "title": "课程总结与下一步",
+        "description": "回顾本次入门课程的核心内容，并给出继续学习的建议和资源。",
+        "keyPoints": [
+          "今日重点：安装、print、变量、数据类型、运算符、条件判断",
+          "推荐学习路径：循环、列表、函数 → 面向对象 → 实战项目",
+          "自学资源：Python 官方文档、菜鸟教程、LeetCode 简单题目",
+          "坚持每天写一点代码，多动手最重要"
+        ],
+        "order": 9
+      }
+    ],
+    "languageDirective": "本课程将使用中文授课，所有讲解、解释和提示均以中文呈现。代码中的英文关键词和函数名保持原样，但术语解释会使用中文，以确保初学者易于理解。对于有标准中文翻译的技术术语，优先使用中文译名。",
+    "topicSummary": "Python 入门",
+    "agents": [
+      {
+        "id": "default-1",
+        "name": "星野老师",
+        "role": "teacher",
+        "persona": "一位温柔优雅的蓝发教师，眼中总是闪烁着智慧的光芒。教学风格亲切耐心，善于用生动的例子和温暖的鼓励引导学生。像动漫里的完美老师形象，既有专业素养又有母性关怀，总能在学生困惑时给予恰到好处的点拨。"
+      },
+      {
+        "id": "default-2",
+        "name": "芽衣助教",
+        "role": "assistant",
+        "persona": "一位活泼开朗的双马尾少女，永远充满干劲。作为助教，她总是第一时间发现学生的困惑，用元气满满的笑容和通俗易懂的语言补充讲解。像动漫里活力四射的学妹，让课堂氛围轻松愉快，是老师最得力的小帮手。"
+      },
+      {
+        "id": "default-3",
+        "name": "小萌",
+        "role": "student",
+        "persona": "一位戴着可爱猫耳的元气少女，对世界上的一切都充满好奇。总是第一个发现新奇事物，眨着闪闪发亮的大眼睛问\"这是什么？\"\"为什么会这样？\"。她的纯真好奇感染着身边每一个人，让课堂充满探索的乐趣。"
+      },
+      {
+        "id": "default-4",
+        "name": "智也",
+        "role": "student",
+        "persona": "一位戴着细框眼镜的沉稳少年，总是保持着冷静理性的思考。擅长逻辑分析和深度推理，喜欢在得出结论前多角度审视问题。虽然话不多，但每句话都经过深思熟虑，常常用一句精准的分析让全班恍然大悟。"
+      },
+      {
+        "id": "default-5",
+        "name": "梦璃",
+        "role": "student",
+        "persona": "一位神秘梦幻的紫发少女，眼中总是闪烁着灵感的光芒。拥有无限的想象力和独特的审美视角，能把枯燥的知识编织成诗意的故事。她的奇思妙想常常出人意料，却又意外地贴切，让学习变成一场奇幻的冒险。"
+      },
+      {
+        "id": "default-6",
+        "name": "凛",
+        "role": "student",
+        "persona": "一位认真严谨的黑长直少女，总是捧着一本整洁的笔记本。善于捕捉课堂上的每一个重点，将散乱的知识点梳理成清晰的脉络。她的笔记工整美观，逻辑分明，是全班同学争相借阅的学习宝典。"
+      }
+    ],
+    "stage": {
+      "id": "bHEL1yr5QP",
+      "name": "Python 入门概览",
+      "languageDirective": "本课程将使用中文授课，所有讲解、解释和提示均以中文呈现。代码中的英文关键词和函数名保持原样，但术语解释会使用中文，以确保初学者易于理解。对于有标准中文翻译的技术术语，优先使用中文译名。",
+      "videoManifest": {},
+      "style": "interactive",
+      "createdAt": 1780197147963,
+      "updatedAt": 1780197147963,
+      "agentIds": [
+        "default-1",
+        "default-2",
+        "default-3",
+        "default-4",
+        "default-5",
+        "default-6"
+      ]
+    },
+    "requirement": "python入门\n",
+    "enableImageGeneration": false,
+    "enableVideoGeneration": false,
+    "enableTTS": false
+  },
+  "outlines": [
+    {
+      "id": "scene_1",
+      "type": "slide",
+      "title": "Python 入门概览",
+      "description": "介绍本课程的学习目标、Python 语言的特点及其广泛的应用领域。",
+      "keyPoints": [
+        "Python 是什么：一门简洁、易读的高级编程语言",
+        "Python 的三大特点：简单易学、跨平台、丰富的库",
+        "学习路线概览：基础语法 → 数据处理 → 项目实践"
+      ],
+      "order": 1
+    },
+    {
+      "id": "scene_2",
+      "type": "slide",
+      "title": "环境准备",
+      "description": "指导学习者完成 Python 的安装和开发工具的选择，确保后续实操顺畅。",
+      "keyPoints": [
+        "从 python.org 下载最新版 Python",
+        "安装时勾选“Add Python to PATH”",
+        "推荐使用 IDLE 或 VS Code 作为初学编辑器",
+        "验证安装：打开命令行输入 python --version"
+      ],
+      "order": 2
+    },
+    {
+      "id": "scene_3",
+      "type": "slide",
+      "title": "第一个 Python 程序",
+      "description": "编写并运行经典的“Hello, World!”程序，迈出编程第一步。",
+      "keyPoints": [
+        "用 print() 函数输出文字",
+        "在编辑器中编写代码并保存为 .py 文件",
+        "在终端运行 python 文件名.py 查看结果",
+        "常见错误：缺少括号、中英文符号混淆"
+      ],
+      "order": 3
+    },
+    {
+      "id": "scene_4",
+      "type": "slide",
+      "title": "变量与数据类型",
+      "description": "学习如何命名变量、进行赋值，以及 Python 中最基础的数据类型。",
+      "keyPoints": [
+        "变量名规则：字母、数字、下划线，不能以数字开头",
+        "使用 = 赋值，变量无需事先声明类型",
+        "常用数据类型：int、float、str、bool",
+        "用 type() 查看变量类型"
+      ],
+      "order": 4
+    },
+    {
+      "id": "scene_5",
+      "type": "interactive",
+      "title": "练一练：编写简单代码",
+      "description": "在交互式代码编辑器中亲手输入代码，体验变量、输出和输入操作。",
+      "keyPoints": [
+        "练习：创建字符串变量，用 print 输出",
+        "尝试让用户输入姓名并打招呼（input + print）",
+        "观察代码运行结果，理解语句顺序",
+        "感受即时反馈，加深理解"
+      ],
+      "order": 5,
+      "widgetType": "code",
+      "widgetOutline": {
+        "language": "python"
+      }
+    },
+    {
+      "id": "scene_6",
+      "type": "slide",
+      "title": "基本运算符",
+      "description": "掌握算术运算符、比较运算符和逻辑运算符的使用。",
+      "keyPoints": [
+        "算术运算符：+、-、*、/、//（整除）、%（取余）",
+        "比较运算符：==、!=、>、<、>=、<=",
+        "逻辑运算符：and、or、not",
+        "运算符优先级与括号的使用"
+      ],
+      "order": 6
+    },
+    {
+      "id": "scene_7",
+      "type": "slide",
+      "title": "条件判断 if-elif-else",
+      "description": "使用条件语句实现程序的分支逻辑，让代码能够做决策。",
+      "keyPoints": [
+        "if 条件: 执行的代码块（注意冒号和缩进）",
+        "使用 elif 添加多个分支",
+        "else 处理所有未满足的情况",
+        "实例：根据分数输出等级（优秀/良好/及格/不及格）"
+      ],
+      "order": 7
+    },
+    {
+      "id": "scene_8",
+      "type": "quiz",
+      "title": "Python 基础小测验",
+      "description": "通过几道选择题和多项选择题，快速检验对前面所学核心知识的掌握情况。",
+      "keyPoints": [
+        "print 函数的使用",
+        "变量的命名与赋值",
+        "常见数据类型区分",
+        "基本运算符的结果"
+      ],
+      "order": 8,
+      "quizConfig": {
+        "questionCount": 3,
+        "difficulty": "easy",
+        "questionTypes": [
+          "single",
+          "multiple"
+        ]
+      }
+    },
+    {
+      "id": "scene_9",
+      "type": "slide",
+      "title": "课程总结与下一步",
+      "description": "回顾本次入门课程的核心内容，并给出继续学习的建议和资源。",
+      "keyPoints": [
+        "今日重点：安装、print、变量、数据类型、运算符、条件判断",
+        "推荐学习路径：循环、列表、函数 → 面向对象 → 实战项目",
+        "自学资源：Python 官方文档、菜鸟教程、LeetCode 简单题目",
+        "坚持每天写一点代码，多动手最重要"
+      ],
+      "order": 9
+    }
+  ],
+  "outlinesMeta": {
+    "languageDirective": "本课程将使用中文授课，所有讲解、解释和提示均以中文呈现。代码中的英文关键词和函数名保持原样，但术语解释会使用中文，以确保初学者易于理解。对于有标准中文翻译的技术术语，优先使用中文译名。",
+    "totalScenes": 9
+  },
+  "topicSummary": "Python 入门"
+}

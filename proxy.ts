@@ -5,15 +5,31 @@ import { verifyAccessToken } from '@/lib/server/auth/jwt';
 const PUBLIC_PATHS = [
   '/',
   '/auth',
+  '/m/auth',
   '/api/auth',
+  '/api/access-code/status',
+  '/api/server-providers',
   '/api/sky/solve/clear',
-  '/api/sky/slides/generate/jobs',
+  '/api/sky/enrichment',
+  '/sky/software-cup',
+  '/sky/cloud-mind/course-studio',
+  '/sky/study-lab',
+  '/api/sky/cloud-mind/personalization-context',
+  '/api/sky/workshop',
+  '/api/sky/learning-path',
+  '/api/sky/content-safety',
+  '/api/sky/course-knowledge',
+  '/api/sky/learning-effect',
+  '/api/sky/resource-generation',
+  '/api/sky/student/profile/conversation',
 ];
 
 /** Static asset prefixes to always skip */
 const STATIC_PREFIXES = [
   '/_next',
   '/favicon.ico',
+  '/manifest.json',
+  '/sw.js',
   '/logos/',
   '/avatars/',
   '/logo-icon.svg',
@@ -32,11 +48,24 @@ function isApiRoute(pathname: string): boolean {
   return pathname.startsWith('/api/');
 }
 
+function getLoginPath(pathname: string): string {
+  return pathname === '/m' || pathname.startsWith('/m/') ? '/m/auth/login' : '/auth/login';
+}
+
+function isPublicReadRequest(request: NextRequest): boolean {
+  const { pathname } = request.nextUrl;
+  return request.method === 'GET' && pathname === '/api/classroom';
+}
+
+function normalizeMobileRedirectPath(pathname: string): string {
+  return pathname === '/m/sky/learning' ? '/m/sky/study-lab' : pathname;
+}
+
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip public routes and static assets
-  if (isPublicPath(pathname)) {
+  if (isPublicPath(pathname) || isPublicReadRequest(request)) {
     return NextResponse.next();
   }
 
@@ -47,10 +76,7 @@ export default async function proxy(request: NextRequest) {
     if (isApiRoute(pathname)) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
-    const loginUrl = new URL('/auth/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    loginUrl.searchParams.set('reason', 'login_required');
-    return NextResponse.redirect(loginUrl);
+    return redirectToLogin(request, pathname);
   }
 
   const payload = await verifyAccessToken(accessToken);
@@ -58,15 +84,27 @@ export default async function proxy(request: NextRequest) {
     if (isApiRoute(pathname)) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
-    const loginUrl = new URL('/auth/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    loginUrl.searchParams.set('reason', 'login_required');
-    return NextResponse.redirect(loginUrl);
+    return redirectToLogin(request, pathname);
   }
 
   return NextResponse.next();
 }
 
+/**
+ * Redirect to the login page, preserving the original path + query string
+ * so the user returns to exactly where they were after authenticating.
+ */
+function redirectToLogin(request: NextRequest, pathname: string): NextResponse {
+  const redirectPathname = normalizeMobileRedirectPath(pathname);
+  const loginUrl = new URL(getLoginPath(redirectPathname), request.url);
+  const { search } = request.nextUrl;
+  loginUrl.searchParams.set('redirect', search ? `${redirectPathname}${search}` : redirectPathname);
+  loginUrl.searchParams.set('reason', 'login_required');
+  return NextResponse.redirect(loginUrl);
+}
+
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png|temp/).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|logos/|avatars/|logo-icon\\.svg|logo-horizontal\\.png).*)',
+  ],
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { Brain, Minimize2 } from 'lucide-react';
@@ -20,7 +20,10 @@ export function DraggableQaButton({ className }: DraggableQaButtonProps) {
   const originRef = useRef({ x: 0, y: 0 });
   const offsetRef = useRef({ dx: 0, dy: 0 });
   const positionRef = useRef(position);
-  positionRef.current = position;
+
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   const cleanupListeners = useCallback(
     (onMove: (e: MouseEvent | TouchEvent) => void, onUp: () => void) => {
@@ -110,6 +113,7 @@ export function DraggableQaButton({ className }: DraggableQaButtonProps) {
             transition={{ duration: 0.15 }}
           >
             <button
+              aria-label="打开智囊"
               onClick={handleClick}
               className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 flex items-center justify-center active:scale-95 transition-shadow"
             >
@@ -127,17 +131,18 @@ export function DraggableQaButton({ className }: DraggableQaButtonProps) {
           >
             <button
               onClick={handleClick}
-              className="h-9 px-3 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 text-white text-sm font-medium shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 flex items-center gap-1.5 active:scale-95 transition-shadow whitespace-nowrap"
+              className="flex h-11 items-center gap-1.5 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-3 text-sm font-medium text-white shadow-lg shadow-sky-500/30 transition-shadow hover:shadow-xl hover:shadow-sky-500/40 active:scale-95 whitespace-nowrap"
             >
               <Brain className="w-4 h-4" />
               <span>智囊</span>
             </button>
             <button
               data-toggle-collapse
+              aria-label="折叠智囊入口"
               onClick={handleToggleCollapse}
-              className="w-7 h-7 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 text-gray-500 dark:text-gray-400 flex items-center justify-center hover:bg-white dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 active:scale-90 transition-all shadow-sm"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200/60 bg-white/80 text-gray-500 shadow-sm backdrop-blur-sm transition-all hover:bg-white hover:text-gray-700 active:scale-95 dark:border-gray-700/60 dark:bg-gray-800/80 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
             >
-              <Minimize2 className="w-3 h-3" />
+              <Minimize2 className="h-3.5 w-3.5" />
             </button>
           </motion.div>
         )}
