@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '无效的提交状态');
   }
   if (body.status !== 'closed') {
-    return apiError(API_ERROR_CODES.FORBIDDEN, 403, '工作流状态只能由对应服务推进');
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, '工作流状态只能由对应服务推进');
   }
 
   try {
