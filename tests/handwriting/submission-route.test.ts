@@ -86,7 +86,7 @@ describe('/api/sky/handwriting/submissions/[submissionId]', () => {
     const response = await PATCH(patchRequest('uploaded'), context(created.id));
 
     expect(response.status).toBe(403);
-    expect((await response.json()).errorCode).toBe('FORBIDDEN');
+    expect((await response.json()).errorCode).toBe('INVALID_REQUEST');
   });
 
   it('rejects an unknown target status', async () => {
