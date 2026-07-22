@@ -27,6 +27,7 @@ import { buildKnowledgePointsPrompt } from './solver-prompts';
 import { findSimilarByKnowledgePoints, hashProblemText } from './question-bank';
 import { createLogger } from '@/lib/logger';
 import { postProcessMathContent } from './math-postprocessor';
+import type { ProblemSpec } from './types';
 
 const log = createLogger('SolveChain');
 
@@ -188,6 +189,7 @@ export async function runSolveChain(
   onStreamEvent?: (event: StreamEvent) => void,
   signal?: AbortSignal,
   analyzePromise?: Promise<import('./agents/analyze-types').AnalysisResult>,
+  problemSpec?: ProblemSpec | null,
 ): Promise<SolveChainResult> {
   const startTime = Date.now();
   const warnings: string[] = [];
@@ -247,6 +249,7 @@ export async function runSolveChain(
             problemText,
             problemImage ?? null,
             onStreamEvent,
+            problemSpec ?? null,
           );
           const result = await withTimeout(
             solvePromise,
@@ -302,6 +305,7 @@ export async function runSolveChain(
             problemText,
             problemImage ?? null,
             onStreamEvent,
+            problemSpec ?? null,
           );
           const retryResult = await withTimeout(
             retryPromise,
@@ -486,6 +490,7 @@ async function solveStreamCollect(
   problemText: string,
   problemImage: string | null,
   onStreamEvent?: (event: StreamEvent) => void,
+  problemSpec?: ProblemSpec | null,
 ): Promise<{
   solution: string;
   steps: SolveChainResult['steps'];
@@ -499,7 +504,7 @@ async function solveStreamCollect(
   let knowledgePoints: SolveChainResult['knowledgePoints'] = [];
   let similarQuestions: SolveChainResult['similarQuestions'] = [];
 
-  for await (const event of streamSolve(agentType, problemText, problemImage)) {
+  for await (const event of streamSolve(agentType, problemText, problemImage, problemSpec)) {
     // Forward event to caller if provided (for SSE streaming)
     onStreamEvent?.(event);
 

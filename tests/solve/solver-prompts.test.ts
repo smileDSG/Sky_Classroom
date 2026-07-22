@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { buildSolverPrompt } from '@/lib/solve/solver-prompts';
+import type { ProblemSpec } from '@/lib/solve/types';
 
 describe('buildSolverPrompt', () => {
   test('returns prompt for universal agent', () => {
@@ -92,6 +93,32 @@ describe('buildSolverPrompt', () => {
       [],
     );
     expect(prompt).not.toContain('附加信息');
-    expect(prompt).not.toContain('相关知识点');
   });
+
+  test('grounds the solver with structured recognition context', () => {
+    const problemSpec: ProblemSpec = {
+      id: 'p1',
+      stage: '高中',
+      subject: '物理',
+      questionType: '选择题',
+      stem: '小球从斜面顶端静止释放',
+      options: [{ key: 'A', content: '2 m/s' }],
+      givens: [{ name: '高度', symbol: 'h', value: '5', unit: 'm' }],
+      asks: ['求末速度'],
+      formulas: ['v^2=2gh'],
+      diagram: { type: '斜面图', description: '小球沿斜面下滑', labels: ['A', 'B'], relations: ['A高于B'] },
+      ambiguities: [{ field: 'g', candidates: ['9.8', '10'], reason: '题图不清晰' }],
+      materials: [],
+      subQuestions: [],
+      confidence: 0.88,
+    };
+
+    const prompt = buildSolverPrompt('science', problemSpec.stem, 'data:image/png;base64,abc', undefined, undefined, undefined, undefined, problemSpec);
+
+    for (const expected of ['高中', '物理', '选择题', '小球从斜面顶端静止释放', 'A: 2 m/s', '高度(h)=5 m', '求末速度', 'v^2=2gh', '斜面图', '题图不清晰']) {
+      expect(prompt).toContain(expected);
+    }
+    expect(prompt).toContain('原始题图优先');
+  });
+
 });

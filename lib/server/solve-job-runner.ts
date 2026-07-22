@@ -3,6 +3,7 @@
  */
 import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
 import type { SolveJob } from './solve-job-store';
+import type { ProblemSpec } from '@/lib/solve/types';
 import { updateSolveJob } from './solve-job-store';
 import { createLogger } from '@/lib/logger';
 
@@ -18,6 +19,7 @@ export function runSolveJob(
   problemText: string,
   problemImage: string | null,
   userAnswer: string | null,
+  problemSpec?: ProblemSpec | null,
 ): Promise<void> {
   const existing = runningJobs.get(jobId);
   if (existing) return existing;
@@ -27,7 +29,7 @@ export function runSolveJob(
       updateSolveJob(jobId, { status: 'running', phase: 'checking', progress: 5 });
 
       const graph = createSolveGraph();
-      const initialState = buildSolveInitialState(problemText, problemImage, userAnswer);
+      const initialState = buildSolveInitialState(problemText, problemImage, userAnswer, problemSpec);
 
       // Phase: routing
       updateSolveJob(jobId, { phase: 'routing', progress: 15 });

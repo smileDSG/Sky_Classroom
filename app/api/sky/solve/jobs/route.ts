@@ -14,7 +14,7 @@ const log = createLogger('API:SolveJobs');
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { problem, problemImage, userAnswer } = body;
+    const { problem, problemImage, problemSpec, userAnswer } = body;
 
     if (!problem) {
       return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, '缺少必填字段: problem');
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const jobId = nanoid(10);
     const job = createSolveJob(jobId, problem);
 
-    after(() => runSolveJob(jobId, problem, problemImage ?? null, userAnswer ?? null));
+    after(() => runSolveJob(jobId, problem, problemImage ?? null, userAnswer ?? null, problemSpec ?? null));
 
     log.info(`Solve job created: ${jobId} (${problem.slice(0, 40)}...)`);
 

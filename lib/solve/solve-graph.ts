@@ -19,7 +19,8 @@ import { StateGraph, START, END } from '@langchain/langgraph';
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { SolveGraphAnnotation, type SolveGraphState } from './solve-graph-state';
 import { solveWithAgentNode } from './solver-agent';
-import type { FourPartOutput } from './types';
+import type { FourPartOutput, ProblemSpec } from './types';
+import { classifyProblem } from './solver-constants';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SolveGraph');
@@ -110,57 +111,8 @@ async function routeToAgentNode(
   state: SolveGraphState,
   _config: LangGraphRunnableConfig,
 ): Promise<Partial<SolveGraphState>> {
-  const { problemText } = state;
-
-  const scienceKeywords = [
-    '物理',
-    '化学',
-    '数学',
-    '力学',
-    '微积分',
-    '代数',
-    '几何',
-    '方程',
-    '计算',
-    '求解',
-    '证明',
-  ];
-  const humanitiesKeywords = [
-    '语文',
-    '历史',
-    '政治',
-    '地理',
-    '文学',
-    '作文',
-    '阅读',
-    '分析',
-    '论述',
-    '谈谈',
-  ];
-
-  let scienceScore = 0;
-  let humanitiesScore = 0;
-
-  for (const kw of scienceKeywords) {
-    if (problemText.includes(kw)) scienceScore++;
-  }
-  for (const kw of humanitiesKeywords) {
-    if (problemText.includes(kw)) humanitiesScore++;
-  }
-
-  let route: SolveGraphState['agentRoute'];
-  if (scienceScore > humanitiesScore) {
-    route = 'science';
-  } else if (humanitiesScore > scienceScore) {
-    route = 'humanities';
-  } else {
-    route = 'universal';
-  }
-
-  log.info(
-    `[SolveGraph] routeToAgent: ${route} (science=${scienceScore}, humanities=${humanitiesScore})`,
-  );
-
+  const route = classifyProblem(state.problemText, state.problemSpec);
+  log.info(`[SolveGraph] routeToAgent: ${route}`);
   return { agentRoute: route };
 }
 
@@ -352,10 +304,12 @@ export function buildSolveInitialState(
   problemText: string,
   problemImage?: string | null,
   userAnswer?: string | null,
+  problemSpec?: ProblemSpec | null,
 ): SolveGraphState {
   return {
     problemText,
     problemImage: problemImage ?? null,
+    problemSpec: problemSpec ?? null,
     userAnswer: userAnswer ?? null,
     agentId: 'universal',
     selectedAgentId: null,

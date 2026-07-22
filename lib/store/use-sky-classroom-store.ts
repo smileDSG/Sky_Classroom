@@ -45,6 +45,7 @@ interface SolveSlice {
 const getDefaultSolveState = (): SolveState => ({
   problemText: '',
   problemImage: null,
+  problemSpec: null,
   userAnswer: null,
   agentId: 'universal',
   selectedAgentId: null,

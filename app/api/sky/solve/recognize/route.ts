@@ -5,6 +5,7 @@
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { extractFormulas } from '@/lib/recognition/formula-extractor';
+import { aggregateRecognitionQuality } from '@/lib/recognition/recognition-quality';
 import { isJsonLikeOutput, parseProblemSpecs } from '@/lib/recognition/problem-spec-parser';
 import { validateImage } from '@/lib/recognition/image-validator';
 import { getModel } from '@/lib/ai/providers';
@@ -14,12 +15,13 @@ import { callLLM } from '@/lib/ai/llm';
 
 const log = createLogger('API:SkySolveRecognize');
 
-const OCR_PROMPT = `你是题目视觉转录器，只识别和结构化题目，绝对不要解题。
+const OCR_PROMPT = `你是纸质题目与手写内容视觉转录器，只识别和结构化图片内容，绝对不要解题。
 只返回 {"problems":[ProblemSpec,...]} JSON 对象，不要输出 JSON 之外内容。
 每题必须包含 id、stage、subject、questionType、stem、options、givens、asks、formulas、ambiguities、confidence。
-stage 只能是初中、高中、大学、unknown；缺省数组必须返回 []；公式使用 LaTeX。
-多道题分别放入 problems，保留题号、材料、子问题、选项、表格、图形标签与关系。
-看不清、被裁剪或存在多种读法时禁止猜测，在 ambiguities 写 {field,candidates,reason} 并降低 confidence。
+stage 只能是初中、高中、大学、unknown。缺省数组必须返回 []。公式使用 LaTeX。
+必须支持中文、英文、数字、单位、手写与印刷混排，以及分式、根式、上下标、向量、积分、求和和矩阵。
+多道题分别放入 problems；保留题号、材料、子问题、选项、表格、图形标签与关系。
+看不清、被裁剪或存在多种读法时禁止猜测：在 ambiguities 内写 {field,candidates,reason} 并降低 confidence。
 confidence 范围 0 到 1。不要解释、评价或提供答案。`;
 
 interface VisionModelConfig {
@@ -115,6 +117,11 @@ export async function POST(req: Request) {
       const latex = winner.structuredProblems.length > 0
         ? extractFormulas(structuredText).latex
         : winner.latex;
+      const fallbackConfidence = text.includes('[?]') ? 0.5 : 0.82;
+      const quality = aggregateRecognitionQuality(
+        winner.structuredProblems,
+        fallbackConfidence,
+      );
       return apiSuccess({
         text,
         latex,
@@ -123,6 +130,9 @@ export async function POST(req: Request) {
           ? winner.structuredProblems.map(problem => ({ image: dataUrl, text: problem.stem, latex: extractFormulas(problem.stem).latex }))
           : text ? [{ image: dataUrl, text, latex }] : [],
         structuredProblems: winner.structuredProblems,
+        confidence: quality.confidence,
+        ambiguities: quality.ambiguities,
+        needsConfirmation: quality.needsConfirmation,
         usedModel: `${winner.visionConfig.providerId}/${winner.visionConfig.modelId}`,
       });
     } catch (aggErr) {

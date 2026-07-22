@@ -11,7 +11,7 @@
 
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import type { SolveGraphState } from './solve-graph-state';
-import type { SolverAgentType } from './types';
+import type { ProblemSpec, SolverAgentType } from './types';
 import type { ProviderId } from '@/lib/ai/providers';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
@@ -62,6 +62,7 @@ async function solveOnce(
   agentType: SolverAgentType,
   problemText: string,
   problemImage: string | null,
+  problemSpec?: ProblemSpec | null,
 ): Promise<ParsedSolution | null> {
   const t0 = Date.now();
   // Only use image if a vision model is actually available
@@ -70,7 +71,7 @@ async function solveOnce(
   const modelConfig = resolveSolverModel(agentType, hasImage);
   const modelWithInfo = getModel(modelConfig);
 
-  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
+  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined, undefined, undefined, undefined, undefined, problemSpec);
 
   // Build multimodal message: image + text when image is available
   const userContent: any[] = [];
@@ -141,10 +142,11 @@ export async function solveWithHybrid(
   primary: SolverAgentType,
   problemText: string,
   problemImage: string | null,
+  problemSpec?: ProblemSpec | null,
 ): Promise<{ solution: ParsedSolution; usedAgents: SolverAgentType[] }> {
   const t0 = Date.now();
   // Primary
-  const primaryResult = await solveOnce(primary, problemText, problemImage);
+  const primaryResult = await solveOnce(primary, problemText, problemImage, problemSpec);
   if (primaryResult) {
     const validated = validateConfidence(primaryResult, primary);
     log.info(`[SolveAgent] Primary (${primary}): confidence=${validated.toFixed(2)}, took ${Date.now() - t0}ms`);
@@ -167,7 +169,7 @@ export async function solveWithHybrid(
 
   let secondaryResult: ParsedSolution | null = null;
   if (fallbacks.length > 0) {
-    secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
+    secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage, problemSpec);
     if (secondaryResult) {
       const validated = validateConfidence(secondaryResult, fallbacks[0]);
       if (validated >= MIN_VALIDATED_CONFIDENCE) {
@@ -177,7 +179,12 @@ export async function solveWithHybrid(
 
     // Tertiary: last resort — still validate, pick best of all three
     if (fallbacks.length > 1) {
-      const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
+      const tertiaryResult = await solveOnce(
+        fallbacks[1],
+        problemText,
+        problemImage,
+        problemSpec,
+      );
       if (tertiaryResult) {
         const validated = validateConfidence(tertiaryResult, fallbacks[1]);
         if (validated >= MIN_VALIDATED_CONFIDENCE) {
@@ -246,7 +253,7 @@ export async function solveWithAgentNode(
   state: SolveGraphState,
   _config: LangGraphRunnableConfig,
 ): Promise<Partial<SolveGraphState>> {
-  const { problemText, problemImage, agentRoute } = state;
+  const { problemText, problemImage, problemSpec, agentRoute } = state;
 
   if (!problemText) {
     log.error('[SolveGraph] solveWithAgentNode: empty problemText');
@@ -260,7 +267,12 @@ export async function solveWithAgentNode(
     const t0 = Date.now();
     // Don't pass problemImage to solve — OCR already extracted the text.
     // Passing image forces vision models which are slower and may timeout.
-    const { solution, usedAgents } = await solveWithHybrid(agentType, problemText, null);
+    const { solution, usedAgents } = await solveWithHybrid(
+      agentType,
+      problemText,
+      null,
+      problemSpec,
+    );
     log.info(`[SolveGraph] solveWithAgentNode completed in ${Date.now() - t0}ms, agents=${usedAgents.join(',')}`);
 
     return {

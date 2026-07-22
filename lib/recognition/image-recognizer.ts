@@ -4,7 +4,7 @@
  */
 
 import { createLogger } from '@/lib/logger';
-import type { ImageRecognitionResult, RecognizedProblem } from '@/lib/solve/types';
+import type { ImageRecognitionResult, ProblemSpec, RecognizedProblem } from '@/lib/solve/types';
 import { preprocessImage } from './image-preprocessor';
 import { splitProblems } from './multi-problem-splitter';
 import { extractFormulas } from './formula-extractor';
@@ -60,10 +60,12 @@ export async function recognizeImage(
   const problems: RecognizedProblem[] = [];
   let allText = '';
   let allLatex = '';
+  const structuredProblems: ProblemSpec[] = [];
 
   for (const { blob } of problemImages) {
     const result = await performOCR(blob, provider);
     problems.push(result);
+    if (result.problemSpec) structuredProblems.push(result.problemSpec);
     allText += result.text + '\n';
     if (result.latex) {
       allLatex += result.latex + '\n';
@@ -75,6 +77,7 @@ export async function recognizeImage(
     latex: allLatex.trim(),
     problemCount: problems.length,
     problems,
+    structuredProblems,
   };
 }
 
@@ -111,12 +114,14 @@ async function recognizeWithVisionLLM(imageBlob: Blob): Promise<RecognizedProble
 
   const data = await response.json();
   const text = data.data?.text || '';
+  const problemSpec = data.data?.structuredProblems?.[0] as ProblemSpec | undefined;
   const { text: cleanedText, latex } = extractFormulas(text);
 
   return {
     image: base64,
     text: cleanedText,
     latex,
+    problemSpec,
   };
 }
 

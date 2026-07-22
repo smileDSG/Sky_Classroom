@@ -120,7 +120,7 @@ async function generateKnowledgePoints(
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { problem, problemImage, userAnswer } = body;
+    const { problem, problemImage, problemSpec, userAnswer } = body;
 
     if (!problem) {
       return new Response(formatSSEEvent('error', { message: 'Missing required field: problem' }), {
@@ -278,6 +278,7 @@ export async function POST(req: Request) {
           },
           chainAbort.signal,
           analyzePromise,
+          problemSpec ?? null,
         );
         log.info(`[ExplainStream] Phase 2 (solving) took ${Date.now() - t1}ms, answer=${chainResult.answer?.slice(0, 30) || 'none'}`);
 
