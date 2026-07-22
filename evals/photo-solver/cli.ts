@@ -22,7 +22,7 @@ export interface CliOptions {
 export interface CliDependencies {
   loadCases?: typeof loadPhotoSolverCases;
   createOfflineAdapter?: (documentsPath: string) => PhotoSolverAdapter;
-  createLiveAdapter?: () => PhotoSolverAdapter;
+  createLiveAdapter?: (imageBaseDir: string) => PhotoSolverAdapter;
   runEvaluation?: typeof runPhotoSolverEvaluation;
   writeReport?: typeof writeEvaluationReport;
 }
@@ -99,7 +99,8 @@ export async function runPhotoSolverCli(args: string[], dependencies: CliDepende
   const cases = await (dependencies.loadCases ?? loadPhotoSolverCases)(options.dataset, filters);
   const adapter =
     options.mode === 'live'
-      ? (dependencies.createLiveAdapter ?? (() => new LiveAdapter()))()
+      ? (dependencies.createLiveAdapter ??
+          ((imageBaseDir) => new LiveAdapter({ imageBaseDir })))(path.dirname(options.dataset))
       : (dependencies.createOfflineAdapter ?? ((documents) => new OfflineAdapter(documents)))(
           options.documents,
         );

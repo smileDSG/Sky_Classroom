@@ -28,6 +28,7 @@ export interface LiveSolveOutput {
 }
 
 export interface LiveAdapterOptions {
+  imageBaseDir?: string;
   recognize?: (input: {
     imagePath: string;
     testCase: PhotoSolverCase;
@@ -39,6 +40,7 @@ export interface LiveAdapterOptions {
     testCase: PhotoSolverCase;
   }) => Promise<LiveSolveOutput>;
   fileExists?: (filePath: string) => Promise<boolean>;
+  supportsRecognitionApis?: () => boolean;
   sleep?: (milliseconds: number) => Promise<void>;
 }
 
@@ -151,12 +153,20 @@ export class LiveAdapter implements PhotoSolverAdapter {
   private readonly recognize: NonNullable<LiveAdapterOptions['recognize']>;
   private readonly solve: NonNullable<LiveAdapterOptions['solve']>;
   private readonly fileExists: NonNullable<LiveAdapterOptions['fileExists']>;
+  private readonly imageBaseDir: string;
+  private readonly supportsRecognitionApis: NonNullable<
+    LiveAdapterOptions['supportsRecognitionApis']
+  >;
   private readonly sleep: NonNullable<LiveAdapterOptions['sleep']>;
 
   constructor(options: LiveAdapterOptions = {}) {
     this.recognize = options.recognize ?? serverRecognize;
     this.solve = options.solve ?? serverSolve;
     this.fileExists = options.fileExists ?? defaultFileExists;
+    this.imageBaseDir = options.imageBaseDir ?? process.cwd();
+    this.supportsRecognitionApis =
+      options.supportsRecognitionApis ??
+      (() => typeof Blob !== 'undefined' && typeof FormData !== 'undefined');
     this.sleep = options.sleep ?? defaultSleep;
   }
 
@@ -168,7 +178,7 @@ export class LiveAdapter implements PhotoSolverAdapter {
     let recognitionMs = 0;
 
     if (testCase.imagePath) {
-      const imagePath = path.resolve(testCase.imagePath);
+      const imagePath = path.resolve(this.imageBaseDir, testCase.imagePath);
       if (!(await this.fileExists(imagePath))) {
         return adapterResultSchema.parse({
           recognition,
@@ -179,7 +189,7 @@ export class LiveAdapter implements PhotoSolverAdapter {
           skipReason: `image not found: ${testCase.imagePath}`,
         });
       }
-      if (typeof Blob === 'undefined' || typeof FormData === 'undefined') {
+      if (!this.supportsRecognitionApis()) {
         return adapterResultSchema.parse({
           recognition,
           retrievedDocuments: [],
