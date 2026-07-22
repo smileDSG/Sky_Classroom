@@ -24,4 +24,26 @@ describe('OfflineAdapter', () => {
       expect(cases.some((item) => item.tags.includes(tag))).toBe(true);
     }
   });
+
+  it('has the required fixture distribution', async () => {
+    const cases = await loadPhotoSolverCases(casesPath);
+    expect(cases).toHaveLength(20);
+    expect(cases.filter((item) => item.mode === 'synthetic')).toHaveLength(10);
+    expect(cases.filter((item) => item.mode === 'real')).toHaveLength(10);
+    expect(cases.filter((item) => item.stage === '初中')).toHaveLength(6);
+    expect(cases.filter((item) => item.stage === '高中')).toHaveLength(8);
+    expect(cases.filter((item) => item.stage === '大学')).toHaveLength(6);
+    expect(cases.filter((item) => item.subject === '理科')).toHaveLength(14);
+    expect(cases.filter((item) => item.subject === '文科')).toHaveLength(6);
+  });
+
+  it('handles a missing real image and rejected cases deterministically', async () => {
+    const cases = await loadPhotoSolverCases(casesPath);
+    const realCase = cases.find((item) => item.mode === 'real');
+    const rejected = cases.find((item) => item.shouldReject);
+    const adapter = new OfflineAdapter();
+    expect(realCase?.imagePath).toBeTruthy();
+    expect((await adapter.run(realCase!)).skipped).toBe(false);
+    expect((await adapter.run(rejected!)).answer).toBeUndefined();
+  });
 });
