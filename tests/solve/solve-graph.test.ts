@@ -48,6 +48,16 @@ describe('buildSolveInitialState', () => {
     const state = buildSolveInitialState('2+2=?', null, '5');
     expect(state.userAnswer).toBe('5');
   });
+
+  test('preserves structured problem context', () => {
+    const problemSpec = {
+      id: 'p1', stage: '高中' as const, subject: '物理', questionType: '选择题', stem: '题干',
+      options: [], givens: [], asks: [], formulas: [], ambiguities: [], materials: [], subQuestions: [], diagram: null, confidence: 0.9,
+    };
+    const state = buildSolveInitialState('题干', null, null, problemSpec);
+    expect(state.problemSpec).toEqual(problemSpec);
+  });
+
 });
 
 describe('createSolveGraph', () => {

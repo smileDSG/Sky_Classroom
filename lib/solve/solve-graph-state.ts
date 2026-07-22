@@ -10,6 +10,7 @@ import type {
   GradeResult,
   VotingResult,
   FourPartOutput,
+  ProblemSpec,
   SolverAgentType,
 } from './types';
 
@@ -26,6 +27,10 @@ export const SolveGraphAnnotation = Annotation.Root({
     default: () => '',
   }),
   problemImage: Annotation<string | null>({
+    value: (_prev, next) => next,
+    default: () => null,
+  }),
+  problemSpec: Annotation<ProblemSpec | null>({
     value: (_prev, next) => next,
     default: () => null,
   }),

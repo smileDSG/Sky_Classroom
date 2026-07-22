@@ -13,7 +13,7 @@ const log = createLogger('API:SkySolveExplain');
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { problem, problemImage, userAnswer, agentId, useHighPrecision, outputFormat } = body;
+    const { problem, problemImage, problemSpec, userAnswer, agentId, useHighPrecision, outputFormat } = body;
 
     if (!problem) {
       return apiError(
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     log.info(`[Explain] Solving: ${problem.slice(0, 60)}...`);
 
     const graph = createSolveGraph();
-    const initialState = buildSolveInitialState(problem, problemImage ?? null, userAnswer ?? null);
+    const initialState = buildSolveInitialState(problem, problemImage ?? null, userAnswer ?? null, problemSpec ?? null);
 
     const startTime = performance.now();
     const finalState = await graph.invoke(initialState);

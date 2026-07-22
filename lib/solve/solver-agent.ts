@@ -11,7 +11,7 @@
 
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import type { SolveGraphState } from './solve-graph-state';
-import type { SolverAgentType } from './types';
+import type { ProblemSpec, SolverAgentType } from './types';
 import type { ProviderId } from '@/lib/ai/providers';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
@@ -101,11 +101,12 @@ async function solveOnce(
   agentType: SolverAgentType,
   problemText: string,
   problemImage: string | null,
+  problemSpec?: ProblemSpec | null,
 ): Promise<ParsedSolution | null> {
   const modelConfig = resolveSolverModel(agentType);
   const modelWithInfo = getModel(modelConfig);
 
-  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
+  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined, undefined, undefined, undefined, undefined, problemSpec);
 
   const result = await callLLM(
     {
@@ -137,9 +138,10 @@ async function solveWithHybrid(
   primary: SolverAgentType,
   problemText: string,
   problemImage: string | null,
+  problemSpec?: ProblemSpec | null,
 ): Promise<{ solution: ParsedSolution; usedAgents: SolverAgentType[] }> {
   // Primary
-  const primaryResult = await solveOnce(primary, problemText, problemImage);
+  const primaryResult = await solveOnce(primary, problemText, problemImage, problemSpec);
   if (primaryResult) {
     const validated = validateConfidence(primaryResult, primary);
     if (validated >= MIN_VALIDATED_CONFIDENCE) {
@@ -152,7 +154,7 @@ async function solveWithHybrid(
     (t) => t !== primary,
   );
 
-  const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage);
+  const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage, problemSpec);
   if (secondaryResult) {
     const validated = validateConfidence(secondaryResult, fallbacks[0]);
     if (validated >= MIN_VALIDATED_CONFIDENCE) {
@@ -162,7 +164,7 @@ async function solveWithHybrid(
 
   // Tertiary: last resort — accept whatever we get
   if (fallbacks.length > 1) {
-    const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage);
+    const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage, problemSpec);
     if (tertiaryResult) {
       return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
     }
@@ -196,7 +198,7 @@ export async function solveWithAgentNode(
   state: SolveGraphState,
   _config: LangGraphRunnableConfig,
 ): Promise<Partial<SolveGraphState>> {
-  const { problemText, problemImage, agentRoute } = state;
+  const { problemText, problemImage, problemSpec, agentRoute } = state;
 
   if (!problemText) {
     log.error('[SolveGraph] solveWithAgentNode: empty problemText');
@@ -207,7 +209,7 @@ export async function solveWithAgentNode(
   log.info(`[SolveGraph] Solving with agent: ${agentType}`);
 
   try {
-    const { solution, usedAgents } = await solveWithHybrid(agentType, problemText, problemImage);
+    const { solution, usedAgents } = await solveWithHybrid(agentType, problemText, problemImage, problemSpec);
 
     return {
       solution: solution.solution,

@@ -22,6 +22,7 @@ export type SolverAgentType =
 export interface SolveState {
   problemText: string;
   problemImage: string | null;
+  problemSpec: ProblemSpec | null;
   userAnswer: string | null;
   agentId: string;
   selectedAgentId: string | null;   // agent chosen by routing (null = not yet routed)
@@ -128,10 +129,55 @@ export interface QuestionBankEntry {
 
 // ── Recognition ───────────────────────────────────────────────────
 
+export type ProblemStage = '初中' | '高中' | '大学' | 'unknown';
+
+export interface ProblemOption {
+  key: string;
+  content: string;
+}
+
+export interface ProblemGiven {
+  name?: string;
+  symbol?: string;
+  value?: string;
+  unit?: string;
+}
+
+export interface ProblemAmbiguity {
+  field: string;
+  candidates: string[];
+  reason: string;
+}
+
+export interface ProblemDiagram {
+  type: string;
+  description: string;
+  labels: string[];
+  relations: string[];
+}
+
+export interface ProblemSpec {
+  id: string;
+  stage: ProblemStage;
+  subject: string;
+  questionType: string;
+  stem: string;
+  options: ProblemOption[];
+  givens: ProblemGiven[];
+  asks: string[];
+  formulas: string[];
+  ambiguities: ProblemAmbiguity[];
+  materials: string[];
+  subQuestions: string[];
+  diagram: ProblemDiagram | null;
+  confidence: number;
+}
+
 export interface RecognizedProblem {
   image: string;    // base64 or data URL of cropped problem region
   text: string;     // extracted text
   latex: string;    // extracted LaTeX formulas
+  problemSpec?: ProblemSpec;
 }
 
 export interface ImageRecognitionResult {
@@ -139,4 +185,5 @@ export interface ImageRecognitionResult {
   latex: string;
   problemCount: number;
   problems?: RecognizedProblem[];
+  structuredProblems?: ProblemSpec[];
 }

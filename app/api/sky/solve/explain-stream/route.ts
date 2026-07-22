@@ -130,7 +130,7 @@ function formatSSEEvent(type: string, data: Record<string, unknown> = {}): strin
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { problem, problemImage, userAnswer } = body;
+    const { problem, problemImage, problemSpec, userAnswer } = body;
 
     if (!problem) {
       return new Response(
@@ -215,7 +215,7 @@ export async function POST(req: Request) {
         }
 
         // Phase 2: Route to agent
-        const agentType = classifyProblem(problem);
+        const agentType = classifyProblem(problem, problemSpec);
         await write(formatSSEEvent('phase', { phase: 'routing', agentType }));
 
         // Phase 3: Stream solve + parallel knowledge points generation
@@ -232,7 +232,7 @@ export async function POST(req: Request) {
         let streamedQuestionType: 'choice' | 'fill' | 'solve' | 'judge' | undefined = undefined;
         let streamedOptions: string[] | undefined = undefined;
 
-        for await (const event of streamSolve(agentType, problem, problemImage ?? null)) {
+        for await (const event of streamSolve(agentType, problem, problemImage ?? null, problemSpec ?? null)) {
           let processedEvent = event;
           if (event.type === 'step') {
             processedEvent = {

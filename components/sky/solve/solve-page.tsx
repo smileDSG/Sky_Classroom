@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
 import { MultimodalInput } from './multimodal-input';
 import { GradeResultCard } from './grade-result';
 import { SolutionPanel } from './solution-panel';
@@ -15,11 +16,13 @@ import { SolutionSkeleton } from './solution-skeleton';
 import { MathRenderer } from './math-renderer';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { useTaskStore } from '@/lib/store/use-task-store';
-import type { GradeResult, FourPartOutput, GradedFourPartOutput, QuestionBankEntry } from '@/lib/solve/types';
+import type { GradeResult, FourPartOutput, GradedFourPartOutput, ProblemSpec, QuestionBankEntry } from '@/lib/solve/types';
+import type { RecognitionAmbiguity } from '@/lib/recognition/recognition-quality';
 
 type SolvePageState =
   | 'idle'
   | 'recognizing'
+  | 'confirming'
   | 'solving'
   | 'grading'
   | 'success'
@@ -37,14 +40,32 @@ interface SolveResult {
 }
 
 /** Call recognition API, return extracted problem text */
-async function recognizeImage(file: File): Promise<{ text: string; latex: string }> {
+interface RecognizedImageResult {
+  text: string;
+  latex: string;
+  confidence: number;
+  ambiguities: RecognitionAmbiguity[];
+  needsConfirmation: boolean;
+  problems: { image?: string; text: string; latex: string }[];
+  structuredProblems: ProblemSpec[];
+}
+
+async function recognizeImage(file: File): Promise<RecognizedImageResult> {
   const formData = new FormData();
   formData.append('image', file);
 
   const res = await fetch('/api/sky/solve/recognize', { method: 'POST', body: formData });
   if (!res.ok) throw new Error('图片识别失败');
   const json = await res.json();
-  return { text: json.text ?? '', latex: json.latex ?? '' };
+  return {
+    text: json.text ?? '',
+    latex: json.latex ?? '',
+    confidence: typeof json.confidence === 'number' ? json.confidence : 0,
+    ambiguities: Array.isArray(json.ambiguities) ? json.ambiguities : [],
+    needsConfirmation: json.needsConfirmation === true,
+    problems: Array.isArray(json.problems) ? json.problems : [],
+    structuredProblems: Array.isArray(json.structuredProblems) ? json.structuredProblems : [],
+  };
 }
 
 /** Call grade API */
@@ -72,6 +93,7 @@ interface StreamState {
 async function streamExplain(
   problemText: string,
   problemImage: string | null,
+  problemSpec: ProblemSpec | null,
   onPhase: (phase: StreamPhase) => void,
   onUpdate: (partial: Partial<StreamState>) => void,
   signal: AbortSignal,
@@ -79,7 +101,7 @@ async function streamExplain(
   const res = await fetch('/api/sky/solve/explain-stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ problem: problemText, problemImage }),
+    body: JSON.stringify({ problem: problemText, problemImage, problemSpec }),
     signal,
   });
 
@@ -139,7 +161,11 @@ async function streamExplain(
               break;
 
             case 'knowledge':
-              accumulated.knowledgePoints = event.points.map((p: any) => ({
+              accumulated.knowledgePoints = event.points.map((p: {
+                name?: string;
+                description?: string;
+                difficulty?: string;
+              }) => ({
                 name: p.name || '',
                 description: p.description || '',
                 difficulty: p.difficulty || 'medium',
@@ -148,7 +174,12 @@ async function streamExplain(
               break;
 
             case 'similar':
-              accumulated.similarQuestions = event.questions.map((q: any) => ({
+              accumulated.similarQuestions = event.questions.map((q: {
+                problem?: string;
+                difficulty?: number;
+                knowledgePoint?: string;
+                answer?: string;
+              }) => ({
                 problem: q.problem || '',
                 difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
                 knowledgePoint: q.knowledgePoint || '',
@@ -231,11 +262,12 @@ async function pollSolveJob(
 async function submitSolveJob(
   problem: string,
   problemImage: string | null,
+  problemSpec: ProblemSpec | null,
 ): Promise<string> {
   const res = await fetch('/api/sky/solve/jobs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ problem, problemImage }),
+    body: JSON.stringify({ problem, problemImage, problemSpec }),
   });
   if (!res.ok) throw new Error('提交解题作业失败');
   const json = await res.json();
@@ -269,6 +301,8 @@ export function SolvePage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SolveResult | null>(null);
   const [recognizedText, setRecognizedText] = useState<string>('');
+  const [recognitionConfidence, setRecognitionConfidence] = useState<number | null>(null);
+  const [recognitionAmbiguities, setRecognitionAmbiguities] = useState<RecognitionAmbiguity[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [streamPhase, setStreamPhase] = useState<StreamPhase>('checking');
   const [showHistory, setShowHistory] = useState(false);
@@ -342,13 +376,14 @@ export function SolvePage() {
     taskId: string,
     problemText: string,
     problemImage: string | null,
+    problemSpec: ProblemSpec | null,
   ): Promise<void> {
     const store = useTaskStore.getState;
     const abortController = new AbortController();
     abortRefs.current.set(taskId, abortController);
 
     try {
-      const jobId = await submitSolveJob(problemText, problemImage);
+      const jobId = await submitSolveJob(problemText, problemImage, problemSpec);
 
       let latestPartial: Partial<{
         answer: string;
@@ -438,16 +473,30 @@ export function SolvePage() {
         let problemText = '';
         let problemImage: string | null = null;
         let previewUrl: string | undefined;
+        let problemSpec: ProblemSpec | null = null;
 
         if (input.type === 'image') {
           setState('recognizing');
           previewUrl = input.previewUrl;
+          setPreviewImage(previewUrl ?? null);
           const recognized = await recognizeImage(input.content as File);
-          problemText = recognized.text || recognized.latex;
-          // Don't send image to solver when we already have text — saves bandwidth
-          problemImage = null;
+          problemSpec = recognized.structuredProblems?.[0] ?? null;
+          problemText = problemSpec?.stem || recognized.text || recognized.latex;
+          problemImage = recognized.problems?.[0]?.image ?? null;
           setRecognizedText(problemText);
+          setRecognitionConfidence(recognized.confidence);
+          setRecognitionAmbiguities(recognized.ambiguities);
+
+          if (
+            recognized.needsConfirmation ||
+            recognized.confidence < 0.8 ||
+            recognized.ambiguities.length > 0
+          ) {
+            setState('confirming');
+            return;
+          }
         } else if (input.type === 'text') {
+          problemSpec = null;
           problemText = input.content as string;
           setRecognizedText(problemText);
         }
@@ -476,7 +525,7 @@ export function SolvePage() {
           recognizedText: problemText,
         });
 
-        startBackgroundPoll(taskId, problemText, problemImage);
+        startBackgroundPoll(taskId, problemText, problemImage, problemSpec);
         setState('solving');
       } catch (err) {
         setError(err instanceof Error ? err.message : '解题过程中出现错误');
@@ -485,6 +534,15 @@ export function SolvePage() {
     },
     [setActiveSolveTask]
   );
+
+  const handleConfirmRecognition = useCallback(() => {
+    const text = recognizedText.trim();
+    if (!text) {
+      setError('请先补充识别后的题目内容');
+      return;
+    }
+    void handleSubmit({ type: 'text', content: text, previewUrl: previewImage ?? undefined });
+  }, [handleSubmit, previewImage, recognizedText]);
 
   const handleGrade = useCallback(
     async (input: { problem: string; userAnswer: string }) => {
@@ -553,6 +611,8 @@ export function SolvePage() {
     setResult(null);
     setError(null);
     setRecognizedText('');
+    setRecognitionConfidence(null);
+    setRecognitionAmbiguities([]);
     setPreviewImage(null);
     setStreamPhase('checking');
     setMistakeBookState('idle');
@@ -626,7 +686,7 @@ export function SolvePage() {
             <Clock className="h-4 w-4" />
             历史记录
           </Button>
-          {(state === 'success' || state === 'graded' || state === 'error' || state === 'solving') && (
+          {(state === 'success' || state === 'graded' || state === 'error' || state === 'solving' || state === 'confirming') && (
             <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>
               <RotateCcw className="h-4 w-4" />
               重新搜题
@@ -682,6 +742,46 @@ export function SolvePage() {
               <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">正在识别图片...</p>
               <p className="text-xs text-muted-foreground">请稍候</p>
             </div>
+          )}
+
+          {state === 'confirming' && (
+            <Card className="border-amber-200/60 dark:border-amber-800/40">
+              <CardHeader className="border-b bg-amber-50/60 dark:bg-amber-950/20">
+                <CardTitle className="text-base text-amber-700 dark:text-amber-300">请核对识别结果</CardTitle>
+                <CardDescription>
+                  手写内容存在不确定字符，请修正后再开始搜题。当前置信度 {Math.round((recognitionConfidence ?? 0) * 100)}%
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 p-4">
+                <Textarea
+                  aria-label="识别结果"
+                  value={recognizedText}
+                  onChange={(event) => setRecognizedText(event.target.value)}
+                  className="min-h-[140px] resize-y"
+                />
+                {recognitionAmbiguities.length > 0 && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>需要确认的内容</AlertTitle>
+                    <AlertDescription>
+                      <ul className="mt-1 space-y-1">
+                        {recognitionAmbiguities.map((ambiguity, index) => (
+                          <li key={`${ambiguity.field}-${index}`}>
+                            {ambiguity.reason}（{ambiguity.candidates.join(' / ')}）
+                          </li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <div className="flex gap-2">
+                  <Button className="flex-1 bg-[#4A90D9] hover:bg-[#4A90D9]/90" onClick={handleConfirmRecognition}>
+                    确认并搜题
+                  </Button>
+                  <Button variant="outline" onClick={handleReset}>重新识别</Button>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {(state === 'solving' || state === 'grading') && (

@@ -10,7 +10,7 @@ import { streamLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { buildSolverPrompt } from './solver-prompts';
 import { resolveSolverModel } from './solver-constants';
-import type { SolverAgentType } from './types';
+import type { ProblemSpec, SolverAgentType } from './types';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('StreamingSolver');
@@ -483,11 +483,12 @@ export async function* streamSolve(
   agentType: SolverAgentType,
   problemText: string,
   problemImage: string | null,
+  problemSpec?: ProblemSpec | null,
 ): AsyncGenerator<StreamEvent> {
   const modelConfig = resolveSolverModel(agentType);
   const modelWithInfo = getModel(modelConfig);
 
-  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
+  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined, undefined, undefined, undefined, undefined, problemSpec);
 
   yield { type: 'phase', phase: 'solving' };
 
@@ -525,7 +526,7 @@ export async function* streamSolve(
 
   if (final.steps.length === 0 || !final.answer) {
     // Streaming parse failed — try fallback with full text
-    yield* fallbackSolve(agentType, problemText, problemImage);
+    yield* fallbackSolve(agentType, problemText, problemImage, problemSpec);
     return;
   }
 
@@ -554,6 +555,7 @@ async function* fallbackSolve(
   agentType: SolverAgentType,
   problemText: string,
   problemImage: string | null,
+  problemSpec?: ProblemSpec | null,
 ): AsyncGenerator<StreamEvent> {
   const { callLLM } = await import('@/lib/ai/llm');
   const { getModel: getModelFn } = await import('@/lib/ai/providers');
@@ -562,7 +564,7 @@ async function* fallbackSolve(
   const modelConfig = resolveSolverModel(agentType);
   const modelWithInfo = getModelFn(modelConfig);
 
-  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined);
+  const systemPrompt = buildSolverPrompt(agentType, problemText, problemImage ?? undefined, undefined, undefined, undefined, undefined, problemSpec);
 
   const result = await callLLM(
     {
