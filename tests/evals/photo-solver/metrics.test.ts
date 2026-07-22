@@ -175,6 +175,7 @@ describe('recognition metrics', () => {
   it.each([
     ['penalizes extra predicted options', ['A'], ['A', 'B'], 0.5],
     ['penalizes missing predicted options', ['A', 'B'], ['A'], 0.5],
+    ['penalizes reordered predicted options', ['A', 'B'], ['B', 'A'], 0],
   ])('%s', (_name, goldOptions, predictedOptions, expectedAccuracy) => {
     expect(
       evaluateRecognition({ options: goldOptions }, { options: predictedOptions }).optionAccuracy,
