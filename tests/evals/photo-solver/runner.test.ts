@@ -17,6 +17,8 @@ describe('photo solver runner', () => {
     expect(report.aggregate.evaluatedCases).toBe(20);
     expect(Object.keys(report.aggregate.byStage).length).toBeGreaterThan(0);
     expect(Object.keys(report.aggregate.bySubject).length).toBeGreaterThan(0);
+    expect(report.aggregate.humanReviewCases).toBe(4);
+    expect(report.cases.filter((item) => item.status === 'human-review')).toHaveLength(4);
   });
 
   it('continues after a single live adapter failure', async () => {
