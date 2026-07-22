@@ -2,7 +2,7 @@ import { mkdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { evaluationReportSchema, type EvaluationReport } from '../types';
 
-export async function writeEvaluationReport(
+async function writeReport(
   report: EvaluationReport,
   options: { outputDir: string },
 ): Promise<{ jsonPath: string; markdownPath: string }> {
@@ -75,4 +75,14 @@ export async function writeEvaluationReport(
     throw error;
   }
   return { jsonPath, markdownPath };
+}
+
+let writeQueue: Promise<unknown> = Promise.resolve();
+export function writeEvaluationReport(
+  report: EvaluationReport,
+  options: { outputDir: string },
+): Promise<{ jsonPath: string; markdownPath: string }> {
+  const operation = writeQueue.then(() => writeReport(report, options));
+  writeQueue = operation.catch(() => undefined);
+  return operation;
 }

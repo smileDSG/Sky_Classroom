@@ -5,6 +5,7 @@ import { evaluateRecognition } from './metrics/recognition';
 import { evaluateRetrieval } from './metrics/retrieval';
 import {
   evaluationReportSchema,
+  adapterResultSchema,
   photoSolverCaseSchema,
   type AggregateScore,
   type EvaluationReport,
@@ -90,7 +91,7 @@ export async function runPhotoSolverEvaluation(
   const scores: PerCaseScore[] = [];
   for (const testCase of cases) {
     try {
-      const result = await adapter.run(testCase);
+      const result = adapterResultSchema.parse(await adapter.run(testCase));
       const recognition = evaluateRecognition(testCase.offlineRecognition, result.recognition);
       const retrieval = evaluateRetrieval(
         testCase.goldDocumentIds,
@@ -110,7 +111,7 @@ export async function runPhotoSolverEvaluation(
         ? 'skipped'
         : result.error
           ? 'failed'
-          : answer.answerMatch || answer.rejectionAccuracy === 1
+          : (testCase.shouldReject ? answer.rejectionAccuracy === 1 : answer.answerMatch === 1)
             ? 'passed'
             : 'failed';
       scores.push({

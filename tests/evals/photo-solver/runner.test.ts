@@ -102,4 +102,22 @@ describe('photo solver runner', () => {
     ).rejects.toThrow(/invalid evaluation case/);
     await expect(runPhotoSolverEvaluation([], {} as never)).rejects.toThrow(/invalid config/);
   });
+
+  it('fails a normal case with a wrong non-empty answer', async () => {
+    const cases = (await loadPhotoSolverCases(file)).slice(0, 1);
+    const base = await new OfflineAdapter().run(cases[0]);
+    const report = await runPhotoSolverEvaluation(
+      cases,
+      { run: async () => ({ ...base, answer: 'definitely wrong' }) },
+      { runMode: 'offline' },
+    );
+    expect(report.cases[0].status).toBe('failed');
+  });
+
+  it('validates adapter results', async () => {
+    const cases = (await loadPhotoSolverCases(file)).slice(0, 1);
+    await expect(
+      runPhotoSolverEvaluation(cases, { run: async () => ({}) as never }, { runMode: 'offline' }),
+    ).rejects.toThrow();
+  });
 });
