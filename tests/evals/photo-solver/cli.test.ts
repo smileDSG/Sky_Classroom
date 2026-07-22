@@ -58,12 +58,13 @@ describe('photo solver evaluation CLI', () => {
       problemText: '2+2',
       provider: imagePath,
     }));
-    const createLiveAdapter = vi.fn((imageBaseDir: string) =>
-      new LiveAdapter({
-        imageBaseDir,
-        recognize,
-        solve: async () => ({ answer: sourceCase.standardAnswer }),
-      }),
+    const createLiveAdapter = vi.fn(
+      (imageBaseDir: string) =>
+        new LiveAdapter({
+          imageBaseDir,
+          recognize,
+          solve: async () => ({ answer: sourceCase.standardAnswer }),
+        }),
     );
 
     const summary = await runPhotoSolverCli(
@@ -109,6 +110,36 @@ describe('photo solver evaluation CLI', () => {
     ]);
     expect(markdown).toContain('# Photo Solver Evaluation');
     expect(markdown).toContain(`- ${sourceCase.id}: provider unavailable`);
+  });
+
+  it('redacts provider secrets from reportable live errors', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'photo-cli-secret-'));
+    const dataset = path.join(dir, 'cases.jsonl');
+    const sourceCase = { ...(await loadPhotoSolverCases(casesPath))[0], imagePath: undefined };
+    await writeFile(dataset, `${JSON.stringify(sourceCase)}\n`);
+
+    const summary = await runPhotoSolverCli(
+      ['--mode', 'live', '--dataset', dataset, '--output-dir', dir],
+      {
+        createLiveAdapter: () =>
+          new LiveAdapter({
+            solve: async () => {
+              throw Object.assign(
+                new Error('Authorization: Bearer sk-super-secret-token provider failed'),
+                { status: 400 },
+              );
+            },
+          }),
+      },
+    );
+    const serializedReports = `${await readFile(summary.jsonPath, 'utf8')}\n${await readFile(
+      summary.markdownPath,
+      'utf8',
+    )}`;
+
+    expect(serializedReports).toContain('[REDACTED]');
+    expect(serializedReports).not.toContain('sk-super-secret-token');
+    expect(serializedReports).not.toMatch(/Bearer\s+sk-/i);
   });
 
   it('passes subject, stage, tag, dataset, and documents options to the pipeline', async () => {
@@ -214,6 +245,43 @@ describe('LiveAdapter', () => {
     expect(solve).toHaveBeenCalledTimes(3);
     expect(sleep).toHaveBeenNthCalledWith(1, 100);
     expect(sleep).toHaveBeenNthCalledWith(2, 200);
+  });
+
+  it('times out each provider attempt and retries without waiting for a hanging promise', async () => {
+    const testCase = {
+      ...(await loadPhotoSolverCases(casesPath))[0],
+      imagePath: undefined,
+      inputText: '2+2',
+    };
+    const solve = vi.fn(() => new Promise<never>(() => undefined));
+    const adapter = new LiveAdapter({
+      solve,
+      attemptTimeoutMs: 5,
+      sleep: async () => undefined,
+    });
+
+    await expect(adapter.run(testCase)).rejects.toThrow(/timed out/i);
+    expect(solve).toHaveBeenCalledTimes(3);
+  });
+
+  it('rejects malformed recognition output before solve and does not retry contract errors', async () => {
+    const testCase = (await loadPhotoSolverCases(casesPath)).find((item) => item.imagePath)!;
+    const recognize = vi.fn(async () => ({
+      recognition: null,
+      problemText: '2+2',
+    }));
+    const solve = vi.fn();
+    const adapter = new LiveAdapter({
+      recognize: recognize as never,
+      solve,
+      fileExists: async () => true,
+      supportsRecognitionApis: () => true,
+      sleep: async () => undefined,
+    });
+
+    await expect(adapter.run(testCase)).rejects.toThrow(/recognition.*contract/i);
+    expect(recognize).toHaveBeenCalledTimes(1);
+    expect(solve).not.toHaveBeenCalled();
   });
 
   it('does not retry non-retryable failures', async () => {

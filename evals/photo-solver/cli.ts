@@ -99,8 +99,9 @@ export async function runPhotoSolverCli(args: string[], dependencies: CliDepende
   const cases = await (dependencies.loadCases ?? loadPhotoSolverCases)(options.dataset, filters);
   const adapter =
     options.mode === 'live'
-      ? (dependencies.createLiveAdapter ??
-          ((imageBaseDir) => new LiveAdapter({ imageBaseDir })))(path.dirname(options.dataset))
+      ? (dependencies.createLiveAdapter ?? ((imageBaseDir) => new LiveAdapter({ imageBaseDir })))(
+          path.dirname(options.dataset),
+        )
       : (dependencies.createOfflineAdapter ?? ((documents) => new OfflineAdapter(documents)))(
           options.documents,
         );

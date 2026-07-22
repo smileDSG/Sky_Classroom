@@ -1,8 +1,10 @@
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { z } from 'zod';
 
 import {
   adapterResultSchema,
+  recognitionResultSchema,
   type AdapterResult,
   type PhotoSolverCase,
   type RecognitionResult,
@@ -29,6 +31,7 @@ export interface LiveSolveOutput {
 
 export interface LiveAdapterOptions {
   imageBaseDir?: string;
+  attemptTimeoutMs?: number;
   recognize?: (input: {
     imagePath: string;
     testCase: PhotoSolverCase;
@@ -46,6 +49,15 @@ export interface LiveAdapterOptions {
 
 const defaultSleep = (milliseconds: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
+
+const liveRecognitionOutputSchema = z
+  .object({
+    recognition: recognitionResultSchema,
+    problemText: z.string(),
+    problemImage: z.string().optional(),
+    provider: z.string().optional(),
+  })
+  .strict();
 
 async function defaultFileExists(filePath: string): Promise<boolean> {
   try {
@@ -71,16 +83,49 @@ function isRetryable(error: unknown): boolean {
 async function withRetries<T>(
   operation: () => Promise<T>,
   sleep: LiveAdapterOptions['sleep'],
+  timeoutMs: number,
 ): Promise<T> {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      return await operation();
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        return await Promise.race([
+          operation(),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(
+              () =>
+                reject(
+                  Object.assign(new Error(`provider attempt timed out after ${timeoutMs}ms`), {
+                    code: 'ETIMEDOUT',
+                  }),
+                ),
+              timeoutMs,
+            );
+          }),
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
     } catch (error) {
-      if (!isRetryable(error) || attempt === 3) throw error;
+      if (!isRetryable(error) || attempt === 3) throw sanitizeError(error);
       await (sleep ?? defaultSleep)(100 * 2 ** (attempt - 1));
     }
   }
   throw new Error('unreachable retry state');
+}
+
+function sanitizeError(error: unknown): Error {
+  const original = error instanceof Error ? error : new Error(String(error));
+  const message = original.message
+    .replace(/(Authorization\s*:\s*)(?:Bearer\s+)?[^\s,;]+/gi, '$1[REDACTED]')
+    .replace(/Bearer\s+[^\s,;]+/gi, 'Bearer [REDACTED]')
+    .replace(/sk-[A-Za-z0-9._-]+/g, '[REDACTED]');
+  const sanitized = new Error(message);
+  const record = original as UnknownRecord;
+  for (const key of ['code', 'status', 'statusCode'] as const) {
+    if (record[key] !== undefined) Object.assign(sanitized, { [key]: record[key] });
+  }
+  return sanitized;
 }
 
 async function serverRecognize(input: {
@@ -154,6 +199,7 @@ export class LiveAdapter implements PhotoSolverAdapter {
   private readonly solve: NonNullable<LiveAdapterOptions['solve']>;
   private readonly fileExists: NonNullable<LiveAdapterOptions['fileExists']>;
   private readonly imageBaseDir: string;
+  private readonly attemptTimeoutMs: number;
   private readonly supportsRecognitionApis: NonNullable<
     LiveAdapterOptions['supportsRecognitionApis']
   >;
@@ -164,6 +210,7 @@ export class LiveAdapter implements PhotoSolverAdapter {
     this.solve = options.solve ?? serverSolve;
     this.fileExists = options.fileExists ?? defaultFileExists;
     this.imageBaseDir = options.imageBaseDir ?? process.cwd();
+    this.attemptTimeoutMs = options.attemptTimeoutMs ?? 90_000;
     this.supportsRecognitionApis =
       options.supportsRecognitionApis ??
       (() => typeof Blob !== 'undefined' && typeof FormData !== 'undefined');
@@ -203,11 +250,18 @@ export class LiveAdapter implements PhotoSolverAdapter {
       const recognized = await withRetries(
         () => this.recognize({ imagePath, testCase }),
         this.sleep,
+        this.attemptTimeoutMs,
       );
+      const parsedRecognition = liveRecognitionOutputSchema.safeParse(recognized);
+      if (!parsedRecognition.success) {
+        throw new Error(
+          `recognition output contract validation failed: ${parsedRecognition.error.message}`,
+        );
+      }
       recognitionMs = performance.now() - recognitionStarted;
-      recognition = recognized.recognition;
-      problem = recognized.problemText;
-      problemImage = recognized.problemImage;
+      recognition = parsedRecognition.data.recognition;
+      problem = parsedRecognition.data.problemText;
+      problemImage = parsedRecognition.data.problemImage;
     }
 
     if (!problem?.trim()) {
@@ -225,6 +279,7 @@ export class LiveAdapter implements PhotoSolverAdapter {
     const solved = await withRetries(
       () => this.solve({ problem, problemImage, recognition, testCase }),
       this.sleep,
+      this.attemptTimeoutMs,
     );
     const generationMs = performance.now() - generationStarted;
 
