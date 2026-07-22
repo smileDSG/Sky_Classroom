@@ -9,39 +9,44 @@ const log = createLogger('FormulaExtractor');
 
 /**
  * Extract and convert LaTeX formulas from recognized OCR text.
- * Returns the cleaned text and extracted LaTeX formulas.
+ * Returns the full text (with LaTeX preserved) and extracted LaTeX formulas.
  */
 export function extractFormulas(text: string): { text: string; latex: string } {
   const formulas: string[] = [];
-  let cleaned = text;
+  let remainingText = text;
 
-  // Extract inline math patterns: $...$ or \(...\)
-  cleaned = cleaned.replace(/\$([^\$]+)\$/g, (_match, formula) => {
-    formulas.push(formula);
-    return '';
-  });
-
-  cleaned = cleaned.replace(/\\\(([^\\]+)\\\)/g, (_match, formula) => {
-    formulas.push(formula);
-    return '';
-  });
-
-  // Extract display math patterns: $$...$$ or \[...\]
-  cleaned = cleaned.replace(/\$\$([^$]+)\$\$/g, (_match, formula) => {
+  // Collect display math before inline math to avoid overlapping $$...$$ matches.
+  remainingText = remainingText.replace(/\$\$([^$]+)\$\$/g, (_match, formula) => {
     formulas.push(`\\[${formula}\\]`);
     return '';
   });
 
-  // Convert common Unicode math symbols to LaTeX
-  cleaned = convertUnicodeMath(cleaned);
+  remainingText = remainingText.replace(/\\\[([^\]]+)\\\]/g, (_match, formula) => {
+    formulas.push(`\\[${formula}\\]`);
+    return '';
+  });
+
+  // Collect inline math patterns: $...$ or \(...\)
+  remainingText = remainingText.replace(/\$([^$]+)\$/g, (_match, formula) => {
+    formulas.push(formula);
+    return '';
+  });
+
+  remainingText = remainingText.replace(/\\\(([^)]+)\\\)/g, (_match, formula) => {
+    formulas.push(formula);
+    return '';
+  });
+
+  // Convert common Unicode math symbols to LaTeX in the full text
+  const cleaned = convertUnicodeMath(remainingText);
 
   const latex = formulas.length > 0 ? formulas.join('\n') : '';
 
-  // Clean up whitespace
-  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  // Normalize whitespace (but preserve newlines for structure)
+  const normalized = cleaned.replace(/[^\S\n]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
 
   log.debug(`Extracted ${formulas.length} formulas from text`);
-  return { text: cleaned, latex };
+  return { text: normalized, latex };
 }
 
 function convertUnicodeMath(text: string): string {

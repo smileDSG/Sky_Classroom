@@ -6,6 +6,7 @@
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { extractFormulas } from '@/lib/recognition/formula-extractor';
+import { isJsonLikeOutput, parseProblemSpecs } from '@/lib/recognition/problem-spec-parser';
 import { validateImage } from '@/lib/recognition/image-validator';
 import { getModel } from '@/lib/ai/providers';
 import type { ProviderId } from '@/lib/ai/providers';
@@ -14,23 +15,14 @@ import { callLLM } from '@/lib/ai/llm';
 
 const log = createLogger('API:SkySolveRecognize');
 
-const OCR_PROMPT = `你是一个专业的数学题目识别助手。请仔细识别图片中的所有题目内容。
+const STRUCTURED_OCR_PROMPT = `你是题目视觉转录器。只识别和结构化题目，绝对不要解题。
 
-要求：
-1. 逐题识别，保留题目编号（如 1.、①、(1) 等）
-2. 所有数学公式和符号**必须用 $...$ 包裹**，示例：
-   - 行内公式：求解 $x^2 + 2x + 1 = 0$
-   - 分数：$\frac{1}{2} + \frac{1}{3}$
-   - 根号：$\sqrt{x^2 + y^2}$
-   - 上下标：$a_n$、$x_1$、$2^{10}$
-   - 比较符：$a \leq b$、$x \geq 0$、$\neq$、$\approx$
-   - 希腊字母：$\alpha$、$\beta$、$\theta$、$\pi$
-3. 分数必须用 $\\frac{分子}{分母}$ 格式，不要写成 a/b
-4. 单独成行的公式用 $$...$$ 包裹
-5. 纯文字部分保持中文原文
-6. 如果图片中有多道题，每道题之间用空行分隔
-7. 无法看清的内容用 [?] 标记，不要猜测
-8. 只输出识别到的题目文字和公式，不要添加你的解释、评价或问候语`;
+只返回 {"problems":[ProblemSpec,...]} JSON 对象，不要输出 JSON 之外内容。
+每题必须包含 id、stage、subject、questionType、stem、options、givens、asks、formulas、ambiguities、confidence。
+stage 只能是初中、高中、大学、unknown。缺省数组必须返回 []。公式使用 LaTeX。
+多道题分别放入 problems；保留题号、材料、子问题、选项、表格、图形标签与关系。
+看不清、被裁剪或存在多种读法时禁止猜测：在 ambiguities 写 {field,candidates,reason} 并降低 confidence。
+confidence 范围 0 到 1。不要解释、评价或提供答案。`;
 
 interface VisionModelConfig {
   providerId: ProviderId;
@@ -111,11 +103,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const messages = [
+    // Build vision message content.
+    // For OpenAI-compatible providers (Qwen, GLM), images must be sent as
+    // data-URL strings rather than raw Buffer, because their compatible-mode
+    // endpoints do not handle binary image parts.
+    const base64DataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
+
+    const messages: Parameters<typeof callLLM>[0]['messages'] = [
       {
         role: 'user' as const,
         content: [
-          { type: 'image' as const, image: buffer, mimeType },
+          { type: 'image' as const, image: base64DataUrl },
           { type: 'text' as const, text: '请逐字逐句识别图片中的所有文字和数学公式。特别注意：所有数学符号、公式、上下标、分数、求和符号(Σ)、积分符号(∫)、根号(√)等必须用 LaTeX 格式识别并用 $...$ 包裹。不要遗漏任何数学内容。' },
         ],
       },
@@ -133,14 +131,14 @@ export async function POST(req: Request) {
         const result = await callLLM(
           {
             model: modelWithInfo.model,
-            messages: messages as any,
+            messages,
             temperature: 0.1,
             maxOutputTokens: 4096,
           },
           'ocr-recognize',
           { retries: 0 },  // model-level fallback handles retries
           undefined,         // thinking
-          OCR_PROMPT,
+          STRUCTURED_OCR_PROMPT,
         );
 
         const rawText = result.text || '';
@@ -152,16 +150,45 @@ export async function POST(req: Request) {
 
         const { text: cleanedText, latex } = extractFormulas(rawText);
 
-        log.info(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} OK, text length=${cleanedText.length}`);
+        let structuredProblems = [] as ReturnType<typeof parseProblemSpecs>;
+        try {
+          structuredProblems = parseProblemSpecs(rawText);
+        } catch (parseError) {
+          log.warn(`[Recognize] Structured ProblemSpec parse failed; using legacy OCR: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+          if (isJsonLikeOutput(rawText)) {
+            errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: invalid ProblemSpec JSON`);
+            continue;
+          }
+          // Legacy vision models return plain OCR text; preserve old response shape.
+        }
 
-        const base64ForResponse = buffer.toString('base64');
-        const dataUrl = `data:${mimeType};base64,${base64ForResponse}`;
+        if (structuredProblems.length > 0) {
+          const structuredText = structuredProblems
+            .map(problem => [problem.stem, ...problem.options.map(option => `${option.key}. ${option.content}`)].join('\n'))
+            .join('\n\n');
+          const structuredLatex = extractFormulas(structuredText).latex;
+          return apiSuccess({
+            text: structuredText,
+            latex: structuredLatex,
+            problemCount: structuredProblems.length,
+            problems: structuredProblems.map(problem => ({ image: base64DataUrl, text: problem.stem, latex: extractFormulas(problem.stem).latex })),
+            structuredProblems,
+            usedModel: `${visionConfig.providerId}/${visionConfig.modelId}`,
+          });
+        }
+        if (isJsonLikeOutput(rawText)) {
+          errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: empty ProblemSpec problems array`);
+          continue;
+        }
+
+        log.info(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} OK, text length=${cleanedText.length}`);
 
         return apiSuccess({
           text: cleanedText,
           latex,
           problemCount: cleanedText ? 1 : 0,
-          problems: cleanedText ? [{ image: dataUrl, text: cleanedText, latex }] : [],
+          problems: cleanedText ? [{ image: base64DataUrl, text: cleanedText, latex }] : [],
+          structuredProblems: [],
           usedModel: `${visionConfig.providerId}/${visionConfig.modelId}`,
         });
       } catch (llmErr) {
