@@ -46,11 +46,11 @@ const emptyAwareRecall = (
 };
 
 const optionAccuracy = (gold: string[] | undefined, predicted: string[] | undefined): number => {
-  const expected = new Set((gold ?? []).map(normalizeContent));
-  const actual = new Set((predicted ?? []).map(normalizeContent));
-  if (expected.size === 0) return actual.size === 0 ? 1 : 0;
-  const matches = [...expected].filter((option) => actual.has(option)).length;
-  return matches / Math.max(expected.size, actual.size);
+  const expected = (gold ?? []).map(normalizeContent);
+  const actual = (predicted ?? []).map(normalizeContent);
+  if (expected.length === 0) return actual.length === 0 ? 1 : 0;
+  const matches = expected.filter((option, index) => option === actual[index]).length;
+  return matches / Math.max(expected.length, actual.length);
 };
 
 const exact = (gold: string | undefined, predicted: string | undefined): number =>
