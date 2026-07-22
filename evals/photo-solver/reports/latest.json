@@ -1,0 +1,1724 @@
+{
+  "generatedAt": "2026-07-22T11:44:15.513Z",
+  "runMode": "offline",
+  "filters": {},
+  "cases": [
+    {
+      "caseId": "syn-jun-phy-1",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "stage": "初中",
+          "subject": "理科",
+          "questionType": "choice",
+          "stem": "力学选择题"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-normal",
+            "content": "基础定律与定义，支持常规题解。",
+            "score": 1
+          }
+        ],
+        "answer": "A",
+        "evidence": [
+          "牛顿定律"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "syn-jun-math-2",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "fill",
+          "stem": "比例填空"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-normal",
+            "content": "基础定律与定义，支持常规题解。",
+            "score": 1
+          }
+        ],
+        "answer": "2",
+        "evidence": [
+          "比例关系"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "syn-jun-chi-3",
+      "status": "human-review",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 0,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 1
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "subjective",
+          "stem": "历史简答"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-normal",
+            "content": "基础定律与定义，支持常规题解。",
+            "score": 1
+          }
+        ],
+        "answer": "改革",
+        "evidence": [
+          "历史事实"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "syn-jun-phy-4",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "solve",
+          "stem": "方程求解"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-noisy",
+            "content": "资料含少量噪声，但关键公式为移项、守恒、波函数。",
+            "score": 1
+          }
+        ],
+        "answer": "3",
+        "evidence": [
+          "移项"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "syn-jun-math-5",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "proof",
+          "stem": "几何证明"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-normal",
+            "content": "基础定律与定义，支持常规题解。",
+            "score": 1
+          }
+        ],
+        "answer": "相等",
+        "evidence": [
+          "全等"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "syn-jun-chi-6",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "choice",
+          "stem": "语文选择"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-counter",
+            "content": "在假设条件改变时，结论需要依据文本语境、因果关系或材料性质重新判断。",
+            "score": 1
+          }
+        ],
+        "answer": "B",
+        "evidence": [
+          "文本语境"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "syn-high-phy-1",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "choice",
+          "stem": "电场"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-normal",
+            "content": "基础定律与定义，支持常规题解。",
+            "score": 1
+          }
+        ],
+        "answer": "C",
+        "evidence": [
+          "电场定律"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "syn-high-math-2",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "fill",
+          "stem": "导数填空"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-normal",
+            "content": "基础定律与定义，支持常规题解。",
+            "score": 1
+          }
+        ],
+        "answer": "1",
+        "evidence": [
+          "导数"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "syn-high-phy-3",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "solve",
+          "stem": "动量计算"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-noisy",
+            "content": "资料含少量噪声，但关键公式为移项、守恒、波函数。",
+            "score": 1
+          }
+        ],
+        "answer": "4",
+        "evidence": [
+          "动量守恒"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "syn-high-chi-4",
+      "status": "human-review",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 0,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 1
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "subjective",
+          "stem": "历史论述"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-multi-a",
+            "content": "史料一与定理一提供前半部分证据。",
+            "score": 1
+          },
+          {
+            "id": "doc-multi-b",
+            "content": "史料二与定理二提供后半部分证据。",
+            "score": 0.99
+          }
+        ],
+        "answer": "开放",
+        "evidence": [
+          "史料一",
+          "史料二"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "real-high-math-5",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "proof",
+          "stem": "函数证明"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-normal",
+            "content": "基础定律与定义，支持常规题解。",
+            "score": 1
+          }
+        ],
+        "answer": "成立",
+        "evidence": [
+          "单调性"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "real-high-chi-6",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 0,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 0,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "choice",
+          "stem": "阅读理解"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-no-answer",
+            "content": "仅有题目背景，没有足够信息推出唯一答案。",
+            "score": 1
+          }
+        ],
+        "evidence": [],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "real-high-phy-7",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "solve",
+          "stem": "电路"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-normal",
+            "content": "基础定律与定义，支持常规题解。",
+            "score": 1
+          }
+        ],
+        "answer": "5",
+        "evidence": [
+          "欧姆定律"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "real-high-chi-8",
+      "status": "human-review",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 0,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 1
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "subjective",
+          "stem": "历史分析"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-counter",
+            "content": "在假设条件改变时，结论需要依据文本语境、因果关系或材料性质重新判断。",
+            "score": 1
+          }
+        ],
+        "answer": "因果",
+        "evidence": [
+          "因果关系"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "real-uni-phy-1",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "choice",
+          "stem": "概率"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-normal",
+            "content": "基础定律与定义，支持常规题解。",
+            "score": 1
+          }
+        ],
+        "answer": "A",
+        "evidence": [
+          "概率定义"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "real-uni-math-2",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "fill",
+          "stem": "积分"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-normal",
+            "content": "基础定律与定义，支持常规题解。",
+            "score": 1
+          }
+        ],
+        "answer": "0",
+        "evidence": [
+          "积分"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "real-uni-phy-3",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "solve",
+          "stem": "量子"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-noisy",
+            "content": "资料含少量噪声，但关键公式为移项、守恒、波函数。",
+            "score": 1
+          }
+        ],
+        "answer": "6",
+        "evidence": [
+          "波函数"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "real-uni-math-4",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "proof",
+          "stem": "线性代数"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-multi-a",
+            "content": "史料一与定理一提供前半部分证据。",
+            "score": 1
+          },
+          {
+            "id": "doc-multi-b",
+            "content": "史料二与定理二提供后半部分证据。",
+            "score": 0.99
+          }
+        ],
+        "answer": "证毕",
+        "evidence": [
+          "定理一",
+          "定理二"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "real-uni-chi-5",
+      "status": "human-review",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 0,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 0,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 1
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "subjective",
+          "stem": "哲学论述"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-no-answer",
+            "content": "仅有题目背景，没有足够信息推出唯一答案。",
+            "score": 1
+          }
+        ],
+        "evidence": [],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    },
+    {
+      "caseId": "real-uni-phy-6",
+      "status": "passed",
+      "recognition": {
+        "stageAccuracy": 1,
+        "subjectAccuracy": 1,
+        "questionTypeAccuracy": 1,
+        "stemSimilarity": 1,
+        "formulaRecall": 1,
+        "givenConditionRecall": 1,
+        "optionAccuracy": 1
+      },
+      "retrieval": {
+        "hitAtK": 1,
+        "precisionAtK": 1,
+        "recallAtK": 1,
+        "mrr": 1
+      },
+      "answer": {
+        "normalizedExactMatch": 1,
+        "aliasMatch": 0,
+        "numericMatch": 0,
+        "answerMatch": 1,
+        "rejectionAccuracy": 1,
+        "requiredEvidenceCoverage": 1,
+        "needsHumanReview": 0
+      },
+      "latencyMs": 0,
+      "tokenUsage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0,
+        "estimatedCost": 0,
+        "currency": "USD"
+      },
+      "adapterResult": {
+        "recognition": {
+          "questionType": "choice",
+          "stem": "材料学"
+        },
+        "retrievedDocuments": [
+          {
+            "id": "doc-counter",
+            "content": "在假设条件改变时，结论需要依据文本语境、因果关系或材料性质重新判断。",
+            "score": 1
+          }
+        ],
+        "answer": "B",
+        "evidence": [
+          "材料性质"
+        ],
+        "timing": {
+          "recognitionMs": 0,
+          "retrievalMs": 0,
+          "generationMs": 0,
+          "totalMs": 0
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0,
+          "estimatedCost": 0,
+          "currency": "USD"
+        },
+        "skipped": false
+      }
+    }
+  ],
+  "aggregate": {
+    "totalCases": 20,
+    "evaluatedCases": 20,
+    "passedCases": 16,
+    "failedCases": 0,
+    "skippedCases": 0,
+    "errorCases": 0,
+    "humanReviewCases": 4,
+    "failureRate": 0,
+    "skippedRate": 0,
+    "metrics": {
+      "recognition.stageAccuracy": 1,
+      "recognition.subjectAccuracy": 1,
+      "recognition.questionTypeAccuracy": 1,
+      "recognition.stemSimilarity": 1,
+      "recognition.formulaRecall": 1,
+      "recognition.givenConditionRecall": 1,
+      "recognition.optionAccuracy": 1,
+      "retrieval.hitAtK": 1,
+      "retrieval.precisionAtK": 1,
+      "retrieval.recallAtK": 1,
+      "retrieval.mrr": 1,
+      "answer.normalizedExactMatch": 0.9375,
+      "answer.aliasMatch": 0,
+      "answer.numericMatch": 0,
+      "answer.answerMatch": 0.9375,
+      "answer.rejectionAccuracy": 1,
+      "answer.requiredEvidenceCoverage": 1,
+      "answer.needsHumanReview": 0,
+      "total": 20,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "latencyMs": 0,
+      "totalTokens": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "estimatedCost": 0,
+      "totalLatencyMs": 0,
+      "averageLatencyMs": 0,
+      "currencyMixed": 0
+    },
+    "byStage": {
+      "初中": {
+        "recognition.stageAccuracy": 1,
+        "recognition.subjectAccuracy": 1,
+        "recognition.questionTypeAccuracy": 1,
+        "recognition.stemSimilarity": 1,
+        "recognition.formulaRecall": 1,
+        "recognition.givenConditionRecall": 1,
+        "recognition.optionAccuracy": 1,
+        "retrieval.hitAtK": 1,
+        "retrieval.precisionAtK": 1,
+        "retrieval.recallAtK": 1,
+        "retrieval.mrr": 1,
+        "answer.normalizedExactMatch": 1,
+        "answer.aliasMatch": 0,
+        "answer.numericMatch": 0,
+        "answer.answerMatch": 1,
+        "answer.rejectionAccuracy": 1,
+        "answer.requiredEvidenceCoverage": 1,
+        "answer.needsHumanReview": 0,
+        "total": 6,
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "latencyMs": 0,
+        "totalTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCost": 0,
+        "totalLatencyMs": 0,
+        "averageLatencyMs": 0,
+        "currencyMixed": 0
+      },
+      "高中": {
+        "recognition.stageAccuracy": 1,
+        "recognition.subjectAccuracy": 1,
+        "recognition.questionTypeAccuracy": 1,
+        "recognition.stemSimilarity": 1,
+        "recognition.formulaRecall": 1,
+        "recognition.givenConditionRecall": 1,
+        "recognition.optionAccuracy": 1,
+        "retrieval.hitAtK": 1,
+        "retrieval.precisionAtK": 1,
+        "retrieval.recallAtK": 1,
+        "retrieval.mrr": 1,
+        "answer.normalizedExactMatch": 0.8333333333333334,
+        "answer.aliasMatch": 0,
+        "answer.numericMatch": 0,
+        "answer.answerMatch": 0.8333333333333334,
+        "answer.rejectionAccuracy": 1,
+        "answer.requiredEvidenceCoverage": 1,
+        "answer.needsHumanReview": 0,
+        "total": 8,
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "latencyMs": 0,
+        "totalTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCost": 0,
+        "totalLatencyMs": 0,
+        "averageLatencyMs": 0,
+        "currencyMixed": 0
+      },
+      "大学": {
+        "recognition.stageAccuracy": 1,
+        "recognition.subjectAccuracy": 1,
+        "recognition.questionTypeAccuracy": 1,
+        "recognition.stemSimilarity": 1,
+        "recognition.formulaRecall": 1,
+        "recognition.givenConditionRecall": 1,
+        "recognition.optionAccuracy": 1,
+        "retrieval.hitAtK": 1,
+        "retrieval.precisionAtK": 1,
+        "retrieval.recallAtK": 1,
+        "retrieval.mrr": 1,
+        "answer.normalizedExactMatch": 1,
+        "answer.aliasMatch": 0,
+        "answer.numericMatch": 0,
+        "answer.answerMatch": 1,
+        "answer.rejectionAccuracy": 1,
+        "answer.requiredEvidenceCoverage": 1,
+        "answer.needsHumanReview": 0,
+        "total": 6,
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "latencyMs": 0,
+        "totalTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCost": 0,
+        "totalLatencyMs": 0,
+        "averageLatencyMs": 0,
+        "currencyMixed": 0
+      }
+    },
+    "bySubject": {
+      "理科": {
+        "recognition.stageAccuracy": 1,
+        "recognition.subjectAccuracy": 1,
+        "recognition.questionTypeAccuracy": 1,
+        "recognition.stemSimilarity": 1,
+        "recognition.formulaRecall": 1,
+        "recognition.givenConditionRecall": 1,
+        "recognition.optionAccuracy": 1,
+        "retrieval.hitAtK": 1,
+        "retrieval.precisionAtK": 1,
+        "retrieval.recallAtK": 1,
+        "retrieval.mrr": 1,
+        "answer.normalizedExactMatch": 1,
+        "answer.aliasMatch": 0,
+        "answer.numericMatch": 0,
+        "answer.answerMatch": 1,
+        "answer.rejectionAccuracy": 1,
+        "answer.requiredEvidenceCoverage": 1,
+        "answer.needsHumanReview": 0,
+        "total": 14,
+        "passed": 14,
+        "failed": 0,
+        "skipped": 0,
+        "latencyMs": 0,
+        "totalTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCost": 0,
+        "totalLatencyMs": 0,
+        "averageLatencyMs": 0,
+        "currencyMixed": 0
+      },
+      "文科": {
+        "recognition.stageAccuracy": 1,
+        "recognition.subjectAccuracy": 1,
+        "recognition.questionTypeAccuracy": 1,
+        "recognition.stemSimilarity": 1,
+        "recognition.formulaRecall": 1,
+        "recognition.givenConditionRecall": 1,
+        "recognition.optionAccuracy": 1,
+        "retrieval.hitAtK": 1,
+        "retrieval.precisionAtK": 1,
+        "retrieval.recallAtK": 1,
+        "retrieval.mrr": 1,
+        "answer.normalizedExactMatch": 0.5,
+        "answer.aliasMatch": 0,
+        "answer.numericMatch": 0,
+        "answer.answerMatch": 0.5,
+        "answer.rejectionAccuracy": 1,
+        "answer.requiredEvidenceCoverage": 1,
+        "answer.needsHumanReview": 0,
+        "total": 6,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "latencyMs": 0,
+        "totalTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCost": 0,
+        "totalLatencyMs": 0,
+        "averageLatencyMs": 0,
+        "currencyMixed": 0
+      }
+    },
+    "byTag": {
+      "normal": {
+        "recognition.stageAccuracy": 1,
+        "recognition.subjectAccuracy": 1,
+        "recognition.questionTypeAccuracy": 1,
+        "recognition.stemSimilarity": 1,
+        "recognition.formulaRecall": 1,
+        "recognition.givenConditionRecall": 1,
+        "recognition.optionAccuracy": 1,
+        "retrieval.hitAtK": 1,
+        "retrieval.precisionAtK": 1,
+        "retrieval.recallAtK": 1,
+        "retrieval.mrr": 1,
+        "answer.normalizedExactMatch": 1,
+        "answer.aliasMatch": 0,
+        "answer.numericMatch": 0,
+        "answer.answerMatch": 1,
+        "answer.rejectionAccuracy": 1,
+        "answer.requiredEvidenceCoverage": 1,
+        "answer.needsHumanReview": 0,
+        "total": 10,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "latencyMs": 0,
+        "totalTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCost": 0,
+        "totalLatencyMs": 0,
+        "averageLatencyMs": 0,
+        "currencyMixed": 0
+      },
+      "noisy": {
+        "recognition.stageAccuracy": 1,
+        "recognition.subjectAccuracy": 1,
+        "recognition.questionTypeAccuracy": 1,
+        "recognition.stemSimilarity": 1,
+        "recognition.formulaRecall": 1,
+        "recognition.givenConditionRecall": 1,
+        "recognition.optionAccuracy": 1,
+        "retrieval.hitAtK": 1,
+        "retrieval.precisionAtK": 1,
+        "retrieval.recallAtK": 1,
+        "retrieval.mrr": 1,
+        "answer.normalizedExactMatch": 1,
+        "answer.aliasMatch": 0,
+        "answer.numericMatch": 0,
+        "answer.answerMatch": 1,
+        "answer.rejectionAccuracy": 1,
+        "answer.requiredEvidenceCoverage": 1,
+        "answer.needsHumanReview": 0,
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "latencyMs": 0,
+        "totalTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCost": 0,
+        "totalLatencyMs": 0,
+        "averageLatencyMs": 0,
+        "currencyMixed": 0
+      },
+      "counterfactual": {
+        "recognition.stageAccuracy": 1,
+        "recognition.subjectAccuracy": 1,
+        "recognition.questionTypeAccuracy": 1,
+        "recognition.stemSimilarity": 1,
+        "recognition.formulaRecall": 1,
+        "recognition.givenConditionRecall": 1,
+        "recognition.optionAccuracy": 1,
+        "retrieval.hitAtK": 1,
+        "retrieval.precisionAtK": 1,
+        "retrieval.recallAtK": 1,
+        "retrieval.mrr": 1,
+        "answer.normalizedExactMatch": 1,
+        "answer.aliasMatch": 0,
+        "answer.numericMatch": 0,
+        "answer.answerMatch": 1,
+        "answer.rejectionAccuracy": 1,
+        "answer.requiredEvidenceCoverage": 1,
+        "answer.needsHumanReview": 0,
+        "total": 3,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "latencyMs": 0,
+        "totalTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCost": 0,
+        "totalLatencyMs": 0,
+        "averageLatencyMs": 0,
+        "currencyMixed": 0
+      },
+      "multi-document": {
+        "recognition.stageAccuracy": 1,
+        "recognition.subjectAccuracy": 1,
+        "recognition.questionTypeAccuracy": 1,
+        "recognition.stemSimilarity": 1,
+        "recognition.formulaRecall": 1,
+        "recognition.givenConditionRecall": 1,
+        "recognition.optionAccuracy": 1,
+        "retrieval.hitAtK": 1,
+        "retrieval.precisionAtK": 1,
+        "retrieval.recallAtK": 1,
+        "retrieval.mrr": 1,
+        "answer.normalizedExactMatch": 1,
+        "answer.aliasMatch": 0,
+        "answer.numericMatch": 0,
+        "answer.answerMatch": 1,
+        "answer.rejectionAccuracy": 1,
+        "answer.requiredEvidenceCoverage": 1,
+        "answer.needsHumanReview": 0,
+        "total": 2,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "latencyMs": 0,
+        "totalTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCost": 0,
+        "totalLatencyMs": 0,
+        "averageLatencyMs": 0,
+        "currencyMixed": 0
+      },
+      "no-answer": {
+        "recognition.stageAccuracy": 1,
+        "recognition.subjectAccuracy": 1,
+        "recognition.questionTypeAccuracy": 1,
+        "recognition.stemSimilarity": 1,
+        "recognition.formulaRecall": 1,
+        "recognition.givenConditionRecall": 1,
+        "recognition.optionAccuracy": 1,
+        "retrieval.hitAtK": 1,
+        "retrieval.precisionAtK": 1,
+        "retrieval.recallAtK": 1,
+        "retrieval.mrr": 1,
+        "answer.normalizedExactMatch": 0,
+        "answer.aliasMatch": 0,
+        "answer.numericMatch": 0,
+        "answer.answerMatch": 0,
+        "answer.rejectionAccuracy": 1,
+        "answer.requiredEvidenceCoverage": 1,
+        "answer.needsHumanReview": 0,
+        "total": 2,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "latencyMs": 0,
+        "totalTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCost": 0,
+        "totalLatencyMs": 0,
+        "averageLatencyMs": 0,
+        "currencyMixed": 0
+      }
+    }
+  }
+}

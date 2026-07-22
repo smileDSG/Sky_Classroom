@@ -37,7 +37,7 @@ const avg = (rows: PerCaseScore[], key: 'recognition' | 'retrieval' | 'answer') 
   const sums: Record<string, number> = {};
   let n = 0;
   for (const r of rows) {
-    if (r.status === 'skipped') continue;
+    if (r.status === 'skipped' || (key === 'answer' && r.status === 'human-review')) continue;
     n++;
     for (const [k, v] of Object.entries(r[key])) sums[k] = (sums[k] ?? 0) + v;
   }
@@ -106,11 +106,14 @@ export async function runPhotoSolverEvaluation(
         didReject: !result.answer,
         evidence: result.evidence,
         requiredEvidence: testCase.requiredEvidence,
+        subjective: testCase.questionType === 'subjective',
       });
       const status = result.skipped
         ? 'skipped'
         : result.error
           ? 'failed'
+          : answer.needsHumanReview
+            ? 'human-review'
           : (testCase.shouldReject ? answer.rejectionAccuracy === 1 : answer.answerMatch === 1)
             ? 'passed'
             : 'failed';
@@ -151,7 +154,7 @@ export async function runPhotoSolverEvaluation(
     failedCases: failed,
     skippedCases: skipped,
     errorCases: errors,
-    humanReviewCases: 0,
+    humanReviewCases: scores.filter((s) => s.status === 'human-review').length,
     failureRate: evaluated ? (failed + errors) / evaluated : 0,
     skippedRate: scores.length ? skipped / scores.length : 0,
     metrics: summary(scores),

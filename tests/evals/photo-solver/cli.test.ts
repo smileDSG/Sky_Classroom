@@ -322,4 +322,27 @@ describe('LiveAdapter', () => {
     expect(serialized).not.toContain('sk-secret');
     expect(serialized.toLowerCase()).not.toContain('authorization');
   });
+
+  it('preserves retrieval results and measured retrieval latency from the live pipeline', async () => {
+    const testCase = {
+      ...(await loadPhotoSolverCases(casesPath))[0],
+      imagePath: undefined,
+      inputText: '2+2',
+    };
+    const adapter = new LiveAdapter({
+      solve: async () => ({
+        answer: '4',
+        evidence: ['addition'],
+        retrievedDocuments: [{ id: 'doc-live', content: '2+2=4', score: 0.9 }],
+        retrievalMs: 12,
+      }),
+    });
+
+    const result = await adapter.run(testCase);
+
+    expect(result.retrievedDocuments).toEqual([
+      { id: 'doc-live', content: '2+2=4', score: 0.9 },
+    ]);
+    expect(result.timing.retrievalMs).toBe(12);
+  });
 });

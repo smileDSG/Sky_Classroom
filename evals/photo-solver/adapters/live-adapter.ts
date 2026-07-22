@@ -24,6 +24,7 @@ export interface LiveSolveOutput {
   answer?: string;
   evidence?: string[];
   retrievedDocuments?: Array<{ id: string; content?: string; score?: number }>;
+  retrievalMs?: number;
   usage?: AdapterResult['usage'];
   provider?: string;
   [key: string]: unknown;
@@ -175,6 +176,10 @@ async function serverSolve(input: {
   problemImage?: string;
   recognition: RecognitionResult;
 }): Promise<LiveSolveOutput> {
+  const retrievalStarted = performance.now();
+  const { findSimilarQuestions } = await import('../../../lib/solve/question-bank');
+  const matches = await findSimilarQuestions(input.problem, 0.01);
+  const retrievalMs = performance.now() - retrievalStarted;
   const { buildSolveInitialState, createSolveGraph } =
     await import('../../../lib/solve/solve-graph');
   const graph = createSolveGraph();
@@ -191,6 +196,15 @@ async function serverSolve(input: {
       ),
       ...(output?.knowledgePoints ?? []).map((point) => point.name),
     ],
+    retrievedDocuments: matches.map((match) => ({
+      id: match.id,
+      content: match.problemText,
+      score:
+        typeof (match as UnknownRecord)._similarity === 'number'
+          ? ((match as UnknownRecord)._similarity as number)
+          : undefined,
+    })),
+    retrievalMs,
   };
 }
 
@@ -290,7 +304,7 @@ export class LiveAdapter implements PhotoSolverAdapter {
       evidence: solved.evidence ?? [],
       timing: {
         recognitionMs,
-        retrievalMs: 0,
+        retrievalMs: solved.retrievalMs ?? 0,
         generationMs,
         totalMs: performance.now() - started,
       },
