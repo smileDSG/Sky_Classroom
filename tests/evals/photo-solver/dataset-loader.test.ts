@@ -13,7 +13,6 @@ const validCase = {
   subject: '物理',
   questionType: '选择题',
   imagePath: 'images/missing.png',
-  inputText: '',
   expectedProblemSpec: { stem: '测试题' },
   offlineRecognition: { stem: '测试题' },
   standardAnswer: 'B',
@@ -70,6 +69,15 @@ describe('loadPhotoSolverCases', () => {
     const filePath = await writeJsonl([JSON.stringify(validCase)]);
 
     await expect(loadPhotoSolverCases(filePath)).resolves.toHaveLength(1);
+  });
+
+  it.each([
+    ['empty strings', '', ''],
+    ['whitespace-only strings', '  ', '\t'],
+  ])('rejects %s as the only case inputs', async (_label, imagePath, inputText) => {
+    const filePath = await writeJsonl([JSON.stringify({ ...validCase, imagePath, inputText })]);
+
+    await expect(loadPhotoSolverCases(filePath)).rejects.toThrow(/imagePath|inputText/);
   });
 
   it('filters by mode, subject, stage, and tags', async () => {

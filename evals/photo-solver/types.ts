@@ -23,8 +23,8 @@ export const photoSolverCaseSchema = z
     stage: z.string().min(1),
     subject: z.string().min(1),
     questionType: z.string().min(1),
-    imagePath: z.string().optional(),
-    inputText: z.string().optional(),
+    imagePath: z.string().trim().min(1).optional(),
+    inputText: z.string().trim().min(1).optional(),
     expectedProblemSpec: problemSpecSchema,
     offlineRecognition: recognitionResultSchema,
     standardAnswer: z.string(),
@@ -34,7 +34,7 @@ export const photoSolverCaseSchema = z
     shouldReject: z.boolean(),
     tags: z.array(z.string()),
   })
-  .refine((item) => item.imagePath !== undefined || item.inputText !== undefined, {
+  .refine((item) => Boolean(item.imagePath || item.inputText), {
     message: 'either imagePath or inputText is required',
     path: ['imagePath'],
   });
