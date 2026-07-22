@@ -1,0 +1,6 @@
+{"id":"doc-normal","title":"基础定律","content":"基础定律与定义，支持常规题解。","tags":["normal"]}
+{"id":"doc-noisy","title":"含噪资料","content":"资料含少量噪声，但关键公式为移项、守恒、波函数。","tags":["noisy"]}
+{"id":"doc-no-answer","title":"无答案资料","content":"仅有题目背景，没有足够信息推出唯一答案。","tags":["no-answer"]}
+{"id":"doc-counter","title":"反事实资料","content":"在假设条件改变时，结论需要依据文本语境、因果关系或材料性质重新判断。","tags":["counterfactual"]}
+{"id":"doc-multi-a","title":"多文档甲","content":"史料一与定理一提供前半部分证据。","tags":["multi-document"]}
+{"id":"doc-multi-b","title":"多文档乙","content":"史料二与定理二提供后半部分证据。","tags":["multi-document"]}
