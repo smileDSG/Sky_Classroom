@@ -58,6 +58,20 @@ describe('photo solver runner', () => {
     expect(report.aggregate.skippedCases).toBe(1);
   });
 
+  it('excludes human-review cases from automatic answer metric averages', async () => {
+    const allCases = await loadPhotoSolverCases(file);
+    const objective = allCases.find((item) => item.questionType !== 'subjective')!;
+    const subjective = allCases.find((item) => item.questionType === 'subjective')!;
+    const report = await runPhotoSolverEvaluation(
+      [objective, subjective],
+      new OfflineAdapter(),
+      { runMode: 'offline', generatedAt: 'fixed' },
+    );
+
+    expect(report.aggregate.metrics['answer.answerMatch']).toBe(1);
+    expect(report.aggregate.humanReviewCases).toBe(1);
+  });
+
   it('validates runner options before calling the adapter', async () => {
     const cases = (await loadPhotoSolverCases(file)).slice(0, 1);
     let calls = 0;

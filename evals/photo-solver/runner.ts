@@ -37,7 +37,7 @@ const avg = (rows: PerCaseScore[], key: 'recognition' | 'retrieval' | 'answer') 
   const sums: Record<string, number> = {};
   let n = 0;
   for (const r of rows) {
-    if (r.status === 'skipped') continue;
+    if (r.status === 'skipped' || (key === 'answer' && r.status === 'human-review')) continue;
     n++;
     for (const [k, v] of Object.entries(r[key])) sums[k] = (sums[k] ?? 0) + v;
   }

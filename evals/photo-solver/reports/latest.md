@@ -2,9 +2,9 @@
 ## Overview
 
 - answer.aliasMatch: 0
-- answer.answerMatch: 0.75
-- answer.needsHumanReview: 0.2
-- answer.normalizedExactMatch: 0.9
+- answer.answerMatch: 0.9375
+- answer.needsHumanReview: 0
+- answer.normalizedExactMatch: 0.9375
 - answer.numericMatch: 0
 - answer.rejectionAccuracy: 1
 - answer.requiredEvidenceCoverage: 1
@@ -36,8 +36,8 @@
 
 ### 初中
 - answer.aliasMatch: 0
-- answer.answerMatch: 0.8333333333333334
-- answer.needsHumanReview: 0.16666666666666666
+- answer.answerMatch: 1
+- answer.needsHumanReview: 0
 - answer.normalizedExactMatch: 1
 - answer.numericMatch: 0
 - answer.rejectionAccuracy: 1
@@ -67,9 +67,9 @@
 - totalTokens: 0
 ### 大学
 - answer.aliasMatch: 0
-- answer.answerMatch: 0.8333333333333334
-- answer.needsHumanReview: 0.16666666666666666
-- answer.normalizedExactMatch: 0.8333333333333334
+- answer.answerMatch: 1
+- answer.needsHumanReview: 0
+- answer.normalizedExactMatch: 1
 - answer.numericMatch: 0
 - answer.rejectionAccuracy: 1
 - answer.requiredEvidenceCoverage: 1
@@ -98,9 +98,9 @@
 - totalTokens: 0
 ### 高中
 - answer.aliasMatch: 0
-- answer.answerMatch: 0.625
-- answer.needsHumanReview: 0.25
-- answer.normalizedExactMatch: 0.875
+- answer.answerMatch: 0.8333333333333334
+- answer.needsHumanReview: 0
+- answer.normalizedExactMatch: 0.8333333333333334
 - answer.numericMatch: 0
 - answer.rejectionAccuracy: 1
 - answer.requiredEvidenceCoverage: 1
@@ -132,9 +132,9 @@
 
 ### 文科
 - answer.aliasMatch: 0
-- answer.answerMatch: 0.16666666666666666
-- answer.needsHumanReview: 0.6666666666666666
-- answer.normalizedExactMatch: 0.6666666666666666
+- answer.answerMatch: 0.5
+- answer.needsHumanReview: 0
+- answer.normalizedExactMatch: 0.5
 - answer.numericMatch: 0
 - answer.rejectionAccuracy: 1
 - answer.requiredEvidenceCoverage: 1
@@ -197,8 +197,8 @@
 
 ### counterfactual
 - answer.aliasMatch: 0
-- answer.answerMatch: 0.6666666666666666
-- answer.needsHumanReview: 0.3333333333333333
+- answer.answerMatch: 1
+- answer.needsHumanReview: 0
 - answer.normalizedExactMatch: 1
 - answer.numericMatch: 0
 - answer.rejectionAccuracy: 1
@@ -228,8 +228,8 @@
 - totalTokens: 0
 ### multi-document
 - answer.aliasMatch: 0
-- answer.answerMatch: 0.5
-- answer.needsHumanReview: 0.5
+- answer.answerMatch: 1
+- answer.needsHumanReview: 0
 - answer.normalizedExactMatch: 1
 - answer.numericMatch: 0
 - answer.rejectionAccuracy: 1
@@ -260,7 +260,7 @@
 ### no-answer
 - answer.aliasMatch: 0
 - answer.answerMatch: 0
-- answer.needsHumanReview: 0.5
+- answer.needsHumanReview: 0
 - answer.normalizedExactMatch: 0
 - answer.numericMatch: 0
 - answer.rejectionAccuracy: 1
@@ -321,8 +321,8 @@
 - totalTokens: 0
 ### normal
 - answer.aliasMatch: 0
-- answer.answerMatch: 0.9
-- answer.needsHumanReview: 0.1
+- answer.answerMatch: 1
+- answer.needsHumanReview: 0
 - answer.normalizedExactMatch: 1
 - answer.numericMatch: 0
 - answer.rejectionAccuracy: 1
