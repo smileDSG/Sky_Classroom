@@ -4,6 +4,7 @@ import { evaluateRecognition } from './metrics/recognition';
 import { evaluateRetrieval } from './metrics/retrieval';
 import {
   evaluationReportSchema,
+  photoSolverCaseSchema,
   type AggregateScore,
   type EvaluationReport,
   type PerCaseScore,
@@ -35,14 +36,35 @@ const grouped = (
     const vals = field === 'tags' ? cases[i].tags : [cases[i][field]];
     for (const v of vals) (out[v] ??= []).push(r);
   });
-  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, avg(v, 'answer')]));
+  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, summary(v)]));
 };
+const summary = (rows: PerCaseScore[]) => ({
+  ...Object.fromEntries(
+    Object.entries(avg(rows, 'recognition')).map(([k, v]) => [`recognition.${k}`, v]),
+  ),
+  ...Object.fromEntries(
+    Object.entries(avg(rows, 'retrieval')).map(([k, v]) => [`retrieval.${k}`, v]),
+  ),
+  ...Object.fromEntries(Object.entries(avg(rows, 'answer')).map(([k, v]) => [`answer.${k}`, v])),
+  total: rows.length,
+  passed: rows.filter((r) => r.status === 'passed').length,
+  failed: rows.filter((r) => r.status === 'failed' || r.status === 'error').length,
+  skipped: rows.filter((r) => r.status === 'skipped').length,
+  latencyMs: rows.reduce((s, r) => s + r.latencyMs, 0),
+  totalTokens: rows.reduce((s, r) => s + (r.tokenUsage?.totalTokens ?? 0), 0),
+  estimatedCost: rows.reduce((s, r) => s + (r.tokenUsage?.estimatedCost ?? 0), 0),
+});
 export async function runPhotoSolverEvaluation(
   cases: PhotoSolverCase[],
   adapter: PhotoSolverAdapter,
   options: RunnerOptions = {},
 ): Promise<EvaluationReport> {
-  if (!Array.isArray(cases)) throw new Error('invalid dataset');
+  if (!Array.isArray(cases) || !adapter || typeof adapter.run !== 'function')
+    throw new Error('invalid config or dataset');
+  for (const item of cases) {
+    const parsed = photoSolverCaseSchema.safeParse(item);
+    if (!parsed.success) throw new Error(`invalid evaluation case: ${parsed.error.message}`);
+  }
   const scores: PerCaseScore[] = [];
   for (const testCase of cases) {
     try {
@@ -109,7 +131,7 @@ export async function runPhotoSolverEvaluation(
     humanReviewCases: 0,
     failureRate: evaluated ? (failed + errors) / evaluated : 0,
     skippedRate: scores.length ? skipped / scores.length : 0,
-    metrics: avg(scores, 'answer'),
+    metrics: summary(scores),
     byStage: grouped(scores, cases, 'stage'),
     bySubject: grouped(scores, cases, 'subject'),
     byTag: grouped(scores, cases, 'tags'),
