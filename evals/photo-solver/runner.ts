@@ -17,11 +17,21 @@ export interface RunnerOptions {
   generatedAt?: string;
   filters?: EvaluationReport['filters'];
 }
-const runnerOptionsSchema = z.object({
-  runMode: z.enum(['offline', 'live']).optional(),
-  generatedAt: z.string().min(1).optional(),
-  filters: z.unknown().optional(),
-});
+const runnerOptionsSchema = z
+  .object({
+    runMode: z.enum(['offline', 'live']).optional(),
+    generatedAt: z.string().min(1).optional(),
+    filters: z
+      .object({
+        mode: z.enum(['real', 'synthetic']).optional(),
+        stage: z.string().min(1).optional(),
+        subject: z.string().min(1).optional(),
+        tags: z.array(z.string().min(1)).optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
 const avg = (rows: PerCaseScore[], key: 'recognition' | 'retrieval' | 'answer') => {
   const sums: Record<string, number> = {};
   let n = 0;
