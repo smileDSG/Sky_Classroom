@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 
 import { evaluateAnswer } from '../../../evals/photo-solver/metrics/answer';
 import {
@@ -143,8 +143,8 @@ describe('recognition metrics', () => {
       subjectAccuracy: 0,
       questionTypeAccuracy: 1,
       stemSimilarity: 1,
-      formulaRecall: 0.5,
-      givenConditionRecall: 0.5,
+      formulaRecall: 0,
+      givenConditionRecall: 0,
       optionAccuracy: 1,
     });
   });
@@ -234,5 +234,34 @@ describe('retrieval metrics', () => {
 
   it.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])('rejects invalid k=%s', (k) => {
     expect(() => evaluateRetrieval(['a'], ['a'], k)).toThrow('k must be a positive integer');
+  });
+});
+
+describe('hardening regressions', () => {
+  it('normalizes real full-width punctuation and preserves answer-like words', () => {
+    expect(normalizeText('答案：北京。你好，世界！')).toBe('答案:北京.你好,世界!');
+    expect(normalizeAnswer('answerable')).toBe('answerable');
+    expect(normalizeAnswer('answering')).toBe('answering');
+    expect(normalizeAnswer('答案解析')).toBe('答案解析');
+  });
+
+  it('penalizes extra and reordered formulas and conditions', () => {
+    expect(
+      evaluateRecognition({ formulas: ['a', 'b'] }, { formulas: ['a', 'b', 'c'] }).formulaRecall,
+    ).toBeCloseTo(2 / 3);
+    expect(
+      evaluateRecognition({ formulas: ['a', 'b'] }, { formulas: ['b', 'a'] }).formulaRecall,
+    ).toBe(0);
+    expect(
+      evaluateRecognition({ givenConditions: ['x', 'y'] }, { givenConditions: ['x'] })
+        .givenConditionRecall,
+    ).toBe(0.5);
+  });
+
+  it('does not score rejection when either field is missing', () => {
+    expect(evaluateAnswer({ standardAnswer: '' }).rejectionAccuracy).toBeUndefined();
+    expect(
+      evaluateAnswer({ standardAnswer: '', shouldReject: true }).rejectionAccuracy,
+    ).toBeUndefined();
   });
 });

@@ -22,7 +22,7 @@ export interface AnswerMetrics {
   aliasMatch: number;
   numericMatch: number;
   answerMatch: number;
-  rejectionAccuracy: number;
+  rejectionAccuracy: number | undefined;
   requiredEvidenceCoverage: number;
   needsHumanReview: boolean;
 }
@@ -74,7 +74,10 @@ export const evaluateAnswer = (input: AnswerEvaluationInput): AnswerMetrics => {
     aliasMatch: Number(alias),
     numericMatch: Number(numeric),
     answerMatch: Number(!input.subjective && (exact || alias || numeric)),
-    rejectionAccuracy: Number(Boolean(input.shouldReject) === Boolean(input.didReject)),
+    rejectionAccuracy:
+      input.shouldReject === undefined || input.didReject === undefined
+        ? undefined
+        : Number(input.shouldReject === input.didReject),
     requiredEvidenceCoverage: required.size === 0 ? 1 : covered / required.size,
     needsHumanReview: Boolean(input.subjective),
   };
