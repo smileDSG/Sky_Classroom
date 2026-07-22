@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -40,6 +40,75 @@ describe('photo solver evaluation CLI', () => {
 
     expect(summary.mode).toBe('live');
     expect(run).toHaveBeenCalled();
+  });
+
+  it('resolves manifest image paths from the dataset directory, not the process cwd', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'photo-cli-images-'));
+    const imageDir = path.join(dir, 'images');
+    const dataset = path.join(dir, 'cases.jsonl');
+    const sourceCase = (await loadPhotoSolverCases(casesPath))[0];
+    await mkdir(imageDir);
+    await writeFile(path.join(imageDir, 'question.png'), 'image');
+    await writeFile(
+      dataset,
+      `${JSON.stringify({ ...sourceCase, imagePath: 'images/question.png', inputText: undefined })}\n`,
+    );
+    const recognize = vi.fn(async ({ imagePath }: { imagePath: string }) => ({
+      recognition: sourceCase.offlineRecognition,
+      problemText: '2+2',
+      provider: imagePath,
+    }));
+    const createLiveAdapter = vi.fn((imageBaseDir: string) =>
+      new LiveAdapter({
+        imageBaseDir,
+        recognize,
+        solve: async () => ({ answer: sourceCase.standardAnswer }),
+      }),
+    );
+
+    const summary = await runPhotoSolverCli(
+      ['--mode', 'live', '--dataset', dataset, '--output-dir', dir],
+      { createLiveAdapter },
+    );
+
+    expect(createLiveAdapter).toHaveBeenCalledWith(dir);
+    expect(recognize).toHaveBeenCalledWith(
+      expect.objectContaining({ imagePath: path.join(dir, 'images/question.png') }),
+    );
+    expect(summary.skippedCases).toBe(0);
+  });
+
+  it('records a live provider failure after three attempts and still writes both reports', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'photo-cli-error-'));
+    const dataset = path.join(dir, 'cases.jsonl');
+    const sourceCase = { ...(await loadPhotoSolverCases(casesPath))[0], imagePath: undefined };
+    await writeFile(dataset, `${JSON.stringify(sourceCase)}\n`);
+    const solve = vi
+      .fn()
+      .mockRejectedValue(Object.assign(new Error('provider unavailable'), { status: 503 }));
+
+    const summary = await runPhotoSolverCli(
+      ['--mode', 'live', '--dataset', dataset, '--output-dir', dir],
+      {
+        createLiveAdapter: (imageBaseDir) =>
+          new LiveAdapter({ imageBaseDir, solve, sleep: async () => undefined }),
+      },
+    );
+    const report = JSON.parse(await readFile(summary.jsonPath, 'utf8'));
+    const markdown = await readFile(summary.markdownPath, 'utf8');
+
+    expect(solve).toHaveBeenCalledTimes(3);
+    expect(report.runMode).toBe('live');
+    expect(report.aggregate.errorCases).toBe(1);
+    expect(report.cases).toEqual([
+      expect.objectContaining({
+        caseId: sourceCase.id,
+        status: 'error',
+        failure: 'provider unavailable',
+      }),
+    ]);
+    expect(markdown).toContain('# Photo Solver Evaluation');
+    expect(markdown).toContain(`- ${sourceCase.id}: provider unavailable`);
   });
 
   it('passes subject, stage, tag, dataset, and documents options to the pipeline', async () => {
@@ -110,6 +179,23 @@ describe('LiveAdapter', () => {
 
     expect(result.skipped).toBe(true);
     expect(result.skipReason).toMatch(/image.*not found/i);
+  });
+
+  it('skips image recognition when the runtime only supports browser execution', async () => {
+    const testCase = (await loadPhotoSolverCases(casesPath)).find((item) => item.imagePath)!;
+    const recognize = vi.fn();
+    const adapter = new LiveAdapter({
+      recognize,
+      solve: vi.fn(),
+      fileExists: async () => true,
+      supportsRecognitionApis: () => false,
+    });
+
+    const result = await adapter.run(testCase);
+
+    expect(result.skipped).toBe(true);
+    expect(result.skipReason).toMatch(/browser-compatible/i);
+    expect(recognize).not.toHaveBeenCalled();
   });
 
   it('retries retryable provider failures up to three attempts then throws', async () => {
