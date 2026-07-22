@@ -140,6 +140,38 @@ describe('POST /api/sky/solve/explain-stream', () => {
 
     const events = await parseSSEEvents(res);
     expect(events[0].type).toBe('error');
+    expect(events[0].errorCode).toBe('MISSING_REQUIRED_FIELD');
+  });
+
+  it('returns invalid problemSpec errors as SSE with an error code', async () => {
+    const { POST } = await import('@/app/api/sky/solve/explain-stream/route');
+    const req = new Request('http://localhost/api/sky/solve/explain-stream', {
+      method: 'POST',
+      body: JSON.stringify({ problem: '题目', problemSpec: { stage: '小学' } }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    expect(res.headers.get('content-type')).toContain('text/event-stream');
+    const events = await parseSSEEvents(res);
+    expect(events[0]).toMatchObject({ type: 'error', errorCode: 'INVALID_REQUEST' });
+  });
+
+  it('returns outer request errors as SSE with an internal error code', async () => {
+    const { POST } = await import('@/app/api/sky/solve/explain-stream/route');
+    const req = new Request('http://localhost/api/sky/solve/explain-stream', {
+      method: 'POST',
+      body: '{}',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    vi.spyOn(req, 'json').mockRejectedValueOnce(new Error('malformed body'));
+
+    const res = await POST(req);
+    expect(res.status).toBe(500);
+    expect(res.headers.get('content-type')).toContain('text/event-stream');
+    const events = await parseSSEEvents(res);
+    expect(events[0]).toMatchObject({ type: 'error', errorCode: 'INTERNAL_ERROR' });
   });
 
   it('emits correct event order for full chain solve', async () => {

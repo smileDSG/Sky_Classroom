@@ -270,7 +270,9 @@ export async function runSolveChain(
     // Process analyze result
     if (analysisResult.ok) {
       analysis = analysisResult.value;
-      log.info(`[SolveChain] Analyze: subject=${analysis.subject}, confidence=${analysis.confidence}`);
+      log.info(
+        `[SolveChain] Analyze: subject=${analysis.subject}, confidence=${analysis.confidence}`,
+      );
     } else {
       warnings.push('分析步骤超时或失败，跳过');
     }
@@ -287,7 +289,9 @@ export async function runSolveChain(
       if (solveResult.similarQuestions.length > 0) {
         similarQuestions = solveResult.similarQuestions;
       }
-      log.info(`[SolveChain] Solve result: answer=${answer?.slice(0, 30) || 'none'}, steps=${steps.length}`);
+      log.info(
+        `[SolveChain] Solve result: answer=${answer?.slice(0, 30) || 'none'}, steps=${steps.length}`,
+      );
     } else {
       warnings.push('解题步骤超时或失败');
       log.warn(`[SolveChain] Solve failed: ${solveResultRaw.error}`);
@@ -351,13 +355,15 @@ export async function runSolveChain(
     const highConfidence = analysis?.confidence ?? 0;
     const isPureNumericAnswer = answer && /^[\d.,\s\-+*/()]+$/.test(answer.replace(/\s/g, ''));
     const isShortProblem = problemText.length < 50;
-    const skipVerify = highConfidence >= HIGH_CONFIDENCE_THRESHOLD || isPureNumericAnswer || isShortProblem;
+    const skipVerify =
+      highConfidence >= HIGH_CONFIDENCE_THRESHOLD || isPureNumericAnswer || isShortProblem;
     if (skipVerify) {
-      const reason = highConfidence >= HIGH_CONFIDENCE_THRESHOLD
-        ? '分析置信度较高'
-        : isPureNumericAnswer
-          ? '纯数字答案'
-          : '短题目（<50字符）';
+      const reason =
+        highConfidence >= HIGH_CONFIDENCE_THRESHOLD
+          ? '分析置信度较高'
+          : isPureNumericAnswer
+            ? '纯数字答案'
+            : '短题目（<50字符）';
       log.info(`[SolveChain] Step 3: Verify skipped (${reason})`);
       verification = {
         isCorrect: true,
@@ -366,7 +372,7 @@ export async function runSolveChain(
       };
     } else if (answer) {
       const verifyResult = await withTimeout(
-        verifyAnswer(problemText, answer),
+        verifyAnswer(problemText, answer, problemSpec),
         getStepTimeout(Date.now() - startTime),
         'verify',
       );

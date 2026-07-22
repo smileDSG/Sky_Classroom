@@ -121,6 +121,55 @@ describe('runSolveChain', () => {
     expect(result.metadata.hasCorrection).toBe(true);
   });
 
+  it('passes confirmed ProblemSpec to the verification agent for traceable validation', async () => {
+    const { analyzeProblem } = await import('@/lib/solve/agents/analyze-agent');
+    vi.mocked(analyzeProblem).mockResolvedValue({
+      subject: 'math',
+      knowledgePoints: ['方程'],
+      difficulty: 'medium',
+      questionType: 'solve',
+      confidence: 0.5,
+    });
+    const { streamSolve } = await import('@/lib/solve/streaming-solver');
+    vi.mocked(streamSolve).mockImplementationOnce(async function* () {
+      yield { type: 'step', label: '步骤1', content: '移项', keyPoints: [] };
+      yield { type: 'answer', answer: 'x=1' };
+    });
+    const { verifyAnswer } = await import('@/lib/solve/agents/verify-agent');
+    vi.mocked(verifyAnswer).mockResolvedValue({
+      isCorrect: true,
+      confidence: 0.95,
+      reasoning: 'matches confirmed recognition',
+    });
+    const problemSpec = {
+      id: 'confirmed-1',
+      stage: '高中' as const,
+      subject: '数学',
+      questionType: 'calculation',
+      stem: '解方程 $x+1=2$，并说明移项依据。',
+      options: [],
+      givens: [{ name: '方程', value: 'x+1=2' }],
+      asks: ['求 x', '说明移项依据'],
+      formulas: ['x+1=2'],
+      ambiguities: [],
+      materials: [],
+      subQuestions: [],
+      diagram: null,
+      confidence: 1,
+    };
+
+    await runSolveChain(
+      '解方程 $x+1=2$，并说明移项依据。这是一道需要完整过程、列出已知条件并解释每一步推导依据的长题目。',
+      null,
+      undefined,
+      undefined,
+      undefined,
+      problemSpec,
+    );
+
+    expect(verifyAnswer).toHaveBeenCalledWith(expect.any(String), 'x=1', problemSpec);
+  });
+
   it('continues chain when analyze fails (with warning)', async () => {
     const { analyzeProblem } = await import('@/lib/solve/agents/analyze-agent');
     vi.mocked(analyzeProblem).mockRejectedValue(new Error('LLM error'));

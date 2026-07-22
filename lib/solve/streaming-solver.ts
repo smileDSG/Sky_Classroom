@@ -169,6 +169,12 @@ export interface FirstTokenEvent {
   type: 'first_token';
 }
 
+export interface MetadataEvent {
+  type: 'metadata';
+  questionType: 'choice' | 'fill' | 'solve' | 'judge';
+  options?: string[];
+}
+
 export type StreamEvent =
   | SolutionEvent
   | StepEvent
@@ -176,7 +182,8 @@ export type StreamEvent =
   | KnowledgeEvent
   | SimilarEvent
   | PhaseEvent
-  | FirstTokenEvent;
+  | FirstTokenEvent
+  | MetadataEvent;
 
 // ── Streaming JSON parser state machine ──────────────────────────────
 
@@ -248,6 +255,8 @@ class StepStreamParser {
     steps: StepEvent[];
     knowledge: KnowledgeEvent['points'];
     similar: SimilarEvent['questions'];
+    questionType?: 'choice' | 'fill' | 'solve' | 'judge';
+    options?: string[];
   } {
     // Try to extract remaining data from buffer
     this.extractFallback();

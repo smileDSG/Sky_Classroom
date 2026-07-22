@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { buildSolverPrompt } from '@/lib/solve/solver-prompts';
+import { buildVerifyPrompt } from '@/lib/solve/agents/verify-prompts';
 import type { ProblemSpec } from '@/lib/solve/types';
 
 describe('buildSolverPrompt', () => {
@@ -119,6 +120,38 @@ describe('buildSolverPrompt', () => {
       expect(prompt).toContain(expected);
     }
     expect(prompt).toContain('原始题图优先');
+  });
+
+  test('passes every confirmed ProblemSpec field to the verification prompt', () => {
+    const problemSpec: ProblemSpec = {
+      id: 'verify-1',
+      stage: '大学',
+      subject: '物理',
+      questionType: '综合题',
+      stem: '小车沿斜面运动',
+      options: [{ key: 'A', content: '匀加速' }],
+      givens: [{ name: '质量', symbol: 'm', value: '2', unit: 'kg' }],
+      asks: ['加速度'],
+      formulas: ['F=ma'],
+      ambiguities: [{ field: 'diagram', candidates: ['A', 'B'], reason: '图示模糊' }],
+      materials: ['实验记录表'],
+      subQuestions: ['求末速度'],
+      diagram: {
+        type: 'motion',
+        description: '小车沿斜面下滑',
+        labels: ['A', 'B'],
+        relations: ['A高于B'],
+      },
+      confidence: 0.74,
+    };
+
+    const prompt = buildVerifyPrompt(problemSpec.stem, 'a=2', problemSpec);
+    for (const expected of [
+      '大学', '物理', '综合题', '实验记录表', '求末速度', 'motion', '小车沿斜面下滑',
+      '小车沿斜面运动', 'A', 'F=ma', '图示模糊', '0.74',
+    ]) {
+      expect(prompt).toContain(expected);
+    }
   });
 
 });

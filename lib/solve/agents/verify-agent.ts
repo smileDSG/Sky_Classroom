@@ -7,6 +7,7 @@ import { VERIFY_SYSTEM_PROMPT, buildVerifyPrompt } from './verify-prompts';
 import { matchAnswers } from './answer-matcher';
 import { DEFAULT_VERIFY, type VerifyResult } from './verify-types';
 import { createLogger } from '@/lib/logger';
+import type { ProblemSpec } from '../types';
 
 const log = createLogger('VerifyAgent');
 
@@ -21,6 +22,7 @@ const VERIFY_MODEL_KEY = 'science';
 export async function verifyAnswer(
   problemText: string,
   originalAnswer: string,
+  problemSpec?: ProblemSpec | null,
 ): Promise<VerifyResult> {
   try {
     const modelConfig = resolveSolverModel(VERIFY_MODEL_KEY);
@@ -29,7 +31,9 @@ export async function verifyAnswer(
     const result = await callLLM(
       {
         model,
-        messages: [{ role: 'user', content: buildVerifyPrompt(problemText, originalAnswer) }] as any,
+        messages: [
+          { role: 'user', content: buildVerifyPrompt(problemText, originalAnswer, problemSpec) },
+        ] as any,
         temperature: 0.2,
         maxOutputTokens: 512,
       },
@@ -59,9 +63,8 @@ export async function verifyAnswer(
     }
 
     // Answers differ -- use LLM's suggested answer if available
-    const suggested = typeof parsed.suggestedAnswer === 'string'
-      ? parsed.suggestedAnswer
-      : llmAnswer;
+    const suggested =
+      typeof parsed.suggestedAnswer === 'string' ? parsed.suggestedAnswer : llmAnswer;
 
     return {
       isCorrect: false,

@@ -25,6 +25,8 @@ import { type StreamEvent } from '@/lib/solve/streaming-solver';
 import { runSolveChain } from '@/lib/solve/solve-chain';
 import { analyzeProblem } from '@/lib/solve/agents/analyze-agent';
 import { postProcessMathContent } from '@/lib/solve/math-postprocessor';
+import { parseProblemSpecInput } from '@/lib/recognition/problem-spec-parser';
+import { API_ERROR_CODES } from '@/lib/server/api-response';
 
 const log = createLogger('API:ExplainStream');
 
@@ -69,6 +71,25 @@ function formatStreamEvent(event: StreamEvent): string {
 
 function formatSSEEvent(type: string, data: Record<string, unknown> = {}): string {
   return `data: ${JSON.stringify({ type, ...data })}\n\n`;
+}
+
+function formatSSEError(
+  errorCode: string,
+  message: string,
+  details?: string,
+): string {
+  return formatSSEEvent('error', {
+    errorCode,
+    message,
+    ...(details ? { details } : {}),
+  });
+}
+
+function sseErrorResponse(status: number, errorCode: string, message: string, details?: string): Response {
+  return new Response(formatSSEError(errorCode, message, details), {
+    status,
+    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+  });
 }
 
 // ── Knowledge points helper (for bank/cache hit path) ───────────────
@@ -123,10 +144,18 @@ export async function POST(req: Request) {
     const { problem, problemImage, problemSpec, userAnswer } = body;
 
     if (!problem) {
-      return new Response(formatSSEEvent('error', { message: 'Missing required field: problem' }), {
-        status: 400,
-        headers: { 'Content-Type': 'text/event-stream' },
-      });
+      return sseErrorResponse(400, API_ERROR_CODES.MISSING_REQUIRED_FIELD, 'Missing required field: problem');
+    }
+
+    let parsedProblemSpec;
+    try {
+      parsedProblemSpec = parseProblemSpecInput(problemSpec);
+    } catch (error) {
+      return sseErrorResponse(
+        400,
+        API_ERROR_CODES.INVALID_REQUEST,
+        error instanceof Error ? error.message : 'problemSpec 无效',
+      );
     }
 
     log.info(`[ExplainStream] Solving: ${problem.slice(0, 60)}...`);
@@ -156,7 +185,9 @@ export async function POST(req: Request) {
           findSimilarQuestions(problem, 0.85),
           findSolveCacheMatches(problem, 0.8),
         ]);
-        log.info(`[ExplainStream] Phase 1 (checking) took ${Date.now() - t0}ms, bank=${bankMatches.length}, cache=${cacheMatches.length}`);
+        log.info(
+          `[ExplainStream] Phase 1 (checking) took ${Date.now() - t0}ms, bank=${bankMatches.length}, cache=${cacheMatches.length}`,
+        );
 
         // ── Fast path: Question bank hit ─────────────────────────────
         // Cache hits bypass all post-processing — content is already pre-processed.
@@ -278,9 +309,11 @@ export async function POST(req: Request) {
           },
           chainAbort.signal,
           analyzePromise,
-          problemSpec ?? null,
+          parsedProblemSpec,
         );
-        log.info(`[ExplainStream] Phase 2 (solving) took ${Date.now() - t1}ms, answer=${chainResult.answer?.slice(0, 30) || 'none'}`);
+        log.info(
+          `[ExplainStream] Phase 2 (solving) took ${Date.now() - t1}ms, answer=${chainResult.answer?.slice(0, 30) || 'none'}`,
+        );
 
         // ── Emit analysis event (NEW in C-004) ───────────────────────
         if (chainResult.analysis) {
@@ -331,7 +364,7 @@ export async function POST(req: Request) {
         // ── Async: Knowledge + Similar + Auto-save ─────────────────────
         // These run after `done` is emitted so the UI can show the answer
         // immediately while knowledge/similar load in the background.
-        ;(async () => {
+        (async () => {
           try {
             // Generate knowledge points if missing
             if (chainResult.knowledgePoints.length === 0 && chainResult.analysis) {
@@ -391,9 +424,10 @@ export async function POST(req: Request) {
         log.error('ExplainStream error:', err);
         try {
           await write(
-            formatSSEEvent('error', {
-              message: err instanceof Error ? err.message : '解题失败',
-            }),
+            formatSSEError(
+              API_ERROR_CODES.INTERNAL_ERROR,
+              err instanceof Error ? err.message : '解题失败',
+            ),
           );
           await writer.close();
         } catch {
@@ -411,9 +445,11 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     log.error('ExplainStream API error:', err);
-    return new Response(formatSSEEvent('error', { message: '解题失败' }), {
-      status: 500,
-      headers: { 'Content-Type': 'text/event-stream' },
-    });
+    return sseErrorResponse(
+      500,
+      API_ERROR_CODES.INTERNAL_ERROR,
+      '解题失败',
+      err instanceof Error ? err.message : undefined,
+    );
   }
 }

@@ -8,6 +8,7 @@ import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response
 import { createSolveJob } from '@/lib/server/solve-job-store';
 import { runSolveJob } from '@/lib/server/solve-job-runner';
 import { createLogger } from '@/lib/logger';
+import { parseProblemSpecInput } from '@/lib/recognition/problem-spec-parser';
 
 const log = createLogger('API:SolveJobs');
 
@@ -20,21 +21,37 @@ export async function POST(req: Request) {
       return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, '缺少必填字段: problem');
     }
 
+    let parsedProblemSpec;
+    try {
+      parsedProblemSpec = parseProblemSpecInput(problemSpec);
+    } catch (error) {
+      return apiError(
+        API_ERROR_CODES.INVALID_REQUEST,
+        400,
+        error instanceof Error ? error.message : 'problemSpec 无效',
+      );
+    }
+
     const jobId = nanoid(10);
     const job = createSolveJob(jobId, problem);
 
-    after(() => runSolveJob(jobId, problem, problemImage ?? null, userAnswer ?? null, problemSpec ?? null));
+    after(() =>
+      runSolveJob(jobId, problem, problemImage ?? null, userAnswer ?? null, parsedProblemSpec),
+    );
 
     log.info(`Solve job created: ${jobId} (${problem.slice(0, 40)}...)`);
 
-    return apiSuccess({
-      jobId: job.id,
-      status: job.status,
-      phase: job.phase,
-      progress: job.progress,
-      pollUrl: `/api/sky/solve/jobs/${jobId}`,
-      pollIntervalMs: 2000,
-    }, 202);
+    return apiSuccess(
+      {
+        jobId: job.id,
+        status: job.status,
+        phase: job.phase,
+        progress: job.progress,
+        pollUrl: `/api/sky/solve/jobs/${jobId}`,
+        pollIntervalMs: 2000,
+      },
+      202,
+    );
   } catch (err) {
     log.error('Solve job creation failed:', err);
     return apiError(

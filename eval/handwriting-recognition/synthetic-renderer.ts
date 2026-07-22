@@ -1,4 +1,4 @@
-import { createCanvas } from '@napi-rs/canvas';
+import { createCanvas, type SKRSContext2D } from '@napi-rs/canvas';
 import type { SyntheticRecognitionCase } from './synthetic-generator';
 
 const WIDTH = 1200;
@@ -15,7 +15,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-function drawPaper(ctx: ReturnType<typeof createCanvas>['getContext']): void {
+function drawPaper(ctx: SKRSContext2D): void {
   ctx.fillStyle = '#f8f1df';
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -36,7 +36,7 @@ function drawPaper(ctx: ReturnType<typeof createCanvas>['getContext']): void {
 }
 
 function drawHandwrittenText(
-  ctx: ReturnType<typeof createCanvas>['getContext'],
+  ctx: SKRSContext2D,
   text: string,
   x: number,
   y: number,

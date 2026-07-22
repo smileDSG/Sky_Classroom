@@ -94,6 +94,21 @@ async function recognizeImage(file: File): Promise<RecognizedImageResult> {
   };
 }
 
+const EDITABLE_RECOGNITION_FIELDS = new Set(['stem', 'text']);
+
+/** Apply the student's confirmation without hiding unresolved non-text ambiguities. */
+export function confirmRecognition(problemSpec: ProblemSpec, editedText: string): ProblemSpec {
+  const ambiguities = problemSpec.ambiguities.filter(
+    (ambiguity) => !EDITABLE_RECOGNITION_FIELDS.has(ambiguity.field),
+  );
+  return {
+    ...problemSpec,
+    stem: editedText.trim(),
+    ambiguities,
+    confidence: ambiguities.length > 0 ? problemSpec.confidence : 1,
+  };
+}
+
 /** Call grade API */
 async function gradeProblem(
   problem: string,
@@ -617,12 +632,7 @@ export function SolvePage({
           }
         } else if (input.type === 'text') {
           problemSpec = confirmedRecognition?.problemSpec
-            ? {
-                ...confirmedRecognition.problemSpec,
-                stem: (input.content as string).trim(),
-                ambiguities: [],
-                confidence: 1,
-              }
+            ? confirmRecognition(confirmedRecognition.problemSpec, input.content as string)
             : null;
           problemImage = confirmedRecognition?.problemImage ?? input.previewUrl ?? null;
           setConfirmedRecognition(null);

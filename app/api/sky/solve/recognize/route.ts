@@ -34,13 +34,28 @@ interface VisionModelConfig {
 function getVisionModels(): VisionModelConfig[] {
   const models: VisionModelConfig[] = [];
   if (process.env.ANTHROPIC_API_KEY) {
-    models.push({ providerId: 'anthropic', modelId: 'claude-sonnet-4-6', apiKey: process.env.ANTHROPIC_API_KEY, providerType: 'anthropic' });
+    models.push({
+      providerId: 'anthropic',
+      modelId: 'claude-sonnet-4-6',
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      providerType: 'anthropic',
+    });
   }
   if (process.env.QWEN_API_KEY) {
-    models.push({ providerId: 'qwen', modelId: 'qwen3-vl-plus', apiKey: process.env.QWEN_API_KEY, providerType: 'openai' });
+    models.push({
+      providerId: 'qwen',
+      modelId: 'qwen3-vl-plus',
+      apiKey: process.env.QWEN_API_KEY,
+      providerType: 'openai',
+    });
   }
   if (process.env.GLM_API_KEY) {
-    models.push({ providerId: 'glm', modelId: 'glm-5v-turbo', apiKey: process.env.GLM_API_KEY, providerType: 'openai' });
+    models.push({
+      providerId: 'glm',
+      modelId: 'glm-5v-turbo',
+      apiKey: process.env.GLM_API_KEY,
+      providerType: 'openai',
+    });
   }
   return models;
 }
@@ -64,20 +79,31 @@ export async function POST(req: Request) {
     const dataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
     const visionModels = getVisionModels();
 
-    log.info(`[Recognize] models=${visionModels.map(m => `${m.providerId}/${m.modelId}`).join(', ')}, bytes=${bytes.byteLength}`);
+    log.info(
+      `[Recognize] models=${visionModels.map((m) => `${m.providerId}/${m.modelId}`).join(', ')}, bytes=${bytes.byteLength}`,
+    );
     if (visionModels.length === 0) {
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '没有配置支持视觉的模型，请配置 ANTHROPIC_API_KEY、GLM_API_KEY 或 QWEN_API_KEY');
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        '没有配置支持视觉的模型，请配置 ANTHROPIC_API_KEY、GLM_API_KEY 或 QWEN_API_KEY',
+      );
     }
 
-    const messages: Parameters<typeof callLLM>[0]['messages'] = [{
-      role: 'user',
-      content: [
-        { type: 'image', image: dataUrl },
-        { type: 'text', text: '请逐字逐句识别图片中的所有文字和数学公式，特别注意手写字、分数、根式、上下标、向量和单位。' },
-      ],
-    }];
+    const messages: Parameters<typeof callLLM>[0]['messages'] = [
+      {
+        role: 'user',
+        content: [
+          { type: 'image', image: dataUrl },
+          {
+            type: 'text',
+            text: '请逐字逐句识别图片中的所有文字和数学公式，特别注意手写字、分数、根式、上下标、向量和单位。',
+          },
+        ],
+      },
+    ];
 
-    const modelPromises = visionModels.map(async visionConfig => {
+    const modelPromises = visionModels.map(async (visionConfig) => {
       const modelWithInfo = getModel(visionConfig);
       log.info(`[Recognize] racing ${visionConfig.providerId}/${visionConfig.modelId}`);
       const llmPromise = callLLM(
@@ -88,47 +114,74 @@ export async function POST(req: Request) {
         OCR_PROMPT,
       );
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error(`${visionConfig.providerId}/${visionConfig.modelId} timed out after 25000ms`)), 25_000);
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                `${visionConfig.providerId}/${visionConfig.modelId} timed out after 25000ms`,
+              ),
+            ),
+          25_000,
+        );
       });
       const result = await Promise.race([llmPromise, timeoutPromise]);
       const rawText = result.text?.trim() ?? '';
-      if (!rawText) throw new Error(`${visionConfig.providerId}/${visionConfig.modelId}: 返回空白内容`);
+      if (!rawText)
+        throw new Error(`${visionConfig.providerId}/${visionConfig.modelId}: 返回空白内容`);
 
       const { text: cleanedText, latex } = extractFormulas(rawText);
       let structuredProblems: ReturnType<typeof parseProblemSpecs> = [];
       try {
         structuredProblems = parseProblemSpecs(rawText);
       } catch (parseError) {
-        log.warn(`[Recognize] structured parse failed: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
-        if (isJsonLikeOutput(rawText)) throw new Error(`${visionConfig.providerId}/${visionConfig.modelId}: invalid ProblemSpec JSON`);
+        log.warn(
+          `[Recognize] structured parse failed: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+        );
+        if (isJsonLikeOutput(rawText))
+          throw new Error(
+            `${visionConfig.providerId}/${visionConfig.modelId}: invalid ProblemSpec JSON`,
+          );
       }
       if (isJsonLikeOutput(rawText) && structuredProblems.length === 0) {
-        throw new Error(`${visionConfig.providerId}/${visionConfig.modelId}: empty ProblemSpec problems array`);
+        throw new Error(
+          `${visionConfig.providerId}/${visionConfig.modelId}: empty ProblemSpec problems array`,
+        );
       }
-      return { visionConfig, cleanedText, latex, structuredProblems };
+      return { visionConfig, rawText, cleanedText, latex, structuredProblems };
     });
 
     try {
       const winner = await Promise.any(modelPromises);
       const structuredText = winner.structuredProblems
-        .map(problem => [problem.stem, ...problem.options.map(option => `${option.key}. ${option.content}`)].join('\n'))
+        .map((problem) =>
+          [
+            problem.stem,
+            ...problem.options.map((option) => `${option.key}. ${option.content}`),
+          ].join('\n'),
+        )
         .join('\n\n');
-      const text = winner.structuredProblems.length > 0 ? structuredText : winner.cleanedText;
-      const latex = winner.structuredProblems.length > 0
-        ? extractFormulas(structuredText).latex
-        : winner.latex;
+      // Keep the original legacy OCR text so inline/display LaTeX remains part
+      // of the problem sent to the solver; `latex` is an extracted index only.
+      const text = winner.structuredProblems.length > 0 ? structuredText : winner.rawText;
+      const latex =
+        winner.structuredProblems.length > 0 ? extractFormulas(structuredText).latex : winner.latex;
       const fallbackConfidence = text.includes('[?]') ? 0.5 : 0.82;
-      const quality = aggregateRecognitionQuality(
-        winner.structuredProblems,
-        fallbackConfidence,
-      );
+      const quality = aggregateRecognitionQuality(winner.structuredProblems, fallbackConfidence);
       return apiSuccess({
         text,
         latex,
-        problemCount: winner.structuredProblems.length > 0 ? winner.structuredProblems.length : text ? 1 : 0,
-        problems: winner.structuredProblems.length > 0
-          ? winner.structuredProblems.map(problem => ({ image: dataUrl, text: problem.stem, latex: extractFormulas(problem.stem).latex }))
-          : text ? [{ image: dataUrl, text, latex }] : [],
+        problemCount:
+          winner.structuredProblems.length > 0 ? winner.structuredProblems.length : text ? 1 : 0,
+        problems:
+          winner.structuredProblems.length > 0
+            ? winner.structuredProblems.map((problem) => ({
+                image: dataUrl,
+                text: problem.stem,
+                latex: extractFormulas(problem.stem).latex,
+              }))
+            : text
+              ? [{ image: dataUrl, text, latex }]
+              : [],
         structuredProblems: winner.structuredProblems,
         confidence: quality.confidence,
         ambiguities: quality.ambiguities,
@@ -136,12 +189,24 @@ export async function POST(req: Request) {
         usedModel: `${winner.visionConfig.providerId}/${winner.visionConfig.modelId}`,
       });
     } catch (aggErr) {
-      const errors = (aggErr as AggregateError).errors?.map((error: unknown) => error instanceof Error ? error.message : String(error)) ?? [String(aggErr)];
+      const errors = (aggErr as AggregateError).errors?.map((error: unknown) =>
+        error instanceof Error ? error.message : String(error),
+      ) ?? [String(aggErr)];
       log.error(`[Recognize] all vision models failed: ${errors.join('; ')}`);
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, `所有视觉模型均识别失败（已尝试 ${visionModels.length} 个模型）`, errors.join('; '));
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        `所有视觉模型均识别失败（已尝试 ${visionModels.length} 个模型）`,
+        errors.join('; '),
+      );
     }
   } catch (err) {
     log.error('Recognize API error:', err);
-    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '图片识别失败', err instanceof Error ? err.message : undefined);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      '图片识别失败',
+      err instanceof Error ? err.message : undefined,
+    );
   }
 }
