@@ -1,4 +1,5 @@
 import type { PhotoSolverAdapter } from './adapters/types';
+import { z } from 'zod';
 import { evaluateAnswer } from './metrics/answer';
 import { evaluateRecognition } from './metrics/recognition';
 import { evaluateRetrieval } from './metrics/retrieval';
@@ -16,6 +17,11 @@ export interface RunnerOptions {
   generatedAt?: string;
   filters?: EvaluationReport['filters'];
 }
+const runnerOptionsSchema = z.object({
+  runMode: z.enum(['offline', 'live']).optional(),
+  generatedAt: z.string().min(1).optional(),
+  filters: z.unknown().optional(),
+});
 const avg = (rows: PerCaseScore[], key: 'recognition' | 'retrieval' | 'answer') => {
   const sums: Record<string, number> = {};
   let n = 0;
@@ -52,13 +58,19 @@ const summary = (rows: PerCaseScore[]) => ({
   skipped: rows.filter((r) => r.status === 'skipped').length,
   latencyMs: rows.reduce((s, r) => s + r.latencyMs, 0),
   totalTokens: rows.reduce((s, r) => s + (r.tokenUsage?.totalTokens ?? 0), 0),
+  inputTokens: rows.reduce((s, r) => s + (r.tokenUsage?.inputTokens ?? 0), 0),
+  outputTokens: rows.reduce((s, r) => s + (r.tokenUsage?.outputTokens ?? 0), 0),
   estimatedCost: rows.reduce((s, r) => s + (r.tokenUsage?.estimatedCost ?? 0), 0),
+  totalLatencyMs: rows.reduce((s, r) => s + r.latencyMs, 0),
+  averageLatencyMs: rows.length ? rows.reduce((s, r) => s + r.latencyMs, 0) / rows.length : 0,
+  currencyMixed: new Set(rows.map((r) => r.tokenUsage?.currency).filter(Boolean)).size > 1 ? 1 : 0,
 });
 export async function runPhotoSolverEvaluation(
   cases: PhotoSolverCase[],
   adapter: PhotoSolverAdapter,
   options: RunnerOptions = {},
 ): Promise<EvaluationReport> {
+  runnerOptionsSchema.parse(options);
   if (!Array.isArray(cases) || !adapter || typeof adapter.run !== 'function')
     throw new Error('invalid config or dataset');
   for (const item of cases) {

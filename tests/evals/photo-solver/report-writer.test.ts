@@ -22,5 +22,8 @@ describe('report writer', () => {
     expect(await readFile(second.jsonPath, 'utf8')).toBe(json1);
     expect(md).toContain('Overview');
     expect(md).toContain(report.cases[0].caseId);
+    expect(md).toContain('## Failures');
+    expect(md).toContain('## Skipped');
+    expect(md).toContain('recognition.');
   });
 });

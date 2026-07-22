@@ -55,4 +55,22 @@ describe('photo solver runner', () => {
     expect(report.cases[0].status).toBe('skipped');
     expect(report.aggregate.skippedCases).toBe(1);
   });
+
+  it('validates runner options before calling the adapter', async () => {
+    const cases = (await loadPhotoSolverCases(file)).slice(0, 1);
+    let calls = 0;
+    await expect(
+      runPhotoSolverEvaluation(
+        cases,
+        {
+          run: async () => {
+            calls++;
+            throw new Error('called');
+          },
+        },
+        { runMode: 'bad' as 'live' },
+      ),
+    ).rejects.toThrow(/runMode/);
+    expect(calls).toBe(0);
+  });
 });
