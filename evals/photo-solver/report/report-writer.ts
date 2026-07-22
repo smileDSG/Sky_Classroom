@@ -37,7 +37,7 @@ export async function writeEvaluationReport(
     ),
     '',
   ].join('\n');
-  const stamp = '.tmp-' + process.pid;
+  const stamp = `.tmp-${process.pid}-${Math.random().toString(36).slice(2)}`;
   await writeFile(join(options.outputDir, stamp + '.json'), JSON.stringify(valid, null, 2) + '\n');
   await writeFile(join(options.outputDir, stamp + '.md'), md);
   await rename(join(options.outputDir, stamp + '.json'), jsonPath);
