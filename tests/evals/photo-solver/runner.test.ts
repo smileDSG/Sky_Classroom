@@ -73,4 +73,33 @@ describe('photo solver runner', () => {
     ).rejects.toThrow(/runMode/);
     expect(calls).toBe(0);
   });
+
+  it('rejects invalid filters before calling the adapter', async () => {
+    const cases = (await loadPhotoSolverCases(file)).slice(0, 1);
+    let calls = 0;
+    await expect(
+      runPhotoSolverEvaluation(
+        cases,
+        {
+          run: async () => {
+            calls++;
+            throw new Error('called');
+          },
+        },
+        { filters: { unknown: true } as never },
+      ),
+    ).rejects.toThrow();
+    expect(calls).toBe(0);
+  });
+
+  it('rejects invalid cases and adapters up front', async () => {
+    await expect(
+      runPhotoSolverEvaluation([{}] as never, {
+        run: async () => {
+          throw new Error('called');
+        },
+      }),
+    ).rejects.toThrow(/invalid evaluation case/);
+    await expect(runPhotoSolverEvaluation([], {} as never)).rejects.toThrow(/invalid config/);
+  });
 });
