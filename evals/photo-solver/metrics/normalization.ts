@@ -26,8 +26,9 @@ export const normalizeFormula = (value: string): string =>
   normalizeText(value).replace(/^\$|\$$/gu, '');
 
 export const normalizeAnswer = (value: string): string => {
-  let normalized = normalizeText(value);
-  normalized = normalized.replace(/^(?:answer|答案(?:为|是)?):?/u, '');
+  const surface = mapPunctuation(value).toLocaleLowerCase().trim();
+  const withoutLabel = surface.replace(/^(?:answer|答案(?:为|是)?)(?:\s*:\s*|\s+)/u, '');
+  const normalized = normalizeText(withoutLabel);
   return normalized.replace(/[.!。！]+$/gu, '');
 };
 

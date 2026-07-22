@@ -27,6 +27,14 @@ describe('normalization metrics', () => {
     expect(normalizeAnswer(input)).toBe(expected);
   });
 
+  it.each([
+    ['answerable', 'answerable'],
+    ['answering', 'answering'],
+    ['答案解析', '答案解析'],
+  ])('does not strip answer-like words without a label boundary: %s', (input, expected) => {
+    expect(normalizeAnswer(input)).toBe(expected);
+  });
+
   it('only performs surface-safe formula normalization', () => {
     expect(normalizeFormula(' $ x ^ 2 ＋ 2 x = 3 $ ')).toBe('x^2+2x=3');
     expect(normalizeFormula('x-(y-z)')).not.toBe(normalizeFormula('x-y-z'));
@@ -162,6 +170,15 @@ describe('recognition metrics', () => {
         { formulas: ['x=1'], givenConditions: ['x>0'], options: ['A'] },
       ),
     ).toMatchObject({ formulaRecall: 0, givenConditionRecall: 0, optionAccuracy: 0 });
+  });
+
+  it.each([
+    ['penalizes extra predicted options', ['A'], ['A', 'B'], 0.5],
+    ['penalizes missing predicted options', ['A', 'B'], ['A'], 0.5],
+  ])('%s', (_name, goldOptions, predictedOptions, expectedAccuracy) => {
+    expect(
+      evaluateRecognition({ options: goldOptions }, { options: predictedOptions }).optionAccuracy,
+    ).toBe(expectedAccuracy);
   });
 });
 
