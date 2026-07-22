@@ -13,26 +13,32 @@ const log = createLogger('FormulaExtractor');
  */
 export function extractFormulas(text: string): { text: string; latex: string } {
   const formulas: string[] = [];
+  let remainingText = text;
 
-  // Collect inline math patterns: $...$ or \(...\)
-  text.replace(/\$([^\$]+)\$/g, (_match, formula) => {
-    formulas.push(formula);
-    return '';
-  });
-
-  text.replace(/\\\(([^\\]+)\\\)/g, (_match, formula) => {
-    formulas.push(formula);
-    return '';
-  });
-
-  // Collect display math patterns: $$...$$ or \[...\]
-  text.replace(/\$\$([^$]+)\$\$/g, (_match, formula) => {
+  // Collect display math before inline math to avoid overlapping $$...$$ matches.
+  remainingText = remainingText.replace(/\$\$([^$]+)\$\$/g, (_match, formula) => {
     formulas.push(`\\[${formula}\\]`);
     return '';
   });
 
+  remainingText = remainingText.replace(/\\\[([^\]]+)\\\]/g, (_match, formula) => {
+    formulas.push(`\\[${formula}\\]`);
+    return '';
+  });
+
+  // Collect inline math patterns: $...$ or \(...\)
+  remainingText = remainingText.replace(/\$([^$]+)\$/g, (_match, formula) => {
+    formulas.push(formula);
+    return '';
+  });
+
+  remainingText = remainingText.replace(/\\\(([^)]+)\\\)/g, (_match, formula) => {
+    formulas.push(formula);
+    return '';
+  });
+
   // Convert common Unicode math symbols to LaTeX in the full text
-  const cleaned = convertUnicodeMath(text);
+  const cleaned = convertUnicodeMath(remainingText);
 
   const latex = formulas.length > 0 ? formulas.join('\n') : '';
 
