@@ -1,4 +1,14 @@
-import { mkdtemp, mkdir, readFile, rename, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import {
+  copyFile,
+  mkdtemp,
+  mkdir,
+  readFile,
+  rename,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -210,8 +220,8 @@ describe('strict math resource index builder', () => {
       { ...options(root), manifestPath: 'linked-config/manifest.json' },
       {
         ...options(root),
-        indexPath: 'linked-output/index.json',
-        reportPath: 'linked-output/report.json',
+        indexPath: 'linked-output/missing/nested/index.json',
+        reportPath: 'linked-output/missing/nested/report.json',
       },
     ]) {
       await expect(buildMathResourceIndex(input)).rejects.toMatchObject({
@@ -219,6 +229,7 @@ describe('strict math resource index builder', () => {
         stage: 'resource-index-build',
       });
     }
+    expect(await exists(path.join(outside, 'output/missing'))).toBe(false);
   });
 
   it('rolls back a newly published report when the runtime index rename fails', async () => {
@@ -285,10 +296,13 @@ describe('strict math resource index builder', () => {
           if (target === indexPath && source.includes('.tmp-') && !source.endsWith('.backup')) {
             throw new Error('index publish failed');
           }
+          await rename(source, target);
+        },
+        copyBackup: async (source, target) => {
           if (target === reportPath && source.endsWith('.backup')) {
             throw new Error('report restore failed');
           }
-          await rename(source, target);
+          await copyFile(source, target);
         },
       });
     } catch (cause) {
@@ -302,6 +316,39 @@ describe('strict math resource index builder', () => {
     expect(await readFile(recoveryBackupPaths[0], 'utf8')).toBe(previousReport);
     expect(await readFile(indexPath, 'utf8')).toBe(previousIndex);
     expect(await exists(reportPath)).toBe(false);
+  });
+
+  it('keeps the prior artifact pair when the final index publish fails', async () => {
+    const root = await workspace();
+    const input = options(root);
+    await writeFile(
+      path.join(root, 'sources/source.md'),
+      markdown('Derivative', 'https://example.com/source'),
+    );
+    await buildMathResourceIndex(input);
+    const indexPath = path.join(root, input.indexPath);
+    const reportPath = path.join(root, input.reportPath);
+    const previousIndex = await readFile(indexPath, 'utf8');
+    const previousReport = await readFile(reportPath, 'utf8');
+    await writeFile(
+      path.join(root, 'sources/second.md'),
+      markdown('Function', 'https://example.com/second'),
+    );
+
+    await expect(
+      buildMathResourceIndex(input, {
+        renameFile: async (source, target) => {
+          if (target === indexPath && source.includes('.tmp-') && !source.endsWith('.backup')) {
+            throw new Error('index publish failed');
+          }
+          await rename(source, target);
+        },
+        copyBackup: copyFile,
+      }),
+    ).rejects.toMatchObject({ code: 'RESOURCE_INDEX_UNAVAILABLE' });
+
+    expect(await readFile(indexPath, 'utf8')).toBe(previousIndex);
+    expect(await readFile(reportPath, 'utf8')).toBe(previousReport);
   });
 
   it('keeps committed outputs and an undeleted backup when post-commit cleanup fails', async () => {

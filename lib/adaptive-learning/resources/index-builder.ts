@@ -1,6 +1,16 @@
 import 'server-only';
 
-import { lstat, mkdir, readFile, readdir, realpath, rename, rm, writeFile } from 'node:fs/promises';
+import {
+  copyFile,
+  lstat,
+  mkdir,
+  readFile,
+  readdir,
+  realpath,
+  rename,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import path from 'node:path';
 
 import {
@@ -38,6 +48,7 @@ export interface BuildMathResourceIndexResult {
 export interface BuildMathResourceIndexDependencies {
   readSourceFile?: (filePath: string) => Promise<string>;
   renameFile?: (sourcePath: string, targetPath: string) => Promise<void>;
+  copyBackup?: typeof copyFile;
   removeFile?: typeof rm;
 }
 
@@ -121,6 +132,21 @@ function isWithin(parent: string, candidate: string): boolean {
   return !(relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative));
 }
 
+async function nearestExistingAncestor(candidate: string): Promise<string> {
+  let current = candidate;
+  while (true) {
+    try {
+      await lstat(current);
+      return current;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      const parent = path.dirname(current);
+      if (parent === current) throw error;
+      current = parent;
+    }
+  }
+}
+
 async function validateFilesystemBoundaries(paths: ResolvedBuildPaths): Promise<void> {
   let realWorkspaceRoot: string;
   let realSourceDir: string;
@@ -159,6 +185,18 @@ async function validateFilesystemBoundaries(paths: ResolvedBuildPaths): Promise<
 
   const outputParents = [path.dirname(paths.indexPath), path.dirname(paths.reportPath)];
   try {
+    const existingAncestors = await Promise.all(outputParents.map(nearestExistingAncestor));
+    const realAncestors = await Promise.all(
+      existingAncestors.map((ancestor) => realpath(ancestor)),
+    );
+    for (const candidate of realAncestors) {
+      if (!isWithin(realWorkspaceRoot, candidate)) {
+        throw buildError('INVALID_SCHEMA', 'Output ancestor resolves outside the workspace', {
+          workspaceRoot: realWorkspaceRoot,
+          resolvedPath: candidate,
+        });
+      }
+    }
     await Promise.all(outputParents.map((directory) => mkdir(directory, { recursive: true })));
     const realOutputParents = await Promise.all(
       outputParents.map((directory) => realpath(directory)),
@@ -258,6 +296,7 @@ async function writeArtifacts(
   index: ResourceIndex,
   report: GovernanceReport,
   renameFile: (sourcePath: string, targetPath: string) => Promise<void>,
+  copyBackup: typeof copyFile,
   removeFile: typeof rm,
 ): Promise<void> {
   await Promise.all([
@@ -279,7 +318,7 @@ async function writeArtifacts(
     await writeFile(indexTemp, `${JSON.stringify(index, null, 2)}\n`, 'utf8');
     try {
       if ((await lstat(reportPath)).isFile()) {
-        await renameFile(reportPath, reportBackup);
+        await copyBackup(reportPath, reportBackup);
         reportBackedUp = true;
       }
     } catch (error) {
@@ -287,7 +326,7 @@ async function writeArtifacts(
     }
     try {
       if ((await lstat(indexPath)).isFile()) {
-        await renameFile(indexPath, indexBackup);
+        await copyBackup(indexPath, indexBackup);
         indexBackedUp = true;
       }
     } catch (error) {
@@ -317,7 +356,8 @@ async function writeArtifacts(
     ] as const) {
       if (!backedUp) continue;
       try {
-        await renameFile(backup, target);
+        await copyBackup(backup, target);
+        await removeFile(backup, { force: true });
       } catch (error) {
         rollbackFailures.push(error instanceof Error ? error.message : String(error));
         recoveryBackupPaths.push(backup);
@@ -441,6 +481,7 @@ export async function buildMathResourceIndex(
     index,
     report,
     dependencies.renameFile ?? rename,
+    dependencies.copyBackup ?? copyFile,
     dependencies.removeFile ?? rm,
   );
   return { index, report, indexPath: paths.indexPath, reportPath: paths.reportPath };
