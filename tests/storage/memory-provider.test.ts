@@ -6,6 +6,8 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { MemoryStorageProvider } from '@/lib/storage/memory-provider';
 import type { StorageEntry } from '@/lib/storage/storage-types';
+import { createUserDAO } from '@/lib/storage/dao/users';
+import type { LearningOnboardingProfile } from '@/lib/onboarding/types';
 
 function makeEntry(id: string, data: unknown): StorageEntry {
   return {
@@ -168,5 +170,57 @@ describe('MemoryStorageProvider', () => {
       await provider.delete('items', 'a');
       expect(await provider.count('items')).toBe(1);
     });
+  });
+});
+
+describe('user profile storage', () => {
+  test('round-trips a learning onboarding profile', async () => {
+    const provider = new MemoryStorageProvider();
+    const users = await createUserDAO(provider);
+    const learningOnboarding: LearningOnboardingProfile = {
+      version: 1,
+      status: 'completed',
+      weakSubjects: ['math'],
+      learningGoal: 'build-foundations',
+      teachingPreference: 'step-by-step',
+      completedAt: 100,
+    };
+
+    await users.create({
+      id: 'user-1',
+      email: 'student@example.com',
+      username: 'student',
+      passwordHash: null,
+      role: 'user',
+      status: 'active',
+      guestId: null,
+      planType: 'free',
+      avatar: null,
+      nickname: null,
+      bio: null,
+      educationLevel: 'middle',
+      grade: '初二',
+      favoriteSubjects: [{ id: 'math', name: '数学', enabled: true }],
+      learningOnboarding,
+      learningStyle: null,
+      detailLevel: null,
+      preferredLanguage: null,
+      aiPersonality: null,
+      aiName: null,
+      customInstructions: null,
+      autoGenerateQuiz: null,
+      showStepByStep: null,
+      enableMemory: null,
+      enableRAG: null,
+      emailVerified: true,
+      emailVerifyToken: null,
+      resetToken: null,
+      resetTokenExpiry: null,
+    });
+
+    const loaded = await provider.get('users', 'user-1');
+    expect((loaded?.data as { learningOnboarding: unknown }).learningOnboarding).toEqual(
+      learningOnboarding,
+    );
   });
 });

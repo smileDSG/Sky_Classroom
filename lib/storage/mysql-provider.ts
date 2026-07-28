@@ -71,6 +71,8 @@ const CREATE_TABLES_SQL = [
     bio                   TEXT,
     education_level       VARCHAR(50),
     grade                 VARCHAR(50),
+    favorite_subjects     JSON,
+    learning_onboarding   JSON,
     learning_style        VARCHAR(50),
     detail_level          VARCHAR(50),
     preferred_language    VARCHAR(20),
@@ -175,12 +177,13 @@ async function migrateFromStorageEntries(pool: any): Promise<void> {
         if (table === 'users') {
           await pool.query(
             `INSERT IGNORE INTO users (id, email, username, password_hash, role, status, guest_id, plan_type,
-              avatar, nickname, bio, education_level, grade, learning_style, detail_level,
+              avatar, nickname, bio, education_level, grade, favorite_subjects, learning_onboarding,
+              learning_style, detail_level,
               preferred_language, ai_personality, ai_name, custom_instructions,
               auto_generate_quiz, show_step_by_step, enable_memory, enable_rag,
               email_verified, email_verify_token, reset_token, reset_token_expiry,
               created_at, updated_at, last_login_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             [
               row.id,
               data.email ?? null,
@@ -195,6 +198,8 @@ async function migrateFromStorageEntries(pool: any): Promise<void> {
               data.bio ?? null,
               data.educationLevel ?? null,
               data.grade ?? null,
+              data.favoriteSubjects ? JSON.stringify(data.favoriteSubjects) : null,
+              data.learningOnboarding ? JSON.stringify(data.learningOnboarding) : null,
               data.learningStyle ?? null,
               data.detailLevel ?? null,
               data.preferredLanguage ?? null,
@@ -286,6 +291,9 @@ export class MySQLStorageProvider implements StorageProvider {
         await pool.query(sql);
       }
 
+      await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS favorite_subjects JSON');
+      await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS learning_onboarding JSON');
+
       // Migrate old data from storage_entries
       await migrateFromStorageEntries(pool);
 
@@ -305,17 +313,20 @@ export class MySQLStorageProvider implements StorageProvider {
     if (table === 'users') {
       await pool.query(
         `INSERT INTO users (id, email, username, password_hash, role, status, guest_id, plan_type,
-          avatar, nickname, bio, education_level, grade, learning_style, detail_level,
+          avatar, nickname, bio, education_level, grade, favorite_subjects, learning_onboarding,
+          learning_style, detail_level,
           preferred_language, ai_personality, ai_name, custom_instructions,
           auto_generate_quiz, show_step_by_step, enable_memory, enable_rag,
           email_verified, email_verify_token, reset_token, reset_token_expiry,
           created_at, updated_at, last_login_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON DUPLICATE KEY UPDATE
           email=VALUES(email), username=VALUES(username), password_hash=VALUES(password_hash),
           role=VALUES(role), status=VALUES(status), guest_id=VALUES(guest_id), plan_type=VALUES(plan_type),
           avatar=VALUES(avatar), nickname=VALUES(nickname), bio=VALUES(bio),
-          education_level=VALUES(education_level), grade=VALUES(grade), learning_style=VALUES(learning_style),
+          education_level=VALUES(education_level), grade=VALUES(grade),
+          favorite_subjects=VALUES(favorite_subjects), learning_onboarding=VALUES(learning_onboarding),
+          learning_style=VALUES(learning_style),
           detail_level=VALUES(detail_level), preferred_language=VALUES(preferred_language),
           ai_personality=VALUES(ai_personality), ai_name=VALUES(ai_name), custom_instructions=VALUES(custom_instructions),
           auto_generate_quiz=VALUES(auto_generate_quiz), show_step_by_step=VALUES(show_step_by_step),
@@ -337,6 +348,8 @@ export class MySQLStorageProvider implements StorageProvider {
           data.bio ?? null,
           data.educationLevel ?? null,
           data.grade ?? null,
+          data.favoriteSubjects ? JSON.stringify(data.favoriteSubjects) : null,
+          data.learningOnboarding ? JSON.stringify(data.learningOnboarding) : null,
           data.learningStyle ?? null,
           data.detailLevel ?? null,
           data.preferredLanguage ?? null,
@@ -570,6 +583,12 @@ function parseDatetime(val: unknown): number {
   return new Date(val as string).getTime();
 }
 
+function parseJsonColumn<T>(value: unknown): T | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string') return JSON.parse(value) as T;
+  return value as T;
+}
+
 function rowToUserEntry(row: RowDataPacket): StorageEntry {
   return {
     id: row.id as string,
@@ -587,6 +606,8 @@ function rowToUserEntry(row: RowDataPacket): StorageEntry {
       bio: row.bio,
       educationLevel: row.education_level,
       grade: row.grade,
+      favoriteSubjects: parseJsonColumn(row.favorite_subjects),
+      learningOnboarding: parseJsonColumn(row.learning_onboarding),
       learningStyle: row.learning_style,
       detailLevel: row.detail_level,
       preferredLanguage: row.preferred_language,
