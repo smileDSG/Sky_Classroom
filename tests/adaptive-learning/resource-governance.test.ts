@@ -192,7 +192,7 @@ describe('math resource governance', () => {
       manual_verification_required: 1,
     });
     expect(report.resourceGapNodeIds).toEqual(
-      GAOKAO_MATH_PACK_V1.nodes.map((node) => node.id).sort(),
+      GAOKAO_MATH_PACK_V1.nodes.map((node) => node.id),
     );
   });
 

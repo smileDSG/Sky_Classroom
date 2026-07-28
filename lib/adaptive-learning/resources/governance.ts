@@ -354,8 +354,7 @@ export function governMathResources(input: GovernMathResourcesInput): GovernMath
     ),
     resourceGapNodeIds: pack.nodes
       .map((node) => node.id)
-      .filter((nodeId) => !coveredNodeIds.has(nodeId))
-      .sort(compareText),
+      .filter((nodeId) => !coveredNodeIds.has(nodeId)),
   });
 
   return { index, report };
