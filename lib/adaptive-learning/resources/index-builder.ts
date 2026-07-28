@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -66,7 +68,7 @@ function resolveWithin(workspaceRoot: string, value: string, field: string): str
   }
   const resolved = path.resolve(workspaceRoot, value);
   const relative = path.relative(workspaceRoot, resolved);
-  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
     throw buildError('INVALID_SCHEMA', `${field} must stay within the workspace`, {
       field,
       value,
@@ -124,7 +126,7 @@ async function scanMarkdownFiles(directory: string): Promise<string[]> {
   for (const entry of entries.sort((left, right) => compareText(left.name, right.name))) {
     const entryPath = path.join(directory, entry.name);
     if (entry.isDirectory()) files.push(...(await scanMarkdownFiles(entryPath)));
-    else if (entry.isFile() && entry.name.endsWith('.md')) files.push(entryPath);
+    else if (entry.isFile() && entry.name.toLowerCase().endsWith('.md')) files.push(entryPath);
   }
   return files.sort(compareText);
 }

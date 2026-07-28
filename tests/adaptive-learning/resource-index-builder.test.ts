@@ -2,7 +2,9 @@ import { mkdtemp, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('server-only', () => ({}));
 
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
 import { buildMathResourceIndex } from '@/lib/adaptive-learning/resources/index-builder';
