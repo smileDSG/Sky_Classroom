@@ -39,17 +39,80 @@ function normalizeError(error: unknown): AdaptiveLearningError {
   });
 }
 
+function publicDetails(error: AdaptiveLearningError): Record<string, unknown> {
+  const details = error.details ?? {};
+  switch (error.code) {
+    case 'INVALID_SCHEMA':
+      return {
+        ...(Array.isArray(details.issues) ? { issues: details.issues } : {}),
+        ...(Array.isArray(details.duplicateKeys) ? { duplicateKeys: details.duplicateKeys } : {}),
+      };
+    case 'RESOURCE_GAP':
+      return {
+        ...(Array.isArray(details.nodeIds) ? { nodeIds: details.nodeIds } : {}),
+        ...(typeof details.expectedResourceType === 'string'
+          ? { expectedResourceType: details.expectedResourceType }
+          : {}),
+        ...(typeof details.maxDifficulty === 'number'
+          ? { maxDifficulty: details.maxDifficulty }
+          : {}),
+      };
+    case 'CURRICULUM_VERSION_MISMATCH':
+      return {
+        ...('expected' in details
+          ? { expected: details.expected }
+          : 'expectedCurriculumPackId' in details
+            ? { expected: details.expectedCurriculumPackId }
+            : {}),
+        ...('actual' in details
+          ? { actual: details.actual }
+          : 'actualCurriculumPackId' in details
+            ? { actual: details.actualCurriculumPackId }
+            : {}),
+      };
+    case 'SYNC_FAILED': {
+      const causeType =
+        typeof details.causeType === 'string'
+          ? details.causeType
+          : error.cause instanceof Error
+            ? error.cause.name
+            : error.cause === undefined
+              ? undefined
+              : typeof error.cause;
+      return causeType ? { causeType } : {};
+    }
+    default:
+      return {};
+  }
+}
+
+function publicMessage(error: AdaptiveLearningError): string {
+  if (error.code === 'RESOURCE_INDEX_UNAVAILABLE') return 'Math resource index is unavailable';
+  if (error.code === 'SYNC_FAILED') return 'Math resource service dependency is unavailable';
+  return error.message;
+}
+
 export function adaptiveLearningApiError(error: unknown, correlationId: string): NextResponse {
   const normalized = normalizeError(error);
+  if (normalized.code === 'RESOURCE_INDEX_UNAVAILABLE' || normalized.code === 'SYNC_FAILED') {
+    console.error('Adaptive learning API internal failure', {
+      correlationId,
+      code: normalized.code,
+      stage: normalized.stage,
+      message: normalized.message,
+      details: normalized.details ?? {},
+      cause: normalized.cause,
+    });
+  }
   return NextResponse.json(
     {
       success: false,
       error: {
         code: normalized.code,
-        message: normalized.message,
+        message: publicMessage(normalized),
         retryable: normalized.retryable,
         stage: normalized.stage,
-        details: normalized.details ?? {},
+        details: publicDetails(normalized),
         correlationId,
       },
     },

@@ -38,7 +38,24 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const queryValues = Object.fromEntries(new URL(request.url).searchParams.entries());
+    const searchParams = new URL(request.url).searchParams;
+    const seenKeys = new Set<string>();
+    const duplicateKeys = new Set<string>();
+    for (const key of searchParams.keys()) {
+      if (seenKeys.has(key)) duplicateKeys.add(key);
+      seenKeys.add(key);
+    }
+    if (duplicateKeys.size > 0) {
+      throw new AdaptiveLearningError({
+        code: 'INVALID_SCHEMA',
+        message: 'Math resource query contains duplicate parameters',
+        retryable: false,
+        stage: 'math-resources-api',
+        details: { duplicateKeys: [...duplicateKeys] },
+      });
+    }
+
+    const queryValues = Object.fromEntries(searchParams.entries());
     const query = mathResourceQuerySchema.safeParse(queryValues);
     if (!query.success) {
       throw new AdaptiveLearningError({

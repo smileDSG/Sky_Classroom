@@ -81,6 +81,24 @@ describe('GET /api/sky/math-resources', () => {
     expect(mocks.findVerified).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['nodeId', '?nodeId=derivative-concept&nodeId=functions-properties'],
+    ['limit', '?limit=5&limit=10'],
+  ])('rejects duplicate %s query parameters instead of applying last-wins', async (key, query) => {
+    const response = await GET(request(query, 'corr-duplicate'));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      success: false,
+      error: {
+        code: 'INVALID_SCHEMA',
+        stage: 'math-resources-api',
+        details: { duplicateKeys: [key] },
+      },
+    });
+    expect(mocks.findVerified).not.toHaveBeenCalled();
+  });
+
   it('returns verified resources and preserves a caller correlation id', async () => {
     const resources = [{ id: 'math_1234567890abcdef', status: 'verified' }];
     mocks.findVerified.mockResolvedValue(resources);
@@ -111,7 +129,12 @@ describe('GET /api/sky/math-resources', () => {
         message: 'No verified resources match the query',
         retryable: false,
         stage: 'resource-query',
-        details: { nodeId: 'derivative-concept' },
+        details: {
+          nodeIds: ['derivative-concept'],
+          expectedResourceType: 'concept',
+          maxDifficulty: 4,
+          indexPath: 'C:\\private\\index.json',
+        },
       }),
     );
 
@@ -122,17 +145,33 @@ describe('GET /api/sky/math-resources', () => {
       success: false,
       error: {
         code: 'RESOURCE_GAP',
-        details: { nodeId: 'derivative-concept' },
+        details: {
+          nodeIds: ['derivative-concept'],
+          expectedResourceType: 'concept',
+          maxDifficulty: 4,
+        },
         correlationId: 'corr-gap',
       },
     });
   });
 
-  it('maps unknown repository failures and generates a correlation id', async () => {
-    mocks.findVerified.mockRejectedValue(new Error('disk read failed'));
+  it('keeps internal index details out of responses while logging them with correlation', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const indexPath = 'C:\\private\\adaptive-learning\\resource-index.v1.json';
+    mocks.findVerified.mockRejectedValue(
+      new AdaptiveLearningError({
+        code: 'RESOURCE_INDEX_UNAVAILABLE',
+        message: `Could not read ${indexPath}`,
+        retryable: false,
+        stage: 'resource-index-read',
+        details: { indexPath, issues: [{ message: 'secret parse failure' }] },
+        cause: new Error('disk read failed'),
+      }),
+    );
 
     const response = await GET(request());
     const body = await response.json();
+    const responseText = JSON.stringify(body);
 
     expect(response.status).toBe(503);
     expect(body).toMatchObject({
@@ -140,11 +179,18 @@ describe('GET /api/sky/math-resources', () => {
       error: {
         code: 'RESOURCE_INDEX_UNAVAILABLE',
         retryable: false,
-        stage: 'math-resources-api',
+        stage: 'resource-index-read',
         details: {},
         correlationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
       },
     });
+    expect(responseText).not.toContain(indexPath);
+    expect(responseText).not.toContain('secret parse failure');
     expect(response.headers.get('x-correlation-id')).toBe(body.error.correlationId);
+    expect(JSON.stringify(log.mock.calls)).toContain(body.error.correlationId);
+    expect(
+      log.mock.calls.some((call) => call.some((value) => value?.details?.indexPath === indexPath)),
+    ).toBe(true);
+    log.mockRestore();
   });
 });
