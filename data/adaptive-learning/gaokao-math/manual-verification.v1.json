@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "curriculumPackId": "gaokao-math-2026.1",
+  "entries": [
+    {
+      "sourcePath": "data/crawled/math/What-is-a-Function-15e6c608.md",
+      "status": "verified",
+      "nodeIds": ["functions-basic"],
+      "resourceType": "concept",
+      "difficulty": 2,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "内容准确解释函数定义、定义域和值域，适合作为函数基础概念资源。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Introduction-to-Derivatives-242a8f27.md",
+      "status": "verified",
+      "nodeIds": ["derivative-concept"],
+      "resourceType": "concept",
+      "difficulty": 3,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "从变化率与极限直观引入导数定义，适合作为导数概念教学资源。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Finding-Maxima-and-Minima-using-Derivatives-8844c91f.md",
+      "status": "verified",
+      "nodeIds": ["derivative-applications"],
+      "resourceType": "worked-example",
+      "difficulty": 4,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "通过导数符号与驻点求解函数极值，包含完整且可复用的例题步骤。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Arithmetic-Sequences-and-Sums-58b77756.md",
+      "status": "verified",
+      "nodeIds": ["sequences"],
+      "resourceType": "worked-example",
+      "difficulty": 3,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "覆盖等差数列通项与求和公式，并给出步骤清晰的典型例题。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Conditional-Probability-97b27e03.md",
+      "status": "verified",
+      "nodeIds": ["probability"],
+      "resourceType": "worked-example",
+      "difficulty": 3,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "围绕条件概率公式和样本空间更新，提供推理过程完整的例题。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Trigonometric-Identities-500b187f.md",
+      "status": "verified",
+      "nodeIds": ["trigonometry"],
+      "resourceType": "concept",
+      "difficulty": 3,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "系统讲解常用三角恒等式及其变换关系，适合作为概念梳理资源。"
+    }
+  ]
+}
