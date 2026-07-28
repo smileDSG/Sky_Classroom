@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { nodeIdSchema } from './curriculum';
 import { isoDateTimeSchema } from './resource';
 
-const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const dateSchema = z.iso.date();
 
 export const learnerProfileSchema = z
   .object({

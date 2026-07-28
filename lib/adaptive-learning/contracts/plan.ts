@@ -4,7 +4,7 @@ import { nodeIdSchema } from './curriculum';
 import { learnerProfileSchema } from './learner';
 import { isoDateTimeSchema } from './resource';
 
-const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const dateSchema = z.iso.date();
 
 export const learningTaskSchema = z
   .object({
@@ -49,7 +49,26 @@ export const learningPlanSchema = z
     constraintChecks: z.array(z.string().min(1)),
     evidenceEventIds: z.array(z.string().min(1)),
   })
-  .strict();
+  .strict()
+  .superRefine((plan, ctx) => {
+    if (plan.validFrom > plan.validTo) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['validTo'],
+        message: 'validTo must be on or after validFrom',
+      });
+    }
+
+    plan.tasks.forEach((task, index) => {
+      if (task.scheduledDate < plan.validFrom || task.scheduledDate > plan.validTo) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['tasks', index, 'scheduledDate'],
+          message: 'task scheduledDate must be within the plan validity window',
+        });
+      }
+    });
+  });
 
 export const planAdjustmentSchema = z
   .object({

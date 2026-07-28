@@ -7,10 +7,12 @@ import {
   learnerProfileSchema,
   learningEventSchema,
   learningPlanSchema,
+  learningTaskSchema,
   mathResourceSchema,
   manualVerificationManifestSchema,
   mathResourceQuerySchema,
   planAdjustmentSchema,
+  weeklyTargetSchema,
 } from '@/lib/adaptive-learning/contracts';
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
 
@@ -28,6 +30,59 @@ const node = {
   defaultStabilityDays: 7,
   commonErrorCodes: ['derivative_definition_confusion'],
   activityTypes: ['learn', 'worked-example', 'practice', 'review', 'diagnostic'],
+};
+
+const validProfileInput = {
+  userId: 'user-1',
+  stage: 'senior-high',
+  grade: 'grade-12',
+  subject: 'math',
+  curriculumPackVersion: '2026.1',
+  examDate: '2027-06-07',
+  targetScore: 125,
+  latestScore: 96,
+  weeklyAvailableMinutes: 600,
+  dailyAvailability: { monday: 90, tuesday: 90 },
+  preferredSessionMinutes: 30,
+  constraints: {
+    restDays: ['sunday'],
+    maxDailyMinutes: 120,
+    teacherLockedNodeIds: [],
+  },
+  createdAt: '2026-07-28T00:00:00.000Z',
+  updatedAt: '2026-07-28T00:00:00.000Z',
+};
+
+const validTaskInput = {
+  id: 'task-1',
+  nodeId: 'derivative-concept',
+  type: 'practice',
+  title: 'Derivative practice',
+  objective: 'Apply the derivative definition accurately.',
+  plannedMinutes: 30,
+  difficulty: 3,
+  resourceIds: ['math_1234567890abcdef'],
+  successCriteria: ['Solve four of five questions correctly.'],
+  status: 'pending',
+  scheduledDate: '2026-07-29',
+  reasonCodes: ['low_mastery'],
+};
+
+const validPlanInput = {
+  id: 'plan-1',
+  userId: 'user-1',
+  version: 1,
+  status: 'active',
+  generatedAt: '2026-07-28T00:00:00.000Z',
+  validFrom: '2026-07-28',
+  validTo: '2026-08-03',
+  curriculumPackVersion: '2026.1',
+  plannerVersion: '1.0.0',
+  profileSnapshot: validProfileInput,
+  tasks: [],
+  weeklyTargets: [],
+  constraintChecks: ['daily_minutes_ok'],
+  evidenceEventIds: ['event-1'],
 };
 
 describe('adaptive learning curriculum and resource contracts', () => {
@@ -252,15 +307,135 @@ describe('adaptive learning curriculum and resource contracts', () => {
     ).toBe('micro');
   });
 
+  it('rejects impossible calendar dates across adaptive contracts', () => {
+    expect(() =>
+      learnerProfileSchema.parse({
+        ...validProfileInput,
+        examDate: '2026-02-31',
+      }),
+    ).toThrow();
+    expect(() =>
+      learningPlanSchema.parse({
+        ...validPlanInput,
+        validFrom: '2026-13-01',
+      }),
+    ).toThrow();
+    expect(() =>
+      learningPlanSchema.parse({
+        ...validPlanInput,
+        validTo: '2026-02-31',
+      }),
+    ).toThrow();
+    expect(() =>
+      learningTaskSchema.parse({
+        ...validTaskInput,
+        scheduledDate: '2026-02-31',
+      }),
+    ).toThrow();
+    expect(() =>
+      weeklyTargetSchema.parse({
+        weekStart: '2026-13-01',
+        targetNodeIds: ['derivative-concept'],
+        plannedMinutes: 90,
+        expectedOutcomes: ['Improve derivative fluency.'],
+      }),
+    ).toThrow();
+  });
+
+  it('rejects reversed plan ranges and tasks outside the plan window', () => {
+    expect(() =>
+      learningPlanSchema.parse({
+        ...validPlanInput,
+        validFrom: '2026-08-04',
+        validTo: '2026-08-03',
+      }),
+    ).toThrow();
+    expect(() =>
+      learningPlanSchema.parse({
+        ...validPlanInput,
+        tasks: [{ ...validTaskInput, scheduledDate: '2026-07-27' }],
+      }),
+    ).toThrow();
+    expect(() =>
+      learningPlanSchema.parse({
+        ...validPlanInput,
+        tasks: [{ ...validTaskInput, scheduledDate: '2026-08-04' }],
+      }),
+    ).toThrow();
+
+    expect(
+      learningPlanSchema.parse({
+        ...validPlanInput,
+        tasks: [
+          { ...validTaskInput, scheduledDate: '2026-07-28' },
+          { ...validTaskInput, id: 'task-2', scheduledDate: '2026-08-03' },
+        ],
+      }).tasks,
+    ).toHaveLength(2);
+  });
+
+  it('rejects unknown fields throughout adaptive domain contracts', () => {
+    expect(() =>
+      learnerProfileSchema.parse({
+        ...validProfileInput,
+        unknown: true,
+      }),
+    ).toThrow();
+    expect(() =>
+      learnerProfileSchema.parse({
+        ...validProfileInput,
+        constraints: {
+          ...validProfileInput.constraints,
+          unknown: true,
+        },
+      }),
+    ).toThrow();
+    expect(() =>
+      learningPlanSchema.parse({
+        ...validPlanInput,
+        unknown: true,
+      }),
+    ).toThrow();
+    expect(() =>
+      planAdjustmentSchema.parse({
+        id: 'adjustment-1',
+        userId: 'user-1',
+        previousPlanId: 'plan-1',
+        nextPlanId: 'plan-2',
+        mode: 'micro',
+        triggerEventIds: ['event-1'],
+        changedTaskIds: ['task-1'],
+        preservedTaskIds: [],
+        ruleEvidence: [
+          {
+            nodeId: 'derivative-concept',
+            reasonCode: 'mastery_changed',
+            before: 0.5,
+            after: 0.6,
+            unknown: true,
+          },
+        ],
+        explanation: 'Mastery evidence changed the task.',
+        createdAt: '2026-07-28T00:00:01.000Z',
+      }),
+    ).toThrow();
+  });
+
   it('carries structured non-fallback errors', () => {
+    const cause = new Error('resource index unavailable');
     const error = new AdaptiveLearningError({
       code: 'RESOURCE_GAP',
       message: 'No verified derivative resource',
       retryable: false,
       stage: 'resource-query',
       details: { nodeId: 'derivative-concept' },
+      cause,
     });
+    expect(error.name).toBe('AdaptiveLearningError');
     expect(error.code).toBe('RESOURCE_GAP');
+    expect(error.retryable).toBe(false);
+    expect(error.stage).toBe('resource-query');
     expect(error.details).toEqual({ nodeId: 'derivative-concept' });
+    expect(error.cause).toBe(cause);
   });
 });
