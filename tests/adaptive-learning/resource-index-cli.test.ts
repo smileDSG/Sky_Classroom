@@ -58,6 +58,44 @@ describe('math resource index CLI', () => {
     expect(() => parseResourceIndexCliArgs(args)).toThrow(message);
   });
 
+  it.each([
+    {
+      args: [...argv, '--unknown', 'value'],
+      details: { kind: 'unknown-option', option: '--unknown' },
+    },
+    {
+      args: argv.slice(2),
+      details: { kind: 'missing-option', option: '--workspace-root' },
+    },
+    {
+      args: [...argv, '--pack', 'duplicate'],
+      details: { kind: 'duplicate-option', option: '--pack' },
+    },
+    {
+      args: ['--workspace-root', '--source-dir', 'data/crawled/math', ...argv.slice(4)],
+      details: { kind: 'missing-value', option: '--workspace-root' },
+    },
+  ])('reports invalid CLI input without invoking the builder: $details.kind', async (testCase) => {
+    const build = vi.fn();
+    const stdout = vi.fn();
+    const stderr = vi.fn();
+
+    await expect(runResourceIndexCli(testCase.args, { build, stdout, stderr })).resolves.toBe(1);
+
+    expect(build).not.toHaveBeenCalled();
+    expect(stdout).not.toHaveBeenCalled();
+    expect(stderr).toHaveBeenCalledOnce();
+    expect(JSON.parse(stderr.mock.calls[0][0])).toMatchObject({
+      success: false,
+      error: {
+        code: 'INVALID_SCHEMA',
+        retryable: false,
+        stage: 'resource-index-cli',
+        details: testCase.details,
+      },
+    });
+  });
+
   it('builds once and writes a compact success payload to stdout', async () => {
     const build = vi.fn(async () => ({
       report: {

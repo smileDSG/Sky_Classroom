@@ -34,6 +34,16 @@ function isResourceIndexOption(argument: string): argument is ResourceIndexOptio
   return Object.hasOwn(OPTION_FIELDS, argument);
 }
 
+function invalidCliInput(message: string, details: Record<string, unknown>): AdaptiveLearningError {
+  return new AdaptiveLearningError({
+    code: 'INVALID_SCHEMA',
+    message,
+    retryable: false,
+    stage: 'resource-index-cli',
+    details,
+  });
+}
+
 export function parseResourceIndexCliArgs(argv: string[]): BuildMathResourceIndexInput {
   const values: Partial<BuildMathResourceIndexInput> = {};
   const seen = new Set<ResourceIndexOption>();
@@ -41,18 +51,30 @@ export function parseResourceIndexCliArgs(argv: string[]): BuildMathResourceInde
   for (let index = 0; index < argv.length; index += 2) {
     const option = argv[index];
     if (!option.startsWith('--')) {
-      throw new Error(`unexpected argument: ${option}`);
+      throw invalidCliInput(`unexpected argument: ${option}`, {
+        kind: 'unexpected-argument',
+        argument: option,
+      });
     }
     if (!isResourceIndexOption(option)) {
-      throw new Error(`unknown option: ${option}`);
+      throw invalidCliInput(`unknown option: ${option}`, {
+        kind: 'unknown-option',
+        option,
+      });
     }
     if (seen.has(option)) {
-      throw new Error(`duplicate option: ${option}`);
+      throw invalidCliInput(`duplicate option: ${option}`, {
+        kind: 'duplicate-option',
+        option,
+      });
     }
 
     const value = argv[index + 1];
     if (value === undefined || value.trim().length === 0 || value.startsWith('--')) {
-      throw new Error(`${option} requires a value`);
+      throw invalidCliInput(`${option} requires a value`, {
+        kind: 'missing-value',
+        option,
+      });
     }
 
     seen.add(option);
@@ -61,7 +83,10 @@ export function parseResourceIndexCliArgs(argv: string[]): BuildMathResourceInde
 
   for (const option of Object.keys(OPTION_FIELDS) as ResourceIndexOption[]) {
     if (!seen.has(option)) {
-      throw new Error(`missing required option: ${option}`);
+      throw invalidCliInput(`missing required option: ${option}`, {
+        kind: 'missing-option',
+        option,
+      });
     }
   }
 
