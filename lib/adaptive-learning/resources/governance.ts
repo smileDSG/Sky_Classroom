@@ -153,6 +153,12 @@ function qualityScore(document: CrawledMathDocument): number {
       cause,
     );
   }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw invalidGovernance('Governed resource canonical URL must use HTTP or HTTPS', {
+      sourcePath: document.sourcePath,
+      canonicalUrl: document.canonicalUrl,
+    });
+  }
   const hostname = url.hostname.toLowerCase();
   let score = 0.2;
 
@@ -323,8 +329,12 @@ export function governMathResources(input: GovernMathResourcesInput): GovernMath
       statusCounts.rejected += 1;
     }
 
+    const hardDuplicate = duplicateDecisions.hardDuplicates.get(resource.sourcePath);
+    const generatedKeeperReason = hardDuplicate
+      ? `keeper:${hardDuplicate.keeperSourcePath}`
+      : undefined;
     for (const reason of resource.rejectionReasons) {
-      if (reason.startsWith('keeper:')) continue;
+      if (reason === generatedKeeperReason) continue;
       reasonCounts[reason] = (reasonCounts[reason] ?? 0) + 1;
     }
   }

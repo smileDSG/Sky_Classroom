@@ -293,17 +293,42 @@ describe('math resource governance', () => {
     }
   });
 
-  it('wraps invalid canonical URLs as structured governance errors', () => {
-    const source = document({
-      sourcePath: 'data/invalid-url.md',
-      canonicalUrl: 'not a valid URL',
-    });
+  it('rejects invalid and non-HTTP canonical URLs as structured governance errors', () => {
+    for (const [name, canonicalUrl] of [
+      ['invalid', 'not a valid URL'],
+      ['javascript', 'javascript:alert(1)'],
+      ['data', 'data:text/plain,math'],
+      ['ftp', 'ftp://example.com/math'],
+    ]) {
+      const source = document({
+        sourcePath: `data/${name}-url.md`,
+        canonicalUrl,
+      });
 
-    const error = captureGovernanceError(() => govern([source]));
-    expect(error.details).toMatchObject({
-      sourcePath: source.sourcePath,
-      canonicalUrl: source.canonicalUrl,
-    });
+      const error = captureGovernanceError(() => govern([source]));
+      expect(error.details).toMatchObject({
+        sourcePath: source.sourcePath,
+        canonicalUrl: source.canonicalUrl,
+      });
+    }
+  });
+
+  it('counts manual keeper-like rejection reasons without counting duplicate keeper metadata', () => {
+    const source = document({ sourcePath: 'data/manual-rejection.md' });
+    const verificationManifest = manifest([
+      {
+        sourcePath: source.sourcePath,
+        status: 'rejected',
+        reasons: ['keeper:manual-policy'],
+        reviewer: 'reviewer',
+        reviewedAt: NOW,
+        notes: 'Policy rejection with a keeper-like reason.',
+      },
+    ]);
+
+    const { report } = govern([source], verificationManifest);
+
+    expect(report.reasonCounts).toEqual({ 'keeper:manual-policy': 1 });
   });
 
   it('refuses to manually verify a document rejected as a hard duplicate', () => {
