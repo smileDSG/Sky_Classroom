@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, readFile, stat, symlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rename, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -259,5 +259,48 @@ describe('strict math resource index builder', () => {
     });
     expect(await exists(path.join(root, input.indexPath))).toBe(false);
     expect(await exists(path.join(root, input.reportPath))).toBe(false);
+  });
+
+  it('preserves a recoverable backup when publication and backup restoration both fail', async () => {
+    const root = await workspace();
+    const input = options(root);
+    await writeFile(
+      path.join(root, 'sources/source.md'),
+      markdown('Derivative', 'https://example.com/source'),
+    );
+    await buildMathResourceIndex(input);
+    const indexPath = path.join(root, input.indexPath);
+    const reportPath = path.join(root, input.reportPath);
+    const previousIndex = await readFile(indexPath, 'utf8');
+    const previousReport = await readFile(reportPath, 'utf8');
+    await writeFile(
+      path.join(root, 'sources/second.md'),
+      markdown('Function', 'https://example.com/second'),
+    );
+
+    let error: AdaptiveLearningError | undefined;
+    try {
+      await buildMathResourceIndex(input, {
+        renameFile: async (source, target) => {
+          if (target === indexPath && source.includes('.tmp-') && !source.endsWith('.backup')) {
+            throw new Error('index publish failed');
+          }
+          if (target === reportPath && source.endsWith('.backup')) {
+            throw new Error('report restore failed');
+          }
+          await rename(source, target);
+        },
+      });
+    } catch (cause) {
+      error = captureBuildError(cause);
+    }
+
+    expect(error).toMatchObject({ code: 'RESOURCE_INDEX_UNAVAILABLE' });
+    const recoveryBackupPaths = error?.details?.recoveryBackupPaths as string[];
+    expect(recoveryBackupPaths).toHaveLength(1);
+    expect(recoveryBackupPaths[0]).toContain(path.basename(reportPath));
+    expect(await readFile(recoveryBackupPaths[0], 'utf8')).toBe(previousReport);
+    expect(await readFile(indexPath, 'utf8')).toBe(previousIndex);
+    expect(await exists(reportPath)).toBe(false);
   });
 });

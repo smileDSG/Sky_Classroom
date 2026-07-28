@@ -37,6 +37,7 @@ export interface BuildMathResourceIndexResult {
 
 export interface BuildMathResourceIndexDependencies {
   readSourceFile?: (filePath: string) => Promise<string>;
+  renameFile?: (sourcePath: string, targetPath: string) => Promise<void>;
 }
 
 interface ResolvedBuildPaths {
@@ -255,6 +256,7 @@ async function writeArtifacts(
   reportPath: string,
   index: ResourceIndex,
   report: GovernanceReport,
+  renameFile: (sourcePath: string, targetPath: string) => Promise<void>,
 ): Promise<void> {
   await Promise.all([
     mkdir(path.dirname(indexPath), { recursive: true }),
@@ -275,7 +277,7 @@ async function writeArtifacts(
     await writeFile(indexTemp, `${JSON.stringify(index, null, 2)}\n`, 'utf8');
     try {
       if ((await lstat(reportPath)).isFile()) {
-        await rename(reportPath, reportBackup);
+        await renameFile(reportPath, reportBackup);
         reportBackedUp = true;
       }
     } catch (error) {
@@ -283,15 +285,15 @@ async function writeArtifacts(
     }
     try {
       if ((await lstat(indexPath)).isFile()) {
-        await rename(indexPath, indexBackup);
+        await renameFile(indexPath, indexBackup);
         indexBackedUp = true;
       }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     }
-    await rename(reportTemp, reportPath);
+    await renameFile(reportTemp, reportPath);
     reportPublished = true;
-    await rename(indexTemp, indexPath);
+    await renameFile(indexTemp, indexPath);
     indexPublished = true;
     await Promise.all([
       reportBackedUp ? rm(reportBackup, { force: true }) : Promise.resolve(),
@@ -299,6 +301,7 @@ async function writeArtifacts(
     ]);
   } catch (cause) {
     const rollbackFailures: string[] = [];
+    const recoveryBackupPaths: string[] = [];
     for (const [published, target] of [
       [indexPublished, indexPath],
       [reportPublished, reportPath],
@@ -316,17 +319,13 @@ async function writeArtifacts(
     ] as const) {
       if (!backedUp) continue;
       try {
-        await rename(backup, target);
+        await renameFile(backup, target);
       } catch (error) {
         rollbackFailures.push(error instanceof Error ? error.message : String(error));
+        recoveryBackupPaths.push(backup);
       }
     }
-    await Promise.allSettled([
-      rm(reportTemp, { force: true }),
-      rm(indexTemp, { force: true }),
-      rm(reportBackup, { force: true }),
-      rm(indexBackup, { force: true }),
-    ]);
+    await Promise.allSettled([rm(reportTemp, { force: true }), rm(indexTemp, { force: true })]);
     throw buildError(
       'RESOURCE_INDEX_UNAVAILABLE',
       'Resource index artifacts could not be published',
@@ -334,6 +333,7 @@ async function writeArtifacts(
         indexPath,
         reportPath,
         rollbackFailures,
+        recoveryBackupPaths,
       },
       cause,
     );
@@ -404,6 +404,12 @@ export async function buildMathResourceIndex(
     parseFailures: [],
   });
 
-  await writeArtifacts(paths.indexPath, paths.reportPath, index, report);
+  await writeArtifacts(
+    paths.indexPath,
+    paths.reportPath,
+    index,
+    report,
+    dependencies.renameFile ?? rename,
+  );
   return { index, report, indexPath: paths.indexPath, reportPath: paths.reportPath };
 }
