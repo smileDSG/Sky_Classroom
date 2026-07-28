@@ -17,11 +17,11 @@
   },
   "parseFailures": [],
   "resourceGapNodeIds": [
-    "analytic-geometry",
-    "complex-numbers",
     "functions-properties",
-    "inequalities",
+    "statistics",
+    "analytic-geometry",
     "solid-geometry",
-    "statistics"
+    "complex-numbers",
+    "inequalities"
   ]
 }
