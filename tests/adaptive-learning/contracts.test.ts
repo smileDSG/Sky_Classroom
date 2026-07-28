@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   curriculumNodeSchema,
   curriculumPackSchema,
+  governanceReportSchema,
   mathResourceSchema,
   manualVerificationManifestSchema,
   mathResourceQuerySchema,
@@ -111,5 +112,59 @@ describe('adaptive learning curriculum and resource contracts', () => {
       maxDifficulty: 4,
       limit: 20,
     });
+  });
+
+  it('rejects unknown governance status count fields', () => {
+    expect(() =>
+      governanceReportSchema.parse({
+        schemaVersion: '1.0.0',
+        indexVersion: '2026.1',
+        scanned: 1,
+        parsed: 1,
+        statusCounts: {
+          verified: 1,
+          needsReview: 0,
+          rejected: 0,
+          unknown: 0,
+        },
+        reasonCounts: {},
+        parseFailures: [],
+        resourceGapNodeIds: [],
+      }),
+    ).toThrow();
+  });
+
+  it('rejects incoherent curriculum pack identities and node versions', () => {
+    const pack = {
+      id: 'gaokao-math-2026.1',
+      version: '2026.1',
+      title: '2026 高考数学最小课程包',
+      subject: 'math',
+      stage: 'senior-high',
+      examSystem: 'gaokao',
+      examYear: 2026,
+      nodes: [node],
+    };
+
+    expect(() =>
+      curriculumPackSchema.parse({
+        ...pack,
+        id: 'gaokao-math-2026.2',
+      }),
+    ).toThrow();
+    expect(() =>
+      curriculumPackSchema.parse({
+        ...pack,
+        id: 'gaokao-math-2027.1',
+        version: '2027.1',
+        nodes: [{ ...node, version: '2027.1' }],
+      }),
+    ).toThrow();
+    expect(() =>
+      curriculumPackSchema.parse({
+        ...pack,
+        nodes: [{ ...node, version: '2026.2' }],
+      }),
+    ).toThrow();
   });
 });

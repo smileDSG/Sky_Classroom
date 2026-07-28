@@ -114,11 +114,13 @@ export const governanceReportSchema = z
     indexVersion: z.string().min(1),
     scanned: z.number().int().min(0),
     parsed: z.number().int().min(0),
-    statusCounts: z.object({
-      verified: z.number().int().min(0),
-      needsReview: z.number().int().min(0),
-      rejected: z.number().int().min(0),
-    }),
+    statusCounts: z
+      .object({
+        verified: z.number().int().min(0),
+        needsReview: z.number().int().min(0),
+        rejected: z.number().int().min(0),
+      })
+      .strict(),
     reasonCounts: z.record(z.string(), z.number().int().min(0)),
     parseFailures: z.array(
       z

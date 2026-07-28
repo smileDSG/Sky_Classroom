@@ -40,7 +40,35 @@ export const curriculumPackSchema = z
     examYear: z.number().int().min(2026),
     nodes: z.array(curriculumNodeSchema).min(1),
   })
-  .strict();
+  .strict()
+  .superRefine((pack, ctx) => {
+    if (pack.id !== `gaokao-math-${pack.version}`) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['id'],
+        message: 'curriculum pack id must match its version',
+      });
+    }
+
+    const [versionYear] = pack.version.split('.');
+    if (Number(versionYear) !== pack.examYear) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['examYear'],
+        message: 'curriculum pack version year must match examYear',
+      });
+    }
+
+    pack.nodes.forEach((node, index) => {
+      if (node.version !== pack.version) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['nodes', index, 'version'],
+          message: 'curriculum node version must match pack version',
+        });
+      }
+    });
+  });
 
 export type ActivityType = z.infer<typeof activityTypeSchema>;
 export type CurriculumNode = z.infer<typeof curriculumNodeSchema>;
