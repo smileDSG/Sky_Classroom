@@ -7,7 +7,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, BookOpen, Brain, MessageCircle, Settings2, RotateCcw } from 'lucide-react';
+import Link from 'next/link';
+import {
+  Sparkles,
+  BookOpen,
+  Brain,
+  MessageCircle,
+  Settings2,
+  RotateCcw,
+  ArrowRight,
+} from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -96,6 +105,14 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
           {'重置'}
         </Button>
       </div>
+
+      <Link
+        href="/sky/onboarding?mode=edit&redirect=%2Faccount"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        重新填写学习画像
+        <ArrowRight className="size-4" />
+      </Link>
 
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-muted/50 rounded-lg">
