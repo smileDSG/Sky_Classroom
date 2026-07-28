@@ -129,7 +129,7 @@ describe('math resource governance', () => {
     const approvedResource = first.index.resources[0];
     expect(approvedResource).toMatchObject({
       id: `math_${createHash('sha256')
-        .update(`${approved.canonicalUrl}\n${approved.contentHash}`)
+        .update(`${approved.canonicalUrl}\n${approved.contentHash}\n${approved.sourcePath}`)
         .digest('hex')
         .slice(0, 16)}`,
       nodeIds: ['derivative-concept'],
@@ -167,11 +167,14 @@ describe('math resource governance', () => {
     const keeper = document({
       sourcePath: 'data/a-keeper.md',
       canonicalUrl: 'https://example.com/shared',
+      contentHash: 'd'.repeat(64),
       declaredWordCount: 400,
     });
     const copy = document({
       sourcePath: 'data/b-copy.md',
+      title: 'Derivative exercise',
       canonicalUrl: 'https://example.com/shared',
+      contentHash: 'd'.repeat(64),
       declaredWordCount: 100,
     });
 
@@ -182,10 +185,10 @@ describe('math resource governance', () => {
       status: 'rejected',
       rejectionReasons: ['duplicate_canonical_url', `keeper:${keeper.sourcePath}`],
     });
+    expect(new Set(index.resources.map((resource) => resource.id))).toHaveLength(2);
     expect(report.statusCounts).toEqual({ verified: 0, needsReview: 1, rejected: 1 });
-    expect(report.reasonCounts).toMatchObject({
+    expect(report.reasonCounts).toEqual({
       duplicate_canonical_url: 1,
-      [`keeper:${keeper.sourcePath}`]: 1,
       manual_verification_required: 1,
     });
     expect(report.resourceGapNodeIds).toEqual(
@@ -258,6 +261,49 @@ describe('math resource governance', () => {
       const error = captureGovernanceError(() => govern([source], testCase.manifest));
       expect(error.details).toMatchObject(testCase.details);
     }
+  });
+
+  it('rejects duplicate manifest source paths regardless of conflicting entry order', () => {
+    const source = document({ sourcePath: 'data/duplicate-manifest-source.md' });
+    const verified: ManualVerificationManifest['entries'][number] = {
+      sourcePath: source.sourcePath,
+      status: 'verified',
+      nodeIds: ['derivative-concept'],
+      resourceType: 'concept',
+      difficulty: 3,
+      reviewer: 'reviewer',
+      reviewedAt: NOW,
+      notes: 'approved',
+    };
+    const rejected: ManualVerificationManifest['entries'][number] = {
+      sourcePath: source.sourcePath,
+      status: 'rejected',
+      reasons: ['source_not_trustworthy'],
+      reviewer: 'reviewer',
+      reviewedAt: NOW,
+      notes: 'rejected',
+    };
+
+    for (const entries of [
+      [verified, rejected],
+      [rejected, verified],
+    ]) {
+      const error = captureGovernanceError(() => govern([source], manifest(entries)));
+      expect(error.details).toMatchObject({ sourcePath: source.sourcePath });
+    }
+  });
+
+  it('wraps invalid canonical URLs as structured governance errors', () => {
+    const source = document({
+      sourcePath: 'data/invalid-url.md',
+      canonicalUrl: 'not a valid URL',
+    });
+
+    const error = captureGovernanceError(() => govern([source]));
+    expect(error.details).toMatchObject({
+      sourcePath: source.sourcePath,
+      canonicalUrl: source.canonicalUrl,
+    });
   });
 
   it('refuses to manually verify a document rejected as a hard duplicate', () => {

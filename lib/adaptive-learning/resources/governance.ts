@@ -75,6 +75,19 @@ function parsePack(input: unknown): CurriculumPack {
   return result.data;
 }
 
+function validateUniqueManifestSources(manifest: ManualVerificationManifest): void {
+  const sourcePaths = new Set<string>();
+
+  for (const entry of manifest.entries) {
+    if (sourcePaths.has(entry.sourcePath)) {
+      throw invalidGovernance('Manual verification manifest contains a duplicate source path', {
+        sourcePath: entry.sourcePath,
+      });
+    }
+    sourcePaths.add(entry.sourcePath);
+  }
+}
+
 function validateManifestReferences(
   manifest: ManualVerificationManifest,
   pack: CurriculumPack,
@@ -118,15 +131,28 @@ function validateManifestReferences(
 }
 
 function resourceId(document: CrawledMathDocument): string {
+  const normalizedSourcePath = document.sourcePath.replace(/\\/gu, '/');
   const digest = createHash('sha256')
-    .update(`${document.canonicalUrl}\n${document.contentHash}`)
+    .update(`${document.canonicalUrl}\n${document.contentHash}\n${normalizedSourcePath}`)
     .digest('hex')
     .slice(0, 16);
   return `math_${digest}`;
 }
 
 function qualityScore(document: CrawledMathDocument): number {
-  const url = new URL(document.canonicalUrl);
+  let url: URL;
+  try {
+    url = new URL(document.canonicalUrl);
+  } catch (cause) {
+    throw invalidGovernance(
+      'Governed resource contains an invalid canonical URL',
+      {
+        sourcePath: document.sourcePath,
+        canonicalUrl: document.canonicalUrl,
+      },
+      cause,
+    );
+  }
   const hostname = url.hostname.toLowerCase();
   let score = 0.2;
 
@@ -188,6 +214,7 @@ function parseReport(report: unknown): GovernanceReport {
 export function governMathResources(input: GovernMathResourcesInput): GovernMathResourcesResult {
   const manifest = parseManifest(input.manifest);
   const pack = parsePack(input.pack);
+  validateUniqueManifestSources(manifest);
   const documents = [...input.documents].sort((left, right) =>
     compareText(left.sourcePath, right.sourcePath),
   );
@@ -297,6 +324,7 @@ export function governMathResources(input: GovernMathResourcesInput): GovernMath
     }
 
     for (const reason of resource.rejectionReasons) {
+      if (reason.startsWith('keeper:')) continue;
       reasonCounts[reason] = (reasonCounts[reason] ?? 0) + 1;
     }
   }
