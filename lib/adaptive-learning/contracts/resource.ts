@@ -147,6 +147,7 @@ export const mathResourceQuerySchema = z
 export type MathResource = z.infer<typeof mathResourceSchema>;
 export type MathResourceStatus = z.infer<typeof mathResourceStatusSchema>;
 export type MathResourceType = z.infer<typeof mathResourceTypeSchema>;
+export type MathResourceLanguage = z.infer<typeof mathResourceLanguageSchema>;
 export type ManualVerificationManifest = z.infer<typeof manualVerificationManifestSchema>;
 export type ResourceIndex = z.infer<typeof resourceIndexSchema>;
 export type GovernanceReport = z.infer<typeof governanceReportSchema>;
