@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -166,5 +166,98 @@ describe('strict math resource index builder', () => {
       code: 'INVALID_SCHEMA',
       stage: 'resource-index-build',
     });
+  });
+
+  it('rejects source, manifest, and output parents that escape through filesystem links', async (context) => {
+    const root = await workspace();
+    const outside = await mkdtemp(path.join(tmpdir(), 'math-index-outside-'));
+    await mkdir(path.join(outside, 'sources'));
+    await mkdir(path.join(outside, 'config'));
+    await mkdir(path.join(outside, 'output'));
+    await writeFile(
+      path.join(outside, 'sources/source.md'),
+      markdown('Derivative', 'https://example.com/outside'),
+    );
+    await writeFile(
+      path.join(outside, 'config/manifest.json'),
+      `${JSON.stringify({
+        schemaVersion: '1.0.0',
+        curriculumPackId: 'gaokao-math-2026.1',
+        entries: [],
+      })}\n`,
+    );
+    await writeFile(
+      path.join(root, 'sources/source.md'),
+      markdown('Derivative', 'https://example.com/inside'),
+    );
+
+    const linkType = process.platform === 'win32' ? 'junction' : 'dir';
+    try {
+      await symlink(path.join(outside, 'sources'), path.join(root, 'linked-sources'), linkType);
+      await symlink(path.join(outside, 'config'), path.join(root, 'linked-config'), linkType);
+      await symlink(path.join(outside, 'output'), path.join(root, 'linked-output'), linkType);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === 'EPERM' || code === 'EACCES' || code === 'ENOTSUP') {
+        context.skip(`OS denied directory link creation (${code})`);
+        return;
+      }
+      throw error;
+    }
+
+    for (const input of [
+      { ...options(root), sourceDir: 'linked-sources' },
+      { ...options(root), manifestPath: 'linked-config/manifest.json' },
+      {
+        ...options(root),
+        indexPath: 'linked-output/index.json',
+        reportPath: 'linked-output/report.json',
+      },
+    ]) {
+      await expect(buildMathResourceIndex(input)).rejects.toMatchObject({
+        code: 'INVALID_SCHEMA',
+        stage: 'resource-index-build',
+      });
+    }
+  });
+
+  it('rolls back a newly published report when the runtime index rename fails', async () => {
+    const root = await workspace();
+    const input = options(root);
+    await writeFile(
+      path.join(root, 'sources/source.md'),
+      markdown('Derivative', 'https://example.com/source'),
+    );
+    await mkdir(path.join(root, input.indexPath), { recursive: true });
+
+    await expect(buildMathResourceIndex(input)).rejects.toMatchObject({
+      code: 'RESOURCE_INDEX_UNAVAILABLE',
+      stage: 'resource-index-build',
+    });
+    expect(await exists(path.join(root, input.reportPath))).toBe(false);
+    expect((await stat(path.join(root, input.indexPath))).isDirectory()).toBe(true);
+  });
+
+  it('reports source read I/O failures immediately instead of aggregating them as parse failures', async () => {
+    const root = await workspace();
+    const input = options(root);
+    await writeFile(
+      path.join(root, 'sources/source.md'),
+      markdown('Derivative', 'https://example.com/source'),
+    );
+
+    await expect(
+      buildMathResourceIndex(input, {
+        readSourceFile: async () => {
+          throw Object.assign(new Error('read denied'), { code: 'EACCES' });
+        },
+      }),
+    ).rejects.toMatchObject({
+      code: 'RESOURCE_INDEX_UNAVAILABLE',
+      stage: 'resource-index-build',
+      details: expect.objectContaining({ sourcePath: 'sources/source.md' }),
+    });
+    expect(await exists(path.join(root, input.indexPath))).toBe(false);
+    expect(await exists(path.join(root, input.reportPath))).toBe(false);
   });
 });

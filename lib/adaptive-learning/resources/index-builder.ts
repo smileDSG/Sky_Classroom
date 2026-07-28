@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readFile, readdir, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
@@ -11,7 +11,10 @@ import {
 } from '@/lib/adaptive-learning/contracts/resource';
 import { getCurriculumPack } from '@/lib/adaptive-learning/curriculum/registry';
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
-import { parseCrawledMathDocument } from '@/lib/adaptive-learning/resources/crawled-document';
+import {
+  parseCrawledMathDocument,
+  type CrawledMathDocument,
+} from '@/lib/adaptive-learning/resources/crawled-document';
 import { governMathResources } from '@/lib/adaptive-learning/resources/governance';
 
 export interface BuildMathResourceIndexInput {
@@ -30,6 +33,10 @@ export interface BuildMathResourceIndexResult {
   report: GovernanceReport;
   indexPath: string;
   reportPath: string;
+}
+
+export interface BuildMathResourceIndexDependencies {
+  readSourceFile?: (filePath: string) => Promise<string>;
 }
 
 interface ResolvedBuildPaths {
@@ -105,6 +112,75 @@ function resolveBuildPaths(input: BuildMathResourceIndexInput): ResolvedBuildPat
     });
   }
   return resolved;
+}
+
+function isWithin(parent: string, candidate: string): boolean {
+  const relative = path.relative(parent, candidate);
+  return !(relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative));
+}
+
+async function validateFilesystemBoundaries(paths: ResolvedBuildPaths): Promise<void> {
+  let realWorkspaceRoot: string;
+  let realSourceDir: string;
+  let realManifestPath: string;
+  try {
+    [realWorkspaceRoot, realSourceDir, realManifestPath] = await Promise.all([
+      realpath(paths.workspaceRoot),
+      realpath(paths.sourceDir),
+      realpath(paths.manifestPath),
+    ]);
+  } catch (cause) {
+    throw buildError(
+      'RESOURCE_INDEX_UNAVAILABLE',
+      'Workspace, source directory, or manifest is unavailable',
+      {
+        workspaceRoot: paths.workspaceRoot,
+        sourceDir: paths.sourceDir,
+        manifestPath: paths.manifestPath,
+      },
+      cause,
+    );
+  }
+
+  for (const [field, candidate] of [
+    ['sourceDir', realSourceDir],
+    ['manifestPath', realManifestPath],
+  ] as const) {
+    if (!isWithin(realWorkspaceRoot, candidate)) {
+      throw buildError('INVALID_SCHEMA', `${field} resolves outside the workspace`, {
+        field,
+        workspaceRoot: realWorkspaceRoot,
+        resolvedPath: candidate,
+      });
+    }
+  }
+
+  const outputParents = [path.dirname(paths.indexPath), path.dirname(paths.reportPath)];
+  try {
+    await Promise.all(outputParents.map((directory) => mkdir(directory, { recursive: true })));
+    const realOutputParents = await Promise.all(
+      outputParents.map((directory) => realpath(directory)),
+    );
+    for (const candidate of realOutputParents) {
+      if (!isWithin(realWorkspaceRoot, candidate)) {
+        throw buildError('INVALID_SCHEMA', 'Output parent resolves outside the workspace', {
+          workspaceRoot: realWorkspaceRoot,
+          resolvedPath: candidate,
+        });
+      }
+    }
+  } catch (cause) {
+    if (cause instanceof AdaptiveLearningError) throw cause;
+    throw buildError(
+      'RESOURCE_INDEX_UNAVAILABLE',
+      'Output directories are unavailable',
+      {
+        indexPath: paths.indexPath,
+        reportPath: paths.reportPath,
+      },
+      cause,
+    );
+  }
 }
 
 async function scanMarkdownFiles(directory: string): Promise<string[]> {
@@ -187,20 +263,77 @@ async function writeArtifacts(
   const suffix = `.tmp-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const indexTemp = `${indexPath}${suffix}`;
   const reportTemp = `${reportPath}${suffix}`;
+  const indexBackup = `${indexPath}${suffix}.backup`;
+  const reportBackup = `${reportPath}${suffix}.backup`;
+  let indexBackedUp = false;
+  let reportBackedUp = false;
+  let indexPublished = false;
+  let reportPublished = false;
 
   try {
     await writeFile(reportTemp, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
     await writeFile(indexTemp, `${JSON.stringify(index, null, 2)}\n`, 'utf8');
+    try {
+      if ((await lstat(reportPath)).isFile()) {
+        await rename(reportPath, reportBackup);
+        reportBackedUp = true;
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    }
+    try {
+      if ((await lstat(indexPath)).isFile()) {
+        await rename(indexPath, indexBackup);
+        indexBackedUp = true;
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    }
     await rename(reportTemp, reportPath);
+    reportPublished = true;
     await rename(indexTemp, indexPath);
+    indexPublished = true;
+    await Promise.all([
+      reportBackedUp ? rm(reportBackup, { force: true }) : Promise.resolve(),
+      indexBackedUp ? rm(indexBackup, { force: true }) : Promise.resolve(),
+    ]);
   } catch (cause) {
-    await Promise.allSettled([rm(reportTemp, { force: true }), rm(indexTemp, { force: true })]);
+    const rollbackFailures: string[] = [];
+    for (const [published, target] of [
+      [indexPublished, indexPath],
+      [reportPublished, reportPath],
+    ] as const) {
+      if (!published) continue;
+      try {
+        await rm(target, { force: true });
+      } catch (error) {
+        rollbackFailures.push(error instanceof Error ? error.message : String(error));
+      }
+    }
+    for (const [backedUp, backup, target] of [
+      [indexBackedUp, indexBackup, indexPath],
+      [reportBackedUp, reportBackup, reportPath],
+    ] as const) {
+      if (!backedUp) continue;
+      try {
+        await rename(backup, target);
+      } catch (error) {
+        rollbackFailures.push(error instanceof Error ? error.message : String(error));
+      }
+    }
+    await Promise.allSettled([
+      rm(reportTemp, { force: true }),
+      rm(indexTemp, { force: true }),
+      rm(reportBackup, { force: true }),
+      rm(indexBackup, { force: true }),
+    ]);
     throw buildError(
       'RESOURCE_INDEX_UNAVAILABLE',
       'Resource index artifacts could not be published',
       {
         indexPath,
         reportPath,
+        rollbackFailures,
       },
       cause,
     );
@@ -209,8 +342,10 @@ async function writeArtifacts(
 
 export async function buildMathResourceIndex(
   input: BuildMathResourceIndexInput,
+  dependencies: BuildMathResourceIndexDependencies = {},
 ): Promise<BuildMathResourceIndexResult> {
   const paths = resolveBuildPaths(input);
+  await validateFilesystemBoundaries(paths);
   const sourceFiles = await scanMarkdownFiles(paths.sourceDir);
   if (sourceFiles.length === 0) {
     throw buildError('INVALID_SCHEMA', 'Resource source directory contains no Markdown files', {
@@ -218,12 +353,27 @@ export async function buildMathResourceIndex(
     });
   }
 
-  const documents = [];
+  const documents: CrawledMathDocument[] = [];
   const parseFailures: GovernanceReport['parseFailures'] = [];
   for (const filePath of sourceFiles) {
     const sourcePath = workspaceRelative(paths.workspaceRoot, filePath);
+    let markdown: string;
     try {
-      const markdown = await readFile(filePath, 'utf8');
+      markdown = await (dependencies.readSourceFile ?? ((target) => readFile(target, 'utf8')))(
+        filePath,
+      );
+    } catch (cause) {
+      throw buildError(
+        'RESOURCE_INDEX_UNAVAILABLE',
+        'Resource source file could not be read',
+        {
+          sourcePath,
+          filePath,
+        },
+        cause,
+      );
+    }
+    try {
       documents.push(parseCrawledMathDocument(sourcePath, markdown));
     } catch (cause) {
       const error = cause as Partial<AdaptiveLearningError> & Error;
