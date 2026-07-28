@@ -144,6 +144,25 @@ export const mathResourceQuerySchema = z
   })
   .strict();
 
+export const mathResourceQueryResultSchema = z
+  .object({
+    curriculumPackId: z.string().min(1),
+    indexVersion: z.string().min(1),
+    resources: z.array(mathResourceSchema),
+  })
+  .strict()
+  .superRefine((result, ctx) => {
+    result.resources.forEach((resource, index) => {
+      if (resource.status !== 'verified') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['resources', index, 'status'],
+          message: 'resource query results must contain only verified resources',
+        });
+      }
+    });
+  });
+
 export type MathResource = z.infer<typeof mathResourceSchema>;
 export type MathResourceStatus = z.infer<typeof mathResourceStatusSchema>;
 export type MathResourceType = z.infer<typeof mathResourceTypeSchema>;
@@ -152,3 +171,4 @@ export type ManualVerificationManifest = z.infer<typeof manualVerificationManife
 export type ResourceIndex = z.infer<typeof resourceIndexSchema>;
 export type GovernanceReport = z.infer<typeof governanceReportSchema>;
 export type MathResourceQuery = z.infer<typeof mathResourceQuerySchema>;
+export type MathResourceQueryResult = z.infer<typeof mathResourceQueryResultSchema>;
