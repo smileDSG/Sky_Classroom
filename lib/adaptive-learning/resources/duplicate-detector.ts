@@ -47,25 +47,89 @@ function selectKeeper(documents: readonly CrawledMathDocument[]): CrawledMathDoc
   )[0];
 }
 
-function recordHardDuplicates(
-  groups: Map<string, CrawledMathDocument[]>,
-  reason: HardDuplicateReason,
-  decisions: Map<string, HardDuplicateDecision>,
-): void {
-  for (const key of [...groups.keys()].sort(compareText)) {
-    const group = groups.get(key);
-    if (!group || group.length < 2) continue;
+function findRoot(parents: number[], index: number): number {
+  if (parents[index] !== index) parents[index] = findRoot(parents, parents[index]);
+  return parents[index];
+}
 
-    const keeper = selectKeeper(group);
-    for (const document of group) {
-      if (document.sourcePath === keeper.sourcePath || decisions.has(document.sourcePath)) continue;
+function union(parents: number[], left: number, right: number): void {
+  const leftRoot = findRoot(parents, left);
+  const rightRoot = findRoot(parents, right);
+  if (leftRoot === rightRoot) return;
 
-      decisions.set(document.sourcePath, {
-        keeperSourcePath: keeper.sourcePath,
-        reason,
-      });
+  const first = Math.min(leftRoot, rightRoot);
+  const second = Math.max(leftRoot, rightRoot);
+  parents[second] = first;
+}
+
+function duplicateComponents(documents: readonly CrawledMathDocument[]): CrawledMathDocument[][] {
+  const sorted = [...documents].sort((left, right) =>
+    compareText(left.sourcePath, right.sourcePath),
+  );
+  const parents = sorted.map((_, index) => index);
+
+  for (const keyFor of [
+    (document: CrawledMathDocument) => document.canonicalUrl,
+    (document: CrawledMathDocument) => document.contentHash,
+  ]) {
+    const firstIndexByKey = new Map<string, number>();
+    sorted.forEach((document, index) => {
+      const key = keyFor(document);
+      const firstIndex = firstIndexByKey.get(key);
+      if (firstIndex === undefined) {
+        firstIndexByKey.set(key, index);
+      } else {
+        union(parents, firstIndex, index);
+      }
+    });
+  }
+
+  const components = new Map<number, CrawledMathDocument[]>();
+  sorted.forEach((document, index) => {
+    const root = findRoot(parents, index);
+    const component = components.get(root);
+    if (component) component.push(document);
+    else components.set(root, [document]);
+  });
+
+  return [...components.values()].filter((component) => component.length > 1);
+}
+
+function duplicateReason(
+  document: CrawledMathDocument,
+  keeper: CrawledMathDocument,
+  component: readonly CrawledMathDocument[],
+): HardDuplicateReason {
+  if (document.canonicalUrl === keeper.canonicalUrl) return 'duplicate_canonical_url';
+  if (document.contentHash === keeper.contentHash) return 'duplicate_content_hash';
+
+  const hasUrlEdge = component.some(
+    (peer) => peer !== document && peer.canonicalUrl === document.canonicalUrl,
+  );
+  return hasUrlEdge ? 'duplicate_canonical_url' : 'duplicate_content_hash';
+}
+
+function findHardDuplicates(
+  documents: readonly CrawledMathDocument[],
+): Map<string, HardDuplicateDecision> {
+  const pending: Array<[string, HardDuplicateDecision]> = [];
+
+  for (const component of duplicateComponents(documents)) {
+    const keeper = selectKeeper(component);
+    for (const document of component) {
+      if (document === keeper) continue;
+      pending.push([
+        document.sourcePath,
+        {
+          keeperSourcePath: keeper.sourcePath,
+          reason: duplicateReason(document, keeper, component),
+        },
+      ]);
     }
   }
+
+  pending.sort(([left], [right]) => compareText(left, right));
+  return new Map(pending);
 }
 
 function findTitleCollisions(documents: readonly CrawledMathDocument[]): Map<string, string[]> {
@@ -91,21 +155,8 @@ function findTitleCollisions(documents: readonly CrawledMathDocument[]): Map<str
 export function detectDuplicateDecisions(
   documents: readonly CrawledMathDocument[],
 ): DuplicateDecisions {
-  const hardDuplicates = new Map<string, HardDuplicateDecision>();
-
-  recordHardDuplicates(
-    groupDocuments(documents, (document) => document.canonicalUrl),
-    'duplicate_canonical_url',
-    hardDuplicates,
-  );
-  recordHardDuplicates(
-    groupDocuments(documents, (document) => document.contentHash),
-    'duplicate_content_hash',
-    hardDuplicates,
-  );
-
   return {
-    hardDuplicates,
+    hardDuplicates: findHardDuplicates(documents),
     titleCollisions: findTitleCollisions(documents),
   };
 }

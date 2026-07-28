@@ -153,6 +153,54 @@ describe('deterministic duplicate decisions', () => {
     });
   });
 
+  it('uses one non-rejected keeper for a transitive URL and hash component', () => {
+    const documents = [
+      document({
+        sourcePath: 'data/a-bridge.md',
+        canonicalUrl: 'https://example.com/shared-with-b',
+        contentHash: '8'.repeat(64),
+        declaredWordCount: 200,
+      }),
+      document({
+        sourcePath: 'data/b-url-copy.md',
+        canonicalUrl: 'https://example.com/shared-with-b',
+        contentHash: '9'.repeat(64),
+        declaredWordCount: 100,
+      }),
+      document({
+        sourcePath: 'data/c-global-keeper.md',
+        canonicalUrl: 'https://example.com/keeper',
+        contentHash: '8'.repeat(64),
+        declaredWordCount: 300,
+      }),
+    ];
+    const expected = new Map([
+      [
+        'data/a-bridge.md',
+        {
+          keeperSourcePath: 'data/c-global-keeper.md',
+          reason: 'duplicate_content_hash' as const,
+        },
+      ],
+      [
+        'data/b-url-copy.md',
+        {
+          keeperSourcePath: 'data/c-global-keeper.md',
+          reason: 'duplicate_canonical_url' as const,
+        },
+      ],
+    ]);
+
+    for (const input of [documents, [...documents].reverse()]) {
+      const hardDuplicates = detectDuplicateDecisions(input).hardDuplicates;
+
+      expect(hardDuplicates).toEqual(expected);
+      for (const decision of hardDuplicates.values()) {
+        expect(hardDuplicates.has(decision.keeperSourcePath)).toBe(false);
+      }
+    }
+  });
+
   it('reports equal normalized titles as symmetric review collisions without hard rejection', () => {
     const documents = ['c', 'a', 'b'].map((name, index) =>
       document({
