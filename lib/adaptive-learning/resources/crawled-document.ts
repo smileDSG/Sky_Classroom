@@ -11,8 +11,8 @@ const MINIMUM_BODY_LENGTH = 50;
 const frontMatterSchema = z
   .object({
     title: z.string().trim().min(1),
-    source: z.string().url(),
-    originalUrl: z.string().url(),
+    source: z.string().trim().min(1),
+    originalUrl: z.string().trim().min(1),
     course: z.literal('math'),
     tags: z.array(z.string().trim().min(1)),
     wordCount: z.number().int().nonnegative(),
@@ -105,13 +105,32 @@ export function detectLanguage(value: string): MathResourceLanguage {
   return 'mixed';
 }
 
-export function canonicalizeUrl(value: string): string {
+function parseSupportedUrl(value: string, details: Record<string, unknown> = {}): URL {
   let url: URL;
   try {
     url = new URL(value);
   } catch (cause) {
-    throw invalidSchema('Crawled resource contains an invalid URL', { url: value }, cause);
+    throw invalidSchema(
+      'Crawled resource contains an invalid URL',
+      { ...details, reason: 'invalid-url', url: value },
+      cause,
+    );
   }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw invalidSchema('Crawled resource URL uses an unsupported protocol', {
+      ...details,
+      reason: 'unsupported-url-protocol',
+      url: value,
+      protocol: url.protocol,
+    });
+  }
+
+  return url;
+}
+
+function canonicalizeSupportedUrl(value: string, details: Record<string, unknown> = {}): string {
+  const url = parseSupportedUrl(value, details);
 
   url.hash = '';
   for (const key of [...url.searchParams.keys()]) {
@@ -124,6 +143,10 @@ export function canonicalizeUrl(value: string): string {
   url.pathname = url.pathname.replace(/\/+$/u, '') || '/';
 
   return url.toString().replace(/\/(?=\?|$)/u, '');
+}
+
+export function canonicalizeUrl(value: string): string {
+  return canonicalizeSupportedUrl(value);
 }
 
 export function parseCrawledMathDocument(
@@ -172,12 +195,18 @@ export function parseCrawledMathDocument(
 
   const normalizedTitle = normalizeComparableText(parsed.data.title);
   const normalizedBody = normalizeComparableText(body);
+  const urlDetails = { sourcePath: normalizedSourcePath };
+  parseSupportedUrl(parsed.data.source, { ...urlDetails, field: 'source' });
+  const canonicalUrl = canonicalizeSupportedUrl(parsed.data.originalUrl, {
+    ...urlDetails,
+    field: 'originalUrl',
+  });
 
   return {
     sourcePath: normalizedSourcePath,
     title: parsed.data.title,
     sourceUrl: parsed.data.source,
-    canonicalUrl: canonicalizeUrl(parsed.data.originalUrl),
+    canonicalUrl,
     course: parsed.data.course,
     tags: parsed.data.tags,
     declaredWordCount: parsed.data.wordCount,

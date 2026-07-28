@@ -76,6 +76,59 @@ describe('crawled math document parser', () => {
     ).toBe('https://example.com/math/functions?a=2&a=1&z=9');
   });
 
+  it.each([
+    ['javascript:alert(1)', 'unsupported-url-protocol'],
+    ['data:text/plain,math', 'unsupported-url-protocol'],
+    ['ftp://example.com/math', 'unsupported-url-protocol'],
+    ['not a url', 'invalid-url'],
+  ])('rejects unsafe or malformed canonical URLs: %s', (url, reason) => {
+    const error = captureInvalidSchema(() => canonicalizeUrl(url));
+    expect(error.details).toMatchObject({ url, reason });
+  });
+
+  it.each([
+    ['source', 'source: "https://Example.com/math/functions/"', 'source: "ftp://example.com/math"'],
+    [
+      'originalUrl',
+      'originalUrl: "https://example.com/math"',
+      'originalUrl: "javascript:alert(1)"',
+    ],
+  ])('rejects unsupported %s protocols in parsed metadata', (field, current, replacement) => {
+    const input = markdown('x'.repeat(50), 'https://example.com/math').replace(
+      current,
+      replacement,
+    );
+    const error = captureInvalidSchema(() => parseCrawledMathDocument('unsafe.md', input));
+    expect(error.details).toMatchObject({
+      sourcePath: 'unsafe.md',
+      field,
+      reason: 'unsupported-url-protocol',
+    });
+  });
+
+  it('reports true YAML syntax failures with their cause', () => {
+    const invalidYaml = `---
+title: "unterminated
+source: "https://example.com/math"
+originalUrl: "https://example.com/math"
+course: "math"
+tags: ["math"]
+wordCount: 50
+depth: 1
+crawledAt: "2026-07-28T08:00:00.000Z"
+---
+
+${'x'.repeat(50)}`;
+    const error = captureInvalidSchema(() =>
+      parseCrawledMathDocument('invalid-yaml.md', invalidYaml),
+    );
+    expect(error.details).toMatchObject({
+      sourcePath: 'invalid-yaml.md',
+      reason: 'invalid-yaml',
+    });
+    expect(error.cause).toBeInstanceOf(Error);
+  });
+
   it('rejects malformed front matter and cross-subject documents without fallback', () => {
     const missing = captureInvalidSchema(() =>
       parseCrawledMathDocument('data\\crawled\\math\\missing.md', 'plain markdown only'),
