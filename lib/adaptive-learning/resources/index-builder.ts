@@ -38,6 +38,7 @@ export interface BuildMathResourceIndexResult {
 export interface BuildMathResourceIndexDependencies {
   readSourceFile?: (filePath: string) => Promise<string>;
   renameFile?: (sourcePath: string, targetPath: string) => Promise<void>;
+  removeFile?: typeof rm;
 }
 
 interface ResolvedBuildPaths {
@@ -257,6 +258,7 @@ async function writeArtifacts(
   index: ResourceIndex,
   report: GovernanceReport,
   renameFile: (sourcePath: string, targetPath: string) => Promise<void>,
+  removeFile: typeof rm,
 ): Promise<void> {
   await Promise.all([
     mkdir(path.dirname(indexPath), { recursive: true }),
@@ -295,10 +297,6 @@ async function writeArtifacts(
     reportPublished = true;
     await renameFile(indexTemp, indexPath);
     indexPublished = true;
-    await Promise.all([
-      reportBackedUp ? rm(reportBackup, { force: true }) : Promise.resolve(),
-      indexBackedUp ? rm(indexBackup, { force: true }) : Promise.resolve(),
-    ]);
   } catch (cause) {
     const rollbackFailures: string[] = [];
     const recoveryBackupPaths: string[] = [];
@@ -308,7 +306,7 @@ async function writeArtifacts(
     ] as const) {
       if (!published) continue;
       try {
-        await rm(target, { force: true });
+        await removeFile(target, { force: true });
       } catch (error) {
         rollbackFailures.push(error instanceof Error ? error.message : String(error));
       }
@@ -325,7 +323,10 @@ async function writeArtifacts(
         recoveryBackupPaths.push(backup);
       }
     }
-    await Promise.allSettled([rm(reportTemp, { force: true }), rm(indexTemp, { force: true })]);
+    await Promise.allSettled([
+      removeFile(reportTemp, { force: true }),
+      removeFile(indexTemp, { force: true }),
+    ]);
     throw buildError(
       'RESOURCE_INDEX_UNAVAILABLE',
       'Resource index artifacts could not be published',
@@ -336,6 +337,36 @@ async function writeArtifacts(
         recoveryBackupPaths,
       },
       cause,
+    );
+  }
+
+  const backupPaths = [
+    ...(reportBackedUp ? [reportBackup] : []),
+    ...(indexBackedUp ? [indexBackup] : []),
+  ];
+  const cleanupResults = await Promise.allSettled(
+    backupPaths.map((backupPath) => removeFile(backupPath, { force: true })),
+  );
+  const cleanupFailures: string[] = [];
+  const leftoverBackupPaths: string[] = [];
+  cleanupResults.forEach((result, index) => {
+    if (result.status === 'fulfilled') return;
+    cleanupFailures.push(
+      result.reason instanceof Error ? result.reason.message : String(result.reason),
+    );
+    leftoverBackupPaths.push(backupPaths[index]);
+  });
+  if (cleanupFailures.length > 0) {
+    throw buildError(
+      'RESOURCE_INDEX_UNAVAILABLE',
+      'Resource index artifacts published but backup cleanup failed',
+      {
+        indexPath,
+        reportPath,
+        leftoverBackupPaths,
+        cleanupFailures,
+      },
+      new AggregateError(cleanupFailures, 'Backup cleanup failed'),
     );
   }
 }
@@ -410,6 +441,7 @@ export async function buildMathResourceIndex(
     index,
     report,
     dependencies.renameFile ?? rename,
+    dependencies.removeFile ?? rm,
   );
   return { index, report, indexPath: paths.indexPath, reportPath: paths.reportPath };
 }

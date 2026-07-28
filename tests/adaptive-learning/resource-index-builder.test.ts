@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, readFile, rename, stat, symlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rename, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -302,5 +302,42 @@ describe('strict math resource index builder', () => {
     expect(await readFile(recoveryBackupPaths[0], 'utf8')).toBe(previousReport);
     expect(await readFile(indexPath, 'utf8')).toBe(previousIndex);
     expect(await exists(reportPath)).toBe(false);
+  });
+
+  it('keeps committed outputs and an undeleted backup when post-commit cleanup fails', async () => {
+    const root = await workspace();
+    const input = options(root);
+    await writeFile(
+      path.join(root, 'sources/source.md'),
+      markdown('Derivative', 'https://example.com/source'),
+    );
+    await buildMathResourceIndex(input);
+    await writeFile(
+      path.join(root, 'sources/second.md'),
+      markdown('Function', 'https://example.com/second'),
+    );
+    const indexPath = path.join(root, input.indexPath);
+    const reportPath = path.join(root, input.reportPath);
+
+    let error: AdaptiveLearningError | undefined;
+    try {
+      await buildMathResourceIndex(input, {
+        removeFile: async (target, options) => {
+          if (target.includes(path.basename(reportPath)) && target.endsWith('.backup')) {
+            throw new Error('report backup cleanup failed');
+          }
+          await rm(target, options);
+        },
+      });
+    } catch (cause) {
+      error = captureBuildError(cause);
+    }
+
+    expect(error).toMatchObject({ code: 'RESOURCE_INDEX_UNAVAILABLE' });
+    const leftoverBackupPaths = error?.details?.leftoverBackupPaths as string[];
+    expect(leftoverBackupPaths).toHaveLength(1);
+    expect(await exists(leftoverBackupPaths[0])).toBe(true);
+    expect(JSON.parse(await readFile(indexPath, 'utf8')).resources).toHaveLength(2);
+    expect(JSON.parse(await readFile(reportPath, 'utf8'))).toMatchObject({ scanned: 2, parsed: 2 });
   });
 });
