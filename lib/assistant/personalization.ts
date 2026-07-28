@@ -3,6 +3,7 @@ import type { StudentProfile } from '@/lib/student/profile-types';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { UserEntry } from '@/lib/storage/dao/users';
 import type { QuestionBankEntry } from '@/lib/solve/types';
+import type { TeachingPreference } from '@/lib/onboarding/types';
 
 export type AssistantAnswerDepth = 'concise' | 'standard' | 'detailed' | 'comprehensive';
 export type AssistantTeachingMode =
@@ -35,6 +36,7 @@ export interface AssistantPersonalization {
   showStepByStep?: boolean | null;
   enableMemory?: boolean | null;
   enableRAG?: boolean | null;
+  teachingPreference?: TeachingPreference | null;
 }
 
 export interface AssistantStrategy {
@@ -125,6 +127,14 @@ const TONE_LABELS: Record<AssistantTone, string> = {
   encouraging: '鼓励引导',
   strict: '严格指出问题但不打击',
   humorous: '轻松幽默但不影响准确性',
+};
+
+export const TEACHING_PREFERENCE_INSTRUCTIONS: Record<TeachingPreference, string> = {
+  'example-first': '先给一个贴近当前知识点的例题，再抽象出规则。',
+  'visual-explanation': '优先用表格、结构图或空间关系组织解释。',
+  'step-by-step': '把推导拆成连续步骤，每步只引入一个新变化。',
+  'practice-first': '先给低负担尝试题或提示，再根据作答讲解。',
+  balanced: '根据问题在讲解、例子和练习之间保持均衡。',
 };
 
 function normalize(value: string): string {
@@ -437,6 +447,12 @@ export function buildAssistantPersonalizationPrompt(input: BuildAssistantPromptI
     lines.push(`- 用户特殊要求：${compactText(input.personalization.customInstructions, 120)}。`);
   }
 
+  if (input.personalization?.teachingPreference) {
+    lines.push(
+      `- 讲解偏好：${TEACHING_PREFERENCE_INSTRUCTIONS[input.personalization.teachingPreference]}`,
+    );
+  }
+
   if (evidence?.summary) {
     lines.push('', '【可用学习证据】', `- ${evidence.summary}`);
     for (const item of evidence.items.slice(0, 3)) {
@@ -472,5 +488,9 @@ export function pickPersonalizationFromUser(user: UserEntry | null): AssistantPe
     showStepByStep: user.showStepByStep,
     enableMemory: user.enableMemory,
     enableRAG: user.enableRAG,
+    teachingPreference:
+      user.learningOnboarding?.status === 'completed'
+        ? user.learningOnboarding.teachingPreference
+        : null,
   };
 }

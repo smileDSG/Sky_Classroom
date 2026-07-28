@@ -4,9 +4,13 @@ import {
   buildAssistantPersonalizationPrompt,
   buildAssistantRagEvidence,
   buildAssistantStrategy,
+  pickPersonalizationFromUser,
 } from '@/lib/assistant/personalization';
+import { buildPersonalizationPrompt } from '@/lib/agents/personalization-utils';
 import type { StudentProfile } from '@/lib/student/profile-types';
 import type { QuestionBankEntry } from '@/lib/solve/types';
+import type { UserEntry } from '@/lib/storage/dao/users';
+import type { TeachingPreference } from '@/lib/onboarding/types';
 
 const masteryBySubject: StudentProfile['masteryBySubject'] = {
   math: 40,
@@ -58,6 +62,19 @@ const quadraticHistoryEntry: QuestionBankEntry = {
 };
 
 describe('assistant personalization', () => {
+  function userWithPreference(preference: TeachingPreference): UserEntry {
+    return {
+      learningOnboarding: {
+        version: 1,
+        status: 'completed',
+        weakSubjects: ['math'],
+        learningGoal: 'build-foundations',
+        teachingPreference: preference,
+        completedAt: 100,
+      },
+    } as UserEntry;
+  }
+
   it('lowers difficulty and starts with hints when the question touches weak knowledge', () => {
     const strategy = buildAssistantStrategy({
       userMessage: '二次函数顶点式怎么配方？',
@@ -148,5 +165,29 @@ describe('assistant personalization', () => {
     expect(prompt).toContain('自然提及');
     expect(prompt).not.toContain('{');
     expect(prompt.length).toBeLessThan(1800);
+  });
+
+  it('uses a completed onboarding teaching preference in centralized prompts', () => {
+    expect(
+      pickPersonalizationFromUser(userWithPreference('example-first')).teachingPreference,
+    ).toBe('example-first');
+
+    const prompt = buildAssistantPersonalizationPrompt({
+      userMessage: '讲一下函数',
+      strategy: {
+        answerDepth: 'standard',
+        teachingMode: 'direct',
+        difficulty: 'current',
+        tone: 'friendly',
+        shouldMentionProfile: false,
+        recommendedNextAction: 'none',
+      },
+      personalization: { teachingPreference: 'step-by-step' },
+    });
+
+    expect(prompt).toContain('把推导拆成连续步骤');
+    expect(buildPersonalizationPrompt({ teachingPreference: 'step-by-step' })).toContain(
+      '把推导拆成连续步骤',
+    );
   });
 });
