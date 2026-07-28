@@ -3,10 +3,16 @@ import {
   curriculumNodeSchema,
   curriculumPackSchema,
   governanceReportSchema,
+  knowledgeStateSchema,
+  learnerProfileSchema,
+  learningEventSchema,
+  learningPlanSchema,
   mathResourceSchema,
   manualVerificationManifestSchema,
   mathResourceQuerySchema,
+  planAdjustmentSchema,
 } from '@/lib/adaptive-learning/contracts';
+import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
 
 const node = {
   id: 'derivative-concept',
@@ -166,5 +172,95 @@ describe('adaptive learning curriculum and resource contracts', () => {
         nodes: [{ ...node, version: '2026.2' }],
       }),
     ).toThrow();
+  });
+
+  it('validates learner, evidence, plan, and adjustment contracts', () => {
+    const profile = learnerProfileSchema.parse({
+      userId: 'user-1',
+      stage: 'senior-high',
+      grade: 'grade-12',
+      subject: 'math',
+      curriculumPackVersion: '2026.1',
+      examDate: '2027-06-07',
+      targetScore: 125,
+      latestScore: 96,
+      weeklyAvailableMinutes: 600,
+      dailyAvailability: { monday: 90, tuesday: 90 },
+      preferredSessionMinutes: 30,
+      constraints: {
+        restDays: ['sunday'],
+        maxDailyMinutes: 120,
+        teacherLockedNodeIds: [],
+      },
+      createdAt: '2026-07-28T00:00:00.000Z',
+      updatedAt: '2026-07-28T00:00:00.000Z',
+    });
+    const state = knowledgeStateSchema.parse({
+      userId: profile.userId,
+      nodeId: 'derivative-concept',
+      alpha: 2,
+      beta: 2,
+      mastery: 0.5,
+      confidence: 0,
+      retention: 1,
+      reviewStabilityDays: 7,
+      repeatedErrorCount: 0,
+      evidenceCount: 0,
+      version: 1,
+    });
+    const event = learningEventSchema.parse({
+      eventId: 'event-1',
+      userId: profile.userId,
+      type: 'answer-submitted',
+      occurredAt: '2026-07-28T00:00:00.000Z',
+      source: 'quiz',
+      nodeIds: [state.nodeId],
+      payload: { correct: true },
+      schemaVersion: '1.0.0',
+    });
+    const plan = learningPlanSchema.parse({
+      id: 'plan-1',
+      userId: profile.userId,
+      version: 1,
+      status: 'active',
+      generatedAt: '2026-07-28T00:00:00.000Z',
+      validFrom: '2026-07-28',
+      validTo: '2026-08-03',
+      curriculumPackVersion: '2026.1',
+      plannerVersion: '1.0.0',
+      profileSnapshot: profile,
+      tasks: [],
+      weeklyTargets: [],
+      constraintChecks: ['daily_minutes_ok'],
+      evidenceEventIds: [event.eventId],
+    });
+    expect(plan.userId).toBe('user-1');
+    expect(
+      planAdjustmentSchema.parse({
+        id: 'adjustment-1',
+        userId: 'user-1',
+        previousPlanId: 'plan-1',
+        nextPlanId: 'plan-2',
+        mode: 'micro',
+        triggerEventIds: ['event-1'],
+        changedTaskIds: [],
+        preservedTaskIds: [],
+        ruleEvidence: [],
+        explanation: '新证据未改变今日任务。',
+        createdAt: '2026-07-28T00:00:01.000Z',
+      }).mode,
+    ).toBe('micro');
+  });
+
+  it('carries structured non-fallback errors', () => {
+    const error = new AdaptiveLearningError({
+      code: 'RESOURCE_GAP',
+      message: 'No verified derivative resource',
+      retryable: false,
+      stage: 'resource-query',
+      details: { nodeId: 'derivative-concept' },
+    });
+    expect(error.code).toBe('RESOURCE_GAP');
+    expect(error.details).toEqual({ nodeId: 'derivative-concept' });
   });
 });
