@@ -23,5 +23,5 @@ export function getCurriculumPack(curriculumPackId: string): CurriculumPack {
     });
   }
 
-  return pack;
+  return validateCurriculumPack(structuredClone(pack));
 }
