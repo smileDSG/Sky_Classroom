@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "indexVersion": "2026-07-28.1",
+  "scanned": 915,
+  "parsed": 915,
+  "statusCounts": {
+    "verified": 6,
+    "needsReview": 884,
+    "rejected": 25
+  },
+  "reasonCounts": {
+    "manual_verification_required": 884,
+    "ambiguous_curriculum_mapping": 813,
+    "title_collision": 25,
+    "duplicate_content_hash": 14,
+    "duplicate_canonical_url": 11
+  },
+  "parseFailures": [],
+  "resourceGapNodeIds": [
+    "analytic-geometry",
+    "complex-numbers",
+    "functions-properties",
+    "inequalities",
+    "solid-geometry",
+    "statistics"
+  ]
+}
