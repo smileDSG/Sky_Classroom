@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { InlineMath } from '@/components/ui/inline-math';
 import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
 
@@ -103,6 +104,7 @@ interface Message {
 }
 
 export function KagamiPanel() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scene, setScene] = useState<Scene>('idle');
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -543,6 +545,8 @@ export function KagamiPanel() {
       return () => clearTimeout(timer);
     }
   }, [scene, loading, changeScene]);
+
+  if (pathname === '/sky/onboarding') return null;
 
   return (
     <>
