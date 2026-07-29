@@ -1,7 +1,7 @@
 # Learning Profile Onboarding Design
 
 **Date:** 2026-07-28
-**Status:** Approved direction
+**Status:** Superseded by `2026-07-29-universal-identity-profile-onboarding-design.md`
 
 ## Goal
 
