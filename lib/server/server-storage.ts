@@ -12,17 +12,21 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('ServerStorage');
 
-let _cached: StorageProvider | null = null;
+const globalForServerStorage = globalThis as unknown as {
+  _serverStorageProvider: StorageProvider | null;
+};
 
 export async function getServerStorage(): Promise<StorageProvider> {
-  if (_cached) return _cached;
+  if (globalForServerStorage._serverStorageProvider) {
+    return globalForServerStorage._serverStorageProvider;
+  }
 
   // Try MySQL first
   if (process.env.MYSQL_DATABASE) {
     const provider = new MySQLStorageProvider();
     if (await provider.isAvailable()) {
       log.info('Server storage: using MySQL');
-      _cached = provider;
+      globalForServerStorage._serverStorageProvider = provider;
       return provider;
     }
     log.error(
@@ -37,7 +41,7 @@ export async function getServerStorage(): Promise<StorageProvider> {
     const provider = new SupabaseStorageProvider();
     if (await provider.isAvailable()) {
       log.info('Server storage: using Supabase');
-      _cached = provider;
+      globalForServerStorage._serverStorageProvider = provider;
       return provider;
     }
     log.error('Supabase configured but unavailable');
@@ -48,6 +52,6 @@ export async function getServerStorage(): Promise<StorageProvider> {
     'Data (check-ins, mistakes, etc.) will be LOST on server restart. ' +
     'Fix: Start MySQL and ensure it is accessible, or configure SUPABASE_URL.'
   );
-  _cached = new MemoryStorageProvider();
-  return _cached;
+  globalForServerStorage._serverStorageProvider = new MemoryStorageProvider();
+  return globalForServerStorage._serverStorageProvider;
 }
