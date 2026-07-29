@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextResponse } from 'next/server';
 import type { UserEntry } from '@/lib/storage/dao/users';
+import type { CompleteUniversalOnboardingInput } from '@/lib/onboarding/types';
 
 vi.mock('@/lib/server/auth/helpers', () => ({
   requireAuth: vi.fn(),
@@ -18,14 +19,24 @@ import { POST as SKIP } from '@/app/api/user/learning-onboarding/skip/route';
 const mockRequireAuth = vi.mocked(requireAuth);
 const mockCreateUserDAO = vi.mocked(createUserDAO);
 
-const completionPayload = {
-  educationLevel: 'middle',
-  grade: '初二',
-  favoriteSubjects: ['math', 'physics'],
-  weakSubjects: ['math'],
-  learningGoal: 'build-foundations',
-  goalDetail: '补齐代数基础',
-  teachingPreference: 'step-by-step',
+const learnerProfile: CompleteUniversalOnboardingInput['profiles']['learner'] = {
+  identity: 'learner',
+  context: {
+    stage: 'middle',
+    learningDomains: [{ domain: { source: 'catalog', id: 'math', name: '数学' } }],
+    supportDomains: [{ source: 'catalog', id: 'physics', name: '物理' }],
+  },
+  goals: [{ source: 'catalog', id: 'build-foundations', label: '巩固基础' }],
+  roleNeeds: ['identify-gaps'],
+  preferences: { explanationStyle: 'step-by-step' },
+  detail: '补齐代数基础',
+};
+
+const completionPayload: CompleteUniversalOnboardingInput = {
+  version: 2,
+  identities: ['learner'],
+  primaryIdentity: 'learner',
+  profiles: { learner: learnerProfile },
 };
 
 function makeUser(overrides: Partial<UserEntry> = {}): UserEntry {
@@ -46,10 +57,7 @@ function makeUser(overrides: Partial<UserEntry> = {}): UserEntry {
     bio: null,
     educationLevel: 'middle',
     grade: '初二',
-    favoriteSubjects: [
-      { id: 'math', name: '数学', enabled: true },
-      { id: 'physics', name: '物理', enabled: false },
-    ],
+    favoriteSubjects: [{ id: 'math', name: '数学', enabled: true }],
     learningOnboarding: null,
     learningStyle: null,
     detailLevel: null,
@@ -77,6 +85,14 @@ function putRequest(body: unknown): Request {
   });
 }
 
+function mockUpdate() {
+  const update = vi
+    .fn()
+    .mockImplementation(async (_id, values) => makeUser({ ...values, updatedAt: 2 }));
+  mockCreateUserDAO.mockResolvedValue({ update } as never);
+  return update;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockRequireAuth.mockResolvedValue({ user: makeUser() });
@@ -88,83 +104,195 @@ describe('learning onboarding API', () => {
       error: NextResponse.json({ success: false }, { status: 401 }),
     });
 
-    const response = await GET();
-
-    expect(response.status).toBe(401);
+    expect((await GET()).status).toBe(401);
   });
 
-  it('returns pending plus existing personalization', async () => {
-    const response = await GET();
-
-    expect(await response.json()).toEqual({
+  it('returns pending without fabricating a profile', async () => {
+    expect(await (await GET()).json()).toEqual({
       success: true,
       status: 'pending',
       onboarding: null,
-      educationLevel: 'middle',
-      grade: '初二',
-      favoriteSubjects: ['math'],
     });
   });
 
-  it('updates existing fields and completed profile in one DAO call', async () => {
-    const update = vi
-      .fn()
-      .mockImplementation(async (_id, values) => makeUser({ ...values, updatedAt: 2 }));
-    mockCreateUserDAO.mockResolvedValue({ update } as never);
+  it('returns a normalized v2 view for a completed v1 record without writing it', async () => {
+    const update = mockUpdate();
+    mockRequireAuth.mockResolvedValue({
+      user: makeUser({
+        learningOnboarding: {
+          version: 1,
+          status: 'completed',
+          weakSubjects: ['physics'],
+          learningGoal: 'build-foundations',
+          teachingPreference: 'step-by-step',
+          completedAt: 100,
+        },
+      }),
+    });
+
+    const body = await (await GET()).json();
+
+    expect(body).toMatchObject({
+      success: true,
+      status: 'completed',
+      onboarding: {
+        version: 2,
+        status: 'completed',
+        migratedFromVersion: 1,
+        primaryIdentity: 'learner',
+      },
+    });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('stores a completed v2 profile in one update without rewriting legacy columns', async () => {
+    const update = mockUpdate();
 
     const response = await PUT(putRequest(completionPayload));
 
     expect(response.status).toBe(200);
     expect(update).toHaveBeenCalledTimes(1);
     expect(update).toHaveBeenCalledWith('user-1', {
-      educationLevel: 'middle',
-      grade: '初二',
-      favoriteSubjects: expect.arrayContaining([{ id: 'math', name: '数学', enabled: true }]),
       learningOnboarding: expect.objectContaining({
-        version: 1,
+        version: 2,
         status: 'completed',
-        weakSubjects: ['math'],
+        primaryIdentity: 'learner',
+        completedAt: expect.any(Number),
+        profiles: {
+          learner: expect.objectContaining({
+            identity: 'learner',
+            completedAt: expect.any(Number),
+          }),
+        },
       }),
+    });
+    expect(update.mock.calls[0][1]).not.toHaveProperty('educationLevel');
+    expect(update.mock.calls[0][1]).not.toHaveProperty('favoriteSubjects');
+  });
+
+  it('preserves selected completed secondary profiles during primary identity edits', async () => {
+    const existingLearner = { ...learnerProfile, completedAt: 10 };
+    mockRequireAuth.mockResolvedValue({
+      user: makeUser({
+        learningOnboarding: {
+          version: 2,
+          status: 'completed',
+          identities: ['learner', 'educator'],
+          primaryIdentity: 'learner',
+          profiles: { learner: existingLearner },
+          completedAt: 10,
+        },
+      }),
+    });
+    const update = mockUpdate();
+    const educatorPayload: CompleteUniversalOnboardingInput = {
+      version: 2,
+      identities: ['learner', 'educator'],
+      primaryIdentity: 'educator',
+      profiles: {
+        educator: {
+          identity: 'educator',
+          contexts: [
+            {
+              stage: 'high',
+              teachingDomains: [{ domain: { source: 'catalog', id: 'math', name: '数学' } }],
+            },
+          ],
+          goals: [{ source: 'catalog', id: 'prepare-lessons', label: '备课' }],
+          roleNeeds: ['question-design'],
+          preferences: { primarySupport: 'lesson-plan-structure' },
+        },
+      },
+    };
+
+    await PUT(putRequest(educatorPayload));
+
+    const stored = update.mock.calls[0][1].learningOnboarding;
+    expect(stored).toMatchObject({
+      identities: ['learner', 'educator'],
+      primaryIdentity: 'educator',
+      profiles: {
+        learner: existingLearner,
+        educator: expect.objectContaining({ identity: 'educator' }),
+      },
     });
   });
 
-  it('rejects a stage and grade mismatch', async () => {
-    const update = vi.fn();
-    mockCreateUserDAO.mockResolvedValue({ update } as never);
+  it('removes profiles for identities explicitly removed from the identity set', async () => {
+    mockRequireAuth.mockResolvedValue({
+      user: makeUser({
+        learningOnboarding: {
+          version: 2,
+          status: 'completed',
+          identities: ['learner', 'educator'],
+          primaryIdentity: 'educator',
+          profiles: {
+            learner: { ...learnerProfile, completedAt: 10 },
+            educator: {
+              identity: 'educator',
+              contexts: [],
+              goals: [],
+              roleNeeds: [],
+              preferences: { primarySupport: 'balanced' },
+              completedAt: 10,
+            },
+          },
+          completedAt: 10,
+        },
+      }),
+    });
+    const update = mockUpdate();
 
-    const response = await PUT(putRequest({ ...completionPayload, grade: '高一' }));
+    await PUT(putRequest(completionPayload));
 
-    expect(response.status).toBe(400);
+    expect(update.mock.calls[0][1].learningOnboarding.profiles).toEqual({
+      learner: expect.any(Object),
+    });
+  });
+
+  it('allows an administrator to save only their own profile', async () => {
+    mockRequireAuth.mockResolvedValue({ user: makeUser({ role: 'admin', id: 'admin-1' }) });
+    const update = mockUpdate();
+
+    expect((await PUT(putRequest(completionPayload))).status).toBe(200);
+    expect(update).toHaveBeenCalledWith('admin-1', expect.any(Object));
+  });
+
+  it('rejects invalid stage-domain pairs and forged migration markers', async () => {
+    const update = mockUpdate();
+    const invalidDomain = structuredClone(completionPayload);
+    invalidDomain.profiles.learner!.context.learningDomains = [
+      { domain: { source: 'catalog', id: 'general-technology', name: '通用技术' } },
+    ];
+
+    expect((await PUT(putRequest(invalidDomain))).status).toBe(400);
+    expect((await PUT(putRequest({ ...completionPayload, migratedFromVersion: 1 }))).status).toBe(
+      400,
+    );
     expect(update).not.toHaveBeenCalled();
   });
 
-  it('records skipped without fabricating answers', async () => {
-    const update = vi.fn().mockImplementation(async (_id, values) => makeUser(values));
-    mockCreateUserDAO.mockResolvedValue({ update } as never);
+  it('records version 2 skipped without fabricating answers', async () => {
+    const update = mockUpdate();
 
     const response = await SKIP();
 
     expect(response.status).toBe(200);
     expect(update).toHaveBeenCalledWith('user-1', {
-      learningOnboarding: expect.objectContaining({
-        version: 1,
+      learningOnboarding: {
+        version: 2,
         status: 'skipped',
         skippedAt: expect.any(Number),
-      }),
+      },
     });
-    expect(update.mock.calls[0][1]).not.toHaveProperty('weakSubjects');
     expect(update.mock.calls[0][1]).not.toHaveProperty('educationLevel');
   });
 
   it('allows the same completion payload to be retried', async () => {
-    const update = vi.fn().mockImplementation(async (_id, values) => makeUser(values));
-    mockCreateUserDAO.mockResolvedValue({ update } as never);
+    const update = mockUpdate();
 
-    const first = await PUT(putRequest(completionPayload));
-    const second = await PUT(putRequest(completionPayload));
-
-    expect(first.status).toBe(200);
-    expect(second.status).toBe(200);
+    expect((await PUT(putRequest(completionPayload))).status).toBe(200);
+    expect((await PUT(putRequest(completionPayload))).status).toBe(200);
     expect(update).toHaveBeenCalledTimes(2);
   });
 });

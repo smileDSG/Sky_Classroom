@@ -13,6 +13,7 @@ import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { buildPersonalizationContext } from '@/lib/cloud-mind/personalization-context';
 import { createLogger } from '@/lib/logger';
 import type { ProfileCacheEntry, StudentProfile } from '@/lib/student/profile-types';
+import { getLearnerSupportSubjectIds } from '@/lib/onboarding/consumption';
 
 const log = createLogger('API:CloudMindPersonalizationContext');
 const DEMO_PROFILE_USER_ID = 'default-user';
@@ -120,10 +121,7 @@ export async function GET(req: NextRequest) {
       dueMistakes,
       recentAttempts,
       learningPath,
-      selfReportedWeakSubjects:
-        user?.learningOnboarding?.status === 'completed'
-          ? user.learningOnboarding.weakSubjects
-          : undefined,
+      selfReportedWeakSubjects: user ? getLearnerSupportSubjectIds(user) : undefined,
     });
 
     return apiSuccess({ data: context });

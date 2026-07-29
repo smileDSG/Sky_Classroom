@@ -7,7 +7,7 @@ describe('learning profile completion entries', () => {
   it('renders an onboarding link for skipped users', () => {
     render(<LearningProfilePrompt status="skipped" />);
 
-    expect(screen.getByRole('link', { name: '完善学习画像' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '完善用户画像' })).toHaveAttribute(
       'href',
       '/sky/onboarding?mode=edit&redirect=%2Fsky',
     );
@@ -22,7 +22,7 @@ describe('learning profile completion entries', () => {
   it('uses /sky/onboarding?mode=edit for the account entry', () => {
     render(<PersonalizationForm />);
 
-    expect(screen.getByRole('link', { name: '重新填写学习画像' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '填写/编辑用户画像' })).toHaveAttribute(
       'href',
       '/sky/onboarding?mode=edit&redirect=%2Faccount',
     );

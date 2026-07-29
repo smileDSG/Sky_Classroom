@@ -335,7 +335,7 @@ Goals and needs are also validated against the active identity rather than one s
 
 | Identity | Goal catalog | Need catalog |
 | --- | --- | --- |
-| Learner | `improve-performance`; `exam-prep`; `strengthen-foundations`; `explore-interests`; `career-skills` | `identify-gaps`; `learning-plan`; `clearer-explanations`; `practice-feedback`; `motivation` |
+| Learner | `improve-grades`; `exam-prep`; `build-foundations`; `explore-interest`; `career-skills` | `identify-gaps`; `learning-plan`; `clearer-explanations`; `practice-feedback`; `motivation` |
 | Educator | `prepare-lessons`; `create-materials`; `classroom-interaction`; `design-assessment`; `professional-development` | `differentiated-instruction`; `question-design`; `resource-adaptation`; `feedback-support`; `reduce-repetitive-work` |
 | Guardian | `homework-support`; `learning-habits`; `address-gaps`; `develop-interests`; `family-learning-communication` | `age-appropriate-guidance`; `hint-strategy`; `short-session-plan`; `understand-progress`; `resource-selection` |
 | Education manager | `curriculum-planning`; `resource-governance`; `teaching-quality`; `learning-data-analysis`; `educator-development` | `standards-alignment`; `content-organization`; `cohort-comparison`; `report-generation`; `cross-team-collaboration` |

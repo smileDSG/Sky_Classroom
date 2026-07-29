@@ -110,7 +110,7 @@ export function PersonalizationForm() {const [activeTab, setActiveTab] = useSta
         href="/sky/onboarding?mode=edit&redirect=%2Faccount"
         className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
-        重新填写学习画像
+        填写/编辑用户画像
         <ArrowRight className="size-4" />
       </Link>
 

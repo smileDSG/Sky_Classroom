@@ -4,6 +4,12 @@ import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { UserEntry } from '@/lib/storage/dao/users';
 import type { QuestionBankEntry } from '@/lib/solve/types';
 import type { TeachingPreference } from '@/lib/onboarding/types';
+import type { ProductIdentity } from '@/lib/onboarding/catalog';
+import { readUniversalOnboarding } from '@/lib/onboarding/migration';
+import {
+  buildIdentityProfileInstructions,
+  getPrimaryIdentityProfile,
+} from '@/lib/onboarding/selectors';
 
 export type AssistantAnswerDepth = 'concise' | 'standard' | 'detailed' | 'comprehensive';
 export type AssistantTeachingMode =
@@ -37,6 +43,8 @@ export interface AssistantPersonalization {
   enableMemory?: boolean | null;
   enableRAG?: boolean | null;
   teachingPreference?: TeachingPreference | null;
+  productIdentity?: ProductIdentity | null;
+  profileInstructions?: string[] | null;
 }
 
 export interface AssistantStrategy {
@@ -453,6 +461,10 @@ export function buildAssistantPersonalizationPrompt(input: BuildAssistantPromptI
     );
   }
 
+  for (const instruction of input.personalization?.profileInstructions ?? []) {
+    lines.push(`- ${compactText(instruction, 120)}。`);
+  }
+
   if (evidence?.summary) {
     lines.push('', '【可用学习证据】', `- ${evidence.summary}`);
     for (const item of evidence.items.slice(0, 3)) {
@@ -476,6 +488,8 @@ export function buildAssistantPersonalizationPrompt(input: BuildAssistantPromptI
 
 export function pickPersonalizationFromUser(user: UserEntry | null): AssistantPersonalization {
   if (!user) return {};
+  const onboarding = readUniversalOnboarding(user);
+  const primaryProfile = getPrimaryIdentityProfile(onboarding);
   return {
     educationLevel: user.educationLevel,
     grade: user.grade,
@@ -489,8 +503,8 @@ export function pickPersonalizationFromUser(user: UserEntry | null): AssistantPe
     enableMemory: user.enableMemory,
     enableRAG: user.enableRAG,
     teachingPreference:
-      user.learningOnboarding?.status === 'completed'
-        ? user.learningOnboarding.teachingPreference
-        : null,
+      primaryProfile?.identity === 'learner' ? primaryProfile.preferences.explanationStyle : null,
+    productIdentity: primaryProfile?.identity ?? null,
+    profileInstructions: buildIdentityProfileInstructions(onboarding),
   };
 }

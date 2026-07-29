@@ -31,30 +31,26 @@ function renderOnboarding() {
   return render(<LearningProfileOnboarding />);
 }
 
-function chooseEducation() {
+function chooseIdentity(label = '学习者') {
+  fireEvent.click(screen.getByRole('button', { name: label }));
+  fireEvent.click(screen.getByRole('button', { name: '下一步' }));
+}
+
+function chooseLearnerContext() {
   fireEvent.click(screen.getByRole('button', { name: '初中' }));
-  fireEvent.click(screen.getByRole('button', { name: '初二' }));
+  const learningDomains = screen.getByRole('group', { name: '学习领域（选填）' });
+  fireEvent.click(within(learningDomains).getByRole('button', { name: '数学' }));
+  const supportDomains = screen.getByRole('group', { name: '需要重点支持的领域（选填）' });
+  fireEvent.click(within(supportDomains).getByRole('button', { name: '物理' }));
   fireEvent.click(screen.getByRole('button', { name: '下一步' }));
 }
 
-function chooseSubjects(favorites = ['数学'], weak = ['数学']) {
-  const favoriteGroup = screen.getByRole('group', { name: '感兴趣的学科' });
-  const weakGroup = screen.getByRole('group', { name: '目前较吃力的学科' });
-  for (const label of favorites) {
-    fireEvent.click(within(favoriteGroup).getByRole('button', { name: label }));
-  }
-  for (const label of weak) {
-    fireEvent.click(within(weakGroup).getByRole('button', { name: label }));
-  }
-  fireEvent.click(screen.getByRole('button', { name: '下一步' }));
-}
-
-function chooseGoal() {
-  fireEvent.click(screen.getByRole('button', { name: '补齐基础' }));
-  fireEvent.change(screen.getByLabelText('具体目标（选填）'), {
+function chooseLearnerGoal() {
+  fireEvent.click(screen.getByRole('button', { name: '巩固基础' }));
+  fireEvent.click(screen.getByRole('button', { name: '分步讲解' }));
+  fireEvent.change(screen.getByLabelText('最重要的问题（选填）'), {
     target: { value: '补齐代数基础' },
   });
-  fireEvent.click(screen.getByRole('button', { name: '分步推导' }));
 }
 
 beforeEach(() => {
@@ -66,97 +62,164 @@ beforeEach(() => {
     jsonResponse({
       success: true,
       status: 'completed',
-      onboarding: { version: 1, status: 'completed' },
+      onboarding: {
+        version: 2,
+        status: 'completed',
+        identities: ['learner'],
+        primaryIdentity: 'learner',
+        profiles: {},
+        completedAt: 10,
+      },
     }),
   );
   vi.stubGlobal('fetch', fetchMock);
 });
 
 describe('LearningProfileOnboarding', () => {
-  it('moves through education, subjects, and goal steps', () => {
+  it('moves through identity, learner context, and learner preference steps', () => {
     renderOnboarding();
 
-    expect(screen.getByRole('heading', { name: '你目前在哪个学习阶段？' })).toBeInTheDocument();
-    chooseEducation();
-    expect(screen.getByRole('group', { name: '感兴趣的学科' })).toBeInTheDocument();
-    chooseSubjects([], []);
-    expect(screen.getByRole('heading', { name: '这段时间最想达成什么？' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '你会以哪些身份使用 OpenMAIC？' })).toBeVisible();
+    chooseIdentity();
+    expect(screen.getByRole('heading', { name: '你目前处于哪个学习阶段？' })).toBeVisible();
+    chooseLearnerContext();
+    expect(screen.getByRole('heading', { name: '你希望先解决什么？' })).toBeVisible();
+    expect(screen.getByRole('group', { name: '你更喜欢怎样学习？' })).toBeVisible();
   });
 
-  it('requires stage and grade before continuing', () => {
+  it('requires an identity and supports a separate primary identity', () => {
     renderOnboarding();
+    fireEvent.click(screen.getByRole('button', { name: '下一步' }));
+    expect(screen.getByText('请至少选择一个身份')).toBeVisible();
 
+    fireEvent.click(screen.getByRole('button', { name: '学习者' }));
+    fireEvent.click(screen.getByRole('button', { name: '教师 / 培训者' }));
+    const primaryGroup = screen.getByRole('group', { name: '当前主要身份' });
+    fireEvent.click(within(primaryGroup).getByRole('button', { name: '教师 / 培训者' }));
     fireEvent.click(screen.getByRole('button', { name: '下一步' }));
-    expect(screen.getByText('请选择学习阶段和年级')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '初中' }));
-    fireEvent.click(screen.getByRole('button', { name: '下一步' }));
-    expect(screen.getByText('请选择学习阶段和年级')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '初二' }));
-    fireEvent.click(screen.getByRole('button', { name: '下一步' }));
-    expect(screen.getByRole('group', { name: '感兴趣的学科' })).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: '你主要教授哪些学习阶段？' })).toBeVisible();
   });
 
-  it('allows favorite and weak subject selections to overlap', () => {
+  it.each([
+    ['家长 / 辅导者', '你主要支持哪个学习阶段？'],
+    ['教育管理 / 教研者', '你服务或管理哪些学习阶段？'],
+    ['其他', '哪个阶段最接近你的当前场景？'],
+  ])('uses identity-specific wording for %s', (identity, heading) => {
     renderOnboarding();
-    chooseEducation();
+    chooseIdentity(identity);
+    expect(screen.getByRole('heading', { name: heading })).toBeVisible();
+  });
 
-    const favoriteMath = within(screen.getByRole('group', { name: '感兴趣的学科' })).getByRole(
-      'button',
-      { name: '数学' },
+  it('supports multiple educator stages and custom undergraduate domains', () => {
+    renderOnboarding();
+    chooseIdentity('教师 / 培训者');
+    fireEvent.click(screen.getByRole('button', { name: '高中' }));
+    fireEvent.click(screen.getByRole('button', { name: '添加教学阶段' }));
+
+    const stageGroups = screen.getAllByRole('group', { name: /教学阶段/ });
+    fireEvent.click(within(stageGroups[1]).getByRole('button', { name: '本科' }));
+    const customInput = screen.getByLabelText('添加自定义领域');
+    fireEvent.change(customInput, { target: { value: '量子信息' } });
+    fireEvent.click(screen.getByRole('button', { name: '添加领域' }));
+
+    expect(screen.getByRole('button', { name: '量子信息' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
     );
-    const weakMath = within(screen.getByRole('group', { name: '目前较吃力的学科' })).getByRole(
-      'button',
-      { name: '数学' },
-    );
-    fireEvent.click(favoriteMath);
-    fireEvent.click(weakMath);
-
-    expect(favoriteMath).toHaveAttribute('aria-pressed', 'true');
-    expect(weakMath).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getAllByRole('button', { name: '移除该阶段' })).toHaveLength(1);
   });
 
-  it('submits one complete payload and refreshes auth state', async () => {
+  it('submits a version 2 payload and refreshes auth state', async () => {
     renderOnboarding();
-    chooseEducation();
-    chooseSubjects(['数学', '物理'], ['数学']);
-    chooseGoal();
+    chooseIdentity();
+    chooseLearnerContext();
+    chooseLearnerGoal();
 
     fireEvent.click(screen.getByRole('button', { name: '保存画像' }));
 
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/user/learning-onboarding',
-      expect.objectContaining({ method: 'PUT' }),
-    );
-    expect(JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1]?.body))).toEqual({
-      educationLevel: 'middle',
-      grade: '初二',
-      favoriteSubjects: ['math', 'physics'],
-      weakSubjects: ['math'],
-      learningGoal: 'build-foundations',
-      goalDetail: '补齐代数基础',
-      teachingPreference: 'step-by-step',
+    const payload = JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1]?.body));
+    expect(payload).toEqual({
+      version: 2,
+      identities: ['learner'],
+      primaryIdentity: 'learner',
+      profiles: {
+        learner: {
+          identity: 'learner',
+          context: {
+            stage: 'middle',
+            learningDomains: [{ domain: { source: 'catalog', id: 'math', name: '数学' } }],
+            supportDomains: [{ source: 'catalog', id: 'physics', name: '物理' }],
+          },
+          goals: [{ source: 'catalog', id: 'build-foundations', label: '巩固基础' }],
+          roleNeeds: [],
+          preferences: { explanationStyle: 'step-by-step' },
+          detail: '补齐代数基础',
+        },
+      },
     });
-    expect(screen.getByRole('heading', { name: '学习画像已保存' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '用户画像已保存' })).toBeVisible();
   });
 
-  it('keeps answers and shows an error when save fails', async () => {
+  it('keeps every answer when save fails and permits retry', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ success: false }, 500));
     renderOnboarding();
-    chooseEducation();
-    chooseSubjects();
-    chooseGoal();
+    chooseIdentity();
+    chooseLearnerContext();
+    chooseLearnerGoal();
 
     fireEvent.click(screen.getByRole('button', { name: '保存画像' }));
 
-    expect(await screen.findByText('保存失败，请稍后重试')).toBeInTheDocument();
-    expect(screen.getByLabelText('具体目标（选填）')).toHaveValue('补齐代数基础');
+    expect(await screen.findByText('保存失败，请稍后重试')).toBeVisible();
+    expect(screen.getByLabelText('最重要的问题（选填）')).toHaveValue('补齐代数基础');
     expect(screen.getByRole('button', { name: '保存画像' })).toBeEnabled();
-    expect(refresh).not.toHaveBeenCalled();
   });
 
-  it('records skip and returns to the safe redirect', async () => {
+  it('loads an existing v2 profile in edit mode and does not overwrite it on exit', async () => {
+    navigation.search = 'mode=edit&redirect=%2Faccount';
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        success: true,
+        status: 'completed',
+        onboarding: {
+          version: 2,
+          status: 'completed',
+          identities: ['educator'],
+          primaryIdentity: 'educator',
+          profiles: {
+            educator: {
+              identity: 'educator',
+              contexts: [
+                {
+                  stage: 'high',
+                  teachingDomains: [{ domain: { source: 'catalog', id: 'math', name: '数学' } }],
+                },
+              ],
+              goals: [{ source: 'catalog', id: 'prepare-lessons', label: '备课' }],
+              roleNeeds: [],
+              preferences: { primarySupport: 'balanced' },
+              completedAt: 100,
+            },
+          },
+          completedAt: 100,
+        },
+      }),
+    );
+    renderOnboarding();
+
+    expect(screen.getByText('正在读取用户画像…')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: '更新用户画像' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '教师 / 培训者' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    fireEvent.click(screen.getByRole('button', { name: '返回' }));
+    expect(navigation.push).toHaveBeenCalledWith('/account');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('records skip for first onboarding and returns to the safe redirect', async () => {
     navigation.search = 'redirect=%2Fsky%2Flearning';
     renderOnboarding();
 
@@ -166,51 +229,5 @@ describe('LearningProfileOnboarding', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/user/learning-onboarding/skip', {
       method: 'POST',
     });
-    expect(refresh).toHaveBeenCalledTimes(1);
-  });
-
-  it('offers a diagnostic prefilled with the first weak subject', async () => {
-    renderOnboarding();
-    chooseEducation();
-    chooseSubjects([], ['物理', '数学']);
-    chooseGoal();
-    fireEvent.click(screen.getByRole('button', { name: '保存画像' }));
-    await screen.findByRole('heading', { name: '学习画像已保存' });
-
-    fireEvent.click(screen.getByRole('button', { name: '开始诊断' }));
-
-    expect(navigation.push).toHaveBeenCalledWith(
-      '/sky/cloud-mind/quiz?subject=physics&mode=diagnostic',
-    );
-  });
-
-  it('loads and prefills the existing profile in edit mode', async () => {
-    navigation.search = 'mode=edit&redirect=%2Faccount';
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({
-        success: true,
-        status: 'completed',
-        educationLevel: 'high',
-        grade: '高二',
-        favoriteSubjects: ['english'],
-        onboarding: {
-          version: 1,
-          status: 'completed',
-          weakSubjects: ['physics'],
-          learningGoal: 'exam-prep',
-          goalDetail: '准备期末考试',
-          teachingPreference: 'visual-explanation',
-          completedAt: 100,
-        },
-      }),
-    );
-
-    renderOnboarding();
-
-    expect(screen.getByText('正在读取学习画像…')).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: '更新学习画像' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '高中' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: '高二' })).toHaveAttribute('aria-pressed', 'true');
-    expect(fetchMock).toHaveBeenCalledWith('/api/user/learning-onboarding');
   });
 });

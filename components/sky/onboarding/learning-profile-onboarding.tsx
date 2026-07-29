@@ -2,123 +2,273 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Check, ClipboardCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ClipboardCheck, Loader2, Plus } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { sanitizeInternalRedirect } from '@/components/auth/onboarding-gate';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
-  LEARNING_GOALS,
-  ONBOARDING_SUBJECT_IDS,
-  TEACHING_PREFERENCES,
-  type CompleteLearningOnboardingInput,
-  type LearningOnboardingProfile,
-  type TeachingPreference,
-} from '@/lib/onboarding/types';
-import { SUBJECT_CONFIG } from '@/lib/student/profile-config';
+  IDENTITY_CONFIG,
+  IDENTITY_LABELS,
+  PRODUCT_IDENTITIES,
+  type CatalogOption,
+  type ProductIdentity,
+} from '@/lib/onboarding/catalog';
+import {
+  createInitialFormState,
+  setPrimaryIdentity,
+  toggleIdentity,
+  toCompletionInput,
+  updateIdentityDraft,
+  type IdentityDraft,
+  type UniversalOnboardingFormState,
+} from '@/lib/onboarding/form-state';
+import { resolveOnboardingRecommendation } from '@/lib/onboarding/selectors';
+import type { UniversalOnboardingProfile } from '@/lib/onboarding/types';
+import { ProfileChoice } from './domain-picker';
+import { IdentityContextEditor } from './identity-context-editor';
 
 type Step = 0 | 1 | 2 | 3;
-type EducationLevel = CompleteLearningOnboardingInput['educationLevel'];
-type Grade = CompleteLearningOnboardingInput['grade'];
-type LearningGoal = CompleteLearningOnboardingInput['learningGoal'];
-type OnboardingSubject = (typeof ONBOARDING_SUBJECT_IDS)[number];
-
-interface FormState {
-  educationLevel: EducationLevel | null;
-  grade: string;
-  favoriteSubjects: OnboardingSubject[];
-  weakSubjects: OnboardingSubject[];
-  learningGoal: LearningGoal | null;
-  goalDetail: string;
-  teachingPreference: TeachingPreference;
-}
+type Goal = IdentityDraft['goals'][number];
 
 interface OnboardingResponse {
   success: boolean;
-  educationLevel?: string | null;
-  grade?: string | null;
-  favoriteSubjects?: string[];
-  onboarding?: LearningOnboardingProfile | null;
+  status?: string;
+  onboarding?: UniversalOnboardingProfile | null;
 }
 
-const INITIAL_FORM: FormState = {
-  educationLevel: null,
-  grade: '',
-  favoriteSubjects: [],
-  weakSubjects: [],
-  learningGoal: null,
-  goalDetail: '',
-  teachingPreference: 'balanced',
-};
-
-const STAGES = [
-  { value: 'middle', label: '初中', grades: ['初一', '初二', '初三'] },
-  { value: 'high', label: '高中', grades: ['高一', '高二', '高三'] },
-] as const;
-
-const GOAL_LABELS: Record<(typeof LEARNING_GOALS)[number], string> = {
-  'improve-grades': '提升成绩',
-  'exam-prep': '备战考试',
-  'build-foundations': '补齐基础',
-  'explore-interest': '拓展兴趣',
-};
-
-const PREFERENCE_LABELS: Record<(typeof TEACHING_PREFERENCES)[number], string> = {
-  'example-first': '先看例题',
-  'visual-explanation': '图示讲解',
-  'step-by-step': '分步推导',
-  'practice-first': '先练后讲',
-  balanced: '均衡安排',
-};
-
-const SUBJECTS = ONBOARDING_SUBJECT_IDS.map((id) => ({
-  id,
-  label: SUBJECT_CONFIG.find((subject) => subject.id === id)?.label ?? id,
-}));
-
-function toggleSubject(
-  subjects: OnboardingSubject[],
-  subject: OnboardingSubject,
-): OnboardingSubject[] {
-  return subjects.includes(subject)
-    ? subjects.filter((item) => item !== subject)
-    : [...subjects, subject];
+function goalKey(goal: Goal): string {
+  return goal.source === 'catalog' ? `catalog:${goal.id}` : `custom:${goal.label.toLowerCase()}`;
 }
 
-function ChoiceButton({
-  label,
-  selected,
-  onClick,
-  className,
+function toggleLimited<T>(
+  values: T[],
+  value: T,
+  equals: (left: T, right: T) => boolean,
+  max: number,
+) {
+  return values.some((item) => equals(item, value))
+    ? values.filter((item) => !equals(item, value))
+    : values.length < max
+      ? [...values, value]
+      : values;
+}
+
+function IdentityStep({
+  state,
+  onChange,
 }: {
-  label: string;
-  selected: boolean;
-  onClick: () => void;
-  className?: string;
+  state: UniversalOnboardingFormState;
+  onChange: (state: UniversalOnboardingFormState) => void;
 }) {
+  function changeIdentity(identity: ProductIdentity) {
+    if (
+      state.identities.includes(identity) &&
+      state.completedProfiles[identity] &&
+      !window.confirm('移除身份会同时删除该身份已保存的画像，是否继续？')
+    ) {
+      return;
+    }
+    onChange(toggleIdentity(state, identity));
+  }
+
   return (
-    <button
-      type="button"
-      aria-label={label}
-      aria-pressed={selected}
-      onClick={onClick}
-      className={cn(
-        'flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        selected
-          ? 'border-primary bg-primary/10 text-foreground'
-          : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
-        className,
+    <section aria-labelledby="identity-heading">
+      <h2 id="identity-heading" className="text-lg font-semibold text-foreground">
+        你会以哪些身份使用 OpenMAIC？
+      </h2>
+      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        可多选。这里的身份只影响内容与工具推荐，不改变账号权限。
+      </p>
+      <fieldset className="mt-6">
+        <legend className="sr-only">使用身份</legend>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {PRODUCT_IDENTITIES.map((identity) => (
+            <ProfileChoice
+              key={identity}
+              label={IDENTITY_LABELS[identity]}
+              selected={state.identities.includes(identity)}
+              onClick={() => changeIdentity(identity)}
+            />
+          ))}
+        </div>
+      </fieldset>
+
+      {state.identities.length > 1 && (
+        <fieldset className="mt-7">
+          <legend className="mb-2 text-sm font-medium text-foreground">当前主要身份</legend>
+          <p className="mb-3 text-sm text-muted-foreground">
+            首次只需完善这个身份，其他身份可以稍后补充。
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {state.identities.map((identity) => (
+              <ProfileChoice
+                key={identity}
+                label={IDENTITY_LABELS[identity]}
+                selected={state.primaryIdentity === identity}
+                onClick={() => onChange(setPrimaryIdentity(state, identity))}
+              />
+            ))}
+          </div>
+        </fieldset>
       )}
-    >
-      <span>{label}</span>
-      {selected && (
-        <span aria-hidden="true" className="flex items-center gap-1 text-xs text-primary">
-          <Check className="size-4" />
-          已选
-        </span>
-      )}
-    </button>
+    </section>
+  );
+}
+
+function GoalPreferenceStep({
+  state,
+  onChange,
+}: {
+  state: UniversalOnboardingFormState;
+  onChange: (state: UniversalOnboardingFormState) => void;
+}) {
+  const identity = state.primaryIdentity;
+  const [customGoal, setCustomGoal] = useState('');
+  if (!identity) return null;
+  const activeIdentity: ProductIdentity = identity;
+  const draft = state.drafts[activeIdentity];
+  const config = IDENTITY_CONFIG[activeIdentity];
+  const goals = config.goals as readonly CatalogOption[];
+  const needs = config.needs as readonly CatalogOption[];
+  const preferences = config.preferences as readonly CatalogOption[];
+
+  function update(updateDraft: (draft: IdentityDraft) => IdentityDraft) {
+    onChange(updateIdentityDraft(state, activeIdentity, updateDraft));
+  }
+
+  function toggleGoal(goal: Goal) {
+    update((current) => ({
+      ...current,
+      goals: toggleLimited(
+        current.goals,
+        goal,
+        (left, right) => goalKey(left) === goalKey(right),
+        3,
+      ),
+    }));
+  }
+
+  function addCustomGoal() {
+    const label = customGoal.trim().replace(/\s+/g, ' ');
+    if (!label || label.length > 40) return;
+    const goal: Goal = { source: 'custom', label };
+    if (draft.goals.some((item) => goalKey(item) === goalKey(goal)) || draft.goals.length >= 3)
+      return;
+    update((current) => ({ ...current, goals: [...current.goals, goal] }));
+    setCustomGoal('');
+  }
+
+  return (
+    <section aria-labelledby="goal-heading">
+      <h2 id="goal-heading" className="text-lg font-semibold text-foreground">
+        你希望先解决什么？
+      </h2>
+      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        目标选 1-3 项，其余选项均可保持默认，之后随时可改。
+      </p>
+
+      <fieldset className="mt-6">
+        <legend className="mb-2 text-sm font-medium text-foreground">当前目标</legend>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {goals.map((item) => {
+            const goal: Goal = { source: 'catalog', id: item.id, label: item.label };
+            return (
+              <ProfileChoice
+                key={item.id}
+                label={item.label}
+                selected={draft.goals.some((selected) => goalKey(selected) === goalKey(goal))}
+                onClick={() => toggleGoal(goal)}
+              />
+            );
+          })}
+          {draft.goals
+            .filter((goal) => goal.source === 'custom')
+            .map((goal) => (
+              <ProfileChoice
+                key={goalKey(goal)}
+                label={goal.label}
+                selected
+                onClick={() => toggleGoal(goal)}
+              />
+            ))}
+        </div>
+        <div className="mt-3 flex gap-2">
+          <Input
+            aria-label="其他目标"
+            value={customGoal}
+            maxLength={40}
+            className="min-h-11 min-w-0"
+            onChange={(event) => setCustomGoal(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                addCustomGoal();
+              }
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 shrink-0"
+            disabled={!customGoal.trim() || draft.goals.length >= 3}
+            onClick={addCustomGoal}
+          >
+            <Plus />
+            添加目标
+          </Button>
+        </div>
+      </fieldset>
+
+      <fieldset className="mt-7">
+        <legend className="mb-2 text-sm font-medium text-foreground">希望获得的支持（选填）</legend>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {needs.map((item) => (
+            <ProfileChoice
+              key={item.id}
+              label={item.label}
+              selected={draft.needs.includes(item.id)}
+              onClick={() =>
+                update((current) => ({
+                  ...current,
+                  needs: toggleLimited(current.needs, item.id, (left, right) => left === right, 3),
+                }))
+              }
+            />
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset className="mt-7">
+        <legend className="mb-2 text-sm font-medium text-foreground">
+          {config.preferenceLabel}
+        </legend>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {preferences.map((item) => (
+            <ProfileChoice
+              key={item.id}
+              label={item.label}
+              selected={draft.preference === item.id}
+              onClick={() => update((current) => ({ ...current, preference: item.id }))}
+            />
+          ))}
+        </div>
+      </fieldset>
+
+      <div className="mt-7">
+        <label htmlFor="profile-detail" className="mb-2 block text-sm font-medium text-foreground">
+          最重要的问题（选填）
+        </label>
+        <Input
+          id="profile-detail"
+          value={draft.detail}
+          maxLength={120}
+          className="min-h-11"
+          onChange={(event) => update((current) => ({ ...current, detail: event.target.value }))}
+        />
+      </div>
+    </section>
   );
 }
 
@@ -129,46 +279,22 @@ export function LearningProfileOnboarding() {
   const isEditMode = searchParams.get('mode') === 'edit';
   const safeRedirect = sanitizeInternalRedirect(searchParams.get('redirect'));
   const [step, setStep] = useState<Step>(0);
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [form, setForm] = useState(createInitialFormState);
+  const [savedProfile, setSavedProfile] = useState<UniversalOnboardingProfile | null>(null);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'error'>(
     isEditMode ? 'loading' : 'idle',
   );
 
-  const activeStage = STAGES.find((stage) => stage.value === form.educationLevel);
-  const firstWeakSubject = form.weakSubjects[0];
-  const diagnosticHref = firstWeakSubject
-    ? `/sky/cloud-mind/quiz?subject=${encodeURIComponent(firstWeakSubject)}&mode=diagnostic`
-    : '/sky/cloud-mind/quiz?mode=diagnostic';
-
   const loadProfile = useCallback(async () => {
     setLoadState('loading');
     setError('');
     try {
       const response = await fetch('/api/user/learning-onboarding');
-      if (!response.ok) throw new Error('load failed');
       const data = (await response.json()) as OnboardingResponse;
-      if (!data.success) throw new Error('load failed');
-
-      const onboarding = data.onboarding?.status === 'completed' ? data.onboarding : null;
-      const favoriteSubjects = (data.favoriteSubjects ?? []).filter((subject) =>
-        ONBOARDING_SUBJECT_IDS.includes(subject as OnboardingSubject),
-      ) as OnboardingSubject[];
-      const educationLevel =
-        data.educationLevel === 'middle' || data.educationLevel === 'high'
-          ? data.educationLevel
-          : null;
-
-      setForm({
-        educationLevel,
-        grade: data.grade ?? '',
-        favoriteSubjects,
-        weakSubjects: onboarding?.weakSubjects ?? [],
-        learningGoal: onboarding?.learningGoal ?? null,
-        goalDetail: onboarding?.goalDetail ?? '',
-        teachingPreference: onboarding?.teachingPreference ?? 'balanced',
-      });
+      if (!response.ok || !data.success) throw new Error('load failed');
+      setForm(createInitialFormState(data.onboarding));
       setLoadState('idle');
     } catch {
       setLoadState('error');
@@ -179,46 +305,51 @@ export function LearningProfileOnboarding() {
     if (isEditMode) void loadProfile();
   }, [isEditMode, loadProfile]);
 
+  const recommendation = useMemo(
+    () => resolveOnboardingRecommendation(savedProfile, safeRedirect),
+    [safeRedirect, savedProfile],
+  );
   const progressStep = Math.min(step + 1, 3);
-  const progressLabel = useMemo(() => `第 ${progressStep} 步，共 3 步`, [progressStep]);
 
   function nextStep() {
     setError('');
     if (step === 0) {
-      if (!form.educationLevel || !form.grade) {
-        setError('请选择学习阶段和年级');
+      if (!form.primaryIdentity || form.identities.length === 0) {
+        setError('请至少选择一个身份');
         return;
       }
       setStep(1);
       return;
     }
-    if (step === 1) setStep(2);
+    if (step === 1) {
+      const draft = form.primaryIdentity ? form.drafts[form.primaryIdentity] : null;
+      if (!draft || draft.contexts.some((context) => !context.stage)) {
+        setError('请为每个使用场景选择学习阶段');
+        return;
+      }
+      setStep(2);
+    }
   }
 
   async function saveProfile() {
-    if (!form.learningGoal) {
-      setError('请选择一个学习目标');
+    const primaryDraft = form.primaryIdentity ? form.drafts[form.primaryIdentity] : null;
+    if (!primaryDraft || primaryDraft.goals.length === 0) {
+      setError('请至少选择一个当前目标');
       return;
     }
 
     setError('');
     setIsSaving(true);
     try {
-      const payload: CompleteLearningOnboardingInput = {
-        educationLevel: form.educationLevel as EducationLevel,
-        grade: form.grade as Grade,
-        favoriteSubjects: form.favoriteSubjects,
-        weakSubjects: form.weakSubjects,
-        learningGoal: form.learningGoal,
-        goalDetail: form.goalDetail,
-        teachingPreference: form.teachingPreference,
-      };
+      const payload = toCompletionInput(form);
       const response = await fetch('/api/user/learning-onboarding', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error('save failed');
+      const data = (await response.json()) as OnboardingResponse;
+      if (!response.ok || !data.success) throw new Error('save failed');
+      setSavedProfile(data.onboarding?.status === 'completed' ? data.onboarding : null);
       await refresh();
       setStep(3);
     } catch {
@@ -248,7 +379,7 @@ export function LearningProfileOnboarding() {
       <div className="mx-auto flex min-h-svh w-full max-w-3xl items-center justify-center px-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
           <Loader2 className="size-4 animate-spin" />
-          正在读取学习画像…
+          正在读取用户画像…
         </div>
       </div>
     );
@@ -257,7 +388,7 @@ export function LearningProfileOnboarding() {
   if (loadState === 'error') {
     return (
       <div className="mx-auto flex min-h-svh w-full max-w-3xl flex-col items-center justify-center gap-4 px-4 text-center">
-        <p className="text-sm text-destructive">学习画像读取失败</p>
+        <p className="text-sm text-destructive">用户画像读取失败</p>
         <Button type="button" variant="outline" className="min-h-11" onClick={loadProfile}>
           重试
         </Button>
@@ -266,28 +397,40 @@ export function LearningProfileOnboarding() {
   }
 
   if (step === 3) {
+    const hasDistinctRecommendation = recommendation.primaryHref !== recommendation.secondaryHref;
     return (
       <div className="mx-auto flex min-h-svh w-full max-w-3xl flex-col px-4 py-8 sm:px-6">
         <div className="flex flex-1 flex-col items-center justify-center text-center">
           <div className="mb-5 flex size-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
             <ClipboardCheck className="size-7" />
           </div>
-          <h1 className="text-2xl font-semibold text-foreground">学习画像已保存</h1>
+          <h1 className="text-2xl font-semibold text-foreground">用户画像已保存</h1>
           <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-            你可以先做一组小测建立学情基线，也可以直接继续学习。
+            推荐会结合当前身份、阶段、领域和目标，并随着后续使用继续更新。
           </p>
         </div>
-        <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+        <div
+          className={cn(
+            'grid gap-3 border-t border-border pt-4',
+            hasDistinctRecommendation && 'sm:grid-cols-2',
+          )}
+        >
+          {hasDistinctRecommendation && (
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11"
+              onClick={() => router.push(recommendation.secondaryHref)}
+            >
+              先返回
+            </Button>
+          )}
           <Button
             type="button"
-            variant="outline"
             className="min-h-11"
-            onClick={() => router.push(safeRedirect)}
+            onClick={() => router.push(recommendation.primaryHref)}
           >
-            先逛逛
-          </Button>
-          <Button type="button" className="min-h-11" onClick={() => router.push(diagnosticHref)}>
-            开始诊断
+            {recommendation.primaryLabel}
             <ArrowRight />
           </Button>
         </div>
@@ -296,13 +439,13 @@ export function LearningProfileOnboarding() {
   }
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-3xl flex-col px-4 pt-6 sm:px-6 sm:pt-10">
+    <div className="mx-auto flex min-h-svh w-full max-w-3xl flex-col overflow-x-hidden px-4 pt-6 sm:px-6 sm:pt-10">
       <header className="shrink-0 border-b border-border pb-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-medium text-primary">{progressLabel}</p>
+            <p className="text-xs font-medium text-primary">第 {progressStep} 步，共 3 步</p>
             <h1 className="mt-1 text-xl font-semibold text-foreground sm:text-2xl">
-              {isEditMode ? '更新学习画像' : '建立学习画像'}
+              {isEditMode ? '更新用户画像' : '建立用户画像'}
             </h1>
           </div>
           <Button
@@ -310,9 +453,9 @@ export function LearningProfileOnboarding() {
             variant="ghost"
             className="min-h-11 shrink-0 text-muted-foreground"
             disabled={isSaving}
-            onClick={skipOnboarding}
+            onClick={() => (isEditMode ? router.push(safeRedirect) : void skipOnboarding())}
           >
-            暂时跳过
+            {isEditMode ? '返回' : '暂时跳过'}
           </Button>
         </div>
         <div
@@ -336,164 +479,14 @@ export function LearningProfileOnboarding() {
       </header>
 
       <div className="flex-1 py-6">
-        {step === 0 && (
-          <section aria-labelledby="education-heading">
-            <h2 id="education-heading" className="text-lg font-semibold text-foreground">
-              你目前在哪个学习阶段？
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">这会帮助我们匹配合适的内容难度。</p>
-            <fieldset className="mt-6">
-              <legend className="mb-2 text-sm font-medium text-foreground">学习阶段</legend>
-              <div className="grid grid-cols-2 gap-2">
-                {STAGES.map((stage) => (
-                  <ChoiceButton
-                    key={stage.value}
-                    label={stage.label}
-                    selected={form.educationLevel === stage.value}
-                    onClick={() => {
-                      setError('');
-                      setForm((current) => ({
-                        ...current,
-                        educationLevel: stage.value,
-                        grade: current.educationLevel === stage.value ? current.grade : '',
-                      }));
-                    }}
-                  />
-                ))}
-              </div>
-            </fieldset>
-            {activeStage && (
-              <fieldset className="mt-6">
-                <legend className="mb-2 text-sm font-medium text-foreground">年级</legend>
-                <div className="grid grid-cols-3 gap-2">
-                  {activeStage.grades.map((grade) => (
-                    <ChoiceButton
-                      key={grade}
-                      label={grade}
-                      selected={form.grade === grade}
-                      onClick={() => {
-                        setError('');
-                        setForm((current) => ({ ...current, grade }));
-                      }}
-                      className="justify-center"
-                    />
-                  ))}
-                </div>
-              </fieldset>
-            )}
-          </section>
-        )}
-
-        {step === 1 && (
-          <section aria-labelledby="subjects-heading">
-            <h2 id="subjects-heading" className="text-lg font-semibold text-foreground">
-              哪些学科更需要关注？
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">兴趣和吃力学科可以重复选择。</p>
-            <fieldset className="mt-6">
-              <legend className="mb-2 text-sm font-medium text-foreground">感兴趣的学科</legend>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {SUBJECTS.map((subject) => (
-                  <ChoiceButton
-                    key={subject.id}
-                    label={subject.label}
-                    selected={form.favoriteSubjects.includes(subject.id)}
-                    onClick={() =>
-                      setForm((current) => ({
-                        ...current,
-                        favoriteSubjects: toggleSubject(current.favoriteSubjects, subject.id),
-                      }))
-                    }
-                  />
-                ))}
-              </div>
-            </fieldset>
-            <fieldset className="mt-7">
-              <legend className="mb-2 text-sm font-medium text-foreground">目前较吃力的学科</legend>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {SUBJECTS.map((subject) => (
-                  <ChoiceButton
-                    key={subject.id}
-                    label={subject.label}
-                    selected={form.weakSubjects.includes(subject.id)}
-                    onClick={() =>
-                      setForm((current) => ({
-                        ...current,
-                        weakSubjects: toggleSubject(current.weakSubjects, subject.id),
-                      }))
-                    }
-                  />
-                ))}
-              </div>
-            </fieldset>
-          </section>
-        )}
-
-        {step === 2 && (
-          <section aria-labelledby="goal-heading">
-            <h2 id="goal-heading" className="text-lg font-semibold text-foreground">
-              这段时间最想达成什么？
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">选择目标和更适合你的讲解方式。</p>
-            <fieldset className="mt-6">
-              <legend className="mb-2 text-sm font-medium text-foreground">学习目标</legend>
-              <div className="grid grid-cols-2 gap-2">
-                {LEARNING_GOALS.map((goal) => (
-                  <ChoiceButton
-                    key={goal}
-                    label={GOAL_LABELS[goal]}
-                    selected={form.learningGoal === goal}
-                    onClick={() => {
-                      setError('');
-                      setForm((current) => ({ ...current, learningGoal: goal }));
-                    }}
-                  />
-                ))}
-              </div>
-            </fieldset>
-            <div className="mt-5">
-              <label
-                htmlFor="goal-detail"
-                className="mb-2 block text-sm font-medium text-foreground"
-              >
-                具体目标（选填）
-              </label>
-              <Input
-                id="goal-detail"
-                value={form.goalDetail}
-                maxLength={120}
-                placeholder="例如：补齐代数基础"
-                className="min-h-11"
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, goalDetail: event.target.value }))
-                }
-              />
-            </div>
-            <fieldset className="mt-6">
-              <legend className="mb-2 text-sm font-medium text-foreground">讲解偏好</legend>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {TEACHING_PREFERENCES.map((preference) => (
-                  <ChoiceButton
-                    key={preference}
-                    label={PREFERENCE_LABELS[preference]}
-                    selected={form.teachingPreference === preference}
-                    onClick={() =>
-                      setForm((current) => ({
-                        ...current,
-                        teachingPreference: preference,
-                      }))
-                    }
-                  />
-                ))}
-              </div>
-            </fieldset>
-          </section>
-        )}
+        {step === 0 && <IdentityStep state={form} onChange={setForm} />}
+        {step === 1 && <IdentityContextEditor state={form} onChange={setForm} />}
+        {step === 2 && <GoalPreferenceStep state={form} onChange={setForm} />}
       </div>
 
-      <footer className="sticky bottom-0 shrink-0 border-t border-border bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+      <footer className="sticky bottom-0 z-20 shrink-0 border-t border-border bg-background/95 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur supports-[backdrop-filter]:bg-background/85">
         {error && (
-          <p className="mb-3 text-sm text-destructive" role="alert">
+          <p id="onboarding-error" className="mb-3 text-sm text-destructive" role="alert">
             {error}
           </p>
         )}
@@ -516,12 +509,23 @@ export function LearningProfileOnboarding() {
             <span />
           )}
           {step < 2 ? (
-            <Button type="button" className="min-h-11" onClick={nextStep}>
+            <Button
+              type="button"
+              className="min-h-11"
+              aria-describedby={error ? 'onboarding-error' : undefined}
+              onClick={nextStep}
+            >
               下一步
               <ArrowRight />
             </Button>
           ) : (
-            <Button type="button" className="min-h-11" disabled={isSaving} onClick={saveProfile}>
+            <Button
+              type="button"
+              className="min-h-11"
+              aria-describedby={error ? 'onboarding-error' : undefined}
+              disabled={isSaving}
+              onClick={saveProfile}
+            >
               {isSaving ? <Loader2 className="animate-spin" /> : <Check />}
               {isSaving ? '保存中…' : '保存画像'}
             </Button>
