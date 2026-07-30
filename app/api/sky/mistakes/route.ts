@@ -10,7 +10,7 @@ import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import type { ErrorType } from '@/lib/storage/dao/mistakes';
 import { createLogger } from '@/lib/logger';
-import { invalidateProfileCache } from '@/lib/student/profile-builder';
+import { recordReviewCompleted } from '@/lib/adaptive-learning/profile/event-recorder';
 import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:SkyMistakes');
@@ -121,12 +121,23 @@ export async function PATCH(req: NextRequest) {
       log.info('Mistake review reset (wrong):', id);
     }
 
-    // Invalidate student profile cache so the next profile build reflects the review result
+    // Record a review event and invalidate the profile cache so the next
+    // profile build reflects the review result in real time.
     try {
-      await invalidateProfileCache(auth.user.id);
-      log.info('Profile cache invalidated for user:', auth.user.id);
-    } catch (cacheErr) {
-      log.warn('Failed to invalidate profile cache after review:', cacheErr);
+      const storage = await getServerStorage();
+      const entry = await dao.get(auth.user.id, id);
+      if (entry) {
+        await recordReviewCompleted({
+          storage,
+          userId: auth.user.id,
+          source: 'mistake-review',
+          rating: correct ? 'recalled' : 'forgotten',
+          knowledgePoints: entry.knowledgePoints,
+          correlationId: entry.id,
+        });
+      }
+    } catch (eventErr) {
+      log.warn('Failed to record review event:', eventErr);
     }
 
     return apiSuccess({ reviewed: correct, id });

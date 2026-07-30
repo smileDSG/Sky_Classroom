@@ -1,0 +1,108 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryStorageProvider } from '@/lib/storage/memory-provider';
+import {
+  recordLearningEvent,
+  recordAnswerSubmitted,
+  recordReviewCompleted,
+  learningEventInputSchema,
+} from '@/lib/adaptive-learning/profile/event-recorder';
+import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
+
+vi.mock('@/lib/student/profile-builder', () => ({
+  invalidateProfileCache: vi.fn(async () => {}),
+}));
+
+describe('EventRecorder', () => {
+  let storage: MemoryStorageProvider;
+
+  beforeEach(() => {
+    storage = new MemoryStorageProvider();
+  });
+
+  it('records a valid learning event and assigns missing metadata', async () => {
+    const event = await recordLearningEvent(
+      {
+        userId: 'user-1',
+        type: 'answer-submitted',
+        source: 'quiz',
+        evidenceQuality: 'verified',
+        payload: { correct: true },
+      },
+      { storage },
+    );
+
+    expect(event).not.toBeNull();
+    expect(event?.eventId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(event?.schemaVersion).toBe('1.0.0');
+    expect(event?.nodeIds).toEqual([]);
+    expect(event?.type).toBe('answer-submitted');
+
+    const repository = new LearnerProfileRepository(storage);
+    const events = await repository.listLearningEvents('user-1');
+    expect(events).toHaveLength(1);
+    expect(events[0]?.payload).toEqual({ correct: true });
+  });
+
+  it('records answer-submitted with knowledge points', async () => {
+    const event = await recordAnswerSubmitted({
+      storage,
+      userId: 'user-1',
+      source: 'solve-grade',
+      correct: false,
+      knowledgePoints: ['三角形', '相似三角形'],
+    });
+
+    expect(event).not.toBeNull();
+    expect(event?.payload).toEqual({
+      correct: false,
+      knowledgePoints: ['三角形', '相似三角形'],
+    });
+  });
+
+  it('records review-completed events', async () => {
+    const event = await recordReviewCompleted({
+      storage,
+      userId: 'user-1',
+      source: 'mistake-review',
+      rating: 'recalled',
+      knowledgePoints: ['一元二次方程'],
+    });
+
+    expect(event).not.toBeNull();
+    expect(event?.type).toBe('review-completed');
+    expect(event?.payload).toEqual({
+      rating: 'recalled',
+      knowledgePoints: ['一元二次方程'],
+    });
+  });
+
+  it('swallows invalid events instead of throwing', async () => {
+    const event = await recordLearningEvent(
+      {
+        userId: 'user-1',
+        type: 'answer-submitted',
+        source: 'quiz',
+        evidenceQuality: 'verified',
+        payload: { wrongKey: true } as unknown as Record<string, unknown>,
+      },
+      { storage },
+    );
+
+    expect(event).toBeNull();
+    const repository = new LearnerProfileRepository(storage);
+    await expect(repository.listLearningEvents('user-1')).resolves.toHaveLength(0);
+  });
+
+  it('accepts a valid learning event input schema without metadata', () => {
+    const input = {
+      userId: 'user-1',
+      type: 'answer-submitted' as const,
+      source: 'quiz',
+      evidenceQuality: 'verified' as const,
+      payload: { correct: true },
+    };
+
+    const parsed = learningEventInputSchema.parse(input);
+    expect(parsed).toEqual(input);
+  });
+});

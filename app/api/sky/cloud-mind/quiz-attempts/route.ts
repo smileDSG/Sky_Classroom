@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { getServerStorage } from '@/lib/server/server-storage';
-import { invalidateProfileCache } from '@/lib/student/profile-builder';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import type { QuizAttemptInput, QuizAttemptQuestion } from '@/lib/student/quiz-attempts';
 import type { Difficulty, Subject } from '@/lib/solve/agents/analyze-types';
+import { recordAnswerSubmitted } from '@/lib/adaptive-learning/profile/event-recorder';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('API:QuizAttempts');
@@ -82,7 +82,23 @@ export async function POST(request: NextRequest) {
     const storage = await getServerStorage();
     const dao = createQuizAttemptDAO(storage);
     const attempt = await dao.add(input);
-    await invalidateProfileCache(input.userId || 'default-user');
+
+    // Record a learning event for every question so the profile can update
+    // mastery per knowledge point in real time.
+    await Promise.all(
+      attempt.questions.map((question, index) =>
+        recordAnswerSubmitted({
+          storage,
+          userId: attempt.userId,
+          source: 'quiz-attempts',
+          correct: question.isCorrect,
+          knowledgePoints: question.knowledgePoints,
+          correlationId: attempt.id,
+        }).catch((err) => {
+          log.warn(`Failed to record event for quiz question ${index}:`, err);
+        }),
+      ),
+    );
 
     log.info(`Quiz attempt saved: ${attempt.id}, ${attempt.correct}/${attempt.total}`);
     return apiSuccess({ attempt });

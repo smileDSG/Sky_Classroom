@@ -12,6 +12,7 @@ import type { ErrorType } from '@/lib/storage/dao/mistakes';
 import type { MistakeCause } from '@/lib/solve/types';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
 import { buildTeachingProjection } from '@/lib/adaptive-learning/profile/projection-builder';
+import { recordAnswerSubmitted } from '@/lib/adaptive-learning/profile/event-recorder';
 import { injectTeachingProjection } from '@/lib/assistant/context-injector';
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
 import { adaptiveLearningApiError } from '@/lib/adaptive-learning/api-error';
@@ -116,6 +117,20 @@ export async function POST(req: Request) {
           `错题本存储失败: ${errMsg}`,
         );
       }
+    }
+
+    // Record a learning event for every grading result so the learner profile
+    // can react to the latest evidence in real time.
+    try {
+      await recordAnswerSubmitted({
+        storage,
+        userId: auth.user.id,
+        source: 'solve-grade',
+        correct: result.isCorrect,
+        knowledgePoints: knowledgePoints ?? [],
+      });
+    } catch (eventErr) {
+      log.warn('Failed to record grading event:', eventErr);
     }
 
     return apiSuccess({ ...result });

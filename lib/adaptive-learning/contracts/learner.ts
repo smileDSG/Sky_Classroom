@@ -172,6 +172,7 @@ export const learningEvidenceQualitySchema = z.enum([
 const answerSubmittedPayloadSchema = z
   .object({
     correct: z.boolean(),
+    knowledgePoints: z.array(z.string()).optional(),
   })
   .strict();
 
@@ -182,7 +183,7 @@ export const learningEventSchema = z
     type: learningEventTypeSchema,
     occurredAt: isoDateTimeSchema,
     source: z.string().min(1),
-    nodeIds: z.array(nodeIdSchema),
+    nodeIds: z.array(nodeIdSchema).optional().default([]),
     evidenceQuality: learningEvidenceQualitySchema,
     payload: z.record(z.string(), z.unknown()),
     schemaVersion: z.literal('1.0.0'),
