@@ -795,26 +795,14 @@ export function LearnerProfileDashboard() {
     }
 
     try {
-      const [statsRes, cloudRes, pathRes] = await Promise.all([
-        fetch('/api/sky/learning-stats', { credentials: 'include' }),
-        fetch('/api/sky/cloud-mind/dashboard', { credentials: 'include' }),
-        fetch('/api/sky/learning-path', { credentials: 'include' }),
-      ]);
+      const res = await fetch('/api/sky/profile-dashboard', { credentials: 'include' });
 
-      if (!statsRes.ok) throw new Error(`学习统计接口错误: ${statsRes.status}`);
-      if (!cloudRes.ok) throw new Error(`驾驶舱接口错误: ${cloudRes.status}`);
-      if (!pathRes.ok) throw new Error(`学习路径接口错误: ${pathRes.status}`);
+      if (!res.ok) throw new Error(`数据大屏接口错误: ${res.status}`);
 
-      const stats = await statsRes.json();
-      const cloud = await cloudRes.json();
-      const path = await pathRes.json();
+      const json = await res.json();
 
       setState({
-        data: {
-          stats: stats.data ?? stats,
-          cloudMind: cloud.data ?? cloud,
-          learningPath: path.data ?? path,
-        },
+        data: json.data,
         loading: false,
         error: null,
         lastUpdated: new Date(),

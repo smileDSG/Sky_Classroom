@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { LayoutDashboard } from 'lucide-react';
 
 const NAV_ITEMS = [
   { label: '首页', href: '/sky', icon: '🏠' },
@@ -49,6 +50,22 @@ export function SkySidebar({ collapsed }: SkySidebarProps) {
             </Link>
           );
         })}
+
+        {/* 分隔线 */}
+        <div className="my-1 border-t border-gray-200 dark:border-slate-700" />
+
+        {/* 数据大屏入口 */}
+        <Link
+          href="/sky/learning/profile-dashboard"
+          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+            pathname === '/sky/learning/profile-dashboard'
+              ? 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300 font-semibold'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-slate-200'
+          }`}
+        >
+          <LayoutDashboard className="h-5 w-5 shrink-0" />
+          {!collapsed && <span>数据大屏</span>}
+        </Link>
       </nav>
 
       <div className="border-t border-gray-200 dark:border-slate-700 p-3 space-y-1">
