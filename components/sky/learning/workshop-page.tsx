@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   GraduationCap,
   Layers,
+  LayoutDashboard,
   Network,
   RefreshCw,
   Route,
@@ -573,6 +574,13 @@ function WorkshopPageContent() {
                   <RefreshCw className={cn('h-3 w-3', loadingSnapshot && 'animate-spin')} />
                   刷新数据
                 </button>
+                <Link
+                  href="/sky/learning/profile-dashboard"
+                  className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-1 font-medium text-violet-700 shadow-sm transition-colors hover:bg-violet-100 dark:border-violet-200/25 dark:bg-violet-300/10 dark:text-violet-100 dark:shadow-none dark:hover:bg-violet-300/20"
+                >
+                  <LayoutDashboard className="h-3 w-3" />
+                  数据大屏
+                </Link>
               </div>
             </div>
 
