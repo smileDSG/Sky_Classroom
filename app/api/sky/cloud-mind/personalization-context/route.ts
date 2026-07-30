@@ -106,8 +106,8 @@ export async function GET(req: NextRequest) {
     const [profile, mistakesResult, dueMistakes, recentAttempts, learningPath, profileSignals] =
       await Promise.all([
         resolveProfile(userId),
-        mistakeDAO.list({ page: 1, pageSize: 50 }),
-        mistakeDAO.getDueForReview(),
+        mistakeDAO.list(userId, { page: 1, pageSize: 50 }),
+        mistakeDAO.getDueForReview(userId),
         quizAttemptDAO.list({ userId, recentDays: 14 }),
         learningPathDAO.getActiveByUser(userId),
         profileSignalDAO.listByUser(userId),

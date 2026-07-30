@@ -6,6 +6,7 @@
  */
 
 import type { StorageProvider, StorageEntry } from './storage-types';
+import { StorageEntryAlreadyExistsError } from './storage-errors';
 import { createLogger } from '@/lib/logger';
 import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 
@@ -126,6 +127,7 @@ const CREATE_TABLES_SQL = [
 
   `CREATE TABLE IF NOT EXISTS mistakes (
     id                  VARCHAR(255) PRIMARY KEY,
+    user_id             VARCHAR(255) NOT NULL,
     problem_text        TEXT NOT NULL,
     problem_image       LONGTEXT,
     user_answer         TEXT NOT NULL,
@@ -142,9 +144,43 @@ const CREATE_TABLES_SQL = [
     created_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_mistakes_reviewed (reviewed),
-    INDEX idx_mistakes_next_review (next_review)
+    INDEX idx_mistakes_next_review (next_review),
+    INDEX idx_mistakes_owner_reviewed (user_id, reviewed),
+    INDEX idx_mistakes_owner_next_review (user_id, next_review)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 ];
+
+// ── Schema upgrades for mistakes owner isolation ────────────────────
+
+async function ensureMistakesOwnerSchema(pool: Pool): Promise<void> {
+  const [[columnRow]] = await pool.query<RowDataPacket[]>(
+    `SELECT COUNT(*) as cnt FROM information_schema.COLUMNS
+     WHERE table_schema = DATABASE() AND table_name = 'mistakes' AND column_name = 'user_id'`,
+  );
+
+  if (columnRow.cnt === 0) {
+    await pool.query(
+      'ALTER TABLE mistakes ADD COLUMN user_id VARCHAR(255) NULL AFTER id',
+    );
+  }
+
+  const indexes = [
+    { name: 'idx_mistakes_owner_reviewed', columns: 'user_id, reviewed' },
+    { name: 'idx_mistakes_owner_next_review', columns: 'user_id, next_review' },
+  ];
+
+  for (const { name, columns } of indexes) {
+    const [[indexRow]] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as cnt FROM information_schema.STATISTICS
+       WHERE table_schema = DATABASE() AND table_name = 'mistakes' AND index_name = ?`,
+      [name],
+    );
+
+    if (indexRow.cnt === 0) {
+      await pool.query(`ALTER TABLE mistakes ADD INDEX ${name} (${columns})`);
+    }
+  }
+}
 
 // ── Data migration from storage_entries ─────────────────────────────
 
@@ -157,125 +193,126 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
   ];
 
   for (const { table, key } of tables) {
-    try {
-      // Check if dedicated table is empty
-      const [countRows] = await pool.query<RowDataPacket[]>(
-        `SELECT COUNT(*) as cnt FROM ${table}`,
-      );
-      if (countRows[0].cnt > 0) continue;
+    // Check if dedicated table is empty
+    const [countRows] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as cnt FROM ${table}`,
+    );
+    if (countRows[0].cnt > 0) continue;
 
-      // Check if storage_entries has data for this table
-      const [oldRows] = await pool.query<RowDataPacket[]>(
-        'SELECT * FROM storage_entries WHERE table_name = ?',
-        [key],
-      );
-      if (oldRows.length === 0) continue;
+    // Check if storage_entries has data for this table
+    const [oldRows] = await pool.query<RowDataPacket[]>(
+      'SELECT * FROM storage_entries WHERE table_name = ?',
+      [key],
+    );
+    if (oldRows.length === 0) continue;
 
-      log.info(`Migrating ${oldRows.length} rows from storage_entries.${key} → ${table}`);
+    log.info(`Migrating ${oldRows.length} rows from storage_entries.${key} → ${table}`);
 
-      for (const row of oldRows) {
-        const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-        const createdAt =
-          typeof row.created_at === 'string' ? row.created_at : toDatetime(row.created_at);
-        const updatedAt =
-          typeof row.updated_at === 'string' ? row.updated_at : toDatetime(row.updated_at);
+    for (const row of oldRows) {
+      const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+      const createdAt =
+        typeof row.created_at === 'string' ? row.created_at : toDatetime(row.created_at);
+      const updatedAt =
+        typeof row.updated_at === 'string' ? row.updated_at : toDatetime(row.updated_at);
 
-        if (table === 'users') {
-          await pool.query(
-            `INSERT IGNORE INTO users (id, email, username, password_hash, role, status, guest_id, plan_type,
-              avatar, nickname, bio, education_level, grade, learning_style, detail_level,
-              preferred_language, ai_personality, ai_name, custom_instructions,
-              auto_generate_quiz, show_step_by_step, enable_memory, enable_rag,
-              email_verified, email_verify_token, reset_token, reset_token_expiry,
-              created_at, updated_at, last_login_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-            [
-              row.id,
-              data.email ?? null,
-              data.username,
-              data.passwordHash ?? null,
-              data.role ?? 'user',
-              data.status ?? 'active',
-              data.guestId ?? null,
-              data.planType ?? 'free',
-              data.avatar ?? null,
-              data.nickname ?? null,
-              data.bio ?? null,
-              data.educationLevel ?? null,
-              data.grade ?? null,
-              data.learningStyle ?? null,
-              data.detailLevel ?? null,
-              data.preferredLanguage ?? null,
-              data.aiPersonality ?? null,
-              data.aiName ?? null,
-              data.customInstructions ?? null,
-              data.autoGenerateQuiz ?? false,
-              data.showStepByStep ?? true,
-              data.enableMemory ?? true,
-              data.enableRAG ?? true,
-              data.emailVerified ?? false,
-              data.emailVerifyToken ?? null,
-              data.resetToken ?? null,
-              data.resetTokenExpiry ? toDatetime(data.resetTokenExpiry) : null,
-              createdAt,
-              updatedAt,
-              data.lastLoginAt ? toDatetime(data.lastLoginAt) : null,
-            ],
-          );
-        } else if (table === 'user_checkins') {
-          await pool.query(
-            'INSERT IGNORE INTO user_checkins (id, user_id, checkin_date, timestamp, created_at) VALUES (?,?,?,?,?)',
-            [row.id, data.userId, data.date, data.timestamp, createdAt],
-          );
-        } else if (table === 'user_stats') {
-          await pool.query(
-            `INSERT IGNORE INTO user_stats (id, user_id, stat_date, study_seconds, checkin_streak,
-              mastery_score, problems_attempted, problems_correct, scenes_completed, last_active_at, created_at, updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-            [
-              row.id,
-              data.userId,
-              data.date,
-              data.studySeconds ?? 0,
-              data.checkinStreak ?? 0,
-              data.masteryScore ?? 0,
-              data.problemsAttempted ?? 0,
-              data.problemsCorrect ?? 0,
-              data.scenesCompleted ?? 0,
-              data.lastActiveAt ?? Date.now(),
-              createdAt,
-              updatedAt,
-            ],
-          );
-        } else if (table === 'mistakes') {
-          await pool.query(
-            `INSERT IGNORE INTO mistakes (id, problem_text, problem_image, user_answer, correct_answer,
-              error_type, error_explanation, knowledge_points, review_count, last_review, next_review,
-              mastery_level, reviewed, source_session_id, created_at, updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-            [
-              row.id,
-              data.problemText ?? '',
-              data.problemImage ?? null,
-              data.userAnswer ?? '',
-              data.correctAnswer ?? '',
-              data.errorType ?? 'concept',
-              data.errorExplanation ?? null,
-              JSON.stringify(data.knowledgePoints ?? []),
-              data.reviewCount ?? 0,
-              data.lastReview ?? null,
-              data.nextReview ?? null,
-              data.masteryLevel ?? 0,
-              data.reviewed ?? false,
-              data.sourceSessionId ?? null,
-              createdAt,
-              updatedAt,
-            ],
-          );
-        }
+      if (table === 'users') {
+        await pool.query(
+          `INSERT IGNORE INTO users (id, email, username, password_hash, role, status, guest_id, plan_type,
+            avatar, nickname, bio, education_level, grade, learning_style, detail_level,
+            preferred_language, ai_personality, ai_name, custom_instructions,
+            auto_generate_quiz, show_step_by_step, enable_memory, enable_rag,
+            email_verified, email_verify_token, reset_token, reset_token_expiry,
+            created_at, updated_at, last_login_at)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            row.id,
+            data.email ?? null,
+            data.username,
+            data.passwordHash ?? null,
+            data.role ?? 'user',
+            data.status ?? 'active',
+            data.guestId ?? null,
+            data.planType ?? 'free',
+            data.avatar ?? null,
+            data.nickname ?? null,
+            data.bio ?? null,
+            data.educationLevel ?? null,
+            data.grade ?? null,
+            data.learningStyle ?? null,
+            data.detailLevel ?? null,
+            data.preferredLanguage ?? null,
+            data.aiPersonality ?? null,
+            data.aiName ?? null,
+            data.customInstructions ?? null,
+            data.autoGenerateQuiz ?? false,
+            data.showStepByStep ?? true,
+            data.enableMemory ?? true,
+            data.enableRAG ?? true,
+            data.emailVerified ?? false,
+            data.emailVerifyToken ?? null,
+            data.resetToken ?? null,
+            data.resetTokenExpiry ? toDatetime(data.resetTokenExpiry) : null,
+            createdAt,
+            updatedAt,
+            data.lastLoginAt ? toDatetime(data.lastLoginAt) : null,
+          ],
+        );
+      } else if (table === 'user_checkins') {
+        await pool.query(
+          'INSERT IGNORE INTO user_checkins (id, user_id, checkin_date, timestamp, created_at) VALUES (?,?,?,?,?)',
+          [row.id, data.userId, data.date, data.timestamp, createdAt],
+        );
+      } else if (table === 'user_stats') {
+        await pool.query(
+          `INSERT IGNORE INTO user_stats (id, user_id, stat_date, study_seconds, checkin_streak,
+            mastery_score, problems_attempted, problems_correct, scenes_completed, last_active_at, created_at, updated_at)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            row.id,
+            data.userId,
+            data.date,
+            data.studySeconds ?? 0,
+            data.checkinStreak ?? 0,
+            data.masteryScore ?? 0,
+            data.problemsAttempted ?? 0,
+            data.problemsCorrect ?? 0,
+            data.scenesCompleted ?? 0,
+            data.lastActiveAt ?? Date.now(),
+            createdAt,
+            updatedAt,
+          ],
+        );
+      } else if (table === 'mistakes') {
+        // Only migrate mistakes that have a known owner. Legacy entries without
+        // a userId cannot be safely attributed, so they are skipped.
+        if (!data.userId) continue;
+
+        await pool.query(
+          `INSERT IGNORE INTO mistakes (id, user_id, problem_text, problem_image, user_answer, correct_answer,
+            error_type, error_explanation, knowledge_points, review_count, last_review, next_review,
+            mastery_level, reviewed, source_session_id, created_at, updated_at)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            row.id,
+            data.userId,
+            data.problemText ?? '',
+            data.problemImage ?? null,
+            data.userAnswer ?? '',
+            data.correctAnswer ?? '',
+            data.errorType ?? 'concept',
+            data.errorExplanation ?? null,
+            JSON.stringify(data.knowledgePoints ?? []),
+            data.reviewCount ?? 0,
+            data.lastReview ?? null,
+            data.nextReview ?? null,
+            data.masteryLevel ?? 0,
+            data.reviewed ?? false,
+            data.sourceSessionId ?? null,
+            createdAt,
+            updatedAt,
+          ],
+        );
       }
-    } catch (err) {
-      log.error(`Migration failed for ${table}:`, err instanceof Error ? err.message : err);
     }
   }
 }
@@ -294,6 +331,9 @@ export class MySQLStorageProvider implements StorageProvider {
         await pool.query(sql);
       }
 
+      // Ensure mistakes table has owner-isolation columns/indexes for existing deployments
+      await ensureMistakesOwnerSchema(pool);
+
       // Migrate old data from storage_entries
       await migrateFromStorageEntries(pool);
 
@@ -301,6 +341,54 @@ export class MySQLStorageProvider implements StorageProvider {
     } catch (err) {
       log.error('MySQL connection failed:', err instanceof Error ? err.message : err);
       return false;
+    }
+  }
+
+  // ── INSERT (atomic create) ──────────────────────────────────────────
+
+  async insert<T>(table: string, entry: StorageEntry<T>): Promise<void> {
+    const pool = await getPool();
+    const data = entry.data as Record<string, unknown>;
+
+    try {
+      if (table === 'mistakes') {
+        await pool.query(
+          `INSERT INTO mistakes (id, user_id, problem_text, problem_image, user_answer, correct_answer,
+            error_type, error_explanation, knowledge_points, review_count, last_review, next_review,
+            mastery_level, reviewed, source_session_id, created_at, updated_at)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            entry.id,
+            data.userId,
+            data.problemText ?? '',
+            data.problemImage ?? null,
+            data.userAnswer ?? '',
+            data.correctAnswer ?? '',
+            data.errorType ?? 'concept',
+            data.errorExplanation ?? null,
+            JSON.stringify(data.knowledgePoints ?? []),
+            data.reviewCount ?? 0,
+            data.lastReview ?? null,
+            data.nextReview ?? null,
+            data.masteryLevel ?? 0,
+            data.reviewed ?? false,
+            data.sourceSessionId ?? null,
+            toDatetime(entry.createdAt),
+            toDatetime(entry.updatedAt),
+          ],
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO storage_entries (id, table_name, data, created_at, updated_at)
+           VALUES (?,?,?,?,?)`,
+          [entry.id, table, JSON.stringify(data), toDatetime(entry.createdAt), toDatetime(entry.updatedAt)],
+        );
+      }
+    } catch (err) {
+      if (err instanceof Error && 'code' in err && err.code === 'ER_DUP_ENTRY') {
+        throw new StorageEntryAlreadyExistsError(table, entry.id, { cause: err });
+      }
+      throw err;
     }
   }
 
@@ -399,12 +487,12 @@ export class MySQLStorageProvider implements StorageProvider {
       );
     } else if (table === 'mistakes') {
       await pool.query(
-        `INSERT INTO mistakes (id, problem_text, problem_image, user_answer, correct_answer,
+        `INSERT INTO mistakes (id, user_id, problem_text, problem_image, user_answer, correct_answer,
           error_type, error_explanation, knowledge_points, review_count, last_review, next_review,
           mastery_level, reviewed, source_session_id, created_at, updated_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON DUPLICATE KEY UPDATE
-          problem_text=VALUES(problem_text), problem_image=VALUES(problem_image),
+          user_id=VALUES(user_id), problem_text=VALUES(problem_text), problem_image=VALUES(problem_image),
           user_answer=VALUES(user_answer), correct_answer=VALUES(correct_answer),
           error_type=VALUES(error_type), error_explanation=VALUES(error_explanation),
           knowledge_points=VALUES(knowledge_points), review_count=VALUES(review_count),
@@ -413,6 +501,7 @@ export class MySQLStorageProvider implements StorageProvider {
           source_session_id=VALUES(source_session_id), updated_at=VALUES(updated_at)`,
         [
           entry.id,
+          data.userId,
           data.problemText ?? '',
           data.problemImage ?? null,
           data.userAnswer ?? '',
@@ -667,25 +756,36 @@ function rowToStatsEntry(row: RowDataPacket): StorageEntry {
 }
 
 function rowToMistakeEntry(row: RowDataPacket): StorageEntry {
+  const knowledgePoints =
+    typeof row.knowledge_points === 'string'
+      ? JSON.parse(row.knowledge_points)
+      : (row.knowledge_points ?? []);
+
   return {
     id: row.id as string,
     data: {
+      id: row.id as string,
+      userId: row.user_id,
       problemText: row.problem_text,
       problemImage: row.problem_image,
       userAnswer: row.user_answer,
       correctAnswer: row.correct_answer,
       errorType: row.error_type,
       errorExplanation: row.error_explanation,
-      knowledgePoints:
-        typeof row.knowledge_points === 'string'
-          ? JSON.parse(row.knowledge_points)
-          : (row.knowledge_points ?? []),
+      knowledgePoints,
       reviewCount: row.review_count,
       lastReview: row.last_review ? Number(row.last_review) : undefined,
       nextReview: row.next_review ? Number(row.next_review) : undefined,
       masteryLevel: row.mastery_level,
       reviewed: !!row.reviewed,
       sourceSessionId: row.source_session_id,
+      source: row.source,
+      solutionSteps:
+        typeof row.solution_steps === 'string'
+          ? JSON.parse(row.solution_steps)
+          : (row.solution_steps ?? []),
+      hints:
+        typeof row.hints === 'string' ? JSON.parse(row.hints) : (row.hints ?? []),
     },
     createdAt: parseDatetime(row.created_at),
     updatedAt: parseDatetime(row.updated_at),

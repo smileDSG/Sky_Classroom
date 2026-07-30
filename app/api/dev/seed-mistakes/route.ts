@@ -169,13 +169,15 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const clearOnly = body.clear === true;
 
+  const userId = (body.userId as string | undefined) ?? 'dev-seed-user';
+
   try {
     const dao = await createMistakeBookDAO(await getServerStorage());
 
     // Clear existing
-    const { items: existing } = await dao.list({ page: 1, pageSize: 9999 });
+    const { items: existing } = await dao.list(userId, { page: 1, pageSize: 9999 });
     for (const item of existing) {
-      await dao.delete(item.id);
+      await dao.delete(userId, item.id);
     }
     log.info(`Cleared ${existing.length} existing mistakes`);
 
@@ -190,7 +192,7 @@ export async function POST(req: NextRequest) {
       const offset = Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000);
       const solvedAt = now - offset;
 
-      await dao.add({
+      await dao.add(userId, {
         id: s.id,
         problemText: s.problemText,
         userAnswer: s.userAnswer,
@@ -201,7 +203,7 @@ export async function POST(req: NextRequest) {
       });
 
       // Set a realistic lastReview / nextReview
-      await dao.update(s.id, {
+      await dao.update(userId, s.id, {
         lastReview: solvedAt,
         nextReview: solvedAt + 1 * 24 * 60 * 60 * 1000, // due tomorrow
       });
@@ -224,13 +226,14 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const clearOnly = url.searchParams.get('clear') === 'true';
+  const userId = url.searchParams.get('userId') ?? 'dev-seed-user';
 
   try {
     const dao = await createMistakeBookDAO(await getServerStorage());
-    const { items: existing } = await dao.list({ page: 1, pageSize: 9999 });
+    const { items: existing } = await dao.list(userId, { page: 1, pageSize: 9999 });
 
     for (const item of existing) {
-      await dao.delete(item.id);
+      await dao.delete(userId, item.id);
     }
 
     if (clearOnly) {
@@ -243,7 +246,7 @@ export async function GET(req: NextRequest) {
       const offset = Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000);
       const solvedAt = now - offset;
 
-      await dao.add({
+      await dao.add(userId, {
         id: s.id,
         problemText: s.problemText,
         userAnswer: s.userAnswer,
@@ -254,7 +257,7 @@ export async function GET(req: NextRequest) {
       });
 
       // Set a realistic lastReview / nextReview
-      await dao.update(s.id, {
+      await dao.update(userId, s.id, {
         lastReview: solvedAt,
         nextReview: solvedAt + 1 * 24 * 60 * 60 * 1000,
       });

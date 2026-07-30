@@ -97,8 +97,9 @@ export async function POST(req: NextRequest) {
     let graphNodes: GraphNode[] | null = null;
     let solveHistory: QuestionBankEntry[] | null = null;
     try {
+      if (!currentUser) throw new Error('No authenticated user');
       const dao = await getDAO();
-      const result = await dao.list({ pageSize: 9999 });
+      const result = await dao.list(currentUser.id, { pageSize: 9999 });
       mistakes = result.items;
       if (mistakes.length > 0) {
         const graph = buildGraphFromMistakes(mistakes);

@@ -35,7 +35,7 @@ export async function analyzeQuizPerformance(
 
   // Fetch recent mistakes and direct quiz attempts
   const [{ items: allMistakes }, recentAttempts] = await Promise.all([
-    dao.list({ pageSize: 9999 }),
+    dao.list(userId, { pageSize: 9999 }),
     quizAttemptDAO.list({ userId, recentDays }),
   ]);
   const recentMistakes = allMistakes.filter(

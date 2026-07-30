@@ -57,7 +57,7 @@ export async function getLearningStats(userId: string): Promise<LearningStatsRes
   // ── Calculate mastery from knowledge graph ──
   let masteryPercent = 0;
   try {
-    const mistakesResult = await mistakeDAO.list({ pageSize: 1000 });
+    const mistakesResult = await mistakeDAO.list(userId, { pageSize: 1000 });
     if (mistakesResult.items.length > 0) {
       const clientMistakes = mistakesResult.items.map((entry) => ({
         id: entry.id,

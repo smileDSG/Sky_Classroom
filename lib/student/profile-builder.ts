@@ -144,7 +144,7 @@ export async function buildStudentProfile(userId: string): Promise<StudentProfil
 
   // Fetch all learning signals
   const [{ items: mistakes }, quizAttempts] = await Promise.all([
-    mistakeDAO.list({ pageSize: 9999 }),
+    mistakeDAO.list(userId, { pageSize: 9999 }),
     quizAttemptDAO.list({ userId }),
   ]);
   log.info(`Building profile for ${userId}: ${mistakes.length} mistakes, ${quizAttempts.length} quiz attempts loaded`);

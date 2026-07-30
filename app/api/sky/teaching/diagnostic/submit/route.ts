@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
         });
 
         for (const a of wrongAnswers) {
-          await mistakeDAO.add({
+          await mistakeDAO.add(userId, {
             id: `diag_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
             problemText: a.question,
             userAnswer: String(a.selectedOption),

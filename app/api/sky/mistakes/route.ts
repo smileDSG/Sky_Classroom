@@ -11,8 +11,7 @@ import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import type { ErrorType } from '@/lib/storage/dao/mistakes';
 import { createLogger } from '@/lib/logger';
 import { invalidateProfileCache } from '@/lib/student/profile-builder';
-import { cookies } from 'next/headers';
-import { verifyAccessToken } from '@/lib/server/auth';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:SkyMistakes');
 
@@ -32,6 +31,9 @@ async function getDAO() {
 // ── GET — list / query mistakes ──────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const dao = await getDAO();
     const url = new URL(req.url);
@@ -41,7 +43,7 @@ export async function GET(req: NextRequest) {
     const page = url.searchParams.get('page');
     const pageSize = url.searchParams.get('pageSize');
 
-    const result = await dao.list({
+    const result = await dao.list(auth.user.id, {
       errorType: errorType ?? undefined,
       reviewed: reviewed !== null ? reviewed === 'true' : undefined,
       masteryBelow: masteryBelow ? Number(masteryBelow) : undefined,
@@ -59,13 +61,16 @@ export async function GET(req: NextRequest) {
 // ── POST — create a new mistake entry ────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const dao = await getDAO();
     const body = await req.json();
 
     const id = `mistake-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    await dao.add({
+    await dao.add(auth.user.id, {
       id,
       problemText: body.problemText ?? '',
       problemImage: body.problemImage,
@@ -89,6 +94,9 @@ export async function POST(req: NextRequest) {
 // ── PATCH — record a review (Ebbinghaus scheduling) ──────────────────
 
 export async function PATCH(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const dao = await getDAO();
     const body = await req.json();
@@ -99,26 +107,24 @@ export async function PATCH(req: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '缺少 id 参数');
     }
 
+    const updated = correct
+      ? await dao.recordReview(auth.user.id, id)
+      : await dao.resetReview(auth.user.id, id);
+
+    if (!updated) {
+      return apiError(API_ERROR_CODES.NOT_FOUND, 404, '错题不存在');
+    }
+
     if (correct) {
-      await dao.recordReview(id);
       log.info('Mistake reviewed (correct):', id);
     } else {
-      // Wrong answer — reset review count
-      await dao.resetReview(id);
       log.info('Mistake review reset (wrong):', id);
     }
 
     // Invalidate student profile cache so the next profile build reflects the review result
     try {
-      const cookieStore = await cookies();
-      const accessToken = cookieStore.get('access_token');
-      if (accessToken) {
-        const payload = await verifyAccessToken(accessToken.value);
-        if (payload?.sub) {
-          await invalidateProfileCache(payload.sub);
-          log.info('Profile cache invalidated for user:', payload.sub);
-        }
-      }
+      await invalidateProfileCache(auth.user.id);
+      log.info('Profile cache invalidated for user:', auth.user.id);
     } catch (cacheErr) {
       log.warn('Failed to invalidate profile cache after review:', cacheErr);
     }
@@ -133,15 +139,18 @@ export async function PATCH(req: NextRequest) {
 // ── DELETE — remove a mistake (or all if ?all=true) ──────────────────
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const dao = await getDAO();
     const url = new URL(req.url);
 
     // Bulk delete: ?all=true
     if (url.searchParams.get('all') === 'true') {
-      const { items } = await dao.list({ page: 1, pageSize: 99999 });
+      const { items } = await dao.list(auth.user.id, { page: 1, pageSize: 99999 });
       for (const item of items) {
-        await dao.delete(item.id);
+        await dao.delete(auth.user.id, item.id);
       }
       log.info(`Bulk deleted ${items.length} mistakes`);
       return apiSuccess({ deleted: items.length });
@@ -153,7 +162,11 @@ export async function DELETE(req: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '缺少 id 参数');
     }
 
-    await dao.delete(id);
+    const deleted = await dao.delete(auth.user.id, id);
+    if (!deleted) {
+      return apiError(API_ERROR_CODES.NOT_FOUND, 404, '错题不存在');
+    }
+
     log.info('Mistake deleted:', id);
     return apiSuccess({ deleted: true, id });
   } catch (err) {

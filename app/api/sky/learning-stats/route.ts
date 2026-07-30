@@ -10,9 +10,11 @@
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { getLearningStats } from '@/lib/server/learning-stats';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
 import { createLogger } from '@/lib/logger';
+import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
 
 const log = createLogger('API:LearningStats');
 
@@ -43,7 +45,13 @@ export async function GET(req: NextRequest) {
     }
 
     const stats = await getLearningStats(userId);
-    return apiSuccess({ ...stats });
+
+    // ── Authoritative learner profile ──
+    const storage = await getServerStorage();
+    const profileRepository = new LearnerProfileRepository(storage);
+    const preferences = await profileRepository.getLatestPreferences(userId);
+
+    return apiSuccess({ ...stats, learnerProfile: preferences ?? null });
   } catch (err) {
     log.error('Learning stats error:', err);
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '学习统计查询失败');

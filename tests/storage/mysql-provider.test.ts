@@ -11,6 +11,7 @@ vi.mock('mysql2/promise', () => ({
   default: {
     createPool: vi.fn(() => ({ query: mysqlBoundary.query })),
   },
+  createPool: vi.fn(() => ({ query: mysqlBoundary.query })),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -166,7 +167,7 @@ describe('MySQLStorageProvider insert', () => {
         return [[{ cnt: schemaState.hasUserId ? 1 : 0 }], []];
       }
       if (normalized.includes('FROM information_schema.STATISTICS')) {
-        return [[{ cnt: schemaState.indexes.has(String(params[1])) ? 1 : 0 }], []];
+        return [[{ cnt: schemaState.indexes.has(String(params[0])) ? 1 : 0 }], []];
       }
       if (normalized === 'ALTER TABLE mistakes ADD COLUMN user_id VARCHAR(255) NULL AFTER id') {
         schemaState.hasUserId = true;

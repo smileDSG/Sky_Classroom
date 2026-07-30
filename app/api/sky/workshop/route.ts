@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
 
     const [{ items: mistakeEntries, total }, learningStats, profile, memoryReviewEntries] =
       await Promise.all([
-        mistakeDAO.list({ pageSize: 9999 }),
+        mistakeDAO.list(userId, { pageSize: 9999 }),
         getLearningStats(userId).catch((error) => {
           log.warn('Learning stats unavailable:', error);
           return null;

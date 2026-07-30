@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
         // Add knowledge points to mistake book for prioritized review
         const mistakeDAO = createMistakeBookDAO(storage);
         for (const kp of knowledgePoints) {
-          await mistakeDAO.add({
+          await mistakeDAO.add(userId, {
             id: `review_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
             problemText: `需复习知识点: ${kp}`,
             userAnswer: '',

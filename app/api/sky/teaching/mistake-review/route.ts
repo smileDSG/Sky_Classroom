@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     // Auth + quota check
     const quota = await requireQuota('generationCount');
     if ('error' in quota) return quota.error;
+    const userId = quota.userId;
 
     // Fetch mistakes from storage
     const storage = await getServerStorage();
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     const mistakes: NonNullable<Awaited<ReturnType<typeof dao.get>>>[] = [];
     for (const id of mistakeIds) {
-      const entry = await dao.get(id);
+      const entry = await dao.get(userId, id);
       if (entry) mistakes.push(entry);
     }
 

@@ -41,7 +41,7 @@ export async function buildPathGenerationContext(userId: string): Promise<PathGe
   const mistakeDAO = createMistakeBookDAO(storage);
 
   // Fetch raw mistake entries for review scheduling and graph building
-  const { items: mistakes } = await mistakeDAO.list({ pageSize: 9999 });
+  const { items: mistakes } = await mistakeDAO.list(userId, { pageSize: 9999 });
 
   // Build profile (includes its own mistake + quiz analysis with 30-min cache)
   const profile = await buildStudentProfile(userId);
