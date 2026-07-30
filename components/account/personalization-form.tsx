@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import {
   AlertCircle,
+  ArrowRight,
   BookOpen,
   Brain,
   CheckCircle2,
@@ -278,17 +280,29 @@ export function PersonalizationForm() {
 
   const isSaving = saveState === 'saving';
   const saveDisabled = isSaving || saveState === 'conflict';
+  const onboardingLink = (
+    <Link
+      href="/sky/onboarding?mode=edit&redirect=%2Faccount"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      填写/编辑用户画像
+      <ArrowRight className="size-4" />
+    </Link>
+  );
 
   if (loadState === 'loading') {
     return (
-      <Card
-        role="status"
-        aria-live="polite"
-        className="flex min-h-56 items-center justify-center gap-3 border-violet-100 bg-violet-50/40 p-8 dark:border-violet-900 dark:bg-violet-950/20"
-      >
-        <LoaderCircle className="size-5 animate-spin text-violet-600" />
-        <span className="text-sm text-muted-foreground">正在加载服务端个人画像…</span>
-      </Card>
+      <div className="space-y-4">
+        {onboardingLink}
+        <Card
+          role="status"
+          aria-live="polite"
+          className="flex min-h-56 items-center justify-center gap-3 border-violet-100 bg-violet-50/40 p-8 dark:border-violet-900 dark:bg-violet-950/20"
+        >
+          <LoaderCircle className="size-5 animate-spin text-violet-600" />
+          <span className="text-sm text-muted-foreground">正在加载服务端个人画像…</span>
+        </Card>
+      </div>
     );
   }
 
@@ -338,6 +352,8 @@ export function PersonalizationForm() {
           恢复初始值
         </Button>
       </div>
+
+      {onboardingLink}
 
       <div
         role="tablist"

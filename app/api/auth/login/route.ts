@@ -10,6 +10,8 @@ import { signAccessToken, signRefreshToken, verifyPassword } from '@/lib/server/
 import { ACCESS_COOKIE_MAX_AGE, REFRESH_COOKIE_MAX_AGE } from '@/lib/server/auth/jwt';
 import { createUserDAO } from '@/lib/storage/dao/users';
 import { ensureAdminUser } from '@/lib/server/admin-seed';
+import { DEMO_USERNAME } from '@/lib/auth/demo-account';
+import { ensureDemoUser } from '@/lib/server/demo-user';
 
 const LoginSchema = z.object({
   emailOrUsername: z.string().min(1),
@@ -27,6 +29,10 @@ export async function POST(request: Request) {
     }
 
     const { emailOrUsername, password } = parsed.data;
+    if (emailOrUsername === DEMO_USERNAME) {
+      await ensureDemoUser();
+    }
+
     const dao = await createUserDAO();
 
     // Lookup by email first, then username

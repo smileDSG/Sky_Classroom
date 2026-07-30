@@ -13,8 +13,10 @@ import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
 
 const log = createLogger('ServerStorage');
 
-let _cached: StorageProvider | null = null;
-let _requiredCached: StorageProvider | null = null;
+const globalForServerStorage = globalThis as unknown as {
+  _serverStorageProvider?: StorageProvider | null;
+  _requiredServerStorageProvider?: StorageProvider | null;
+};
 
 function persistentStorageUnavailable(
   message: string,
@@ -30,13 +32,15 @@ function persistentStorageUnavailable(
 }
 
 export async function getRequiredServerStorage(): Promise<StorageProvider> {
-  if (_requiredCached) return _requiredCached;
+  if (globalForServerStorage._requiredServerStorageProvider) {
+    return globalForServerStorage._requiredServerStorageProvider;
+  }
 
   if (process.env.MYSQL_DATABASE) {
     const provider = new MySQLStorageProvider();
     if (await provider.isAvailable()) {
       log.info('Required server storage: using MySQL');
-      _requiredCached = provider;
+      globalForServerStorage._requiredServerStorageProvider = provider;
       return provider;
     }
 
@@ -50,7 +54,7 @@ export async function getRequiredServerStorage(): Promise<StorageProvider> {
     const provider = new SupabaseStorageProvider();
     if (await provider.isAvailable()) {
       log.info('Required server storage: using Supabase');
-      _requiredCached = provider;
+      globalForServerStorage._requiredServerStorageProvider = provider;
       return provider;
     }
 
@@ -65,20 +69,22 @@ export async function getRequiredServerStorage(): Promise<StorageProvider> {
 }
 
 export async function getServerStorage(): Promise<StorageProvider> {
-  if (_cached) return _cached;
+  if (globalForServerStorage._serverStorageProvider) {
+    return globalForServerStorage._serverStorageProvider;
+  }
 
   // Try MySQL first
   if (process.env.MYSQL_DATABASE) {
     const provider = new MySQLStorageProvider();
     if (await provider.isAvailable()) {
       log.info('Server storage: using MySQL');
-      _cached = provider;
+      globalForServerStorage._serverStorageProvider = provider;
       return provider;
     }
     log.error(
       `MySQL configured (database: ${process.env.MYSQL_DATABASE}) but connection failed. ` +
-      `Check: MySQL is running, host=${process.env.MYSQL_HOST || 'localhost'}:${process.env.MYSQL_PORT || 3306}, ` +
-      `user=${process.env.MYSQL_USER || 'root'}. Falling back to next provider.`
+        `Check: MySQL is running, host=${process.env.MYSQL_HOST || 'localhost'}:${process.env.MYSQL_PORT || 3306}, ` +
+        `user=${process.env.MYSQL_USER || 'root'}. Falling back to next provider.`,
     );
   }
 
@@ -87,7 +93,7 @@ export async function getServerStorage(): Promise<StorageProvider> {
     const provider = new SupabaseStorageProvider();
     if (await provider.isAvailable()) {
       log.info('Server storage: using Supabase');
-      _cached = provider;
+      globalForServerStorage._serverStorageProvider = provider;
       return provider;
     }
     log.error('Supabase configured but unavailable');
@@ -95,9 +101,9 @@ export async function getServerStorage(): Promise<StorageProvider> {
 
   log.error(
     '!!! NO PERSISTENT STORAGE AVAILABLE — falling back to in-memory. ' +
-    'Data (check-ins, mistakes, etc.) will be LOST on server restart. ' +
-    'Fix: Start MySQL and ensure it is accessible, or configure SUPABASE_URL.'
+      'Data (check-ins, mistakes, etc.) will be LOST on server restart. ' +
+      'Fix: Start MySQL and ensure it is accessible, or configure SUPABASE_URL.',
   );
-  _cached = new MemoryStorageProvider();
-  return _cached;
+  globalForServerStorage._serverStorageProvider = new MemoryStorageProvider();
+  return globalForServerStorage._serverStorageProvider;
 }

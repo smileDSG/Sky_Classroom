@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DEMO_PASSWORD, DEMO_USERNAME } from '@/lib/auth/demo-account';
 
 type AuthLayoutOptions = Omit<ComponentProps<typeof AuthLayout>, 'children'>;
 
@@ -29,6 +30,7 @@ function LoginForm({ authLayoutProps, noAuthLayout }: LoginPageContentProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [demoAccountEnabled, setDemoAccountEnabled] = useState(false);
 
   const redirect = searchParams.get('redirect') || '/';
   const reason = searchParams.get('reason');
@@ -42,6 +44,26 @@ function LoginForm({ authLayoutProps, noAuthLayout }: LoginPageContentProps) {
       toast.warning('请先登录后再访问');
     }
   }, [reason]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadDemoAccountAvailability() {
+      try {
+        const response = await fetch('/api/auth/demo-account');
+        if (!response.ok) return;
+        const data = (await response.json()) as { enabled?: unknown };
+        if (active && data.enabled === true) setDemoAccountEnabled(true);
+      } catch {
+        // The demo account is optional; failed checks remain disabled.
+      }
+    }
+
+    void loadDemoAccountAvailability();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,24 +196,43 @@ function LoginForm({ authLayoutProps, noAuthLayout }: LoginPageContentProps) {
         </div>
       </div>
 
-      {/* Default credentials hint */}
+      {/* Test credentials */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="rounded-xl bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/60 dark:border-sky-800/30 p-3"
+        className="space-y-2 rounded-xl border border-sky-200/60 bg-sky-50/80 p-3 dark:border-sky-800/30 dark:bg-sky-950/30"
       >
-        <div className="flex items-center gap-2 text-sm">
-          <div className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400">
-            <User className="size-3.5" />
-            <span className="font-medium">admin</span>
-          </div>
-          <span className="text-slate-300 dark:text-slate-600">|</span>
-          <div className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400">
-            <Lock className="size-3.5" />
-            <span className="font-medium">123</span>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span className="font-medium text-slate-600 dark:text-slate-300">管理员</span>
+          <div className="flex min-w-0 items-center gap-2 text-sky-600 dark:text-sky-400">
+            <span className="flex items-center gap-1.5">
+              <User className="size-3.5" />
+              <span className="font-medium">admin</span>
+            </span>
+            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <span className="flex items-center gap-1.5">
+              <Lock className="size-3.5" />
+              <span className="font-medium">123</span>
+            </span>
           </div>
         </div>
+        {demoAccountEnabled && (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-sky-200/60 pt-2 text-sm dark:border-sky-800/30">
+            <span className="font-medium text-slate-600 dark:text-slate-300">普通测试用户</span>
+            <div className="flex min-w-0 items-center gap-2 text-sky-600 dark:text-sky-400">
+              <span className="flex items-center gap-1.5">
+                <User className="size-3.5" />
+                <span className="font-medium">{DEMO_USERNAME}</span>
+              </span>
+              <span className="text-slate-300 dark:text-slate-600">|</span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                <Lock className="size-3.5 shrink-0" />
+                <span className="break-all font-medium">{DEMO_PASSWORD}</span>
+              </span>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Footer */}

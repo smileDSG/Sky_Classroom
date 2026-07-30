@@ -7,12 +7,14 @@ import { verifyAccessToken } from '@/lib/server/auth';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
+import { createUserDAO } from '@/lib/storage/dao/users';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { createProfileSignalDAO } from '@/lib/student/profile-signals';
 import { buildPersonalizationContext } from '@/lib/cloud-mind/personalization-context';
 import { createLogger } from '@/lib/logger';
 import type { ProfileCacheEntry, StudentProfile } from '@/lib/student/profile-types';
+import { getLearnerSupportSubjectIds } from '@/lib/onboarding/consumption';
 
 const log = createLogger('API:CloudMindPersonalizationContext');
 const DEMO_PROFILE_USER_ID = 'default-user';
@@ -102,16 +104,25 @@ export async function GET(req: NextRequest) {
     const quizAttemptDAO = createQuizAttemptDAO(storage);
     const learningPathDAO = createLearningPathDAO(storage);
     const profileSignalDAO = createProfileSignalDAO(storage);
+    const userDAO = await createUserDAO(storage);
 
-    const [profile, mistakesResult, dueMistakes, recentAttempts, learningPath, profileSignals] =
-      await Promise.all([
-        resolveProfile(userId),
-        mistakeDAO.list(userId, { page: 1, pageSize: 50 }),
-        mistakeDAO.getDueForReview(userId),
-        quizAttemptDAO.list({ userId, recentDays: 14 }),
-        learningPathDAO.getActiveByUser(userId),
-        profileSignalDAO.listByUser(userId),
-      ]);
+    const [
+      profile,
+      mistakesResult,
+      dueMistakes,
+      recentAttempts,
+      learningPath,
+      profileSignals,
+      user,
+    ] = await Promise.all([
+      resolveProfile(userId),
+      mistakeDAO.list(userId, { page: 1, pageSize: 50 }),
+      mistakeDAO.getDueForReview(userId),
+      quizAttemptDAO.list({ userId, recentDays: 14 }),
+      learningPathDAO.getActiveByUser(userId),
+      profileSignalDAO.listByUser(userId),
+      userDAO.getById(userId),
+    ]);
 
     const context = buildPersonalizationContext({
       userId,
@@ -121,6 +132,7 @@ export async function GET(req: NextRequest) {
       recentAttempts,
       learningPath,
       profileSignals,
+      selfReportedWeakSubjects: user ? getLearnerSupportSubjectIds(user) : undefined,
     });
 
     return apiSuccess({ data: context });

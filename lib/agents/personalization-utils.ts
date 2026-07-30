@@ -5,14 +5,19 @@
  */
 
 import type { PersonalizationSliceState } from '@/lib/store/settings/personalization';
+import {
+  TEACHING_PREFERENCE_INSTRUCTIONS,
+  type AssistantPersonalization,
+} from '@/lib/assistant/personalization';
+
+type AgentPersonalization = Partial<PersonalizationSliceState> &
+  Pick<AssistantPersonalization, 'teachingPreference'>;
 
 /**
  * Build a system prompt modifier based on user personalization settings.
  * This should be prepended to agent system prompts.
  */
-export function buildPersonalizationPrompt(
-  personalization: Partial<PersonalizationSliceState>,
-): string {
+export function buildPersonalizationPrompt(personalization: AgentPersonalization): string {
   const parts: string[] = [];
 
   // Education level context
@@ -40,7 +45,9 @@ export function buildPersonalizationPrompt(
       kinesthetic: '实践型学习者，偏好动手操作和实际案例',
       balanced: '平衡型学习者，综合多种学习方式',
     };
-    parts.push(`学习风格：${styleMap[personalization.learningStyle] || personalization.learningStyle}`);
+    parts.push(
+      `学习风格：${styleMap[personalization.learningStyle] || personalization.learningStyle}`,
+    );
   }
 
   // Detail level
@@ -51,7 +58,9 @@ export function buildPersonalizationPrompt(
       detailed: '详细回答，充分展开每个概念',
       comprehensive: '全面深入，提供完整背景和扩展知识',
     };
-    parts.push(`回答风格：${detailMap[personalization.detailLevel] || personalization.detailLevel}`);
+    parts.push(
+      `回答风格：${detailMap[personalization.detailLevel] || personalization.detailLevel}`,
+    );
   }
 
   // Language preference
@@ -70,7 +79,9 @@ export function buildPersonalizationPrompt(
       strict: '严格要求，指出错误并督促改进',
       humorous: '幽默风趣，让学习过程轻松愉快',
     };
-    parts.push(`交流风格：${personalityMap[personalization.aiPersonality] || personalization.aiPersonality}`);
+    parts.push(
+      `交流风格：${personalityMap[personalization.aiPersonality] || personalization.aiPersonality}`,
+    );
   }
 
   // AI name
@@ -91,6 +102,10 @@ export function buildPersonalizationPrompt(
   // Custom instructions
   if (personalization.customInstructions) {
     parts.push(`用户特殊要求：${personalization.customInstructions}`);
+  }
+
+  if (personalization.teachingPreference) {
+    parts.push(TEACHING_PREFERENCE_INSTRUCTIONS[personalization.teachingPreference]);
   }
 
   // Feature preferences
@@ -119,9 +134,7 @@ export function getPersonalizationFromStore(): Partial<PersonalizationSliceState
  * Build a user context string for RAG retrieval queries.
  * Helps tailor retrieval to user's education level and interests.
  */
-export function buildRAGContext(
-  personalization: Partial<PersonalizationSliceState>,
-): string {
+export function buildRAGContext(personalization: Partial<PersonalizationSliceState>): string {
   const parts: string[] = [];
 
   if (personalization.educationLevel) {

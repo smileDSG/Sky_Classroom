@@ -5,6 +5,7 @@
 
 import { createStorageProvider, getStorageProvider } from '@/lib/storage/storage-factory';
 import type { StorageProvider } from '@/lib/storage/storage-types';
+import type { LearningOnboardingProfile } from '@/lib/onboarding/types';
 
 const isServer = typeof window === 'undefined';
 
@@ -30,6 +31,7 @@ export interface UserEntry {
   educationLevel: string | null;
   grade: string | null;
   favoriteSubjects: { id: string; name: string; enabled: boolean }[] | null;
+  learningOnboarding: LearningOnboardingProfile | null;
   learningStyle: string | null;
   detailLevel: string | null;
   preferredLanguage: string | null;
@@ -66,10 +68,12 @@ export async function createUserDAO(storage?: StorageProvider): Promise<{
   delete: (id: string) => Promise<boolean>;
   list: () => Promise<UserEntry[]>;
 }> {
-  const s = storage ?? await ensureProvider();
+  const s = storage ?? (await ensureProvider());
 
   return {
-    async create(user: Omit<UserEntry, 'createdAt' | 'updatedAt' | 'lastLoginAt'>): Promise<UserEntry> {
+    async create(
+      user: Omit<UserEntry, 'createdAt' | 'updatedAt' | 'lastLoginAt'>,
+    ): Promise<UserEntry> {
       const now = Date.now();
       const entry = {
         id: user.id,
@@ -100,17 +104,25 @@ export async function createUserDAO(storage?: StorageProvider): Promise<{
 
     async getByEmail(email: string): Promise<UserEntry | null> {
       const all = await s.getAll<UserEntry>(TABLE);
-      return all.find((e) => (e.data as UserEntry).email?.toLowerCase() === email.toLowerCase())?.data as UserEntry ?? null;
+      return (
+        (all.find((e) => (e.data as UserEntry).email?.toLowerCase() === email.toLowerCase())
+          ?.data as UserEntry) ?? null
+      );
     },
 
     async getByUsername(username: string): Promise<UserEntry | null> {
       const all = await s.getAll<UserEntry>(TABLE);
-      return all.find((e) => (e.data as UserEntry).username.toLowerCase() === username.toLowerCase())?.data as UserEntry ?? null;
+      return (
+        (all.find((e) => (e.data as UserEntry).username.toLowerCase() === username.toLowerCase())
+          ?.data as UserEntry) ?? null
+      );
     },
 
     async getByGuestId(guestId: string): Promise<UserEntry | null> {
       const all = await s.getAll<UserEntry>(TABLE);
-      return all.find((e) => (e.data as UserEntry).guestId === guestId)?.data as UserEntry ?? null;
+      return (
+        (all.find((e) => (e.data as UserEntry).guestId === guestId)?.data as UserEntry) ?? null
+      );
     },
 
     async update(id: string, data: Partial<UserEntry>): Promise<UserEntry | null> {

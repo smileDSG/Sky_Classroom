@@ -16,6 +16,7 @@ import { AuthProvider } from '@/components/auth/auth-provider';
 import { ClassroomJobPoller } from '@/components/classroom-job-poller';
 import { SlidesJobPoller } from '@/components/slides-job-poller';
 import { ServiceWorkerReset } from '@/components/service-worker-reset';
+import { OnboardingGate } from '@/components/auth/onboarding-gate';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -44,6 +45,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
+            <OnboardingGate />
             <ServerProvidersInit />
             <ServiceWorkerReset />
             <SkyClassroomEntry />

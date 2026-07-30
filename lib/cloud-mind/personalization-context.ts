@@ -7,6 +7,8 @@ import {
   type ProfileSignal,
 } from '@/lib/student/profile-signals';
 import type { LearningPath } from '@/lib/teaching/learning-path-types';
+import type { Subject } from '@/lib/solve/agents/analyze-types';
+import { SUBJECT_CONFIG } from '@/lib/student/profile-config';
 import { buildCloudMindDashboard } from './recommendation-engine';
 import { derivePreferredDifficulty } from './difficulty-policy';
 import type {
@@ -27,6 +29,7 @@ interface BuildPersonalizationContextInput {
   recentAttempts: QuizAttempt[];
   learningPath?: LearningPath | null;
   profileSignals?: ProfileSignal[];
+  selfReportedWeakSubjects?: Subject[];
 }
 
 function withQuery(
@@ -92,6 +95,7 @@ function buildRecommendation(input: {
   dueReviews: PersonalizationContext['dueReviews'];
   learningPath?: PersonalizationContext['learningPath'];
   preferredDifficulty: PersonalizationDifficulty;
+  selfReportedWeakSubjects?: Subject[];
 }): PersonalizationContext['recommendation'] {
   const primaryWeakPoint = input.weakPoints[0];
   const conversationWeakPoint = input.conversationProfile?.knowledgeBase?.weakPoints[0];
@@ -112,6 +116,16 @@ function buildRecommendation(input: {
       };
     }
 
+    const subject = input.selfReportedWeakSubjects?.[0];
+    if (subject) {
+      const subjectLabel = SUBJECT_CONFIG.find((config) => config.id === subject)?.label ?? subject;
+      return {
+        title: `先诊断一下${subjectLabel}`,
+        reason: '你将它标记为较薄弱学科，先用一组小测建立真实学情基线。',
+        targetTool: 'quiz',
+        href: `/sky/cloud-mind/quiz?subject=${subject}&mode=diagnostic`,
+      };
+    }
     return {
       title: '先做一次入门诊断',
       reason: '先用一组小测建立学情画像，后续工具才能给出更贴合的默认值。',
@@ -189,10 +203,7 @@ function deriveExplanationStyle(input: {
   if (/步骤|step|一步|先给答案/i.test(preference)) return 'step_first';
   if (/原理|principle|why|为什么|推导/i.test(preference)) return 'principle_first';
   if (/练习|practice|刷题|小测/i.test(preference)) return 'practice_first';
-  if (
-    input.resourceFormats.includes('code_case') ||
-    input.resourceFormats.includes('diagram')
-  ) {
+  if (input.resourceFormats.includes('code_case') || input.resourceFormats.includes('diagram')) {
     return 'example_first';
   }
   return 'step_first';
@@ -360,6 +371,7 @@ export function buildPersonalizationContext(
       dueReviews: dashboard.dueReviews,
       learningPath,
       preferredDifficulty,
+      selfReportedWeakSubjects: input.selfReportedWeakSubjects,
     }),
   };
 }

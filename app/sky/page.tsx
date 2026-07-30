@@ -29,6 +29,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
+import { LearningProfilePrompt } from '@/components/sky/dashboard/learning-profile-prompt';
 
 const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 const ABILITY_DIMENSIONS = [
@@ -699,6 +700,8 @@ export default function SkyDashboardPage() {
             </div>
           </div>
         </motion.div>
+
+        <LearningProfilePrompt status={user?.onboardingStatus} />
 
         <AnimatePresence mode="wait">
           {!hasData ? (

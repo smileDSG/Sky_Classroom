@@ -109,7 +109,6 @@ interface Message {
 
 export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
-
   const [open, setOpen] = useState(false);
   const [scene, setScene] = useState<Scene>('idle');
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -555,6 +554,7 @@ export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
 
   if (
     pathname?.startsWith('/auth') ||
+    pathname === '/sky/onboarding' ||
     pathname?.startsWith('/sky/software-cup') ||
     pathname?.startsWith('/sky/cloud-mind/course-studio') ||
     pathname?.startsWith('/sky/study-lab') ||

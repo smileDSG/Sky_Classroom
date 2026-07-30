@@ -50,7 +50,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register({ email: email || undefined, username, password });
-      router.push('/');
+      router.push('/sky/onboarding');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
@@ -60,7 +60,7 @@ export default function RegisterPage() {
   };
 
   useEffect(() => {
-    if (!isGuest) router.push('/');
+    if (!isGuest) router.push('/sky/onboarding');
   }, [isGuest, router]);
 
   return (

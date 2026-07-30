@@ -4,9 +4,13 @@ import {
   buildAssistantPersonalizationPrompt,
   buildAssistantRagEvidence,
   buildAssistantStrategy,
+  pickPersonalizationFromUser,
 } from '@/lib/assistant/personalization';
+import { buildPersonalizationPrompt } from '@/lib/agents/personalization-utils';
 import type { StudentProfile } from '@/lib/student/profile-types';
 import type { QuestionBankEntry } from '@/lib/solve/types';
+import type { UserEntry } from '@/lib/storage/dao/users';
+import type { TeachingPreference } from '@/lib/onboarding/types';
 
 const masteryBySubject: StudentProfile['masteryBySubject'] = {
   math: 40,
@@ -58,6 +62,19 @@ const quadraticHistoryEntry: QuestionBankEntry = {
 };
 
 describe('assistant personalization', () => {
+  function userWithPreference(preference: TeachingPreference): UserEntry {
+    return {
+      learningOnboarding: {
+        version: 1,
+        status: 'completed',
+        weakSubjects: ['math'],
+        learningGoal: 'build-foundations',
+        teachingPreference: preference,
+        completedAt: 100,
+      },
+    } as UserEntry;
+  }
+
   it('lowers difficulty and starts with hints when the question touches weak knowledge', () => {
     const strategy = buildAssistantStrategy({
       userMessage: '二次函数顶点式怎么配方？',
@@ -148,5 +165,110 @@ describe('assistant personalization', () => {
     expect(prompt).toContain('自然提及');
     expect(prompt).not.toContain('{');
     expect(prompt.length).toBeLessThan(1800);
+  });
+
+  it('uses a completed onboarding teaching preference in centralized prompts', () => {
+    expect(
+      pickPersonalizationFromUser(userWithPreference('example-first')).teachingPreference,
+    ).toBe('example-first');
+
+    const prompt = buildAssistantPersonalizationPrompt({
+      userMessage: '讲一下函数',
+      strategy: {
+        answerDepth: 'standard',
+        teachingMode: 'direct',
+        difficulty: 'current',
+        tone: 'friendly',
+        shouldMentionProfile: false,
+        recommendedNextAction: 'none',
+      },
+      personalization: { teachingPreference: 'step-by-step' },
+    });
+
+    expect(prompt).toContain('把推导拆成连续步骤');
+    expect(buildPersonalizationPrompt({ teachingPreference: 'step-by-step' })).toContain(
+      '把推导拆成连续步骤',
+    );
+  });
+
+  it('uses a v2 learner explanation preference without treating self-report as mastery', () => {
+    const personalization = pickPersonalizationFromUser({
+      educationLevel: null,
+      grade: null,
+      favoriteSubjects: null,
+      learningOnboarding: {
+        version: 2,
+        status: 'completed',
+        identities: ['learner'],
+        primaryIdentity: 'learner',
+        profiles: {
+          learner: {
+            identity: 'learner',
+            context: {
+              stage: 'undergraduate',
+              learningDomains: [{ domain: { source: 'custom', name: '量子信息' } }],
+              supportDomains: [],
+            },
+            goals: [{ source: 'catalog', id: 'explore-interest', label: '探索兴趣' }],
+            roleNeeds: ['clearer-explanations'],
+            preferences: { explanationStyle: 'visual-explanation' },
+            completedAt: 10,
+          },
+        },
+        completedAt: 10,
+      },
+    } as unknown as UserEntry);
+
+    expect(personalization.teachingPreference).toBe('visual-explanation');
+    expect(personalization.productIdentity).toBe('learner');
+    expect(personalization.profileInstructions).toContain('当前身份：学习者');
+  });
+
+  it('builds educator-specific prompt context from the primary identity', () => {
+    const personalization = pickPersonalizationFromUser({
+      educationLevel: null,
+      grade: null,
+      favoriteSubjects: null,
+      learningOnboarding: {
+        version: 2,
+        status: 'completed',
+        identities: ['educator'],
+        primaryIdentity: 'educator',
+        profiles: {
+          educator: {
+            identity: 'educator',
+            contexts: [
+              {
+                stage: 'high',
+                teachingDomains: [{ domain: { source: 'catalog', id: 'math', name: '数学' } }],
+              },
+            ],
+            goals: [{ source: 'catalog', id: 'prepare-lessons', label: '备课' }],
+            roleNeeds: ['question-design'],
+            preferences: { primarySupport: 'lesson-plan-structure' },
+            completedAt: 10,
+          },
+        },
+        completedAt: 10,
+      },
+    } as UserEntry);
+    const prompt = buildAssistantPersonalizationPrompt({
+      userMessage: '帮我设计一节函数课',
+      strategy: {
+        answerDepth: 'standard',
+        teachingMode: 'direct',
+        difficulty: 'current',
+        tone: 'professional',
+        shouldMentionProfile: false,
+        recommendedNextAction: 'none',
+      },
+      personalization,
+    });
+
+    expect(personalization.productIdentity).toBe('educator');
+    expect(personalization.teachingPreference).toBeNull();
+    expect(prompt).toContain('当前身份：教师 / 培训者');
+    expect(prompt).toContain('优先支持：教案结构');
+    expect(prompt).not.toContain('学生薄弱点');
   });
 });

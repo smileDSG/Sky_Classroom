@@ -34,6 +34,7 @@ export async function ensureAdminUserClient(): Promise<void> {
           educationLevel: null,
           grade: null,
           favoriteSubjects: null,
+          learningOnboarding: null,
           learningStyle: null,
           detailLevel: null,
           preferredLanguage: null,

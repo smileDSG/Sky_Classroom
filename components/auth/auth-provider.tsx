@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation';
 import { useUserProfileStore } from '@/lib/store/user-profile';
 import { ensureAdminUserClient } from '@/lib/client/admin-seed';
 import { installFetchInterceptor } from '@/lib/client/fetch-interceptor';
+import type { LearningOnboardingStatus } from '@/lib/onboarding/types';
 
 export interface AuthUser {
   id: string;
@@ -19,6 +20,7 @@ export interface AuthUser {
   planType: 'free' | 'basic' | 'pro' | 'enterprise';
   emailVerified: boolean;
   createdAt: number;
+  onboardingStatus: LearningOnboardingStatus;
 }
 
 interface AuthContextValue {
