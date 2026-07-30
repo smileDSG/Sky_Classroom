@@ -111,6 +111,89 @@ function getContentFormatLabel(value: string): string {
   return map[value] ?? value;
 }
 
+// ── Tech Frame (科技感装饰边框) ─────────────────────────────────────
+
+interface TechFrameProps {
+  children: React.ReactNode;
+  className?: string;
+  glowColor?: string;
+  scan?: boolean;
+}
+
+function TechFrame({
+  children,
+  className = '',
+  glowColor = '#8B5CF6',
+  scan = false,
+}: TechFrameProps) {
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-lg border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] backdrop-blur-md ${className}`}
+      style={{ boxShadow: `0 0 20px ${glowColor}15, inset 0 0 30px rgba(0,0,0,0.3)` }}
+    >
+      {/* 四角装饰 */}
+      <span
+        className="pointer-events-none absolute left-0 top-0 h-3 w-3 border-l-2 border-t-2 transition-all duration-300 group-hover:h-4 group-hover:w-4"
+        style={{ borderColor: glowColor }}
+      />
+      <span
+        className="pointer-events-none absolute right-0 top-0 h-3 w-3 border-r-2 border-t-2 transition-all duration-300 group-hover:h-4 group-hover:w-4"
+        style={{ borderColor: glowColor }}
+      />
+      <span
+        className="pointer-events-none absolute bottom-0 left-0 h-3 w-3 border-b-2 border-l-2 transition-all duration-300 group-hover:h-4 group-hover:w-4"
+        style={{ borderColor: glowColor }}
+      />
+      <span
+        className="pointer-events-none absolute bottom-0 right-0 h-3 w-3 border-b-2 border-r-2 transition-all duration-300 group-hover:h-4 group-hover:w-4"
+        style={{ borderColor: glowColor }}
+      />
+      {/* 扫描线动画 */}
+      {scan && (
+        <motion.div
+          className="pointer-events-none absolute inset-x-0 h-px"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${glowColor}, transparent)`,
+            boxShadow: `0 0 8px ${glowColor}`,
+          }}
+          animate={{ top: ['0%', '100%', '0%'] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+        />
+      )}
+      {children}
+    </div>
+  );
+}
+
+// ── Section Title (装饰性标题) ───────────────────────────────────────
+
+interface SectionTitleProps {
+  title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  glowColor?: string;
+}
+
+function SectionTitle({ title, subtitle, icon, glowColor = '#8B5CF6' }: SectionTitleProps) {
+  return (
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <span
+          className="h-4 w-1 rounded-full"
+          style={{ background: glowColor, boxShadow: `0 0 8px ${glowColor}` }}
+        />
+        {icon && (
+          <span style={{ color: glowColor }} className="drop-shadow-[0_0_4px_currentColor]">
+            {icon}
+          </span>
+        )}
+        <h2 className="text-sm font-semibold tracking-wide text-white">{title}</h2>
+      </div>
+      {subtitle && <span className="text-[11px] text-slate-500">{subtitle}</span>}
+    </div>
+  );
+}
+
 // ── Animated Stat Card ──────────────────────────────────────────────
 
 interface StatCardProps {
@@ -141,31 +224,44 @@ function StatCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
-      whileHover={{ scale: 1.02, y: -2 }}
-      className={`relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br ${gradient} p-5 backdrop-blur-md shadow-lg shadow-black/20`}
+      whileHover={{ scale: 1.03, y: -3 }}
+      className={`group relative overflow-hidden rounded-lg border border-white/10 bg-gradient-to-br ${gradient} p-4 backdrop-blur-md`}
+      style={{ boxShadow: `0 0 16px ${color}20, inset 0 1px 0 rgba(255,255,255,0.05)` }}
     >
-      <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/5 blur-2xl" />
+      {/* 四角装饰 */}
+      <span
+        className="pointer-events-none absolute left-0 top-0 h-2 w-2 border-l border-t opacity-60 transition-all group-hover:h-3 group-hover:w-3 group-hover:opacity-100"
+        style={{ borderColor: color }}
+      />
+      <span
+        className="pointer-events-none absolute bottom-0 right-0 h-2 w-2 border-b border-r opacity-60 transition-all group-hover:h-3 group-hover:w-3 group-hover:opacity-100"
+        style={{ borderColor: color }}
+      />
+      <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/5 blur-xl" />
       <div className="relative flex items-start justify-between">
         <div>
-          <div className="text-3xl font-bold tracking-tight text-white">
+          <div
+            className="text-2xl font-bold tracking-tight"
+            style={{ color: '#fff', textShadow: `0 0 12px ${color}60` }}
+          >
             {formatNumber(animated.value)}
-            {suffix && <span className="ml-1 text-lg text-white/60">{suffix}</span>}
+            {suffix && <span className="ml-1 text-sm text-white/50">{suffix}</span>}
           </div>
-          <div className="mt-1 text-sm font-medium text-white/70">{label}</div>
+          <div className="mt-1 text-xs font-medium text-white/60">{label}</div>
         </div>
         <div
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/10"
-          style={{ color }}
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10"
+          style={{ color, boxShadow: `0 0 8px ${color}30` }}
         >
           {icon}
         </div>
       </div>
       {spark && value > 0 && (
-        <div className="absolute bottom-3 right-3">
+        <div className="absolute bottom-2 right-2">
           <motion.div
-            className="h-1.5 w-1.5 rounded-full"
-            style={{ backgroundColor: color }}
-            animate={{ scale: [1, 1.6, 1], opacity: [1, 0.5, 1] }}
+            className="h-1 w-1 rounded-full"
+            style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }}
+            animate={{ scale: [1, 1.8, 1], opacity: [1, 0.4, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
         </div>
@@ -176,7 +272,15 @@ function StatCard({
 
 // ── Ring Progress ───────────────────────────────────────────────────
 
-function RingProgress({ percent, size = 120, color = '#8B5CF6' }: { percent: number; size?: number; color?: string }) {
+function RingProgress({
+  percent,
+  size = 120,
+  color = '#8B5CF6',
+}: {
+  percent: number;
+  size?: number;
+  color?: string;
+}) {
   const r = size * 0.36;
   const circumference = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(100, percent));
@@ -210,7 +314,11 @@ function RingProgress({ percent, size = 120, color = '#8B5CF6' }: { percent: num
 
 // ── Mini Bar Chart (Weak Points) ────────────────────────────────────
 
-function WeakPointsBarChart({ items }: { items: { label: string; value: number; count: number }[] }) {
+function WeakPointsBarChart({
+  items,
+}: {
+  items: { label: string; value: number; count: number }[];
+}) {
   const max = Math.max(...items.map((i) => i.value || 1), 1);
 
   return (
@@ -745,13 +853,11 @@ export function LearnerProfileDashboard() {
   }, [state.data]);
 
   const weakPointBars = useMemo(() => {
-    return (state.data?.cloudMind.weakPoints ?? [])
-      .slice(0, 6)
-      .map((p) => ({
-        label: p.knowledgePoint,
-        value: Math.round((1 - p.mastery) * 100),
-        count: p.recentMistakeCount,
-      }));
+    return (state.data?.cloudMind.weakPoints ?? []).slice(0, 6).map((p) => ({
+      label: p.knowledgePoint,
+      value: Math.round((1 - p.mastery) * 100),
+      count: p.recentMistakeCount,
+    }));
   }, [state.data]);
 
   const trendData: TrendPoint[] = useMemo(() => {
@@ -775,9 +881,15 @@ export function LearnerProfileDashboard() {
 
   if (authLoading || (state.loading && !state.data)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{ background: 'linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%)' }}
+      >
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+          <div className="relative">
+            <div className="absolute inset-0 animate-ping rounded-full bg-violet-500/20" />
+            <Loader2 className="relative h-8 w-8 animate-spin text-violet-400" />
+          </div>
           <p className="text-sm text-slate-400">加载画像数据中...</p>
         </div>
       </div>
@@ -786,8 +898,14 @@ export function LearnerProfileDashboard() {
 
   if (state.error && !state.data) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-950 px-4">
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-center">
+      <div
+        className="flex min-h-screen flex-col items-center justify-center gap-4 px-4"
+        style={{ background: 'linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%)' }}
+      >
+        <div
+          className="rounded-lg border border-red-500/20 bg-red-500/10 p-6 text-center"
+          style={{ boxShadow: '0 0 20px rgba(239,68,68,0.15)' }}
+        >
           <p className="text-red-300">{state.error}</p>
           <Button onClick={() => fetchData()} className="mt-4" variant="outline">
             <RefreshCw className="mr-2 h-4 w-4" />
@@ -803,258 +921,326 @@ export function LearnerProfileDashboard() {
   const preferences = stats?.learnerProfile;
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100 md:px-6 lg:px-8">
-      {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-      >
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg shadow-violet-500/20">
-              <LayoutDashboard className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-white">学习者画像数据大屏</h1>
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  </span>
-                  实时
-                </span>
+    <div
+      className="relative min-h-screen overflow-hidden px-4 py-6 text-slate-100 md:px-6 lg:px-8"
+      style={{
+        background:
+          'radial-gradient(ellipse at 20% 0%, #1e1b4b 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, #0c1b2e 0%, transparent 50%), linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%)',
+      }}
+    >
+      {/* 网格线背景 */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(139,92,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.5) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+      />
+      {/* 顶部光带 */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
+
+      <div className="relative">
+        {/* Header */}
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+        >
+          <div>
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-violet-500/30 bg-gradient-to-br from-violet-500/20 to-cyan-500/10"
+                style={{ boxShadow: '0 0 16px rgba(139,92,246,0.3)' }}
+              >
+                <LayoutDashboard className="h-5 w-5 text-violet-300" />
               </div>
-              <p className="text-xs text-slate-400">
-                {user?.username ?? '学习者'} · 每 15 秒自动刷新
-              </p>
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="bg-gradient-to-r from-violet-300 via-white to-cyan-300 bg-clip-text text-xl font-bold tracking-wide text-transparent">
+                    学习者画像数据大屏
+                  </h1>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    </span>
+                    LIVE
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="h-px w-8 bg-gradient-to-r from-violet-500/50 to-transparent" />
+                  <p className="text-xs text-slate-400">
+                    {user?.username ?? '学习者'} · 每 15 秒自动刷新
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {state.lastUpdated && (
-            <span className="text-xs text-slate-500">
-              更新于 {state.lastUpdated.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </span>
-          )}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => fetchData()}
-            disabled={state.loading}
-            className="border-white/10 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white"
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${state.loading ? 'animate-spin' : ''}`} />
-            刷新
-          </Button>
-          <Link href="/sky/learning">
+          <div className="flex items-center gap-3">
+            {state.lastUpdated && (
+              <span className="text-xs text-slate-500">
+                更新于{' '}
+                {state.lastUpdated.toLocaleTimeString('zh-CN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                })}
+              </span>
+            )}
             <Button
               size="sm"
               variant="outline"
-              className="border-white/10 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white"
+              onClick={() => fetchData()}
+              disabled={state.loading}
+              className="border-violet-500/20 bg-violet-500/5 text-slate-200 hover:bg-violet-500/10 hover:text-white"
             >
-              返回学习页
+              <RefreshCw className={`mr-2 h-4 w-4 ${state.loading ? 'animate-spin' : ''}`} />
+              刷新
             </Button>
-          </Link>
-        </div>
-      </motion.header>
-
-      {/* KPI Cards */}
-      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <StatCard
-          label="知识掌握度"
-          value={stats?.masteryPercent ?? 0}
-          suffix="%"
-          icon={<Brain className="h-5 w-5" />}
-          color="#8B5CF6"
-          gradient="from-violet-600/30 to-indigo-600/20"
-          delay={0}
-          spark
-        />
-        <StatCard
-          label="连续打卡"
-          value={stats?.streakDays ?? 0}
-          suffix="天"
-          icon={<Flame className="h-5 w-5" />}
-          color="#F59E0B"
-          gradient="from-orange-600/30 to-amber-600/20"
-          delay={0.05}
-        />
-        <StatCard
-          label="今日学习"
-          value={stats?.todayStudyMinutes ?? 0}
-          suffix="分"
-          icon={<Clock className="h-5 w-5" />}
-          color="#06B6D4"
-          gradient="from-cyan-600/30 to-blue-600/20"
-          delay={0.1}
-        />
-        <StatCard
-          label="做题正确率"
-          value={accuracy}
-          suffix="%"
-          icon={<CheckCircle2 className="h-5 w-5" />}
-          color="#10B981"
-          gradient="from-emerald-600/30 to-teal-600/20"
-          delay={0.15}
-        />
-        <StatCard
-          label="待复习错题"
-          value={cloudMind?.dueReviews.length ?? 0}
-          icon={<BookOpen className="h-5 w-5" />}
-          color="#F43F5E"
-          gradient="from-rose-600/30 to-pink-600/20"
-          delay={0.2}
-        />
-        <StatCard
-          label="总练习题数"
-          value={cloudMind?.summary.totalQuestions ?? 0}
-          icon={<BarChart3 className="h-5 w-5" />}
-          color="#6366F1"
-          gradient="from-indigo-600/30 to-violet-600/20"
-          delay={0.25}
-        />
-      </div>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left: Mastery + Accuracy */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm lg:col-span-1"
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">综合掌握度</h2>
-            <span className="text-xs text-slate-500">基于知识图谱计算</span>
-          </div>
-          <div className="flex flex-col items-center justify-center py-4">
-            <RingProgress percent={stats?.masteryPercent ?? 0} size={160} color="#8B5CF6" />
-            <div className="mt-4 text-center">
-              <div className="text-3xl font-bold text-white">
-                {formatPercent(stats?.masteryPercent ?? 0)}
-              </div>
-              <p className="mt-1 text-xs text-slate-400">
-                {cloudMind?.hasLearningData ? '已有学习数据' : '数据采集中'}
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
-            <div className="text-center">
-              <div className="text-lg font-semibold text-emerald-400">
-                {cloudMind?.summary.totalCorrect ?? 0}
-              </div>
-              <div className="text-[10px] text-slate-500">累计正确</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-violet-400">
-                {cloudMind?.weakPoints.length ?? 0}
-              </div>
-              <div className="text-[10px] text-slate-500">薄弱知识点</div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Middle: Trend Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm lg:col-span-2"
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">近14天学习活跃度</h2>
-            <span className="text-xs text-slate-500">每日学习记录数</span>
-          </div>
-          <div className="h-56">
-            <TrendChart data={trendData} color="#8B5CF6" />
-          </div>
-        </motion.div>
-
-        {/* Radar */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm lg:col-span-1"
-        >
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">能力雷达</h2>
-            <span className="text-xs text-slate-500">薄弱维度</span>
-          </div>
-          <div className="h-64">
-            <AbilityRadar data={radarData} />
-          </div>
-        </motion.div>
-
-        {/* Weak Points */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm lg:col-span-1"
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">薄弱知识点 TOP6</h2>
-            <Link
-              href="/sky/learning/mistakes"
-              className="text-xs text-violet-400 hover:text-violet-300"
-            >
-              查看全部
+            <Link href="/sky/learning">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-cyan-500/20 bg-cyan-500/5 text-slate-200 hover:bg-cyan-500/10 hover:text-white"
+              >
+                返回学习页
+              </Button>
             </Link>
           </div>
-          {weakPointBars.length > 0 ? (
-            <WeakPointsBarChart items={weakPointBars} />
-          ) : (
-            <div className="flex h-48 items-center justify-center text-xs text-slate-500">
-              暂无薄弱知识点数据
-            </div>
-          )}
-        </motion.div>
+        </motion.header>
 
-        {/* Learning Path */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm lg:col-span-1"
-        >
-          <PathTimeline path={state.data?.learningPath.path ?? null} />
-        </motion.div>
-
-        {/* Preferences */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55 }}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm lg:col-span-1"
-        >
-          <PreferencePanel preferences={preferences ?? null} />
-        </motion.div>
-
-        {/* Recent Activity */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm lg:col-span-2"
-        >
-          <RecentActivity records={cloudMind?.recentRecords ?? []} />
-        </motion.div>
-      </div>
-
-      {/* Footer */}
-      <footer className="mt-8 flex items-center justify-between border-t border-white/10 pt-4 text-[11px] text-slate-500">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-3.5 w-3.5" />
-          <span>数据每 15 秒自动刷新 · 实时展示学习画像</span>
+        {/* KPI Cards */}
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          <StatCard
+            label="知识掌握度"
+            value={stats?.masteryPercent ?? 0}
+            suffix="%"
+            icon={<Brain className="h-5 w-5" />}
+            color="#8B5CF6"
+            gradient="from-violet-600/30 to-indigo-600/20"
+            delay={0}
+            spark
+          />
+          <StatCard
+            label="连续打卡"
+            value={stats?.streakDays ?? 0}
+            suffix="天"
+            icon={<Flame className="h-5 w-5" />}
+            color="#F59E0B"
+            gradient="from-orange-600/30 to-amber-600/20"
+            delay={0.05}
+          />
+          <StatCard
+            label="今日学习"
+            value={stats?.todayStudyMinutes ?? 0}
+            suffix="分"
+            icon={<Clock className="h-5 w-5" />}
+            color="#06B6D4"
+            gradient="from-cyan-600/30 to-blue-600/20"
+            delay={0.1}
+          />
+          <StatCard
+            label="做题正确率"
+            value={accuracy}
+            suffix="%"
+            icon={<CheckCircle2 className="h-5 w-5" />}
+            color="#10B981"
+            gradient="from-emerald-600/30 to-teal-600/20"
+            delay={0.15}
+          />
+          <StatCard
+            label="待复习错题"
+            value={cloudMind?.dueReviews.length ?? 0}
+            icon={<BookOpen className="h-5 w-5" />}
+            color="#F43F5E"
+            gradient="from-rose-600/30 to-pink-600/20"
+            delay={0.2}
+          />
+          <StatCard
+            label="总练习题数"
+            value={cloudMind?.summary.totalQuestions ?? 0}
+            icon={<BarChart3 className="h-5 w-5" />}
+            color="#6366F1"
+            gradient="from-indigo-600/30 to-violet-600/20"
+            delay={0.25}
+          />
         </div>
-        <Link href="/account" className="text-violet-400 hover:text-violet-300">
-          编辑画像偏好 →
-        </Link>
-      </footer>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {/* Left: Mastery + Accuracy */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-1"
+          >
+            <TechFrame glowColor="#8B5CF6" scan className="h-full p-5">
+              <SectionTitle
+                title="综合掌握度"
+                subtitle="知识图谱计算"
+                icon={<Brain className="h-4 w-4" />}
+              />
+              <div className="flex flex-col items-center justify-center py-4">
+                <RingProgress percent={stats?.masteryPercent ?? 0} size={160} color="#8B5CF6" />
+                <div className="mt-4 text-center">
+                  <div
+                    className="text-3xl font-bold"
+                    style={{ color: '#fff', textShadow: '0 0 16px rgba(139,92,246,0.6)' }}
+                  >
+                    {formatPercent(stats?.masteryPercent ?? 0)}
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {cloudMind?.hasLearningData ? '已有学习数据' : '数据采集中'}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
+                <div className="text-center">
+                  <div
+                    className="text-lg font-semibold text-emerald-400"
+                    style={{ textShadow: '0 0 8px rgba(16,185,129,0.4)' }}
+                  >
+                    {cloudMind?.summary.totalCorrect ?? 0}
+                  </div>
+                  <div className="text-[10px] text-slate-500">累计正确</div>
+                </div>
+                <div className="text-center">
+                  <div
+                    className="text-lg font-semibold text-violet-400"
+                    style={{ textShadow: '0 0 8px rgba(139,92,246,0.4)' }}
+                  >
+                    {cloudMind?.weakPoints.length ?? 0}
+                  </div>
+                  <div className="text-[10px] text-slate-500">薄弱知识点</div>
+                </div>
+              </div>
+            </TechFrame>
+          </motion.div>
+
+          {/* Middle: Trend Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="lg:col-span-2"
+          >
+            <TechFrame glowColor="#06B6D4" className="h-full p-5">
+              <SectionTitle
+                title="近14天学习活跃度"
+                subtitle="每日学习记录数"
+                icon={<TrendingUp className="h-4 w-4" />}
+                glowColor="#06B6D4"
+              />
+              <div className="h-56">
+                <TrendChart data={trendData} color="#06B6D4" />
+              </div>
+            </TechFrame>
+          </motion.div>
+
+          {/* Radar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="lg:col-span-1"
+          >
+            <TechFrame glowColor="#8B5CF6" className="h-full p-5">
+              <SectionTitle
+                title="能力雷达"
+                subtitle="薄弱维度"
+                icon={<Zap className="h-4 w-4" />}
+              />
+              <div className="h-64">
+                <AbilityRadar data={radarData} />
+              </div>
+            </TechFrame>
+          </motion.div>
+
+          {/* Weak Points */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="lg:col-span-1"
+          >
+            <TechFrame glowColor="#F43F5E" className="h-full p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-4 w-1 rounded-full"
+                    style={{ background: '#F43F5E', boxShadow: '0 0 8px #F43F5E' }}
+                  />
+                  <h2 className="text-sm font-semibold tracking-wide text-white">
+                    薄弱知识点 TOP6
+                  </h2>
+                </div>
+                <Link
+                  href="/sky/learning/mistakes"
+                  className="text-xs text-rose-400 hover:text-rose-300"
+                >
+                  查看全部
+                </Link>
+              </div>
+              {weakPointBars.length > 0 ? (
+                <WeakPointsBarChart items={weakPointBars} />
+              ) : (
+                <div className="flex h-48 items-center justify-center text-xs text-slate-500">
+                  暂无薄弱知识点数据
+                </div>
+              )}
+            </TechFrame>
+          </motion.div>
+
+          {/* Learning Path */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="lg:col-span-1"
+          >
+            <TechFrame glowColor="#10B981" className="h-full p-5">
+              <PathTimeline path={state.data?.learningPath.path ?? null} />
+            </TechFrame>
+          </motion.div>
+
+          {/* Preferences */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+            className="lg:col-span-1"
+          >
+            <TechFrame glowColor="#06B6D4" className="h-full p-5">
+              <PreferencePanel preferences={preferences ?? null} />
+            </TechFrame>
+          </motion.div>
+
+          {/* Recent Activity */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="lg:col-span-2"
+          >
+            <TechFrame glowColor="#6366F1" scan className="h-full p-5">
+              <RecentActivity records={cloudMind?.recentRecords ?? []} />
+            </TechFrame>
+          </motion.div>
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-8 flex items-center justify-between border-t border-violet-500/20 pt-4 text-[11px] text-slate-500">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-3.5 w-3.5 text-violet-500" />
+            <span>数据每 15 秒自动刷新 · 实时展示学习画像</span>
+          </div>
+          <Link href="/account" className="text-violet-400 hover:text-violet-300">
+            编辑画像偏好 →
+          </Link>
+        </footer>
+      </div>
     </div>
   );
 }
