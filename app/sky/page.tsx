@@ -11,6 +11,7 @@ import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useAuth } from '@/components/auth/auth-provider';
+import { cn } from '@/lib/utils';
 import {
   BarChart3,
   BookOpenCheck,
