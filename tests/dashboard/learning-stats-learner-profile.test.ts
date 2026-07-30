@@ -9,7 +9,8 @@ import { NextRequest } from 'next/server';
 import { MemoryStorageProvider } from '@/lib/storage/memory-provider';
 import type { StorageProvider } from '@/lib/storage/storage-types';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
-import type { LearnerPreferences } from '@/lib/adaptive-learning/contracts';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
+import type { KnowledgeState, LearnerPreferences } from '@/lib/adaptive-learning/contracts';
 
 const dashBoundary = vi.hoisted(() => ({
   userId: 'user-dash',
@@ -73,10 +74,27 @@ function makeRequest(): NextRequest {
   });
 }
 
+function makeKnowledgeState(mastery: number): KnowledgeState {
+  return {
+    userId: dashBoundary.userId,
+    nodeId: 'node-a',
+    alpha: 2,
+    beta: 2,
+    mastery,
+    confidence: 0.5,
+    retention: 1,
+    reviewStabilityDays: 7,
+    repeatedErrorCount: 0,
+    evidenceCount: 1,
+    version: 1,
+  };
+}
+
 beforeEach(async () => {
   dashBoundary.userId = 'user-dash';
   await storage.clear('learner-preference-versions');
   await storage.clear('user_stats');
+  await storage.clear('knowledge-state');
 });
 
 describe('GET /api/sky/learning-stats learner profile integration', () => {
@@ -103,5 +121,18 @@ describe('GET /api/sky/learning-stats learner profile integration', () => {
     expect(json.learnerProfile.preferredLanguage).toBe('zh-CN');
     expect(json.learnerProfile.explanationDepth).toBe('detailed');
     expect(json.learnerProfile.assistantName).toBe('小云');
+  });
+
+  it('calculates masteryPercent from knowledge states', async () => {
+    const dao = createKnowledgeStateDAO(storage);
+    await dao.set(dashBoundary.userId, makeKnowledgeState(0.75));
+
+    const req = makeRequest();
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.success).toBe(true);
+    expect(json.masteryPercent).toBe(75);
   });
 });

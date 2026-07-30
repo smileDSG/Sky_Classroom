@@ -50,32 +50,46 @@ function getQualityWeight(quality: string): number {
   return parsed.success ? QUALITY_WEIGHTS[parsed.data] : QUALITY_WEIGHTS.unverified;
 }
 
-function stableNodeId(input: string): string {
-  const trimmed = input.trim().toLowerCase();
+interface KnowledgePointTarget {
+  nodeId: string;
+  displayName?: string;
+}
+
+function buildTarget(input: string): KnowledgePointTarget {
+  const trimmed = input.trim();
+  const normalized = trimmed.toLowerCase();
 
   // Try to build a readable kebab ID from ASCII/Latin characters.
-  const slug = trimmed.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const slug = normalized.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   if (slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-    return `kp-${slug}`;
+    return { nodeId: `kp-${slug}`, displayName: trimmed };
   }
 
   // Fallback to a deterministic hex hash for non-ASCII names (e.g. CJK).
   let hash = 0;
-  for (let i = 0; i < trimmed.length; i++) {
-    const code = trimmed.charCodeAt(i);
+  for (let i = 0; i < normalized.length; i++) {
+    const code = normalized.charCodeAt(i);
     hash = (hash << 5) - hash + code;
     hash |= 0;
   }
   const hex = Math.abs(hash).toString(16).padStart(8, '0');
-  return `kp-${hex}`;
+  return { nodeId: `kp-${hex}`, displayName: trimmed };
 }
 
-function eventTargetNodeIds(event: LearningEvent): string[] {
-  const fromNodes = event.nodeIds ?? [];
+function eventTargets(event: LearningEvent): KnowledgePointTarget[] {
+  const fromNodes = (event.nodeIds ?? []).map((nodeId) => ({ nodeId }));
   const fromPayload = (event.payload?.knowledgePoints as string[] | undefined) ?? [];
-  const fromKnowledgePoints = fromPayload.map(stableNodeId);
-  return Array.from(new Set([...fromNodes, ...fromKnowledgePoints]));
+  const fromKnowledgePoints = fromPayload.map(buildTarget);
+  const combined = [...fromNodes, ...fromKnowledgePoints];
+  const seen = new Set<string>();
+  const targets: KnowledgePointTarget[] = [];
+  for (const target of combined) {
+    if (seen.has(target.nodeId)) continue;
+    seen.add(target.nodeId);
+    targets.push(target);
+  }
+  return targets;
 }
 
 function computeMastery(alpha: number, beta: number): number {
@@ -99,10 +113,11 @@ function computeRetention(
   return Math.exp(-elapsedDays / stabilityDays);
 }
 
-function createInitialState(userId: string, nodeId: string): KnowledgeState {
+function createInitialState(userId: string, nodeId: string, displayName?: string): KnowledgeState {
   return {
     userId,
     nodeId,
+    displayName,
     alpha: INITIAL_ALPHA,
     beta: INITIAL_BETA,
     mastery: computeMastery(INITIAL_ALPHA, INITIAL_BETA),
@@ -204,22 +219,28 @@ export async function applyLearningEvent(
   storage: StorageProvider,
 ): Promise<void> {
   try {
-    const nodeIds = eventTargetNodeIds(event);
-    if (nodeIds.length === 0) return;
+    const targets = eventTargets(event);
+    if (targets.length === 0) return;
 
     const dao = createKnowledgeStateDAO(storage);
     const now = new Date().toISOString();
 
-    for (const nodeId of nodeIds) {
-      let state = (await dao.get(userId, nodeId)) ?? createInitialState(userId, nodeId);
+    for (const target of targets) {
+      let state =
+        (await dao.get(userId, target.nodeId)) ??
+        createInitialState(userId, target.nodeId, target.displayName);
       state = applyEventToState(state, event);
+      // Preserve the latest display name if the event provides one.
+      if (target.displayName) {
+        state = { ...state, displayName: target.displayName };
+      }
       const validated = knowledgeStateSchema.parse(state);
       await dao.set(userId, validated);
     }
 
-    log.info(`Applied ${event.type} to ${nodeIds.length} node(s) for ${userId}`, {
+    log.info(`Applied ${event.type} to ${targets.length} node(s) for ${userId}`, {
       eventId: event.eventId,
-      nodeIds,
+      nodeIds: targets.map((t) => t.nodeId),
       occurredAt: now,
     });
   } catch (err) {

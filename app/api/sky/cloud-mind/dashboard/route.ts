@@ -6,6 +6,7 @@ import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response
 import { verifyAccessToken } from '@/lib/server/auth';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { buildCloudMindDashboard, EMPTY_KB_STATS } from '@/lib/cloud-mind/recommendation-engine';
@@ -110,15 +111,18 @@ export async function GET(req: NextRequest) {
     const userId = await resolveUserId(req);
     const storage = await getServerStorage();
     const mistakeDAO = createMistakeBookDAO(storage);
+    const knowledgeStateDAO = createKnowledgeStateDAO(storage);
     const quizAttemptDAO = createQuizAttemptDAO(storage);
 
-    const [profile, mistakesResult, dueMistakes, recentAttempts, kbStats] = await Promise.all([
-      resolveDashboardProfile(userId),
-      mistakeDAO.list(userId, { page: 1, pageSize: 50 }),
-      mistakeDAO.getDueForReview(userId),
-      quizAttemptDAO.list({ userId, recentDays: 14 }),
-      safeKnowledgeStats(),
-    ]);
+    const [profile, mistakesResult, dueMistakes, recentAttempts, kbStats, knowledgeStates] =
+      await Promise.all([
+        resolveDashboardProfile(userId),
+        mistakeDAO.list(userId, { page: 1, pageSize: 50 }),
+        mistakeDAO.getDueForReview(userId),
+        quizAttemptDAO.list({ userId, recentDays: 14 }),
+        safeKnowledgeStats(),
+        knowledgeStateDAO.list(userId),
+      ]);
 
     const dashboard = buildCloudMindDashboard({
       userId,
@@ -127,6 +131,7 @@ export async function GET(req: NextRequest) {
       dueMistakes,
       recentAttempts,
       kbStats,
+      knowledgeStates,
     });
 
     return apiSuccess({ data: dashboard });

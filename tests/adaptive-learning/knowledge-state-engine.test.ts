@@ -154,7 +154,7 @@ describe('applyLearningEvent', () => {
     expect(state?.evidenceCount).toBe(1);
   });
 
-  it('maps knowledge points to stable node ids', async () => {
+  it('maps knowledge points to stable node ids and preserves display names', async () => {
     const event = makeEvent(
       'answer-submitted',
       { correct: false },
@@ -168,9 +168,12 @@ describe('applyLearningEvent', () => {
     const dao = createKnowledgeStateDAO(storage);
     const states = await dao.list('user-1');
     expect(states).toHaveLength(2);
-    expect(states.map((s) => s.nodeId).sort()).toEqual(
-      ['kp-algebra', expect.stringMatching(/^kp-[a-f0-9]+$/)].sort(),
-    );
+
+    const algebra = states.find((s) => s.nodeId === 'kp-algebra');
+    const triangle = states.find((s) => s.nodeId !== 'kp-algebra');
+
+    expect(algebra?.displayName).toBe('Algebra');
+    expect(triangle?.displayName).toBe('三角形');
   });
 
   it('updates existing state across multiple events', async () => {

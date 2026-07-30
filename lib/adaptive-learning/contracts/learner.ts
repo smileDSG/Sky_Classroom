@@ -135,6 +135,7 @@ export const knowledgeStateSchema = z
   .object({
     userId: z.string().min(1),
     nodeId: nodeIdSchema,
+    displayName: z.string().min(1).optional(),
     alpha: z.number().positive(),
     beta: z.number().positive(),
     mastery: z.number().min(0).max(1),
