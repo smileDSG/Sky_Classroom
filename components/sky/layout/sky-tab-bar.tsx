@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Star, Brain, TrendingUp, Feather, GraduationCap } from 'lucide-react';
+import { Star, Brain, TrendingUp, Feather, GraduationCap, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS: { label: string; href: string; icon: typeof Star; badge?: number }[] = [
@@ -11,6 +11,7 @@ const NAV_ITEMS: { label: string; href: string; icon: typeof Star; badge?: numbe
   { label: '今日学习', href: '/sky', icon: Star },
   { label: '云端智囊', href: '/sky/cloud-mind', icon: Brain },
   { label: '学习路线', href: '/sky/learning', icon: TrendingUp },
+  { label: '数据大屏', href: '/sky/learning/profile-dashboard', icon: LayoutDashboard },
   { label: '云翼助手', href: '/sky/assistant', icon: Feather },
 ];
 
@@ -26,7 +27,16 @@ export function SkyTabBar() {
         } else if (item.href === '/sky') {
           isActive = pathname === '/sky';
         } else {
-          isActive = pathname.startsWith(item.href);
+          // Longest-prefix match: only highlight this tab if no other tab
+          // has a more specific (longer) href that also matches the pathname.
+          isActive =
+            pathname.startsWith(item.href) &&
+            !NAV_ITEMS.some(
+              (other) =>
+                other.href !== item.href &&
+                other.href.startsWith(item.href) &&
+                pathname.startsWith(other.href),
+            );
         }
 
         const Icon = item.icon;
