@@ -7,6 +7,7 @@ import {
   type LearningEvent,
 } from '@/lib/adaptive-learning/contracts';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
+import { applyLearningEvent } from '@/lib/adaptive-learning/profile/knowledge-state-engine';
 import { invalidateProfileCache } from '@/lib/student/profile-builder';
 import { createLogger } from '@/lib/logger';
 import type { StorageProvider } from '@/lib/storage/storage-types';
@@ -61,6 +62,10 @@ export async function recordLearningEvent(
 
     const repository = new LearnerProfileRepository(options.storage);
     await repository.appendLearningEvent(event);
+
+    // Apply the event to per-node knowledge states in real time. Failures are
+    // swallowed so that the primary action is never blocked by profiling.
+    await applyLearningEvent(input.userId, event, options.storage);
 
     if (!options.skipCacheInvalidation) {
       await invalidateProfileCache(input.userId).catch((err) => {

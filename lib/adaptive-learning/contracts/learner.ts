@@ -211,3 +211,7 @@ export type LearnerPreferencesInput = z.infer<typeof learnerPreferencesInputSche
 export type DomainLearnerProfile = z.infer<typeof domainLearnerProfileSchema>;
 export type KnowledgeState = z.infer<typeof knowledgeStateSchema>;
 export type LearningEvent = z.infer<typeof learningEventSchema>;
+export type LearningEventType = z.infer<typeof learningEventTypeSchema>;
+export type LearningEvidenceQuality = z.infer<typeof learningEvidenceQualitySchema>;
+export type EvidenceQuality = LearningEvidenceQuality;
+export type ContentFormatPreference = z.infer<typeof contentFormatPreferenceSchema>;

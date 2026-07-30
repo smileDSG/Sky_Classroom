@@ -7,6 +7,7 @@ import {
   learningEventInputSchema,
 } from '@/lib/adaptive-learning/profile/event-recorder';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 
 vi.mock('@/lib/student/profile-builder', () => ({
   invalidateProfileCache: vi.fn(async () => {}),
@@ -104,5 +105,21 @@ describe('EventRecorder', () => {
 
     const parsed = learningEventInputSchema.parse(input);
     expect(parsed).toEqual(input);
+  });
+
+  it('updates knowledge state after recording an event with knowledge points', async () => {
+    await recordAnswerSubmitted({
+      storage,
+      userId: 'user-1',
+      source: 'solve-grade',
+      correct: false,
+      knowledgePoints: ['一元二次方程'],
+    });
+
+    const dao = createKnowledgeStateDAO(storage);
+    const states = await dao.list('user-1');
+    expect(states).toHaveLength(1);
+    expect(states[0]?.mastery).toBeLessThan(0.5);
+    expect(states[0]?.evidenceCount).toBe(1);
   });
 });
