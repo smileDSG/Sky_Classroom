@@ -2,6 +2,8 @@ import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { QuizAttempt } from '@/lib/student/quiz-attempts';
 import type { StudentProfile } from '@/lib/student/profile-types';
 import type { LearningPath } from '@/lib/teaching/learning-path-types';
+import type { Subject } from '@/lib/solve/agents/analyze-types';
+import { SUBJECT_CONFIG } from '@/lib/student/profile-config';
 import { buildCloudMindDashboard } from './recommendation-engine';
 import { derivePreferredDifficulty } from './difficulty-policy';
 import type {
@@ -17,6 +19,7 @@ interface BuildPersonalizationContextInput {
   dueMistakes: MistakeBookEntry[];
   recentAttempts: QuizAttempt[];
   learningPath?: LearningPath | null;
+  selfReportedWeakSubjects?: Subject[];
 }
 
 function withQuery(
@@ -81,11 +84,22 @@ function buildRecommendation(input: {
   dueReviews: PersonalizationContext['dueReviews'];
   learningPath?: PersonalizationContext['learningPath'];
   preferredDifficulty: PersonalizationDifficulty;
+  selfReportedWeakSubjects?: Subject[];
 }): PersonalizationContext['recommendation'] {
   const primaryWeakPoint = input.weakPoints[0];
   const learningTopic = input.learningPath?.next ?? input.learningPath?.current;
 
   if (!input.hasLearningData) {
+    const subject = input.selfReportedWeakSubjects?.[0];
+    if (subject) {
+      const subjectLabel = SUBJECT_CONFIG.find((config) => config.id === subject)?.label ?? subject;
+      return {
+        title: `先诊断一下${subjectLabel}`,
+        reason: '你将它标记为较薄弱学科，先用一组小测建立真实学情基线。',
+        targetTool: 'quiz',
+        href: `/sky/cloud-mind/quiz?subject=${subject}&mode=diagnostic`,
+      };
+    }
     return {
       title: '先做一次入门诊断',
       reason: '先用一组小测建立学情画像，后续工具才能给出更贴合的默认值。',
@@ -176,6 +190,7 @@ export function buildPersonalizationContext(
       dueReviews: dashboard.dueReviews,
       learningPath,
       preferredDifficulty,
+      selfReportedWeakSubjects: input.selfReportedWeakSubjects,
     }),
   };
 }

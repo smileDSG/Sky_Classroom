@@ -7,11 +7,13 @@ import { verifyAccessToken } from '@/lib/server/auth';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
+import { createUserDAO } from '@/lib/storage/dao/users';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { buildPersonalizationContext } from '@/lib/cloud-mind/personalization-context';
 import { createLogger } from '@/lib/logger';
 import type { ProfileCacheEntry, StudentProfile } from '@/lib/student/profile-types';
+import { getLearnerSupportSubjectIds } from '@/lib/onboarding/consumption';
 
 const log = createLogger('API:CloudMindPersonalizationContext');
 const DEMO_PROFILE_USER_ID = 'default-user';
@@ -100,14 +102,17 @@ export async function GET(req: NextRequest) {
     const mistakeDAO = createMistakeBookDAO(storage);
     const quizAttemptDAO = createQuizAttemptDAO(storage);
     const learningPathDAO = createLearningPathDAO(storage);
+    const userDAO = await createUserDAO(storage);
 
-    const [profile, mistakesResult, dueMistakes, recentAttempts, learningPath] = await Promise.all([
-      resolveProfile(userId),
-      mistakeDAO.list({ page: 1, pageSize: 50 }),
-      mistakeDAO.getDueForReview(),
-      quizAttemptDAO.list({ userId, recentDays: 14 }),
-      learningPathDAO.getActiveByUser(userId),
-    ]);
+    const [profile, mistakesResult, dueMistakes, recentAttempts, learningPath, user] =
+      await Promise.all([
+        resolveProfile(userId),
+        mistakeDAO.list({ page: 1, pageSize: 50 }),
+        mistakeDAO.getDueForReview(),
+        quizAttemptDAO.list({ userId, recentDays: 14 }),
+        learningPathDAO.getActiveByUser(userId),
+        userDAO.getById(userId),
+      ]);
 
     const context = buildPersonalizationContext({
       userId,
@@ -116,6 +121,7 @@ export async function GET(req: NextRequest) {
       dueMistakes,
       recentAttempts,
       learningPath,
+      selfReportedWeakSubjects: user ? getLearnerSupportSubjectIds(user) : undefined,
     });
 
     return apiSuccess({ data: context });

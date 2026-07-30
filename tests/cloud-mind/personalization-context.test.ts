@@ -95,6 +95,43 @@ describe('cloud mind personalization context', () => {
     });
   });
 
+  it('recommends a diagnostic for the first self-reported weak subject on cold start', () => {
+    const context = buildPersonalizationContext({
+      userId: 'new-user',
+      profile: null,
+      mistakes: [],
+      dueMistakes: [],
+      recentAttempts: [],
+      learningPath: null,
+      selfReportedWeakSubjects: ['physics'],
+    });
+
+    expect(context.recommendation).toMatchObject({
+      targetTool: 'quiz',
+      href: '/sky/cloud-mind/quiz?subject=physics&mode=diagnostic',
+    });
+  });
+
+  it('keeps observed weak points ahead of self-reported subjects', () => {
+    const context = buildPersonalizationContext({
+      userId: 'u1',
+      profile: makeProfile({
+        masteryByKnowledge: { 数学: 20 },
+        weakPoints: ['数学'],
+        strongPoints: [],
+      }),
+      mistakes: [],
+      dueMistakes: [],
+      recentAttempts: [],
+      learningPath: null,
+      selfReportedWeakSubjects: ['physics'],
+    });
+
+    const recommendationUrl = new URL(context.recommendation!.href, 'http://localhost');
+    expect(recommendationUrl.searchParams.get('topic')).toBe('数学');
+    expect(recommendationUrl.searchParams.get('subject')).toBeNull();
+  });
+
   it('uses profile data for weak points, recent accuracy, difficulty, and error patterns', () => {
     const context = buildPersonalizationContext({
       userId: 'u1',

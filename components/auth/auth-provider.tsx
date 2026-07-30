@@ -8,6 +8,7 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import { useUserProfileStore } from '@/lib/store/user-profile';
 import { ensureAdminUserClient } from '@/lib/client/admin-seed';
 import { installFetchInterceptor } from '@/lib/client/fetch-interceptor';
+import type { LearningOnboardingStatus } from '@/lib/onboarding/types';
 
 export interface AuthUser {
   id: string;
@@ -18,6 +19,7 @@ export interface AuthUser {
   planType: 'free' | 'basic' | 'pro' | 'enterprise';
   emailVerified: boolean;
   createdAt: number;
+  onboardingStatus: LearningOnboardingStatus;
 }
 
 interface AuthContextValue {
@@ -72,9 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Auto-refresh access token every 10 minutes
   useEffect(() => {
     if (!user) return;
-    const interval = setInterval(() => {
-      fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' }).catch(() => {});
-    }, 10 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' }).catch(() => {});
+      },
+      10 * 60 * 1000,
+    );
     return () => clearInterval(interval);
   }, [user]);
 

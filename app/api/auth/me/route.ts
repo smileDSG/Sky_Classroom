@@ -7,6 +7,7 @@ import { NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { verifyAccessToken } from '@/lib/server/auth';
 import { createUserDAO } from '@/lib/storage/dao/users';
+import { getLearningOnboardingStatus } from '@/lib/onboarding/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
         planType: user.planType,
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
+        onboardingStatus: getLearningOnboardingStatus(user.learningOnboarding),
       },
     });
   } catch (err) {

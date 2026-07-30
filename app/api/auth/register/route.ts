@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       educationLevel: null,
       grade: null,
       favoriteSubjects: null,
+      learningOnboarding: null,
       learningStyle: null,
       detailLevel: null,
       preferredLanguage: null,
