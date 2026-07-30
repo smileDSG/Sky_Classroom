@@ -135,6 +135,7 @@ export const knowledgeStateSchema = z
   .object({
     userId: z.string().min(1),
     nodeId: nodeIdSchema,
+    displayName: z.string().min(1).optional(),
     alpha: z.number().positive(),
     beta: z.number().positive(),
     mastery: z.number().min(0).max(1),
@@ -172,6 +173,7 @@ export const learningEvidenceQualitySchema = z.enum([
 const answerSubmittedPayloadSchema = z
   .object({
     correct: z.boolean(),
+    knowledgePoints: z.array(z.string()).optional(),
   })
   .strict();
 
@@ -182,7 +184,7 @@ export const learningEventSchema = z
     type: learningEventTypeSchema,
     occurredAt: isoDateTimeSchema,
     source: z.string().min(1),
-    nodeIds: z.array(nodeIdSchema),
+    nodeIds: z.array(nodeIdSchema).optional().default([]),
     evidenceQuality: learningEvidenceQualitySchema,
     payload: z.record(z.string(), z.unknown()),
     schemaVersion: z.literal('1.0.0'),
@@ -210,3 +212,7 @@ export type LearnerPreferencesInput = z.infer<typeof learnerPreferencesInputSche
 export type DomainLearnerProfile = z.infer<typeof domainLearnerProfileSchema>;
 export type KnowledgeState = z.infer<typeof knowledgeStateSchema>;
 export type LearningEvent = z.infer<typeof learningEventSchema>;
+export type LearningEventType = z.infer<typeof learningEventTypeSchema>;
+export type LearningEvidenceQuality = z.infer<typeof learningEvidenceQualitySchema>;
+export type EvidenceQuality = LearningEvidenceQuality;
+export type ContentFormatPreference = z.infer<typeof contentFormatPreferenceSchema>;

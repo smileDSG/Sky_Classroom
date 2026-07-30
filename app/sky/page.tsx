@@ -11,6 +11,7 @@ import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useAuth } from '@/components/auth/auth-provider';
+import { cn } from '@/lib/utils';
 import {
   BarChart3,
   BookOpenCheck,
@@ -27,7 +28,9 @@ import {
   Sun,
   Moon,
   MessageCircle,
+  LayoutDashboard,
 } from 'lucide-react';
+import { LearnerProfileDashboard } from '@/components/sky/learning/learner-profile-dashboard';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { LearningProfilePrompt } from '@/components/sky/dashboard/learning-profile-prompt';
 
@@ -527,6 +530,7 @@ export default function SkyDashboardPage() {
   const { resolvedTheme } = useTheme();
   const { user } = useAuth();
   const mistakes = useSkyClassroomStore((s) => s.mistakes);
+  const [viewTab, setViewTab] = useState<'today' | 'dashboard'>('today');
   const greeting = useMemo(() => getGreeting(resolvedTheme === 'dark'), [resolvedTheme]);
   const GreetingIcon = useMemo(() => {
     const hour = new Date().getHours();
@@ -661,82 +665,117 @@ export default function SkyDashboardPage() {
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-6xl space-y-4">
-        {/* ── Greeting ─────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="rounded-xl border border-slate-200/60 bg-white/65 px-4 py-4 backdrop-blur-sm dark:border-slate-700/40 dark:bg-slate-900/45 md:px-5"
-        >
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg md:text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10">
-                  <GreetingIcon className="h-4 w-4 text-indigo-500" />
-                </span>
-                {greeting}
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {hasData
-                  ? `摘星锦囊已记录 ${mistakes.length} 道错题，先完成今天最重要的一步。`
-                  : '从第一道题开始，摘星锦囊会逐步生成你的今日任务。'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="flex items-center gap-1.5 rounded-md bg-white/60 dark:bg-slate-800/50 ring-1 ring-slate-200/40 dark:ring-slate-700/40 px-2.5 py-1 text-slate-500 dark:text-slate-400">
-                <motion.div
-                  className="w-1.5 h-1.5 rounded-full bg-emerald-400"
-                  animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-                学习中
-              </div>
-              {stats.streakDays > 0 && (
-                <div className="flex items-center gap-1 rounded-md bg-amber-500/10 ring-1 ring-amber-500/15 px-2.5 py-1 text-amber-600 dark:text-amber-400 text-xs font-medium">
-                  <Zap className="h-3 w-3" />
-                  {stats.streakDays}天
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
+        {/* ── View Tab Switch ──────────────────────────────────── */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewTab('today')}
+            className={cn(
+              'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+              viewTab === 'today'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-white/70 text-slate-600 hover:bg-slate-100 dark:bg-slate-900/45 dark:text-slate-300 dark:hover:bg-slate-800/50',
+            )}
+          >
+            <Star className="h-3.5 w-3.5" />
+            今日学习
+          </button>
+          <button
+            onClick={() => setViewTab('dashboard')}
+            className={cn(
+              'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+              viewTab === 'dashboard'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-white/70 text-slate-600 hover:bg-slate-100 dark:bg-slate-900/45 dark:text-slate-300 dark:hover:bg-slate-800/50',
+            )}
+          >
+            <LayoutDashboard className="h-3.5 w-3.5" />
+            画像大屏
+          </button>
+        </div>
 
-        <LearningProfilePrompt status={user?.onboardingStatus} />
+        {/* ── Dashboard View ───────────────────────────────────── */}
+        {viewTab === 'dashboard' ? (
+          <LearnerProfileDashboard />
+        ) : (
+          <>
+            <LearningProfilePrompt status={user?.onboardingStatus} />
 
-        <AnimatePresence mode="wait">
-          {!hasData ? (
-            <DashboardEmptyState key="empty" />
-          ) : (
+            {/* ── Greeting ─────────────────────────────────────────── */}
             <motion.div
-              key="content"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-4"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="rounded-xl border border-slate-200/60 bg-white/65 px-4 py-4 backdrop-blur-sm dark:border-slate-700/40 dark:bg-slate-900/45 md:px-5"
             >
-              <TodayFocusPanel
-                recommendation={personalization?.recommendation ?? null}
-                stats={stats}
-                mistakeCount={mistakes.length}
-              />
-
-              <LearningInsightsSection
-                trendData={trendData}
-                radarData={radarData}
-                masteryPercent={masteryPercent}
-                weakPointText={weakPointText}
-              />
-
-              <ReviewPlanSection
-                topics={routeTopics}
-                weakPointText={weakPointText}
-                mistakeCount={mistakes.length}
-              />
-
-              <CommonToolsSection weakPoints={weakPoints} />
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10">
+                      <GreetingIcon className="h-4 w-4 text-indigo-500" />
+                    </span>
+                    {greeting}
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {hasData
+                      ? `摘星锦囊已记录 ${mistakes.length} 道错题，先完成今天最重要的一步。`
+                      : '从第一道题开始，摘星锦囊会逐步生成你的今日任务。'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="flex items-center gap-1.5 rounded-md bg-white/60 dark:bg-slate-800/50 ring-1 ring-slate-200/40 dark:ring-slate-700/40 px-2.5 py-1 text-slate-500 dark:text-slate-400">
+                    <motion.div
+                      className="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                      animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                    学习中
+                  </div>
+                  {stats.streakDays > 0 && (
+                    <div className="flex items-center gap-1 rounded-md bg-amber-500/10 ring-1 ring-amber-500/15 px-2.5 py-1 text-amber-600 dark:text-amber-400 text-xs font-medium">
+                      <Zap className="h-3 w-3" />
+                      {stats.streakDays}天
+                    </div>
+                  )}
+                </div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
+
+            <AnimatePresence mode="wait">
+              {!hasData ? (
+                <DashboardEmptyState key="empty" />
+              ) : (
+                <motion.div
+                  key="content"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-4"
+                >
+                  <TodayFocusPanel
+                    recommendation={personalization?.recommendation ?? null}
+                    stats={stats}
+                    mistakeCount={mistakes.length}
+                  />
+
+                  <LearningInsightsSection
+                    trendData={trendData}
+                    radarData={radarData}
+                    masteryPercent={masteryPercent}
+                    weakPointText={weakPointText}
+                  />
+
+                  <ReviewPlanSection
+                    topics={routeTopics}
+                    weakPointText={weakPointText}
+                    mistakeCount={mistakes.length}
+                  />
+
+                  <CommonToolsSection weakPoints={weakPoints} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        )}
       </div>
     </SkyAppShell>
   );

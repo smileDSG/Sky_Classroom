@@ -1,4 +1,5 @@
 import type { KBStats, KBType } from '@/lib/knowledge-base/types';
+import type { KnowledgeState } from '@/lib/adaptive-learning/contracts';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { QuizAttempt } from '@/lib/student/quiz-attempts';
 import type { StudentProfile } from '@/lib/student/profile-types';
@@ -107,11 +108,65 @@ function deriveWeakPointNames(input: {
     .map(([point]) => point);
 }
 
+function buildKnowledgeStateWeakPoints(
+  states: KnowledgeState[],
+  recentCounts: Map<string, number>,
+  dueCounts: Map<string, number>,
+  kbStats: KBStats | null,
+): WeakPointSummary[] {
+  return states
+    .filter((state) => state.mastery < 0.5)
+    .sort((a, b) => a.mastery - b.mastery)
+    .slice(0, 5)
+    .map((state) => {
+      const knowledgePoint = state.displayName ?? state.nodeId;
+      const masteryPercent = Math.round(state.mastery * 100);
+      return {
+        knowledgePoint,
+        mastery: masteryPercent,
+        recentMistakeCount: recentCounts.get(knowledgePoint) ?? 0,
+        actionHref: withQuery('/sky/cloud-mind/quiz', {
+          topic: knowledgePoint,
+          difficulty: masteryPercent < 45 ? 'easy' : 'medium',
+        }),
+        evidence: buildKnowledgePointEvidence({
+          knowledgePoint,
+          mastery: masteryPercent,
+          recentMistakeCount: recentCounts.get(knowledgePoint) ?? 0,
+          dueReviewCount: dueCounts.get(knowledgePoint) ?? 0,
+          kbStats,
+        }),
+      };
+    });
+}
+
+function mergeWeakPoints(
+  profileWeakPoints: WeakPointSummary[],
+  knowledgeStateWeakPoints: WeakPointSummary[],
+): WeakPointSummary[] {
+  const seen = new Set<string>();
+  const merged: WeakPointSummary[] = [];
+
+  for (const point of profileWeakPoints) {
+    seen.add(point.knowledgePoint);
+    merged.push(point);
+  }
+
+  for (const point of knowledgeStateWeakPoints) {
+    if (seen.has(point.knowledgePoint)) continue;
+    seen.add(point.knowledgePoint);
+    merged.push(point);
+  }
+
+  return merged.slice(0, 6);
+}
+
 function deriveWeakPoints(input: {
   profile: StudentProfile | null;
   mistakes: MistakeBookEntry[];
   dueMistakes: MistakeBookEntry[];
   kbStats: KBStats | null;
+  knowledgeStates?: KnowledgeState[];
 }): WeakPointSummary[] {
   const recentCounts = countRecentMistakesByKnowledge(input.mistakes);
   const dueCounts = countRecentMistakesByKnowledge(input.dueMistakes, 9999);
@@ -120,7 +175,7 @@ function deriveWeakPoints(input: {
     recentCounts,
   });
 
-  return weakPointNames.slice(0, 5).map((knowledgePoint) => {
+  const profileWeakPoints = weakPointNames.slice(0, 5).map((knowledgePoint) => {
     const mastery = input.profile?.masteryByKnowledge?.[knowledgePoint] ?? 50;
     return {
       knowledgePoint,
@@ -139,6 +194,15 @@ function deriveWeakPoints(input: {
       }),
     };
   });
+
+  const knowledgeStateWeakPoints = buildKnowledgeStateWeakPoints(
+    input.knowledgeStates ?? [],
+    recentCounts,
+    dueCounts,
+    input.kbStats,
+  );
+
+  return mergeWeakPoints(profileWeakPoints, knowledgeStateWeakPoints);
 }
 
 function buildDueReviews(dueMistakes: MistakeBookEntry[]): DueReviewItem[] {
@@ -317,18 +381,25 @@ export function buildCloudMindDashboard(input: {
   dueMistakes: MistakeBookEntry[];
   recentAttempts: QuizAttempt[];
   kbStats?: KBStats | null;
+  knowledgeStates?: KnowledgeState[];
 }): CloudMindDashboardData {
   const kbStats = input.kbStats ?? EMPTY_KB_STATS;
   const masteryValues = Object.values(input.profile?.masteryByKnowledge ?? {});
+  const knowledgeStateMasteryValues = (input.knowledgeStates ?? []).map((s) =>
+    Math.round(s.mastery * 100),
+  );
+  const allMasteryValues = [...masteryValues, ...knowledgeStateMasteryValues];
   const hasLearningData =
     hasProfileLearningData(input.profile) ||
     input.mistakes.length > 0 ||
-    input.recentAttempts.length > 0;
+    input.recentAttempts.length > 0 ||
+    (input.knowledgeStates?.length ?? 0) > 0;
   const weakPoints = deriveWeakPoints({
     profile: input.profile,
     mistakes: input.mistakes,
     dueMistakes: input.dueMistakes,
     kbStats,
+    knowledgeStates: input.knowledgeStates,
   });
   const dueReviews = buildDueReviews(input.dueMistakes);
   const recentRecords = buildRecentRecords({
@@ -358,7 +429,7 @@ export function buildCloudMindDashboard(input: {
     summary: {
       totalQuestions: input.profile?.totalQuestions ?? 0,
       totalCorrect: input.profile?.totalCorrect ?? 0,
-      masteryAverage: average(masteryValues),
+      masteryAverage: average(allMasteryValues),
       recentAccuracy:
         input.recentAttempts.length > 0
           ? average(input.recentAttempts.slice(0, 3).map((attempt) => attempt.accuracy))

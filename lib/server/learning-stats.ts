@@ -7,6 +7,7 @@
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createUserStatsDAO } from '@/lib/storage/dao/user-stats';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { createLogger } from '@/lib/logger';
 import type { LearningStatsResponse } from '@/lib/teaching/learning-path-types';
@@ -54,26 +55,35 @@ export async function getLearningStats(userId: string): Promise<LearningStatsRes
   const checkInEntry = await storage.get<CheckInEntry>(CHECKIN_TABLE, `${userId}_${todayStr}`);
   const checkedInToday = !!checkInEntry?.data;
 
-  // ── Calculate mastery from knowledge graph ──
+  // ── Calculate mastery from knowledge states and knowledge graph ──
   let masteryPercent = 0;
   try {
-    const mistakesResult = await mistakeDAO.list(userId, { pageSize: 1000 });
-    if (mistakesResult.items.length > 0) {
-      const clientMistakes = mistakesResult.items.map((entry) => ({
-        id: entry.id,
-        problem: entry.problemText,
-        userAnswer: entry.userAnswer,
-        correctAnswer: entry.correctAnswer,
-        cause: mistakeCauseFromErrorType(entry.errorType) as any,
-        solvedAt: entry.lastReview ? new Date(entry.lastReview) : new Date(),
-        reviewed: entry.reviewed,
-        reviewCount: entry.reviewCount,
-        knowledgePoints: entry.knowledgePoints ?? [],
-      }));
-      const graph = buildKnowledgeGraph(clientMistakes);
-      if (graph.nodes.length > 0) {
-        const totalMastery = graph.nodes.reduce((sum, node) => sum + node.mastery, 0);
-        masteryPercent = Math.round(totalMastery / graph.nodes.length);
+    const knowledgeStateDAO = createKnowledgeStateDAO(storage);
+    const knowledgeStates = await knowledgeStateDAO.list(userId);
+
+    if (knowledgeStates.length > 0) {
+      const totalMastery = knowledgeStates.reduce((sum, state) => sum + state.mastery, 0);
+      masteryPercent = Math.round((totalMastery / knowledgeStates.length) * 100);
+    } else {
+      // Fallback to the legacy knowledge graph when no event-driven states exist yet.
+      const mistakesResult = await mistakeDAO.list(userId, { pageSize: 1000 });
+      if (mistakesResult.items.length > 0) {
+        const clientMistakes = mistakesResult.items.map((entry) => ({
+          id: entry.id,
+          problem: entry.problemText,
+          userAnswer: entry.userAnswer,
+          correctAnswer: entry.correctAnswer,
+          cause: mistakeCauseFromErrorType(entry.errorType) as any,
+          solvedAt: entry.lastReview ? new Date(entry.lastReview) : new Date(),
+          reviewed: entry.reviewed,
+          reviewCount: entry.reviewCount,
+          knowledgePoints: entry.knowledgePoints ?? [],
+        }));
+        const graph = buildKnowledgeGraph(clientMistakes);
+        if (graph.nodes.length > 0) {
+          const totalMastery = graph.nodes.reduce((sum, node) => sum + node.mastery, 0);
+          masteryPercent = Math.round(totalMastery / graph.nodes.length);
+        }
       }
     }
   } catch (err) {

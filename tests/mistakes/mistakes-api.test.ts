@@ -404,6 +404,27 @@ describe('PATCH /api/sky/mistakes', () => {
     expect(updated?.nextReview).toBeDefined();
     expect(updated?.nextReview).toBeGreaterThan(Date.now());
   });
+
+  it('records a review-completed learning event after PATCH', async () => {
+    const createRes = await createMistake({ knowledgePoints: ['事件测试'] });
+    const id = await extractId(createRes);
+
+    await PATCH(
+      new NextRequest(BASE, {
+        method: 'PATCH',
+        body: JSON.stringify({ id }),
+      }),
+    );
+
+    const repository = new LearnerProfileRepository(storage);
+    const events = await repository.listLearningEvents('user-a');
+    const reviewEvent = events.find((e) => e.type === 'review-completed' && e.correlationId === id);
+
+    expect(reviewEvent).toBeDefined();
+    expect(reviewEvent?.source).toBe('mistake-review');
+    expect(reviewEvent?.payload.rating).toBe('recalled');
+    expect(reviewEvent?.payload.knowledgePoints).toEqual(['事件测试']);
+  });
 });
 
 // ── DELETE ─────────────────────────────────────────────────────────

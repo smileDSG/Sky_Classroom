@@ -26,7 +26,16 @@ export function SkyTabBar() {
         } else if (item.href === '/sky') {
           isActive = pathname === '/sky';
         } else {
-          isActive = pathname.startsWith(item.href);
+          // Longest-prefix match: only highlight this tab if no other tab
+          // has a more specific (longer) href that also matches the pathname.
+          isActive =
+            pathname.startsWith(item.href) &&
+            !NAV_ITEMS.some(
+              (other) =>
+                other.href !== item.href &&
+                other.href.startsWith(item.href) &&
+                pathname.startsWith(other.href),
+            );
         }
 
         const Icon = item.icon;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildCloudMindDashboard } from '@/lib/cloud-mind/recommendation-engine';
+import type { KnowledgeState } from '@/lib/adaptive-learning/contracts';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { StudentProfile } from '@/lib/student/profile-types';
 
@@ -98,5 +99,67 @@ describe('cloud mind recommendation engine', () => {
       source: 'profile',
       title: '学情画像更新',
     });
+  });
+
+  it('includes knowledge state weak points in the dashboard', () => {
+    const knowledgeStates: KnowledgeState[] = [
+      {
+        userId: 'u3',
+        nodeId: 'kp-0135ff99',
+        displayName: '三角形',
+        alpha: 2,
+        beta: 4,
+        mastery: 0.33,
+        confidence: 0.4,
+        retention: 0.9,
+        reviewStabilityDays: 5,
+        repeatedErrorCount: 2,
+        evidenceCount: 2,
+        version: 2,
+      },
+    ];
+
+    const dashboard = buildCloudMindDashboard({
+      userId: 'u3',
+      profile: null,
+      mistakes: [],
+      dueMistakes: [],
+      recentAttempts: [],
+      knowledgeStates,
+    });
+
+    expect(dashboard.hasLearningData).toBe(true);
+    expect(dashboard.weakPoints).toHaveLength(1);
+    expect(dashboard.weakPoints[0].knowledgePoint).toBe('三角形');
+    expect(dashboard.weakPoints[0].mastery).toBe(33);
+  });
+
+  it('averages knowledge state mastery into summary', () => {
+    const knowledgeStates: KnowledgeState[] = [
+      {
+        userId: 'u4',
+        nodeId: 'node-a',
+        alpha: 4,
+        beta: 2,
+        mastery: 0.67,
+        confidence: 0.5,
+        retention: 1,
+        reviewStabilityDays: 7,
+        repeatedErrorCount: 0,
+        evidenceCount: 1,
+        version: 1,
+      },
+    ];
+
+    const dashboard = buildCloudMindDashboard({
+      userId: 'u4',
+      profile: null,
+      mistakes: [],
+      dueMistakes: [],
+      recentAttempts: [],
+      knowledgeStates,
+    });
+
+    expect(dashboard.summary.masteryAverage).toBe(67);
   });
 });
