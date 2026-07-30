@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Star, Brain, TrendingUp, Feather, GraduationCap, LayoutDashboard } from 'lucide-react';
+import { Star, Brain, TrendingUp, Feather, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS: { label: string; href: string; icon: typeof Star; badge?: number }[] = [
@@ -11,7 +11,6 @@ const NAV_ITEMS: { label: string; href: string; icon: typeof Star; badge?: numbe
   { label: '今日学习', href: '/sky', icon: Star },
   { label: '云端智囊', href: '/sky/cloud-mind', icon: Brain },
   { label: '学习路线', href: '/sky/learning', icon: TrendingUp },
-  { label: '数据大屏', href: '/sky/learning/profile-dashboard', icon: LayoutDashboard },
   { label: '云翼助手', href: '/sky/assistant', icon: Feather },
 ];
 
