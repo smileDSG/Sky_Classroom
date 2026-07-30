@@ -1,17 +1,21 @@
 /**
  * POST /api/sky/assistant
  * AI assistant chat endpoint — real LLM-powered with SSE streaming.
- * Injects mistake-book, knowledge-graph, and GAM-style memory context
- * for personalised responses.
+ * Injects authenticated learner context for personalised responses.
  */
 import { NextRequest } from 'next/server';
 import { streamLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
-import { getServerStorage } from '@/lib/server/server-storage';
+import { requireAuth } from '@/lib/server/auth/helpers';
+import { getRequiredServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildGraphFromMistakes } from '@/lib/graph/builder';
 import { buildSystemPrompt } from '@/lib/assistant/context-injector';
+import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
+import { buildTeachingProjection } from '@/lib/adaptive-learning/profile/projection-builder';
+import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
+import { adaptiveLearningApiError } from '@/lib/adaptive-learning/api-error';
 
 const log = createLogger('API:SkyAssistant');
 
@@ -20,24 +24,31 @@ export const maxDuration = 30;
 let _daoPromise: ReturnType<typeof initDAO> | null = null;
 
 async function initDAO() {
-  const storage = await getServerStorage();
+  const storage = await getRequiredServerStorage();
   return createMistakeBookDAO(storage);
 }
 
 async function getDAO() {
-  if (!_daoPromise) _daoPromise = initDAO();
+  if (!_daoPromise) {
+    _daoPromise = initDAO().catch((error) => {
+      _daoPromise = null;
+      throw error;
+    });
+  }
   return _daoPromise;
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await req.json();
-    const { messages, subject, difficulty, style, memoryContext } = body as {
+    const { messages, subject, difficulty, style } = body as {
       messages: { role: string; content: string }[];
       subject?: string;
       difficulty?: string;
       style?: string;
-      memoryContext?: string; // GAM-style memory context from client
     };
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -54,57 +65,42 @@ export async function POST(req: NextRequest) {
       providerType: body.providerType,
     });
 
+    // Load authoritative learner profile for personalised responses
+    const storage = await getRequiredServerStorage();
+    const profileRepository = new LearnerProfileRepository(storage);
+    const preferences = await profileRepository.getLatestPreferences(auth.user.id);
+    if (!preferences) {
+      const error = new AdaptiveLearningError({
+        code: 'PROFILE_NOT_FOUND',
+        message: 'Learner profile is required before using the assistant',
+        retryable: false,
+        stage: 'assistant-profile-load',
+      });
+      return adaptiveLearningApiError(error, crypto.randomUUID());
+    }
+
+    const teachingProjection = buildTeachingProjection({
+      userId: auth.user.id,
+      snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w0`,
+      profileVersion: preferences.version,
+      eventWatermark: 0,
+      preferences,
+      knowledgeStatus: 'no-evidence',
+    });
+
     // Load student context for personalised responses
-    let mistakes = null;
-    let graphNodes = null;
-    let solveHistory = null;
-    try {
-      const dao = await getDAO();
-      const result = await dao.list({ pageSize: 9999 });
-      mistakes = result.items;
-      if (mistakes.length > 0) {
-        const graph = buildGraphFromMistakes(mistakes);
-        graphNodes = graph.nodes;
-      }
-    } catch (err) {
-      log.warn('Failed to load mistake context, continuing without it:', err);
-    }
-    try {
-      const { listQuestionBankEntries } = await import('@/lib/solve/question-bank');
-      solveHistory = await listQuestionBankEntries(10);
-    } catch (err) {
-      log.warn('Failed to load question bank, continuing without it:', err);
-    }
+    const dao = await getDAO();
+    const mistakePage = await dao.list(auth.user.id, { pageSize: 9999 });
+    const mistakes = mistakePage.items;
+    const graphNodes = mistakes.length > 0 ? buildGraphFromMistakes(mistakes).nodes : null;
 
     const subj = subject || '数学';
 
-    // Check if client already sent a system message (e.g. Kagami persona)
-    const clientSystemMsg = messages.find((m) => m.role === 'system');
-
-    let systemPrompt: string;
-    if (clientSystemMsg) {
-      // Use client's system message as base, append learning context
-      systemPrompt = clientSystemMsg.content;
-      if (mistakes && mistakes.length > 0) {
-        const ctx = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
-          mistakes: mistakes,
-          graphNodes: graphNodes ?? undefined,
-          solveHistory: solveHistory ?? undefined,
-        });
-        systemPrompt += '\n\n' + ctx.split('\n').slice(1).join('\n'); // append context without duplicating base
-      }
-    } else {
-      systemPrompt = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
-        mistakes: mistakes ?? undefined,
-        graphNodes: graphNodes ?? undefined,
-        solveHistory: solveHistory ?? undefined,
-      });
-    }
-
-    // Inject GAM-style memory context if provided by client
-    if (memoryContext) {
-      systemPrompt += '\n\n' + memoryContext;
-    }
+    const systemPrompt = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
+      mistakes,
+      graphNodes: graphNodes ?? undefined,
+      teachingProjection,
+    });
 
     // Convert messages — exclude system messages since we pass via system param
     const aiMessages = messages
@@ -114,7 +110,7 @@ export async function POST(req: NextRequest) {
         content: m.content,
       }));
 
-    const result = streamLLM(
+    const generation = streamLLM(
       {
         model,
         system: systemPrompt,
@@ -132,7 +128,7 @@ export async function POST(req: NextRequest) {
 
     (async () => {
       try {
-        for await (const chunk of result.textStream) {
+        for await (const chunk of generation.textStream) {
           const event = `data: ${JSON.stringify({ type: 'text_delta', content: chunk })}\n\n`;
           await writer.write(encoder.encode(event));
         }

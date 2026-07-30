@@ -152,6 +152,7 @@ export async function gradeAnswer(
   correctAnswer: string,
   userAnswer: string,
   correctAnswerSteps?: string[],
+  teachingProjection?: string,
 ): Promise<GradeResult> {
   try {
     const modelWithInfo = getModel({
@@ -171,8 +172,12 @@ export async function gradeAnswer(
       .replace('{userAnswer}', userAnswer)
       .replace('{stepsContext}', stepsContext);
 
+    const systemContent = teachingProjection
+      ? `${prompt}\n\n# Learner Profile (authoritative)\n${teachingProjection}\n\n请严格按上述学习者画像调整讲解深度、语气和分步详略。`
+      : prompt;
+
     const messages: Array<{ role: string; content: unknown }> = [
-      { role: 'system', content: prompt },
+      { role: 'system', content: systemContent },
     ];
 
     const result = await callLLM(

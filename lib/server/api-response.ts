@@ -35,6 +35,7 @@ export function apiError(
   status: number,
   error: string,
   details?: string,
+  headers?: Record<string, string>,
 ): NextResponse<ApiErrorBody> {
   return NextResponse.json(
     {
@@ -43,7 +44,7 @@ export function apiError(
       error,
       ...(details ? { details } : {}),
     },
-    { status },
+    { status, headers },
   );
 }
 
@@ -55,6 +56,7 @@ export function apiError(
 export function apiSuccess<T extends Record<string, unknown>>(
   data: T,
   status = 200,
+  headers?: Record<string, string>,
 ): NextResponse {
-  return NextResponse.json({ success: true, ...data }, { status });
+  return NextResponse.json({ success: true, ...data }, { status, headers });
 }

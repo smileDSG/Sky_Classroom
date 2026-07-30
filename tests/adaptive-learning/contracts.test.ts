@@ -270,6 +270,7 @@ describe('adaptive learning curriculum and resource contracts', () => {
       occurredAt: '2026-07-28T00:00:00.000Z',
       source: 'quiz',
       nodeIds: [state.nodeId],
+      evidenceQuality: 'verified',
       payload: { correct: true },
       schemaVersion: '1.0.0',
     });

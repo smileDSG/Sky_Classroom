@@ -3,15 +3,18 @@ import {
   injectMistakeContext,
   injectGraphContext,
   buildSystemPrompt,
+  injectTeachingProjection,
 } from '@/lib/assistant/context-injector';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { GraphNode } from '@/lib/graph/types';
+import type { TeachingProfileProjection } from '@/lib/adaptive-learning/contracts';
 
 const BASE_PROMPT = '你是一位专业的数学学习助手。';
 
 function makeMistake(overrides: Partial<MistakeBookEntry> = {}): MistakeBookEntry {
   return {
     id: 'm1',
+    userId: 'user-1',
     problemText: '1+1=?',
     userAnswer: '3',
     correctAnswer: '2',
@@ -153,5 +156,94 @@ describe('buildSystemPrompt', () => {
     const prompt = buildSystemPrompt('物理', 'senior', 'heuristic');
     expect(prompt).toContain('启发式');
     expect(prompt).toContain('高中');
+  });
+
+  it('with teaching projection → includes learner profile context', () => {
+    const projection: TeachingProfileProjection = {
+      projectionId: 'p1',
+      kind: 'teaching',
+      userId: 'user-1',
+      snapshotId: 's1',
+      profileVersion: 1,
+      eventWatermark: 0,
+      schemaVersion: '1.0.0',
+      generatedAt: '2026-07-28T00:00:00.000Z',
+      data: {
+        preferredLanguage: 'zh-CN',
+        contentFormatPreferences: ['text', 'worked-example'],
+        explanationDepth: 'detailed',
+        learningPace: 'standard',
+        stepByStepMode: 'when-needed',
+        interactionTone: 'friendly',
+        assistantName: '小云',
+        activeDomain: {
+          domainProfileId: 'default',
+          subjectId: 'math',
+          educationStage: 'senior-high',
+          gradeLevel: 'grade-12',
+          curriculumPackId: 'gaokao-math-2026.1',
+          curriculumPackVersion: '2026-07-28.1',
+        },
+        knowledgeStatus: 'no-evidence',
+        strengths: [],
+        growthAreas: [],
+      },
+    };
+
+    const prompt = buildSystemPrompt('数学', 'junior', 'concise', { teachingProjection: projection });
+    expect(prompt).toContain('学习者画像');
+    expect(prompt).toContain('小云');
+    expect(prompt).toContain('讲解深度：详细');
+    expect(prompt).toContain('尚未收集到足够学习证据');
+  });
+});
+
+// ── injectTeachingProjection ───────────────────────────────────────
+
+describe('injectTeachingProjection', () => {
+  it('includes growth areas with mastery percentages', () => {
+    const projection: TeachingProfileProjection = {
+      projectionId: 'p1',
+      kind: 'teaching',
+      userId: 'user-1',
+      snapshotId: 's1',
+      profileVersion: 1,
+      eventWatermark: 0,
+      schemaVersion: '1.0.0',
+      generatedAt: '2026-07-28T00:00:00.000Z',
+      data: {
+        preferredLanguage: 'zh-CN',
+        contentFormatPreferences: ['text'],
+        explanationDepth: 'standard',
+        learningPace: 'slow',
+        stepByStepMode: 'always',
+        interactionTone: 'encouraging',
+        assistantName: '助教',
+        activeDomain: {
+          domainProfileId: 'default',
+          subjectId: 'math',
+          educationStage: 'junior-high',
+          gradeLevel: 'grade-9',
+          curriculumPackId: 'gaokao-math-2026.1',
+          curriculumPackVersion: '2026-07-28.1',
+        },
+        knowledgeStatus: 'ready',
+        strengths: [],
+        growthAreas: [
+          {
+            nodeId: 'quadratic-equations',
+            mastery: 0.35,
+            confidence: 0.6,
+            reasonCodes: ['repeated-errors'],
+          },
+        ],
+      },
+    };
+
+    const result = injectTeachingProjection(BASE_PROMPT, projection);
+    expect(result).toContain('初中');
+    expect(result).toContain('quadratic-equations（掌握度 35%）');
+    expect(result).toContain('学习节奏：较慢');
+    expect(result).toContain('始终分步');
   });
 });

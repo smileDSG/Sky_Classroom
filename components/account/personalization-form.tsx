@@ -1,354 +1,684 @@
-/**
- * Personalization Settings Form
- *
- * User personalization preferences for AI interactions.
- */
-
 'use client';
 
-import { useState } from 'react';
-import { Sparkles, BookOpen, Brain, MessageCircle, Settings2, RotateCcw } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/hooks/use-i18n';
-import { toast } from 'sonner';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import {
-  useSettingsStore,
-  LEARNING_STYLE_LABELS,
-  DETAIL_LEVEL_LABELS,
-  AI_PERSONALITY_LABELS,
-  EDUCATION_LEVEL_LABELS,
-  DEFAULT_SUBJECTS,
-  type LearningStyle,
-  type DetailLevel,
-  type AIPersonality,
-  type EducationLevel,
-} from '@/lib/store/settings';
+  AlertCircle,
+  BookOpen,
+  Brain,
+  CheckCircle2,
+  LoaderCircle,
+  MessageCircle,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 
-const LEARNING_STYLES: LearningStyle[] = ['visual', 'auditory', 'reading', 'kinesthetic', 'balanced'];
-const DETAIL_LEVELS: DetailLevel[] = ['concise', 'standard', 'detailed', 'comprehensive'];
-const AI_PERSONALITIES: AIPersonality[] = ['friendly', 'professional', 'encouraging', 'strict', 'humorous'];
-const EDUCATION_LEVELS: EducationLevel[] = ['primary', 'middle', 'high', 'undergraduate', 'graduate', 'other'];
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  learnerPreferencesInputSchema,
+  type LearnerPreferencesInput,
+} from '@/lib/adaptive-learning/contracts';
+import {
+  createInitialLearnerPreferences,
+  LearnerProfileClientError,
+  loadLearnerPreferences,
+  saveLearnerPreferences,
+  toLearnerPreferencesInput,
+} from '@/lib/adaptive-learning/profile/client';
+import { cn } from '@/lib/utils';
+
+type TabKey = 'formats' | 'learning' | 'ai' | 'privacy';
+type LoadState = 'loading' | 'ready' | 'missing' | 'error';
+type SaveState = 'idle' | 'saving' | 'success' | 'conflict' | 'error';
+
+const FORMAT_OPTIONS: Array<{
+  value: LearnerPreferencesInput['contentFormatPreferences'][number];
+  label: string;
+  hint: string;
+}> = [
+  { value: 'text', label: '文字讲解', hint: '结构清晰的文字说明' },
+  { value: 'worked-example', label: '例题演示', hint: '先看完整解法再练习' },
+  { value: 'diagram', label: '图示理解', hint: '图表、流程与空间关系' },
+  { value: 'interactive', label: '互动练习', hint: '边学边答、即时反馈' },
+  { value: 'audio', label: '语音讲解', hint: '适合听学与复述' },
+];
+
+const DEPTH_OPTIONS: Array<{
+  value: LearnerPreferencesInput['explanationDepth'];
+  label: string;
+}> = [
+  { value: 'concise', label: '简洁' },
+  { value: 'standard', label: '标准' },
+  { value: 'detailed', label: '详细' },
+  { value: 'comprehensive', label: '全面' },
+];
+
+const PACE_OPTIONS: Array<{
+  value: LearnerPreferencesInput['learningPace'];
+  label: string;
+}> = [
+  { value: 'slow', label: '稳步慢学' },
+  { value: 'standard', label: '标准节奏' },
+  { value: 'fast', label: '快速推进' },
+];
+
+const STEP_OPTIONS: Array<{
+  value: LearnerPreferencesInput['stepByStepMode'];
+  label: string;
+  hint: string;
+}> = [
+  { value: 'always', label: '始终分步', hint: '每次都展示完整步骤' },
+  { value: 'when-needed', label: '按需分步', hint: '复杂内容才展开步骤' },
+  { value: 'hints-first', label: '提示优先', hint: '先给线索，再揭示答案' },
+];
+
+const TONE_OPTIONS: Array<{
+  value: LearnerPreferencesInput['interactionTone'];
+  label: string;
+}> = [
+  { value: 'friendly', label: '友善亲切' },
+  { value: 'professional', label: '专业严谨' },
+  { value: 'encouraging', label: '鼓励引导' },
+  { value: 'strict', label: '严格要求' },
+  { value: 'humorous', label: '幽默风趣' },
+];
+
+const MEMORY_OPTIONS: Array<{
+  value: LearnerPreferencesInput['privacy']['conversationMemory'];
+  label: string;
+  hint: string;
+}> = [
+  { value: 'off', label: '关闭', hint: '不使用历史对话记忆' },
+  { value: 'session', label: '仅本次会话', hint: '离开会话后不再使用' },
+  { value: 'persistent', label: '跨会话记忆', hint: '持续辅助后续学习' },
+];
+
+const TABS: Array<{ key: TabKey; label: string; icon: typeof BookOpen }> = [
+  { key: 'formats', label: '呈现偏好', icon: BookOpen },
+  { key: 'learning', label: '学习节奏', icon: Brain },
+  { key: 'ai', label: 'AI 交互', icon: MessageCircle },
+  { key: 'privacy', label: '隐私授权', icon: ShieldCheck },
+];
+
+function profileErrorMessage(error: unknown): string {
+  if (!(error instanceof LearnerProfileClientError)) {
+    return '个人画像请求失败，请重试。';
+  }
+
+  switch (error.code) {
+    case 'UNAUTHORIZED':
+      return '登录状态已失效，请重新登录后再试。';
+    case 'PERSISTENT_STORAGE_UNAVAILABLE':
+      return '个人画像存储暂不可用，当前更改未保存。';
+    case 'INVALID_PROFILE_RESPONSE':
+      return '服务端返回的个人画像不完整，已停止加载。';
+    default:
+      return '个人画像请求失败，当前更改未保存。';
+  }
+}
+
+function OptionButton({
+  selected,
+  disabled,
+  onClick,
+  children,
+  className,
+}: {
+  selected: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'min-h-11 rounded-xl border px-4 py-2.5 text-left text-sm transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2',
+        'disabled:cursor-not-allowed disabled:opacity-50',
+        selected
+          ? 'border-violet-300 bg-violet-50 text-violet-800 shadow-sm dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-200'
+          : 'border-border bg-background text-foreground hover:border-violet-200 hover:bg-violet-50/50 dark:hover:border-violet-800 dark:hover:bg-violet-950/20',
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function PersonalizationForm() {
-  const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<'profile' | 'learning' | 'ai' | 'features'>('profile');
+  const [activeTab, setActiveTab] = useState<TabKey>('formats');
+  const [draft, setDraft] = useState<LearnerPreferencesInput>(() =>
+    createInitialLearnerPreferences(),
+  );
+  const [version, setVersion] = useState(0);
+  const [loadState, setLoadState] = useState<LoadState>('loading');
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
 
-  // Profile settings
-  const educationLevel = useSettingsStore((s) => s.educationLevel);
-  const grade = useSettingsStore((s) => s.grade);
-  const favoriteSubjects = useSettingsStore((s) => s.favoriteSubjects);
-  const setEducationLevel = useSettingsStore((s) => s.setEducationLevel);
-  const setGrade = useSettingsStore((s) => s.setGrade);
-  const toggleSubject = useSettingsStore((s) => s.toggleSubject);
+  const loadProfile = useCallback(async () => {
+    setLoadState('loading');
+    setSaveState('idle');
+    setStatusMessage('');
 
-  // Learning settings
-  const learningStyle = useSettingsStore((s) => s.learningStyle);
-  const detailLevel = useSettingsStore((s) => s.detailLevel);
-  const preferredLanguage = useSettingsStore((s) => s.preferredLanguage);
-  const setLearningStyle = useSettingsStore((s) => s.setLearningStyle);
-  const setDetailLevel = useSettingsStore((s) => s.setDetailLevel);
-  const setPreferredLanguage = useSettingsStore((s) => s.setPreferredLanguage);
+    try {
+      const preferences = await loadLearnerPreferences();
+      setDraft(toLearnerPreferencesInput(preferences));
+      setVersion(preferences.version);
+      setLoadState('ready');
+    } catch (error) {
+      if (error instanceof LearnerProfileClientError && error.code === 'PROFILE_NOT_FOUND') {
+        setDraft(createInitialLearnerPreferences());
+        setVersion(0);
+        setLoadState('missing');
+        return;
+      }
 
-  // AI personality settings
-  const aiPersonality = useSettingsStore((s) => s.aiPersonality);
-  const aiName = useSettingsStore((s) => s.aiName);
-  const customInstructions = useSettingsStore((s) => s.customInstructions);
-  const setAIPersonality = useSettingsStore((s) => s.setAIPersonality);
-  const setAIName = useSettingsStore((s) => s.setAIName);
-  const setCustomInstructions = useSettingsStore((s) => s.setCustomInstructions);
+      setLoadState('error');
+      setStatusMessage(profileErrorMessage(error));
+    }
+  }, []);
 
-  // Feature settings
-  const autoGenerateQuiz = useSettingsStore((s) => s.autoGenerateQuiz);
-  const showStepByStep = useSettingsStore((s) => s.showStepByStep);
-  const enableMemory = useSettingsStore((s) => s.enableMemory);
-  const enableRAG = useSettingsStore((s) => s.enableRAG);
-  const setAutoGenerateQuiz = useSettingsStore((s) => s.setAutoGenerateQuiz);
-  const setShowStepByStep = useSettingsStore((s) => s.setShowStepByStep);
-  const setEnableMemory = useSettingsStore((s) => s.setEnableMemory);
-  const setEnableRAG = useSettingsStore((s) => s.setEnableRAG);
-  const resetPersonalization = useSettingsStore((s) => s.resetPersonalization);
+  useEffect(() => {
+    const loadTimer = window.setTimeout(() => {
+      void loadProfile();
+    }, 0);
+
+    return () => window.clearTimeout(loadTimer);
+  }, [loadProfile]);
+
+  const markEdited = () => {
+    setSaveState((current) => (current === 'success' || current === 'error' ? 'idle' : current));
+    setStatusMessage('');
+  };
+
+  const updateDraft = <K extends keyof LearnerPreferencesInput>(
+    key: K,
+    value: LearnerPreferencesInput[K],
+  ) => {
+    markEdited();
+    setDraft((current) => ({ ...current, [key]: value }));
+  };
+
+  const updatePrivacy = <K extends keyof LearnerPreferencesInput['privacy']>(
+    key: K,
+    value: LearnerPreferencesInput['privacy'][K],
+  ) => {
+    markEdited();
+    setDraft((current) => ({
+      ...current,
+      privacy: { ...current.privacy, [key]: value },
+    }));
+  };
+
+  const toggleFormat = (format: LearnerPreferencesInput['contentFormatPreferences'][number]) => {
+    const selected = draft.contentFormatPreferences.includes(format);
+    if (selected && draft.contentFormatPreferences.length === 1) {
+      setSaveState('error');
+      setStatusMessage('至少保留一种内容呈现偏好。');
+      return;
+    }
+
+    updateDraft(
+      'contentFormatPreferences',
+      selected
+        ? draft.contentFormatPreferences.filter((item) => item !== format)
+        : [...draft.contentFormatPreferences, format],
+    );
+  };
 
   const handleReset = () => {
-    if (confirm(t('personalization.resetConfirm') || '确定要重置所有个性化设置吗？')) {
-      resetPersonalization();
-      toast.success(t('personalization.resetSuccess') || '已重置为默认设置');
+    if (!window.confirm('恢复为待保存的初始偏好？服务端画像将在保存后更新。')) return;
+    setDraft(createInitialLearnerPreferences());
+    setSaveState('idle');
+    setStatusMessage('已恢复初始值，尚未保存。');
+  };
+
+  const handleSave = async () => {
+    const parsed = learnerPreferencesInputSchema.safeParse(draft);
+    if (!parsed.success) {
+      setSaveState('error');
+      setStatusMessage(parsed.error.issues[0]?.message ?? '画像字段校验失败。');
+      return;
+    }
+
+    setSaveState('saving');
+    setStatusMessage('');
+
+    try {
+      const saved = await saveLearnerPreferences({
+        expectedVersion: version,
+        preferences: parsed.data,
+      });
+      setDraft(toLearnerPreferencesInput(saved));
+      setVersion(saved.version);
+      setLoadState('ready');
+      setSaveState('success');
+    } catch (error) {
+      if (error instanceof LearnerProfileClientError && error.code === 'PROFILE_VERSION_CONFLICT') {
+        setSaveState('conflict');
+        setStatusMessage('画像已在其他位置更新。当前更改未覆盖服务端内容。');
+        return;
+      }
+
+      setSaveState('error');
+      setStatusMessage(profileErrorMessage(error));
     }
   };
 
-  const tabs = [
-    { key: 'profile' as const, icon: BookOpen, label: t('personalization.tabs.profile') || '个人资料' },
-    { key: 'learning' as const, icon: Brain, label: t('personalization.tabs.learning') || '学习偏好' },
-    { key: 'ai' as const, icon: MessageCircle, label: t('personalization.tabs.ai') || 'AI 个性' },
-    { key: 'features' as const, icon: Settings2, label: t('personalization.tabs.features') || '功能设置' },
-  ];
+  const isSaving = saveState === 'saving';
+  const saveDisabled = isSaving || saveState === 'conflict';
+
+  if (loadState === 'loading') {
+    return (
+      <Card
+        role="status"
+        aria-live="polite"
+        className="flex min-h-56 items-center justify-center gap-3 border-violet-100 bg-violet-50/40 p-8 dark:border-violet-900 dark:bg-violet-950/20"
+      >
+        <LoaderCircle className="size-5 animate-spin text-violet-600" />
+        <span className="text-sm text-muted-foreground">正在加载服务端个人画像…</span>
+      </Card>
+    );
+  }
+
+  if (loadState === 'error') {
+    return (
+      <Card className="border-red-200 bg-red-50/70 p-6 dark:border-red-900 dark:bg-red-950/20">
+        <div role="alert" className="flex items-start gap-3">
+          <AlertCircle className="mt-0.5 size-5 shrink-0 text-red-600" />
+          <div className="space-y-3">
+            <div>
+              <h2 className="font-semibold text-red-900 dark:text-red-100">个人画像加载失败</h2>
+              <p className="mt-1 text-sm text-red-800 dark:text-red-200">{statusMessage}</p>
+            </div>
+            <Button type="button" variant="outline" onClick={() => void loadProfile()}>
+              <RefreshCw className="size-4" />
+              重新加载
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="size-5 text-violet-500" />
-          <h2 className="text-lg font-semibold">{t('personalization.title') || '个性化设置'}</h2>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl bg-violet-100 p-2.5 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
+            <Sparkles className="size-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">学习者个人画像</h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+              这些偏好由服务端统一保存，供教学、检索、规划与学习反馈使用。
+            </p>
+          </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground">
-          <RotateCcw className="size-4 mr-1" />
-          {t('personalization.reset') || '重置'}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={isSaving}
+          onClick={handleReset}
+          className="min-h-11 self-start text-muted-foreground"
+        >
+          <RotateCcw className="size-4" />
+          恢复初始值
         </Button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-muted/50 rounded-lg">
-        {tabs.map(({ key, icon: Icon, label }) => (
+      <div
+        role="tablist"
+        aria-label="个人画像设置分类"
+        className="grid grid-cols-4 gap-1 rounded-xl bg-muted/60 p-1"
+      >
+        {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
+            id={`profile-tab-${key}`}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === key}
+            aria-controls={`profile-panel-${key}`}
+            disabled={isSaving}
             onClick={() => setActiveTab(key)}
             className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all',
+              'flex min-h-11 items-center justify-center gap-2 rounded-lg px-2 text-sm font-medium transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2',
               activeTab === key
-                ? 'bg-white dark:bg-slate-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                ? 'bg-background text-violet-700 shadow-sm dark:text-violet-300'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
             <Icon className="size-4" />
-            <span className="hidden sm:inline">{label}</span>
+            <span aria-hidden="true" className="hidden sm:inline">
+              {label}
+            </span>
+            <span className="sr-only">{label}</span>
           </button>
         ))}
       </div>
 
-      {/* Profile Tab */}
-      {activeTab === 'profile' && (
-        <div className="space-y-6">
-          {/* Education Level */}
-          <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.educationLevel') || '教育阶段'}</label>
-            <div className="flex flex-wrap gap-2">
-              {EDUCATION_LEVELS.map((level) => (
-                <button
-                  key={level}
-                  onClick={() => setEducationLevel(level)}
-                  className={cn(
-                    'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                    educationLevel === level
-                      ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 ring-1 ring-violet-300 dark:ring-violet-600'
-                      : 'bg-muted hover:bg-muted/80 text-muted-foreground',
-                  )}
+      {activeTab === 'formats' && (
+        <div
+          id="profile-panel-formats"
+          role="tabpanel"
+          aria-labelledby="profile-tab-formats"
+          className="space-y-5"
+        >
+          <Card className="space-y-4 p-5">
+            <div>
+              <h3 className="text-sm font-semibold">内容呈现方式</h3>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                可多选，不把你固定归类为单一“学习类型”。
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {FORMAT_OPTIONS.map((option) => (
+                <OptionButton
+                  key={option.value}
+                  selected={draft.contentFormatPreferences.includes(option.value)}
+                  disabled={isSaving}
+                  onClick={() => toggleFormat(option.value)}
                 >
-                  {EDUCATION_LEVEL_LABELS[level]}
-                </button>
+                  <span className="block font-medium">{option.label}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{option.hint}</span>
+                </OptionButton>
               ))}
             </div>
           </Card>
 
-          {/* Grade */}
-          <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.grade') || '年级'}</label>
-            <input
-              type="text"
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
-              placeholder={t('personalization.gradePlaceholder') || '例如：初二、高一、大三'}
-              className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
-            />
-          </Card>
-
-          {/* Favorite Subjects */}
-          <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.favoriteSubjects') || '感兴趣的学科'}</label>
-            <div className="flex flex-wrap gap-2">
-              {(favoriteSubjects.length > 0 ? favoriteSubjects : DEFAULT_SUBJECTS).map((subject) => (
-                <button
-                  key={subject.id}
-                  onClick={() => toggleSubject(subject.id)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-full text-sm font-medium transition-all',
-                    subject.enabled
-                      ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 ring-1 ring-sky-300 dark:ring-sky-600'
-                      : 'bg-muted hover:bg-muted/80 text-muted-foreground',
-                  )}
-                >
-                  {subject.name}
-                </button>
-              ))}
-            </div>
+          <Card className="space-y-3 p-5">
+            <label htmlFor="preferred-language" className="text-sm font-semibold">
+              首选语言
+            </label>
+            <select
+              id="preferred-language"
+              value={draft.preferredLanguage}
+              disabled={isSaving}
+              onChange={(event) => updateDraft('preferredLanguage', event.target.value)}
+              className="min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+            >
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+            </select>
           </Card>
         </div>
       )}
 
-      {/* Learning Tab */}
       {activeTab === 'learning' && (
-        <div className="space-y-6">
-          {/* Learning Style */}
-          <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.learningStyle') || '学习风格'}</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {LEARNING_STYLES.map((style) => (
-                <button
-                  key={style}
-                  onClick={() => setLearningStyle(style)}
-                  className={cn(
-                    'px-4 py-3 rounded-lg text-sm font-medium transition-all text-center',
-                    learningStyle === style
-                      ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 ring-1 ring-violet-300 dark:ring-violet-600'
-                      : 'bg-muted hover:bg-muted/80 text-muted-foreground',
-                  )}
+        <div
+          id="profile-panel-learning"
+          role="tabpanel"
+          aria-labelledby="profile-tab-learning"
+          className="space-y-5"
+        >
+          <Card className="space-y-3 p-5">
+            <h3 className="text-sm font-semibold">讲解深度</h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {DEPTH_OPTIONS.map((option) => (
+                <OptionButton
+                  key={option.value}
+                  selected={draft.explanationDepth === option.value}
+                  disabled={isSaving}
+                  onClick={() => updateDraft('explanationDepth', option.value)}
+                  className="text-center"
                 >
-                  {LEARNING_STYLE_LABELS[style]}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t('personalization.learningStyleHint') || '选择最适合你的学习方式，AI会据此调整讲解风格'}
-            </p>
-          </Card>
-
-          {/* Detail Level */}
-          <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.detailLevel') || '回答详细程度'}</label>
-            <div className="flex flex-wrap gap-2">
-              {DETAIL_LEVELS.map((level) => (
-                <button
-                  key={level}
-                  onClick={() => setDetailLevel(level)}
-                  className={cn(
-                    'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                    detailLevel === level
-                      ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 ring-1 ring-violet-300 dark:ring-violet-600'
-                      : 'bg-muted hover:bg-muted/80 text-muted-foreground',
-                  )}
-                >
-                  {DETAIL_LEVEL_LABELS[level]}
-                </button>
+                  {option.label}
+                </OptionButton>
               ))}
             </div>
           </Card>
 
-          {/* Preferred Language */}
-          <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.preferredLanguage') || '首选语言'}</label>
-            <div className="flex gap-2">
-              {[
-                { value: 'zh', label: '中文' },
-                { value: 'en', label: 'English' },
-              ].map((lang) => (
-                <button
-                  key={lang.value}
-                  onClick={() => setPreferredLanguage(lang.value)}
-                  className={cn(
-                    'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                    preferredLanguage === lang.value
-                      ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 ring-1 ring-violet-300 dark:ring-violet-600'
-                      : 'bg-muted hover:bg-muted/80 text-muted-foreground',
-                  )}
+          <Card className="space-y-3 p-5">
+            <h3 className="text-sm font-semibold">学习节奏</h3>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {PACE_OPTIONS.map((option) => (
+                <OptionButton
+                  key={option.value}
+                  selected={draft.learningPace === option.value}
+                  disabled={isSaving}
+                  onClick={() => updateDraft('learningPace', option.value)}
+                  className="text-center"
                 >
-                  {lang.label}
-                </button>
+                  {option.label}
+                </OptionButton>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="space-y-3 p-5">
+            <h3 className="text-sm font-semibold">分步引导方式</h3>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {STEP_OPTIONS.map((option) => (
+                <OptionButton
+                  key={option.value}
+                  selected={draft.stepByStepMode === option.value}
+                  disabled={isSaving}
+                  onClick={() => updateDraft('stepByStepMode', option.value)}
+                >
+                  <span className="block font-medium">{option.label}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{option.hint}</span>
+                </OptionButton>
               ))}
             </div>
           </Card>
         </div>
       )}
 
-      {/* AI Personality Tab */}
       {activeTab === 'ai' && (
-        <div className="space-y-6">
-          {/* AI Name */}
-          <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.aiName') || 'AI 助手名称'}</label>
+        <div
+          id="profile-panel-ai"
+          role="tabpanel"
+          aria-labelledby="profile-tab-ai"
+          className="space-y-5"
+        >
+          <Card className="space-y-3 p-5">
+            <label htmlFor="assistant-name" className="text-sm font-semibold">
+              AI 助手称呼
+            </label>
             <input
+              id="assistant-name"
               type="text"
-              value={aiName}
-              onChange={(e) => setAIName(e.target.value)}
-              placeholder={t('personalization.aiNamePlaceholder') || '给你的AI助手起个名字'}
+              value={draft.assistantName}
+              disabled={isSaving}
               maxLength={20}
-              className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+              onChange={(event) => updateDraft('assistantName', event.target.value)}
+              className="min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
             />
           </Card>
 
-          {/* AI Personality */}
-          <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.aiPersonality') || 'AI 性格风格'}</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {AI_PERSONALITIES.map((personality) => (
-                <button
-                  key={personality}
-                  onClick={() => setAIPersonality(personality)}
-                  className={cn(
-                    'px-4 py-3 rounded-lg text-sm font-medium transition-all text-center',
-                    aiPersonality === personality
-                      ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 ring-1 ring-violet-300 dark:ring-violet-600'
-                      : 'bg-muted hover:bg-muted/80 text-muted-foreground',
-                  )}
+          <Card className="space-y-3 p-5">
+            <h3 className="text-sm font-semibold">互动语气</h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {TONE_OPTIONS.map((option) => (
+                <OptionButton
+                  key={option.value}
+                  selected={draft.interactionTone === option.value}
+                  disabled={isSaving}
+                  onClick={() => updateDraft('interactionTone', option.value)}
+                  className="text-center"
                 >
-                  {AI_PERSONALITY_LABELS[personality]}
-                </button>
+                  {option.label}
+                </OptionButton>
               ))}
             </div>
           </Card>
 
-          {/* Custom Instructions */}
-          <Card className="p-5 space-y-3">
-            <label className="text-sm font-medium">{t('personalization.customInstructions') || '自定义指令'}</label>
+          <Card className="space-y-3 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="preference-notes" className="text-sm font-semibold">
+                补充偏好说明
+              </label>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {draft.preferenceNotes.length}/500
+              </span>
+            </div>
             <Textarea
-              value={customInstructions}
-              onChange={(e) => setCustomInstructions(e.target.value)}
-              placeholder={t('personalization.customInstructionsPlaceholder') || '告诉AI你的特殊需求，例如：我更喜欢用图示理解概念；请多用例子说明；我对编程感兴趣...'}
+              id="preference-notes"
+              value={draft.preferenceNotes}
+              disabled={isSaving}
               maxLength={500}
               rows={4}
+              onChange={(event) => updateDraft('preferenceNotes', event.target.value)}
+              placeholder="例如：讲抽象概念时先给生活类比，再给正式定义。"
               className="resize-none"
             />
-            <p className="text-xs text-muted-foreground text-right">{customInstructions.length}/500</p>
+            <p className="text-xs leading-5 text-muted-foreground">
+              仅保存结构化学习偏好，不接收系统提示词或私有记忆上下文。
+            </p>
           </Card>
         </div>
       )}
 
-      {/* Features Tab */}
-      {activeTab === 'features' && (
-        <div className="space-y-4">
-          <Card className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">{t('personalization.autoGenerateQuiz') || '自动出题'}</label>
-                <p className="text-xs text-muted-foreground">{t('personalization.autoGenerateQuizHint') || '学习完成后自动生成练习题'}</p>
-              </div>
-              <Switch checked={autoGenerateQuiz} onCheckedChange={setAutoGenerateQuiz} />
+      {activeTab === 'privacy' && (
+        <div
+          id="profile-panel-privacy"
+          role="tabpanel"
+          aria-labelledby="profile-tab-privacy"
+          className="space-y-5"
+        >
+          <Card className="space-y-3 p-5">
+            <h3 className="text-sm font-semibold">对话记忆范围</h3>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {MEMORY_OPTIONS.map((option) => (
+                <OptionButton
+                  key={option.value}
+                  selected={draft.privacy.conversationMemory === option.value}
+                  disabled={isSaving}
+                  onClick={() => updatePrivacy('conversationMemory', option.value)}
+                >
+                  <span className="block font-medium">{option.label}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{option.hint}</span>
+                </OptionButton>
+              ))}
             </div>
           </Card>
 
           <Card className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">{t('personalization.showStepByStep') || '分步解答'}</label>
-                <p className="text-xs text-muted-foreground">{t('personalization.showStepByStepHint') || '解题时显示详细步骤'}</p>
+            <div className="flex items-center justify-between gap-5">
+              <div>
+                <label htmlFor="behavior-signals" className="text-sm font-semibold">
+                  允许可选行为信号
+                </label>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  允许使用停留、点击等非核心信号优化体验；不会直接改变掌握度。
+                </p>
               </div>
-              <Switch checked={showStepByStep} onCheckedChange={setShowStepByStep} />
+              <Switch
+                id="behavior-signals"
+                checked={draft.privacy.optionalBehaviorSignals}
+                disabled={isSaving}
+                onCheckedChange={(checked) => updatePrivacy('optionalBehaviorSignals', checked)}
+              />
             </div>
           </Card>
 
           <Card className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">{t('personalization.enableMemory') || '记忆功能'}</label>
-                <p className="text-xs text-muted-foreground">{t('personalization.enableMemoryHint') || 'AI记住你的学习历史和偏好'}</p>
+            <div className="flex items-center justify-between gap-5">
+              <div>
+                <label htmlFor="private-retrieval" className="text-sm font-semibold">
+                  允许检索个人私有知识库
+                </label>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  仅控制个人上传资料；平台课程知识仍按教学权限检索。
+                </p>
               </div>
-              <Switch checked={enableMemory} onCheckedChange={setEnableMemory} />
-            </div>
-          </Card>
-
-          <Card className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">{t('personalization.enableRAG') || '知识库增强'}</label>
-                <p className="text-xs text-muted-foreground">{t('personalization.enableRAGHint') || '使用上传的知识库辅助回答'}</p>
-              </div>
-              <Switch checked={enableRAG} onCheckedChange={setEnableRAG} />
+              <Switch
+                id="private-retrieval"
+                checked={draft.privacy.privateKnowledgeRetrieval}
+                disabled={isSaving}
+                onCheckedChange={(checked) => updatePrivacy('privateKnowledgeRetrieval', checked)}
+              />
             </div>
           </Card>
         </div>
       )}
+
+      <div aria-live="polite" aria-atomic="true">
+        {loadState === 'missing' && saveState === 'idle' && (
+          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" />
+            尚未创建个人画像。以上是待确认初始值，保存后才会生效。
+          </div>
+        )}
+        {saveState === 'saving' && (
+          <div
+            role="status"
+            className="flex items-center gap-2 rounded-xl border bg-muted/50 p-4 text-sm"
+          >
+            <LoaderCircle className="size-4 animate-spin" />
+            正在保存个人画像…
+          </div>
+        )}
+        {saveState === 'success' && (
+          <div
+            role="status"
+            className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-100"
+          >
+            <CheckCircle2 className="size-4" />
+            个人画像已保存，当前版本 {version}。
+          </div>
+        )}
+        {saveState === 'conflict' && (
+          <div
+            role="alert"
+            className="flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span>{statusMessage}</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => void loadProfile()}>
+              <RefreshCw className="size-4" />
+              加载最新画像
+            </Button>
+          </div>
+        )}
+        {saveState === 'error' && (
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/20 dark:text-red-100"
+          >
+            <AlertCircle className="mt-0.5 size-4 shrink-0" />
+            {statusMessage}
+          </div>
+        )}
+        {saveState === 'idle' && loadState === 'ready' && (
+          <div
+            role="status"
+            className="flex items-center gap-2 rounded-xl border bg-muted/40 p-4 text-sm text-muted-foreground"
+          >
+            <ShieldCheck className="size-4 text-emerald-600" />
+            已连接服务端个人画像 · 版本 {version}
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          disabled={saveDisabled}
+          onClick={() => void handleSave()}
+          className="min-h-11 min-w-36 bg-violet-600 text-white hover:bg-violet-700"
+        >
+          {isSaving ? (
+            <LoaderCircle className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
+          {loadState === 'missing' ? '创建个人画像' : '保存个人画像'}
+        </Button>
+      </div>
     </div>
   );
 }

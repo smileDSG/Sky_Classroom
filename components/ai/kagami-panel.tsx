@@ -1,5 +1,7 @@
 'use client';
 
+import { sanitizeAssistantMessages } from '@/lib/assistant/client-payload';
+
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { InlineMath } from '@/components/ui/inline-math';
 import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
@@ -355,10 +357,7 @@ export function KagamiPanel() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [
-            { role: 'system', content: mode === 'anime' ? KAGAMI_PERSONA : NORMAL_PERSONA },
-            ...msgs.map((m) => ({ role: m.role, content: m.content })),
-          ],
+          messages: sanitizeAssistantMessages(msgs),
           style: 'detailed',
         }),
         signal: controller.signal,

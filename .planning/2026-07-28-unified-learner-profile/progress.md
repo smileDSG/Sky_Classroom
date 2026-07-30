@@ -1,0 +1,75 @@
+# Progress
+
+- 2026-07-28：读取项目说明与现有自适应学习设计，确认需求属于全局画像架构改造。
+- 2026-07-28：审计账号资料、个性化 store/API、用户 DAO、学习者合同、课堂 prompt、助手、错题和学习统计数据流。
+- 2026-07-28：确认现有画像分散、消费者接入不一致，并发现错题数据缺少用户隔离与多处静默降级。
+- 2026-07-28：建立独立规划目录，开始整理统一画像契约和实施阶段。
+- 2026-07-28：确认个性化设置 UI 未同步服务端、Sky API 认证覆盖极低、错题表缺少 `user_id`，并记录核心存储的内存 fallback 风险。
+- 2026-07-28：确认课程生成中的“Student Profile”实际是自由文本目标受众，需要与认证用户个人画像分离。
+- 2026-07-28：完成初步量化：35 个 Sky API 路由仅 6 个带认证检查，画像相关代码分散在 47 个文件。
+- 2026-07-28：审阅错题、助手、聊天与自适应合同测试，确定认证隔离和统一画像将需要明确的测试契约迁移。
+- 2026-07-28：审计画像证据来源，发现模糊评分 fallback 会污染掌握度，且现有 `masteryScore` 混入连续打卡与场景完成数；计划中将拆分知识、参与度和进度指标。
+- 2026-07-28：恢复规划上下文并确认工作树包含大量用户文件；后续只新增统一画像计划文档，不触碰现有未提交生产改动。
+- 2026-07-28：完成现状审计阶段，进入统一 Schema、来源可信度、错误码、隐私与消费者投影设计。
+- 2026-07-28：复核现有 learner contract、资料 store 和 personalization API，确认需要拆分账户展示资料、显式偏好、领域目标与派生学情，并取消读取与保存过程中的静默成功语义。
+- 2026-07-28：复核错题 DAO、服务端存储、个性化 prompt 与助手路由，确定首批硬前置为用户隔离、严格持久化、服务端投影和去除客户端权威上下文。
+- 2026-07-28：复核存储接口、用户 DAO、自适应错误与合同测试，确定采用现有 AdaptiveLearningError/Zod 基线，并以 service 层的版本与事件水位校验弥补当前通用存储缺少事务语义的问题。
+- 2026-07-28：检查 MySQL 表映射，确认 `mistakes` 是专表且缺少 `user_id`；一次 Windows glob 搜索参数失败，已记录并改用目录级过滤策略。
+- 2026-07-28：检查认证、错题、批改、复习路由，确认所有者必须由 `requireAuth()` 注入；确定错题复习阶段与知识掌握度在新 API 中分离表达。
+- 2026-07-28：检查个性化表单与字段消费者，确认表单无保存/错误状态，`enableMemory` 与 `enableRAG` 目前是含义模糊的功能开关；一次设置 store 路径假设错误已记录。
+- 2026-07-28：定位真实 settings store 与课件讲解 Agent，确定画像客户端状态独立管理，并统一流式/非流式消费者合同；细化记忆、行为采集与私有 RAG 的隐私语义。
+- 2026-07-28：审计多智能体课堂、出题、记忆卡片与学习统计，完成核心消费者的权威身份、投影种类与写回事件方向设计。
+- 2026-07-28：审计离线学习计划与共享题库，确定 CLI 复用统一 planning service，并把共享题目与用户交互证据拆开建模。
+- 2026-07-28：审计课程目标受众、RAG 与首页/学习数据 UI，完成 AudienceProfile 分离、可选检索增强追踪和 dashboard 投影设计。
+- 2026-07-28：完成统一合同、错误码、隐私语义和版本/事件水位设计，开始整理生产者/消费者矩阵与实施文件行号。
+- 2026-07-28：完成核心生产者/消费者矩阵，参考仓库既有 Superpowers 计划格式，进入正式 TDD 实施计划编写。
+- 2026-07-28：补齐消费者行号和 API 测试基线，确定实施前先建立认证/存储测试夹具，并迁移现有宽松输入断言。
+- 2026-07-28：完成正式计划正文；写入 `docs/superpowers/plans/2026-07-28-unified-learner-profile-platform.md` 时因自动审批服务 404 被拒绝，未尝试绕过。
+- 2026-07-28：用户明确允许重试写入正式计划并进入推荐的 TDD 实施；开始加载 TDD 与编码约束，准备按单一行为 RED→GREEN 推进。
+- 2026-07-28：两次获准后的正式计划新文件写入仍被审批服务 404 拒绝；为遵守 `apply_patch` 和计划先行规则，未修改任何生产代码。
+- 2026-07-28：用户明确授权以 `.planning` 计划作为批准基线，正式进入首个安全垂直切片的 TDD 实施。
+- 2026-07-28：TDD A02 RED：新增 `learner-profile-contracts.test.ts`，聚焦测试按预期因 `learnerPreferencesSchema` 尚未导出而失败（1 failed）。
+- 2026-07-28：TDD A03 GREEN：在 `contracts/learner.ts` 增加最小 `learnerPreferencesSchema`，聚焦测试通过（1 passed）。
+- 2026-07-28：TDD 增量循环：重复内容呈现偏好测试先按预期失败，再增加唯一性校验；聚焦测试恢复为 2 passed。
+- 2026-07-28：Domain profile 两轮 RED→GREEN 完成：先支持非数学领域，再约束 targetScore 不得超过 scoreScaleMax；聚焦测试 4 passed。期间一次 refinement 命中错误链，已修正并验证。
+- 2026-07-28：LearningEvent 首个严格 payload tracer 完成：`answer-submitted` 未知字段测试先失败，最小 per-type 校验后新旧合同测试合计 16 passed。
+- 2026-07-28：LearningEvent evidenceQuality 必填测试先出现 2 个预期失败（缺字段与 strict 未识别），增加质量枚举后新旧合同测试合计 17 passed。
+- 2026-07-28：恢复已批准的 `.planning` 基线并复核工作区；Snapshot tracer RED 已确认：聚焦测试 7 项中仅 `learnerProfileSnapshotSchema` 未导出导致 1 failed，其余 6 passed。
+- 2026-07-28：TDD Snapshot GREEN：新增严格 `learnerProfileSnapshotSchema`、五类 `profileProjectionKindSchema` 及 barrel 导出；聚焦测试 7 passed。
+- 2026-07-28：TDD Teaching projection RED→GREEN：公开 Schema 缺失时聚焦测试 1 failed / 7 passed；新增仅包含结构化教学控制、活动领域与知识信号的严格投影后 8 passed。
+- 2026-07-28：TDD Profile error codes RED→GREEN：先证明画像缺失、不完整、过期、版本冲突、投影失败、证据拒绝与持久化不可用均无显式错误码，再增量扩展统一错误枚举；新旧合同测试 20 passed。
+- 2026-07-28：TDD Decision trace RED→GREEN：新增仅记录消费者、投影/快照版本、事件水位、字段路径与原因码的严格审计合同，不承载画像值或 prompt；聚焦测试 10 passed。
+- 2026-07-28：TDD AudienceProfile RED→GREEN：新增与认证学习者解耦的课程目标受众合同，结构化表达受众类型、学段、先验水平、目标和可访问性需求；聚焦测试 11 passed。
+- 2026-07-28：TDD Strict storage A01 RED→GREEN：新增 `getRequiredServerStorage()`，无持久化配置时返回 `PERSISTENT_STORAGE_UNAVAILABLE`，不创建内存 provider；专属测试 1 passed。
+- 2026-07-28：Strict storage 边界验证：配置 MySQL 但不可用时不会切换到可用 Supabase，专属测试累计 2 passed。
+- 2026-07-28：TDD Atomic insert A01 RED→GREEN：Memory provider 新增 create-only `insert()` 与统一 `StorageEntryAlreadyExistsError`；重复 ID 被拒绝且原记录保持不变，内存存储测试 19 passed。
+- 2026-07-28：子代理完成五类投影真实消费者只读审计，已收敛最小字段、完整条件与敏感字段披露边界，未修改文件。
+- 2026-07-28：TDD Assessment projection RED→GREEN：新增只影响选题、讲解与反馈的严格评测投影，包含活动领域与聚合知识信号，不包含评分真值控制；聚焦测试 12 passed。
+- 2026-07-28：TDD Retrieval projection 两轮 RED→GREEN：先新增显式知识源权限投影，再证明关闭私有检索时仍可携带 `private-user` 来源并修正；聚焦测试 14 passed。一次相似 `.strict()` 补丁命中错误已立即定位修复并记录。
+- 2026-07-28：TDD Planning projection RED→GREEN：新增考试型/掌握型结构化目标、可用时间、教师锁定节点、知识证据与参与度合同；聚焦测试 15 passed。
+- 2026-07-28：TDD Dashboard projection RED→GREEN：新增 `ready|no-evidence` 状态并强制无证据时 `overallMastery=null`，禁止伪造零掌握度；聚焦测试 16 passed。
+- 2026-07-28：TDD Teaching evidence state RED→GREEN：教学投影现在必须显式声明 `ready|no-evidence`；新旧画像合同测试合计 28 passed。Stage A 合同切片（快照、五投影、决策追踪、AudienceProfile、错误码）完成首轮实现。
+- 2026-07-28：验证基线：仓库没有 `typecheck` script，仓库级 `tsc` 又被约 3050 条既有错误阻塞；使用临时 include-only tsconfig 对本次生产文件聚焦校验，0 errors，通过后已删除临时配置。
+- 2026-07-28：Atomic insert 连续 TDD：LocalStorage 使用 Web Locks 临界区并在缺锁时显式报错；IndexedDB 使用原生 `add`；MySQL 使用无 upsert 子句的原生 INSERT 并归一化 1062；Supabase 使用 `.insert()` 并归一化 23505。统一 `StorageProvider.insert()` 已设为必选。
+- 2026-07-28：画像合同、严格存储与五类 provider 聚焦回归共 8 files / 69 tests passed。
+- 2026-07-28：扩展后的聚焦 TypeScript 校验覆盖画像合同、strict accessor、StorageProvider 接口与五类 provider，0 errors；临时配置已删除。
+- 2026-07-28：TDD Profile repository RED→GREEN：偏好采用不可变 `(userId, version)` 记录，严格解析并读取最高版本；专属测试 1 passed。
+- 2026-07-28：TDD Profile service RED→GREEN：客户端输入合同移除 owner/version/schema/time，服务端赋予权威字段并通过 create-only 写入实现版本冲突保护；服务与仓储聚焦测试通过。
+- 2026-07-28：TDD Profile API 三轮验证：缺失画像显式返回 `PROFILE_NOT_FOUND`；认证 PUT 创建服务端 owner/version；陈旧 expectedVersion 返回 `PROFILE_VERSION_CONFLICT`。API/service/repository 共 3 files / 5 tests passed。
+- 2026-07-28：TDD Profile UI 完成：`PersonalizationForm` 改为服务端权威 GET/PUT，移除本地 settings 画像依赖；严格校验成功响应，只提交 client-safe preferences；显式呈现 loading、missing 初始化、saving、success、conflict 与 failure，并在保存期间锁定控件。UI/API/service/repository 聚焦回归 4 files / 10 tests passed，ESLint、Prettier、聚焦 TypeScript 均通过。
+- 2026-07-29：修复 `app/api/sky/assistant/route.ts` 导入错误：将不存在的 `createAdaptiveLearningApiErrorResponse` 替换为 `adaptiveLearningApiError`，并同步调用签名。
+- 2026-07-29：修复 `STATUS_BY_CODE` 缺少 `PROFILE_NOT_FOUND` 问题，补全画像相关错误码到状态码映射，确保画像缺失返回 404 而非 503。
+- 2026-07-29：TDD 助手消费者集成回归：`tests/assistant/assistant-api.test.ts` 验证缺失画像返回 `PROFILE_NOT_FOUND` 404、成功时 teaching projection 注入系统提示；`tests/assistant/context-injector.test.ts` 验证投影渲染与知识信号展示。聚焦回归 5 files / 34 tests passed。
+- 2026-07-29：画像测试 fixture 类型修复：移除 `as const`，为 `LearnerPreferences`/`DomainLearnerProfile`/`LearningEvent`/`LearnerPreferencesInput` 添加显式类型注解；为 `makeMistake` 补充必填 `userId`。聚焦 TypeScript 校验画像生产文件与相关测试 0 errors。
+- 2026-07-29：更新 `task_plan.md`：阶段 6 状态改为 complete，追加阶段 6 结论（已完成切片、验证结果、遗留风险、待确认决策）。
+- 2026-07-30：按用户「都需要」决策启动阶段 7，完成旧 `/api/user/personalization` 显式废弃与迁移：新增 `migrate-legacy-personalization.ts`、重写路由代理、扩展 `apiSuccess`/`apiError` 支持自定义 headers、新增 `personalization-deprecation.test.ts`；聚焦测试通过。
+- 2026-07-30：完成课堂 `/api/chat` 接入教学投影：`StatelessChatRequest` / `OrchestratorState` / `buildStructuredPrompt` / agent-system 模板全链路支持 `teachingProjection`；`app/api/chat/route.ts` 认证后加载权威画像并注入，缺失时返回 `PROFILE_NOT_FOUND` 404。
+- 2026-07-30：新增 `tests/integration/chat-learner-profile.test.ts`（3 tests）与 `tests/orchestration/prompt-builder.test.ts` 教学投影断言；修复 `tests/integration/chat-endpoint.test.ts` 因新增 server-only 依赖导致的模块导入错误。
+- 2026-07-30：阶段 7 当前聚焦回归 8 files / 70 tests passed；生产文件临时 include-only TypeScript 校验 0 errors；更新 `task_plan.md` 与 `progress.md`。
+- 2026-07-30：完成错题 DAO/API 跨用户隔离回归：审查确认 DAO 所有方法已按 `userId` 过滤；为 `lib/storage/dao/mistakes.ts` 的 `update` 增加运行时 `id`/`userId` 防覆盖；新增 `tests/storage/dao-mistakes-isolation.test.ts`（13 tests）；在 `tests/mistakes/mistakes-api.test.ts` 新增 API 层 userId 绑定断言。
+- 2026-07-30：阶段 7 错题隔离切片聚焦回归 12 files / 163 tests passed；错题相关生产文件 include-only TypeScript 校验 0 errors；更新 `task_plan.md` 与 `progress.md`。
+- 2026-07-30：实现 `KnowledgeState` DAO/API 并补齐用户隔离：新增 `lib/storage/dao/knowledge-state.ts`，所有方法按 `userId` 过滤，`set` 覆盖数据中的 userId，`delete` 先校验所有权；新增 `app/api/user/knowledge-state/route.ts`，GET/POST 均通过 `requireAuth()` 绑定认证用户，POST 用 `knowledgeStateSchema` 严格校验；新增 `tests/storage/dao-knowledge-state-isolation.test.ts`（6 tests）与 `tests/adaptive-learning/knowledge-state-api.test.ts`（4 tests）。
+- 2026-07-30：修复测试/类型问题：`tests/mistakes/mistakes-api.test.ts` 增加 `vi.mock('server-only', () => ({}))` 并补充 `seedPreferences` 助手以适配 `/api/sky/solve/grade` 对画像的强依赖；`app/api/user/knowledge-state/route.ts` 将 `VALIDATION_ERROR` 改为 `API_ERROR_CODES.INVALID_REQUEST`；`lib/storage/dao/knowledge-state.ts` 的 `set` 补充 `createdAt`/`updatedAt` 以符合 `StorageEntry` 合同；`tests/adaptive-learning/personalization-deprecation.test.ts` 补充 `createdAt` 字段以符合严格 `StorageEntry`。
+- 2026-07-30：阶段 7 最终聚焦回归：分两个批次运行，19 files / 169 tests passed；使用临时 include-only tsconfig 对本次生产文件与相关测试进行 TypeScript 校验，0 errors；临时配置已删除。
+- 2026-07-30：更新 `task_plan.md`：阶段 7 状态改为 complete（除 7.6 学习路径 pending），7.4/7.5/7.7/7.8 标记完成并补充实现细节与验证结果，7.6 说明未找到独立生成器待后续推进。
+- 2026-07-30：完成 7.6 学习路径接入画像投影：新增 `lib/adaptive-learning/planning/learning-plan-service.ts` 消费 `PlanningProfileProjection` 生成结构化计划；新增 `retrieve-chunks.ts`/`generate-plan.ts` 分别负责资料召回与 LLM 调用；新增 `app/api/sky/learning-path/route.ts` 认证后加载权威画像并返回计划；重写 `scripts/generate-learning-plan.ts` 使用新服务；为 `DomainLearnerProfile` 补充 `targetNodeIds`/`horizonDays` 支持掌握型规划；新增 `tests/adaptive-learning/learning-plan-service.test.ts`（3 tests）与 `tests/adaptive-learning/learning-path-api.test.ts`（4 tests）。聚焦回归 6 files / 32 tests passed，临时 include-only TypeScript 校验 0 errors，临时配置已删除。更新 `task_plan.md` 与 `progress.md`：阶段 7 全部完成，聚焦测试合计 21 files / 176 tests passed。

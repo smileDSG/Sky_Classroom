@@ -16,6 +16,9 @@ export interface StorageEntry<T = unknown> {
 
 /** Unified storage provider interface */
 export interface StorageProvider {
+  /** Create a new entry. Must reject when the table/id already exists. */
+  insert<T>(table: string, entry: StorageEntry<T>): Promise<void>;
+
   /** Save an entry (upsert) */
   set<T>(table: string, entry: StorageEntry<T>): Promise<void>;
 

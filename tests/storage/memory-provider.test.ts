@@ -5,6 +5,7 @@
  */
 import { describe, test, expect, beforeEach } from 'vitest';
 import { MemoryStorageProvider } from '@/lib/storage/memory-provider';
+import { StorageEntryAlreadyExistsError } from '@/lib/storage/storage-errors';
 import type { StorageEntry } from '@/lib/storage/storage-types';
 
 function makeEntry(id: string, data: unknown): StorageEntry {
@@ -71,6 +72,20 @@ describe('MemoryStorageProvider', () => {
       await provider.set('new-table', makeEntry('1', 'test'));
       const found = await provider.get('new-table', '1');
       expect(found?.data).toBe('test');
+    });
+  });
+
+  describe('insert', () => {
+    test('rejects a duplicate id without changing the original entry', async () => {
+      const original = makeEntry('1', { name: 'Alice' });
+      const duplicate = makeEntry('1', { name: 'Bob' });
+
+      await provider.insert('users', original);
+
+      await expect(provider.insert('users', duplicate)).rejects.toBeInstanceOf(
+        StorageEntryAlreadyExistsError,
+      );
+      expect(await provider.get('users', '1')).toEqual(original);
     });
   });
 

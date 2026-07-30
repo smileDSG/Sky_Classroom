@@ -28,6 +28,7 @@ import {
   type AssistantConversationRecord,
 } from '@/lib/storage/dao/assistant-conversation';
 import type { AssistantMessage } from '@/lib/utils/database';
+import { sanitizeAssistantMessages } from '@/lib/assistant/client-payload';
 
 const log = createLogger('AssistantPanel');
 
@@ -369,28 +370,15 @@ export function AssistantPanel({
       // Load memory context asynchronously, then send
       void (async () => {
         try {
-          const memories = await retrieveRelevantMemories(AGENT_ID, msg);
-          const memContext = buildMemoryContext(memories);
-          const fullMemoryContext = memContext
-            ? `以下是该学生的历史学习档案，请在回答时参考这些信息，使回答更加个性化：\n${memContext}`
-            : undefined;
-
-          // Prepend mode-appropriate persona as system message
-          const allMessages = [
-            { role: 'system' as const, content: mode === 'anime' ? KAGAMI_SYSTEM_PROMPT : NORMAL_SYSTEM_PROMPT },
-            ...newMessages,
-          ];
-
           const res = await fetch('/api/sky/assistant', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             signal: abortController.signal,
             body: JSON.stringify({
-              messages: allMessages,
+              messages: sanitizeAssistantMessages(newMessages),
               subject,
               difficulty,
               style,
-              memoryContext: fullMemoryContext,
               model: modelConfig.modelString,
               apiKey: modelConfig.apiKey,
               baseUrl: modelConfig.baseUrl,

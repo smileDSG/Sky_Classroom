@@ -236,6 +236,33 @@ describe('buildStructuredPrompt', () => {
     expect(prompt).toContain('初中二年级');
   });
 
+  test('includes teaching projection when provided', async () => {
+    const { buildStructuredPrompt } = await import('@/lib/orchestration/prompt-builder');
+    const agentConfig = {
+      id: 'default-1',
+      role: 'teacher' as const,
+      name: '王老师',
+      persona: '耐心细致的老师',
+      allowedActions: [],
+      priority: 10,
+    };
+    const storeState = makeStoreState();
+
+    const prompt = buildStructuredPrompt(
+      agentConfig,
+      storeState,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      '称呼：小云。讲解深度：详细。语气：鼓励引导。',
+    );
+    expect(prompt).toContain('Learner Profile (authoritative)');
+    expect(prompt).toContain('称呼：小云');
+    expect(prompt).toContain('讲解深度：详细');
+  });
+
   test('student role gets shorter guidelines', async () => {
     const { buildStructuredPrompt } = await import('@/lib/orchestration/prompt-builder');
     const teacherConfig = {

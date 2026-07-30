@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "indexVersion": "2026-07-28.1",
+  "indexVersion": "2026-07-28.2",
   "curriculumPackId": "gaokao-math-2026.1",
   "generatedAt": "2026-07-28T00:00:00.000Z",
   "resources": [
@@ -2877,17 +2877,18 @@
       "subject": "math",
       "stage": "senior-high",
       "examSystem": "gaokao",
-      "nodeIds": [],
-      "resourceType": "concept",
+      "nodeIds": [
+        "analytic-geometry"
+      ],
+      "resourceType": "worked-example",
       "difficulty": 3,
       "qualityScore": 1,
       "contentHash": "03524a428d8610b44a7fd98adb92979cf946bc725587f40cfd4f000c576dc7a4",
       "excerpt": "## 目录要点 - Circle Equations - Circle on a Graph - Example: x value of 2, and a radius of 5 - More General Case - Example: A circle with center at (3,4) and a radius of 6: - Try it Yourself - \"General Form\" - Going From General Form to Standard Form - Example: x2 + y2 − 2x − 4y − 4 = 0 - Unit Circle - How to Plot a Circle by Hand - Example: Plot (x−4)2 + (y−2)2 = 25 - How to Plot a Circle on the Computer - Example: Plot (x−4)2 + (y−2)2 = 25 Circle Equations h1 Circle Equations A circle is easy to make: Draw a curve that's \"radius\" away from a central point. All points are the same distance from the center. In fact the definition of a circle is Circle: The set of all points on a plane that are a fixed distance from a center. h2 Circle on a Graph Let's put a circle of radius 5 on a graph: Now let's work out exactly where all the points are. We make a right triangle: And then use Pythagoras: x2 + y2 = 52 There are an infinite number of those points, here are some examples: 52 + 02 = 25 + 0 = 25 32 + 42 = 9 + 16 = 25 02 + 52 = 0 + 25 = 25 (−4)2 + (−3)2 = 16 + 9 = 25 02 + (−5)2 = 0 + 25 = 25 In all cases a point on the circle follows the rule x2 + y2 = radius2 Like this (try the slider): ../algebra/images/equation-graph.js?fn0=x^2+y^2=r^2&xmin=-8&xmax=8&ymin=-6&ymax=6&varr=5|0|10 We can use that idea to find a missing value. h3 Example: x value of 2, and a radius of 5 x2 + y2 = r2 Values we know: 22 + y2 = 52 y2 = 52 − 22 Square root both sides: y = ±√(52 − 22) y ≈ ±4.58... (The ± means there are two possible values: one with + the other with −) And here are the two points: h2 More General Case Now let's put the center at (a,b) So the circle is all the points (x,y) that are \"r\" away from the center (a,b). Now lets work out where the points are (using a right triangle and Pythagoras): It is the same idea as before, but we need to subtract a and b: (x−a)2 + (y−b)2 = r2 And that's the \"Standard Form\" for the equation of a circle! It shows all the important information at a glance: the center (a,b) and the radius r. h3 Example: A circle with center at (3,4) and a radius of 6: (x−a)2 + (y−b)2 = r2 Put in (a,b) and r: (x−3)2 + (y−4)2 = 62 We can then use our algebra skills to simplify and rearrange that equation, depending on what we need it for. h2 Try it Yourself images/circle-equn.js h2 \"General Form\" But you may see a circle equation and not know it! Because it may not be in the neat \"Standard Form\" above. As an example, let's put some values to a, b and r and then expand it (x−a)2 + (y−b)2 = r2 Example: a=1, b=2, r=3: (x−1)2 + (y−2)2 = 32 x2 − 2x + 1 + y2 − 4y + 4 = 9 Gather like terms: x2 + y2 − 2x − 4y + 1 + 4 − 9 = 0 And we end up with this: x2 + y2 − 2x − 4y − 4 = 0 It is a circle equation, but \"in disguise\"! So when you see something like that think \"hmm ... that might be a circle!\" In fact we can write it in \"General Form\" by putting constants instead of the numbers: x2 + y2 + Ax + By + C = 0 Note: General Form always has for the first two terms. h2 Going From General Form to Standard Form Now imagine we have an equation in General Form: x2 + y2 + Ax + By + C = 0 How can we get it into Standard Form like this? (x−a)2 + (y−b)2 = r2 The answer is to Complete the Square (read about that) twice ... once for x and once for y: h3 Example: x2 + y2 − 2x − 4y − 4 = 0 x2 + y2 − 2x − 4y − 4 = 0 Put xs and ys together: (x2 − 2x) + (y2 − 4y) − 4 = 0 Constant on right: (x2 − 2x) + (y2 − 4y) = 4 Now complete the square for x (take half of the −2, square it, and add to both sides): ) + (y2 − 4y) = 4 + And complete the square for y (take half of the −4, square it, and add to both sides): (x2 − 2x + (−1)2) + (y2 − 4y + ) = 4 + (−1)2 + (x2 − 2x + 1) + (y2 − 4y + 4) = 9 (x − 1)2 + (y − 2)2 = 32 And we have it in Standard Form! (Note: this used the a=1, b=2, r=3 example from before, so we got it right!) h2 Unit Circle If we place the circle center at (0,0) and set the radius to 1 we get: (x−a)2 + (y−b)2 = r2 (x−0)2 + (y−0)2 = 12 Which is the equatio",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required",
-        "ambiguous_curriculum_mapping"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_c4e2844a85a30ed0",
@@ -3389,14 +3390,14 @@
         "complex-numbers"
       ],
       "resourceType": "concept",
-      "difficulty": 3,
+      "difficulty": 2,
       "qualityScore": 1,
       "contentHash": "8dc83fc49b475f331e7001c1e458e2a26429b7ca9d28a131a8c6580d51590991",
       "excerpt": "## 目录要点 - Complex Numbers - Complex Numbers - Examples: - Can a Number be a Combination of Two Numbers? - Either Part Can Be Zero - Complicated? - A Visual Explanation - Properties - Example: z = 3 + 4i - Adding - Example: add the complex numbers 3 + 2i and 1 + 7i - Example: add the complex numbers 3 + 5i and 4 − 3i - Multiplying - Example: (3 + 2i)(1 + 7i) - Example: (1 + i)2 - But There's a Quicker Way! - Why Does That Rule Work? - Let's try i2 - Example: i2 - Conjugates - Example: - Dividing - Example: Do this Division: - Multiplying By the Conjugate - Example: Let's try this again - Notation - The Mandelbrot Set Complex Numbers h1 Complex Numbers A Complex Number A Complex Number is a combination of a Real Number and an Imaginary Number Real Numbers are numbers like: 12.38 −0.8625 Nearly any number you can think of is a Real Number! Imaginary Numbers when squared give a negative result. Normally this doesn't happen, because: - when we square a positive number we get a positive result, and - when we square a negative number we also get a positive result (because a negative times a negative gives a positive), for example −2 × −2 = +4 But just imagine such numbers exist, because we want them. Let&apos;s talk some more about imaginary numbers ... The \"unit\" imaginary number (like for Real Numbers) is , which is the square root of −1 When we square Examples of Imaginary Numbers: 1.04i −2.8i And we keep that little \"i\" there to remind us we still need to multiply by √−1 Be careful! While we write i = √−1, standard square root rules (like √a × √b = √(ab)) don't work with negative numbers. It is always safest to use the rule i2 = −1 directly. h2 Complex Numbers When we combine a Real Number and an Imaginary Number we get a Complex Number: h3 Examples: 0.8 − 2.2i h3 Can a Number be a Combination of Two Numbers? Can we make a number from two other numbers? Sure we can! We do it with fractions all the time. The fraction is a number made up of a 3 and an 8. We know it means \"3 of 8 equal parts\". Well, a Complex Number is just two numbers added together (a Real and an Imaginary Number). h2 Either Part Can Be Zero So, a Complex Number has a real part and an imaginary part. But either part can be 0, so all Real Numbers and Imaginary Numbers are also Complex Numbers . Complex Number Imaginary Part Purely Imaginary h2 Complicated? Complex does not mean complicated. It means the two types of numbers, real and imaginary, together form a complex, just like a building complex (buildings joined together). h2 A Visual Explanation You know how the number line goes left-right? Well let's have the imaginary numbers go up-down: And we get the Complex Plane A complex number can now be shown as a point: The complex number 3 + 4i h2 Properties The letter z is often used for a complex number: - z is a Complex Number - a and b are Real Numbers - i is the unit imaginary number = √−1 we refer to the real part and imaginary part using Re and Im like this: The conjugate (it changes the sign in the middle) of z is shown with a star: z* = a &minus; bi We can also use angle and distance like this (called polar form): So the complex number 3 + 4i can also be shown as distance 5 and angle 0.927 radians. To convert from one form to the other use Cartesian to Polar conversion. The magnitude of z is: |z| = &radic;(a2 + b2) And the angle of z, also called Arg(z) is: Arg(z) = tan-1(b/a) h3 Example: z = 3 + 4i - z is a Complex Number - 3 and 4 are Real Numbers - Re(z) = 3 - Im(z) = 4 - |z| = √(32 + 42) = 5 - Arg(z) = tan-1(4/3) = 0.927... radians - z* = 3 − 4i To add two complex numbers we add each part separately: (a+bi) + (c+di) = (a+c) + (b+d)i h3 Example: add the complex numbers 3 + 2i and 1 + 7i - add the real numbers, and - add the imaginary numbers: = 3 + 1 + (2 + 7)i Let's try another: h3 Example: add the complex numbers 3 + 5i and 4 − 3i (3 + 5i) + (4 − 3i) = 3 + 4 + (5 − 3)i On the complex plane it is: h2 Multiplying To multiply complex numbers: Each part of ",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_173a94c5f7712525",
@@ -3415,10 +3416,10 @@
       "qualityScore": 1,
       "contentHash": "6fc1530797fb8a1fee1a17eb132033d3e81b41c121749eb2701c03523ee195a3",
       "excerpt": "## 目录要点 - Complex Plane - Real and Imaginary make Complex - Putting a Complex Number on a Plane - Whole New World - Complex Number as a Vector - Adding - Polar Form - Example: the number 3 + 4i - Distance - Find the distance between z1 = 2 + 3i and z2 = 5 − i: - Midpoint - Find the midpoint between z1 = 2 + 3i and z2 = 5 − i: - Summary Complex Plane h1 Complex Plane No, not that complex plane ... ... this complex plane: a plane for complex numbers! Also called an \"Argand Diagram\" h2 Real and Imaginary make Complex A Complex Number is a combination of a Real Number and an Imaginary Number: A Real Number is the type of number we use every day. Examples: 12.38, &frac12;, 0, &minus;2000 When we square a Real Number we get a positive (or zero) result: 22 = 2 &times; 2 = 4 12 = 1 &times; 1 = 1 02 = 0 &times; 0 = 0 What can we square to get &minus;1? ? 2 = &minus;1 Squaring &minus;1 doesn't work because multiplying negatives gives a positive: (&minus;1) &times; (&minus;1) = +1, and no other Real Number works either. So it seems mathematics is incomplete ... ... but we can fill the gap by imagining there's a number that, when multiplied by itself, gives &minus;1 (call it i for imaginary): i2 = &minus;1 An Imaginary Number, when squared gives a negative result . Examples: 5i, -3.6i, i/2, 500i And together: A Complex Number is a combination of a Real Number and an Imaginary Number Examples: 3.6 + 4i, &minus;0.02 + 1.2i, 25 &minus; 0.3i, 0 + 2i h2 Putting a Complex Number on a Plane You may be familiar with the number line: But where do we put a complex number like ? Let's have the real number line go left-right as usual, and have the imaginary number line go up-and-down: We can then plot a complex number like 3 + 4i : - 3 units along (the real axis), - and 4 units up (the imaginary axis) - 4 units along (the real axis), - and 2 units down (the imaginary axis) And that's the complex plane: - complex because it is a combination of real and imaginary, - plane because it is like a geometric plane (2 dimensional) h2 Whole New World Now let's bring the idea of a plane (as seen in Cartesian coordinates, Polar coordinates, Vectors and so on) to complex numbers. It will open up a whole new world of numbers that are more complete and elegant, as we'll see. h2 Complex Number as a Vector We can think of a complex number as a vector. This is a vector. It has magnitude (length) and direction. And here's the complex number 3 + 4i as a vector: We can add complex numbers as vectors, too: To add the complex numbers 3 + 5i and 4 &minus; 3i : - add the real numbers, and - add the imaginary numbers separately, like this: (3 + 5i) + (4 &minus; 3i) = (3 + 4) + (5 &minus; 3)i h2 Polar Form Let's use 3 + 4i again: Here it is in polar form: So the complex number 3 + 4i can also be shown as distance (5) and angle (0.927 radians). Those two values (distance and angle) have special names: - Modulus (r): The distance from the origin to the point. For 3 + 4i, the modulus is 5. - Argument (&theta;): The angle measured counterclockwise from the positive Real axis. For 3 + 4i, the argument is 0.927 radians (or about 53.1°) Modulus is often shown using vertical bars, like this: |3 + 4i| = 5 Let's see how to convert from one form to the other using Cartesian to Polar conversion: h3 Example: the number 3 + 4i From 3 + 4i : - Modulus (r) = &radic;(x2 + y2) = &radic;(32 + 42) = &radic;25 = 5 - Argument (&theta;) = tan-1 (y/x) = tan-1 (4/3) = 0.927 (to 3 decimals) And we get distance (5) and angle (0.927 radians) - x = r &times; cos( &theta; ) = 5 &times; cos( 0.927 ) = 5 &times; 0.6002... = 3 (close enough) - y = r &times; sin( &theta; ) = 5 &times; sin( 0.927 ) = 5 &times; 0.7998... = 4 (close enough) And distance 5 and angle 0.927 radians becomes 3 and 4 again. In fact a common way to write a complex number in Polar form is = r cos &theta; + i r sin &theta; = r(cos &theta; + i sin &theta;) And \"cos &theta; + i sin &theta;\" is often shortened to \"cis &theta;\", so: x + iy = ",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_b03220881b2339b8",
@@ -6099,17 +6100,17 @@
       "stage": "senior-high",
       "examSystem": "gaokao",
       "nodeIds": [
-        "functions-basic"
+        "functions-properties"
       ],
       "resourceType": "concept",
-      "difficulty": 3,
+      "difficulty": 2,
       "qualityScore": 1,
       "contentHash": "22dc5b4a4ae5f02b9b968ffe2db30ae880b3e67f17864a5dfe06c50db9bf73cf",
       "excerpt": "## 目录要点 - Even and Odd Functions - Even Functions - Odd Functions - Neither Odd nor Even - Even or Odd? - Example: is f(x) = x/(x2&minus;1) Even or Odd or neither? - Even and Odd - Special Properties Even and Odd Functions h1 Even and Odd Functions They are special types of functions h2 Even Functions A function is \"even\" when: f(x) = f(&minus;x) In other words there is symmetry about the y-axis (like a reflection): This is the curve f(x) = x2+1 They are called \"even\" functions because the functions x2, x4, x6, x8, etc behave like that, but there are other functions that behave like that too, such as cos(x): Cosine function: f(x) = cos(x) It is an even function But an even exponent does not always make an even function, for example is not an even function. h2 Odd Functions A function is \"odd\" when: &minus;f(x) = f(&minus;x) for all x Note the minus in front of f(x): &minus;f(x). And we get origin symmetry: This is the curve f(x) = x3&minus;x They are called \"odd\" because the functions x, x3, x5, x7, etc behave like that, but there are other functions that behave like that, too, such as sin(x): Sine function: f(x) = sin(x) It is an odd function But an odd exponent does not always make an odd function, for example is not an odd function. h2 Neither Odd nor Even Don't be misled by the names \"odd\" and \"even\" ... they are just names ... and a function does not have to be even or odd. In fact most functions are neither odd nor even. For example, just adding 1 to the curve above gets this: This is the curve f(x) = x3&minus;x+1 It is not an odd function, and it is not an even function either. It is neither odd nor even h2 Even or Odd? h3 Example: is f(x) = x/(x2&minus;1) Even or Odd or neither? Let's see what happens when we substitute &minus;x: f(&minus;x) = (&minus;x)/((&minus;x)2&minus;1) &minus;x/(x2&minus;1) &minus;f(x) f(&minus;x) = &minus;f(x) , which makes it an Odd Function h2 Even and Odd The only function that is even and odd is f(x) = 0 h2 Special Properties - The sum of two even functions is even - The sum of two odd functions is odd - The sum of an even and odd function is neither even nor odd (unless one function is zero). Multiplying: - The product of two even functions is an even function. - The product of two odd functions is an even function. - The product of an even function and an odd function is an odd function. 547, 548, 549, 550, 1184, 1185, 1186, 8454, 8455, 8456 Equation Symmetry Hyperbolic Functions Algebra Index Copyright &copy; 2024 Rod Pierce",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_1538dedaa5d11e5b",
@@ -7268,17 +7269,18 @@
       "subject": "math",
       "stage": "senior-high",
       "examSystem": "gaokao",
-      "nodeIds": [],
+      "nodeIds": [
+        "analytic-geometry"
+      ],
       "resourceType": "concept",
-      "difficulty": 3,
+      "difficulty": 2,
       "qualityScore": 0.8,
       "contentHash": "4fda5c57a0a93478ae699bbf4fa021bda0654b539e9fc12b415b631aa4ad48e7",
       "excerpt": "## 目录要点 - General Form of Equation of a Line - The \"General Form\" of the equation of a straight line is: - Example: Convert 4x − 2y − 5 = 0 to Slope-Intercept Form - Why Use It? General Form of Equation of a Line h1 General Form of Equation of a Line The \"General Form\" of the equation of a straight line is: Ax + By + C = 0 A or B can be zero, but not both at the same time. The General Form isn't always the most useful form, and you may prefer to use: The Slope-Intercept Form of the equation of a straight line: The Point-Slope Form of the equation of a straight line: y − y1 = m(x − x1) h3 Example: Convert 4x − 2y − 5 = 0 to Slope-Intercept Form We are heading for: 4x − 2y − 5 = 0 Move all except y right: −2y = −4x + 5 Divide all by (−2): y = 2x − 5/2 And we are done! (Note: m = 2 and b = −5/2) h2 Why Use It? It has the advantage of working well with vertical lines, which the Slope-Intercept Form and Point-Slope Form don't. 2455, 2456, 2457, 520, 523, 524, 1159, 1163, 1164, 2458 Slope (Gradient) of a Straight Line Y Intercept of a Straight Line Test Yourself Explore the Straight Line Graph Straight Line Graph Calculator Copyright &copy; 2026 Rod Pierce",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required",
-        "ambiguous_curriculum_mapping"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_fd22586af5a51dbc",
@@ -8367,17 +8369,18 @@
       "subject": "math",
       "stage": "senior-high",
       "examSystem": "gaokao",
-      "nodeIds": [],
+      "nodeIds": [
+        "functions-properties"
+      ],
       "resourceType": "concept",
-      "difficulty": 3,
+      "difficulty": 2,
       "qualityScore": 1,
       "contentHash": "4cddaa0e0c165dc967e36c48ff973c433da593f1e0ab966dc13c783ddb682b09",
       "excerpt": "## 目录要点 - Increasing and Decreasing Functions - Increasing Functions - Flat? - Using Algebra - An Example: - For An Interval - Decreasing Functions - An Example - Example: f(x) = x3&minus;4x, for x in the interval [&minus;1,2] - Constant Functions - Lines - One-to-One Increasing and Decreasing Functions h1 Increasing and Decreasing Functions h2 Increasing Functions A function is \"increasing\" when the y-value increases as the x-value increases, like this: It is easy to see that y=f(x) tends to go up as it goes along. h3 Flat? What about that flat bit near the start? Is that OK? - Yes, it is OK when we say the function is Increasing - But it is not OK if we say the function is Strictly Increasing (no flatness allowed) h3 Using Algebra What if we can't plot the graph to see if it is increasing? In that case we need a definition using algebra. For a function y=f(x): when x1 < x2 then f(x1) &le; f(x2) when x1 < x2 then f(x1) < f(x2) Strictly Increasing That has to be true for any x1, x2, not just some nice ones we might choose. The important parts are the &le; signs ... remember where they go! h3 An Example: This is also an increasing function even though the rate of increase reduces h3 For An Interval Usually we are only interested in some interval, like this one: This function is increasing for the interval shown (it may be increasing or decreasing elsewhere) h2 Decreasing Functions as the x-value increases: For a function y=f(x): when x1 < x2 then f(x1) &ge; f(x2) when x1 < x2 then f(x1) > f(x2) Strictly Decreasing Notice that f(x1) is now larger than (or equal to) f(x2). h2 An Example Let's try to find where a function is increasing or decreasing. h3 Example: f(x) = x3&minus;4x, for x in the interval [&minus;1,2] Let's plot it, including the interval [&minus;1,2]: Starting from &minus;1 (the beginning of the interval [&minus;1,2]): - at x = &minus;1 the function is decreasing, - it continues to decrease until about 1.2 - it then increases from there, past x = 2 Without exact analysis we can't pinpoint where the curve turns from decreasing to increasing, so let's just say: Within the interval [&minus;1,2]: - the curve decreases in the interval [&minus;1, approx 1.2] - the curve increases in the interval [approx 1.2, 2] h2 Constant Functions A Constant Function is a horizontal line: In fact lines are either increasing, decreasing, or constant. The equation of a line is: tells us if the function is increasing, decreasing or constant: Try the m slider here: ../algebra/images/function-graph.js?fn0=2+m*x&xmin=-2&xmax=6&ymin=-1&ymax=4&varm=1|-4|4 h2 One-to-One Strictly Increasing (and Strictly Decreasing) functions have a special property called \"injective\" or \"one-to-one\" which simply means we never get the same \"y\" value twice. General Function \"Injective\" (one-to-one) Why is this useful? Because Injective Functions can be reversed! We can go from a \"y\" value back to an \"x\" value (which we can't do when there's more than one possible \"x\" value). Read Injective, Surjective and Bijective to discover more. 544, 1179, 2406, 1180, 2407, 1181, 543, 2408, 9025, 9026 What's a Function? Algebra Index Copyright &copy; 2026 Rod Pierce",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required",
-        "ambiguous_curriculum_mapping"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_09a6ad95d73be482",
@@ -11600,17 +11603,18 @@
       "subject": "math",
       "stage": "senior-high",
       "examSystem": "gaokao",
-      "nodeIds": [],
+      "nodeIds": [
+        "statistics"
+      ],
       "resourceType": "concept",
       "difficulty": 3,
       "qualityScore": 1,
       "contentHash": "6aea0359bf67e37f50b0ba410ec312f35623176d82f8437a4be553adec24327d",
       "excerpt": "## 目录要点 - Normal Distribution - Quincunx - Standard Deviations - Example: 95% of students at school are between 1.1m and 1.7m tall. - Standard Scores - Example: In that same school one of your friends is 1.85m tall - Example: Travel Time - Example: Travel Time (continued) - Why Standardize ... ? - Example: Professor Willoughby is marking a test. - In More Detail - A Practical Example: Your company packages sugar in 1 kg bags. - More Accurate Values ... Normal Distribution h1 Normal Distribution Data can be \"distributed\" (spread out) in different ways. It can be spread out more on the left Or more on the right Skewed right Or it can be all jumbled up But in many cases the data tends to be around a central value, with no bias left or right, and it gets close to a \"Normal Distribution\" like this: The blue curve is a Normal Distribution. The yellow histogram shows some data that follows it closely, but not perfectly (which is usual). It is often called a \"Bell Curve\" because it looks like a bell. Many things closely follow a Normal Distribution: - heights of people - size of manufactured products - measurement errors - blood pressure - test scores We say the data is \"normally distributed\": The Normal Distribution has: - mean = median = mode - symmetry about the center - 50% of values less than the mean and 50% greater than the mean Most data isn't perfectly normal, but the normal distribution still helps us make sense of it! You can see a normal distribution being created by random chance! It is called the Quincunx and it is an amazing machine. Have a play with it! h2 Standard Deviations The Standard Deviation is a measure of how spread out numbers are (read that page for details on how to calculate it). When we calculate the standard deviation we find that approximately: 68% of values are within 1 standard deviation of the mean 95% of values are within 2 standard deviations of the mean 99.7% of values are within 3 standard deviations of the mean h3 Example: 95% of students at school are between 1.1m and 1.7m tall. Assuming this data is normally distributed can you calculate the mean and standard deviation? The mean is halfway between 1.1m and 1.7m: Mean = (1.1m + 1.7m) / 2 = 1.4m 95% is 2 standard deviations either side of the mean (a total of 4 standard deviations) so: 1 standard deviation = (1.7m-1.1m) / 4 = 0.6m / 4 = 0.15m And this is the result: It is good to know the standard deviation, because (for data that's approximately normal) we can say that any value is: - likely to be within 1 standard deviation (68 out of 100 should be) - very likely to be within 2 standard deviations (95 out of 100 should be) - almost certainly within 3 standard deviations (997 out of 1000 should be) h2 Standard Scores The number of standard deviations from the mean is also called the \"Standard Score\" or \"z-score\". Get used to those words! - σ (sigma) is the standard deviation - z is the standard score (how many standard deviations from the mean) h3 Example: In that same school one of your friends is 1.85m tall You can see on the bell curve that 1.85m is 3 standard deviations from the mean of 1.4, so: Your friend's height has a \"z-score\" of 3.0 It is also possible to calculate how many standard deviations 1.85 is from the mean How far is 1.85 from the mean? It is 1.85 - 1.4 = 0.45m from the mean How many standard deviations is that? The standard deviation is 0.15m, so: 0.45m / 0.15m = 3 standard deviations To convert a value to a Standard Score (\"z-score\"): - first subtract the mean, - then divide by the Standard Deviation And doing that's called \"Standardizing\": We can take any Normal Distribution and convert it to The Standard Normal Distribution. h3 Example: Travel Time A survey of daily travel time had these results (in minutes): 26, 33, 65, 28, 34, 55, 25, 44, 50, 36, 26, 37, 43, 62, 35, 38, 45, 32, 28, 34 The Mean is 38.8 minutes, and the Standard Deviation is 11.4 minutes (you can copy and paste the values into the Standard Deviation Calcu",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required",
-        "ambiguous_curriculum_mapping"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_b244673f719b6d3f",
@@ -13592,14 +13596,14 @@
         "inequalities"
       ],
       "resourceType": "concept",
-      "difficulty": 3,
+      "difficulty": 2,
       "qualityScore": 1,
       "contentHash": "dbf831fbc39da8910918f32cc44ff453d20a20b82f00a0ac211d0d36f8df5197",
       "excerpt": "## 目录要点 - Properties of Inequalities - The 4 Inequalities - Properties - Transitive Property - Example: - Reversal Property - Law of Trichotomy - Example: Alex Has More Money Than Billy - Addition and Subtraction - Example: Alex has less money than Billy. - Multiplication and Division - Why does multiplying by a negative reverse the sign? - Additive Inverse - Example: Alex has more money than Billy, and so Alex is ahead. - Multiplicative Inverse - Example: Alex and Billy both complete a journey of 12 kilometers. - Example: a = +7 and b = −3 - Non-Negative Property of Squares - Example: - Square Root Property - Example: a=4, b=9 Properties of Inequalities h1 Properties of Inequalities Inequality tells us about the relative size of two values. (You might like to read a gentle Introduction to Inequalities first) h2 The 4 Inequalities greater than greater than or equal to less than or equal to The symbol \"points at\" the smaller value h2 Properties Inequalities have properties ... all with special names! Here we list each one, with examples. Note: the values a, b and c we use below are Real Numbers. h2 Transitive Property When we link up inequalities in order, we can \"jump over\" the middle inequality. If a < b and b < c, then a < c If a > b and b > c, then a > c - If Alex is older than Billy and - Billy is older than Carol, then Alex must be older than Carol also! h2 Reversal Property We can swap a and b over, if we make sure the symbol still \"points at\" the smaller value. - If a > b then b < a - If a < b then b > a Example: Alex is older than Billy, so Billy is younger than Alex h2 Law of Trichotomy The \"Law of Trichotomy\" says only one of the following is true: It makes sense, right? a must be either less than b or equal to b or greater than b. It must be one of those, and only one of those. h3 Example: Alex Has More Money Than Billy We could write it like this: So we also know that: - Alex does not have less money than Billy (not a<b) - Alex does not have the same amount of money as Billy (not a=b) (Of course!) h2 Addition and Subtraction Adding c to both sides of an inequality just shifts everything along, and the inequality stays the same. If a < b, then a + c < b + c Drag these points, they keep the same difference: ../numbers/images/number-zoom.js?xmin=-5;xmax=12;pts=3|0~5|0;pts-mode=diff h3 Example: Alex has less money than Billy. If both Alex and Billy get $3 more, then Alex will still have less money than Billy. - If a < b, then a − c < b − c - If a > b, then a + c > b + c, and - If a > b, then a − c > b − c So adding (or subtracting) the same value to both a and b won't change the inequality h2 Multiplication and Division When we multiply both a and b by a positive number, the inequality stays the same. But when we multiply both a and b by a negative number, the inequality swaps over! Notice that a<b becomes b<a after multiplying by &minus;2 But the inequality stays the same when multiplying by +3 Drag these points: they keep the same ratio. See them swap over at zero: ../numbers/images/number-zoom.js?xmin=-12;xmax=12;pts=2|0~5|0;pts-mode=ratio Here are the rules: - If a < b, and c is positive, then ac < bc - If a < b, and c is negative, then ac > bc (inequality swaps over!) A \"positive\" example: Example: Alex's score of 3 is lower than Billy's score of 7. If both Alex and Billy manage to double their scores (×2), Alex's score will still be lower than Billy's score. But when multiplying by a negative the opposite happens: But if the scores become minuses, then Alex loses 3 points and Billy loses 7 points So Alex has now done better than Billy! h3 Why does multiplying by a negative reverse the sign? Well, just look at the number line! For example, from −3 to −7 is a decrease, but from 3 to 7 is an increase. So the inequality sign reverses (from < to >) h2 Additive Inverse As we just saw, putting minuses in front of a and b changes the direction of the inequality. This is called the \"Additive Inverse\": - If a < b then −a >",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_19aa1ab8359720f9",
@@ -14796,14 +14800,14 @@
         "statistics"
       ],
       "resourceType": "concept",
-      "difficulty": 3,
+      "difficulty": 2,
       "qualityScore": 1,
       "contentHash": "569b3aa01594a9c6cfcf118ffc4f50de086583cf1db42af3f04d63d9e079c627",
       "excerpt": "## 目录要点 - Sampling - Sampling - Random Sampling - Example: You want to know the favorite colors for people at your school, but don't have the time to ask everyone. - Systematic Sampling - Example: You want to know the favorite colors for people at your school, but don't have the time to ask everyone. - Stratified Sampling - Example: Survey 100 People in Our Town - Example: We want to survey 300 people in the USA - Cluster Sampling When we want to understand or make predictions about a large group, we often use a special technique called sampling. We use special words: - Population: The whole group we are interested in - Census: A collection of data from the whole population - Sample: A collection of data from part of the population A census can be very expensive! So often we just want a sample. But how do we choose what members of the population to sample? There are 4 main methods: Random Sample (pick randomly from list) Systematic Sample (such as every 4th) Stratified Sample (randomly, but in ratio to group size) Cluster Sample (choose whole groups randomly) h2 Random Sampling The best way is to choose randomly Imagine slips of paper each with a person's name, put all the slips into a barrel, mix them up, then dive your hand in and choose some slips of paper. But this means you need a full list of the population to choose from. Computer databases can be a big help here! h3 Example: You want to know the favorite colors for people at your school, but don't have the time to ask everyone. Somehow get a full list of students printed out, then - place all pages on the ground, drop a pencil and note down the student's name - repeat until you have 50 names Now survey those 50. Your results will hopefully be nearly as good as if you had asked everyone. Random surveys are the best way to avoid bias. And your results are better when you ask more people. Example: nationwide opinion polls survey around 2,000 people, and the results are nearly as good (within about 1%) as asking everyone. h2 Systematic Sampling This is where we follow some system of selection like \"every 10th person\" h3 Example: You want to know the favorite colors for people at your school, but don't have the time to ask everyone. Solution: stand at the gate and choose \"every 4th person to arrive\" Not perfect, as you will miss out on people who are away. You could improve this by selecting from a full list of people then go and find them. h2 Stratified Sampling This is where we divide the population into groups by some characteristic such as age or occupation or gender. Then make sure our survey includes people from each group in proportion to how many there are in the whole population. h3 Example: Survey 100 People in Our Town We know that teachers make up 7% of our town's population, so we should include: 100 x 7% = 7 teachers h3 Example: We want to survey 300 people in the USA This is a recent population breakdown for the USA: 5.7% 12.5% 13.0% 13.7% 13.1% 12.3% 12.9% 16.8% We want to survey 300 people, so we choose: 5.7% 12.5% 13.0% 13.7% 13.1% 12.3% 12.9% 16.8% I am not sure how to ask the 0-4 range, but we will think of something. h2 Cluster Sampling We break the population into many groups, then randomly choose whole groups. Example: we divide the town into many different zones, then randomly choose 5 zones and survey everyone in those zones. Cluster sampling works best when the clusters are similar in character to each other. Example: if the town has rich and poor zones then try to create a new way of dividing the town into fairer regions, which is also a good idea in general! Copyright &copy; 2025 Rod Pierce",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_52ee30ce70515b27",
@@ -15651,14 +15655,14 @@
         "solid-geometry"
       ],
       "resourceType": "concept",
-      "difficulty": 3,
+      "difficulty": 2,
       "qualityScore": 0.8,
       "contentHash": "ed364912f90090e9cf71c56d41f28083840d81ee09e5db61cbe07c826b515717",
       "excerpt": "## 目录要点 - Solid Geometry - Three Dimensions - Simple Shapes - Properties - Polyhedra and Non-Polyhedra - Polyhedra (they have flat faces): - Non-Polyhedra (when any surface is not flat): - More... Solid Geometry h1 Solid Geometry Solid Geometry is the geometry of three-dimensional space, the kind of space we live in. h2 Three Dimensions It is called three-dimensional, or 3D, because there are three dimensions: width, depth and height. h2 Simple Shapes Let us start with some of the simplest shapes: Common 3D Shapes h2 Properties Solids have properties (special things about them), such as: - volume (think of how much water it could hold) - surface area (think of the area you would have to paint) - how many vertices (corner points), faces and edges they have h2 Polyhedra and Non-Polyhedra There are two main types of solids, \"Polyhedra\", and \"Non-Polyhedra\": h3 Polyhedra (they have flat faces): Cuboids (Volume of a Cuboid) Platonic Solids h3 Non-Polyhedra (when any surface is not flat): h3 More... - Polyhedron Models - Volume and Area of a Sphere Calculator - Spheroid - Cross Sections - Vertices, Faces, and Edges - Cone vs Sphere vs Cylinder - Pyramid vs Cone - Prism vs Cylinder - Pyramid vs Cube - Volume of Horizontal Cylinder - Euler's Theorem - Pythagoras in 3D - Hypercubes Platonic Solids Geometry Index Copyright &copy; 2025 Rod Pierce",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_efc0a0215b7905c2",
@@ -15861,18 +15865,17 @@
       "stage": "senior-high",
       "examSystem": "gaokao",
       "nodeIds": [
-        "inequalities",
-        "functions-basic"
+        "inequalities"
       ],
-      "resourceType": "concept",
+      "resourceType": "worked-example",
       "difficulty": 3,
       "qualityScore": 1,
       "contentHash": "ec7812e27ca29c8f7612a8472a71e0bf5055bb0997c12afe3a88510afd1fb754",
       "excerpt": "## 目录要点 - Solving Quadratic Inequalities - Quadratic - Solving - Example: x2 − x − 6 &lt; 0 - What If It Doesn't Go Through Zero? - A \"Real World\" Example - A stuntman will jump off a 20 m building. A high-speed camera is ready to film him between 15 m and 10 m above the ground. - First, let's sketch the question: - Now let's solve it! - Higher Than Quadratic - Example: x3 + 4 ≥ 3x2 + x Solving Quadratic Inequalities h1 Solving Quadratic Inequalities ... and more ... h2 Quadratic A Quadratic Equation (in Standard Form) looks like: A Quadratic Equation in Standard Form (a, b, and c can have any value, except that a can't be 0.) The above is an equation (=) but sometimes we need to solve inequalities like these: greater than greater than or equal to less than or equal to 2y2 + 1 ≤ 7y Solving inequalities is very like solving equations ... we do most of the same things. When solving equations we try to find points, such as the ones marked \"=0\" But when solving inequalities we try to find interval(s), such as the ones marked \">0\" or \"<0\" So this is what we do: - find the \"=0\" points - in between the \"=0\" points, are intervals that are either - greater than zero (>0), or - less than zero (<0) - then pick a test value to discover which it is (>0 or <0) Here's an example: h3 Example: x2 − x − 6 < 0 x2 − x − 6 has these simple factors (what luck!): (x+2)(x−3) < 0 First, let's find where it is equal to zero: It is equal to zero when x = −2 or x = +3 because when x = −2, then (x+2) is zero or when x = +3, then (x−3) is zero So between −2 and +3, the function will either be - always greater than zero, or - always less than zero We don't know which ... yet! Let's pick a value in-between (say x=0) and test it: substitute x=0: So between x=−2 and x=+3, the function is less than zero. And that's the region we want, so... x2 − x − 6 < 0 in the interval Note: x2 − x − 6 0 in the interval (−∞,−2) and (3, +∞) And here's the graph of x2 − x − 6: - The equation equals zero at −2 and 3 - The inequality \"<0\" is true between −2 and 3 Also try the Inequality Grapher. h2 What If It Doesn't Go Through Zero? Here's the graph of x2 − x + 1 There are no \"=0\" points! But that makes things easier. Because the line doesn't cross through y=0, it must be either: - always > 0, or - always < 0 So all we have to do is test one value (say x=0) to see if it is above or below. h2 A \"Real World\" Example h3 A stuntman will jump off a 20 m building. A high-speed camera is ready to film him between 15 m and 10 m above the ground. When should the camera film him? We can use this formula for distance and time: d = 20 − 5t2 - d = distance above ground (m), and - t = time from jump (seconds) (Note: if you are curious about the formula, it is simplified from d = d0 + v0t + ½a0t2 , where d0=20, v0=0, and a0=−9.81 the acceleration due to gravity.) OK, let's go. h3 First, let's sketch the question: The distance we want is from 10 m to 15 m: And we know the formula for 10 < 20 − 5t2 < 15 h3 Now let's solve it! First, let's subtract 20 from both sides: −10 < −5t2 <−5 Now multiply both sides by −(1/5). But because we are multiplying by a negative number, the inequalities will change direction ... read Solving Inequalities to see why. To be neat, the smaller number should be on the left, and the larger on the right. So let's swap them over (and make sure the inequalities still point correctly): Last, we can safely take square roots, since all values are greater then zero: We can tell the film crew: \"Film from 1.0 to 1.4 seconds after jumping\" h2 Higher Than Quadratic The same ideas can help us solve more complicated inequalities: h3 Example: x3 + 4 ≥ 3x2 + x First, let's put it in standard form: x3 − 3x2 − x + 4 ≥ 0 This is a cubic equation (the highest exponent is a cube, i.e. ), and is hard to solve, so let's graph it instead: The zero points are approximately: - −1.1 - 1.3 - 2.9 And from the graph we can see the intervals where it is greater than (or equal to) zero: - From −1.1 t",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_9395323659b4896f",
@@ -18685,18 +18688,18 @@
       "subject": "math",
       "stage": "senior-high",
       "examSystem": "gaokao",
-      "nodeIds": [],
+      "nodeIds": [
+        "solid-geometry"
+      ],
       "resourceType": "concept",
       "difficulty": 3,
       "qualityScore": 1,
       "contentHash": "6bd4280907a1d69a25870e61393bc987d4965430354d8fe7551fd7bea7c0acc9",
       "excerpt": "## 目录要点 - Vectors - Example: A plane is flying along, pointing North, but there is a wind coming from the North-West. - Subtracting - Notation - Calculations - Adding Vectors - Example: add the vectors a = (8, 13) and b = (26, 7) - Subtracting Vectors - Example: subtract k = (4, 5) from v = (12, 2) - Magnitude of a Vector - Example: what is the magnitude of the vector b = (6, 8) ? - Vector vs Scalar - Example: kb is actually the scalar k times the vector b. - Multiplying a Vector by a Scalar - Example: multiply the vector (5,2) by the scalar 3 - Multiplying a Vector by a Vector (Dot Product and Cross Product) - More Than 2 Dimensions - Example: add the vectors a = (3, 7, 4) and b = (2, 9, 11) - Example: what is the magnitude of the vector w = (1, −2, 3) ? - Example: subtract (1, 2, 3, 4) from (3, 3, 3, 3) - Magnitude and Direction - An Example This is a vector: A vector has magnitude (size) and direction: The length of the line shows its magnitude and the arrowhead points in the direction. Play with one here: ../geometry/images/geom-vector.js?mode=vector We can add two vectors by joining them head-to-tail: And it doesn't matter which order we add them, we get the same result: h3 Example: A plane is flying along, pointing North, but there is a wind coming from the North-West. The two vectors (the velocity caused by the propeller, and the velocity of the wind) result in a slightly slower ground speed heading a little East of North. If you watched the plane from the ground it would seem to be slipping sideways a little. Have you ever seen that happen? Maybe you have seen birds struggling against a strong wind that seem to fly sideways. Vectors help explain that. Velocity, acceleration, force and many other things are vectors. h2 Subtracting We can also subtract one vector from another: - first we reverse the direction of the vector we want to subtract, - then add them as usual: A vector is often written in bold, like a or b. A vector can also be written as the letters of its head and tail with an arrow above it, like this: h2 Calculations Now ... how do we do the calculations? The most common way is to first break up vectors into x and y parts, like this: The vector a is broken up into the two vectors ax and ay (We see later how to do this.) h2 Adding Vectors We can then add vectors by adding the x parts and adding the y parts: The vector (8, 13) and the vector (26, 7) add up to the vector (34, 20) h3 Example: add the vectors a = (8, 13) and b = (26, 7) c = (8, 13) + (26, 7) = (8+26, 13+7) = (34, 20) When we break up a vector like that, each part is called a component: ../geometry/images/geom-vector.js?mode=xy h2 Subtracting Vectors To subtract, first reverse the vector we want to subtract, then add. h3 Example: subtract k = (4, 5) from v = (12, 2) a = (12, 2) + −(4, 5) = (12, 2) + (−4, −5) = (12−4, 2−5) = (8, −3) h2 Magnitude of a Vector The magnitude of a vector is shown by two vertical bars on either side of the vector: OR it can be written with double vertical bars (so as not to confuse it with absolute value): We use Pythagoras' theorem to calculate it: |a| = √( x2 + y2 ) h3 Example: what is the magnitude of the vector b = (6, 8) ? |b| = √( 62 + 82 ) = √(36+64) = √100 = 10 A vector with magnitude 1 is called a Unit Vector. h2 Vector vs Scalar A scalar has magnitude (size) only. Scalar: just a number (like 7 or −0.32) ... definitely not a vector. A vector has magnitude and direction, and is often written in bold, so we know it is not a scalar: - so c is a vector, it has magnitude and direction - but c is just a value, like 3 or 12.4 h3 Example: kb is actually the scalar k times the vector b. If k = 2 and b = (3, 4), then kb = 2 × (3, 4) = (2×3, 2×4) = (6, 8) h2 Multiplying a Vector by a Scalar When we multiply a vector by a scalar it is called \"scaling\" a vector, because we change how big or small the vector is. h3 Example: multiply the vector (5,2) by the scalar 3 a = 3(5,2) = (3×5,3×2) = (15,6) It still points in the same d",
-      "status": "needs-review",
-      "rejectionReasons": [
-        "manual_verification_required",
-        "ambiguous_curriculum_mapping",
-        "title_collision"
-      ]
+      "status": "verified",
+      "verifiedBy": "project-owner",
+      "verifiedAt": "2026-07-28T00:00:00.000Z",
+      "rejectionReasons": []
     },
     {
       "id": "math_d397db5b49f53bb1",

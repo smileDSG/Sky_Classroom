@@ -101,6 +101,7 @@ export async function generateMemoryCards(
   contentText: string,
   topic?: string,
   cardCount?: number,
+  teachingProjection?: string,
 ): Promise<MemoryCardDeck> {
   const apiKey = resolveApiKey('deepseek');
   const baseUrl = resolveBaseUrl('deepseek') || 'https://api.deepseek.com/v1';
@@ -155,9 +156,13 @@ export async function generateMemoryCards(
 
   log.info(`Generating memory cards, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}`);
 
+  const systemPrompt = teachingProjection
+    ? `${MEMORY_CARDS_AGENT_SYSTEM_PROMPT}\n\n# Learner Profile (authoritative)\n${teachingProjection}\n\n请严格按上述学习者画像调整卡片数量、解释深度、助记技巧和复习节奏。`
+    : MEMORY_CARDS_AGENT_SYSTEM_PROMPT;
+
   const result = await generateText({
     model: deepseek.chat('deepseek-chat'),
-    system: MEMORY_CARDS_AGENT_SYSTEM_PROMPT,
+    system: systemPrompt,
     prompt: userPrompt,
     temperature: 0.7,
     maxOutputTokens: 8192,

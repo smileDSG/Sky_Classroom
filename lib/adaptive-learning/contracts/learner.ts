@@ -5,6 +5,107 @@ import { isoDateTimeSchema } from './resource';
 
 const dateSchema = z.iso.date();
 
+export const contentFormatPreferenceSchema = z.enum([
+  'text',
+  'worked-example',
+  'diagram',
+  'interactive',
+  'audio',
+]);
+
+export const learnerPreferencesSchema = z
+  .object({
+    userId: z.string().min(1),
+    preferredLanguage: z.string().min(2).max(20),
+    contentFormatPreferences: z
+      .array(contentFormatPreferenceSchema)
+      .min(1)
+      .refine((formats) => new Set(formats).size === formats.length, {
+        message: 'contentFormatPreferences must not contain duplicates',
+      }),
+    explanationDepth: z.enum(['concise', 'standard', 'detailed', 'comprehensive']),
+    learningPace: z.enum(['slow', 'standard', 'fast']),
+    stepByStepMode: z.enum(['always', 'when-needed', 'hints-first']),
+    interactionTone: z.enum(['friendly', 'professional', 'encouraging', 'strict', 'humorous']),
+    assistantName: z.string().min(1).max(20),
+    preferenceNotes: z.string().max(500),
+    privacy: z
+      .object({
+        conversationMemory: z.enum(['off', 'session', 'persistent']),
+        optionalBehaviorSignals: z.boolean(),
+        privateKnowledgeRetrieval: z.boolean(),
+      })
+      .strict(),
+    version: z.number().int().positive(),
+    schemaVersion: z.literal('1.0.0'),
+    updatedAt: isoDateTimeSchema,
+    updatedBy: z.enum(['user', 'teacher', 'system', 'migration']),
+  })
+  .strict();
+
+export const learnerPreferencesInputSchema = learnerPreferencesSchema.omit({
+  userId: true,
+  version: true,
+  schemaVersion: true,
+  updatedAt: true,
+  updatedBy: true,
+});
+
+export const domainLearnerProfileSchema = z
+  .object({
+    id: z.string().min(1),
+    userId: z.string().min(1),
+    subjectId: z.string().min(1),
+    educationStage: z.enum([
+      'primary',
+      'junior-high',
+      'senior-high',
+      'vocational',
+      'undergraduate',
+      'graduate',
+      'other',
+    ]),
+    gradeLevel: z.string().min(1),
+    curriculumPackId: z.string().min(1),
+    curriculumPackVersion: z.string().min(1),
+    examSystem: z.string().min(1).optional(),
+    examDate: dateSchema.optional(),
+    targetScore: z.number().min(0).optional(),
+    scoreScaleMax: z.number().positive().optional(),
+    latestVerifiedScore: z.number().min(0).optional(),
+    targetNodeIds: z.array(nodeIdSchema).optional(),
+    horizonDays: z.number().int().positive().optional(),
+    weeklyAvailableMinutes: z.number().int().positive(),
+    dailyAvailability: z.record(z.string(), z.number().int().min(0)),
+    preferredSessionMinutes: z.number().int().min(10).max(120),
+    constraints: z
+      .object({
+        restDays: z.array(z.string().min(1)),
+        maxDailyMinutes: z.number().int().positive(),
+        teacherLockedNodeIds: z.array(nodeIdSchema),
+      })
+      .strict(),
+    status: z.enum(['active', 'archived']),
+    version: z.number().int().positive(),
+    schemaVersion: z.literal('1.0.0'),
+    createdAt: isoDateTimeSchema,
+    updatedAt: isoDateTimeSchema,
+  })
+  .strict()
+  .superRefine((profile, ctx) => {
+    if (
+      profile.targetScore !== undefined &&
+      profile.scoreScaleMax !== undefined &&
+      profile.targetScore > profile.scoreScaleMax
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['targetScore'],
+        message: 'targetScore must not exceed scoreScaleMax',
+      });
+    }
+  });
+
 export const learnerProfileSchema = z
   .object({
     userId: z.string().min(1),
@@ -60,6 +161,20 @@ export const learningEventTypeSchema = z.enum([
   'profile-updated',
 ]);
 
+export const learningEvidenceQualitySchema = z.enum([
+  'verified',
+  'teacher-verified',
+  'self-reported',
+  'inferred',
+  'unverified',
+]);
+
+const answerSubmittedPayloadSchema = z
+  .object({
+    correct: z.boolean(),
+  })
+  .strict();
+
 export const learningEventSchema = z
   .object({
     eventId: z.string().min(1),
@@ -68,12 +183,30 @@ export const learningEventSchema = z
     occurredAt: isoDateTimeSchema,
     source: z.string().min(1),
     nodeIds: z.array(nodeIdSchema),
+    evidenceQuality: learningEvidenceQualitySchema,
     payload: z.record(z.string(), z.unknown()),
     schemaVersion: z.literal('1.0.0'),
     correlationId: z.string().min(1).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((event, ctx) => {
+    if (event.type !== 'answer-submitted') return;
+
+    const payload = answerSubmittedPayloadSchema.safeParse(event.payload);
+    if (payload.success) return;
+
+    for (const issue of payload.error.issues) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['payload', ...issue.path],
+        message: issue.message,
+      });
+    }
+  });
 
 export type LearnerProfile = z.infer<typeof learnerProfileSchema>;
+export type LearnerPreferences = z.infer<typeof learnerPreferencesSchema>;
+export type LearnerPreferencesInput = z.infer<typeof learnerPreferencesInputSchema>;
+export type DomainLearnerProfile = z.infer<typeof domainLearnerProfileSchema>;
 export type KnowledgeState = z.infer<typeof knowledgeStateSchema>;
 export type LearningEvent = z.infer<typeof learningEventSchema>;

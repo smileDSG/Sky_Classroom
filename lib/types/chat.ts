@@ -276,6 +276,12 @@ export interface StatelessChatRequest {
     nickname?: string;
     bio?: string;
   };
+  /**
+   * Server-built teaching projection for the authenticated learner.
+   * Clients MUST NOT submit this as authoritative input; the server
+   * overwrites any client-provided value with the authoritative projection.
+   */
+  teachingProjection?: string;
   /** OpenAI-compatible API credentials */
   apiKey: string;
   baseUrl?: string;

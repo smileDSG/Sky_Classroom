@@ -8,6 +8,7 @@
 import mysql, { type Pool, type RowDataPacket } from 'mysql2/promise';
 import type { StorageProvider, StorageEntry } from './storage-types';
 import { createLogger } from '@/lib/logger';
+import { StorageEntryAlreadyExistsError } from './storage-errors';
 
 const log = createLogger('Storage:MySQL');
 
@@ -34,6 +35,11 @@ function toDatetime(ts: number): string {
 
 function toDate(ts: number): string {
   return new Date(ts).toISOString().slice(0, 10);
+}
+
+function isDuplicateEntryError(error: unknown): boolean {
+  const candidate = error as { code?: unknown; errno?: unknown } | null;
+  return candidate?.code === 'ER_DUP_ENTRY' || candidate?.errno === 1062;
 }
 
 // ── Table name routing ──────────────────────────────────────────────
@@ -121,6 +127,7 @@ const CREATE_TABLES_SQL = [
 
   `CREATE TABLE IF NOT EXISTS mistakes (
     id                  VARCHAR(255) PRIMARY KEY,
+    user_id             VARCHAR(255) NOT NULL,
     problem_text        TEXT NOT NULL,
     problem_image       LONGTEXT,
     user_answer         TEXT NOT NULL,
@@ -136,12 +143,38 @@ const CREATE_TABLES_SQL = [
     source_session_id   VARCHAR(255),
     created_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_mistakes_reviewed (reviewed),
-    INDEX idx_mistakes_next_review (next_review)
+    INDEX idx_mistakes_owner_reviewed (user_id, reviewed),
+    INDEX idx_mistakes_owner_next_review (user_id, next_review)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 ];
 
 // ── Data migration from storage_entries ─────────────────────────────
+
+async function ensureMistakeOwnershipSchema(pool: Pool): Promise<void> {
+  const [columnRows] = await pool.query<RowDataPacket[]>(
+    `SELECT COUNT(*) as cnt FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    ['mistakes', 'user_id'],
+  );
+  if (Number(columnRows[0]?.cnt ?? 0) === 0) {
+    await pool.query('ALTER TABLE mistakes ADD COLUMN user_id VARCHAR(255) NULL AFTER id');
+  }
+
+  const indexes = [
+    { name: 'idx_mistakes_owner_reviewed', columns: 'user_id, reviewed' },
+    { name: 'idx_mistakes_owner_next_review', columns: 'user_id, next_review' },
+  ];
+  for (const index of indexes) {
+    const [indexRows] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as cnt FROM information_schema.STATISTICS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?`,
+      ['mistakes', index.name],
+    );
+    if (Number(indexRows[0]?.cnt ?? 0) === 0) {
+      await pool.query(`ALTER TABLE mistakes ADD INDEX ${index.name} (${index.columns})`);
+    }
+  }
+}
 
 async function migrateFromStorageEntries(pool: Pool): Promise<void> {
   const tables = [
@@ -210,13 +243,18 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
             ],
           );
         } else if (table === 'mistakes') {
+          if (typeof data.userId !== 'string' || data.userId.length === 0) {
+            log.warn(`Skipping legacy mistake without owner: ${String(row.id)}`);
+            continue;
+          }
           await pool.query(
-            `INSERT IGNORE INTO mistakes (id, problem_text, problem_image, user_answer, correct_answer,
+            `INSERT IGNORE INTO mistakes (id, user_id, problem_text, problem_image, user_answer, correct_answer,
               error_type, error_explanation, knowledge_points, review_count, last_review, next_review,
               mastery_level, reviewed, source_session_id, created_at, updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             [
-              row.id, data.problemText ?? '', data.problemImage ?? null, data.userAnswer ?? '', data.correctAnswer ?? '',
+              row.id, data.userId, data.problemText ?? '', data.problemImage ?? null,
+              data.userAnswer ?? '', data.correctAnswer ?? '',
               data.errorType ?? 'concept', data.errorExplanation ?? null,
               JSON.stringify(data.knowledgePoints ?? []),
               data.reviewCount ?? 0, data.lastReview ?? null, data.nextReview ?? null,
@@ -228,6 +266,7 @@ async function migrateFromStorageEntries(pool: Pool): Promise<void> {
       }
     } catch (err) {
       log.error(`Migration failed for ${table}:`, err instanceof Error ? err.message : err);
+      throw err;
     }
   }
 }
@@ -246,6 +285,8 @@ export class MySQLStorageProvider implements StorageProvider {
       for (const sql of CREATE_TABLES_SQL) {
         await pool.query(sql);
       }
+
+      await ensureMistakeOwnershipSchema(pool);
 
       // Migrate old data from storage_entries
       await migrateFromStorageEntries(pool);
@@ -324,10 +365,10 @@ export class MySQLStorageProvider implements StorageProvider {
       );
     } else if (table === 'mistakes') {
       await pool.query(
-        `INSERT INTO mistakes (id, problem_text, problem_image, user_answer, correct_answer,
+        `INSERT INTO mistakes (id, user_id, problem_text, problem_image, user_answer, correct_answer,
           error_type, error_explanation, knowledge_points, review_count, last_review, next_review,
           mastery_level, reviewed, source_session_id, created_at, updated_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON DUPLICATE KEY UPDATE
           problem_text=VALUES(problem_text), problem_image=VALUES(problem_image),
           user_answer=VALUES(user_answer), correct_answer=VALUES(correct_answer),
@@ -337,7 +378,7 @@ export class MySQLStorageProvider implements StorageProvider {
           mastery_level=VALUES(mastery_level), reviewed=VALUES(reviewed),
           source_session_id=VALUES(source_session_id), updated_at=VALUES(updated_at)`,
         [
-          entry.id, data.problemText ?? '', data.problemImage ?? null,
+          entry.id, data.userId, data.problemText ?? '', data.problemImage ?? null,
           data.userAnswer ?? '', data.correctAnswer ?? '',
           data.errorType ?? 'concept', data.errorExplanation ?? null,
           JSON.stringify(data.knowledgePoints ?? []),
@@ -354,6 +395,84 @@ export class MySQLStorageProvider implements StorageProvider {
          ON DUPLICATE KEY UPDATE data = VALUES(data), updated_at = VALUES(updated_at)`,
         [entry.id, table, JSON.stringify(entry.data), toDatetime(entry.createdAt), toDatetime(entry.updatedAt)],
       );
+    }
+  }
+
+  async insert<T>(table: string, entry: StorageEntry<T>): Promise<void> {
+    const pool = getPool();
+    const data = entry.data as Record<string, unknown>;
+
+    try {
+      if (table === 'users') {
+        await pool.query(
+          `INSERT INTO users (id, email, username, password_hash, role, status, guest_id, plan_type,
+            avatar, nickname, bio, education_level, grade, learning_style, detail_level,
+            preferred_language, ai_personality, ai_name, custom_instructions,
+            auto_generate_quiz, show_step_by_step, enable_memory, enable_rag,
+            email_verified, email_verify_token, reset_token, reset_token_expiry,
+            created_at, updated_at, last_login_at)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            entry.id, data.email ?? null, data.username, data.passwordHash ?? null,
+            data.role ?? 'user', data.status ?? 'active', data.guestId ?? null, data.planType ?? 'free',
+            data.avatar ?? null, data.nickname ?? null, data.bio ?? null,
+            data.educationLevel ?? null, data.grade ?? null, data.learningStyle ?? null, data.detailLevel ?? null,
+            data.preferredLanguage ?? null, data.aiPersonality ?? null, data.aiName ?? null, data.customInstructions ?? null,
+            data.autoGenerateQuiz ?? false, data.showStepByStep ?? true, data.enableMemory ?? true, data.enableRAG ?? true,
+            data.emailVerified ?? false, data.emailVerifyToken ?? null, data.resetToken ?? null,
+            data.resetTokenExpiry && typeof data.resetTokenExpiry === 'number' ? toDatetime(data.resetTokenExpiry) : null,
+            toDatetime(entry.createdAt), toDatetime(entry.updatedAt),
+            data.lastLoginAt ? toDatetime(data.lastLoginAt as number) : null,
+          ],
+        );
+      } else if (table === 'user_checkins') {
+        await pool.query(
+          `INSERT INTO user_checkins (id, user_id, checkin_date, timestamp, created_at)
+          VALUES (?,?,?,?,?)`,
+          [entry.id, data.userId, data.date, data.timestamp, toDatetime(entry.createdAt)],
+        );
+      } else if (table === 'user_stats') {
+        await pool.query(
+          `INSERT INTO user_stats (id, user_id, stat_date, study_seconds, checkin_streak,
+            mastery_score, problems_attempted, problems_correct, scenes_completed, last_active_at,
+            created_at, updated_at)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            entry.id, data.userId, data.date, data.studySeconds ?? 0, data.checkinStreak ?? 0,
+            data.masteryScore ?? 0, data.problemsAttempted ?? 0, data.problemsCorrect ?? 0,
+            data.scenesCompleted ?? 0, data.lastActiveAt ?? Date.now(),
+            toDatetime(entry.createdAt), toDatetime(entry.updatedAt),
+          ],
+        );
+      } else if (table === 'mistakes') {
+        await pool.query(
+          `INSERT INTO mistakes (id, user_id, problem_text, problem_image, user_answer, correct_answer,
+            error_type, error_explanation, knowledge_points, review_count, last_review, next_review,
+            mastery_level, reviewed, source_session_id, created_at, updated_at)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            entry.id, data.userId, data.problemText ?? '', data.problemImage ?? null,
+            data.userAnswer ?? '', data.correctAnswer ?? '',
+            data.errorType ?? 'concept', data.errorExplanation ?? null,
+            JSON.stringify(data.knowledgePoints ?? []),
+            data.reviewCount ?? 0, data.lastReview ?? null, data.nextReview ?? null,
+            data.masteryLevel ?? 0, data.reviewed ?? false, data.sourceSessionId ?? null,
+            toDatetime(entry.createdAt), toDatetime(entry.updatedAt),
+          ],
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO storage_entries (id, table_name, data, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?)`,
+          [entry.id, table, JSON.stringify(entry.data), toDatetime(entry.createdAt), toDatetime(entry.updatedAt)],
+        );
+      }
+    } catch (error) {
+      if (isDuplicateEntryError(error)) {
+        throw new StorageEntryAlreadyExistsError(table, entry.id, { cause: error });
+      }
+      log.error(`insert(${table}, ${entry.id}) failed:`, error);
+      throw error;
     }
   }
 
@@ -566,6 +685,8 @@ function rowToMistakeEntry(row: RowDataPacket): StorageEntry {
   return {
     id: row.id as string,
     data: {
+      id: row.id as string,
+      userId: row.user_id,
       problemText: row.problem_text,
       problemImage: row.problem_image,
       userAnswer: row.user_answer,

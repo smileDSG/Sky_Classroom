@@ -2,11 +2,12 @@
  * GET/POST/PATCH/DELETE /api/sky/mistakes
  *
  * Mistake book CRUD endpoint backed by the unified storage DAO.
- * Falls back to in-memory storage when IndexedDB / localStorage are unavailable.
+ * Uses authenticated ownership and required persistent storage.
  */
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getServerStorage } from '@/lib/server/server-storage';
+import { requireAuth } from '@/lib/server/auth/helpers';
+import { getRequiredServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import type { ErrorType } from '@/lib/storage/dao/mistakes';
 import { createLogger } from '@/lib/logger';
@@ -17,18 +18,26 @@ const log = createLogger('API:SkyMistakes');
 let _daoPromise: ReturnType<typeof initDAO> | null = null;
 
 async function initDAO() {
-  const storage = await getServerStorage();
+  const storage = await getRequiredServerStorage();
   return createMistakeBookDAO(storage);
 }
 
 async function getDAO() {
-  if (!_daoPromise) _daoPromise = initDAO();
+  if (!_daoPromise) {
+    _daoPromise = initDAO().catch((error) => {
+      _daoPromise = null;
+      throw error;
+    });
+  }
   return _daoPromise;
 }
 
 // ── GET — list / query mistakes ──────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const dao = await getDAO();
     const url = new URL(req.url);
@@ -38,7 +47,7 @@ export async function GET(req: NextRequest) {
     const page = url.searchParams.get('page');
     const pageSize = url.searchParams.get('pageSize');
 
-    const result = await dao.list({
+    const result = await dao.list(auth.user.id, {
       errorType: errorType ?? undefined,
       reviewed: reviewed !== null ? reviewed === 'true' : undefined,
       masteryBelow: masteryBelow ? Number(masteryBelow) : undefined,
@@ -56,13 +65,16 @@ export async function GET(req: NextRequest) {
 // ── POST — create a new mistake entry ────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const dao = await getDAO();
     const body = await req.json();
 
     const id = `mistake-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    await dao.add({
+    await dao.add(auth.user.id, {
       id,
       problemText: body.problemText ?? '',
       problemImage: body.problemImage,
@@ -85,6 +97,9 @@ export async function POST(req: NextRequest) {
 // ── PATCH — record a review (Ebbinghaus scheduling) ──────────────────
 
 export async function PATCH(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const dao = await getDAO();
     const body = await req.json();
@@ -94,7 +109,10 @@ export async function PATCH(req: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '缺少 id 参数');
     }
 
-    await dao.recordReview(id);
+    const reviewed = await dao.recordReview(auth.user.id, id);
+    if (!reviewed) {
+      return apiError(API_ERROR_CODES.NOT_FOUND, 404, '错题不存在');
+    }
     log.info('Mistake reviewed:', id);
     return apiSuccess({ reviewed: true, id });
   } catch (err) {
@@ -106,6 +124,9 @@ export async function PATCH(req: NextRequest) {
 // ── DELETE — remove a mistake ────────────────────────────────────────
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const dao = await getDAO();
     const url = new URL(req.url);
@@ -115,7 +136,10 @@ export async function DELETE(req: NextRequest) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '缺少 id 参数');
     }
 
-    await dao.delete(id);
+    const deleted = await dao.delete(auth.user.id, id);
+    if (!deleted) {
+      return apiError(API_ERROR_CODES.NOT_FOUND, 404, '错题不存在');
+    }
     log.info('Mistake deleted:', id);
     return apiSuccess({ deleted: true, id });
   } catch (err) {

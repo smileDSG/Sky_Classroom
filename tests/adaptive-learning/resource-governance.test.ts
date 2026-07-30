@@ -191,9 +191,7 @@ describe('math resource governance', () => {
       duplicate_canonical_url: 1,
       manual_verification_required: 1,
     });
-    expect(report.resourceGapNodeIds).toEqual(
-      GAOKAO_MATH_PACK_V1.nodes.map((node) => node.id),
-    );
+    expect(report.resourceGapNodeIds).toEqual(GAOKAO_MATH_PACK_V1.nodes.map((node) => node.id));
   });
 
   it('adds explicit ambiguous and title-collision review reasons without auto-verification', () => {

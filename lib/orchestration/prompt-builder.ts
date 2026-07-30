@@ -129,6 +129,11 @@ function buildLanguageConstraint(langDirective?: string): string {
   return langDirective ? `\n# Language (CRITICAL)\n${langDirective}\n` : '';
 }
 
+function buildTeachingProjectionSection(teachingProjection?: string): string {
+  if (!teachingProjection) return '';
+  return `\n# Learner Profile (authoritative)\n${teachingProjection}\n`;
+}
+
 function buildDiscussionContextSection(
   discussionContext: DiscussionContext | undefined,
   agentResponses: AgentTurnSummary[] | undefined,
@@ -173,6 +178,7 @@ export function buildStructuredPrompt(
     recentTurns: Array<{ contentPreview: string; actionNames: string[] }>;
     keyFacts: string[];
   },
+  teachingProjection?: string,
 ): string {
   // Determine current scene type for action filtering
   const currentScene = storeState.currentSceneId
@@ -212,6 +218,7 @@ export function buildStructuredPrompt(
       || '',
     discussionContextSection: buildDiscussionContextSection(discussionContext, agentResponses),
     memorySection: memory ? formatAgentMemory(memory) : '',
+    teachingProjectionSection: buildTeachingProjectionSection(teachingProjection),
   };
 
   const prompt = buildPrompt(PROMPT_IDS.AGENT_SYSTEM, vars);

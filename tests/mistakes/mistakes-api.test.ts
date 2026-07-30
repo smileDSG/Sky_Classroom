@@ -1,8 +1,70 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import { MemoryStorageProvider } from '@/lib/storage/memory-provider';
+import type { StorageProvider } from '@/lib/storage/storage-types';
+
+const apiBoundary = vi.hoisted(() => ({
+  userId: 'user-a',
+  storage: null as StorageProvider | null,
+}));
+
+vi.mock('@/lib/server/auth/helpers', () => ({
+  requireAuth: vi.fn(async () => ({ user: { id: apiBoundary.userId } })),
+}));
+
+vi.mock('@/lib/server/server-storage', () => ({
+  getServerStorage: vi.fn(async () => apiBoundary.storage),
+  getRequiredServerStorage: vi.fn(async () => apiBoundary.storage),
+}));
+
+vi.mock('@/lib/solve/grader', () => ({
+  gradeAnswer: vi.fn(async (_problem: string, correctAnswer: string, userAnswer: string) => ({
+    isCorrect: false,
+    score: 0,
+    correctAnswer,
+    userAnswer,
+    errorAnalysis: 'mock grading error',
+    cause: 'concept-unclear',
+  })),
+}));
+
+vi.mock('server-only', () => ({}));
+
 import { GET, POST, PATCH, DELETE } from '@/app/api/sky/mistakes/route';
+import { DELETE as DELETE_BY_ID } from '@/app/api/sky/mistakes/[id]/route';
+import { GET as GET_DUE } from '@/app/api/sky/review/due/route';
+import { GET as GET_KNOWLEDGE_GRAPH } from '@/app/api/sky/knowledge-graph/route';
+import { POST as GRADE_ANSWER } from '@/app/api/sky/solve/grade/route';
+import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
+import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
 
 const BASE = 'http://localhost/api/sky/mistakes';
+const storage = new MemoryStorageProvider();
+apiBoundary.storage = storage;
+
+async function seedPreferences(userId: string) {
+  const repo = new LearnerProfileRepository(storage);
+  await repo.insertPreferences({
+    userId,
+    preferredLanguage: 'zh-CN',
+    contentFormatPreferences: ['worked-example', 'diagram'],
+    explanationDepth: 'detailed',
+    learningPace: 'standard',
+    stepByStepMode: 'always',
+    interactionTone: 'encouraging',
+    assistantName: '小智',
+    preferenceNotes: '',
+    privacy: {
+      conversationMemory: 'persistent',
+      optionalBehaviorSignals: true,
+      privateKnowledgeRetrieval: false,
+    },
+    version: 1,
+    schemaVersion: '1.0.0',
+    updatedAt: '2026-07-28T00:00:00.000Z',
+    updatedBy: 'user',
+  });
+}
 
 function buildUrl(params: Record<string, string> = {}): string {
   const url = new URL(BASE);
@@ -34,9 +96,27 @@ async function extractId(res: Response): Promise<string> {
   return json.id as string;
 }
 
+beforeEach(async () => {
+  apiBoundary.userId = 'user-a';
+  await storage.clear('mistakes');
+});
+
 // ── GET ────────────────────────────────────────────────────────────
 
 describe('GET /api/sky/mistakes', () => {
+  it('does not reveal another authenticated user\'s mistakes', async () => {
+    const created = await createMistake({ knowledgePoints: ['A_PRIVATE_POINT'] });
+    const id = await extractId(created);
+
+    apiBoundary.userId = 'user-b';
+    const response = await GET(new NextRequest(BASE));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.total).toBe(0);
+    expect(payload.items.map((item: { id: string }) => item.id)).not.toContain(id);
+  });
+
   it('returns items array and total count', async () => {
     const req = new NextRequest(BASE);
     const res = await GET(req);
@@ -87,6 +167,88 @@ describe('GET /api/sky/mistakes', () => {
   });
 });
 
+describe('GET /api/sky/review/due', () => {
+  it('builds the review schedule from only the authenticated user\'s mistakes', async () => {
+    const dao = createMistakeBookDAO(storage);
+    const base = {
+      problemText: 'due problem',
+      userAnswer: 'wrong',
+      correctAnswer: 'right',
+      errorType: 'concept' as const,
+      knowledgePoints: ['due-point'],
+      nextReview: Date.now() - 1_000,
+    };
+    await dao.add('user-a', { id: 'due-a', ...base });
+    await dao.add('user-b', { id: 'due-b', ...base });
+
+    apiBoundary.userId = 'user-b';
+    const response = await GET_DUE();
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.dueToday.map((item: { id: string }) => item.id)).toEqual(['due-b']);
+  });
+});
+
+describe('GET /api/sky/knowledge-graph', () => {
+  it('builds graph nodes from only the authenticated user\'s mistakes', async () => {
+    const dao = createMistakeBookDAO(storage);
+    const base = {
+      problemText: 'graph problem',
+      userAnswer: 'wrong',
+      correctAnswer: 'right',
+      errorType: 'concept' as const,
+    };
+    await dao.add('user-a', {
+      id: 'graph-a',
+      ...base,
+      knowledgePoints: ['A_PRIVATE_POINT'],
+    });
+    await dao.add('user-b', {
+      id: 'graph-b',
+      ...base,
+      knowledgePoints: ['B_PRIVATE_POINT'],
+    });
+
+    apiBoundary.userId = 'user-b';
+    const response = await GET_KNOWLEDGE_GRAPH();
+    const payload = await response.json();
+    const nodeIds = payload.nodes.map((node: { id: string }) => node.id);
+
+    expect(response.status).toBe(200);
+    expect(nodeIds).toContain('B_PRIVATE_POINT');
+    expect(nodeIds).not.toContain('A_PRIVATE_POINT');
+  });
+});
+
+describe('POST /api/sky/solve/grade', () => {
+  it('binds generated mistakes to the authenticated user and ignores client-owned ids', async () => {
+    await seedPreferences(apiBoundary.userId);
+
+    const response = await GRADE_ANSWER(
+      new Request('http://localhost/api/sky/solve/grade', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          problem: '1 + 1 = ?',
+          correctAnswer: '2',
+          userAnswer: '3',
+          mistakeId: 'attacker-selected-id',
+          knowledgePoints: ['加法'],
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+
+    const list = await GET(new NextRequest(BASE));
+    const payload = await list.json();
+    expect(payload.items).toHaveLength(1);
+    expect(payload.items[0].userId).toBe('user-a');
+    expect(payload.items[0].id).not.toBe('attacker-selected-id');
+  });
+});
+
 // ── POST ────────────────────────────────────────────────────────────
 
 describe('POST /api/sky/mistakes', () => {
@@ -132,11 +294,52 @@ describe('POST /api/sky/mistakes', () => {
       expect(created.errorType).toBe('concept');
     }
   });
+
+  it('ignores client-provided userId and binds the entry to the authenticated user', async () => {
+    const res = await POST(
+      new NextRequest(BASE, {
+        method: 'POST',
+        body: JSON.stringify({
+          problemText: 'client-userid-test',
+          userAnswer: 'wrong',
+          correctAnswer: 'right',
+          errorType: 'concept',
+          userId: 'attacker',
+        }),
+      }),
+    );
+    expect(res.status).toBe(201);
+
+    const getRes = await GET(new NextRequest(BASE));
+    const getJson = await getRes.json();
+    expect(getJson.items).toHaveLength(1);
+    expect(getJson.items[0].userId).toBe('user-a');
+  });
 });
 
 // ── PATCH ───────────────────────────────────────────────────────────
 
 describe('PATCH /api/sky/mistakes', () => {
+  it('does not let another authenticated user review a private mistake', async () => {
+    const createRes = await createMistake({ knowledgePoints: ['A_REVIEW_PRIVATE'] });
+    const id = await extractId(createRes);
+
+    apiBoundary.userId = 'user-b';
+    const response = await PATCH(
+      new NextRequest(BASE, {
+        method: 'PATCH',
+        body: JSON.stringify({ id }),
+      }),
+    );
+
+    expect(response.status).toBe(404);
+
+    apiBoundary.userId = 'user-a';
+    const list = await GET(new NextRequest(BASE));
+    const payload = await list.json();
+    expect(payload.items.find((item: { id: string }) => item.id === id)?.reviewCount).toBe(0);
+  });
+
   it('records a review and returns success', async () => {
     const createRes = await createMistake({ knowledgePoints: ['复习测试'] });
     const id = await extractId(createRes);
@@ -206,6 +409,32 @@ describe('PATCH /api/sky/mistakes', () => {
 // ── DELETE ─────────────────────────────────────────────────────────
 
 describe('DELETE /api/sky/mistakes', () => {
+  it('enforces ownership in the dynamic delete route used by the client', async () => {
+    const createRes = await createMistake({ knowledgePoints: ['A_DYNAMIC_DELETE_PRIVATE'] });
+    const id = await extractId(createRes);
+
+    apiBoundary.userId = 'user-b';
+    const response = await DELETE_BY_ID(new NextRequest(`${BASE}/${id}`), {
+      params: Promise.resolve({ id }),
+    });
+
+    expect(response.status).toBe(404);
+  });
+
+  it('does not let another authenticated user delete a private mistake', async () => {
+    const createRes = await createMistake({ knowledgePoints: ['A_DELETE_PRIVATE'] });
+    const id = await extractId(createRes);
+
+    apiBoundary.userId = 'user-b';
+    const response = await DELETE(new NextRequest(`${BASE}/${id}`));
+    expect(response.status).toBe(404);
+
+    apiBoundary.userId = 'user-a';
+    const list = await GET(new NextRequest(BASE));
+    const payload = await list.json();
+    expect(payload.items.map((item: { id: string }) => item.id)).toContain(id);
+  });
+
   it('deletes a mistake and returns success', async () => {
     const createRes = await createMistake({ knowledgePoints: ['删除测试'] });
     const id = await extractId(createRes);

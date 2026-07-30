@@ -14,6 +14,7 @@ import { createUserStatsDAO } from '@/lib/storage/dao/user-stats';
 import { createLogger } from '@/lib/logger';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
+import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
 
 const log = createLogger('API:LearningStats');
 
@@ -66,6 +67,10 @@ export async function GET(req: NextRequest) {
     const checkInEntry = await storage.get<CheckInEntry>(CHECKIN_TABLE, `${userId}_${todayStr}`);
     const checkedInToday = !!checkInEntry?.data;
 
+    // ── Authoritative learner profile ──
+    const profileRepository = new LearnerProfileRepository(storage);
+    const preferences = await profileRepository.getLatestPreferences(userId);
+
     return apiSuccess({
       todayStudyMinutes: Math.round(stats.studySeconds / 60 * 10) / 10,
       streakDays: stats.checkinStreak,
@@ -74,6 +79,7 @@ export async function GET(req: NextRequest) {
       problemsAttempted: stats.problemsAttempted,
       problemsCorrect: stats.problemsCorrect,
       scenesCompleted: stats.scenesCompleted,
+      learnerProfile: preferences ?? null,
     });
   } catch (err) {
     log.error('Learning stats error:', err);

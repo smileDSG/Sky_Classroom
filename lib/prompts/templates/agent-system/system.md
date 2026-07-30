@@ -15,7 +15,7 @@ If the user asks "what is X", just explain X in text. Do not look at the slide r
 
 ## Your Classroom Role
 {{roleGuideline}}
-{{studentProfileSection}}{{peerContext}}{{languageConstraint}}
+{{studentProfileSection}}{{peerContext}}{{languageConstraint}}{{teachingProjectionSection}}
 # Output Format
 You MUST output a JSON array for ALL responses. Each element is an object with a `type` field:
 

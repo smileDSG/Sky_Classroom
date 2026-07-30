@@ -6,6 +6,7 @@
  */
 
 import type { StorageProvider, StorageEntry } from './storage-types';
+import { StorageEntryAlreadyExistsError } from './storage-errors';
 
 export class MemoryStorageProvider implements StorageProvider {
   private tables: Map<string, Map<string, StorageEntry>> = new Map();
@@ -23,6 +24,14 @@ export class MemoryStorageProvider implements StorageProvider {
 
   async set<T>(table: string, entry: StorageEntry<T>): Promise<void> {
     this.getTable(table).set(entry.id, entry as StorageEntry);
+  }
+
+  async insert<T>(table: string, entry: StorageEntry<T>): Promise<void> {
+    const target = this.getTable(table);
+    if (target.has(entry.id)) {
+      throw new StorageEntryAlreadyExistsError(table, entry.id);
+    }
+    target.set(entry.id, entry as StorageEntry);
   }
 
   async get<T>(table: string, id: string): Promise<StorageEntry<T> | null> {

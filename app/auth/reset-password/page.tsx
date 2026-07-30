@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Eye, EyeOff, Loader2, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 
 type Status = 'form' | 'loading' | 'success' | 'error';
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -29,13 +29,6 @@ export default function ResetPasswordPage() {
   const strength = (hasLen ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNumber ? 1 : 0);
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
-
-  useEffect(() => {
-    if (!token) {
-      setStatus('error');
-      setError('No reset token provided');
-    }
-  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +98,7 @@ export default function ResetPasswordPage() {
   }
 
   // Error state (no token)
-  if (status === 'error' && !token) {
+  if (!token) {
     return (
       <AuthLayout>
         <motion.div
@@ -120,7 +113,9 @@ export default function ResetPasswordPage() {
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
             Invalid Link
           </h1>
-          <p className="text-sm text-muted-foreground mb-6">{error}</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            No reset token provided
+          </p>
           <Link href="/auth/forgot-password" className="w-full">
             <Button variant="outline" className="w-full h-11 rounded-xl">
               Request New Link
@@ -241,5 +236,13 @@ export default function ResetPasswordPage() {
         </Button>
       </form>
     </AuthLayout>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

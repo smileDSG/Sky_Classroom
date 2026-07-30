@@ -8,12 +8,19 @@
  */
 
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { AssistantFab } from '@/components/sky/assistant/assistant-fab';
 import { AssistantPanel } from '@/components/sky/assistant/assistant-panel';
 import { AssistantConfig } from '@/components/sky/assistant/assistant-config';
+
+vi.mock('@/lib/ai/memory-context', () => ({
+  retrieveRelevantMemories: vi.fn().mockResolvedValue([{ content: 'CLIENT_PRIVATE_MEMORY' }]),
+  buildMemoryContext: vi.fn().mockReturnValue('CLIENT_PRIVATE_MEMORY'),
+  injectMemoryIntoPrompt: vi.fn(),
+  saveExtractedMemories: vi.fn().mockResolvedValue(undefined),
+}));
 
 function resetStore() {
   localStorage.clear();
@@ -65,6 +72,20 @@ describe('AssistantPanel', () => {
     resetStore();
     // 需要 isOpen 为 true 才能看到内容
     useSkyClassroomStore.setState({ isOpen: true });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode('data: {"type":"done"}\n\n'));
+              controller.close();
+            },
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
   });
 
   it('渲染欢迎消息 — "AI 学习助手"文字出现', () => {
@@ -88,6 +109,21 @@ describe('AssistantPanel', () => {
     const textarea = screen.getByPlaceholderText('输入你的问题…');
     expect(textarea).toBeDefined();
     expect(textarea.tagName).toBe('TEXTAREA');
+  });
+
+  it('发送时不上传客户端 system prompt 或私有 memory context', async () => {
+    render(<AssistantPanel />);
+    const textarea = screen.getByRole('textbox');
+
+    fireEvent.change(textarea, { target: { value: '解释二次函数' } });
+    fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' });
+
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    const payload = JSON.parse(String(init?.body));
+
+    expect(payload.messages).toEqual([{ role: 'user', content: '解释二次函数' }]);
+    expect(payload).not.toHaveProperty('memoryContext');
   });
 });
 

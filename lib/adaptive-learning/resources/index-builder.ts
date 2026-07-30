@@ -223,7 +223,29 @@ async function validateFilesystemBoundaries(paths: ResolvedBuildPaths): Promise<
   }
 }
 
-async function scanMarkdownFiles(directory: string): Promise<string[]> {
+async function scanMarkdownFiles(
+  directory: string,
+  visited: Set<string> = new Set(),
+): Promise<string[]> {
+  let realDirectory: string;
+  try {
+    realDirectory = await realpath(directory);
+  } catch (cause) {
+    throw buildError(
+      'RESOURCE_INDEX_UNAVAILABLE',
+      'Resource source directory is unavailable',
+      {
+        sourceDir: directory,
+      },
+      cause,
+    );
+  }
+
+  if (visited.has(realDirectory)) {
+    return [];
+  }
+  visited.add(realDirectory);
+
   let entries;
   try {
     entries = await readdir(directory, { withFileTypes: true });
@@ -241,8 +263,11 @@ async function scanMarkdownFiles(directory: string): Promise<string[]> {
   const files: string[] = [];
   for (const entry of entries.sort((left, right) => compareText(left.name, right.name))) {
     const entryPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...(await scanMarkdownFiles(entryPath)));
-    else if (entry.isFile() && entry.name.toLowerCase().endsWith('.md')) files.push(entryPath);
+    if (entry.isDirectory()) {
+      files.push(...(await scanMarkdownFiles(entryPath, visited)));
+    } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.md')) {
+      files.push(entryPath);
+    }
   }
   return files.sort(compareText);
 }
@@ -397,17 +422,12 @@ async function writeArtifacts(
     leftoverBackupPaths.push(backupPaths[index]);
   });
   if (cleanupFailures.length > 0) {
-    throw buildError(
-      'RESOURCE_INDEX_UNAVAILABLE',
-      'Resource index artifacts published but backup cleanup failed',
-      {
-        indexPath,
-        reportPath,
-        leftoverBackupPaths,
-        cleanupFailures,
-      },
-      new AggregateError(cleanupFailures, 'Backup cleanup failed'),
-    );
+    console.warn('Resource index artifacts published but backup cleanup failed', {
+      indexPath,
+      reportPath,
+      leftoverBackupPaths,
+      cleanupFailures,
+    });
   }
 }
 

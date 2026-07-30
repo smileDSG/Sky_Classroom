@@ -22,6 +22,8 @@ export const EBBINGHAUS_INTERVALS = [1, 2, 4, 7, 15, 30];
 export interface MistakeBookEntry {
   /** Unique identifier */
   id: string;
+  /** Authenticated owner */
+  userId: string;
   /** Problem text */
   problemText: string;
   /** Optional problem image (base64) */
@@ -64,12 +66,17 @@ function calcNextReview(entry: MistakeBookEntry): { nextReview: number; masteryL
 export function createMistakeBookDAO(storage: StorageProvider) {
   return {
     /** Add a new mistake (auto-generated from grading results) */
-    async add(entry: Omit<MistakeBookEntry, 'reviewCount' | 'masteryLevel' | 'reviewed'>): Promise<void> {
+    async add(
+      userId: string,
+      entry: Omit<MistakeBookEntry, 'userId' | 'reviewCount' | 'masteryLevel' | 'reviewed'>,
+    ): Promise<void> {
+      if (!userId) throw new Error('Authenticated userId is required');
       const now = Date.now();
       const storageEntry: StorageEntry<MistakeBookEntry> = {
         id: entry.id,
         data: {
           ...entry,
+          userId,
           reviewCount: 0,
           masteryLevel: 0,
           reviewed: false,
@@ -77,28 +84,39 @@ export function createMistakeBookDAO(storage: StorageProvider) {
         createdAt: now,
         updatedAt: now,
       };
-      await storage.set(TABLE, storageEntry);
+      await storage.insert(TABLE, storageEntry);
     },
 
     /** Get a mistake by ID */
-    async get(id: string): Promise<MistakeBookEntry | null> {
+    async get(userId: string, id: string): Promise<MistakeBookEntry | null> {
+      if (!userId) throw new Error('Authenticated userId is required');
       const result = await storage.get<MistakeBookEntry>(TABLE, id);
-      return result?.data ?? null;
+      return result?.data.userId === userId ? result.data : null;
     },
 
     /** Update a mistake */
-    async update(id: string, patch: Partial<MistakeBookEntry>): Promise<void> {
+    async update(
+      userId: string,
+      id: string,
+      patch: Partial<Omit<MistakeBookEntry, 'id' | 'userId'>>,
+    ): Promise<boolean> {
+      if (!userId) throw new Error('Authenticated userId is required');
       const existing = await storage.get<MistakeBookEntry>(TABLE, id);
-      if (!existing) throw new Error(`Mistake ${id} not found`);
-      existing.data = { ...existing.data, ...patch };
+      if (!existing || existing.data.userId !== userId) return false;
+      // Defensive: never allow id / userId to be overwritten at runtime,
+      // even if a caller bypasses the TypeScript-omitted type.
+      const { id: _id, userId: _userId, ...safePatch } = patch as Record<string, unknown>;
+      existing.data = { ...existing.data, ...safePatch } as MistakeBookEntry;
       existing.updatedAt = Date.now();
       await storage.set(TABLE, existing);
+      return true;
     },
 
     /** Record a successful review (Ebbinghaus schedule) */
-    async recordReview(id: string): Promise<void> {
+    async recordReview(userId: string, id: string): Promise<boolean> {
+      if (!userId) throw new Error('Authenticated userId is required');
       const existing = await storage.get<MistakeBookEntry>(TABLE, id);
-      if (!existing) throw new Error(`Mistake ${id} not found`);
+      if (!existing || existing.data.userId !== userId) return false;
 
       existing.data.reviewCount += 1;
       existing.data.lastReview = Date.now();
@@ -109,23 +127,28 @@ export function createMistakeBookDAO(storage: StorageProvider) {
       existing.updatedAt = Date.now();
 
       await storage.set(TABLE, existing);
+      return true;
     },
 
     /** Delete a mistake */
-    async delete(id: string): Promise<boolean> {
+    async delete(userId: string, id: string): Promise<boolean> {
+      if (!userId) throw new Error('Authenticated userId is required');
+      const existing = await storage.get<MistakeBookEntry>(TABLE, id);
+      if (!existing || existing.data.userId !== userId) return false;
       return storage.delete(TABLE, id);
     },
 
     /** List mistakes with optional filtering */
-    async list(opts?: {
+    async list(userId: string, opts?: {
       errorType?: ErrorType;
       reviewed?: boolean;
       masteryBelow?: number;
       page?: number;
       pageSize?: number;
     }): Promise<{ items: MistakeBookEntry[]; total: number }> {
+      if (!userId) throw new Error('Authenticated userId is required');
       const all = await storage.getAll<MistakeBookEntry>(TABLE);
-      let filtered = all;
+      let filtered = all.filter((entry) => entry.data.userId === userId);
 
       if (opts?.errorType !== undefined) {
         filtered = filtered.filter((e) => e.data.errorType === opts.errorType);
@@ -149,34 +172,44 @@ export function createMistakeBookDAO(storage: StorageProvider) {
     },
 
     /** Get mistakes due for review (Ebbinghaus) */
-    async getDueForReview(): Promise<MistakeBookEntry[]> {
+    async getDueForReview(userId: string): Promise<MistakeBookEntry[]> {
+      if (!userId) throw new Error('Authenticated userId is required');
       const all = await storage.getAll<MistakeBookEntry>(TABLE);
       const now = Date.now();
       return all
         .filter((e) => {
           const d = e.data;
-          return !d.reviewed && d.nextReview !== undefined && d.nextReview <= now;
+          return (
+            d.userId === userId &&
+            !d.reviewed &&
+            d.nextReview !== undefined &&
+            d.nextReview <= now
+          );
         })
         .sort((a, b) => (a.data.nextReview ?? 0) - (b.data.nextReview ?? 0))
         .map((e) => e.data);
     },
 
     /** Get mistakes by knowledge point */
-    async findByKnowledgePoint(point: string): Promise<MistakeBookEntry[]> {
+    async findByKnowledgePoint(userId: string, point: string): Promise<MistakeBookEntry[]> {
+      if (!userId) throw new Error('Authenticated userId is required');
       const all = await storage.getAll<MistakeBookEntry>(TABLE);
       return all
         .filter((e) =>
-          e.data.knowledgePoints.some(
-            (kp) => kp.toLowerCase().includes(point.toLowerCase()),
-          ),
+          e.data.userId === userId &&
+          e.data.knowledgePoints.some((kp) => kp.toLowerCase().includes(point.toLowerCase())),
         )
         .map((e) => e.data);
     },
 
     /** Count total mistakes */
-    async count(opts?: { errorType?: ErrorType; reviewed?: boolean }): Promise<number> {
+    async count(
+      userId: string,
+      opts?: { errorType?: ErrorType; reviewed?: boolean },
+    ): Promise<number> {
+      if (!userId) throw new Error('Authenticated userId is required');
       const all = await storage.getAll<MistakeBookEntry>(TABLE);
-      let filtered = all;
+      let filtered = all.filter((entry) => entry.data.userId === userId);
       if (opts?.errorType !== undefined) {
         filtered = filtered.filter((e) => e.data.errorType === opts.errorType);
       }
@@ -187,10 +220,12 @@ export function createMistakeBookDAO(storage: StorageProvider) {
     },
 
     /** Get error type distribution */
-    async getErrorTypeDistribution(): Promise<Record<ErrorType, number>> {
+    async getErrorTypeDistribution(userId: string): Promise<Record<ErrorType, number>> {
+      if (!userId) throw new Error('Authenticated userId is required');
       const all = await storage.getAll<MistakeBookEntry>(TABLE);
       const dist: Record<string, number> = {};
       for (const e of all) {
+        if (e.data.userId !== userId) continue;
         dist[e.data.errorType] = (dist[e.data.errorType] ?? 0) + 1;
       }
       const types: ErrorType[] = ['calculation', 'concept', 'reasoning', 'reading', 'careless'];

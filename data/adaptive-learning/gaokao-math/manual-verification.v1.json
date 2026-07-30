@@ -61,6 +61,126 @@
       "reviewer": "project-owner",
       "reviewedAt": "2026-07-28T00:00:00.000Z",
       "notes": "系统讲解常用三角恒等式及其变换关系，适合作为概念梳理资源。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Even-and-Odd-Functions-78879ad0.md",
+      "status": "verified",
+      "nodeIds": ["functions-properties"],
+      "resourceType": "concept",
+      "difficulty": 2,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "覆盖函数奇偶性定义、图像特征与判定方法，适合函数性质入门。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Increasing-and-Decreasing-Functions-202c9ff8.md",
+      "status": "verified",
+      "nodeIds": ["functions-properties"],
+      "resourceType": "concept",
+      "difficulty": 2,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "讲解函数单调性定义与代数判定，包含典型例题。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Normal-Distribution-943fe224.md",
+      "status": "verified",
+      "nodeIds": ["statistics"],
+      "resourceType": "concept",
+      "difficulty": 3,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "系统介绍正态分布、标准差与标准分数，覆盖统计核心概念。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Sampling-0d063caf.md",
+      "status": "verified",
+      "nodeIds": ["statistics"],
+      "resourceType": "concept",
+      "difficulty": 2,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "介绍抽样方法、偏差与样本代表性，适合统计应用入门。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Circle-Equations-c7672a9a.md",
+      "status": "verified",
+      "nodeIds": ["analytic-geometry"],
+      "resourceType": "worked-example",
+      "difficulty": 3,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "圆的标准方程与一般方程互化，包含完整作图与例题步骤。"
+    },
+    {
+      "sourcePath": "data/crawled/math/General-Form-of-Equation-of-a-Line-00dc2fbb.md",
+      "status": "verified",
+      "nodeIds": ["analytic-geometry"],
+      "resourceType": "concept",
+      "difficulty": 2,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "直线的一般式、斜截式互化，解析几何基础。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Solid-Geometry-38bc8d32.md",
+      "status": "verified",
+      "nodeIds": ["solid-geometry"],
+      "resourceType": "concept",
+      "difficulty": 2,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "立体几何基础概念与三维空间认知，适合建立空间观念。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Vectors-afd459ad.md",
+      "status": "verified",
+      "nodeIds": ["solid-geometry"],
+      "resourceType": "concept",
+      "difficulty": 3,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "向量定义、表示与基本运算，支撑立体几何中的空间向量方法。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Complex-Numbers-4b782f05.md",
+      "status": "verified",
+      "nodeIds": ["complex-numbers"],
+      "resourceType": "concept",
+      "difficulty": 2,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "复数定义、几何意义与四则运算，例题丰富。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Complex-Plane-316d60f9.md",
+      "status": "verified",
+      "nodeIds": ["complex-numbers"],
+      "resourceType": "concept",
+      "difficulty": 3,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "复平面的几何表示与模、辐角概念，巩固复数几何意义。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Solving-Quadratic-Inequalities-17bb7aa4.md",
+      "status": "verified",
+      "nodeIds": ["inequalities"],
+      "resourceType": "worked-example",
+      "difficulty": 3,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "二次不等式求解步骤与数轴标根法，含实际应用例题。"
+    },
+    {
+      "sourcePath": "data/crawled/math/Properties-of-Inequalities-8e204cec.md",
+      "status": "verified",
+      "nodeIds": ["inequalities"],
+      "resourceType": "concept",
+      "difficulty": 2,
+      "reviewer": "project-owner",
+      "reviewedAt": "2026-07-28T00:00:00.000Z",
+      "notes": "不等式基本性质与运算规则，为解不等式奠定概念基础。"
     }
   ]
 }
