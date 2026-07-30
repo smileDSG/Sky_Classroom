@@ -5,10 +5,16 @@
 import { gradeAnswer } from '@/lib/solve/grader';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
-import { getServerStorage } from '@/lib/server/server-storage';
+import { requireAuth } from '@/lib/server/auth/helpers';
+import { getRequiredServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import type { ErrorType } from '@/lib/storage/dao/mistakes';
 import type { MistakeCause } from '@/lib/solve/types';
+import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
+import { buildTeachingProjection } from '@/lib/adaptive-learning/profile/projection-builder';
+import { injectTeachingProjection } from '@/lib/assistant/context-injector';
+import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
+import { adaptiveLearningApiError } from '@/lib/adaptive-learning/api-error';
 
 const log = createLogger('API:SkySolveGrade');
 
@@ -28,17 +34,25 @@ function mapCauseToErrorType(cause: MistakeCause): ErrorType {
 let _daoPromise: ReturnType<typeof createMistakeBookDAO> | null = null;
 async function getMistakeDAO() {
   if (!_daoPromise) {
-    const storage = await getServerStorage();
-    _daoPromise = createMistakeBookDAO(storage);
+    try {
+      const storage = await getRequiredServerStorage();
+      _daoPromise = createMistakeBookDAO(storage);
+    } catch (error) {
+      _daoPromise = null;
+      throw error;
+    }
   }
   return _daoPromise;
 }
 
 
 export async function POST(req: Request) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await req.json();
-    const { problem, correctAnswer, userAnswer, stepByStep, mistakeId, knowledgePoints } = body;
+    const { problem, correctAnswer, userAnswer, stepByStep, knowledgePoints } = body;
 
     if (!problem || !correctAnswer || !userAnswer) {
       return apiError(
@@ -48,18 +62,42 @@ export async function POST(req: Request) {
       );
     }
 
+    // Load authoritative learner profile for personalised grading
+    const storage = await getRequiredServerStorage();
+    const profileRepository = new LearnerProfileRepository(storage);
+    const preferences = await profileRepository.getLatestPreferences(auth.user.id);
+    if (!preferences) {
+      const error = new AdaptiveLearningError({
+        code: 'PROFILE_NOT_FOUND',
+        message: 'Learner profile is required before grading',
+        retryable: false,
+        stage: 'solve-grade-profile-load',
+      });
+      return adaptiveLearningApiError(error, crypto.randomUUID());
+    }
+
+    const teachingProjection = buildTeachingProjection({
+      userId: auth.user.id,
+      snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w0`,
+      profileVersion: preferences.version,
+      eventWatermark: 0,
+      preferences,
+      knowledgeStatus: 'no-evidence',
+    });
+    const teachingProjectionText = injectTeachingProjection('', teachingProjection).trim();
+
     const steps: string[] | undefined = Array.isArray(stepByStep)
       ? stepByStep.map((s: { content?: string; text?: string }) => s?.content ?? s?.text ?? '')
       : undefined;
 
-    const result = await gradeAnswer(problem, correctAnswer, userAnswer, steps);
+    const result = await gradeAnswer(problem, correctAnswer, userAnswer, steps, teachingProjectionText);
 
     // 错误答案写入错题本（使用统一存储 DAO）
     if (!result.isCorrect) {
       try {
         const dao = await getMistakeDAO();
-        await dao.add({
-          id: mistakeId || `mistake-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        await dao.add(auth.user.id, {
+          id: `mistake-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           problemText: problem,
           userAnswer,
           correctAnswer,

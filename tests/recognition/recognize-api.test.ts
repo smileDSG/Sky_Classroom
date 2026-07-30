@@ -137,13 +137,13 @@ describe('Recognize API 端点', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.text).toBe('解方程 $x^2 + 2x + 1 = 0$');
+    expect(body.text).toBe('解方程');
     expect(body.latex).toBe('x^2 + 2x + 1 = 0');
     expect(body.structuredProblems).toEqual([]);
     expect(body.problemCount).toBe(1);
     expect(body.problems).toHaveLength(1);
     expect(body.problems[0]).toMatchObject({
-      text: '解方程 $x^2 + 2x + 1 = 0$',
+      text: '解方程',
       latex: 'x^2 + 2x + 1 = 0',
     });
     expect(body.usedModel).toBe('glm/glm-5v-turbo');
@@ -245,7 +245,7 @@ describe('Recognize API 端点', () => {
 
     expect(res.status).toBe(200);
     expect(llmState.callCount).toBe(1);
-    expect(body.text).toBe('[?] 题目局部模糊，但可识别公式 $x+1=2$');
+    expect(body.text).toBe('[?] 题目局部模糊，但可识别公式');
     expect(body.latex).toBe('x+1=2');
     expect(body.structuredProblems).toEqual([]);
     expect(body.usedModel).toBe('glm/glm-5v-turbo');

@@ -10,20 +10,6 @@ import { Button } from '@/components/ui/button';
 
 type Status = 'loading' | 'success' | 'already' | 'error';
 
-export default function VerifyEmailPage() {
-  return (
-    <Suspense
-      fallback={
-        <AuthLayout>
-          <Loader2 className="mx-auto size-8 animate-spin text-sky-500" />
-        </AuthLayout>
-      }
-    >
-      <VerifyEmailContent />
-    </Suspense>
-  );
-}
-
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -95,7 +81,7 @@ function VerifyEmailContent() {
         className="flex flex-col items-center text-center"
       >
         <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-            displayStatus === 'success' ? 'bg-green-100 dark:bg-green-900/30' :
+          displayStatus === 'success' ? 'bg-green-100 dark:bg-green-900/30' :
           displayStatus === 'error' ? 'bg-red-100 dark:bg-red-900/30' :
           'bg-sky-100 dark:bg-sky-900/30'
         }`}>
@@ -125,5 +111,13 @@ function VerifyEmailContent() {
         )}
       </motion.div>
     </AuthLayout>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

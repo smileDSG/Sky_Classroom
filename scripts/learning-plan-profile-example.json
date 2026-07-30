@@ -1,0 +1,9 @@
+{
+  "grade": "senior",
+  "subjects": ["math"],
+  "weakPoints": ["function", "derivative"],
+  "goals": "高考数学130",
+  "weeklyHours": 10,
+  "weeks": 4,
+  "examDate": "2027-06-07"
+}

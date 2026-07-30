@@ -4,7 +4,8 @@
  * Returns mistakes due for review based on Ebbinghaus scheduling.
  */
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getServerStorage } from '@/lib/server/server-storage';
+import { requireAuth } from '@/lib/server/auth/helpers';
+import { getRequiredServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildReviewSchedule, getMasteryProgress } from '@/lib/schedule/review-scheduler';
 import { createLogger } from '@/lib/logger';
@@ -14,19 +15,27 @@ const log = createLogger('API:SkyReviewDue');
 let _daoPromise: ReturnType<typeof initDAO> | null = null;
 
 async function initDAO() {
-  const storage = await getServerStorage();
+  const storage = await getRequiredServerStorage();
   return createMistakeBookDAO(storage);
 }
 
 async function getDAO() {
-  if (!_daoPromise) _daoPromise = initDAO();
+  if (!_daoPromise) {
+    _daoPromise = initDAO().catch((error) => {
+      _daoPromise = null;
+      throw error;
+    });
+  }
   return _daoPromise;
 }
 
 export async function GET() {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const dao = await getDAO();
-    const { items: mistakes } = await dao.list({ pageSize: 9999 });
+    const { items: mistakes } = await dao.list(auth.user.id, { pageSize: 9999 });
 
     const schedule = buildReviewSchedule(mistakes);
     const progress = getMasteryProgress(mistakes);

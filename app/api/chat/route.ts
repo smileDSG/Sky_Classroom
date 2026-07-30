@@ -21,6 +21,12 @@ import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
 import type { ThinkingConfig } from '@/lib/types/provider';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
+import { getRequiredServerStorage } from '@/lib/server/server-storage';
+import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
+import { buildTeachingProjection } from '@/lib/adaptive-learning/profile/projection-builder';
+import { injectTeachingProjection } from '@/lib/assistant/context-injector';
+import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
+import { adaptiveLearningApiError } from '@/lib/adaptive-learning/api-error';
 const log = createLogger('Chat API');
 
 // Limit message history to prevent large request bodies
@@ -93,6 +99,30 @@ export async function POST(req: NextRequest) {
     const quota = await requireQuota('llmCalls');
     if ('error' in quota) return quota.error;
 
+    // Load authoritative learner profile for personalised responses
+    const storage = await getRequiredServerStorage();
+    const profileRepository = new LearnerProfileRepository(storage);
+    const preferences = await profileRepository.getLatestPreferences(quota.userId);
+    if (!preferences) {
+      const error = new AdaptiveLearningError({
+        code: 'PROFILE_NOT_FOUND',
+        message: 'Learner profile is required before using chat',
+        retryable: false,
+        stage: 'chat-profile-load',
+      });
+      return adaptiveLearningApiError(error, crypto.randomUUID());
+    }
+
+    const teachingProjection = buildTeachingProjection({
+      userId: quota.userId,
+      snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w0`,
+      profileVersion: preferences.version,
+      eventWatermark: 0,
+      preferences,
+      knowledgeStatus: 'no-evidence',
+    });
+    const teachingProjectionText = injectTeachingProjection('', teachingProjection).trim();
+
     log.info('Processing request');
     log.info(
       `Agents: ${body.config.agentIds.join(', ')}, Messages: ${messages.length}, Turn: ${body.directorState?.turnCount ?? 0}`,
@@ -145,6 +175,7 @@ export async function POST(req: NextRequest) {
             ...body,
             messages,
             apiKey: resolvedApiKey,
+            teachingProjection: teachingProjectionText,
           },
           signal,
           languageModel,

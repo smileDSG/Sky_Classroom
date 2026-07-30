@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { TextSelectionAI } from './text-selection-ai';
+import { sanitizeAssistantMessages } from '@/lib/assistant/client-payload';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -55,7 +56,7 @@ export function GlobalAIPanel() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: msgs.map((m) => ({ role: m.role, content: m.content })),
+          messages: sanitizeAssistantMessages(msgs),
           style: 'concise',
         }),
         signal: controller.signal,

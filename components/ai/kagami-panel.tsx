@@ -1,5 +1,7 @@
 'use client';
 
+import { sanitizeAssistantMessages } from '@/lib/assistant/client-payload';
+
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { createPortal } from 'react-dom';
@@ -403,10 +405,7 @@ export function KagamiPanel({ mobile = false }: { mobile?: boolean }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [
-            { role: 'system', content: mode === 'anime' ? KAGAMI_PERSONA : NORMAL_PERSONA },
-            ...msgs.map((m) => ({ role: m.role, content: m.content })),
-          ],
+          messages: sanitizeAssistantMessages(msgs),
           style: 'detailed',
         }),
         signal: controller.signal,

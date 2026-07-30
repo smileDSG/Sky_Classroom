@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { callLLM } from '@/lib/ai/llm';
 
 // Shared state for LLM mock
 const llmState = vi.hoisted(() => ({
@@ -154,5 +155,19 @@ describe('gradeAnswer (LLM-based)', () => {
     expect(result.partialCredit).toHaveLength(2);
     expect(result.partialCredit?.[0].earnedScore).toBe(50);
     expect(result.partialCredit?.[1].earnedScore).toBe(10);
+  });
+
+  test('includes teaching projection in system prompt when provided', async () => {
+    llmState.responseText = JSON.stringify(validGradeJson);
+    (callLLM as ReturnType<typeof vi.fn>).mockClear();
+
+    await gradeAnswer('解方程', 'x = 2', 'x = 3', undefined, '称呼：小云。讲解深度：详细。');
+
+    expect(callLLM).toHaveBeenCalledTimes(1);
+    const callArg = (callLLM as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+    const systemContent = callArg.messages[0].content as string;
+    expect(systemContent).toContain('Learner Profile (authoritative)');
+    expect(systemContent).toContain('称呼：小云');
+    expect(systemContent).toContain('讲解深度：详细');
   });
 });

@@ -33,6 +33,8 @@ export const OrchestratorState = Annotation.Root({
   sessionType: Annotation<'qa' | 'discussion' | null>,
   triggerAgentId: Annotation<string | null>,
   userProfile: Annotation<{ nickname?: string; bio?: string } | null>,
+  /** Server-built learner teaching projection (authoritative) */
+  teachingProjection: Annotation<string | null>,
   /** Request-scenced agent configs for generated agents (not in the default registry) */
   agentConfigOverrides: Annotation<Record<string, AgentConfig>>,
 
@@ -96,6 +98,7 @@ export function buildInitialState(
     sessionType: request.config.sessionType ?? null,
     triggerAgentId: request.config.triggerAgentId || null,
     userProfile: request.userProfile || null,
+    teachingProjection: request.teachingProjection || null,
     agentConfigOverrides,
     currentAgentId: null,
     turnCount,

@@ -6,6 +6,7 @@
  */
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { LocalStorageProvider } from '@/lib/storage/local-storage-provider';
+import { StorageEntryAlreadyExistsError } from '@/lib/storage/storage-errors';
 import type { StorageEntry } from '@/lib/storage/storage-types';
 
 function makeEntry(id: string, data: unknown): StorageEntry {
@@ -16,6 +17,12 @@ describe('LocalStorageProvider', () => {
   let provider: LocalStorageProvider;
 
   beforeEach(() => {
+    Object.defineProperty(navigator, 'locks', {
+      configurable: true,
+      value: {
+        request: async (_name: string, callback: () => unknown) => callback(),
+      },
+    });
     provider = new LocalStorageProvider('test-sky');
     // Clear all test keys
     const keysToRemove: string[] = [];
@@ -73,6 +80,20 @@ describe('LocalStorageProvider', () => {
       const indexRaw = localStorage.getItem('test-sky::__idx:users');
       const index = JSON.parse(indexRaw!) as string[];
       expect(index.sort()).toEqual(['a', 'b']);
+    });
+  });
+
+  describe('insert', () => {
+    test('rejects a duplicate id without changing the original entry', async () => {
+      const original = makeEntry('1', { name: 'Alice' });
+      const duplicate = makeEntry('1', { name: 'Bob' });
+
+      await provider.insert('users', original);
+
+      await expect(provider.insert('users', duplicate)).rejects.toBeInstanceOf(
+        StorageEntryAlreadyExistsError,
+      );
+      expect(await provider.get('users', '1')).toEqual(original);
     });
   });
 

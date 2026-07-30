@@ -7,22 +7,13 @@ import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response
 import { createLogger } from '@/lib/logger';
 import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
 import { saveToQuestionBank, isProblemInBank } from '@/lib/solve/question-bank';
-import { parseProblemSpecInput } from '@/lib/recognition/problem-spec-parser';
 
 const log = createLogger('API:SkySolveExplain');
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const {
-      problem,
-      problemImage,
-      problemSpec,
-      userAnswer,
-      agentId,
-      useHighPrecision,
-      outputFormat,
-    } = body;
+    const { problem, problemImage, problemSpec, userAnswer, agentId, useHighPrecision, outputFormat } = body;
 
     if (!problem) {
       return apiError(
@@ -32,26 +23,10 @@ export async function POST(req: Request) {
       );
     }
 
-    let parsedProblemSpec;
-    try {
-      parsedProblemSpec = parseProblemSpecInput(problemSpec);
-    } catch (error) {
-      return apiError(
-        API_ERROR_CODES.INVALID_REQUEST,
-        400,
-        error instanceof Error ? error.message : 'problemSpec 无效',
-      );
-    }
-
     log.info(`[Explain] Solving: ${problem.slice(0, 60)}...`);
 
     const graph = createSolveGraph();
-    const initialState = buildSolveInitialState(
-      problem,
-      problemImage ?? null,
-      userAnswer ?? null,
-      parsedProblemSpec,
-    );
+    const initialState = buildSolveInitialState(problem, problemImage ?? null, userAnswer ?? null, problemSpec ?? null);
 
     const startTime = performance.now();
     const finalState = await graph.invoke(initialState);
@@ -59,7 +34,11 @@ export async function POST(req: Request) {
 
     if (finalState.error) {
       log.error(`[Explain] Graph error: ${finalState.error}`);
-      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, `解题失败: ${finalState.error}`);
+      return apiError(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        500,
+        `解题失败: ${finalState.error}`,
+      );
     }
 
     const output = finalState.fourPartOutput ?? {
@@ -80,7 +59,7 @@ export async function POST(req: Request) {
             problemText: problem,
             problemImage: problemImage ?? undefined,
             answer: output.answer,
-            knowledgePoints: (output.knowledgePoints ?? []).map((kp) => ({
+            knowledgePoints: (output.knowledgePoints ?? []).map(kp => ({
               name: kp.name,
               description: kp.description,
               difficulty: kp.difficulty,
@@ -88,7 +67,9 @@ export async function POST(req: Request) {
             similarQuestions: output.similarQuestions ?? [],
             agentId: agentId ?? 'universal',
             solvedAt: Date.now(),
-            verified: true,
+            verified: false,
+            questionType: output.questionType,
+            options: output.options,
           });
           log.info('[Explain] 题目已自动入库');
         }

@@ -74,6 +74,7 @@ export async function runAgentGeneration(
     state.userProfile || undefined,
     state.agentResponses,
     memory,
+    state.teachingProjection || undefined,
   );
 
   const openaiMessages = convertMessagesToOpenAI(state.messages, agentId);

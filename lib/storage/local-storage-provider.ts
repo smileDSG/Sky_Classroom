@@ -7,6 +7,10 @@
 
 import type { StorageProvider, StorageEntry } from './storage-types';
 import { createLogger } from '@/lib/logger';
+import {
+  StorageAtomicInsertUnavailableError,
+  StorageEntryAlreadyExistsError,
+} from './storage-errors';
 
 const log = createLogger('Storage:LocalStorage');
 
@@ -59,6 +63,31 @@ export class LocalStorageProvider implements StorageProvider {
       log.error(`set(${table}, ${entry.id}) failed:`, err);
       throw err;
     }
+  }
+
+  async insert<T>(table: string, entry: StorageEntry<T>): Promise<void> {
+    const lockManager = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+    if (!lockManager) {
+      throw new StorageAtomicInsertUnavailableError('localstorage');
+    }
+
+    const lockName = `${this.prefix}:insert:${table}:${entry.id}`;
+    await lockManager.request(lockName, async () => {
+      const key = this.itemKey(table, entry.id);
+      if (localStorage.getItem(key) !== null) {
+        throw new StorageEntryAlreadyExistsError(table, entry.id);
+      }
+
+      const index = this.getTableIndex(table);
+      localStorage.setItem(key, JSON.stringify(entry));
+      try {
+        index.add(entry.id);
+        this.setTableIndex(table, index);
+      } catch (error) {
+        localStorage.removeItem(key);
+        throw error;
+      }
+    });
   }
 
   async get<T>(table: string, id: string): Promise<StorageEntry<T> | null> {

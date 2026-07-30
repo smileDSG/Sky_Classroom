@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "indexVersion": "2026-07-28.2",
+  "scanned": 915,
+  "parsed": 915,
+  "statusCounts": {
+    "verified": 18,
+    "needsReview": 872,
+    "rejected": 25
+  },
+  "reasonCounts": {
+    "manual_verification_required": 872,
+    "ambiguous_curriculum_mapping": 808,
+    "title_collision": 24,
+    "duplicate_content_hash": 14,
+    "duplicate_canonical_url": 11
+  },
+  "parseFailures": [],
+  "resourceGapNodeIds": []
+}

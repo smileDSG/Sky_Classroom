@@ -69,6 +69,20 @@ export const API_ERROR_CODES = {
   FILE_TOO_LARGE: 'FILE_TOO_LARGE',
   /** Invalid file type */
   INVALID_FILE_TYPE: 'INVALID_FILE_TYPE',
+  /** Learner profile does not exist */
+  PROFILE_NOT_FOUND: 'PROFILE_NOT_FOUND',
+  /** Learner profile is missing fields required by a consumer */
+  PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
+  /** Learner profile snapshot is stale */
+  PROFILE_STALE: 'PROFILE_STALE',
+  /** Learner profile version changed concurrently */
+  PROFILE_VERSION_CONFLICT: 'PROFILE_VERSION_CONFLICT',
+  /** Learner profile projection could not be built */
+  PROFILE_PROJECTION_FAILED: 'PROFILE_PROJECTION_FAILED',
+  /** Learning evidence was rejected by profile policy */
+  PROFILE_EVIDENCE_REJECTED: 'PROFILE_EVIDENCE_REJECTED',
+  /** Required persistent storage is unavailable */
+  PERSISTENT_STORAGE_UNAVAILABLE: 'PERSISTENT_STORAGE_UNAVAILABLE',
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
@@ -106,6 +120,13 @@ export const ERROR_CODE_STATUS: Record<ApiErrorCode, number> = {
   RESET_TOKEN_INVALID: 400,
   FILE_TOO_LARGE: 413,
   INVALID_FILE_TYPE: 400,
+  PROFILE_NOT_FOUND: 404,
+  PROFILE_INCOMPLETE: 422,
+  PROFILE_STALE: 409,
+  PROFILE_VERSION_CONFLICT: 409,
+  PROFILE_PROJECTION_FAILED: 500,
+  PROFILE_EVIDENCE_REJECTED: 422,
+  PERSISTENT_STORAGE_UNAVAILABLE: 503,
 };
 
 /** Default human-readable message for each error code */
@@ -141,4 +162,11 @@ export const ERROR_CODE_MESSAGES: Record<ApiErrorCode, string> = {
   RESET_TOKEN_INVALID: 'Invalid or expired reset token',
   FILE_TOO_LARGE: 'File size exceeds the limit',
   INVALID_FILE_TYPE: 'Invalid file type',
+  PROFILE_NOT_FOUND: 'Learner profile not found',
+  PROFILE_INCOMPLETE: 'Learner profile is incomplete',
+  PROFILE_STALE: 'Learner profile is stale',
+  PROFILE_VERSION_CONFLICT: 'Learner profile version conflict',
+  PROFILE_PROJECTION_FAILED: 'Learner profile projection failed',
+  PROFILE_EVIDENCE_REJECTED: 'Learning evidence rejected',
+  PERSISTENT_STORAGE_UNAVAILABLE: 'Persistent storage unavailable',
 };

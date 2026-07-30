@@ -8,6 +8,7 @@
 import type { StorageProvider, StorageEntry, StorageConfig } from './storage-types';
 import { DEFAULT_STORAGE_CONFIG } from './storage-types';
 import { createLogger } from '@/lib/logger';
+import { StorageEntryAlreadyExistsError } from './storage-errors';
 
 const log = createLogger('Storage:IndexedDB');
 
@@ -111,6 +112,28 @@ export class IndexedDBStorageProvider implements StorageProvider {
     } catch (err) {
       log.error(`set(${table}, ${entry.id}) failed:`, err);
       throw err;
+    }
+  }
+
+  async insert<T>(table: string, entry: StorageEntry<T>): Promise<void> {
+    try {
+      const { store, tx } = await this.transaction(table, 'readwrite');
+      const request = store.add(entry);
+      await new Promise<void>((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error ?? request.error);
+        tx.onabort = () => reject(tx.error ?? request.error);
+      });
+    } catch (error) {
+      if (
+        error instanceof DOMException
+          ? error.name === 'ConstraintError'
+          : (error as { name?: unknown } | null)?.name === 'ConstraintError'
+      ) {
+        throw new StorageEntryAlreadyExistsError(table, entry.id, { cause: error });
+      }
+      log.error(`insert(${table}, ${entry.id}) failed:`, error);
+      throw error;
     }
   }
 

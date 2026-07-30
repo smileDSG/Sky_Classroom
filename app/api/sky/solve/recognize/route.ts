@@ -1,6 +1,7 @@
 /**
  * POST /api/sky/solve/recognize
- * Recognize printed or handwritten problem photos for the existing solve flow.
+ * Image recognition endpoint for problem solving.
+ * Uses vision-capable LLMs for OCR, with runtime multi-model fallback.
  */
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
@@ -15,7 +16,8 @@ import { callLLM } from '@/lib/ai/llm';
 
 const log = createLogger('API:SkySolveRecognize');
 
-const OCR_PROMPT = `你是纸质题目与手写内容视觉转录器，只识别和结构化图片内容，绝对不要解题。
+const STRUCTURED_OCR_PROMPT = `你是纸质题目与手写内容视觉转录器。只识别和结构化图片内容，绝对不要解题。
+
 只返回 {"problems":[ProblemSpec,...]} JSON 对象，不要输出 JSON 之外内容。
 每题必须包含 id、stage、subject、questionType、stem、options、givens、asks、formulas、ambiguities、confidence。
 stage 只能是初中、高中、大学、unknown。缺省数组必须返回 []。公式使用 LaTeX。
@@ -31,32 +33,38 @@ interface VisionModelConfig {
   providerType: ProviderType;
 }
 
+/** Build list of available vision models in priority order (accuracy first for math recognition) */
 function getVisionModels(): VisionModelConfig[] {
   const models: VisionModelConfig[] = [];
+
+  // Claude first — best at math formula recognition in images
   if (process.env.ANTHROPIC_API_KEY) {
     models.push({
-      providerId: 'anthropic',
+      providerId: 'anthropic' as ProviderId,
       modelId: 'claude-sonnet-4-6',
       apiKey: process.env.ANTHROPIC_API_KEY,
-      providerType: 'anthropic',
+      providerType: 'anthropic' as ProviderType,
     });
   }
+  // Qwen3-VL-Plus — strong multimodal with good math support
   if (process.env.QWEN_API_KEY) {
     models.push({
-      providerId: 'qwen',
+      providerId: 'qwen' as ProviderId,
       modelId: 'qwen3-vl-plus',
       apiKey: process.env.QWEN_API_KEY,
-      providerType: 'openai',
+      providerType: 'openai' as ProviderType,
     });
   }
+  // GLM-5V-turbo — fallback option
   if (process.env.GLM_API_KEY) {
     models.push({
-      providerId: 'glm',
+      providerId: 'glm' as ProviderId,
       modelId: 'glm-5v-turbo',
       apiKey: process.env.GLM_API_KEY,
-      providerType: 'openai',
+      providerType: 'openai' as ProviderType,
     });
   }
+
   return models;
 }
 
@@ -64,142 +72,151 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const image = formData.get('image') as File | null;
+
     if (!image) {
-      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing required field: image');
+      return apiError(
+        API_ERROR_CODES.MISSING_REQUIRED_FIELD,
+        400,
+        'Missing required field: image',
+      );
     }
 
     const validation = validateImage(image);
     if (!validation.valid) {
-      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, validation.error ?? '图片校验失败');
+      return apiError(
+        API_ERROR_CODES.INVALID_REQUEST,
+        400,
+        validation.error ?? '图片校验失败',
+      );
     }
 
     const bytes = await image.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const mimeType = image.type || 'image/png';
-    const dataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
-    const visionModels = getVisionModels();
 
-    log.info(
-      `[Recognize] models=${visionModels.map((m) => `${m.providerId}/${m.modelId}`).join(', ')}, bytes=${bytes.byteLength}`,
-    );
+    const visionModels = getVisionModels();
+    log.info(`[Recognize] Available vision models: ${visionModels.map(m => `${m.providerId}/${m.modelId}`).join(', ')}, image: ${bytes.byteLength} bytes, ${mimeType}`);
+
     if (visionModels.length === 0) {
       return apiError(
         API_ERROR_CODES.INTERNAL_ERROR,
         500,
-        '没有配置支持视觉的模型，请配置 ANTHROPIC_API_KEY、GLM_API_KEY 或 QWEN_API_KEY',
+        '没有配置支持视觉的模型，请配置 ANTHROPIC_API_KEY 或 GLM_API_KEY 或 QWEN_API_KEY',
       );
     }
 
+    // Build vision message content.
+    // For OpenAI-compatible providers (Qwen, GLM), images must be sent as
+    // data-URL strings rather than raw Buffer, because their compatible-mode
+    // endpoints do not handle binary image parts.
+    const base64DataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
+
     const messages: Parameters<typeof callLLM>[0]['messages'] = [
       {
-        role: 'user',
+        role: 'user' as const,
         content: [
-          { type: 'image', image: dataUrl },
-          {
-            type: 'text',
-            text: '请逐字逐句识别图片中的所有文字和数学公式，特别注意手写字、分数、根式、上下标、向量和单位。',
-          },
+          { type: 'image' as const, image: base64DataUrl },
+          { type: 'text' as const, text: '请逐字逐句识别纸质图片中的所有印刷与手写内容。保留原有顺序、题号、换行、中文、英文、数字和单位；分式、根式、上下标、向量、积分、求和、矩阵等公式必须用 LaTeX 并用 $...$ 包裹。无法确定的字符不要猜测，记录到 ambiguities 并降低 confidence。' },
         ],
       },
     ];
 
-    const modelPromises = visionModels.map(async (visionConfig) => {
-      const modelWithInfo = getModel(visionConfig);
-      log.info(`[Recognize] racing ${visionConfig.providerId}/${visionConfig.modelId}`);
-      const llmPromise = callLLM(
-        { model: modelWithInfo.model, messages, temperature: 0.1, maxOutputTokens: 8192 },
-        'ocr-recognize',
-        { retries: 0 },
-        undefined,
-        OCR_PROMPT,
-      );
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(
-          () =>
-            reject(
-              new Error(
-                `${visionConfig.providerId}/${visionConfig.modelId} timed out after 25000ms`,
-              ),
-            ),
-          25_000,
-        );
-      });
-      const result = await Promise.race([llmPromise, timeoutPromise]);
-      const rawText = result.text?.trim() ?? '';
-      if (!rawText)
-        throw new Error(`${visionConfig.providerId}/${visionConfig.modelId}: 返回空白内容`);
+    const errors: string[] = [];
 
-      const { text: cleanedText, latex } = extractFormulas(rawText);
-      let structuredProblems: ReturnType<typeof parseProblemSpecs> = [];
+    // Try each vision model in sequence — first success wins
+    for (const visionConfig of visionModels) {
       try {
-        structuredProblems = parseProblemSpecs(rawText);
-      } catch (parseError) {
-        log.warn(
-          `[Recognize] structured parse failed: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
-        );
-        if (isJsonLikeOutput(rawText))
-          throw new Error(
-            `${visionConfig.providerId}/${visionConfig.modelId}: invalid ProblemSpec JSON`,
-          );
-      }
-      if (isJsonLikeOutput(rawText) && structuredProblems.length === 0) {
-        throw new Error(
-          `${visionConfig.providerId}/${visionConfig.modelId}: empty ProblemSpec problems array`,
-        );
-      }
-      return { visionConfig, rawText, cleanedText, latex, structuredProblems };
-    });
+        const modelWithInfo = getModel(visionConfig);
 
-    try {
-      const winner = await Promise.any(modelPromises);
-      const structuredText = winner.structuredProblems
-        .map((problem) =>
-          [
-            problem.stem,
-            ...problem.options.map((option) => `${option.key}. ${option.content}`),
-          ].join('\n'),
-        )
-        .join('\n\n');
-      // Keep the original legacy OCR text so inline/display LaTeX remains part
-      // of the problem sent to the solver; `latex` is an extracted index only.
-      const text = winner.structuredProblems.length > 0 ? structuredText : winner.rawText;
-      const latex =
-        winner.structuredProblems.length > 0 ? extractFormulas(structuredText).latex : winner.latex;
-      const fallbackConfidence = text.includes('[?]') ? 0.5 : 0.82;
-      const quality = aggregateRecognitionQuality(winner.structuredProblems, fallbackConfidence);
-      return apiSuccess({
-        text,
-        latex,
-        problemCount:
-          winner.structuredProblems.length > 0 ? winner.structuredProblems.length : text ? 1 : 0,
-        problems:
-          winner.structuredProblems.length > 0
-            ? winner.structuredProblems.map((problem) => ({
-                image: dataUrl,
-                text: problem.stem,
-                latex: extractFormulas(problem.stem).latex,
-              }))
-            : text
-              ? [{ image: dataUrl, text, latex }]
-              : [],
-        structuredProblems: winner.structuredProblems,
-        confidence: quality.confidence,
-        ambiguities: quality.ambiguities,
-        needsConfirmation: quality.needsConfirmation,
-        usedModel: `${winner.visionConfig.providerId}/${winner.visionConfig.modelId}`,
-      });
-    } catch (aggErr) {
-      const errors = (aggErr as AggregateError).errors?.map((error: unknown) =>
-        error instanceof Error ? error.message : String(error),
-      ) ?? [String(aggErr)];
-      log.error(`[Recognize] all vision models failed: ${errors.join('; ')}`);
-      return apiError(
-        API_ERROR_CODES.INTERNAL_ERROR,
-        500,
-        `所有视觉模型均识别失败（已尝试 ${visionModels.length} 个模型）`,
-        errors.join('; '),
-      );
+        log.info(`[Recognize] Trying ${visionConfig.providerId}/${visionConfig.modelId}...`);
+
+        const result = await callLLM(
+          {
+            model: modelWithInfo.model,
+            messages,
+            temperature: 0.1,
+            maxOutputTokens: 4096,
+          },
+          'ocr-recognize',
+          { retries: 0 },  // model-level fallback handles retries
+          undefined,         // thinking
+          STRUCTURED_OCR_PROMPT,
+        );
+
+        const rawText = result.text || '';
+        if (!rawText.trim()) {
+          log.warn(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} returned empty text`);
+          errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: 返回空白内容`);
+          continue;
+        }
+
+        const { text: cleanedText, latex } = extractFormulas(rawText);
+
+        let structuredProblems = [] as ReturnType<typeof parseProblemSpecs>;
+        try {
+          structuredProblems = parseProblemSpecs(rawText);
+        } catch (parseError) {
+          log.warn(`[Recognize] Structured ProblemSpec parse failed; using legacy OCR: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+          if (isJsonLikeOutput(rawText)) {
+            errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: invalid ProblemSpec JSON`);
+            continue;
+          }
+          // Legacy vision models return plain OCR text; preserve old response shape.
+        }
+
+        if (structuredProblems.length > 0) {
+          const quality = aggregateRecognitionQuality(structuredProblems);
+          const structuredText = structuredProblems
+            .map(problem => [problem.stem, ...problem.options.map(option => `${option.key}. ${option.content}`)].join('\n'))
+            .join('\n\n');
+          const structuredLatex = extractFormulas(structuredText).latex;
+          return apiSuccess({
+            text: structuredText,
+            latex: structuredLatex,
+            problemCount: structuredProblems.length,
+            problems: structuredProblems.map(problem => ({ image: base64DataUrl, text: problem.stem, latex: extractFormulas(problem.stem).latex })),
+            structuredProblems,
+            confidence: quality.confidence,
+            ambiguities: quality.ambiguities,
+            needsConfirmation: quality.needsConfirmation,
+            usedModel: `${visionConfig.providerId}/${visionConfig.modelId}`,
+          });
+        }
+        if (isJsonLikeOutput(rawText)) {
+          errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: empty ProblemSpec problems array`);
+          continue;
+        }
+
+        log.info(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} OK, text length=${cleanedText.length}`);
+
+        const fallbackConfidence = cleanedText.includes('[?]') ? 0.5 : 0.82;
+        const quality = aggregateRecognitionQuality([], fallbackConfidence);
+
+        return apiSuccess({
+          text: cleanedText,
+          latex,
+          problemCount: cleanedText ? 1 : 0,
+          problems: cleanedText ? [{ image: base64DataUrl, text: cleanedText, latex }] : [],
+          structuredProblems: [],
+          confidence: quality.confidence,
+          ambiguities: quality.ambiguities,
+          needsConfirmation: quality.needsConfirmation,
+          usedModel: `${visionConfig.providerId}/${visionConfig.modelId}`,
+        });
+      } catch (llmErr) {
+        const msg = llmErr instanceof Error ? llmErr.message : String(llmErr);
+        log.warn(`[Recognize] ${visionConfig.providerId}/${visionConfig.modelId} failed: ${msg}`);
+        errors.push(`${visionConfig.providerId}/${visionConfig.modelId}: ${msg}`);
+      }
     }
+
+    log.error(`[Recognize] All ${visionModels.length} vision models failed: ${errors.join('; ')}`);
+    return apiError(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      500,
+      `所有视觉模型均识别失败（已尝试 ${visionModels.length} 个模型）`,
+      errors.join('; '),
+    );
   } catch (err) {
     log.error('Recognize API error:', err);
     return apiError(

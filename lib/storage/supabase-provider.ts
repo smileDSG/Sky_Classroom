@@ -8,6 +8,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { StorageProvider, StorageEntry } from './storage-types';
 import { createLogger } from '@/lib/logger';
+import { StorageEntryAlreadyExistsError } from './storage-errors';
 
 const log = createLogger('Storage:Supabase');
 
@@ -57,6 +58,24 @@ export class SupabaseStorageProvider implements StorageProvider {
       log.error('Supabase set error:', error);
       throw new Error(`Failed to set entry: ${error.message}`);
     }
+  }
+
+  async insert<T>(table: string, entry: StorageEntry<T>): Promise<void> {
+    const client = getClient();
+    const { error } = await client.from(this.tableName).insert({
+      id: entry.id,
+      table_name: table,
+      data: entry.data,
+      created_at: new Date(entry.createdAt).toISOString(),
+      updated_at: new Date(entry.updatedAt).toISOString(),
+    });
+
+    if (!error) return;
+    if (error.code === '23505') {
+      throw new StorageEntryAlreadyExistsError(table, entry.id, { cause: error });
+    }
+    log.error('Supabase insert error:', error);
+    throw new Error(`Failed to insert entry: ${error.message}`, { cause: error });
   }
 
   async get<T>(table: string, id: string): Promise<StorageEntry<T> | null> {

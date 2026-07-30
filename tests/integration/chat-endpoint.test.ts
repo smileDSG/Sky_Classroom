@@ -11,6 +11,8 @@ vi.mock('@/lib/orchestration/stateless-generate', () => ({
   statelessGenerate: vi.fn(),
 }));
 
+vi.mock('server-only', () => ({}));
+
 vi.mock('@/lib/ai/providers', () => ({
   isProviderKeyRequired: vi.fn().mockReturnValue(false),
 }));

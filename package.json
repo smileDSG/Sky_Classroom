@@ -23,7 +23,8 @@
     "setup:lo": "node scripts/setup-libreoffice.js",
     "eval:whiteboard": "tsx eval/whiteboard-layout/runner.ts",
     "eval:outline-language": "tsx eval/outline-language/runner.ts",
-    "eval:photo-solver": "tsx evals/photo-solver/cli.ts"
+    "eval:photo-solver": "tsx evals/photo-solver/cli.ts",
+    "adaptive:resources": "tsx --conditions=react-server scripts/build-gaokao-math-resource-index.ts --workspace-root . --source-dir data/crawled/math --manifest data/adaptive-learning/gaokao-math/manual-verification.v1.json --index data/adaptive-learning/gaokao-math/resource-index.v1.json --report data/adaptive-learning/gaokao-math/governance-report.v1.json --pack gaokao-math-2026.1 --index-version 2026-07-28.1 --generated-at 2026-07-28T00:00:00.000Z"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.71",
