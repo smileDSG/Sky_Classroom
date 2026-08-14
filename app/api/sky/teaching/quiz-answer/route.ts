@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
-import { invalidateProfileCache } from '@/lib/student/profile-builder';
+import { getServerStorage } from '@/lib/server/server-storage';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
+import { recordAnswerSubmitted } from '@/lib/adaptive-learning/profile/event-recorder';
+import { getLearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
+import {
+  buildTeachingKnowledgeImpacts,
+  type TeachingProfileUpdate,
+} from '@/lib/teaching/profile-impact';
 import { readTeachingJob, updateTeachingJob } from '@/lib/server/teaching-job-store';
 
 const log = createLogger('QuizAnswerAPI');
@@ -16,7 +23,7 @@ const log = createLogger('QuizAnswerAPI');
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sectionId, chunkOrder, selectedOption, correctAnswer, question, options, knowledgePoints, jobId } = body;
+    const { sectionId, chunkOrder, selectedOption, correctAnswer, knowledgePoints, jobId } = body;
 
     if (selectedOption === undefined || selectedOption === null) {
       return NextResponse.json(
@@ -46,27 +53,26 @@ export async function POST(request: NextRequest) {
       `selected=${selectedOption}, expected=${expectedAnswer}, correct=${isCorrect}, user=${userId || 'anonymous'}`
     );
 
-    // If the user is authenticated and answered incorrectly, invalidate their profile cache
-    // so the next profile build reflects this mistake
-    if (userId && !isCorrect) {
-      try {
-        await invalidateProfileCache(userId);
-        log.info(`Profile cache invalidated for user ${userId} after wrong answer`);
-      } catch (cacheErr) {
-        log.warn('Failed to invalidate profile cache:', cacheErr);
-      }
-    }
+    let resolvedKnowledgePoints = Array.isArray(knowledgePoints)
+      ? knowledgePoints.filter(
+          (value): value is string => typeof value === 'string' && Boolean(value.trim()),
+        )
+      : [];
 
     // Record quiz result in job store for adaptive engine
     if (jobId && typeof jobId === 'string') {
       try {
         const job = await readTeachingJob(jobId);
         if (job) {
+          const section = job.plan?.sections.find((item) => item.id === sectionId);
+          if (resolvedKnowledgePoints.length === 0) {
+            resolvedKnowledgePoints = section?.knowledgePoints ?? [];
+          }
           const existingResults = job.quizResults ?? [];
           existingResults.push({
             sectionId: sectionId || '',
             chunkOrder: typeof chunkOrder === 'number' ? chunkOrder : 0,
-            knowledgePoints: Array.isArray(knowledgePoints) ? knowledgePoints : [],
+            knowledgePoints: resolvedKnowledgePoints,
             isCorrect,
             timestamp: Date.now(),
           });
@@ -77,12 +83,46 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let profileUpdate: TeachingProfileUpdate | null = null;
+    if (userId && resolvedKnowledgePoints.length > 0) {
+      try {
+        const storage = await getServerStorage();
+        const stateDAO = createKnowledgeStateDAO(storage);
+        const before = await stateDAO.list(userId);
+        const event = await recordAnswerSubmitted({
+          storage,
+          userId,
+          source: 'teaching-quiz',
+          correct: isCorrect,
+          knowledgePoints: resolvedKnowledgePoints,
+          correlationId: `${jobId ?? 'teaching'}:${sectionId ?? 'section'}:${chunkOrder ?? 0}`,
+        });
+        const after = await stateDAO.list(userId);
+        profileUpdate = {
+          recorded: Boolean(event),
+          evidenceType: 'verified-answer',
+          changes: buildTeachingKnowledgeImpacts({
+            knowledgePoints: resolvedKnowledgePoints,
+            before,
+            after,
+          }),
+          learnerDecision: getLearnerDecision({
+            knowledgeStates: after,
+            explicitTopic: resolvedKnowledgePoints[0],
+          }),
+        };
+      } catch (profileErr) {
+        log.warn('Failed to update learner profile after teaching quiz:', profileErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         correct: isCorrect,
         selectedOption,
         expectedAnswer,
+        profileUpdate,
       },
     });
   } catch (error) {

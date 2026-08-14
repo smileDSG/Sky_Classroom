@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DomainPicker, ProfileChoice } from './domain-picker';
 import {
   IDENTITY_CONFIG,
-  PROFILE_STAGES,
+  PROFILE_STAGE_OPTIONS,
   STAGE_LABELS,
   type ProductIdentity,
   type ProfileStage,
@@ -128,7 +128,7 @@ export function IdentityContextEditor({
               <fieldset aria-label={legend} className="mt-2">
                 <legend className="sr-only">{legend}</legend>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {PROFILE_STAGES.map((stage) => (
+                  {PROFILE_STAGE_OPTIONS.map((stage) => (
                     <ProfileChoice
                       key={stage}
                       label={STAGE_LABELS[stage]}

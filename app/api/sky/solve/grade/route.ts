@@ -13,9 +13,14 @@ import type { MistakeCause } from '@/lib/solve/types';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
 import { buildTeachingProjection } from '@/lib/adaptive-learning/profile/projection-builder';
 import { recordAnswerSubmitted } from '@/lib/adaptive-learning/profile/event-recorder';
+import { buildTeachingEvidence } from '@/lib/adaptive-learning/profile/teaching-evidence';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
+import { recordMappedAnswerEvidence } from '@/lib/adaptive-learning/profile/quiz-evidence-recorder';
+import { invalidateProfileCache } from '@/lib/student/profile-builder';
 import { injectTeachingProjection } from '@/lib/assistant/context-injector';
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
 import { adaptiveLearningApiError } from '@/lib/adaptive-learning/api-error';
+import { getLearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
 
 const log = createLogger('API:SkySolveGrade');
 
@@ -24,9 +29,9 @@ function mapCauseToErrorType(cause: MistakeCause): ErrorType {
   const map: Record<MistakeCause, ErrorType> = {
     'concept-unclear': 'concept',
     'calculation-error': 'calculation',
-    'misreading': 'reading',
+    misreading: 'reading',
     'method-wrong': 'reasoning',
-    'careless': 'careless',
+    careless: 'careless',
     'format-error': 'careless',
   };
   return map[cause] ?? 'concept';
@@ -45,7 +50,6 @@ async function getMistakeDAO() {
   }
   return _daoPromise;
 }
-
 
 export async function POST(req: Request) {
   const auth = await requireAuth();
@@ -66,6 +70,7 @@ export async function POST(req: Request) {
     // Load authoritative learner profile for personalised grading
     const storage = await getRequiredServerStorage();
     const profileRepository = new LearnerProfileRepository(storage);
+    const knowledgeStateDAO = createKnowledgeStateDAO(storage);
     const preferences = await profileRepository.getLatestPreferences(auth.user.id);
     if (!preferences) {
       const error = new AdaptiveLearningError({
@@ -77,13 +82,24 @@ export async function POST(req: Request) {
       return adaptiveLearningApiError(error, crypto.randomUUID());
     }
 
+    const [knowledgeStates, learningEvents] = await Promise.all([
+      knowledgeStateDAO.list(auth.user.id),
+      profileRepository.listLearningEvents(auth.user.id),
+    ]);
+    const teachingEvidence = buildTeachingEvidence({
+      states: knowledgeStates,
+      eventWatermark: learningEvents.length,
+    });
+
     const teachingProjection = buildTeachingProjection({
       userId: auth.user.id,
-      snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w0`,
+      snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w${teachingEvidence.eventWatermark}`,
       profileVersion: preferences.version,
-      eventWatermark: 0,
+      eventWatermark: teachingEvidence.eventWatermark,
       preferences,
-      knowledgeStatus: 'no-evidence',
+      knowledgeStatus: teachingEvidence.knowledgeStatus,
+      strengths: teachingEvidence.strengths,
+      growthAreas: teachingEvidence.growthAreas,
     });
     const teachingProjectionText = injectTeachingProjection('', teachingProjection).trim();
 
@@ -91,7 +107,63 @@ export async function POST(req: Request) {
       ? stepByStep.map((s: { content?: string; text?: string }) => s?.content ?? s?.text ?? '')
       : undefined;
 
-    const result = await gradeAnswer(problem, correctAnswer, userAnswer, steps, teachingProjectionText);
+    const result = await gradeAnswer(
+      problem,
+      correctAnswer,
+      userAnswer,
+      steps,
+      teachingProjectionText,
+    );
+
+    const evidenceLabels = Array.isArray(knowledgePoints)
+      ? knowledgePoints.map(String).filter(Boolean)
+      : [];
+    const evidenceResult = await recordMappedAnswerEvidence(storage, {
+      eventId: `solve-grade:${crypto.randomUUID()}`,
+      userId: auth.user.id,
+      source: 'solve-grade',
+      labels: evidenceLabels,
+      correct: result.isCorrect,
+      occurredAt: new Date().toISOString(),
+      evidenceQuality: 'verified',
+    });
+    let updatedKnowledgeStates = knowledgeStates;
+    if (evidenceResult.updatedStates > 0) {
+      await invalidateProfileCache(auth.user.id);
+      updatedKnowledgeStates = await knowledgeStateDAO.list(auth.user.id);
+    } else if (!evidenceResult.matchedNodes) {
+      await recordAnswerSubmitted({
+        storage,
+        userId: auth.user.id,
+        source: 'solve-grade',
+        correct: result.isCorrect,
+        knowledgePoints: evidenceLabels,
+      });
+    }
+
+    const beforeByNodeId = new Map(knowledgeStates.map((state) => [state.nodeId, state]));
+    const afterByNodeId = new Map(updatedKnowledgeStates.map((state) => [state.nodeId, state]));
+    const profileImpact = evidenceResult.updatedNodeIds.flatMap((nodeId) => {
+      const afterState = afterByNodeId.get(nodeId);
+      if (!afterState) return [];
+      const beforeState = beforeByNodeId.get(nodeId);
+      return [
+        {
+          nodeId,
+          displayName: afterState.displayName ?? nodeId,
+          masteryBefore: beforeState?.mastery ?? null,
+          masteryAfter: afterState.mastery,
+          confidenceBefore: beforeState?.confidence ?? null,
+          confidenceAfter: afterState.confidence,
+          evidenceAdded: Math.max(0, afterState.evidenceCount - (beforeState?.evidenceCount ?? 0)),
+          repeatedErrorCount: afterState.repeatedErrorCount,
+        },
+      ];
+    });
+    const nextDecision = getLearnerDecision({
+      knowledgeStates: updatedKnowledgeStates,
+      fallbackTopic: evidenceLabels[0] ?? null,
+    });
 
     // 错误答案写入错题本（使用统一存储 DAO）
     if (!result.isCorrect) {
@@ -111,29 +183,20 @@ export async function POST(req: Request) {
       } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         log.error('错题本存储失败:', errMsg, e instanceof Error ? e.stack : '');
-        return apiError(
-          API_ERROR_CODES.INTERNAL_ERROR,
-          500,
-          `错题本存储失败: ${errMsg}`,
-        );
+        return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, `错题本存储失败: ${errMsg}`);
       }
     }
 
-    // Record a learning event for every grading result so the learner profile
-    // can react to the latest evidence in real time.
-    try {
-      await recordAnswerSubmitted({
-        storage,
-        userId: auth.user.id,
-        source: 'solve-grade',
-        correct: result.isCorrect,
-        knowledgePoints: knowledgePoints ?? [],
-      });
-    } catch (eventErr) {
-      log.warn('Failed to record grading event:', eventErr);
-    }
-
-    return apiSuccess({ ...result });
+    return apiSuccess({
+      ...result,
+      evidence: {
+        matchedNodes: evidenceResult.matchedNodes,
+        updatedStates: evidenceResult.updatedStates,
+        recordedEvent: evidenceResult.recordedEvent,
+      },
+      profileImpact,
+      nextDecision,
+    });
   } catch (err) {
     log.error('Grade API error:', err);
     return apiError(

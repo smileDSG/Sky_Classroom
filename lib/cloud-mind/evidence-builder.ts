@@ -1,5 +1,6 @@
 import type { KBStats } from '@/lib/knowledge-base/types';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
+import { canonicalizeKnowledgePoint } from '@/lib/adaptive-learning/knowledge/knowledge-point-registry';
 import type { EvidenceItem } from './types';
 
 function isRecent(timestamp: number | undefined, days: number): boolean {
@@ -15,7 +16,8 @@ export function countRecentMistakesByKnowledge(
   for (const mistake of mistakes) {
     if (mistake.lastReview && !isRecent(mistake.lastReview, days)) continue;
     for (const point of mistake.knowledgePoints) {
-      counts.set(point, (counts.get(point) ?? 0) + 1);
+      const canonical = canonicalizeKnowledgePoint(point);
+      counts.set(canonical.name, (counts.get(canonical.name) ?? 0) + 1);
     }
   }
   return counts;

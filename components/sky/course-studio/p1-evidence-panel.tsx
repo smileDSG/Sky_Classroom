@@ -127,7 +127,7 @@ export function CourseStudioP1EvidencePanel({
             },
             {
               questionId: 'p1-q2',
-              knowledgePoint: 'RAG workflow',
+              knowledgePoint: '课程资料检索流程',
               correct: true,
             },
           ],
@@ -202,7 +202,7 @@ export function CourseStudioP1EvidencePanel({
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700/40 dark:bg-slate-900/60">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
             <ShieldCheck className="h-4 w-4" />
-            QA Agent
+            内容检查
           </div>
           <div className="space-y-2">
             {resourceChecks.slice(0, 3).map((check) => (

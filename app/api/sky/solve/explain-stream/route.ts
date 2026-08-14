@@ -327,6 +327,7 @@ export async function POST(req: Request) {
               problemText: problem,
               problemImage: problemImage ?? undefined,
               answer: streamedAnswer,
+              solution: '',
               knowledgePoints: streamedKnowledge,
               similarQuestions: streamedSimilar,
               agentId: agentType,

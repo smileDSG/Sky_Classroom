@@ -36,5 +36,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist", "packages/*/src", "openclaw", "e2e", "OpenMAIC", "software-cup-A3"]
+  "exclude": ["node_modules", "dist", "packages/*/src", "openclaw", "e2e", "智眸无界", "software-cup-A3"]
 }

@@ -19,10 +19,10 @@ export default function AboutPage() {
           </div>
 
           <p className="mb-3 text-sm font-semibold tracking-[0.2em] text-sky-600">SKY CLASSROOM</p>
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">关于 OpenMAIC</h1>
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">关于天空课堂</h1>
           <p className="mt-5 text-lg leading-8 text-slate-600">
-            OpenMAIC 是一个 AI
-            多智能体互动课堂平台，通过智能体协作完成课程规划、内容生成、课堂互动和学习反馈。
+            天空课堂是一个 AI
+            AI互动课堂平台，通过AI老师和AI同学协作完成课程规划、内容生成、课堂互动和学习反馈。
           </p>
 
           <div className="mt-10 grid gap-4 md:grid-cols-2">
@@ -33,9 +33,9 @@ export default function AboutPage() {
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <h2 className="font-semibold">多智能体课堂</h2>
+              <h2 className="font-semibold">AI互动课堂</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                教师与同学智能体围绕课程内容协作，让课堂生成、讲解和讨论形成完整闭环。
+                AI老师和AI同学围绕课程内容协作，让课堂生成、讲解和讨论连贯起来。
               </p>
             </div>
           </div>

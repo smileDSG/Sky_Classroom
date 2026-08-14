@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { nodeIdSchema } from './curriculum';
 import { learnerProfileSchema } from './learner';
+import { planningProfileProjectionSchema } from './profile-projection';
 import { isoDateTimeSchema } from './resource';
 
 const dateSchema = z.iso.date();
@@ -9,6 +10,7 @@ const dateSchema = z.iso.date();
 export const learningTaskSchema = z
   .object({
     id: z.string().min(1),
+    pathNodeId: z.string().min(1).optional(),
     nodeId: nodeIdSchema,
     type: z.enum(['learn', 'worked-example', 'practice', 'review', 'diagnostic']),
     title: z.string().min(1),
@@ -20,6 +22,7 @@ export const learningTaskSchema = z
     status: z.enum(['pending', 'in-progress', 'completed', 'skipped']),
     scheduledDate: dateSchema,
     reasonCodes: z.array(z.string().min(1)).min(1),
+    actionHref: z.string().min(1).optional(),
   })
   .strict();
 
@@ -36,6 +39,7 @@ export const learningPlanSchema = z
   .object({
     id: z.string().min(1),
     userId: z.string().min(1),
+    pathId: z.string().min(1).optional(),
     version: z.number().int().positive(),
     status: z.enum(['draft', 'active', 'superseded', 'completed']),
     generatedAt: isoDateTimeSchema,
@@ -43,7 +47,7 @@ export const learningPlanSchema = z
     validTo: dateSchema,
     curriculumPackVersion: z.string().min(1),
     plannerVersion: z.string().min(1),
-    profileSnapshot: learnerProfileSchema,
+    profileSnapshot: z.union([learnerProfileSchema, planningProfileProjectionSchema]),
     tasks: z.array(learningTaskSchema),
     weeklyTargets: z.array(weeklyTargetSchema),
     constraintChecks: z.array(z.string().min(1)),
@@ -96,5 +100,6 @@ export const planAdjustmentSchema = z
   .strict();
 
 export type LearningTask = z.infer<typeof learningTaskSchema>;
+export type WeeklyTarget = z.infer<typeof weeklyTargetSchema>;
 export type LearningPlan = z.infer<typeof learningPlanSchema>;
 export type PlanAdjustment = z.infer<typeof planAdjustmentSchema>;

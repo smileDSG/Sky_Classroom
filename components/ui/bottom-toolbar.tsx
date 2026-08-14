@@ -17,6 +17,8 @@ import {
   Minimize2,
   Square,
   MessageCircle,
+  CircleCheck,
+  CircleHelp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStageStore } from '@/lib/store';
@@ -53,6 +55,7 @@ export interface BottomToolbarProps {
   readonly onCycleSpeed?: () => void;
   // Ask Teacher
   readonly onAskTeacher?: () => void;
+  readonly onReportUnderstanding?: (level: 'confused' | 'understood') => void;
 }
 
 /* Compact control button */
@@ -113,6 +116,7 @@ export function BottomToolbar({
   playbackSpeed = 1,
   onCycleSpeed,
   onAskTeacher,
+  onReportUnderstanding,
 }: BottomToolbarProps) {
   const canGoPrev = currentSceneIndex > 0;
   const canGoNext = currentSceneIndex < scenesCount - 1;
@@ -203,6 +207,29 @@ export function BottomToolbar({
               <MessageCircle className="w-4 h-4" />
               <span>提问</span>
             </button>
+          )}
+
+          {onReportUnderstanding && (
+            <>
+              <button
+                type="button"
+                onClick={() => onReportUnderstanding('confused')}
+                className={ctrlBtn}
+                aria-label="Report confusion"
+                title="还没听懂"
+              >
+                <CircleHelp className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onReportUnderstanding('understood')}
+                className={ctrlBtn}
+                aria-label="Report understanding"
+                title="已经听懂"
+              >
+                <CircleCheck className="w-4 h-4" />
+              </button>
+            </>
           )}
 
           <CtrlDivider />

@@ -7,6 +7,7 @@
 
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
+import { canonicalizeKnowledgePoint } from '@/lib/adaptive-learning/knowledge/knowledge-point-registry';
 import { createQuizAttemptDAO } from './quiz-attempts';
 
 export interface QuizPerformanceSummary {
@@ -55,7 +56,7 @@ export async function analyzeQuizPerformance(
   // Calculate accuracy by knowledge point
   const kpStats = new Map<
     string,
-    { attempts: number; correct: number }
+    { name: string; attempts: number; correct: number }
   >();
 
   const causeCounts = new Map<string, number>();
@@ -68,20 +69,30 @@ export async function analyzeQuizPerformance(
           ? [attempt.topic]
           : ['综合练习'];
       for (const kp of points) {
-        const stat = kpStats.get(kp) ?? { attempts: 0, correct: 0 };
+        const canonical = canonicalizeKnowledgePoint(kp);
+        const stat = kpStats.get(canonical.id) ?? {
+          name: canonical.name,
+          attempts: 0,
+          correct: 0,
+        };
         stat.attempts += 1;
         if (question.isCorrect) stat.correct += 1;
-        kpStats.set(kp, stat);
+        kpStats.set(canonical.id, stat);
       }
     }
   }
 
   for (const m of recentMistakes) {
     for (const kp of m.knowledgePoints) {
-      const stat = kpStats.get(kp) ?? { attempts: 0, correct: 0 };
+      const canonical = canonicalizeKnowledgePoint(kp);
+      const stat = kpStats.get(canonical.id) ?? {
+        name: canonical.name,
+        attempts: 0,
+        correct: 0,
+      };
       stat.attempts += 1;
       if (m.reviewed) stat.correct += 1;
-      kpStats.set(kp, stat);
+      kpStats.set(canonical.id, stat);
     }
 
     const cause = m.errorType ?? 'concept';
@@ -92,10 +103,10 @@ export async function analyzeQuizPerformance(
   let totalAttempts = 0;
   let totalCorrect = 0;
 
-  for (const [kp, stat] of kpStats) {
+  for (const stat of kpStats.values()) {
     totalAttempts += stat.attempts;
     totalCorrect += stat.correct;
-    accuracyByKnowledge[kp] =
+    accuracyByKnowledge[stat.name] =
       stat.attempts > 0
         ? Math.round((stat.correct / stat.attempts) * 100)
         : 0;

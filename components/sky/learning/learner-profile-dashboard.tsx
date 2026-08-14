@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Activity,
@@ -13,6 +13,8 @@ import {
   Flame,
   LayoutDashboard,
   Loader2,
+  Maximize2,
+  Minimize2,
   RefreshCw,
   Target,
   TrendingUp,
@@ -52,13 +54,6 @@ function formatPercent(n: number): string {
   return `${Math.round(n)}%`;
 }
 
-function formatDuration(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
 function formatRelativeTime(ts: number): string {
   const diff = Date.now() - ts;
   const minutes = Math.floor(diff / 60000);
@@ -69,6 +64,10 @@ function formatRelativeTime(ts: number): string {
   if (hours < 24) return `${hours}小时前`;
   if (days < 30) return `${days}天前`;
   return '很久以前';
+}
+
+function clampMastery(mastery: number): number {
+  return Math.max(0, Math.min(100, mastery));
 }
 
 function getPreferenceLabel(key: string, value: string): string {
@@ -711,7 +710,7 @@ function PreferencePanel({ preferences }: { preferences: LearnerPreferences | nu
           <User className="h-4 w-4 text-cyan-400" />
           学习偏好
         </h3>
-        <p className="text-xs text-slate-400">尚未设置学习者画像偏好</p>
+        <p className="text-xs text-slate-400">尚未设置学习偏好</p>
         <Link
           href="/account"
           className="mt-2 inline-block text-xs font-medium text-violet-400 hover:text-violet-300"
@@ -782,6 +781,8 @@ function PreferencePanel({ preferences }: { preferences: LearnerPreferences | nu
 
 export function LearnerProfileDashboard() {
   const { user, isLoading: authLoading } = useAuth();
+  const dashboardRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [state, setState] = useState<FetchState>({
     data: null,
     loading: true,
@@ -795,14 +796,12 @@ export function LearnerProfileDashboard() {
     }
 
     try {
-      const res = await fetch('/api/sky/profile-dashboard', { credentials: 'include' });
+      const response = await fetch('/api/sky/profile-dashboard', { credentials: 'include' });
+      if (!response.ok) throw new Error(`数据大屏接口错误: ${response.status}`);
 
-      if (!res.ok) throw new Error(`数据大屏接口错误: ${res.status}`);
-
-      const json = await res.json();
-
+      const payload = await response.json();
       setState({
-        data: json.data,
+        data: payload.data,
         loading: false,
         error: null,
         lastUpdated: new Date(),
@@ -823,6 +822,20 @@ export function LearnerProfileDashboard() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  useEffect(() => {
+    const syncFullscreenState = () => setIsFullscreen(document.fullscreenElement !== null);
+    document.addEventListener('fullscreenchange', syncFullscreenState);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreenState);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      return;
+    }
+    await dashboardRef.current?.requestFullscreen();
+  }, []);
+
   const accuracy = useMemo(() => {
     const stats = state.data?.stats;
     if (!stats) return 0;
@@ -836,14 +849,14 @@ export function LearnerProfileDashboard() {
     if (weak.length === 0) return [];
     return weak.slice(0, 6).map((p) => ({
       name: p.knowledgePoint.slice(0, 4),
-      value: Math.round((1 - p.mastery) * 100),
+      value: Math.round(clampMastery(p.mastery)),
     }));
   }, [state.data]);
 
   const weakPointBars = useMemo(() => {
     return (state.data?.cloudMind.weakPoints ?? []).slice(0, 6).map((p) => ({
       label: p.knowledgePoint,
-      value: Math.round((1 - p.mastery) * 100),
+      value: Math.round(100 - clampMastery(p.mastery)),
       count: p.recentMistakeCount,
     }));
   }, [state.data]);
@@ -870,7 +883,7 @@ export function LearnerProfileDashboard() {
   if (authLoading || (state.loading && !state.data)) {
     return (
       <div
-        className="flex min-h-screen items-center justify-center"
+        className="flex min-h-[calc(100dvh-4rem)] items-center justify-center"
         style={{ background: 'linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%)' }}
       >
         <div className="flex flex-col items-center gap-3">
@@ -878,7 +891,7 @@ export function LearnerProfileDashboard() {
             <div className="absolute inset-0 animate-ping rounded-full bg-violet-500/20" />
             <Loader2 className="relative h-8 w-8 animate-spin text-violet-400" />
           </div>
-          <p className="text-sm text-slate-400">加载画像数据中...</p>
+          <p className="text-sm text-slate-400">正在加载学习情况...</p>
         </div>
       </div>
     );
@@ -887,7 +900,7 @@ export function LearnerProfileDashboard() {
   if (state.error && !state.data) {
     return (
       <div
-        className="flex min-h-screen flex-col items-center justify-center gap-4 px-4"
+        className="flex min-h-[calc(100dvh-4rem)] flex-col items-center justify-center gap-4 px-4"
         style={{ background: 'linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%)' }}
       >
         <div
@@ -910,7 +923,8 @@ export function LearnerProfileDashboard() {
 
   return (
     <div
-      className="relative min-h-screen overflow-hidden px-4 py-6 text-slate-100 md:px-6 lg:px-8"
+      ref={dashboardRef}
+      className="relative min-h-[calc(100dvh-4rem)] w-full overflow-x-hidden overflow-y-auto px-4 py-6 text-slate-100 md:px-6 lg:px-8"
       style={{
         background:
           'radial-gradient(ellipse at 20% 0%, #1e1b4b 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, #0c1b2e 0%, transparent 50%), linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%)',
@@ -946,7 +960,7 @@ export function LearnerProfileDashboard() {
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="bg-gradient-to-r from-violet-300 via-white to-cyan-300 bg-clip-text text-xl font-bold tracking-wide text-transparent">
-                    学习者画像数据大屏
+                    学习情况总览
                   </h1>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
                     <span className="relative flex h-1.5 w-1.5">
@@ -979,6 +993,21 @@ export function LearnerProfileDashboard() {
             <Button
               size="sm"
               variant="outline"
+              onClick={toggleFullscreen}
+              className="border-cyan-500/20 bg-cyan-500/5 text-slate-200 hover:bg-cyan-500/10 hover:text-white"
+              aria-label={isFullscreen ? '退出全屏' : '全屏显示'}
+              title={isFullscreen ? '退出全屏（Esc）' : '全屏显示'}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="mr-2 h-4 w-4" />
+              ) : (
+                <Maximize2 className="mr-2 h-4 w-4" />
+              )}
+              {isFullscreen ? '退出全屏' : '全屏'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => fetchData()}
               disabled={state.loading}
               className="border-violet-500/20 bg-violet-500/5 text-slate-200 hover:bg-violet-500/10 hover:text-white"
@@ -986,22 +1015,13 @@ export function LearnerProfileDashboard() {
               <RefreshCw className={`mr-2 h-4 w-4 ${state.loading ? 'animate-spin' : ''}`} />
               刷新
             </Button>
-            <Link href="/sky/learning">
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-cyan-500/20 bg-cyan-500/5 text-slate-200 hover:bg-cyan-500/10 hover:text-white"
-              >
-                返回学习页
-              </Button>
-            </Link>
           </div>
         </motion.header>
 
         {/* KPI Cards */}
         <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           <StatCard
-            label="知识掌握度"
+            label="知识掌握情况"
             value={stats?.masteryPercent ?? 0}
             suffix="%"
             icon={<Brain className="h-5 w-5" />}
@@ -1066,8 +1086,8 @@ export function LearnerProfileDashboard() {
           >
             <TechFrame glowColor="#8B5CF6" scan className="h-full p-5">
               <SectionTitle
-                title="综合掌握度"
-                subtitle="知识图谱计算"
+                title="整体掌握情况"
+                subtitle="根据学习记录计算"
                 icon={<Brain className="h-4 w-4" />}
               />
               <div className="flex flex-col items-center justify-center py-4">
@@ -1222,10 +1242,10 @@ export function LearnerProfileDashboard() {
         <footer className="mt-8 flex items-center justify-between border-t border-violet-500/20 pt-4 text-[11px] text-slate-500">
           <div className="flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5 text-violet-500" />
-            <span>数据每 15 秒自动刷新 · 实时展示学习画像</span>
+            <span>数据每 15 秒自动刷新 · 实时展示学习情况</span>
           </div>
           <Link href="/account" className="text-violet-400 hover:text-violet-300">
-            编辑画像偏好 →
+            编辑学习偏好 →
           </Link>
         </footer>
       </div>

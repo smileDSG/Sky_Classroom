@@ -146,7 +146,7 @@ export function buildSlideStyleContract(outline: Pick<SceneOutline, 'order' | 't
   const recipe = recipeForOrder(outline.order);
 
   return [
-    'OpenMAIC golden sample style contract:',
+    '天空课堂 golden sample style contract:',
     `- Page-specific composition for this page: ${recipe.name}.`,
     `- Main visual anchor: ${recipe.anchor}.`,
     `- Layout recipe: ${recipe.composition}.`,

@@ -21,6 +21,11 @@ import {
   Target,
 } from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
+import {
+  LearningPlanPanel,
+  type LearningPlanPanelData,
+} from '@/components/sky/learning/learning-plan-panel';
 import {
   getLearningFeatureHref,
   isLearningFeatureKey,
@@ -106,6 +111,22 @@ interface WorkshopSnapshot {
 interface WorkshopMistakeSnapshot extends Omit<MistakeRecord, 'solvedAt' | 'source'> {
   solvedAt: string | number;
   source?: MistakeRecord['source'] | 'classroom-diagnostic';
+}
+
+async function markLearningPlanTaskInProgress(taskId: string): Promise<void> {
+  const response = await fetch(`/api/sky/learning-plan/tasks/${encodeURIComponent(taskId)}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'in-progress' }),
+  });
+  const payload = (await response.json().catch(() => null)) as {
+    success?: boolean;
+    error?: string;
+  } | null;
+  if (!response.ok || !payload?.success) {
+    throw new Error(payload?.error ?? '计划任务启动失败');
+  }
 }
 
 const toneClasses: Record<MissionTone, { chip: string; text: string; line: string }> = {
@@ -206,8 +227,8 @@ function buildMissionSteps(insights: LearningInsights): MissionStep[] {
       {
         id: 'diagnose',
         label: '第一步',
-        title: '完成一次诊断采样',
-        detail: '拍照搜题或手动输入题目，让系统获得第一批学习信号',
+        title: '完成一次入门练习',
+        detail: '拍照搜题或手动输入题目，让系统留下第一批学习记录',
         href: '/sky/cloud-mind/solve?source=workshop-chain',
         icon: Sparkles,
         tone: 'emerald',
@@ -216,7 +237,7 @@ function buildMissionSteps(insights: LearningInsights): MissionStep[] {
       {
         id: 'profile',
         label: '第二步',
-        title: '生成学情画像',
+        title: '了解学习情况',
         detail: '查看题目、正确率和薄弱点是否已经被系统识别',
         href: getWorkshopFeatureHref('profile'),
         icon: ShieldCheck,
@@ -229,7 +250,7 @@ function buildMissionSteps(insights: LearningInsights): MissionStep[] {
         label: '第三步',
         title: '查看天梯路线',
         detail: '确认薄弱点和先修关系，决定下一轮练习方向',
-        href: getWorkshopFeatureHref('graph'),
+        href: '/sky/learning/path',
         icon: Network,
         tone: 'amber',
         feature: 'graph',
@@ -239,7 +260,7 @@ function buildMissionSteps(insights: LearningInsights): MissionStep[] {
         id: 'quiz',
         label: '收束',
         title: '做一组针对练习',
-        detail: '用 5 道同类题验证画像是否准确',
+        detail: '用 5 道同类题看看系统是否了解你的情况',
         href: `/sky/cloud-mind/quiz?topic=${encodeURIComponent(topic)}&count=5`,
         icon: Target,
         tone: 'rose',
@@ -359,11 +380,47 @@ function buildDailyTaskAction(
 
   const diagnoseStep = missionSteps.find((step) => step.id === 'diagnose') ?? missionSteps[0];
   return {
-    title: '先完成一次诊断采样',
-    detail: '通过拍照搜题或手动输入题目，让系统生成你的学习画像',
+    title: '先完成一次入门练习',
+    detail: '通过拍照搜题或手动输入题目，让系统逐步了解你的学习情况',
     href: diagnoseStep.href,
     icon: Sparkles,
     duration: diagnoseStep.duration,
+  };
+}
+
+export function buildPlannedDailyTaskAction(
+  data: LearningPlanPanelData | null,
+  fallback: DailyTaskAction,
+): DailyTaskAction {
+  if (!data?.plan || !data.view) return fallback;
+
+  const task = data.view.nextTask;
+  if (task) {
+    return {
+      title: task.title,
+      detail: task.objective,
+      href: task.actionHref ?? '/sky/learning/path',
+      icon: CalendarClock,
+      duration: { min: task.plannedMinutes, max: task.plannedMinutes },
+    };
+  }
+
+  if (data.view.summary.totalTasks > 0 && data.view.summary.completionRate === 100) {
+    return {
+      title: '今日计划已完成',
+      detail: '今日学习任务已全部完成。下一批任务会继续按你的学习安排推进。',
+      href: '/sky/learning/path',
+      icon: CheckCircle2,
+      duration: { min: 0, max: 0 },
+    };
+  }
+
+  return {
+    title: '今日为计划缓冲日',
+    detail: '算法已结合时间预算和休息日安排，今天无需追加任务。',
+    href: '/sky/learning/path',
+    icon: Route,
+    duration: { min: 0, max: 0 },
   };
 }
 
@@ -384,7 +441,7 @@ export function WorkshopPage() {
       fallback={
         <SkyAppShell>
           <div className="mx-auto flex min-h-[60vh] max-w-6xl items-center justify-center text-sm text-muted-foreground">
-            加载天梯工坊...
+            加载学习工作台...
           </div>
         </SkyAppShell>
       }
@@ -400,6 +457,9 @@ function WorkshopPageContent() {
   const [snapshot, setSnapshot] = useState<WorkshopSnapshot | null>(null);
   const [loadingSnapshot, setLoadingSnapshot] = useState(true);
   const [snapshotError, setSnapshotError] = useState<string | null>(null);
+  const [learningPlanData, setLearningPlanData] = useState<LearningPlanPanelData | null>(null);
+  const [learningPlanError, setLearningPlanError] = useState<string | null>(null);
+  const [startingDailyTask, setStartingDailyTask] = useState(false);
   const [toolsExpanded, setToolsExpanded] = useState(false);
   const mistakes = useSkyClassroomStore((state) => state.mistakes);
   const memoryProgress = useSkyClassroomStore((state) => state.memoryProgress);
@@ -436,9 +496,13 @@ function WorkshopPageContent() {
     () => sumDurations(missionSteps.map((step) => step.duration)),
     [missionSteps],
   );
-  const dailyTaskAction = useMemo(
+  const fallbackDailyTaskAction = useMemo(
     () => buildDailyTaskAction(insights, missionSteps),
     [insights, missionSteps],
+  );
+  const dailyTaskAction = useMemo(
+    () => buildPlannedDailyTaskAction(learningPlanData, fallbackDailyTaskAction),
+    [fallbackDailyTaskAction, learningPlanData],
   );
   const allRouteTopics = useMemo(() => fallbackTopics(insights), [insights]);
   const routeTopics = allRouteTopics.slice(0, 3);
@@ -457,7 +521,7 @@ function WorkshopPageContent() {
       });
       const data = await response.json();
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error ?? '天梯工坊数据加载失败');
+        throw new Error(data?.error ?? '学习工作台数据加载失败');
       }
 
       const nextSnapshot: WorkshopSnapshot = {
@@ -470,7 +534,12 @@ function WorkshopPageContent() {
       };
       setSnapshot(nextSnapshot);
       const store = useSkyClassroomStore.getState();
-      store.mergeMistakes(nextSnapshot.mistakes.map(normalizeSnapshotMistake));
+      const normalized = nextSnapshot.mistakes.map(normalizeSnapshotMistake);
+      if (data.dataSources?.replaceMistakes) {
+        useSkyClassroomStore.setState({ mistakes: normalized });
+      } else {
+        store.mergeMistakes(normalized);
+      }
       if (nextSnapshot.memoryProgress) {
         const latestLocal = store.memoryProgress.lastStudied ?? 0;
         const latestServer = nextSnapshot.memoryProgress.lastStudied ?? 0;
@@ -487,15 +556,35 @@ function WorkshopPageContent() {
         });
       }
     } catch (error) {
-      setSnapshotError(error instanceof Error ? error.message : '天梯工坊数据加载失败');
+      setSnapshotError(error instanceof Error ? error.message : '学习工作台数据加载失败');
     } finally {
       setLoadingSnapshot(false);
+    }
+  }, []);
+
+  const loadLearningPlan = useCallback(async () => {
+    setLearningPlanError(null);
+    try {
+      const response = await fetch('/api/sky/learning-plan?view=today', {
+        credentials: 'include',
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error ?? '个人学习计划加载失败');
+      }
+      setLearningPlanData(data.data as LearningPlanPanelData);
+    } catch (error) {
+      setLearningPlanError(error instanceof Error ? error.message : '个人学习计划加载失败');
     }
   }, []);
 
   useEffect(() => {
     void loadWorkshopSnapshot();
   }, [loadWorkshopSnapshot]);
+
+  useEffect(() => {
+    void loadLearningPlan();
+  }, [loadLearningPlan]);
 
   useEffect(() => {
     if (!isLearningFeatureKey(tabParam)) return;
@@ -508,12 +597,50 @@ function WorkshopPageContent() {
   }, [router, searchParams, tabParam]);
 
   const MainIcon = dailyTaskAction.icon;
+  const planView = learningPlanData?.view;
+  const hasPlannedTask = Boolean(learningPlanData?.plan && planView?.nextTask);
+  const planDayCompleted = Boolean(
+    learningPlanData?.plan &&
+    planView &&
+    planView.summary.totalTasks > 0 &&
+    planView.summary.completionRate === 100,
+  );
+  const dailyTaskDurationLabel =
+    learningPlanData?.plan && planView && !planView.nextTask
+      ? planDayCompleted
+        ? '今日完成'
+        : '计划缓冲'
+      : formatDuration(dailyTaskAction.duration);
+  const dailyTaskButtonLabel = hasPlannedTask
+    ? planView?.nextTask?.status === 'in-progress'
+      ? '继续计划任务'
+      : '开始计划任务'
+    : learningPlanData?.plan && planView
+      ? '查看个人学习安排'
+      : '开始今日任务';
 
-  const handleStartDailyTask = () => {
+  const handlePlanChanged = useCallback(async () => {
+    await Promise.all([loadLearningPlan(), loadWorkshopSnapshot(true)]);
+  }, [loadLearningPlan, loadWorkshopSnapshot]);
+
+  const handleStartDailyTask = async () => {
     try {
       localStorage.setItem('sky-workshop-daily-task-started', new Date().toISOString());
     } catch {
       /* non-critical */
+    }
+
+    if (hasPlannedTask && planView?.nextTask) {
+      setStartingDailyTask(true);
+      setLearningPlanError(null);
+      try {
+        await markLearningPlanTaskInProgress(planView.nextTask.id);
+        await loadLearningPlan();
+      } catch (error) {
+        setLearningPlanError(error instanceof Error ? error.message : '计划任务启动失败');
+      } finally {
+        setStartingDailyTask(false);
+      }
     }
 
     if (dailyTaskAction.feature) {
@@ -534,6 +661,8 @@ function WorkshopPageContent() {
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-6xl space-y-5 pb-8">
+        <SkySectionNav section="learning" />
+
         <section className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/85 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-cyan-100/10 dark:bg-[#07111f]/95 dark:shadow-[0_24px_72px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.05)]">
           <div className="grid border-b border-slate-200/70 dark:border-cyan-100/10 lg:grid-cols-[minmax(0,1fr)_520px]">
             <div className="bg-[linear-gradient(135deg,#f0fdf4_0%,#f0f9ff_52%,#f8fafc_100%)] px-5 py-5 dark:bg-[linear-gradient(135deg,#123346_0%,#0d2438_52%,#0b1729_100%)] md:px-6">
@@ -542,7 +671,7 @@ function WorkshopPageContent() {
                   <Sparkles className="h-4 w-4" />
                 </span>
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-200/25 dark:bg-emerald-300/10 dark:text-emerald-100">
-                  天梯工坊
+                  学习工作台
                 </span>
                 <span className="rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-xs font-medium text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-200 dark:shadow-none">
                   {insights.strategyLabel}
@@ -579,18 +708,21 @@ function WorkshopPageContent() {
                   className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-1 font-medium text-violet-700 shadow-sm transition-colors hover:bg-violet-100 dark:border-violet-200/25 dark:bg-violet-300/10 dark:text-violet-100 dark:shadow-none dark:hover:bg-violet-300/20"
                 >
                   <LayoutDashboard className="h-3 w-3" />
-                  数据大屏
+                  学习情况总览
                 </Link>
               </div>
             </div>
 
-            <aside className="border-t border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5_0%,#eef9ff_52%,#f8fafc_100%)] p-5 shadow-[inset_1px_0_0_rgba(16,185,129,0.12)] dark:border-emerald-200/15 dark:bg-[linear-gradient(135deg,#0f3035_0%,#0b2530_48%,#081827_100%)] dark:shadow-[inset_1px_0_0_rgba(167,243,208,0.08)] lg:border-l lg:border-t-0">
+            <aside
+              id="daily-task"
+              className="border-t border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5_0%,#eef9ff_52%,#f8fafc_100%)] p-5 shadow-[inset_1px_0_0_rgba(16,185,129,0.12)] dark:border-emerald-200/15 dark:bg-[linear-gradient(135deg,#0f3035_0%,#0b2530_48%,#081827_100%)] dark:shadow-[inset_1px_0_0_rgba(167,243,208,0.08)] lg:border-l lg:border-t-0"
+            >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-100">
                   今日任务
                 </span>
                 <span className="rounded-full border border-emerald-200 bg-white/80 px-2 py-0.5 text-[11px] font-medium text-emerald-700 shadow-sm dark:border-emerald-200/20 dark:bg-emerald-300/10 dark:text-emerald-50 dark:shadow-none">
-                  {formatDuration(dailyTaskAction.duration)}
+                  {dailyTaskDurationLabel}
                 </span>
               </div>
               <div className="mt-4 flex items-start gap-3">
@@ -610,10 +742,11 @@ function WorkshopPageContent() {
                 <button
                   type="button"
                   onClick={handleStartDailyTask}
+                  disabled={startingDailyTask}
                   className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(16,185,129,0.18)] transition-transform hover:-translate-y-0.5 hover:bg-emerald-700 dark:bg-emerald-300 dark:text-slate-950 dark:hover:bg-emerald-200"
                 >
                   <MainIcon className="h-4 w-4" />
-                  开始今日任务
+                  {dailyTaskButtonLabel}
                 </button>
                 <button
                   type="button"
@@ -621,18 +754,36 @@ function WorkshopPageContent() {
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/60 hover:text-indigo-700 dark:border-white/12 dark:bg-white/[0.06] dark:text-slate-100 dark:shadow-none dark:hover:border-indigo-200/40 dark:hover:bg-white/[0.09]"
                 >
                   <ShieldCheck className="h-4 w-4 text-indigo-500 dark:text-indigo-100" />
-                  画像
+                  学习情况
                 </button>
               </div>
             </aside>
           </div>
+        </section>
 
+        <div id="learning-plan" className="scroll-mt-5">
+          <LearningPlanPanel
+            initialData={learningPlanData}
+            error={learningPlanError ?? undefined}
+            onPlanChanged={handlePlanChanged}
+          />
+        </div>
+
+        <section className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/85 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-cyan-100/10 dark:bg-[#07111f]/95 dark:shadow-[0_24px_72px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.05)]">
           <div className="flex flex-col gap-5 p-5">
+            <LearningLoopRail
+              focusTopic={insights.focusTopic}
+              routeTopicCount={routeTopics.length}
+              hasSignals={insights.hasSignals}
+              dailyTaskTitle={dailyTaskAction.title}
+              dailyTaskHref={dailyTaskAction.href}
+            />
+
             <details className="order-2 rounded-2xl border border-slate-200 bg-white/70 shadow-sm dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:shadow-none">
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-white/[0.05]">
                 <span className="flex items-center gap-2">
                   <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-100" />
-                  学习状态
+                  学习情况
                 </span>
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   展开实时概览
@@ -738,7 +889,7 @@ function WorkshopPageContent() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => router.push(getWorkshopFeatureHref('graph'))}
+                      onClick={() => router.push('/sky/learning/path')}
                       className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/60 dark:border-cyan-100/10 dark:bg-white/[0.045] dark:text-slate-100 dark:shadow-none dark:hover:border-indigo-200/35 dark:hover:bg-white/[0.07]"
                     >
                       <Network className="h-4 w-4 text-cyan-600 dark:text-cyan-100" />
@@ -815,6 +966,111 @@ function SectionTitle({
       </div>
       <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{aside}</span>
     </div>
+  );
+}
+
+function LearningLoopRail({
+  focusTopic,
+  routeTopicCount,
+  hasSignals,
+  dailyTaskTitle,
+  dailyTaskHref,
+}: {
+  focusTopic: string;
+  routeTopicCount: number;
+  hasSignals: boolean;
+  dailyTaskTitle: string;
+  dailyTaskHref: string;
+}) {
+  const steps = [
+    {
+      label: '知识底座',
+      title: '知识地图',
+      detail: routeTopicCount > 0 ? `已定位 ${routeTopicCount} 个重点` : '完成练习后建立地图',
+      href: '/sky/learning/graph',
+      icon: Network,
+      tone: 'text-cyan-700 dark:text-cyan-200',
+      bg: 'bg-cyan-500/10',
+    },
+    {
+      label: '学习画像',
+      title: hasSignals ? '画像已更新' : '建立学习画像',
+      detail: hasSignals ? `当前关注 ${focusTopic}` : '先完成一次练习留下证据',
+      href: '/sky/learning/profile',
+      icon: ShieldCheck,
+      tone: 'text-violet-700 dark:text-violet-200',
+      bg: 'bg-violet-500/10',
+    },
+    {
+      label: '智能决策',
+      title: '今日任务',
+      detail: dailyTaskTitle,
+      href: '#daily-task',
+      icon: Target,
+      tone: 'text-emerald-700 dark:text-emerald-200',
+      bg: 'bg-emerald-500/10',
+    },
+    {
+      label: '学习反馈',
+      title: '更新下一步',
+      detail: '完成后重新评估掌握度和复习节奏',
+      href: dailyTaskHref,
+      icon: RefreshCw,
+      tone: 'text-amber-700 dark:text-amber-200',
+      bg: 'bg-amber-500/10',
+    },
+  ];
+
+  return (
+    <section
+      id="learning-loop"
+      className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-cyan-100/10 dark:bg-[#0b1729]/80 dark:shadow-none"
+    >
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-100" />
+            学习闭环
+          </div>
+          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+            系统根据知识状态决定今天学什么，完成后继续更新下一步。
+          </p>
+        </div>
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          知识底座 → 决策 → 反馈
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {steps.map((step, index) => {
+          const Icon = step.icon;
+          return (
+            <Link
+              key={step.label}
+              href={step.href}
+              className="group relative flex min-h-24 items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 transition-colors hover:border-emerald-300 hover:bg-emerald-50/40 dark:border-cyan-100/10 dark:bg-[#081423] dark:hover:border-emerald-200/35 dark:hover:bg-[#0f2238]"
+            >
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${step.bg} ${step.tone}`}
+              >
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                  {index + 1}. {step.label}
+                </span>
+                <span className="mt-0.5 block text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {step.title}
+                </span>
+                <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  {step.detail}
+                </span>
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -904,7 +1160,7 @@ function MissionStepCard({
 function RoutePreviewCard({ topic, index }: { topic: LearningInsightTopic; index: number }) {
   return (
     <Link
-      href={getWorkshopFeatureHref('graph')}
+      href="/sky/learning/path"
       className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50/40 dark:border-cyan-100/10 dark:bg-[#081423] dark:shadow-none dark:hover:border-emerald-200/35 dark:hover:bg-[#0f2238]"
     >
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 text-xs font-semibold text-cyan-700 dark:border-cyan-100/12 dark:bg-cyan-200/10 dark:text-cyan-100">

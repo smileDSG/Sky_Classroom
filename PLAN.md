@@ -1,6 +1,6 @@
 # Task Plan
 > Generated at: 2026-06-29
-> Task: Improve classroom slide generation toward the OpenMAIC gif style.
+> Task: Improve classroom slide generation toward the 智眸无界 gif style.
 
 ## Goal
 

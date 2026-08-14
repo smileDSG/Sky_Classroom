@@ -1,4 +1,4 @@
-# OpenMAIC 天空课堂 — Claude 协作指南
+# 智眸无界 天空课堂 — Claude 协作指南
 
 ## 项目背景
 

@@ -165,11 +165,11 @@ export function AuthLayout({
           >
             <img
               src="/logo-icon.svg"
-              alt="Sky Classroom"
+              alt="天空课堂"
               className="size-12 transition-transform group-hover:scale-105"
             />
             <span className="text-[22px] font-black leading-none text-slate-900 drop-shadow-[0_1px_0_rgba(255,255,255,0.7)] dark:text-sky-100">
-              Sky Classroom
+              天空课堂
             </span>
           </Link>
         </motion.div>

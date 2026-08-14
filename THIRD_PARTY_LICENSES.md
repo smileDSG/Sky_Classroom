@@ -6,7 +6,7 @@
 
 | 名称 | 当前用途 | 协议/说明 |
 | --- | --- | --- |
-| OpenMAIC / sky-classroom | 基础 AI 课堂平台与本次参赛代码底座 | AGPL-3.0，见根目录 `LICENSE` 和 `package.json` |
+| 智眸无界 / sky-classroom | 基础 AI 课堂平台与本次参赛代码底座 | AGPL-3.0，见根目录 `LICENSE` 和 `package.json` |
 
 ## 前端与 UI
 

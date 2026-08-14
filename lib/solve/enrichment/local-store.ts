@@ -111,6 +111,7 @@ export async function saveToLocalStore(
     problemHash,
     problemText: entry.problemText,
     answer: entry.answer,
+    solution: '',
     knowledgePoints: entry.knowledgePoints.map((k) => ({
       name: k.name,
       description: k.description,

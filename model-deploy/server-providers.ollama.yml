@@ -1,0 +1,19 @@
+# server-providers.yml — 本地 Ollama 完全离线示例（复制到 server-providers.yml）
+#
+# 完全离线方案：本机安装 Ollama 并拉取模型后，无需任何云端 Key 即可让多智能体实时生成。
+#
+#   1) 安装 Ollama（https://ollama.com），启动后执行：  ollama pull llama3.3
+#   2) 复制本文件到项目根目录：  cp model-deploy/server-providers.ollama.yml server-providers.yml
+#   3) 在 .env.local 或 .env 中设置：  DEFAULT_MODEL=ollama:llama3.3
+#   4) 启动应用（docker compose up 或 pnpm dev）
+#
+# 说明：ollama 是无密钥提供商（keyless），只需配置 baseUrl 指向本地 Ollama 的 OpenAI 兼容接口。
+
+providers:
+  ollama:
+    baseUrl: http://localhost:11434/v1
+    models:
+      - llama3.3
+      - qwen2.5
+
+# 默认模型（也可放在 .env.local：DEFAULT_MODEL=ollama:llama3.3）

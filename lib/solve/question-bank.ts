@@ -34,6 +34,7 @@ function rowToEntry(row: QuestionBankRow): QuestionBankEntry {
     problemText: row.content,
     problemImage: row.image ?? undefined,
     answer: row.answer,
+    solution: '',
     knowledgePoints: (row.knowledgePoints ?? []).map((name) => ({
       name,
       description: row.explanation ? `${name} — 参见题目解析` : '',
@@ -415,7 +416,7 @@ async function searchKBByKnowledgePoints(
     }
 
     log.info(
-      `[QuestionBank] findSimilarByKnowledgePoints: ${candidates.length} results for KPs [${kpNames}]`,
+      `[QuestionBank] findSimilarByKnowledgePoints: ${candidates.length} results for KPs [${currentKpNames}]`,
     );
     return candidates;
   } catch (error) {

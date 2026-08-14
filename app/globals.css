@@ -85,15 +85,15 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* Celestial Atelier — Sky Observatory Theme (light) */
-  --celestial-void: #f8fafc;
-  --celestial-horizon: #f1f5f9;
-  --celestial-haze: #cbd5e1;
-  --celestial-starlight: #334155;
-  --celestial-dawn: #f97316;
-  --celestial-nebula: #7c3aed;
-  --celestial-zenith: #0284c7;
-  --celestial-surface: rgba(255, 255, 255, 0.72);
-  --celestial-border: rgba(203, 213, 225, 0.4);
+  --celestial-void: #f4f7fb;
+  --celestial-horizon: #edf3f8;
+  --celestial-haze: #a8b7c7;
+  --celestial-starlight: #152238;
+  --celestial-dawn: #0f766e;
+  --celestial-nebula: #155e75;
+  --celestial-zenith: #0369a1;
+  --celestial-surface: rgba(255, 255, 255, 0.94);
+  --celestial-border: rgba(148, 163, 184, 0.46);
 
   /* Deep Space Probe — Solve Page Theme (light = "天光学院") */
   --probe-void: #eff6ff;
@@ -113,24 +113,24 @@
   --probe-accent-glow: rgba(124, 58, 237, 0.12);
   --probe-warm: #ea580c;
 
-  /* Stardust Collector — Memory Page Theme (Light: "玫瑰学院 Rose Academy") */
-  --memory-void: #fdf8fa;
+  /* Memory cards — aligned with the learning workspace */
+  --memory-void: #f8fafc;
   --memory-surface: rgba(255, 255, 255, 0.9);
   --memory-surface-elevated: rgba(255, 255, 255, 0.96);
-  --memory-border: rgba(100, 80, 200, 0.15);
-  --memory-border-strong: rgba(100, 80, 200, 0.3);
-  --memory-primary: #e11d48;
-  --memory-primary-bright: #be123c;
-  --memory-glow: rgba(225, 29, 55, 0.1);
-  --memory-glow-strong: rgba(225, 29, 55, 0.2);
-  --memory-text: #1a1a2e;
-  --memory-muted: rgba(100, 100, 140, 0.55);
+  --memory-border: rgba(148, 163, 184, 0.32);
+  --memory-border-strong: rgba(56, 189, 248, 0.5);
+  --memory-primary: #0284c7;
+  --memory-primary-bright: #0369a1;
+  --memory-glow: rgba(14, 165, 233, 0.1);
+  --memory-glow-strong: rgba(14, 165, 233, 0.18);
+  --memory-text: #0f172a;
+  --memory-muted: rgba(71, 85, 105, 0.72);
   --memory-collected: #059669;
   --memory-collected-glow: rgba(5, 150, 105, 0.2);
-  --memory-accent: #7c3aed;
-  --memory-accent-glow: rgba(124, 58, 237, 0.12);
-  --memory-indigo: #4f46e5;
-  --memory-indigo-glow: rgba(79, 70, 229, 0.12);
+  --memory-accent: #2563eb;
+  --memory-accent-glow: rgba(37, 99, 235, 0.1);
+  --memory-indigo: #2563eb;
+  --memory-indigo-glow: rgba(37, 99, 235, 0.1);
   --memory-warm: #d97706;
   --memory-warm-glow: rgba(217, 119, 6, 0.12);
 
@@ -235,24 +235,24 @@ html.dark {
   --probe-accent-glow: rgba(56, 189, 248, 0.3);
   --probe-warm: #fb923c;
 
-  /* Stardust Collector — Memory Page Dark Overrides */
-  --memory-void: #070914;
-  --memory-surface: rgba(22, 10, 18, 0.95);
-  --memory-surface-elevated: rgba(32, 15, 25, 0.97);
-  --memory-border: rgba(251, 113, 133, 0.3);
-  --memory-border-strong: rgba(251, 113, 133, 0.5);
-  --memory-primary: #fda4af;
-  --memory-primary-bright: #fecdd3;
-  --memory-glow: rgba(253, 164, 175, 0.45);
-  --memory-glow-strong: rgba(253, 164, 175, 0.65);
-  --memory-text: #fff5f7;
-  --memory-muted: rgba(200, 200, 230, 0.55);
+  /* Memory cards — dark workspace override */
+  --memory-void: #020617;
+  --memory-surface: rgba(15, 23, 42, 0.95);
+  --memory-surface-elevated: rgba(30, 41, 59, 0.98);
+  --memory-border: rgba(148, 163, 184, 0.24);
+  --memory-border-strong: rgba(56, 189, 248, 0.42);
+  --memory-primary: #38bdf8;
+  --memory-primary-bright: #7dd3fc;
+  --memory-glow: rgba(56, 189, 248, 0.16);
+  --memory-glow-strong: rgba(56, 189, 248, 0.28);
+  --memory-text: #f1f5f9;
+  --memory-muted: rgba(148, 163, 184, 0.78);
   --memory-collected: #34d399;
   --memory-collected-glow: rgba(52, 211, 153, 0.4);
-  --memory-accent: #c084fc;
-  --memory-accent-glow: rgba(192, 132, 252, 0.3);
-  --memory-indigo: #818cf8;
-  --memory-indigo-glow: rgba(129, 140, 248, 0.3);
+  --memory-accent: #60a5fa;
+  --memory-accent-glow: rgba(96, 165, 250, 0.2);
+  --memory-indigo: #60a5fa;
+  --memory-indigo-glow: rgba(96, 165, 250, 0.2);
   --memory-warm: #fbbf24;
   --memory-warm-glow: rgba(251, 191, 36, 0.3);
 
@@ -300,16 +300,12 @@ html.dark {
     @apply border-border outline-ring/50;
   }
   html {
-    /* Always render the vertical scrollbar so layout doesn't horizontally
-       shift when content grows/shrinks across the viewport-height threshold
-       (e.g. expanding/collapsing recent classrooms). scrollbar-gutter:
-       stable doesn't cover every browser/config combo we see, so fall back
-       to forcing overflow-y: scroll as well. */
-    scrollbar-gutter: stable;
-    overflow-y: scroll;
+    scrollbar-gutter: auto;
+    overflow-y: auto;
   }
   body {
     @apply bg-background text-foreground;
+    overflow-y: auto;
   }
 }
 
@@ -836,6 +832,21 @@ html:not(.dark) .mobile-theme-surface .mobile-tool-token {
   }
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+html,
+body,
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
 }
 
 /* Shimmer sweep for skeleton loading */
@@ -1692,4 +1703,203 @@ html:not(.dark) .mobile-theme-surface .mobile-tool-token {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: warp-sweep 4s linear infinite;
+}
+
+/* Let desktop workbench pages use the space beside the persistent sidebar. */
+@media (min-width: 1536px) {
+  [data-sky-desktop-main] > .mx-auto.max-w-6xl {
+    max-width: none;
+  }
+}
+
+/* Light-mode slide authoring is a calm workspace, not a faded dark-mode scene. */
+html:not(.dark) .slides-workspace-header {
+  box-shadow: 0 1px 0 rgba(148, 163, 184, 0.24);
+}
+
+html:not(.dark) .slides-workspace-mark {
+  background: #e6f4f1 !important;
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.18) !important;
+}
+
+html:not(.dark) .slides-empty-atmosphere,
+html:not(.dark) .slides-empty-horizon {
+  display: none;
+}
+
+html:not(.dark) .slides-empty-state {
+  background: #f4f7fb;
+}
+
+html:not(.dark) .slides-empty-content {
+  max-width: 70rem;
+  align-items: stretch;
+  gap: 1.25rem;
+}
+
+html:not(.dark) .slides-empty-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+html:not(.dark) .slides-empty-icon {
+  height: 3rem;
+  width: 3rem;
+  border-color: rgba(15, 118, 110, 0.16);
+  background: #e6f4f1;
+  color: #0f766e;
+}
+
+html:not(.dark) .slides-empty-title {
+  text-align: left;
+}
+
+html:not(.dark) .slides-empty-title h2 {
+  font-size: 1.25rem;
+  letter-spacing: 0;
+}
+
+html:not(.dark) .slides-empty-title p {
+  color: #526176;
+}
+
+html:not(.dark) .slides-adaptive-brief,
+html:not(.dark) .slides-generation-form {
+  border-color: #d8e2ec;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+}
+
+html:not(.dark) .slides-adaptive-brief {
+  border-radius: 0.75rem;
+  background: #ffffff;
+}
+
+html:not(.dark) .slides-adaptive-brief-header {
+  border-color: #e3eaf1;
+}
+
+html:not(.dark) .slides-adaptive-brief h3,
+html:not(.dark) .slides-adaptive-summary-title,
+html:not(.dark) .slides-adaptive-metric-value {
+  color: #152238;
+}
+
+html:not(.dark) .slides-adaptive-brief p,
+html:not(.dark) .slides-adaptive-step,
+html:not(.dark) .slides-adaptive-metric-label {
+  color: #526176;
+}
+
+html:not(.dark) .slides-adaptive-summary,
+html:not(.dark) .slides-adaptive-metric,
+html:not(.dark) .slides-adaptive-step {
+  border-color: #e3eaf1;
+  background: #f8fafc;
+}
+
+html:not(.dark) .slides-adaptive-brief a {
+  border-color: #d8e2ec;
+  background: #ffffff;
+  color: #334155;
+}
+
+html:not(.dark) .slides-adaptive-brief a:hover {
+  border-color: rgba(15, 118, 110, 0.35);
+  color: #0f766e;
+}
+
+html:not(.dark) .slides-generation-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 13rem;
+  gap: 1rem;
+  align-items: end;
+  border: 1px solid #d8e2ec;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+html:not(.dark) .slides-topic-control label,
+html:not(.dark) .slides-difficulty-control label {
+  color: #526176;
+  letter-spacing: 0.08em;
+}
+
+html:not(.dark) .slides-topic-input {
+  border: 1px solid #d8e2ec;
+  border-radius: 0.5rem;
+  background: #f8fafc !important;
+  padding: 0.625rem 0.75rem !important;
+  color: #152238;
+}
+
+html:not(.dark) .slides-topic-input::placeholder {
+  color: #8291a5;
+}
+
+html:not(.dark) .slides-topic-underline,
+html:not(.dark) .slides-topic-glow {
+  display: none;
+}
+
+html:not(.dark) .slides-difficulty-options {
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+html:not(.dark) .slides-difficulty-option {
+  min-height: 2.75rem;
+  flex: 1;
+  flex-direction: row;
+  justify-content: center;
+  gap: 0.375rem;
+  border: 1px solid #d8e2ec;
+  border-radius: 0.5rem;
+  background: #ffffff;
+}
+
+html:not(.dark) .slides-difficulty-option > div:first-child {
+  display: none;
+}
+
+html:not(.dark) .slides-difficulty-option--active {
+  border-color: #0f766e;
+  background: #e6f4f1;
+}
+
+html:not(.dark) .slides-difficulty-option--active span,
+html:not(.dark) .slides-difficulty-option--active svg {
+  color: #0f766e !important;
+}
+
+html:not(.dark) .slides-generate-action {
+  grid-column: 1 / -1;
+}
+
+html:not(.dark) .slides-generate-button {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(15, 118, 110, 0.18);
+}
+
+html:not(.dark) .slides-generate-button:hover {
+  border-color: #115e59;
+  background: #115e59;
+}
+
+html:not(.dark) .slides-generate-button > div {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  html:not(.dark) .slides-generation-form {
+    display: block;
+  }
+
+  html:not(.dark) .slides-difficulty-control,
+  html:not(.dark) .slides-generate-action {
+    margin-top: 1rem;
+  }
 }

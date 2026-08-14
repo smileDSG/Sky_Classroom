@@ -1,5 +1,5 @@
 ---
-description: 将远程 master 最新代码拉取到本地分支并解决冲突。支持 OpenMAIC 和 ridingApp/ridingAdmin 项目。
+description: 将远程 master 最新代码拉取到本地分支并解决冲突。支持 智眸无界 和 ridingApp/ridingAdmin 项目。
 ---
 
 # Git 同步远程 master 到本地分支
@@ -15,8 +15,8 @@ description: 将远程 master 最新代码拉取到本地分支并解决冲突�
 ### 1. 确认项目和分支
 
 - 如果用户指定了项目路径，使用该路径；否则检测当前工作目录。
-- 默认项目路径：`D:\github\OpenMAIC-firsted-team-`
-- 默认目标分支：`Dev-ryx`（OpenMAIC）或当前分支（其他项目）
+- 默认项目路径：`D:\github\智眸无界-firsted-team-`
+- 默认目标分支：`Dev-ryx`（智眸无界）或当前分支（其他项目）
 
 执行：
 ```bash

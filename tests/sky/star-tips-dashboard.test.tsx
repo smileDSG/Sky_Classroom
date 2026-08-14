@@ -132,13 +132,13 @@ describe('SkyDashboardPage', () => {
     global.fetch = mockFetch;
   });
 
-  it('renders one consolidated cloud mind tool entry without the duplicate quick actions panel', async () => {
+  it("keeps the overview focused on today's plan and routes detail work to dedicated pages", async () => {
     render(<SkyDashboardPage />);
 
-    expect(await screen.findByText('今日主行动')).toBeInTheDocument();
-    expect(screen.getByText('今日调度')).toBeInTheDocument();
-    expect(screen.getByText('关键入口')).toBeInTheDocument();
-    expect(screen.getByText('趋势与能力')).toBeInTheDocument();
+    expect(await screen.findByText('今天优先完成')).toBeInTheDocument();
+    expect(screen.getByText('今天的安排')).toBeInTheDocument();
+    expect(screen.getByText('学习快照')).toBeInTheDocument();
+    expect(screen.getByText('完成后，再深入处理')).toBeInTheDocument();
     expect(screen.getByText('复习 2 条到期内容')).toBeInTheDocument();
     expect(
       screen.getByText('先把到期内容转成短周期卡片，能减少遗忘并更新掌握度。'),
@@ -148,14 +148,19 @@ describe('SkyDashboardPage', () => {
       '/sky/cloud-mind/memory?topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0',
     );
 
-    expect(await screen.findByText('云端智囊')).toBeInTheDocument();
-    expect(screen.getByText('拍照搜题')).toBeInTheDocument();
-    expect(screen.getByText('幻灯片')).toBeInTheDocument();
-    expect(screen.getByText('智能出题')).toBeInTheDocument();
-    expect(screen.getByText('记忆卡片')).toBeInTheDocument();
-    expect(screen.getByText('智能授课')).toBeInTheDocument();
-    expect(screen.queryByText('快捷操作')).not.toBeInTheDocument();
-    expect(screen.queryByText('连续打卡')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /查看完整学习记录/ })).toHaveAttribute(
+      'href',
+      '/sky/learning/profile-dashboard',
+    );
+    expect(
+      screen
+        .getAllByRole('link', { name: /学习路径/ })
+        .some((link) => link.getAttribute('href') === '/sky/learning/path'),
+    ).toBe(true);
+    expect(screen.queryByRole('tablist', { name: '首页视图' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tablist', { name: '学习计划时间范围' })).not.toBeInTheDocument();
+    expect(screen.queryByText('趋势与能力')).not.toBeInTheDocument();
+    expect(screen.queryByText('关键入口')).not.toBeInTheDocument();
 
     await waitFor(() => {
       const learningStatsCalls = mockFetch.mock.calls.filter(

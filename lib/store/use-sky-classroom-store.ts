@@ -22,10 +22,16 @@ import type {
   SlideGenerationOptions,
   SlideGenerationResult,
 } from '@/lib/slides/types';
-import type { MistakeRecord, KnowledgeGraph, MistakeFilter } from '@/lib/mistakes/types';
+import type {
+  MistakeRecord,
+  KnowledgeGraph,
+  MistakeFilter,
+  MistakeReviewResult,
+} from '@/lib/mistakes/types';
 import type { Slide } from '@/lib/types/slides';
 import type { MemoryReviewRecord } from '@/lib/cloud-mind/types';
 import { createLogger } from '@/lib/logger';
+import { refreshLearningPlanAfterEvidence } from '@/lib/adaptive-learning/client/refresh-learning-plan';
 
 const log = createLogger('SkyClassroomStore');
 
@@ -113,7 +119,7 @@ const createSlidesSlice = (set: SetFn<SlidesSlice>): SlidesSlice => ({
     set({
       generationOptions: {
         topic: typeof options.topic === 'string' ? options.topic : '',
-        difficulty: ['junior', 'senior', 'college'].includes(options.difficulty as string)
+        difficulty: ['senior', 'college'].includes(options.difficulty as string)
           ? options.difficulty
           : 'senior',
       },
@@ -158,13 +164,27 @@ function syncAddToServer(m: MistakeRecord): void {
   });
 }
 
-/** Fire-and-forget: PATCH mistake review on server */
-function syncReviewToServer(id: string, correct: boolean): void {
-  fetch('/api/sky/mistakes', {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, correct }),
-  }).catch(() => {});
+/** Optimistically update locally, then return the authoritative profile result. */
+async function syncReviewToServer(
+  id: string,
+  correct: boolean,
+): Promise<MistakeReviewResult | null> {
+  try {
+    const response = await fetch('/api/sky/mistakes', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, correct }),
+    });
+    const payload = (await response.json()) as Partial<MistakeReviewResult> & {
+      success?: boolean;
+    };
+    if (!response.ok || payload.success !== true || !payload.profileUpdate) return null;
+    void refreshLearningPlanAfterEvidence();
+    return payload as MistakeReviewResult;
+  } catch {
+    return null;
+  }
 }
 
 /** Fire-and-forget: DELETE mistake on server */
@@ -178,7 +198,7 @@ interface MistakesSlice {
   activeFilter: MistakeFilter | null;
 
   addMistake: (mistake: MistakeRecord) => void;
-  markReviewed: (id: string, correct?: boolean) => void;
+  markReviewed: (id: string, correct?: boolean) => Promise<MistakeReviewResult | null>;
   setFilter: (filter: MistakeFilter | null) => void;
   setKnowledgeGraph: (graph: KnowledgeGraph) => void;
   deleteMistake: (id: string) => void;
@@ -203,7 +223,7 @@ const createMistakesSlice = (
     });
     syncAddToServer(m);
   },
-  markReviewed: (id, correct = true) => {
+  markReviewed: async (id, correct = true) => {
     const now = Date.now();
     set((s) => ({
       mistakes: s.mistakes.map((m) => {
@@ -234,7 +254,7 @@ const createMistakesSlice = (
         };
       }),
     }));
-    syncReviewToServer(id, correct);
+    return syncReviewToServer(id, correct);
   },
   setFilter: (filter) => set({ activeFilter: filter }),
   setKnowledgeGraph: (graph) => set({ knowledgeGraph: graph }),
@@ -373,11 +393,14 @@ export const useSkyClassroomStore = create<SkyClassroomStore>()(
           const g = s.generationOptions as Record<string, unknown>;
           s.generationOptions = {
             topic: typeof g.topic === 'string' ? g.topic : '',
-            difficulty: ['junior', 'senior', 'college'].includes(g.difficulty as string)
+            difficulty: ['senior', 'college'].includes(g.difficulty as string)
               ? g.difficulty
               : 'senior',
           };
         }
+        // Older assistant settings used junior/high-school aliases. Keep the
+        // stored preference usable while moving the visible default forward.
+        if (s.difficulty !== 'college') s.difficulty = 'senior';
         // Deduplicate mistakes with duplicate IDs (legacy data)
         if (Array.isArray(s.mistakes)) {
           const seen = new Set<string>();

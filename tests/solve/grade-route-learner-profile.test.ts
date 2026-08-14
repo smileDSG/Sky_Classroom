@@ -9,6 +9,7 @@ import { NextRequest } from 'next/server';
 import { MemoryStorageProvider } from '@/lib/storage/memory-provider';
 import type { StorageProvider } from '@/lib/storage/storage-types';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import type { LearnerPreferences } from '@/lib/adaptive-learning/contracts';
 
 const gradeBoundary = vi.hoisted(() => ({
@@ -75,6 +76,8 @@ beforeEach(async () => {
   gradeBoundary.userId = 'user-grade';
   await storage.clear('learner-preference-versions');
   await storage.clear('mistake-book');
+  await storage.clear('learning-events');
+  await storage.clear('knowledge-state');
   gradeAnswerMock.mockReset();
   gradeAnswerMock.mockResolvedValue({
     isCorrect: true,
@@ -119,6 +122,51 @@ describe('POST /api/sky/solve/grade learner profile integration', () => {
     expect(typeof teachingProjection).toBe('string');
     expect(teachingProjection).toContain('学习者画像');
     expect(teachingProjection).toContain('小云');
+  });
+
+  it('passes Bayesian growth areas to the grader', async () => {
+    await seedPreferences(gradeBoundary.userId);
+    await createKnowledgeStateDAO(storage).set(gradeBoundary.userId, {
+      userId: gradeBoundary.userId,
+      nodeId: 'functions-basic',
+      alpha: 2,
+      beta: 3,
+      mastery: 0.4,
+      confidence: 0.6,
+      retention: 1,
+      reviewStabilityDays: 7,
+      repeatedErrorCount: 2,
+      evidenceCount: 3,
+      version: 3,
+    });
+
+    const res = await POST(
+      makeRequest({ problem: '2+2=?', correctAnswer: '4', userAnswer: '4' }),
+    );
+
+    expect(res.status).toBe(200);
+    const [, , , , teachingProjection] = gradeAnswerMock.mock.calls[0];
+    expect(teachingProjection).toContain('functions-basic');
+  });
+
+  it('records the grading result as Bayesian answer evidence', async () => {
+    await seedPreferences(gradeBoundary.userId);
+
+    const res = await POST(
+      makeRequest({
+        problem: 'What is a function?',
+        correctAnswer: 'A mapping',
+        userAnswer: 'A mapping',
+        knowledgePoints: ['function'],
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    const state = await createKnowledgeStateDAO(storage).get(
+      gradeBoundary.userId,
+      'functions-basic',
+    );
+    expect(state?.mastery).toBeGreaterThan(0.5);
   });
 
   it('does not accept client-provided teachingProjection as authoritative', async () => {

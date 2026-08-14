@@ -16,6 +16,7 @@ import { buildReviewSchedule, getMasteryProgress } from '@/lib/schedule/review-s
 import type { MemoryReviewRecord } from '@/lib/cloud-mind/types';
 import type { MistakeCause } from '@/lib/solve/types';
 import { createLogger } from '@/lib/logger';
+import { ensureDemoLearningData } from '@/lib/demo/admin-mistake-seed';
 
 const log = createLogger('API:SkyWorkshop');
 const MEMORY_REVIEWS_TABLE = 'cloud_mind_memory_reviews';
@@ -78,6 +79,10 @@ export async function GET(req: NextRequest) {
 
     const storage = await getServerStorage();
     const mistakeDAO = createMistakeBookDAO(storage);
+    const demoSeed = await ensureDemoLearningData(userId, storage);
+    if (demoSeed.changed) {
+      await invalidateProfileCache(userId);
+    }
 
     const [{ items: mistakeEntries, total }, learningStats, profile, memoryReviewEntries] =
       await Promise.all([
@@ -139,6 +144,7 @@ export async function GET(req: NextRequest) {
       profile,
       memoryProgress,
       dataSources: {
+        replaceMistakes: userId === 'admin-default' || userId === 'demo-default',
         mistakes: 'server',
         review: 'server',
         learningStats: learningStats ? 'server' : 'unavailable',

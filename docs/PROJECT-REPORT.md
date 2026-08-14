@@ -236,7 +236,7 @@ START → checkSolveCache → checkQuestionBank → routeToAgent → solveWithAg
 | 05-15 | `21b042e` | **项目初始化** — .gitignore + 基础结构 |
 | 05-15 | `0578bc5` | Captain 前置任务 — 类型系统、Provider 层、编排层、API 层 |
 | 05-15 | `76e238f` | 前端测试套件、预设系统、UI 错误/虚拟列表组件 |
-| 05-16 | `d41acf4` | OpenMAIC v0.2.1 基座 + B-001 规划文档 |
+| 05-16 | `d41acf4` | 智眸无界 v0.2.1 基座 + B-001 规划文档 |
 | 05-16 | `3372737` | **Prompt 系统 Phase 1** — 模块化 Prompt 基础设施 |
 | 05-16 | `a7f1cde` | **Prompt 系统 Phase 2** — 核心模板、角色、学生人设 |
 | 05-16 | `3462f40` | 第一次完整项目提交 |

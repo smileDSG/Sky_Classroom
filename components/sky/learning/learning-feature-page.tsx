@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CalendarClock } from 'lucide-react';
+import { ArrowRight, CalendarClock } from 'lucide-react';
 import { StudentProfilePage } from '@/app/sky/student/student-profile-page';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import {
@@ -84,7 +84,12 @@ function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps)
         const data = await response.json();
         if (cancelled || !response.ok || !data?.success || !Array.isArray(data.mistakes)) return;
 
-        useSkyClassroomStore.getState().mergeMistakes(data.mistakes.map(normalizeSnapshotMistake));
+        const normalized = data.mistakes.map(normalizeSnapshotMistake);
+        if (data.dataSources?.replaceMistakes) {
+          useSkyClassroomStore.setState({ mistakes: normalized });
+        } else {
+          useSkyClassroomStore.getState().mergeMistakes(normalized);
+        }
       } catch {
         /* Keep feature pages usable with local store data. */
       }
@@ -110,14 +115,7 @@ function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps)
         <section className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/90 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-cyan-100/10 dark:bg-[#07111f]/95 dark:shadow-[0_24px_72px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
           <div className="flex flex-col gap-4 border-b border-slate-200/70 bg-[linear-gradient(135deg,#f0fdf4_0%,#f0f9ff_52%,#f8fafc_100%)] px-5 py-5 dark:border-cyan-100/10 dark:bg-[linear-gradient(135deg,#123346_0%,#0d2438_52%,#0b1729_100%)] md:px-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
-              <Link
-                href="/sky/learning"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-white dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:shadow-none dark:hover:bg-white/[0.09]"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                返回天梯工坊
-              </Link>
-              <div className="mt-4 flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-[0_10px_28px_rgba(16,185,129,0.08)] dark:border-emerald-200/25 dark:bg-emerald-300/10 dark:text-emerald-100 dark:shadow-none">
                   <ActiveIcon className="h-5 w-5" />
                 </span>

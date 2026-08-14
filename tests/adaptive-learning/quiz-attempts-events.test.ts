@@ -69,6 +69,14 @@ describe('POST /api/sky/cloud-mind/quiz-attempts records learning events', () =>
     expect(correctEvent?.type).toBe('answer-submitted');
     expect(correctEvent?.source).toBe('quiz-attempts');
     expect(correctEvent?.payload.knowledgePoints).toEqual(['加法']);
+    expect(correctEvent?.payload).toMatchObject({
+      itemId: expect.stringContaining('quiz:ai:'),
+      itemVersion: 'quiz-attempt.v1',
+      itemDifficulty: 0,
+      dimensionId: 'math',
+      contentHash: expect.stringContaining('fnv1a:'),
+      generatorVersion: 'cloud-mind-ai.v1',
+    });
     expect(wrongEvent?.payload.knowledgePoints).toEqual(['加法', '进位']);
     expect(wrongEvent?.correlationId).toBe(payload.attempt.id);
   });

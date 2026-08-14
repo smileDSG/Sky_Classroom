@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Clock, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeachingPanel } from '@/components/sky/solve/teaching-panel';
@@ -8,20 +8,35 @@ import { TeachingHistoryPanel } from '@/components/sky/solve/teaching-history-pa
 import type { TeachingHistoryItem } from '@/lib/teaching/teaching-job-client';
 import type { LessonPlan, LessonSection } from '@/lib/teaching/lesson-types';
 import type { ContentChunk } from '@/lib/teaching/content-types';
+import type { TeachingGenerationPolicy } from '@/lib/teaching/personalization-policy';
+import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 
 interface TeachingPageProps {
   initialTopic?: string;
   personalizationNotice?: string | null;
+  personalizationPolicy?: TeachingGenerationPolicy | null;
+  personalizationContext?: PersonalizationContext | null;
+  showHistoryInitially?: boolean;
 }
 
-export function TeachingPage({ initialTopic, personalizationNotice }: TeachingPageProps) {
-  const [showHistory, setShowHistory] = useState(false);
+export function TeachingPage({
+  initialTopic,
+  personalizationNotice,
+  personalizationPolicy,
+  personalizationContext,
+  showHistoryInitially = false,
+}: TeachingPageProps) {
+  const [showHistory, setShowHistory] = useState(showHistoryInitially);
   const [historyItem, setHistoryItem] = useState<{
     topic: string;
     plan?: LessonPlan;
     sections?: { section: LessonSection; chunks: ContentChunk[] }[];
   } | null>(null);
-  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+  const [historyRefreshKey] = useState(0);
+
+  useEffect(() => {
+    setShowHistory(showHistoryInitially);
+  }, [showHistoryInitially]);
 
   const handleSelectHistory = useCallback((item: TeachingHistoryItem) => {
     setHistoryItem({
@@ -86,6 +101,8 @@ export function TeachingPage({ initialTopic, personalizationNotice }: TeachingPa
         onViewedHistory={handleViewedHistory}
         initialTopic={initialTopic}
         personalizationNotice={personalizationNotice}
+        personalizationPolicy={personalizationPolicy}
+        personalizationContext={personalizationContext}
       />
     </div>
   );

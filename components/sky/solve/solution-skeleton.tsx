@@ -9,7 +9,7 @@ interface SolutionSkeletonProps {
 }
 
 const phaseMessages: Record<string, string> = {
-  checking: '正在检索题库...',
+  checking: '正在查找题库...',
   routing: '正在分析题目类型...',
   solving: 'AI 正在解题中...',
   grading: '正在批改...',

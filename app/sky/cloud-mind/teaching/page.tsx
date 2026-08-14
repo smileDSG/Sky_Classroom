@@ -1,57 +1,93 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { TeachingPage } from '@/app/sky/teaching/teaching-page';
 import { CelestialCanvas } from '@/components/sky/slides/design-system/celestial-canvas';
-import { motion } from 'motion/react';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
+import type { TeachingGenerationPolicy } from '@/lib/teaching/personalization-policy';
+import { SkyAppShell } from '@/components/sky/layout/app-shell';
 
 export default function CloudMindTeachingRoute() {
   return (
-    <Suspense fallback={<CloudMindTeachingFallback />}>
-      <CloudMindTeachingContent />
-    </Suspense>
+    <SkyAppShell section="teaching" fullBleed>
+      <Suspense fallback={<CloudMindTeachingFallback />}>
+        <CloudMindTeachingContent />
+      </Suspense>
+    </SkyAppShell>
   );
 }
 
 function CloudMindTeachingFallback() {
-  return (
-    <div
-      className="relative min-h-screen bg-[var(--teaching-void)]"
-    />
-  );
+  return <div className="relative min-h-[calc(100dvh-4rem)] bg-[var(--teaching-void)]" />;
 }
 
 function CloudMindTeachingContent() {
   const searchParams = useSearchParams();
   const queryTopic = searchParams.get('topic');
+  const showHistoryInitially = searchParams.get('view') === 'history';
   const [contextTopic, setContextTopic] = useState('');
   const [personalizationNotice, setPersonalizationNotice] = useState<string | null>(null);
+  const [personalizationPolicy, setPersonalizationPolicy] =
+    useState<TeachingGenerationPolicy | null>(null);
+  const [personalizationContext, setPersonalizationContext] =
+    useState<PersonalizationContext | null>(null);
   const effectiveInitialTopic = queryTopic ?? contextTopic;
-  const effectivePersonalizationNotice = queryTopic ? null : personalizationNotice;
+  const effectivePersonalizationNotice = personalizationNotice;
 
   useEffect(() => {
-    if (queryTopic) {
-      return;
-    }
-
     let cancelled = false;
     fetch('/api/sky/cloud-mind/personalization-context')
       .then((res) => res.json())
       .then((json: { success?: boolean; data?: PersonalizationContext }) => {
         if (cancelled || !json.success || !json.data) return;
         const context = json.data;
-        const topic =
+        setPersonalizationContext(context);
+        const recommendedTopic =
           context.tutoringPolicy?.targetTopic ??
           context.learningPath?.next ??
           context.weakPoints[0]?.knowledgePoint;
-        if (!topic) return;
-        setContextTopic(topic);
+        const topic = recommendedTopic ?? '\u5165\u95e8\u8bca\u65ad';
+        const teachingPolicy = context.toolPolicies?.teaching;
+        const policy = teachingPolicy
+          ? {
+              difficulty: teachingPolicy.difficulty,
+              explanationStyle: teachingPolicy.explanationStyle,
+              resourceFormats: context.tutoringPolicy?.resourceFormats ?? ['worked_example'],
+              pacing: teachingPolicy.pacing,
+              reasonCodes: teachingPolicy.reasonCodes,
+              profileVersion: context.learnerDecision?.profileVersion ?? 0,
+            }
+          : null;
+        setPersonalizationPolicy(policy);
+        const difficultyLabel =
+          policy?.difficulty === 'easy'
+            ? '基础难度'
+            : policy?.difficulty === 'hard'
+              ? '挑战难度'
+              : '标准难度';
+        const pacingLabel =
+          policy?.pacing === 'remedial'
+            ? '补基础节奏'
+            : policy?.pacing === 'sprint'
+              ? '冲刺节奏'
+              : '稳步推进';
+        const styleLabel =
+          policy?.explanationStyle === 'principle_first'
+            ? '原理优先'
+            : policy?.explanationStyle === 'example_first'
+              ? '例题优先'
+              : policy?.explanationStyle === 'practice_first'
+                ? '练习优先'
+                : '步骤优先';
+        if (!queryTopic && recommendedTopic) setContextTopic(recommendedTopic);
         setPersonalizationNotice(
-          `\u5df2\u6839\u636e\u5929\u68af\u5de5\u574a\u4e3a\u4f60\u9884\u8bbe\uff1a${topic} / \u5fae\u8bfe\u8bb2\u89e3`,
+          queryTopic && policy
+            ? `保留你选择的主题；已按你的情况调整为 ${difficultyLabel}、${pacingLabel}、${styleLabel}。`
+            : context.learnerDecision
+              ? `${context.learnerDecision.summary} ${topic} / 微课讲解`
+              : `学习安排：${topic} · ${difficultyLabel} · ${pacingLabel} · ${styleLabel}。`,
         );
       })
       .catch(() => {
@@ -63,7 +99,7 @@ function CloudMindTeachingContent() {
   }, [queryTopic]);
 
   return (
-    <div className="relative min-h-screen bg-[var(--teaching-void)]">
+    <div className="relative min-h-[calc(100dvh-4rem)] bg-[var(--teaching-void)]">
       {/* Deep space starfield */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <CelestialCanvas starCount={100} parallax={false} nebula grid={false} />
@@ -77,25 +113,12 @@ function CloudMindTeachingContent() {
 
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 pt-6 pb-12">
-        {/* Back button */}
-        <motion.div
-          data-sky-desktop-top-actions
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mb-6"
-        >
-          <Link
-            href="/sky/cloud-mind"
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-[var(--teaching-muted)] transition-all hover:text-[var(--teaching-primary-bright)] hover:bg-[var(--teaching-primary)]/10"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            返回
-          </Link>
-        </motion.div>
-
         <TeachingPage
           initialTopic={effectiveInitialTopic}
           personalizationNotice={effectivePersonalizationNotice}
+          personalizationPolicy={personalizationPolicy}
+          personalizationContext={personalizationContext}
+          showHistoryInitially={showHistoryInitially}
         />
       </div>
     </div>

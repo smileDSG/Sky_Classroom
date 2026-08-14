@@ -138,9 +138,7 @@ export function scoreSlideContent(
     const hasReadableOverlap = layoutIssues.some(
       (issue) => issue.type === 'readable_element_overlap',
     );
-    const hasLatexSizingIssue = layoutIssues.some(
-      (issue) => issue.type === 'latex_box_too_small',
-    );
+    const hasLatexSizingIssue = layoutIssues.some((issue) => issue.type === 'latex_box_too_small');
     const hasUnsafeBounds = layoutIssues.some((issue) => issue.type === 'unsafe_bottom_zone');
     const hasMisalignedParallelGroup = layoutIssues.some(
       (issue) => issue.type === 'misaligned_parallel_group',
@@ -168,7 +166,7 @@ export function scoreSlideContent(
       coherence -= 0.14;
     }
     if (hasExcessiveColoredPanels) {
-      warnings.push('Slide uses too many colored background boxes for the clean OpenMAIC style');
+      warnings.push('Slide uses too many colored background boxes for the clean 天空课堂 style');
       coherence -= 0.1;
       elementDiversity = Math.min(elementDiversity, 0.82);
     }

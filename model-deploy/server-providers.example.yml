@@ -1,0 +1,31 @@
+# server-providers.yml — 云端多提供商示例（复制到 server-providers.yml 后填写 Key）
+#
+# 这是「AI 生成新课」模式需要的配置。零密钥演示（/sky/software-cup）不需要它。
+# 复制到项目根目录并重命名为 server-providers.yml：
+#   cp model-deploy/server-providers.example.yml server-providers.yml
+#
+# 多 Key 轮询：用 apiKeys 数组（或逗号分隔的环境变量）把请求分摊到多个 Key，规避单 Key 限速。
+
+providers:
+  # 示例：单 Key（向后兼容）
+  openai:
+    apiKey: sk-xxxxx
+    baseUrl: https://api.openai.com/v1
+
+  # 示例：多 Key 轮询
+  deepseek:
+    apiKeys:
+      - sk-key1-xxxxx
+      - sk-key2-xxxxx
+      - sk-key3-xxxxx
+    baseUrl: https://api.deepseek.com
+
+  # 示例：阿里云百炼 Qwen
+  # qwen:
+  #   apiKeys:
+  #     - sk-key1
+  #     - sk-key2
+  #   baseUrl: https://dashscope.aliyuncs.com/compatible-mode/v1
+
+# 设置默认模型（也可改用 .env.local 里的 DEFAULT_MODEL）：
+#   DEFAULT_MODEL=deepseek:deepseek-chat

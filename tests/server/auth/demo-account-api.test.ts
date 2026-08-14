@@ -34,7 +34,7 @@ const mockSignAccessToken = vi.mocked(signAccessToken);
 const mockSignRefreshToken = vi.mocked(signRefreshToken);
 const mockVerifyPassword = vi.mocked(verifyPassword);
 
-function loginRequest(emailOrUsername: string, password = 'OpenMAIC123!') {
+function loginRequest(emailOrUsername: string, password = 'SkyClassroom123!') {
   return new Request('http://localhost/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -1,5 +1,5 @@
-import { StudyLabPage } from '@/components/sky/study-lab/study-lab-page';
+import { redirect } from 'next/navigation';
 
 export default function SkyStudyLabRoute() {
-  return <StudyLabPage />;
+  redirect('/sky/learning#learning-plan');
 }

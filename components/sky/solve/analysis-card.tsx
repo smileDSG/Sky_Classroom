@@ -75,7 +75,7 @@ export function AnalysisCard({ analysis, className }: AnalysisCardProps) {
 
           <Badge variant="outline" className="text-xs border-[var(--probe-border-strong)] text-[var(--probe-muted)]">
             <Zap className="h-3 w-3 mr-1" />
-            置信度 {Math.round(analysis.confidence * 100)}%
+            判断把握 {Math.round(analysis.confidence * 100)}%
           </Badge>
         </div>
 

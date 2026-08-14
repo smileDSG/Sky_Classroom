@@ -286,6 +286,7 @@ function chunksToSlides(
       type: 'slide',
       title: pageCount === 0 ? section.title : `${section.title} (${pageCount + 1})`,
       order: baseOrder + pageCount,
+      knowledgePoints: section.knowledgePoints,
       content: slideContent,
       actions,
       createdAt: Date.now(),
@@ -422,7 +423,7 @@ function convertSectionToQuizScene(
   };
 }
 
-// OpenMAIC-style slide layout helpers
+// 天空课堂-style slide layout helpers
 
 function createTextElement(
   content: string,
@@ -1259,7 +1260,7 @@ function createOpenMaicStyleSlide(structured: StructuredContent, sectionTitle: s
   };
 }
 
-/** Convert StructuredContent into a local element slide when the OpenMAIC agent is unavailable. */
+/** Convert StructuredContent into a local element slide when the 天空课堂 agent is unavailable. */
 export function createStructuredFallbackSlide(
   structured: StructuredContent,
   sectionTitle: string,
@@ -1267,7 +1268,7 @@ export function createStructuredFallbackSlide(
   try {
     return polishSlide(createOpenMaicStyleSlide(structured, sectionTitle), { title: sectionTitle });
   } catch (err) {
-    log.warn(`[ToClassroom] OpenMAIC-style layout failed for "${sectionTitle}":`, err);
+    log.warn(`[ToClassroom] 天空课堂-style layout failed for "${sectionTitle}":`, err);
     return null;
   }
 }
@@ -1429,7 +1430,7 @@ export async function convertSectionToScenes(
   const hasQuizChunks = chunks.some((c) => c.type === 'quiz');
   const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
 
-  // Path 1: OpenMAIC element-level slide generator, with local structured fallback.
+  // Path 1: 天空课堂 element-level slide generator, with local structured fallback.
   if (!isTestEnv) {
     const slide =
       (await generateElementSlideForSection(sectionData, order)) ??
@@ -1452,12 +1453,13 @@ export async function convertSectionToScenes(
         type: 'slide',
         title: section.title,
         order,
+        knowledgePoints: section.knowledgePoints,
         content: { type: 'slide', canvas: slide },
         actions: richActions,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-      log.info(`[ToClassroom] OpenMAIC-style slide produced for: ${section.title}`);
+      log.info(`[ToClassroom] 天空课堂-style slide produced for: ${section.title}`);
     }
   }
 
@@ -1510,6 +1512,7 @@ export async function convertSectionToScenes(
       type: 'slide',
       title: section.title,
       order,
+      knowledgePoints: section.knowledgePoints,
       content: { type: 'slide', canvas: summarySlide },
       actions: summaryActions,
       createdAt: Date.now(),
@@ -1659,6 +1662,7 @@ export async function convertTeachingJobToStage(
     type: 'slide',
     title: '封面',
     order: order++,
+    knowledgePoints: job.plan?.focusPoints,
     content: { type: 'slide', canvas: coverSlide },
     actions: coverActions,
     createdAt: now,
@@ -1750,6 +1754,7 @@ export async function convertTeachingJobToStage(
     type: 'slide',
     title: '结束',
     order,
+    knowledgePoints: job.plan?.focusPoints,
     content: { type: 'slide', canvas: endSlide },
     actions: endActions,
     createdAt: now,

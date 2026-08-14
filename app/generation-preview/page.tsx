@@ -1413,7 +1413,7 @@ function GenerationPreviewContent() {
                 className="flex items-center gap-3 text-sm text-muted-foreground/50 font-medium uppercase tracking-widest"
               >
                 <Sparkles className="size-3 animate-pulse" />
-                {'AI智能体工作中...'}
+                {'AI角色工作中...'}
                 {generatedAgents.length > 0 && !showAgentReveal && (
                   <button
                     onClick={() => setShowAgentReveal(true)}

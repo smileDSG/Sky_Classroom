@@ -8,7 +8,7 @@ import {
   ChartNoAxesColumnIncreasing,
   GraduationCap,
   LibraryBig,
-  MessageCircleQuestion,
+  Presentation,
   UserRound,
   type LucideIcon,
 } from 'lucide-react';
@@ -24,28 +24,29 @@ const quickEntrances: {
 }[] = [
   {
     icon: GraduationCap,
-    title: '天空授课',
+    title: '学习',
     href: '/m/sky',
     color: 'text-sky-300 bg-sky-400/12 ring-sky-300/25',
     exact: true,
   },
   {
+    icon: Presentation,
+    title: '备课',
+    href: '/m/sky/teaching',
+    color: 'text-amber-300 bg-amber-400/12 ring-amber-300/25',
+    activeHrefs: ['/m/sky/teaching'],
+  },
+  {
     icon: LibraryBig,
-    title: '云端智囊',
+    title: '资源',
     href: '/m/sky/cloud-mind',
     color: 'text-violet-300 bg-violet-400/12 ring-violet-300/25',
   },
   {
     icon: ChartNoAxesColumnIncreasing,
-    title: '天梯工坊',
+    title: '学习记录',
     href: '/m/sky/study-lab',
     color: 'text-emerald-300 bg-emerald-400/12 ring-emerald-300/25',
-  },
-  {
-    icon: MessageCircleQuestion,
-    title: '云翼助手',
-    href: '/m/sky/assistant',
-    color: 'text-rose-300 bg-rose-400/12 ring-rose-300/25',
   },
   {
     icon: UserRound,

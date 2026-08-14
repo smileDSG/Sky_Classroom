@@ -53,7 +53,7 @@ export function AgentSettings({
       <div className="space-y-4">
         {/* Mode Toggle */}
         <div className="space-y-2">
-          <Label>{'智能体模式'}</Label>
+          <Label>{'AI角色模式'}</Label>
           <div className="inline-flex rounded-lg border bg-muted/30 p-0.5">
             <button
               onClick={() => onAgentModeChange('preset')}
@@ -85,8 +85,8 @@ export function AgentSettings({
           <>
             {/* Preset mode: existing agent multi-select */}
             <div className="space-y-2">
-              <Label>{'选择智能体'}</Label>
-              <p className="text-sm text-muted-foreground">{'选择参与对话的智能体。选择1个为单智能体模式，选择多个为多智能体协作模式。'}</p>
+              <Label>{'选择AI角色'}</Label>
+              <p className="text-sm text-muted-foreground">{'选择参与课堂对话的AI角色。选择1个为单角色模式，选择多个为多人协作模式。'}</p>
             </div>
 
             <div className="space-y-2 border rounded-lg p-2 bg-muted/30">
@@ -139,16 +139,16 @@ export function AgentSettings({
               {selectedAgentIds.length === 0 && (
                 <span className="flex items-center gap-1.5">
                   <AlertCircle className="h-4 w-4" />
-                  {'请至少选择1个智能体'}
+                  {'请至少选择1个AI角色'}
                 </span>
               )}
               {selectedAgentIds.length === 1 && (
                 <span className="flex items-center gap-1.5">
                   <User className="h-4 w-4" />
-                  <strong>{'单智能体模式'}</strong> -{' '}
+                  <strong>{'单角色模式'}</strong> -{' '}
                   {(() => {
                     const agent = agents.find((a) => a.id === selectedAgentIds[0]);
-                    return agent ? getAgentName(agent) : '选中的智能体';
+                    return agent ? getAgentName(agent) : '选中的AI角色';
                   })()}{' '}
                   {'直接回答'}
                 </span>
@@ -156,8 +156,8 @@ export function AgentSettings({
               {selectedAgentIds.length > 1 && (
                 <span className="flex items-center gap-1.5">
                   <Users className="h-4 w-4" />
-                  <strong>{'多智能体模式'}</strong> -{' '}
-                  {`已选择 ${selectedAgentIds.length} 个智能体协作讨论`}
+                  <strong>{'多人协作模式'}</strong> -{' '}
+                  {`已选择 ${selectedAgentIds.length} 个AI角色协作讨论`}
                 </span>
               )}
             </div>
@@ -166,7 +166,7 @@ export function AgentSettings({
             {selectedAgentIds.length > 1 && (
               <div className="space-y-2 border-l-4 border-purple-500 pl-4">
                 <Label>{'最大讨论轮数'}</Label>
-                <p className="text-xs text-muted-foreground">{'智能体之间最多讨论多少轮（每个智能体完成动作并回复算一轮）'}</p>
+                <p className="text-xs text-muted-foreground">{'AI角色之间最多讨论多少轮（每个角色完成动作并回复算一轮）'}</p>
                 <Input
                   type="number"
                   min="1"

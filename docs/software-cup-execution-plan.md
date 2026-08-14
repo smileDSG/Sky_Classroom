@@ -71,7 +71,7 @@
 
 | 材料 | 用途 | 建议位置 |
 | --- | --- | --- |
-| 开源项目说明 | 显著标注 OpenMAIC 和依赖协议 | `OPEN_SOURCE_NOTICE.md` |
+| 开源项目说明 | 显著标注 智眸无界 和依赖协议 | `OPEN_SOURCE_NOTICE.md` |
 | 第三方许可证说明 | 汇总主要依赖来源和协议 | `THIRD_PARTY_LICENSES.md` |
 | 防幻觉机制说明 | 解释 RAG、核验、引用、置信度 | `docs/software-cup-safety-and-trust.md` |
 | 内容安全策略 | 说明敏感内容过滤和拒答边界 | `docs/software-cup-content-safety.md` |
@@ -962,14 +962,14 @@ lib/ai/key-pool.ts
 
 ### `G-001` 开源项目说明
 
-> 显著说明本作品基于 OpenMAIC 二次开发，并列出主要开源依赖。
+> 显著说明本作品基于 智眸无界 二次开发，并列出主要开源依赖。
 
 - **前置任务**：无
 - **状态**：已完成
 
 **验收标准：**
 
-- [ ] 标注 OpenMAIC 来源和 AGPL-3.0 协议。
+- [ ] 标注 智眸无界 来源和 AGPL-3.0 协议。
 - [ ] 标注 Next.js、React、Tailwind CSS、Radix UI、shadcn/ui、LangGraph、Vercel AI SDK 等。
 - [ ] 说明本作品新增功能范围。
 - [ ] 保留原项目许可证说明。

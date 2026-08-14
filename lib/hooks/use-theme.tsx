@@ -10,9 +10,6 @@ interface ThemeContextType {
   resolvedTheme: 'light' | 'dark';
   /** True after first client render — safe to use resolvedTheme for rendering */
   isMounted: boolean;
-  /** Force dark mode regardless of user preference — used by /sky/cloud-mind sub-pages */
-  forceDark: boolean;
-  setForceDark: (v: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -30,8 +27,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('system');
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
   const [isMounted, setIsMounted] = useState(false);
-  const [forceDark, setForceDark] = useState(false);
-
   const resolvedTheme = theme === 'system' ? systemTheme : theme;
 
   // After hydration: read real theme from localStorage + system preference
@@ -51,12 +46,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Apply .dark class to document root
   useEffect(() => {
     const root = document.documentElement;
-    if (forceDark || resolvedTheme === 'dark') {
+    if (resolvedTheme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-  }, [resolvedTheme, forceDark]);
+  }, [resolvedTheme]);
 
   // Listen to system theme changes
   useEffect(() => {
@@ -83,7 +78,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   return (
     <ThemeContext.Provider
-      value={{ theme, setTheme: handleSetTheme, resolvedTheme, isMounted, forceDark, setForceDark }}
+      value={{ theme, setTheme: handleSetTheme, resolvedTheme, isMounted }}
     >
       {children}
     </ThemeContext.Provider>

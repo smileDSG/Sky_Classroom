@@ -2,23 +2,36 @@
 
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, BrainCircuit, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from './math-renderer';
 import type { ContentChunk } from '@/lib/teaching/content-types';
+import { refreshLearningPlanAfterEvidence } from '@/lib/adaptive-learning/client/refresh-learning-plan';
+import {
+  getTeachingDecisionTarget,
+  type TeachingProfileUpdate,
+} from '@/lib/teaching/profile-impact';
 
 interface QuizInteractionProps {
   chunk: ContentChunk;
   jobId?: string;
+  knowledgePoints?: string[];
   onAnswer?: (correct: boolean) => void;
 }
 
-export function QuizInteraction({ chunk, jobId, onAnswer }: QuizInteractionProps) {
+export function QuizInteraction({
+  chunk,
+  jobId,
+  knowledgePoints = [],
+  onAnswer,
+}: QuizInteractionProps) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [profileUpdate, setProfileUpdate] = useState<TeachingProfileUpdate | null>(null);
 
   const options = chunk.options || [];
   const question = chunk.question || chunk.content;
@@ -43,11 +56,14 @@ export function QuizInteraction({ chunk, jobId, onAnswer }: QuizInteractionProps
           selectedOption,
           correctAnswer: chunk.correctAnswer,
           jobId,
+          knowledgePoints,
         }),
       });
       const result = await response.json();
       const correct = result.data?.correct ?? selectedOption === (chunk.correctAnswer ?? 0);
       setIsCorrect(correct);
+      setProfileUpdate(result.data?.profileUpdate ?? null);
+      void refreshLearningPlanAfterEvidence();
       onAnswer?.(correct);
     } catch {
       // Fallback to client-side verification
@@ -182,6 +198,59 @@ export function QuizInteraction({ chunk, jobId, onAnswer }: QuizInteractionProps
           </div>
           <div className="text-sm text-gray-600 dark:text-gray-300">
             <MathRenderer content={chunk.content} />
+          </div>
+        </motion.div>
+      )}
+
+      {profileUpdate && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl border border-cyan-200 bg-gradient-to-r from-cyan-50 to-indigo-50 p-3 dark:border-cyan-200/15 dark:from-cyan-950/35 dark:to-indigo-950/30"
+        >
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+            <BrainCircuit className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+            随堂答案已记录到学习情况
+          </div>
+          <div className="mt-2 space-y-1.5">
+            {profileUpdate.changes.map((change) => (
+              <div
+                key={change.knowledgePoint}
+                className="flex items-center justify-between gap-3 rounded-lg bg-white/75 px-2.5 py-2 text-[11px] dark:bg-white/[0.06]"
+              >
+                <span className="truncate font-semibold text-slate-700 dark:text-slate-200">
+                  {change.knowledgePoint}
+                </span>
+                <span
+                  className={cn(
+                    'shrink-0 font-bold',
+                    isCorrect
+                      ? 'text-emerald-600 dark:text-emerald-300'
+                      : 'text-rose-600 dark:text-rose-300',
+                  )}
+                >
+                  {change.masteryBefore === null
+                    ? '暂无'
+                    : `${Math.round(change.masteryBefore * 100)}%`}{' '}
+                  →{' '}
+                  {change.masteryAfter === null
+                    ? '暂无'
+                    : `${Math.round(change.masteryAfter * 100)}%`}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-3 rounded-lg bg-slate-950 px-2.5 py-2 text-white dark:bg-cyan-200 dark:text-slate-950">
+            <span className="line-clamp-2 text-[10px] leading-relaxed">
+              {profileUpdate.learnerDecision.summary}
+            </span>
+            <Link
+              href={getTeachingDecisionTarget(profileUpdate.learnerDecision).href}
+              className="inline-flex shrink-0 items-center gap-1 rounded-md bg-white/15 px-2 py-1 text-[10px] font-semibold dark:bg-slate-950 dark:text-white"
+            >
+              {getTeachingDecisionTarget(profileUpdate.learnerDecision).label}
+              <ArrowRight className="h-3 w-3" />
+            </Link>
           </div>
         </motion.div>
       )}

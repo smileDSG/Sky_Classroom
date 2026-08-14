@@ -63,7 +63,7 @@ describe('ensureDemoUser', () => {
     await ensureDemoUser();
 
     expect(getByUsername).toHaveBeenCalledWith('demo');
-    expect(mockHashPassword).toHaveBeenCalledWith('OpenMAIC123!');
+    expect(mockHashPassword).toHaveBeenCalledWith('SkyClassroom123!');
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'demo-default',

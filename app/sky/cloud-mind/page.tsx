@@ -8,16 +8,28 @@ import {
   BookOpen,
   Brain,
   Camera,
+  CheckCircle2,
+  Clock3,
   FileQuestion,
+  Gauge,
   Layers,
+  ListChecks,
   Loader2,
   Presentation,
   Sparkles,
+  Target,
   Zap,
   type LucideIcon,
 } from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
-import type { CloudMindDashboardData, LearningRecommendation } from '@/lib/cloud-mind/types';
+import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
+import type {
+  CloudMindDashboardData,
+  LearningRecommendation,
+  PersonalizationContext,
+  ToolPersonalizationPolicy,
+  ToolPersonalizationPolicies,
+} from '@/lib/cloud-mind/types';
 
 const TOOLS: Array<{
   id: string;
@@ -28,6 +40,8 @@ const TOOLS: Array<{
   gradient: string;
   stats: string;
   badge?: string;
+  policyKey: keyof ToolPersonalizationPolicies;
+  group: 'learning' | 'resources';
 }> = [
   {
     id: 'solve',
@@ -38,6 +52,8 @@ const TOOLS: Array<{
     gradient: 'from-violet-500 to-purple-600',
     stats: '已解答 1.2k+ 题',
     badge: '热门',
+    policyKey: 'solve',
+    group: 'learning',
   },
   {
     id: 'slides',
@@ -48,6 +64,8 @@ const TOOLS: Array<{
     gradient: 'from-cyan-500 to-blue-600',
     stats: 'AI 智能生成',
     badge: '推荐',
+    policyKey: 'slides',
+    group: 'resources',
   },
   {
     id: 'quiz',
@@ -58,6 +76,8 @@ const TOOLS: Array<{
     gradient: 'from-amber-500 to-yellow-500',
     stats: '9 大学科覆盖',
     badge: '新',
+    policyKey: 'quiz',
+    group: 'learning',
   },
   {
     id: 'memory',
@@ -67,28 +87,178 @@ const TOOLS: Array<{
     icon: Brain,
     gradient: 'from-rose-500 to-pink-600',
     stats: '科学记忆法',
+    policyKey: 'memory',
+    group: 'learning',
   },
   {
     id: 'teaching',
     label: '智能授课',
-    description: 'AI 辅助课堂讲解，智能生成教学方案',
+    description: '针对薄弱点生成微课，边学边练并即时检查',
     href: '/sky/cloud-mind/teaching',
     icon: BookOpen,
     gradient: 'from-amber-500 to-orange-600',
-    stats: 'AI 教学助手',
+    stats: '学生微课讲解',
     badge: '新',
+    policyKey: 'teaching',
+    group: 'learning',
   },
   {
     id: 'course-studio',
     label: '课程资源工坊',
-    description: '结合课程知识库和学习画像，生成讲义、题库、导图、实操案例和视频脚本',
+    description: '结合课程资料和你的学习情况，生成讲义、题库、导图、实操案例和视频脚本',
     href: '/sky/cloud-mind/course-studio',
     icon: Layers,
     gradient: 'from-emerald-500 to-teal-600',
     stats: 'AI 导论知识库',
     badge: '个性化',
+    policyKey: 'learningPath',
+    group: 'resources',
   },
 ];
+
+const PACE_LABELS: Record<ToolPersonalizationPolicy['pacing'], string> = {
+  remedial: '补基础节奏',
+  steady: '稳步推进',
+  sprint: '冲刺节奏',
+};
+
+const DIFFICULTY_LABELS: Record<ToolPersonalizationPolicy['difficulty'], string> = {
+  easy: '基础难度',
+  medium: '标准难度',
+  hard: '挑战难度',
+};
+
+const EXPLANATION_LABELS: Record<ToolPersonalizationPolicy['explanationStyle'], string> = {
+  step_first: '步骤优先',
+  principle_first: '原理优先',
+  example_first: '例题优先',
+  practice_first: '练习优先',
+};
+
+type ToolCardView = {
+  kicker: string;
+  title: string;
+  detail: string;
+  meta: string;
+  action: string;
+};
+
+function displayTopic(value: string | undefined): string | undefined {
+  const topic = value?.trim();
+  return topic && !/^kp-[a-z0-9-]+$/i.test(topic) ? topic : undefined;
+}
+
+function toolTopic(policy: ToolPersonalizationPolicy | undefined): string {
+  const topic = displayTopic(policy?.targetTopic);
+  return topic ? `「${topic}」` : '当前学习重点';
+}
+
+function buildToolCardView(
+  toolId: string,
+  policy: ToolPersonalizationPolicy | undefined,
+  dueReviewCount: number,
+): ToolCardView {
+  const topic = toolTopic(policy);
+  const duration = policy?.durationMinutes ?? 10;
+  const difficulty = policy ? DIFFICULTY_LABELS[policy.difficulty] : '完成画像后匹配';
+  const pace = policy ? PACE_LABELS[policy.pacing] : '完成练习后匹配';
+  const count = policy?.questionCount ?? 0;
+
+  switch (toolId) {
+    case 'solve':
+      return {
+        kicker: policy?.action === 'diagnostic' ? '先建立基线' : '针对最近错题',
+        title: `把 ${topic} 的解题步骤讲明白`,
+        detail: `拍一道题直接进入即时讲解，${policy ? EXPLANATION_LABELS[policy.explanationStyle] : '按步骤拆解'}，不用先选学科或难度。`,
+        meta: `${duration} 分钟 · 1 道题`,
+        action: '拍题解析',
+      };
+    case 'quiz':
+      return {
+        kicker: policy?.action === 'diagnostic' ? '先做小诊断' : '验证掌握度',
+        title: `用 ${count || 3} 题检验 ${topic}`,
+        detail: `${difficulty} · ${pace}，答题结果会继续调整后续练习，不需要你手动拼配置。`,
+        meta: `${count || 3} 题 · ${duration} 分钟`,
+        action: '开始小测',
+      };
+    case 'memory':
+      return {
+        kicker: dueReviewCount > 0 ? '到期内容优先' : '巩固容易遗忘的内容',
+        title:
+          dueReviewCount > 0 ? `先复习 ${dueReviewCount} 项到期内容` : `把 ${topic} 做成记忆卡`,
+        detail: `按间隔复习安排卡片，${topic} 会作为首个复习范围，减少你再次整理资料的成本。`,
+        meta: `${count || 5} 张卡 · ${duration} 分钟`,
+        action: dueReviewCount > 0 ? '开始复习' : '生成卡片',
+      };
+    case 'teaching':
+      return {
+        kicker: '学生微课讲解',
+        title: `用一节微课补上 ${topic}`,
+        detail: `先${policy ? EXPLANATION_LABELS[policy.explanationStyle] : '讲清核心'}，再用检查点确认是否真的掌握；教师备课请进入备课工作区。`,
+        meta: `微课 · ${duration} 分钟`,
+        action: '开始授课',
+      };
+    case 'slides':
+      return {
+        kicker: '组织成可讲的课件',
+        title: `把 ${topic} 讲成一套 PPT`,
+        detail: `课件优先覆盖需要加强的内容，并按${policy ? EXPLANATION_LABELS[policy.explanationStyle] : '结构化讲解'}组织页面。`,
+        meta: `课件 · ${duration} 分钟`,
+        action: '生成课件',
+      };
+    case 'course-studio':
+      return {
+        kicker: '一站生成学习资源',
+        title: `围绕 ${topic} 生成一套资料`,
+        detail: '把讲义、导图、题库和实操案例放进同一条学习路径，适合需要完整补齐一个章节时使用。',
+        meta: `资源包 · ${duration} 分钟`,
+        action: '进入资源工坊',
+      };
+    default:
+      return {
+        kicker: '按你的学习情况准备',
+        title: `继续处理 ${topic}`,
+        detail: '系统会在进入工具后继续读取你的学习记录。',
+        meta: '按需安排',
+        action: '开始使用',
+      };
+  }
+}
+
+function buildToolHref(
+  toolId: string,
+  fallbackHref: string,
+  policy: ToolPersonalizationPolicy | undefined,
+): string {
+  const topic = displayTopic(policy?.targetTopic);
+  if (!topic || !policy) return fallbackHref;
+
+  const params = new URLSearchParams({
+    topic,
+    difficulty: policy.difficulty,
+  });
+
+  switch (toolId) {
+    case 'solve':
+      return `/sky/cloud-mind/solve?${params.toString()}`;
+    case 'slides':
+      return `/sky/cloud-mind/slides?${params.toString()}`;
+    case 'quiz':
+      if (policy.questionCount > 0) params.set('count', String(policy.questionCount));
+      if (policy.action === 'diagnostic') params.set('mode', 'diagnostic');
+      return `/sky/cloud-mind/quiz?${params.toString()}`;
+    case 'memory':
+      params.set('content', `知识点：${topic}`);
+      return `/sky/cloud-mind/memory?${params.toString()}`;
+    case 'teaching':
+      params.set('from', 'cloud-mind');
+      return `/sky/cloud-mind/teaching?${params.toString()}`;
+    case 'course-studio':
+      return `/sky/cloud-mind/course-studio?${params.toString()}`;
+    default:
+      return fallbackHref;
+  }
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -145,7 +315,7 @@ function getRecommendationAction(recommendation: LearningRecommendation | null) 
   if (!recommendation) {
     return {
       href: '/sky/cloud-mind/quiz',
-      label: '开始诊断',
+      label: '开始入门练习',
     };
   }
 
@@ -169,6 +339,7 @@ function buildTeachingHref(topic?: string): string {
 
 export default function CloudMindPage() {
   const [dashboard, setDashboard] = useState<CloudMindDashboardData | null>(null);
+  const [profileContext, setProfileContext] = useState<PersonalizationContext | null>(null);
   const [dashboardState, setDashboardState] = useState<DashboardState>('loading');
 
   useEffect(() => {
@@ -186,6 +357,17 @@ export default function CloudMindPage() {
         setDashboardState('error');
       });
 
+    fetch('/api/sky/cloud-mind/personalization-context', { credentials: 'include' })
+      .then((res) => res.json())
+      .then((payload: { data?: PersonalizationContext }) => {
+        if (!active) return;
+        setProfileContext(payload.data ?? null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setProfileContext(null);
+      });
+
     return () => {
       active = false;
     };
@@ -194,6 +376,27 @@ export default function CloudMindPage() {
   const primaryRecommendation = dashboard?.recommendations[0] ?? null;
   const recommendationAction = getRecommendationAction(primaryRecommendation);
   const suggestedTopic = dashboard?.weakPoints[0]?.knowledgePoint;
+  const policies = profileContext?.toolPolicies;
+  const primaryWeakPoint = dashboard?.weakPoints[0];
+  const mastery = primaryWeakPoint?.mastery ?? dashboard?.summary.masteryAverage ?? 0;
+  const accuracy = dashboard?.summary.recentAccuracy;
+  const profileStatus = !dashboard?.hasLearningData
+    ? '正在了解你的学习情况'
+    : mastery < 50
+      ? '需要补基础'
+      : mastery < 75
+        ? '正在稳定提升'
+        : '状态良好';
+  const statusTone = !dashboard?.hasLearningData
+    ? 'text-sky-700 dark:text-sky-300'
+    : mastery < 50
+      ? 'text-amber-700 dark:text-amber-300'
+      : 'text-emerald-700 dark:text-emerald-300';
+  const profileReason = !dashboard?.hasLearningData
+    ? '完成一次短练习，系统才知道从哪里开始最合适。'
+    : primaryWeakPoint
+      ? `根据最近的答题和错题，${primaryWeakPoint.knowledgePoint} 是当前最值得先处理的薄弱点。`
+      : '系统会继续观察你的答题表现，动态调整后续工具。';
   const secondaryAction = recommendationAction.href.startsWith('/sky/cloud-mind/memory')
     ? {
         href: buildTeachingHref(suggestedTopic),
@@ -204,9 +407,18 @@ export default function CloudMindPage() {
         label: '生成记忆卡片',
       };
 
+  const profileAction = !dashboard?.hasLearningData
+    ? { href: '/sky/cloud-mind/quiz?mode=diagnostic', label: '开始 5 分钟入门练习' }
+    : recommendationAction;
+  const recommendedToolId = primaryRecommendation?.target.href
+    .split('/sky/cloud-mind/')[1]
+    ?.split('?')[0];
+
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-6xl space-y-5 pt-1">
+        <SkySectionNav section="resources" />
+
         <motion.section
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -249,6 +461,113 @@ export default function CloudMindPage() {
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 0.08 }}
+          className="overflow-hidden rounded-3xl border border-sky-200/80 bg-white shadow-xl shadow-sky-100/70 dark:border-sky-900/60 dark:bg-slate-900/80 dark:shadow-slate-950/20"
+        >
+          <div className="border-b border-slate-200/80 bg-slate-50/80 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/40 md:px-7">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                  <Gauge className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">
+                    学习情况中心
+                  </p>
+                  <h2 className="mt-0.5 text-lg font-bold text-slate-950 dark:text-white">
+                    你的学习状态，正在驱动下面的每个工具
+                  </h2>
+                </div>
+              </div>
+              <span className={`text-sm font-semibold ${statusTone}`}>
+                {dashboardState === 'loading' ? '正在读取数据…' : profileStatus}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-6 px-5 py-6 md:grid-cols-[1.15fr_0.85fr] md:px-7">
+            <div>
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    当前优先主题
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-slate-950 dark:text-white">
+                    {dashboardState === 'loading'
+                      ? '正在分析…'
+                      : (primaryWeakPoint?.knowledgePoint ?? '先完成一次入门练习')}
+                  </p>
+                </div>
+                <p className="text-3xl font-bold tabular-nums text-sky-700 dark:text-sky-300">
+                  {mastery}%
+                </p>
+              </div>
+              <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.max(4, Math.min(100, mastery))}%` }}
+                  transition={{ duration: 0.8, delay: 0.25 }}
+                  className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400"
+                />
+              </div>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {profileReason}
+              </p>
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">近 14 天正确率</p>
+                  <p className="mt-1 text-lg font-bold tabular-nums text-slate-900 dark:text-white">
+                    {accuracy === null || accuracy === undefined ? '暂无' : `${accuracy}%`}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">待复习</p>
+                  <p className="mt-1 text-lg font-bold tabular-nums text-amber-600 dark:text-amber-300">
+                    {dashboard?.dueReviews.length ?? 0} 项
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">累计练习</p>
+                  <p className="mt-1 text-lg font-bold tabular-nums text-slate-900 dark:text-white">
+                    {dashboard?.summary.totalQuestions ?? 0} 题
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">学习记录</p>
+                  <p className="mt-1 text-lg font-bold text-emerald-600 dark:text-emerald-300">
+                    {profileContext?.hasPersonalizationSignals ? '已启用' : '待收集'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col justify-between rounded-2xl border border-sky-200 bg-sky-50/80 p-5 dark:border-sky-900/60 dark:bg-sky-950/30">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-sky-800 dark:text-sky-200">
+                  <Target className="h-4 w-4" />
+                  系统下一步怎么安排
+                </div>
+                <p className="mt-3 text-xl font-bold text-slate-950 dark:text-white">
+                  {primaryRecommendation?.title ?? '先做一次入门练习'}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  {primaryRecommendation?.reason ?? '用 5 道题建立基线，后续难度和内容会自动调整。'}
+                </p>
+              </div>
+              <Link
+                href={profileAction.href}
+                className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-sky-600/20 transition-colors hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+              >
+                {profileAction.label}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </motion.section>
+
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.1 }}
           className={`${suggestionPanelClass} p-5`}
         >
@@ -264,13 +583,13 @@ export default function CloudMindPage() {
               <h2 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
                 {dashboardState === 'error'
                   ? '暂时没有拿到实时建议'
-                  : (primaryRecommendation?.title ?? '先完成一次入门诊断')}
+                  : (primaryRecommendation?.title ?? '先完成一次入门练习')}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
                 {dashboardState === 'error'
                   ? '可以直接从下面的 AI 工具开始。'
                   : (primaryRecommendation?.reason ??
-                    '建立第一份学情画像后，智囊会优先推荐更适合当前状态的 AI 工具。')}
+                    '完成一些练习后，系统会优先推荐更适合你当前状态的学习工具。')}
               </p>
             </div>
 
@@ -294,8 +613,10 @@ export default function CloudMindPage() {
 
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">全部工具</h2>
-            <p className="text-sm text-slate-500">围绕学习任务组织核心入口</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">按任务选择工具</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              学习时先用核心工具，准备课程时进入资源生成区
+            </p>
           </div>
           <span className="rounded-full border border-slate-200/80 bg-white/85 px-3 py-1 text-xs font-semibold text-slate-500 dark:border-slate-700/40 dark:bg-slate-900/55 dark:text-slate-400">
             {TOOLS.length} 个工具
@@ -308,52 +629,98 @@ export default function CloudMindPage() {
           animate="visible"
           className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {TOOLS.map((tool) => {
-            const Icon = tool.icon;
-            return (
-              <motion.div key={tool.id} variants={itemVariants}>
-                <Link
-                  href={tool.href}
-                  className="group relative flex min-h-44 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-lg shadow-slate-200/50 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/50 hover:bg-white hover:shadow-xl hover:shadow-indigo-200/50 dark:border-slate-700/30 dark:bg-slate-900/55 dark:shadow-none dark:hover:border-indigo-400/30 dark:hover:bg-slate-900/75 dark:hover:shadow-indigo-500/10"
-                >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-[0.06] dark:group-hover:opacity-[0.08]`}
-                  />
+          {(['learning', 'resources'] as const).map((group) => (
+            <div key={group} className="contents">
+              <div className="col-span-full flex items-end justify-between gap-3 border-b border-slate-200/70 pb-2 dark:border-slate-700/40">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    {group === 'learning' ? '学习工具' : '资源与生成'}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {group === 'learning'
+                      ? '直接解决一道题、补一个知识点，或开始复习。'
+                      : '把知识点整理成课件、讲义和可复用的课程材料。'}
+                  </p>
+                </div>
+              </div>
+              {TOOLS.filter((tool) => tool.group === group).map((tool) => {
+                const Icon = tool.icon;
+                const policy = policies?.[tool.policyKey];
+                const isRecommended = recommendedToolId === tool.id;
+                const cardView = buildToolCardView(
+                  tool.id,
+                  policy,
+                  profileContext?.dueReviews.length ?? dashboard?.dueReviews.length ?? 0,
+                );
+                const toolHref = buildToolHref(tool.id, tool.href, policy);
+                return (
+                  <motion.div key={tool.id} variants={itemVariants}>
+                    <Link
+                      href={toolHref}
+                      aria-label={`${tool.label}：${cardView.action}`}
+                      className={`group relative flex min-h-56 flex-col overflow-hidden rounded-2xl border bg-white/90 p-6 shadow-lg shadow-slate-200/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300/50 hover:bg-white hover:shadow-xl hover:shadow-indigo-200/50 dark:bg-slate-900/55 dark:shadow-none dark:hover:border-indigo-400/30 dark:hover:bg-slate-900/75 dark:hover:shadow-indigo-500/10 ${
+                        isRecommended
+                          ? 'border-sky-400 ring-2 ring-sky-400/20 dark:border-sky-400/70 dark:ring-sky-400/20'
+                          : 'border-slate-200/80 dark:border-slate-700/30'
+                      }`}
+                    >
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-[0.06] dark:group-hover:opacity-[0.08]`}
+                      />
 
-                  <div className="relative z-10 flex h-full flex-col">
-                    <div className="mb-4 flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-lg`}
-                        >
-                          <Icon className="h-6 w-6 text-white" />
+                      <div className="relative z-10 flex h-full flex-col">
+                        <div className="mb-4 flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-lg`}
+                            >
+                              <Icon className="h-6 w-6 text-white" />
+                            </div>
+                            {tool.badge && (
+                              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                                {tool.badge}
+                              </span>
+                            )}
+                          </div>
+                          <ArrowRight className="h-5 w-5 text-slate-400 transition-all duration-300 group-hover:translate-x-1 group-hover:text-indigo-500 dark:text-slate-600 dark:group-hover:text-indigo-300" />
                         </div>
-                        {tool.badge && (
-                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-                            {tool.badge}
-                          </span>
-                        )}
+
+                        <h3 className="mb-1.5 text-lg font-bold text-slate-800 dark:text-slate-100">
+                          {tool.label}
+                        </h3>
+                        <div className="mt-3 flex flex-1 flex-col border-t border-slate-200/80 pt-3 dark:border-slate-700/50">
+                          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-sky-700 dark:text-sky-300">
+                            {isRecommended ? (
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            ) : (
+                              <Target className="h-3.5 w-3.5" />
+                            )}
+                            {isRecommended ? '当前优先' : cardView.kicker}
+                          </div>
+                          <p className="mt-1.5 text-sm font-semibold leading-5 text-slate-800 dark:text-slate-100">
+                            {cardView.title}
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                            {cardView.detail}
+                          </p>
+                          <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-3 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                            <span className="inline-flex items-center gap-1">
+                              <Clock3 className="h-3.5 w-3.5" />
+                              {cardView.meta}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-sky-700 dark:text-sky-300">
+                              <ListChecks className="h-3.5 w-3.5" />
+                              {cardView.action}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-slate-400 transition-all duration-300 group-hover:translate-x-1 group-hover:text-indigo-500 dark:text-slate-600 dark:group-hover:text-indigo-300" />
-                    </div>
-
-                    <h3 className="mb-1.5 text-lg font-bold text-slate-800 dark:text-slate-100">
-                      {tool.label}
-                    </h3>
-                    <p className="flex-1 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                      {tool.description}
-                    </p>
-
-                    <div className="mt-4">
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800/70 dark:text-slate-400">
-                        {tool.stats}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ))}
         </motion.section>
       </div>
     </SkyAppShell>

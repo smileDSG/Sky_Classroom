@@ -1,5 +1,6 @@
 import type { KBStats } from '@/lib/knowledge-base/types';
 import type { ConversationProfileSummary } from '@/lib/student/profile-signals';
+import type { LearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
 
 export type EvidenceType = 'mistake' | 'profile' | 'memory' | 'knowledge' | 'behavior';
 
@@ -104,6 +105,14 @@ export type TutoringExplanationStyle =
 
 export type TutoringPacing = 'remedial' | 'steady' | 'sprint';
 
+export type ToolPersonalizationMode =
+  | 'diagnose'
+  | 'practice'
+  | 'retain'
+  | 'teach'
+  | 'present'
+  | 'plan';
+
 export type TutoringResourceFormat =
   | 'worked_example'
   | 'code_case'
@@ -124,6 +133,37 @@ export interface TutoringPolicy {
     summary: string;
     confidence?: number;
   }>;
+}
+
+export interface ToolPersonalizationPolicy {
+  mode: ToolPersonalizationMode;
+  targetTopic?: string;
+  knowledgePoints: string[];
+  difficulty: PersonalizationDifficulty;
+  explanationStyle: TutoringExplanationStyle;
+  pacing: TutoringPacing;
+  questionCount: number;
+  durationMinutes: number;
+  action: 'diagnostic' | 'teach' | 'review' | 'quiz';
+  explanationMode: 'immediate' | 'on-request';
+  reasonCodes: string[];
+}
+
+export interface ToolPersonalizationPolicies {
+  solve: ToolPersonalizationPolicy;
+  quiz: ToolPersonalizationPolicy;
+  memory: ToolPersonalizationPolicy;
+  teaching: ToolPersonalizationPolicy;
+  slides: ToolPersonalizationPolicy;
+  learningPath: ToolPersonalizationPolicy;
+}
+
+export interface PersonalizationShadowComparison {
+  baselineTargetTool: CloudMindToolTarget | null;
+  newTargetTool: CloudMindToolTarget | null;
+  baselineHref: string | null;
+  newHref: string | null;
+  changed: boolean;
 }
 
 export interface PersonalizationContext {
@@ -149,7 +189,10 @@ export interface PersonalizationContext {
     reason: string;
   };
   preferredDifficulty: PersonalizationDifficulty;
+  learnerDecision?: LearnerDecision;
+  shadowComparison?: PersonalizationShadowComparison;
   tutoringPolicy?: TutoringPolicy;
+  toolPolicies?: ToolPersonalizationPolicies;
   recommendation: {
     title: string;
     reason: string;

@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -65,7 +66,6 @@ const styleOptions = [
   { label: '启发式', value: 'heuristic' },
 ];
 const difficultyOptions = [
-  { label: '初中', value: 'junior' },
   { label: '高中', value: 'senior' },
   { label: '大学', value: 'college' },
 ];
@@ -90,14 +90,14 @@ function MobileAssistantContent() {
   const view = searchParams.get('view');
   const [subject] = useState('化学');
   const [style] = useState('detailed');
-  const [difficulty] = useState('junior');
+  const [difficulty] = useState('senior');
   const [question, setQuestion] = useState('');
   const styleLabel = useMemo(
     () => styleOptions.find((item) => item.value === style)?.label ?? '详细',
     [style],
   );
   const difficultyLabel = useMemo(
-    () => difficultyOptions.find((item) => item.value === difficulty)?.label ?? '初中',
+    () => difficultyOptions.find((item) => item.value === difficulty)?.label ?? '高中',
     [difficulty],
   );
 

@@ -4,7 +4,7 @@ import type { StudyLabViewModel } from '@/lib/sky/study-lab-data';
 import { PanelShell } from './panel-shell';
 
 function formatAccuracy(value: number | null): string {
-  return value === null ? '待诊断' : `${Math.round(value)}%`;
+  return value === null ? '待了解' : `${Math.round(value)}%`;
 }
 
 export function ProfileSummaryPanel({
@@ -17,7 +17,7 @@ export function ProfileSummaryPanel({
   const primaryWeakPoint = profile.weakPoints[0];
 
   return (
-    <PanelShell icon={ShieldCheck} title="学情画像" eyebrow="Profile" error={error}>
+    <PanelShell icon={ShieldCheck} title="学习情况" eyebrow="Profile" error={error}>
       {profile.hasLearningData ? (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -47,7 +47,7 @@ export function ProfileSummaryPanel({
                     {point.knowledgePoint}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    掌握度 {Math.round(point.mastery)}% · 近错 {point.recentMistakeCount} 次
+                    掌握情况 {Math.round(point.mastery)}% · 近错 {point.recentMistakeCount} 次
                   </span>
                 </span>
                 <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
@@ -57,12 +57,12 @@ export function ProfileSummaryPanel({
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600 dark:border-cyan-100/15 dark:bg-white/[0.04] dark:text-slate-300">
-          还没有足够的学习信号。先完成一次诊断、错题沉淀或测验，系统才会生成真实画像。
+          还没有足够的学习记录。先完成一次练习、整理错题或参加测验，系统才能更准确地了解你。
           <Link
             href="/sky/cloud-mind/quiz"
             className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 dark:bg-emerald-300 dark:text-slate-950"
           >
-            开始诊断
+            开始入门练习
           </Link>
         </div>
       )}

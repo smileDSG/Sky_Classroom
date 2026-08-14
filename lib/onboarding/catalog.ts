@@ -3,6 +3,8 @@ export interface CatalogOption<T extends string = string> {
   label: string;
 }
 
+const option = <T extends string>(id: T, label: string): CatalogOption<T> => ({ id, label });
+
 export const PRODUCT_IDENTITIES = [
   'learner',
   'educator',
@@ -23,8 +25,33 @@ export const PROFILE_STAGES = [
   'other',
 ] as const;
 
+/**
+ * Stages shown in the current onboarding flow.
+ *
+ * `PROFILE_STAGES` still includes legacy values so existing saved profiles
+ * can be parsed safely. New users are guided toward high-school and above.
+ */
+export const PROFILE_STAGE_OPTIONS = PROFILE_STAGES.filter((stage) => stage !== 'middle');
+
 export type ProductIdentity = (typeof PRODUCT_IDENTITIES)[number];
 export type ProfileStage = (typeof PROFILE_STAGES)[number];
+
+export const LEARNER_FOUNDATIONS = [
+  option('starting', '刚开始接触'),
+  option('developing', '有基础但不稳定'),
+  option('solid', '基础较稳，准备进阶'),
+  option('advanced', '基础扎实，想挑战高阶'),
+] as const;
+
+export const LEARNER_WEEKLY_TIME = [
+  option('light', '每周少于 2 小时'),
+  option('regular', '每周 2-5 小时'),
+  option('focused', '每周 5-10 小时'),
+  option('intensive', '每周 10 小时以上'),
+] as const;
+
+export type LearnerFoundation = (typeof LEARNER_FOUNDATIONS)[number]['id'];
+export type LearnerWeeklyTime = (typeof LEARNER_WEEKLY_TIME)[number]['id'];
 
 export const IDENTITY_LABELS: Record<ProductIdentity, string> = {
   learner: '学习者',
@@ -45,8 +72,6 @@ export const STAGE_LABELS: Record<ProfileStage, string> = {
   professional: '职业发展 / 成人学习',
   other: '其他',
 };
-
-const option = <T extends string>(id: T, label: string): CatalogOption<T> => ({ id, label });
 
 export const DOMAIN_CATALOG_BY_STAGE = {
   preschool: [
@@ -105,6 +130,14 @@ export const DOMAIN_CATALOG_BY_STAGE = {
   ],
   undergraduate: [
     option('major-core', '专业核心课'),
+    option('computer-science', '计算机科学'),
+    option('artificial-intelligence', '人工智能'),
+    option('data-science', '数据科学'),
+    option('engineering', '工程技术'),
+    option('economics-management', '经济与管理'),
+    option('humanities-social-sciences', '人文与社会科学'),
+    option('medicine-life-sciences', '医学与生命科学'),
+    option('design-arts', '设计与艺术'),
     option('general-education', '通识课程'),
     option('languages', '语言学习'),
     option('programming', '编程'),

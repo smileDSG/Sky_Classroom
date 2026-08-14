@@ -3,6 +3,7 @@
  */
 
 import type { MistakeCause } from '@/lib/solve/types';
+import type { LearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
 
 // ── Mistake tracker ──────────────────────────────────────────────
 
@@ -45,6 +46,31 @@ export interface MistakeStats {
   reviewedCount: number;
   causeDistribution: Record<MistakeCause, number>;
   recentCount: number;  // last 7 days
+}
+
+export interface MistakeReviewKnowledgeChange {
+  knowledgePoint: string;
+  masteryBefore: number | null;
+  masteryAfter: number | null;
+  confidenceBefore: number | null;
+  confidenceAfter: number | null;
+  evidenceCountBefore: number;
+  evidenceCountAfter: number;
+}
+
+export interface MistakeReviewResult {
+  reviewed: boolean;
+  id: string;
+  review: {
+    reviewCount: number;
+    masteryLevel: number;
+    nextReview?: number;
+  } | null;
+  profileUpdate: {
+    recorded: boolean;
+    changes: MistakeReviewKnowledgeChange[];
+    learnerDecision: LearnerDecision;
+  };
 }
 
 // ── Knowledge graph (re-exported from unified module) ───────────

@@ -14,10 +14,10 @@ export function TrustReviewPanel({ viewModel }: { viewModel: StudyLabViewModel }
   const hasErrors = Object.keys(viewModel.errors).length > 0;
 
   return (
-    <PanelShell icon={ShieldCheck} title="可信审查" eyebrow="Trust">
+    <PanelShell icon={ShieldCheck} title="内容检查" eyebrow="Trust">
       <div className="grid gap-3 md:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 dark:border-cyan-100/10 dark:bg-white/[0.04]">
-          <div className="text-xs text-slate-500 dark:text-slate-400">来源引用</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">资料来源</div>
           <div className="mt-1 text-sm font-semibold text-slate-950 dark:text-white">
             {sourceEntries.length > 0 ? '已显示数据源' : '等待学习数据'}
           </div>
@@ -52,7 +52,7 @@ export function TrustReviewPanel({ viewModel }: { viewModel: StudyLabViewModel }
         ) : (
           <div className="flex items-start gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs leading-5 text-slate-500 dark:border-cyan-100/15 dark:bg-white/[0.04] dark:text-slate-400">
             <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            暂无可追溯学习数据。完成诊断或复习后，来源和置信度会随真实数据展示。
+            暂无可查看的学习记录。完成练习或复习后，这里会显示资料来源和判断把握。
           </div>
         )}
       </div>

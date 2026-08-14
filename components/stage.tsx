@@ -37,6 +37,7 @@ import {
 import { AlertTriangle, LayoutList, MessageSquare } from 'lucide-react';
 import { PptViewer } from '@/components/classroom/ppt-viewer';
 import { VisuallyHidden } from 'radix-ui';
+import { recordLearnerBehaviorEvent } from '@/lib/adaptive-learning/profile/client';
 
 /**
  * Stage Component
@@ -65,6 +66,54 @@ export function Stage({
   const failedOutlines = useStageStore.use.failedOutlines();
 
   const currentScene = getCurrentScene();
+  const currentSceneKnowledgePoints = useMemo(() => {
+    if (!currentScene) return [];
+    if (currentScene.knowledgePoints && currentScene.knowledgePoints.length > 0) {
+      return currentScene.knowledgePoints;
+    }
+
+    const outline = outlines.find((candidate) => candidate.order === currentScene.order);
+    if (outline?.keyPoints && outline.keyPoints.length > 0) return outline.keyPoints;
+
+    return currentScene.content.type === 'quiz' ? (currentScene.content.knowledgePoints ?? []) : [];
+  }, [currentScene, outlines]);
+  const currentSceneKnowledgePointsRef = useRef<string[]>([]);
+  currentSceneKnowledgePointsRef.current = currentSceneKnowledgePoints;
+
+  useEffect(() => {
+    if (!currentScene) return;
+
+    const sceneId = currentScene.id;
+    const sceneKnowledgePoints = [...currentSceneKnowledgePointsRef.current];
+    dwellStartedAtRef.current = Date.now();
+    dwellAccumulatedSecondsRef.current = 0;
+
+    return () => {
+      const startedAt = dwellStartedAtRef.current;
+      if (startedAt) {
+        const activeDurationSeconds = Math.max(
+          0,
+          Math.round(
+            (dwellAccumulatedSecondsRef.current + (Date.now() - startedAt) / 1000) * 10,
+          ) / 10,
+        );
+        if (activeDurationSeconds > 0) {
+          void recordLearnerBehaviorEvent({
+            type: 'dwell-recorded',
+            source: 'scene-view',
+            payload: {
+              activeDurationSeconds,
+              baselineDurationSeconds: 30,
+              knowledgePoints: sceneKnowledgePoints,
+            },
+            correlationId: sceneId,
+          });
+        }
+      }
+      dwellStartedAtRef.current = null;
+      dwellAccumulatedSecondsRef.current = 0;
+    };
+  }, [currentScene?.id]);
 
   // PPT slide panel state
   const [pptPanelOpen, setPptPanelOpen] = useState(false);
@@ -190,6 +239,10 @@ export function Stage({
   const chatAreaRef = useRef<ChatAreaRef>(null);
   const lectureSessionIdRef = useRef<string | null>(null);
   const lectureActionCounterRef = useRef(0);
+  const replayCountRef = useRef(0);
+  const playbackActiveStartedAtRef = useRef<number | null>(null);
+  const dwellStartedAtRef = useRef<number | null>(null);
+  const dwellAccumulatedSecondsRef = useRef(0);
   const discussionAbortRef = useRef<AbortController | null>(null);
   const presentationIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -320,6 +373,15 @@ export function Stage({
     if (!askInputValue.trim()) return;
 
     const message = askInputValue.trim();
+    void recordLearnerBehaviorEvent({
+      type: 'question-asked',
+      source: 'playback-question',
+      payload: {
+        intent: message.slice(0, 80),
+        knowledgePoints: currentSceneKnowledgePoints,
+      },
+      correlationId: currentScene?.id,
+    });
     setIsAskDialogOpen(false);
     setAskInputValue('');
 
@@ -334,7 +396,36 @@ export function Stage({
     setChatIsStreaming(true);
     setChatSessionType('qa');
     setThinkingState({ stage: 'director' });
-  }, [askInputValue, setChatAreaCollapsed]);
+  }, [askInputValue, currentScene, currentSceneKnowledgePoints, setChatAreaCollapsed]);
+
+  const handleSelfReport = useCallback(
+    (level: 'confused' | 'understood') => {
+      void recordLearnerBehaviorEvent({
+        type: 'self-reported',
+        source: 'playback-feedback',
+        payload: { level, knowledgePoints: currentSceneKnowledgePoints },
+        correlationId: currentScene?.id,
+      });
+    },
+    [currentScene, currentSceneKnowledgePoints],
+  );
+
+  const recordPlaybackPause = useCallback(() => {
+    const startedAt = playbackActiveStartedAtRef.current;
+    if (!startedAt || !currentScene) return;
+
+    const activeDurationSeconds = Math.max(
+      0,
+      Math.round(((Date.now() - startedAt) / 1000) * 10) / 10,
+    );
+    void recordLearnerBehaviorEvent({
+      type: 'segment-paused',
+      source: 'playback',
+      payload: { activeDurationSeconds, knowledgePoints: currentSceneKnowledgePoints },
+      correlationId: currentScene.id,
+    });
+    playbackActiveStartedAtRef.current = null;
+  }, [currentScene, currentSceneKnowledgePoints]);
 
   // Handle key down in ask dialog
   const handleAskInputKeyDown = useCallback(
@@ -449,6 +540,9 @@ export function Stage({
 
   // Initialize playback engine when scene changes
   useEffect(() => {
+    replayCountRef.current = 0;
+    playbackActiveStartedAtRef.current = null;
+
     // Bump epoch so any stale SSE callbacks from the previous scene are discarded
     sceneEpochRef.current++;
 
@@ -586,6 +680,7 @@ export function Stage({
         // until scene transition (auto-play) or user restarts. Scene change
         // effect handles the reset.
         setPlaybackCompleted(true);
+        playbackActiveStartedAtRef.current = null;
 
         // End lecture session on playback complete
         if (lectureSessionIdRef.current) {
@@ -641,6 +736,7 @@ export function Stage({
           lectureSessionIdRef.current = sessionId;
           lectureActionCounterRef.current = 0;
         }
+        playbackActiveStartedAtRef.current = Date.now();
         engine.start();
       })();
     } else {
@@ -806,6 +902,7 @@ export function Stage({
 
     const mode = engine.getMode();
     if (mode === 'playing' || mode === 'live') {
+      recordPlaybackPause();
       engine.pause();
       // Pause lecture buffer so text stops immediately
       if (lectureSessionIdRef.current) {
@@ -813,6 +910,7 @@ export function Stage({
       }
     } else if (mode === 'paused') {
       engine.resume();
+      playbackActiveStartedAtRef.current = Date.now();
       // Resume lecture buffer
       if (lectureSessionIdRef.current) {
         chatAreaRef.current?.resumeBuffer(lectureSessionIdRef.current);
@@ -828,13 +926,25 @@ export function Stage({
       if (wasCompleted) {
         // Restart from beginning (user clicked restart after completion)
         lectureActionCounterRef.current = 0;
+        replayCountRef.current += 1;
+        void recordLearnerBehaviorEvent({
+          type: 'segment-replayed',
+          source: 'playback',
+          payload: {
+            replayCount: replayCountRef.current,
+            knowledgePoints: currentSceneKnowledgePoints,
+          },
+          correlationId: currentScene?.id,
+        });
+        playbackActiveStartedAtRef.current = Date.now();
         engine.start();
       } else {
         // Continue from current position (e.g. after discussion end)
+        playbackActiveStartedAtRef.current = Date.now();
         engine.continuePlayback();
       }
     }
-  }, [playbackCompleted, currentScene]);
+  }, [currentScene, currentSceneKnowledgePoints, playbackCompleted, recordPlaybackPause]);
 
   // get scene information
   const isPendingScene = currentSceneId === PENDING_SCENE_ID;
@@ -1283,6 +1393,7 @@ export function Stage({
               showStopDiscussion={showStopButton}
               onStopDiscussion={handleStopDiscussion}
               onAskTeacher={handleOpenAskDialog}
+              onReportUnderstanding={handleSelfReport}
               ttsEnabled={ttsEnabled}
               ttsMuted={ttsMuted}
               ttsVolume={ttsVolume}

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildStudyLabViewModel, type StudyLabApiSnapshots } from '@/lib/sky/study-lab-data';
+import {
+  buildStudyLabViewModel,
+  type StudyLabApiSnapshots,
+  type StudyLabLearningPlanResponse,
+} from '@/lib/sky/study-lab-data';
 
 const personalization = {
   userId: 'u1',
@@ -87,11 +91,73 @@ const learningPath = {
   updatedAt: 1200,
 };
 
+const scheduledTask = {
+  id: 'task-today',
+  pathNodeId: 'n2',
+  nodeId: 'neural-network-basics',
+  type: 'practice' as const,
+  title: '今日神经网络练习',
+  objective: '巩固反向传播',
+  plannedMinutes: 30,
+  difficulty: 2,
+  resourceIds: [],
+  successCriteria: ['完成练习'],
+  status: 'pending' as const,
+  scheduledDate: '2026-08-06',
+  reasonCodes: ['low-mastery'],
+  actionHref: '/sky/cloud-mind/quiz?topic=nn',
+};
+
+const learningPlan: StudyLabLearningPlanResponse = {
+  plan: {
+    id: 'plan-1',
+    userId: 'u1',
+    pathId: 'path1',
+    version: 1,
+    status: 'active' as const,
+    generatedAt: '2026-08-06T00:00:00.000Z',
+    validFrom: '2026-08-06',
+    validTo: '2026-09-02',
+    curriculumPackVersion: '2026.1',
+    plannerVersion: '2.0.0',
+    profileSnapshot: {
+      userId: 'u1',
+      stage: 'senior-high',
+      grade: 'grade-12',
+      subject: 'math',
+      curriculumPackVersion: '2026.1',
+      examDate: '2026-09-03',
+      weeklyAvailableMinutes: 180,
+      dailyAvailability: { thu: 60 },
+      preferredSessionMinutes: 30,
+      constraints: { restDays: ['sun'], maxDailyMinutes: 60, teacherLockedNodeIds: [] },
+      createdAt: '2026-08-01T00:00:00.000Z',
+      updatedAt: '2026-08-01T00:00:00.000Z',
+    },
+    tasks: [scheduledTask],
+    weeklyTargets: [],
+    constraintChecks: ['daily-capacity-respected'],
+    evidenceEventIds: [],
+  },
+  view: {
+    kind: 'today' as const,
+    planId: 'plan-1',
+    pathId: 'path1',
+    from: '2026-08-06',
+    to: '2026-08-06',
+    tasks: [scheduledTask],
+    weeklyTargets: [],
+    nextTask: scheduledTask,
+    summary: { totalTasks: 1, completedTasks: 0, plannedMinutes: 30, completionRate: 0 },
+  },
+};
+
 function makeSnapshots(overrides: Partial<StudyLabApiSnapshots> = {}): StudyLabApiSnapshots {
   return {
     personalization: { status: 'fulfilled', data: personalization },
     workshop: { status: 'fulfilled', data: workshop },
     learningPath: { status: 'fulfilled', data: { path: learningPath } },
+    learningPlan: { status: 'fulfilled', data: learningPlan },
     ...overrides,
   };
 }
@@ -120,6 +186,23 @@ describe('buildStudyLabViewModel', () => {
       masteryPercent: 64,
     });
     expect(viewModel.learningPath?.nodes).toHaveLength(2);
+  });
+
+  it('connects the active plan task to today mission and its path node', () => {
+    const viewModel = buildStudyLabViewModel(makeSnapshots());
+
+    expect(viewModel.learningPlan?.todayTask).toMatchObject({
+      id: 'task-today',
+      pathNodeId: 'n2',
+      plannedMinutes: 30,
+      actionHref: '/sky/cloud-mind/quiz?topic=nn',
+    });
+    expect(viewModel.learningPath?.nodes[1]).toMatchObject({
+      id: 'n2',
+      scheduledDate: '2026-08-06',
+      scheduledTaskCount: 1,
+      isToday: true,
+    });
   });
 
   it('keeps workshop data usable when personalization fails', () => {

@@ -20,7 +20,7 @@ const STRUCTURED_OCR_PROMPT = `你是纸质题目与手写内容视觉转录器�
 
 只返回 {"problems":[ProblemSpec,...]} JSON 对象，不要输出 JSON 之外内容。
 每题必须包含 id、stage、subject、questionType、stem、options、givens、asks、formulas、ambiguities、confidence。
-stage 只能是初中、高中、大学、unknown。缺省数组必须返回 []。公式使用 LaTeX。
+stage 只能是高中、大学、unknown。缺省数组必须返回 []。公式使用 LaTeX。
 必须支持中文、英文、数字、单位、手写与印刷混排，以及分式、根式、上下标、向量、积分、求和和矩阵。
 多道题分别放入 problems；保留题号、材料、子问题、选项、表格、图形标签与关系。
 看不清、被裁剪或存在多种读法时禁止猜测：在 ambiguities 内写 {field,candidates,reason} 并降低 confidence。

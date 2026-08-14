@@ -35,6 +35,7 @@ export interface SerializableScene {
   type: string;
   title: string;
   order: number;
+  knowledgePoints?: string[];
   content: unknown;
   actions?: unknown[];
   whiteboards?: unknown[];
@@ -107,6 +108,7 @@ export function serializeScene(scene: Scene): SerializableScene {
     type: scene.type,
     title: scene.title,
     order: scene.order,
+    knowledgePoints: scene.knowledgePoints,
     content: scene.content as unknown,
     actions: scene.actions as unknown[] | undefined,
     whiteboards: scene.whiteboards as unknown[] | undefined,
@@ -138,6 +140,7 @@ export function deserializeScene(data: unknown): Scene {
     ) as Scene['type'],
     title: assertString(obj.title, 'Scene.title'),
     order: assertNumber(obj.order, 'Scene.order'),
+    knowledgePoints: obj.knowledgePoints as string[] | undefined,
     content: obj.content as SceneContent,
     actions: obj.actions as Scene['actions'],
     whiteboards: obj.whiteboards as Scene['whiteboards'],

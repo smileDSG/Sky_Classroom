@@ -184,6 +184,7 @@ export const SceneSchema = z.object({
   type: z.enum(['slide', 'quiz', 'interactive', 'pbl']),
   title: z.string().min(1).max(200),
   order: z.number().int().nonnegative(),
+  knowledgePoints: z.array(z.string().min(1)).optional(),
   content: z.object({}),
   actions: z.array(z.object({})).optional(),
   whiteboards: z.array(z.object({})).optional(),

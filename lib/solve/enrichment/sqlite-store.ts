@@ -137,6 +137,7 @@ function rowToEntry(row: DbRow): QuestionBankEntry {
     problemHash: row.problem_hash,
     problemText: row.problem_text,
     answer: row.answer,
+    solution: '',
     knowledgePoints,
     similarQuestions: [],
     agentId: row.agent_id as SolverAgentType,
@@ -211,6 +212,7 @@ export async function saveQuestion(entry: SqliteStoreEntry): Promise<QuestionBan
     problemHash,
     problemText: entry.problemText,
     answer: entry.answer,
+    solution: entry.solution ?? '',
     knowledgePoints: entry.knowledgePoints.map((k) => ({
       name: k.name,
       description: k.description,

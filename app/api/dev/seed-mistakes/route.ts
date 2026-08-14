@@ -25,12 +25,12 @@ interface SeedMistake {
 
 const SAMPLE_MISTAKES: SeedMistake[] = [
   {
-    id: 'seed-func-001',
-    problemText: '已知二次函数 y = ax² + bx + c 的图象经过点 (1, 0)、(-1, 4) 和 (2, 3)，求 a、b、c 的值。',
-    userAnswer: 'a=1, b=-2, c=1',
-    correctAnswer: 'a=1, b=-2, c=1',
+    id: 'seed-derivative-001',
+    problemText: '已知函数 f(x)=x³-3x，判断它在区间 (-1, 1) 上的单调性。',
+    userAnswer: '单调递增',
+    correctAnswer: '单调递减',
     errorType: 'concept',
-    knowledgePoints: ['二次函数', '待定系数法'],
+    knowledgePoints: ['高中数学·导数', '函数单调性'],
     source: 'solve',
   },
   {

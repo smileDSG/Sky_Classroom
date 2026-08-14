@@ -109,18 +109,18 @@ const TABS: Array<{ key: TabKey; label: string; icon: typeof BookOpen }> = [
 
 function profileErrorMessage(error: unknown): string {
   if (!(error instanceof LearnerProfileClientError)) {
-    return '个人画像请求失败，请重试。';
+    return '学习情况读取失败，请重试。';
   }
 
   switch (error.code) {
     case 'UNAUTHORIZED':
       return '登录状态已失效，请重新登录后再试。';
     case 'PERSISTENT_STORAGE_UNAVAILABLE':
-      return '个人画像存储暂不可用，当前更改未保存。';
+      return '学习情况暂时无法保存，当前更改未保存。';
     case 'INVALID_PROFILE_RESPONSE':
-      return '服务端返回的个人画像不完整，已停止加载。';
+      return '返回的学习情况不完整，已停止加载。';
     default:
-      return '个人画像请求失败，当前更改未保存。';
+      return '学习情况读取失败，当前更改未保存。';
   }
 }
 
@@ -240,7 +240,7 @@ export function PersonalizationForm() {
   };
 
   const handleReset = () => {
-    if (!window.confirm('恢复为待保存的初始偏好？服务端画像将在保存后更新。')) return;
+    if (!window.confirm('恢复为待保存的初始偏好？保存后学习情况会更新。')) return;
     setDraft(createInitialLearnerPreferences());
     setSaveState('idle');
     setStatusMessage('已恢复初始值，尚未保存。');
@@ -250,7 +250,7 @@ export function PersonalizationForm() {
     const parsed = learnerPreferencesInputSchema.safeParse(draft);
     if (!parsed.success) {
       setSaveState('error');
-      setStatusMessage(parsed.error.issues[0]?.message ?? '画像字段校验失败。');
+      setStatusMessage(parsed.error.issues[0]?.message ?? '学习情况填写有误。');
       return;
     }
 
@@ -269,7 +269,7 @@ export function PersonalizationForm() {
     } catch (error) {
       if (error instanceof LearnerProfileClientError && error.code === 'PROFILE_VERSION_CONFLICT') {
         setSaveState('conflict');
-        setStatusMessage('画像已在其他位置更新。当前更改未覆盖服务端内容。');
+        setStatusMessage('学习情况已在其他位置更新。当前更改未覆盖已保存内容。');
         return;
       }
 
@@ -285,7 +285,7 @@ export function PersonalizationForm() {
       href="/sky/onboarding?mode=edit&redirect=%2Faccount"
       className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
-      填写/编辑用户画像
+      填写/编辑学习情况
       <ArrowRight className="size-4" />
     </Link>
   );
@@ -300,7 +300,7 @@ export function PersonalizationForm() {
           className="flex min-h-56 items-center justify-center gap-3 border-violet-100 bg-violet-50/40 p-8 dark:border-violet-900 dark:bg-violet-950/20"
         >
           <LoaderCircle className="size-5 animate-spin text-violet-600" />
-          <span className="text-sm text-muted-foreground">正在加载服务端个人画像…</span>
+          <span className="text-sm text-muted-foreground">正在加载已保存的学习情况…</span>
         </Card>
       </div>
     );
@@ -313,7 +313,7 @@ export function PersonalizationForm() {
           <AlertCircle className="mt-0.5 size-5 shrink-0 text-red-600" />
           <div className="space-y-3">
             <div>
-              <h2 className="font-semibold text-red-900 dark:text-red-100">个人画像加载失败</h2>
+            <h2 className="font-semibold text-red-900 dark:text-red-100">学习情况加载失败</h2>
               <p className="mt-1 text-sm text-red-800 dark:text-red-200">{statusMessage}</p>
             </div>
             <Button type="button" variant="outline" onClick={() => void loadProfile()}>
@@ -334,9 +334,9 @@ export function PersonalizationForm() {
             <Sparkles className="size-5" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">学习者个人画像</h2>
+            <h2 className="text-lg font-semibold">我的学习情况</h2>
             <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-              这些偏好由服务端统一保存，供教学、检索、规划与学习反馈使用。
+              这些偏好会统一保存，用于上课、查资料、安排学习和学习反馈。
             </p>
           </div>
         </div>
@@ -357,7 +357,7 @@ export function PersonalizationForm() {
 
       <div
         role="tablist"
-        aria-label="个人画像设置分类"
+        aria-label="学习情况设置分类"
         className="grid grid-cols-4 gap-1 rounded-xl bg-muted/60 p-1"
       >
         {TABS.map(({ key, label, icon: Icon }) => (
@@ -553,7 +553,7 @@ export function PersonalizationForm() {
               className="resize-none"
             />
             <p className="text-xs leading-5 text-muted-foreground">
-              仅保存结构化学习偏好，不接收系统提示词或私有记忆上下文。
+              这里只保存学习偏好，不会保存系统内部设置或私密对话内容。
             </p>
           </Card>
         </div>
@@ -590,7 +590,7 @@ export function PersonalizationForm() {
                   允许可选行为信号
                 </label>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  允许使用停留、点击等非核心信号优化体验；不会直接改变掌握度。
+                  允许使用停留、点击等操作帮助改进体验；不会直接改变你的掌握情况。
                 </p>
               </div>
               <Switch
@@ -606,10 +606,10 @@ export function PersonalizationForm() {
             <div className="flex items-center justify-between gap-5">
               <div>
                 <label htmlFor="private-retrieval" className="text-sm font-semibold">
-                  允许检索个人私有知识库
+                  允许查找我上传的资料
                 </label>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  仅控制个人上传资料；平台课程知识仍按教学权限检索。
+                  只影响个人上传的资料；课程资料仍按正常权限使用。
                 </p>
               </div>
               <Switch
@@ -627,7 +627,7 @@ export function PersonalizationForm() {
         {loadState === 'missing' && saveState === 'idle' && (
           <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
             <AlertCircle className="mt-0.5 size-4 shrink-0" />
-            尚未创建个人画像。以上是待确认初始值，保存后才会生效。
+            还没有保存学习情况。以上是待确认的初始内容，保存后才会生效。
           </div>
         )}
         {saveState === 'saving' && (
@@ -636,7 +636,7 @@ export function PersonalizationForm() {
             className="flex items-center gap-2 rounded-xl border bg-muted/50 p-4 text-sm"
           >
             <LoaderCircle className="size-4 animate-spin" />
-            正在保存个人画像…
+            正在保存学习情况…
           </div>
         )}
         {saveState === 'success' && (
@@ -645,7 +645,7 @@ export function PersonalizationForm() {
             className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-100"
           >
             <CheckCircle2 className="size-4" />
-            个人画像已保存，当前版本 {version}。
+            学习情况已保存。
           </div>
         )}
         {saveState === 'conflict' && (
@@ -656,7 +656,7 @@ export function PersonalizationForm() {
             <span>{statusMessage}</span>
             <Button type="button" variant="outline" size="sm" onClick={() => void loadProfile()}>
               <RefreshCw className="size-4" />
-              加载最新画像
+            加载最新学习情况
             </Button>
           </div>
         )}
@@ -675,7 +675,7 @@ export function PersonalizationForm() {
             className="flex items-center gap-2 rounded-xl border bg-muted/40 p-4 text-sm text-muted-foreground"
           >
             <ShieldCheck className="size-4 text-emerald-600" />
-            已连接服务端个人画像 · 版本 {version}
+          已连接并保存学习情况
           </div>
         )}
       </div>
@@ -692,7 +692,7 @@ export function PersonalizationForm() {
           ) : (
             <Save className="size-4" />
           )}
-          {loadState === 'missing' ? '创建个人画像' : '保存个人画像'}
+          {loadState === 'missing' ? '保存学习情况' : '保存学习情况'}
         </Button>
       </div>
     </div>

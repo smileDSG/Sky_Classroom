@@ -65,7 +65,7 @@ const cloudTools: {
   {
     icon: Presentation,
     label: 'PPT 课件',
-    desc: '整理成课堂课件',
+    desc: '整理成讲解材料',
     href: '/m/sky/cloud-mind/slides',
     gradient: 'from-sky-500/28 via-blue-500/22 to-cyan-400/24',
     glow: 'bg-sky-300/24',
@@ -84,7 +84,7 @@ const cloudTools: {
   },
   {
     icon: MessageSquare,
-    label: '互动课堂',
+    label: '互动讲解',
     desc: '角色参与讲解',
     href: '/m/sky/assistant',
     gradient: 'from-emerald-500/28 via-teal-500/20 to-cyan-400/22',
@@ -105,8 +105,8 @@ const studyCards: {
 }[] = [
   {
     icon: GraduationCap,
-    title: '知识图谱',
-    desc: '把学习路径拆成清晰节点',
+    title: '知识地图',
+    desc: '把学习安排拆成清晰节点',
     href: '/m/sky/learning/graph',
     color: 'from-sky-500 to-blue-500',
     tag: '进阶',
@@ -124,7 +124,7 @@ const studyCards: {
   {
     icon: UserRound,
     title: '学习档案',
-    desc: '查看掌握度、打卡和成长轨迹',
+    desc: '查看掌握情况、打卡和成长轨迹',
     href: '/m/sky/learning/profile',
     color: 'from-emerald-500 to-teal-500',
     tag: '成长',
@@ -151,7 +151,7 @@ const mobileTemplates = [
     title: 'Python 入门课',
     desc: '适合零基础，30 分钟做出第一个小程序',
     prompt:
-      '从零学 Python，30 分钟写出第一个程序。请用互动课堂方式讲解变量、输入输出和一个小游戏案例。',
+      '从零学 Python，30 分钟写出第一个程序。请用互动讲解方式说明变量、输入输出和一个小游戏案例。',
   },
   {
     title: '傅里叶变换',
@@ -161,7 +161,7 @@ const mobileTemplates = [
   {
     title: '桌游规则课',
     desc: '把复杂规则讲成可操作步骤',
-    prompt: '阿瓦隆桌游怎么玩？请按角色、流程、胜负条件、常见策略做一节互动课堂。',
+    prompt: '阿瓦隆桌游怎么玩？请按角色、流程、胜负条件、常见策略做一节互动讲解。',
   },
 ];
 
@@ -289,7 +289,7 @@ function MobileSkyTeachingSection({ children }: { children: ReactNode }) {
               天穹授课
             </h3>
             <p className="mt-0.5 text-[12px] text-slate-500 dark:text-slate-400">
-              输入主题，生成一节可互动的课堂
+              输入知识点，生成一节可互动的讲解
             </p>
           </div>
         </div>
@@ -413,7 +413,7 @@ function MobileCreateClassroomCard({
             <p className="truncate text-[12px] font-semibold text-slate-100">
               {selectedTeacher?.name ?? '默认老师'} · {selectedStudentIds.length} 位学生
             </p>
-            <p className="mt-0.5 truncate text-[12px] text-slate-400">点击配置课堂角色</p>
+            <p className="mt-0.5 truncate text-[12px] text-slate-400">点击配置讲解方式</p>
           </div>
         </div>
         <ChevronDown className="size-4 shrink-0 text-slate-400" />
@@ -542,7 +542,7 @@ function MobileCreateClassroomCard({
 
           <button
             type="button"
-            aria-label="创建课堂主行动"
+            aria-label="开始讲解主行动"
             onClick={onSubmit}
             disabled={!value.trim() || isSubmitting}
             data-testid="mobile-create-classroom-action"
@@ -563,10 +563,10 @@ function MobileCreateClassroomCard({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[13px] font-extrabold">
-                {isSubmitting ? '正在提交课堂任务' : '创建互动课堂'}
+                {isSubmitting ? '正在准备讲解' : '开始知识点讲解'}
               </span>
               <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-400">
-                根据输入准备课堂流程
+                根据输入生成分步骤讲解
               </span>
             </span>
             <span
@@ -587,7 +587,7 @@ function MobileCreateClassroomCard({
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 px-4 pb-4 sm:items-center">
           <div className="w-full max-w-[360px] rounded-[22px] border border-white/10 bg-[#142236] p-4 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-[15px] font-semibold text-white">选择课堂模板</h3>
+              <h3 className="text-[15px] font-semibold text-white">选择讲解模板</h3>
               <button
                 type="button"
                 onClick={() => setTemplatePanelOpen(false)}
@@ -698,7 +698,7 @@ export default function MobileSkyHomePage() {
   const handleCreateClassroom = async () => {
     const trimmedRequirement = requirement.trim();
     if (!trimmedRequirement) {
-      toast.error('请输入课堂内容');
+      toast.error('请输入想学习的知识点');
       return;
     }
 
@@ -749,10 +749,10 @@ export default function MobileSkyHomePage() {
       }
       setRequirement('');
       setPdfFile(null);
-      toast.success('课堂任务已提交');
+      toast.success('讲解任务已提交');
       router.push(`/m/generation-progress?jobId=${jobId}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : '创建课堂失败，请重试';
+      const message = error instanceof Error ? error.message : '生成讲解失败，请重试';
       if (message === 'User not found' || message.includes('Not authenticated')) {
         toast.error('登录已过期，请重新登录');
         router.push('/m/auth/login?redirect=%2Fm%2Fsky');

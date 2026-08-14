@@ -25,7 +25,7 @@ export const SUBJECTS: SubjectConfig[] = [
       '线性代数题',
       '概率统计题',
     ],
-    gradeLevels: ['junior', 'senior', 'college'],
+    gradeLevels: ['senior', 'college'],
     priority: 1,
   },
   {
@@ -42,7 +42,7 @@ export const SUBJECTS: SubjectConfig[] = [
       '光学题',
       '近代物理题',
     ],
-    gradeLevels: ['junior', 'senior', 'college'],
+    gradeLevels: ['senior', 'college'],
     priority: 2,
   },
   {
@@ -58,7 +58,7 @@ export const SUBJECTS: SubjectConfig[] = [
       '化学方程式',
       '化学反应题',
     ],
-    gradeLevels: ['junior', 'senior', 'college'],
+    gradeLevels: ['senior', 'college'],
     priority: 3,
   },
   {
@@ -72,7 +72,7 @@ export const SUBJECTS: SubjectConfig[] = [
       '现代文阅读题',
       '作文题目',
     ],
-    gradeLevels: ['junior', 'senior'],
+    gradeLevels: ['senior'],
     priority: 4,
   },
   {
@@ -86,7 +86,7 @@ export const SUBJECTS: SubjectConfig[] = [
       '英语完形填空',
       '英语语法题',
     ],
-    gradeLevels: ['junior', 'senior'],
+    gradeLevels: ['senior'],
     priority: 5,
   },
   {
@@ -110,7 +110,7 @@ export const SUBJECTS: SubjectConfig[] = [
       '高中历史题',
       '高考历史真题',
     ],
-    gradeLevels: ['junior', 'senior'],
+    gradeLevels: ['senior'],
     priority: 7,
   },
   {
@@ -121,7 +121,7 @@ export const SUBJECTS: SubjectConfig[] = [
       '高中地理题',
       '高考地理真题',
     ],
-    gradeLevels: ['junior', 'senior'],
+    gradeLevels: ['senior'],
     priority: 8,
   },
   {
@@ -144,7 +144,6 @@ export const SUBJECT_MAP: Record<SubjectId, SubjectConfig> = Object.fromEntries(
 // ── Grade levels ────────────────────────────────────────────────────
 
 export const GRADES: GradeConfig[] = [
-  { id: 'junior', label: '初中', searchSuffix: '初中' },
   { id: 'senior', label: '高中', searchSuffix: '高中' },
   { id: 'college', label: '大学', searchSuffix: '大学' },
 ];

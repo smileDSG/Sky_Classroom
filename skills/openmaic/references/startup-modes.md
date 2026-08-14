@@ -2,7 +2,7 @@
 
 ## Goal
 
-Help the user choose how OpenMAIC should run before you start anything.
+Help the user choose how 智眸无界 should run before you start anything.
 
 ## Options
 

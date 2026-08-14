@@ -1,0 +1,30 @@
+{
+  "datasetVersion": "1.0.0",
+  "description": "Synthetic fixed-item response sequence for deterministic ability-model regression tests.",
+  "responses": [
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-01-001", "difficulty": -0.7, "correct": false, "occurredAt": "2026-08-01T08:00:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-01-001", "difficulty": -0.7, "correct": true, "occurredAt": "2026-08-01T08:01:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-02-003", "difficulty": 0, "correct": false, "occurredAt": "2026-08-01T08:02:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-02-003", "difficulty": 0, "correct": true, "occurredAt": "2026-08-01T08:03:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-10-010", "difficulty": 0.7, "correct": false, "occurredAt": "2026-08-01T08:04:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-10-010", "difficulty": 0.7, "correct": true, "occurredAt": "2026-08-01T08:05:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-01-003", "difficulty": -0.7, "correct": false, "occurredAt": "2026-08-01T08:06:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-01-003", "difficulty": -0.7, "correct": true, "occurredAt": "2026-08-01T08:07:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-03-004", "difficulty": 0, "correct": false, "occurredAt": "2026-08-01T08:08:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-03-004", "difficulty": 0, "correct": true, "occurredAt": "2026-08-01T08:09:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-10-009", "difficulty": 0.7, "correct": false, "occurredAt": "2026-08-01T08:10:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-10-009", "difficulty": 0.7, "correct": true, "occurredAt": "2026-08-01T08:11:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-04-001", "difficulty": -0.7, "correct": false, "occurredAt": "2026-08-01T08:12:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-04-001", "difficulty": -0.7, "correct": true, "occurredAt": "2026-08-01T08:13:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-05-004", "difficulty": 0, "correct": false, "occurredAt": "2026-08-01T08:14:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-05-004", "difficulty": 0, "correct": true, "occurredAt": "2026-08-01T08:15:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-06-009", "difficulty": 0.7, "correct": false, "occurredAt": "2026-08-01T08:16:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-06-009", "difficulty": 0.7, "correct": true, "occurredAt": "2026-08-01T08:17:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-07-002", "difficulty": -0.7, "correct": false, "occurredAt": "2026-08-01T08:18:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-07-002", "difficulty": -0.7, "correct": true, "occurredAt": "2026-08-01T08:19:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-08-005", "difficulty": 0, "correct": false, "occurredAt": "2026-08-01T08:20:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-08-005", "difficulty": 0, "correct": true, "occurredAt": "2026-08-01T08:21:00.000Z" },
+    { "userId": "learner-a", "dimensionId": "ai-intro", "itemId": "ai-09-004", "difficulty": 0.7, "correct": false, "occurredAt": "2026-08-01T08:22:00.000Z" },
+    { "userId": "learner-b", "dimensionId": "ai-intro", "itemId": "ai-09-004", "difficulty": 0.7, "correct": true, "occurredAt": "2026-08-01T08:23:00.000Z" }
+  ]
+}

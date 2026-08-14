@@ -25,6 +25,10 @@ import type { PptxThemeId } from '@/lib/slides/types';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
 import type { PPTTextElement, Slide } from '@/lib/types/slides';
 import {
+  buildSlidesPromptDirective,
+  type SlidesAdaptivePolicy,
+} from '@/lib/slides/personalization';
+import {
   createAudit,
   startStep,
   endStep,
@@ -47,6 +51,8 @@ export interface GenerateOptions {
   jobId: string;
   /** Target audience education level from user personalization */
   educationLevel?: string;
+  /** Server-resolved learner-profile policy. Never trust a client-provided policy here. */
+  personalization?: SlidesAdaptivePolicy;
 }
 
 export type PipelineStage =
@@ -104,6 +110,8 @@ export interface JobState {
   startedAt?: number;
   /** Overall pipeline end timestamp */
   finishedAt?: number;
+  /** Learner-profile strategy used for this generation. */
+  personalization?: SlidesAdaptivePolicy;
 }
 
 // ── Job Manager ──────────────────────────────────────────────────────
@@ -227,12 +235,22 @@ setInterval(() => {
 // ── Pipeline ─────────────────────────────────────────────────────────
 
 export async function runPipeline(options: GenerateOptions): Promise<void> {
-  const { topic, difficulty, minPages, maxPages, designDNA, languageModel, jobId, educationLevel } =
-    options;
+  const {
+    topic,
+    difficulty,
+    minPages,
+    maxPages,
+    designDNA,
+    languageModel,
+    jobId,
+    educationLevel,
+    personalization,
+  } = options;
 
   // Initialize audit
   createAudit(jobId, topic, difficulty);
   startStep(jobId, 'planning');
+  if (personalization) updateJob(jobId, { personalization });
 
   try {
     if (process.env.SKY_SLIDES_LEGACY_PIPELINE !== 'true') {
@@ -251,7 +269,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
         },
       });
       log.info(
-        `[Pipeline:${jobId}] OpenMAIC complete: ${openMaicResult.pptxUrl} (${openMaicResult.totalPages} pages)`,
+        `[Pipeline:${jobId}] 天空课堂 complete: ${openMaicResult.pptxUrl} (${openMaicResult.totalPages} pages)`,
       );
       return;
     }
@@ -761,7 +779,7 @@ export async function runPipeline(options: GenerateOptions): Promise<void> {
       startStep(jobId, 'merge_render');
       const pres = new pptxgen();
       pres.layout = 'LAYOUT_WIDE';
-      pres.author = 'OpenMAIC';
+      pres.author = '天空课堂';
       pres.title = topic;
 
       const sortedInstructions = instructions.sort((a, b) => a.pageNum - b.pageNum);
@@ -906,8 +924,17 @@ export interface OpenMaicPipelineResult {
 export async function runOpenMaicSlidesPipeline(
   options: GenerateOptions,
 ): Promise<OpenMaicPipelineResult> {
-  const { topic, difficulty, minPages, maxPages, designDNA, languageModel, jobId, educationLevel } =
-    options;
+  const {
+    topic,
+    difficulty,
+    minPages,
+    maxPages,
+    designDNA,
+    languageModel,
+    jobId,
+    educationLevel,
+    personalization,
+  } = options;
   const publicDir = path.resolve(process.cwd(), 'public');
   const outputDir = path.join(publicDir, 'temp', 'pptx');
   await fs.mkdir(outputDir, { recursive: true });
@@ -919,7 +946,7 @@ export async function runOpenMaicSlidesPipeline(
   updateJob(jobId, {
     stage: 'planning',
     pipelineMode: 'openmaic',
-    message: 'OpenMAIC element-level slide generation is starting...',
+    message: '天空课堂正在启动元素级课件生成…',
     progress: 8,
     totalPages: slideCount,
   });
@@ -944,7 +971,7 @@ export async function runOpenMaicSlidesPipeline(
 
   updateJob(jobId, {
     stage: 'pages_designing',
-    message: `OpenMAIC is drawing ${slideCount} element-level slides...`,
+    message: `天空课堂正在绘制 ${slideCount} 页元素级课件…`,
     progress: 20,
   });
 
@@ -954,7 +981,7 @@ export async function runOpenMaicSlidesPipeline(
       difficulty: difficultyLevel,
       slideCount,
       language: 'Use Simplified Chinese (zh-CN) for all slide text.',
-      personaPrompt: buildOpenMaicStyleDirective(designDNA, educationLevel),
+      personaPrompt: buildOpenMaicStyleDirective(designDNA, educationLevel, personalization),
       themeId: theme,
       educationLevel,
     },
@@ -962,13 +989,13 @@ export async function runOpenMaicSlidesPipeline(
   );
 
   if (generated.slides.length === 0) {
-    throw new Error('OpenMAIC element-level generator returned no slides');
+    throw new Error('天空课堂 element-level generator returned no slides');
   }
 
   const slideSummaries = summarizeOpenMaicSlides(generated.slides, topic);
   updateJob(jobId, {
     stage: 'pages_designing',
-    message: `OpenMAIC generated ${generated.slides.length} slides; exporting PPTX...`,
+    message: `天空课堂已生成 ${generated.slides.length} 页课件，正在导出 PPTX…`,
     progress: 70,
     totalPages: generated.slides.length,
     outline: slideSummaries,
@@ -989,7 +1016,7 @@ export async function runOpenMaicSlidesPipeline(
 
   updateJob(jobId, {
     stage: 'merging',
-    message: 'OpenMAIC PPTX exported; generating preview images...',
+    message: '天空课堂 PPTX 已导出，正在生成预览图…',
     progress: 85,
     pptxUrl,
     fileName,
@@ -1001,7 +1028,7 @@ export async function runOpenMaicSlidesPipeline(
   updateJob(jobId, {
     stage: 'done',
     progress: 100,
-    message: 'OpenMAIC slide deck generated',
+    message: '天空课堂课件生成完成',
     pptxUrl,
     fileName,
     previewImages: previewImages.length > 0 ? previewImages : undefined,
@@ -1050,10 +1077,15 @@ function selectOpenMaicExportTheme(designDNA: DesignDNA): PptxThemeId {
   return 'sky-blue';
 }
 
-function buildOpenMaicStyleDirective(designDNA: DesignDNA, educationLevel?: string): string {
+function buildOpenMaicStyleDirective(
+  designDNA: DesignDNA,
+  educationLevel?: string,
+  personalization?: SlidesAdaptivePolicy,
+): string {
   const colors = designDNA.colors;
+  const personalizationDirective = buildSlidesPromptDirective(personalization);
   return [
-    'Use OpenMAIC-style element-level slide design, not template slots.',
+    'Use 天空课堂-style element-level slide design, not template slots.',
     'Create polished visual hierarchy with explicit TextElement, ShapeElement, LineElement, TableElement, ChartElement, and LatexElement objects when useful.',
     'Use layered backgrounds, generous spacing, asymmetric balance, and varied compositions. Do not repeat the same title-body layout on every slide.',
     'Hard ban: do not use the old Sky card-panel template. Avoid two equal rounded pastel cards, large colored content boxes, and formula blocks trapped inside cards.',
@@ -1063,6 +1095,7 @@ function buildOpenMaicStyleDirective(designDNA: DesignDNA, educationLevel?: stri
     `Visual mood: ${designDNA.styleName} / ${designDNA.mood}.`,
     `Preferred palette: cover #${colors.coverBg}, content #${colors.contentBg}, accent #${colors.accent}, secondary #${colors.accentSecondary}.`,
     educationLevel ? `Audience education level: ${educationLevel}.` : '',
+    personalizationDirective,
   ]
     .filter(Boolean)
     .join('\n');

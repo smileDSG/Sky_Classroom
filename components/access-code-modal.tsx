@@ -9,7 +9,8 @@ interface AccessCodeModalProps {
   onSuccess: () => void;
 }
 
-export function AccessCodeModal({ open, onSuccess }: AccessCodeModalProps) {const [code, setCode] = useState('');
+export function AccessCodeModal({ open, onSuccess }: AccessCodeModalProps) {
+  const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -115,7 +116,7 @@ export function AccessCodeModal({ open, onSuccess }: AccessCodeModalProps) {con
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.25, duration: 0.4 }}
               >
-                OpenMAIC
+                天空课堂
               </motion.p>
 
               {/* Form */}

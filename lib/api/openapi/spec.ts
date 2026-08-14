@@ -61,9 +61,9 @@ export function generateOpenApiSpec(overrides?: {
   return {
     openapi: '3.1.0',
     info: {
-      title: overrides?.title ?? 'OpenMAIC API',
+      title: overrides?.title ?? '天空课堂 API',
       version: overrides?.version ?? '1.0.0',
-      description: overrides?.description ?? 'OpenMAIC — Multi-Agent AI Classroom Platform API',
+      description: overrides?.description ?? '天空课堂——多智能体 AI 课堂平台 API',
     },
     servers: [{ url: '/api/v1', description: 'API v1' }],
     paths,

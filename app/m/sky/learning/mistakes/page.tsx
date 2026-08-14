@@ -85,7 +85,7 @@ function formatDate(value: Date | string | number) {
 }
 
 function getPrimaryTopic(mistake: MistakeRecord) {
-  return mistake.knowledgePoints[0] ?? '综合诊断';
+  return mistake.knowledgePoints[0] ?? '综合摸底';
 }
 
 function buildTopicQuery(topic: string) {
@@ -193,7 +193,7 @@ export default function MobileMistakeBookPage() {
   const visibleStart = filteredMistakes.length === 0 ? 0 : pageStart + 1;
   const visibleEnd = Math.min(pageStart + MOBILE_MISTAKES_PAGE_SIZE, filteredMistakes.length);
   const primaryMistake = dueMistakes[0] ?? filteredMistakes[0] ?? mistakes[0];
-  const primaryActionTopic = primaryMistake ? getPrimaryTopic(primaryMistake) : '综合诊断';
+  const primaryActionTopic = primaryMistake ? getPrimaryTopic(primaryMistake) : '综合摸底';
 
   return (
     <MobileSkyShell fullBleed>

@@ -59,7 +59,7 @@ describe('PersonalizationForm', () => {
 
     render(<PersonalizationForm />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('服务端返回的个人画像不完整');
+    expect(await screen.findByRole('alert')).toHaveTextContent('返回的学习情况不完整');
     expect(screen.queryByRole('tab', { name: /AI/ })).not.toBeInTheDocument();
   });
 
@@ -82,9 +82,9 @@ describe('PersonalizationForm', () => {
     fireEvent.change(screen.getByLabelText('AI 助手称呼'), {
       target: { value: '新导师' },
     });
-    fireEvent.click(screen.getByRole('button', { name: '保存个人画像' }));
+    fireEvent.click(screen.getByRole('button', { name: '保存学习情况' }));
 
-    expect(screen.getByRole('button', { name: /保存个人画像/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /保存学习情况/ })).toBeDisabled();
     expect(screen.getByRole('tab', { name: '学习节奏' })).toBeDisabled();
 
     const request = fetchMock.mock.calls[1]?.[1] as RequestInit;
@@ -106,7 +106,7 @@ describe('PersonalizationForm', () => {
       ),
     );
 
-    expect(await screen.findByText('个人画像已保存，当前版本 4。')).toBeInTheDocument();
+    expect(await screen.findByText('学习情况已保存。')).toBeInTheDocument();
   });
 
   it('shows explicit initialization and creates a missing profile at version zero', async () => {
@@ -146,12 +146,12 @@ describe('PersonalizationForm', () => {
 
     render(<PersonalizationForm />);
 
-    expect(await screen.findByText(/尚未创建个人画像/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '创建个人画像' }));
+    expect(await screen.findByText(/还没有保存学习情况/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '保存学习情况' }));
 
     const request = fetchMock.mock.calls[1]?.[1] as RequestInit;
     expect(JSON.parse(String(request.body))).toMatchObject({ expectedVersion: 0 });
-    expect(await screen.findByText('个人画像已保存，当前版本 1。')).toBeInTheDocument();
+    expect(await screen.findByText('学习情况已保存。')).toBeInTheDocument();
   });
 
   it('surfaces version conflicts and blocks stale resubmission', async () => {
@@ -179,11 +179,11 @@ describe('PersonalizationForm', () => {
     fireEvent.change(screen.getByLabelText('AI 助手称呼'), {
       target: { value: '冲突草稿' },
     });
-    fireEvent.click(screen.getByRole('button', { name: '保存个人画像' }));
+    fireEvent.click(screen.getByRole('button', { name: '保存学习情况' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('画像已在其他位置更新');
+    expect(await screen.findByRole('alert')).toHaveTextContent('学习情况已在其他位置更新');
     expect(screen.getByDisplayValue('冲突草稿')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '保存个人画像' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: '加载最新画像' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '保存学习情况' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '加载最新学习情况' })).toBeInTheDocument();
   });
 });

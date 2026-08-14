@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Brain, Presentation, Search, MessageSquare, Sparkles, ArrowRight } from 'lucide-react';
+import { Brain, Presentation, Search, MessageSquare, ArrowRight } from 'lucide-react';
 
 const tools = [
   {
@@ -74,7 +74,7 @@ export function CloudMindHeroButton() {
           {/* Header */}
           <div
             className="flex items-center justify-between mb-5 cursor-pointer group"
-            onClick={() => router.push('/sky')}
+            onClick={() => router.push('/sky/cloud-mind')}
           >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm group-hover:bg-white/25 transition-all duration-300">
@@ -82,9 +82,9 @@ export function CloudMindHeroButton() {
               </div>
               <div>
                 <h3 className="text-base md:text-lg font-bold text-white tracking-wide">
-                  云端智囊
+                  学习工具与资源
                 </h3>
-                <p className="text-xs text-white/50">AI 驱动的智能学习工具集</p>
+                <p className="text-xs text-white/50">拍题、练习、复习和课程材料，一站进入</p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-white/60 group-hover:text-white transition-colors duration-300">

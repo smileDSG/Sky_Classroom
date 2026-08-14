@@ -85,7 +85,7 @@ export function TtsConfigPopover() {
       return;
     }
     if (!canPreview) {
-      toast.info('自动音色会根据 Agent 人设动态生成，无法单独试听');
+      toast.info('自动音色会根据AI角色设定动态生成，无法单独试听');
       return;
     }
     try {

@@ -222,6 +222,7 @@ export const retrievalProfileProjectionSchema = z
 const planningKnowledgeSignalSchema = z
   .object({
     nodeId: nodeIdSchema,
+    displayName: z.string().min(1).optional(),
     mastery: z.number().min(0).max(1),
     confidence: z.number().min(0).max(1),
     retention: z.number().min(0).max(1),

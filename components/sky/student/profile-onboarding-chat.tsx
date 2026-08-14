@@ -40,7 +40,7 @@ interface ProfileOnboardingChatProps {
 }
 
 const STARTER_QUESTION = '你最近最想提升哪门课或哪个能力？也可以直接说当前最卡的知识点。';
-const DEFAULT_TITLE = '对话式学习画像';
+const DEFAULT_TITLE = '对话式了解学习情况';
 const DEFAULT_DESCRIPTION = '聊 2 分钟，我会把目标、薄弱点和讲解偏好转成后续推荐依据。';
 const DEFAULT_PLACEHOLDER =
   '例如：我想两周内补机器学习，过拟合和模型评估总是搞不懂，希望多用代码案例和图解讲。';
@@ -111,7 +111,7 @@ export function ProfileOnboardingChat({
       const json = (await response.json()) as ConversationResponse;
 
       if (!response.ok || !json.success || !json.data) {
-        throw new Error(json.error || '画像对话更新失败');
+        throw new Error(json.error || '学习情况更新失败');
       }
 
       setPatch(json.data.profilePatch);
@@ -128,7 +128,7 @@ export function ProfileOnboardingChat({
         },
       ]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '画像对话更新失败');
+      setError(err instanceof Error ? err.message : '学习情况更新失败');
     } finally {
       setLoading(false);
     }

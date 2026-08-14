@@ -1,32 +1,32 @@
-# OpenMAIC-first Classroom Slides Implementation Plan
+# 智眸无界-first Classroom Slides Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make classroom / teaching-flow slide scenes use OpenMAIC-main's element-level slide generation as the visual source of truth, then reattach Sky Classroom features without letting them drive layout.
+**Goal:** Make classroom / teaching-flow slide scenes use 智眸无界-main's element-level slide generation as the visual source of truth, then reattach Sky Classroom features without letting them drive layout.
 
-**Architecture:** Keep the current modular dispatcher, but make `lib/generation/scene-content/slide-generator.ts` behave like the OpenMAIC-main classroom slide generator. Remove `themeDirective`, `templateData`, and heavy `slide-polish` influence from new classroom slide generation; keep media refs, LaTeX, IDs, action/TTS pipeline, caching, progress, and persistence.
+**Architecture:** Keep the current modular dispatcher, but make `lib/generation/scene-content/slide-generator.ts` behave like the 智眸无界-main classroom slide generator. Remove `themeDirective`, `templateData`, and heavy `slide-polish` influence from new classroom slide generation; keep media refs, LaTeX, IDs, action/TTS pipeline, caching, progress, and persistence.
 
-**Tech Stack:** Next.js 16, React 19, TypeScript 5, Vitest, file-based prompt templates, OpenMAIC element-level slide schema.
+**Tech Stack:** Next.js 16, React 19, TypeScript 5, Vitest, file-based prompt templates, 智眸无界 element-level slide schema.
 
 ---
 
 ## File Structure
 
 - Modify `tests/prompts/slide-richness-contract.test.ts`
-  - Replace the current "richness contract" assertion with an OpenMAIC-first classroom slide prompt contract.
-- Create `tests/generation/classroom-slide-openmaic-first.test.ts`
+  - Replace the current "richness contract" assertion with an 智眸无界-first classroom slide prompt contract.
+- Create `tests/generation/classroom-slide-sky_classroom-first.test.ts`
   - Unit-test `generateSlideContent` with a mock LLM response.
   - Prove that new classroom slide content stays element-level, does not return `templateData`, and does not add `polish_` elements.
 - Modify `lib/prompts/templates/slide-content/system.md`
-  - Restore the OpenMAIC-main style schema prompt by removing Sky-specific theme/richness/layout recipe requirements.
+  - Restore the 智眸无界-main style schema prompt by removing Sky-specific theme/richness/layout recipe requirements.
 - Modify `lib/prompts/templates/slide-content/user.md`
-  - Restore the OpenMAIC-main user prompt by removing `Course Theme`, `themeDirective`, and richness contract requirements.
+  - Restore the 智眸无界-main user prompt by removing `Course Theme`, `themeDirective`, and richness contract requirements.
 - Modify `lib/generation/scene-content/slide-generator.ts`
   - Remove theme-driven prompt variables and heavy slide-polish.
   - Keep image/video refs, LaTeX processing, defaults, ID assignment, and background conversion.
 - Modify `lib/generation/scene-generator.ts`
   - Stop selecting a slide theme for `generateSlideContent`.
-  - Build classroom slide scenes with the OpenMAIC-main default slide theme and without `templateData/layoutVersion`.
+  - Build classroom slide scenes with the 智眸无界-main default slide theme and without `templateData/layoutVersion`.
 
 ## Task 1: Lock Prompt Contract
 
@@ -39,7 +39,7 @@
 Use this assertion for classroom slide prompts:
 
 ```ts
-it('keeps classroom slide prompts OpenMAIC-first instead of theme-driven', () => {
+it('keeps classroom slide prompts 智眸无界-first instead of theme-driven', () => {
   const system = readTemplate('slide-content', 'system.md');
   const user = readTemplate('slide-content', 'user.md');
   const combined = `${system}\n${user}`;
@@ -73,8 +73,8 @@ Expected: fail because current prompt still contains `Course Theme`, `{{themeDir
 ## Task 2: Lock Generator Behavior
 
 **Files:**
-- Create: `tests/generation/classroom-slide-openmaic-first.test.ts`
-- Test: `tests/generation/classroom-slide-openmaic-first.test.ts`
+- Create: `tests/generation/classroom-slide-sky_classroom-first.test.ts`
+- Test: `tests/generation/classroom-slide-sky_classroom-first.test.ts`
 
 - [ ] **Step 1: Add generator regression test**
 
@@ -117,7 +117,7 @@ function makeAiCall(response: string): {
   };
 }
 
-describe('OpenMAIC-first classroom slide generation', () => {
+describe('智眸无界-first classroom slide generation', () => {
   it('does not inject theme directives, template data, or polish-generated layout elements', async () => {
     const aiResponse = JSON.stringify({
       background: { type: 'solid', color: '#ffffff' },
@@ -168,22 +168,22 @@ describe('OpenMAIC-first classroom slide generation', () => {
 Run:
 
 ```powershell
-pnpm vitest run tests/generation/classroom-slide-openmaic-first.test.ts
+pnpm vitest run tests/generation/classroom-slide-sky_classroom-first.test.ts
 ```
 
 Expected: fail because current generator prompt includes theme content and `slide-polish` adds extra elements to weak slides.
 
-## Task 3: Restore OpenMAIC-main Prompt Templates
+## Task 3: Restore 智眸无界-main Prompt Templates
 
 **Files:**
 - Modify: `lib/prompts/templates/slide-content/system.md`
 - Modify: `lib/prompts/templates/slide-content/user.md`
-- Reference: `E:/01_Work/OpenMAIC-main/lib/prompts/templates/slide-content/system.md`
-- Reference: `E:/01_Work/OpenMAIC-main/lib/prompts/templates/slide-content/user.md`
+- Reference: `E:/01_Work/智眸无界-main/lib/prompts/templates/slide-content/system.md`
+- Reference: `E:/01_Work/智眸无界-main/lib/prompts/templates/slide-content/user.md`
 
-- [ ] **Step 1: Replace prompt templates with OpenMAIC-main versions**
+- [ ] **Step 1: Replace prompt templates with 智眸无界-main versions**
 
-Mechanically copy the two reference files from `E:/01_Work/OpenMAIC-main/lib/prompts/templates/slide-content/`.
+Mechanically copy the two reference files from `E:/01_Work/智眸无界-main/lib/prompts/templates/slide-content/`.
 
 The resulting `user.md` must not contain:
 
@@ -196,9 +196,9 @@ Slide Richness Contract
 The resulting `system.md` must not contain:
 
 ```md
-Clean OpenMAIC Visual Standard
+Clean 智眸无界 Visual Standard
 Slide Richness Contract
-OpenMAIC Classroom Visual Target
+智眸无界 Classroom Visual Target
 Recipe A
 Recipe B
 Recipe C
@@ -215,11 +215,11 @@ pnpm vitest run tests/prompts/slide-richness-contract.test.ts
 
 Expected: pass.
 
-## Task 4: Make Slide Generator OpenMAIC-first
+## Task 4: Make Slide Generator 智眸无界-first
 
 **Files:**
 - Modify: `lib/generation/scene-content/slide-generator.ts`
-- Test: `tests/generation/classroom-slide-openmaic-first.test.ts`
+- Test: `tests/generation/classroom-slide-sky_classroom-first.test.ts`
 
 - [ ] **Step 1: Remove visual ownership imports**
 
@@ -291,7 +291,7 @@ Replace the post-parse polish block with this flow:
 Run:
 
 ```powershell
-pnpm vitest run tests/generation/classroom-slide-openmaic-first.test.ts
+pnpm vitest run tests/generation/classroom-slide-sky_classroom-first.test.ts
 ```
 
 Expected: pass.
@@ -300,7 +300,7 @@ Expected: pass.
 
 **Files:**
 - Modify: `lib/generation/scene-generator.ts`
-- Test: `tests/generation/classroom-slide-openmaic-first.test.ts`
+- Test: `tests/generation/classroom-slide-sky_classroom-first.test.ts`
 
 - [ ] **Step 1: Change imports**
 
@@ -338,7 +338,7 @@ Replace the `case 'slide'` branch with:
       );
 ```
 
-- [ ] **Step 3: Use OpenMAIC default slide theme in scene creation**
+- [ ] **Step 3: Use 智眸无界 default slide theme in scene creation**
 
 Inside `createSceneWithActions`, replace the theme/template block with:
 
@@ -353,7 +353,7 @@ Inside `createSceneWithActions`, replace the theme/template block with:
     };
 
     log.info(
-      `[SceneCreate] Creating OpenMAIC-first slide for "${outline.title}": elements=${slideContent.elements.length}`,
+      `[SceneCreate] Creating 智眸无界-first slide for "${outline.title}": elements=${slideContent.elements.length}`,
     );
 ```
 
@@ -383,7 +383,7 @@ Change the function parameter to:
 Run:
 
 ```powershell
-pnpm vitest run tests/generation/classroom-slide-openmaic-first.test.ts tests/prompts/slide-richness-contract.test.ts
+pnpm vitest run tests/generation/classroom-slide-sky_classroom-first.test.ts tests/prompts/slide-richness-contract.test.ts
 ```
 
 Expected: pass.
@@ -398,7 +398,7 @@ Expected: pass.
 Run:
 
 ```powershell
-pnpm vitest run tests/generation/classroom-slide-openmaic-first.test.ts tests/prompts/slide-richness-contract.test.ts tests/generation/quality-scorer.test.ts
+pnpm vitest run tests/generation/classroom-slide-sky_classroom-first.test.ts tests/prompts/slide-richness-contract.test.ts tests/generation/quality-scorer.test.ts
 ```
 
 Expected: pass.
@@ -418,7 +418,7 @@ Expected: no new lint errors in modified files.
 Run:
 
 ```powershell
-git diff -- tests/prompts/slide-richness-contract.test.ts tests/generation/classroom-slide-openmaic-first.test.ts lib/prompts/templates/slide-content/system.md lib/prompts/templates/slide-content/user.md lib/generation/scene-content/slide-generator.ts lib/generation/scene-generator.ts
+git diff -- tests/prompts/slide-richness-contract.test.ts tests/generation/classroom-slide-sky_classroom-first.test.ts lib/prompts/templates/slide-content/system.md lib/prompts/templates/slide-content/user.md lib/generation/scene-content/slide-generator.ts lib/generation/scene-generator.ts
 ```
 
-Expected: diff only covers the OpenMAIC-first classroom slide path and tests.
+Expected: diff only covers the 智眸无界-first classroom slide path and tests.

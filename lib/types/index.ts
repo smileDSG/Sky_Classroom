@@ -1,5 +1,5 @@
 /**
- * OpenMAIC Type Definitions — Barrel Export
+ * 天空课堂 Type Definitions — Barrel Export
  *
  * All type modules are re-exported here. Import from `@/lib/types` to
  * access the entire type surface, or import specific sub-paths for

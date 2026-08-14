@@ -43,9 +43,12 @@ export async function POST(req: Request) {
 
     const output = finalState.fourPartOutput ?? {
       answer: finalState.solution ?? '',
+      solution: finalState.solution ?? '',
       steps: [],
       knowledgePoints: [],
       similarQuestions: [],
+      questionType: undefined,
+      options: undefined,
     };
 
     log.info(`[Explain] 耗时 ${solvingTime}ms, 缓存命中=${finalState.fromQuestionBank}`);
@@ -59,6 +62,7 @@ export async function POST(req: Request) {
             problemText: problem,
             problemImage: problemImage ?? undefined,
             answer: output.answer,
+            solution: output.solution ?? '',
             knowledgePoints: (output.knowledgePoints ?? []).map(kp => ({
               name: kp.name,
               description: kp.description,

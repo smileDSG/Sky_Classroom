@@ -9,7 +9,7 @@ fixed production credential by default.
 ## Credentials
 
 - Username: `demo`
-- Password: `OpenMAIC123!`
+- Password: `SkyClassroom123!`
 - Authorization role: `user`
 - Plan: `free`
 - Onboarding state: `pending` because `learningOnboarding` is `null`

@@ -1,6 +1,6 @@
-# Contributing to OpenMAIC
+# Contributing to 智眸无界
 
-Thank you for your interest in contributing to OpenMAIC! This guide will help you get started and ensure a smooth collaboration.
+Thank you for your interest in contributing to 智眸无界! This guide will help you get started and ensure a smooth collaboration.
 
 ## How to Contribute
 
@@ -33,7 +33,7 @@ To avoid duplicate effort, please **comment on an issue** to claim it before you
 ```bash
 # Clone the repository
 git clone https://github.com/THU-MAIC/OpenMAIC.git
-cd OpenMAIC
+cd 智眸无界
 
 # Install dependencies
 pnpm install
@@ -130,7 +130,7 @@ AI-assisted PRs are held to the same quality standard as any other PR. Community
 ## Project Structure
 
 ```
-OpenMAIC/
+智眸无界/
 ├── app/              # Next.js app router pages and API routes
 ├── components/       # React components
 ├── lib/              # Shared utilities and core logic
@@ -158,4 +158,4 @@ Please report security vulnerabilities through [GitHub Security Advisories](http
 
 ## License
 
-By contributing to OpenMAIC, you agree that your contributions will be licensed under the [AGPL-3.0 License](LICENSE).
+By contributing to 智眸无界, you agree that your contributions will be licensed under the [AGPL-3.0 License](LICENSE).

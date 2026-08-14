@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Check, ClipboardCheck, Loader2, Plus } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Brain,
+  Check,
+  ClipboardCheck,
+  Clock3,
+  Loader2,
+  Plus,
+  Sparkles,
+} from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { sanitizeInternalRedirect } from '@/components/auth/onboarding-gate';
 import { Button } from '@/components/ui/button';
@@ -11,6 +21,8 @@ import { cn } from '@/lib/utils';
 import {
   IDENTITY_CONFIG,
   IDENTITY_LABELS,
+  LEARNER_FOUNDATIONS,
+  LEARNER_WEEKLY_TIME,
   PRODUCT_IDENTITIES,
   type CatalogOption,
   type ProductIdentity,
@@ -25,6 +37,7 @@ import {
   type UniversalOnboardingFormState,
 } from '@/lib/onboarding/form-state';
 import { resolveOnboardingRecommendation } from '@/lib/onboarding/selectors';
+import type { InitialProfileSnapshot } from '@/lib/onboarding/initial-profile';
 import type { UniversalOnboardingProfile } from '@/lib/onboarding/types';
 import { ProfileChoice } from './domain-picker';
 import { IdentityContextEditor } from './identity-context-editor';
@@ -36,6 +49,7 @@ interface OnboardingResponse {
   success: boolean;
   status?: string;
   onboarding?: UniversalOnboardingProfile | null;
+  initialProfile?: InitialProfileSnapshot | null;
 }
 
 function goalKey(goal: Goal): string {
@@ -66,7 +80,7 @@ function IdentityStep({
     if (
       state.identities.includes(identity) &&
       state.completedProfiles[identity] &&
-      !window.confirm('移除身份会同时删除该身份已保存的画像，是否继续？')
+      !window.confirm('移除身份会同时删除该身份已保存的学习情况，是否继续？')
     ) {
       return;
     }
@@ -76,7 +90,7 @@ function IdentityStep({
   return (
     <section aria-labelledby="identity-heading">
       <h2 id="identity-heading" className="text-lg font-semibold text-foreground">
-        你会以哪些身份使用 OpenMAIC？
+        你会以哪些身份使用天空课堂？
       </h2>
       <p className="mt-1 text-sm leading-6 text-muted-foreground">
         可多选。这里的身份只影响内容与工具推荐，不改变账号权限。
@@ -240,6 +254,51 @@ function GoalPreferenceStep({
         </div>
       </fieldset>
 
+      {activeIdentity === 'learner' && (
+        <div className="mt-7 grid gap-6 rounded-xl border border-primary/15 bg-primary/[0.03] p-4 sm:p-5">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Brain className="size-4 text-primary" />
+              初始学习状态
+            </div>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              这些是自评数据，只用于设置初始难度与学习节奏，后续会由真实作答自动校准。
+            </p>
+          </div>
+
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium text-foreground">你目前的基础状态</legend>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {LEARNER_FOUNDATIONS.map((item) => (
+                <ProfileChoice
+                  key={item.id}
+                  label={item.label}
+                  selected={draft.foundation === item.id}
+                  onClick={() => update((current) => ({ ...current, foundation: item.id }))}
+                />
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+              <Clock3 className="size-4 text-primary" />
+              每周可投入时间
+            </legend>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {LEARNER_WEEKLY_TIME.map((item) => (
+                <ProfileChoice
+                  key={item.id}
+                  label={item.label}
+                  selected={draft.weeklyTime === item.id}
+                  onClick={() => update((current) => ({ ...current, weeklyTime: item.id }))}
+                />
+              ))}
+            </div>
+          </fieldset>
+        </div>
+      )}
+
       <fieldset className="mt-7">
         <legend className="mb-2 text-sm font-medium text-foreground">
           {config.preferenceLabel}
@@ -281,6 +340,7 @@ export function LearningProfileOnboarding() {
   const [step, setStep] = useState<Step>(0);
   const [form, setForm] = useState(createInitialFormState);
   const [savedProfile, setSavedProfile] = useState<UniversalOnboardingProfile | null>(null);
+  const [initialProfile, setInitialProfile] = useState<InitialProfileSnapshot | null>(null);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'error'>(
@@ -309,6 +369,9 @@ export function LearningProfileOnboarding() {
     () => resolveOnboardingRecommendation(savedProfile, safeRedirect),
     [safeRedirect, savedProfile],
   );
+  const completionHref = isEditMode
+    ? recommendation.primaryHref
+    : '/sky/learning/profile?from=learning';
   const progressStep = Math.min(step + 1, 3);
 
   function nextStep() {
@@ -327,6 +390,10 @@ export function LearningProfileOnboarding() {
         setError('请为每个使用场景选择学习阶段');
         return;
       }
+      if (form.primaryIdentity === 'learner' && draft.contexts[0]?.domains.length === 0) {
+        setError('请至少选择一个当前学习领域');
+        return;
+      }
       setStep(2);
     }
   }
@@ -335,6 +402,13 @@ export function LearningProfileOnboarding() {
     const primaryDraft = form.primaryIdentity ? form.drafts[form.primaryIdentity] : null;
     if (!primaryDraft || primaryDraft.goals.length === 0) {
       setError('请至少选择一个当前目标');
+      return;
+    }
+    if (
+      form.primaryIdentity === 'learner' &&
+      (!primaryDraft.foundation || !primaryDraft.weeklyTime)
+    ) {
+      setError('请选择当前基础状态和每周可投入时间');
       return;
     }
 
@@ -350,6 +424,7 @@ export function LearningProfileOnboarding() {
       const data = (await response.json()) as OnboardingResponse;
       if (!response.ok || !data.success) throw new Error('save failed');
       setSavedProfile(data.onboarding?.status === 'completed' ? data.onboarding : null);
+      setInitialProfile(data.initialProfile ?? null);
       await refresh();
       setStep(3);
     } catch {
@@ -379,7 +454,7 @@ export function LearningProfileOnboarding() {
       <div className="mx-auto flex min-h-svh w-full max-w-3xl items-center justify-center px-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
           <Loader2 className="size-4 animate-spin" />
-          正在读取用户画像…
+          正在读取你的学习情况…
         </div>
       </div>
     );
@@ -388,7 +463,7 @@ export function LearningProfileOnboarding() {
   if (loadState === 'error') {
     return (
       <div className="mx-auto flex min-h-svh w-full max-w-3xl flex-col items-center justify-center gap-4 px-4 text-center">
-        <p className="text-sm text-destructive">用户画像读取失败</p>
+        <p className="text-sm text-destructive">学习情况读取失败</p>
         <Button type="button" variant="outline" className="min-h-11" onClick={loadProfile}>
           重试
         </Button>
@@ -404,10 +479,51 @@ export function LearningProfileOnboarding() {
           <div className="mb-5 flex size-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
             <ClipboardCheck className="size-7" />
           </div>
-          <h1 className="text-2xl font-semibold text-foreground">用户画像已保存</h1>
+          <h1 className="text-2xl font-semibold text-foreground">学习情况已保存</h1>
           <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
             推荐会结合当前身份、阶段、领域和目标，并随着后续使用继续更新。
           </p>
+          {initialProfile && (
+            <div className="mt-6 w-full max-w-2xl text-left">
+              <div className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 font-semibold text-foreground">
+                    <Sparkles className="size-5 text-primary" />
+                    初始学习情况已建立
+                  </div>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    完整度 {initialProfile.completeness}%
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-foreground">{initialProfile.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                  当前难度建议：{initialProfile.recommendedDifficulty}
+                  。内容来自你的自我介绍，完成练习后会自动更新。
+                </p>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {initialProfile.toolSuggestions.map((suggestion) => (
+                  <Button
+                    key={`${suggestion.tool}:${suggestion.href}`}
+                    type="button"
+                    variant="outline"
+                    className="h-auto min-h-24 items-start justify-start whitespace-normal p-4 text-left"
+                    onClick={() => router.push(suggestion.href)}
+                  >
+                    <span>
+                      <span className="block font-semibold text-foreground">
+                        {suggestion.title}
+                      </span>
+                      <span className="mt-1 block text-xs font-normal leading-5 text-muted-foreground">
+                        {suggestion.reason}
+                      </span>
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div
           className={cn(
@@ -425,11 +541,7 @@ export function LearningProfileOnboarding() {
               先返回
             </Button>
           )}
-          <Button
-            type="button"
-            className="min-h-11"
-            onClick={() => router.push(recommendation.primaryHref)}
-          >
+          <Button type="button" className="min-h-11" onClick={() => router.push(completionHref)}>
             {recommendation.primaryLabel}
             <ArrowRight />
           </Button>
@@ -445,7 +557,7 @@ export function LearningProfileOnboarding() {
           <div>
             <p className="text-xs font-medium text-primary">第 {progressStep} 步，共 3 步</p>
             <h1 className="mt-1 text-xl font-semibold text-foreground sm:text-2xl">
-              {isEditMode ? '更新用户画像' : '建立用户画像'}
+              {isEditMode ? '更新学习情况' : '填写学习情况'}
             </h1>
           </div>
           <Button
@@ -527,7 +639,7 @@ export function LearningProfileOnboarding() {
               onClick={saveProfile}
             >
               {isSaving ? <Loader2 className="animate-spin" /> : <Check />}
-              {isSaving ? '保存中…' : '保存画像'}
+              {isSaving ? '保存中…' : '保存学习情况'}
             </Button>
           )}
         </div>

@@ -1,4 +1,4 @@
-# OpenMAIC 教学PPT生成链路 — 开发规划文档
+# 智眸无界 教学PPT生成链路 — 开发规划文档
 
 > 版本: v1.0
 > 日期: 2026-05-24
@@ -11,7 +11,7 @@
 
 ### 1.1 现状
 
-OpenMAIC-B-001 现有的PPT生成模块采用 **pptxgenjs 代码生成** 路线：
+智眸无界-B-001 现有的PPT生成模块采用 **pptxgenjs 代码生成** 路线：
 - AI生成每页的元素坐标、颜色、字体
 - 后端用 pptxgenjs 逐元素绘制PPT
 - 现有6套主题（sky-blue, minimal, warm, fresh, dark, ocean）

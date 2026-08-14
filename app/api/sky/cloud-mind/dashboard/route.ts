@@ -12,7 +12,11 @@ import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { buildCloudMindDashboard, EMPTY_KB_STATS } from '@/lib/cloud-mind/recommendation-engine';
 import { createLogger } from '@/lib/logger';
 import type { KBStats } from '@/lib/knowledge-base/types';
-import type { ProfileCacheEntry, StudentProfile } from '@/lib/student/profile-types';
+import {
+  STUDENT_PROFILE_CACHE_VERSION,
+  type ProfileCacheEntry,
+  type StudentProfile,
+} from '@/lib/student/profile-types';
 
 const log = createLogger('API:CloudMindDashboard');
 const DEMO_PROFILE_USER_ID = 'default-user';
@@ -72,6 +76,7 @@ async function readCachedDemoProfile(): Promise<StudentProfile | null> {
     );
     const raw = await fs.readFile(cachePath, 'utf-8');
     const entry = JSON.parse(raw) as ProfileCacheEntry;
+    if (entry.cacheVersion !== STUDENT_PROFILE_CACHE_VERSION) return null;
     return hydrateProfileDates(entry.profile);
   } catch (err) {
     log.warn('Demo profile unavailable for cloud mind dashboard:', err);

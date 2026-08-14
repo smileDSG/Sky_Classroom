@@ -22,6 +22,11 @@ import type { GeneratedSectionData } from './teaching-job-store';
 import type { PrecedingSection } from '@/lib/teaching/content-types';
 import type { LessonSection } from '@/lib/teaching/lesson-types';
 import {
+  applyTeachingGenerationPolicy,
+  type TeachingGenerationPolicy,
+} from '@/lib/teaching/personalization-policy';
+import { resolveTeachingPersonalizationPolicy } from '@/lib/server/teaching-personalization';
+import {
   readTeachingJob,
   markTeachingJobRunning,
   markTeachingJobSucceeded,
@@ -53,13 +58,20 @@ async function assertNotCancelled(jobId: string): Promise<void> {
  * Run a teaching job: plan lesson → generate content concurrently.
  * Each completed section is persisted to the job store immediately.
  */
-export function runTeachingJob(jobId: string, topic: string, userId: string): Promise<void> {
+export function runTeachingJob(
+  jobId: string,
+  topic: string,
+  userId: string,
+  personalizationPolicy?: TeachingGenerationPolicy,
+): Promise<void> {
   const existing = runningJobs.get(jobId);
   if (existing) return existing;
 
   const jobPromise = (async () => {
     try {
       await markTeachingJobRunning(jobId);
+      const storedPolicy = (await readTeachingJob(jobId))?.personalizationPolicy;
+      const requestedPolicy = personalizationPolicy ?? storedPolicy;
 
       // Phase 1: Build student profile & plan lesson
       log.info(`[${jobId}] Building student profile for ${userId}`);
@@ -73,7 +85,13 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
       });
 
       log.info(`[${jobId}] Planning lesson for topic: ${topic}`);
-      const plan = await planLesson(profile, topic);
+      const basePlan = await planLesson(profile, topic);
+      const effectivePolicy =
+        requestedPolicy ?? (await resolveTeachingPersonalizationPolicy(userId, topic));
+      if (!requestedPolicy && effectivePolicy) {
+        await updateTeachingJob(jobId, { personalizationPolicy: effectivePolicy });
+      }
+      const plan = applyTeachingGenerationPolicy(basePlan, effectivePolicy);
 
       await assertNotCancelled(jobId);
       const totalSections = plan.sections.length;
@@ -101,7 +119,10 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
       // Phase 2: Generate content concurrently
       let completedCount = 0;
       const failedSections: { section: LessonSection; index: number }[] = [];
-      for await (const { section, chunks, structured, index } of generateLessonConcurrent(plan, profile)) {
+      for await (const { section, chunks, structured, index } of generateLessonConcurrent(
+        plan,
+        profile,
+      )) {
         await assertNotCancelled(jobId);
         completedCount++;
         // 使用 section 在 plan 中的真实索引，避免章节被丢弃/重试后 sectionIndex 错位
@@ -154,9 +175,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
       if (failedSections.length > 0) {
         await assertNotCancelled(jobId);
         const retryTotal = failedSections.length;
-        log.info(
-          `[${jobId}] ${retryTotal} section(s) failed, auto-retrying once (concurrent)`,
-        );
+        log.info(`[${jobId}] ${retryTotal} section(s) failed, auto-retrying once (concurrent)`);
         const jobForRetry = await readTeachingJob(jobId);
 
         // 累积成功的重试结果，全部完成后一次性写回 store（避免并发写竞态）
@@ -169,9 +188,7 @@ export function runTeachingJob(jobId: string, topic: string, userId: string): Pr
           const precedingSections: PrecedingSection[] = [];
           if (jobForRetry?.sections) {
             for (let i = 0; i < index; i++) {
-              const ps = jobForRetry.sections.find(
-                (s) => s.section.id === plan.sections[i]?.id,
-              );
+              const ps = jobForRetry.sections.find((s) => s.section.id === plan.sections[i]?.id);
               if (ps) {
                 precedingSections.push({
                   title: ps.section.title,

@@ -271,6 +271,8 @@ export interface StatelessChatRequest {
   };
   /** Accumulated director state from previous per-agent requests */
   directorState?: DirectorState;
+  /** Optional stable learning session id for action/outcome correlation. */
+  sessionId?: string;
   /** User profile for personalization */
   userProfile?: {
     nickname?: string;
@@ -313,6 +315,10 @@ export type ParsedToolCall = ParsedAction;
  * Server-Sent Events for stateless chat API
  */
 export type StatelessEvent =
+  | {
+      type: 'decision_context';
+      data: { decisionId: string; sessionId: string; correlationId: string };
+    }
   | {
       type: 'agent_start';
       data: {

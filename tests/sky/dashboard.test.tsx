@@ -108,7 +108,7 @@ describe('StatCards', () => {
 
     // 掌握度 = 1/3 = 33% (m2 reviewed)
     expect(screen.getByText('33%')).toBeDefined();
-    expect(screen.getByText('知识掌握度')).toBeDefined();
+    expect(screen.getByText('知识掌握情况')).toBeDefined();
   });
 });
 

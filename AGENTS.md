@@ -1,4 +1,4 @@
-# OpenMAIC — Agent Guide
+# 智眸无界 — Agent Guide
 
 Next.js 16 + React 19 + TypeScript 5 monorepo. AI multi-agent interactive classroom platform.
 
@@ -110,7 +110,7 @@ Key env categories: LLM, TTS, ASR, PDF, Image, Video, Web Search. See `.env.exam
 
 **Exports**: PPTX via `packages/pptxgenjs`, HTML via `lib/export/`, classroom ZIP backup.
 
-**Docker**: `docker compose up --build`. LibreOffice bundled in image for PPTX rendering. Data persisted in `openmaic-data` volume.
+**Docker**: `docker compose up --build`. LibreOffice bundled in image for PPTX rendering. Data persisted in `sky_classroom-data` volume.
 
 ## Commit Convention
 

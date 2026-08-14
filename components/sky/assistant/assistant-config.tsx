@@ -17,7 +17,6 @@ const STYLE_OPTIONS = [
 ] as const;
 
 const DIFFICULTY_OPTIONS = [
-  { label: '初中', value: 'junior' },
   { label: '高中', value: 'senior' },
   { label: '大学', value: 'college' },
 ] as const;
@@ -29,6 +28,7 @@ export function AssistantConfig() {
   const setSubject = useSkyClassroomStore((s) => s.setSubject);
   const setStyle = useSkyClassroomStore((s) => s.setStyle);
   const setDifficulty = useSkyClassroomStore((s) => s.setDifficulty);
+  const visibleDifficulty = difficulty === 'college' ? 'college' : 'senior';
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-800">
@@ -86,7 +86,7 @@ export function AssistantConfig() {
                 type="button"
                 onClick={() => setDifficulty(opt.value)}
                 className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                  difficulty === opt.value
+                  visibleDifficulty === opt.value
                     ? 'bg-[#8B5CF6] text-white shadow-sm'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
                 }`}

@@ -1,6 +1,11 @@
-import { redirect } from 'next/navigation';
+import { TeacherWorkspacePage } from '@/components/sky/teaching/teacher-workspace-page';
 
 type SearchParams = Record<string, string | string[] | undefined>;
+
+function getSearchParam(searchParams: SearchParams, key: string): string | undefined {
+  const value = searchParams[key];
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export default async function TeachingRoute({
   searchParams,
@@ -8,16 +13,11 @@ export default async function TeachingRoute({
   searchParams: Promise<SearchParams> | SearchParams;
 }) {
   const params = await searchParams;
-  const sp = new URLSearchParams();
 
-  for (const [key, value] of Object.entries(params)) {
-    if (Array.isArray(value)) {
-      for (const v of value) sp.append(key, v);
-    } else if (value !== undefined) {
-      sp.set(key, value);
-    }
-  }
-
-  const qs = sp.toString();
-  redirect(`/sky/cloud-mind/teaching${qs ? `?${qs}` : ''}`);
+  return (
+    <TeacherWorkspacePage
+      initialTopic={getSearchParam(params, 'topic')}
+      showHistoryInitially={getSearchParam(params, 'view') === 'history'}
+    />
+  );
 }

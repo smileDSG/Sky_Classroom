@@ -22,7 +22,7 @@ export function MistakeBook() {
 export function KnowledgeGraphView() {
   return (
     <div className="rounded-lg bg-gray-100 dark:bg-slate-800 p-4 text-gray-400 dark:text-slate-500">
-      知识图谱（待实现）
+      知识地图（待实现）
     </div>
   );
 }

@@ -29,7 +29,7 @@
 - Create: `app/about/page.tsx`
 - Create: `tests/components/about-page.test.tsx`
 
-- [ ] Add a page test expecting the OpenMAIC name, open-source description, and license link.
+- [ ] Add a page test expecting the 智眸无界 name, open-source description, and license link.
 - [ ] Run the test and confirm it fails because the page does not exist.
 - [ ] Add a static About page using existing Tailwind and Link patterns.
 - [ ] Re-run the test and confirm it passes.

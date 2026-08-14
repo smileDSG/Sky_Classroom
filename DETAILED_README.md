@@ -1,9 +1,9 @@
-# OpenMAIC — 开放多智能体互动课堂
+# 智眸无界 — 开放多智能体互动课堂
 
 > 一键生成沉浸式多智能体互动课堂，由 AI 教师和 AI 同学实时授课、讨论、互动。
 
 <p align="center">
-  <img src="assets/banner.png" alt="OpenMAIC Banner" width="680"/>
+  <img src="assets/banner.png" alt="智眸无界 Banner" width="680"/>
 </p>
 
 <p align="center">
@@ -58,7 +58,7 @@
 
 ## 项目简介
 
-**OpenMAIC**（Open Multi-Agent Interactive Classroom）是清华大学 THU-MAIC 团队开发的开源 AI 互动课堂平台。它能够将任何主题或文档转化为丰富的互动学习体验：
+**智眸无界**（Open Multi-Agent Interactive Classroom）是清华大学 THU-MAIC 团队开发的开源 AI 互动课堂平台。它能够将任何主题或文档转化为丰富的互动学习体验：
 
 - **一键生成课堂** — 描述一个主题或附上学习材料，AI 几分钟内构建完整课堂
 - **多智能体课堂** — AI 老师和智能体同学实时授课、讨论、互动
@@ -256,7 +256,7 @@ sudo apt-get install -y libreoffice
 
 ```bash
 git clone https://github.com/THU-MAIC/OpenMAIC.git
-cd OpenMAIC
+cd 智眸无界
 pnpm install
 ```
 
@@ -552,7 +552,7 @@ LLM_THINKING_DISABLED=false
 
 ### Vercel 部署
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTHU-MAIC%2FOpenMAIC&envDescription=Configure%20at%20least%20one%20LLM%20provider%20API%20key%20(e.g.%20OPENAI_API_KEY%2C%20ANTHROPIC_API_KEY).%20All%20providers%20are%20optional.&envLink=https%3A%2F%2Fgithub.com%2FTHU-MAIC%2FOpenMAIC%2Fblob%2Fmain%2F.env.example&project-name=openmaic&framework=nextjs)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTHU-MAIC%2F智眸无界&envDescription=Configure%20at%20least%20one%20LLM%20provider%20API%20key%20(e.g.%20OPENAI_API_KEY%2C%20ANTHROPIC_API_KEY).%20All%20providers%20are%20optional.&envLink=https%3A%2F%2Fgithub.com%2FTHU-MAIC%2F智眸无界%2Fblob%2Fmain%2F.env.example&project-name=sky_classroom&framework=nextjs)
 
 手动步骤：
 1. Fork 本仓库
@@ -573,15 +573,15 @@ docker compose up --build
 
 Docker Compose 配置说明：
 - 服务暴露端口 `3000`
-- 数据持久化到 `openmaic-data` 卷
+- 数据持久化到 `sky_classroom-data` 卷
 - LibreOffice 已内置在镜像中（用于 PPTX→PNG）
 - 可选挂载 `server-providers.yml` 进行服务商配置
 
 开发模式 Docker：
 
 ```bash
-docker build -f docker/Dockerfile.dev -t openmaic-dev .
-docker run -p 3000:3000 -v $(pwd):/app openmaic-dev
+docker build -f docker/Dockerfile.dev -t sky_classroom-dev .
+docker run -p 3000:3000 -v $(pwd):/app sky_classroom-dev
 ```
 
 ### 手动部署
@@ -589,7 +589,7 @@ docker run -p 3000:3000 -v $(pwd):/app openmaic-dev
 ```bash
 # 1. 克隆并安装
 git clone https://github.com/THU-MAIC/OpenMAIC.git
-cd OpenMAIC
+cd 智眸无界
 pnpm install
 
 # 2. 配置环境变量
@@ -608,7 +608,7 @@ pnpm start
 ## 项目结构
 
 ```
-OpenMAIC/
+智眸无界/
 ├── app/                          # Next.js App Router
 │   ├── api/                      #   服务端 API 路由 (~18 个端点)
 │   │   ├── generate/             #     场景生成流水线
@@ -655,7 +655,7 @@ OpenMAIC/
 │   └── pptxgenjs/                #   定制化 PPTX 生成
 │
 ├── skills/                       # OpenClaw 集成
-│   └── openmaic/                 #   OpenMAIC Skill
+│   └── sky_classroom/                 #   智眸无界 Skill
 │
 ├── configs/                      # 共享常量
 ├── public/                       # 静态资源
@@ -838,7 +838,7 @@ A: 是的，修改 `.env.local` 后需要重启开发服务器 (`pnpm dev`) 才�
 
 ## 引用
 
-如果 OpenMAIC 对您的研究有帮助，请考虑引用：
+如果 智眸无界 对您的研究有帮助，请考虑引用：
 
 ```bibtex
 @Article{JCST-2509-16000,

@@ -147,7 +147,7 @@ describe('generateSlides', () => {
     expect(lastSystem()).toContain('LatexElement');
     expect(lastSystem()).not.toContain('Template-Driven Mode');
     expect(lastUser()).toContain('"slides"');
-    expect(lastUser()).toContain('OpenMAIC compositions');
+    expect(lastUser()).toContain('天空课堂 compositions');
     expect(lastUser()).toContain('Do NOT use the old card-panel template');
     expect(lastUser()).not.toContain('side-by-side');
     expect(lastUser()).not.toContain('Simple Layout Mode');

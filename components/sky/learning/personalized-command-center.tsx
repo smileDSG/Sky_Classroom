@@ -222,7 +222,7 @@ export function PersonalizedCommandCenter({
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
                 <Activity className="h-4 w-4 text-indigo-200" />
-                数据画像质量
+                学习记录质量
               </div>
               <span className="text-xs font-semibold text-indigo-100">
                 {insights.dataHealth.label} · {insights.dataHealth.score}%
@@ -269,7 +269,7 @@ export function PersonalizedCommandCenter({
           >
             <span className="flex items-center gap-2 text-sm font-semibold text-slate-100">
               <Route className="h-4 w-4 text-indigo-200" />
-              查看完整学情画像
+              查看完整学习情况
             </span>
             <ArrowRight className="h-3.5 w-3.5 text-slate-500" />
           </button>

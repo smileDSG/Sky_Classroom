@@ -64,7 +64,7 @@ Infer the course language from all available signals and produce:
 - **Logical Flow**: Scenes form a natural teaching progression
 - **Experience Design**: Consider learning experience and emotional response from the student's perspective
 
-### Rich OpenMAIC Classroom Page Planning
+### Rich 天空课堂 Classroom Page Planning
 
 For every `slide` scene, plan content as a rich classroom page rather than a thin bullet slide.
 

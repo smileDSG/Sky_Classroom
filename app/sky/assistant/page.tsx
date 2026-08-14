@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -9,6 +10,7 @@ import { AssistantConfig } from '@/components/sky/assistant/assistant-config';
 import { AssistantHistory } from '@/components/sky/assistant/assistant-history';
 import { AssistantSettings } from '@/components/sky/assistant/assistant-settings';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import {
   Feather,
   Wind,
@@ -67,6 +69,8 @@ function AssistantContent() {
     return 'anime';
   });
   const [loadConvId, setLoadConvId] = useState<string | null>(null);
+  const [personalizationContext, setPersonalizationContext] =
+    useState<PersonalizationContext | null>(null);
 
   const handleLoadConversation = useCallback((messages: { id: string; role: 'user' | 'assistant'; content: string }[], convId: string) => {
     setLoadConvId(convId);
@@ -83,10 +87,39 @@ function AssistantContent() {
     if (difficultyParam) setDifficulty(difficultyParam);
   }, [difficultyParam, setDifficulty, setStyle, setSubject, styleParam, subjectParam]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/sky/cloud-mind/personalization-context', { credentials: 'include' })
+      .then((response) => response.json())
+      .then((payload: { success?: boolean; data?: PersonalizationContext }) => {
+        if (!cancelled && payload.success && payload.data) {
+          setPersonalizationContext(payload.data);
+        }
+      })
+      .catch(() => {
+        /* Assistant remains usable while learner context is unavailable. */
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleModeChange = useCallback((newMode: 'anime' | 'normal') => {
     setMode(newMode);
     try { localStorage.setItem('assistant-panel-mode', newMode); } catch { /* ignore */ }
   }, []);
+
+  const profileTarget =
+    personalizationContext?.toolPolicies?.teaching.targetTopic ??
+    personalizationContext?.tutoringPolicy?.targetTopic ??
+    personalizationContext?.learnerDecision?.topic ??
+    personalizationContext?.learningPath?.next ??
+    personalizationContext?.weakPoints[0]?.knowledgePoint;
+  const profileReason =
+    personalizationContext?.learnerDecision?.summary ??
+    personalizationContext?.recommendation?.reason;
 
   return (
     <SkyAppShell>
@@ -178,11 +211,18 @@ function AssistantContent() {
 
           {/* Bottom Tip */}
           <div className="rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200/50 dark:border-amber-700/20 p-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-2">
               <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              <span className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
-                提示：小镜会记住你们的对话
-              </span>
+              <div>
+                <div className="text-[10px] font-semibold text-amber-800 dark:text-amber-300">
+                  {profileTarget ? `当前学习目标：${profileTarget}` : '正在读取你的学习情况'}
+                </div>
+                {profileReason && (
+                  <p className="mt-1 line-clamp-3 text-[10px] leading-relaxed text-amber-700/80 dark:text-amber-400/80">
+                    {profileReason}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </motion.div>
@@ -206,6 +246,7 @@ function AssistantContent() {
                   externalLoadConvId={loadConvId}
                   onConversationLoaded={handleConversationLoaded}
                   initialPrompt={initialPrompt}
+                  personalizationContext={personalizationContext}
                 />
               </div>
             </>

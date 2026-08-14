@@ -127,7 +127,7 @@ describe('LearningProfilePage', () => {
   it('renders a dedicated profile-completion page', async () => {
     await renderLearningProfilePage();
 
-    expect(await screen.findByRole('heading', { name: '完善学习画像' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '完善学习情况' })).toBeInTheDocument();
     expect(screen.getByText('让摘星锦囊先认识你的目标、薄弱点和学习偏好。')).toBeInTheDocument();
     expect(screen.getByLabelText('画像对话采集')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /返回摘星锦囊/ })).toHaveAttribute('href', '/sky');
@@ -158,7 +158,7 @@ describe('LearningProfilePage', () => {
   it('updates the live profile preview after the chat extracts a profile patch', async () => {
     await renderLearningProfilePage();
 
-    fireEvent.click(await screen.findByRole('button', { name: '更新画像' }));
+    fireEvent.click(await screen.findByRole('button', { name: '更新学习情况' }));
 
     expect(screen.getByText('两周内补强机器学习')).toBeInTheDocument();
     expect(screen.getByText('过拟合、模型评估')).toBeInTheDocument();
@@ -246,9 +246,9 @@ describe('LearningProfilePage', () => {
       'href',
       '/sky/cloud-mind/quiz',
     );
-    expect(screen.getByRole('link', { name: /进入学习实验室/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /查看个人学习计划/ })).toHaveAttribute(
       'href',
-      '/sky/study-lab',
+      '/sky/learning#learning-plan',
     );
     expect(screen.getByRole('link', { name: /查看完整分析/ })).toHaveAttribute(
       'href',

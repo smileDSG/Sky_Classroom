@@ -87,6 +87,8 @@ export interface Scene {
   };
 
   // Metadata
+  /** Knowledge-point labels inherited from the scene outline. */
+  knowledgePoints?: string[];
   createdAt?: number;
   updatedAt?: number;
 }

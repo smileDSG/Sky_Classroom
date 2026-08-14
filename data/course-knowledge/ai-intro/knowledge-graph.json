@@ -287,7 +287,7 @@
       "chapter": "08-computer-vision",
       "difficulty": 3,
       "prerequisites": ["cnn"],
-      "masteryCriteria": ["能说明预训练模型和微调的意义"],
+      "masteryCriteria": ["能说明预训练模型和针对任务进一步调整的意义"],
       "commonMisconceptions": ["认为迁移学习不需要关注新数据分布"]
     },
     {

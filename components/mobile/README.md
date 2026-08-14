@@ -46,9 +46,9 @@ import { MobileSheet } from "@/components/mobile";
 </MobileSheet>;
 ```
 
-## 置信度与复核
+## 判断把握与复核
 
-展示 AI 结果的可信度：
+展示 AI 结果的判断把握：
 
 ```tsx
 import { MobileConfidenceBadge } from "@/components/mobile";
@@ -56,12 +56,12 @@ import { MobileConfidenceBadge } from "@/components/mobile";
 <MobileConfidenceBadge value={0.82} />;
 ```
 
-- `value >= 0.7` 显示“可信”。
+- `value >= 0.7` 显示“判断把握较高”。
 - `value < 0.7` 显示“需复核”。
 
-## 来源引用
+## 资料来源
 
-展示检索到的来源或引用：
+展示找到的资料来源：
 
 ```tsx
 import { MobileSourceList } from "@/components/mobile";
@@ -71,7 +71,7 @@ import { MobileSourceList } from "@/components/mobile";
 />;
 ```
 
-## Agent 进度
+## AI角色进度
 
 展示多阶段生成进度：
 
@@ -80,7 +80,7 @@ import { MobileAgentProgress } from "@/components/mobile";
 
 <MobileAgentProgress
   stages={[
-    { id: "profile", label: "画像分析", status: "done" },
+    { id: "profile", label: "学习情况分析", status: "done" },
     { id: "generate", label: "资源生成", status: "active" },
   ]}
 />;

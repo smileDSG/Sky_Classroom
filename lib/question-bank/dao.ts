@@ -460,7 +460,7 @@ export async function findAdjacentIds(
   filter: Pick<QuestionBankFilter, 'subject' | 'grade' | 'difficulty' | 'questionType' | 'verified' | 'keyword'> = {},
 ): Promise<{ prevId: string | null; nextId: string | null }> {
   await ensureTable();
-  const pool = getPool();
+  const pool = await getPool();
 
   // Get current row's created_at
   const [curRows] = await pool.query<QBRow[]>('SELECT created_at FROM question_bank WHERE id = ?', [id]);

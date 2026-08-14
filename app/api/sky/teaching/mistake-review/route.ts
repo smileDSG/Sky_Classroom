@@ -13,6 +13,7 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { createTeachingJob } from '@/lib/server/teaching-job-store';
 import { runTeachingJob } from '@/lib/server/teaching-job-runner';
+import { resolveTeachingPersonalizationPolicy } from '@/lib/server/teaching-personalization';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { planMistakeReview, buildTeachingTopicFromReview } from '@/lib/teaching/mistake-review-planner';
@@ -51,17 +52,21 @@ export async function POST(req: NextRequest) {
     // Analyze mistakes and build review plan
     const reviewPlan = planMistakeReview(mistakes);
     const teachingTopic = buildTeachingTopicFromReview(reviewPlan);
+    const personalizationPolicy = await resolveTeachingPersonalizationPolicy(
+      quota.userId,
+      teachingTopic,
+    );
 
     const jobId = nanoid(10);
 
     // Create job record
-    await createTeachingJob(jobId, quota.userId, teachingTopic);
+    await createTeachingJob(jobId, quota.userId, teachingTopic, personalizationPolicy);
 
     // Record usage
     await recordUsage(quota.userId, quota.planType, 'generationCount');
 
     // Start background generation
-    after(() => runTeachingJob(jobId, teachingTopic, quota.userId));
+    after(() => runTeachingJob(jobId, teachingTopic, quota.userId, personalizationPolicy));
 
     log.info(`Mistake review job ${jobId} created for user ${quota.userId}, topic: ${teachingTopic}`);
 

@@ -58,6 +58,7 @@ describe('applyAnswerEvent', () => {
     expect(next.beta).toBe(2);
     expect(next.mastery).toBeGreaterThan(0.5);
     expect(next.evidenceCount).toBe(1);
+    expect(next.confidence).toBeLessThan(0.4);
     expect(next.lastEvidenceAt).toBe(event.occurredAt);
   });
 

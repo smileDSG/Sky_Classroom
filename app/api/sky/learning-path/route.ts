@@ -16,7 +16,12 @@ import { getServerStorage, getRequiredServerStorage } from '@/lib/server/server-
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
 import { buildPlanningProjection } from '@/lib/adaptive-learning/profile/projection-builder';
+import { buildPlanningEvidence } from '@/lib/adaptive-learning/profile/planning-evidence';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import { generateLearningPlan } from '@/lib/adaptive-learning/planning/learning-plan-service';
+import {
+  buildScheduledLearningPlan,
+} from '@/lib/adaptive-learning/planning/scheduled-learning-plan';
 import { retrieveChunksForPlanning } from '@/lib/adaptive-learning/planning/retrieve-chunks';
 import { generatePlanWithLLM } from '@/lib/adaptive-learning/planning/generate-plan';
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
@@ -34,6 +39,8 @@ import type {
   StrategyAlias,
 } from '@/lib/teaching/learning-path-types';
 import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
+import { createLearningPlanDAO } from '@/lib/storage/dao/learning-plans';
+import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personalization';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 
 const log = createLogger('API:LearningPath');
@@ -45,6 +52,37 @@ const VALID_PRIORITY_STRATEGIES: PriorityStrategy[] = [
   'goal-topic',
   'balanced',
 ];
+
+const DEFAULT_NARRATIVE_PLAN_TIMEOUT_MS = 8_000;
+
+function getNarrativePlanTimeoutMs(): number {
+  const configured = Number(process.env.LEARNING_PATH_NARRATIVE_TIMEOUT_MS);
+  return Number.isFinite(configured) && configured > 0
+    ? configured
+    : DEFAULT_NARRATIVE_PLAN_TIMEOUT_MS;
+}
+
+async function awaitNarrativePlan<T>(
+  promise: Promise<T | null>,
+  timeoutMs: number,
+): Promise<T | null> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      log.warn(`Narrative learning plan timed out after ${timeoutMs}ms; using schedule only`);
+      resolve(null);
+    }, timeoutMs);
+
+    void promise.then((value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      resolve(value);
+    });
+  });
+}
 
 function normalizePriorities(
   priorities?: string[],
@@ -102,9 +140,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { goalTopic, domainProfileId = 'default' } = body as {
+    const { goalTopic, domainProfileId = 'default', priorities, strategy } = body as {
       goalTopic?: string;
       domainProfileId?: string;
+      priorities?: string[];
+      strategy?: StrategyAlias;
     };
 
     if (!domainProfileId || typeof domainProfileId !== 'string') {
@@ -125,7 +165,10 @@ export async function POST(req: NextRequest) {
       return adaptiveLearningApiError(error, correlationId);
     }
 
-    const domainProfile = await profileRepository.getLatestDomainProfile(auth.user.id, domainProfileId);
+    const domainProfile = await profileRepository.getLatestDomainProfile(
+      auth.user.id,
+      domainProfileId,
+    );
     if (!domainProfile) {
       const error = new AdaptiveLearningError({
         code: 'PROFILE_INCOMPLETE',
@@ -136,28 +179,96 @@ export async function POST(req: NextRequest) {
       return adaptiveLearningApiError(error, correlationId);
     }
 
-    const projection = buildPlanningProjection({
-      userId: auth.user.id,
-      snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w0`,
-      profileVersion: preferences.version,
-      eventWatermark: 0,
-      preferences,
-      domainProfile,
-      planningMode: domainProfile.examDate && domainProfile.targetScore ? 'exam' : 'mastery',
-      knowledgeStatus: 'no-evidence',
-      targetKnowledge: [],
-      engagementSummary: { studyMinutes7d: 0, activeDays7d: 0 },
+    const [knowledgeStates, learningEvents] = await Promise.all([
+      createKnowledgeStateDAO(storage).list(auth.user.id),
+      profileRepository.listLearningEvents(auth.user.id),
+    ]);
+    const planningEvidence = buildPlanningEvidence({
+      states: knowledgeStates,
+      events: learningEvents,
+      targetNodeIds: domainProfile.targetNodeIds,
     });
 
-    const plan = await generateLearningPlan(
-      { projection, goalTopic },
-      {
-        retrieveChunks: retrieveChunksForPlanning,
-        generatePlan: generatePlanWithLLM,
-      },
+    const projection = buildPlanningProjection({
+      userId: auth.user.id,
+      snapshotId:
+        `snapshot:${preferences.userId}:v${preferences.version}` +
+        `:w${planningEvidence.eventWatermark}`,
+      profileVersion: preferences.version,
+      eventWatermark: planningEvidence.eventWatermark,
+      preferences,
+      domainProfile,
+      planningMode:
+        domainProfile.examDate && domainProfile.targetScore !== undefined ? 'exam' : 'mastery',
+      knowledgeStatus: planningEvidence.knowledgeStatus,
+      targetKnowledge: planningEvidence.targetKnowledge,
+      engagementSummary: planningEvidence.engagementSummary,
+    });
+
+    const narrativePlanTimeoutMs = getNarrativePlanTimeoutMs();
+    const narrativePlanPromise = (async () =>
+      generateLearningPlan(
+        {
+          projection,
+          goalTopic,
+          learnerDecision: await resolveLearnerDecisionForUser(auth.user.id, goalTopic),
+        },
+        {
+          retrieveChunks: retrieveChunksForPlanning,
+          generatePlan: (systemPrompt, userPrompt) =>
+            generatePlanWithLLM(systemPrompt, userPrompt, {
+              retries: 0,
+              timeoutMs: narrativePlanTimeoutMs,
+            }),
+        },
+      ))().catch((error) => {
+      log.warn(
+        'Narrative learning plan unavailable; continuing with deterministic schedule:',
+        error,
+      );
+      return null;
+    });
+
+    const normalizedPriorities = normalizePriorities(priorities, strategy);
+    const pathContext = await buildPathGenerationContext(auth.user.id);
+    const path = buildInitialPathFromContext(pathContext, {
+      goalTopic,
+      priorities: normalizedPriorities,
+      strategy,
+    });
+
+    if (!path.nodes.length) {
+      return apiError(
+        API_ERROR_CODES.GENERATION_FAILED,
+        500,
+        '未能生成学习路径，请稍后重试',
+        undefined,
+        { 'x-correlation-id': correlationId },
+      );
+    }
+
+    const plan = buildScheduledLearningPlan({
+      path,
+      projection,
+      evidenceEventIds: learningEvents.map((event) => event.eventId),
+    });
+    const planDAO = createLearningPlanDAO(storage);
+    const previousPlan = await planDAO.getActiveByUser(auth.user.id);
+    await createLearningPathDAO(storage).add(path);
+    await planDAO.add(plan);
+    if (previousPlan) {
+      await planDAO.update(previousPlan.id, { status: 'superseded' });
+    }
+    const narrativePlan = await awaitNarrativePlan(
+      narrativePlanPromise,
+      narrativePlanTimeoutMs,
     );
 
-    return apiSuccess({ data: plan }, 200, { 'x-correlation-id': correlationId });
+    return apiSuccess(
+      { data: { path, plan, narrativePlan } },
+      201,
+      { 'x-correlation-id': correlationId },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Learning path generation failed:', message);

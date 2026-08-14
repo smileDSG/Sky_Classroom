@@ -11,7 +11,16 @@ import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import type { ErrorType } from '@/lib/storage/dao/mistakes';
 import { createLogger } from '@/lib/logger';
 import { recordReviewCompleted } from '@/lib/adaptive-learning/profile/event-recorder';
+import { getLearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import { requireAuth } from '@/lib/server/auth/helpers';
+import { ensureDemoLearningData } from '@/lib/demo/admin-mistake-seed';
+import { invalidateProfileCache } from '@/lib/student/profile-builder';
+import type { KnowledgeState } from '@/lib/adaptive-learning/contracts';
+import {
+  canonicalizeKnowledgePoint,
+  sameKnowledgePoint,
+} from '@/lib/adaptive-learning/knowledge/knowledge-point-registry';
 
 const log = createLogger('API:SkyMistakes');
 
@@ -28,6 +37,16 @@ async function getDAO() {
   return _daoPromise;
 }
 
+function findKnowledgeState(states: KnowledgeState[], knowledgePoint: string) {
+  const normalized = knowledgePoint.trim().toLocaleLowerCase();
+  return states.find(
+    (state) =>
+      state.nodeId.trim().toLocaleLowerCase() === normalized ||
+      state.displayName?.trim().toLocaleLowerCase() === normalized ||
+      sameKnowledgePoint(state.displayName ?? state.nodeId, knowledgePoint),
+  );
+}
+
 // ── GET — list / query mistakes ──────────────────────────────────────
 
 export async function GET(req: NextRequest) {
@@ -36,6 +55,11 @@ export async function GET(req: NextRequest) {
 
   try {
     const dao = await getDAO();
+    const storage = await getServerStorage();
+    const demoSeed = await ensureDemoLearningData(auth.user.id, storage);
+    if (demoSeed.changed) {
+      await invalidateProfileCache(auth.user.id);
+    }
     const url = new URL(req.url);
     const errorType = url.searchParams.get('errorType') as ErrorType | null;
     const reviewed = url.searchParams.get('reviewed');
@@ -99,6 +123,8 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const dao = await getDAO();
+    const storage = await getServerStorage();
+    const knowledgeStateDAO = createKnowledgeStateDAO(storage);
     const body = await req.json();
     const id = body.id as string;
     const correct = body.correct !== false; // default true
@@ -106,6 +132,12 @@ export async function PATCH(req: NextRequest) {
     if (!id) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '缺少 id 参数');
     }
+
+    const entry = await dao.get(auth.user.id, id);
+    if (!entry) {
+      return apiError(API_ERROR_CODES.NOT_FOUND, 404, '错题不存在');
+    }
+    const statesBefore = await knowledgeStateDAO.list(auth.user.id);
 
     const updated = correct
       ? await dao.recordReview(auth.user.id, id)
@@ -123,24 +155,65 @@ export async function PATCH(req: NextRequest) {
 
     // Record a review event and invalidate the profile cache so the next
     // profile build reflects the review result in real time.
+    let reviewEventRecorded = false;
     try {
-      const storage = await getServerStorage();
-      const entry = await dao.get(auth.user.id, id);
-      if (entry) {
-        await recordReviewCompleted({
-          storage,
-          userId: auth.user.id,
-          source: 'mistake-review',
-          rating: correct ? 'recalled' : 'forgotten',
-          knowledgePoints: entry.knowledgePoints,
-          correlationId: entry.id,
-        });
-      }
+      const event = await recordReviewCompleted({
+        storage,
+        userId: auth.user.id,
+        source: 'mistake-review',
+        rating: correct ? 'recalled' : 'forgotten',
+        knowledgePoints: entry.knowledgePoints,
+        correlationId: entry.id,
+      });
+      reviewEventRecorded = Boolean(event);
     } catch (eventErr) {
       log.warn('Failed to record review event:', eventErr);
     }
 
-    return apiSuccess({ reviewed: correct, id });
+    const [statesAfter, reviewedEntry] = await Promise.all([
+      knowledgeStateDAO.list(auth.user.id),
+      dao.get(auth.user.id, id),
+    ]);
+    const canonicalPoints = new Map(
+      entry.knowledgePoints.map((knowledgePoint) => {
+        const canonical = canonicalizeKnowledgePoint(knowledgePoint);
+        return [canonical.id, canonical.name] as const;
+      }),
+    );
+    const changes = [...canonicalPoints.values()].map((knowledgePoint) => {
+      const before = findKnowledgeState(statesBefore, knowledgePoint);
+      const after = findKnowledgeState(statesAfter, knowledgePoint);
+      return {
+        knowledgePoint,
+        masteryBefore: before?.mastery ?? null,
+        masteryAfter: after?.mastery ?? null,
+        confidenceBefore: before?.confidence ?? null,
+        confidenceAfter: after?.confidence ?? null,
+        evidenceCountBefore: before?.evidenceCount ?? 0,
+        evidenceCountAfter: after?.evidenceCount ?? 0,
+      };
+    });
+    const learnerDecision = getLearnerDecision({
+      knowledgeStates: statesAfter,
+      explicitTopic: entry.knowledgePoints[0],
+    });
+
+    return apiSuccess({
+      reviewed: correct,
+      id,
+      review: reviewedEntry
+        ? {
+            reviewCount: reviewedEntry.reviewCount,
+            masteryLevel: reviewedEntry.masteryLevel,
+            nextReview: reviewedEntry.nextReview,
+          }
+        : null,
+      profileUpdate: {
+        recorded: reviewEventRecorded,
+        changes,
+        learnerDecision,
+      },
+    });
   } catch (err) {
     log.error('Mistakes PATCH error:', err);
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '标记复习失败');

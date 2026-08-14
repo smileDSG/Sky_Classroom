@@ -4,7 +4,7 @@
 - Root cause: `public/sw.js` used cache-first for `/_next/static/*`, and `proxy.ts` did not allow `/sw.js` or `/manifest.json` through as public static assets. The browser could keep a stale service worker/cache while the dev server rebuilt a different Turbopack module graph.
 - Fix:
   - Rewrote `public/sw.js` as valid JavaScript, changed Next static chunks to network-only, and bumped cache names.
-  - Added `components/service-worker-reset.tsx` to unregister old service workers and delete `openmaic-*` caches in development.
+  - Added `components/service-worker-reset.tsx` to unregister old service workers and delete `sky_classroom-*` caches in development.
   - Mounted `ServiceWorkerReset` in `app/layout.tsx`.
   - Added `/sw.js` and `/manifest.json` to `proxy.ts` public/static allowlist and matcher exclusion.
 - Evidence:

@@ -23,11 +23,17 @@ import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
-import { buildStudentProfile } from '@/lib/student/profile-builder';
+import { buildStudentProfile, invalidateProfileCache } from '@/lib/student/profile-builder';
+import { ensureDemoLearningData } from '@/lib/demo/admin-mistake-seed';
 import { buildCloudMindDashboard, EMPTY_KB_STATS } from '@/lib/cloud-mind/recommendation-engine';
 import { createLogger } from '@/lib/logger';
+import { createAdminLearningDashboardDemo } from '@/lib/demo/admin-learning-dashboard';
 import type { KBStats } from '@/lib/knowledge-base/types';
-import type { ProfileCacheEntry, StudentProfile } from '@/lib/student/profile-types';
+import {
+  STUDENT_PROFILE_CACHE_VERSION,
+  type ProfileCacheEntry,
+  type StudentProfile,
+} from '@/lib/student/profile-types';
 
 const log = createLogger('API:ProfileDashboard');
 const DEMO_PROFILE_USER_ID = 'default-user';
@@ -73,6 +79,7 @@ async function readCachedDemoProfile(): Promise<StudentProfile | null> {
     );
     const raw = await fs.readFile(cachePath, 'utf-8');
     const entry = JSON.parse(raw) as ProfileCacheEntry;
+    if (entry.cacheVersion !== STUDENT_PROFILE_CACHE_VERSION) return null;
     return hydrateProfileDates(entry.profile);
   } catch {
     return null;
@@ -80,19 +87,19 @@ async function readCachedDemoProfile(): Promise<StudentProfile | null> {
 }
 
 async function resolveDashboardProfile(userId: string): Promise<StudentProfile | null> {
+  if (DEMO_FALLBACK_USER_IDS.has(userId)) {
+    const demoProfile = await readCachedDemoProfile();
+    if (demoProfile && hasProfileLearningData(demoProfile)) {
+      return { ...demoProfile, userId };
+    }
+  }
+
   const profile = await buildStudentProfile(userId).catch((err) => {
     log.warn('Profile unavailable for dashboard:', err);
     return null;
   });
 
-  if (hasProfileLearningData(profile) || !DEMO_FALLBACK_USER_IDS.has(userId)) {
-    return profile;
-  }
-
-  const demoProfile = await readCachedDemoProfile();
-  if (!demoProfile || !hasProfileLearningData(demoProfile)) return profile;
-
-  return { ...demoProfile, userId };
+  return profile;
 }
 
 export async function GET(req: NextRequest) {
@@ -134,6 +141,10 @@ export async function GET(req: NextRequest) {
 
     // ── Parallel data fetching ──
     const storage = await getServerStorage();
+    const demoSeed = await ensureDemoLearningData(userId, storage);
+    if (demoSeed.changed) {
+      await invalidateProfileCache(userId);
+    }
     const profileRepository = new LearnerProfileRepository(storage);
     const mistakeDAO = createMistakeBookDAO(storage);
     const knowledgeStateDAO = createKnowledgeStateDAO(storage);
@@ -162,21 +173,31 @@ export async function GET(req: NextRequest) {
       learningPathDAO.getActiveByUser(userId),
     ]);
 
+    const isAdminDemo = DEMO_FALLBACK_USER_IDS.has(userId);
     const cloudMind = buildCloudMindDashboard({
       userId,
       profile,
-      mistakes: mistakesResult.items,
-      dueMistakes,
+      mistakes: isAdminDemo ? [] : mistakesResult.items,
+      dueMistakes: isAdminDemo ? [] : dueMistakes,
       recentAttempts,
       kbStats,
       knowledgeStates,
     });
 
+    const demo = isAdminDemo ? createAdminLearningDashboardDemo() : null;
+    if (demo) {
+      cloudMind.dueReviews = demo.dueReviews;
+      cloudMind.recentRecords = demo.recentRecords;
+      cloudMind.weakPoints = demo.knowledgeTopics;
+    }
+
     return apiSuccess({
       data: {
-        stats: { ...learningStats, learnerProfile: preferences ?? null },
+        stats: demo
+          ? { ...demo.stats, learnerProfile: preferences ?? demo.stats.learnerProfile }
+          : { ...learningStats, learnerProfile: preferences ?? null },
         cloudMind,
-        learningPath: { path: activePath },
+        learningPath: { path: demo?.learningPath ?? activePath },
       },
     });
   } catch (err) {

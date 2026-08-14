@@ -174,7 +174,7 @@ export default function MobileReviewPlanPage() {
         <header className="flex items-center gap-2.5">
           <Link
             href="/m/sky/learning/profile"
-            aria-label="返回学习画像"
+            aria-label="返回学习情况"
             className="flex size-11 shrink-0 items-center justify-center rounded-[16px] border border-white/10 bg-white/[0.06] text-slate-100 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/45"
           >
             <ArrowLeft className="size-5" />

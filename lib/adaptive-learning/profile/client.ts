@@ -6,6 +6,7 @@ import {
 } from '@/lib/adaptive-learning/contracts';
 
 const PROFILE_ENDPOINT = '/api/user/learner-profile';
+const LEARNING_EVENTS_ENDPOINT = '/api/learning-events';
 
 export class LearnerProfileClientError extends Error {
   constructor(
@@ -156,4 +157,71 @@ export async function saveLearnerPreferences(input: {
 
   if (!response.ok) throw readError(payload, response.status);
   return parsePreferences(payload, response.status);
+}
+
+/** Record optional behaviour evidence without blocking the primary UI action. */
+export type LearnerBehaviorEventInput = {
+  source: string;
+  nodeIds?: string[];
+  correlationId?: string;
+} & (
+  | {
+      type: 'segment-replayed';
+      payload: { replayCount: number; knowledgePoints?: string[] };
+    }
+  | {
+      type: 'segment-paused';
+      payload: { activeDurationSeconds: number; knowledgePoints?: string[] };
+    }
+  | {
+      type: 'dwell-recorded';
+      payload: {
+        activeDurationSeconds: number;
+        baselineDurationSeconds: number;
+        knowledgePoints?: string[];
+      };
+    }
+  | {
+      type: 'question-asked';
+      payload: { intent: string; knowledgePoints?: string[] };
+    }
+  | {
+      type: 'self-reported';
+      payload: { level: 'confused' | 'understood'; knowledgePoints?: string[] };
+  }
+);
+
+export interface LearnerBehaviorEventResult {
+  recorded: boolean;
+  reason?: string;
+}
+
+export async function recordLearnerBehaviorEvent(
+  input: LearnerBehaviorEventInput,
+): Promise<LearnerBehaviorEventResult> {
+  try {
+    const response = await fetch(LEARNING_EVENTS_ENDPOINT, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...input,
+        evidenceQuality: 'inferred',
+      }),
+    });
+    const payload = (await response.json().catch(() => null)) as {
+      recorded?: boolean;
+      reason?: string;
+    } | null;
+    return {
+      recorded: response.ok && payload?.recorded === true,
+      reason: payload?.reason ?? (response.ok ? undefined : 'request-failed'),
+    };
+  } catch {
+    // Profiling is best-effort. Playback must continue when telemetry fails.
+    return { recorded: false, reason: 'request-failed' };
+  }
 }

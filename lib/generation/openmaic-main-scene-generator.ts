@@ -917,7 +917,7 @@ async function generateSlideContent(
   if (!slideQa.pass) {
     const blockingQaIssues = slideQa.issues.filter((issue) => issue.severity === 'blocking');
     log.warn(
-      `OpenMAIC edit slide QA found ${blockingQaIssues.length} blocking content issue(s) for "${outline.title}"; retrying content design.`,
+      `天空课堂 edit slide QA found ${blockingQaIssues.length} blocking content issue(s) for "${outline.title}"; retrying content design.`,
     );
     const retryPrompt = `${userPrompt}
 
@@ -993,7 +993,7 @@ Hard content rules for the retry:
       }
     } else {
       log.warn(
-        `OpenMAIC edit slide content QA retry for "${outline.title}" did not return valid elements.`,
+        `天空课堂 edit slide content QA retry for "${outline.title}" did not return valid elements.`,
       );
     }
   }
@@ -1844,6 +1844,7 @@ export function createSceneWithActions(
       type: 'slide',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'slide',
         canvas: slide,
@@ -1859,6 +1860,7 @@ export function createSceneWithActions(
       type: 'quiz',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'quiz',
         questions: content.questions,
@@ -1874,6 +1876,7 @@ export function createSceneWithActions(
       type: 'interactive',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'interactive',
         url: '',
@@ -1894,6 +1897,7 @@ export function createSceneWithActions(
       type: 'pbl',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'pbl',
         projectConfig: content.projectConfig,

@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { buildStudentProfile, invalidateProfileCache } from '@/lib/student/profile-builder';
+import { getCurriculumPack } from '@/lib/adaptive-learning/curriculum/registry';
 import type { StorageProvider } from '@/lib/storage/storage-types';
 
 // Mock storage
@@ -19,11 +20,19 @@ vi.mock('@/lib/student/quiz-attempts', () => ({
   createQuizAttemptDAO: vi.fn(),
 }));
 
+vi.mock('@/lib/storage/dao/knowledge-state', () => ({
+  createKnowledgeStateDAO: vi.fn(),
+}));
+
 const mockMistakeDAO = {
   list: vi.fn(),
 };
 
 const mockQuizAttemptDAO = {
+  list: vi.fn(),
+};
+
+const mockKnowledgeStateDAO = {
   list: vi.fn(),
 };
 
@@ -45,10 +54,15 @@ describe('buildStudentProfile', () => {
     const { getServerStorage } = await import('@/lib/server/server-storage');
     const { createMistakeBookDAO } = await import('@/lib/storage/dao/mistakes');
     const { createQuizAttemptDAO } = await import('@/lib/student/quiz-attempts');
+    const { createKnowledgeStateDAO } = await import('@/lib/storage/dao/knowledge-state');
     vi.mocked(getServerStorage).mockResolvedValue(mockStorage);
     vi.mocked(createMistakeBookDAO).mockReturnValue(mockMistakeDAO as unknown as ReturnType<typeof createMistakeBookDAO>);
     vi.mocked(createQuizAttemptDAO).mockReturnValue(mockQuizAttemptDAO as unknown as ReturnType<typeof createQuizAttemptDAO>);
+    vi.mocked(createKnowledgeStateDAO).mockReturnValue(
+      mockKnowledgeStateDAO as unknown as ReturnType<typeof createKnowledgeStateDAO>,
+    );
     mockQuizAttemptDAO.list.mockResolvedValue([]);
+    mockKnowledgeStateDAO.list.mockResolvedValue([]);
   });
 
   afterEach(async () => {
@@ -93,6 +107,33 @@ describe('buildStudentProfile', () => {
     expect(profile.totalQuestions).toBeGreaterThan(0);
     expect(profile.masteryByKnowledge).toHaveProperty('方程');
     expect(profile.masteryBySubject.math).toBeGreaterThan(0);
+  });
+
+  it('uses Bayesian knowledge state as the authoritative mapped mastery', async () => {
+    mockMistakeDAO.list.mockResolvedValueOnce({ items: [], total: 0 });
+    mockKnowledgeStateDAO.list.mockResolvedValueOnce([
+      {
+        userId: 'test-user',
+        nodeId: 'functions-basic',
+        alpha: 4,
+        beta: 1,
+        mastery: 0.8,
+        confidence: 0.7,
+        retention: 1,
+        reviewStabilityDays: 10,
+        repeatedErrorCount: 0,
+        evidenceCount: 3,
+        version: 3,
+      },
+    ]);
+
+    const profile = await buildStudentProfile('test-user');
+    const node = getCurriculumPack('gaokao-math-2026.1').nodes.find(
+      (candidate) => candidate.id === 'functions-basic',
+    )!;
+
+    expect(profile.masteryByKnowledge[node.name]).toBe(80);
+    expect(profile.masteryBySubject.math).toBe(80);
   });
 
   it('caches profile for subsequent calls', async () => {

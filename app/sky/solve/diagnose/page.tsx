@@ -95,7 +95,7 @@ export default function DiagnosePage() {
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24, fontFamily: 'system-ui, sans-serif' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>🔍 诊断面板：识图 vs 解题</h1>
+      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>🔍 识图与解题检查</h1>
       <p style={{ color: '#666', marginBottom: 24 }}>
         上传同一道题的图片，对比 OCR 识别文字和解题结果，一眼看出问题在哪一环。
       </p>
@@ -300,7 +300,7 @@ export default function DiagnosePage() {
           background: solveResult.answer === manualResult.answer ? '#f0fdf4' : '#fef2f2',
           border: `2px solid ${solveResult.answer === manualResult.answer ? '#bbf7d0' : '#fecaca'}`,
         }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>📊 诊断结论</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>📊 检查结论</h2>
           {solveResult.answer === manualResult.answer ? (
             <p style={{ color: '#166534' }}>
               ✅ 图片链路和手动输入链路<strong>答案一致</strong>— 识图和解题都没问题。
@@ -320,7 +320,7 @@ export default function DiagnosePage() {
 
       {/* 快速提示 */}
       <details style={{ marginTop: 24, color: '#6b7280', fontSize: 13 }}>
-        <summary style={{ cursor: 'pointer', fontWeight: 500 }}>💡 诊断技巧</summary>
+        <summary style={{ cursor: 'pointer', fontWeight: 500 }}>💡 检查技巧</summary>
         <ul style={{ paddingLeft: 20, lineHeight: 2, marginTop: 8 }}>
           <li><strong>OCR 文字乱码？</strong>检查 API Key（ANTHROPIC_API_KEY / QWEN_API_KEY / GLM_API_KEY），或尝试更清晰的图片</li>
           <li><strong>OCR 文字正确但解题错？</strong>检查 solver 的 LLM API Key，查看浏览器 Console / 服务端日志</li>

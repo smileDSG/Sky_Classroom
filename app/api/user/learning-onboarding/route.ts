@@ -1,13 +1,14 @@
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { requireAuth } from '@/lib/server/auth/helpers';
-import { createUserDAO } from '@/lib/storage/dao/users';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { readUniversalOnboarding } from '@/lib/onboarding/migration';
+import { integrateCompletedOnboardingProfile } from '@/lib/onboarding/profile-integration';
+import { buildInitialProfileSnapshot } from '@/lib/onboarding/initial-profile';
 import {
   CURRENT_ONBOARDING_VERSION,
   completeUniversalOnboardingSchema,
   getLearningOnboardingStatus,
   type CompleteUniversalOnboardingInput,
-  type LearningOnboardingProfile,
   type UniversalIdentityProfile,
   type UniversalOnboardingProfile,
 } from '@/lib/onboarding/types';
@@ -64,9 +65,11 @@ export async function GET() {
   const auth = await requireAuth();
   if ('error' in auth) return auth.error;
 
+  const onboarding = normalizedProfile(auth.user);
   return apiSuccess({
     status: getLearningOnboardingStatus(auth.user.learningOnboarding),
-    onboarding: normalizedProfile(auth.user),
+    onboarding,
+    initialProfile: buildInitialProfileSnapshot(onboarding),
   });
 }
 
@@ -79,17 +82,17 @@ export async function PUT(request: Request) {
     return apiError('INVALID_REQUEST', 400, 'Validation failed', parsed.error.issues[0]?.message);
   }
 
-  const completed: LearningOnboardingProfile = buildStoredProfile(
-    parsed.data,
-    auth.user,
-    Date.now(),
-  );
-  const dao = await createUserDAO();
-  const updated = await dao.update(auth.user.id, { learningOnboarding: completed });
-  if (!updated) return apiError('NOT_FOUND', 404, 'User not found');
+  const completed = buildStoredProfile(parsed.data, auth.user, Date.now());
+  const storage = await getServerStorage();
+  const { user: updated } = await integrateCompletedOnboardingProfile({
+    storage,
+    userId: auth.user.id,
+    profile: completed,
+  });
 
   return apiSuccess({
     onboarding: updated.learningOnboarding,
     status: getLearningOnboardingStatus(updated.learningOnboarding),
+    initialProfile: buildInitialProfileSnapshot(normalizedProfile(updated)),
   });
 }

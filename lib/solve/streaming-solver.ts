@@ -50,7 +50,7 @@ function fixLatexJsonEscapes(json: string): string {
 // LLMs emit messy LaTeX: stray newlines inside $...$, misplaced $,
 // \sqrtn (missing braces), etc. Clean before display.
 
-function cleanLatexContent(text: string): string {
+export function cleanLatexContent(text: string): string {
   if (!text) return text;
 
   let s = text;
@@ -154,7 +154,19 @@ export interface MetadataEvent {
   options?: string[];
 }
 
-export type StreamEvent = StepEvent | AnswerEvent | KnowledgeEvent | SimilarEvent | PhaseEvent | MetadataEvent;
+export interface SolutionEvent {
+  type: 'solution';
+  solution: string;
+}
+
+export type StreamEvent =
+  | StepEvent
+  | AnswerEvent
+  | KnowledgeEvent
+  | SimilarEvent
+  | PhaseEvent
+  | MetadataEvent
+  | SolutionEvent;
 
 // ── Streaming JSON parser state machine ──────────────────────────────
 

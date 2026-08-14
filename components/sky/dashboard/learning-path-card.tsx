@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, type ElementType, type ReactNode } from 'react';
+import Link from 'next/link';
 import { motion } from 'motion/react';
 import {
   Route,
@@ -35,6 +36,7 @@ import type {
   PriorityStrategy,
   StrategyAlias,
 } from '@/lib/teaching/learning-path-types';
+import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 
 interface LearningPathCardProps {
   onStartTopic?: (topic: string) => void;
@@ -69,39 +71,38 @@ interface PreviewData {
   masteryPercent: number;
 }
 
-const STRATEGIES: { key: StrategyAlias; label: string; icon: ElementType; desc: string }[] =
-  [
-    {
-      key: 'balanced',
-      label: '均衡提升',
-      icon: BarChart3,
-      desc: '综合考虑薄弱点、复习计划和错因',
-    },
-    {
-      key: 'weakness-first',
-      label: '薄弱优先',
-      icon: AlertTriangle,
-      desc: '优先攻克掌握度最低的知识点',
-    },
-    {
-      key: 'review-first',
-      label: '复习到期优先',
-      icon: CalendarClock,
-      desc: '优先安排今天到期的复习内容',
-    },
-    {
-      key: 'error-first',
-      label: '错因攻坚',
-      icon: Brain,
-      desc: '集中突破高频错误类型',
-    },
-    {
-      key: 'goal-topic',
-      label: '目标主题',
-      icon: Target,
-      desc: '围绕你输入的目标主题展开',
-    },
-  ];
+const STRATEGIES: { key: StrategyAlias; label: string; icon: ElementType; desc: string }[] = [
+  {
+    key: 'balanced',
+    label: '均衡提升',
+    icon: BarChart3,
+    desc: '综合考虑薄弱点、复习计划和错因',
+  },
+  {
+    key: 'weakness-first',
+    label: '薄弱优先',
+    icon: AlertTriangle,
+    desc: '优先练习目前最不熟悉的知识点',
+  },
+  {
+    key: 'review-first',
+    label: '复习到期优先',
+    icon: CalendarClock,
+    desc: '优先安排今天到期的复习内容',
+  },
+  {
+    key: 'error-first',
+    label: '错因攻坚',
+    icon: Brain,
+    desc: '集中突破高频错误类型',
+  },
+  {
+    key: 'goal-topic',
+    label: '目标主题',
+    icon: Target,
+    desc: '围绕你输入的目标主题展开',
+  },
+];
 
 function getNodeStatusIcon(node: LearningPathNode) {
   if (node.status === 'completed') {
@@ -113,19 +114,9 @@ function getNodeStatusIcon(node: LearningPathNode) {
   return <Circle className="h-4 w-4 text-slate-300 dark:text-slate-600" />;
 }
 
-function getNodeStatusColor(status: LearningPathNode['status']) {
-  switch (status) {
-    case 'completed':
-      return 'bg-emerald-500';
-    case 'in_progress':
-      return 'bg-indigo-500';
-    default:
-      return 'bg-slate-200 dark:bg-slate-700';
-  }
-}
-
 export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
   const [path, setPath] = useState<LearningPath | null>(null);
+  const [personalization, setPersonalization] = useState<PersonalizationContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
@@ -148,6 +139,13 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    fetch('/api/sky/cloud-mind/personalization-context', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => {
+        if (j?.data) setPersonalization(j.data as PersonalizationContext);
+      })
+      .catch(() => {});
   }, []);
 
   const handleOpenDialog = async () => {
@@ -232,7 +230,7 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
       >
         <div className="flex items-center gap-1.5 mb-2.5">
           <Route className="h-3.5 w-3.5 text-indigo-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">学习路径</span>
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">天梯工坊</span>
         </div>
         <div className="flex items-center justify-center py-3">
           <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
@@ -251,10 +249,12 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
         >
           <div className="flex items-center gap-1.5 mb-2.5">
             <Route className="h-3.5 w-3.5 text-indigo-500" />
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">学习路径</span>
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              天梯工坊
+            </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-2.5">
-            还没有学习路径，让 AI 为你规划一条个性化学习路线吧。
+            还没有学习路线，让 AI 为你规划一条个性化学习路线吧。
           </p>
           <Button
             size="sm"
@@ -267,7 +267,7 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
             ) : (
               <Route className="h-3 w-3 mr-1" />
             )}
-            生成学习路径
+            生成学习路线
           </Button>
         </motion.div>
 
@@ -309,6 +309,13 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
   const nextNode = path.nodes.find((n) => n.status === 'pending' || n.status === 'in_progress');
   const currentNode = path.nodes.find((n) => n.status === 'in_progress');
+  const pathPolicy = personalization?.toolPolicies?.learningPath;
+  const pathTopic = pathPolicy?.targetTopic ?? nextNode?.topic ?? currentNode?.topic;
+  const pathReason = personalization?.dueReviews.length
+    ? `有 ${personalization.dueReviews.length} 项内容到期，先安排复习再推进新知识。`
+    : personalization?.weakPoints[0]
+      ? `当前薄弱点是「${personalization.weakPoints[0].knowledgePoint}」，路线优先补这里。`
+      : '路线会根据你的练习表现动态调整。';
 
   return (
     <motion.div
@@ -319,11 +326,34 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-1.5">
           <Route className="h-3.5 w-3.5 text-indigo-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{path.title}</span>
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+            {path.title}
+          </span>
         </div>
         <span className="text-[9px] text-slate-400 dark:text-slate-500">
           {completed}/{total}
         </span>
+      </div>
+
+      <div className="mb-3 rounded-lg border border-sky-200/70 bg-sky-50/80 px-2.5 py-2 dark:border-sky-900/60 dark:bg-sky-950/25">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-sky-700 dark:text-sky-300">
+          <Target className="h-3 w-3" />
+          学习安排
+        </div>
+        <p className="mt-1 text-[11px] font-semibold leading-4 text-slate-800 dark:text-slate-100">
+          {pathTopic ? `下一站：${pathTopic}` : '等待学习记录'}
+        </p>
+        <p className="mt-0.5 text-[10px] leading-4 text-slate-500 dark:text-slate-400">
+          {pathReason}
+        </p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5 text-[9px] text-slate-500 dark:text-slate-400">
+          <span className="rounded-full bg-white px-1.5 py-0.5 dark:bg-slate-900/60">
+            推荐：讲解 → 练习
+          </span>
+          <span className="rounded-full bg-white px-1.5 py-0.5 dark:bg-slate-900/60">
+            达到 80% 才算完成
+          </span>
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -374,17 +404,27 @@ export function LearningPathCard({ onStartTopic }: LearningPathCardProps) {
       </div>
 
       {/* Next action */}
-      {nextNode && onStartTopic && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => onStartTopic(nextNode.topic)}
-          className="w-full text-indigo-600 dark:text-indigo-400 border-indigo-200/60 dark:border-indigo-800/60 hover:text-indigo-700 text-xs h-7"
+      <div className="space-y-2">
+        {nextNode && onStartTopic && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onStartTopic(nextNode.topic)}
+            className="w-full text-indigo-600 dark:text-indigo-400 border-indigo-200/60 dark:border-indigo-800/60 hover:text-indigo-700 text-xs h-7"
+          >
+            <ArrowRight className="h-3 w-3 mr-1" />
+            {currentNode ? `继续：${currentNode.topic}` : `开始：${nextNode.topic}`}
+          </Button>
+        )}
+        <Link
+          href="/sky/learning/path"
+          className="flex min-h-9 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-3 text-xs font-semibold text-white shadow-sm transition-all hover:from-indigo-500 hover:to-violet-500 hover:shadow-md"
         >
-          <ArrowRight className="h-3 w-3 mr-1" />
-          {currentNode ? `继续：${currentNode.topic}` : `开始：${nextNode.topic}`}
-        </Button>
-      )}
+          <Route className="h-3.5 w-3.5" />
+          查看完整路线和安排原因
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
     </motion.div>
   );
 }
@@ -433,7 +473,7 @@ function GenerationDialog({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500">
               <Route className="h-4 w-4 text-white" />
             </div>
-            生成个性化学习路径
+            规划个性化学习路线
           </DialogTitle>
           <DialogDescription className="text-slate-500 dark:text-slate-400">
             基于天梯工坊数据为你规划下一步学习重点
@@ -467,7 +507,9 @@ function GenerationDialog({
                         </Badge>
                       ))}
                       {preview.weakPoints.length > 4 && (
-                        <span className="text-[10px] text-slate-400">+{preview.weakPoints.length - 4}</span>
+                        <span className="text-[10px] text-slate-400">
+                          +{preview.weakPoints.length - 4}
+                        </span>
                       )}
                     </div>
                   ) : (
@@ -564,7 +606,9 @@ function GenerationDialog({
                         <div
                           className={cn(
                             'text-sm font-medium',
-                            active ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200',
+                            active
+                              ? 'text-indigo-700 dark:text-indigo-300'
+                              : 'text-slate-700 dark:text-slate-200',
                           )}
                         >
                           {label}
@@ -589,12 +633,14 @@ function GenerationDialog({
                   目标主题
                 </label>
                 <Input
-                  placeholder="例如：二次函数、三角函数、电磁感应..."
+                  placeholder="例如：导数、三角函数、线性代数..."
                   value={goalTopic}
                   onChange={(e) => onGoalTopicChange(e.target.value)}
                   className="focus-visible:ring-indigo-500"
                 />
-                <p className="text-xs text-slate-400">输入知识点名称，AI 会围绕它展开先修与巩固路径</p>
+                <p className="text-xs text-slate-400">
+                  输入知识点名称，AI 会围绕它展开先修与巩固路径
+                </p>
               </div>
             )}
 

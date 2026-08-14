@@ -442,7 +442,7 @@ export function AudioSettings({
             ttsEnabled ? 'opacity-100' : 'opacity-40 max-h-0 pointer-events-none',
           )}
         >
-          <p className="text-xs text-muted-foreground">{'每个 Agent 的音色可在首页「课堂角色配置」中设置'}</p>
+          <p className="text-xs text-muted-foreground">{'每个AI角色的音色可在首页「课堂角色配置」中设置'}</p>
 
           <div className="space-y-2">
             <Label className="text-sm">{'TTS 提供商'}</Label>

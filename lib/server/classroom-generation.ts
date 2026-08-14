@@ -134,7 +134,7 @@ function createSlideFallbackOutline(outline: SceneOutline): SceneOutline {
   return {
     ...outline,
     type: 'slide',
-    description: `${outline.description || outline.title}\n\nPresent the original ${outline.type} activity as a regular OpenMAIC classroom slide. Keep the key idea visual, concrete, and lesson-ready.`,
+    description: `${outline.description || outline.title}\n\nPresent the original ${outline.type} activity as a regular 天空课堂 classroom slide. Keep the key idea visual, concrete, and lesson-ready.`,
     quizConfig: undefined,
     interactiveConfig: undefined,
     pblConfig: undefined,
@@ -161,7 +161,7 @@ async function generateSceneContentWithSlideFallback(
 
   const fallbackOutline = createSlideFallbackOutline(outline);
   log.warn(
-    `Scene "${outline.title}" (${outline.type}) content generation failed; retrying as OpenMAIC slide.`,
+    `Scene "${outline.title}" (${outline.type}) content generation failed; retrying as 天空课堂 slide.`,
   );
 
   try {
@@ -218,7 +218,7 @@ Deck diversity repair rules:
 - This is a deck-level failure, so a page that only changes wording but keeps the same layout still fails.`
     : '';
 
-  return `这页幻灯片没有通过 OpenMAIC 课堂级 QA，请基于当前页完整重做，而不是微调。主题：${outline.title}
+  return `这页幻灯片没有通过天空课堂课堂级 QA，请基于当前页完整重做，而不是只改动少数地方。主题：${outline.title}
 
 失败项：
 ${issueDetails}
@@ -1790,7 +1790,7 @@ export async function generateClassroom(
     .filter((outline): outline is SceneOutline => outline !== null);
   if (failedContentOutlines.length > 0) {
     throw new Error(
-      `OpenMAIC classroom content generation failed for ${failedContentOutlines.length} scene(s): ${failedContentOutlines
+      `天空课堂 classroom content generation failed for ${failedContentOutlines.length} scene(s): ${failedContentOutlines
         .map((outline) => outline.title)
         .join(', ')}`,
     );
@@ -2081,7 +2081,7 @@ export async function generateClassroomContinue(
     .filter((outline): outline is SceneOutline => outline !== null);
   if (failedContentOutlines.length > 0) {
     throw new Error(
-      `OpenMAIC classroom content generation failed for ${failedContentOutlines.length} scene(s): ${failedContentOutlines
+      `天空课堂 classroom content generation failed for ${failedContentOutlines.length} scene(s): ${failedContentOutlines
         .map((outline) => outline.title)
         .join(', ')}`,
     );

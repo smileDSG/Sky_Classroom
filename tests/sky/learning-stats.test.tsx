@@ -79,7 +79,7 @@ describe('LearningStats', () => {
     expect(screen.getByText('今日学习诊断')).toBeDefined();
     expect(screen.getByText('总错题')).toBeDefined();
     expect(screen.getAllByText('待复习').length).toBeGreaterThan(0);
-    expect(screen.getByText('掌握度')).toBeDefined();
+    expect(screen.getByText('掌握情况')).toBeDefined();
     expect(screen.getByText('记忆卡片')).toBeDefined();
     expect(screen.getByText('近 7 天新增 2 道，今日 2 道')).toBeDefined();
     expect(screen.getByText('已复习 1 道，复习率 50%')).toBeDefined();

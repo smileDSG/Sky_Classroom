@@ -112,7 +112,7 @@ export function buildAnalyzePrompt(problemText: string): string {
 - [ ] **Step 3: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add lib/solve/agents/analyze-types.ts lib/solve/agents/analyze-prompts.ts
 git commit -m "feat(solve): add analysis types and prompts for C-001"
 ```
@@ -190,7 +190,7 @@ describe('analyzeProblem', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/agents/analyze-agent.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/agents/analyze-agent.test.ts`
 Expected: FAIL — module `analyze-agent` not found
 
 - [ ] **Step 3: Write implementation**
@@ -258,13 +258,13 @@ export async function analyzeProblem(problemText: string): Promise<AnalysisResul
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/agents/analyze-agent.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/agents/analyze-agent.test.ts`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add lib/solve/agents/analyze-agent.ts tests/solve/agents/analyze-agent.test.ts
 git commit -m "feat(solve): add Analyze Agent with tests (C-001)"
 ```
@@ -337,7 +337,7 @@ describe('matchAnswers', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/agents/answer-matcher.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/agents/answer-matcher.test.ts`
 Expected: FAIL — module `answer-matcher` not found
 
 - [ ] **Step 3: Write implementation**
@@ -446,13 +446,13 @@ function parseSet(s: string): string[] | null {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/agents/answer-matcher.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/agents/answer-matcher.test.ts`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add lib/solve/agents/answer-matcher.ts tests/solve/agents/answer-matcher.test.ts
 git commit -m "feat(solve): add answer matcher with normalization (C-002)"
 ```
@@ -576,7 +576,7 @@ describe('verifyAnswer', () => {
 
 - [ ] **Step 4: Run test to verify it fails**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/agents/verify-agent.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/agents/verify-agent.test.ts`
 Expected: FAIL — module `verify-agent` not found
 
 - [ ] **Step 5: Write implementation**
@@ -653,13 +653,13 @@ export async function verifyAnswer(
 
 - [ ] **Step 6: Run test to verify it passes**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/agents/verify-agent.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/agents/verify-agent.test.ts`
 Expected: PASS
 
 - [ ] **Step 7: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add lib/solve/agents/verify-types.ts lib/solve/agents/verify-prompts.ts lib/solve/agents/verify-agent.ts tests/solve/agents/verify-agent.test.ts
 git commit -m "feat(solve): add Verify Agent with tests (C-002)"
 ```
@@ -747,7 +747,7 @@ describe('correctAnswer', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/agents/correct-agent.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/agents/correct-agent.test.ts`
 Expected: FAIL — module `correct-agent` not found
 
 - [ ] **Step 4: Write implementation**
@@ -817,13 +817,13 @@ export async function correctAnswer(
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/agents/correct-agent.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/agents/correct-agent.test.ts`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add lib/solve/agents/correct-prompts.ts lib/solve/agents/correct-agent.ts tests/solve/agents/correct-agent.test.ts
 git commit -m "feat(solve): add Correct Agent with tests (C-002)"
 ```
@@ -1043,7 +1043,7 @@ describe('solveChain', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/solve-chain.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/solve-chain.test.ts`
 Expected: FAIL — module `solve-chain` not found
 
 - [ ] **Step 4: Write implementation**
@@ -1340,13 +1340,13 @@ export async function* solveChain(input: SolveChainInput): AsyncGenerator<SolveC
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/solve-chain.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/solve-chain.test.ts`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add lib/solve/solve-chain-types.ts lib/solve/solve-chain.ts tests/solve/solve-chain.test.ts
 git commit -m "feat(solve): add Solve Chain orchestrator with tests (C-003)"
 ```
@@ -1438,13 +1438,13 @@ export async function POST(req: Request) {
 
 - [ ] **Step 2: Verify the app still compiles**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx tsc --noEmit --pretty 2>&1 | head -30`
+Run: `cd D:/github/智眸无界-firsted-team- && npx tsc --noEmit --pretty 2>&1 | head -30`
 Expected: No new type errors from our changes
 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add app/api/sky/solve/explain-stream/route.ts
 git commit -m "refactor(solve): replace explain-stream internals with solveChain (C-004)"
 ```
@@ -1651,13 +1651,13 @@ const [chainPhase, setChainPhase] = useState<string>('');
 
 - [ ] **Step 5: Verify TypeScript compiles**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx tsc --noEmit --pretty 2>&1 | head -30`
+Run: `cd D:/github/智眸无界-firsted-team- && npx tsc --noEmit --pretty 2>&1 | head -30`
 Expected: No new errors
 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add components/sky/solve/analysis-card.tsx components/sky/solve/verification-badge.tsx components/sky/solve/chain-progress.tsx components/sky/solve/solution-panel.tsx
 git commit -m "feat(solve): add analysis card, verification badge, chain progress (C-005)"
 ```
@@ -1777,7 +1777,7 @@ describe('buildStudentProfile', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/teaching/profile-builder.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/teaching/profile-builder.test.ts`
 Expected: FAIL — module `profile-builder` not found
 
 - [ ] **Step 4: Write implementation**
@@ -1902,7 +1902,7 @@ export function summarizeProfile(profile: StudentProfile): StudentProfileSummary
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/teaching/profile-builder.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/teaching/profile-builder.test.ts`
 Expected: PASS
 
 - [ ] **Step 6: Create the API route**
@@ -1955,7 +1955,7 @@ export async function POST(req: Request) {
 - [ ] **Step 7: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add lib/student/profile-types.ts lib/student/profile-builder.ts app/api/sky/student/profile/route.ts tests/teaching/profile-builder.test.ts
 git commit -m "feat(teaching): add student profile system with API (D-001)"
 ```
@@ -2110,7 +2110,7 @@ describe('planLesson', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/teaching/lesson-planner.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/teaching/lesson-planner.test.ts`
 Expected: FAIL — module `lesson-planner` not found
 
 - [ ] **Step 4: Write implementation**
@@ -2257,13 +2257,13 @@ ${masteryContext || '暂无数据'}
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/teaching/lesson-planner.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/teaching/lesson-planner.test.ts`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add lib/teaching/lesson-types.ts lib/teaching/lesson-planner.ts tests/teaching/lesson-planner.test.ts
 git commit -m "feat(teaching): add lesson planner with mastery-based depth (D-002)"
 ```
@@ -2430,7 +2430,7 @@ describe('generateQuiz', () => {
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/teaching/content-generator.test.ts tests/teaching/quiz-injector.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/teaching/content-generator.test.ts tests/teaching/quiz-injector.test.ts`
 Expected: FAIL — modules not found
 
 - [ ] **Step 4: Write `quiz-injector.ts`**
@@ -2634,13 +2634,13 @@ ${section.depth === 'advanced' ? '请适当拓展，增加一些延伸思考。'
 
 - [ ] **Step 6: Run tests to verify they pass**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/teaching/content-generator.test.ts tests/teaching/quiz-injector.test.ts`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/teaching/content-generator.test.ts tests/teaching/quiz-injector.test.ts`
 Expected: PASS
 
 - [ ] **Step 7: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add lib/teaching/content-generator.ts lib/teaching/quiz-injector.ts tests/teaching/content-generator.test.ts tests/teaching/quiz-injector.test.ts
 git commit -m "feat(teaching): add content generator and quiz injector (D-003, D-004)"
 ```
@@ -2731,13 +2731,13 @@ export async function POST(req: Request) {
 
 - [ ] **Step 2: Verify TypeScript compiles**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx tsc --noEmit --pretty 2>&1 | head -30`
+Run: `cd D:/github/智眸无界-firsted-team- && npx tsc --noEmit --pretty 2>&1 | head -30`
 Expected: No new errors
 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add app/api/sky/teaching/generate-stream/route.ts
 git commit -m "feat(teaching): add SSE teaching stream API (D-003)"
 ```
@@ -2822,13 +2822,13 @@ export function InlineQuiz({ question, onAnswer }: InlineQuizProps) {
 
 - [ ] **Step 2: Verify TypeScript compiles**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx tsc --noEmit --pretty 2>&1 | head -30`
+Run: `cd D:/github/智眸无界-firsted-team- && npx tsc --noEmit --pretty 2>&1 | head -30`
 Expected: No new errors
 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add components/sky/teaching/inline-quiz.tsx
 git commit -m "feat(teaching): add inline quiz component (D-004)"
 ```
@@ -2839,23 +2839,23 @@ git commit -m "feat(teaching): add inline quiz component (D-004)"
 
 - [ ] **Step 1: Run all module C tests**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/solve/ --reporter=verbose`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/solve/ --reporter=verbose`
 Expected: All tests pass
 
 - [ ] **Step 2: Run all module D tests**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx vitest run tests/teaching/ --reporter=verbose`
+Run: `cd D:/github/智眸无界-firsted-team- && npx vitest run tests/teaching/ --reporter=verbose`
 Expected: All tests pass
 
 - [ ] **Step 3: TypeScript type check**
 
-Run: `cd D:/github/OpenMAIC-firsted-team- && npx tsc --noEmit --pretty 2>&1 | tail -20`
+Run: `cd D:/github/智眸无界-firsted-team- && npx tsc --noEmit --pretty 2>&1 | tail -20`
 Expected: No new errors
 
 - [ ] **Step 4: Final commit**
 
 ```bash
-cd D:/github/OpenMAIC-firsted-team-
+cd D:/github/智眸无界-firsted-team-
 git add -A
 git status
 git commit -m "feat: complete team3 Module C (solve chain) + Module D (adaptive teaching)"

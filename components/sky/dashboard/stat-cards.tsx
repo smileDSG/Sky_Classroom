@@ -136,7 +136,7 @@ export function StatCards({ mistakes }: StatCardsProps) {
       barPercent: mistakes.length > 0 ? Math.round((toReviewCount / mistakes.length) * 100) : 0,
     },
     {
-      label: '知识掌握度',
+      label: '知识掌握情况',
       value: Math.round(animMastery.value),
       suffix: '%',
       color: '#10B981',

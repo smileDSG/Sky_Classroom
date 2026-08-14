@@ -1,5 +1,5 @@
 # =============================================================================
-# OpenMAIC 环境依赖清单 (Environment Requirements)
+# 智眸无界 环境依赖清单 (Environment Requirements)
 # 本文件记录项目运行所需的完整环境配置，包括运行时、包管理器、
 # 系统依赖、Node.js 依赖及可选的外部服务。
 # =============================================================================
@@ -209,7 +209,7 @@ PNPM_VERSION>=10.0.0
 # -----------------------------------------------------------------------------
 
 # git clone https://github.com/THU-MAIC/OpenMAIC.git
-# cd OpenMAIC
+# cd 智眸无界
 # pnpm install
 # cp .env.example .env.local      # 编辑填入 API Key
 # pnpm dev                         # 启动开发服务器 → http://localhost:3000

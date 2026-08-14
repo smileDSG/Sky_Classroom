@@ -1,0 +1,32 @@
+{
+  "profile": {
+    "userId": "user-lp",
+    "masteryBySubject": {
+      "math": 0,
+      "physics": 0,
+      "chemistry": 0,
+      "biology": 0,
+      "chinese": 0,
+      "english": 0,
+      "history": 0,
+      "geography": 0,
+      "politics": 0,
+      "unknown": 0
+    },
+    "masteryByKnowledge": {},
+    "weakPoints": [],
+    "strongPoints": [],
+    "errorPatterns": [],
+    "totalQuestions": 0,
+    "totalCorrect": 0,
+    "lastUpdated": "2026-08-14T16:16:11.840Z",
+    "recentQuizPerformance": {
+      "overallAccuracy": 50,
+      "accuracyByKnowledge": {},
+      "topErrorCauses": [],
+      "recommendedDepthShift": "maintain"
+    }
+  },
+  "cachedAt": 1786724171845,
+  "cacheVersion": 2
+}

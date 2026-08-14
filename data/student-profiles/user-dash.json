@@ -1,0 +1,36 @@
+{
+  "profile": {
+    "userId": "user-dash",
+    "masteryBySubject": {
+      "math": 0,
+      "physics": 0,
+      "chemistry": 0,
+      "biology": 0,
+      "chinese": 0,
+      "english": 0,
+      "history": 0,
+      "geography": 0,
+      "politics": 0,
+      "unknown": 25
+    },
+    "masteryByKnowledge": {
+      "三角形": 25
+    },
+    "weakPoints": [
+      "三角形"
+    ],
+    "strongPoints": [],
+    "errorPatterns": [],
+    "totalQuestions": 0,
+    "totalCorrect": 0,
+    "lastUpdated": "2026-08-14T16:16:01.466Z",
+    "recentQuizPerformance": {
+      "overallAccuracy": 50,
+      "accuracyByKnowledge": {},
+      "topErrorCauses": [],
+      "recommendedDepthShift": "maintain"
+    }
+  },
+  "cachedAt": 1786724161471,
+  "cacheVersion": 2
+}

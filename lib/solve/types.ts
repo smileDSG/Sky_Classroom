@@ -24,6 +24,7 @@ export interface SolveState {
   problemImage: string | null;
   problemSpec: ProblemSpec | null;
   userAnswer: string | null;
+  adaptiveGuidance?: string | null;
   agentId: string;
   selectedAgentId: string | null;   // agent chosen by routing (null = not yet routed)
   agentRoute: SolverAgentType | null; // routed agent type
@@ -79,6 +80,7 @@ export interface VotingResolution {
 
 export interface FourPartOutput {
   answer: string;
+  solution: string;
   steps: {
     label: string;
     content: string;
@@ -116,6 +118,7 @@ export interface QuestionBankEntry {
   problemText: string;
   problemImage?: string;
   answer: string;
+  solution: string;
   knowledgePoints: { name: string; description: string; difficulty: string }[];
   similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string; answer?: string }[];
   agentId: SolverAgentType;

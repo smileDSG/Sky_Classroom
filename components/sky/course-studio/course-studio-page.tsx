@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
   BookOpen,
   BrainCircuit,
@@ -39,6 +39,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
+import { submitClassroomJob } from '@/lib/classroom/classroom-job-client';
+import { addActiveJobEntry } from '@/lib/classroom/classroom-session';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { cn } from '@/lib/utils';
 
@@ -225,11 +227,17 @@ const RESOURCE_TYPES: ResourceTypeOption[] = [
 
 const INITIAL_STAGES: StageItem[] = [
   { key: 'safety', label: '安全检查', agent: 'SafetyGuard', status: 'pending', progress: 8 },
-  { key: 'profile', label: '画像抽取', agent: 'ProfileAgent', status: 'pending', progress: 22 },
-  { key: 'search', label: '知识库检索', agent: 'CourseAgent', status: 'pending', progress: 38 },
+  { key: 'profile', label: '了解学习情况', agent: 'ProfileAgent', status: 'pending', progress: 22 },
+  { key: 'search', label: '查找课程资料', agent: 'CourseAgent', status: 'pending', progress: 38 },
   { key: 'generate', label: '资源生成', agent: 'ResourceAgents', status: 'pending', progress: 68 },
-  { key: 'review', label: '可信审核', agent: 'TrustReviewAgent', status: 'pending', progress: 86 },
-  { key: 'path', label: '路径编排', agent: 'LearningPathAgent', status: 'pending', progress: 100 },
+  { key: 'review', label: '检查内容', agent: 'TrustReviewAgent', status: 'pending', progress: 86 },
+  {
+    key: 'path',
+    label: '安排学习顺序',
+    agent: 'LearningPathAgent',
+    status: 'pending',
+    progress: 100,
+  },
 ];
 
 const COURSE_STUDIO_USER_ID = 'course-studio-student';
@@ -237,7 +245,7 @@ const COURSE_STUDIO_USER_ID = 'course-studio-student';
 const DETAIL_TABS: Array<{ id: DetailTabId; title: string; icon: LucideIcon }> = [
   { id: 'fit', title: '为什么适合你', icon: UserRound },
   { id: 'process', title: '生成流程', icon: Search },
-  { id: 'trust', title: '可信审核', icon: ShieldCheck },
+  { id: 'trust', title: '内容检查', icon: ShieldCheck },
   { id: 'follow', title: '后续学习', icon: Route },
 ];
 
@@ -362,13 +370,13 @@ function derivePersonalizationDraft(context: PersonalizationContext) {
     goal:
       conversationProfile?.learningGoal?.value ??
       context.recommendation?.title ??
-      '根据当前画像生成一套学习资料',
+      '根据你现在的学习情况生成一套学习资料',
     weakPoints: weakPointNames.join('、'),
     history:
       uniqueNonEmpty(historyParts).join('；') ||
       (context.hasLearningData
-        ? '已有学习行为记录，系统会结合历史表现生成资料'
-        : '学习数据较少，系统会先按当前课程和补充需求建立初始画像'),
+        ? '已有学习记录，系统会结合之前的表现生成资料'
+        : '学习记录还不多，系统会先按当前课程和你的需求生成第一版安排'),
     courseFocus:
       context.learningPath?.next ?? context.learningPath?.current ?? weakPointNames[0] ?? '',
     studyTime: conversationProfile?.learningPace?.value ?? '每天 45 分钟',
@@ -379,12 +387,12 @@ function derivePersonalizationDraft(context: PersonalizationContext) {
 }
 
 function recommendationEvidence(context: PersonalizationContext | null): string[] {
-  if (!context) return ['还没有读取到系统画像，可先补充课程或章节生成初始资料。'];
+  if (!context) return ['还没有读取到你的学习情况，可先补充课程或章节生成资料。'];
 
   const items = [
-    context.hasPersonalizationSignals ? '来自最近对话中沉淀的学习画像。' : null,
+    context.hasPersonalizationSignals ? '参考了你最近对话中提到的学习情况。' : null,
     context.weakPoints.length > 0
-      ? `来自 ${context.weakPoints.length} 个薄弱知识点与掌握度记录。`
+      ? `参考了 ${context.weakPoints.length} 个需要加强的知识点和学习记录。`
       : null,
     context.recentAccuracy === null
       ? null
@@ -417,7 +425,7 @@ function buildStudentInput(params: {
     `我的专业背景：${params.major || '未填写'}`,
     `当前课程：《人工智能导论》${params.courseFocus ? `，重点章节：${params.courseFocus}` : ''}`,
     `学习目标：${params.goal || '希望系统帮我规划学习目标'}`,
-    `薄弱点：${params.weakPoints || '需要系统结合画像判断'}`,
+    `需要加强的内容：${params.weakPoints || '请结合我的学习情况判断'}`,
     `学习历史：${params.history || '暂无明确记录'}`,
     params.supplement ? `补充需求：${params.supplement}` : '',
     `资源偏好：${params.preferenceText || '未指定'}；希望生成：${selectedLabels.join('、')}`,
@@ -437,6 +445,11 @@ function resourceSummary(resource: GeneratedResource): string {
 }
 
 export function CourseStudioPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryTopic = searchParams.get('topic');
+  const queryGoal = searchParams.get('goal');
+  const queryTypes = searchParams.get('types');
   const [major, setMajor] = useState('');
   const [goal, setGoal] = useState('');
   const [weakPoints, setWeakPoints] = useState('');
@@ -461,6 +474,19 @@ export function CourseStudioPage() {
   const [profilePanelOpen, setProfilePanelOpen] = useState(false);
   const [flowPanelOpen, setFlowPanelOpen] = useState(false);
   const [activeDetail, setActiveDetail] = useState<DetailTabId>('fit');
+  const [nextAction, setNextAction] = useState<'idle' | 'classroom' | 'plan'>('idle');
+  const [nextActionError, setNextActionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (queryTopic) setCourseFocus(queryTopic);
+    if (queryGoal) setSupplement(queryGoal);
+    if (queryTypes) {
+      const requestedTypes = queryTypes
+        .split(',')
+        .filter((type) => RESOURCE_TYPES.some((item) => item.id === type));
+      if (requestedTypes.length > 0) setSelectedTypes(requestedTypes);
+    }
+  }, [queryGoal, queryTopic, queryTypes]);
 
   const applyPersonalizationDraft = useCallback(
     (context: PersonalizationContext, mode: 'fill-empty' | 'replace' = 'replace') => {
@@ -491,7 +517,7 @@ export function CourseStudioPage() {
       setPersonalization(context);
       applyPersonalizationDraft(context, 'replace');
     } catch {
-      setError('暂时没有读取到系统画像，可以补充当前课程或章节后生成初始资料。');
+      setError('暂时没有读取到你的学习情况，可以补充当前课程或章节后生成资料。');
     } finally {
       setContextLoading(false);
     }
@@ -541,7 +567,7 @@ export function CourseStudioPage() {
 
   const weakPointTags = useMemo(() => splitList(weakPoints), [weakPoints]);
   const evidenceItems = useMemo(() => {
-    if (contextLoading) return ['正在读取课程、练习、错题和学习路径中的画像信号。'];
+    if (contextLoading) return ['正在查看课程、练习、错题和学习安排，了解你的学习情况。'];
     return recommendationEvidence(personalization);
   }, [contextLoading, personalization]);
   const systemProfileReady = hasSystemProfile(personalization);
@@ -660,17 +686,62 @@ export function CourseStudioPage() {
     }
   };
 
+  const handleStartClassroom = async () => {
+    const topic = courseFocus.trim() || goal.trim() || supplement.trim() || '人工智能导论';
+    const resourceContext = (result?.resources ?? [])
+      .slice(0, 4)
+      .map((resource) => `${resource.title}：${resourceSummary(resource)}`)
+      .join('\n');
+    setNextAction('classroom');
+    setNextActionError(null);
+    try {
+      const jobId = await submitClassroomJob({
+        requirement: [
+          `请围绕“${topic}”生成一套可授课的互动课堂。优先覆盖核心概念、示例和练习。`,
+          resourceContext ? `本次已生成的资料摘要：\n${resourceContext}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n\n'),
+        enableWebSearch: false,
+        agentMode: 'default',
+      });
+      addActiveJobEntry({ jobId, topic });
+      router.push(`/generation-progress?jobId=${encodeURIComponent(jobId)}`);
+    } catch (err) {
+      setNextActionError(err instanceof Error ? err.message : '课堂启动失败，请稍后再试');
+      setNextAction('idle');
+    }
+  };
+
+  const handleCreateLearningPlan = async () => {
+    const goalTopic = courseFocus.trim() || goal.trim() || supplement.trim() || '人工智能导论';
+    setNextAction('plan');
+    setNextActionError(null);
+    try {
+      const response = await fetch('/api/sky/learning-path', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ goalTopic, strategy: 'balanced' }),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        error?: string;
+      } | null;
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.error || '学习任务生成失败');
+      }
+      router.push('/sky/learning');
+    } catch (err) {
+      setNextActionError(err instanceof Error ? err.message : '学习任务生成失败，请稍后再试');
+      setNextAction('idle');
+    }
+  };
+
   return (
     <SkyAppShell>
       <div className="mx-auto max-w-4xl space-y-4 pb-24 sm:pb-10">
         <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70 sm:p-6">
-          <Link
-            href="/sky/cloud-mind"
-            className="mb-5 inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-cyan-200 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:border-cyan-400/40 dark:hover:text-cyan-100"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            云端智囊
-          </Link>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <Badge
@@ -683,14 +754,18 @@ export function CourseStudioPage() {
                 这次想生成什么学习资料？
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                已根据学习画像预设偏好。补一句本次重点，或直接生成一套资料。
+                已根据你的学习情况预设偏好。补一句本次重点，或直接生成一套资料。
               </p>
             </div>
             <Badge
               variant="outline"
               className="h-8 shrink-0 rounded-full px-3 text-slate-600 dark:text-slate-300"
             >
-              {contextLoading ? '画像读取中' : systemProfileReady ? '画像已就绪' : '补一句即可生成'}
+              {contextLoading
+                ? '正在读取学习情况'
+                : systemProfileReady
+                  ? '已准备好'
+                  : '补一句即可生成'}
             </Badge>
           </div>
         </section>
@@ -707,7 +782,7 @@ export function CourseStudioPage() {
             id="course-studio-intent"
             value={supplement}
             onChange={(event) => setSupplement(event.target.value)}
-            placeholder="例如：帮我复习 RAG，准备期末考试"
+            placeholder="例如：帮我复习导数，准备期末考试"
             className="min-h-24 resize-none bg-white text-sm leading-6 dark:bg-slate-950/70"
           />
           <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
@@ -745,7 +820,7 @@ export function CourseStudioPage() {
             onClick={() => setProfilePanelOpen((value) => !value)}
           >
             <UserRound className="h-4 w-4" />
-            调整画像依据
+            调整参考信息
           </Button>
           <Button
             type="button"
@@ -768,7 +843,7 @@ export function CourseStudioPage() {
             ) : (
               <RefreshCw className="h-4 w-4" />
             )}
-            刷新画像
+            更新学习情况
           </Button>
         </div>
 
@@ -777,7 +852,7 @@ export function CourseStudioPage() {
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
                 <BrainCircuit className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-100" />
-                <h2 className="text-sm font-semibold text-slate-950 dark:text-white">画像依据</h2>
+                <h2 className="text-sm font-semibold text-slate-950 dark:text-white">参考信息</h2>
               </div>
               <Badge
                 variant="outline"
@@ -793,7 +868,7 @@ export function CourseStudioPage() {
             </div>
             <div className="mb-4 flex gap-2 rounded-xl bg-cyan-50 px-3 py-3 text-xs leading-5 text-cyan-800 dark:bg-cyan-300/10 dark:text-cyan-100">
               <Info className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>这些内容只用于微调画像，不需要每次生成都填写。</span>
+              <span>这些内容会帮助系统了解你的学习情况，不需要每次生成都填写。</span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -812,7 +887,7 @@ export function CourseStudioPage() {
                   id="course-focus"
                   value={courseFocus}
                   onChange={(event) => setCourseFocus(event.target.value)}
-                  placeholder="第 4 章 / RAG / 智能体"
+                  placeholder="第 4 章 / 导数 / 重点公式"
                   className="min-h-11"
                 />
               </div>
@@ -832,7 +907,7 @@ export function CourseStudioPage() {
                   id="weak-points"
                   value={weakPoints}
                   onChange={(event) => setWeakPoints(event.target.value)}
-                  placeholder="过拟合、模型评估、RAG"
+                  placeholder="容易出错的知识点，例如：导数、受力分析"
                   className="min-h-11"
                 />
                 {weakPointTags.length > 0 && (
@@ -904,6 +979,48 @@ export function CourseStudioPage() {
         )}
 
         {result && (
+          <section className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 shadow-sm dark:border-sky-300/20 dark:bg-sky-300/10 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
+                  <Play className="h-4 w-4 text-sky-600 dark:text-sky-200" />
+                  课程已经准备好，下一步做什么？
+                </div>
+                <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                  课堂会使用当前主题重新生成授课场景；学习任务会写入你的学习路径。
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  onClick={handleStartClassroom}
+                  disabled={nextAction !== 'idle'}
+                  className="min-h-10 bg-sky-600 text-white hover:bg-sky-700"
+                >
+                  <Play className="h-4 w-4" />
+                  {nextAction === 'classroom' ? '正在启动课堂' : '进入互动课堂'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCreateLearningPlan}
+                  disabled={nextAction !== 'idle'}
+                  className="min-h-10 border-sky-200 bg-white/80 dark:border-sky-300/30 dark:bg-slate-950/40"
+                >
+                  <BrainCircuit className="h-4 w-4" />
+                  {nextAction === 'plan' ? '正在生成任务' : '生成学习任务'}
+                </Button>
+              </div>
+            </div>
+            {nextActionError && (
+              <p className="mt-3 text-xs leading-5 text-rose-700 dark:text-rose-200">
+                {nextActionError}
+              </p>
+            )}
+          </section>
+        )}
+
+        {result && (
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/40 dark:bg-slate-950/70">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
@@ -914,7 +1031,7 @@ export function CourseStudioPage() {
                   </h2>
                 </div>
                 <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  命中 {hits.length} 条课程知识，可信审核
+                  找到 {hits.length} 条课程资料，内容检查
                   {result.reviewResult.passed ? '通过' : '需要复核'}。
                 </p>
               </div>
@@ -1001,7 +1118,7 @@ export function CourseStudioPage() {
                     </div>
                   ) : (
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      生成后显示画像摘要。
+                      生成后显示学习情况摘要。
                     </p>
                   )}
                   <div className="mt-4 space-y-2">
@@ -1108,9 +1225,9 @@ export function CourseStudioPage() {
                         label="生成配套练习"
                       />
                       <NextAction
-                        href="/sky/study-lab"
+                        href="/sky/learning#learning-plan"
                         icon={BrainCircuit}
-                        label="查看学习实验室"
+                        label="查看个人学习计划"
                       />
                     </div>
                   </div>

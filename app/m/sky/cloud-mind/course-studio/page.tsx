@@ -2,14 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  BookOpen,
-  Map,
-  Presentation,
-  Route,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowLeft, BookOpen, Map, Presentation, Route, Sparkles } from 'lucide-react';
 import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
 import { MobileSkyShell } from '@/components/mobile/mobile-sky-shell';
 import { cn } from '@/lib/utils';
@@ -21,7 +14,7 @@ const resourceTypes = [
 ];
 
 export default function MobileCourseStudioPage() {
-  const [goal, setGoal] = useState('两周内补上 RAG 和过拟合');
+  const [goal, setGoal] = useState('两周内补上机器学习基础和过拟合');
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['markdown_lecture', 'ppt_outline']);
 
   const advancedHref = useMemo(() => {
@@ -56,7 +49,7 @@ export default function MobileCourseStudioPage() {
             <div>
               <h1 className="text-[24px] font-extrabold leading-none text-white">课程工作室</h1>
               <p className="mt-1 text-[12px] font-semibold text-slate-400">
-                基于画像生成讲义、课件、导图和学习路径。
+                先收集目标，再生成讲义、课件、导图和学习路径。
               </p>
             </div>
           </div>
@@ -103,12 +96,12 @@ export default function MobileCourseStudioPage() {
             className="mt-4 flex h-11 items-center justify-center gap-2 rounded-[13px] bg-sky-500 text-[13px] font-extrabold text-white active:bg-sky-400"
           >
             <Sparkles className="size-4" />
-            打开完整工作室
+            继续生成课程资料
           </Link>
         </section>
 
         <section className="rounded-[18px] border border-white/10 bg-white/[0.04] p-3">
-          <h2 className="text-[14px] font-extrabold text-white">移动端先做轻入口</h2>
+          <h2 className="text-[14px] font-extrabold text-white">从这里开始整理学习资料</h2>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-slate-400">
             这里负责收集目标和资源类型。完整生成追踪、可信审核和多资源预览继续进入桌面工作室承接。
           </p>

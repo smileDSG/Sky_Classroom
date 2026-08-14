@@ -10,7 +10,7 @@ from pptx.enum.shapes import MSO_SHAPE
 from lxml import etree
 import os
 
-OUTPUT = 'C:/Users/11486/Desktop/OpenMAIC-B-001/public/templates/source/清新-template.pptx'
+OUTPUT = 'C:/Users/11486/Desktop/智眸无界-B-001/public/templates/source/清新-template.pptx'
 
 # ═══════════════════════════════════════════════════════════════════
 # 配色方案 — 清新自然

@@ -1,2 +1,2 @@
 export const DEMO_USERNAME = 'demo';
-export const DEMO_PASSWORD = 'OpenMAIC123!';
+export const DEMO_PASSWORD = 'SkyClassroom123!';

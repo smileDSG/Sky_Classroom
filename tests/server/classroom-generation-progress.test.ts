@@ -481,7 +481,7 @@ describe('classroom generation progress', () => {
       generateClassroomContinue(savedOutlineResult(), {
         baseUrl: 'http://localhost',
       }),
-    ).rejects.toThrow('OpenMAIC classroom content generation failed for 2 scene(s): Intro, Check');
+    ).rejects.toThrow('天空课堂 classroom content generation failed for 2 scene(s): Intro, Check');
 
     expect(sceneGeneratorMocks.createSceneWithActions).not.toHaveBeenCalled();
   });

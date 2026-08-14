@@ -37,7 +37,7 @@ describe('LearningTrendChart', () => {
 
   it('renders empty state when no data', () => {
     render(<LearningTrendChart data={[]} />);
-    expect(screen.getByText('暂无数据，去搜题页开始练习')).toBeInTheDocument();
+    expect(screen.getByText('学习趋势即将呈现')).toBeInTheDocument();
   });
 });
 
@@ -68,7 +68,7 @@ describe('StatCards', () => {
     render(<StatCards mistakes={demoMistakes} />);
     expect(screen.getByText('今日搜题')).toBeInTheDocument();
     expect(screen.getByText('错题待复习')).toBeInTheDocument();
-    expect(screen.getByText('知识掌握度')).toBeInTheDocument();
+    expect(screen.getByText('知识掌握情况')).toBeInTheDocument();
   });
 });
 

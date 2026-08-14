@@ -1,5 +1,5 @@
 services:
-  openmaic:
+  sky_classroom:
     build: .
     ports:
       - "3000:3000"
@@ -9,11 +9,10 @@ services:
       # LibreOffice is bundled in the Docker image.
       # Override only if you use a custom LO build.
       - LO_SOFFICE_PATH=/usr/bin/soffice
-    volumes:
-      # Optional: mount server-providers.yml for provider config
-      # - ./server-providers.yml:/app/server-providers.yml:ro
-      - openmaic-data:/app/data
+      # 开启演示账号，评委可直接用 demo / SkyClassroom123! 登录体验（生产环境可删除此行）
+      - ENABLE_DEMO_ACCOUNT=true
+    # 演示数据已打包进镜像的 /app/data，请勿把卷挂到 /app/data 以免遮蔽。
+    # 如需持久化用户数据，请改用 MySQL/Supabase，或把卷挂到其它路径（如 /app/data/uploads）。
+    # volumes:
+    #   - sky_classroom-data:/app/data
     restart: unless-stopped
-
-volumes:
-  openmaic-data:

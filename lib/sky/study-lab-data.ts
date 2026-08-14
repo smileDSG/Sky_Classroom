@@ -4,6 +4,8 @@ import type {
   PersonalizationDifficulty,
   WeakPointSummary,
 } from '@/lib/cloud-mind/types';
+import type { LearningPlan, LearningTask } from '@/lib/adaptive-learning/contracts';
+import type { LearningPlanView } from '@/lib/adaptive-learning/planning/learning-plan-view';
 import type { LearningPath, LearningPathNode } from '@/lib/teaching/learning-path-types';
 
 export type SnapshotResult<T> =
@@ -42,11 +44,32 @@ export interface StudyLabLearningPathResponse {
   path: LearningPath | null;
 }
 
+export interface StudyLabLearningPlanResponse {
+  plan: LearningPlan | null;
+  view: LearningPlanView | null;
+}
+
 export interface StudyLabApiSnapshots {
   personalization: SnapshotResult<PersonalizationContext>;
   workshop: SnapshotResult<StudyLabWorkshopSnapshot>;
   learningPath: SnapshotResult<StudyLabLearningPathResponse>;
+  learningPlan: SnapshotResult<StudyLabLearningPlanResponse>;
 }
+
+type StudyLabScheduledTask = Pick<
+  LearningTask,
+  | 'id'
+  | 'pathNodeId'
+  | 'nodeId'
+  | 'type'
+  | 'title'
+  | 'objective'
+  | 'plannedMinutes'
+  | 'status'
+  | 'scheduledDate'
+  | 'successCriteria'
+  | 'actionHref'
+>;
 
 export interface StudyLabViewModel {
   generatedAt: number;
@@ -72,12 +95,29 @@ export interface StudyLabViewModel {
   };
   learningPath: {
     title: string;
-    nodes: Array<Pick<LearningPathNode, 'id' | 'topic' | 'status' | 'knowledgePoints'>>;
+    nodes: Array<
+      Pick<LearningPathNode, 'id' | 'topic' | 'status' | 'knowledgePoints'> & {
+        scheduledDate?: string;
+        scheduledTaskCount: number;
+        isToday: boolean;
+      }
+    >;
+  } | null;
+  learningPlan: {
+    id: string;
+    pathId?: string;
+    validFrom: string;
+    validTo: string;
+    todayDate: string | null;
+    todayTask: StudyLabScheduledTask | null;
+    tasks: StudyLabScheduledTask[];
+    todaySummary: LearningPlanView['summary'] | null;
   } | null;
   errors: {
     personalization?: string;
     workshop?: string;
     learningPath?: string;
+    learningPlan?: string;
   };
 }
 
@@ -148,8 +188,43 @@ function buildWorkshop(result: StudyLabApiSnapshots['workshop']): StudyLabViewMo
   };
 }
 
+function projectScheduledTask(task: LearningTask): StudyLabScheduledTask {
+  return {
+    id: task.id,
+    ...(task.pathNodeId ? { pathNodeId: task.pathNodeId } : {}),
+    nodeId: task.nodeId,
+    type: task.type,
+    title: task.title,
+    objective: task.objective,
+    plannedMinutes: task.plannedMinutes,
+    status: task.status,
+    scheduledDate: task.scheduledDate,
+    successCriteria: task.successCriteria,
+    ...(task.actionHref ? { actionHref: task.actionHref } : {}),
+  };
+}
+
+function buildLearningPlan(
+  result: StudyLabApiSnapshots['learningPlan'],
+): StudyLabViewModel['learningPlan'] {
+  if (result.status === 'rejected' || !result.data.plan) return null;
+  const { plan, view } = result.data;
+
+  return {
+    id: plan.id,
+    ...(plan.pathId ? { pathId: plan.pathId } : {}),
+    validFrom: plan.validFrom,
+    validTo: plan.validTo,
+    todayDate: view?.from ?? null,
+    todayTask: view?.nextTask ? projectScheduledTask(view.nextTask) : null,
+    tasks: plan.tasks.map(projectScheduledTask),
+    todaySummary: view?.summary ?? null,
+  };
+}
+
 function buildLearningPath(
   result: StudyLabApiSnapshots['learningPath'],
+  learningPlan: StudyLabViewModel['learningPlan'],
 ): StudyLabViewModel['learningPath'] {
   if (result.status === 'rejected') return null;
   const path = result.data.path;
@@ -157,12 +232,26 @@ function buildLearningPath(
 
   return {
     title: path.title,
-    nodes: path.nodes.map((node) => ({
-      id: node.id,
-      topic: node.topic,
-      status: node.status,
-      knowledgePoints: node.knowledgePoints,
-    })),
+    nodes: path.nodes.map((node) => {
+      const scheduledTasks = (learningPlan?.tasks ?? [])
+        .filter(
+          (task) =>
+            task.pathNodeId === node.id &&
+            (task.status === 'pending' || task.status === 'in-progress'),
+        )
+        .sort((left, right) => left.scheduledDate.localeCompare(right.scheduledDate));
+      const scheduledDate = scheduledTasks[0]?.scheduledDate;
+
+      return {
+        id: node.id,
+        topic: node.topic,
+        status: node.status,
+        knowledgePoints: node.knowledgePoints,
+        ...(scheduledDate ? { scheduledDate } : {}),
+        scheduledTaskCount: scheduledTasks.length,
+        isToday: scheduledTasks.some((task) => task.scheduledDate === learningPlan?.todayDate),
+      };
+    }),
   };
 }
 
@@ -174,6 +263,9 @@ function collectErrors(snapshots: StudyLabApiSnapshots): StudyLabViewModel['erro
     ...(snapshots.workshop.status === 'rejected' ? { workshop: snapshots.workshop.error } : {}),
     ...(snapshots.learningPath.status === 'rejected'
       ? { learningPath: snapshots.learningPath.error }
+      : {}),
+    ...(snapshots.learningPlan.status === 'rejected'
+      ? { learningPlan: snapshots.learningPlan.error }
       : {}),
   };
 }
@@ -188,12 +280,14 @@ export function buildStudyLabViewModel(snapshots: StudyLabApiSnapshots): StudyLa
     isFiniteNumber(snapshots.personalization.data.generatedAt)
       ? snapshots.personalization.data.generatedAt
       : 0;
+  const learningPlan = buildLearningPlan(snapshots.learningPlan);
 
   return {
     generatedAt: Math.max(workshopGeneratedAt, personalizationGeneratedAt) || Date.now(),
     profile: buildProfile(snapshots.personalization),
     workshop: buildWorkshop(snapshots.workshop),
-    learningPath: buildLearningPath(snapshots.learningPath),
+    learningPath: buildLearningPath(snapshots.learningPath, learningPlan),
+    learningPlan,
     errors: collectErrors(snapshots),
   };
 }

@@ -883,10 +883,10 @@ function VoxCPMVoiceManager() {
         <div>
           <Label className="text-base font-semibold">{'VoxCPM 音色'}</Label>
           <p className="mt-1 text-xs text-muted-foreground">
-            {'保存在当前浏览器，进入统一音色池后可在 Agent Bar 中使用。'}
+            {'保存在当前浏览器，进入统一音色池后可在课堂角色栏中使用。'}
           </p>
           <p className="mt-1 text-xs text-muted-foreground/70">
-            {'自动音色会把 Agent 人设作为音色提示词发送到你配置的 VoxCPM 后端。'}
+            {'自动音色会根据AI角色的设定生成声音，并发送到你配置的语音服务。'}
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -919,7 +919,7 @@ function VoxCPMVoiceManager() {
                 title={'自动音色'}
                 badge={'默认'}
                 badgeTone="default"
-                detail={'使用 Agent 人设作为音色 prompt'}
+                detail={'根据AI角色设定生成声音'}
                 kind="auto"
               />
               {profiles.length > 0 ? (

@@ -98,7 +98,7 @@ function buildSignals(snapshot: WorkshopSnapshot | null): CompletionSignal[] {
       detail: weakCount > 0 ? `${weakCount} 个` : '待识别',
     },
     {
-      label: '掌握度',
+      label: '掌握情况',
       ready: masteryCount > 0,
       detail: masteryCount > 0 ? `${masteryCount} 项` : '待生成',
     },
@@ -116,7 +116,7 @@ function getFocusTopic(snapshot: WorkshopSnapshot | null) {
   const masteryEntries = Object.entries(snapshot?.profile?.masteryByKnowledge ?? {}).sort(
     ([, a], [, b]) => a - b,
   );
-  return masteryEntries[0]?.[0] ?? '综合诊断';
+  return masteryEntries[0]?.[0] ?? '综合摸底';
 }
 
 function getPreferenceLines(snapshot: WorkshopSnapshot | null, accuracy: number) {
@@ -126,8 +126,8 @@ function getPreferenceLines(snapshot: WorkshopSnapshot | null, accuracy: number)
 
   return [
     {
-      label: weakCount > 0 ? '先补薄弱点' : '先做诊断采样',
-      detail: weakCount > 0 ? `当前优先处理 ${weakCount} 个低掌握点` : '完成几道题后画像会更准',
+      label: weakCount > 0 ? '先补薄弱点' : '先做入门练习',
+      detail: weakCount > 0 ? `当前优先处理 ${weakCount} 个不熟悉的知识点` : '完成几道题后系统会更了解你',
     },
     {
       label: accuracy >= 75 ? '挑战进阶题' : '步骤拆解优先',
@@ -180,7 +180,7 @@ export default function MobileLearningProfilePage() {
           cache: 'no-store',
         });
         const data = await response.json();
-        if (!response.ok || !data?.success) throw new Error(data?.error ?? '画像数据加载失败');
+        if (!response.ok || !data?.success) throw new Error(data?.error ?? '学习情况加载失败');
         if (cancelled) return;
         setSnapshot({
           generatedAt: data.generatedAt ?? Date.now(),
@@ -191,7 +191,7 @@ export default function MobileLearningProfilePage() {
         });
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : '画像数据加载失败');
+          setError(loadError instanceof Error ? loadError.message : '学习情况加载失败');
           setSnapshot(null);
         }
       } finally {
@@ -221,7 +221,7 @@ export default function MobileLearningProfilePage() {
     <MobileSkyShell fullBleed>
       <div className="space-y-3 px-4 pb-24">
         <section
-          aria-label="学习画像总览"
+          aria-label="学习情况总览"
           className="relative overflow-hidden rounded-[22px] border border-sky-100 bg-[#f8fbff] p-4 shadow-[0_18px_42px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.86)]"
         >
           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(224,247,255,0.92),rgba(248,251,255,0.72)_48%,rgba(241,245,255,0.92)_100%)]" />
@@ -232,23 +232,23 @@ export default function MobileLearningProfilePage() {
               <div className="min-w-0">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-extrabold text-cyan-700">
                   <Brain className="size-3" />
-                  学情分析
+                  学习情况分析
                 </span>
                 <h1 className="mt-3 text-[25px] font-extrabold leading-tight text-slate-950">
-                  学习画像
+                  学习情况
                 </h1>
                 <p className="mt-1.5 line-clamp-2 text-[13px] font-semibold leading-5 text-slate-600">
                   {error
                     ? error
                     : loading
-                      ? '正在同步你的题目、复习和掌握度数据。'
+                      ? '正在同步你的题目、复习和掌握情况。'
                       : `当前建议先处理「${focusTopic}」，让练习更贴近你的薄弱点。`}
                 </p>
               </div>
               <div className="grid size-[78px] shrink-0 place-items-center rounded-[24px] border border-slate-200 bg-white/88 shadow-[0_12px_24px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)]">
                 <div className="text-center">
                   <div className="text-[22px] font-black leading-none text-slate-950">{mastery}%</div>
-                  <div className="mt-1 text-[11px] font-bold text-slate-500">掌握度</div>
+                  <div className="mt-1 text-[11px] font-bold text-slate-500">掌握情况</div>
                 </div>
               </div>
             </div>
@@ -262,13 +262,13 @@ export default function MobileLearningProfilePage() {
         </section>
 
         <section
-          aria-label="画像完整度"
+          aria-label="学习情况完整度"
           className="rounded-[20px] border border-slate-200 bg-white/88 p-3.5 shadow-[0_14px_32px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.86)]"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[15px] font-extrabold text-slate-950">
               <Sparkles className="size-4 text-cyan-600" />
-              画像完整度
+              学习情况完整度
             </div>
             <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-[12px] font-black text-cyan-700">
               {completion}%
@@ -291,7 +291,7 @@ export default function MobileLearningProfilePage() {
               href="/m/sky/learning/graph"
               className="inline-flex h-7 items-center gap-1 rounded-full bg-slate-100 px-2 text-[12px] font-bold text-slate-600"
             >
-              知识图谱
+              知识地图
               <ArrowRight className="size-3" />
             </Link>
           </div>
@@ -339,7 +339,7 @@ export default function MobileLearningProfilePage() {
               下一步行动
             </div>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[12px] font-bold text-slate-500">
-              按画像排序
+              按学习情况排序
             </span>
           </div>
 
@@ -347,8 +347,8 @@ export default function MobileLearningProfilePage() {
             <ActionRow
               href={dueCount > 0 ? '/m/sky/learning/review/plan' : '/m/sky/cloud-mind/solve'}
               icon={dueCount > 0 ? BookOpenCheck : Sparkles}
-              title={dueCount > 0 ? '处理到期复习' : '补充诊断样本'}
-              desc={dueCount > 0 ? `${dueCount} 道内容需要及时回看` : '做几道题，让画像更准确'}
+              title={dueCount > 0 ? '处理到期复习' : '补充练习记录'}
+              desc={dueCount > 0 ? `${dueCount} 道内容需要及时回看` : '做几道题，让系统更了解你'}
               badge={dueCount > 0 ? `${dueCount} 道` : '优先'}
               tone="primary"
             />

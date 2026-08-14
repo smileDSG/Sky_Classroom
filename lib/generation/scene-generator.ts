@@ -368,7 +368,7 @@ export function createSceneWithActions(
       shadow: { h: 0, v: 0, blur: 10, color: '#000000' },
     };
     log.info(
-      `[SceneCreate] Creating OpenMAIC-first slide for "${outline.title}": elements=${slideContent.elements.length}`,
+      `[SceneCreate] Creating 天空课堂-first slide for "${outline.title}": elements=${slideContent.elements.length}`,
     );
 
     const slide: Slide = {
@@ -380,12 +380,13 @@ export function createSceneWithActions(
       background: slideContent.background,
     };
 
-    log.info(`[SceneCreate] OpenMAIC-first slide created: id=${slide.id}`);
+    log.info(`[SceneCreate] 天空课堂-first slide created: id=${slide.id}`);
 
     const sceneResult = api.scene.create({
       type: 'slide',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'slide',
         canvas: slide,
@@ -411,6 +412,7 @@ export function createSceneWithActions(
       type: 'quiz',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'quiz',
         questions: content.questions,
@@ -427,6 +429,7 @@ export function createSceneWithActions(
       type: 'interactive',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'interactive',
         url: '',
@@ -446,6 +449,7 @@ export function createSceneWithActions(
       type: 'pbl',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'pbl',
         projectConfig: content.projectConfig,

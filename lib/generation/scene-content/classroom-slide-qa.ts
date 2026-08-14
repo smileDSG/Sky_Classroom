@@ -114,7 +114,7 @@ export function formatClassroomSlideQAError(report: ClassroomSlideQAReport): str
     })
     .join('; ');
 
-  return `OpenMAIC classroom slide QA failed for ${brokenScenes.length} scene(s): ${brokenScenes.join(
+  return `天空课堂 classroom slide QA failed for ${brokenScenes.length} scene(s): ${brokenScenes.join(
     ', ',
   )}${details ? `. Blocking details: ${details}` : ''}`;
 }
@@ -151,7 +151,7 @@ function auditSlideVisualStyle(content: GeneratedSlideContent): GeneratedSlideQA
       type: 'orange_decorative_element',
       severity: 'blocking' as const,
       detail:
-        'Clean OpenMAIC classroom slides should use blue-related accents; remove orange bars, stripes, corner marks, and unrelated decoration.',
+        'Clean 天空课堂 classroom slides should use blue-related accents; remove orange bars, stripes, corner marks, and unrelated decoration.',
       elementId: element.id,
     }));
 }

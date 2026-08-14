@@ -7,7 +7,7 @@ description: 数学公式渲染问题诊断与修复。当用户报告拍照搜�
 
 ## 适用场景
 
-用户报告 OpenMAIC 拍照搜题模块中数学公式渲染异常，包括：
+用户报告 智眸无界 拍照搜题模块中数学公式渲染异常，包括：
 - 积分、级数、圆锥曲线等复杂公式显示错误
 - LaTeX 语法解析失败
 - KaTeX 渲染报错
@@ -71,7 +71,7 @@ curl -s http://localhost:3000/sky/solve/math-test
 
 修复后运行相关测试：
 ```bash
-cd "d:\github\OpenMAIC-firsted-team-" && npx vitest run tests/solve/ 2>&1
+cd "d:\github\智眸无界-firsted-team-" && npx vitest run tests/solve/ 2>&1
 ```
 
 ## 注意事项

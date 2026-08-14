@@ -43,15 +43,15 @@ function formatDate(timestamp?: number) {
 const learningStats = [
   { label: '今日学习', value: '28 分钟', icon: Flame },
   { label: '待复习', value: '6 题', icon: CalendarCheck },
-  { label: '掌握度', value: '82%', icon: BadgeCheck },
+  { label: '掌握情况', value: '82%', icon: BadgeCheck },
 ];
 
 const learningActions = [
   {
     href: '/m/sky/learning/profile',
     icon: GraduationCap,
-    label: '学习画像',
-    desc: '查看掌握度和路径建议',
+    label: '学习情况',
+    desc: '查看掌握情况和路径建议',
   },
   {
     href: '/m/sky/learning/mistakes',

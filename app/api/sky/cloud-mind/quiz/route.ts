@@ -16,6 +16,7 @@ import { deriveQuizParamsFromProfile } from '@/lib/student/quiz-param-deriver';
 import { getSubjectLabelOrSelf } from '@/lib/mistakes/subject-inference';
 import { createCloudMindQuizJob, getCloudMindQuizJob } from '@/lib/server/cloud-mind-quiz-job-store';
 import { runCloudMindQuizJob } from '@/lib/server/cloud-mind-quiz-job-runner';
+import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personalization';
 
 const log = createLogger('API:CloudMindQuiz');
 
@@ -59,11 +60,19 @@ async function resolveJobInput(body: unknown): Promise<{
 
   const userId = await resolveUserId();
   const profile = userId ? await buildStudentProfile(userId) : undefined;
+  const decision = userId ? await resolveLearnerDecisionForUser(userId, topic) : undefined;
 
   let derived: { subject: string; difficulty: string; topic: string; count: number } | undefined;
   if (auto || !subject || !difficulty || !topic) {
     if (!profile) throw new Error('需要登录且存在学情数据才能自动出题');
-    derived = deriveQuizParamsFromProfile(profile, { count: count ?? 5 });
+    derived = decision
+      ? {
+          subject: 'math',
+          difficulty: decision.difficulty,
+          topic: decision.topic ?? '',
+          count: decision.questionCount,
+        }
+      : deriveQuizParamsFromProfile(profile, { count: count ?? 5 });
   }
 
   const finalSubject = subject || derived?.subject || 'math';

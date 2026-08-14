@@ -12,6 +12,7 @@ import type { LessonPlan, LessonSection } from '@/lib/teaching/lesson-types';
 import type { ContentChunk } from '@/lib/teaching/content-types';
 import type { StructuredContent } from '@/lib/generation/classroom-content-agent';
 import type { SectionFeedback, QuizResult } from '@/lib/teaching/adaptive-engine';
+import type { TeachingGenerationPolicy } from '@/lib/teaching/personalization-policy';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('TeachingJobStore');
@@ -40,6 +41,7 @@ export interface TeachingJob {
   id: string;
   userId: string;
   topic: string;
+  personalizationPolicy?: TeachingGenerationPolicy;
   status: TeachingJobStatus;
   /** Current step description */
   step: string;
@@ -125,6 +127,7 @@ export async function createTeachingJob(
   jobId: string,
   userId: string,
   topic: string,
+  personalizationPolicy?: TeachingGenerationPolicy,
 ): Promise<TeachingJob> {
   await ensureDir();
   const now = new Date().toISOString();
@@ -132,6 +135,7 @@ export async function createTeachingJob(
     id: jobId,
     userId,
     topic,
+    personalizationPolicy,
     status: 'queued',
     step: 'queued',
     progress: 0,

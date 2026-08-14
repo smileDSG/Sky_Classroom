@@ -1,7 +1,22 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Sparkles, AlertCircle, RotateCcw, Image as ImageIcon, Wand2, Clock, BookOpen, CheckCircle2, Plus, X } from 'lucide-react';
+import {
+  Sparkles,
+  AlertCircle,
+  RotateCcw,
+  Image as ImageIcon,
+  Wand2,
+  Clock,
+  BookOpen,
+  CheckCircle2,
+  Plus,
+  X,
+  Brain,
+  Route,
+  ArrowRight,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,8 +31,17 @@ import { SolutionSkeleton } from './solution-skeleton';
 import { MathRenderer } from './math-renderer';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { useTaskStore } from '@/lib/store/use-task-store';
-import type { GradeResult, FourPartOutput, GradedFourPartOutput, ProblemSpec, QuestionBankEntry } from '@/lib/solve/types';
+import type {
+  GradeResult,
+  FourPartOutput,
+  GradedFourPartOutput,
+  ProblemSpec,
+  QuestionBankEntry,
+} from '@/lib/solve/types';
+import type { SearchRecord } from '@/lib/store/search-history';
 import type { RecognitionAmbiguity } from '@/lib/recognition/recognition-quality';
+import type { PersonalizationContext } from '@/lib/cloud-mind/types';
+import { completeLearningPlanTaskFromEvidence } from '@/lib/adaptive-learning/client/complete-learning-plan-task';
 
 type SolvePageState =
   | 'idle'
@@ -37,6 +61,27 @@ interface SolveResult {
   solution: FourPartOutput | GradedFourPartOutput;
   gradeResult?: GradeResult;
   fromQuestionBank: boolean;
+}
+
+interface SolveProfileImpact {
+  nodeId: string;
+  displayName: string;
+  masteryBefore: number | null;
+  masteryAfter: number;
+  confidenceBefore: number | null;
+  confidenceAfter: number;
+  evidenceAdded: number;
+  repeatedErrorCount: number;
+}
+
+interface SolveGradeResponse extends GradeResult {
+  evidence?: {
+    matchedNodes: boolean;
+    updatedStates: number;
+    recordedEvent: boolean;
+  };
+  profileImpact?: SolveProfileImpact[];
+  nextDecision?: PersonalizationContext['learnerDecision'];
 }
 
 /** Call recognition API, return extracted problem text */
@@ -69,15 +114,22 @@ async function recognizeImage(file: File): Promise<RecognizedImageResult> {
 }
 
 /** Call grade API */
-async function gradeProblem(problem: string, correctAnswer: string, userAnswer: string): Promise<GradeResult> {
+async function gradeProblem(
+  problem: string,
+  correctAnswer: string,
+  userAnswer: string,
+  stepByStep: FourPartOutput['steps'],
+  knowledgePoints: string[],
+): Promise<SolveGradeResponse> {
   const res = await fetch('/api/sky/solve/grade', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ problem, correctAnswer, userAnswer }),
+    body: JSON.stringify({ problem, correctAnswer, userAnswer, stepByStep, knowledgePoints }),
   });
   if (!res.ok) throw new Error('批改失败');
   const json = await res.json();
-  return json as GradeResult;
+  void completeLearningPlanTaskFromEvidence(knowledgePoints, ['practice', 'diagnostic']);
+  return json as SolveGradeResponse;
 }
 
 // ── Streaming explain — consumes SSE, builds solution incrementally ──
@@ -144,11 +196,14 @@ async function streamExplain(
               break;
 
             case 'step':
-              accumulated.steps = [...accumulated.steps, {
-                label: event.label,
-                content: event.content,
-                keyPoints: event.keyPoints || [],
-              }];
+              accumulated.steps = [
+                ...accumulated.steps,
+                {
+                  label: event.label,
+                  content: event.content,
+                  keyPoints: event.keyPoints || [],
+                },
+              ];
               onUpdate({
                 steps: accumulated.steps,
                 answer: accumulated.answer || event.content, // fallback
@@ -161,30 +216,30 @@ async function streamExplain(
               break;
 
             case 'knowledge':
-              accumulated.knowledgePoints = event.points.map((p: {
-                name?: string;
-                description?: string;
-                difficulty?: string;
-              }) => ({
-                name: p.name || '',
-                description: p.description || '',
-                difficulty: p.difficulty || 'medium',
-              }));
+              accumulated.knowledgePoints = event.points.map(
+                (p: { name?: string; description?: string; difficulty?: string }) => ({
+                  name: p.name || '',
+                  description: p.description || '',
+                  difficulty: p.difficulty || 'medium',
+                }),
+              );
               onUpdate({ knowledgePoints: accumulated.knowledgePoints });
               break;
 
             case 'similar':
-              accumulated.similarQuestions = event.questions.map((q: {
-                problem?: string;
-                difficulty?: number;
-                knowledgePoint?: string;
-                answer?: string;
-              }) => ({
-                problem: q.problem || '',
-                difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
-                knowledgePoint: q.knowledgePoint || '',
-                ...(q.answer ? { answer: q.answer } : {}),
-              }));
+              accumulated.similarQuestions = event.questions.map(
+                (q: {
+                  problem?: string;
+                  difficulty?: number;
+                  knowledgePoint?: string;
+                  answer?: string;
+                }) => ({
+                  problem: q.problem || '',
+                  difficulty: typeof q.difficulty === 'number' ? q.difficulty : 5,
+                  knowledgePoint: q.knowledgePoint || '',
+                  ...(q.answer ? { answer: q.answer } : {}),
+                }),
+              );
               onUpdate({ similarQuestions: accumulated.similarQuestions });
               break;
 
@@ -294,6 +349,149 @@ function phaseProgress(phase: StreamPhase): string {
   return prog[phase] ?? '10%';
 }
 
+const SOLVE_ACTION_LABELS = {
+  diagnostic: '先确认前置断点',
+  teach: '先补概念再解题',
+  review: '先唤醒旧方法',
+  quiz: '精炼讲解并迁移',
+} as const;
+
+function getSolveNextAction(decision: NonNullable<SolveGradeResponse['nextDecision']>): {
+  label: string;
+  href: string;
+} {
+  const topic = decision.topic ? encodeURIComponent(decision.topic) : '';
+  if (decision.action === 'teach') {
+    return {
+      label: '按最新学习情况补概念',
+      href: `/sky/cloud-mind/teaching${topic ? `?topic=${topic}` : ''}`,
+    };
+  }
+  if (decision.action === 'review') {
+    return {
+      label: '按最新学习情况去复习',
+      href: `/sky/cloud-mind/memory${topic ? `?topic=${topic}` : ''}`,
+    };
+  }
+  const quizParams = new URLSearchParams({
+    difficulty: decision.difficulty,
+    count: String(decision.questionCount),
+  });
+  if (decision.topic) quizParams.set('topic', decision.topic);
+  return {
+    label: decision.action === 'diagnostic' ? '继续做针对练习' : '进入进阶测验',
+    href: `/sky/cloud-mind/quiz?${quizParams.toString()}`,
+  };
+}
+
+function SolveProfileFeedback({ feedback }: { feedback: SolveGradeResponse }) {
+  const impacts = feedback.profileImpact ?? [];
+  const evidence = feedback.evidence;
+  const decision = feedback.nextDecision;
+  const nextAction = decision ? getSolveNextAction(decision) : null;
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50/60 dark:border-emerald-800/50 dark:from-emerald-950/35 dark:via-slate-950/70 dark:to-sky-950/25">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-emerald-200/70 px-4 py-3 dark:border-emerald-900/60">
+        <div className="flex items-start gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white">
+            <Brain className="h-4 w-4" />
+          </span>
+          <div>
+            <div className="text-sm font-bold text-slate-900 dark:text-white">
+              学习情况已记录本次批改
+            </div>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              分数不是终点：答案记录会帮助更新学习情况，并安排下一步学习。
+            </p>
+          </div>
+        </div>
+        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-300/10 dark:text-emerald-200">
+          {evidence?.updatedStates ? `更新 ${evidence.updatedStates} 个知识点情况` : '结果已记录'}
+        </span>
+      </div>
+
+      <div className="space-y-3 p-4">
+        {impacts.length > 0 ? (
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {impacts.slice(0, 3).map((impact) => (
+              <div
+                key={impact.nodeId}
+                className="rounded-xl border border-emerald-200/70 bg-white/75 p-3 dark:border-emerald-900/50 dark:bg-slate-950/35"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+                    {impact.displayName}
+                  </span>
+                  <span className="text-[10px] text-slate-400">+{impact.evidenceAdded} 条记录</span>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                  <div>
+                    <span className="block">掌握情况</span>
+                    <strong className="mt-0.5 block text-sm text-slate-800 dark:text-white">
+                      {impact.masteryBefore === null
+                        ? '新建'
+                        : `${Math.round(impact.masteryBefore * 100)}%`}
+                      <span className="mx-1 text-emerald-500">→</span>
+                      {Math.round(impact.masteryAfter * 100)}%
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="block">判断把握</span>
+                    <strong className="mt-0.5 block text-sm text-slate-800 dark:text-white">
+                      {impact.confidenceBefore === null
+                        ? '新建'
+                        : `${Math.round(impact.confidenceBefore * 100)}%`}
+                      <span className="mx-1 text-emerald-500">→</span>
+                      {Math.round(impact.confidenceAfter * 100)}%
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-xs leading-5 text-amber-700 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200">
+            {evidence?.matchedNodes === false
+              ? '本题还没有关联到课程知识点；分数和错题已保留，但暂时无法显示掌握情况变化。'
+              : '本次答题记录已保存，继续完成同类题后会更准确地更新掌握情况。'}
+          </div>
+        )}
+
+        {decision && nextAction && (
+          <div className="flex flex-col gap-3 rounded-xl border border-sky-200/70 bg-sky-50/75 p-3 dark:border-sky-900/50 dark:bg-sky-950/30 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.1em] text-sky-700 dark:text-sky-300">
+                <Route className="h-3.5 w-3.5" /> 根据本次答题更新
+              </div>
+              <div className="mt-1 text-sm font-bold text-slate-900 dark:text-white">
+                {decision.topic ?? '下一学习节点'} · {SOLVE_ACTION_LABELS[decision.action]}
+              </div>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                {decision.summary}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Link
+                href="/sky/learning/path"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-white px-3 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-50 dark:border-sky-800 dark:bg-slate-950/50 dark:text-sky-300"
+              >
+                查看路线
+              </Link>
+              <Link
+                href={nextAction.href}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-500"
+              >
+                {nextAction.label} <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // ── Component ────────────────────────────────────────────────────────
 
 export function SolvePage() {
@@ -307,7 +505,10 @@ export function SolvePage() {
   const [streamPhase, setStreamPhase] = useState<StreamPhase>('checking');
   const [showHistory, setShowHistory] = useState(false);
   const [mistakeSaved, setMistakeSaved] = useState(false);
-  const [mistakeBookState, setMistakeBookState] = useState<'idle' | 'prompt' | 'saving' | 'saved' | 'dismissed'>('idle');
+  const [mistakeBookState, setMistakeBookState] = useState<
+    'idle' | 'prompt' | 'saving' | 'saved' | 'dismissed'
+  >('idle');
+  const [profileFeedback, setProfileFeedback] = useState<SolveGradeResponse | null>(null);
   const addMistake = useSkyClassroomStore((s) => s.addMistake);
   const abortRefs = useRef<Map<string, AbortController>>(new Map());
 
@@ -333,8 +534,11 @@ export function SolvePage() {
 
     if (task.status === 'running') {
       setStreamPhase(
-        task.phase?.includes('路由') ? 'routing' :
-        task.phase?.includes('查') ? 'checking' : 'solving'
+        task.phase?.includes('路由')
+          ? 'routing'
+          : task.phase?.includes('查')
+            ? 'checking'
+            : 'solving',
       );
       setState('solving');
     } else if (task.status === 'completed' && task.result) {
@@ -355,8 +559,11 @@ export function SolvePage() {
 
     if (task.status === 'running') {
       setStreamPhase(
-        task.phase?.includes('路由') ? 'routing' :
-        task.phase?.includes('查') ? 'checking' : 'solving'
+        task.phase?.includes('路由')
+          ? 'routing'
+          : task.phase?.includes('查')
+            ? 'checking'
+            : 'solving',
       );
       setState('solving');
     } else if (task.status === 'completed' && task.result) {
@@ -397,12 +604,25 @@ export function SolvePage() {
         jobId,
         (phase) => {
           const progress =
-            phase === 'checking' ? 15 : phase === 'routing' ? 35 : phase === 'solving' ? 70 : phase === 'done' ? 100 : 10;
+            phase === 'checking'
+              ? 15
+              : phase === 'routing'
+                ? 35
+                : phase === 'solving'
+                  ? 70
+                  : phase === 'done'
+                    ? 100
+                    : 10;
           const phaseLabel =
-            phase === 'checking' ? '正在查询题库...' :
-            phase === 'routing' ? '正在分析题目类型...' :
-            phase === 'solving' ? 'AI 正在解题中...' :
-            phase === 'done' ? '解题完成' : '处理中...';
+            phase === 'checking'
+              ? '正在查询题库...'
+              : phase === 'routing'
+                ? '正在分析题目类型...'
+                : phase === 'solving'
+                  ? 'AI 正在解题中...'
+                  : phase === 'done'
+                    ? '解题完成'
+                    : '处理中...';
           store().updateTask(taskId, { phase: phaseLabel, progress, jobId });
         },
         (partial) => {
@@ -415,6 +635,7 @@ export function SolvePage() {
       // Build SolveResult from polled data
       const solution: FourPartOutput = {
         answer: latestPartial.answer || '',
+        solution: latestPartial.answer || '',
         steps: latestPartial.steps || [],
         knowledgePoints: (latestPartial.knowledgePoints || []).map((k) => ({
           name: k.name,
@@ -455,7 +676,11 @@ export function SolvePage() {
   }
 
   const handleSubmit = useCallback(
-    async (input: { type: 'image' | 'voice' | 'text'; content: string | File; previewUrl?: string }) => {
+    async (input: {
+      type: 'image' | 'voice' | 'text';
+      content: string | File;
+      previewUrl?: string;
+    }) => {
       // Cancel previous in-flight task
       const prevId = useTaskStore.getState().activeSolveTaskId;
       if (prevId) {
@@ -467,6 +692,7 @@ export function SolvePage() {
       setResult(null);
       setMistakeSaved(false);
       setMistakeBookState('idle');
+      setProfileFeedback(null);
       setStreamPhase('checking');
 
       try {
@@ -532,7 +758,7 @@ export function SolvePage() {
         setState('error');
       }
     },
-    [setActiveSolveTask]
+    [setActiveSolveTask],
   );
 
   const handleConfirmRecognition = useCallback(() => {
@@ -551,7 +777,14 @@ export function SolvePage() {
       try {
         setState('grading');
         const correctAnswer = result?.solution.answer ?? '';
-        const gradeResult = await gradeProblem(input.problem, correctAnswer, input.userAnswer);
+        const gradeResult = await gradeProblem(
+          input.problem,
+          correctAnswer,
+          input.userAnswer,
+          result?.solution.steps ?? [],
+          result?.solution.knowledgePoints?.map((point) => point.name) ?? [],
+        );
+        setProfileFeedback(gradeResult);
 
         const gradedSolution: GradedFourPartOutput = {
           ...((result?.solution as FourPartOutput) || {
@@ -600,7 +833,7 @@ export function SolvePage() {
         setState('error');
       }
     },
-    [result]
+    [result],
   );
 
   const handleReset = useCallback(() => {
@@ -616,11 +849,15 @@ export function SolvePage() {
     setPreviewImage(null);
     setStreamPhase('checking');
     setMistakeBookState('idle');
+    setProfileFeedback(null);
   }, [setActiveSolveTask]);
 
-  const handleSimilarQuestionClick = useCallback((problem: string) => {
-    handleSubmit({ type: 'text', content: problem });
-  }, [handleSubmit]);
+  const handleSimilarQuestionClick = useCallback(
+    (problem: string) => {
+      handleSubmit({ type: 'text', content: problem });
+    },
+    [handleSubmit],
+  );
 
   const handleSaveToMistakeBook = useCallback(async () => {
     if (!result) return;
@@ -645,9 +882,11 @@ export function SolvePage() {
     }
   }, [result]);
 
-  const handleLoadFromHistory = useCallback((entry: QuestionBankEntry) => {
+  const handleLoadFromHistory = useCallback((entry: QuestionBankEntry | SearchRecord) => {
+    if (!('answer' in entry)) return;
     const solution: FourPartOutput = {
       answer: entry.answer,
+      solution: '',
       steps: [],
       knowledgePoints: (entry.knowledgePoints ?? []).map((kp) => ({
         name: kp.name,
@@ -673,7 +912,9 @@ export function SolvePage() {
     <div className="mx-auto max-w-7xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">搜题批改</h1>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent">
+            搜题批改
+          </h1>
           <p className="text-sm text-muted-foreground">拍照、语音或输入题目，AI 帮你解答</p>
         </div>
         <div className="flex items-center gap-2">
@@ -681,12 +922,19 @@ export function SolvePage() {
             variant={showHistory ? 'default' : 'outline'}
             size="sm"
             className="gap-2"
-            onClick={() => { setShowHistory((v) => !v); if (!showHistory) setError(null); }}
+            onClick={() => {
+              setShowHistory((v) => !v);
+              if (!showHistory) setError(null);
+            }}
           >
             <Clock className="h-4 w-4" />
             历史记录
           </Button>
-          {(state === 'success' || state === 'graded' || state === 'error' || state === 'solving' || state === 'confirming') && (
+          {(state === 'success' ||
+            state === 'graded' ||
+            state === 'error' ||
+            state === 'solving' ||
+            state === 'confirming') && (
             <Button variant="outline" size="sm" className="gap-2" onClick={handleReset}>
               <RotateCcw className="h-4 w-4" />
               重新搜题
@@ -739,7 +987,9 @@ export function SolvePage() {
                   <ImageIcon className="h-6 w-6 text-sky-500" />
                 </div>
               </div>
-              <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">正在识别图片...</p>
+              <p className="mt-4 text-sm font-medium text-sky-600 dark:text-sky-400">
+                正在识别图片...
+              </p>
               <p className="text-xs text-muted-foreground">请稍候</p>
             </div>
           )}
@@ -747,9 +997,12 @@ export function SolvePage() {
           {state === 'confirming' && (
             <Card className="border-amber-200/60 dark:border-amber-800/40">
               <CardHeader className="border-b bg-amber-50/60 dark:bg-amber-950/20">
-                <CardTitle className="text-base text-amber-700 dark:text-amber-300">请核对识别结果</CardTitle>
+                <CardTitle className="text-base text-amber-700 dark:text-amber-300">
+                  请核对识别结果
+                </CardTitle>
                 <CardDescription>
-                  手写内容存在不确定字符，请修正后再开始搜题。当前置信度 {Math.round((recognitionConfidence ?? 0) * 100)}%
+                  手写内容存在不确定字符，请修正后再开始搜题。当前识别把握{' '}
+                  {Math.round((recognitionConfidence ?? 0) * 100)}%
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 p-4">
@@ -775,10 +1028,15 @@ export function SolvePage() {
                   </Alert>
                 )}
                 <div className="flex gap-2">
-                  <Button className="flex-1 bg-[#4A90D9] hover:bg-[#4A90D9]/90" onClick={handleConfirmRecognition}>
+                  <Button
+                    className="flex-1 bg-[#4A90D9] hover:bg-[#4A90D9]/90"
+                    onClick={handleConfirmRecognition}
+                  >
                     确认并搜题
                   </Button>
-                  <Button variant="outline" onClick={handleReset}>重新识别</Button>
+                  <Button variant="outline" onClick={handleReset}>
+                    重新识别
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -819,7 +1077,10 @@ export function SolvePage() {
                   />
                 </div>
                 <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground">
-                  <span>查库</span><span>路由</span><span>解题</span><span>完成</span>
+                  <span>查库</span>
+                  <span>安排</span>
+                  <span>解题</span>
+                  <span>完成</span>
                 </div>
               </div>
             </div>
@@ -842,7 +1103,8 @@ export function SolvePage() {
                 )}
                 {recognizedText && (
                   <div className="mb-2 text-sm text-muted-foreground">
-                    识别结果：<MathRenderer content={recognizedText} />
+                    识别结果：
+                    <MathRenderer content={recognizedText} />
                   </div>
                 )}
                 <MathRenderer content={result.problem} className="text-sm text-foreground" />
@@ -860,10 +1122,7 @@ export function SolvePage() {
         {/* ── RIGHT COLUMN ── */}
         <div className="space-y-6">
           {showHistory ? (
-            <HistoryPanel
-              onLoad={handleLoadFromHistory}
-              onClose={() => setShowHistory(false)}
-            />
+            <HistoryPanel onLoad={handleLoadFromHistory} onClose={() => setShowHistory(false)} />
           ) : (
             <>
               {state === 'error' && error && (
@@ -894,6 +1153,7 @@ export function SolvePage() {
               {state === 'graded' && result?.gradeResult && (
                 <>
                   <GradeResultCard result={result.gradeResult} />
+                  {profileFeedback && <SolveProfileFeedback feedback={profileFeedback} />}
                   {!result.gradeResult.isCorrect && (
                     <div className="flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20">
                       {mistakeSaved ? (
@@ -911,8 +1171,10 @@ export function SolvePage() {
                       )}
                       <Badge variant="secondary" className="text-xs">
                         前往
-                        <a href="/sky/learning" className="ml-1 underline">学习数据</a>
-                        {' '}查看
+                        <a href="/sky/learning" className="ml-1 underline">
+                          学习数据
+                        </a>{' '}
+                        查看
                       </Badge>
                     </div>
                   )}
@@ -920,45 +1182,47 @@ export function SolvePage() {
               )}
 
               {/* Mistake book prompt — shown after solve completes */}
-              {state === 'success' && mistakeBookState !== 'idle' && mistakeBookState !== 'dismissed' && (
-                <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    <span className="text-sm text-amber-700 dark:text-amber-300">
-                      {mistakeBookState === 'saved' ? '已加入错题本' : '是否将此题加入错题本？'}
-                    </span>
+              {state === 'success' &&
+                mistakeBookState !== 'idle' &&
+                mistakeBookState !== 'dismissed' && (
+                  <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <span className="text-sm text-amber-700 dark:text-amber-300">
+                        {mistakeBookState === 'saved' ? '已加入错题本' : '是否将此题加入错题本？'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {mistakeBookState === 'prompt' && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="h-7 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
+                            onClick={handleSaveToMistakeBook}
+                          >
+                            <Plus className="h-3 w-3" />
+                            加入
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-muted-foreground"
+                            onClick={() => setMistakeBookState('dismissed')}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </>
+                      )}
+                      {mistakeBookState === 'saving' && (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+                      )}
+                      {mistakeBookState === 'saved' && (
+                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {mistakeBookState === 'prompt' && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="h-7 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
-                          onClick={handleSaveToMistakeBook}
-                        >
-                          <Plus className="h-3 w-3" />
-                          加入
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0 text-muted-foreground"
-                          onClick={() => setMistakeBookState('dismissed')}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </>
-                    )}
-                    {mistakeBookState === 'saving' && (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
-                    )}
-                    {mistakeBookState === 'saved' && (
-                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    )}
-                  </div>
-                </div>
-              )}
+                )}
 
               {(state === 'success' || state === 'graded') && result && (
                 <>

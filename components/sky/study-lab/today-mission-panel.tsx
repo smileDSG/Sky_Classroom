@@ -5,12 +5,50 @@ import type { StudyLabViewModel } from '@/lib/sky/study-lab-data';
 import { PanelShell } from './panel-shell';
 
 function buildMission(viewModel: StudyLabViewModel) {
+  const learningPlan = viewModel.learningPlan;
+  if (learningPlan) {
+    const plannedTask = learningPlan.todayTask;
+    if (plannedTask) {
+      return {
+        title: plannedTask.title,
+        detail: plannedTask.objective,
+        href: plannedTask.actionHref ?? '/sky/learning/path',
+        badge: '今日计划',
+        duration: `${plannedTask.plannedMinutes} 分钟`,
+        actionLabel: '开始今日任务',
+      };
+    }
+
+    const todaySummary = learningPlan.todaySummary;
+    if (todaySummary && todaySummary.totalTasks > 0 && todaySummary.completionRate === 100) {
+      return {
+        title: '今日计划已完成',
+        detail: '今日任务已全部完成。保持节奏，下一批任务会按个人路径继续推进。',
+        href: '/sky/learning/path',
+        badge: '计划完成',
+        duration: `${todaySummary.plannedMinutes} 分钟`,
+        actionLabel: '查看完整安排',
+      };
+    }
+
+    return {
+      title: '今日为计划缓冲日',
+      detail: '算法已结合本周时间预算与休息日安排，今天无需追加学习任务。',
+      href: '/sky/learning/path',
+      badge: '计划缓冲',
+      duration: '0 分钟',
+      actionLabel: '查看完整安排',
+    };
+  }
+
   if (viewModel.profile.recommendation) {
     return {
       title: viewModel.profile.recommendation.title,
       detail: viewModel.profile.recommendation.reason,
       href: viewModel.profile.recommendation.href,
-      badge: '画像推荐',
+      badge: '为你推荐',
+      duration: '约 10-20 分钟',
+      actionLabel: '开始今日任务',
     };
   }
 
@@ -20,14 +58,18 @@ function buildMission(viewModel: StudyLabViewModel) {
       detail: '先把到期内容转为短周期复习，避免遗忘继续累积。',
       href: '/sky/learning/review?dailyTask=1',
       badge: '到期复习',
+      duration: '约 10-20 分钟',
+      actionLabel: '开始今日任务',
     };
   }
 
   return {
-    title: '完成一次入门诊断',
-    detail: '通过智能出题或拍照解题建立第一批学习信号。',
+    title: '完成一次入门练习',
+    detail: '通过智能出题或拍照解题留下第一批学习记录。',
     href: '/sky/cloud-mind/quiz',
-    badge: '诊断采样',
+    badge: '入门练习',
+    duration: '约 10-20 分钟',
+    actionLabel: '开始今日任务',
   };
 }
 
@@ -69,7 +111,9 @@ export function TodayMissionPanel({
           <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-200/20 dark:bg-white/[0.08] dark:text-emerald-50">
             {mission.badge}
           </span>
-          <span className="text-xs text-emerald-700/80 dark:text-emerald-50/80">约 10-20 分钟</span>
+          <span className="text-xs text-emerald-700/80 dark:text-emerald-50/80">
+            {mission.duration}
+          </span>
         </div>
         <h3 className="mt-3 text-lg font-semibold leading-7 text-slate-950 dark:text-white">
           {mission.title}
@@ -82,7 +126,7 @@ export function TodayMissionPanel({
           className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 dark:bg-emerald-300 dark:text-slate-950 dark:hover:bg-emerald-200 sm:w-auto"
         >
           <CalendarClock className="h-4 w-4" />
-          开始今日任务
+          {mission.actionLabel}
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>

@@ -7,17 +7,20 @@ import { HeaderControls } from "@/components/sky/home/header-controls";
 import { FloatingUserCard } from "@/components/sky/home/floating-user-card";
 import { SettingsDialog } from "@/components/settings";
 import { UpgradeDialog } from "@/components/billing/upgrade-dialog";
-import { SkyTabBar } from "./sky-tab-bar";
+import { SkySidebar } from "./sidebar-nav";
 import { BackgroundTasksIndicator } from "./background-tasks-indicator";
-import { useAuth } from "@/components/auth/auth-provider";
+import { useOptionalAuth } from "@/components/auth/auth-provider";
 import { useStudyTimer } from "@/lib/hooks/use-study-timer";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { CheckCircle2, Sparkles } from "lucide-react";
 import { MobileSkyShell } from "@/components/mobile/shell/mobile-sky-shell";
+import { SkySectionNav, type SkySection } from "./sky-section-nav";
 
 interface SkyAppShellProps {
   children: React.ReactNode;
+  section?: SkySection;
+  fullBleed?: boolean;
 }
 
 /**
@@ -75,42 +78,16 @@ function AtmosphericBackground() {
   );
 }
 
-/**
- * Logo with refined hover interaction
- */
-function Logo() {
-  return (
-    <Link href="/" className="flex items-center gap-2.5 group">
-      <div className="relative">
-        <motion.img
-          src="/logo-icon.svg"
-          alt="天空课堂"
-          className="w-7 h-7"
-          whileHover={{ scale: 1.08, rotate: 3 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        />
-        <div className="absolute inset-0 rounded-lg bg-sky-400/0 group-hover:bg-sky-400/10 transition-colors duration-300 -z-10 blur-md" />
-      </div>
-      <div className="flex flex-col">
-        <h1 className="text-[15px] font-bold tracking-tight text-slate-800 dark:text-slate-100">
-          天空课堂
-        </h1>
-        <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 -mt-0.5 tracking-[0.15em] uppercase">
-          Sky Classroom
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-function DesktopSkyShell({ children }: SkyAppShellProps) {
-  const { user, refresh } = useAuth();
+function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
+  const { user, refresh } = useOptionalAuth();
+  const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
   const [streakDays, setStreakDays] = useState(0);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Track real study time when user is logged in
   useStudyTimer(!!user);
@@ -158,43 +135,73 @@ function DesktopSkyShell({ children }: SkyAppShellProps) {
     }
   }, [user, checkedIn, checkingIn]);
 
-  return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
-      <AtmosphericBackground />
+  const workspace = pathname.startsWith("/sky/teaching") || pathname.startsWith("/sky/cloud-mind/teaching")
+    ? {
+        label: "备课工作区",
+        description: "课程、教案、课件和课堂历史",
+      }
+    : pathname.startsWith("/sky/cloud-mind") ||
+        pathname.startsWith("/sky/question-bank") ||
+        pathname.startsWith("/sky/assistant") ||
+        pathname.startsWith("/sky/solve") ||
+        pathname.startsWith("/sky/slides")
+      ? {
+          label: "学习资源",
+          description: "题目、讲解、复习和课程材料",
+        }
+      : {
+          label: "学习工作台",
+          description: "今天学什么、为什么学、下一步怎么走",
+        };
 
-      {/* Header */}
-      <header
-        className={`sticky top-0 z-50 flex shrink-0 flex-wrap items-center gap-3 px-4 py-3 transition-all duration-500 md:grid md:h-16 md:grid-cols-3 md:gap-0 md:px-6 md:py-0 ${
-          scrolled
-            ? "bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0_1px_20px_-8px_rgba(15,23,42,0.08)] dark:shadow-[0_1px_20px_-8px_rgba(0,0,0,0.2)] border-b border-slate-200/40 dark:border-slate-700/20"
-            : "bg-transparent"
+  return (
+    <div className="relative min-h-dvh w-full overflow-x-clip">
+      <AtmosphericBackground />
+      <SkySidebar
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed((value) => !value)}
+      />
+
+      <div
+        className={`ml-[248px] flex min-h-dvh min-w-0 flex-col ${
+          sidebarCollapsed ? "ml-[72px]" : ""
         }`}
       >
-        {/* Top accent line on scroll */}
-        {scrolled && (
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-sky-400/40 to-transparent origin-left"
-          />
-        )}
+        <header
+          className={`sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 px-5 transition-all duration-500 xl:px-8 ${
+            scrolled
+              ? "bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl shadow-[0_1px_20px_-8px_rgba(15,23,42,0.08)] dark:shadow-[0_1px_20px_-8px_rgba(0,0,0,0.2)] border-b border-slate-200/40 dark:border-slate-700/20"
+              : "bg-transparent"
+          }`}
+        >
+          {scrolled && (
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              className="absolute inset-x-0 top-0 h-px origin-left bg-gradient-to-r from-transparent via-sky-400/40 to-transparent"
+            />
+          )}
 
-        <div className="order-1 flex items-center gap-3 md:order-none">
-          <Logo />
-        </div>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="h-8 w-1 rounded-full bg-sky-500" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {workspace.label}
+              </p>
+              <p className="hidden truncate text-xs text-slate-500 dark:text-slate-400 sm:block">
+                {workspace.description}
+              </p>
+            </div>
+          </div>
 
-        <div className="order-3 w-full overflow-x-auto pb-1 md:order-none md:flex md:w-auto md:justify-center md:overflow-visible md:pb-0">
-          <SkyTabBar />
-        </div>
-
-        <div className="order-2 ml-auto flex items-center justify-end gap-2 md:order-none md:ml-0 md:gap-3">
+          <div className="flex shrink-0 items-center justify-end gap-2 md:gap-3">
           {/* Check-in Button - Only show when logged in and not checked in */}
           {user && !checkedIn && (
             <Button
               size="sm"
               onClick={handleCheckIn}
               disabled={checkingIn}
-              className="hidden md:flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg shadow-rose-500/25"
+              className="hidden lg:flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg shadow-rose-500/25"
             >
               <CheckCircle2 className="h-4 w-4" />
               {checkingIn ? "打卡中..." : "今日打卡"}
@@ -209,10 +216,20 @@ function DesktopSkyShell({ children }: SkyAppShellProps) {
           <HeaderControls />
           <div className="hidden h-5 w-px bg-slate-200/60 dark:bg-slate-700/40 sm:block" />
           <FloatingUserCard onUpgradeOpen={() => setUpgradeOpen(true)} />
-        </div>
-      </header>
+          </div>
+        </header>
 
-      <main className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</main>
+        <main
+          data-sky-desktop-main
+          className={
+            fullBleed
+              ? "min-w-0 flex-1"
+              : "min-w-0 flex-1 px-4 py-5 md:px-6 md:py-7 xl:px-8"
+          }
+        >
+          {children}
+        </main>
+      </div>
 
       <BackgroundTasksIndicator />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
@@ -226,14 +243,21 @@ function DesktopSkyShell({ children }: SkyAppShellProps) {
   );
 }
 
-export function SkyAppShell({ children }: SkyAppShellProps) {
+export function SkyAppShell({ children, section, fullBleed = false }: SkyAppShellProps) {
   return (
     <>
       <div className="hidden md:block">
-        <DesktopSkyShell>{children}</DesktopSkyShell>
+        <DesktopSkyShell fullBleed={fullBleed}>{children}</DesktopSkyShell>
       </div>
       <div className="md:hidden">
-        <MobileSkyShell>{children}</MobileSkyShell>
+        <MobileSkyShell>
+          {section && (
+            <div className="px-4 pt-4">
+              <SkySectionNav section={section} />
+            </div>
+          )}
+          {children}
+        </MobileSkyShell>
       </div>
     </>
   );

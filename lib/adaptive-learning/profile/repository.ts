@@ -7,6 +7,7 @@ import {
   type LearningEvent,
 } from '@/lib/adaptive-learning/contracts';
 import type { StorageEntry, StorageProvider } from '@/lib/storage/storage-types';
+import { StorageEntryAlreadyExistsError } from '@/lib/storage/storage-errors';
 
 const PREFERENCES_TABLE = 'learner-preference-versions';
 const DOMAIN_PROFILES_TABLE = 'domain-learner-profile-versions';
@@ -90,15 +91,21 @@ export class LearnerProfileRepository {
     return profiles[0] ?? null;
   }
 
-  async appendLearningEvent(input: LearningEvent): Promise<void> {
+  async appendLearningEvent(input: LearningEvent): Promise<boolean> {
     const event = learningEventSchema.parse(input);
     const timestamp = new Date(event.occurredAt).getTime();
-    await this.storage.insert(LEARNING_EVENTS_TABLE, {
-      id: learningEventEntryId(event.userId, event.eventId),
-      data: event,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    });
+    try {
+      await this.storage.insert(LEARNING_EVENTS_TABLE, {
+        id: learningEventEntryId(event.userId, event.eventId),
+        data: event,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof StorageEntryAlreadyExistsError) return false;
+      throw error;
+    }
   }
 
   async listLearningEvents(userId: string): Promise<LearningEvent[]> {

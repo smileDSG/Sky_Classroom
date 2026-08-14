@@ -38,6 +38,10 @@ export const SolveGraphAnnotation = Annotation.Root({
     value: (_prev, next) => next,
     default: () => null,
   }),
+  adaptiveGuidance: Annotation<string | null>({
+    value: (_prev, next) => next,
+    default: () => null,
+  }),
 
   // Routing
   agentId: Annotation<string>({

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft,
   ArrowRight,
   BookOpenCheck,
   CheckCircle2,
@@ -37,12 +36,6 @@ interface ProfileField {
   evidence: string[];
   confidence?: number;
   status: FieldStatus;
-}
-
-export type ProfileCompletionReturnSource = 'starTips' | 'learning';
-
-interface ProfileCompletionPageProps {
-  returnSource?: ProfileCompletionReturnSource;
 }
 
 function joinValues(values?: string[]): string {
@@ -232,8 +225,8 @@ function buildSuggestionPrompts(
   }
 
   addUniquePrompt(prompts, {
-    label: '先做诊断',
-    text: '我还不太确定哪里薄弱，想先做一次小诊断，再根据结果安排讲解和练习。',
+    label: '先做摸底练习',
+    text: '我还不太确定哪里薄弱，想先做一次小练习，再根据结果安排讲解和复习。',
   });
 
   return prompts.slice(0, 3);
@@ -310,7 +303,7 @@ function NextAction({
   );
 }
 
-export function ProfileCompletionPage({ returnSource = 'starTips' }: ProfileCompletionPageProps) {
+export function ProfileCompletionPage() {
   const [personalization, setPersonalization] = useState<PersonalizationContext | null>(null);
   const [patch, setPatch] = useState<ConversationalProfilePatch>();
   const [loading, setLoading] = useState(true);
@@ -337,11 +330,11 @@ export function ProfileCompletionPage({ returnSource = 'starTips' }: ProfileComp
         if (response.ok && json.success && json.data) {
           setPersonalization(json.data);
         } else {
-          setError(json.error ?? '画像上下文暂时不可用，你仍然可以先通过对话补充画像。');
+          setError(json.error ?? '学习情况暂时不可用，你仍然可以先通过对话补充信息。');
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : '画像上下文加载失败');
+          setError(err instanceof Error ? err.message : '学习情况加载失败');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -370,37 +363,24 @@ export function ProfileCompletionPage({ returnSource = 'starTips' }: ProfileComp
     () => buildSuggestionPrompts(personalization, patch),
     [personalization, patch],
   );
-  const returnLink =
-    returnSource === 'learning'
-      ? { href: '/sky/learning', label: '返回天梯工坊' }
-      : { href: '/sky', label: '返回摘星锦囊' };
-
   return (
     <SkyAppShell>
       <main className="mx-auto max-w-7xl space-y-5 px-4 pb-8 sm:px-6 lg:px-8">
         <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-5">
-          <Link
-            href={returnLink.href}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {returnLink.label}
-          </Link>
-
-          <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
             <div className="min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-100">
                 <UserCheck className="h-3.5 w-3.5" />
-                学习画像
+                学习情况
               </div>
               <h1 className="mt-3 text-2xl font-semibold leading-tight text-slate-950 dark:text-white md:text-3xl">
-                完善学习画像
+                完善学习情况
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
                 让摘星锦囊先认识你的目标、薄弱点和学习偏好。
               </p>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                后续资料生成、智能练习和学习路径都会按画像调整。
+                后续资料生成、练习和学习路径都会参考你的情况调整。
               </p>
             </div>
 
@@ -408,7 +388,7 @@ export function ProfileCompletionPage({ returnSource = 'starTips' }: ProfileComp
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    关键画像完成度
+                    关键信息完成度
                   </p>
                   <p className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">
                     {completedCoreCount}/4
@@ -440,10 +420,10 @@ export function ProfileCompletionPage({ returnSource = 'starTips' }: ProfileComp
           <section className="min-w-0">
             <ProfileOnboardingChat
               title="告诉我你现在怎么学"
-              description="用自然语言说就好，我会把目标、薄弱点和偏好拆成可用于推荐的画像字段。"
+              description="用自然语言说就好，我会整理你的目标、需要加强的内容和学习偏好。"
               starterQuestion="你最近最想提升哪门课或哪项能力？也可以直接说当前最卡的知识点，以及你希望我怎么带你学。"
               placeholder="例如：我想两周内补机器学习，过拟合和模型评估总是搞不懂，希望多用代码案例和图解讲。"
-              submitLabel="更新画像"
+              submitLabel="更新学习情况"
               suggestionPrompts={suggestionPrompts}
               onPatchChange={setPatch}
             />
@@ -454,7 +434,7 @@ export function ProfileCompletionPage({ returnSource = 'starTips' }: ProfileComp
               <div className="mb-3 flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4 text-sky-600 dark:text-sky-300" />
                 <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-                  实时画像预览
+                  实时学习情况预览
                 </h2>
               </div>
               <div className="space-y-2.5">
@@ -473,7 +453,7 @@ export function ProfileCompletionPage({ returnSource = 'starTips' }: ProfileComp
               </div>
               <p className="mt-2 text-sm leading-6 text-emerald-800 dark:text-emerald-100">
                 {hasActionContext
-                  ? '已经可以按当前画像开始推荐。信息越完整，后续建议越贴近你。'
+                  ? '已经可以按当前学习情况开始推荐。信息越完整，后续建议越贴近你。'
                   : '先补充目标或薄弱点，也可以直接进入工具后继续完善。'}
               </p>
               <div className="mt-3 grid gap-2">
@@ -483,7 +463,11 @@ export function ProfileCompletionPage({ returnSource = 'starTips' }: ProfileComp
                   label="生成个性化资料"
                 />
                 <NextAction href="/sky/cloud-mind/quiz" icon={BookOpenCheck} label="开始智能练习" />
-                <NextAction href="/sky/study-lab" icon={Target} label="进入学习实验室" />
+                <NextAction
+                  href="/sky/learning#learning-plan"
+                  icon={Target}
+                  label="查看个人学习计划"
+                />
                 <NextAction href="/sky/student" icon={UserCheck} label="查看完整分析" />
               </div>
             </section>

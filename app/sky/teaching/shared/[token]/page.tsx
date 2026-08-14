@@ -136,7 +136,11 @@ export default function SharedTeachingPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base flex items-center gap-2">
                       <Badge variant="secondary" className={TYPE_COLORS[s.section.contentType]}>
-                        {s.section.contentType === 'quiz' ? '随堂测验' : s.section.contentType === 'example' ? '例题讲解' : '知识讲解'}
+                        {s.section.contentType === 'quiz'
+                          ? '随堂测验'
+                          : s.section.contentType === 'example'
+                            ? '例题讲解'
+                            : '知识讲解'}
                       </Badge>
                       {s.section.title}
                     </CardTitle>
@@ -189,7 +193,7 @@ export default function SharedTeachingPage() {
           transition={{ delay: 0.5 }}
           className="mt-8 text-center text-sm text-muted-foreground"
         >
-          <p>由 OpenMAIC AI 智能授课系统生成</p>
+          <p>由天空课堂 AI 智能授课系统生成</p>
         </motion.div>
       </div>
     </div>

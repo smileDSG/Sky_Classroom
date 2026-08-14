@@ -37,7 +37,7 @@ function chooseIdentity(label = '学习者') {
 }
 
 function chooseLearnerContext() {
-  fireEvent.click(screen.getByRole('button', { name: '初中' }));
+  fireEvent.click(screen.getByRole('button', { name: '高中' }));
   const learningDomains = screen.getByRole('group', { name: '学习领域（选填）' });
   fireEvent.click(within(learningDomains).getByRole('button', { name: '数学' }));
   const supportDomains = screen.getByRole('group', { name: '需要重点支持的领域（选填）' });
@@ -47,7 +47,10 @@ function chooseLearnerContext() {
 
 function chooseLearnerGoal() {
   fireEvent.click(screen.getByRole('button', { name: '巩固基础' }));
+  fireEvent.click(screen.getByRole('button', { name: '定位薄弱点' }));
   fireEvent.click(screen.getByRole('button', { name: '分步讲解' }));
+  fireEvent.click(screen.getByRole('button', { name: '有基础但不稳定' }));
+  fireEvent.click(screen.getByRole('button', { name: '每周 2-5 小时' }));
   fireEvent.change(screen.getByLabelText('最重要的问题（选填）'), {
     target: { value: '补齐代数基础' },
   });
@@ -70,6 +73,31 @@ beforeEach(() => {
         profiles: {},
         completedAt: 10,
       },
+      initialProfile: {
+        status: 'self-reported',
+        identity: 'learner',
+        identityLabel: '学习者',
+        stage: 'high',
+        stageLabel: '高中',
+        focusDomains: ['数学'],
+        supportDomains: ['物理'],
+        goals: ['巩固基础'],
+        needs: ['identify-gaps'],
+        preference: 'step-by-step',
+        foundation: 'developing',
+        weeklyTime: 'regular',
+        recommendedDifficulty: 'easy',
+        completeness: 100,
+        summary: '高中学习者，关注数学，优先补强物理。',
+        toolSuggestions: [
+          {
+            tool: 'quiz',
+            title: '先诊断物理',
+            reason: '用真实作答校准画像。',
+            href: '/sky/cloud-mind/quiz?topic=物理&mode=diagnostic',
+          },
+        ],
+      },
     }),
   );
   vi.stubGlobal('fetch', fetchMock);
@@ -79,12 +107,14 @@ describe('LearningProfileOnboarding', () => {
   it('moves through identity, learner context, and learner preference steps', () => {
     renderOnboarding();
 
-    expect(screen.getByRole('heading', { name: '你会以哪些身份使用 OpenMAIC？' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: '你会以哪些身份使用天空课堂？' })).toBeVisible();
     chooseIdentity();
     expect(screen.getByRole('heading', { name: '你目前处于哪个学习阶段？' })).toBeVisible();
     chooseLearnerContext();
     expect(screen.getByRole('heading', { name: '你希望先解决什么？' })).toBeVisible();
     expect(screen.getByRole('group', { name: '你更喜欢怎样学习？' })).toBeVisible();
+    expect(screen.getByRole('group', { name: '你目前的基础状态' })).toBeVisible();
+    expect(screen.getByRole('group', { name: '每周可投入时间' })).toBeVisible();
   });
 
   it('requires an identity and supports a separate primary identity', () => {
@@ -136,7 +166,7 @@ describe('LearningProfileOnboarding', () => {
     chooseLearnerContext();
     chooseLearnerGoal();
 
-    fireEvent.click(screen.getByRole('button', { name: '保存画像' }));
+    fireEvent.click(screen.getByRole('button', { name: '保存学习情况' }));
 
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     const payload = JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1]?.body));
@@ -148,18 +178,21 @@ describe('LearningProfileOnboarding', () => {
         learner: {
           identity: 'learner',
           context: {
-            stage: 'middle',
+            stage: 'high',
             learningDomains: [{ domain: { source: 'catalog', id: 'math', name: '数学' } }],
             supportDomains: [{ source: 'catalog', id: 'physics', name: '物理' }],
           },
           goals: [{ source: 'catalog', id: 'build-foundations', label: '巩固基础' }],
-          roleNeeds: [],
+          roleNeeds: ['identify-gaps'],
           preferences: { explanationStyle: 'step-by-step' },
+          baseline: { foundation: 'developing', weeklyTime: 'regular' },
           detail: '补齐代数基础',
         },
       },
     });
-    expect(screen.getByRole('heading', { name: '用户画像已保存' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: '学习情况已保存' })).toBeVisible();
+    expect(screen.getByText('高中学习者，关注数学，优先补强物理。')).toBeVisible();
+    expect(screen.getByRole('button', { name: /先诊断物理/ })).toBeVisible();
   });
 
   it('keeps every answer when save fails and permits retry', async () => {
@@ -169,11 +202,11 @@ describe('LearningProfileOnboarding', () => {
     chooseLearnerContext();
     chooseLearnerGoal();
 
-    fireEvent.click(screen.getByRole('button', { name: '保存画像' }));
+    fireEvent.click(screen.getByRole('button', { name: '保存学习情况' }));
 
     expect(await screen.findByText('保存失败，请稍后重试')).toBeVisible();
     expect(screen.getByLabelText('最重要的问题（选填）')).toHaveValue('补齐代数基础');
-    expect(screen.getByRole('button', { name: '保存画像' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '保存学习情况' })).toBeEnabled();
   });
 
   it('loads an existing v2 profile in edit mode and does not overwrite it on exit', async () => {
@@ -208,8 +241,8 @@ describe('LearningProfileOnboarding', () => {
     );
     renderOnboarding();
 
-    expect(screen.getByText('正在读取用户画像…')).toBeVisible();
-    expect(await screen.findByRole('heading', { name: '更新用户画像' })).toBeVisible();
+    expect(screen.getByText('正在读取你的学习情况…')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: '更新学习情况' })).toBeVisible();
     expect(screen.getByRole('button', { name: '教师 / 培训者' })).toHaveAttribute(
       'aria-pressed',
       'true',

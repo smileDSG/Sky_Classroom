@@ -1,6 +1,6 @@
 # 开源项目与第三方工具使用说明
 
-本项目基于 OpenMAIC / sky-classroom 代码仓库进行参赛方向扩展，当前新增方向为“面向高校专业课程的多智能体个性化学习资源生成系统”。项目根目录 `package.json` 标注许可证为 `AGPL-3.0`，项目根目录保留 `LICENSE` 文件。最终提交材料应继续保留原项目许可证和版权说明。
+本项目基于 智眸无界 / sky-classroom 代码仓库进行参赛方向扩展，当前新增方向为“面向高校专业课程的多智能体个性化学习资源生成系统”。项目根目录 `package.json` 标注许可证为 `AGPL-3.0`，项目根目录保留 `LICENSE` 文件。最终提交材料应继续保留原项目许可证和版权说明。
 
 ## 本次新增/整理内容
 
@@ -14,7 +14,7 @@
 
 | 名称 | 用途 | 来源 | 协议 |
 | --- | --- | --- | --- |
-| OpenMAIC / sky-classroom | 参赛项目基础代码仓库 | 当前仓库 | AGPL-3.0 |
+| 智眸无界 / sky-classroom | 参赛项目基础代码仓库 | 当前仓库 | AGPL-3.0 |
 | Next.js | Web 应用框架 | https://nextjs.org | MIT |
 | React / React DOM | 前端 UI 框架 | https://react.dev | MIT |
 | TypeScript | 类型系统和编译工具 | https://www.typescriptlang.org | Apache-2.0 |

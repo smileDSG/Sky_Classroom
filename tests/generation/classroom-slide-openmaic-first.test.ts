@@ -466,7 +466,7 @@ describe('OpenMAIC original classroom slide generation', () => {
     expect(lastUser()).toContain('使用中文进行教学');
     expect(lastUser()).not.toContain('Course Theme');
     expect(lastUser()).not.toContain('themeDirective');
-    expect(lastUser()).not.toContain('OpenMAIC Classroom Slide Directive');
+    expect(lastUser()).not.toContain('天空课堂 Classroom Slide Directive');
     expect(lastUser()).not.toContain('slides.gif classic classroom composition');
     expect(lastSystem()).not.toContain('Slide Richness Contract');
   });
@@ -501,7 +501,7 @@ describe('OpenMAIC original classroom slide generation', () => {
     expect(lastUser()).toContain('7');
     expect(lastUser()).toContain('Deck diversity hard rules');
     expect(lastUser()).toContain('Do not reuse the same main composition');
-    expect(lastUser()).toContain('OpenMAIC golden sample style contract');
+    expect(lastUser()).toContain('天空课堂 golden sample style contract');
     expect(lastUser()).toContain('Page-specific composition for this page');
     expect(lastUser()).toContain('center-stage');
     expect(lastUser()).toContain('Do not use orange bars');
@@ -569,7 +569,7 @@ describe('OpenMAIC original classroom slide generation', () => {
     expect(result).not.toBeNull();
     expect(callCount()).toBe(1);
     expect(lastUser()).toContain('# Generation Requirements');
-    expect(lastUser()).not.toContain('OpenMAIC Classroom Slide Directive');
+    expect(lastUser()).not.toContain('天空课堂 Classroom Slide Directive');
     expect(lastUser()).not.toContain('Use English.');
     expect((result as GeneratedSlideContent).elements.length).toBeGreaterThanOrEqual(4);
   });

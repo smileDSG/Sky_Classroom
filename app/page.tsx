@@ -40,6 +40,7 @@ import { ClassroomGrid } from '@/components/sky/home/classroom-grid';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
 import { CloudMindHeroButton } from '@/components/sky/home/cloud-mind-hero-button';
 import { FeaturedSection } from '@/components/sky/home/featured-section';
+import { LearningPlanPreview } from '@/components/sky/home/learning-plan-preview';
 import type { SettingsSection } from '@/lib/types/settings';
 
 // 重型组件 — 懒加载
@@ -310,7 +311,7 @@ export default function HomePage() {
     for (const task of runningTasks) {
       if (!task.jobId) continue;
       const jobId = task.jobId;
-      const topic = task.label?.replace(/^课堂:\s*/, '') || '';
+      const topic = task.label?.replace(/^(?:课堂|讲解):\s*/, '') || '';
       const isReviewing = task.phase?.includes('审阅');
 
       setActiveJobs((prev) => ({
@@ -517,7 +518,7 @@ export default function HomePage() {
     }
 
     if (!requirement.trim()) {
-      setError('请输入课程需求');
+      setError('请输入课程内容或想学习的知识点');
       return;
     }
 
@@ -583,7 +584,7 @@ export default function HomePage() {
       startJobPolling(jobId, topic);
     } catch (err) {
       log.error('Error preparing generation:', err);
-      const msg = err instanceof Error ? err.message : '生成课堂失败，请重试';
+      const msg = err instanceof Error ? err.message : '生成讲解失败，请重试';
       // If user not found in DB (stale JWT after DB reset), redirect to login
       if (msg === 'User not found' || msg.includes('Not authenticated')) {
         toast.error('登录已过期，请重新登录');
@@ -707,7 +708,7 @@ export default function HomePage() {
           {/* 问候语 */}
           <GreetingSection />
 
-          {/* 天穹讲课标题 */}
+          {/* 天空课堂入口 */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -744,7 +745,7 @@ export default function HomePage() {
               {/* 标题主体 */}
               <div className="flex flex-col items-center">
                 <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 dark:from-sky-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent tracking-wider">
-                  天穹讲课
+                  天空课堂
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="w-6 h-px bg-gradient-to-r from-transparent to-sky-300 dark:to-sky-700" />
@@ -775,7 +776,7 @@ export default function HomePage() {
             </div>
 
             <p className="relative text-xs text-slate-400 dark:text-slate-500 mt-2 tracking-widest">
-              AI 驱动 · 智能教学 · 无限可能
+              输入想学的知识点，生成一堂分步骤讲解、例题和互动练习的互动课堂
             </p>
           </motion.div>
 
@@ -803,6 +804,9 @@ export default function HomePage() {
               onStudentsChange={setSelectedStudentIds}
             />
           </div>
+
+          {/* 个性化计划预览：不抢占知识点讲解主入口，只承接已有学习记录。 */}
+          <LearningPlanPreview />
 
           {/* 云端智囊 */}
           <CloudMindHeroButton />
@@ -933,7 +937,7 @@ export default function HomePage() {
             </motion.div>
           )}
 
-          {/* 最近课堂 */}
+          {/* 最近讲解 */}
           {classrooms.length > 0 && (
             <section>
               <ClassroomGrid

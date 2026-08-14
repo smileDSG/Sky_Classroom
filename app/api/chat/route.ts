@@ -24,9 +24,20 @@ import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { getRequiredServerStorage } from '@/lib/server/server-storage';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
 import { buildTeachingProjection } from '@/lib/adaptive-learning/profile/projection-builder';
+import { buildTeachingEvidence } from '@/lib/adaptive-learning/profile/teaching-evidence';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import { injectTeachingProjection } from '@/lib/assistant/context-injector';
+import { getLearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
 import { adaptiveLearningApiError } from '@/lib/adaptive-learning/api-error';
+import { createInterventionDecisionDAO } from '@/lib/adaptive-learning/data/intervention-decisions';
+import { createLearnerReflectionDAO } from '@/lib/adaptive-learning/data/learner-reflections';
+import { runLearnerReflection } from '@/lib/adaptive-learning/profile/reflection-service';
+import { generateCounterfactualDecision } from '@/lib/adaptive-learning/decision/counterfactual-decision';
+import {
+  recordInterventionPlanned,
+  recordInterventionSelected,
+} from '@/lib/adaptive-learning/profile/event-recorder';
 const log = createLogger('Chat API');
 
 // Limit message history to prevent large request bodies
@@ -113,15 +124,114 @@ export async function POST(req: NextRequest) {
       return adaptiveLearningApiError(error, crypto.randomUUID());
     }
 
+    const [knowledgeStates, learningEvents, storedReflection] = await Promise.all([
+      createKnowledgeStateDAO(storage).list(quota.userId),
+      profileRepository.listLearningEvents(quota.userId),
+      createLearnerReflectionDAO(storage).getLatest(quota.userId),
+    ]);
+    let latestReflection = storedReflection;
+    if (preferences.privacy.optionalBehaviorSignals) {
+      latestReflection = await runLearnerReflection({
+        storage,
+        userId: quota.userId,
+        events: learningEvents,
+      }).catch(() => storedReflection);
+    }
+    const teachingEvidence = buildTeachingEvidence({
+      states: knowledgeStates,
+      eventWatermark: learningEvents.length,
+    });
+
     const teachingProjection = buildTeachingProjection({
       userId: quota.userId,
-      snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w0`,
+      snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w${teachingEvidence.eventWatermark}`,
       profileVersion: preferences.version,
-      eventWatermark: 0,
+      eventWatermark: teachingEvidence.eventWatermark,
       preferences,
-      knowledgeStatus: 'no-evidence',
+      knowledgeStatus: teachingEvidence.knowledgeStatus,
+      strengths: teachingEvidence.strengths,
+      growthAreas: teachingEvidence.growthAreas,
     });
-    const teachingProjectionText = injectTeachingProjection('', teachingProjection).trim();
+    const learnerDecision = getLearnerDecision({ knowledgeStates });
+    const decisionId = crypto.randomUUID();
+    const sessionId = body.sessionId ?? `chat:${quota.userId}`;
+    const correlationId = decisionId;
+    const decisionTarget = learnerDecision.topic ?? learnerDecision.nodeId ?? '当前知识点';
+    const counterfactual = await generateCounterfactualDecision({
+      baseline: learnerDecision,
+      knowledgeStates,
+      reflection: latestReflection,
+      explicitTopic: decisionTarget,
+      modelRef: process.env.COUNTERFACTUAL_MODEL,
+    });
+    const selectedPlan =
+      counterfactual.plans.find((plan) => plan.id === counterfactual.selectedPlanId) ??
+      counterfactual.plans[0];
+    if (!selectedPlan) {
+      throw new Error('Counterfactual decision produced no selected plan');
+    }
+    const reflectionText = latestReflection?.hypotheses.length
+      ? `\n\n【行为反思提示：非权威】\n${latestReflection.hypotheses
+          .filter((hypothesis) => new Date(hypothesis.expiresAt).getTime() > Date.now())
+          .map(
+            (hypothesis) =>
+              `- ${hypothesis.dimension}: ${hypothesis.statement}（置信度 ${Math.round(hypothesis.confidence * 100)}%，证据 ${hypothesis.evidenceEventIds.join(', ')}）`,
+          )
+          .join('\n')}`
+      : '';
+    const teachingProjectionText = `${injectTeachingProjection('', teachingProjection).trim()}${reflectionText}
+
+【当前学习决策】
+建议动作：${learnerDecision.action}。
+目标：${decisionTarget}。
+原因：${learnerDecision.summary}
+原因码：${learnerDecision.reasonCodes.join('、')}。
+此建议只调整讲解方式与节奏；用户明确提出的问题和主题优先。`;
+
+    await createInterventionDecisionDAO(storage)
+      .add({
+        decisionId,
+        userId: quota.userId,
+        sessionId,
+        stateSnapshot: {
+          topic: decisionTarget,
+          action: learnerDecision.action,
+          difficulty: learnerDecision.difficulty,
+          profileVersion: learnerDecision.profileVersion,
+          eventWatermark: learnerDecision.eventWatermark,
+          counterfactualStateSummary: counterfactual.stateSummary,
+        },
+        reflectionSnapshot: latestReflection
+          ? { reflectionId: latestReflection.reflectionId, hypotheses: latestReflection.hypotheses }
+          : undefined,
+        candidatePlans: counterfactual.plans,
+        selectedPlan,
+        fallbackUsed: counterfactual.fallbackUsed,
+        modelId: counterfactual.modelId,
+        correlationId,
+        createdAt: new Date().toISOString(),
+      })
+      .catch((error) => log.warn('Failed to record intervention decision:', error));
+    await recordInterventionPlanned({
+      storage,
+      userId: quota.userId,
+      source: 'chat-director',
+      decisionId,
+      sessionId,
+      candidatePlanIds: counterfactual.plans.map((plan) => plan.id),
+      fallbackUsed: counterfactual.fallbackUsed,
+      correlationId,
+    });
+    await recordInterventionSelected({
+      storage,
+      userId: quota.userId,
+      source: 'chat-director',
+      decisionId,
+      planId: selectedPlan.id,
+      action: selectedPlan.action,
+      topic: selectedPlan.topic ?? learnerDecision.topic,
+      correlationId,
+    });
 
     log.info('Processing request');
     log.info(
@@ -164,6 +274,12 @@ export async function POST(req: NextRequest) {
 
       try {
         startHeartbeat();
+
+        const decisionContext: StatelessEvent = {
+          type: 'decision_context',
+          data: { decisionId, sessionId, correlationId },
+        };
+        writer.write(encoder.encode(`data: ${JSON.stringify(decisionContext)}\n\n`)).catch(() => {});
 
         // Default: thinking disabled for low-latency chat. UI requests send
         // `thinkingConfig`; eval harnesses can still opt in via `thinking`.

@@ -10,6 +10,7 @@ import { analyzeSlides, streamSlidesAnalysis } from '@/lib/agents/cloud-mind/sli
 import { createLogger } from '@/lib/logger';
 import { requireAuth } from '@/lib/server/auth/helpers';
 import { createUserDAO } from '@/lib/storage/dao/users';
+import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personalization';
 
 const log = createLogger('API:CloudMindSlides');
 
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
         const dao = await createUserDAO();
         const user = await dao.getById(auth.user.id);
         if (user) {
+          const decision = await resolveLearnerDecisionForUser(auth.user.id, topic);
           personalization = {
             educationLevel: user.educationLevel || undefined,
             grade: user.grade || undefined,
@@ -53,6 +55,11 @@ export async function POST(req: NextRequest) {
             aiName: user.aiName || undefined,
             customInstructions: user.customInstructions || undefined,
             enableRAG: user.enableRAG ?? true,
+            adaptiveDifficulty: decision?.difficulty,
+            adaptiveFormat: decision?.format,
+            adaptiveTopic: decision?.topic ?? topic,
+            adaptiveExplanationMode: decision?.explanationMode,
+            adaptiveReasonCodes: decision?.reasonCodes,
           };
         }
       }

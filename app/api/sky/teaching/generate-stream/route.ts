@@ -16,6 +16,7 @@ import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { createTeachingJob } from '@/lib/server/teaching-job-store';
 import { runTeachingJob } from '@/lib/server/teaching-job-runner';
 import { createLogger } from '@/lib/logger';
+import { teachingGenerationPolicySchema } from '@/lib/teaching/personalization-policy';
 
 const log = createLogger('API:TeachingGenerate');
 
@@ -34,15 +35,27 @@ export async function POST(req: NextRequest) {
 
     const jobId = nanoid(10);
     const trimmedTopic = topic.trim();
+    const parsedPolicy = body.personalizationPolicy
+      ? teachingGenerationPolicySchema.safeParse(body.personalizationPolicy)
+      : null;
+    if (parsedPolicy && !parsedPolicy.success) {
+      return apiError(
+        'INVALID_REQUEST',
+        400,
+        '个性化授课参数无效',
+        parsedPolicy.error.issues[0]?.message,
+      );
+    }
+    const personalizationPolicy = parsedPolicy?.success ? parsedPolicy.data : undefined;
 
     // Create job record
-    await createTeachingJob(jobId, quota.userId, trimmedTopic);
+    await createTeachingJob(jobId, quota.userId, trimmedTopic, personalizationPolicy);
 
     // Record usage
     await recordUsage(quota.userId, quota.planType, 'generationCount');
 
     // Start background generation
-    after(() => runTeachingJob(jobId, trimmedTopic, quota.userId));
+    after(() => runTeachingJob(jobId, trimmedTopic, quota.userId, personalizationPolicy));
 
     log.info(`Teaching job ${jobId} created for user ${quota.userId}, topic: ${trimmedTopic}`);
 

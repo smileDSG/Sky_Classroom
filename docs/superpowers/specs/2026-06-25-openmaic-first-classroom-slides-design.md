@@ -1,22 +1,22 @@
-# OpenMAIC-first Classroom Slide Generation Design
+# 智眸无界-first Classroom Slide Generation Design
 
 ## Context
 
-The current project is an OpenMAIC-derived classroom system with extra Sky Classroom features:
+The current project is an 智眸无界-derived classroom system with extra Sky Classroom features:
 learning diagnostics, Cloud Mind context, generated agents, progress tracking, media generation,
 TTS, caching, quality scoring, and persistence.
 
-The user wants only the classroom / teaching flow slide scenes to look like `E:/01_Work/OpenMAIC-main/`.
+The user wants only the classroom / teaching flow slide scenes to look like `E:/01_Work/智眸无界-main/`.
 The independent `app/sky/slides` PPT workspace is out of scope.
 
 Earlier partial migration did not solve the visual problem because the current classroom slide path still
 lets local theme/template/polish logic influence the final page. The new design makes the
-OpenMAIC-main element-level slide generator the visual source of truth first, then reconnects existing
+智眸无界-main element-level slide generator the visual source of truth first, then reconnects existing
 features around it.
 
 ## Goal
 
-Generate classroom slide scenes that visually match OpenMAIC-main:
+Generate classroom slide scenes that visually match 智眸无界-main:
 
 - white or very light canvas
 - clear title and thin divider
@@ -34,22 +34,22 @@ Generate classroom slide scenes that visually match OpenMAIC-main:
 
 ## Selected Approach
 
-Use an OpenMAIC-first core with feature reattachment:
+Use an 智眸无界-first core with feature reattachment:
 
-1. Restore the classroom slide content generator to OpenMAIC-main's native element-level approach.
+1. Restore the classroom slide content generator to 智眸无界-main's native element-level approach.
 2. Keep the current modular file boundary, especially `lib/generation/scene-content/slide-generator.ts`,
    so the rest of Sky Classroom keeps compiling with minimal changes.
-3. Bypass or remove visual modifiers that fight the OpenMAIC look.
+3. Bypass or remove visual modifiers that fight the 智眸无界 look.
 4. Reattach existing project features as non-invasive context, validation, or post-parse safety steps.
 
-This is intentionally different from "add more prompt rules." OpenMAIC-main should own the slide
+This is intentionally different from "add more prompt rules." 智眸无界-main should own the slide
 structure; Sky Classroom features should feed content or verify output without taking over layout.
 
 ## Architecture
 
 ### Source of Truth
 
-`E:/01_Work/OpenMAIC-main/lib/generation/scene-generator.ts` contains the reference
+`E:/01_Work/智眸无界-main/lib/generation/scene-generator.ts` contains the reference
 `generateSlideContent` behavior. The implementation should port that behavior into:
 
 - `lib/generation/scene-content/slide-generator.ts`
@@ -106,8 +106,8 @@ Disable or bypass for new classroom slide generation:
 
 1. User generates a classroom from Sky Classroom.
 2. Current outline generation and Sky-specific context continue to produce `SceneOutline[]`.
-3. Slide outlines enter the OpenMAIC-first `generateSlideContent`.
-4. The model outputs element-level JSON using OpenMAIC-main prompt/schema behavior.
+3. Slide outlines enter the 智眸无界-first `generateSlideContent`.
+4. The model outputs element-level JSON using 智眸无界-main prompt/schema behavior.
 5. Compatibility post-processing runs:
    image IDs, video refs, LaTeX, element defaults, IDs, and safe bounds.
 6. `createSceneWithActions` builds a normal classroom slide scene.
@@ -117,7 +117,7 @@ Disable or bypass for new classroom slide generation:
 
 Focused tests should prove that the old visual path no longer dominates classroom slide scenes:
 
-- prompt contract test: classroom slide prompts match OpenMAIC-first requirements and do not require
+- prompt contract test: classroom slide prompts match 智眸无界-first requirements and do not require
   `themeDirective`
 - generator test: `generateSlideContent` returns element-level content with no `templateData`
 - regression test: Sky-specific inputs such as media references and teacher context still pass through
@@ -128,15 +128,15 @@ Focused tests should prove that the old visual path no longer dominates classroo
 ## Risks
 
 - Full visual restoration can temporarily reduce Sky-specific theme variety. This is acceptable because the
-  goal is to match OpenMAIC-main first.
+  goal is to match 智眸无界-main first.
 - Some existing tests may expect current theme/polish behavior and need updates.
 - Current worktree is heavily dirty; implementation must avoid reverting unrelated user changes.
 - Generated slides may become plainer before feature reattachment is tuned. The acceptance criterion is
-  OpenMAIC-like cleanliness, not maximum decoration.
+  智眸无界-like cleanliness, not maximum decoration.
 
 ## Acceptance Criteria
 
-- Classroom-generated slide scenes visually follow OpenMAIC-main rather than the current Sky template/card
+- Classroom-generated slide scenes visually follow 智眸无界-main rather than the current Sky template/card
   style.
 - New classroom slides do not depend on `templateData`.
 - Existing classroom generation still supports agents, media references, TTS/actions, progress, caching,

@@ -30,6 +30,7 @@ assets
 .vercel
 coverage
 logs
-data
+# NOTE: `data` 必须打进镜像 —— 软件杯零密钥演示依赖 data/demo 与 data/course-knowledge。
+#       若日后需精简镜像，可改为运行时挂载卷，但切勿让卷遮蔽 /app/data。
 docs
 .claude

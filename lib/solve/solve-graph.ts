@@ -305,12 +305,14 @@ export function buildSolveInitialState(
   problemImage?: string | null,
   userAnswer?: string | null,
   problemSpec?: ProblemSpec | null,
+  adaptiveGuidance?: string | null,
 ): SolveGraphState {
   return {
     problemText,
     problemImage: problemImage ?? null,
     problemSpec: problemSpec ?? null,
     userAnswer: userAnswer ?? null,
+    adaptiveGuidance: adaptiveGuidance ?? null,
     agentId: 'universal',
     selectedAgentId: null,
     agentRoute: null,

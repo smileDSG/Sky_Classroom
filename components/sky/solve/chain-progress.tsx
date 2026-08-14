@@ -25,12 +25,12 @@ interface PhaseConfig {
 const PHASE_CONFIG: Record<ChainPhase, PhaseConfig> = {
   checking:   { label: '正在查询题库...', shortLabel: '查库' },
   analyzing:  { label: '正在分析题目...', shortLabel: '分析' },
-  routing:    { label: '正在路由到解题 Agent...', shortLabel: '路由' },
+  routing:    { label: '正在安排解题助手...', shortLabel: '安排' },
   solving:    { label: 'AI 正在解题中...', shortLabel: '解题' },
   verifying:  { label: '正在校验答案...', shortLabel: '校验' },
   correcting: { label: '正在修正答案...', shortLabel: '修正' },
   knowledge:  { label: '正在提取知识点...', shortLabel: '知识点' },
-  similar:    { label: '正在检索类似题...', shortLabel: '类似题' },
+  similar:    { label: '正在查找类似题...', shortLabel: '类似题' },
   done:       { label: '解题完成', shortLabel: '完成' },
 };
 

@@ -182,6 +182,23 @@ async function ensureMistakesOwnerSchema(pool: Pool): Promise<void> {
   }
 }
 
+async function ensureColumn(
+  pool: Pool,
+  tableName: string,
+  columnName: string,
+  columnDefinition: string,
+): Promise<void> {
+  const [[columnRow]] = await pool.query<RowDataPacket[]>(
+    `SELECT COUNT(*) as cnt FROM information_schema.COLUMNS
+     WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+    [tableName, columnName],
+  );
+
+  if (columnRow.cnt === 0) {
+    await pool.query(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`);
+  }
+}
+
 // ── Data migration from storage_entries ─────────────────────────────
 
 async function migrateFromStorageEntries(pool: Pool): Promise<void> {
@@ -334,8 +351,8 @@ export class MySQLStorageProvider implements StorageProvider {
 
       // Ensure mistakes table has owner-isolation columns/indexes for existing deployments
       await ensureMistakesOwnerSchema(pool);
-      await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS favorite_subjects JSON');
-      await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS learning_onboarding JSON');
+      await ensureColumn(pool, 'users', 'favorite_subjects', 'JSON');
+      await ensureColumn(pool, 'users', 'learning_onboarding', 'JSON');
 
       // Migrate old data from storage_entries
       await migrateFromStorageEntries(pool);

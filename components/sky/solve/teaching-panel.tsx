@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
+  ArrowRight,
   BookOpen,
   Loader2,
   Sparkles,
@@ -22,6 +24,11 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
+  Clock3,
+  Gauge,
+  Layers,
+  Route,
+  Target,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +67,13 @@ import type { LearningPath } from '@/lib/teaching/learning-path-types';
 import { inferSubject } from '@/lib/mistakes/subject-inference';
 import type { Subject } from '@/lib/solve/agents/analyze-types';
 import { HOT_TOPICS, searchTopics } from '@/configs/teaching-topics';
+import type { TeachingGenerationPolicy } from '@/lib/teaching/personalization-policy';
+import type { PersonalizationContext } from '@/lib/cloud-mind/types';
+import {
+  getTeachingDecisionTarget,
+  type TeachingProfileUpdate,
+} from '@/lib/teaching/profile-impact';
+import { refreshLearningPlanAfterEvidence } from '@/lib/adaptive-learning/client/refresh-learning-plan';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -124,6 +138,34 @@ const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
   },
 };
 
+const TEACHING_DIFFICULTY_LABELS = {
+  easy: '基础难度',
+  medium: '标准难度',
+  hard: '挑战难度',
+} as const;
+
+const TEACHING_PACING_LABELS = {
+  remedial: '补基础节奏',
+  steady: '稳步推进',
+  sprint: '冲刺节奏',
+} as const;
+
+const TEACHING_STYLE_LABELS = {
+  step_first: '步骤优先',
+  principle_first: '原理优先',
+  example_first: '例题优先',
+  practice_first: '练习优先',
+} as const;
+
+const TEACHING_REASON_LABELS: Record<string, string> = {
+  'no-evidence': '学习记录不足，先从基础讲解开始',
+  'low-confidence': '还不太确定你的学习情况，课堂会多确认几次',
+  'low-mastery': '当前掌握情况还不够，先补概念再练习',
+  'repeated-errors': '同类错误重复出现，课堂会重点提醒',
+  'low-retention': '学过的内容有些遗忘，课堂会安排回顾',
+  'stable-mastery': '掌握比较稳定，可以增加练习和挑战',
+};
+
 // ── Section Renderer ───────────────────────────────────────────────
 
 interface SectionCardProps {
@@ -134,7 +176,10 @@ interface SectionCardProps {
   profile?: StudentProfile | null;
   onRetry?: (sectionId: string) => void;
   onAskQuestion?: (sectionId: string, sectionTitle: string) => void;
-  onFeedback?: (type: 'mastered' | 'needs_review') => void;
+  onFeedback?: (
+    type: 'mastered' | 'needs_review',
+    profileUpdate: TeachingProfileUpdate | null,
+  ) => void;
 }
 
 const SectionCard = React.memo(function SectionCard({
@@ -150,10 +195,49 @@ const SectionCard = React.memo(function SectionCard({
   const sortedChunks = [...chunks].sort((a, b) => a.order - b.order);
   const hasFailed = sortedChunks.some((c) => c.failed);
   const typeBadge = TYPE_BADGE[section.contentType] ?? TYPE_BADGE.explanation;
+  const [feedbackLoading, setFeedbackLoading] = useState<'mastered' | 'needs_review' | null>(null);
+  const [submittedFeedback, setSubmittedFeedback] = useState<
+    'mastered' | 'needs_review' | null
+  >(null);
+  const [feedbackProfileUpdate, setFeedbackProfileUpdate] =
+    useState<TeachingProfileUpdate | null>(null);
 
   const handleRetry = () => {
     if (onRetry) {
       onRetry(section.id);
+    }
+  };
+
+  const handleSectionFeedback = async (feedbackType: 'mastered' | 'needs_review') => {
+    if (!jobId || feedbackLoading || submittedFeedback) return;
+    setFeedbackLoading(feedbackType);
+    try {
+      const response = await fetch('/api/sky/teaching/feedback', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobId,
+          sectionId: section.id,
+          feedbackType,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || '反馈写入失败');
+      }
+      const profileUpdate = (result.data?.profileUpdate ?? null) as TeachingProfileUpdate | null;
+      setSubmittedFeedback(feedbackType);
+      setFeedbackProfileUpdate(profileUpdate);
+      onFeedback?.(feedbackType, profileUpdate);
+      void refreshLearningPlanAfterEvidence();
+      toast.success(
+        feedbackType === 'mastered' ? '“已掌握”已记录到学习情况' : '“需复习”已记录到学习情况',
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '反馈写入失败');
+    } finally {
+      setFeedbackLoading(null);
     }
   };
 
@@ -279,7 +363,11 @@ const SectionCard = React.memo(function SectionCard({
               <div className="flex items-start justify-between gap-3">
                 <div className={cn('flex-1 min-w-0', chunk.type === 'formula' && 'text-center')}>
                   {chunk.type === 'quiz' && chunk.options && chunk.options.length > 0 ? (
-                    <QuizInteraction chunk={chunk} jobId={jobId} />
+                    <QuizInteraction
+                      chunk={chunk}
+                      jobId={jobId}
+                      knowledgePoints={section.knowledgePoints}
+                    />
                   ) : (
                     <div
                       className={cn(
@@ -333,57 +421,76 @@ const SectionCard = React.memo(function SectionCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={async () => {
-                    if (jobId) {
-                      try {
-                        await fetch('/api/sky/teaching/feedback', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            jobId,
-                            sectionId: section.id,
-                            feedbackType: 'mastered',
-                          }),
-                        });
-                      } catch {
-                        // ignore network errors
-                      }
-                    }
-                    toast.success('已标记为「已掌握」');
-                    onFeedback?.('mastered');
-                  }}
+                  onClick={() => void handleSectionFeedback('mastered')}
+                  disabled={Boolean(feedbackLoading || submittedFeedback)}
                   className="text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                 >
-                  <ThumbsUp className="h-3 w-3 mr-1" />
-                  已掌握
+                  {feedbackLoading === 'mastered' ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <ThumbsUp className="h-3 w-3 mr-1" />
+                  )}
+                  {submittedFeedback === 'mastered' ? '已记录' : '已掌握'}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={async () => {
-                    if (jobId) {
-                      try {
-                        await fetch('/api/sky/teaching/feedback', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            jobId,
-                            sectionId: section.id,
-                            feedbackType: 'needs_review',
-                          }),
-                        });
-                      } catch {
-                        // ignore network errors
-                      }
-                    }
-                    toast.success('已标记为「需复习」');
-                    onFeedback?.('needs_review');
-                  }}
+                  onClick={() => void handleSectionFeedback('needs_review')}
+                  disabled={Boolean(feedbackLoading || submittedFeedback)}
                   className="text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                 >
-                  <ThumbsDown className="h-3 w-3 mr-1" />
-                  需复习
+                  {feedbackLoading === 'needs_review' ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <ThumbsDown className="h-3 w-3 mr-1" />
+                  )}
+                  {submittedFeedback === 'needs_review' ? '已记录' : '需复习'}
                 </Button>
+              </div>
+            </div>
+          )}
+
+          {feedbackProfileUpdate && (
+            <div className="rounded-xl border border-cyan-200 bg-gradient-to-r from-cyan-50 to-indigo-50 p-3 dark:border-cyan-200/15 dark:from-cyan-950/35 dark:to-indigo-950/30">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                <Brain className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+                    章节反馈已更新学习情况
+              </div>
+              <p className="mt-1 text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">
+                这是自我评价，参考程度低于随堂答题；它会帮助调整掌握情况并影响复习安排，不会直接判定你完全学会。
+              </p>
+              <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                {feedbackProfileUpdate.changes.map((change) => (
+                  <div
+                    key={change.knowledgePoint}
+                    className="flex items-center justify-between gap-2 rounded-lg bg-white/75 px-2.5 py-2 text-[11px] dark:bg-white/[0.06]"
+                  >
+                    <span className="truncate font-semibold text-slate-700 dark:text-slate-200">
+                      {change.knowledgePoint}
+                    </span>
+                    <span className="shrink-0 font-bold text-cyan-700 dark:text-cyan-200">
+                      {change.masteryBefore === null
+                        ? '暂无'
+                        : `${Math.round(change.masteryBefore * 100)}%`}{' '}
+                      →{' '}
+                      {change.masteryAfter === null
+                        ? '暂无'
+                        : `${Math.round(change.masteryAfter * 100)}%`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-3 rounded-lg bg-slate-950 px-2.5 py-2 text-white dark:bg-cyan-200 dark:text-slate-950">
+                <span className="line-clamp-2 text-[10px] leading-relaxed">
+                  {feedbackProfileUpdate.learnerDecision.summary}
+                </span>
+                <Link
+                  href={getTeachingDecisionTarget(feedbackProfileUpdate.learnerDecision).href}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-md bg-white/15 px-2 py-1 text-[10px] font-semibold dark:bg-slate-950 dark:text-white"
+                >
+                  {getTeachingDecisionTarget(feedbackProfileUpdate.learnerDecision).label}
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
             </div>
           )}
@@ -441,6 +548,205 @@ function SectionSkeleton() {
   );
 }
 
+function TeachingPersonalizationPanel({
+  context,
+  policy,
+  notice,
+  topic,
+  plan,
+  loading,
+  done,
+  displayIndex,
+  feedbackStats,
+}: {
+  context?: PersonalizationContext | null;
+  policy?: TeachingGenerationPolicy | null;
+  notice?: string | null;
+  topic: string;
+  plan: LessonPlan | null;
+  loading: boolean;
+  done: boolean;
+  displayIndex: number;
+  feedbackStats: { mastered: number; needsReview: number };
+}) {
+  const targetTopic =
+    topic.trim() ||
+    context?.toolPolicies?.teaching.targetTopic ||
+    context?.tutoringPolicy?.targetTopic ||
+    context?.weakPoints[0]?.knowledgePoint ||
+    '入门摸底';
+  const weakPoint = context?.weakPoints.find(
+    (item) => item.knowledgePoint.trim().toLocaleLowerCase() === targetTopic.toLocaleLowerCase(),
+  );
+  const mastery = weakPoint?.mastery ?? context?.masteryByKnowledge[targetTopic];
+  const effectivePolicy =
+    policy ??
+    (context?.toolPolicies?.teaching
+      ? {
+          difficulty: context.toolPolicies.teaching.difficulty,
+          explanationStyle: context.toolPolicies.teaching.explanationStyle,
+          resourceFormats: context.tutoringPolicy?.resourceFormats ?? ['worked_example'],
+          pacing: context.toolPolicies.teaching.pacing,
+          reasonCodes: context.toolPolicies.teaching.reasonCodes,
+          profileVersion: context.learnerDecision?.profileVersion ?? 0,
+        }
+      : null);
+  const resourceLabels: Record<string, string> = {
+    worked_example: '例题',
+    code_case: '代码案例',
+    diagram: '图示',
+    practice: '练习',
+    video: '视频',
+    summary: '总结',
+  };
+  const reasonCodes = effectivePolicy?.reasonCodes ?? context?.learnerDecision?.reasonCodes ?? [];
+  const reasons = reasonCodes.map((code) => TEACHING_REASON_LABELS[code] ?? code);
+  const duration = plan?.estimatedDuration ?? context?.toolPolicies?.teaching.durationMinutes ?? 10;
+  const sectionCount = plan?.sections.length;
+  const currentSection =
+    displayIndex >= 0 && plan?.sections[displayIndex] ? plan.sections[displayIndex] : null;
+  const statusLabel = done ? '教案已生成' : loading ? '正在根据你的情况生成' : '已参考你的学习情况';
+  const judgement =
+    context?.learnerDecision?.summary ??
+    notice ??
+    '根据你的学习情况调整本次课堂的讲解顺序、难度和练习比例。';
+
+  if (!context && !effectivePolicy && !notice) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-5 overflow-hidden rounded-2xl border border-indigo-400/25 bg-gradient-to-br from-indigo-500/12 via-[var(--teaching-surface)] to-violet-500/10 p-4 shadow-[0_0_26px_-12px_var(--teaching-glow)] sm:p-5"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-400/25 bg-indigo-400/10 text-indigo-300">
+            <Brain className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="text-sm font-bold text-[var(--teaching-text)]">按你的情况授课</h4>
+              <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-300">
+                {statusLabel}
+              </span>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-[var(--teaching-muted)]">
+              当前判断：{judgement}
+            </p>
+          </div>
+        </div>
+        {effectivePolicy && (
+          <div className="rounded-xl border border-[var(--teaching-border)] bg-black/5 px-3 py-2 text-right">
+            <div className="text-[10px] text-[var(--teaching-muted)]">本次课程</div>
+            <div className="mt-0.5 text-sm font-semibold text-[var(--teaching-primary-bright)]">
+              {sectionCount ? `${sectionCount} 节 · ` : ''}
+              {duration} 分钟
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[1.05fr_1fr]">
+        <div className="rounded-xl border border-indigo-400/20 bg-indigo-400/[0.06] p-3.5">
+          <div className="flex items-center gap-2 text-xs font-semibold text-indigo-300">
+            <Target className="h-4 w-4" /> 当前讲解主题
+          </div>
+          <div className="mt-1.5 text-lg font-bold text-[var(--teaching-text)]">{targetTopic}</div>
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-[11px] text-[var(--teaching-muted)]">
+              <span>进入课堂前的掌握情况</span>
+              <span>{typeof mastery === 'number' ? `${Math.round(mastery)}%` : '待了解'}</span>
+            </div>
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/5">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-400"
+                style={{ width: `${Math.max(4, Math.min(100, mastery ?? 4))}%` }}
+              />
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {(reasons.length > 0 ? reasons : ['根据你的学习情况和学习安排生成']).map((reason) => (
+              <span
+                key={reason}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] text-[var(--teaching-muted)]"
+              >
+                {reason}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {effectivePolicy && (
+          <div className="grid grid-cols-2 gap-2.5">
+            {[
+              {
+                icon: Gauge,
+                label: '课程难度',
+                value: TEACHING_DIFFICULTY_LABELS[effectivePolicy.difficulty],
+              },
+              {
+                icon: Clock3,
+                label: '讲课节奏',
+                value: TEACHING_PACING_LABELS[effectivePolicy.pacing],
+              },
+              {
+                icon: BookOpen,
+                label: '讲解方式',
+                value: TEACHING_STYLE_LABELS[effectivePolicy.explanationStyle],
+              },
+              {
+                icon: Layers,
+                label: '内容结构',
+                value: effectivePolicy.resourceFormats
+                  .map((format) => resourceLabels[format] ?? format)
+                  .slice(0, 2)
+                  .join(' + '),
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.label}
+                  className="rounded-xl border border-[var(--teaching-border)] bg-black/5 p-3"
+                >
+                  <div className="flex items-center gap-1.5 text-[10px] text-[var(--teaching-muted)]">
+                    <Icon className="h-3.5 w-3.5 text-[var(--teaching-primary)]" /> {item.label}
+                  </div>
+                  <div className="mt-1.5 text-xs font-semibold text-[var(--teaching-text)]">
+                    {item.value}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 flex flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-2 text-[11px] leading-5 text-[var(--teaching-muted)]">
+          <Route className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-300" />
+          <span>
+            {currentSection
+              ? `当前第 ${displayIndex + 1} 节：${currentSection.title}。课堂反馈会继续修正后续推荐。`
+              : '生成后将按章节逐步讲解，并用“已掌握 / 需复习”反馈更新后续学习安排。'}
+          </span>
+        </div>
+        {(feedbackStats.mastered > 0 || feedbackStats.needsReview > 0) && (
+          <div className="flex shrink-0 items-center gap-2 text-[10px]">
+            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-1 text-emerald-300">
+              已掌握 {feedbackStats.mastered}
+            </span>
+            <span className="rounded-full border border-amber-400/20 bg-amber-400/10 px-2 py-1 text-amber-300">
+              需复习 {feedbackStats.needsReview}
+            </span>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────
 
 interface TeachingPanelProps {
@@ -456,6 +762,8 @@ interface TeachingPanelProps {
   onViewedHistory?: () => void;
   initialTopic?: string;
   personalizationNotice?: string | null;
+  personalizationPolicy?: TeachingGenerationPolicy | null;
+  personalizationContext?: PersonalizationContext | null;
 }
 
 export function TeachingPanel({
@@ -464,6 +772,8 @@ export function TeachingPanel({
   onViewedHistory,
   initialTopic,
   personalizationNotice,
+  personalizationPolicy,
+  personalizationContext,
 }: TeachingPanelProps) {
   const { user } = useAuth();
   const [topic, setTopic] = useState('');
@@ -512,6 +822,8 @@ export function TeachingPanel({
     mastered: 0,
     needsReview: 0,
   });
+  const [feedbackProfileUpdates, setFeedbackProfileUpdates] = useState<TeachingProfileUpdate[]>([]);
+  const latestFeedbackProfileUpdate = feedbackProfileUpdates.at(-1) ?? null;
 
   // Diagnostic state
   const [diagnosticStep, setDiagnosticStep] = useState<'idle' | 'loading' | 'ready' | 'done'>(
@@ -827,6 +1139,7 @@ export function TeachingPanel({
       setDiagnosticStep('idle');
       setDiagnosticSessionId(null);
       setFeedbackStats({ mastered: 0, needsReview: 0 });
+      setFeedbackProfileUpdates([]);
       setLearningPath(null);
       setDisplayIndex(-1);
       setIsFavorited(false);
@@ -834,7 +1147,7 @@ export function TeachingPanel({
       setShowHomework(false);
 
       try {
-        const jobId = await submitTeachingJob(t.trim());
+        const jobId = await submitTeachingJob(t.trim(), personalizationPolicy ?? undefined);
 
         setCurrentJobId(jobId);
 
@@ -876,7 +1189,7 @@ export function TeachingPanel({
         setLoading(false);
       }
     },
-    [topic, resumePolling],
+    [personalizationPolicy, topic, resumePolling],
   );
 
   // ── Start with diagnostic ──
@@ -919,7 +1232,7 @@ export function TeachingPanel({
       const data = await res.json();
 
       if (!data.success) {
-        toast.error(data.error || '诊断生成失败');
+        toast.error(data.error || '学习情况生成失败');
         setDiagnosticStep('idle');
         setDiagnosticSessionId(null);
         return;
@@ -935,7 +1248,7 @@ export function TeachingPanel({
       setDiagnosticQuestions(data.data.questions);
       setDiagnosticStep('ready');
     } catch {
-      toast.error('诊断生成失败，直接开始授课');
+      toast.error('学习情况生成失败，直接开始授课');
       await startTeachingJob();
     }
   }, [topic, hasProfile, startTeachingJob]);
@@ -943,7 +1256,7 @@ export function TeachingPanel({
   // ── Submit diagnostic answers ──
   const submitDiagnostic = useCallback(async () => {
     if (!diagnosticSessionId) {
-      toast.error('诊断会话已过期，请重新开始');
+      toast.error('学习情况记录已过期，请重新开始');
       setDiagnosticStep('idle');
       return;
     }
@@ -1142,17 +1455,25 @@ export function TeachingPanel({
           </div>
         </div>
         <div className="px-5 py-5">
-          {personalizationNotice && !done && (
-            <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-4 py-3 text-sm text-emerald-200">
-              {personalizationNotice}
-            </div>
+          {!viewHistoryItem && (
+            <TeachingPersonalizationPanel
+              context={personalizationContext}
+              policy={personalizationPolicy}
+              notice={personalizationNotice}
+              topic={topic}
+              plan={plan}
+              loading={loading}
+              done={done}
+              displayIndex={displayIndex}
+              feedbackStats={feedbackStats}
+            />
           )}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <Input
                 value={topic}
                 onChange={(e) => handleTopicChange(e.target.value)}
-                placeholder="输入授课主题，例如：二次函数、牛顿定律..."
+                placeholder="输入授课主题，例如：导数、牛顿定律..."
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && canSubmit) handleStart();
                 }}
@@ -1467,7 +1788,7 @@ export function TeachingPanel({
               </div>
               <div>
                 <h3 className="text-base font-semibold text-[var(--teaching-text)]">
-                  星际课前诊断
+                  星际课前摸底
                 </h3>
                 <p className="text-sm text-[var(--teaching-muted)]">
                   {diagnosticStep === 'loading'
@@ -1539,7 +1860,7 @@ export function TeachingPanel({
                   onClick={submitDiagnostic}
                   className="h-11 rounded-xl px-6 bg-[var(--teaching-primary)] hover:bg-[var(--teaching-primary-bright)] text-white"
                 >
-                  提交诊断
+                  提交练习
                 </Button>
                 <Button
                   variant="outline"
@@ -1550,7 +1871,7 @@ export function TeachingPanel({
                   }}
                   className="h-11 rounded-xl border-[var(--teaching-border)] text-[var(--teaching-muted)] hover:text-[var(--teaching-text)] hover:bg-[var(--teaching-primary)]/5"
                 >
-                  跳过诊断，直接授课
+                  跳过摸底，直接授课
                 </Button>
               </div>
             )}
@@ -1591,7 +1912,7 @@ export function TeachingPanel({
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-base font-semibold text-[var(--teaching-text)]">诊断报告</h3>
+                <h3 className="text-base font-semibold text-[var(--teaching-text)]">学习情况报告</h3>
                 <p className="text-sm text-[var(--teaching-muted)] mt-0.5">
                   {diagnosticResult.accuracy >= 80
                     ? '前置知识掌握良好，可以进入正式授课'
@@ -1673,13 +1994,16 @@ export function TeachingPanel({
           onAskQuestion={(sectionId, sectionTitle) =>
             setChatSection({ id: sectionId, title: sectionTitle })
           }
-          onFeedback={(type) =>
+          onFeedback={(type, profileUpdate) => {
             setFeedbackStats((prev) => ({
               ...prev,
               mastered: type === 'mastered' ? prev.mastered + 1 : prev.mastered,
               needsReview: type === 'needs_review' ? prev.needsReview + 1 : prev.needsReview,
-            }))
-          }
+            }));
+            if (profileUpdate) {
+              setFeedbackProfileUpdates((prev) => [...prev, profileUpdate]);
+            }
+          }}
         />
       )}
 
@@ -1864,6 +2188,56 @@ export function TeachingPanel({
                   </div>
                 )}
               </div>
+
+              {latestFeedbackProfileUpdate && (
+                <div className="mt-4 rounded-xl border border-cyan-200 bg-gradient-to-r from-cyan-50 to-indigo-50 p-3 dark:border-cyan-200/15 dark:from-cyan-950/35 dark:to-indigo-950/30">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                    <Brain className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+                    课堂反馈已更新学习情况
+                  </div>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {latestFeedbackProfileUpdate.changes.slice(0, 3).map((change) => (
+                      <div
+                        key={change.knowledgePoint}
+                        className="rounded-lg bg-white/75 px-2.5 py-2 dark:bg-white/[0.06]"
+                      >
+                        <div className="truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                          {change.knowledgePoint}
+                        </div>
+                        <div className="mt-1 text-xs font-bold text-cyan-700 dark:text-cyan-200">
+                          {change.masteryBefore === null
+                            ? '暂无'
+                            : `${Math.round(change.masteryBefore * 100)}%`}{' '}
+                          →{' '}
+                          {change.masteryAfter === null
+                            ? '暂无'
+                            : `${Math.round(change.masteryAfter * 100)}%`}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-950 px-3 py-2.5 text-white dark:bg-cyan-200 dark:text-slate-950">
+                    <div>
+                      <div className="text-[10px] font-semibold opacity-65">新的学习判断</div>
+                      <div className="mt-0.5 text-xs font-bold">
+                        {latestFeedbackProfileUpdate.learnerDecision.summary}
+                      </div>
+                    </div>
+                    <Link
+                      href={
+                        getTeachingDecisionTarget(latestFeedbackProfileUpdate.learnerDecision).href
+                      }
+                      className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white/15 px-2.5 py-1.5 text-[10px] font-semibold dark:bg-slate-950 dark:text-white"
+                    >
+                      {
+                        getTeachingDecisionTarget(latestFeedbackProfileUpdate.learnerDecision)
+                          .label
+                      }
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>

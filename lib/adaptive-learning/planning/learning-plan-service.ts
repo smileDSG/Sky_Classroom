@@ -7,6 +7,7 @@
  */
 
 import type { PlanningProfileProjection } from '@/lib/adaptive-learning/contracts';
+import type { LearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
 
 export interface KnowledgeChunk {
   source: string;
@@ -46,6 +47,7 @@ export interface LearningPlanResult {
 export interface GenerateLearningPlanInput {
   projection: PlanningProfileProjection;
   goalTopic?: string;
+  learnerDecision?: LearnerDecision;
 }
 
 export interface LearningPlanDependencies {
@@ -144,11 +146,14 @@ export async function generateLearningPlan(
   input: GenerateLearningPlanInput,
   deps: LearningPlanDependencies,
 ): Promise<LearningPlanResult> {
-  const { projection, goalTopic } = input;
+  const { projection, goalTopic, learnerDecision } = input;
   const chunks = await deps.retrieveChunks(projection, 12);
 
   const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(projection, chunks, goalTopic);
+  const adaptiveGoalTopic = learnerDecision
+    ? `${goalTopic ?? ''} [action=${learnerDecision.action}; difficulty=${learnerDecision.difficulty}; duration=${learnerDecision.durationMinutes}min; questions=${learnerDecision.questionCount}; reasons=${learnerDecision.reasonCodes.join(',')}]`
+    : goalTopic;
+  const userPrompt = buildUserPrompt(projection, chunks, adaptiveGoalTopic);
   const raw = await deps.generatePlan(systemPrompt, userPrompt);
 
   let parsed: unknown;

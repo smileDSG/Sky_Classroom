@@ -17,12 +17,17 @@ import {
 import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import type { StorageProvider } from '@/lib/storage/storage-types';
 import { createLogger } from '@/lib/logger';
+import {
+  canonicalizeKnowledgePoint,
+  resolveKnowledgePoint,
+} from '@/lib/adaptive-learning/knowledge/knowledge-point-registry';
 
 const log = createLogger('KnowledgeStateEngine');
 
-const INITIAL_ALPHA = 2;
-const INITIAL_BETA = 2;
+const INITIAL_ALPHA = 1;
+const INITIAL_BETA = 1;
 const INITIAL_STABILITY_DAYS = 7;
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const QUALITY_WEIGHTS: Record<EvidenceQuality, number> = {
   verified: 1.0,
@@ -41,7 +46,7 @@ const REVIEW_RATING_WEIGHTS: Record<string, { alpha: number; beta: number }> = {
 };
 
 const STABILITY_SUCCESS_MULTIPLIER = 1.25;
-const STABILITY_FAILURE_MULTIPLIER = 0.75;
+const STABILITY_FAILURE_MULTIPLIER = 0.5;
 const MAX_STABILITY_DAYS = 365;
 const MIN_STABILITY_DAYS = 1;
 
@@ -56,29 +61,15 @@ interface KnowledgePointTarget {
 }
 
 function buildTarget(input: string): KnowledgePointTarget {
-  const trimmed = input.trim();
-  const normalized = trimmed.toLowerCase();
-
-  // Try to build a readable kebab ID from ASCII/Latin characters.
-  const slug = normalized.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-  if (slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-    return { nodeId: `kp-${slug}`, displayName: trimmed };
-  }
-
-  // Fallback to a deterministic hex hash for non-ASCII names (e.g. CJK).
-  let hash = 0;
-  for (let i = 0; i < normalized.length; i++) {
-    const code = normalized.charCodeAt(i);
-    hash = (hash << 5) - hash + code;
-    hash |= 0;
-  }
-  const hex = Math.abs(hash).toString(16).padStart(8, '0');
-  return { nodeId: `kp-${hex}`, displayName: trimmed };
+  const point = canonicalizeKnowledgePoint(input);
+  return { nodeId: point.id, displayName: point.name };
 }
 
 function eventTargets(event: LearningEvent): KnowledgePointTarget[] {
-  const fromNodes = (event.nodeIds ?? []).map((nodeId) => ({ nodeId }));
+  const fromNodes = (event.nodeIds ?? []).map((nodeId) => {
+    const point = resolveKnowledgePoint(nodeId);
+    return point ? { nodeId: point.id, displayName: point.name } : { nodeId };
+  });
   const fromPayload = (event.payload?.knowledgePoints as string[] | undefined) ?? [];
   const fromKnowledgePoints = fromPayload.map(buildTarget);
   const combined = [...fromNodes, ...fromKnowledgePoints];
@@ -96,21 +87,9 @@ function computeMastery(alpha: number, beta: number): number {
   return alpha / (alpha + beta);
 }
 
-function computeConfidence(alpha: number, beta: number): number {
-  // Confidence grows with total evidence; starts near 0 and approaches 1.
-  const total = alpha + beta;
-  return Math.max(0, Math.min(1, 1 - 2 / (total + 2)));
-}
-
-function computeRetention(
-  lastEvidenceAt: string | undefined,
-  stabilityDays: number,
-  now: Date,
-): number {
-  if (!lastEvidenceAt) return 1;
-  const elapsedMs = now.getTime() - new Date(lastEvidenceAt).getTime();
-  const elapsedDays = Math.max(0, elapsedMs / (1000 * 60 * 60 * 24));
-  return Math.exp(-elapsedDays / stabilityDays);
+function computeConfidence(evidenceCount: number): number {
+  // Priors express uncertainty, not evidence. Only observed events raise confidence.
+  return Math.max(0, Math.min(1, 1 - Math.exp(-evidenceCount / 4)));
 }
 
 function createInitialState(userId: string, nodeId: string, displayName?: string): KnowledgeState {
@@ -121,7 +100,7 @@ function createInitialState(userId: string, nodeId: string, displayName?: string
     alpha: INITIAL_ALPHA,
     beta: INITIAL_BETA,
     mastery: computeMastery(INITIAL_ALPHA, INITIAL_BETA),
-    confidence: computeConfidence(INITIAL_ALPHA, INITIAL_BETA),
+    confidence: computeConfidence(0),
     retention: 1,
     reviewStabilityDays: INITIAL_STABILITY_DAYS,
     repeatedErrorCount: 0,
@@ -134,38 +113,77 @@ function clampStability(days: number): number {
   return Math.max(MIN_STABILITY_DAYS, Math.min(MAX_STABILITY_DAYS, days));
 }
 
+export interface AnswerEvidenceInput {
+  userId: string;
+  nodeId: string;
+  displayName?: string;
+  correct: boolean;
+  evidenceQuality: LearningEvent['evidenceQuality'];
+  occurredAt: string;
+  defaultStabilityDays: number;
+  previous?: KnowledgeState | null;
+}
+
+function round(value: number): number {
+  return Math.round(value * 1_000_000) / 1_000_000;
+}
+
+function retentionAt(previous: KnowledgeState | null | undefined, occurredAt: string): number {
+  if (!previous?.lastEvidenceAt) return 1;
+  const elapsedDays = Math.max(
+    0,
+    (new Date(occurredAt).getTime() - new Date(previous.lastEvidenceAt).getTime()) /
+      MILLISECONDS_PER_DAY,
+  );
+  return Math.exp(-elapsedDays / Math.max(1, previous.reviewStabilityDays));
+}
+
+export function updateKnowledgeStateFromAnswer(input: AnswerEvidenceInput): KnowledgeState {
+  const previous = input.previous;
+  const retention = retentionAt(previous, input.occurredAt);
+  const weight = getQualityWeight(input.evidenceQuality);
+  const previousAlpha = previous?.alpha ?? INITIAL_ALPHA;
+  const previousBeta = previous?.beta ?? INITIAL_BETA;
+  const alpha =
+    INITIAL_ALPHA + (previousAlpha - INITIAL_ALPHA) * retention + (input.correct ? weight : 0);
+  const beta =
+    INITIAL_BETA + (previousBeta - INITIAL_BETA) * retention + (input.correct ? 0 : weight);
+  const evidenceCount = (previous?.evidenceCount ?? 0) + 1;
+  const stability = previous?.reviewStabilityDays ?? input.defaultStabilityDays;
+  const reviewStabilityDays = input.correct
+    ? stability * STABILITY_SUCCESS_MULTIPLIER
+    : stability * STABILITY_FAILURE_MULTIPLIER;
+
+  return knowledgeStateSchema.parse({
+    userId: input.userId,
+    nodeId: input.nodeId,
+    ...(previous?.displayName || input.displayName
+      ? { displayName: previous?.displayName ?? input.displayName }
+      : {}),
+    alpha: round(alpha),
+    beta: round(beta),
+    mastery: round(alpha / (alpha + beta)),
+    confidence: round(computeConfidence(evidenceCount)),
+    retention: 1,
+    reviewStabilityDays: round(clampStability(reviewStabilityDays)),
+    repeatedErrorCount: input.correct ? 0 : (previous?.repeatedErrorCount ?? 0) + 1,
+    lastEvidenceAt: input.occurredAt,
+    ...(previous?.lastReviewedAt ? { lastReviewedAt: previous.lastReviewedAt } : {}),
+    evidenceCount,
+    version: (previous?.version ?? 0) + 1,
+  });
+}
+
 export function applyAnswerEvent(state: KnowledgeState, event: LearningEvent): KnowledgeState {
-  const correct = Boolean(event.payload.correct);
-  const weight = getQualityWeight(event.evidenceQuality);
-  const now = event.occurredAt;
-
-  let alpha = state.alpha;
-  let beta = state.beta;
-  let repeatedErrorCount = state.repeatedErrorCount;
-  let stabilityDays = state.reviewStabilityDays;
-
-  if (correct) {
-    alpha += weight;
-    stabilityDays *= STABILITY_SUCCESS_MULTIPLIER;
-  } else {
-    beta += weight;
-    repeatedErrorCount += 1;
-    stabilityDays *= STABILITY_FAILURE_MULTIPLIER;
-  }
-
-  return {
-    ...state,
-    alpha,
-    beta,
-    mastery: computeMastery(alpha, beta),
-    confidence: computeConfidence(alpha, beta),
-    retention: computeRetention(state.lastReviewedAt, stabilityDays, new Date(now)),
-    reviewStabilityDays: clampStability(stabilityDays),
-    repeatedErrorCount,
-    lastEvidenceAt: now,
-    evidenceCount: state.evidenceCount + 1,
-    version: state.version + 1,
-  };
+  return updateKnowledgeStateFromAnswer({
+    userId: state.userId,
+    nodeId: state.nodeId,
+    correct: Boolean(event.payload.correct),
+    evidenceQuality: event.evidenceQuality,
+    occurredAt: event.occurredAt,
+    defaultStabilityDays: state.reviewStabilityDays,
+    previous: state,
+  });
 }
 
 export function applyReviewEvent(state: KnowledgeState, event: LearningEvent): KnowledgeState {
@@ -174,8 +192,8 @@ export function applyReviewEvent(state: KnowledgeState, event: LearningEvent): K
   const weight = getQualityWeight(event.evidenceQuality);
   const now = event.occurredAt;
 
-  let alpha = state.alpha + weights.alpha * weight;
-  let beta = state.beta + weights.beta * weight;
+  const alpha = state.alpha + weights.alpha * weight;
+  const beta = state.beta + weights.beta * weight;
   let stabilityDays = state.reviewStabilityDays;
 
   if (weights.beta > 0) {
@@ -191,7 +209,7 @@ export function applyReviewEvent(state: KnowledgeState, event: LearningEvent): K
     alpha,
     beta,
     mastery: computeMastery(alpha, beta),
-    confidence: computeConfidence(alpha, beta),
+    confidence: computeConfidence(state.evidenceCount + 1),
     retention: 1,
     reviewStabilityDays: clampStability(stabilityDays),
     lastReviewedAt: now,
@@ -224,18 +242,50 @@ export async function applyLearningEvent(
 
     const dao = createKnowledgeStateDAO(storage);
     const now = new Date().toISOString();
+    let existingStates = await dao.list(userId);
 
     for (const target of targets) {
+      const directState = existingStates.find((state) => state.nodeId === target.nodeId);
+      const aliasState = directState
+        ? undefined
+        : existingStates.find((state) => {
+            const label = state.displayName ?? state.nodeId;
+            return canonicalizeKnowledgePoint(label).id === target.nodeId;
+          });
+      const previous = directState ?? aliasState;
       let state =
-        (await dao.get(userId, target.nodeId)) ??
-        createInitialState(userId, target.nodeId, target.displayName);
-      state = applyEventToState(state, event);
-      // Preserve the latest display name if the event provides one.
-      if (target.displayName) {
-        state = { ...state, displayName: target.displayName };
-      }
+        event.type === 'answer-submitted'
+          ? updateKnowledgeStateFromAnswer({
+              userId,
+              nodeId: target.nodeId,
+              displayName: target.displayName,
+              correct: Boolean(event.payload.correct),
+              evidenceQuality: event.evidenceQuality,
+              occurredAt: event.occurredAt,
+              defaultStabilityDays: INITIAL_STABILITY_DAYS,
+              previous,
+            })
+          : applyEventToState(
+              previous ?? createInitialState(userId, target.nodeId, target.displayName),
+              event,
+            );
+      state = {
+        ...state,
+        nodeId: target.nodeId,
+        ...(target.displayName ? { displayName: target.displayName } : {}),
+      };
       const validated = knowledgeStateSchema.parse(state);
       await dao.set(userId, validated);
+      if (aliasState && aliasState.nodeId !== target.nodeId) {
+        await dao.delete(userId, aliasState.nodeId);
+      }
+      existingStates = [
+        ...existingStates.filter(
+          (existing) =>
+            existing.nodeId !== target.nodeId && existing.nodeId !== aliasState?.nodeId,
+        ),
+        validated,
+      ];
     }
 
     log.info(`Applied ${event.type} to ${targets.length} node(s) for ${userId}`, {

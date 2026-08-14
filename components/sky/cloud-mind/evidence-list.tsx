@@ -34,7 +34,7 @@ export function EvidenceList({
   if (items.length === 0) {
     return (
       <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
-        暂无证据记录
+        暂无学习记录
       </div>
     );
   }

@@ -2,44 +2,44 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Presentation, Search, Brain, MessageSquare } from 'lucide-react';
+import { BookOpenCheck, LibraryBig, Presentation, Search } from 'lucide-react';
 
 const quickAccessItems = [
   {
-    icon: Presentation,
-    title: 'PPT 课件生成',
-    desc: '一键生成精美课件',
+    icon: BookOpenCheck,
+    title: '今日学习',
+    desc: '查看任务和下一步建议',
     color: 'text-sky-500',
     bg: 'bg-sky-500/10 hover:bg-sky-500/20',
     border: 'border-sky-200/50 dark:border-sky-800/30',
-    href: '/sky/cloud-mind/slides',
+    href: '/sky',
   },
   {
-    icon: Search,
-    title: '拍照搜题',
-    desc: '拍照秒出解析答案',
+    icon: Presentation,
+    title: '备课工作台',
+    desc: '生成教案和互动课堂',
     color: 'text-violet-500',
     bg: 'bg-violet-500/10 hover:bg-violet-500/20',
     border: 'border-violet-200/50 dark:border-violet-800/30',
-    href: '/sky/cloud-mind/solve',
+    href: '/sky/teaching',
   },
   {
-    icon: Brain,
-    title: '云端智囊',
-    desc: 'AI 智能学习工具集',
+    icon: Search,
+    title: '题目与练习',
+    desc: '拍题、诊断和针对练习',
     color: 'text-amber-500',
     bg: 'bg-amber-500/10 hover:bg-amber-500/20',
     border: 'border-amber-200/50 dark:border-amber-800/30',
-    href: '/sky/cloud-mind',
+    href: '/sky/cloud-mind/solve',
   },
   {
-    icon: MessageSquare,
-    title: '互动课堂',
-    desc: '沉浸式 AI 教学',
+    icon: LibraryBig,
+    title: '课程资源',
+    desc: '讲义、题库和记忆材料',
     color: 'text-emerald-500',
     bg: 'bg-emerald-500/10 hover:bg-emerald-500/20',
     border: 'border-emerald-200/50 dark:border-emerald-800/30',
-    href: '/sky/assistant',
+    href: '/sky/cloud-mind/course-studio',
   },
 ];
 

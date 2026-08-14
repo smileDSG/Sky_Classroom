@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextResponse } from 'next/server';
 import type { UserEntry } from '@/lib/storage/dao/users';
 import type { CompleteUniversalOnboardingInput } from '@/lib/onboarding/types';
+import { MemoryStorageProvider } from '@/lib/storage/memory-provider';
+
+const storageBoundary = vi.hoisted(() => ({
+  storage: null as MemoryStorageProvider | null,
+}));
 
 vi.mock('@/lib/server/auth/helpers', () => ({
   requireAuth: vi.fn(),
@@ -11,6 +16,10 @@ vi.mock('@/lib/storage/dao/users', () => ({
   createUserDAO: vi.fn(),
 }));
 
+vi.mock('@/lib/server/server-storage', () => ({
+  getServerStorage: vi.fn(async () => storageBoundary.storage),
+}));
+
 import { requireAuth } from '@/lib/server/auth/helpers';
 import { createUserDAO } from '@/lib/storage/dao/users';
 import { GET, PUT } from '@/app/api/user/learning-onboarding/route';
@@ -18,6 +27,8 @@ import { POST as SKIP } from '@/app/api/user/learning-onboarding/skip/route';
 
 const mockRequireAuth = vi.mocked(requireAuth);
 const mockCreateUserDAO = vi.mocked(createUserDAO);
+const storage = new MemoryStorageProvider();
+storageBoundary.storage = storage;
 
 const learnerProfile: CompleteUniversalOnboardingInput['profiles']['learner'] = {
   identity: 'learner',
@@ -88,13 +99,19 @@ function putRequest(body: unknown): Request {
 function mockUpdate() {
   const update = vi
     .fn()
-    .mockImplementation(async (_id, values) => makeUser({ ...values, updatedAt: 2 }));
-  mockCreateUserDAO.mockResolvedValue({ update } as never);
+    .mockImplementation(async (id, values) => makeUser({ id, ...values, updatedAt: 2 }));
+  const getById = vi.fn().mockImplementation(async () => {
+    const auth = await mockRequireAuth();
+    return 'user' in auth ? auth.user : null;
+  });
+  mockCreateUserDAO.mockResolvedValue({ getById, update } as never);
   return update;
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks();
+  await storage.clear('learner-preference-versions');
+  await storage.clear('profile_signals');
   mockRequireAuth.mockResolvedValue({ user: makeUser() });
 });
 
@@ -112,6 +129,7 @@ describe('learning onboarding API', () => {
       success: true,
       status: 'pending',
       onboarding: null,
+      initialProfile: null,
     });
   });
 
@@ -145,29 +163,38 @@ describe('learning onboarding API', () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  it('stores a completed v2 profile in one update without rewriting legacy columns', async () => {
+  it('stores a completed v2 profile and synchronizes legacy profile columns', async () => {
     const update = mockUpdate();
 
     const response = await PUT(putRequest(completionPayload));
 
     expect(response.status).toBe(200);
     expect(update).toHaveBeenCalledTimes(1);
-    expect(update).toHaveBeenCalledWith('user-1', {
-      learningOnboarding: expect.objectContaining({
-        version: 2,
-        status: 'completed',
-        primaryIdentity: 'learner',
-        completedAt: expect.any(Number),
-        profiles: {
-          learner: expect.objectContaining({
-            identity: 'learner',
-            completedAt: expect.any(Number),
-          }),
-        },
+    expect(update).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({
+        learningOnboarding: expect.objectContaining({
+          version: 2,
+          status: 'completed',
+          primaryIdentity: 'learner',
+          completedAt: expect.any(Number),
+          profiles: {
+            learner: expect.objectContaining({
+              identity: 'learner',
+              completedAt: expect.any(Number),
+            }),
+          },
+        }),
+        educationLevel: 'middle',
+        grade: expect.any(String),
+        favoriteSubjects: expect.arrayContaining([
+          expect.objectContaining({ id: 'math', enabled: true }),
+          expect.objectContaining({ id: 'physics', enabled: true }),
+        ]),
+        learningStyle: 'reading',
+        showStepByStep: true,
       }),
-    });
-    expect(update.mock.calls[0][1]).not.toHaveProperty('educationLevel');
-    expect(update.mock.calls[0][1]).not.toHaveProperty('favoriteSubjects');
+    );
   });
 
   it('preserves selected completed secondary profiles during primary identity edits', async () => {

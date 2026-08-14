@@ -33,7 +33,7 @@ describe('login page account hints', () => {
 
     expect(await screen.findByText('普通测试用户')).toBeInTheDocument();
     expect(screen.getByText('demo')).toBeInTheDocument();
-    expect(screen.getByText('OpenMAIC123!')).toBeInTheDocument();
+    expect(screen.getByText('SkyClassroom123!')).toBeInTheDocument();
     expect(screen.getByText('管理员')).toBeInTheDocument();
     expect(mockFetch).toHaveBeenCalledWith('/api/auth/demo-account');
   });
@@ -51,7 +51,7 @@ describe('login page account hints', () => {
     await waitFor(() => expect(mockFetch).toHaveBeenCalledWith('/api/auth/demo-account'));
     expect(screen.getByText('管理员')).toBeInTheDocument();
     expect(screen.queryByText('普通测试用户')).not.toBeInTheDocument();
-    expect(screen.queryByText('OpenMAIC123!')).not.toBeInTheDocument();
+    expect(screen.queryByText('SkyClassroom123!')).not.toBeInTheDocument();
   });
 
   it('fails closed when the availability request errors', async () => {

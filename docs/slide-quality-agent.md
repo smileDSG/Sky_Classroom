@@ -16,9 +16,9 @@ The agent prevents generated classroom slides from becoming thin, hard to read, 
 - pages with too few meaningful learning blocks
 - flat typography with no clear title/body hierarchy
 
-## What We Learned From OpenMAIC-main
+## What We Learned From 智眸无界-main
 
-`E:/01_Work/OpenMAIC-main/` does not rely on a single "make it beautiful" prompt. Its stronger pattern is a pipeline:
+`E:/01_Work/智眸无界-main/` does not rely on a single "make it beautiful" prompt. Its stronger pattern is a pipeline:
 
 1. The outline stage decides what every scene should teach.
 2. Slide prompts constrain the element schema and layout rules.
@@ -28,7 +28,7 @@ The agent prevents generated classroom slides from becoming thin, hard to read, 
 
 This project now follows the same idea for classroom slides: prompts plan richer pages, deterministic checks catch drift, and tests keep the contract from being removed later.
 
-## Clean OpenMAIC GIF Style
+## Clean 智眸无界 GIF Style
 
 The `deepseek.gif` and `avalon.gif` references are closer to an editorial course deck than a dashboard. The target style is:
 
@@ -162,7 +162,7 @@ The suite covers:
 - promised step count mismatch detection
 - repeated layout signature detection
 - orange/decorative chrome blocking
-- OpenMAIC-first element generation and QA retry
+- 智眸无界-first element generation and QA retry
 - current polish repairs for Redis, Python, Java, functions, formulas, tables, and stacked teaching bands
 
 When a user reports a new bad slide, add a focused regression case first, then adjust `slide-polish`, `classroom-slide-qa`, `layout-guard-agent`, or the prompt contract until the new case passes.

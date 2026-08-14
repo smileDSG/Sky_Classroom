@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   AlertCircle,
-  ArrowLeft,
   BarChart3,
   BookOpenCheck,
   CalendarClock,
@@ -174,18 +173,11 @@ export function StudentProfilePage() {
     <div className="mx-auto max-w-6xl space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          <Link
-            href="/sky/learning"
-            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-white dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            返回天梯工坊
-          </Link>
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-sky-500 text-white shadow-lg shadow-emerald-500/20">
             <UserCheck className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-xl font-bold text-slate-950 dark:text-white">学情分析</h2>
+            <h2 className="text-xl font-bold text-slate-950 dark:text-white">学习情况分析</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               把做题表现和学习偏好合成下一步学习处方
             </p>
@@ -290,7 +282,7 @@ function PrescriptionHero({
   onOpenPreference: () => void;
   onAddReview: (topics: string[]) => void;
 }) {
-  const topTopic = prescription.priorityTopics[0]?.name ?? '入门诊断';
+  const topTopic = prescription.priorityTopics[0]?.name ?? '入门摸底';
 
   return (
     <section className="overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm dark:border-emerald-300/20 dark:bg-slate-900/70">
@@ -408,7 +400,7 @@ function WeakPointPriorityList({
         <div>
           <h3 className="text-base font-semibold text-slate-950 dark:text-white">薄弱点优先级</h3>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            按掌握度、错因频次和对话画像共同排序
+            按掌握情况、错因频次和学习记录共同排序
           </p>
         </div>
         <BarChart3 className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
@@ -416,7 +408,7 @@ function WeakPointPriorityList({
 
       {topics.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
-          暂无薄弱点。完成一次诊断或针对练习后，这里会生成优先级列表。
+          暂无薄弱点。完成一次入门练习或针对练习后，这里会生成优先级列表。
         </div>
       ) : (
         <div className="space-y-3">
@@ -435,7 +427,7 @@ function WeakPointPriorityList({
                       {topic.name}
                     </h4>
                     <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-900 dark:text-slate-300">
-                      掌握度 {topic.mastery}%
+                      掌握情况 {topic.mastery}%
                     </span>
                   </div>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-white dark:bg-slate-900">
@@ -526,7 +518,7 @@ function EvidencePanel({ evidence }: { evidence: PrescriptionEvidence[] }) {
             </div>
             <span className="w-fit rounded-full bg-white px-2 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-900 dark:text-slate-300">
               {item.source === 'performance' && '做题数据'}
-              {item.source === 'preference' && '画像对话'}
+              {item.source === 'preference' && '学习情况对话'}
               {item.source === 'mixed' && '综合判断'}
             </span>
           </div>

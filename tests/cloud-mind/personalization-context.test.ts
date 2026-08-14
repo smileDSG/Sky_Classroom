@@ -4,6 +4,8 @@ import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { ProfileSignal } from '@/lib/student/profile-signals';
 import type { StudentProfile } from '@/lib/student/profile-types';
 import type { LearningPath } from '@/lib/teaching/learning-path-types';
+import type { KnowledgeState } from '@/lib/adaptive-learning/contracts';
+import { canonicalizeKnowledgePoint } from '@/lib/adaptive-learning/knowledge/knowledge-point-registry';
 
 function makeProfile(overrides: Partial<StudentProfile> = {}): StudentProfile {
   return {
@@ -78,6 +80,117 @@ function makeLearningPath(): LearningPath {
 }
 
 describe('cloud mind personalization context', () => {
+  it('uses persisted knowledge state decision for the next action', () => {
+    const knowledgeStates: KnowledgeState[] = [
+      {
+        userId: 'u1',
+        nodeId: 'functions-basic',
+        displayName: '函数基础',
+        alpha: 2,
+        beta: 5,
+        mastery: 0.28,
+        confidence: 0.7,
+        retention: 1,
+        reviewStabilityDays: 7,
+        repeatedErrorCount: 2,
+        evidenceCount: 4,
+        lastEvidenceAt: '2026-07-30T08:00:00.000Z',
+        version: 5,
+      },
+    ];
+
+    const context = buildPersonalizationContext({
+      userId: 'u1',
+      profile: makeProfile(),
+      mistakes: [],
+      dueMistakes: [],
+      recentAttempts: [],
+      learningPath: null,
+      knowledgeStates,
+    });
+
+    expect(context.learnerDecision?.action).toBe('teach');
+    expect(context.recommendation).toMatchObject({
+      targetTool: 'teaching',
+    });
+    expect(context.shadowComparison).toMatchObject({
+      baselineTargetTool: 'quiz',
+      newTargetTool: 'teaching',
+      changed: true,
+    });
+    expect(context.recommendation?.href).toContain('topic=%E5%87%BD%E6%95%B0%E5%9F%BA%E7%A1%80');
+  });
+
+  it('keeps learner decision shadow-only when rollout is disabled', () => {
+    const context = buildPersonalizationContext({
+      userId: 'u1',
+      profile: makeProfile(),
+      mistakes: [],
+      dueMistakes: [],
+      recentAttempts: [],
+      learningPath: null,
+      knowledgeStates: [
+        {
+          userId: 'u1',
+          nodeId: 'functions-basic',
+          displayName: '鍑芥暟鍩虹',
+          alpha: 2,
+          beta: 5,
+          mastery: 0.28,
+          confidence: 0.7,
+          retention: 1,
+          reviewStabilityDays: 7,
+          repeatedErrorCount: 2,
+          evidenceCount: 4,
+          lastEvidenceAt: '2026-07-30T08:00:00.000Z',
+          version: 5,
+        },
+      ],
+      useLearnerDecision: false,
+    });
+
+    expect(context.learnerDecision?.action).toBe('teach');
+    expect(context.shadowComparison?.newTargetTool).toBe('teaching');
+    expect(context.recommendation?.targetTool).toBe('quiz');
+  });
+
+  it('never exposes generated knowledge-point ids in personalization output', () => {
+    const context = buildPersonalizationContext({
+      userId: 'u1',
+      profile: makeProfile(),
+      mistakes: [],
+      dueMistakes: [],
+      recentAttempts: [],
+      learningPath: null,
+      knowledgeStates: [
+        {
+          userId: 'u1',
+          nodeId: canonicalizeKnowledgePoint('二次函数').id,
+          alpha: 2,
+          beta: 5,
+          mastery: 0.28,
+          confidence: 0.7,
+          retention: 1,
+          reviewStabilityDays: 7,
+          repeatedErrorCount: 2,
+          evidenceCount: 4,
+          version: 5,
+        },
+      ],
+    });
+
+    expect(
+      JSON.stringify({
+        topic: context.learnerDecision?.topic,
+        tutoringTopic: context.tutoringPolicy?.targetTopic,
+        recommendation: context.recommendation,
+        toolPolicies: context.toolPolicies,
+      }),
+    ).not.toContain('kp-');
+    expect(context.learnerDecision?.topic).toBe('二次函数');
+    expect(context.tutoringPolicy?.targetTopic).toBe('二次函数');
+  });
+
   it('returns medium defaults and quiz onboarding for empty learning data', () => {
     const context = buildPersonalizationContext({
       userId: 'new-user',
@@ -131,6 +244,26 @@ describe('cloud mind personalization context', () => {
         evidence: ['prefers code and diagrams'],
         createdAt: 1002,
       },
+      {
+        id: 'state',
+        userId: 'new-user',
+        dimension: 'currentLearningState',
+        value: '自评基础：有基础但不稳定',
+        source: 'onboarding_chat',
+        confidence: 0.6,
+        evidence: ['onboarding baseline'],
+        createdAt: 1003,
+      },
+      {
+        id: 'pace',
+        userId: 'new-user',
+        dimension: 'learningPace',
+        value: 'slow',
+        source: 'onboarding_chat',
+        confidence: 0.75,
+        evidence: ['weekly time'],
+        createdAt: 1004,
+      },
     ];
 
     const context = buildPersonalizationContext({
@@ -153,10 +286,10 @@ describe('cloud mind personalization context', () => {
     ]);
     expect(context.tutoringPolicy).toMatchObject({
       targetTopic: 'vector retrieval',
-      difficulty: 'medium',
+      difficulty: 'easy',
       explanationStyle: 'example_first',
       resourceFormats: ['code_case', 'diagram'],
-      pacing: 'steady',
+      pacing: 'remedial',
     });
     expect(context.tutoringPolicy?.directives).toEqual(
       expect.arrayContaining([

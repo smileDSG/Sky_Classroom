@@ -14,7 +14,7 @@ const globalForRunningJobs = globalThis as unknown as {
 const runningJobs: Map<string, Promise<void>> =
   globalForRunningJobs._solveRunningJobs ?? (globalForRunningJobs._solveRunningJobs = new Map());
 
-export function runSolveJob(jobId: string, problemText: string, problemImage: string | null, userAnswer: string | null, problemSpec?: ProblemSpec | null): Promise<void> {
+export function runSolveJob(jobId: string, problemText: string, problemImage: string | null, userAnswer: string | null, problemSpec?: ProblemSpec | null, adaptiveGuidance?: string | null): Promise<void> {
   const existing = runningJobs.get(jobId);
   if (existing) return existing;
 
@@ -23,7 +23,13 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
       updateSolveJob(jobId, { status: 'running', phase: 'checking', progress: 5 });
 
       const graph = createSolveGraph();
-      const initialState = buildSolveInitialState(problemText, problemImage, userAnswer, problemSpec);
+      const initialState = buildSolveInitialState(
+        problemText,
+        problemImage,
+        userAnswer,
+        problemSpec,
+        adaptiveGuidance,
+      );
 
       // Phase: routing
       updateSolveJob(jobId, { phase: 'routing', progress: 15 });
@@ -47,6 +53,7 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
 
       const output = finalState.fourPartOutput ?? {
         answer: finalState.solution ?? '',
+        solution: finalState.solution ?? '',
         steps: [],
         knowledgePoints: [],
         similarQuestions: [],
@@ -58,6 +65,7 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
         progress: 100,
         result: {
           answer: output.answer,
+          solution: output.solution ?? '',
           steps: output.steps,
           knowledgePoints: output.knowledgePoints,
           similarQuestions: output.similarQuestions,
@@ -93,6 +101,7 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
               problemText,
               problemImage: problemImage ?? undefined,
               answer: output.answer,
+              solution: output.solution ?? '',
               knowledgePoints: (output.knowledgePoints ?? []).map(kp => ({
                 name: kp.name,
                 description: kp.description,

@@ -4,10 +4,12 @@ import {
   recordLearningEvent,
   recordAnswerSubmitted,
   recordReviewCompleted,
+  recordShadowDecision,
   learningEventInputSchema,
 } from '@/lib/adaptive-learning/profile/event-recorder';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
 import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
+import { getAbilityState } from '@/lib/adaptive-learning/profile/ability-state-repository';
 
 vi.mock('@/lib/student/profile-builder', () => ({
   invalidateProfileCache: vi.fn(async () => {}),
@@ -121,5 +123,106 @@ describe('EventRecorder', () => {
     expect(states).toHaveLength(1);
     expect(states[0]?.mastery).toBeLessThan(0.5);
     expect(states[0]?.evidenceCount).toBe(1);
+  });
+
+  it('updates theta only for a verified answer with a complete fixed-item identity', async () => {
+    await recordLearningEvent(
+      {
+        userId: 'user-1',
+        type: 'answer-submitted',
+        source: 'course-quiz',
+        nodeIds: ['multi-agent-orchestration'],
+        evidenceQuality: 'verified',
+        payload: {
+          correct: true,
+          itemId: 'ai-10-010',
+          itemVersion: 'v0.1.0',
+          itemDifficulty: 0.7,
+          dimensionId: 'ai-intro',
+          contentHash: 'sha256:ai-10-010',
+          generatorVersion: 'course-bank-v0.1.0',
+        },
+      },
+      { storage },
+    );
+
+    await expect(getAbilityState(storage, 'user-1', 'ai-intro')).resolves.toMatchObject({
+      answerCount: 1,
+    });
+  });
+
+  it('records shadow decisions once without changing knowledge state', async () => {
+    const comparison = {
+      baselineTargetTool: 'quiz' as const,
+      newTargetTool: 'teaching' as const,
+      baselineHref: '/sky/cloud-mind/quiz?topic=函数基础',
+      newHref: '/sky/cloud-mind/teaching?topic=函数基础',
+      changed: true,
+      topic: '函数基础',
+      action: 'teach' as const,
+      profileVersion: 4,
+      reasonCodes: ['low-mastery'],
+    };
+
+    const first = await recordShadowDecision({
+      storage,
+      userId: 'user-1',
+      source: 'cloud-mind-personalization',
+      comparison,
+    });
+    expect(first?.type).toBe('shadow-decision-recorded');
+
+    const events = await new LearnerProfileRepository(storage).listLearningEvents('user-1');
+    const second = await recordShadowDecision({
+      storage,
+      userId: 'user-1',
+      source: 'cloud-mind-personalization',
+      comparison,
+      existingEvents: events,
+    });
+
+    expect(second).toBeNull();
+    expect(events).toHaveLength(1);
+    await expect(createKnowledgeStateDAO(storage).list('user-1')).resolves.toEqual([]);
+  });
+
+  it('records intervention lifecycle events with one correlation id', async () => {
+    const planned = await recordLearningEvent(
+      {
+        userId: 'user-1',
+        type: 'intervention-planned',
+        source: 'director',
+        evidenceQuality: 'inferred',
+        correlationId: 'decision-1',
+        payload: {
+          decisionId: 'decision-1',
+          sessionId: 'session-1',
+          candidatePlanIds: ['teach-first', 'quiz-first'],
+          fallbackUsed: false,
+        },
+      },
+      { storage },
+    );
+
+    const outcome = await recordLearningEvent(
+      {
+        userId: 'user-1',
+        type: 'session-completed',
+        source: 'quiz',
+        evidenceQuality: 'verified',
+        correlationId: 'decision-1',
+        payload: {
+          decisionId: 'decision-1',
+          durationSeconds: 420,
+          questionCount: 4,
+          correctCount: 3,
+        },
+      },
+      { storage },
+    );
+
+    expect(planned?.type).toBe('intervention-planned');
+    expect(outcome?.correlationId).toBe('decision-1');
+    await expect(new LearnerProfileRepository(storage).listLearningEvents('user-1')).resolves.toHaveLength(2);
   });
 });

@@ -23,7 +23,7 @@ export interface AuthUser {
   onboardingStatus: LearningOnboardingStatus;
 }
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   isGuest: boolean;
@@ -54,6 +54,22 @@ export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
+}
+
+/** Allows shared shells to render safely in isolated previews and public routes. */
+export function useOptionalAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  return (
+    ctx ?? {
+      user: null,
+      isLoading: false,
+      isGuest: true,
+      login: async () => {},
+      register: async () => {},
+      logout: async () => {},
+      refresh: async () => {},
+    }
+  );
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -130,7 +146,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (!res.ok) {
       const json = await res.json();
-      throw new Error(json.error || 'Registration failed');
+      const message =
+        typeof json.error === 'string'
+          ? json.error
+          : json.error?.message || json.message || '注册失败，请稍后重试';
+      throw new Error(message);
     }
     await fetchUser();
   };

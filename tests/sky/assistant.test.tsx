@@ -256,10 +256,10 @@ describe('AssistantConfig', () => {
     expect(screen.getByText('启发式')).toBeDefined();
   });
 
-  it('难度选择 — 3 个难度按钮', () => {
+  it('难度选择 — 只展示高中和大学', () => {
     render(<AssistantConfig />);
 
-    expect(screen.getByText('初中')).toBeDefined();
+    expect(screen.queryByText('初中')).toBeNull();
     expect(screen.getByText('高中')).toBeDefined();
     expect(screen.getByText('大学')).toBeDefined();
   });

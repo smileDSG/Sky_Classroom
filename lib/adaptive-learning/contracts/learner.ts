@@ -153,13 +153,26 @@ export const knowledgeStateSchema = z
 export const learningEventTypeSchema = z.enum([
   'assessment-imported',
   'answer-submitted',
+  'segment-replayed',
+  'segment-paused',
+  'dwell-recorded',
+  'question-asked',
+  'self-reported',
   'mistake-recorded',
   'review-completed',
   'task-started',
   'task-completed',
+  'shadow-decision-recorded',
   'study-time-recorded',
   'teacher-correction',
   'profile-updated',
+  'intervention-planned',
+  'intervention-selected',
+  'question-presented',
+  'hint-requested',
+  'explanation-viewed',
+  'session-completed',
+  'session-exited',
 ]);
 
 export const learningEvidenceQualitySchema = z.enum([
@@ -174,8 +187,127 @@ const answerSubmittedPayloadSchema = z
   .object({
     correct: z.boolean(),
     knowledgePoints: z.array(z.string()).optional(),
+    itemId: z.string().min(1).optional(),
+    itemVersion: z.string().min(1).optional(),
+    itemDifficulty: z.number().finite().optional(),
+    dimensionId: z.string().min(1).optional(),
+    contentHash: z.string().min(1).optional(),
+    generatorVersion: z.string().min(1).optional(),
   })
   .strict();
+
+export const abilityStateSchema = z
+  .object({
+    userId: z.string().min(1),
+    dimensionId: z.string().min(1),
+    theta: z.number().finite(),
+    answerCount: z.number().int().min(0),
+    lastEvidenceAt: isoDateTimeSchema.optional(),
+    version: z.number().int().positive(),
+  })
+  .strict();
+
+const behaviorPayloadSchemas = {
+  'segment-replayed': z
+    .object({
+      replayCount: z.number().int().positive(),
+      knowledgePoints: z.array(z.string().min(1)).optional(),
+    })
+    .strict(),
+  'segment-paused': z
+    .object({
+      activeDurationSeconds: z.number().min(0),
+      knowledgePoints: z.array(z.string().min(1)).optional(),
+    })
+    .strict(),
+  'dwell-recorded': z
+    .object({
+      activeDurationSeconds: z.number().min(0),
+      baselineDurationSeconds: z.number().positive(),
+      knowledgePoints: z.array(z.string().min(1)).optional(),
+    })
+    .strict(),
+  'question-asked': z
+    .object({
+      intent: z.string().min(1).max(80),
+      knowledgePoints: z.array(z.string().min(1)).optional(),
+    })
+    .strict(),
+  'self-reported': z
+    .object({
+      level: z.enum(['confused', 'understood']),
+      knowledgePoints: z.array(z.string().min(1)).optional(),
+    })
+    .strict(),
+  'shadow-decision-recorded': z
+    .object({
+      baselineTargetTool: z
+        .enum(['solve', 'slides', 'quiz', 'memory', 'teaching'])
+        .nullable(),
+      newTargetTool: z
+        .enum(['solve', 'slides', 'quiz', 'memory', 'teaching'])
+        .nullable(),
+      baselineHref: z.string().min(1).nullable(),
+      newHref: z.string().min(1).nullable(),
+      changed: z.boolean(),
+      topic: z.string().min(1).nullable(),
+      action: z.enum(['diagnostic', 'teach', 'review', 'quiz']).nullable(),
+      profileVersion: z.number().int().min(0),
+      reasonCodes: z.array(z.string().min(1)),
+    })
+    .strict(),
+  'intervention-planned': z
+    .object({
+      decisionId: z.string().min(1),
+      sessionId: z.string().min(1),
+      candidatePlanIds: z.array(z.string().min(1)),
+      fallbackUsed: z.boolean(),
+    })
+    .strict(),
+  'intervention-selected': z
+    .object({
+      decisionId: z.string().min(1),
+      planId: z.string().min(1),
+      action: z.enum(['teach', 'review', 'quiz', 'diagnostic']),
+      topic: z.string().min(1).nullable(),
+    })
+    .strict(),
+  'question-presented': z
+    .object({
+      decisionId: z.string().min(1),
+      questionId: z.string().min(1),
+      difficulty: z.enum(['easy', 'medium', 'hard']),
+    })
+    .strict(),
+  'hint-requested': z
+    .object({
+      decisionId: z.string().min(1),
+      questionId: z.string().min(1),
+      hintLevel: z.number().int().min(1).max(3),
+    })
+    .strict(),
+  'explanation-viewed': z
+    .object({
+      decisionId: z.string().min(1),
+      durationSeconds: z.number().min(0),
+    })
+    .strict(),
+  'session-completed': z
+    .object({
+      decisionId: z.string().min(1),
+      durationSeconds: z.number().min(0),
+      questionCount: z.number().int().min(0),
+      correctCount: z.number().int().min(0),
+    })
+    .strict(),
+  'session-exited': z
+    .object({
+      decisionId: z.string().min(1),
+      durationSeconds: z.number().min(0),
+      reason: z.string().min(1).max(120),
+    })
+    .strict(),
+} as const;
 
 export const learningEventSchema = z
   .object({
@@ -192,9 +324,13 @@ export const learningEventSchema = z
   })
   .strict()
   .superRefine((event, ctx) => {
-    if (event.type !== 'answer-submitted') return;
+    const payloadSchema =
+      event.type === 'answer-submitted'
+        ? answerSubmittedPayloadSchema
+        : behaviorPayloadSchemas[event.type as keyof typeof behaviorPayloadSchemas];
+    if (!payloadSchema) return;
 
-    const payload = answerSubmittedPayloadSchema.safeParse(event.payload);
+    const payload = payloadSchema.safeParse(event.payload);
     if (payload.success) return;
 
     for (const issue of payload.error.issues) {
@@ -211,6 +347,7 @@ export type LearnerPreferences = z.infer<typeof learnerPreferencesSchema>;
 export type LearnerPreferencesInput = z.infer<typeof learnerPreferencesInputSchema>;
 export type DomainLearnerProfile = z.infer<typeof domainLearnerProfileSchema>;
 export type KnowledgeState = z.infer<typeof knowledgeStateSchema>;
+export type AbilityState = z.infer<typeof abilityStateSchema>;
 export type LearningEvent = z.infer<typeof learningEventSchema>;
 export type LearningEventType = z.infer<typeof learningEventTypeSchema>;
 export type LearningEvidenceQuality = z.infer<typeof learningEvidenceQualitySchema>;

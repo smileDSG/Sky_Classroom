@@ -224,7 +224,7 @@ export function resolveOnboardingRecommendation(
       };
     case 'education-manager':
       return {
-        primaryHref: route('/sky/study-lab', [
+        primaryHref: route('/sky/learning', [
           ['stage', context.stage],
           ['domain', domain],
           ['goal', goal],

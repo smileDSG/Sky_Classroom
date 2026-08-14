@@ -48,13 +48,13 @@ describe("mobile shared UI", () => {
     render(
       <MobileAgentProgress
         stages={[
-          { id: "profile", label: "画像分析", status: "done" },
+          { id: "profile", label: "学习情况分析", status: "done" },
           { id: "generate", label: "资源生成", status: "active" },
         ]}
       />,
     );
 
-    expect(screen.getByText("画像分析")).toBeInTheDocument();
+    expect(screen.getByText("学习情况分析")).toBeInTheDocument();
     expect(screen.getByText("资源生成")).toBeInTheDocument();
   });
 });

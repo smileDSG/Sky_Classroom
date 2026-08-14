@@ -1,11 +1,16 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import { ArrowRight, BrainCircuit, CheckCircle2, CircleOff, Database } from 'lucide-react';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { getCurrentModelConfig } from '@/lib/utils/model-config';
 import { createLogger } from '@/lib/logger';
 import { InlineMath } from '@/components/ui/inline-math';
 import { useScrollIsolation } from '@/lib/hooks/use-scroll-isolation';
+import { recordLearnerBehaviorEvent } from '@/lib/adaptive-learning/profile/client';
+import type { AssistantPersonalizationStreamPayload } from '@/lib/assistant/personalization';
+import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import {
   retrieveRelevantMemories,
   buildMemoryContext,
@@ -106,6 +111,74 @@ interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  personalization?: AssistantPersonalizationStreamPayload;
+  profileSync?: 'pending' | 'recorded' | 'disabled' | 'failed';
+  nextRecommendation?: PersonalizationContext['recommendation'];
+}
+
+const ANSWER_DEPTH_LABELS: Record<
+  AssistantPersonalizationStreamPayload['strategy']['answerDepth'],
+  string
+> = {
+  concise: '先结论，少步骤',
+  standard: '核心思路 + 必要步骤',
+  detailed: '拆清概念和步骤',
+  comprehensive: '完整讲解 + 迁移',
+};
+
+const TEACHING_MODE_LABELS: Record<
+  AssistantPersonalizationStreamPayload['strategy']['teachingMode'],
+  string
+> = {
+  direct: '直接讲解',
+  socratic: '启发式追问',
+  visual: '结构化图解',
+  example_first: '例子优先',
+  hint_first: '先提示再展开',
+};
+
+const STRATEGY_DIFFICULTY_LABELS: Record<
+  AssistantPersonalizationStreamPayload['strategy']['difficulty'],
+  string
+> = {
+  easier: '降低一级，先补台阶',
+  current: '保持当前难度',
+  challenge: '提高挑战与迁移',
+};
+
+function getPersonalizationTopic(context?: PersonalizationContext | null): string | undefined {
+  return (
+    context?.toolPolicies?.teaching.targetTopic ??
+    context?.tutoringPolicy?.targetTopic ??
+    context?.learnerDecision?.topic ??
+    context?.learningPath?.next ??
+    context?.weakPoints[0]?.knowledgePoint
+  );
+}
+
+function buildNextActionTarget(
+  personalization: AssistantPersonalizationStreamPayload,
+  context?: PersonalizationContext | null,
+): { href: string; label: string } {
+  const topic = personalization.focusTopic ?? getPersonalizationTopic(context);
+  const query = topic ? `?topic=${encodeURIComponent(topic)}` : '';
+
+  if (
+    personalization.strategy.recommendedNextAction === 'quiz' ||
+    personalization.actionPlan.primaryAction === 'generate_quiz'
+  ) {
+    return { href: `/sky/cloud-mind/quiz${query}`, label: '按你的情况练一组' };
+  }
+  if (
+    personalization.strategy.recommendedNextAction === 'review' ||
+    personalization.actionPlan.primaryAction === 'review_plan'
+  ) {
+    return { href: `/sky/cloud-mind/memory${query}`, label: '进入个性化复习' };
+  }
+  if (personalization.actionPlan.primaryAction === 'add_mistake') {
+    return { href: '/sky/learning/mistakes', label: '查看错题闭环' };
+  }
+  return { href: '/sky/learning/path', label: '查看学习路线' };
 }
 
 // ── 持久化辅助函数 ──────────────────────────────────────────────────
@@ -183,6 +256,7 @@ interface AssistantPanelProps {
   onConversationLoaded?: () => void;
   accentColor?: string;
   initialPrompt?: string | null;
+  personalizationContext?: PersonalizationContext | null;
 }
 
 export function AssistantPanel({
@@ -192,6 +266,7 @@ export function AssistantPanel({
   onConversationLoaded,
   accentColor: externalAccent,
   initialPrompt,
+  personalizationContext,
 }: AssistantPanelProps = {}) {
   const [accent, setAccent] = useState(externalAccent || THEME_MAP.sky);
   useEffect(() => {
@@ -213,6 +288,8 @@ export function AssistantPanel({
   const [showHistory, setShowHistory] = useState(false);
   const [conversations, setConversations] = useState<AssistantConversationRecord[]>([]);
   const [memoryContextStr, setMemoryContextStr] = useState<string>('');
+  const [livePersonalizationContext, setLivePersonalizationContext] =
+    useState<PersonalizationContext | null>(personalizationContext ?? null);
   const consumedInitialPromptRef = useRef<string | null>(null);
 
   // Current conversation ID for persistence
@@ -242,6 +319,34 @@ export function AssistantPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const nextId = useCallback(() => `msg-${crypto.randomUUID()}`, []);
+
+  const refreshPersonalizationContext = useCallback(async () => {
+    try {
+      const response = await fetch('/api/sky/cloud-mind/personalization-context', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const payload = (await response.json()) as {
+        success?: boolean;
+        data?: PersonalizationContext;
+      };
+      if (!response.ok || !payload.success || !payload.data) return null;
+      setLivePersonalizationContext(payload.data);
+      return payload.data;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (personalizationContext === undefined) return;
+    setLivePersonalizationContext(personalizationContext);
+  }, [personalizationContext]);
+
+  useEffect(() => {
+    if (personalizationContext) return;
+    void refreshPersonalizationContext();
+  }, [personalizationContext, refreshPersonalizationContext]);
 
   // ── Memory loading ──────────────────────────────────────────────
 
@@ -407,6 +512,8 @@ export function AssistantPanel({
 
       // Load memory context asynchronously, then send
       void (async () => {
+        let profileSignalPromise: Promise<void> | null = null;
+
         try {
           const memories = await retrieveRelevantMemories(AGENT_ID, msg);
           const memContext = buildMemoryContext(memories);
@@ -465,7 +572,62 @@ export function AssistantPanel({
               if (!line.startsWith('data: ')) continue;
               try {
                 const event = JSON.parse(line.slice(6));
-                if (event.type === 'text_delta') {
+                if (event.type === 'personalization' && event.strategy && event.actionPlan) {
+                  const personalization: AssistantPersonalizationStreamPayload = {
+                    strategy: event.strategy,
+                    evidence: event.evidence ?? null,
+                    actionPlan: event.actionPlan,
+                    focusTopic: event.focusTopic,
+                  };
+                  setMessages((prev) =>
+                    prev.map((message) =>
+                      message.id === assistantMsgId
+                        ? { ...message, personalization, profileSync: 'pending' }
+                        : message,
+                    ),
+                  );
+
+                  const knowledgePoints = Array.from(
+                    new Set(
+                      [
+                        personalization.focusTopic,
+                        ...(personalization.evidence?.items.flatMap(
+                          (item) => item.knowledgePoints,
+                        ) ?? []),
+                        getPersonalizationTopic(livePersonalizationContext),
+                      ].filter((point): point is string => Boolean(point)),
+                    ),
+                  ).slice(0, 5);
+
+                  profileSignalPromise = recordLearnerBehaviorEvent({
+                    type: 'question-asked',
+                    source: 'sky-assistant',
+                    correlationId: assistantMsgId,
+                    payload: {
+                      intent: msg.slice(0, 80),
+                      knowledgePoints: knowledgePoints.length > 0 ? knowledgePoints : undefined,
+                    },
+                  }).then(async (result) => {
+                    const refreshedContext = result.recorded
+                      ? await refreshPersonalizationContext()
+                      : livePersonalizationContext;
+                    setMessages((prev) =>
+                      prev.map((message) =>
+                        message.id === assistantMsgId
+                          ? {
+                              ...message,
+                              profileSync: result.recorded
+                                ? 'recorded'
+                                : result.reason === 'behavior-signals-disabled'
+                                  ? 'disabled'
+                                  : 'failed',
+                              nextRecommendation: refreshedContext?.recommendation ?? null,
+                            }
+                          : message,
+                      ),
+                    );
+                  });
+                } else if (event.type === 'text_delta') {
                   accumulatedText += event.content;
                   setMessages((prev) =>
                     prev.map((m) =>
@@ -508,6 +670,7 @@ export function AssistantPanel({
             difficulty,
             style,
           );
+          await profileSignalPromise;
         } catch (err) {
           if ((err as Error).name === 'AbortError') return;
           log.error('Assistant fetch error:', err);
@@ -523,7 +686,18 @@ export function AssistantPanel({
         }
       })();
     },
-    [input, loading, messages, subject, difficulty, style, mode],
+    [
+      difficulty,
+      input,
+      livePersonalizationContext,
+      loading,
+      messages,
+      mode,
+      nextId,
+      refreshPersonalizationContext,
+      style,
+      subject,
+    ],
   );
 
   const handleKeyDown = useCallback(
@@ -546,24 +720,30 @@ export function AssistantPanel({
 
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
-  const difficultyLabel =
-    difficulty === 'junior'
-      ? '初中'
-      : difficulty === 'senior'
-        ? '高中'
-        : difficulty === 'college'
-          ? '大学'
-          : difficulty || '';
+  const difficultyLabel = difficulty === 'college' ? '大学' : '高中';
 
   const styleLabel = style === 'concise' ? '简洁' : style === 'heuristic' ? '启发' : '详细';
 
+  const latestPersonalization = [...messages]
+    .reverse()
+    .find((message) => message.role === 'assistant' && message.personalization)?.personalization;
+  const profileTopic =
+    latestPersonalization?.focusTopic ?? getPersonalizationTopic(livePersonalizationContext);
+
   const hints = useMemo(
-    () => [
-      `帮我看看这道${subject || '数学'}题`,
-      `什么是${subject || '数学'}里的核心概念`,
-      '怎么高效复习错题',
-    ],
-    [subject],
+    () =>
+      profileTopic
+        ? [
+            `按我的情况一步一步讲清「${profileTopic}」`,
+            `先提示我做一道「${profileTopic}」小题`,
+            `结合我的错题复习「${profileTopic}」`,
+          ]
+        : [
+            `帮我看看这道${subject || '数学'}题`,
+            `什么是${subject || '数学'}里的核心概念`,
+            '怎么高效复习错题',
+          ],
+    [profileTopic, subject],
   );
 
   // ── Render ──────────────────────────────────────────────────────
@@ -795,67 +975,171 @@ export function AssistantPanel({
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {messages.map((msg, i) => (
-              <div
-                key={`${msg.id}-${i}`}
-                className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-              >
-                {/* Avatar */}
-                <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm ${
-                    msg.role === 'user'
-                      ? 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-slate-300'
-                      : 'text-[var(--accent)]'
-                  }`}
-                  style={
-                    msg.role !== 'user'
-                      ? { backgroundColor: `rgb(var(--accent-rgb) / 0.1)` }
-                      : undefined
+            {messages.map((msg, i) => {
+              const fallbackNextTarget = msg.personalization
+                ? buildNextActionTarget(msg.personalization, livePersonalizationContext)
+                : null;
+              const nextTarget = msg.nextRecommendation
+                ? {
+                    href: msg.nextRecommendation.href,
+                    label: msg.nextRecommendation.title,
                   }
-                >
-                  {msg.role === 'user' ? (
-                    '👤'
-                  ) : (
-                    <img
-                      src={
-                        mode === 'anime'
-                          ? '/avatars/kagami/chibi.png'
-                          : '/avatars/student-glasses-new.jpg'
-                      }
-                      className="size-full rounded-full object-cover"
-                      alt="小镜"
-                    />
-                  )}
-                </div>
-                {/* Bubble */}
+                : fallbackNextTarget;
+              const syncAction =
+                msg.profileSync === 'disabled'
+                  ? { href: '/account', label: '去开启行为信号' }
+                  : nextTarget;
+
+              return (
                 <div
-                  className={`max-w-[75%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-                    msg.role === 'user'
-                      ? 'rounded-tr-sm text-white'
-                      : 'rounded-tl-sm border border-gray-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-slate-800 text-gray-800 dark:text-slate-200'
-                  }`}
-                  style={msg.role === 'user' ? { backgroundColor: accent } : undefined}
+                  key={`${msg.id}-${i}`}
+                  className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                 >
-                  <InlineMath text={msg.content} />
-                  {msg.role === 'assistant' && loading && msg.content === '' && (
-                    <span className="inline-flex gap-1">
-                      <span
-                        className="h-1.5 w-1.5 animate-bounce rounded-full"
-                        style={{ backgroundColor: accent, animationDelay: '0ms' }}
+                  {/* Avatar */}
+                  <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm ${
+                      msg.role === 'user'
+                        ? 'bg-gray-200 text-gray-600 dark:bg-slate-600 dark:text-slate-300'
+                        : 'text-[var(--accent)]'
+                    }`}
+                    style={
+                      msg.role !== 'user'
+                        ? { backgroundColor: `rgb(var(--accent-rgb) / 0.1)` }
+                        : undefined
+                    }
+                  >
+                    {msg.role === 'user' ? (
+                      '👤'
+                    ) : (
+                      <img
+                        src={
+                          mode === 'anime'
+                            ? '/avatars/kagami/chibi.png'
+                            : '/avatars/student-glasses-new.jpg'
+                        }
+                        className="size-full rounded-full object-cover"
+                        alt="小镜"
                       />
-                      <span
-                        className="h-1.5 w-1.5 animate-bounce rounded-full"
-                        style={{ backgroundColor: accent, animationDelay: '150ms' }}
-                      />
-                      <span
-                        className="h-1.5 w-1.5 animate-bounce rounded-full"
-                        style={{ backgroundColor: accent, animationDelay: '300ms' }}
-                      />
-                    </span>
-                  )}
+                    )}
+                  </div>
+
+                  <div
+                    className={`max-w-[82%] space-y-2 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}
+                  >
+                    {msg.role === 'assistant' && msg.personalization && (
+                      <div className="rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 to-cyan-50 p-3 shadow-sm dark:border-violet-200/15 dark:from-violet-950/35 dark:to-cyan-950/30 dark:shadow-none">
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-violet-700 dark:text-violet-200">
+                          <BrainCircuit className="h-3.5 w-3.5" />
+                          学习情况让本回答发生了这些变化
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-700 dark:bg-white/[0.07] dark:text-slate-200">
+                            深度：{ANSWER_DEPTH_LABELS[msg.personalization.strategy.answerDepth]}
+                          </span>
+                          <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-700 dark:bg-white/[0.07] dark:text-slate-200">
+                            讲法：{TEACHING_MODE_LABELS[msg.personalization.strategy.teachingMode]}
+                          </span>
+                          <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-700 dark:bg-white/[0.07] dark:text-slate-200">
+                            难度：
+                            {STRATEGY_DIFFICULTY_LABELS[msg.personalization.strategy.difficulty]}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                          <span className="font-semibold text-slate-800 dark:text-slate-100">
+                            判断原因：
+                          </span>
+                          {msg.personalization.actionPlan.reason}
+                        </p>
+                        {msg.personalization.evidence?.summary && (
+                          <p className="mt-1 text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">
+                            参考记录：{msg.personalization.evidence.summary}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Bubble */}
+                    <div
+                      className={`rounded-xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                        msg.role === 'user'
+                          ? 'rounded-tr-sm text-white'
+                          : 'rounded-tl-sm border border-gray-200 bg-[#F8FAFC] text-gray-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'
+                      }`}
+                      style={msg.role === 'user' ? { backgroundColor: accent } : undefined}
+                    >
+                      <InlineMath text={msg.content} />
+                      {msg.role === 'assistant' && loading && msg.content === '' && (
+                        <span className="inline-flex gap-1">
+                          <span
+                            className="h-1.5 w-1.5 animate-bounce rounded-full"
+                            style={{ backgroundColor: accent, animationDelay: '0ms' }}
+                          />
+                          <span
+                            className="h-1.5 w-1.5 animate-bounce rounded-full"
+                            style={{ backgroundColor: accent, animationDelay: '150ms' }}
+                          />
+                          <span
+                            className="h-1.5 w-1.5 animate-bounce rounded-full"
+                            style={{ backgroundColor: accent, animationDelay: '300ms' }}
+                          />
+                        </span>
+                      )}
+                    </div>
+
+                    {msg.role === 'assistant' && msg.personalization && msg.profileSync && (
+                      <div
+                        className={`rounded-xl border px-3 py-2.5 ${
+                          msg.profileSync === 'recorded'
+                            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-200/15 dark:bg-emerald-400/10'
+                            : msg.profileSync === 'disabled'
+                              ? 'border-amber-200 bg-amber-50 dark:border-amber-200/15 dark:bg-amber-400/10'
+                              : 'border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/[0.035]'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          {msg.profileSync === 'recorded' ? (
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                          ) : msg.profileSync === 'disabled' ? (
+                            <CircleOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-300" />
+                          ) : (
+                            <Database className="mt-0.5 h-4 w-4 shrink-0 text-slate-500 dark:text-slate-300" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[11px] font-bold text-slate-800 dark:text-slate-100">
+                              {msg.profileSync === 'pending'
+                                ? '正在把本次提问同步到学习情况…'
+                                : msg.profileSync === 'recorded'
+                                  ? '学习情况已记录本次提问'
+                                  : msg.profileSync === 'disabled'
+                                    ? '本次提问未写入学习记录'
+                                    : '回答已完成，学习情况同步暂时失败'}
+                            </div>
+                            <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">
+                              {msg.profileSync === 'recorded'
+                                ? '系统已重新安排练习重点和下一步工具；提问只用于提示需要确认的知识点，不会直接降低掌握情况。'
+                                : msg.profileSync === 'disabled'
+                                  ? '“允许参考操作记录”当前未开启。你仍可正常对话，但提问不会参与学习情况更新。'
+                                  : msg.profileSync === 'pending'
+                                    ? '该信号只用于辅助判断是否需要诊断，不会被当成答错。'
+                                    : '不会影响本次回答，稍后再次提问时会自动重试。'}
+                            </p>
+                          </div>
+                          {syncAction && msg.profileSync !== 'pending' && (
+                            <Link
+                              href={syncAction.href}
+                              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-slate-900 px-2.5 py-1.5 text-[10px] font-semibold text-white hover:bg-slate-800 dark:bg-cyan-300 dark:text-slate-950 dark:hover:bg-cyan-200"
+                            >
+                              {syncAction.label}
+                              <ArrowRight className="h-3 w-3" />
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {loading && messages.filter((m) => m.role === 'assistant').at(-1)?.content && (
               <div className="flex gap-2.5">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full">

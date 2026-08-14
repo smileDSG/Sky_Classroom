@@ -2,7 +2,6 @@
 
 import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
@@ -36,9 +35,9 @@ import { SuccessState } from './states/success-state';
 import { SuggestingState } from './states/suggesting-state';
 import { RegeneratePrompt } from './regenerate-prompt';
 import { QaReportModalLight } from './qa-report-modal-light';
+import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 
 const DIFFICULTIES = [
-  { value: 'junior', label: '初中' },
   { value: 'senior', label: '高中' },
   { value: 'college', label: '大学' },
 ] as const;
@@ -46,6 +45,7 @@ const DIFFICULTIES = [
 interface SlidesPageProps {
   initialTopic?: string;
   personalizationNotice?: string | null;
+  personalizationContext?: PersonalizationContext | null;
 }
 
 export default function SlidesPage(props: SlidesPageProps = {}) {
@@ -62,7 +62,11 @@ export default function SlidesPage(props: SlidesPageProps = {}) {
   );
 }
 
-function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPageProps = {}) {
+function SlidesPageContent({
+  initialTopic,
+  personalizationNotice,
+  personalizationContext,
+}: SlidesPageProps = {}) {
   const searchParams = useSearchParams();
   const urlTopic = searchParams.get('topic');
 
@@ -75,7 +79,7 @@ function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPagePr
 
   // Defensive: localStorage may contain stale non-string values from old schema
   const topic = typeof generationOptions?.topic === 'string' ? generationOptions.topic : '';
-  const difficulty: 'junior' | 'senior' | 'college' = ['junior', 'senior', 'college'].includes(
+  const difficulty: 'junior' | 'senior' | 'college' = ['senior', 'college'].includes(
     generationOptions?.difficulty as string,
   )
     ? (generationOptions.difficulty as 'junior' | 'senior' | 'college')
@@ -84,7 +88,6 @@ function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPagePr
   // Ephemeral UI state
   const [generating, setGenerating] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [autoTriggered, setAutoTriggered] = useState(false);
   const userEditedTopicRef = useRef(false);
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarConfig>(
     AVATAR_CONFIGS.find((a) => a.id === storeSelectedAvatarId) || AVATAR_CONFIGS[0],
@@ -118,9 +121,13 @@ function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPagePr
   } = useCoverDraft();
 
   useEffect(() => {
-    if (!initialTopic || urlTopic || topic.trim() || generating || userEditedTopicRef.current)
-      return;
-    setGenerationOptions({ topic: initialTopic, difficulty });
+    const suggestedTopic = urlTopic?.trim() || initialTopic?.trim();
+    if (!suggestedTopic || generating || userEditedTopicRef.current) return;
+
+    const currentTopic = topic.trim();
+    if (currentTopic === suggestedTopic || (!urlTopic && currentTopic)) return;
+
+    setGenerationOptions({ topic: suggestedTopic, difficulty });
   }, [difficulty, generating, initialTopic, setGenerationOptions, topic, urlTopic]);
   // ── Legacy ──
   const [generatedPptx, setGeneratedPptx] = useState<{ url: string; fileName: string } | null>(
@@ -815,14 +822,6 @@ function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPagePr
     return () => clearInterval(poll);
   }, [activeJobId]);
 
-  // Auto-trigger generation from URL ?topic=xxx
-  useEffect(() => {
-    if (urlTopic && !autoTriggered && !generating) {
-      setAutoTriggered(true);
-      handleGenerate(urlTopic);
-    }
-  }, [urlTopic, autoTriggered, generating, handleGenerate]);
-
   const totalPages = previewImages?.length ?? 0;
   const hasContent = !!previewImages?.length || !!generatedPptx;
 
@@ -837,7 +836,7 @@ function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPagePr
 
   return (
     <div
-      className="flex h-screen w-full flex-col overflow-hidden relative"
+      className="slides-workspace relative flex h-[calc(100dvh-4rem)] min-h-0 w-full flex-col overflow-hidden"
       style={{
         background:
           'linear-gradient(180deg, var(--celestial-void) 0%, var(--celestial-horizon) 100%)',
@@ -845,33 +844,18 @@ function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPagePr
     >
       {/* Top bar */}
       <header
-        className="relative z-10 flex flex-shrink-0 items-center border-b border-[var(--celestial-haze)]/10 px-5 h-14 backdrop-blur-2xl"
+        className="slides-workspace-header relative z-10 flex h-14 flex-shrink-0 items-center border-b border-[var(--celestial-haze)]/20 px-5"
         style={{ background: 'var(--celestial-surface)' }}
       >
-        {/* Left: back + brand */}
+        {/* Left: brand */}
         <div className="flex flex-shrink-0 items-center gap-2.5">
-          <Link
-            href="/sky"
-            className="group flex h-8 w-8 items-center justify-center rounded-lg text-[var(--celestial-starlight)]/30 transition-all hover:bg-[var(--celestial-starlight)]/[0.03] hover:text-[var(--celestial-starlight)]/60"
-            title="返回首页"
-          >
-            <svg
-              className="h-4 w-4 transition-transform group-hover:-translate-x-0.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <div className="h-5 w-px bg-[var(--celestial-haze)]/20" />
           <div className="flex items-center gap-2">
             <div
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--celestial-starlight)]"
+              className="slides-workspace-mark flex h-7 w-7 items-center justify-center rounded-lg text-[var(--celestial-starlight)]"
               style={{
                 background: 'linear-gradient(135deg, rgba(139,92,246,0.35), rgba(56,189,248,0.25))',
-                boxShadow: '0 0 10px rgba(139,92,246,0.25), inset 0 0 0 1px var(--celestial-border)',
+                boxShadow:
+                  '0 0 10px rgba(139,92,246,0.25), inset 0 0 0 1px var(--celestial-border)',
               }}
             >
               <svg
@@ -1002,6 +986,7 @@ function SlidesPageContent({ initialTopic, personalizationNotice }: SlidesPagePr
                   difficulty={difficulty}
                   generating={generating}
                   personalizationNotice={personalizationNotice}
+                  personalizationContext={personalizationContext}
                   onTopicChange={(t) => {
                     userEditedTopicRef.current = true;
                     setGenerationOptions({ topic: t, difficulty });

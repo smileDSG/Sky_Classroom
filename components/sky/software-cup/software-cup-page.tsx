@@ -28,7 +28,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 const DEFAULT_INPUT =
-  '我是软件工程大二学生，正在学人工智能导论。Python 基础还可以，线性代数学过但不太熟。现在最困惑的是过拟合、模型评估和 RAG，不太会把概念和代码联系起来。希望两周内补上机器学习基础和大模型智能体，偏好图解、代码案例和分层练习题。每天大概能学 45 分钟，希望系统帮我规划学习顺序并生成资料。';
+  '我是软件工程大二学生，正在学人工智能导论。Python 基础还可以，线性代数学过但不太熟。现在最困惑的是过拟合、模型评估和课程资料检索，不太会把概念和代码联系起来。希望两周内补上机器学习基础和 AI 助手，偏好图解、代码案例和分层练习题。每天大概能学 45 分钟，希望系统帮我规划学习顺序并生成资料。';
 
 type StageStatus = 'pending' | 'running' | 'completed' | 'failed';
 
@@ -135,11 +135,11 @@ interface GenerationResult {
 
 const INITIAL_STAGES: StageItem[] = [
   { key: 'safety', label: '安全检查', agent: 'SafetyGuard', status: 'pending' },
-  { key: 'profile', label: '画像构建', agent: 'ProfileAgent', status: 'pending' },
-  { key: 'search', label: '课程检索', agent: 'CourseUnderstandingAgent', status: 'pending' },
+  { key: 'profile', label: '了解学习情况', agent: 'ProfileAgent', status: 'pending' },
+  { key: 'search', label: '查找课程资料', agent: 'CourseUnderstandingAgent', status: 'pending' },
   { key: 'generate', label: '资源生成', agent: 'ResourceAgents', status: 'pending' },
   { key: 'review', label: '质量审核', agent: 'QualityReviewAgent', status: 'pending' },
-  { key: 'path', label: '路径规划', agent: 'LearningPathAgent', status: 'pending' },
+  { key: 'path', label: '安排学习顺序', agent: 'LearningPathAgent', status: 'pending' },
 ];
 
 const resourceMeta: Record<
@@ -247,7 +247,7 @@ function StatusPill({ status }: { status: StageStatus | string }) {
 function ProfilePanel({ profile }: { profile: StudentProfile | null }) {
   if (!profile) {
     return (
-      <Panel icon={UserRound} eyebrow="Profile" title="学习画像">
+      <Panel icon={UserRound} eyebrow="Profile" title="学习情况">
         <div className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
           等待自然语言输入。
         </div>
@@ -267,7 +267,7 @@ function ProfilePanel({ profile }: { profile: StudentProfile | null }) {
   ];
 
   return (
-    <Panel icon={UserRound} eyebrow="Profile" title="8 维学习画像">
+    <Panel icon={UserRound} eyebrow="Profile" title="8 项学习情况">
       <div className="grid gap-2">
         {dimensions.map(([label, value]) => (
           <div
@@ -294,7 +294,7 @@ function AgentProgressPanel({
   const percent = Math.round((completed / stages.length) * 100);
 
   return (
-    <Panel icon={GitBranch} eyebrow="Agents" title="多智能体协同进度">
+    <Panel icon={GitBranch} eyebrow="AI角色" title="AI角色协作进度">
       <div className="mb-3">
         <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <span>当前进度</span>
@@ -342,11 +342,11 @@ function AgentProgressPanel({
 
 function CourseHitsPanel({ hits }: { hits: CourseHit[] }) {
   return (
-    <Panel icon={Search} eyebrow="RAG" title="课程知识库命中">
+    <Panel icon={Search} eyebrow="课程资料" title="找到的课程资料">
       <div className="space-y-2">
         {hits.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
-            等待检索。
+            等待查找资料。
           </div>
         ) : (
           hits.slice(0, 5).map((hit) => (
@@ -395,7 +395,7 @@ function ResourcesPanel({ resources }: { resources: GeneratedResource[] }) {
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700">
-                  {Math.round(resource.trust.confidence * 100)}% 可信
+                  {Math.round(resource.trust.confidence * 100)}% 判断把握较高
                 </span>
               </div>
               <h3 className="mt-3 text-sm font-semibold leading-5 text-slate-950 dark:text-white">
@@ -504,7 +504,7 @@ function TrustPanel({
             </span>
           </div>
           <div className="mt-2 space-y-1">
-            {(review?.suggestions || ['等待来源引用和置信度检查。']).map((item) => (
+            {(review?.suggestions || ['等待资料来源和内容检查。']).map((item) => (
               <div key={item} className="text-xs leading-5 text-slate-600 dark:text-slate-300">
                 {item}
               </div>
@@ -632,7 +632,7 @@ export function SoftwareCupPage() {
                 AI 导论课程学习资源生成
               </h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                基于《人工智能导论》课程知识库和学习画像，生成可追溯、可审核的个性化学习方案。
+                基于《人工智能导论》课程资料和学习情况，生成有来源、可检查的个性化学习方案。
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">

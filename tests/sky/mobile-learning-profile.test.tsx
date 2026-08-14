@@ -65,18 +65,18 @@ describe('MobileLearningProfilePage', () => {
     });
 
     expect(container.querySelector('iframe')).not.toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: '学习画像' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '学习情况' })).toBeInTheDocument();
 
-    const hero = screen.getByLabelText('学习画像总览');
+    const hero = screen.getByLabelText('学习情况总览');
     expect(hero).toHaveClass('bg-[#f8fbff]');
-    expect(within(hero).getByText('学情分析')).toBeInTheDocument();
-    expect(within(hero).getByText('掌握度')).toBeInTheDocument();
+    expect(within(hero).getByText('学习情况分析')).toBeInTheDocument();
+    expect(within(hero).getByText('掌握情况')).toBeInTheDocument();
     expect(within(hero).getByText('正确率')).toBeInTheDocument();
     expect(within(hero).getByText('今日学习')).toBeInTheDocument();
     expect(within(hero).getByText('连续学习')).toBeInTheDocument();
     expect(within(hero).getAllByText('72%').length).toBeGreaterThan(0);
 
-    expect(screen.getByText('画像完整度')).toBeInTheDocument();
+    expect(screen.getByText('学习情况完整度')).toBeInTheDocument();
     expect(screen.getByText('题目样本')).toBeInTheDocument();
     expect(screen.getAllByText('薄弱点').length).toBeGreaterThan(0);
     expect(screen.getAllByText('二次函数').length).toBeGreaterThan(0);

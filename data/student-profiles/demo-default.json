@@ -1,0 +1,252 @@
+{
+  "profile": {
+    "userId": "demo-default",
+    "masteryBySubject": {
+      "math": 43,
+      "physics": 29,
+      "chemistry": 50,
+      "biology": 33,
+      "chinese": 0,
+      "english": 86,
+      "history": 67,
+      "geography": 50,
+      "politics": 0,
+      "unknown": 68
+    },
+    "masteryByKnowledge": {
+      "高中历史·工业革命": 67,
+      "大学线性代数·特征值": 29,
+      "大学计算机·动态规划": 86,
+      "高中生物·遗传规律": 33,
+      "高中英语·过去完成时": 86,
+      "高中物理·电磁感应": 29,
+      "高中地理·洋流": 50,
+      "高中化学·化学平衡": 50,
+      "大学高等数学·多元微积分": 57,
+      "kp-66d8cada": 50,
+      "大学人工智能·RAG": 67
+    },
+    "weakPoints": [
+      "大学线性代数·特征值",
+      "高中物理·电磁感应"
+    ],
+    "strongPoints": [
+      "大学计算机·动态规划",
+      "高中英语·过去完成时"
+    ],
+    "errorPatterns": [
+      {
+        "knowledgePoint": "高中英语·时态",
+        "errorType": "misreading",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-27T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "高中英语·过去完成时",
+        "errorType": "misreading",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-27T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "高中地理·洋流",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-24T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "气候影响",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-24T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "高中历史·工业革命",
+        "errorType": "method-wrong",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-25T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "历史事件因果分析",
+        "errorType": "method-wrong",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-25T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "高中生物·遗传规律",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-28T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "基因分离定律",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-28T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "高中数学·导数",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-06T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "函数单调性",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-06T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "极值",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-06T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "高中化学·化学平衡",
+        "errorType": "method-wrong",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-03T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "反应速率",
+        "errorType": "method-wrong",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-03T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "高中物理·电磁感应",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-04T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "楞次定律",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-04T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "高中数学·空间向量",
+        "errorType": "calculation-error",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-05T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "向量数量积",
+        "errorType": "calculation-error",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-05T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "大学计算机·算法设计",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-31T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "大学计算机·动态规划",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-31T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "0-1背包",
+        "errorType": "concept-unclear",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-31T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "大学高等数学·多元微积分",
+        "errorType": "calculation-error",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-02T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "偏导数",
+        "errorType": "calculation-error",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-02T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "梯度",
+        "errorType": "calculation-error",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-02T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "大学线性代数·矩阵",
+        "errorType": "method-wrong",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-01T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "大学线性代数·特征值",
+        "errorType": "method-wrong",
+        "frequency": 1,
+        "lastOccurrence": "2026-08-01T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "大学人工智能·RAG",
+        "errorType": "method-wrong",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-30T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "向量检索",
+        "errorType": "method-wrong",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-30T05:26:24.974Z"
+      },
+      {
+        "knowledgePoint": "重排序",
+        "errorType": "method-wrong",
+        "frequency": 1,
+        "lastOccurrence": "2026-07-30T05:26:24.974Z"
+      }
+    ],
+    "totalQuestions": 12,
+    "totalCorrect": 0,
+    "lastUpdated": "2026-08-06T14:27:05.639Z",
+    "recentQuizPerformance": {
+      "overallAccuracy": 43,
+      "accuracyByKnowledge": {
+        "高中英语·时态": 100,
+        "高中英语·过去完成时": 100,
+        "高中地理·洋流": 100,
+        "气候影响": 100,
+        "高中历史·工业革命": 0,
+        "历史事件因果分析": 0,
+        "高中生物·遗传规律": 0,
+        "基因分离定律": 0,
+        "高中数学·导数": 0,
+        "函数单调性": 0,
+        "极值": 0,
+        "高中化学·化学平衡": 0,
+        "反应速率": 0,
+        "高中物理·电磁感应": 100,
+        "楞次定律": 100,
+        "高中数学·空间向量": 0,
+        "向量数量积": 0,
+        "大学计算机·算法设计": 0,
+        "大学计算机·动态规划": 0,
+        "0-1背包": 0,
+        "大学高等数学·多元微积分": 100,
+        "偏导数": 100,
+        "梯度": 100,
+        "大学线性代数·矩阵": 0,
+        "大学线性代数·特征值": 0,
+        "大学人工智能·RAG": 100,
+        "向量检索": 100,
+        "重排序": 100
+      },
+      "topErrorCauses": [
+        "concept",
+        "reasoning",
+        "calculation"
+      ],
+      "recommendedDepthShift": "maintain"
+    }
+  },
+  "cachedAt": 1786026425640,
+  "cacheVersion": 2
+}

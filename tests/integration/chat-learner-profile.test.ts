@@ -10,6 +10,7 @@ import { NextRequest } from 'next/server';
 import { MemoryStorageProvider } from '@/lib/storage/memory-provider';
 import type { StorageProvider } from '@/lib/storage/storage-types';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import type { LearnerPreferences } from '@/lib/adaptive-learning/contracts';
 
 const chatBoundary = vi.hoisted(() => ({
@@ -89,9 +90,19 @@ function makeRequest(body: unknown): NextRequest {
 beforeEach(async () => {
   chatBoundary.userId = 'user-chat';
   await storage.clear('learner-preference-versions');
+  await storage.clear('learning-events');
+  await storage.clear('knowledge-state');
   statelessGenerateMock.mockReset();
   statelessGenerateMock.mockImplementation(async function* () {
-    yield { type: 'done', data: { totalActions: 0, totalAgents: 0, agentHadContent: false, directorState: { turnCount: 0, agentResponses: [], whiteboardLedger: [] } } };
+    yield {
+      type: 'done',
+      data: {
+        totalActions: 0,
+        totalAgents: 0,
+        agentHadContent: false,
+        directorState: { turnCount: 0, agentResponses: [], whiteboardLedger: [] },
+      },
+    };
   });
 });
 
@@ -99,7 +110,13 @@ describe('POST /api/chat learner profile integration', () => {
   it('returns PROFILE_NOT_FOUND when learner profile is missing', async () => {
     const req = makeRequest({
       messages: [{ role: 'user', content: 'hi' }],
-      storeState: { stage: null, scenes: [], currentSceneId: null, mode: 'playback', whiteboardOpen: false },
+      storeState: {
+        stage: null,
+        scenes: [],
+        currentSceneId: null,
+        mode: 'playback',
+        whiteboardOpen: false,
+      },
       config: { agentIds: ['default-1'] },
       apiKey: 'mock-key',
     });
@@ -117,7 +134,13 @@ describe('POST /api/chat learner profile integration', () => {
 
     const req = makeRequest({
       messages: [{ role: 'user', content: 'hi' }],
-      storeState: { stage: null, scenes: [], currentSceneId: null, mode: 'playback', whiteboardOpen: false },
+      storeState: {
+        stage: null,
+        scenes: [],
+        currentSceneId: null,
+        mode: 'playback',
+        whiteboardOpen: false,
+      },
       config: { agentIds: ['default-1'] },
       apiKey: 'mock-key',
     });
@@ -133,12 +156,64 @@ describe('POST /api/chat learner profile integration', () => {
     expect(callArg.teachingProjection).toContain('语气：鼓励引导');
   });
 
+  it('injects Bayesian growth areas into orchestration context', async () => {
+    await seedPreferences(chatBoundary.userId);
+    await createKnowledgeStateDAO(storage).set(chatBoundary.userId, {
+      userId: chatBoundary.userId,
+      nodeId: 'functions-basic',
+      alpha: 2,
+      beta: 3,
+      mastery: 0.4,
+      confidence: 0.6,
+      retention: 1,
+      reviewStabilityDays: 7,
+      repeatedErrorCount: 2,
+      evidenceCount: 3,
+      version: 3,
+    });
+
+    const res = await POST(
+      makeRequest({
+        messages: [{ role: 'user', content: 'help with functions' }],
+        storeState: {
+          stage: null,
+          scenes: [],
+          currentSceneId: null,
+          mode: 'playback',
+          whiteboardOpen: false,
+        },
+        config: { agentIds: ['default-1'] },
+        apiKey: 'mock-key',
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(statelessGenerateMock.mock.calls[0]?.[0].teachingProjection).toContain(
+      'functions-basic',
+    );
+    expect(statelessGenerateMock.mock.calls[0]?.[0].teachingProjection).toContain(
+      '建议动作：teach',
+    );
+    expect(statelessGenerateMock.mock.calls[0]?.[0].teachingProjection).toContain(
+      '原因码：low-mastery、repeated-errors',
+    );
+    expect(statelessGenerateMock.mock.calls[0]?.[0].teachingProjection).toContain(
+      '用户明确提出的问题和主题优先',
+    );
+  });
+
   it('does not accept client-provided teachingProjection as authoritative', async () => {
     await seedPreferences(chatBoundary.userId);
 
     const req = makeRequest({
       messages: [{ role: 'user', content: 'hi' }],
-      storeState: { stage: null, scenes: [], currentSceneId: null, mode: 'playback', whiteboardOpen: false },
+      storeState: {
+        stage: null,
+        scenes: [],
+        currentSceneId: null,
+        mode: 'playback',
+        whiteboardOpen: false,
+      },
       config: { agentIds: ['default-1'] },
       apiKey: 'mock-key',
       teachingProjection: 'CLIENT_PROJECTION_OVERRIDE',
@@ -150,5 +225,29 @@ describe('POST /api/chat learner profile integration', () => {
     const callArg = statelessGenerateMock.mock.calls[0]?.[0];
     expect(callArg.teachingProjection).toContain('学习者画像');
     expect(callArg.teachingProjection).not.toContain('CLIENT_PROJECTION_OVERRIDE');
+  });
+
+  it('streams a decision context for downstream behavior correlation', async () => {
+    await seedPreferences(chatBoundary.userId);
+
+    const res = await POST(
+      makeRequest({
+        messages: [{ role: 'user', content: 'hi' }],
+        sessionId: 'session-1',
+        storeState: {
+          stage: null,
+          scenes: [],
+          currentSceneId: null,
+          mode: 'playback',
+          whiteboardOpen: false,
+        },
+        config: { agentIds: ['default-1'] },
+        apiKey: 'mock-key',
+      }),
+    );
+
+    const body = await res.text();
+    expect(body).toContain('"type":"decision_context"');
+    expect(body).toContain('"sessionId":"session-1"');
   });
 });

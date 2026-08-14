@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BrainCircuit, Sparkles } from 'lucide-react';
+import { BrainCircuit, Sparkles } from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,6 +10,7 @@ import {
   type SnapshotResult,
   type StudyLabApiSnapshots,
   type StudyLabLearningPathResponse,
+  type StudyLabLearningPlanResponse,
   type StudyLabViewModel,
   type StudyLabWorkshopSnapshot,
 } from '@/lib/sky/study-lab-data';
@@ -18,7 +19,6 @@ import { cn } from '@/lib/utils';
 import { LearningPathTimeline } from './learning-path-timeline';
 import { ProfileSummaryPanel } from './profile-summary-panel';
 import { TodayMissionPanel } from './today-mission-panel';
-import { TrustReviewPanel } from './trust-review-panel';
 
 type LoadState = 'loading' | 'ready';
 
@@ -53,7 +53,7 @@ async function settle<T>(promise: Promise<T>): Promise<SnapshotResult<T>> {
 }
 
 async function loadStudyLabSnapshots(): Promise<StudyLabApiSnapshots> {
-  const [personalization, workshop, learningPath] = await Promise.all([
+  const [personalization, workshop, learningPath, learningPlan] = await Promise.all([
     settle(
       fetchApiData<PersonalizationContext>(
         '/api/sky/cloud-mind/personalization-context',
@@ -67,12 +67,19 @@ async function loadStudyLabSnapshots(): Promise<StudyLabApiSnapshots> {
         (payload) => payload.data as StudyLabLearningPathResponse,
       ),
     ),
+    settle(
+      fetchApiData<StudyLabLearningPlanResponse>(
+        '/api/sky/learning-plan?view=today',
+        (payload) => payload.data as StudyLabLearningPlanResponse,
+      ),
+    ),
   ]);
 
   return {
     personalization,
     workshop,
     learningPath,
+    learningPlan,
   };
 }
 
@@ -164,20 +171,14 @@ export function StudyLabPage() {
                 </span>
               </div>
               <h1 className="mt-3 text-2xl font-semibold leading-tight text-slate-950 dark:text-white sm:text-3xl">
-                学习画像、路线和数据来源
+                学习情况、路线和资料来源
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-200">
-                这里保留个性化学习的详细数据，主流程请从今日学习和学习路线进入。
+                这里保留个性化学习的详细数据，主流程请从摘星锦囊和天梯工坊进入。
               </p>
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button asChild variant="outline" className="min-h-11 justify-center">
-                <Link href="/sky/learning">
-                  <ArrowLeft className="h-4 w-4" />
-                  返回天梯工坊
-                </Link>
-              </Button>
               <Button asChild className="min-h-11 justify-center">
                 <Link href="/sky/cloud-mind">
                   <Sparkles className="h-4 w-4" />
@@ -204,7 +205,7 @@ export function StudyLabPage() {
                 viewModel={viewModel}
                 onRefresh={() => void load(true)}
                 refreshing={refreshing}
-                error={viewModel.errors.workshop}
+                error={viewModel.errors.learningPlan ?? viewModel.errors.workshop}
               />
               <ProfileSummaryPanel
                 profile={viewModel.profile}
@@ -212,11 +213,8 @@ export function StudyLabPage() {
               />
               <LearningPathTimeline
                 learningPath={viewModel.learningPath}
-                error={viewModel.errors.learningPath}
+                error={viewModel.errors.learningPath ?? viewModel.errors.learningPlan}
               />
-              <div className="lg:col-span-2">
-                <TrustReviewPanel viewModel={viewModel} />
-              </div>
             </div>
           )}
         </div>

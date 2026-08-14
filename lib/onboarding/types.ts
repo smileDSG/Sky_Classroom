@@ -10,6 +10,8 @@ import {
   IDENTITY_CONFIG,
   LEARNER_NEEDS,
   LEARNER_PREFERENCES,
+  LEARNER_FOUNDATIONS,
+  LEARNER_WEEKLY_TIME,
   OTHER_NEEDS,
   OTHER_PREFERENCES,
   PRODUCT_IDENTITIES,
@@ -168,6 +170,13 @@ const learnerProfileInputSchema = z
     ...profileBase,
     roleNeeds: z.array(optionEnum(LEARNER_NEEDS)).max(3),
     preferences: z.object({ explanationStyle: optionEnum(LEARNER_PREFERENCES) }).strict(),
+    baseline: z
+      .object({
+        foundation: optionEnum(LEARNER_FOUNDATIONS),
+        weeklyTime: optionEnum(LEARNER_WEEKLY_TIME),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

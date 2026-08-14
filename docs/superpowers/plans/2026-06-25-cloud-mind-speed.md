@@ -6,7 +6,7 @@
 
 **Architecture:** Keep each cloud-mind agent's public API unchanged. Add one focused in-memory cache module under `lib/agents/cloud-mind/`, then wire quiz, memory cards, slides analysis, translation, and writing through `callLLM` or `streamLLM` so they inherit key rotation, timeout handling, thinking configuration, and performance telemetry.
 
-**Tech Stack:** Next.js API routes, Vercel AI SDK, Vitest, TypeScript, existing OpenMAIC provider configuration.
+**Tech Stack:** Next.js API routes, Vercel AI SDK, Vitest, TypeScript, existing 智眸无界 provider configuration.
 
 ---
 

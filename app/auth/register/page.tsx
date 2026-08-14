@@ -27,8 +27,6 @@ export default function RegisterPage() {
   const hasUpper = /[A-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const strength = (hasLen ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNumber ? 1 : 0);
-  const strengthPercent = password.length === 0 ? 0 : ([33, 66, 100][strength] ?? 33);
-  const strengthLabel = ['', 'Weak', 'Fair', 'Strong'][strength] ?? '';
   const strengthColor = ['', 'bg-red-500', 'bg-yellow-500', 'bg-green-500'][strength] ?? '';
 
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
@@ -39,11 +37,11 @@ export default function RegisterPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError('两次输入的密码不一致');
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError('密码长度至少为 8 个字符');
       return;
     }
 
@@ -53,7 +51,7 @@ export default function RegisterPage() {
       router.push('/sky/onboarding');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(err instanceof Error ? err.message : '注册失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -66,10 +64,10 @@ export default function RegisterPage() {
   return (
     <AuthLayout>
       <h1 className="text-2xl font-bold text-center text-slate-800 dark:text-slate-100 mb-1">
-        Create Account
+        创建账号
       </h1>
       <p className="text-sm text-center text-muted-foreground mb-6">
-        Join Sky Classroom and start learning
+        加入天空课堂，开启智能学习之旅
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -84,10 +82,10 @@ export default function RegisterPage() {
           </motion.div>
         )}
 
-        {/* Email (optional) */}
+        {/* 邮箱（选填） */}
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-slate-600 dark:text-slate-300">
-            Email <span className="text-muted-foreground/50 text-xs font-normal">(optional)</span>
+            邮箱 <span className="text-muted-foreground/50 text-xs font-normal">（选填）</span>
           </Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/50" />
@@ -103,17 +101,17 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Username */}
+        {/* 用户名 */}
         <div className="space-y-1.5">
           <Label htmlFor="username" className="text-slate-600 dark:text-slate-300">
-            Username
+            用户名
           </Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/50" />
             <Input
               id="username"
               type="text"
-              placeholder="Choose a username"
+              placeholder="请输入用户名"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -124,17 +122,17 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Password */}
+        {/* 密码 */}
         <div className="space-y-1.5">
           <Label htmlFor="password" className="text-slate-600 dark:text-slate-300">
-            Password
+            密码
           </Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/50" />
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="At least 8 characters"
+              placeholder="至少输入 8 个字符"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -170,7 +168,7 @@ export default function RegisterPage() {
                   ) : (
                     <X className="inline size-3 mr-0.5" />
                   )}
-                  8+ chars
+                  至少 8 位
                 </span>
                 <span className={hasUpper ? 'text-green-600 dark:text-green-400' : ''}>
                   {hasUpper ? (
@@ -178,7 +176,7 @@ export default function RegisterPage() {
                   ) : (
                     <X className="inline size-3 mr-0.5" />
                   )}
-                  Uppercase
+                  包含大写字母
                 </span>
                 <span className={hasNumber ? 'text-green-600 dark:text-green-400' : ''}>
                   {hasNumber ? (
@@ -186,24 +184,24 @@ export default function RegisterPage() {
                   ) : (
                     <X className="inline size-3 mr-0.5" />
                   )}
-                  Number
+                  包含数字
                 </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Confirm Password */}
+        {/* 确认密码 */}
         <div className="space-y-1.5">
           <Label htmlFor="confirmPassword" className="text-slate-600 dark:text-slate-300">
-            Confirm Password
+            确认密码
           </Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/50" />
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Repeat your password"
+              placeholder="请再次输入密码"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -220,7 +218,7 @@ export default function RegisterPage() {
               <Check className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-green-500" />
             )}
           </div>
-          {passwordsMismatch && <p className="text-xs text-red-500">Passwords do not match</p>}
+          {passwordsMismatch && <p className="text-xs text-red-500">两次输入的密码不一致</p>}
         </div>
 
         {/* Submit */}
@@ -232,22 +230,22 @@ export default function RegisterPage() {
           {loading ? (
             <span className="flex items-center gap-2">
               <Loader2 className="size-4 animate-spin" />
-              Creating account...
+              正在创建账号...
             </span>
           ) : (
-            'Create Account'
+            '创建账号'
           )}
         </Button>
       </form>
 
       {/* Footer */}
       <p className="text-sm text-center text-muted-foreground mt-6">
-        Already have an account?{' '}
+        已有账号？{' '}
         <Link
           href="/auth/login"
           className="inline-flex min-h-11 items-center rounded-md px-1 font-medium text-sky-600 transition-colors hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
         >
-          Sign in
+          立即登录
         </Link>
       </p>
     </AuthLayout>

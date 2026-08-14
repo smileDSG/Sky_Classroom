@@ -2,35 +2,32 @@
  * Account center — profile, account info, security.
  */
 
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, User } from "lucide-react";
-import { useAuth } from "@/components/auth/auth-provider";
-import {
-  SidebarNav,
-  type AccountSection,
-} from "@/components/account/sidebar-nav";
-import { ProfileForm } from "@/components/account/profile-form";
-import { PersonalizationForm } from "@/components/account/personalization-form";
-import { AccountInfo } from "@/components/account/account-info";
-import { SecurityForm } from "@/components/account/security-form";
-import { PlanBillingSection } from "@/components/account/plan-billing-section";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, User } from 'lucide-react';
+import { useAuth } from '@/components/auth/auth-provider';
+import { SidebarNav, type AccountSection } from '@/components/account/sidebar-nav';
+import { ProfileForm } from '@/components/account/profile-form';
+import { PersonalizationForm } from '@/components/account/personalization-form';
+import { AccountInfo } from '@/components/account/account-info';
+import { SecurityForm } from '@/components/account/security-form';
+import { PlanBillingSection } from '@/components/account/plan-billing-section';
+import { Button } from '@/components/ui/button';
 
 export default function AccountPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const [activeSection, setActiveSection] = useState<AccountSection>("profile");
+  const [activeSection, setActiveSection] = useState<AccountSection>('profile');
 
   const SECTIONS: { key: AccountSection; label: string }[] = [
-    { key: "profile", label: "个人资料" },
-    { key: "personalization", label: "个性化" },
-    { key: "plan", label: "订阅" },
-    { key: "account", label: "账户" },
-    { key: "security", label: "安全" },
+    { key: 'profile', label: '个人资料' },
+    { key: 'personalization', label: '个性化' },
+    { key: 'plan', label: '订阅' },
+    { key: 'account', label: '账户' },
+    { key: 'security', label: '安全' },
   ];
 
   // Redirect to login if not authenticated (after initial load)
@@ -38,10 +35,8 @@ export default function AccountPage() {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-muted-foreground">{"请先登录后再访问"}</p>
-          <Button onClick={() => router.push("/auth/login")}>
-            {"返回首页"}
-          </Button>
+          <p className="text-muted-foreground">{'请先登录后再访问'}</p>
+          <Button onClick={() => router.push('/auth/login')}>{'返回首页'}</Button>
         </div>
       </div>
     );
@@ -49,15 +44,15 @@ export default function AccountPage() {
 
   const renderSection = () => {
     switch (activeSection) {
-      case "profile":
+      case 'profile':
         return <ProfileForm />;
-      case "personalization":
+      case 'personalization':
         return <PersonalizationForm />;
-      case "plan":
+      case 'plan':
         return <PlanBillingSection />;
-      case "account":
+      case 'account':
         return <AccountInfo />;
-      case "security":
+      case 'security':
         return <SecurityForm />;
       default:
         return null;
@@ -79,15 +74,15 @@ export default function AccountPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push("/")}
+          onClick={() => router.push('/')}
           className="gap-1.5 text-sm"
         >
           <ArrowLeft className="size-4" />
-          <span className="hidden sm:inline">{"返回首页"}</span>
+          <span className="hidden sm:inline">{'返回首页'}</span>
         </Button>
         <div className="flex items-center gap-2">
           <User className="size-5 text-sky-500" />
-          <h1 className="text-lg font-semibold">{"账户中心"}</h1>
+          <h1 className="text-lg font-semibold">{'账户中心'}</h1>
         </div>
       </header>
 
@@ -109,7 +104,7 @@ export default function AccountPage() {
                 {SECTIONS.map(({ key, label }) => (
                   <Button
                     key={key}
-                    variant={activeSection === key ? "default" : "ghost"}
+                    variant={activeSection === key ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setActiveSection(key)}
                     className="shrink-0"
@@ -125,11 +120,8 @@ export default function AccountPage() {
 
               <div className="mt-8 rounded-xl border border-slate-200/60 bg-white/60 p-4 dark:border-slate-800/60 dark:bg-slate-900/40">
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  <Link
-                    href="/about"
-                    className="hover:text-sky-600 dark:hover:text-sky-400"
-                  >
-                    关于 OpenMAIC / 开源协议
+                  <Link href="/about" className="hover:text-sky-600 dark:hover:text-sky-400">
+                    关于天空课堂 / 开源协议
                   </Link>
                 </p>
               </div>

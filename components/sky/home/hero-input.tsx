@@ -2,17 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  ArrowUp,
-  Sparkles,
-  Atom,
-  ImageIcon,
-  FileText,
-  X,
-  Mic,
-  Search,
-  Wand2,
-} from 'lucide-react';
+import { ArrowUp, Sparkles, Atom, ImageIcon, FileText, X, Mic, Search, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SpeechButton } from '@/components/audio/speech-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -53,7 +43,8 @@ export function HeroInput({
   selectedStudentIds: string[];
   onTeacherChange: (teacherId: string) => void;
   onStudentsChange: (studentIds: string[]) => void;
-}) {const textareaRef = useRef<HTMLTextAreaElement>(null);
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -64,7 +55,7 @@ export function HeroInput({
         if (canSubmit) onSubmit();
       }
     },
-    [canSubmit, onSubmit]
+    [canSubmit, onSubmit],
   );
 
   const handleDrop = useCallback(
@@ -76,7 +67,7 @@ export function HeroInput({
         onPdfChange(file);
       }
     },
-    [onPdfChange]
+    [onPdfChange],
   );
 
   return (
@@ -90,7 +81,7 @@ export function HeroInput({
           isFocused || isDragging
             ? 'border-sky-400/50 shadow-2xl shadow-sky-500/20 dark:shadow-sky-900/30'
             : 'border-slate-200/50 dark:border-slate-700/50 shadow-xl shadow-slate-200/30 dark:shadow-slate-900/20',
-          isDragging && 'ring-2 ring-sky-400/50 ring-offset-2'
+          isDragging && 'ring-2 ring-sky-400/50 ring-offset-2',
         )}
         onDragOver={(e) => {
           e.preventDefault();
@@ -116,7 +107,7 @@ export function HeroInput({
                     'text-violet-600 dark:text-violet-400',
                     'border border-violet-200/50 dark:border-violet-700/30',
                     'hover:shadow-md hover:shadow-violet-500/10',
-                    'transition-all duration-200'
+                    'transition-all duration-200',
                   )}
                 >
                   <Wand2 className="w-4 h-4" />
@@ -138,7 +129,7 @@ export function HeroInput({
                     'text-sm font-medium transition-all duration-200',
                     webSearch
                       ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-700/50'
-                      : 'bg-slate-50 dark:bg-slate-700/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                      : 'bg-slate-50 dark:bg-slate-700/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50',
                   )}
                 >
                   <Search className="w-4 h-4" />
@@ -148,8 +139,18 @@ export function HeroInput({
                       layoutId="check"
                       className="w-4 h-4 rounded-full bg-sky-500 flex items-center justify-center"
                     >
-                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-2.5 h-2.5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     </motion.div>
                   )}
@@ -171,12 +172,16 @@ export function HeroInput({
                   'text-sm font-medium transition-all duration-200',
                   interactiveMode
                     ? 'bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 text-cyan-600 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-700/50 shadow-md shadow-cyan-500/10'
-                    : 'bg-slate-50 dark:bg-slate-700/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                    : 'bg-slate-50 dark:bg-slate-700/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50',
                 )}
               >
                 <motion.div
                   animate={interactiveMode ? { rotate: 360 } : {}}
-                  transition={{ duration: 2, repeat: interactiveMode ? Infinity : 0, ease: 'linear' }}
+                  transition={{
+                    duration: 2,
+                    repeat: interactiveMode ? Infinity : 0,
+                    ease: 'linear',
+                  }}
                 >
                   <Atom className="w-4 h-4" />
                 </motion.div>
@@ -189,19 +194,25 @@ export function HeroInput({
                 )}
               </motion.button>
             </TooltipTrigger>
-            <TooltipContent>创建可交互的沉浸式课堂</TooltipContent>
+            <TooltipContent>生成可互动的知识点讲解</TooltipContent>
           </Tooltip>
         </div>
 
-        {/* 角色选择器 */}
-        <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30">
-          <AgentSelector
-            selectedTeacherId={selectedTeacherId}
-            selectedStudentIds={selectedStudentIds}
-            onTeacherChange={onTeacherChange}
-            onStudentsChange={onStudentsChange}
-          />
-        </div>
+        {/* 高级协作设置，默认收起，避免用户在开始前先理解 Agent */}
+        <details className="border-b border-slate-100 bg-slate-50/50 dark:border-slate-700/50 dark:bg-slate-800/30">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
+            <span>教学角色与协作设置</span>
+            <span className="text-xs text-slate-400">高级设置</span>
+          </summary>
+          <div className="px-3 pb-3">
+            <AgentSelector
+              selectedTeacherId={selectedTeacherId}
+              selectedStudentIds={selectedStudentIds}
+              onTeacherChange={onTeacherChange}
+              onStudentsChange={onStudentsChange}
+            />
+          </div>
+        </details>
 
         {/* 文本输入区 */}
         <div className="relative">
@@ -221,7 +232,7 @@ export function HeroInput({
               'bg-transparent resize-none',
               'text-[15px] leading-relaxed',
               'placeholder:text-slate-400 dark:placeholder:text-slate-500',
-              'focus:outline-none'
+              'focus:outline-none',
             )}
             rows={9}
           />
@@ -287,7 +298,7 @@ export function HeroInput({
                     'flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer',
                     'text-sm text-slate-600 dark:text-slate-400',
                     'hover:bg-slate-100 dark:hover:bg-slate-700/50',
-                    'transition-colors'
+                    'transition-colors',
                   )}
                 >
                   <ImageIcon className="w-4 h-4" />
@@ -327,10 +338,10 @@ export function HeroInput({
               'transition-all duration-200',
               canSubmit
                 ? 'bg-gradient-to-r from-sky-500 to-blue-500 text-white shadow-lg shadow-sky-500/25 hover:shadow-xl hover:shadow-sky-500/30'
-                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed',
             )}
           >
-            <span>创建课堂</span>
+            <span>开始讲解</span>
             <ArrowUp className={cn('w-4 h-4', canSubmit && '-rotate-45')} />
           </motion.button>
         </div>

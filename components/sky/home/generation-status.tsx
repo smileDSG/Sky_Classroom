@@ -16,7 +16,7 @@ const phaseLabels: Record<string, string> = {
   submitting: '提交请求中...',
   generating_outline: '构思课堂结构...',
   reviewing: '大纲就绪，等待确认',
-  generating_slides: '编排幻灯片中...',
+  generating_slides: '正在安排课堂内容...',
   done: '课堂已就绪',
 };
 
@@ -60,7 +60,9 @@ export function GenerationStatus({ phase, progress, step, jobId }: GenerationSta
                 {step || '可自由浏览其他页面，后台继续处理 — 点击查看详情'}
               </p>
             </div>
-            <span className="text-sm font-semibold text-slate-500 tabular-nums tracking-wide">{progress}%</span>
+            <span className="text-sm font-semibold text-slate-500 tabular-nums tracking-wide">
+              {progress}%
+            </span>
           </div>
           <div className="mt-3.5 h-[2px] rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
             <motion.div
@@ -99,12 +101,12 @@ export function GenerationStatus({ phase, progress, step, jobId }: GenerationSta
             开始你的第一个课堂
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
-            在上方输入框中描述你想要的课堂内容，点击"创建课堂"即可开始
+            在上方输入想弄懂的知识点，点击“开始讲解”即可开始
           </p>
           <div className="flex flex-wrap gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/40 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 cursor-default border border-slate-200/50 dark:border-slate-600/30">
               <Lightbulb className="w-3 h-3 text-amber-500" />
-              试试输入"初中物理：力的作用"
+              试试输入"高中物理：电磁感应"
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/40 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 cursor-default border border-slate-200/50 dark:border-slate-600/30">
               <Compass className="w-3 h-3 text-sky-500" />

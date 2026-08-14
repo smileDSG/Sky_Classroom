@@ -65,7 +65,7 @@ export const ALL_STEPS: GenerationStep[] = [
   {
     id: 'agent-generation',
     title: '正在生成角色',
-    description: '为课堂生成智能体角色...',
+    description: '为课堂生成AI角色...',
     icon: Bot,
     type: 'writing',
   },

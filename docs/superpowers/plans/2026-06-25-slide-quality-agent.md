@@ -6,7 +6,7 @@
 
 **Architecture:** Extend the existing deterministic `layout-guard-agent` into a broader slide quality gate, then feed those signals into `quality-scorer` and `slide-polish`. Prompt contracts remain the first line of defense; deterministic checks catch model drift after generation.
 
-**Tech Stack:** TypeScript, Vitest, Markdown prompt templates, existing OpenMAIC-style element DSL.
+**Tech Stack:** TypeScript, Vitest, Markdown prompt templates, existing 智眸无界-style element DSL.
 
 ---
 
@@ -21,7 +21,7 @@
   - missing dominant visual anchor
   - too few learning text blocks
   - insufficient visual hierarchy
-- [x] Add tests that expect `scoreSlideContent` to penalize thin slides and reward rich OpenMAIC-style slides.
+- [x] Add tests that expect `scoreSlideContent` to penalize thin slides and reward rich 智眸无界-style slides.
 - [x] Run `pnpm vitest run tests/slides/agent/layout-guard-agent.test.ts tests/generation/quality-scorer.test.ts` and confirm the new tests fail for the expected reason.
 
 ### Task 2: Implement Deterministic Slide Richness Checks

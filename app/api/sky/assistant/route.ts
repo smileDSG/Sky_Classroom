@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
       // Use client's system message as base, append learning context
       systemPrompt = clientSystemMsg.content;
       if (allowMemory && mistakes && mistakes.length > 0) {
-        const ctx = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
+          const ctx = buildSystemPrompt(subj, difficulty || 'senior', style || 'detailed', {
           mistakes: mistakes,
           graphNodes: graphNodes ?? undefined,
           solveHistory: allowRag ? (solveHistory ?? undefined) : undefined,
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
         systemPrompt += '\n\n' + ctx.split('\n').slice(1).join('\n'); // append context without duplicating base
       }
     } else {
-      systemPrompt = buildSystemPrompt(subj, difficulty || 'junior', style || 'detailed', {
+      systemPrompt = buildSystemPrompt(subj, difficulty || 'senior', style || 'detailed', {
         mistakes: allowMemory ? (mistakes ?? undefined) : undefined,
         graphNodes: allowMemory ? (graphNodes ?? undefined) : undefined,
         solveHistory: allowRag ? (solveHistory ?? undefined) : undefined,
@@ -186,6 +186,33 @@ export async function POST(req: NextRequest) {
 
     (async () => {
       try {
+        const safeEvidence = evidence
+          ? {
+              summary: evidence.summary,
+              items: evidence.items.slice(0, 3).map((item) => ({
+                type: item.type,
+                title: item.title,
+                summary: item.summary,
+                knowledgePoints: item.knowledgePoints,
+              })),
+            }
+          : null;
+        const focusTopic =
+          safeEvidence?.items.flatMap((item) => item.knowledgePoints)[0] ??
+          profile?.weakPoints.find((point) => latestUserMessage.includes(point));
+
+        await writer.write(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              type: 'personalization',
+              strategy,
+              evidence: safeEvidence,
+              actionPlan,
+              focusTopic,
+            })}\n\n`,
+          ),
+        );
+
         for await (const chunk of result.textStream) {
           const event = `data: ${JSON.stringify({ type: 'text_delta', content: chunk })}\n\n`;
           await writer.write(encoder.encode(event));

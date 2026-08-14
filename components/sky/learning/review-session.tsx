@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import type { MistakeRecord } from '@/lib/mistakes/types';
+import Link from 'next/link';
+import { ArrowRight, BrainCircuit, CheckCircle2, Loader2, TriangleAlert } from 'lucide-react';
+import type { MistakeRecord, MistakeReviewResult } from '@/lib/mistakes/types';
 import { ReviewCard, type ReviewPhase } from './review-card';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { EBBINGHAUS_INTERVALS } from '@/lib/storage/dao/mistakes';
@@ -18,6 +20,14 @@ interface ItemResult {
   id: string;
   correct: boolean;
   hintsUsed: number;
+  syncState: 'pending' | 'done' | 'failed';
+  reviewResult: MistakeReviewResult | null;
+}
+
+interface ReviewFeedback {
+  id: string;
+  syncState: ItemResult['syncState'];
+  reviewResult: MistakeReviewResult | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -43,6 +53,25 @@ function formatDuration(ms: number): string {
   return `${minutes}分${seconds}秒`;
 }
 
+function formatPercent(value: number | null): string {
+  return value === null ? '暂无' : `${Math.round(value * 100)}%`;
+}
+
+function buildDecisionTarget(result: MistakeReviewResult): { href: string; label: string } {
+  const decision = result.profileUpdate.learnerDecision;
+  const topic = decision.topic ? `?topic=${encodeURIComponent(decision.topic)}` : '';
+  if (decision.action === 'teach') {
+    return { href: `/sky/cloud-mind/teaching${topic}`, label: '按最新学习情况补课' };
+  }
+  if (decision.action === 'review') {
+    return { href: `/sky/cloud-mind/memory${topic}`, label: '进入下一轮复习' };
+  }
+  return {
+    href: `/sky/cloud-mind/quiz${topic}`,
+    label: decision.action === 'diagnostic' ? '做一道确认题' : '按最新学习情况练习',
+  };
+}
+
 // ── Component ─────────────────────────────────────────────────────
 
 export function ReviewSession({ items, onClose }: ReviewSessionProps) {
@@ -55,6 +84,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
   const [startTime] = useState(Date.now());
   const [showSummary, setShowSummary] = useState(false);
   const [lastResult, setLastResult] = useState<boolean | null>(null);
+  const [lastReviewFeedback, setLastReviewFeedback] = useState<ReviewFeedback | null>(null);
   const [transitioning, setTransitioning] = useState(false);
 
   const currentItem = items[currentIndex];
@@ -108,11 +138,37 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
       // Record result
       setResults((prev) => [
         ...prev,
-        { id: currentItem.id, correct, hintsUsed },
+        {
+          id: currentItem.id,
+          correct,
+          hintsUsed,
+          syncState: 'pending',
+          reviewResult: null,
+        },
       ]);
+      setLastReviewFeedback({
+        id: currentItem.id,
+        syncState: 'pending',
+        reviewResult: null,
+      });
 
       // Update store
-      markReviewed(currentItem.id, correct);
+      void markReviewed(currentItem.id, correct).then((reviewResult) => {
+        const syncState = reviewResult ? 'done' : 'failed';
+        setResults((prev) => {
+          const next = [...prev];
+          const resultIndex = next.findLastIndex((item) => item.id === currentItem.id);
+          if (resultIndex >= 0) {
+            next[resultIndex] = {
+              ...next[resultIndex],
+              syncState,
+              reviewResult,
+            };
+          }
+          return next;
+        });
+        setLastReviewFeedback({ id: currentItem.id, syncState, reviewResult });
+      });
 
       // Auto-advance after delay
       setTimeout(() => {
@@ -146,6 +202,7 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
       setResults([]);
       setShowSummary(false);
       setLastResult(null);
+      setLastReviewFeedback(null);
     }
   }, [items, results]);
 
@@ -157,6 +214,33 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
     const duration = Date.now() - startTime;
     return { correctCount, wrongCount, duration };
   }, [results, startTime]);
+
+  const profileSummary = useMemo(() => {
+    const completed = results
+      .map((result) => result.reviewResult)
+      .filter((result): result is MistakeReviewResult => result !== null);
+    const changesByPoint = new Map<
+      string,
+      MistakeReviewResult['profileUpdate']['changes'][number]
+    >();
+    for (const result of completed) {
+      for (const change of result.profileUpdate.changes) {
+        const previous = changesByPoint.get(change.knowledgePoint);
+        changesByPoint.set(change.knowledgePoint, {
+          ...change,
+          masteryBefore: previous?.masteryBefore ?? change.masteryBefore,
+          confidenceBefore: previous?.confidenceBefore ?? change.confidenceBefore,
+          evidenceCountBefore: previous?.evidenceCountBefore ?? change.evidenceCountBefore,
+        });
+      }
+    }
+    return {
+      changes: [...changesByPoint.values()],
+      latestResult: completed.at(-1) ?? null,
+      pendingCount: results.filter((result) => result.syncState === 'pending').length,
+      failedCount: results.filter((result) => result.syncState === 'failed').length,
+    };
+  }, [results]);
 
   // ── Render: Summary ─────────────────────────────────────────────
 
@@ -209,6 +293,86 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
           <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
             用时 {formatDuration(summaryStats.duration)}
           </p>
+
+          <div className="mt-5 rounded-2xl border border-cyan-200 bg-gradient-to-br from-cyan-50 via-sky-50 to-indigo-50 p-4 text-left dark:border-cyan-200/15 dark:from-cyan-950/40 dark:via-sky-950/35 dark:to-indigo-950/35">
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+              <BrainCircuit className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+              学习情况已处理本轮复习
+            </div>
+
+            {profileSummary.pendingCount > 0 && (
+              <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-xs text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-600" />
+                还有 {profileSummary.pendingCount} 道题正在更新掌握情况…
+              </div>
+            )}
+
+            {profileSummary.changes.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {profileSummary.changes.slice(0, 4).map((change) => {
+                  const improved =
+                    (change.masteryAfter ?? 0) >= (change.masteryBefore ?? change.masteryAfter ?? 0);
+                  return (
+                    <div
+                      key={change.knowledgePoint}
+                      className="rounded-xl border border-white/80 bg-white/75 px-3 py-2 dark:border-white/[0.07] dark:bg-white/[0.05]"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="truncate text-xs font-semibold text-slate-800 dark:text-slate-100">
+                          {change.knowledgePoint}
+                        </span>
+                        <span
+                          className={`shrink-0 text-xs font-bold ${
+                            improved
+                              ? 'text-emerald-600 dark:text-emerald-300'
+                              : 'text-rose-600 dark:text-rose-300'
+                          }`}
+                        >
+                          {formatPercent(change.masteryBefore)} →{' '}
+                          {formatPercent(change.masteryAfter)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+                        记录数 {change.evidenceCountBefore} → {change.evidenceCountAfter} · 判断把握{' '}
+                        {formatPercent(change.confidenceBefore)} →{' '}
+                        {formatPercent(change.confidenceAfter)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {profileSummary.latestResult && (
+              <div className="mt-3 rounded-xl bg-slate-950 px-3 py-3 text-white dark:bg-cyan-200 dark:text-slate-950">
+                <div className="text-[10px] font-semibold opacity-65">重新计算后的下一步</div>
+                <div className="mt-1 text-xs font-bold">
+                  {profileSummary.latestResult.profileUpdate.learnerDecision.summary}
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <span className="truncate text-[10px] opacity-70">
+                    目标：
+                    {profileSummary.latestResult.profileUpdate.learnerDecision.topic ??
+                      '继续积累学习记录'}
+                  </span>
+                  <Link
+                    href={buildDecisionTarget(profileSummary.latestResult).href}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white/15 px-2.5 py-1.5 text-[10px] font-semibold hover:bg-white/20 dark:bg-slate-950 dark:text-white"
+                  >
+                    {buildDecisionTarget(profileSummary.latestResult).label}
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {profileSummary.failedCount > 0 && (
+              <div className="mt-3 flex items-start gap-2 text-[10px] leading-relaxed text-amber-700 dark:text-amber-300">
+                <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                {profileSummary.failedCount} 道题的学习情况暂时没有更新；本地复习进度已保留，可稍后再复习同步。
+              </div>
+            )}
+          </div>
 
           <div className="mt-6 flex gap-3">
             <button
@@ -310,6 +474,51 @@ export function ReviewSession({ items, onClose }: ReviewSessionProps) {
                       ? `下次复习: ${formatNextReview(currentItem.reviewCount, true)}`
                       : `复习进度已重置 · 下次复习: ${formatNextReview(0, false)}`}
                   </p>
+                  {lastReviewFeedback?.id === currentItem.id && (
+                    <div className="mx-auto mt-3 max-w-sm rounded-xl border border-white/80 bg-white/75 px-3 py-2 text-left dark:border-white/10 dark:bg-white/[0.06]">
+                      {lastReviewFeedback.syncState === 'pending' && (
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-600" />
+                          正在保存这次复习结果…
+                        </div>
+                      )}
+                      {lastReviewFeedback.syncState === 'done' &&
+                        lastReviewFeedback.reviewResult && (
+                          <div className="flex items-start gap-2">
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                            <div>
+                              <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                                学习情况已更新
+                              </div>
+                              {lastReviewFeedback.reviewResult.profileUpdate.changes[0] && (
+                                <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-300">
+                                  {
+                                    lastReviewFeedback.reviewResult.profileUpdate.changes[0]
+                                      .knowledgePoint
+                                  }
+                                  ：
+                                  {formatPercent(
+                                    lastReviewFeedback.reviewResult.profileUpdate.changes[0]
+                                      .masteryBefore,
+                                  )}{' '}
+                                  →{' '}
+                                  {formatPercent(
+                                    lastReviewFeedback.reviewResult.profileUpdate.changes[0]
+                                      .masteryAfter,
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      {lastReviewFeedback.syncState === 'failed' && (
+                        <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300">
+                          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          本地进度已更新，但学习情况暂时没有同步。
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {!isLast && (
                     <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
                       自动进入下一题...

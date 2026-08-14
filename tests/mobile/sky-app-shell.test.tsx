@@ -1,9 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { SkyAppShell } from "@/components/sky/layout/app-shell";
 
 vi.mock("@/components/auth/auth-provider", () => ({
-  useAuth: () => ({ user: null, refresh: vi.fn() }),
+  useOptionalAuth: () => ({ user: null, refresh: vi.fn() }),
 }));
 
 vi.mock("@/lib/hooks/use-study-timer", () => ({
@@ -54,5 +54,22 @@ describe("SkyAppShell mobile integration", () => {
 
     expect(screen.getAllByText("页面正文")).toHaveLength(2);
     expect(screen.getByLabelText("移动端主导航")).toBeInTheDocument();
+  });
+
+  test("allows each desktop workspace section to expand and collapse", () => {
+    render(
+      <SkyAppShell>
+        <div>页面正文</div>
+      </SkyAppShell>,
+    );
+
+    const learningSection = screen.getByRole("button", { name: "学习工作台" });
+
+    expect(learningSection).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(learningSection);
+    expect(learningSection).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(learningSection);
+    expect(learningSection).toHaveAttribute("aria-expanded", "true");
   });
 });

@@ -3,15 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Star, Brain, TrendingUp, Feather, GraduationCap } from 'lucide-react';
+import { BookOpenCheck, LibraryBig, Presentation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const NAV_ITEMS: { label: string; href: string; icon: typeof Star; badge?: number }[] = [
-  { label: '天穹授课', href: '/', icon: GraduationCap },
-  { label: '今日学习', href: '/sky', icon: Star },
-  { label: '云端智囊', href: '/sky/cloud-mind', icon: Brain },
-  { label: '学习路线', href: '/sky/learning', icon: TrendingUp },
-  { label: '云翼助手', href: '/sky/assistant', icon: Feather },
+const NAV_ITEMS: { label: string; href: string; icon: typeof BookOpenCheck; badge?: number }[] = [
+  { label: '学习', href: '/sky', icon: BookOpenCheck },
+  { label: '备课', href: '/sky/teaching', icon: Presentation },
+  { label: '资源', href: '/sky/cloud-mind', icon: LibraryBig },
 ];
 
 export function SkyTabBar() {

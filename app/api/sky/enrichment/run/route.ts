@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       'math', 'physics', 'chemistry', 'chinese', 'english',
       'biology', 'history', 'geography', 'politics',
     ]);
-    const VALID_GRADES = new Set<GradeLevel>(['junior', 'senior', 'college']);
+    const VALID_GRADES = new Set<GradeLevel>(['senior', 'college']);
 
     if (body.subjects) {
       for (const s of body.subjects) {

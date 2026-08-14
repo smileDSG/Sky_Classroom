@@ -187,6 +187,7 @@ export function buildCompleteScene(
       type: 'slide',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'slide',
         canvas: slide,
@@ -204,6 +205,7 @@ export function buildCompleteScene(
       type: 'quiz',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'quiz',
         questions: content.questions,
@@ -221,6 +223,7 @@ export function buildCompleteScene(
       type: 'interactive',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'interactive',
         url: '',
@@ -243,6 +246,7 @@ export function buildCompleteScene(
       type: 'pbl',
       title: outline.title,
       order: outline.order,
+      knowledgePoints: outline.keyPoints,
       content: {
         type: 'pbl',
         projectConfig: content.projectConfig,

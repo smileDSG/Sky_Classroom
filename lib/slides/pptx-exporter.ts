@@ -155,7 +155,7 @@ export async function exportPptx(options: PptxExportOptions): Promise<PptxExport
   // Build document
   const pptx = new pptxgen();
   pptx.layout = 'LAYOUT_WIDE';
-  pptx.author = 'OpenMAIC Sky Classroom';
+  pptx.author = '天空课堂';
   pptx.title = coverTitle;
   pptx.subject = title;
 

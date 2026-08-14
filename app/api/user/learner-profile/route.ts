@@ -5,6 +5,11 @@ import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/reposi
 import { LearnerProfileService } from '@/lib/adaptive-learning/profile/service';
 import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
 import { learnerPreferencesInputSchema } from '@/lib/adaptive-learning/contracts';
+import { readUniversalOnboarding } from '@/lib/onboarding/migration';
+import {
+  integrateCompletedOnboardingProfile,
+  isOnboardingProfileIntegrated,
+} from '@/lib/onboarding/profile-integration';
 import { z } from 'zod';
 
 const savePreferencesRequestSchema = z
@@ -21,7 +26,25 @@ export async function GET() {
   try {
     const storage = await getRequiredServerStorage();
     const repository = new LearnerProfileRepository(storage);
-    const preferences = await repository.getLatestPreferences(auth.user.id);
+    let preferences = await repository.getLatestPreferences(auth.user.id);
+
+    const onboarding = readUniversalOnboarding(auth.user);
+    if (onboarding?.status === 'completed') {
+      const integrated = await isOnboardingProfileIntegrated({
+        storage,
+        userId: auth.user.id,
+        profile: onboarding,
+      });
+      if (!preferences || !integrated) {
+        preferences = (
+          await integrateCompletedOnboardingProfile({
+            storage,
+            userId: auth.user.id,
+            profile: onboarding,
+          })
+        ).preferences;
+      }
+    }
 
     if (!preferences) {
       return apiError('PROFILE_NOT_FOUND', 404, 'Learner profile not found');
@@ -29,10 +52,7 @@ export async function GET() {
 
     return apiSuccess({ preferences });
   } catch (error) {
-    if (
-      error instanceof AdaptiveLearningError &&
-      error.code === 'PERSISTENT_STORAGE_UNAVAILABLE'
-    ) {
+    if (error instanceof AdaptiveLearningError && error.code === 'PERSISTENT_STORAGE_UNAVAILABLE') {
       return apiError(
         'PERSISTENT_STORAGE_UNAVAILABLE',
         503,

@@ -26,6 +26,7 @@ export interface CreateSceneParams {
   type: SceneType;
   title: string;
   content?: Partial<SceneContent>;
+  knowledgePoints?: string[];
   order?: number;
   actions?: Action[];
 }

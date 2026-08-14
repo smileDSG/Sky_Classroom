@@ -8,7 +8,7 @@
 
 ## 一、模块概述
 
-将 OpenMAIC-B-001 的 Sky Classroom 幻灯片模块从"功能可用"升级为"视觉精美、导出专业、模板丰富"的生产级课件生成系统。覆盖前端预览器、PPT 导出引擎、模板设计体系三大核心子系统。
+将 智眸无界-B-001 的 Sky Classroom 幻灯片模块从"功能可用"升级为"视觉精美、导出专业、模板丰富"的生产级课件生成系统。覆盖前端预览器、PPT 导出引擎、模板设计体系三大核心子系统。
 
 ---
 
@@ -86,7 +86,7 @@
 | `components/sky/slides/theme-picker.tsx` | 卡片式预览、字体/颜色展示 | P1 |
 | `components/sky/slides/thumbnail-list.tsx` | 集成缩略图渲染 | P1 |
 | `components/sky/slides/avatar-player.tsx` | 讲解进度控制、翻页联动 | P1 |
-| `components/sky/slides/avatar-selector.tsx` | 视觉微调（保持现有结构） | P2 |
+| `components/sky/slides/avatar-selector.tsx` | 视觉细节调整（保持现有结构） | P2 |
 | `lib/slides/types.ts` | 扩展类型定义（主题 Token、模板参数） | P0 |
 | `lib/slides/index.ts` | 导出新增模块 | P0 |
 

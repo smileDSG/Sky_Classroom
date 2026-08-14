@@ -2,7 +2,8 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import CloudMindPage from '@/app/sky/cloud-mind/page';
-import type { CloudMindDashboardData } from '@/lib/cloud-mind/types';
+import { buildToolPersonalizationPolicies } from '@/lib/cloud-mind/tool-policies';
+import type { CloudMindDashboardData, PersonalizationContext } from '@/lib/cloud-mind/types';
 
 vi.mock('@/components/sky/layout/app-shell', () => ({
   SkyAppShell: ({ children }: { children: React.ReactNode }) => <main>{children}</main>,
@@ -121,18 +122,49 @@ const dashboard: CloudMindDashboardData = {
   },
 };
 
+const personalizationContext = {
+  userId: 'student-1',
+  generatedAt: Date.now(),
+  hasLearningData: true,
+  hasPersonalizationSignals: true,
+  weakPoints: dashboard.weakPoints,
+  masteryByKnowledge: { 二次函数: 48 },
+  recentAccuracy: 80,
+  dueReviews: dashboard.dueReviews,
+  errorPatterns: [],
+  preferredDifficulty: 'medium',
+  toolPolicies: buildToolPersonalizationPolicies({
+    tutoringPolicy: {
+      targetTopic: '二次函数',
+      difficulty: 'medium',
+      explanationStyle: 'step_first',
+      resourceFormats: ['worked_example'],
+      pacing: 'steady',
+      directives: [],
+      evidence: [],
+    },
+    weakPoints: dashboard.weakPoints,
+    dueReviews: dashboard.dueReviews,
+  }),
+  recommendation: null,
+} as PersonalizationContext;
+
 describe('CloudMindPage', () => {
   const mockFetch = vi.fn();
 
   beforeEach(() => {
     mockFetch.mockReset();
-    mockFetch.mockResolvedValue({
-      json: async () => ({ success: true, data: dashboard }),
-    } as Response);
+    mockFetch
+      .mockResolvedValueOnce({
+        json: async () => ({ success: true, data: dashboard }),
+      } as Response)
+      .mockResolvedValueOnce({
+        json: async () => ({ success: true, data: personalizationContext }),
+      } as Response);
     global.fetch = mockFetch;
   });
 
-  it('keeps five tool cards while limiting dashboard data to one tool suggestion', async () => {
+  it('keeps six tool cards while giving each card a personalized next action', async () => {
     render(<CloudMindPage />);
 
     expect(screen.getByText('拍照搜题')).toBeInTheDocument();
@@ -140,16 +172,30 @@ describe('CloudMindPage', () => {
     expect(screen.getByText('智能出题')).toBeInTheDocument();
     expect(screen.getByText('记忆卡片')).toBeInTheDocument();
     expect(screen.getByText('智能授课')).toBeInTheDocument();
+    expect(screen.getByText('课程资源工坊')).toBeInTheDocument();
 
     expect(await screen.findByText('今日推荐工具')).toBeInTheDocument();
-    expect(screen.getByText('先复习二次函数')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /开始练习/ })).toHaveAttribute(
-      'href',
-      '/sky/cloud-mind/quiz?topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0',
-    );
+    expect(screen.getAllByText('先复习二次函数')).toHaveLength(2);
+    expect(
+      screen
+        .getAllByRole('link', { name: '开始练习' })
+        .some(
+          (link) =>
+            link.getAttribute('href') ===
+            '/sky/cloud-mind/quiz?topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0',
+        ),
+    ).toBe(true);
     expect(screen.getByRole('link', { name: '生成记忆卡片' })).toHaveAttribute(
       'href',
       expect.stringContaining('/sky/cloud-mind/memory?topic='),
+    );
+    expect(screen.getByRole('link', { name: '智能出题：开始小测' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0'),
+    );
+    expect(screen.getByRole('link', { name: '课程资源工坊：进入资源工坊' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('topic=%E4%BA%8C%E6%AC%A1%E5%87%BD%E6%95%B0'),
     );
 
     expect(screen.queryByText('待复习队列')).not.toBeInTheDocument();

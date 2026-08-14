@@ -3,11 +3,13 @@ import type { KnowledgeState } from '@/lib/adaptive-learning/contracts';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { QuizAttempt } from '@/lib/student/quiz-attempts';
 import type { StudentProfile } from '@/lib/student/profile-types';
+import { canonicalizeKnowledgePoint } from '@/lib/adaptive-learning/knowledge/knowledge-point-registry';
 import {
   buildKnowledgePointEvidence,
   buildNewUserEvidence,
   countRecentMistakesByKnowledge,
 } from './evidence-builder';
+import { isInternalKnowledgePoint } from './topic-label';
 import type {
   CloudMindDashboardData,
   DueReviewItem,
@@ -84,6 +86,24 @@ function average(values: number[]): number {
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
+function resolveKnowledgePointName(input: {
+  state: KnowledgeState;
+  fallbackNames: string[];
+  recentNames: Iterable<string>;
+}): string {
+  const candidates = [input.state.displayName, ...input.fallbackNames, ...input.recentNames].filter(
+    (value): value is string => Boolean(value) && !isInternalKnowledgePoint(value),
+  );
+
+  const matched = candidates.find(
+    (value) => canonicalizeKnowledgePoint(value).id === input.state.nodeId,
+  );
+  if (matched) return matched;
+
+  const knownName = canonicalizeKnowledgePoint(input.state.displayName ?? input.state.nodeId).name;
+  return isInternalKnowledgePoint(knownName) ? '当前知识点' : knownName;
+}
+
 function hasProfileLearningData(profile: StudentProfile | null): boolean {
   return (
     (profile?.totalQuestions ?? 0) > 0 ||
@@ -113,13 +133,27 @@ function buildKnowledgeStateWeakPoints(
   recentCounts: Map<string, number>,
   dueCounts: Map<string, number>,
   kbStats: KBStats | null,
+  fallbackNames: string[] = [],
 ): WeakPointSummary[] {
-  return states
+  const byConcept = new Map<string, KnowledgeState>();
+  for (const state of states) {
+    const point = canonicalizeKnowledgePoint(state.displayName ?? state.nodeId);
+    const current = byConcept.get(point.id);
+    if (!current || state.evidenceCount > current.evidenceCount) {
+      byConcept.set(point.id, state);
+    }
+  }
+
+  return [...byConcept.values()]
     .filter((state) => state.mastery < 0.5)
     .sort((a, b) => a.mastery - b.mastery)
     .slice(0, 5)
     .map((state) => {
-      const knowledgePoint = state.displayName ?? state.nodeId;
+      const knowledgePoint = resolveKnowledgePointName({
+        state,
+        fallbackNames,
+        recentNames: recentCounts.keys(),
+      });
       const masteryPercent = Math.round(state.mastery * 100);
       return {
         knowledgePoint,
@@ -200,6 +234,7 @@ function deriveWeakPoints(input: {
     recentCounts,
     dueCounts,
     input.kbStats,
+    weakPointNames,
   );
 
   return mergeWeakPoints(profileWeakPoints, knowledgeStateWeakPoints);

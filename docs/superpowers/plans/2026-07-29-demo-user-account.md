@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Username is exactly `demo` and password is exactly `OpenMAIC123!`.
+- Username is exactly `demo` and password is exactly `SkyClassroom123!`.
 - The account has `role: 'user'`, `planType: 'free'`, and `learningOnboarding: null`.
 - Enable outside production; in production require `ENABLE_DEMO_ACCOUNT=true`.
 - Never reset or update an existing `demo` account.
@@ -69,7 +69,7 @@ Expected: FAIL because `@/lib/server/demo-user` and `@/lib/auth/demo-account` do
 
 ```ts
 export const DEMO_USERNAME = 'demo';
-export const DEMO_PASSWORD = 'OpenMAIC123!';
+export const DEMO_PASSWORD = 'SkyClassroom123!';
 ```
 
 `lib/server/demo-user.ts`:
@@ -150,7 +150,7 @@ Mock the demo helper and assert:
 mockIsDemoAccountEnabled.mockReturnValue(true);
 expect(await (await GET()).json()).toEqual({ enabled: true });
 
-await POST(loginRequest({ emailOrUsername: 'demo', password: 'OpenMAIC123!' }));
+await POST(loginRequest({ emailOrUsername: 'demo', password: 'SkyClassroom123!' }));
 expect(mockEnsureDemoUser).toHaveBeenCalledTimes(1);
 
 await POST(loginRequest({ emailOrUsername: 'alice', password: 'password123' }));
@@ -215,7 +215,7 @@ mockFetch.mockResolvedValue(
 render(<LoginPage />);
 expect(await screen.findByText('普通测试用户')).toBeVisible();
 expect(screen.getByText('demo')).toBeVisible();
-expect(screen.getByText('OpenMAIC123!')).toBeVisible();
+expect(screen.getByText('SkyClassroom123!')).toBeVisible();
 ```
 
 Add a disabled response test and assert the ordinary-user hint is absent while the administrator hint
@@ -236,7 +236,7 @@ ordinary hint only when enabled, with the visible label `普通测试用户` and
 Add to `.env.example`:
 
 ```dotenv
-# Enable the fixed demo / OpenMAIC123! account in production demo deployments.
+# Enable the fixed demo / SkyClassroom123! account in production demo deployments.
 ENABLE_DEMO_ACCOUNT=false
 ```
 
@@ -256,7 +256,7 @@ Expected: all focused commands PASS.
 - [ ] **Step 5: Verify with Edge**
 
 Open `http://localhost:3004/auth/login` in a fresh Edge context. Assert the ordinary account hint is
-visible, submit `demo / OpenMAIC123!`, and verify the final URL is
+visible, submit `demo / SkyClassroom123!`, and verify the final URL is
 `/sky/onboarding?redirect=%2Fsky`. Capture a desktop screenshot and check browser console errors.
 
 - [ ] **Step 6: Commit the implementation**

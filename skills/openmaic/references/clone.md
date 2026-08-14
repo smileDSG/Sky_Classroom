@@ -2,11 +2,11 @@
 
 ## Goal
 
-Establish which OpenMAIC checkout will be used for setup and runtime actions.
+Establish which 智眸无界 checkout will be used for setup and runtime actions.
 
 ## Procedure
 
-1. Check whether OpenMAIC already exists locally.
+1. Check whether 智眸无界 already exists locally.
 2. If a checkout exists, show the path and ask whether to reuse it.
 3. If no checkout exists, propose cloning the repo and ask for confirmation.
 4. After clone, confirm dependency installation separately.
@@ -22,7 +22,7 @@ Clone:
 
 ```bash
 git clone https://github.com/THU-MAIC/OpenMAIC.git
-cd OpenMAIC
+cd 智眸无界
 ```
 
 Install dependencies:

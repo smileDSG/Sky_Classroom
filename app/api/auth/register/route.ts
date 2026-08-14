@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = RegisterSchema.safeParse(body);
     if (!parsed.success) {
-      return apiError('INVALID_REQUEST', 400, 'Validation failed', parsed.error.issues[0].message);
+      return apiError('INVALID_REQUEST', 400, '注册信息格式不正确', parsed.error.issues[0].message);
     }
 
     const { email, username, password } = parsed.data;
@@ -33,12 +33,12 @@ export async function POST(request: Request) {
     if (email) {
       const existing = await dao.getByEmail(email);
       if (existing) {
-        return apiError('EMAIL_EXISTS', 409, 'Email already registered');
+        return apiError('EMAIL_EXISTS', 409, '该邮箱已被注册');
       }
     }
     const byName = await dao.getByUsername(username);
     if (byName) {
-      return apiError('USERNAME_EXISTS', 409, 'Username already taken');
+      return apiError('USERNAME_EXISTS', 409, '该用户名已被使用');
     }
 
     const passwordHash = await hashPassword(password);
@@ -115,6 +115,6 @@ export async function POST(request: Request) {
     });
     return response;
   } catch (_err) {
-    return apiError('INTERNAL_ERROR', 500, 'Registration failed');
+    return apiError('INTERNAL_ERROR', 500, '注册失败，请稍后重试');
   }
 }

@@ -56,6 +56,8 @@ RUN groupadd --system --gid 1001 nodejs && \
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# 演示数据：软件杯零密钥演示依赖 data/demo 与 data/course-knowledge，必须随镜像分发。
+COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 
 USER nextjs
 

@@ -570,7 +570,7 @@ function auditColoredPanelUsage<T extends LayoutElement>(elements: T[]): LayoutG
   return [
     {
       type: 'excessive_colored_panels',
-      detail: `Slide uses ${panels.length} large colored background boxes; clean OpenMAIC pages should use at most one pale panel plus thin dividers`,
+      detail: `Slide uses ${panels.length} large colored background boxes; clean 天空课堂 pages should use at most one pale panel plus thin dividers`,
     },
   ];
 }

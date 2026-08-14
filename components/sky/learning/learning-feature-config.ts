@@ -17,7 +17,7 @@ export const LEARNING_FEATURES = [
   },
   {
     key: 'graph',
-    label: '知识图谱',
+    label: '知识地图',
     desc: '定位薄弱知识点和先修关系',
     href: '/sky/learning/graph',
     icon: Network,
@@ -25,14 +25,14 @@ export const LEARNING_FEATURES = [
   {
     key: 'stats',
     label: '学习统计',
-    desc: '查看学习趋势、错因分布和掌握度',
+    desc: '查看学习趋势、错因分布和掌握情况',
     href: '/sky/learning/stats',
     icon: BarChart3,
   },
   {
     key: 'profile',
-    label: '学情分析',
-    desc: '生成多维能力画像和个性建议',
+    label: '学习分析',
+    desc: '生成学习情况和个性建议',
     href: '/sky/learning/profile?from=learning',
     icon: ShieldCheck,
   },

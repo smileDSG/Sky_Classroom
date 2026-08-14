@@ -243,7 +243,7 @@ import { MobileSheet, MobileActionMenu } from "@/components/mobile";
 
 ### 6.3 `/about` 入口未确认
 
-`/account` 中加入了“关于 OpenMAIC / 开源协议”入口，当前指向 `/about`。如果项目没有正式 `/about` 页面，需要后续补齐或改到已有设置/说明页。
+`/account` 中加入了“关于 智眸无界 / 开源协议”入口，当前指向 `/about`。如果项目没有正式 `/about` 页面，需要后续补齐或改到已有设置/说明页。
 
 ## 7. 队员 B 开工前确认清单
 

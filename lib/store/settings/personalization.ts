@@ -128,7 +128,7 @@ export function getDefaultPersonalizationState(): Omit<
   keyof PersonalizationSliceActions
 > {
   return {
-    educationLevel: 'middle',
+    educationLevel: 'high',
     grade: '',
     favoriteSubjects: DEFAULT_SUBJECTS,
     learningStyle: 'balanced',

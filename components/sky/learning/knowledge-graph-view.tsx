@@ -541,7 +541,7 @@ export function KnowledgeGraphView() {
       <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 shadow-sm dark:bg-slate-800">
         <div className="text-6xl">🧠</div>
         <h3 className="mt-4 text-lg font-semibold text-gray-700 dark:text-slate-200">
-          暂无知识图谱数据
+          暂无知识地图数据
         </h3>
         <p className="mt-2 text-sm text-gray-400 dark:text-slate-400">完成一些练习后自动生成</p>
       </div>
@@ -553,7 +553,7 @@ export function KnowledgeGraphView() {
   return (
     <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800" ref={containerRef}>
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-200">知识图谱</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-200">知识地图</h3>
         <div className="flex items-center gap-2">
           {matchingNodeIds !== null && (
             <span className="text-xs text-muted-foreground">
@@ -670,7 +670,7 @@ export function KnowledgeGraphView() {
             </div>
             <div className="mt-1 space-y-0.5 text-xs text-gray-500 dark:text-slate-400">
               <div>类别：{tooltip.node.category}</div>
-              <div>掌握度：{tooltip.node.mastery}%</div>
+              <div>掌握情况：{tooltip.node.mastery}%</div>
               <div>复习进度：{Math.round(tooltip.node.reviewProgress * 100)}%</div>
               <div>题量：{tooltip.node.problemCount}</div>
               <div>错题数：{tooltip.node.mistakeCount}</div>
@@ -747,7 +747,7 @@ export function KnowledgeGraphView() {
       {learningPath && learningPath.nodes.length > 1 && (
         <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-800/50 dark:bg-blue-900/10">
           <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">
-            推荐学习路径
+            推荐学习安排
           </h4>
           <div className="flex flex-wrap items-center gap-1">
             {learningPath.nodes.map((nodeId, i) => {

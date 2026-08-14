@@ -422,7 +422,7 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
                     {item.problemText}
                   </p>
                   <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-400">
-                    复习 {item.reviewCount} 次 · 掌握度{' '}
+                    复习 {item.reviewCount} 次 · 掌握情况{' '}
                     {'⭐'.repeat(Math.min(item.masteryLevel, 6)) || '—'}
                   </p>
                   {/* Expanded review mode */}

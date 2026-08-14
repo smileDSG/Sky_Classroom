@@ -14,7 +14,7 @@ import {
   User,
 } from 'lucide-react';
 import { useUserProfileStore, AVATAR_OPTIONS } from '@/lib/store/user-profile';
-import { useAuth } from '@/components/auth/auth-provider';
+import { useOptionalAuth } from '@/components/auth/auth-provider';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,7 +33,7 @@ export function FloatingUserCard({
 }: {
   onUpgradeOpen: () => void;
 }) {const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout } = useOptionalAuth();
   const avatar = useUserProfileStore((s) => s.avatar);
   const nickname = useUserProfileStore((s) => s.nickname);
   const bio = useUserProfileStore((s) => s.bio);

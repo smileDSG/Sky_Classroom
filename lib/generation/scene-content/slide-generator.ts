@@ -1,7 +1,7 @@
 /**
  * Slide content generation for classroom scenes.
  *
- * This uses the OpenMAIC element-level slide generator: the model produces
+ * This uses the 天空课堂 element-level slide generator: the model produces
  * Canvas/PPT elements directly, and the classroom renderer displays those
  * elements through the existing slide canvas. It intentionally avoids the
  * template-data layout path so `/classroom` keeps richer generated slides.
@@ -484,7 +484,7 @@ export async function generateSlideContent(
 
 ## REQUIRED SCHEMA RETRY
 
-Your previous response did not match the OpenMAIC slide schema. Return the slide again as pure JSON with this exact top-level shape:
+Your previous response did not match the 天空课堂 slide schema. Return the slide again as pure JSON with this exact top-level shape:
 
 {
   "background": { "type": "solid", "color": "#ffffff" },
@@ -534,7 +534,7 @@ Hard rules:
 
   if (blockingIssues.length > 0) {
     log.warn(
-      `OpenMAIC slide QA found ${blockingIssues.length} blocking layout issue(s) for "${outline.title}"; retrying page design.`,
+      `天空课堂 slide QA found ${blockingIssues.length} blocking layout issue(s) for "${outline.title}"; retrying page design.`,
     );
     const retryPrompt = `${prompts.user}
 
@@ -579,7 +579,7 @@ Hard layout rules for the retry:
         blockingIssues = retryIssues;
       }
     } else {
-      log.warn(`OpenMAIC slide QA retry for "${outline.title}" did not return valid elements.`);
+      log.warn(`天空课堂 slide QA retry for "${outline.title}" did not return valid elements.`);
     }
   }
 
@@ -593,7 +593,7 @@ Hard layout rules for the retry:
   if (!slideQa.pass) {
     const blockingQaIssues = slideQa.issues.filter((issue) => issue.severity === 'blocking');
     log.warn(
-      `OpenMAIC slide QA found ${blockingQaIssues.length} blocking content issue(s) for "${outline.title}"; retrying content design.`,
+      `天空课堂 slide QA found ${blockingQaIssues.length} blocking content issue(s) for "${outline.title}"; retrying content design.`,
     );
     const retryPrompt = `${prompts.user}
 
@@ -649,7 +649,7 @@ Hard content rules for the retry:
       }
     } else {
       log.warn(
-        `OpenMAIC slide content QA retry for "${outline.title}" did not return valid elements.`,
+        `天空课堂 slide content QA retry for "${outline.title}" did not return valid elements.`,
       );
     }
   }

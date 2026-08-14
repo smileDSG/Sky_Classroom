@@ -4,6 +4,7 @@
 
 import type { LessonPlan, LessonSection } from './lesson-types';
 import type { ContentChunk } from './content-types';
+import type { TeachingGenerationPolicy } from './personalization-policy';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -41,11 +42,14 @@ export interface TeachingHistoryItem {
 
 // ── Submit ────────────────────────────────────────────────────────
 
-export async function submitTeachingJob(topic: string): Promise<string> {
+export async function submitTeachingJob(
+  topic: string,
+  personalizationPolicy?: TeachingGenerationPolicy,
+): Promise<string> {
   const opts: RequestInit = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ topic }),
+    body: JSON.stringify({ topic, personalizationPolicy }),
     credentials: 'include',
   };
 
@@ -376,7 +380,11 @@ export async function deleteTeachingHistory(id: string): Promise<void> {
 export async function retrySection(
   jobId: string,
   sectionId: string,
-): Promise<{ section: LessonSection; chunks: ContentChunk[]; structured?: Record<string, unknown> } | null> {
+): Promise<{
+  section: LessonSection;
+  chunks: ContentChunk[];
+  structured?: Record<string, unknown>;
+} | null> {
   const res = await fetch(`/api/sky/teaching/${jobId}/retry-section`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

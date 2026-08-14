@@ -21,7 +21,7 @@ The design uses patterns confirmed in public product documentation:
 - Duolingo treats self-reported starting level as a hypothesis and offers a short adaptive placement test to determine the actual starting point.
 - LinkedIn Learning combines career goals, followed skills, profile data, and later activity to update recommendations over time.
 
-OpenMAIC therefore uses role-first branching, optional diagnostics, and progressive profiling. It does not attempt to collect a complete permanent profile during registration.
+智眸无界 therefore uses role-first branching, optional diagnostics, and progressive profiling. It does not attempt to collect a complete permanent profile during registration.
 
 ## Product Decisions
 
@@ -62,7 +62,7 @@ Display labels:
 - `education-manager`: 教育管理 / 教研者
 - `other`: 其他
 
-These values describe how the person currently uses OpenMAIC. They do not grant permissions and must not be mapped to the authorization `role` column.
+These values describe how the person currently uses 智眸无界. They do not grant permissions and must not be mapped to the authorization `role` column.
 
 ## Stage Taxonomy
 

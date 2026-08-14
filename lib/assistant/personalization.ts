@@ -91,6 +91,23 @@ export interface AssistantActionPlan {
   promptInstruction: string;
 }
 
+export interface AssistantPersonalizationStreamEvidenceItem {
+  type: AssistantRagEvidenceItem['type'];
+  title: string;
+  summary: string;
+  knowledgePoints: string[];
+}
+
+export interface AssistantPersonalizationStreamPayload {
+  strategy: AssistantStrategy;
+  evidence: {
+    summary: string;
+    items: AssistantPersonalizationStreamEvidenceItem[];
+  } | null;
+  actionPlan: AssistantActionPlan;
+  focusTopic?: string;
+}
+
 export interface BuildAssistantPromptInput {
   userMessage: string;
   strategy: AssistantStrategy;

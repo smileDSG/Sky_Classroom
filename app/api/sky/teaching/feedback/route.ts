@@ -4,10 +4,14 @@ import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { readTeachingJob, updateTeachingJob } from '@/lib/server/teaching-job-store';
-import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
-import { buildStudentProfile, invalidateProfileCache } from '@/lib/student/profile-builder';
-import { resolveSubject } from '@/lib/student/profile-config';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
+import { recordLearningEvent } from '@/lib/adaptive-learning/profile/event-recorder';
+import { getLearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
+import {
+  buildTeachingKnowledgeImpacts,
+  type TeachingProfileUpdate,
+} from '@/lib/teaching/profile-impact';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -112,35 +116,36 @@ export async function POST(request: NextRequest) {
       log.warn('Failed to update job feedback:', jobErr);
     }
 
-    // Update learning signals based on feedback type
+    let profileUpdate: TeachingProfileUpdate | null = null;
+
+    // Update unified knowledge states. Section feedback is self-reported,
+    // therefore it receives less weight than a verified quiz answer.
     try {
       const storage = await getServerStorage();
       const job = await readTeachingJob(jobId);
       const section = job?.plan?.sections.find((s) => s.id === sectionId);
       const knowledgePoints = section?.knowledgePoints ?? [];
+      const stateDAO = createKnowledgeStateDAO(storage);
+      const before = await stateDAO.list(userId);
+      const event =
+        knowledgePoints.length > 0
+          ? await recordLearningEvent(
+              {
+                userId,
+                type: 'review-completed',
+                source: 'teaching-section-feedback',
+                evidenceQuality: 'self-reported',
+                payload: {
+                  rating: feedbackType === 'mastered' ? 'good' : 'hard',
+                  knowledgePoints,
+                },
+                correlationId: `${jobId}:${sectionId}`,
+              },
+              { storage },
+            )
+          : null;
 
-      const profile = await buildStudentProfile(userId);
-      const subject = job?.topic ? resolveSubject(job.topic, profile) : 'unknown';
-
-      if (feedbackType === 'mastered' && knowledgePoints.length > 0) {
-        // Record a virtual correct quiz attempt for each knowledge point
-        const quizDAO = createQuizAttemptDAO(storage);
-        await quizDAO.add({
-          userId,
-          subject,
-          difficulty: 'medium',
-          topic: `授课掌握: ${knowledgePoints.join('、')}`,
-          source: 'ai',
-          questions: knowledgePoints.map((kp) => ({
-            question: `掌握度确认: ${kp}`,
-            options: ['已掌握', '未掌握'],
-            answer: 0,
-            userAnswer: 0,
-            isCorrect: true,
-            knowledgePoints: [kp],
-          })),
-        });
-      } else if (feedbackType === 'needs_review' && knowledgePoints.length > 0) {
+      if (feedbackType === 'needs_review' && knowledgePoints.length > 0) {
         // Add knowledge points to mistake book for prioritized review
         const mistakeDAO = createMistakeBookDAO(storage);
         for (const kp of knowledgePoints) {
@@ -156,8 +161,16 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Invalidate profile cache so next rebuild picks up the new signals
-      await invalidateProfileCache(userId);
+      const after = await stateDAO.list(userId);
+      profileUpdate = {
+        recorded: Boolean(event),
+        evidenceType: 'self-reported-feedback',
+        changes: buildTeachingKnowledgeImpacts({ knowledgePoints, before, after }),
+        learnerDecision: getLearnerDecision({
+          knowledgeStates: after,
+          explicitTopic: knowledgePoints[0],
+        }),
+      };
     } catch (signalErr) {
       log.warn('Failed to update learning signals from feedback:', signalErr);
     }
@@ -166,7 +179,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: { feedback },
+      data: { feedback, profileUpdate },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

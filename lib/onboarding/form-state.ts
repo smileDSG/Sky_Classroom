@@ -1,4 +1,10 @@
-import { IDENTITY_CONFIG, type ProductIdentity, type ProfileStage } from './catalog';
+import {
+  IDENTITY_CONFIG,
+  type LearnerFoundation,
+  type LearnerWeeklyTime,
+  type ProductIdentity,
+  type ProfileStage,
+} from './catalog';
 import type {
   CompleteUniversalOnboardingInput,
   DomainRef,
@@ -20,6 +26,8 @@ export interface IdentityDraft {
     : never;
   needs: string[];
   preference: string;
+  foundation: LearnerFoundation | null;
+  weeklyTime: LearnerWeeklyTime | null;
   detail: string;
 }
 
@@ -38,6 +46,8 @@ function createDraft(identity: ProductIdentity): IdentityDraft {
     goals: [],
     needs: [],
     preference: 'balanced',
+    foundation: null,
+    weeklyTime: null,
     detail: '',
     ...(identity === 'learner' ? { preference: 'balanced' } : {}),
   };
@@ -62,6 +72,8 @@ function draftFromProfile(profile: UniversalIdentityProfile): IdentityDraft {
           },
         ],
         preference: profile.preferences.explanationStyle,
+        foundation: profile.baseline?.foundation ?? null,
+        weeklyTime: profile.baseline?.weeklyTime ?? null,
       };
     case 'educator':
       return {
@@ -72,6 +84,8 @@ function draftFromProfile(profile: UniversalIdentityProfile): IdentityDraft {
           supportDomains: [],
         })),
         preference: profile.preferences.primarySupport,
+        foundation: null,
+        weeklyTime: null,
       };
     case 'guardian':
       return {
@@ -82,6 +96,8 @@ function draftFromProfile(profile: UniversalIdentityProfile): IdentityDraft {
           supportDomains: [],
         })),
         preference: profile.preferences.guidanceStyle,
+        foundation: null,
+        weeklyTime: null,
       };
     case 'education-manager':
       return {
@@ -92,6 +108,8 @@ function draftFromProfile(profile: UniversalIdentityProfile): IdentityDraft {
           supportDomains: [],
         })),
         preference: profile.preferences.managementFocus,
+        foundation: null,
+        weeklyTime: null,
       };
     case 'other':
       return {
@@ -104,6 +122,8 @@ function draftFromProfile(profile: UniversalIdentityProfile): IdentityDraft {
           },
         ],
         preference: profile.preferences.collaborationStyle,
+        foundation: null,
+        weeklyTime: null,
       };
   }
 }
@@ -260,6 +280,9 @@ function primaryProfile(
         ...common,
         roleNeeds: draft.needs as never,
         preferences: { explanationStyle: draft.preference as never },
+        ...(draft.foundation && draft.weeklyTime
+          ? { baseline: { foundation: draft.foundation, weeklyTime: draft.weeklyTime } }
+          : {}),
       };
     case 'educator':
       return {

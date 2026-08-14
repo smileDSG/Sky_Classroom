@@ -2,7 +2,7 @@
 
 ## 总览
 
-sky-classroom（OpenMAIC）是一个基于 **LangGraph** 的多智能体交互式课堂系统。核心模式是 **Director → Agent 循环**：Director 节点决定下一个发言的 Agent，被选中的 Agent 生成回复和动作。系统支持 AI 教师、助教和学生角色实时协作授课。
+sky-classroom（智眸无界）是一个基于 **LangGraph** 的多智能体交互式课堂系统。核心模式是 **Director → Agent 循环**：Director 节点决定下一个发言的 Agent，被选中的 Agent 生成回复和动作。系统支持 AI 教师、助教和学生角色实时协作授课。
 
 ```
 ┌─────────────────────────────────────────────┐

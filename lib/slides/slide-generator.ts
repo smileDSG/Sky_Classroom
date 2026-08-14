@@ -193,7 +193,7 @@ function buildUserPrompt(
     `Plan the body slides with variety, depth, and progression:`,
     `- Each slide covers ONE main idea or sub-topic — explain it thoroughly with definition, explanation, and examples`,
     `- For longer decks (10+ slides), each major sub-topic gets 2-3 slides (theory → examples → applications)`,
-    `- Middle slides must mix OpenMAIC compositions: visual anchor, callout map, process flow, timeline, diagram labels, table-as-layout, or formula stage`,
+    `- Middle slides must mix 天空课堂 compositions: visual anchor, callout map, process flow, timeline, diagram labels, table-as-layout, or formula stage`,
     `- Do NOT use the old card-panel template: no two equal pastel rounded cards, no repeated large content boxes, no title-body card grid`,
     `- For math/science topics: use LaTeX formulas on multiple slides as large visual anchors with labels and worked-example steps`,
     `- Do NOT add thin divider lines or horizontal bar shapes under titles; use whitespace, scale, and placement instead`,
@@ -230,7 +230,7 @@ function buildUserPrompt(
     `All TextElement heights must come from the lookup table in the system prompt.`,
     `CRITICAL — Bottom margin: ensure top + height ≤ 562 for EVERY element. If a text element would extend past the bottom, reduce its height or move it up.`,
     `CRITICAL — Right margin: ensure left + width ≤ 1000 for EVERY element.`,
-    `Default to OpenMAIC element-level composition: one strong visual idea per slide, with asymmetric placement and compact explanatory text.`,
+    `Default to 天空课堂 element-level composition: one strong visual idea per slide, with asymmetric placement and compact explanatory text.`,
     `Output pure JSON only — no markdown fences, no explanations.`,
   ]
     .filter((line) => line !== '')
@@ -241,7 +241,8 @@ function buildUserPrompt(
 
 const SUBJECT_PATTERNS: Array<{ pattern: RegExp; hint: string }> = [
   {
-    pattern: /数学|代数|几何|三角|函数|方程|微积分|导数|单调|概率|统计|数列|向量|math|algebra|calculus/i,
+    pattern:
+      /数学|代数|几何|三角|函数|方程|微积分|导数|单调|概率|统计|数列|向量|math|algebra|calculus/i,
     hint: 'This is a MATH topic. Emphasize formulas (use LatexElement), worked examples, and derivations. Use a large formula or graph as the visual anchor with compact callout labels.',
   },
   {
@@ -276,7 +277,7 @@ function inferSubjectHint(topic: string): string {
       return `\n## Subject Guidance\n${hint}`;
     }
   }
-  return `\n## Subject Guidance\nGeneral academic topic. Use OpenMAIC compositions with a visual anchor, compact callouts, and varied information structures for examples and applications.`;
+  return `\n## Subject Guidance\nGeneral academic topic. Use 天空课堂 compositions with a visual anchor, compact callouts, and varied information structures for examples and applications.`;
 }
 
 function buildSlideAssignments(count: number, topic: string): string[] {
@@ -326,7 +327,9 @@ function buildSlideAssignments(count: number, topic: string): string[] {
     if (bodyCount >= 4)
       assignments.push('Slide 5: Deep dive — event 2 (cause, course, consequence)');
     if (bodyCount >= 5)
-      assignments.push('Slide 6: Key figures and their roles (portrait/name matrix with role labels)');
+      assignments.push(
+        'Slide 6: Key figures and their roles (portrait/name matrix with role labels)',
+      );
     if (bodyCount >= 6) assignments.push('Slide 7: Causes vs effects analysis (cause-effect map)');
     if (bodyCount >= 7)
       assignments.push('Slide 8: Different historical perspectives or interpretations');

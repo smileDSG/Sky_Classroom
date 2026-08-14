@@ -1,5 +1,5 @@
 /**
- * OpenMAIC Service Worker
+ * 天空课堂 Service Worker
  *
  * Development note:
  * Next/Turbopack chunks must never be served cache-first. Their URLs can remain

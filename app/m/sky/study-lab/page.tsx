@@ -84,7 +84,7 @@ const toolEntries: Array<{
 }> = [
   {
     label: '错题本',
-    desc: '查看错因与闭环状态',
+    desc: '查看错因与学习进度',
     href: '/m/sky/learning/mistakes',
     icon: BookOpenCheck,
   },
@@ -95,20 +95,20 @@ const toolEntries: Array<{
     icon: CalendarClock,
   },
   {
-    label: '知识图谱',
+    label: '知识地图',
     desc: '定位薄弱点',
     href: '/m/sky/learning/graph',
     icon: Network,
   },
   {
     label: '学习统计',
-    desc: '趋势与掌握度',
+    desc: '趋势与掌握情况',
     href: '/m/sky/learning/stats',
     icon: BarChart3,
   },
   {
-    label: '学情分析',
-    desc: '能力画像和建议',
+    label: '学习分析',
+    desc: '学习情况和建议',
     href: '/m/sky/learning/profile',
     icon: ShieldCheck,
   },
@@ -155,8 +155,8 @@ function buildPathSteps(insights: LearningInsights): PathStep[] {
     return [
       {
         label: '01',
-        title: '完成诊断采样',
-        desc: '拍照搜题或输入题目，让系统获得第一批学习信号',
+        title: '完成入门练习',
+        desc: '拍照搜题或输入题目，让系统留下第一批学习记录',
         href: '/m/sky/cloud-mind/solve?source=workshop-chain',
         icon: Sparkles,
         tone: 'emerald',
@@ -164,7 +164,7 @@ function buildPathSteps(insights: LearningInsights): PathStep[] {
       },
       {
         label: '02',
-        title: '生成学情画像',
+        title: '了解学习情况',
         desc: '查看题目、正确率和薄弱点是否已被识别',
         href: '/m/sky/learning/profile',
         icon: ShieldCheck,
@@ -183,7 +183,7 @@ function buildPathSteps(insights: LearningInsights): PathStep[] {
       {
         label: '04',
         title: '做一组针对练习',
-        desc: '用 5 道同类题验证画像是否准确',
+        desc: '用 5 道同类题看看系统是否了解你的情况',
         href: '/m/sky/cloud-mind/quiz?count=5',
         icon: Target,
         tone: 'rose',
@@ -319,18 +319,18 @@ export default function MobileStudyLabPage() {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <h1 className="text-[28px] font-black leading-tight text-white">
-                {insights.hasSignals ? '个人学习路径' : '先采集一次诊断数据'}
+                {insights.hasSignals ? '个人学习安排' : '先完成一次入门练习'}
               </h1>
               <p className="mt-3 max-w-[260px] text-[13px] leading-relaxed text-white/80">
                 {insights.focusReason}
               </p>
               <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[12px] text-white backdrop-blur-sm">
-                <span>{snapshot ? '云端快照' : '等待学习信号'}</span>
+                <span>{snapshot ? '云端记录' : '等待学习记录'}</span>
                 <span className="h-3 w-px bg-white/25" />
                 <span className="max-w-[140px] truncate">
                   {snapshot?.generatedAt
                     ? `${new Date(snapshot.generatedAt).toLocaleTimeString()} 更新`
-                    : error || '完成诊断后生成路线'}
+                    : error || '完成入门练习后生成安排'}
                 </span>
               </div>
             </div>
@@ -359,11 +359,11 @@ export default function MobileStudyLabPage() {
           <MetricPill icon={Layers} label="记忆" value={insights.metrics.memoryTopicCount} />
         </section>
 
-        <section aria-label="今日学习路径" className="rounded-[20px] border border-white/8 bg-white/[0.035] p-3">
+        <section aria-label="今日任务路径" className="rounded-[20px] border border-white/8 bg-white/[0.035] p-3">
           <div className="mb-2.5 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-[15px] font-extrabold text-white">
               <Route className="size-4 text-emerald-200" />
-              今日学习路径
+              今日学习安排
             </div>
             <span className="rounded-full bg-white/7 px-2 py-0.5 text-[12px] font-bold text-slate-400">
               个性化

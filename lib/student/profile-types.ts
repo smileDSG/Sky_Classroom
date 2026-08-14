@@ -6,6 +6,8 @@ import type { Subject } from '@/lib/solve/agents/analyze-types';
 import type { MistakeCause } from '@/lib/solve/types';
 import type { QuizPerformanceSummary } from './quiz-performance-analyzer';
 
+export const STUDENT_PROFILE_CACHE_VERSION = 2;
+
 export interface StudentProfile {
   userId: string;
   masteryBySubject: Record<Subject, number>; // 0~100 掌握度
@@ -30,4 +32,5 @@ export interface ErrorPattern {
 export interface ProfileCacheEntry {
   profile: StudentProfile;
   cachedAt: number; // timestamp ms
+  cacheVersion?: number;
 }

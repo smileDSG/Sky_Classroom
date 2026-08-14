@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Sparkles, BookOpen } from 'lucide-react';
 
 const DIFFICULTIES = [
-  { value: 'junior', label: '初中' },
   { value: 'senior', label: '高中' },
   { value: 'college', label: '大学' },
 ] as const;
@@ -60,7 +59,7 @@ export function MobileSlidesForm({
 
           <div className="rounded-[22px] border border-white/10 bg-[#0d1728] p-4">
             <label className="block text-xs font-medium text-slate-400">难度级别</label>
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-2 gap-2">
               {DIFFICULTIES.map((d) => (
                 <button
                   key={d.value}

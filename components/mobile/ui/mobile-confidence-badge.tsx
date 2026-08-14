@@ -35,7 +35,7 @@ export function MobileConfidenceBadge({
         )}
       >
         <CheckCircle2 className="size-3" />
-        {percentage}% 可信
+        {percentage}% 判断把握较高
       </span>
     );
   }
@@ -62,7 +62,7 @@ export function MobileConfidenceBadge({
       )}
     >
       <AlertTriangle className="size-3" />
-      {percentage}% 低置信度
+      {percentage}% 判断把握较低
     </span>
   );
 }

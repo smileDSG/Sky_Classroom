@@ -163,7 +163,7 @@ function InsightBanner({
     ? `最高频错因是「${topCause.label}」，${
         topSubject ? `集中在「${topSubject.label}」相关题目。` : '建议先做一组同类题。'
       }`
-    : '完成更多练习后，这里会给出更具体的诊断。';
+    : '完成更多练习后，这里会给出更具体的学习建议。';
 
   return (
     <section className="overflow-hidden rounded-2xl border border-emerald-200/80 bg-[linear-gradient(135deg,#ecfdf5_0%,#eff6ff_58%,#ffffff_100%)] p-5 shadow-sm shadow-emerald-100/60 dark:border-emerald-200/15 dark:bg-[linear-gradient(135deg,rgba(16,185,129,0.14)_0%,rgba(14,165,233,0.1)_58%,rgba(15,23,42,0.2)_100%)] dark:shadow-none">
@@ -171,7 +171,7 @@ function InsightBanner({
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-100">
             <Target className="h-4 w-4" aria-hidden="true" />
-            今日学习诊断
+            今日学习建议
           </div>
           <h2 className="mt-2 text-xl font-semibold text-slate-950 dark:text-white">{title}</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
@@ -539,7 +539,7 @@ export function LearningStats() {
           icon={BookOpenCheck}
         />
         <MetricCard
-          label="掌握度"
+          label="掌握情况"
           value={`${stats.mastery.overallMastery}%`}
           detail={`${stats.mastery.masteredCount} 个知识点已掌握，${stats.mastery.weakCount} 个仍薄弱`}
           tone="emerald"
