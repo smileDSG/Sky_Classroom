@@ -9,8 +9,12 @@ import { NextRequest } from 'next/server';
 import { apiSuccess, apiError } from '@/lib/server/api-response';
 import { updateKey, removeKey, getKeyById } from '@/lib/storage/dao/api-key-pool';
 import { refreshCache } from '@/lib/api-key-pool/pool';
+import { requireAdmin } from '@/lib/server/auth/helpers';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const { id } = await params;
     const body = await req.json();
@@ -31,6 +35,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const { id } = await params;
 

@@ -120,6 +120,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ job
         enableVideoGeneration: config.enableVideoGeneration,
         enableWebSearch: config.enableWebSearch,
       },
+      quota.userId,
       undefined,
     );
 

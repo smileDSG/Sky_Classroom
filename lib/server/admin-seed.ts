@@ -1,6 +1,6 @@
 /**
  * Auto-seed the default admin account.
- * Called before login to ensure admin always exists.
+ * Optional bootstrap for local development.
  */
 
 import { createUserDAO, type UserEntry } from '@/lib/storage/dao/users';
@@ -10,7 +10,8 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('AdminSeed');
 
 const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = '123';
+const ADMIN_PASSWORD =
+  process.env.ADMIN_SEED_PASSWORD || (process.env.NODE_ENV === 'production' ? '' : '123');
 
 const ADMIN_PROFILE_DEFAULTS = {
   nickname: '高等教育学习管理员',
@@ -48,8 +49,16 @@ function getMissingProfileDefaults(user: UserEntry): Partial<UserEntry> {
 
 let seeded = false;
 
+function isAdminSeedEnabled(): boolean {
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.ENABLE_ADMIN_SEED === 'true' && ADMIN_PASSWORD.length >= 12;
+  }
+  return process.env.ENABLE_ADMIN_SEED !== 'false';
+}
+
 export async function ensureAdminUser(): Promise<void> {
   if (seeded) return;
+  if (!isAdminSeedEnabled() || !ADMIN_PASSWORD) return;
 
   try {
     const dao = await createUserDAO();

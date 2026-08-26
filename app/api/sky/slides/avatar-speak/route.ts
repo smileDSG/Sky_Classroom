@@ -9,6 +9,7 @@ import { generateAvatarSpeech, getAvatarById } from '@/lib/slides';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import type { TTSGenerateFn } from '@/lib/slides/avatar-speech';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('API:SkyAvatarSpeak');
 
@@ -26,6 +27,9 @@ export async function POST(req: NextRequest) {
         'Missing required fields: slides (array), avatarId (string)',
       );
     }
+
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
 
     const avatar = getAvatarById(avatarId);
     if (!avatar) {
@@ -56,6 +60,8 @@ export async function POST(req: NextRequest) {
     const speech = await generateAvatarSpeech(slides, avatarId, ttsGenFn, { speed });
 
     const totalDuration = speech.segments.reduce((sum, s) => sum + s.duration, 0);
+
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     return apiSuccess({
       avatarId: speech.avatarId,

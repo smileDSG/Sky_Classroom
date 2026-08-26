@@ -7,8 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
-import { cookies } from 'next/headers';
-import { verifyAccessToken } from '@/lib/server/auth';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { generateHomework } from '@/lib/teaching/homework-generator';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
@@ -23,19 +22,9 @@ export async function GET(
   try {
     const { jobId } = await params;
 
-    // Verify authentication
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
-    let userId: string | null = null;
-
-    if (accessToken) {
-      const payload = await verifyAccessToken(accessToken.value);
-      if (payload) userId = payload.sub;
-    }
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+    const userId = quota.userId;
 
     // Read job
     const job = await readTeachingJob(jobId);
@@ -58,6 +47,7 @@ export async function GET(
       job.topic,
       subject,
     );
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     log.info(`Homework generated for job ${jobId}: ${homework.questions.length} questions`);
 

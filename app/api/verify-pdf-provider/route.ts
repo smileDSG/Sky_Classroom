@@ -4,12 +4,16 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolvePDFApiKey, resolvePDFBaseUrl } from '@/lib/server/provider-config';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { MINERU_CLOUD_DEFAULT_BASE } from '@/lib/pdf/constants';
+import { getClientIp, rateLimiters, rateLimitResponse } from '@/lib/api/middleware/rate-limiter';
 
 const log = createLogger('Verify PDF Provider');
 
 export async function POST(req: NextRequest) {
   let providerId: string | undefined;
   try {
+    const rateLimitResult = rateLimiters.providerVerify.consume(getClientIp(req));
+    if (!rateLimitResult.allowed) return rateLimitResponse(rateLimitResult);
+
     const body = await req.json();
     providerId = body.providerId;
     const { apiKey, baseUrl } = body;

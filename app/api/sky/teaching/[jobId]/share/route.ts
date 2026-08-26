@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readTeachingJob } from '@/lib/server/teaching-job-store';
 import { createLogger } from '@/lib/logger';
-import { cookies } from 'next/headers';
-import { verifyAccessToken } from '@/lib/server/auth';
+import { requireAuth } from '@/lib/server/auth/helpers';
 import { randomUUID } from 'crypto';
 
 const log = createLogger('TeachingShareAPI');
@@ -22,24 +21,9 @@ export async function POST(
   try {
     const { jobId } = await params;
 
-    // Verify authentication
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
-    let userId: string | null = null;
-
-    if (accessToken) {
-      const payload = await verifyAccessToken(accessToken.value);
-      if (payload) {
-        userId = payload.sub;
-      }
-    }
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 },
-      );
-    }
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+    const userId = auth.user.id;
 
     // Get job data
     const job = await readTeachingJob(jobId);
@@ -48,6 +32,9 @@ export async function POST(
         { error: 'Job not found' },
         { status: 404 },
       );
+    }
+    if (job.userId !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Generate share token
@@ -99,6 +86,15 @@ export async function GET(
 ) {
   try {
     const { jobId } = await params;
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+    const job = await readTeachingJob(jobId);
+    if (!job) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+    if (job.userId !== auth.user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Find existing share token for this job
     let existingToken: string | null = null;

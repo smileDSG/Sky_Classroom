@@ -5,6 +5,7 @@ import type { ASRProviderId } from '@/lib/audio/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 const log = createLogger('Transcription');
 
 export const maxDuration = 60;
@@ -13,6 +14,9 @@ export async function POST(req: NextRequest) {
   let resolvedProviderId: string | undefined;
   let resolvedModelId: string | undefined;
   try {
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     const formData = await req.formData();
     const audioFile = formData.get('audio') as File;
     const providerId = formData.get('providerId') as ASRProviderId | null;
@@ -52,6 +56,8 @@ export async function POST(req: NextRequest) {
 
     // Transcribe using the provider system
     const result = await transcribeAudio(config, audioFile);
+
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     return apiSuccess({ text: result.text });
   } catch (error) {

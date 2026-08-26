@@ -6,8 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
-import { cookies } from 'next/headers';
-import { verifyAccessToken } from '@/lib/server/auth';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { resolveSubject } from '@/lib/student/profile-config';
@@ -148,19 +147,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing topic' }, { status: 400 });
     }
 
-    // Verify authentication
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
-    let userId: string | null = null;
-
-    if (accessToken) {
-      const payload = await verifyAccessToken(accessToken.value);
-      if (payload) userId = payload.sub;
-    }
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+    const userId = quota.userId;
 
     // Build profile and extract prerequisites
     const profile = await buildStudentProfile(userId);
@@ -179,6 +168,7 @@ export async function POST(request: NextRequest) {
 
     // Generate diagnostic questions
     const questions = await generateDiagnosticQuestions(prerequisites, subject);
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     if (questions.length === 0) {
       return NextResponse.json({

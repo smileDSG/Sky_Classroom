@@ -30,6 +30,8 @@ const ADMIN_PROFILE_DEFAULTS = {
 };
 
 export async function ensureAdminUserClient(): Promise<void> {
+  if (process.env.NODE_ENV === 'production') return;
+
   try {
     const { createUserDAO } = await import('@/lib/storage/dao/users');
     const dao = await createUserDAO();

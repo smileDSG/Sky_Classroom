@@ -1,6 +1,6 @@
 'use client';
 
-import { LoginPageContent } from '@/app/auth/login/page';
+import { LoginPageContent } from '@/components/auth/login-page-content';
 
 export default function MobileLoginPage() {
   return (

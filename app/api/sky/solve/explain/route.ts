@@ -7,11 +7,15 @@ import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response
 import { createLogger } from '@/lib/logger';
 import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
 import { saveToQuestionBank, isProblemInBank } from '@/lib/solve/question-bank';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('API:SkySolveExplain');
 
 export async function POST(req: Request) {
   try {
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     const body = await req.json();
     const { problem, problemImage, problemSpec, userAnswer, agentId, useHighPrecision, outputFormat } = body;
 
@@ -82,6 +86,7 @@ export async function POST(req: Request) {
       }
     }
 
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
     return apiSuccess({
       ...output,
       fromQuestionBank: finalState.fromQuestionBank ?? false,

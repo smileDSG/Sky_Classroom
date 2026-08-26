@@ -6,30 +6,27 @@
  */
 
 import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
 import { generateMemoryCards } from '@/lib/agents/cloud-mind/memory-cards-agent';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
 import { deriveMemoryParamsFromProfile } from '@/lib/student/memory-param-deriver';
-import { verifyAccessToken } from '@/lib/server/auth';
 import { createLogger } from '@/lib/logger';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
+import { requireAuth } from '@/lib/server/auth/helpers';
+import { getRequiredServerStorage } from '@/lib/server/server-storage';
+import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
+import { buildTeachingProjection } from '@/lib/adaptive-learning/profile/projection-builder';
+import { injectTeachingProjection } from '@/lib/assistant/context-injector';
+import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
+import { adaptiveLearningApiError } from '@/lib/adaptive-learning/api-error';
 
 const log = createLogger('API:CloudMindMemoryCards');
 
 export const maxDuration = 60;
 
-async function resolveUserId(): Promise<string | null> {
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
-    if (!accessToken) return null;
-    const payload = await verifyAccessToken(accessToken.value);
-    return payload?.sub ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await req.json();
     const { content, topic, cardCount, auto } = body as {
@@ -39,18 +36,46 @@ export async function POST(req: NextRequest) {
       auto?: boolean;
     };
 
-    const userId = await resolveUserId();
-    let profile = userId ? await buildStudentProfile(userId) : undefined;
+    if (!content && !auto) {
+      return new Response(JSON.stringify({ error: '学习内容不能为空' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
+    const storage = await getRequiredServerStorage();
+    const profileRepository = new LearnerProfileRepository(storage);
+    const preferences = await profileRepository.getLatestPreferences(auth.user.id);
+    if (!preferences) {
+      const error = new AdaptiveLearningError({
+        code: 'PROFILE_NOT_FOUND',
+        message: 'Learner profile is required before generating memory cards',
+        retryable: false,
+        stage: 'memory-cards-profile-load',
+      });
+      return adaptiveLearningApiError(error, crypto.randomUUID());
+    }
+
+    const teachingProjection = buildTeachingProjection({
+      userId: auth.user.id,
+      snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w0`,
+      profileVersion: preferences.version,
+      eventWatermark: 0,
+      preferences,
+      knowledgeStatus: 'no-evidence',
+    });
+    const teachingProjectionText = injectTeachingProjection('', teachingProjection).trim();
+
+    let profile: Awaited<ReturnType<typeof buildStudentProfile>> | undefined;
+    if (auto || !content) profile = await buildStudentProfile(auth.user.id);
 
     // Auto-derive parameters from the student profile
     let derived: ReturnType<typeof deriveMemoryParamsFromProfile> | undefined;
     if (auto || !content) {
-      if (!profile) {
-        return new Response(
-          JSON.stringify({ error: '需要登录且存在学情数据才能自动生成卡片' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } },
-        );
-      }
+      if (!profile) return new Response(JSON.stringify({ error: '学情数据不可用' }), { status: 400 });
       derived = deriveMemoryParamsFromProfile(profile);
     }
 
@@ -72,42 +97,17 @@ export async function POST(req: NextRequest) {
       trimmedContent,
       finalTopic,
       finalCardCount,
-      profile,
+      teachingProjectionText,
     );
 
-    // Save to cards knowledge base (fire and forget)
-    try {
-      const { write } = await import('@/lib/knowledge-base/kb-manager');
-      const kbContent = JSON.stringify({
-        topic: result.topic,
-        description: result.description,
-        cardCount: result.cards.length,
-        cards: result.cards.map((c) => ({
-          front: c.front,
-          back: c.back,
-          difficulty: c.difficulty,
-          tags: c.tags,
-        })),
-        studyTips: result.studyTips,
-      });
-      write({
-        kbType: 'cards',
-        title: `卡片: ${result.topic}`,
-        content: kbContent,
-        tags: result.cards[0]?.tags || [],
-        sourceId: `cards-${Date.now()}`,
-        verified: true,
-      }).catch((e) => log.warn('KB save failed:', e));
-    } catch {
-      // ignore KB save errors
-    }
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     return new Response(
       JSON.stringify({
         success: true,
         data: result,
         meta: {
-          profileInjected: Boolean(profile),
+          profileInjected: true,
           derived: derived
             ? {
                 topic: derived.topic,

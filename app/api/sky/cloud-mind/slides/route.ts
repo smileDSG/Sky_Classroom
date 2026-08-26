@@ -8,7 +8,7 @@
 import { NextRequest } from 'next/server';
 import { analyzeSlides, streamSlidesAnalysis } from '@/lib/agents/cloud-mind/slides-agent';
 import { createLogger } from '@/lib/logger';
-import { requireAuth } from '@/lib/server/auth/helpers';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import { createUserDAO } from '@/lib/storage/dao/users';
 import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personalization';
 
@@ -32,36 +32,36 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     // 限制内容长度
     const trimmedContent = content.slice(0, 50000);
 
-    // 获取用户个性化设置（如果已登录）
+    // 获取用户个性化设置
     let personalization: Record<string, unknown> | undefined;
     try {
-      const auth = await requireAuth();
-      if (!('error' in auth)) {
-        const dao = await createUserDAO();
-        const user = await dao.getById(auth.user.id);
-        if (user) {
-          const decision = await resolveLearnerDecisionForUser(auth.user.id, topic);
-          personalization = {
-            educationLevel: user.educationLevel || undefined,
-            grade: user.grade || undefined,
-            favoriteSubjects: user.favoriteSubjects || undefined,
-            learningStyle: user.learningStyle || undefined,
-            detailLevel: user.detailLevel || undefined,
-            preferredLanguage: user.preferredLanguage || undefined,
-            aiPersonality: user.aiPersonality || undefined,
-            aiName: user.aiName || undefined,
-            customInstructions: user.customInstructions || undefined,
-            enableRAG: user.enableRAG ?? true,
-            adaptiveDifficulty: decision?.difficulty,
-            adaptiveFormat: decision?.format,
-            adaptiveTopic: decision?.topic ?? topic,
-            adaptiveExplanationMode: decision?.explanationMode,
-            adaptiveReasonCodes: decision?.reasonCodes,
-          };
-        }
+      const dao = await createUserDAO();
+      const user = await dao.getById(quota.userId);
+      if (user) {
+        const decision = await resolveLearnerDecisionForUser(quota.userId, topic);
+        personalization = {
+          educationLevel: user.educationLevel || undefined,
+          grade: user.grade || undefined,
+          favoriteSubjects: user.favoriteSubjects || undefined,
+          learningStyle: user.learningStyle || undefined,
+          detailLevel: user.detailLevel || undefined,
+          preferredLanguage: user.preferredLanguage || undefined,
+          aiPersonality: user.aiPersonality || undefined,
+          aiName: user.aiName || undefined,
+          customInstructions: user.customInstructions || undefined,
+          enableRAG: user.enableRAG ?? true,
+          adaptiveDifficulty: decision?.difficulty,
+          adaptiveFormat: decision?.format,
+          adaptiveTopic: decision?.topic ?? topic,
+          adaptiveExplanationMode: decision?.explanationMode,
+          adaptiveReasonCodes: decision?.reasonCodes,
+        };
       }
     } catch {
       // 未登录或获取失败，使用默认设置
@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
     if (stream) {
       // 流式响应
       const readableStream = await streamSlidesAnalysis(trimmedContent, topic);
+      await recordUsage(quota.userId, quota.planType, 'llmCalls');
       return new Response(readableStream, {
         headers: {
           'Content-Type': 'text/event-stream',
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
 
     // 非流式响应
     const result = await analyzeSlides(trimmedContent, topic, personalization);
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
     return new Response(JSON.stringify({ success: true, data: result }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

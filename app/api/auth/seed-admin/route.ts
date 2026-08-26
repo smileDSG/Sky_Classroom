@@ -10,11 +10,14 @@
 
 import { NextResponse } from 'next/server';
 import { createUserDAO } from '@/lib/storage/dao/users';
-import { hashPassword } from '@/lib/server/auth';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { ensureAdminUser } from '@/lib/server/admin-seed';
 
 export async function POST() {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+  }
+
   try {
     // Run the same idempotent seeding the login flow uses, then report state.
     await ensureAdminUser();
@@ -35,47 +38,10 @@ export async function POST() {
       });
     }
 
-    // Should not normally happen after ensureAdminUser(), but handle it safely.
-    const passwordHash = await hashPassword('123');
-    const created = await dao.create({
-      id: 'admin-default',
-      email: null,
-      username: 'admin',
-      passwordHash,
-      role: 'admin',
-      status: 'active',
-      guestId: null,
-      planType: 'enterprise',
-      avatar: null,
-      nickname: '管理员',
-      bio: null,
-      educationLevel: null,
-      grade: null,
-      favoriteSubjects: null,
-      learningOnboarding: null,
-      learningStyle: null,
-      detailLevel: null,
-      preferredLanguage: null,
-      aiPersonality: null,
-      aiName: null,
-      customInstructions: null,
-      autoGenerateQuiz: null,
-      showStepByStep: null,
-      enableMemory: null,
-      enableRAG: null,
-      emailVerified: true,
-      emailVerifyToken: null,
-      resetToken: null,
-      resetTokenExpiry: null,
-    });
-
-    return NextResponse.json({
-      success: true,
-      action: 'created',
-      storageType,
-      userId: created.id,
-      passwordHash,
-    });
+    return NextResponse.json(
+      { success: false, error: 'Admin seed is disabled or unavailable' },
+      { status: 503 },
+    );
   } catch (err) {
     return NextResponse.json(
       { success: false, error: err instanceof Error ? err.message : String(err) },

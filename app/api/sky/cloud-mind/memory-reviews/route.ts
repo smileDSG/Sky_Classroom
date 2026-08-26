@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
+import { requireAuth } from '@/lib/server/auth/helpers';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
-import { verifyAccessToken } from '@/lib/server/auth';
 import { getServerStorage } from '@/lib/server/server-storage';
 import {
   buildMemoryReviewId,
@@ -19,22 +18,6 @@ const TABLE = 'cloud_mind_memory_reviews';
 const RATINGS = new Set<MemoryReviewRating>(['remembered', 'fuzzy', 'forgotten']);
 const log = createLogger('API:CloudMindMemoryReviews');
 
-async function resolveUserId(req: NextRequest): Promise<string> {
-  const url = new URL(req.url);
-  const queryUserId = url.searchParams.get('userId');
-  if (queryUserId) return queryUserId;
-
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
-    if (!accessToken) return 'default-user';
-    const payload = await verifyAccessToken(accessToken.value);
-    return payload?.sub ?? 'default-user';
-  } catch {
-    return 'default-user';
-  }
-}
-
 function normalizeRating(value: unknown): MemoryReviewRating | null {
   return typeof value === 'string' && RATINGS.has(value as MemoryReviewRating)
     ? (value as MemoryReviewRating)
@@ -43,7 +26,9 @@ function normalizeRating(value: unknown): MemoryReviewRating | null {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await resolveUserId(req);
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+    const userId = auth.user.id;
     const url = new URL(req.url);
     const dueOnly = url.searchParams.get('due') === 'true';
     const storage = await getServerStorage();
@@ -63,7 +48,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await resolveUserId(req);
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+    const userId = auth.user.id;
     const body = await req.json();
     const rating = normalizeRating(body.rating);
 

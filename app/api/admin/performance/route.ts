@@ -5,8 +5,12 @@
 
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { getPerfMonitor } from '@/lib/monitoring/performance';
+import { requireAdmin } from '@/lib/server/auth/helpers';
 
 export async function GET(request: Request) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   const url = new URL(request.url);
   const range = url.searchParams.get('range') || '24h';
 

@@ -27,6 +27,7 @@ import type { StudentProfile } from '@/lib/student/profile-types';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
 import type { UserEntry } from '@/lib/storage/dao/users';
 import type { QuestionBankEntry } from '@/lib/solve/types';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('API:SkyAssistant');
 
@@ -58,6 +59,9 @@ export async function POST(req: NextRequest) {
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'messages is required');
     }
+
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
 
     // Convert messages — exclude system messages since we pass via system param
     const aiMessages = messages
@@ -217,6 +221,7 @@ export async function POST(req: NextRequest) {
           const event = `data: ${JSON.stringify({ type: 'text_delta', content: chunk })}\n\n`;
           await writer.write(encoder.encode(event));
         }
+        await recordUsage(quota.userId, quota.planType, 'llmCalls');
         await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
         await writer.close();
       } catch (error) {

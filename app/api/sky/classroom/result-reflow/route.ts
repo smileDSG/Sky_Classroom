@@ -25,11 +25,15 @@ import { getServerStorage } from '@/lib/server/server-storage';
 import { createQuizAttemptDAO } from '@/lib/student/quiz-attempts';
 import { invalidateProfileCache } from '@/lib/student/profile-builder';
 import { createLogger } from '@/lib/logger';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:ClassroomResultReflow');
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+
     const body = await req.json();
     const { stageId, subject, topic, questions } = body;
 
@@ -41,11 +45,7 @@ export async function POST(req: NextRequest) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'questions 不能为空数组');
     }
 
-    // Auth
-    const authHeader = req.headers.get('authorization');
-    const userId = authHeader?.startsWith('Bearer user-')
-      ? authHeader.slice(7)
-      : 'default-user';
+    const userId = auth.user.id;
 
     const storage = await getServerStorage();
     const quizAttemptDAO = createQuizAttemptDAO(storage);

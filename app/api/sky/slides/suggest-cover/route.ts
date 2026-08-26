@@ -16,6 +16,7 @@ import { suggestCoverStyle } from '@/lib/slides/agent/suggest-cover-agent';
 import { renderCoverPptx } from '@/lib/slides/agent/cover-renderer';
 import { convertPptxToPng } from '@/lib/slides/agent/png-converter';
 import { createLogger } from '@/lib/logger';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('API:SuggestCover');
 
@@ -35,6 +36,9 @@ export async function POST(req: NextRequest) {
     if (!topic || !topic.trim()) {
       return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing required field: topic');
     }
+
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
 
     const diff = difficulty || '高中';
     log.info(`[API:SuggestCover] request — topic="${topic.trim()}" difficulty="${diff}"`);
@@ -102,6 +106,7 @@ export async function POST(req: NextRequest) {
 
     log.info(`[API:SuggestCover] complete in ${totalDuration}ms — png=${pngUrl}, style=${designDNA.styleName}`);
 
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
     return apiSuccess({
       cover: {
         pngUrl,

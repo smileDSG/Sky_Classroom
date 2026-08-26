@@ -13,13 +13,17 @@ import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { buildStudentProfile, invalidateProfileCache } from '@/lib/student/profile-builder';
 import { createLogger } from '@/lib/logger';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:StudentProfile');
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   try {
     const url = new URL(req.url);
-    const userId = url.searchParams.get('userId') || 'default-user';
+    const userId = auth.user.id;
     const forceRefresh = url.searchParams.get('force') === 'true';
 
     if (forceRefresh) {

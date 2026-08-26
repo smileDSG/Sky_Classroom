@@ -99,6 +99,13 @@ export async function getServerStorage(): Promise<StorageProvider> {
     log.error('Supabase configured but unavailable');
   }
 
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_IN_MEMORY_STORAGE !== 'true') {
+    throw persistentStorageUnavailable(
+      'Production requires MySQL or Supabase; refusing in-memory storage',
+      { backend: null, allowInMemoryStorage: false },
+    );
+  }
+
   log.error(
     '!!! NO PERSISTENT STORAGE AVAILABLE — falling back to in-memory. ' +
       'Data (check-ins, mistakes, etc.) will be LOST on server restart. ' +

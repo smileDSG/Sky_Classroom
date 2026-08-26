@@ -62,7 +62,12 @@ export async function POST(req: NextRequest) {
       ? { modelString: runtimeModelConfig.modelString }
       : undefined;
 
-    const job = await createClassroomGenerationJobHybrid(jobId, body, persistedModelConfig);
+    const job = await createClassroomGenerationJobHybrid(
+      jobId,
+      body,
+      quota.userId,
+      persistedModelConfig,
+    );
     const pollUrl = `${baseUrl}/api/generate-classroom/${jobId}`;
 
     // Record generation usage

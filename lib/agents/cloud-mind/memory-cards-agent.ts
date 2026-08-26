@@ -116,7 +116,7 @@ export async function generateMemoryCards(
   contentText: string,
   topic?: string,
   cardCount?: number,
-  profile?: StudentProfile,
+  profileOrProjection?: StudentProfile | string,
 ): Promise<MemoryCardDeck> {
   const apiKey = resolveApiKey('deepseek');
   const baseUrl = resolveBaseUrl('deepseek') || 'https://api.deepseek.com/v1';
@@ -166,9 +166,12 @@ export async function generateMemoryCards(
     log.warn('RAG retrieval failed for memory cards:', ragErr);
   }
 
-  const profileContext = profile
-    ? `\n\n${buildProfileContextPrompt(profile, { maxWeakPoints: 5, maxErrorPatterns: 3 })}`
-    : '';
+  const profileContext =
+    typeof profileOrProjection === 'string'
+      ? `\n\n${profileOrProjection}`
+      : profileOrProjection
+        ? `\n\n${buildProfileContextPrompt(profileOrProjection, { maxWeakPoints: 5, maxErrorPatterns: 3 })}`
+        : '';
 
   const cacheKey = buildCloudMindCacheKey('memory-cards', {
     version: MEMORY_CARDS_AGENT_PROMPT_VERSION,
@@ -192,7 +195,7 @@ export async function generateMemoryCards(
   }
 
   log.info(
-    `Generating memory cards, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}, profile injected: ${Boolean(profile)}`,
+    `Generating memory cards, topic: ${topic || 'auto-detect'}, content length: ${contentText.length}, profile injected: ${Boolean(profileOrProjection)}`,
   );
 
   const result = await callLLM(

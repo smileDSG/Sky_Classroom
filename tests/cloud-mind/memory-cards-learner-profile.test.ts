@@ -26,6 +26,11 @@ vi.mock('@/lib/server/auth/helpers', () => ({
   requireAuth: vi.fn(async () => ({ user: { id: mcBoundary.userId } })),
 }));
 
+vi.mock('@/lib/server/billing/require-quota', () => ({
+  requireQuota: vi.fn(async () => ({ userId: mcBoundary.userId, planType: 'free' })),
+  recordUsage: vi.fn(async () => {}),
+}));
+
 vi.mock('@/lib/server/server-storage', () => ({
   getRequiredServerStorage: vi.fn(async () => mcBoundary.storage),
 }));

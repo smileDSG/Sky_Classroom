@@ -1,9 +1,7 @@
-import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
-import { verifyAccessToken } from '@/lib/server/auth';
+import { getCurrentUser } from '@/lib/server/auth/helpers';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { createLearningPathDAO } from '@/lib/storage/dao/learning-paths';
@@ -36,20 +34,9 @@ const DEMO_PROFILE_USER_ID = 'default-user';
 const DEMO_FALLBACK_USER_IDS = new Set(['admin-default']);
 const MEMORY_REVIEWS_TABLE = 'cloud_mind_memory_reviews';
 
-async function resolveUserId(req: NextRequest): Promise<string> {
-  const url = new URL(req.url);
-  const queryUserId = url.searchParams.get('userId');
-  if (queryUserId) return queryUserId;
-
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
-    if (!accessToken) return 'default-user';
-    const payload = await verifyAccessToken(accessToken.value);
-    return payload?.sub ?? 'default-user';
-  } catch {
-    return 'default-user';
-  }
+async function resolveUserId(): Promise<string> {
+  const user = await getCurrentUser();
+  return user?.id ?? 'default-user';
 }
 
 async function safeBuildProfile(userId: string): Promise<StudentProfile | null> {
@@ -113,9 +100,9 @@ async function resolveProfile(userId: string): Promise<StudentProfile | null> {
   };
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const userId = await resolveUserId(req);
+    const userId = await resolveUserId();
     const storage = await getServerStorage();
     const demoSeed = await ensureDemoLearningData(userId, storage);
     if (demoSeed.changed) {

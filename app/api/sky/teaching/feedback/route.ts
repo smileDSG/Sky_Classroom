@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
-import { cookies } from 'next/headers';
-import { verifyAccessToken } from '@/lib/server/auth';
+import { requireAuth } from '@/lib/server/auth/helpers';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { readTeachingJob, updateTeachingJob } from '@/lib/server/teaching-job-store';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
@@ -57,20 +56,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid feedbackType' }, { status: 400 });
     }
 
-    // Verify authentication
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
-    let userId: string | null = null;
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+    const userId = auth.user.id;
 
-    if (accessToken) {
-      const payload = await verifyAccessToken(accessToken.value);
-      if (payload) {
-        userId = payload.sub;
-      }
-    }
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const job = await readTeachingJob(jobId);
+    if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    if (job.userId !== userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     const feedback: TeachingFeedback = {
@@ -100,8 +93,7 @@ export async function POST(request: NextRequest) {
 
     // Also update teaching job store for adaptive engine
     try {
-      const job = await readTeachingJob(jobId);
-      if (job && job.plan) {
+      if (job.plan) {
         const section = job.plan.sections.find((s) => s.id === sectionId);
         const existingFeedbacks = job.sectionFeedbacks ?? [];
         existingFeedbacks.push({
@@ -122,7 +114,6 @@ export async function POST(request: NextRequest) {
     // therefore it receives less weight than a verified quiz answer.
     try {
       const storage = await getServerStorage();
-      const job = await readTeachingJob(jobId);
       const section = job?.plan?.sections.find((s) => s.id === sectionId);
       const knowledgePoints = section?.knowledgePoints ?? [];
       const stateDAO = createKnowledgeStateDAO(storage);

@@ -44,6 +44,20 @@ interface KBRow extends RowDataPacket {
   updated_at: Date;
 }
 
+function parseTags(value: string | null): string[] {
+  if (!value) return [];
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+    if (typeof parsed === 'string') return parsed.split(',').map((tag) => tag.trim()).filter(Boolean);
+  } catch {
+    // Older rows stored tags as comma-separated text.
+  }
+
+  return value.split(',').map((tag) => tag.trim()).filter(Boolean);
+}
+
 function rowToChunk(row: KBRow): KBChunk {
   return {
     id: row.id,
@@ -53,7 +67,7 @@ function rowToChunk(row: KBRow): KBChunk {
     chunkIndex: row.chunk_index,
     totalChunks: row.total_chunks,
     content: row.content,
-    tags: row.tags ? JSON.parse(row.tags) : [],
+    tags: parseTags(row.tags),
     sourceId: row.source_id,
     verified: !!row.verified,
     usageCount: row.usage_count,

@@ -190,6 +190,13 @@ export const rateLimiters = {
     prefix: 'parse:',
   }),
 
+  /** Provider verification can trigger paid upstream requests. */
+  providerVerify: createRateLimiter({
+    windowMs: 60_000,
+    maxRequests: 10,
+    prefix: 'provider-verify:',
+  }),
+
   /** Health check: 60 requests per minute */
   health: createRateLimiter({
     windowMs: 60_000,

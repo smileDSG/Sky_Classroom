@@ -22,6 +22,8 @@ export type ClassroomGenerationJobStatus =
 
 export interface ClassroomGenerationJob {
   id: string;
+  /** Owner for API authorization. Legacy jobs may omit this and are inaccessible. */
+  userId?: string;
   status: ClassroomGenerationJobStatus;
   step: ClassroomGenerationStep | 'initializing' | 'failed';
   progress: number;

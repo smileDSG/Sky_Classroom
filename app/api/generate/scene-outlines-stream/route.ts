@@ -35,6 +35,7 @@ import type {
 import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 const log = createLogger('Outlines Stream');
 
 export const maxDuration = 300;
@@ -144,6 +145,9 @@ export async function POST(req: NextRequest) {
     if (!body.requirements) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Requirements are required');
     }
+
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
 
     const { requirements, pdfText, pdfImages, imageMapping, researchContext, agents } = body as {
       requirements: UserRequirements;
@@ -374,6 +378,7 @@ export async function POST(req: NextRequest) {
           }
 
           if (parsedOutlines.length > 0) {
+            await recordUsage(quota.userId, quota.planType, 'llmCalls');
             // Replace sequential gen_img_N/gen_vid_N with globally unique IDs
             const uniquifiedOutlines = uniquifyMediaElementIds(parsedOutlines);
             // Send done event with all outlines

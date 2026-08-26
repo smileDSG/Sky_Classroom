@@ -13,6 +13,7 @@ import { getModel } from '@/lib/ai/providers';
 import type { ProviderId } from '@/lib/ai/providers';
 import type { ProviderType } from '@/lib/types/provider';
 import { callLLM } from '@/lib/ai/llm';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('API:SkySolveRecognize');
 
@@ -70,6 +71,9 @@ function getVisionModels(): VisionModelConfig[] {
 
 export async function POST(req: Request) {
   try {
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     const formData = await req.formData();
     const image = formData.get('image') as File | null;
 
@@ -170,6 +174,7 @@ export async function POST(req: Request) {
             .map(problem => [problem.stem, ...problem.options.map(option => `${option.key}. ${option.content}`)].join('\n'))
             .join('\n\n');
           const structuredLatex = extractFormulas(structuredText).latex;
+          await recordUsage(quota.userId, quota.planType, 'llmCalls');
           return apiSuccess({
             text: structuredText,
             latex: structuredLatex,
@@ -192,6 +197,7 @@ export async function POST(req: Request) {
         const fallbackConfidence = cleanedText.includes('[?]') ? 0.5 : 0.82;
         const quality = aggregateRecognitionQuality([], fallbackConfidence);
 
+        await recordUsage(quota.userId, quota.planType, 'llmCalls');
         return apiSuccess({
           text: cleanedText,
           latex,

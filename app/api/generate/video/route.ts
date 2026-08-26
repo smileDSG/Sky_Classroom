@@ -23,6 +23,7 @@ import type { VideoProviderId, VideoGenerationOptions } from '@/lib/media/types'
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('VideoGeneration API');
 
@@ -30,6 +31,9 @@ export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     const body = (await request.json()) as VideoGenerationOptions;
 
     if (!body.prompt) {
@@ -78,6 +82,8 @@ export async function POST(request: NextRequest) {
     log.info(
       `Video generated: url=${result.url ? 'yes' : 'no'}, ${result.width}x${result.height}, ${result.duration}s`,
     );
+
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     return apiSuccess({ result });
   } catch (error) {

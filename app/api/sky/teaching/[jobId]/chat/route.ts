@@ -4,8 +4,7 @@ import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { resolveSolverModel } from '@/lib/solve/solver-constants';
 import { createLogger } from '@/lib/logger';
-import { cookies } from 'next/headers';
-import { verifyAccessToken } from '@/lib/server/auth';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 import type { ContentChunk } from '@/lib/teaching/content-types';
 
 const log = createLogger('TeachingChatAPI');
@@ -33,24 +32,9 @@ export async function POST(
   try {
     const { jobId } = await params;
 
-    // Verify authentication
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
-    let userId: string | null = null;
-
-    if (accessToken) {
-      const payload = await verifyAccessToken(accessToken.value);
-      if (payload) {
-        userId = payload.sub;
-      }
-    }
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 },
-      );
-    }
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+    const userId = quota.userId;
 
     // Get job data
     const job = await readTeachingJob(jobId);
@@ -59,6 +43,9 @@ export async function POST(
         { error: 'Job not found' },
         { status: 404 },
       );
+    }
+    if (job.userId !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     if (!job.plan || !job.sections) {
@@ -158,6 +145,7 @@ ${message}
     );
 
     const reply = result.text || '抱歉，我无法回答这个问题。请尝试重新表述你的问题。';
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     // Append follow-up chunk to the section if sectionId is provided
     if (sectionId) {

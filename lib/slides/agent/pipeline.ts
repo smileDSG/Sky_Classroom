@@ -78,6 +78,8 @@ export interface StageTiming {
 
 export interface JobState {
   jobId: string;
+  userId?: string;
+  cancelled?: boolean;
   stage: PipelineStage;
   pipelineMode?: 'openmaic' | 'legacy';
   message: string;
@@ -123,10 +125,11 @@ if (!_global.__pptDoneTs) _global.__pptDoneTs = new Map<string, number>();
 const jobs = _global.__pptJobs as Map<string, JobState>;
 const _doneTimestamps = _global.__pptDoneTs as Map<string, number>;
 
-export function createJob(jobId: string, totalPages?: number): JobState {
+export function createJob(jobId: string, totalPages?: number, userId?: string): JobState {
   const now = Date.now();
   const state: JobState = {
     jobId,
+    userId,
     stage: 'planning',
     message: '正在规划课程大纲...',
     progress: 0,
@@ -171,6 +174,7 @@ function logToFile(level: string, tag: string, message: string) {
 export function updateJob(jobId: string, update: Partial<JobState>) {
   const job = jobs.get(jobId);
   if (!job) return;
+  if (job.cancelled) return;
 
   // Auto-track stage timing when stage changes
   const newStage = update.stage;
@@ -194,6 +198,20 @@ export function updateJob(jobId: string, update: Partial<JobState>) {
   }
 
   Object.assign(job, update);
+}
+
+export function cancelJob(jobId: string, userId: string): JobState | undefined {
+  const job = jobs.get(jobId);
+  if (!job || job.userId !== userId || job.stage === 'done') return undefined;
+
+  updateJob(jobId, {
+    cancelled: true,
+    stage: 'done',
+    message: '课件生成已取消',
+    error: '用户取消了生成',
+    finishedAt: Date.now(),
+  });
+  return jobs.get(jobId);
 }
 
 // Max concurrent pipeline jobs (safety valve against resource exhaustion)

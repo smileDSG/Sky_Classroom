@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
-import { cookies } from 'next/headers';
-import { verifyAccessToken } from '@/lib/server/auth';
+import { requireAuth } from '@/lib/server/auth/helpers';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import { recordAnswerSubmitted } from '@/lib/adaptive-learning/profile/event-recorder';
@@ -22,6 +21,10 @@ const log = createLogger('QuizAnswerAPI');
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+    const userId = auth.user.id;
+
     const body = await request.json();
     const { sectionId, chunkOrder, selectedOption, correctAnswer, knowledgePoints, jobId } = body;
 
@@ -30,18 +33,6 @@ export async function POST(request: NextRequest) {
         { error: 'Missing selectedOption parameter' },
         { status: 400 },
       );
-    }
-
-    // Verify authentication
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
-    let userId: string | null = null;
-
-    if (accessToken) {
-      const payload = await verifyAccessToken(accessToken.value);
-      if (payload) {
-        userId = payload.sub;
-      }
     }
 
     // Use correctAnswer if provided (from structured quiz chunk), otherwise fallback to 0
@@ -63,21 +54,23 @@ export async function POST(request: NextRequest) {
     if (jobId && typeof jobId === 'string') {
       try {
         const job = await readTeachingJob(jobId);
-        if (job) {
-          const section = job.plan?.sections.find((item) => item.id === sectionId);
-          if (resolvedKnowledgePoints.length === 0) {
-            resolvedKnowledgePoints = section?.knowledgePoints ?? [];
-          }
-          const existingResults = job.quizResults ?? [];
-          existingResults.push({
-            sectionId: sectionId || '',
-            chunkOrder: typeof chunkOrder === 'number' ? chunkOrder : 0,
-            knowledgePoints: resolvedKnowledgePoints,
-            isCorrect,
-            timestamp: Date.now(),
-          });
-          await updateTeachingJob(jobId, { quizResults: existingResults });
+        if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+        if (job.userId !== userId) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
+        const section = job.plan?.sections.find((item) => item.id === sectionId);
+        if (resolvedKnowledgePoints.length === 0) {
+          resolvedKnowledgePoints = section?.knowledgePoints ?? [];
+        }
+        const existingResults = job.quizResults ?? [];
+        existingResults.push({
+          sectionId: sectionId || '',
+          chunkOrder: typeof chunkOrder === 'number' ? chunkOrder : 0,
+          knowledgePoints: resolvedKnowledgePoints,
+          isCorrect,
+          timestamp: Date.now(),
+        });
+        await updateTeachingJob(jobId, { quizResults: existingResults });
       } catch (jobErr) {
         log.warn('Failed to update job quiz result:', jobErr);
       }

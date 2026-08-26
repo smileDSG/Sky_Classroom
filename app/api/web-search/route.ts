@@ -20,12 +20,16 @@ import type { AICallFn } from '@/lib/generation/pipeline-types';
 import { WEB_SEARCH_PROVIDERS } from '@/lib/web-search/constants';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { resolveWebSearchRouteBaseUrl } from '@/lib/server/web-search-config';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('WebSearch');
 
 export async function POST(req: NextRequest) {
   let query: string | undefined;
   try {
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     const body = await req.json();
     const {
       query: requestQuery,
@@ -110,6 +114,8 @@ export async function POST(req: NextRequest) {
       ...(providerId === 'baidu' && baiduSubSources ? { baiduSubSources } : {}),
     });
     const context = formatSearchResultsAsContext(result);
+
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     return apiSuccess({
       answer: result.answer,

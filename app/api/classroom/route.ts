@@ -8,6 +8,7 @@ import {
   readClassroom,
 } from '@/lib/server/classroom-storage';
 import { createLogger } from '@/lib/logger';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('Classroom API');
 
@@ -15,6 +16,9 @@ export async function POST(request: NextRequest) {
   let stageId: string | undefined;
   let sceneCount: number | undefined;
   try {
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+
     const body = await request.json();
     const { stage, scenes } = body;
     stageId = stage?.id;
@@ -29,6 +33,9 @@ export async function POST(request: NextRequest) {
     }
 
     const id = stage.id || randomUUID();
+    if (!isValidClassroomId(id)) {
+      return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid classroom id');
+    }
     const baseUrl = buildRequestOrigin(request);
 
     const persisted = await persistClassroom({ id, stage: { ...stage, id }, scenes }, baseUrl);

@@ -10,6 +10,7 @@
 import { NextRequest } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import type { KBType } from '@/lib/knowledge-base/types';
+import { requireAdmin } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:KnowledgeBase');
 
@@ -77,6 +78,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const { searchParams } = new URL(req.url);
     const docId = searchParams.get('docId');
@@ -97,7 +101,10 @@ export async function DELETE(req: NextRequest) {
       return Response.json({ success: true, message: `KB[${kbType}] cleared` });
     }
 
-    return Response.json({ success: false, error: 'Provide docId or type parameter' }, { status: 400 });
+    return Response.json(
+      { success: false, error: 'Provide docId or type parameter' },
+      { status: 400 },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('KB DELETE failed:', message);

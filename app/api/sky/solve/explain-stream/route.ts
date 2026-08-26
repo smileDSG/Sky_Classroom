@@ -22,6 +22,7 @@ import { streamSolve, type StreamEvent } from '@/lib/solve/streaming-solver';
 import { classifyProblem, resolveSolverModel } from '@/lib/solve/solver-constants';
 import { buildKnowledgePointsPrompt } from '@/lib/solve/solver-prompts';
 import { postProcessMathContent } from '@/lib/solve/math-postprocessor';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('API:ExplainStream');
 
@@ -129,6 +130,11 @@ function formatSSEEvent(type: string, data: Record<string, unknown> = {}): strin
 
 export async function POST(req: Request) {
   try {
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) {
+      return quota.error;
+    }
+
     const body = await req.json();
     const { problem, problemImage, problemSpec, userAnswer } = body;
 
@@ -312,6 +318,7 @@ export async function POST(req: Request) {
         }
 
         // Phase 5: Done
+        await recordUsage(quota.userId, quota.planType, 'llmCalls');
         await write(formatSSEEvent('done', {
           fromQuestionBank: false,
           agentType,

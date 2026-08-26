@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const cronSecret = req.headers.get('x-cron-secret');
     const expectedSecret = process.env.CRON_SECRET;
 
-    if (expectedSecret && cronSecret !== expectedSecret) {
+    if (!expectedSecret || cronSecret !== expectedSecret) {
       return apiError(API_ERROR_CODES.UNAUTHORIZED, 401, 'Unauthorized');
     }
 

@@ -10,6 +10,7 @@ import { runClassroomContinueJob } from '@/lib/server/classroom-job-runner';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { createLogger } from '@/lib/logger';
 import type { SceneOutline } from '@/lib/types/generation';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('ClassroomApprove API');
 
@@ -39,6 +40,9 @@ function buildRuntimeModelConfig(body: Record<string, unknown>): RuntimeModelCon
 export async function POST(req: NextRequest, context: { params: Promise<{ jobId: string }> }) {
   let resolvedJobId: string | undefined;
   try {
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+
     const { jobId } = await context.params;
     resolvedJobId = jobId;
 
@@ -49,6 +53,9 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
     const job = await readClassroomGenerationJobHybrid(jobId);
     if (!job) {
       return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
+    }
+    if (job.userId !== auth.user.id) {
+      return apiError('UNAUTHORIZED', 403, '无权操作此任务');
     }
 
     if (job.status === 'running' && job.step === 'generating_scenes') {

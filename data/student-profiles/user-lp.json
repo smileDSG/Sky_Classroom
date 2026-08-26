@@ -19,7 +19,7 @@
     "errorPatterns": [],
     "totalQuestions": 0,
     "totalCorrect": 0,
-    "lastUpdated": "2026-08-14T16:16:11.840Z",
+    "lastUpdated": "2026-08-26T11:07:06.035Z",
     "recentQuizPerformance": {
       "overallAccuracy": 50,
       "accuracyByKnowledge": {},
@@ -27,6 +27,6 @@
       "recommendedDepthShift": "maintain"
     }
   },
-  "cachedAt": 1786724171845,
+  "cachedAt": 1787742426036,
   "cacheVersion": 2
 }

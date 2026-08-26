@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
+import { getClientIp, rateLimiters, rateLimitResponse } from '@/lib/api/middleware/rate-limiter';
 const log = createLogger('Azure Voices');
 
 export const maxDuration = 30;
@@ -13,6 +14,9 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   let baseUrl: string | undefined;
   try {
+    const rateLimitResult = rateLimiters.providerVerify.consume(getClientIp(req));
+    if (!rateLimitResult.allowed) return rateLimitResponse(rateLimitResult);
+
     const body = await req.json();
     const { apiKey } = body;
     baseUrl = body.baseUrl;
@@ -38,6 +42,7 @@ export async function POST(req: NextRequest) {
         'Ocp-Apim-Subscription-Key': apiKey,
       },
       redirect: 'manual',
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (response.status >= 300 && response.status < 400) {

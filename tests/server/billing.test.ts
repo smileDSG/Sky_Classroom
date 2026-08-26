@@ -26,10 +26,9 @@ vi.mock('@/lib/storage/dao/users', () => ({
   createUserDAO: vi.fn(),
 }));
 
-// ─── Mock Storage for usage tracker ───
-vi.mock('@/lib/storage/storage-factory', () => ({
-  createStorageProvider: vi.fn(),
-  getStorageProvider: vi.fn(),
+// ─── Mock server storage used by quota and usage tracker ───
+vi.mock('@/lib/server/server-storage', () => ({
+  getServerStorage: vi.fn(),
 }));
 
 // ─── Mock next/server for apiError → NextResponse.json ───
@@ -46,7 +45,7 @@ vi.mock('next/server', () => ({
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth/jwt';
 import { createUserDAO } from '@/lib/storage/dao/users';
-import { createStorageProvider } from '@/lib/storage/storage-factory';
+import { getServerStorage } from '@/lib/server/server-storage';
 import { PLANS, getPlanLimits } from '@/lib/server/billing/plans';
 import type { PlanType } from '@/lib/server/billing/plans';
 import type { StorageProvider } from '@/lib/storage/storage-types';
@@ -54,7 +53,7 @@ import type { StorageProvider } from '@/lib/storage/storage-types';
 const mockCookies = vi.mocked(cookies);
 const mockVerify = vi.mocked(verifyAccessToken);
 const mockCreateDAO = vi.mocked(createUserDAO);
-const mockCreateStorage = vi.mocked(createStorageProvider);
+const mockGetServerStorage = vi.mocked(getServerStorage);
 
 const fakeUser = (planType: PlanType) => ({
   id: 'user-123',
@@ -164,10 +163,10 @@ describe('PLANS — plan definitions', () => {
   });
 
   it('enterprise includes all pro features', () => {
-    expect(PLANS.enterprise.features).toContain('All Pro features');
-    expect(PLANS.enterprise.features).toContain('Unlimited everything');
-    expect(PLANS.enterprise.features).toContain('Dedicated support');
-    expect(PLANS.enterprise.features).toContain('Custom integrations');
+    expect(PLANS.enterprise.features).toContain('包含专业版全部功能');
+    expect(PLANS.enterprise.features).toContain('全部不限量');
+    expect(PLANS.enterprise.features).toContain('专属客服支持');
+    expect(PLANS.enterprise.features).toContain('自定义集成');
   });
 });
 
@@ -363,7 +362,7 @@ describe('requireQuota', () => {
 
   it('passes when free user is under limit', async () => {
     mockAuth('free');
-    mockCreateStorage.mockResolvedValue(makeMemoryStorage() as unknown as StorageProvider);
+    mockGetServerStorage.mockResolvedValue(makeMemoryStorage() as unknown as StorageProvider);
 
     const { requireQuota } = await import('@/lib/server/billing/require-quota');
     const result = await requireQuota('generationCount');
@@ -385,7 +384,7 @@ describe('requireQuota', () => {
         storageUsed: 0,
       },
     });
-    mockCreateStorage.mockResolvedValue(provider as unknown as StorageProvider);
+    mockGetServerStorage.mockResolvedValue(provider as unknown as StorageProvider);
 
     const { requireQuota } = await import('@/lib/server/billing/require-quota');
     const result = await requireQuota('generationCount');
@@ -409,7 +408,7 @@ describe('requireQuota', () => {
         storageUsed: 0,
       },
     });
-    mockCreateStorage.mockResolvedValue(provider as unknown as StorageProvider);
+    mockGetServerStorage.mockResolvedValue(provider as unknown as StorageProvider);
 
     const { requireQuota } = await import('@/lib/server/billing/require-quota');
     const result = await requireQuota('llmCalls');
@@ -433,7 +432,7 @@ describe('requireQuota', () => {
         storageUsed: 0,
       },
     });
-    mockCreateStorage.mockResolvedValue(provider as unknown as StorageProvider);
+    mockGetServerStorage.mockResolvedValue(provider as unknown as StorageProvider);
 
     const { requireQuota } = await import('@/lib/server/billing/require-quota');
     const result = await requireQuota('llmCalls');
@@ -448,7 +447,7 @@ describe('requireQuota', () => {
 describe('recordUsage', () => {
   it('increments usage counter without throwing', async () => {
     const provider = makeMemoryStorage();
-    mockCreateStorage.mockResolvedValue(provider as unknown as StorageProvider);
+    mockGetServerStorage.mockResolvedValue(provider as unknown as StorageProvider);
 
     const { recordUsage } = await import('@/lib/server/billing/require-quota');
     await recordUsage('user-X', 'free', 'llmCalls');
@@ -461,7 +460,7 @@ describe('recordUsage', () => {
   });
 
   it('swallows errors silently (non-critical)', async () => {
-    mockCreateStorage.mockRejectedValue(new Error('DB down'));
+    mockGetServerStorage.mockRejectedValue(new Error('DB down'));
 
     const { recordUsage } = await import('@/lib/server/billing/require-quota');
 

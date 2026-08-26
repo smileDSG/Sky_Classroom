@@ -14,6 +14,7 @@ import { runEnrichment, getEnrichmentStatus } from '@/lib/solve/enrichment/enric
 import { isSearchConfigured } from '@/lib/solve/enrichment/web-search';
 import type { SubjectId, GradeLevel } from '@/lib/solve/enrichment/types';
 import { createLogger } from '@/lib/logger';
+import { requireAdmin } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:EnrichmentRun');
 
@@ -24,6 +25,9 @@ interface RunRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await req.json().catch(() => ({})) as RunRequest;
 

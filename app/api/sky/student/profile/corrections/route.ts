@@ -7,6 +7,7 @@ import {
   type ProfileSignalDimension,
   type ProfileSignalValue,
 } from '@/lib/student/profile-signals';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const PROFILE_DIMENSIONS = new Set<ProfileSignalDimension>([
   'majorBackground',
@@ -27,18 +28,20 @@ function evidenceList(evidence: string | string[] | undefined): string[] {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   const body = (await req.json().catch(() => ({}))) as {
-    userId?: string;
     dimension?: ProfileSignalDimension;
     value?: ProfileSignalValue;
     evidence?: string | string[];
   };
 
-  if (!body.userId || !body.dimension || body.value === undefined) {
+  if (!body.dimension || body.value === undefined) {
     return Response.json(
       {
         success: false,
-        error: 'userId, dimension, and value are required',
+        error: 'dimension and value are required',
       },
       { status: 400 },
     );
@@ -57,14 +60,14 @@ export async function POST(req: NextRequest) {
   const storage = await getServerStorage();
   const dao = createProfileSignalDAO(storage);
   const profileSignal = await dao.add({
-    userId: body.userId,
+    userId: auth.user.id,
     dimension: body.dimension,
     value: body.value,
     source: 'manual_correction',
     confidence: 0.98,
     evidence: evidenceList(body.evidence),
   });
-  const signals = await dao.listByUser(body.userId);
+  const signals = await dao.listByUser(auth.user.id);
 
   return Response.json({
     success: true,

@@ -17,6 +17,7 @@ import { verifyAccessToken } from '@/lib/server/auth/jwt';
 import { rateLimiters, rateLimitResponse, getClientIp } from '@/lib/api/middleware/rate-limiter';
 import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personalization';
 import { buildSlidesAdaptivePolicyFromDecision } from '@/lib/slides/personalization';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('API:Generate');
 
@@ -31,6 +32,9 @@ export async function POST(req: NextRequest) {
     if (!payload) {
       return apiError(API_ERROR_CODES.UNAUTHORIZED, 401, 'Invalid or expired token');
     }
+
+    const quota = await requireQuota('generationCount');
+    if ('error' in quota) return quota.error;
 
     // ── Rate limit ──
     const clientIp = getClientIp(req);
@@ -107,7 +111,8 @@ export async function POST(req: NextRequest) {
     log.info(`Starting pipeline for "${topic}" [${diff}, ${minP}-${maxP}p, model=${modelString}]`);
 
     const jobId = nanoid(12);
-    createJob(jobId);
+    createJob(jobId, undefined, payload.sub);
+    await recordUsage(quota.userId, quota.planType, 'generationCount');
 
     // Fire and forget — pipeline runs async, client polls status
     runPipeline({

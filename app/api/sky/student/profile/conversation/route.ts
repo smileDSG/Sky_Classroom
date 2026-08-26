@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
 
 import { buildSoftwareCupProfile } from '@/lib/software-cup/demo-service';
-import { verifyAccessToken } from '@/lib/server/auth';
+import { getCurrentUser } from '@/lib/server/auth/helpers';
 import { getServerStorage } from '@/lib/server/server-storage';
 import {
   extractConversationProfile,
@@ -16,32 +15,16 @@ import {
 
 const DEFAULT_PROFILE_USER_ID = 'default-user';
 
-async function resolveProfileUserId(bodyUserId?: string): Promise<string> {
-  const explicitUserId = bodyUserId?.trim();
-  if (explicitUserId) return explicitUserId;
-
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token');
-    if (!accessToken?.value) return DEFAULT_PROFILE_USER_ID;
-
-    const payload = await verifyAccessToken(accessToken.value);
-    return payload?.sub ?? DEFAULT_PROFILE_USER_ID;
-  } catch {
-    return DEFAULT_PROFILE_USER_ID;
-  }
-}
-
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as {
     input?: string;
     message?: string;
     sessionId?: string;
     stage?: ConversationProfileStage;
-    userId?: string;
   };
   const input = body.input || body.message || '';
-  const userId = await resolveProfileUserId(body.userId);
+  const currentUser = await getCurrentUser();
+  const userId = currentUser?.id ?? DEFAULT_PROFILE_USER_ID;
   const [profile, extraction] = await Promise.all([
     buildSoftwareCupProfile(input),
     Promise.resolve(
@@ -54,7 +37,7 @@ export async function POST(req: NextRequest) {
 
   profile.userId = userId;
 
-  const profileSignals = input.trim()
+  const profileSignals = currentUser && input.trim()
     ? conversationPatchToSignals({
         userId,
         patch: extraction.profilePatch,

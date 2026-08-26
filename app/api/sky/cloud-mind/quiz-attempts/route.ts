@@ -10,7 +10,7 @@ import type { QuizAttemptInput, QuizAttemptQuestion } from '@/lib/student/quiz-a
 import type { Difficulty, Subject } from '@/lib/solve/agents/analyze-types';
 import { recordAnswerSubmitted } from '@/lib/adaptive-learning/profile/event-recorder';
 import { createLogger } from '@/lib/logger';
-import { getJwtPayload } from '@/lib/server/auth/helpers';
+import { requireAuth } from '@/lib/server/auth/helpers';
 import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
 import { getLearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
 
@@ -76,9 +76,11 @@ function normalizeQuestions(rawQuestions: unknown): QuizAttemptQuestion[] {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+
     const body = await request.json();
-    const auth = await getJwtPayload().catch(() => null);
-    const userId = auth?.sub ?? (typeof body.userId === 'string' ? body.userId : 'default-user');
+    const userId = auth.user.id;
     const questions = normalizeQuestions(body.questions);
     if (questions.length === 0) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, '缺少有效答题记录');

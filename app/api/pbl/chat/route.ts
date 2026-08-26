@@ -11,6 +11,7 @@ import type { PBLAgent, PBLIssue } from '@/lib/pbl/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 const log = createLogger('PBL Chat');
 
 interface PBLChatRequest {
@@ -27,13 +28,16 @@ export async function POST(req: NextRequest) {
   let resolvedAgentType: string | undefined;
   try {
     const body = (await req.json()) as PBLChatRequest;
-    const { message, agent, currentIssue, recentMessages, userRole, agentType } = body;
+    const { message, agent, currentIssue, recentMessages = [], userRole, agentType } = body;
     agentName = agent?.name;
     resolvedAgentType = agentType;
 
     if (!message || !agent) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'Message and agent are required');
     }
+
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
 
     // Get model config from request headers/body
     const { model, thinkingConfig } = await resolveModelFromRequest(req, body);
@@ -71,6 +75,8 @@ export async function POST(req: NextRequest) {
       undefined,
       thinkingConfig,
     );
+
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     return apiSuccess({ message: result.text, agentName: agent.name });
   } catch (error) {

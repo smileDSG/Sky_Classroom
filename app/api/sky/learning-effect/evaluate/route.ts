@@ -10,6 +10,7 @@ import {
   type ResourceUsageResult,
 } from '@/lib/software-cup/learning-effect';
 import { createProfileSignalDAO } from '@/lib/student/profile-signals';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const DEFAULT_RESULTS: PracticeResult[] = [
   {
@@ -67,9 +68,11 @@ function buildNextActions(accuracy: number): string[] {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   const body = (await req.json().catch(() => ({}))) as {
     input?: string;
-    userId?: string;
     results?: PracticeResult[];
     resourceUsage?: ResourceUsageResult[];
   };
@@ -89,9 +92,7 @@ export async function POST(req: NextRequest) {
     .filter(([, mastery]) => mastery < 60)
     .map(([point]) => point);
   const nextActions = buildNextActions(summary.accuracy);
-  const profileSignals = body.userId
-    ? learningEffectToProfileSignals({ userId: body.userId, results })
-    : [];
+  const profileSignals = learningEffectToProfileSignals({ userId: auth.user.id, results });
 
   if (profileSignals.length > 0) {
     const storage = await getServerStorage();

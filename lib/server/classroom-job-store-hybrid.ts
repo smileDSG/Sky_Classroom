@@ -155,15 +155,27 @@ function markStaleIfNeeded(job: ClassroomGenerationJob): ClassroomGenerationJob 
 export async function createClassroomGenerationJobHybrid(
   jobId: string,
   input: GenerateClassroomInput,
+  userIdOrModelConfig?:
+    | string
+    | {
+        modelString?: string;
+        apiKey?: string;
+        baseUrl?: string;
+      },
   modelConfig?: {
     modelString?: string;
     apiKey?: string;
     baseUrl?: string;
   },
 ): Promise<ClassroomGenerationJob> {
+  const userId =
+    typeof userIdOrModelConfig === 'string' ? userIdOrModelConfig : 'legacy-unowned-job';
+  const resolvedModelConfig =
+    typeof userIdOrModelConfig === 'string' ? modelConfig : userIdOrModelConfig;
   const now = new Date().toISOString();
   const job: ClassroomGenerationJob = {
     id: jobId,
+    userId,
     status: 'initializing',
     step: 'initializing',
     progress: 1,
@@ -180,7 +192,7 @@ export async function createClassroomGenerationJobHybrid(
       pdfImageCount: input.pdfContent?.images.length || 0,
     },
     scenesGenerated: 0,
-    modelConfig: sanitizeModelConfig(modelConfig),
+    modelConfig: sanitizeModelConfig(resolvedModelConfig),
     input: sanitizeInputForPersistence(input),
   };
 

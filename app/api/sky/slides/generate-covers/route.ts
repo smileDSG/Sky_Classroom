@@ -15,6 +15,7 @@ import { generateCovers } from '@/lib/slides/agent/cover-agent';
 import { renderCoverPptx } from '@/lib/slides/agent/cover-renderer';
 import { convertMultiplePptx } from '@/lib/slides/agent/png-converter';
 import { createLogger } from '@/lib/logger';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('API:GenerateCovers');
 
@@ -26,6 +27,9 @@ export async function POST(req: NextRequest) {
     if (!topic || !topic.trim()) {
       return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing required field: topic');
     }
+
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
 
     const diff = difficulty || '高中';
 
@@ -98,6 +102,7 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
     return apiSuccess({ covers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

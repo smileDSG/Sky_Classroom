@@ -10,6 +10,7 @@ import { callLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 const log = createLogger('Quiz Grade');
 
 interface GradeRequest {
@@ -42,6 +43,9 @@ export async function POST(req: NextRequest) {
     if (!points || !Number.isFinite(points) || points <= 0) {
       return apiError('INVALID_REQUEST', 400, 'points must be a positive number');
     }
+
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
 
     // Resolve model from request headers/body
     const { model: languageModel, thinkingConfig } = await resolveModelFromRequest(req, body);
@@ -97,6 +101,8 @@ ${commentPrompt ? `Grading guidance: ${commentPrompt}\n` : ''}Student answer: ${
           : 'Answer received. Please refer to the standard answer.',
       };
     }
+
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     return apiSuccess({ ...gradeResult });
   } catch (error) {

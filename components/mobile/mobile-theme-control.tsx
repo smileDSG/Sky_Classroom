@@ -24,9 +24,7 @@ export function MobileThemeControl({
   className?: string;
   variant?: 'segment' | 'toggle';
 }) {
-  const { theme, setTheme, forceDark } = useTheme();
-
-  if (forceDark) return null;
+  const { theme, setTheme } = useTheme();
 
   if (variant === 'toggle') {
     const isDark = theme === 'dark';
@@ -62,9 +60,7 @@ export function MobileThemeControl({
             title={option.ariaLabel}
             onClick={() => setTheme(option.id)}
             className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full transition-all active:scale-95 ${
-              active
-                ? 'bg-sky-300 text-[#082033] shadow-sm'
-                : 'text-slate-300 hover:text-white'
+              active ? 'bg-sky-300 text-[#082033] shadow-sm' : 'text-slate-300 hover:text-white'
             }`}
           >
             <Icon className="size-4" />

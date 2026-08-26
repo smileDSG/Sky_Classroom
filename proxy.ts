@@ -9,7 +9,6 @@ const PUBLIC_PATHS = [
   '/api/auth',
   '/api/access-code/status',
   '/api/server-providers',
-  '/api/sky/solve/clear',
   '/api/sky/enrichment',
   '/sky/software-cup',
   '/sky/cloud-mind/course-studio',

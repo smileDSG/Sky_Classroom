@@ -1,10 +1,14 @@
 import { clearQuestionBank } from '@/lib/solve/question-bank';
 import { clearSolveCache } from '@/lib/solve/solve-cache';
 import { createLogger } from '@/lib/logger';
+import { requireAdmin } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:SolveClear');
 
 export async function POST() {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   const results: string[] = [];
 
   // Clear solve cache (in-memory, always works)

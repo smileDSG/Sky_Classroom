@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server';
 import { getTeachingEvents } from '@/lib/server/teaching-job-runner';
+import { readTeachingJob } from '@/lib/server/teaching-job-store';
+import { requireAuth } from '@/lib/server/auth/helpers';
+import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('TeachingStreamSSE');
@@ -14,7 +17,14 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> },
 ) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   const { jobId } = await params;
+  const job = await readTeachingJob(jobId);
+  if (!job) return apiError('NOT_FOUND', 404, '教案任务不存在');
+  if (job.userId !== auth.user.id) return apiError('UNAUTHORIZED', 403, '无权访问此任务');
+
   log.info(`SSE connection opened for job ${jobId}`);
 
   const events = getTeachingEvents();

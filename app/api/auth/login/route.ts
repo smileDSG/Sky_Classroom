@@ -9,7 +9,6 @@ import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, signRefreshToken, verifyPassword } from '@/lib/server/auth';
 import { ACCESS_COOKIE_MAX_AGE, REFRESH_COOKIE_MAX_AGE } from '@/lib/server/auth/jwt';
 import { createUserDAO } from '@/lib/storage/dao/users';
-import { ensureAdminUser } from '@/lib/server/admin-seed';
 import { DEMO_USERNAME } from '@/lib/auth/demo-account';
 import { ensureDemoUser } from '@/lib/server/demo-user';
 
@@ -20,8 +19,6 @@ const LoginSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    await ensureAdminUser();
-
     const body = await request.json();
     const parsed = LoginSchema.safeParse(body);
     if (!parsed.success) {

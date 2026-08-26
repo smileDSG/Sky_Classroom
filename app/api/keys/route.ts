@@ -10,14 +10,21 @@ import { randomUUID } from 'crypto';
 import { apiSuccess, apiError } from '@/lib/server/api-response';
 import { listKeys, createKey } from '@/lib/storage/dao/api-key-pool';
 import { refreshCache } from '@/lib/api-key-pool/pool';
+import { requireAdmin } from '@/lib/server/auth/helpers';
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   const provider = req.nextUrl.searchParams.get('provider') ?? undefined;
   const keys = await listKeys(provider);
   return apiSuccess({ keys });
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await req.json();
     const { provider, apiKey, baseUrl, label, priority } = body;

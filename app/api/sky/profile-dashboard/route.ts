@@ -10,12 +10,10 @@
  * Replaces the three separate calls the frontend previously made to
  * /api/sky/learning-stats, /api/sky/cloud-mind/dashboard, /api/sky/learning-path.
  */
-import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { verifyAccessToken } from '@/lib/server/auth';
+import { requireAuth } from '@/lib/server/auth/helpers';
 import { getServerStorage } from '@/lib/server/server-storage';
 import { getLearningStats } from '@/lib/server/learning-stats';
 import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
@@ -102,42 +100,12 @@ async function resolveDashboardProfile(userId: string): Promise<StudentProfile |
   return profile;
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // ── Auth ──
-    const url = new URL(req.url);
-    const queryUserId = url.searchParams.get('userId');
-
-    let userId: string | null = queryUserId;
-
-    if (!userId) {
-      const cookieStore = await cookies();
-      const accessToken = cookieStore.get('access_token');
-      if (accessToken) {
-        const payload = await verifyAccessToken(accessToken.value);
-        if (payload) userId = payload.sub;
-      }
-    }
-
-    // Unauthenticated fallback — return empty shell so the dashboard can render.
-    if (!userId) {
-      return apiSuccess({
-        data: {
-          stats: {
-            todayStudyMinutes: 0,
-            streakDays: 0,
-            masteryPercent: 0,
-            checkedInToday: false,
-            problemsAttempted: 0,
-            problemsCorrect: 0,
-            scenesCompleted: 0,
-            learnerProfile: null,
-          },
-          cloudMind: null,
-          learningPath: { path: null },
-        },
-      });
-    }
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+    const userId = auth.user.id;
 
     // ── Parallel data fetching ──
     const storage = await getServerStorage();

@@ -8,6 +8,7 @@ export type CloudMindQuizJobStatus = 'queued' | 'running' | 'completed' | 'faile
 
 export interface CloudMindQuizJob {
   id: string;
+  userId: string;
   status: CloudMindQuizJobStatus;
   phase: string;
   progress: number;
@@ -41,7 +42,7 @@ function cleanExpired() {
 
 export async function createCloudMindQuizJob(
   id: string,
-  input: Pick<CloudMindQuizJob, 'subject' | 'difficulty' | 'topic' | 'count' | 'profileInjected'> & {
+  input: Pick<CloudMindQuizJob, 'userId' | 'subject' | 'difficulty' | 'topic' | 'count' | 'profileInjected'> & {
     derived?: CloudMindQuizJob['derived'];
   },
 ): Promise<CloudMindQuizJob> {
@@ -49,6 +50,7 @@ export async function createCloudMindQuizJob(
   const now = Date.now();
   const job: CloudMindQuizJob = {
     id,
+    userId: input.userId,
     status: 'queued',
     phase: 'queued',
     progress: 0,

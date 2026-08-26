@@ -10,8 +10,12 @@ import { NextRequest } from 'next/server';
 import { apiSuccess, apiError } from '@/lib/server/api-response';
 import { pickKey } from '@/lib/api-key-pool/pool';
 import { NoAvailableKeyError } from '@/lib/api-key-pool/types';
+import { requireAdmin } from '@/lib/server/auth/helpers';
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await req.json();
     const { provider } = body;

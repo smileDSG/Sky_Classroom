@@ -9,6 +9,7 @@ export type SolveJobStatus = 'queued' | 'running' | 'completed' | 'failed';
 
 export interface SolveJob {
   id: string;
+  userId: string;
   status: SolveJobStatus;
   phase: string;
   progress: number; // 0-100
@@ -42,11 +43,12 @@ function cleanExpired() {
   }
 }
 
-export function createSolveJob(id: string, problemText: string): SolveJob {
+export function createSolveJob(id: string, problemText: string, userId: string): SolveJob {
   cleanExpired();
   const now = Date.now();
   const job: SolveJob = {
     id,
+    userId,
     status: 'queued',
     phase: 'queued',
     progress: 0,

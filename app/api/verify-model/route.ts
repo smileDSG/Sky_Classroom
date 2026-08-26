@@ -3,11 +3,15 @@ import { generateText } from 'ai';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { resolveModel } from '@/lib/server/resolve-model';
+import { getClientIp, rateLimiters, rateLimitResponse } from '@/lib/api/middleware/rate-limiter';
 const log = createLogger('Verify Model');
 
 export async function POST(req: NextRequest) {
   let model: string | undefined;
   try {
+    const rateLimitResult = rateLimiters.providerVerify.consume(getClientIp(req));
+    if (!rateLimitResult.allowed) return rateLimitResponse(rateLimitResult);
+
     const body = await req.json();
     const { apiKey, baseUrl, providerType } = body;
     model = body.model;

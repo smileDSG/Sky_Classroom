@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto';
 import { apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { generatePreviewFromPptx } from '@/lib/slides/pptx-preview';
+import { rateLimiters, rateLimitResponse, getClientIp } from '@/lib/api/middleware/rate-limiter';
 
 const log = createLogger('API:SkySlidesPreview');
 
@@ -32,6 +33,8 @@ export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitResult = rateLimiters.generate.consume(getClientIp(req));
+    if (!rateLimitResult.allowed) return rateLimitResponse(rateLimitResult);
     const body = await req.json();
     const { pptxUrl } = body as {
       pptxUrl?: string;

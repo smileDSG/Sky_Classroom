@@ -32,6 +32,7 @@ import { getModel } from '@/lib/ai/providers';
 import type { ProviderId, ProviderType } from '@/lib/types/provider';
 import { apiError } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
+import { requireAdmin } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:QB:Import');
 
@@ -287,6 +288,9 @@ function errorMessage(err: unknown, fallback: string): string {
 // ── POST handler ────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const formData = await req.formData();
     const file = formData.get('file');

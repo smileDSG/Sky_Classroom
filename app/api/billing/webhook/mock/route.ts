@@ -10,6 +10,10 @@ import { createUserDAO } from '@/lib/storage/dao/users';
 import type { PlanType } from '@/lib/server/billing/plans';
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return apiError('NOT_FOUND', 404, 'Not found');
+  }
+
   const url = new URL(request.url);
   const orderId = url.searchParams.get('orderId');
 

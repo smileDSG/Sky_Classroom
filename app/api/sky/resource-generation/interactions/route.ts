@@ -6,12 +6,15 @@ import {
   resourceInteractionToProfileSignals,
   type ResourceInteractionAction,
 } from '@/lib/student/resource-interactions';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const ACTIONS = new Set<ResourceInteractionAction>(['view', 'favorite', 'skip', 'complete']);
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth();
+  if ('error' in auth) return auth.error;
+
   const body = (await req.json().catch(() => ({}))) as {
-    userId?: string;
     resourceId?: string;
     resourceType?: string;
     action?: ResourceInteractionAction;
@@ -19,11 +22,11 @@ export async function POST(req: NextRequest) {
     durationSeconds?: number;
   };
 
-  if (!body.userId || !body.resourceId || !body.resourceType || !body.action) {
+  if (!body.resourceId || !body.resourceType || !body.action) {
     return Response.json(
       {
         success: false,
-        error: 'userId, resourceId, resourceType, and action are required',
+        error: 'resourceId, resourceType, and action are required',
       },
       { status: 400 },
     );
@@ -40,7 +43,7 @@ export async function POST(req: NextRequest) {
   }
 
   const profileSignals = resourceInteractionToProfileSignals({
-    userId: body.userId,
+    userId: auth.user.id,
     resourceId: body.resourceId,
     resourceType: body.resourceType,
     action: body.action,

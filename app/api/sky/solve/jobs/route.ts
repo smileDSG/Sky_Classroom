@@ -12,6 +12,7 @@ import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/server/auth';
 import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personalization';
 import type { LearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:SolveJobs');
 
@@ -44,6 +45,9 @@ function buildAdaptiveGuidance(decision: LearnerDecision): string {
 
 export async function POST(req: Request) {
   try {
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+
     const body = await req.json();
     const { problem, problemImage, problemSpec, userAnswer } = body;
 
@@ -52,13 +56,11 @@ export async function POST(req: Request) {
     }
 
     const jobId = nanoid(10);
-    const job = createSolveJob(jobId, problem);
+    const job = createSolveJob(jobId, problem, auth.user.id);
 
     let adaptiveGuidance: string | null = null;
     try {
-      const token = (await cookies()).get('access_token');
-      const userId = token ? (await verifyAccessToken(token.value))?.sub : undefined;
-      const decision = userId ? await resolveLearnerDecisionForUser(userId, problem) : undefined;
+      const decision = await resolveLearnerDecisionForUser(auth.user.id, problem);
       if (decision) {
         adaptiveGuidance = buildAdaptiveGuidance(decision);
       }

@@ -6,12 +6,16 @@ import type { ParsedPdfContent } from '@/lib/types/pdf';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 const log = createLogger('Parse PDF');
 
 export async function POST(req: NextRequest) {
   let pdfFileName: string | undefined;
   let resolvedProviderId: string | undefined;
   try {
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
+
     const contentType = req.headers.get('content-type') || '';
     if (!contentType.includes('multipart/form-data')) {
       log.error('Invalid Content-Type for PDF upload:', contentType);
@@ -72,6 +76,8 @@ export async function POST(req: NextRequest) {
         fileSize: pdfFile.size,
       },
     };
+
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     return apiSuccess({ data: resultWithMetadata });
   } catch (error) {

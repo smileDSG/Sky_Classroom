@@ -21,11 +21,15 @@ import type { ImageProviderId } from '@/lib/media/types';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
+import { getClientIp, rateLimiters, rateLimitResponse } from '@/lib/api/middleware/rate-limiter';
 
 const log = createLogger('VerifyImageProvider');
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimitResult = rateLimiters.providerVerify.consume(getClientIp(request));
+    if (!rateLimitResult.allowed) return rateLimitResponse(rateLimitResult);
+
     const providerId = (request.headers.get('x-image-provider') || 'seedream') as ImageProviderId;
     const model = request.headers.get('x-image-model') || undefined;
     const clientApiKey = request.headers.get('x-api-key') || undefined;

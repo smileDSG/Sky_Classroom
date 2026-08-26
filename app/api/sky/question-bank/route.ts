@@ -14,6 +14,7 @@ import {
   search,
 } from '@/lib/question-bank/dao';
 import type { QuestionBankFilter, QuestionBankInsert } from '@/lib/question-bank/types';
+import { requireAdmin } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:SkyQuestionBank');
 const DIFFICULTIES = new Set(['easy', 'medium', 'hard']);
@@ -38,7 +39,8 @@ function normalizeStringArray(value: unknown): string[] {
   return value
     .map((item: KnowledgePointInput) => {
       if (typeof item === 'string') return item.trim();
-      if (item && typeof item === 'object' && typeof item.name === 'string') return item.name.trim();
+      if (item && typeof item === 'object' && typeof item.name === 'string')
+        return item.name.trim();
       return '';
     })
     .filter(Boolean);
@@ -76,8 +78,10 @@ export async function GET(req: Request) {
     if (query) filter.keyword = query;
     if (subject) filter.subject = subject;
     if (grade) filter.grade = grade;
-    if (DIFFICULTIES.has(difficulty)) filter.difficulty = difficulty as QuestionBankFilter['difficulty'];
-    if (QUESTION_TYPES.has(questionType)) filter.questionType = questionType as QuestionBankFilter['questionType'];
+    if (DIFFICULTIES.has(difficulty))
+      filter.difficulty = difficulty as QuestionBankFilter['difficulty'];
+    if (QUESTION_TYPES.has(questionType))
+      filter.questionType = questionType as QuestionBankFilter['questionType'];
     if (knowledgePoint.trim()) filter.knowledgePoint = knowledgePoint.trim();
     if (verified !== null && verified !== undefined) filter.verified = verified === 'true';
 
@@ -107,28 +111,32 @@ export async function GET(req: Request) {
         questions: [],
         total: 0,
         page: 1,
-        limit: Math.min(100, Math.max(1, parseInt(new URL(req.url).searchParams.get('limit') || '10', 10))),
+        limit: Math.min(
+          100,
+          Math.max(1, parseInt(new URL(req.url).searchParams.get('limit') || '10', 10)),
+        ),
         totalPages: 0,
       });
     }
 
-    return apiError(
-      API_ERROR_CODES.INTERNAL_ERROR,
-      500,
-      '题库查询失败',
-      message,
-    );
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, '题库查询失败', message);
   }
 }
 
 export async function DELETE(req: Request) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const url = new URL(req.url);
     const idsParam = url.searchParams.get('ids');
     const id = url.searchParams.get('id');
 
     if (idsParam) {
-      const ids = idsParam.split(',').map((item) => item.trim()).filter(Boolean);
+      const ids = idsParam
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
       if (ids.length === 0) {
         return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing ids parameter');
       }
@@ -155,11 +163,7 @@ export async function POST(req: Request) {
     const answer = String(body.answer ?? '').trim();
 
     if (!content || !answer) {
-      return apiError(
-        API_ERROR_CODES.MISSING_REQUIRED_FIELD,
-        400,
-        '缺少必填字段: content, answer',
-      );
+      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, '缺少必填字段: content, answer');
     }
 
     const problemHash = hashProblemText(content);
@@ -182,7 +186,12 @@ export async function POST(req: Request) {
       answer,
       explanation: String(body.explanation ?? body.solution ?? '').trim(),
       knowledgePoints: normalizeStringArray(body.knowledgePoints),
-      image: typeof body.image === 'string' ? body.image : typeof body.problemImage === 'string' ? body.problemImage : undefined,
+      image:
+        typeof body.image === 'string'
+          ? body.image
+          : typeof body.problemImage === 'string'
+            ? body.problemImage
+            : undefined,
       options: normalizeOptions(body.options),
       source: typeof body.source === 'string' ? body.source : undefined,
       tags: normalizeStringArray(body.tags),

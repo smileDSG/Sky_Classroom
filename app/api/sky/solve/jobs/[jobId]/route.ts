@@ -5,6 +5,7 @@
 import { apiSuccess, apiError } from '@/lib/server/api-response';
 import { getSolveJob } from '@/lib/server/solve-job-store';
 import { createLogger } from '@/lib/logger';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:SolveJobStatus');
 
@@ -13,6 +14,9 @@ export async function GET(
   { params }: { params: Promise<{ jobId: string }> },
 ) {
   try {
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+
     const { jobId } = await params;
 
     if (!jobId || jobId.length > 30) {
@@ -22,6 +26,9 @@ export async function GET(
     const job = getSolveJob(jobId);
     if (!job) {
       return apiError('INVALID_REQUEST', 404, '作业未找到或已过期');
+    }
+    if (job.userId !== auth.user.id) {
+      return apiError('UNAUTHORIZED', 403, '无权访问此作业');
     }
 
     return apiSuccess({

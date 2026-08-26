@@ -17,6 +17,8 @@ import { getSubjectLabelOrSelf } from '@/lib/mistakes/subject-inference';
 import { createCloudMindQuizJob, getCloudMindQuizJob } from '@/lib/server/cloud-mind-quiz-job-store';
 import { runCloudMindQuizJob } from '@/lib/server/cloud-mind-quiz-job-runner';
 import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personalization';
+import { requireAuth } from '@/lib/server/auth/helpers';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('API:CloudMindQuiz');
 
@@ -93,10 +95,13 @@ async function resolveJobInput(body: unknown): Promise<{
 
 export async function POST(req: NextRequest) {
   try {
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
     const input = await resolveJobInput(await req.json());
     const jobId = nanoid(10);
 
     await createCloudMindQuizJob(jobId, {
+      userId: quota.userId,
       subject: input.subject,
       difficulty: input.difficulty,
       topic: input.topic,
@@ -104,6 +109,7 @@ export async function POST(req: NextRequest) {
       profileInjected: input.profileInjected,
       derived: input.derived,
     });
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
 
     after(() =>
       runCloudMindQuizJob(jobId, {
@@ -139,6 +145,8 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
     const jobId = req.nextUrl.searchParams.get('jobId');
     if (!jobId) return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing jobId');
     if (jobId.length > 40) return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid jobId');
@@ -146,6 +154,9 @@ export async function GET(req: NextRequest) {
     const job = getCloudMindQuizJob(jobId);
     if (!job) {
       return apiError(API_ERROR_CODES.NOT_FOUND, 404, 'Job not found (expired or never existed)');
+    }
+    if (job.userId !== auth.user.id) {
+      return apiError(API_ERROR_CODES.UNAUTHORIZED, 403, '无权访问此任务');
     }
 
     return apiSuccess({

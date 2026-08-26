@@ -16,6 +16,7 @@ import { AGENT_COLOR_PALETTE } from '@/lib/constants/agent-defaults';
 import { getAgentFactory } from '@/lib/orchestration/registry/factory';
 import { getRuleEngine } from '@/lib/orchestration/registry/combination-rules';
 import type { CourseInfo } from '@/lib/orchestration/registry/combination-rules';
+import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
 const log = createLogger('Agent Profiles API');
 
@@ -69,6 +70,9 @@ export async function POST(req: NextRequest) {
         'MISSING_REQUIRED_FIELD', 400, 'availableAvatars is required and must not be empty',
       );
     }
+
+    const quota = await requireQuota('llmCalls');
+    if ('error' in quota) return quota.error;
 
     const { model: languageModel, modelString: _modelString, thinkingConfig } =
       await resolveModelFromRequest(req, body);
@@ -186,6 +190,7 @@ export async function POST(req: NextRequest) {
     });
 
     log.info(`Successfully generated ${agents.length} agent profiles for "${stageInfo.name}"`);
+    await recordUsage(quota.userId, quota.planType, 'llmCalls');
     return apiSuccess({ agents });
   } catch (error) {
     log.error(

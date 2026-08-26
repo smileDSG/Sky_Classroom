@@ -6,12 +6,16 @@ import {
   markClassroomGenerationJobCancelledHybrid,
 } from '@/lib/server/classroom-job-store-hybrid';
 import { createLogger } from '@/lib/logger';
+import { requireAuth } from '@/lib/server/auth/helpers';
 
 const log = createLogger('ClassroomCancel API');
 
 export async function POST(req: NextRequest, context: { params: Promise<{ jobId: string }> }) {
   let resolvedJobId: string | undefined;
   try {
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
+
     const { jobId } = await context.params;
     resolvedJobId = jobId;
 
@@ -22,6 +26,9 @@ export async function POST(req: NextRequest, context: { params: Promise<{ jobId:
     const job = await readClassroomGenerationJobHybrid(jobId);
     if (!job) {
       return apiError('INVALID_REQUEST', 404, 'Classroom generation job not found');
+    }
+    if (job.userId !== auth.user.id) {
+      return apiError('UNAUTHORIZED', 403, '无权操作此任务');
     }
 
     if (job.status === 'succeeded' || job.status === 'failed' || job.status === 'cancelled') {

@@ -11,6 +11,7 @@ import { chunkDocument } from '@/lib/agents/rag/document-chunker';
 import { getVectorStore, resetVectorStore } from '@/lib/agents/rag/vector-store';
 import { createLogger } from '@/lib/logger';
 import type { KBSearchResult, KBStats, KBType } from '@/lib/knowledge-base/types';
+import { requireAdmin } from '@/lib/server/auth/helpers';
 
 const log = createLogger('API:CloudMindKnowledge');
 
@@ -135,6 +136,9 @@ async function tryPersistentDelete(docId?: string, kbType?: KBType): Promise<boo
 
 /** 上传文档到知识库 */
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await req.json();
     const { title, content } = body as { title: string; content: string };
@@ -230,6 +234,9 @@ export async function GET(req: NextRequest) {
 
 /** 清空知识库（或按 docId 删除） */
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   const { searchParams } = new URL(req.url);
   const docId = searchParams.get('docId');
   const kbTypeParam = searchParams.get('kbType') || searchParams.get('type');
