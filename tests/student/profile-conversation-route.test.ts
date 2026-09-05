@@ -46,11 +46,15 @@ const VALID_LLM_JSON = {
   needsConfirmation: true,
 };
 
-async function postMessage(message: string) {
+async function postMessage(message: string, stage?: string) {
   const { POST } = await import('@/app/api/sky/student/profile/conversation/route');
   const req = new Request('http://localhost/api/sky/student/profile/conversation', {
     method: 'POST',
-    body: JSON.stringify({ sessionId: 'profile-onboarding-test', message, stage: 'onboarding' }),
+    body: JSON.stringify({
+      sessionId: 'profile-onboarding-test',
+      message,
+      ...(stage ? { stage } : {}),
+    }),
   });
   const response = await POST(req as unknown as NextRequest);
   return response.json();
@@ -66,6 +70,7 @@ describe('profile conversation route', () => {
   it('persists extracted profile signals for the demo user when no userId is provided', async () => {
     const payload = await postMessage(
       '我想两周内补机器学习，过拟合和模型评估总是搞不懂，希望多用代码案例和图解讲。',
+      'onboarding',
     );
     const signals = await createProfileSignalDAO(storage).listByUser('default-user');
 
@@ -90,7 +95,10 @@ describe('profile conversation route', () => {
     });
     callLLMMock.mockResolvedValue({ text: JSON.stringify(VALID_LLM_JSON) });
 
-    const payload = await postMessage('我下周要考数据结构，链表老是写错，多给点代码案例。');
+    const payload = await postMessage(
+      '我下周要考数据结构，链表老是写错，多给点代码案例。',
+      'onboarding',
+    );
     const signals = await createProfileSignalDAO(storage).listByUser('default-user');
 
     expect(payload.success).toBe(true);
@@ -98,5 +106,33 @@ describe('profile conversation route', () => {
     expect(payload.data.profilePatch.learningGoal.value).toBe('考前补完数据结构的链表与树');
     expect(payload.data.profileSignals.length).toBeGreaterThan(0);
     expect(signals.length).toBeGreaterThan(0);
+  });
+
+  it('falls back to rules and still persists when callLLM fails after a model resolves', async () => {
+    resolveModelFromRequestMock.mockResolvedValue({
+      model: { modelId: 'test-model' },
+      thinkingConfig: undefined,
+    });
+    callLLMMock.mockRejectedValue(new Error('provider auth failed'));
+
+    const payload = await postMessage('我想两周内补机器学习，过拟合总是搞不懂。', 'onboarding');
+    const signals = await createProfileSignalDAO(storage).listByUser('default-user');
+
+    expect(payload.data.extractionSource).toBe('rules');
+    expect(payload.data.profileSignals.length).toBeGreaterThan(0);
+    expect(signals.length).toBeGreaterThan(0);
+  });
+
+  it('skips LLM extraction entirely when no stage is provided', async () => {
+    resolveModelFromRequestMock.mockResolvedValue({
+      model: { modelId: 'test-model' },
+      thinkingConfig: undefined,
+    });
+
+    const payload = await postMessage('生成一份软件杯画像展示');
+
+    expect(payload.data.extractionSource).toBe('rules');
+    expect(resolveModelFromRequestMock).not.toHaveBeenCalled();
+    expect(payload.data.profile).toBeDefined();
   });
 });

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { getClientIp, rateLimiters, rateLimitResponse } from '@/lib/api/middleware/rate-limiter';
 import { buildSoftwareCupProfile } from '@/lib/software-cup/demo-service';
 import { createLogger } from '@/lib/logger';
 import { getCurrentUser } from '@/lib/server/auth/helpers';
@@ -25,9 +26,14 @@ async function extractWithFallback(
   body: { stage?: ConversationProfileStage },
   input: string,
 ): Promise<{ extraction: ConversationProfileExtractionResult; extractionSource: 'llm' | 'rules' }> {
+  const hasStage = body.stage !== undefined;
   const stage: ConversationProfileStage =
     body.stage === 'learning' || body.stage === 'review' ? body.stage : 'onboarding';
   const rulesExtraction = extractConversationProfile({ message: input, stage });
+
+  if (!hasStage || !input.trim()) {
+    return { extraction: rulesExtraction, extractionSource: 'rules' };
+  }
 
   try {
     const resolved = await resolveModelFromRequest(req, body);
@@ -38,12 +44,18 @@ async function extractWithFallback(
     });
     return { extraction, extractionSource: 'llm' };
   } catch (err) {
-    log.warn('LLM profile extraction unavailable, falling back to rules:', err);
+    log.info('LLM profile extraction unavailable, falling back to rules:', err);
     return { extraction: rulesExtraction, extractionSource: 'rules' };
   }
 }
 
 export async function POST(req: NextRequest) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    const rateLimitResult = rateLimiters.chat.consume(getClientIp(req));
+    if (!rateLimitResult.allowed) return rateLimitResponse(rateLimitResult);
+  }
+
   const body = (await req.json().catch(() => ({}))) as {
     input?: string;
     message?: string;
@@ -51,7 +63,6 @@ export async function POST(req: NextRequest) {
     stage?: ConversationProfileStage;
   };
   const input = body.input || body.message || '';
-  const currentUser = await getCurrentUser();
   const userId = currentUser?.id ?? DEFAULT_PROFILE_USER_ID;
   const [{ extraction, extractionSource }, profile] = await Promise.all([
     extractWithFallback(req, body, input),
