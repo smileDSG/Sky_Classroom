@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -160,10 +160,7 @@ function explanationStyleLabel(style?: string): string {
   return '';
 }
 
-function addUniquePrompt(
-  prompts: ProfileSuggestionPrompt[],
-  next: ProfileSuggestionPrompt | null,
-) {
+function addUniquePrompt(prompts: ProfileSuggestionPrompt[], next: ProfileSuggestionPrompt | null) {
   if (!next) return;
   if (prompts.some((prompt) => prompt.label === next.label || prompt.text === next.text)) return;
   prompts.push(next);
@@ -309,43 +306,35 @@ export function ProfileCompletionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadPersonalization = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/sky/cloud-mind/personalization-context', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const json = (await response.json()) as {
+        success?: boolean;
+        data?: PersonalizationContext;
+        error?: string;
+      };
 
-    async function loadPersonalization() {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch('/api/sky/cloud-mind/personalization-context', {
-          credentials: 'include',
-          cache: 'no-store',
-        });
-        const json = (await response.json()) as {
-          success?: boolean;
-          data?: PersonalizationContext;
-          error?: string;
-        };
-
-        if (cancelled) return;
-        if (response.ok && json.success && json.data) {
-          setPersonalization(json.data);
-        } else {
-          setError(json.error ?? '学习情况暂时不可用，你仍然可以先通过对话补充信息。');
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : '学习情况加载失败');
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+      if (response.ok && json.success && json.data) {
+        setPersonalization(json.data);
+      } else {
+        setError(json.error ?? '学习情况暂时不可用，你仍然可以先通过对话补充信息。');
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '学习情况加载失败');
+    } finally {
+      setLoading(false);
     }
-
-    void loadPersonalization();
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    void loadPersonalization();
+  }, [loadPersonalization]);
 
   const fields = useMemo(
     () => buildProfileFields(personalization, patch),
@@ -425,7 +414,10 @@ export function ProfileCompletionPage() {
               placeholder="例如：我想两周内补机器学习，过拟合和模型评估总是搞不懂，希望多用代码案例和图解讲。"
               submitLabel="更新学习情况"
               suggestionPrompts={suggestionPrompts}
-              onPatchChange={setPatch}
+              onPatchChange={(incomingPatch) => {
+                setPatch(incomingPatch);
+                void loadPersonalization();
+              }}
             />
           </section>
 
