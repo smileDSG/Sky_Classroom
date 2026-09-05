@@ -14,6 +14,8 @@
 ## 已确认的决策
 
 - 抽取策略：**LLM 优先，规则兜底**。配置了 LLM key 就走模型抽取，没 key 或失败时自动降级到现有规则抽取。规则代码原样保留当兜底。（已否决：纯 LLM 无兜底；LLM 与规则并行取优）
+- **LLM 抽取按 stage 门控**：仅当调用方传入 `stage` 时才尝试 LLM（画像聊天始终传；course-studio / software-cup demo 流程不传 stage 且只消费 `data.profile`，不应被动承担 LLM 延迟与成本，直接走规则）。
+- **匿名调用按 IP 限流**：该路由在 PUBLIC_PATHS 上且现在会产生 LLM 开销，匿名请求走 `rateLimiters.chat`（30 次/分钟）令牌桶，超限返回 429。登录用户配额（`requireQuota('llmCalls')`）为后续跟进项。
 - 匿名持久化：**写入 default-user**，沿用仓库现有约定（未登录 userId 一律 `default-user`）。（已否决：匿名 cookie + 登录合并；保持不落库改为登录门控）
 - 已知副作用（接受）：匿名用户写入 default-user，多人匿名共用环境会互相污染。
 - 范围外：`buildSoftwareCupProfile`（软件杯 demo 8 维画像）保持不动。
