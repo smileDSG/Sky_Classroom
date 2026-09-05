@@ -46,9 +46,8 @@ describe('extractConversationProfileWithLLM', () => {
 
   it('parses a valid LLM JSON payload into an extraction result', async () => {
     callLLMMock.mockResolvedValue({ text: JSON.stringify(VALID_LLM_JSON) });
-    const { extractConversationProfileWithLLM } = await import(
-      '@/lib/student/conversation-profile-llm'
-    );
+    const { extractConversationProfileWithLLM } =
+      await import('@/lib/student/conversation-profile-llm');
 
     const result = await extractConversationProfileWithLLM({
       message: '我想两周内补机器学习，过拟合和模型评估总是搞不懂，希望多用代码案例和图解讲。',
@@ -74,12 +73,15 @@ describe('extractConversationProfileWithLLM', () => {
 
   it('throws when the LLM replies with invalid JSON', async () => {
     callLLMMock.mockResolvedValue({ text: '这不是 JSON' });
-    const { extractConversationProfileWithLLM } = await import(
-      '@/lib/student/conversation-profile-llm'
-    );
+    const { extractConversationProfileWithLLM } =
+      await import('@/lib/student/conversation-profile-llm');
 
     await expect(
-      extractConversationProfileWithLLM({ message: '随便聊聊', stage: 'onboarding', model: fakeModel }),
+      extractConversationProfileWithLLM({
+        message: '随便聊聊',
+        stage: 'onboarding',
+        model: fakeModel,
+      }),
     ).rejects.toThrow();
   });
 
@@ -91,12 +93,64 @@ describe('extractConversationProfileWithLLM', () => {
         needsConfirmation: false,
       }),
     });
-    const { extractConversationProfileWithLLM } = await import(
-      '@/lib/student/conversation-profile-llm'
-    );
+    const { extractConversationProfileWithLLM } =
+      await import('@/lib/student/conversation-profile-llm');
 
     await expect(
-      extractConversationProfileWithLLM({ message: '我想补数学', stage: 'onboarding', model: fakeModel }),
+      extractConversationProfileWithLLM({
+        message: '我想补数学',
+        stage: 'onboarding',
+        model: fakeModel,
+      }),
     ).rejects.toThrow();
+  });
+
+  it('drops empty dimensions and keeps only whitelisted resource labels', async () => {
+    callLLMMock.mockResolvedValue({
+      text: JSON.stringify({
+        resourcePreference: { value: ['图解', '随便什么'], confidence: 0.9, evidence: [] },
+        knowledgeBase: {
+          strongPoints: [],
+          weakPoints: [],
+          confidence: 0.8,
+          evidence: [],
+        },
+        errorPatternPreference: { value: [], confidence: 0.7, evidence: [] },
+        nextQuestion: '你现在卡在哪里？',
+        needsConfirmation: false,
+      }),
+    });
+    const { extractConversationProfileWithLLM } =
+      await import('@/lib/student/conversation-profile-llm');
+
+    const result = await extractConversationProfileWithLLM({
+      message: '我喜欢图解。',
+      stage: 'onboarding',
+      model: fakeModel,
+    });
+
+    expect(result.profilePatch.resourcePreference?.value).toEqual(['图解']);
+    expect(result.profilePatch.knowledgeBase).toBeUndefined();
+    expect(result.profilePatch.errorPatternPreference).toBeUndefined();
+  });
+
+  it('returns an empty patch when the LLM extracts nothing', async () => {
+    callLLMMock.mockResolvedValue({
+      text: JSON.stringify({
+        nextQuestion: '你最近最想提升什么？',
+        needsConfirmation: false,
+      }),
+    });
+    const { extractConversationProfileWithLLM } =
+      await import('@/lib/student/conversation-profile-llm');
+
+    const result = await extractConversationProfileWithLLM({
+      message: '你好',
+      stage: 'onboarding',
+      model: fakeModel,
+    });
+
+    expect(result.profilePatch).toEqual({});
+    expect(result.evidence).toEqual([]);
   });
 });
