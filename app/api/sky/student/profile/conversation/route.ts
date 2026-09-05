@@ -1,19 +1,47 @@
 import { NextRequest } from 'next/server';
 
 import { buildSoftwareCupProfile } from '@/lib/software-cup/demo-service';
+import { createLogger } from '@/lib/logger';
 import { getCurrentUser } from '@/lib/server/auth/helpers';
+import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { getServerStorage } from '@/lib/server/server-storage';
 import {
   extractConversationProfile,
+  type ConversationProfileExtractionResult,
   type ConversationProfileStage,
 } from '@/lib/student/conversation-profile';
+import { extractConversationProfileWithLLM } from '@/lib/student/conversation-profile-llm';
 import {
   buildConversationProfileFromSignals,
   conversationPatchToSignals,
   createProfileSignalDAO,
 } from '@/lib/student/profile-signals';
 
+const log = createLogger('API:StudentProfileConversation');
 const DEFAULT_PROFILE_USER_ID = 'default-user';
+
+async function extractWithFallback(
+  req: NextRequest,
+  body: { stage?: ConversationProfileStage },
+  input: string,
+): Promise<{ extraction: ConversationProfileExtractionResult; extractionSource: 'llm' | 'rules' }> {
+  const stage: ConversationProfileStage =
+    body.stage === 'learning' || body.stage === 'review' ? body.stage : 'onboarding';
+  const rulesExtraction = extractConversationProfile({ message: input, stage });
+
+  try {
+    const resolved = await resolveModelFromRequest(req, body);
+    const extraction = await extractConversationProfileWithLLM({
+      message: input,
+      stage,
+      model: resolved,
+    });
+    return { extraction, extractionSource: 'llm' };
+  } catch (err) {
+    log.warn('LLM profile extraction unavailable, falling back to rules:', err);
+    return { extraction: rulesExtraction, extractionSource: 'rules' };
+  }
+}
 
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as {
@@ -25,19 +53,14 @@ export async function POST(req: NextRequest) {
   const input = body.input || body.message || '';
   const currentUser = await getCurrentUser();
   const userId = currentUser?.id ?? DEFAULT_PROFILE_USER_ID;
-  const [profile, extraction] = await Promise.all([
+  const [{ extraction, extractionSource }, profile] = await Promise.all([
+    extractWithFallback(req, body, input),
     buildSoftwareCupProfile(input),
-    Promise.resolve(
-      extractConversationProfile({
-        message: input,
-        stage: body.stage ?? 'onboarding',
-      }),
-    ),
   ]);
 
   profile.userId = userId;
 
-  const profileSignals = currentUser && input.trim()
+  const profileSignals = input.trim()
     ? conversationPatchToSignals({
         userId,
         patch: extraction.profilePatch,
@@ -65,6 +88,7 @@ export async function POST(req: NextRequest) {
       profileSignals,
       conversationProfile,
       needsConfirmation: extraction.needsConfirmation,
+      extractionSource,
       profile,
       patch: profile.dimensions,
       evidence: [

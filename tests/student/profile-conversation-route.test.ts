@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 
 import { MemoryStorageProvider } from '@/lib/storage/memory-provider';
@@ -18,24 +18,59 @@ vi.mock('next/headers', () => ({
   }),
 }));
 
-describe('profile conversation route', () => {
-  it('persists extracted profile signals for the demo user when no userId is provided', async () => {
-    const { POST } = await import('@/app/api/sky/student/profile/conversation/route');
-    const req = new Request('http://localhost/api/sky/student/profile/conversation', {
-      method: 'POST',
-      body: JSON.stringify({
-        sessionId: 'profile-onboarding-test',
-        message:
-          '我想两周内补机器学习，过拟合和模型评估总是搞不懂，希望多用代码案例和图解讲。',
-        stage: 'onboarding',
-      }),
-    });
+const resolveModelFromRequestMock = vi.fn();
 
-    const response = await POST(req as unknown as NextRequest);
-    const payload = await response.json();
+vi.mock('@/lib/server/resolve-model', () => ({
+  resolveModelFromRequest: (...args: unknown[]) => resolveModelFromRequestMock(...args),
+}));
+
+const callLLMMock = vi.fn();
+
+vi.mock('@/lib/ai/llm', () => ({
+  callLLM: (...args: unknown[]) => callLLMMock(...args),
+}));
+
+const VALID_LLM_JSON = {
+  learningGoal: {
+    value: '考前补完数据结构的链表与树',
+    confidence: 0.9,
+    evidence: ['下周要考数据结构'],
+  },
+  knowledgeBase: {
+    strongPoints: [],
+    weakPoints: ['链表'],
+    confidence: 0.86,
+    evidence: ['链表老是写错'],
+  },
+  nextQuestion: '我先按这个画像来：目标是考前补完数据结构。对吗？',
+  needsConfirmation: true,
+};
+
+async function postMessage(message: string) {
+  const { POST } = await import('@/app/api/sky/student/profile/conversation/route');
+  const req = new Request('http://localhost/api/sky/student/profile/conversation', {
+    method: 'POST',
+    body: JSON.stringify({ sessionId: 'profile-onboarding-test', message, stage: 'onboarding' }),
+  });
+  const response = await POST(req as unknown as NextRequest);
+  return response.json();
+}
+
+describe('profile conversation route', () => {
+  beforeEach(() => {
+    resolveModelFromRequestMock.mockReset();
+    callLLMMock.mockReset();
+    resolveModelFromRequestMock.mockRejectedValue(new Error('no model configured'));
+  });
+
+  it('persists extracted profile signals for the demo user when no userId is provided', async () => {
+    const payload = await postMessage(
+      '我想两周内补机器学习，过拟合和模型评估总是搞不懂，希望多用代码案例和图解讲。',
+    );
     const signals = await createProfileSignalDAO(storage).listByUser('default-user');
 
     expect(payload.success).toBe(true);
+    expect(payload.data.extractionSource).toBe('rules');
     expect(payload.data.profileSignals.length).toBeGreaterThan(0);
     expect(payload.data.conversationProfile).toBeDefined();
     expect(signals).toEqual(
@@ -46,5 +81,22 @@ describe('profile conversation route', () => {
         }),
       ]),
     );
+  });
+
+  it('uses LLM extraction and persists its patch when a model resolves', async () => {
+    resolveModelFromRequestMock.mockResolvedValue({
+      model: { modelId: 'test-model' },
+      thinkingConfig: undefined,
+    });
+    callLLMMock.mockResolvedValue({ text: JSON.stringify(VALID_LLM_JSON) });
+
+    const payload = await postMessage('我下周要考数据结构，链表老是写错，多给点代码案例。');
+    const signals = await createProfileSignalDAO(storage).listByUser('default-user');
+
+    expect(payload.success).toBe(true);
+    expect(payload.data.extractionSource).toBe('llm');
+    expect(payload.data.profilePatch.learningGoal.value).toBe('考前补完数据结构的链表与树');
+    expect(payload.data.profileSignals.length).toBeGreaterThan(0);
+    expect(signals.length).toBeGreaterThan(0);
   });
 });
