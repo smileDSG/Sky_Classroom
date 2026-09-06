@@ -153,4 +153,34 @@ describe('extractConversationProfileWithLLM', () => {
     expect(result.profilePatch).toEqual({});
     expect(result.evidence).toEqual([]);
   });
+
+  it('normalizes string evidence and synonym resource labels (observed deepseek-chat behavior)', async () => {
+    callLLMMock.mockResolvedValue({
+      text: JSON.stringify({
+        majorBackground: {
+          value: '大三自动化专业，准备考研',
+          confidence: 0.95,
+          evidence: '我大三自动化专业，12月要考研',
+        },
+        resourcePreference: {
+          value: ['动画演示', '典型例题'],
+          confidence: 0.9,
+          evidence: '喜欢看动画演示和典型例题',
+        },
+        nextQuestion: '你希望我先讲哪种？',
+        needsConfirmation: false,
+      }),
+    });
+    const { extractConversationProfileWithLLM } =
+      await import('@/lib/student/conversation-profile-llm');
+
+    const result = await extractConversationProfileWithLLM({
+      message: '我大三自动化专业，12月要考研。',
+      stage: 'onboarding',
+      model: fakeModel,
+    });
+
+    expect(result.profilePatch.majorBackground?.evidence).toEqual(['我大三自动化专业，12月要考研']);
+    expect(result.profilePatch.resourcePreference?.value).toEqual(['视频', '例题拆解']);
+  });
 });

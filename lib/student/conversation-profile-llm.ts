@@ -14,23 +14,61 @@ export const PROFILE_EXTRACTION_TIMEOUT_MS = 25_000;
 
 const RESOURCE_PREFERENCE_LABELS = ['例题拆解', '代码案例', '图解', '练习题', '视频', '文字总结'];
 
+// Models often answer with the student's own words instead of the canonical
+// labels; map known synonyms onto the canonical set, drop the rest.
+const RESOURCE_PREFERENCE_SYNONYMS: Record<string, string> = {
+  例题: '例题拆解',
+  典型例题: '例题拆解',
+  真题: '例题拆解',
+  练习: '练习题',
+  刷题: '练习题',
+  做题: '练习题',
+  小测: '练习题',
+  代码: '代码案例',
+  编程: '代码案例',
+  实操: '代码案例',
+  项目: '代码案例',
+  图示: '图解',
+  流程图: '图解',
+  思维导图: '图解',
+  可视化: '图解',
+  动画: '视频',
+  动画演示: '视频',
+  网课: '视频',
+  视频课: '视频',
+  讲义: '文字总结',
+  笔记: '文字总结',
+  总结: '文字总结',
+};
+
+// LLMs frequently emit a single string where the schema expects a list
+// (observed with deepseek-chat: "evidence": "学生原话"); tolerate both.
+const stringListField = z
+  .union([z.array(z.string()), z.string()])
+  .optional()
+  .transform((value) =>
+    (Array.isArray(value) ? value : value ? [value] : [])
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
+
 const stringDimensionSchema = z.object({
   value: z.string().min(1),
   confidence: z.number().min(0).max(1),
-  evidence: z.array(z.string()).default([]),
+  evidence: stringListField,
 });
 
 const stringListDimensionSchema = z.object({
-  value: z.array(z.string()),
+  value: stringListField,
   confidence: z.number().min(0).max(1),
-  evidence: z.array(z.string()).default([]),
+  evidence: stringListField,
 });
 
 const knowledgeBaseSchema = z.object({
-  strongPoints: z.array(z.string()).default([]),
-  weakPoints: z.array(z.string()).default([]),
+  strongPoints: stringListField,
+  weakPoints: stringListField,
   confidence: z.number().min(0).max(1),
-  evidence: z.array(z.string()).default([]),
+  evidence: stringListField,
 });
 
 const llmExtractionSchema = z.object({
@@ -54,7 +92,7 @@ const SYSTEM_PROMPT = `你是学习画像抽取器。从学生的一条消息中
 - knowledgeBase: { strongPoints, weakPoints, confidence, evidence } 已会与薄弱知识点列表
 - cognitiveStyle: { value, confidence, evidence } 认知风格（如具象化理解、抽象推理）
 - errorPatternPreference: { value: string[], confidence, evidence } 易错模式
-- resourcePreference: { value: string[], confidence, evidence } 资源偏好，取值仅限：例题拆解、代码案例、图解、练习题、视频、文字总结
+- resourcePreference: { value: string[], confidence, evidence } 资源偏好，取值仅限：例题拆解、代码案例、图解、练习题、视频、文字总结（必须从这些标准标签中选，不要自创同义说法）
 - interactionPreference: { value, confidence, evidence } 讲解偏好（如步骤优先、原理优先、先例题后总结）
 - learningPace: { value, confidence, evidence } 学习节奏与时间压力
 - currentLearningState: { value, confidence, evidence } 当前状态（焦虑、赶进度、刚入门等）
@@ -102,9 +140,9 @@ export async function extractConversationProfileWithLLM(input: {
   if (profilePatch.resourcePreference) {
     const allowed = Array.from(
       new Set(
-        profilePatch.resourcePreference.value.filter((label) =>
-          RESOURCE_PREFERENCE_LABELS.includes(label),
-        ),
+        profilePatch.resourcePreference.value
+          .map((label) => RESOURCE_PREFERENCE_SYNONYMS[label] ?? label)
+          .filter((label) => RESOURCE_PREFERENCE_LABELS.includes(label)),
       ),
     );
     if (allowed.length > 0) {
