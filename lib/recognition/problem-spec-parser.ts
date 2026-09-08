@@ -2,6 +2,7 @@ import { jsonrepair } from 'jsonrepair';
 import type { ProblemSpec, ProblemStage } from '@/lib/solve/types';
 
 const REQUIRED_FIELDS = ['stage', 'subject', 'questionType', 'stem'] as const;
+const ALLOWED_FIELDS = new Set(['id','stage','subject','questionType','stem','options','givens','asks','formulas','ambiguities','materials','subQuestions','diagram','confidence']);
 const STAGES = new Set(['\u521d\u4e2d', '\u9ad8\u4e2d', '\u5927\u5b66', 'unknown']);
 
 export function isJsonLikeOutput(raw: string): boolean {
@@ -32,6 +33,9 @@ export function parseProblemSpecs(raw: string): ProblemSpec[] {
   return problems.map((value, index) => {
     if (!value || typeof value !== 'object') throw new Error(`problems[${index}] must be an object`);
     const problem = value as Record<string, unknown>;
+    for (const key of Object.keys(problem)) {
+      if (!ALLOWED_FIELDS.has(key)) throw new Error(`problems[${index}].${key} is not allowed`);
+    }
     for (const field of REQUIRED_FIELDS) {
       if (typeof problem[field] !== 'string' || !problem[field].trim()) {
         throw new Error(`problems[${index}].${field} is required`);
@@ -69,4 +73,10 @@ export function parseProblemSpecs(raw: string): ProblemSpec[] {
       confidence,
     } as ProblemSpec;
   });
+}
+
+/** Validate and normalize one request-boundary ProblemSpec. */
+export function validateProblemSpec(value: unknown): ProblemSpec {
+  const parsed = parseProblemSpecs(JSON.stringify({ problems: [value] }));
+  return parsed[0];
 }

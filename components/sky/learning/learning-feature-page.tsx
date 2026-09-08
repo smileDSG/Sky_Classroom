@@ -18,7 +18,6 @@ import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import type { MistakeRecord } from '@/lib/mistakes/types';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
-import { cn } from '@/lib/utils';
 
 interface LearningFeaturePageProps {
   activeFeature: LearningFeatureKey;
@@ -129,30 +128,6 @@ function LearningFeaturePageContent({ activeFeature }: LearningFeaturePageProps)
                 </div>
               </div>
             </div>
-
-            <nav className="max-w-full overflow-x-auto">
-              <div className="flex min-w-max rounded-2xl border border-slate-200 bg-white/80 p-1 shadow-sm dark:border-cyan-100/10 dark:bg-[#081423]/80 dark:shadow-none">
-                {LEARNING_FEATURES.map((feature) => {
-                  const Icon = feature.icon;
-                  const active = feature.key === activeFeature;
-                  return (
-                    <Link
-                      key={feature.key}
-                      href={feature.href}
-                      className={cn(
-                        'flex min-w-[112px] items-center gap-2 rounded-xl px-3 py-2 text-left transition-colors',
-                        active
-                          ? 'bg-emerald-100 text-emerald-800 shadow-[0_8px_24px_rgba(16,185,129,0.12)] dark:bg-emerald-300 dark:text-slate-950 dark:shadow-[0_8px_24px_rgba(52,211,153,0.14)]'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/[0.05] dark:hover:text-slate-100',
-                      )}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="block truncate text-xs font-semibold">{feature.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </nav>
           </div>
 
           <div className="bg-slate-50/70 p-4 dark:bg-[#07111f]/70">

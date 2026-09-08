@@ -36,7 +36,7 @@ interface KBRow extends RowDataPacket {
   chunk_index: number;
   total_chunks: number;
   content: string;
-  tags: string | null;
+  tags: unknown;
   source_id: string | null;
   verified: number;
   usage_count: number;
@@ -44,8 +44,12 @@ interface KBRow extends RowDataPacket {
   updated_at: Date;
 }
 
-function parseTags(value: string | null): string[] {
+function parseTags(value: unknown): string[] {
   if (!value) return [];
+
+  // mysql2 can deserialize MySQL JSON columns before returning a row.
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  if (typeof value !== 'string') return [];
 
   try {
     const parsed: unknown = JSON.parse(value);

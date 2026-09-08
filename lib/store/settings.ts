@@ -8,8 +8,8 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ProviderId } from '@/lib/ai/providers';
-import { PROVIDERS } from '@/lib/ai/providers';
+import type { ProviderId } from '@/lib/ai/providers-registry';
+import { PROVIDERS } from '@/lib/ai/providers-registry';
 import type { ThinkingConfig } from '@/lib/types/provider';
 import type { TTSProviderId, ASRProviderId, BuiltInTTSProviderId } from '@/lib/audio/types';
 import { DEFAULT_TTS_VOICES } from '@/lib/audio/constants';
@@ -590,22 +590,24 @@ export const useSettingsStore = create<SettingsState>()(
                 }
               }
 
-              // LLM auto-select: only on true first load (no provider selected yet)
+              // LLM auto-select: recover an empty persisted model without requiring
+              // the user to open settings first. Prefer the current usable provider,
+              // then server-configured providers in fallback order.
               let autoProviderId: ProviderId | undefined;
               let autoModelId: string | undefined;
-              if (!state.providerId && !state.modelId) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                for (const [pid, cfg] of Object.entries(newProvidersConfig) as [string, any][]) {
-                  if (cfg.isServerConfigured) {
-                    const serverModels = cfg.serverModels as string[] | undefined;
-                    const modelId = serverModels?.length
-                      ? serverModels[0]
-                      : PROVIDERS[pid as ProviderId]?.models[0]?.id;
-                    if (modelId) {
-                      autoProviderId = pid as ProviderId;
-                      autoModelId = modelId;
-                      break;
-                    }
+              if (!state.modelId) {
+                const candidates = [validLLMProvider || state.providerId, ...llmFallback].filter(
+                  (pid, index, ids): pid is ProviderId => !!pid && ids.indexOf(pid) === index,
+                );
+
+                for (const pid of candidates) {
+                  const cfg = newProvidersConfig[pid];
+                  if (!cfg || (!cfg.isServerConfigured && !cfg.apiKey)) continue;
+                  const modelId = cfg.serverModels?.[0] || cfg.models?.[0]?.id;
+                  if (modelId) {
+                    autoProviderId = pid;
+                    autoModelId = modelId;
+                    break;
                   }
                 }
               }

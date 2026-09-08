@@ -113,7 +113,12 @@ export function getSpeechTextForView({
   audioSpeech,
   liveSpeech,
 }: SpeechTextForViewState): string | null {
-  if (!ttsEnabled || ttsMuted) return liveSpeech;
+  // Prefer the buffer-paced live speech (revealed char-by-char by StreamBuffer)
+  // so each speaker's bubble text is fully played out before the next speaker
+  // takes over. TTS audio runs on the same queue but must NOT preempt the
+  // bubble text with the next speaker's utterance.
+  if (liveSpeech) return liveSpeech;
+  if (!ttsEnabled || ttsMuted) return null;
   if (audioIndicatorState === 'playing' || audioIndicatorState === 'paused') {
     return audioSpeech;
   }

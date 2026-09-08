@@ -28,6 +28,7 @@ const BLOCKING_LAYOUT_TYPES = new Set<LayoutGuardIssue['type']>([
   'latex_box_too_small',
   'unsafe_bottom_zone',
   'text_outside_background',
+  'data_overwhelms_explanation',
 ]);
 
 export interface ClassroomSlideQAIssue extends GeneratedSlideQAIssue {

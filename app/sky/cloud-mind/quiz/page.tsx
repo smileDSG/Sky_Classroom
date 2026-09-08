@@ -42,6 +42,7 @@ import { MathRenderer } from '@/components/sky/solve/math-renderer';
 import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import type { StudentProfile } from '@/lib/student/profile-types';
 import { completeLearningPlanTaskFromEvidence } from '@/lib/adaptive-learning/client/complete-learning-plan-task';
+import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import {
   createLearningDecision,
   reportLearningEvent,
@@ -288,6 +289,11 @@ function CloudMindQuizContent() {
   const [bankSaveStatusById, setBankSaveStatusById] = useState<Record<number, BankSaveStatus>>({});
   const [bankSaveMessageById, setBankSaveMessageById] = useState<Record<number, string>>({});
   const [bankDialog, setBankDialog] = useState<{ title: string; message: string } | null>(null);
+  const [mistakeBookIds, setMistakeBookIds] = useState<Set<number>>(new Set());
+  const [mistakeBookStatus, setMistakeBookStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'skipped'
+  >('idle');
+  const [mistakeBookResult, setMistakeBookResult] = useState<{ added: number } | null>(null);
   const savePromiseRef = useRef<Promise<void> | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userEditedTopicRef = useRef(false);
@@ -900,6 +906,57 @@ function CloudMindQuizContent() {
     }
   }, [bankSaveStatusById, handleSaveQuestionToBank, questionSource, questions, selectedForBank]);
 
+  const wrongQuestions = questions.filter((question, index) => answers[index] !== question.answer);
+  const hasWrongQuestions = wrongQuestions.length > 0;
+
+  const handleAddWrongToMistakeBook = useCallback(async () => {
+    if (mistakeBookIds.size === 0) {
+      setMistakeBookStatus('skipped');
+      return;
+    }
+    setMistakeBookStatus('saving');
+    let added = 0;
+    for (const questionId of mistakeBookIds) {
+      const index = questions.findIndex((q) => q.id === questionId);
+      if (index === -1) continue;
+      const q = questions[index];
+      const userAnswerIdx = answers[index];
+      useSkyClassroomStore.getState().addMistake({
+        id: `mistake-quiz-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        problem: q.question,
+        userAnswer: userAnswerIdx !== null ? q.options[userAnswerIdx] : '未作答',
+        correctAnswer: q.options[q.answer],
+        cause: 'concept-unclear',
+        solvedAt: new Date(),
+        reviewed: false,
+        reviewCount: 0,
+        knowledgePoints: topic.trim() ? [topic.trim()] : [],
+        source: 'classroom-quiz',
+        sourceSessionId: activeTaskId ?? undefined,
+        errorExplanation: q.explanation,
+      });
+      added++;
+    }
+    setMistakeBookResult({ added });
+    setMistakeBookStatus('saved');
+  }, [mistakeBookIds, questions, answers, topic, activeTaskId]);
+
+  // Initialize mistakeBookIds with all wrong questions when entering 'done' state
+  useEffect(() => {
+    if (state === 'done' && hasWrongQuestions && mistakeBookStatus === 'idle') {
+      setMistakeBookIds(new Set(wrongQuestions.map((q) => q.id)));
+    }
+  }, [state, hasWrongQuestions, wrongQuestions, mistakeBookStatus]);
+
+  const toggleMistakeBookId = useCallback((id: number) => {
+    setMistakeBookIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   const handleReset = useCallback(() => {
     reportQuizExit('reset');
     stopPolling();
@@ -928,6 +985,9 @@ function CloudMindQuizContent() {
     setSelectedForBank(new Set());
     setBankSaveStatusById({});
     setBankSaveMessageById({});
+    setMistakeBookIds(new Set());
+    setMistakeBookStatus('idle');
+    setMistakeBookResult(null);
     savePromiseRef.current = null;
     learningDecisionRef.current = null;
     decisionPromiseRef.current = null;
@@ -937,7 +997,6 @@ function CloudMindQuizContent() {
 
   const accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
   const currentQ = questions[currentIdx];
-  const wrongQuestions = questions.filter((question, index) => answers[index] !== question.answer);
   const nextActionTopic = topic.trim() || SUBJECT_LABEL_BY_ID[subject] || subject;
   const wrongQuestionContent = wrongQuestions
     .map(
@@ -1545,6 +1604,101 @@ function CloudMindQuizContent() {
                   {saveStatus === 'failed' && '保存答题记录失败，可稍后重试'}
                 </div>
               </div>
+
+              {hasWrongQuestions && mistakeBookStatus === 'idle' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl border p-5"
+                  style={{
+                    borderColor: 'rgba(251,191,36,0.3)',
+                    background: 'rgba(251,191,36,0.04)',
+                  }}
+                >
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--quiz-text)]">
+                    <BookOpen className="h-4 w-4 text-amber-500" />
+                    错题加入复习计划
+                  </div>
+                  <p className="mb-3 text-xs leading-5 text-[var(--quiz-muted)]">
+                    将错题加入错题本后，系统会按艾宾浩斯遗忘曲线安排复习，下方可取消不需要的题。
+                  </p>
+                  <div className="space-y-1.5">
+                    {wrongQuestions.map((q) => {
+                      const index = questions.findIndex((x) => x.id === q.id);
+                      return (
+                        <label
+                          key={q.id}
+                          className="flex items-center gap-2 rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-text)] transition-colors hover:border-amber-300/40 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={mistakeBookIds.has(q.id)}
+                            onChange={() => toggleMistakeBookId(q.id)}
+                            className="h-3.5 w-3.5 accent-amber-500"
+                          />
+                          <span className="truncate">
+                            <span className="font-medium text-rose-500/70">错题 {index + 1}：</span>
+                            {q.question}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-4 flex gap-3">
+                    <button
+                      onClick={() => {
+                        setMistakeBookStatus('skipped');
+                        setMistakeBookResult(null);
+                      }}
+                      className="rounded-lg border border-[var(--quiz-border)] px-3 py-2 text-xs text-[var(--quiz-muted)] transition-colors hover:border-[var(--quiz-border-strong)] hover:text-[var(--quiz-primary-bright)]"
+                    >
+                      全部跳过
+                    </button>
+                    <button
+                      onClick={handleAddWrongToMistakeBook}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 transition-all hover:bg-amber-100 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200"
+                    >
+                      <BookOpen className="h-3.5 w-3.5" />
+                      确认加入 {mistakeBookIds.size} 道错题
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {mistakeBookStatus === 'saving' && (
+                <div className="flex items-center justify-center gap-2 rounded-2xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 p-4 text-sm text-[var(--quiz-muted)]">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  正在加入错题本…
+                </div>
+              )}
+
+              {mistakeBookStatus === 'saved' && mistakeBookResult && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-300/20 dark:bg-emerald-300/[0.07]"
+                >
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                    <CheckCircle2 className="h-4 w-4" />
+                    已加入 {mistakeBookResult.added} 道错题到错题本
+                  </div>
+                  <p className="mt-1 text-xs text-[var(--quiz-muted)]">
+                    系统将按遗忘曲线安排复习，可在"学习情况"页查看。
+                  </p>
+                </motion.div>
+              )}
+
+              {mistakeBookStatus === 'skipped' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl border border-[var(--quiz-border)] bg-[var(--quiz-primary)]/5 p-4"
+                >
+                  <div className="flex items-center gap-2 text-sm text-[var(--quiz-muted)]">
+                    已跳过，后续可在"学习情况"页手动添加错题。
+                  </div>
+                </motion.div>
+              )}
 
               <QuizProfileUpdatePanel
                 status={saveStatus}

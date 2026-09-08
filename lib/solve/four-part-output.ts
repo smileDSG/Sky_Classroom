@@ -81,8 +81,11 @@ function normalizeSteps(
 ): FourPartOutput['steps'] {
   if (!steps || steps.length === 0) {
     // Use full solution derivation when steps are absent (common for complex
-    // problems like series/calculation). Fall back to answer if solution empty.
+    // problems like series/calculation, or salvaged prose answers). Split it
+    // into paragraphs so the report reads as a derivation, not one blob.
     const content = (rawSolution && rawSolution.trim()) ? rawSolution : fallbackAnswer;
+    const split = splitProseIntoSteps(content);
+    if (split.length > 1) return split;
     return [{ label: '解答', content, keyPoints: [] }];
   }
 
@@ -91,6 +94,38 @@ function normalizeSteps(
     content: step.content || '',
     keyPoints: step.keyPoints || [],
   }));
+}
+
+/** Split a prose solution into labeled steps by common derivation markers. */
+function splitProseIntoSteps(solution: string): FourPartOutput['steps'] {
+  const text = solution.trim();
+  if (!text) return [];
+
+  // Preferred: explicit step markers (第一步 / 第1步 / Step 1 / **步骤N** …).
+  const markerRegex = /(?:^|\n)\s*(?:\*\*)?(第[一二三四五六七八九十\d]+步|Step\s*\d+|步骤\s*\d+)(?:\*\*)?[：:.、\s]*/g;
+  const matches = [...text.matchAll(markerRegex)];
+  if (matches.length >= 2 && matches.length <= 8) {
+    const steps: FourPartOutput['steps'] = [];
+    for (let i = 0; i < matches.length; i++) {
+      const start = (matches[i].index ?? 0) + matches[i][0].length;
+      const end = i + 1 < matches.length ? (matches[i + 1].index ?? text.length) : text.length;
+      const content = text.slice(start, end).trim();
+      if (content) steps.push({ label: matches[i][1], content, keyPoints: [] });
+    }
+    if (steps.length >= 2) return steps;
+  }
+
+  // Fallback: paragraphs (blank-line separated), capped at 6.
+  const paragraphs = text
+    .split(/\n{2,}/)
+    .map((p) => p.replace(/^[-*]\s+/gm, '').trim())
+    .filter((p) => p.length > 0)
+    .slice(0, 6);
+  if (paragraphs.length >= 2) {
+    return paragraphs.map((p, i) => ({ label: `步骤${i + 1}`, content: p, keyPoints: [] }));
+  }
+
+  return [];
 }
 
 function normalizeKnowledgePoints(

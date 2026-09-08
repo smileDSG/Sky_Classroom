@@ -30,8 +30,8 @@ import {
 } from 'lucide-react';
 import { useSettingsStore } from '@/lib/store/settings';
 import { toast } from 'sonner';
-import { type ProviderId } from '@/lib/ai/providers';
-import { PROVIDERS, MONO_LOGO_PROVIDERS } from '@/lib/ai/providers';
+import { type ProviderId } from '@/lib/ai/providers-registry';
+import { PROVIDERS, MONO_LOGO_PROVIDERS } from '@/lib/ai/providers-registry';
 import { cn } from '@/lib/utils';
 import { createCustomProviderSettings, getProviderTypeLabel } from './utils';
 import { ProviderList } from './provider-list';
@@ -212,7 +212,13 @@ interface SettingsDialogProps {
   t?: (key: string) => string;
 }
 
-export function SettingsDialog({ open, onOpenChange, initialSection, t = (key: string) => key }: SettingsDialogProps) {// Get settings from store
+export function SettingsDialog({
+  open,
+  onOpenChange,
+  initialSection,
+  t = (key: string) => key,
+}: SettingsDialogProps) {
+  // Get settings from store
   const providerId = useSettingsStore((state) => state.providerId);
   const _modelId = useSettingsStore((state) => state.modelId);
   const providersConfig = useSettingsStore((state) => state.providersConfig);
@@ -1140,9 +1146,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection, t = (key: s
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{'取消'}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteProvider}>
-              {'删除提供方'}
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmDeleteProvider}>{'删除提供方'}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

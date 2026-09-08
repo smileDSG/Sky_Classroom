@@ -1,7 +1,7 @@
 {
-  "name": "天空课堂",
-  "short_name": "天空课堂",
-  "description": "AI 驱动的智能教学平台",
+  "name": "智眸无界｜天空课堂",
+  "short_name": "智眸无界",
+  "description": "智眸无界的天空课堂 — AI 驱动的智能教学平台",
   "start_url": "/sky",
   "display": "standalone",
   "background_color": "#f8fafc",

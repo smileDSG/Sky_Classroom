@@ -40,14 +40,14 @@ cd <解压目录>
 
 # 2) 准备环境变量（本包已附赠一个无密钥的安全 .env.local，可直接用）
 #    若需 AI「生成新课」，编辑 .env.local 填入任一模型 Key，或见第 5 节
-#    （包内 .env.local 已设置 ENABLE_DEMO_ACCOUNT=true）
+#    ）
 
 # 3) 构建并启动（首次会拉取基础镜像、安装依赖、构建，需几分钟）
 docker compose up --build
 
 # 4) 浏览器访问
 #    - 零密钥演示：http://localhost:3000/sky/software-cup
-#    - 完整应用：   http://localhost:3000  （演示账号 demo / SkyClassroom123!）
+#    - 完整应用：   http://localhost:3000  （体验账号 admin / 123）
 ```
 
 > 注意：演示数据已**打包进镜像的 `/app/data`**（软件杯演示依赖 `data/demo` 与 `data/course-knowledge`）。请勿把数据卷挂到 `/app/data`，否则会遮蔽镜像内数据导致演示失败；如需持久化用户数据请改用 MySQL/Supabase 或挂载到其它路径。
@@ -140,8 +140,8 @@ configs/               常量（形状/字体/快捷键/主题）
 data/                  数据集（随镜像分发，见第 7 节）
 migrations/            SQL 迁移（SQLite 本地 / MySQL 生产）
 Dockerfile            多阶段构建（含 LibreOffice，standalone 输出）
-docker-compose.yml    一键运行（已默认开启演示账号、移除遮蔽数据卷）
-.env.local            附赠：无密钥安全配置（ENABLE_DEMO_ACCOUNT=true）
+docker-compose.yml    一键运行（已默认开启管理员种子、移除遮蔽数据卷）
+.env.local            附赠：无密钥安全配置
 .env.example          完整环境变量样例
 model-deploy/         模型部署示例（Ollama 离线 / 云端多提供商）
 server-providers.yml.example  提供商配置样例

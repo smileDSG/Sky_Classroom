@@ -52,6 +52,10 @@ export function CanvasArea({
   const { t } = useI18n();
   const showControls = mode === 'playback' && !whiteboardOpen;
   const reserveFloatingControls = mode === 'playback' && hideToolbar && !isPresenting;
+  // Panel scenes (quiz forms / interactive widgets) render as a full-area panel instead
+  // of being squeezed into the flat 16:9 slide frame.
+  const isPanelScene = currentScene?.type === 'interactive' || currentScene?.type === 'quiz';
+  const floatingControlsReserve = isPanelScene ? 112 : 80;
   const showPlayHint =
     showControls &&
     engineState !== 'playing' &&
@@ -89,9 +93,8 @@ export function CanvasArea({
       <div
         className={cn(
           'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-2 transition-colors duration-500 md:p-3 xl:p-4',
-          reserveFloatingControls &&
-            (currentScene?.type === 'interactive' ? 'pb-[112px] md:pb-28' : 'pb-[76px] md:pb-20'),
-          currentScene?.type === 'interactive'
+          reserveFloatingControls && (isPanelScene ? 'pb-[112px] md:pb-28' : 'pb-[76px] md:pb-20'),
+          isPanelScene
             ? 'bg-[linear-gradient(180deg,#effcff_0%,#f8feff_100%)] dark:bg-cyan-950/10'
             : 'bg-[linear-gradient(180deg,#e9f8ff_0%,#ffffff_58%,#f2fbff_100%)] dark:bg-slate-950/70',
         )}
@@ -101,12 +104,20 @@ export function CanvasArea({
         <div
           data-classroom-slide-frame="true"
           className={cn(
-            'relative aspect-[16/9] h-full max-h-full max-w-[min(100%,1800px)] overflow-hidden rounded-[18px] bg-white shadow-[0_24px_70px_rgba(14,116,144,0.14)] ring-1 ring-sky-900/10 transition-all duration-700 dark:bg-gray-800 dark:ring-white/10',
+            'relative h-full max-h-full overflow-hidden rounded-[18px] bg-white shadow-[0_24px_70px_rgba(14,116,144,0.14)] ring-1 ring-sky-900/10 transition-all duration-700 dark:bg-gray-800 dark:ring-white/10',
+            isPanelScene
+              ? 'w-full max-w-[min(100%,1180px)]'
+              : 'aspect-[16/9] max-w-[min(100%,1800px)]',
             showControls && !isLiveSession && currentScene?.type === 'slide' && 'cursor-pointer',
-            currentScene?.type === 'interactive'
+            isPanelScene
               ? 'shadow-teal-200/60 dark:shadow-cyan-900/50'
               : 'shadow-sky-200/80 dark:shadow-slate-950/60',
           )}
+          style={
+            reserveFloatingControls
+              ? { maxHeight: `calc(100% - ${floatingControlsReserve}px)` }
+              : undefined
+          }
           onClick={handleSlideClick}
         >
           {/* Whiteboard Layer */}

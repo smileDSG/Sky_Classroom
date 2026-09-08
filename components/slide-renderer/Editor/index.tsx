@@ -11,7 +11,7 @@ export function SlideEditor({ mode }: { readonly mode: StageMode }) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-hidden">
-        {mode === 'autonomous' ? <Canvas /> : <ScreenCanvas />}
+        {mode === 'autonomous' ? <Canvas /> : <ScreenCanvas playback />}
       </div>
     </div>
   );

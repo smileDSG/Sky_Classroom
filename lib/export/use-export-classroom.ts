@@ -21,7 +21,8 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('ExportClassroom');
 
 export function useExportClassroom() {
-  const [exporting, setExporting] = useState(false);const exportClassroomZip = useCallback(async () => {
+  const [exporting, setExporting] = useState(false);
+  const exportClassroomZip = useCallback(async () => {
     const { stage, scenes } = useStageStore.getState();
     if (!stage?.id || scenes.length === 0) return;
 
@@ -164,7 +165,7 @@ export function useExportClassroom() {
         zip.file(af.zipPath, af.record.blob);
       }
       for (const mf of mediaFiles) {
-        zip.file(mf.zipPath, mf.record.blob);
+        zip.file(mf.zipPath, mf.blob);
         if (mf.record.poster) {
           zip.file(mf.zipPath.replace(/\.\w+$/, '.poster.jpg'), mf.record.poster);
         }

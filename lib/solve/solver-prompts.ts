@@ -24,7 +24,7 @@ const LATEX_RULES = `
 
 const QUESTION_TYPE_RULE = `questionType字段必须返回：choice（选择题，含A/B/C/D选项）、fill（填空题）、solve（解答题/计算题/证明题）、judge（判断题）。如果是choice或judge，必须在options字段返回选项数组：choice返回4个选项如["...","...","...","..."]；judge返回["正确","错误"]。如果是fill或solve，options不返回或返回空数组。`;
 
-const ANSWER_RULE = `answer字段【严禁】包含解释/推导/"所以"/"因此"等，只写最终结果如$3$、$\\frac{1}{2}$、$x=4$、A、B。confidence为0-1。`;
+const ANSWER_RULE = `answer字段【严禁】包含解释/推导/"所以"/"因此"等，只写最终结果如$3$、$x=4$、A、B。如果题目提供了选项（选择题），answer必须只写所选选项的字母（如"A"），禁止写答案描述。confidence为0-1。`;
 
 const AGENT_SYSTEM_PROMPTS: Record<SolverAgentType, string> = {
   universal: `你是解题专家。分析题目，给出解题过程和答案。

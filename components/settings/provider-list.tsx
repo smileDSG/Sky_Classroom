@@ -3,8 +3,8 @@
 import { Button } from '@/components/ui/button';
 import { Box, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ProviderId, ProviderConfig } from '@/lib/ai/providers';
-import { MONO_LOGO_PROVIDERS } from '@/lib/ai/providers';
+import type { ProviderId, ProviderConfig } from '@/lib/ai/providers-registry';
+import { MONO_LOGO_PROVIDERS } from '@/lib/ai/providers-registry';
 
 interface ProviderWithServerInfo extends ProviderConfig {
   isServerConfigured?: boolean;
@@ -26,7 +26,8 @@ export function ProviderList({
   onAddProvider,
   width,
   t = (key: string) => key,
-}: ProviderListProps) {// Helper function to get translated provider name
+}: ProviderListProps) {
+  // Helper function to get translated provider name
   const getProviderDisplayName = (provider: ProviderConfig) => {
     const translationKey = `settings.providerNames.${provider.id}`;
     const translated = t(translationKey);

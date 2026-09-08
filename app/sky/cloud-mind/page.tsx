@@ -357,19 +357,30 @@ export default function CloudMindPage() {
         setDashboardState('error');
       });
 
-    fetch('/api/sky/cloud-mind/personalization-context', { credentials: 'include' })
-      .then((res) => res.json())
-      .then((payload: { data?: PersonalizationContext }) => {
-        if (!active) return;
-        setProfileContext(payload.data ?? null);
-      })
-      .catch(() => {
-        if (!active) return;
-        setProfileContext(null);
-      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Personalization is useful after the dashboard is visible, but expensive to build.
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(() => {
+      fetch('/api/sky/cloud-mind/personalization-context', { credentials: 'include' })
+        .then((res) => res.json())
+        .then((payload: { data?: PersonalizationContext }) => {
+          if (!active) return;
+          setProfileContext(payload.data ?? null);
+        })
+        .catch(() => {
+          if (!active) return;
+          setProfileContext(null);
+        });
+    }, 900);
 
     return () => {
       active = false;
+      window.clearTimeout(timer);
     };
   }, []);
 

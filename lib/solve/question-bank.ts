@@ -40,12 +40,13 @@ function rowToEntry(row: QuestionBankRow): QuestionBankEntry {
       description: row.explanation ? `${name} — 参见题目解析` : '',
       difficulty: row.difficulty,
     })),
-    similarQuestions: [],
+    similarQuestions: row.similarQuestions ?? [],
     agentId: 'universal', // dedicated-bank entries are treated as universal solver
     solvedAt: new Date(row.createdAt).getTime(),
     verified: row.verified,
     questionType: row.questionType,
     options: row.options ?? undefined,
+    steps: row.steps ?? undefined,
   };
 }
 
@@ -171,6 +172,7 @@ export async function saveToQuestionBank(
       agentId: entry.agentId,
       solvedAt: entry.solvedAt ?? Date.now(),
       verified: entry.verified ?? true,
+      steps: entry.steps ?? [],
     };
 
     const { write, hasSource } = await import('@/lib/knowledge-base/kb-manager');
@@ -198,7 +200,8 @@ export async function saveToQuestionBank(
         await insertOne({
           subject: '未知学科',
           grade: '',
-          difficulty: (entry.knowledgePoints?.[0]?.difficulty as 'easy' | 'medium' | 'hard') ?? 'medium',
+          difficulty:
+            (entry.knowledgePoints?.[0]?.difficulty as 'easy' | 'medium' | 'hard') ?? 'medium',
           questionType: entry.questionType ?? 'solve',
           content: entry.problemText,
           answer: entry.answer,
@@ -206,6 +209,8 @@ export async function saveToQuestionBank(
           knowledgePoints: entry.knowledgePoints?.map((k) => k.name) ?? [],
           image: entry.problemImage ?? undefined,
           options: entry.options,
+          steps: entry.steps ?? [],
+          similarQuestions: entry.similarQuestions ?? [],
           tags: [],
           verified: entry.verified ?? false,
         });
@@ -327,7 +332,6 @@ export async function findSimilarByKnowledgePoints(
   if (knowledgePoints.length === 0) return [];
 
   const currentKpNames = new Set(knowledgePoints.map((k) => k.name));
-  const kpNames = Array.from(currentKpNames).join(' ');
 
   // Parallel search: knowledge-base + dedicated MySQL table
   const [kbCandidates, bankRows] = await Promise.all([
@@ -337,7 +341,8 @@ export async function findSimilarByKnowledgePoints(
 
   // Merge & dedupe by problem text (simplified key)
   const seen = new Set<string>();
-  const merged: { problem: string; difficulty: number; knowledgePoint: string; answer: string }[] = [];
+  const merged: { problem: string; difficulty: number; knowledgePoint: string; answer: string }[] =
+    [];
 
   for (const c of kbCandidates) {
     const key = hashProblemText(c.problem);
@@ -437,7 +442,12 @@ async function searchBankByKnowledgePoints(
     const tags = Array.from(currentKpNames).slice(0, 3);
     const rows = await search({ tags, limit: limit * 2 });
 
-    const candidates: { problem: string; difficulty: number; knowledgePoint: string; answer: string }[] = [];
+    const candidates: {
+      problem: string;
+      difficulty: number;
+      knowledgePoint: string;
+      answer: string;
+    }[] = [];
 
     for (const row of rows) {
       if (row.problemHash === excludeHash) continue;

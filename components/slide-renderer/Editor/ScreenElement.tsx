@@ -19,6 +19,7 @@ interface ScreenElementProps {
   readonly elementInfo: PPTElement;
   readonly elementIndex: number;
   readonly animate?: boolean;
+  readonly playback?: boolean;
 }
 
 const SLIDE_FONT_STACK =
@@ -52,7 +53,12 @@ function getElementLayer(elementInfo: PPTElement, elementIndex: number): number 
   }
 }
 
-export function ScreenElement({ elementInfo, elementIndex, animate }: ScreenElementProps) {
+export function ScreenElement({
+  elementInfo,
+  elementIndex,
+  animate,
+  playback,
+}: ScreenElementProps) {
   const CurrentElementComponent = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- element components have varying prop signatures
     const elementTypeMap: Record<string, any> = {
@@ -131,7 +137,7 @@ export function ScreenElement({ elementInfo, elementIndex, animate }: ScreenElem
         transform: gpuTransform,
       }}
     >
-      <CurrentElementComponent elementInfo={elementInfo} animate={animate} />
+      <CurrentElementComponent elementInfo={elementInfo} animate={animate} playback={playback} />
     </div>
   );
 }

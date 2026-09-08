@@ -5,6 +5,7 @@ import { Maximize2, Minimize2 } from 'lucide-react';
 import type { InteractiveContent } from '@/lib/types/stage';
 import { useWidgetIframeStore } from '@/lib/store/widget-iframe';
 import { patchHtmlForIframe } from '@/lib/utils/iframe';
+import { postProcessInteractiveHtml } from '@/lib/generation/interactive-post-processor';
 import { cn } from '@/lib/utils';
 
 interface InteractiveRendererProps {
@@ -19,10 +20,12 @@ export function InteractiveRenderer({ content, sceneId }: InteractiveRendererPro
   const setActiveScene = useWidgetIframeStore((state) => state.setActiveScene);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const patchedHtml = useMemo(
-    () => (content.html ? patchHtmlForIframe(content.html) : undefined),
-    [content.html],
-  );
+  // Re-process persisted HTML at render time so existing widgets also get the
+  // layout baseline + adaptive proportion fixer (post-processing is idempotent).
+  const patchedHtml = useMemo(() => {
+    if (!content.html) return undefined;
+    return patchHtmlForIframe(postProcessInteractiveHtml(content.html));
+  }, [content.html]);
 
   // Create iframe messaging callback
   const sendMessageToIframe = useCallback((type: string, payload: Record<string, unknown>) => {

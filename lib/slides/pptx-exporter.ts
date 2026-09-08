@@ -28,7 +28,9 @@ import type { ThemeToken, PptxThemeId } from './types';
 import type { PPTElement, PPTTextElement, PPTChartElement, Slide } from '@/lib/types/slides';
 import type { AvatarSpeech } from './types';
 import type { TemplateElement, PPTDManifest } from '@/lib/templates/pptd-types';
-import { getTheme } from './pptx-themes';
+import { getTheme, buildThemeFromDesignDNA } from './pptx-themes';
+import { renderDesignCoverSlide } from './agent/cover-renderer';
+import type { DesignDNA } from './agent/design-dna';
 import { createLogger } from '@/lib/logger';
 import { toPptxHex, toPptxColor, resolveTextColor } from './color-utils';
 
@@ -105,6 +107,12 @@ export interface PptxExportOptions {
   title: string;
   slides: Slide[];
   theme?: PptxThemeId;
+  /**
+   * User-selected DesignDNA template. When present, the deck theme is built
+   * from the template's palette/fonts and the cover is rendered by the
+   * DesignDNA layout renderer instead of the AI-generated cover elements.
+   */
+  designDNA?: DesignDNA;
   speakerNotes?: string[];
   avatarSpeech?: AvatarSpeech;
   includeSlides?: boolean;
@@ -127,6 +135,8 @@ interface ElementRendererContext {
   ratioPx2Inch: number;
   ratioPx2Pt: number;
   resolvedImages?: Map<string, string>;
+  /** Actual slide background color for contrast checks (AI slides set their own bg). */
+  bgColor: string;
 }
 
 // ── Main Export ────────────────────────────────────────────────────
@@ -142,7 +152,9 @@ export async function exportPptx(options: PptxExportOptions): Promise<PptxExport
     layoutMode,
   } = options;
 
-  const theme = getTheme(options.theme || 'sky-blue');
+  const theme = options.designDNA
+    ? buildThemeFromDesignDNA(options.designDNA, options.theme || 'sky-blue')
+    : getTheme(options.theme || 'sky-blue');
   const useAiLayout = layoutMode === 'ai';
   const startTime = Date.now();
   const totalSlides = slides.length;
@@ -177,7 +189,10 @@ export async function exportPptx(options: PptxExportOptions): Promise<PptxExport
 
   // ── Cover Slide ──────────────────────────────────────────────────
   const coverSlide = pptx.addSlide();
-  if (useAiLayout && aiCover) {
+  if (options.designDNA) {
+    // Template cover: same renderer that produced the gallery preview
+    renderDesignCoverSlide(coverSlide, pptx, options.designDNA, coverTitle, coverSubtitle);
+  } else if (useAiLayout && aiCover) {
     applySlideBackground(coverSlide, aiCover, theme.coverBg);
     renderContentSlide(coverSlide, aiCover, theme, resolvedImages);
   } else {
@@ -318,12 +333,21 @@ function renderContentSlide(
   const ratioPx2Inch = 96 * (viewportSize / 960);
   const ratioPx2Pt = (96 / 72) * (viewportSize / 960);
 
+  const bg = slide.background;
+  const slideBgColor =
+    bg?.type === 'solid' && bg.color
+      ? bg.color
+      : bg?.type === 'gradient' && bg.gradient?.colors?.length
+        ? bg.gradient.colors[0].color
+        : theme.contentBg;
+
   const ctx: ElementRendererContext = {
     pptxSlide,
     theme,
     ratioPx2Inch,
     ratioPx2Pt,
     resolvedImages,
+    bgColor: slideBgColor,
   };
 
   // Identify title element (first text element)
@@ -448,8 +472,9 @@ function renderTextElement(
   const inlineStyle = extractInlineTextStyle(el.content || '', ratioPx2Pt);
   const fontSize = inlineStyle.fontSize ?? (isTitle ? theme.titleFontSize : theme.bodyFontSize);
 
-  // Determine effective background for contrast check
-  const bgColor = theme.contentBg;
+  // Determine effective background for contrast check — use the slide's own
+  // background (AI slides set dark backgrounds, e.g. the end slide), not the theme default
+  const bgColor = ctx.bgColor || theme.contentBg;
   const themeColor = isTitle ? theme.coverTitleColor : theme.bodyColor;
   const resolved = resolveTextColor(inlineStyle.color || el.defaultColor, themeColor, bgColor);
   const color = toPptxHex(resolved);

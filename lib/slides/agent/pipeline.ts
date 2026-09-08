@@ -19,11 +19,14 @@ import type { LanguageModel } from 'ai';
 import type { DesignDNA } from './design-dna';
 import { withConcurrencyLimit } from './concurrency';
 import { callLLM } from '@/lib/ai/llm';
-import { generateSlides } from '@/lib/slides/slide-generator';
-import { exportPptx } from '@/lib/slides/pptx-exporter';
+import { buildThemeFromDesignDNA } from '@/lib/slides/pptx-themes';
+import {
+  buildTemplateDeckBuffer,
+  generateTemplateDeckContent,
+  summarizeTemplatePages,
+} from '@/lib/slides/template-deck';
 import type { PptxThemeId } from '@/lib/slides/types';
 import type { AICallFn } from '@/lib/generation/pipeline-types';
-import type { PPTTextElement, Slide } from '@/lib/types/slides';
 import {
   buildSlidesPromptDirective,
   type SlidesAdaptivePolicy,
@@ -953,6 +956,7 @@ export async function runOpenMaicSlidesPipeline(
     educationLevel,
     personalization,
   } = options;
+  const startedAt = Date.now();
   const publicDir = path.resolve(process.cwd(), 'public');
   const outputDir = path.join(publicDir, 'temp', 'pptx');
   await fs.mkdir(outputDir, { recursive: true });
@@ -960,11 +964,12 @@ export async function runOpenMaicSlidesPipeline(
   const difficultyLevel = normalizeOpenMaicDifficulty(difficulty);
   const slideCount = resolveOpenMaicSlideCount(difficultyLevel, minPages, maxPages);
   const theme = selectOpenMaicExportTheme(designDNA);
+  const difficultyLabel = OPENMAIC_DIFFICULTY_LABELS[difficultyLevel];
 
   updateJob(jobId, {
     stage: 'planning',
     pipelineMode: 'openmaic',
-    message: '天空课堂正在启动元素级课件生成…',
+    message: '天空课堂正在启动固定模板课件生成…',
     progress: 8,
     totalPages: slideCount,
   });
@@ -977,11 +982,11 @@ export async function runOpenMaicSlidesPipeline(
         prompt: user,
         maxOutputTokens: 32768,
       },
-      'sky-slides-openmaic-element',
+      'sky-slides-openmaic-template',
       {
         retries: 2,
         timeoutMs: 180_000,
-        validate: (text) => text.trim().length > 100 && text.includes('"slides"'),
+        validate: (text) => text.trim().length > 100 && text.includes('"pages"'),
       },
     );
     return result.text;
@@ -989,47 +994,44 @@ export async function runOpenMaicSlidesPipeline(
 
   updateJob(jobId, {
     stage: 'pages_designing',
-    message: `天空课堂正在绘制 ${slideCount} 页元素级课件…`,
+    message: '天空课堂正在规划课件内容…',
     progress: 20,
   });
 
-  const generated = await generateSlides(
+  // The LLM produces STRUCTURED CONTENT ONLY; every page is rendered into a
+  // fixed layout with the DesignDNA template's palette/typography.
+  const contentCount = Math.max(1, slideCount - 2);
+  const pages = await generateTemplateDeckContent(
     topic,
-    {
-      difficulty: difficultyLevel,
-      slideCount,
-      language: 'Use Simplified Chinese (zh-CN) for all slide text.',
-      personaPrompt: buildOpenMaicStyleDirective(designDNA, educationLevel, personalization),
-      themeId: theme,
-      educationLevel,
-    },
+    difficultyLabel,
+    contentCount,
+    buildOpenMaicStyleDirective(designDNA, educationLevel, personalization),
     aiCall,
   );
 
-  if (generated.slides.length === 0) {
-    throw new Error('天空课堂 element-level generator returned no slides');
-  }
-
-  const slideSummaries = summarizeOpenMaicSlides(generated.slides, topic);
+  const slideSummaries = summarizeTemplatePages(pages);
   updateJob(jobId, {
     stage: 'pages_designing',
-    message: `天空课堂已生成 ${generated.slides.length} 页课件，正在导出 PPTX…`,
-    progress: 70,
-    totalPages: generated.slides.length,
+    message: `内容已就绪（${pages.length} 页），正在按模板版式绘制 PPTX…`,
+    progress: 65,
+    totalPages: pages.length + 2,
     outline: slideSummaries,
     completedSlides: slideSummaries,
   });
 
-  const exportResult = await exportPptx({
-    title: topic,
-    slides: generated.slides,
-    theme,
-    layoutMode: 'ai',
+  const themeToken = buildThemeFromDesignDNA(designDNA, theme);
+  const buffer = await buildTemplateDeckBuffer({
+    topic,
+    difficultyLabel,
+    dna: designDNA,
+    theme: themeToken,
+    pages,
+    renderFormulaPng: renderLatexFormulaPng,
   });
 
   const fileName = buildOpenMaicFileName(topic, theme);
   const pptxPath = path.join(outputDir, fileName);
-  await fs.writeFile(pptxPath, exportResult.buffer);
+  await fs.writeFile(pptxPath, buffer);
   const pptxUrl = `/temp/pptx/${fileName}`;
 
   updateJob(jobId, {
@@ -1057,9 +1059,34 @@ export async function runOpenMaicSlidesPipeline(
     pptxUrl,
     fileName,
     previewImages,
-    totalPages: generated.slides.length,
-    generationTime: generated.generationTime,
+    totalPages: pages.length + 2,
+    generationTime: Date.now() - startedAt,
   };
+}
+
+const OPENMAIC_DIFFICULTY_LABELS: Record<'junior' | 'senior' | 'college', string> = {
+  junior: '初中',
+  senior: '高中',
+  college: '大学',
+};
+
+/**
+ * LaTeX→PNG via MathJax (lazy import — mathjax is an optional dependency).
+ * Any failure returns null so formula pages fall back to Unicode text.
+ */
+async function renderLatexFormulaPng(
+  latex: string,
+  bgColor: string,
+): Promise<{ buffer: Buffer; width: number; height: number } | null> {
+  try {
+    const { renderLatexToPng } = await import('../latex-to-image');
+    return await renderLatexToPng(latex, { scale: 2.2, bgColor });
+  } catch (err) {
+    log.warn(
+      `renderLatexToPng unavailable: ${err instanceof Error ? err.message : err} — using text fallback`,
+    );
+    return null;
+  }
 }
 
 function normalizeOpenMaicDifficulty(difficulty: string): 'junior' | 'senior' | 'college' {
@@ -1101,6 +1128,7 @@ function buildOpenMaicStyleDirective(
   personalization?: SlidesAdaptivePolicy,
 ): string {
   const colors = designDNA.colors;
+  const fonts = designDNA.fonts;
   const personalizationDirective = buildSlidesPromptDirective(personalization);
   return [
     'Use 天空课堂-style element-level slide design, not template slots.',
@@ -1111,32 +1139,15 @@ function buildOpenMaicStyleDirective(
     'Every content slide should include at least two non-text visual elements beyond the background, such as lines, shapes, chart/table structure, callout markers, or LatexElement formulas.',
     'For math and science decks, make formulas large visual anchors with surrounding labels and worked-example steps; never put LaTeX inside TextElement HTML.',
     `Visual mood: ${designDNA.styleName} / ${designDNA.mood}.`,
-    `Preferred palette: cover #${colors.coverBg}, content #${colors.contentBg}, accent #${colors.accent}, secondary #${colors.accentSecondary}.`,
+    `Preferred palette: cover #${colors.coverBg}, content #${colors.contentBg}, accent #${colors.accent}, secondary #${colors.accentSecondary}, accent light #${colors.accentLight}.`,
+    `Typography: headings use "${fonts.heading}", body text uses "${fonts.body}", English/numerals use "${fonts.en}". Content-page titles around ${fonts.pageTitleSize}pt, body around ${fonts.bodySize}pt.`,
+    'The cover slide is rendered by the system from the user-selected template — keep the cover to a title TextElement and a subtitle TextElement only; the system replaces its visual design with the template layout.',
+    `The end slide should reuse the cover palette (background #${colors.coverBg}) so the deck feels like one design.`,
     educationLevel ? `Audience education level: ${educationLevel}.` : '',
     personalizationDirective,
   ]
     .filter(Boolean)
     .join('\n');
-}
-
-function summarizeOpenMaicSlides(slides: Slide[], topic: string): JobOutlinePage[] {
-  return slides.map((slide, index) => ({
-    pageNum: index + 1,
-    title: extractOpenMaicSlideTitle(slide, index, topic),
-    type: slide.type || (index === 0 ? 'cover' : index === slides.length - 1 ? 'end' : 'content'),
-  }));
-}
-
-function extractOpenMaicSlideTitle(slide: Slide, index: number, topic: string): string {
-  const firstText = slide.elements.find((el): el is PPTTextElement => el.type === 'text');
-  const title = firstText ? stripOpenMaicHtml(firstText.content).replace(/\s+/g, ' ').trim() : '';
-  if (title) return title.slice(0, 48);
-  if (index === 0) return topic;
-  return `Slide ${index + 1}`;
-}
-
-function stripOpenMaicHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, '').trim();
 }
 
 function buildOpenMaicFileName(topic: string, theme: PptxThemeId): string {

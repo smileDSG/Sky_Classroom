@@ -5,6 +5,8 @@ import CloudMindQuizPage from '@/app/sky/cloud-mind/quiz/page';
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/sky/cloud-mind/quiz',
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
 }));
 
 vi.mock('next/link', () => ({
@@ -55,18 +57,42 @@ vi.mock('@/components/sky/solve/math-renderer', () => ({
   MathRenderer: ({ content }: { content: string }) => <span>{content}</span>,
 }));
 
-vi.mock('@/lib/store/use-task-store', () => ({
-  useTaskStore: {
-    getState: () => ({
-      tasks: {},
-      getTask: () => undefined,
-      updateTask: vi.fn(),
-      removeTask: vi.fn(),
-      addTask: vi.fn(),
-    }),
-    subscribe: () => () => undefined,
-  },
+vi.mock('@/lib/store/use-task-store', () => {
+  const mockStore = {
+    tasks: {},
+    dismissedIds: new Set<string>(),
+    getTask: vi.fn(),
+    updateTask: vi.fn(),
+    removeTask: vi.fn(),
+    addTask: vi.fn(),
+    dismissTask: vi.fn(),
+    dismissCompletedTasks: vi.fn(),
+  };
+  const mockFn = vi.fn((selector?: (s: typeof mockStore) => unknown) =>
+    selector ? selector(mockStore) : mockStore,
+  );
+  mockFn.getState = vi.fn(() => mockStore);
+  mockFn.subscribe = vi.fn(() => vi.fn());
+  return { useTaskStore: mockFn };
+});
+
+vi.mock('@/lib/hooks/use-theme', () => ({
+  useTheme: () => ({ theme: 'light', resolvedTheme: 'light', isMounted: true, setTheme: vi.fn() }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
+
+vi.mock('@/lib/store/use-sky-classroom-store', () => {
+  const mockStore = {
+    mistakes: [],
+    addMistake: vi.fn(),
+    markReviewed: vi.fn(),
+  };
+  const mockFn = vi.fn((selector?: (s: typeof mockStore) => unknown) =>
+    selector ? selector(mockStore) : mockStore,
+  );
+  mockFn.getState = vi.fn(() => mockStore);
+  return { useSkyClassroomStore: mockFn };
+});
 
 describe('CloudMindQuizPage', () => {
   beforeEach(() => {
@@ -85,6 +111,7 @@ describe('CloudMindQuizPage', () => {
 
   it('renders the idle quiz state without reading derived counts before initialization', () => {
     expect(() => render(<CloudMindQuizPage />)).not.toThrow();
-    expect(screen.getByRole('heading', { name: '星际试炼场' })).toBeInTheDocument();
+    const headings = screen.getAllByRole('heading', { name: '星际试炼场' });
+    expect(headings.length).toBeGreaterThanOrEqual(1);
   });
 });

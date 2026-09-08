@@ -82,5 +82,48 @@ export class MockApi {
     await this.mockSceneOutlinesStream();
     await this.mockSceneContent();
     await this.mockSceneActions(stageId);
+    await this.mockClassroomJob(stageId ?? 'e2e-generated-stage');
+  }
+
+  /** Mock server-side classroom job submission, polling, and resulting classroom. */
+  async mockClassroomJob(classroomId = 'e2e-generated-stage') {
+    const jobId = 'e2e-job-1';
+    const scenes = mockOutlines.map((outline) => ({
+      id: `scene-${outline.order}`,
+      stageId: classroomId,
+      type: 'slide',
+      title: outline.title,
+      order: outline.order,
+      content: mockSceneContentResponse.content,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }));
+    const classroom = {
+      id: classroomId,
+      stage: { id: classroomId, name: '光合作用', description: '演示课堂', language: 'zh-CN' },
+      scenes,
+    };
+
+    await this.page.route('**/api/generate-classroom', (route) =>
+      route.fulfill({
+        status: 202,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, data: { jobId, status: 'running', step: 'generating_outlines', progress: 1, message: '生成中' } }),
+      }),
+    );
+    await this.page.route('**/api/generate-classroom/*', (route) =>
+      route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, data: { jobId, status: 'succeeded', step: 'done', progress: 100, message: '完成', done: true, result: { classroomId, url: `/classroom/${classroomId}`, scenesCount: scenes.length } } }),
+      }),
+    );
+    await this.page.route('**/api/classroom?id=*', (route) =>
+      route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, classroom }),
+      }),
+    );
   }
 }

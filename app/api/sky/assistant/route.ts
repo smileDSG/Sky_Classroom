@@ -8,7 +8,7 @@ import { NextRequest } from 'next/server';
 import { streamLLM } from '@/lib/ai/llm';
 import { createLogger } from '@/lib/logger';
 import { resolveModel } from '@/lib/server/resolve-model';
-import { getServerStorage } from '@/lib/server/server-storage';
+import { getRequiredServerStorage } from '@/lib/server/server-storage';
 import { createMistakeBookDAO } from '@/lib/storage/dao/mistakes';
 import { buildGraphFromMistakes } from '@/lib/graph/builder';
 import { buildSystemPrompt } from '@/lib/assistant/context-injector';
@@ -20,12 +20,19 @@ import {
   pickPersonalizationFromUser,
 } from '@/lib/assistant/personalization';
 import { apiError, API_ERROR_CODES } from '@/lib/server/api-response';
-import { getCurrentUser } from '@/lib/server/auth/helpers';
+import type { UserEntry } from '@/lib/storage/dao/users';
+import { requireAuth } from '@/lib/server/auth/helpers';
 import { buildStudentProfile } from '@/lib/student/profile-builder';
+import { LearnerProfileRepository } from '@/lib/adaptive-learning/profile/repository';
+import { buildTeachingProjection } from '@/lib/adaptive-learning/profile/projection-builder';
+import { buildTeachingEvidence } from '@/lib/adaptive-learning/profile/teaching-evidence';
+import { createKnowledgeStateDAO } from '@/lib/storage/dao/knowledge-state';
+import { AdaptiveLearningError } from '@/lib/adaptive-learning/errors';
+import { adaptiveLearningApiError } from '@/lib/adaptive-learning/api-error';
+import type { TeachingProfileProjection } from '@/lib/adaptive-learning/contracts';
 import type { GraphNode } from '@/lib/graph/types';
 import type { StudentProfile } from '@/lib/student/profile-types';
 import type { MistakeBookEntry } from '@/lib/storage/dao/mistakes';
-import type { UserEntry } from '@/lib/storage/dao/users';
 import type { QuestionBankEntry } from '@/lib/solve/types';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
 
@@ -36,7 +43,7 @@ export const maxDuration = 30;
 let _daoPromise: ReturnType<typeof initDAO> | null = null;
 
 async function initDAO() {
-  const storage = await getServerStorage();
+  const storage = await getRequiredServerStorage();
   return createMistakeBookDAO(storage);
 }
 
@@ -48,20 +55,22 @@ async function getDAO() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages, subject, difficulty, style, memoryContext } = body as {
+    const { messages, subject, difficulty, style } = body as {
       messages: { role: string; content: string }[];
       subject?: string;
       difficulty?: string;
       style?: string;
-      memoryContext?: string; // GAM-style memory context from client
     };
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'messages is required');
     }
 
+    const auth = await requireAuth();
+    if ('error' in auth) return auth.error;
     const quota = await requireQuota('llmCalls');
     if ('error' in quota) return quota.error;
+    const userId = auth.user.id;
 
     // Convert messages — exclude system messages since we pass via system param
     const aiMessages = messages
@@ -83,12 +92,39 @@ export async function POST(req: NextRequest) {
     // Load student context for personalised responses
     let currentUser: UserEntry | null = null;
     let profile: StudentProfile | null = null;
+    let authoritativeTeachingProjection: TeachingProfileProjection | undefined;
     try {
-      currentUser = await getCurrentUser();
-      const personalization = pickPersonalizationFromUser(currentUser);
-      if (currentUser && personalization.enableMemory !== false) {
-        profile = await buildStudentProfile(currentUser.id);
+      const storage = await getRequiredServerStorage();
+      currentUser = auth.user;
+      const preferences = await new LearnerProfileRepository(storage).getLatestPreferences(userId);
+      if (!preferences) {
+        return adaptiveLearningApiError(
+          new AdaptiveLearningError({
+            code: 'PROFILE_NOT_FOUND',
+            message: 'Learner profile is required before using assistant',
+            retryable: false,
+            stage: 'assistant-profile-load',
+          }),
+          crypto.randomUUID(),
+        );
       }
+      const knowledgeStates = await createKnowledgeStateDAO(storage).list(userId);
+      const teachingEvidence = buildTeachingEvidence({
+        states: knowledgeStates,
+        eventWatermark: 0,
+      });
+      profile = await buildStudentProfile(userId);
+      const teachingProjection = buildTeachingProjection({
+        userId,
+        snapshotId: `snapshot:${preferences.userId}:v${preferences.version}:w${teachingEvidence.eventWatermark}`,
+        profileVersion: preferences.version,
+        eventWatermark: teachingEvidence.eventWatermark,
+        preferences,
+        knowledgeStatus: teachingEvidence.knowledgeStatus,
+        strengths: teachingEvidence.strengths,
+        growthAreas: teachingEvidence.growthAreas,
+      });
+      authoritativeTeachingProjection = teachingProjection;
     } catch (err) {
       log.warn('Failed to load user profile context, continuing without it:', err);
     }
@@ -121,33 +157,13 @@ export async function POST(req: NextRequest) {
 
     const subj = subject || '数学';
 
-    // Check if client already sent a system message (e.g. Kagami persona)
-    const clientSystemMsg = messages.find((m) => m.role === 'system');
-
-    let systemPrompt: string;
-    if (clientSystemMsg) {
-      // Use client's system message as base, append learning context
-      systemPrompt = clientSystemMsg.content;
-      if (allowMemory && mistakes && mistakes.length > 0) {
-          const ctx = buildSystemPrompt(subj, difficulty || 'senior', style || 'detailed', {
-          mistakes: mistakes,
-          graphNodes: graphNodes ?? undefined,
-          solveHistory: allowRag ? (solveHistory ?? undefined) : undefined,
-        });
-        systemPrompt += '\n\n' + ctx.split('\n').slice(1).join('\n'); // append context without duplicating base
-      }
-    } else {
-      systemPrompt = buildSystemPrompt(subj, difficulty || 'senior', style || 'detailed', {
-        mistakes: allowMemory ? (mistakes ?? undefined) : undefined,
-        graphNodes: allowMemory ? (graphNodes ?? undefined) : undefined,
-        solveHistory: allowRag ? (solveHistory ?? undefined) : undefined,
-      });
-    }
-
-    // Inject GAM-style memory context if provided by client
-    if (memoryContext) {
-      systemPrompt += '\n\n' + memoryContext;
-    }
+    // System instructions and learning memory must remain server-authoritative.
+    let systemPrompt = buildSystemPrompt(subj, difficulty || 'senior', style || 'detailed', {
+      mistakes: allowMemory ? (mistakes ?? undefined) : undefined,
+      graphNodes: allowMemory ? (graphNodes ?? undefined) : undefined,
+      solveHistory: allowRag ? (solveHistory ?? undefined) : undefined,
+      teachingProjection: authoritativeTeachingProjection,
+    });
 
     const strategy = buildAssistantStrategy({
       userMessage: latestUserMessage,

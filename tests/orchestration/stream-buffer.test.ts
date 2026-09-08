@@ -170,6 +170,18 @@ describe('StreamBuffer', () => {
       );
     });
 
+    test('waitUntilDrained resolves when done was consumed before waiting', async () => {
+      const cb = makeCallbacks();
+      const buf = new StreamBuffer(cb, { tickMs: 10, charsPerTick: 100 });
+
+      buf.pushDone({ totalActions: 0, totalAgents: 1 });
+      buf.start();
+      vi.advanceTimersByTime(50);
+
+      await expect(buf.waitUntilDrained()).resolves.toBeUndefined();
+      expect(cb.onDone).toHaveBeenCalledOnce();
+    });
+
     test('pushCueUser fires onCueUser callback', () => {
       const cb = makeCallbacks();
       const buf = new StreamBuffer(cb, { tickMs: 10, charsPerTick: 100 });

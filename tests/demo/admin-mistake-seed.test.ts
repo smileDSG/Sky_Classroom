@@ -55,16 +55,16 @@ describe('admin knowledge mistake seed', () => {
     expect(result.items.map((item) => item.id)).toEqual(['student-record']);
   });
 
-  test('creates an idempotent cross-stage planning profile for demo users', async () => {
+  test('creates an idempotent cross-stage planning profile for admin users', async () => {
     const storage = new MemoryStorageProvider();
 
-    await ensureDemoLearningData('demo-default', storage);
-    await ensureDemoLearningData('demo-default', storage);
+    await ensureDemoLearningData('admin-default', storage);
+    await ensureDemoLearningData('admin-default', storage);
 
     const repository = new LearnerProfileRepository(storage);
-    const preferences = await repository.getLatestPreferences('demo-default');
-    const domainProfile = await repository.getLatestDomainProfile('demo-default', 'default');
-    const states = await createKnowledgeStateDAO(storage).list('demo-default');
+    const preferences = await repository.getLatestPreferences('admin-default');
+    const domainProfile = await repository.getLatestDomainProfile('admin-default', 'default');
+    const states = await createKnowledgeStateDAO(storage).list('admin-default');
 
     expect(preferences).toMatchObject({
       learningPace: 'standard',

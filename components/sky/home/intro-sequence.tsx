@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 
 interface IntroSequenceProps {
   onComplete: () => void;
 }
+
+const INTRO_DURATION_MS = 2100;
 
 // 云朵 SVG — 阴影层 + 主体层
 function CloudShape({ className, style }: { className?: string; style?: React.CSSProperties }) {
@@ -74,23 +76,17 @@ function DriftingCloud({
 export function IntroSequence({ onComplete }: IntroSequenceProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const completedRef = useRef(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
     const t0 = setTimeout(() => {
       if (!completedRef.current) {
         completedRef.current = true;
         onComplete();
       }
-    }, 5000);
+    }, INTRO_DURATION_MS);
     timerRef.current = [t0];
     return () => timerRef.current.forEach(clearTimeout);
-  }, [onComplete, mounted]);
+  }, [onComplete]);
 
   const handleSkip = () => {
     if (completedRef.current) return;
@@ -110,85 +106,83 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
         style={{ zIndex: 50 }}
         initial={{ clipPath: 'circle(0% at 50% 65%)' }}
         animate={{ clipPath: 'circle(150% at 50% 65%)' }}
-        transition={{ delay: 3.5, duration: 1.5, ease: 'easeInOut' }}
+        transition={{ delay: 1.2, duration: 0.9, ease: 'easeInOut' }}
       />
 
       {/* 太阳 + 云朵 — 仅客户端渲染，避免 SSR hydration mismatch */}
-      {mounted && (
-        <>
-          {/* 太阳 — 柔和金色，不抢视觉 */}
-          <motion.div
-            className="absolute pointer-events-none"
-            style={{ top: '12%', left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 0.75, scale: 1 }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-          >
-            <svg viewBox="0 0 120 120" className="w-44 h-44 md:w-60 md:h-60">
-              <defs>
-                {/* 柔和光晕 */}
-                <radialGradient id="sunHalo" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#fef3c7" stopOpacity="0.6" />
-                  <stop offset="50%" stopColor="#fde68a" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#fcd34d" stopOpacity="0" />
-                </radialGradient>
-                {/* 太阳本体渐变 */}
-                <radialGradient id="sunBody" cx="45%" cy="40%" r="55%">
-                  <stop offset="0%" stopColor="#fef9c3" />
-                  <stop offset="70%" stopColor="#fbbf24" />
-                  <stop offset="100%" stopColor="#f59e0b" />
-                </radialGradient>
-              </defs>
-              {/* 柔和光晕 — 呼吸动画 */}
-              <motion.circle
-                cx="60"
-                cy="60"
-                r="52"
-                fill="url(#sunHalo)"
-                style={{ transformOrigin: '60px 60px' }}
-                animate={{ scale: [0.92, 1.04, 0.92], opacity: [0.6, 0.9, 0.6] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              {/* 光线 — 柔和的圆角矩形，缓慢旋转 */}
-              <motion.g
-                animate={{ rotate: 360 }}
-                transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
-                style={{ transformOrigin: '60px 60px' }}
-              >
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <rect
-                    key={i}
-                    x="57"
-                    y="8"
-                    width="6"
-                    height="18"
-                    rx="3"
-                    fill="#fbbf24"
-                    opacity={i % 2 === 0 ? 0.5 : 0.3}
-                    transform={`rotate(${i * 36}, 60, 60)`}
-                  />
-                ))}
-              </motion.g>
-              {/* 太阳本体 — 温暖柔和 */}
-              <circle cx="60" cy="60" r="24" fill="url(#sunBody)" />
-            </svg>
-          </motion.div>
+      <>
+        {/* 太阳 — 柔和金色，不抢视觉 */}
+        <motion.div
+          className="absolute pointer-events-none"
+          style={{ top: '12%', left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 0.75, scale: 1 }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+        >
+          <svg viewBox="0 0 120 120" className="w-44 h-44 md:w-60 md:h-60">
+            <defs>
+              {/* 柔和光晕 */}
+              <radialGradient id="sunHalo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#fef3c7" stopOpacity="0.6" />
+                <stop offset="50%" stopColor="#fde68a" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#fcd34d" stopOpacity="0" />
+              </radialGradient>
+              {/* 太阳本体渐变 */}
+              <radialGradient id="sunBody" cx="45%" cy="40%" r="55%">
+                <stop offset="0%" stopColor="#fef9c3" />
+                <stop offset="70%" stopColor="#fbbf24" />
+                <stop offset="100%" stopColor="#f59e0b" />
+              </radialGradient>
+            </defs>
+            {/* 柔和光晕 — 呼吸动画 */}
+            <motion.circle
+              cx="60"
+              cy="60"
+              r="52"
+              fill="url(#sunHalo)"
+              style={{ transformOrigin: '60px 60px' }}
+              animate={{ scale: [0.92, 1.04, 0.92], opacity: [0.6, 0.9, 0.6] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            {/* 光线 — 柔和的圆角矩形，缓慢旋转 */}
+            <motion.g
+              animate={{ rotate: 360 }}
+              transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
+              style={{ transformOrigin: '60px 60px' }}
+            >
+              {Array.from({ length: 10 }).map((_, i) => (
+                <rect
+                  key={i}
+                  x="57"
+                  y="8"
+                  width="6"
+                  height="18"
+                  rx="3"
+                  fill="#fbbf24"
+                  opacity={i % 2 === 0 ? 0.5 : 0.3}
+                  transform={`rotate(${i * 36}, 60, 60)`}
+                />
+              ))}
+            </motion.g>
+            {/* 太阳本体 — 温暖柔和 */}
+            <circle cx="60" cy="60" r="24" fill="url(#sunBody)" />
+          </svg>
+        </motion.div>
 
-          {/* 云朵 — 大小不一，有阴影，向右飘动 */}
-          <div style={{ zIndex: 15 }}>
-            <DriftingCloud top="4%" startX="5%" size={80} opacity={0.5} speed={38} />
-            <DriftingCloud top="10%" startX="60%" size={160} opacity={0.7} speed={28} />
-            <DriftingCloud top="20%" startX="15%" size={200} opacity={0.8} speed={24} />
-            <DriftingCloud top="30%" startX="75%" size={100} opacity={0.55} speed={34} />
-            <DriftingCloud top="40%" startX="5%" size={130} opacity={0.65} speed={30} />
-            <DriftingCloud top="52%" startX="45%" size={180} opacity={0.75} speed={26} />
-            <DriftingCloud top="60%" startX="20%" size={70} opacity={0.5} speed={36} />
-            <DriftingCloud top="70%" startX="60%" size={150} opacity={0.7} speed={22} />
-            <DriftingCloud top="82%" startX="10%" size={110} opacity={0.6} speed={32} />
-            <DriftingCloud top="90%" startX="50%" size={190} opacity={0.8} speed={20} />
-          </div>
-        </>
-      )}
+        {/* 云朵 — 大小不一，有阴影，向右飘动 */}
+        <div style={{ zIndex: 15 }}>
+          <DriftingCloud top="4%" startX="5%" size={80} opacity={0.5} speed={38} />
+          <DriftingCloud top="10%" startX="60%" size={160} opacity={0.7} speed={28} />
+          <DriftingCloud top="20%" startX="15%" size={200} opacity={0.8} speed={24} />
+          <DriftingCloud top="30%" startX="75%" size={100} opacity={0.55} speed={34} />
+          <DriftingCloud top="40%" startX="5%" size={130} opacity={0.65} speed={30} />
+          <DriftingCloud top="52%" startX="45%" size={180} opacity={0.75} speed={26} />
+          <DriftingCloud top="60%" startX="20%" size={70} opacity={0.5} speed={36} />
+          <DriftingCloud top="70%" startX="60%" size={150} opacity={0.7} speed={22} />
+          <DriftingCloud top="82%" startX="10%" size={110} opacity={0.6} speed={32} />
+          <DriftingCloud top="90%" startX="50%" size={190} opacity={0.8} speed={20} />
+        </div>
+      </>
 
       {/* 书 + 涟漪 */}
       <div
@@ -198,7 +192,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
         <motion.div
           initial={{ y: -500, scale: 0.3, opacity: 0 }}
           animate={{ y: 0, scale: 1, opacity: 1 }}
-          transition={{ delay: 1, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ delay: 0.25, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <motion.div
             animate={{
@@ -208,7 +202,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
                 'drop-shadow(0 0 20px rgba(255,255,255,0.5))',
               ],
             }}
-            transition={{ duration: 2, delay: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+            transition={{ duration: 1.4, delay: 0.8, repeat: Infinity, ease: 'easeInOut' }}
           >
             <svg
               viewBox="0 0 200 160"
@@ -299,10 +293,10 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
             className="text-center mt-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 2, duration: 0.5 }}
+            transition={{ delay: 0.75, duration: 0.35 }}
           >
             <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg tracking-wider">
-              天空课堂
+              智眸无界
             </h1>
             <p className="mt-2 text-base md:text-lg text-white/80 font-medium tracking-wide drop-shadow">
               AI 驱动的智能学习平台
@@ -316,7 +310,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
         className="absolute bottom-6 right-6 z-[60] flex min-h-11 min-w-11 items-center gap-2 rounded-full bg-white/20 px-5 py-2.5 text-sm text-white/70 backdrop-blur-sm transition-all hover:bg-white/30 hover:text-white cursor-pointer"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.15 }}
         onClick={handleSkip}
       >
         跳过

@@ -7,7 +7,7 @@
 
 import { Stage, Scene } from '../types/stage';
 import { ChatSession } from '../types/chat';
-import { db } from './database';
+import { db, type MediaFileRecord } from './database';
 import { saveChatSessions, loadChatSessions, deleteChatSessions } from './chat-storage';
 import { clearPlaybackState } from './playback-storage';
 import { clearAllForScene } from '@/lib/quiz/persistence';
@@ -251,7 +251,11 @@ export async function getFirstSlideByStages(
             getThumbnailMediaRef(el as ThumbnailMediaElement),
           );
           if (mediaElements.length > 0) {
-            const mediaRecords = await db.mediaFiles.where('stageId').equals(stageId).toArray();
+            const mediaRecords = (
+              await db.mediaFiles.where('stageId').equals(stageId).toArray()
+            ).filter(
+              (record): record is MediaFileRecord & { blob: Blob } => !!record.blob, // skip pending/failed placeholders
+            );
             const videoRecords = mediaRecords.filter(
               (record) => !record.error && record.type === 'video',
             );

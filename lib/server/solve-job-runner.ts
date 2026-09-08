@@ -2,7 +2,6 @@
  * Solve Job Runner — executes the LangGraph solve pipeline in background.
  */
 import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
-import type { SolveJob } from './solve-job-store';
 import type { ProblemSpec } from '@/lib/solve/types';
 import { updateSolveJob } from './solve-job-store';
 import { createLogger } from '@/lib/logger';
@@ -11,10 +10,17 @@ const log = createLogger('SolveJobRunner');
 const globalForRunningJobs = globalThis as unknown as {
   _solveRunningJobs: Map<string, Promise<void>> | undefined;
 };
-const runningJobs: Map<string, Promise<void>> =
-  globalForRunningJobs._solveRunningJobs ?? (globalForRunningJobs._solveRunningJobs = new Map());
+const runningJobs: Map<string, Promise<void>> = globalForRunningJobs._solveRunningJobs ??
+(globalForRunningJobs._solveRunningJobs = new Map());
 
-export function runSolveJob(jobId: string, problemText: string, problemImage: string | null, userAnswer: string | null, problemSpec?: ProblemSpec | null, adaptiveGuidance?: string | null): Promise<void> {
+export function runSolveJob(
+  jobId: string,
+  problemText: string,
+  problemImage: string | null,
+  userAnswer: string | null,
+  problemSpec?: ProblemSpec | null,
+  adaptiveGuidance?: string | null,
+): Promise<void> {
   const existing = runningJobs.get(jobId);
   if (existing) return existing;
 
@@ -77,8 +83,16 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
 
       log.info(`Solve job ${jobId} completed in ${solvingTime}ms`);
 
-      // Auto-save to question bank and solve cache
-      if (!finalState.fromQuestionBank && !finalState.fromSolveCache && output.answer) {
+      // Auto-save to question bank and solve cache — only high-quality
+      // structured solves (real parsed steps, not the single fallback step
+      // generateOutput creates for prose salvage) so a later solve can
+      // replace them with a full report.
+      if (
+        !finalState.fromQuestionBank &&
+        !finalState.fromSolveCache &&
+        output.answer &&
+        finalState.parsedSteps?.length > 0
+      ) {
         try {
           const { hashProblemText } = await import('@/lib/solve/question-bank');
           const { saveToSolveCache } = await import('@/lib/solve/solve-cache');
@@ -86,7 +100,15 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
           await saveToSolveCache({
             problemText,
             problemHash: hashProblemText(problemText),
-            solution: output.answer,
+            solution: output.solution || output.answer,
+            answer: output.answer,
+            steps: output.steps,
+            knowledgePoints: (output.knowledgePoints ?? []).map((kp) => ({
+              name: kp.name,
+              description: kp.description,
+              difficulty: kp.difficulty,
+            })),
+            similarQuestions: output.similarQuestions ?? [],
             agentId: finalState.agentRoute ?? 'universal',
             solvedAt: Date.now(),
           });
@@ -102,12 +124,13 @@ export function runSolveJob(jobId: string, problemText: string, problemImage: st
               problemImage: problemImage ?? undefined,
               answer: output.answer,
               solution: output.solution ?? '',
-              knowledgePoints: (output.knowledgePoints ?? []).map(kp => ({
+              knowledgePoints: (output.knowledgePoints ?? []).map((kp) => ({
                 name: kp.name,
                 description: kp.description,
                 difficulty: kp.difficulty,
               })),
               similarQuestions: output.similarQuestions ?? [],
+              steps: output.steps,
               agentId: finalState.agentRoute ?? 'universal',
               solvedAt: Date.now(),
               verified: false,

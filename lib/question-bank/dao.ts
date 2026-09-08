@@ -59,6 +59,8 @@ interface QBRow extends RowDataPacket {
   knowledge_points: string; // JSON
   image: string | null;
   options: string | null; // JSON
+  steps: string | null; // JSON
+  similar_questions: string | null; // JSON
   source: string | null;
   tags: string; // JSON
   problem_hash: string;
@@ -80,6 +82,8 @@ function toRow(r: QBRow): QuestionBankRow {
     knowledgePoints: safeParseJson<string[]>(r.knowledge_points, []),
     image: r.image,
     options: safeParseJson<string[] | null>(r.options, null),
+    steps: safeParseJson<{ label: string; content: string; keyPoints?: string[] }[] | null>(r.steps, null),
+    similarQuestions: safeParseJson<{ problem: string; difficulty: number; knowledgePoint: string }[] | null>(r.similar_questions, null),
     source: r.source,
     tags: safeParseJson<string[]>(r.tags, []),
     problemHash: r.problem_hash,
@@ -89,8 +93,10 @@ function toRow(r: QBRow): QuestionBankRow {
   };
 }
 
-function safeParseJson<T>(raw: string | null, fallback: T): T {
-  if (!raw) return fallback;
+function safeParseJson<T>(raw: string | unknown | null, fallback: T): T {
+  if (raw == null) return fallback;
+  // mysql2 auto-parses JSON columns into objects — pass them through as-is.
+  if (typeof raw !== 'string') return raw as T;
   try {
     return JSON.parse(raw) as T;
   } catch {
@@ -259,6 +265,8 @@ export async function ensureTable(): Promise<void> {
         knowledge_points JSON         NOT NULL,
         image            TEXT,
         options          JSON,
+        steps            JSON,
+        similar_questions JSON,
         source           VARCHAR(255),
         tags             JSON         NOT NULL,
         problem_hash     VARCHAR(64)  NOT NULL,
@@ -273,6 +281,23 @@ export async function ensureTable(): Promise<void> {
         INDEX idx_verified   (verified)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+    // Migrations for tables created before these columns existed. Multiple
+    // dev-server module instances can run these concurrently; the
+    // duplicate-column error is the expected benign outcome.
+    const columnMigrations: [string, string][] = [
+      ['steps', 'ALTER TABLE question_bank ADD COLUMN steps JSON NULL AFTER options'],
+      ['similar_questions', 'ALTER TABLE question_bank ADD COLUMN similar_questions JSON NULL AFTER steps'],
+    ];
+    for (const [, ddl] of columnMigrations) {
+      try {
+        await pool.query(ddl);
+      } catch (err) {
+        const e = err as { code?: string; errno?: number; message?: string };
+        const duplicate =
+          e.code === 'ER_DUP_FIELDNAME' || e.code === 'ER_DUP_FIELD' || e.errno === 1060 || /duplicate column/i.test(e.message ?? '');
+        if (!duplicate) throw err;
+      }
+    }
     _tableEnsured = true;
   } catch (err) {
     if (!isConnectionError(err)) throw err;
@@ -301,9 +326,9 @@ export async function insertOne(entry: QuestionBankInsert): Promise<QuestionBank
     await pool.query(
       `INSERT INTO question_bank
         (id, subject, grade, difficulty, question_type, content, answer,
-         explanation, knowledge_points, image, options, source, tags,
+         explanation, knowledge_points, image, options, steps, similar_questions, source, tags,
          problem_hash, verified, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         entry.subject ?? '',
@@ -316,6 +341,8 @@ export async function insertOne(entry: QuestionBankInsert): Promise<QuestionBank
         JSON.stringify(entry.knowledgePoints ?? []),
         entry.image ?? null,
         entry.options ? JSON.stringify(entry.options) : null,
+        entry.steps ? JSON.stringify(entry.steps) : null,
+        entry.similarQuestions ? JSON.stringify(entry.similarQuestions) : null,
         entry.source ?? null,
         JSON.stringify(entry.tags ?? []),
         problemHash,

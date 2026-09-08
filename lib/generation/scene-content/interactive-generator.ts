@@ -171,6 +171,65 @@ function extractHtml(response: string): string | null {
   return null;
 }
 
+/**
+ * Quality gate for a generated interactive widget document.
+ * Returns a list of problems (empty = pass). The gate catches the common
+ * structural/layout defects that make widgets unusable or "flat/broken":
+ *   - missing/interactive or visual parts for widget types that need them;
+ *   - duplicate documents (broken re-generation output);
+ *   - whole-page 3D perspective/tilt that makes text hard to read;
+ *   - fixed-width boxes that will overflow the ~1180px landscape panel.
+ */
+export function auditInteractiveHtml(html: string, widgetType?: WidgetType): string[] {
+  const problems: string[] = [];
+
+  if (!html || html.length < 300) {
+    return ['html too short to be a usable widget'];
+  }
+
+  const doctypeCount = (html.match(/<!DOCTYPE html>/gi) ?? []).length;
+  if (doctypeCount !== 1) {
+    problems.push(`expected exactly one <!DOCTYPE html>, found ${doctypeCount}`);
+  }
+  const htmlTags = (html.match(/<html[\s>]/gi) ?? []).length;
+  if (htmlTags !== 1) {
+    problems.push(`expected exactly one <html> tag, found ${htmlTags}`);
+  }
+  if (!/<\/body>\s*<\/html>\s*$/i.test(html.trim())) {
+    problems.push('document does not end with </body></html>');
+  }
+
+  const hasControls = /<(input|select|button|textarea)\b/i.test(html);
+  if (!hasControls) {
+    problems.push('no interactive controls (input/select/button) found');
+  }
+
+  if (widgetType !== 'code' && widgetType !== 'game') {
+    const hasVisual = /<canvas\b/i.test(html) || /<svg[\s>]/i.test(html);
+    if (!hasVisual) {
+      problems.push('no visual element (canvas/svg) found');
+    }
+  }
+
+  const perspectiveTilt = /transform\s*:\s*[^;]*perspective\(/i.test(html);
+  const wholePageTilt = /(body|#app|\.app|#root|\.root)[^{]*\{[^}]*transform\s*:\s*[^;]*(rotateX|rotateY|perspective)/i.test(
+    html,
+  );
+  if (perspectiveTilt || wholePageTilt) {
+    problems.push('whole-page 3D perspective/tilt transform detected');
+  }
+
+  const fixedWidthOverflow = html.match(/width\s*:\s*(\d{4,})px/gi);
+  if (fixedWidthOverflow) {
+    const maxWidth = Math.max(...fixedWidthOverflow.map((m) => Number(m.replace(/\D/g, '')) || 0));
+    if (maxWidth > 1300) {
+      problems.push(`fixed-width box of ${maxWidth}px would overflow the widget panel`);
+    }
+  }
+
+  return problems;
+}
+
 function extractWidgetConfig(html: string): WidgetConfig | undefined {
   const match = html.match(
     /<script type="application\/json" id="widget-config">([\s\S]*?)<\/script>/,
@@ -301,11 +360,36 @@ export async function generateWidgetContent(
   }
 
   log.info(`Generating ${widgetType} widget for: ${outline.title}`);
-  const response = await aiCall(prompts.system, prompts.user);
-  const html = extractHtml(response);
+
+  // Quality gate: regenerate once if the produced document fails the audit.
+  const MAX_ATTEMPTS = 2;
+  let html: string | null = null;
+  let problems: string[] = [];
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    if (attempt > 1) {
+      log.warn(
+        `Retrying ${widgetType} widget for: ${outline.title} (attempt ${attempt}/${MAX_ATTEMPTS})`,
+      );
+    }
+    const response = await aiCall(prompts.system, prompts.user);
+    const candidate = extractHtml(response);
+    if (!candidate) {
+      problems = ['failed to extract HTML from model response'];
+      continue;
+    }
+    problems = auditInteractiveHtml(candidate, widgetType);
+    if (problems.length === 0) {
+      html = candidate;
+      break;
+    }
+    log.warn(`Widget audit failed for "${outline.title}" (${widgetType}): ${problems.join('; ')}`);
+  }
 
   if (!html) {
-    log.error(`Failed to extract HTML from ${widgetType} response for: ${outline.title}`);
+    log.error(
+      `Abandoning ${widgetType} widget for: ${outline.title} after ${MAX_ATTEMPTS} attempts: ${problems.join('; ')}`,
+    );
     return null;
   }
 

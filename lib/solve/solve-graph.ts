@@ -47,10 +47,13 @@ async function checkSolveCacheNode(
     return {
       fromSolveCache: true,
       solution: hit.solution,
+      parsedAnswer: hit.answer ?? null,
       agentId: hit.agentId,
-      parsedSteps: [],
-      parsedKnowledgePoints: [],
-      parsedSimilarQuestions: [],
+      // Cache entries store the full structured solve output, so hits render
+      // the same report (steps / knowledge points / similar) as fresh solves.
+      parsedSteps: hit.steps ?? [],
+      parsedKnowledgePoints: hit.knowledgePoints ?? [],
+      parsedSimilarQuestions: hit.similarQuestions ?? [],
     };
   }
 
@@ -80,8 +83,9 @@ async function checkQuestionBankNode(
     return {
       fromQuestionBank: true,
       solution: hit.answer,
+      parsedAnswer: hit.answer ?? null,
       agentId: hit.agentId,
-      parsedSteps: [],
+      parsedSteps: hit.steps ?? [],
       parsedKnowledgePoints: (hit.knowledgePoints ?? []).map((k) => ({
         name: k.name,
         description: k.description,
@@ -165,8 +169,11 @@ function extractConciseAnswer(solution: string): string {
 
   for (const marker of answerMarkers) {
     const match = solution.match(marker);
-    if (match && match[1].trim().length > 0) {
-      return match[1].trim();
+    const candidate = match?.[1]?.trim();
+    // Skip degenerate matches (single characters, pure punctuation) and fall
+    // through to the last-sentence fallback which is more readable.
+    if (candidate && candidate.length >= 2) {
+      return candidate;
     }
   }
 
@@ -193,22 +200,21 @@ async function generateOutputNode(
 
   if (!solution) {
     log.error('[SolveGraph] generateOutput: no solution');
+    // Return an error state (not a sentinel output) so the job runner marks
+    // the job failed and never persists the failure into the question bank
+    // or solve cache, where it would poison later cache hits.
     return {
-      fourPartOutput: {
-        solution: '解题失败',
-        answer: '解题失败',
-        steps: [],
-        knowledgePoints: [],
-        similarQuestions: [],
-      },
+      error: '未能生成解题结果，请稍后重试',
     };
   }
 
   // Build raw solution object from solver output.
-  // When parsedSteps is empty (cache hit), extract a concise answer from
-  // the solution instead of using the full solution text as the answer.
+  // The model's own concise answer (e.g. "A" / "轨迹a") is the answer banner;
+  // fall back to derivation-based extraction when absent (cache hits from
+  // older entries, or salvaged prose).
   const hasSteps = state.parsedSteps && state.parsedSteps.length > 0;
-  const conciseAnswer = hasSteps ? solution : extractConciseAnswer(solution);
+  const conciseAnswer =
+    state.parsedAnswer?.trim() || (hasSteps ? solution : extractConciseAnswer(solution));
 
   const raw = {
     answer: conciseAnswer,
@@ -317,6 +323,7 @@ export function buildSolveInitialState(
     selectedAgentId: null,
     agentRoute: null,
     solution: null,
+    parsedAnswer: null,
     parsedSteps: [],
     parsedKnowledgePoints: [],
     parsedSimilarQuestions: [],

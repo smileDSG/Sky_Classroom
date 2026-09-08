@@ -267,6 +267,18 @@ function updateButton(text) {
 - Don't create objects in render loop
 - Throttle slider input events if needed
 
+### 12. Desktop Proportionality (CRITICAL)
+
+The widget is displayed full-width (up to ~1180px) inside a landscape panel, so the **visualization must stay dominant**. The most common defect is the control/parameter panel taking most of the width while the chart/canvas is squeezed into a thin strip.
+
+- On desktop, the **visualization/canvas/chart/result area MUST occupy at least 60%** of the width (`flex-1` / wider column). Keep it the largest element on screen.
+- The **parameter/control panel MUST NOT exceed 40%** of the width (e.g. `md:w-[40%]` / `max-width: 440px`) and should stay a compact vertical column of sliders.
+- **Never let the control panel be wider than the visualization.** When in doubt, make the visualization wider, not the controls.
+- The document must **fill its panel and never overflow horizontally**: `html, body { height:100%; margin:0; overflow-x:hidden; }`. Do not add a fixed pixel width to the outer container that exceeds the viewport.
+- Every chart/canvas must size off its container (`width:100%`) and get a `min-height` (e.g. `min-height: 260px`) so it never collapses into a flat band.
+- Do **not** apply a 3D perspective / tilt transform to the whole page or outer card; it makes text hard to read. Keep any tilt subtle and local to a specific visual element only.
+- After laying out, there should be **no side/bottom scrollbar** produced by overflowing fixed-size boxes; use `overflow:auto` only on the control column, never on the whole widget.
+
 ## Common Bugs to Avoid
 
 | Bug | Cause | Solution |

@@ -70,6 +70,8 @@ export interface GenerateClassroomInput {
   enableImageGeneration?: boolean;
   enableVideoGeneration?: boolean;
   enableTTS?: boolean;
+  /** Skip the deck-level slide layout QA repair loop for faster generation. */
+  skipSlideQA?: boolean;
   agentMode?: 'default' | 'generate';
 }
 
@@ -97,6 +99,7 @@ export interface OutlineOnlyResult {
   enableImageGeneration: boolean;
   enableVideoGeneration: boolean;
   enableTTS: boolean;
+  skipSlideQA: boolean;
 }
 
 export interface ClassroomGenerationProgress {
@@ -1493,6 +1496,7 @@ export async function generateClassroom(
 ): Promise<GenerateClassroomResult | OutlineOnlyResult> {
   const phase = options.phase ?? 'full';
   const { requirement, pdfContent } = input;
+  const quickMode = !!input.skipSlideQA;
 
   await options.onProgress?.({
     step: 'initializing',
@@ -1731,6 +1735,7 @@ export async function generateClassroom(
       enableImageGeneration: input.enableImageGeneration ?? false,
       enableVideoGeneration: input.enableVideoGeneration ?? false,
       enableTTS: input.enableTTS ?? false,
+      skipSlideQA: !!input.skipSlideQA,
     };
   }
 
@@ -1803,21 +1808,26 @@ export async function generateClassroom(
     scenesGenerated: 0,
     totalScenes: outlines.length,
   });
-  const qaResult = await reviewAndRepairClassroomSlideQA(contentResults, aiCall, {
-    sceneContentOptions: {
-      agents,
-      languageDirective,
-      themeSelection: courseTheme,
-    },
-    onProgress: options.onProgress,
-    totalScenes: outlines.length,
-    concurrency,
-  });
-  contentResults = qaResult.contentResults;
-  const slideQaReport = qaResult.slideQaReport;
-  if (!slideQaReport.pass) {
-    const message = formatClassroomSlideQAError(slideQaReport);
-    throw new Error(message);
+  let slideQaReport: ClassroomSlideQAReport | undefined;
+  if (quickMode) {
+    log.info(`Skipping classroom slide QA for ${outlines.length} scene(s) (quick mode).`);
+  } else {
+    const qaResult = await reviewAndRepairClassroomSlideQA(contentResults, aiCall, {
+      sceneContentOptions: {
+        agents,
+        languageDirective,
+        themeSelection: courseTheme,
+      },
+      onProgress: options.onProgress,
+      totalScenes: outlines.length,
+      concurrency,
+    });
+    contentResults = qaResult.contentResults;
+    slideQaReport = qaResult.slideQaReport;
+    if (!slideQaReport.pass) {
+      const message = formatClassroomSlideQAError(slideQaReport);
+      throw new Error(message);
+    }
   }
 
   // Phase B: Generate all scene actions in parallel (content already available)
@@ -1979,6 +1989,7 @@ export async function generateClassroomContinue(
   },
 ): Promise<GenerateClassroomResult> {
   const { outlines, languageDirective, agents, stage } = saved;
+  const quickMode = !!saved.skipSlideQA;
   const courseTheme = selectThemeForCourse(outlines);
 
   const {
@@ -2094,21 +2105,26 @@ export async function generateClassroomContinue(
     scenesGenerated: 0,
     totalScenes: outlines.length,
   });
-  const qaResult = await reviewAndRepairClassroomSlideQA(contentResults, aiCall, {
-    sceneContentOptions: {
-      agents,
-      languageDirective,
-      themeSelection: courseTheme,
-    },
-    onProgress: options.onProgress,
-    totalScenes: outlines.length,
-    concurrency,
-  });
-  contentResults = qaResult.contentResults;
-  const slideQaReport = qaResult.slideQaReport;
-  if (!slideQaReport.pass) {
-    const message = formatClassroomSlideQAError(slideQaReport);
-    throw new Error(message);
+  let slideQaReport: ClassroomSlideQAReport | undefined;
+  if (quickMode) {
+    log.info(`Skipping classroom slide QA for ${outlines.length} scene(s) (quick mode).`);
+  } else {
+    const qaResult = await reviewAndRepairClassroomSlideQA(contentResults, aiCall, {
+      sceneContentOptions: {
+        agents,
+        languageDirective,
+        themeSelection: courseTheme,
+      },
+      onProgress: options.onProgress,
+      totalScenes: outlines.length,
+      concurrency,
+    });
+    contentResults = qaResult.contentResults;
+    slideQaReport = qaResult.slideQaReport;
+    if (!slideQaReport.pass) {
+      const message = formatClassroomSlideQAError(slideQaReport);
+      throw new Error(message);
+    }
   }
 
   // Phase B: Generate all scene actions in parallel (content already available)

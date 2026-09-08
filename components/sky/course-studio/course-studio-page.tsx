@@ -15,6 +15,7 @@ import {
   Eye,
   FileQuestion,
   Film,
+  History,
   Info,
   Layers,
   Loader2,
@@ -38,6 +39,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { submitClassroomJob } from '@/lib/classroom/classroom-job-client';
 import { addActiveJobEntry } from '@/lib/classroom/classroom-session';
@@ -476,6 +478,7 @@ export function CourseStudioPage() {
   const [activeDetail, setActiveDetail] = useState<DetailTabId>('fit');
   const [nextAction, setNextAction] = useState<'idle' | 'classroom' | 'plan'>('idle');
   const [nextActionError, setNextActionError] = useState<string | null>(null);
+  const [quickMode, setQuickMode] = useState(false);
 
   useEffect(() => {
     if (queryTopic) setCourseFocus(queryTopic);
@@ -704,6 +707,7 @@ export function CourseStudioPage() {
           .join('\n\n'),
         enableWebSearch: false,
         agentMode: 'default',
+        skipSlideQA: quickMode,
       });
       addActiveJobEntry({ jobId, topic });
       router.push(`/generation-progress?jobId=${encodeURIComponent(jobId)}`);
@@ -990,7 +994,26 @@ export function CourseStudioPage() {
                   课堂会使用当前主题重新生成授课场景；学习任务会写入你的学习路径。
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                  <Switch
+                    checked={quickMode}
+                    onCheckedChange={setQuickMode}
+                    aria-label="极速生成"
+                  />
+                  极速生成（跳过幻灯片版式 QA，更快，但画质不做把关）
+                </label>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push('/generation-history')}
+                  className="min-h-10 border-sky-200 bg-white/80 dark:border-sky-300/30 dark:bg-slate-950/40"
+                >
+                  <History className="h-4 w-4" />
+                  我的生成记录
+                </Button>
                 <Button
                   type="button"
                   onClick={handleStartClassroom}

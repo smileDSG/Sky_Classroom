@@ -11,6 +11,7 @@ const boundary = vi.hoisted(() => ({
 
 vi.mock('@/lib/server/auth/helpers', () => ({
   getJwtPayload: vi.fn(async () => ({ sub: boundary.userId })),
+  requireAuth: vi.fn(async () => ({ user: { id: boundary.userId } })),
 }));
 
 vi.mock('@/lib/server/server-storage', () => ({

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 import {
   ArrowRight,
   BarChart3,
@@ -25,6 +26,7 @@ import type { PersonalizationContext } from '@/lib/cloud-mind/types';
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph';
 import { syncMistakesFromQuizzes } from '@/lib/mistakes/bridge';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
+import { fetchLearningStats } from '@/lib/client/learning-stats';
 
 interface LearningStats {
   todayStudyMinutes: number;
@@ -294,10 +296,10 @@ export default function SkyDashboardPage() {
   useEffect(() => {
     if (!user) return;
     const fetchStats = () => {
-      fetch('/api/sky/learning-stats', { credentials: 'include' })
-        .then((response) => response.json())
+      if (!isDocumentVisible()) return;
+      fetchLearningStats()
         .then((data) => {
-          if (data.success) setStats(data);
+          setStats(data);
         })
         .catch(() => {});
     };

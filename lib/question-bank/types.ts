@@ -20,6 +20,8 @@ export interface QuestionBankRow {
   knowledgePoints: string[];     // stored as JSON array
   image: string | null;          // base64 or URL
   options: string[] | null;      // for choice/judge questions
+  steps?: { label: string; content: string; keyPoints?: string[] }[] | null; // solve step breakdown
+  similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string }[] | null;
   source: string | null;         // e.g. "2024高考真题"
   tags: string[];                // arbitrary tags
   problemHash: string;           // dedup hash of content
@@ -42,6 +44,9 @@ export interface QuestionBankInsert {
   knowledgePoints?: string[];
   image?: string;
   options?: string[];
+  /** Solve step breakdown (solve-generated entries). */
+  steps?: { label: string; content: string; keyPoints?: string[] }[];
+  similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string }[];
   source?: string;
   tags?: string[];
   verified?: boolean;
@@ -58,6 +63,9 @@ export interface QuestionBankUpdate {
   knowledgePoints?: string[];
   image?: string;
   options?: string[];
+  /** Solve step breakdown (solve-generated entries). */
+  steps?: { label: string; content: string; keyPoints?: string[] }[];
+  similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string }[];
   source?: string;
   tags?: string[];
   verified?: boolean;

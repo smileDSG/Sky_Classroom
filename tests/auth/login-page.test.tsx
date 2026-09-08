@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 const { mockLogin } = vi.hoisted(() => ({ mockLogin: vi.fn() }));
 
@@ -9,58 +9,30 @@ vi.mock('@/components/auth/auth-provider', () => ({
 
 import LoginPage from '@/app/auth/login/page';
 
-const mockFetch = vi.fn();
-
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.stubGlobal('fetch', mockFetch);
+  vi.stubEnv('NODE_ENV', 'development');
 });
 
 afterEach(() => {
-  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe('login page account hints', () => {
-  it('shows the ordinary demo credentials when the server enables them', async () => {
-    mockFetch.mockResolvedValue(
-      new Response(JSON.stringify({ enabled: true }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-
+  it('shows the admin experience account in development', async () => {
     render(<LoginPage />);
 
-    expect(await screen.findByText('普通测试用户')).toBeInTheDocument();
-    expect(screen.getByText('demo')).toBeInTheDocument();
-    expect(screen.getByText('SkyClassroom123!')).toBeInTheDocument();
-    expect(screen.getByText('管理员')).toBeInTheDocument();
-    expect(mockFetch).toHaveBeenCalledWith('/api/auth/demo-account');
+    expect(await screen.findByText('体验账号')).toBeInTheDocument();
+    expect(screen.getByText('admin')).toBeInTheDocument();
+    expect(screen.getByText('123')).toBeInTheDocument();
   });
 
-  it('keeps the administrator hint but hides demo credentials when disabled', async () => {
-    mockFetch.mockResolvedValue(
-      new Response(JSON.stringify({ enabled: false }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
+  it('does not show the admin account in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
 
     render(<LoginPage />);
 
-    await waitFor(() => expect(mockFetch).toHaveBeenCalledWith('/api/auth/demo-account'));
-    expect(screen.getByText('管理员')).toBeInTheDocument();
-    expect(screen.queryByText('普通测试用户')).not.toBeInTheDocument();
-    expect(screen.queryByText('SkyClassroom123!')).not.toBeInTheDocument();
-  });
-
-  it('fails closed when the availability request errors', async () => {
-    mockFetch.mockRejectedValue(new Error('network unavailable'));
-
-    render(<LoginPage />);
-
-    await waitFor(() => expect(mockFetch).toHaveBeenCalledWith('/api/auth/demo-account'));
-    expect(screen.getByText('管理员')).toBeInTheDocument();
-    expect(screen.queryByText('普通测试用户')).not.toBeInTheDocument();
+    expect(screen.queryByText('体验账号')).not.toBeInTheDocument();
+    expect(screen.queryByText('admin')).not.toBeInTheDocument();
   });
 });

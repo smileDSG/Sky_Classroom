@@ -40,9 +40,7 @@ export async function renderCoverPptx(
     pres.title = title;
     const slide = pres.addSlide();
 
-    const layout = (designDNA.layoutType as LayoutType) || 'hero-left';
-    const renderer = LAYOUT_RENDERERS[layout] || LAYOUT_RENDERERS['hero-left'];
-    renderer(slide, pres, designDNA, title, subtitle);
+    renderDesignCoverSlide(slide, pres, designDNA, title, subtitle);
 
     const safeName = `cover-${String(index).padStart(2, '0')}-${Date.now()}.pptx`;
     const pptxPath = path.join(outputDir, safeName);
@@ -57,6 +55,23 @@ export async function renderCoverPptx(
 }
 
 // ── Tagline helper ──────────────────────────────────────────────────
+
+/**
+ * Render the DesignDNA template cover onto an existing slide of a deck.
+ * Used by the PPTX exporter so the generated deck's cover matches the
+ * template the user previewed in the cover gallery.
+ */
+export function renderDesignCoverSlide(
+  slide: pptxgen.Slide,
+  pres: pptxgen,
+  designDNA: DesignDNA,
+  title: string,
+  subtitle: string,
+): void {
+  const layout = (designDNA.layoutType as LayoutType) || 'hero-left';
+  const renderer = LAYOUT_RENDERERS[layout] || LAYOUT_RENDERERS['hero-left'];
+  renderer(slide, pres, designDNA, title, subtitle);
+}
 
 function tagline(subtitle: string): string {
   const cleaned = subtitle

@@ -1,0 +1,18 @@
+# =============================================================================
+# AutoDL 专用覆盖配置 —— 只改端口，不动原 docker-compose.yml
+#
+# 前提：你的机器上确实能跑 docker（docker info 能打出 Server Version）
+#
+# 用法（二选一）：
+#   docker compose -f docker-compose.yml -f docker-compose.autodl.yml up --build -d
+# 或者设置环境变量后简写：
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.autodl.yml docker compose up --build -d
+#
+# 为什么改端口：AutoDL 公网只映射 6006 / 6008，默认的 3000 外网访问不到。
+# =============================================================================
+
+services:
+  sky_classroom:
+    ports:
+      # 容器内部仍是 3000，宿主映射到 6006
+      - '6006:3000'

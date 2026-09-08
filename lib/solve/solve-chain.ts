@@ -21,7 +21,7 @@ import type { AnalysisResult } from './agents/analyze-types';
 import { verifyAnswer } from './agents/verify-agent';
 import { correctAnswer, type CorrectResult } from './agents/correct-agent';
 import { streamSolve, type StreamEvent } from './streaming-solver';
-import { classifyProblem } from './solver-constants';
+import { classifyProblem, SOLVE_THINKING_CONFIG } from './solver-constants';
 import type { SolverAgentType } from './types';
 import { buildKnowledgePointsPrompt } from './solver-prompts';
 import { findSimilarByKnowledgePoints, hashProblemText } from './question-bank';
@@ -149,7 +149,7 @@ async function generateKnowledgePoints(
       },
       'chain-knowledge-gen',
       { retries: 1 },
-      undefined,
+      SOLVE_THINKING_CONFIG,
       '你是知识点总结专家。请直接输出 JSON，不要输出其他内容。',
     );
 

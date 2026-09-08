@@ -42,6 +42,7 @@ import {
   type LearningInsights,
 } from '@/lib/sky/learning-insights';
 import { cn } from '@/lib/utils';
+import type { DailyReviewPath } from '@/lib/sky/daily-review-path';
 
 type MissionTone = 'amber' | 'violet' | 'emerald' | 'rose';
 
@@ -81,6 +82,7 @@ interface WorkshopSnapshot {
     completed?: number;
     total?: number;
   };
+  dailyReviewPath?: DailyReviewPath;
   learningStats?: {
     masteryPercent?: number;
     todayStudyMinutes?: number;
@@ -528,6 +530,7 @@ function WorkshopPageContent() {
         generatedAt: data.generatedAt ?? Date.now(),
         mistakes: Array.isArray(data.mistakes) ? data.mistakes : [],
         review: data.review ?? null,
+        dailyReviewPath: data.dailyReviewPath ?? undefined,
         learningStats: data.learningStats ?? null,
         memoryProgress: data.memoryProgress ?? null,
         profile: data.profile ?? null,
@@ -768,6 +771,10 @@ function WorkshopPageContent() {
             onPlanChanged={handlePlanChanged}
           />
         </div>
+
+        {snapshot?.dailyReviewPath && (
+          <DailyReviewPathSection path={snapshot.dailyReviewPath} loading={loadingSnapshot} />
+        )}
 
         <section className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/85 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-cyan-100/10 dark:bg-[#07111f]/95 dark:shadow-[0_24px_72px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.05)]">
           <div className="flex flex-col gap-5 p-5">
@@ -1207,6 +1214,158 @@ function FeatureEntryCard({ feature }: { feature: (typeof LEARNING_FEATURES)[num
         进入工具
       </span>
     </Link>
+  );
+}
+
+function DailyReviewPathSection({ path, loading }: { path: DailyReviewPath; loading: boolean }) {
+  const router = useRouter();
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
+
+  if (loading) {
+    return (
+      <section className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/85 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-cyan-100/10 dark:bg-[#07111f]/95 dark:shadow-[0_24px_72px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.05)]">
+        <div className="p-5">
+          <div className="h-5 w-32 animate-pulse rounded bg-slate-200 dark:bg-white/10" />
+          <div className="mt-4 space-y-2">
+            <div className="h-12 animate-pulse rounded-lg bg-slate-100 dark:bg-white/5" />
+            <div className="h-12 animate-pulse rounded-lg bg-slate-100 dark:bg-white/5" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const { today, upcoming, summary } = path;
+  const hasItems = today.items.length > 0;
+  const hasDueItems = summary.totalDue > 0;
+
+  return (
+    <section className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/85 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-cyan-100/10 dark:bg-[#07111f]/95 dark:shadow-[0_24px_72px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.05)]">
+      <div className="p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <CalendarClock className="h-4 w-4 text-amber-500" />
+            每日复习路径
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            {summary.overdueCount > 0 && (
+              <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 font-medium text-rose-600 dark:border-rose-200/25 dark:bg-rose-300/10 dark:text-rose-100">
+                {summary.overdueCount} 道逾期
+              </span>
+            )}
+            {summary.weakPointItems > 0 && (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 font-medium text-amber-700 dark:border-amber-200/25 dark:bg-amber-300/10 dark:text-amber-100">
+                {summary.weakPointItems} 道薄弱点
+              </span>
+            )}
+            <span className="rounded-full border border-slate-200 bg-white/80 px-2 py-0.5 shadow-sm dark:border-white/10 dark:bg-white/[0.05]">
+              约 {summary.estimatedMinutes} 分钟
+            </span>
+          </div>
+        </div>
+
+        {hasDueItems ? (
+          <>
+            <div className="mt-4 space-y-1.5">
+              {today.items.map((item) => (
+                <button
+                  key={item.mistakeId}
+                  type="button"
+                  onClick={() => router.push('/sky/learning/mistake-book')}
+                  className="flex w-full items-center gap-3 rounded-lg border border-slate-200 px-3 py-2.5 text-left text-xs transition-colors hover:border-amber-300/40 hover:bg-amber-50/50 dark:border-cyan-100/10 dark:hover:border-amber-300/20 dark:hover:bg-amber-300/5"
+                >
+                  <span
+                    className={cn(
+                      'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
+                      item.dueDays < 0
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-300/15 dark:text-rose-100'
+                        : item.dueDays === 0
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-300/15 dark:text-amber-100'
+                          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-300/15 dark:text-emerald-100',
+                    )}
+                  >
+                    {item.dueDays < 0 ? '逾期' : item.dueDays === 0 ? '今日' : `D${item.dueDays}`}
+                  </span>
+                  <span className="flex-1 truncate">{item.problem}</span>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {item.weakPoint && (
+                      <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:bg-amber-300/10 dark:text-amber-100">
+                        薄弱
+                      </span>
+                    )}
+                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+                      第{item.reviewRound}轮
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {upcoming.length > 0 && (
+              <details className="mt-4">
+                <summary
+                  className="flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  onClick={(e) => {
+                    const target = e.currentTarget as HTMLElement;
+                    const open = target.closest('details')?.open;
+                    setExpandedDay(open ? null : 'upcoming');
+                  }}
+                >
+                  <span className="inline-block h-px flex-1 bg-slate-200 dark:bg-cyan-100/10" />
+                  未来 {upcoming.length} 天安排
+                  <span className="inline-block h-px flex-1 bg-slate-200 dark:bg-cyan-100/10" />
+                </summary>
+                <div className="mt-3 space-y-2">
+                  {upcoming.map((day) => (
+                    <div
+                      key={day.date}
+                      className="rounded-lg border border-slate-200 px-3 py-2 dark:border-cyan-100/10"
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-slate-700 dark:text-slate-200">
+                          {day.dayLabel}
+                        </span>
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {day.count} 道 · 约 {day.estimatedMinutes} 分钟
+                        </span>
+                      </div>
+                      {day.items.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {day.items.slice(0, 3).map((item) => (
+                            <span
+                              key={item.mistakeId}
+                              className="truncate rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 dark:bg-white/[0.05] dark:text-slate-300"
+                              title={item.problem}
+                            >
+                              {item.problem.slice(0, 20)}...
+                            </span>
+                          ))}
+                          {day.items.length > 3 && (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-400 dark:bg-white/[0.05] dark:text-slate-500">
+                              +{day.items.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </>
+        ) : (
+          <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-300/20 dark:bg-emerald-300/[0.07] dark:text-emerald-200">
+            <div className="flex items-center gap-2 font-medium">
+              <CheckCircle2 className="h-4 w-4" />
+              今日无待复习的错题
+            </div>
+            <p className="mt-1 text-xs text-emerald-600/80 dark:text-emerald-200/70">
+              所有错题已掌握或在复习计划中，可以去做一组新题巩固薄弱点。
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

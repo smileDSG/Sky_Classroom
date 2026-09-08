@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles } from 'lucide-react';
+import { GraduationCap, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { resolveLocale } from '@/lib/templates/types';
@@ -13,6 +13,7 @@ import { useSettingsStore } from '@/lib/store/settings';
 import { useMediaGenerationStore } from '@/lib/store/media-generation';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useDraftCache } from '@/lib/hooks/use-draft-cache';
+import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 import { useImportClassroom } from '@/lib/import/use-import-classroom';
 
 import {
@@ -24,6 +25,8 @@ import {
 } from '@/lib/utils/stage-storage';
 import { storePdfBlob } from '@/lib/utils/image-storage';
 import { createLogger } from '@/lib/logger';
+import { resolveChatModelSelection } from '@/lib/utils/model-config';
+import type { ProviderId } from '@/lib/ai/providers';
 import type { Slide } from '@/lib/types/slides';
 import type { CourseTemplate } from '@/lib/templates/types';
 
@@ -36,12 +39,25 @@ import { SkyBackground } from '@/components/sky/home/sky-background';
 import { MinimalNavbar } from '@/components/sky/home/minimal-navbar';
 import { FloatingUserCard } from '@/components/sky/home/floating-user-card';
 import { HeroInput } from '@/components/sky/home/hero-input';
-import { ClassroomGrid } from '@/components/sky/home/classroom-grid';
 import { GreetingSection } from '@/components/sky/home/greeting-section';
-import { CloudMindHeroButton } from '@/components/sky/home/cloud-mind-hero-button';
-import { FeaturedSection } from '@/components/sky/home/featured-section';
-import { LearningPlanPreview } from '@/components/sky/home/learning-plan-preview';
 import type { SettingsSection } from '@/lib/types/settings';
+
+// 折页下方 / 非首屏区块 — 按需加载，加快首屏解析
+const LearningPlanPreview = dynamic(() =>
+  import('@/components/sky/home/learning-plan-preview').then((m) => ({
+    default: m.LearningPlanPreview,
+  })),
+);
+const SkyWorkspacePortals = dynamic(() =>
+  import('@/components/sky/home/workspace-portals').then((m) => ({
+    default: m.SkyWorkspacePortals,
+  })),
+);
+const FeaturedSection = dynamic(() =>
+  import('@/components/sky/home/featured-section').then((m) => ({
+    default: m.FeaturedSection,
+  })),
+);
 
 // 重型组件 — 懒加载
 const SettingsDialog = dynamic(() =>
@@ -53,8 +69,16 @@ const TemplatePicker = dynamic(() =>
 const UpgradeDialog = dynamic(() =>
   import('@/components/billing/upgrade-dialog').then((m) => ({ default: m.UpgradeDialog })),
 );
-const IntroSequence = dynamic(() =>
-  import('@/components/sky/home/intro-sequence').then((m) => ({ default: m.IntroSequence })),
+const ClassroomGrid = dynamic(
+  () => import('@/components/sky/home/classroom-grid').then((m) => ({ default: m.ClassroomGrid })),
+  {
+    ssr: false,
+    loading: () => <div className="min-h-48 w-full animate-pulse rounded-2xl bg-white/40" />,
+  },
+);
+const IntroSequence = dynamic(
+  () => import('@/components/sky/home/intro-sequence').then((m) => ({ default: m.IntroSequence })),
+  { ssr: false },
 );
 const FloatingParticles = dynamic(() =>
   import('@/components/sky/home/floating-particles').then((m) => ({
@@ -111,9 +135,16 @@ interface StageListItem {
   interactiveMode?: boolean;
 }
 
+import { SkyLandingPage } from '@/components/sky/auth/sky-landing-page';
+
 export default function HomePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+
+  // Show landing page for unauthenticated users
+  if (!isLoading && (!user || user.role === 'guest')) {
+    return <SkyLandingPage />;
+  }
 
   // 状态
   const [requirement, setRequirement] = useState('');
@@ -194,6 +225,11 @@ export default function HomePage() {
 
           let transientPollFailures = 0;
           while (!abortController.signal.aborted) {
+            // Pause network polling while the tab is hidden/backgrounded.
+            if (!isDocumentVisible()) {
+              await waitForClassroomPoll(1000, abortController.signal);
+              continue;
+            }
             let data: ClassroomJobState | null;
             try {
               data = await fetchClassroomJob(jobId, abortController.signal);
@@ -411,7 +447,6 @@ export default function HomePage() {
   const [thumbnails, setThumbnails] = useState<Record<string, Slide>>({});
   const thumbnailsRef = useRef<Record<string, Slide>>({});
 
-  const currentModelId = useSettingsStore((s) => s.modelId);
   const { cachedValue: cachedRequirement, updateCache: updateRequirementCache } =
     useDraftCache<string>({ key: 'requirementDraft' });
 
@@ -511,12 +546,6 @@ export default function HomePage() {
 
   // 生成
   const handleGenerate = async () => {
-    if (!currentModelId) {
-      setSettingsSection('providers');
-      setSettingsOpen(true);
-      return;
-    }
-
     if (!requirement.trim()) {
       setError('请输入课程内容或想学习的知识点');
       return;
@@ -533,10 +562,11 @@ export default function HomePage() {
 
       // Build job body with model config from client settings
       const settings = useSettingsStore.getState();
-      const modelString =
-        settings.providerId && settings.modelId
-          ? `${settings.providerId}:${settings.modelId}`
-          : settings.modelId || undefined;
+      const selection = resolveChatModelSelection(
+        (settings.providerId || 'openai') as ProviderId,
+        settings.modelId || 'gpt-5.5',
+      );
+      const modelString = `${selection.providerId}:${selection.modelId}`;
       const body: Record<string, unknown> = {
         requirement,
         enableWebSearch: webSearch,
@@ -679,24 +709,28 @@ export default function HomePage() {
       />
 
       {/* 对话框 */}
-      <SettingsDialog
-        open={settingsOpen}
-        onOpenChange={(open) => {
-          setSettingsOpen(open);
-          if (!open) setSettingsSection(undefined);
-        }}
-        initialSection={settingsSection}
-      />
+      {settingsOpen && (
+        <SettingsDialog
+          open
+          onOpenChange={(open) => {
+            setSettingsOpen(open);
+            if (!open) setSettingsSection(undefined);
+          }}
+          initialSection={settingsSection}
+        />
+      )}
 
-      <TemplatePicker
-        open={templatePickerOpen}
-        onClose={() => setTemplatePickerOpen(false)}
-        onSelect={handleTemplateSelect}
-      />
+      {templatePickerOpen && (
+        <TemplatePicker
+          open
+          onClose={() => setTemplatePickerOpen(false)}
+          onSelect={handleTemplateSelect}
+        />
+      )}
 
-      {user && (
+      {user && upgradeDialogOpen && (
         <UpgradeDialog
-          open={upgradeDialogOpen}
+          open
           onClose={() => setUpgradeDialogOpen(false)}
           currentPlan={user.planType}
         />
@@ -708,77 +742,66 @@ export default function HomePage() {
           {/* 问候语 */}
           <GreetingSection />
 
-          {/* 天空课堂入口 */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="relative flex flex-col items-center py-3"
-          >
-            {/* 背景光晕 */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-72 h-24 rounded-full bg-gradient-to-r from-sky-400/8 via-blue-500/12 to-indigo-400/8 blur-3xl" />
+          <div className="flex items-center gap-2 px-1 py-1 sm:gap-3">
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+              <motion.span
+                animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 3, repeat: Infinity }}
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400"
+              />
+              <span
+                className="h-px w-8 bg-gradient-to-r from-transparent to-sky-300 dark:to-sky-600 sm:w-10"
+                aria-hidden="true"
+              />
+              <svg
+                className="h-5 w-5 shrink-0 text-sky-400/70"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
             </div>
-
-            <div className="relative flex items-center gap-4">
-              {/* 左侧装饰 */}
-              <div className="flex items-center gap-2">
-                <motion.div
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  className="w-1.5 h-1.5 rounded-full bg-sky-400"
-                />
-                <div className="w-10 h-px bg-gradient-to-r from-transparent to-sky-300 dark:to-sky-600" />
-                <svg
-                  className="w-5 h-5 text-sky-400/70"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                  <path d="M2 12l10 5 10-5" />
-                </svg>
-              </div>
-
-              {/* 标题主体 */}
-              <div className="flex flex-col items-center">
-                <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 dark:from-sky-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent tracking-wider">
-                  天空课堂
+            <div className="flex shrink-0 items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-400/15 dark:text-sky-200">
+                <GraduationCap className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 bg-clip-text text-center text-xl font-bold tracking-tight text-transparent dark:from-sky-300 dark:via-blue-300 dark:to-indigo-300">
+                  智眸无界
                 </h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-6 h-px bg-gradient-to-r from-transparent to-sky-300 dark:to-sky-700" />
-                  <Sparkles className="w-3 h-3 text-sky-400/60" />
-                  <div className="w-6 h-px bg-gradient-to-l from-transparent to-sky-300 dark:to-sky-700" />
-                </div>
-              </div>
-
-              {/* 右侧装饰 */}
-              <div className="flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-indigo-400/70"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
-                  <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
-                </svg>
-                <div className="w-10 h-px bg-gradient-to-l from-transparent to-indigo-300 dark:to-indigo-600" />
-                <motion.div
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
-                  transition={{ duration: 3, repeat: Infinity, delay: 1.5 }}
-                  className="w-1.5 h-1.5 rounded-full bg-indigo-400"
-                />
+                <p className="mt-0.5 text-center text-[11px] text-slate-500 dark:text-slate-400">
+                  输入知识点，生成专属互动课堂
+                </p>
               </div>
             </div>
-
-            <p className="relative text-xs text-slate-400 dark:text-slate-500 mt-2 tracking-widest">
-              输入想学的知识点，生成一堂分步骤讲解、例题和互动练习的互动课堂
-            </p>
-          </motion.div>
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <svg
+                className="h-5 w-5 shrink-0 text-indigo-400/70"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
+                <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
+              </svg>
+              <span
+                className="h-px w-8 bg-gradient-to-l from-transparent to-indigo-300 dark:to-indigo-600 sm:w-10"
+                aria-hidden="true"
+              />
+              <motion.span
+                animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 3, repeat: Infinity, delay: 1.5 }}
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400"
+              />
+            </div>
+          </div>
 
           {/* 输入区域 */}
           <div className="w-full">
@@ -804,12 +827,6 @@ export default function HomePage() {
               onStudentsChange={setSelectedStudentIds}
             />
           </div>
-
-          {/* 个性化计划预览：不抢占知识点讲解主入口，只承接已有学习记录。 */}
-          <LearningPlanPreview />
-
-          {/* 云端智囊 */}
-          <CloudMindHeroButton />
 
           {/* ── Classroom generation progress (multi-job) ── */}
           <AnimatePresence>
@@ -902,6 +919,12 @@ export default function HomePage() {
             ))}
           </AnimatePresence>
 
+          {/* 个性化计划预览：不抢占知识点讲解主入口，只承接已有学习记录。 */}
+          <LearningPlanPreview />
+
+          {/* 三大工作区入口 */}
+          <SkyWorkspacePortals />
+
           {/* 精选推荐 + 趣味内容 */}
           <FeaturedSection />
 
@@ -970,13 +993,13 @@ export default function HomePage() {
           className="space-y-2"
         >
           <p className="text-sm font-medium bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 bg-clip-text text-transparent">
-            天空课堂
+            智眸无界
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            AI 驱动的智能教学平台 · 让学习更有趣
+            AI 驱动的互动课堂 · 让学习更有趣
           </p>
           <p className="text-[11px] text-slate-300 dark:text-slate-600">
-            &copy; {new Date().getFullYear()} Sky Classroom. All rights reserved.
+            &copy; 2026 Sky Classroom. All rights reserved.
           </p>
           <button
             onClick={() => {

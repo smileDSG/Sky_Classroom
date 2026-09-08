@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useTheme } from "@/lib/hooks/use-theme";
 import { motion } from "motion/react";
 import { HeaderControls } from "@/components/sky/home/header-controls";
 import { FloatingUserCard } from "@/components/sky/home/floating-user-card";
-import { SettingsDialog } from "@/components/settings";
-import { UpgradeDialog } from "@/components/billing/upgrade-dialog";
 import { SkySidebar } from "./sidebar-nav";
 import { BackgroundTasksIndicator } from "./background-tasks-indicator";
 import { useOptionalAuth } from "@/components/auth/auth-provider";
@@ -16,6 +15,16 @@ import { usePathname } from "next/navigation";
 import { CheckCircle2, Sparkles } from "lucide-react";
 import { MobileSkyShell } from "@/components/mobile/shell/mobile-sky-shell";
 import { SkySectionNav, type SkySection } from "./sky-section-nav";
+import { fetchLearningStats } from "@/lib/client/learning-stats";
+
+const SettingsDialog = dynamic(
+  () => import("@/components/settings").then((module) => module.SettingsDialog),
+  { ssr: false },
+);
+const UpgradeDialog = dynamic(
+  () => import("@/components/billing/upgrade-dialog").then((module) => module.UpgradeDialog),
+  { ssr: false },
+);
 
 interface SkyAppShellProps {
   children: React.ReactNode;
@@ -102,13 +111,10 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
   useEffect(() => {
     if (!user) return;
 
-    fetch("/api/sky/learning-stats", { credentials: "include" })
-      .then((r) => r.json())
+    fetchLearningStats()
       .then((data) => {
-        if (data?.success) {
-          setCheckedIn(data.checkedInToday || false);
-          setStreakDays(data.streakDays || 0);
-        }
+        setCheckedIn(data.checkedInToday || false);
+        setStreakDays(data.streakDays || 0);
       })
       .catch(() => {});
   }, [user]);
@@ -232,13 +238,15 @@ function DesktopSkyShell({ children, fullBleed = false }: SkyAppShellProps) {
       </div>
 
       <BackgroundTasksIndicator />
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <UpgradeDialog
-        open={upgradeOpen}
-        onClose={() => setUpgradeOpen(false)}
-        currentPlan={user?.planType ?? "free"}
-        onPlanChanged={refresh}
-      />
+      {settingsOpen && <SettingsDialog open onOpenChange={setSettingsOpen} />}
+      {upgradeOpen && (
+        <UpgradeDialog
+          open
+          onClose={() => setUpgradeOpen(false)}
+          currentPlan={user?.planType ?? "free"}
+          onPlanChanged={refresh}
+        />
+      )}
     </div>
   );
 }

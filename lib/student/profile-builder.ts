@@ -38,6 +38,7 @@ const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 const CACHE_DIR = path.join(process.cwd(), 'data', 'student-profiles');
 const ADMIN_DEMO_USER_ID = 'admin-default';
 const ADMIN_DEMO_SOURCE_ID = 'default-user';
+const inFlightProfileBuilds = new Map<string, Promise<StudentProfile>>();
 
 // ── Error type mapping ────────────────────────────────────────────
 
@@ -158,7 +159,7 @@ export async function invalidateProfileCache(userId: string) {
  * Build a complete StudentProfile for the given user.
  * Uses the unified storage (MySQL/Supabase/memory) on the server side.
  */
-export async function buildStudentProfile(userId: string): Promise<StudentProfile> {
+async function buildStudentProfileInternal(userId: string): Promise<StudentProfile> {
   const storage = await getServerStorage();
   const demoSeed = await ensureDemoLearningData(userId, storage);
   if (demoSeed.changed) {
@@ -382,4 +383,20 @@ export async function buildStudentProfile(userId: string): Promise<StudentProfil
 
   await setCached(userId, profile);
   return profile;
+}
+
+export async function buildStudentProfile(userId: string): Promise<StudentProfile> {
+  const pending = inFlightProfileBuilds.get(userId);
+  if (pending) return pending;
+
+  const build = buildStudentProfileInternal(userId);
+  inFlightProfileBuilds.set(userId, build);
+
+  try {
+    return await build;
+  } finally {
+    if (inFlightProfileBuilds.get(userId) === build) {
+      inFlightProfileBuilds.delete(userId);
+    }
+  }
 }

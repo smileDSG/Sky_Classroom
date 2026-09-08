@@ -26,6 +26,8 @@ assets
 *.md
 *.pdf
 *.pem
+*.zip
+*.docx
 .DS_Store
 .vercel
 coverage

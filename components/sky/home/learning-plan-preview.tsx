@@ -174,34 +174,42 @@ export function LearningPlanPreview() {
 
   useEffect(() => {
     if (!user) return;
-    let cancelled = false;
-
-    Promise.all([
-      fetch('/api/sky/learning-plan?view=today', { credentials: 'include' }),
-      fetch('/api/sky/cloud-mind/personalization-context', { credentials: 'include' }),
-    ])
-      .then(async ([planResponse, contextResponse]) => {
-        const [planJson, contextJson] = await Promise.all([
-          planResponse.json().catch(() => null),
-          contextResponse.json().catch(() => null),
-        ]);
-        if (cancelled) return;
-        if (planResponse.ok && planJson?.success && planJson.data) {
-          setData(planJson.data as LearningPlanPanelData);
-        }
-        if (contextResponse.ok && contextJson?.success && contextJson.data) {
-          setContext(contextJson.data as PersonalizationContext);
-        }
-      })
-      .catch(() => {
-        /* The classroom remains usable when personalization is unavailable. */
-      })
-      .finally(() => {
-        if (!cancelled) setLoadedForUserId(user.id);
-      });
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      Promise.all([
+        fetch('/api/sky/learning-plan?view=today', {
+          credentials: 'include',
+          signal: controller.signal,
+        }),
+        fetch('/api/sky/cloud-mind/personalization-context', {
+          credentials: 'include',
+          signal: controller.signal,
+        }),
+      ])
+        .then(async ([planResponse, contextResponse]) => {
+          const [planJson, contextJson] = await Promise.all([
+            planResponse.json().catch(() => null),
+            contextResponse.json().catch(() => null),
+          ]);
+          if (controller.signal.aborted) return;
+          if (planResponse.ok && planJson?.success && planJson.data) {
+            setData(planJson.data as LearningPlanPanelData);
+          }
+          if (contextResponse.ok && contextJson?.success && contextJson.data) {
+            setContext(contextJson.data as PersonalizationContext);
+          }
+        })
+        .catch(() => {
+          /* The classroom remains usable when personalization is unavailable. */
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoadedForUserId(user.id);
+        });
+    }, 800);
 
     return () => {
-      cancelled = true;
+      window.clearTimeout(timer);
+      controller.abort();
     };
   }, [user]);
 

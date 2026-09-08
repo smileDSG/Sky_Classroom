@@ -2,7 +2,7 @@
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
-import { resolveSolverModel } from '../solver-constants';
+import { resolveSolverModel, SOLVE_THINKING_CONFIG } from '../solver-constants';
 import { buildCorrectPrompt } from './correct-prompts';
 import { cleanLatexContent } from '../streaming-solver';
 import { createLogger } from '@/lib/logger';
@@ -41,7 +41,7 @@ export async function correctAnswer(
       },
       'correct-agent',
       { retries: 0 },
-      undefined,
+      SOLVE_THINKING_CONFIG,
       '你是解题修正专家。根据校验反馈重新解答题目。输出纯JSON。',
     );
 

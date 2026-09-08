@@ -184,19 +184,37 @@ export class StreamBuffer {
   // Config
   private readonly tickMs: number;
   private readonly charsPerTick: number;
+  private readonly basePostTextMs: number;
   private readonly postTextDelayTicks: number;
   private readonly actionDelayTicks: number;
+  /** Comfortable reading rate (chars/sec) used to size per-segment dwell. */
+  private readonly charsPerSecond: number;
   private readonly cb: StreamBufferCallbacks;
   private partCounter = 0;
   private _drainResolve: (() => void) | null = null;
   private _drainReject: ((err: Error) => void) | null = null;
+  /** True after the terminal done item has been processed. */
+  private _drained = false;
 
   constructor(callbacks: StreamBufferCallbacks, options?: StreamBufferOptions) {
     this.cb = callbacks;
     this.tickMs = options?.tickMs ?? 30;
     this.charsPerTick = options?.charsPerTick ?? 1;
-    this.postTextDelayTicks = Math.ceil((options?.postTextDelayMs ?? 0) / this.tickMs);
+    this.basePostTextMs = options?.postTextDelayMs ?? 0;
+    this.postTextDelayTicks = Math.ceil(this.basePostTextMs / this.tickMs);
     this.actionDelayTicks = Math.ceil((options?.actionDelayMs ?? 0) / this.tickMs);
+    this.charsPerSecond = 8;
+  }
+
+  /**
+   * Per-segment dwell, sized to the utterance length so each speaker's
+   * message stays on the bubble long enough to be read before the next
+   * speaker takes over. This decouples pacing from browser-TTS reliability
+   * (a silent/fast browser voice otherwise lets all speakers rush together).
+   */
+  private computeSegmentDwellTicks(charCount: number): number {
+    const readMs = (charCount / this.charsPerSecond) * 1000;
+    return Math.ceil((this.basePostTextMs + readMs) / this.tickMs);
   }
 
   // ─── Push Methods ────────────────────────────────────────────────
@@ -311,6 +329,9 @@ export class StreamBuffer {
     if (this._disposed) {
       return Promise.reject(new Error('Buffer already disposed'));
     }
+    // SSE can close after the presentation loop has already consumed `done`.
+    // Resolve immediately instead of waiting on a resolver that was registered too late.
+    if (this._drained) return Promise.resolve();
     return new Promise<void>((resolve, reject) => {
       this._drainResolve = resolve;
       this._drainReject = reject;
@@ -366,6 +387,7 @@ export class StreamBuffer {
           this.cb.onSpeechProgress(null);
           this.cb.onThinking(null);
           this.cb.onDone(item);
+          this._drained = true;
           // Resolve drain promise
           this._drainResolve?.();
           this._drainResolve = null;
@@ -504,10 +526,10 @@ export class StreamBuffer {
           this.readIndex++;
           this.charCursor = 0;
 
-          // Fixed pause after text finishes — gives the reader a breathing gap
-          // before the next action or agent turn fires.
+          // Fixed pause after text finishes — sized to the utterance length so
+          // each speaker's message is fully read before the next turn begins.
           if (this.postTextDelayTicks > 0) {
-            this._dwellTicksRemaining = this.postTextDelayTicks;
+            this._dwellTicksRemaining = this.computeSegmentDwellTicks(item.text.length);
             // If TTS hold callback exists, mark that we need to check it after delay
             if (this.cb.shouldHoldAfterReveal) {
               this._holdingForTTS = true;
@@ -587,6 +609,7 @@ export class StreamBuffer {
         this.cb.onSpeechProgress(null);
         this.cb.onThinking(null);
         this.cb.onDone(item);
+        this._drained = true;
         this.readIndex++;
         this.charCursor = 0;
         // Stop the timer — nothing more to process
@@ -656,6 +679,7 @@ export class StreamBuffer {
           this.cb.onSpeechProgress(null);
           this.cb.onThinking(null);
           this.cb.onDone(next);
+          this._drained = true;
           this.readIndex++;
           this.charCursor = 0;
           if (this.timer) {

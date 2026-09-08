@@ -152,5 +152,6 @@ export function buildOutlineOnlyResultFromTeachingJob(
     enableImageGeneration: config.enableImageGeneration,
     enableVideoGeneration: config.enableVideoGeneration,
     enableTTS: config.enableTTS,
+    skipSlideQA: false,
   };
 }

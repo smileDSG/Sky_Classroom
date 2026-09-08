@@ -8,6 +8,7 @@ import { ElementOutline } from '../ElementOutline';
 export interface BaseTextElementProps {
   elementInfo: PPTTextElement;
   target?: string;
+  playback?: boolean;
 }
 
 const SLIDE_FONT_STACK =
@@ -35,7 +36,7 @@ function stripHtml(html: string): string {
  * Base text element component (read-only)
  * Renders static text content with styling
  */
-export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
+export function BaseTextElement({ elementInfo, target, playback = false }: BaseTextElementProps) {
   const { shadowStyle } = useElementShadow(elementInfo.shadow);
   const textRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -45,7 +46,7 @@ export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
     [elementInfo.content],
   );
   const fontFamily = elementInfo.defaultFontName?.trim() || SLIDE_FONT_STACK;
-  const minScale = elementInfo.textType === 'title' ? 0.8 : 0.62;
+  const minScale = elementInfo.textType === 'title' ? 0.8 : playback ? 0.82 : 0.62;
   const hasLongText = stripHtml(displayContent).length > 90;
 
   useLayoutEffect(() => {
@@ -128,16 +129,19 @@ export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
             className={`text ProseMirror-static relative ${target === 'thumbnail' ? 'pointer-events-none' : ''}`}
             style={{
               transform: `scale(${scale})`,
+              // Scale from the center so a shrunken block stays anchored/centered instead of
+              // drifting (previously top-left origin + width compensation conflicted with
+              // the flex centering of the parent, causing text misalignment).
               transformOrigin: elementInfo.vertical
                 ? 'top right'
                 : hasLongText
-                  ? 'top left'
+                  ? 'center top'
                   : 'center center',
-              width: scale < 1 ? `${100 / scale}%` : '100%',
+              width: '100%',
               fontFamily: 'inherit',
               overflowWrap: 'anywhere',
               wordBreak: 'normal',
-              maxHeight: scale < 1 ? `${100 / scale}%` : '100%',
+              maxHeight: '100%',
             }}
             dangerouslySetInnerHTML={{ __html: displayContent }}
           />

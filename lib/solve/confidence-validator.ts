@@ -69,8 +69,13 @@ export function validateConfidence(solution: SolutionLike, _agentType: SolverAge
 
   // ── Solution substance: substantial but not excessive ──
   const solLen = solution.solution.trim().length;
+  const hasStepContent = solution.steps.some((s) => s.content.trim().length > 0);
   if (solLen > 30 && solLen < 5000) {
     score += 0.1;
+  } else if (solLen <= 30 && !hasStepContent) {
+    // Gibberish / truncated answers with no step content carry almost no
+    // information; reject them so the hybrid strategy tries another agent.
+    score -= 0.25;
   }
 
   // ── Uncertainty phrase penalty ──

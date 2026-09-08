@@ -38,6 +38,7 @@ import { AlertTriangle, LayoutList, MessageSquare } from 'lucide-react';
 import { PptViewer } from '@/components/classroom/ppt-viewer';
 import { VisuallyHidden } from 'radix-ui';
 import { recordLearnerBehaviorEvent } from '@/lib/adaptive-learning/profile/client';
+import { revealQuestionPanel } from '@/lib/chat/question-panel';
 
 /**
  * Stage Component
@@ -210,7 +211,11 @@ export function Stage({
       setAudioIndicatorState(state);
       if (state === 'playing' && text) {
         setAudioSpeech(text);
-        setSpeakingAgentId(agentId);
+        // Keep speakingAgentId driven by the StreamBuffer (onLiveSpeech) so the
+        // bubble identity changes in step with the buffer-paced bubble text.
+        // TTS audio for a LATER segment can start before the buffer advances to
+        // it; overriding speakingAgentId here would show the next speaker's
+        // identity while the current speaker's bubble is still on screen.
       } else if (state === 'idle') {
         setAudioSpeech(null);
       }
@@ -385,12 +390,11 @@ export function Stage({
     setIsAskDialogOpen(false);
     setAskInputValue('');
 
+    // Reveal Q&A immediately so the user sees the conversation while the request is in flight.
+    revealQuestionPanel(() => chatAreaRef.current?.switchToTab('chat'), setChatAreaCollapsed);
+
     // Send message via ChatArea
     await chatAreaRef.current?.sendMessage(message);
-
-    // Switch to chat tab and expand
-    chatAreaRef.current?.switchToTab('chat');
-    setChatAreaCollapsed(false);
 
     // Set streaming state
     setChatIsStreaming(true);
@@ -1374,7 +1378,7 @@ export function Stage({
           {/* Bottom: Playback Controls */}
           {mode === 'playback' && !isPresenting && (
             <BottomToolbar
-              className="absolute bottom-3 left-0 right-0 z-40"
+              className="absolute bottom-0 left-0 right-0 z-40"
               currentSceneIndex={currentSceneIndex}
               scenesCount={totalScenesCount}
               engineState={canvasEngineState}

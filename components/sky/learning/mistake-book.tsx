@@ -301,6 +301,13 @@ export function MistakeBook() {
     setSessionItems(null);
   }, []);
 
+  // Auto-scroll to the review session when it's triggered
+  useEffect(() => {
+    if (sessionItems) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [sessionItems]);
+
   // ── Empty state ─────────────────────────────────────────────────────
 
   if (mistakes.length === 0) {
@@ -323,7 +330,9 @@ export function MistakeBook() {
         <div className="flex items-start gap-2.5">
           <Brain className="mt-0.5 h-4 w-4 shrink-0 text-sky-700 dark:text-sky-300" />
           <div>
-            <p className="text-xs font-bold text-sky-800 dark:text-sky-200">正在按你的情况筛选错题</p>
+            <p className="text-xs font-bold text-sky-800 dark:text-sky-200">
+              正在按你的情况筛选错题
+            </p>
             <p className="mt-0.5 text-xs leading-5 text-slate-600 dark:text-slate-300">
               {targetTopic
                 ? `当前薄弱点：${targetTopic}。命中它的错题会标为高优先级。`

@@ -8,6 +8,7 @@ import { createLogger } from '@/lib/logger';
 import { createSolveGraph, buildSolveInitialState } from '@/lib/solve/solve-graph';
 import { saveToQuestionBank, isProblemInBank } from '@/lib/solve/question-bank';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
+import { validateProblemSpec } from '@/lib/recognition/problem-spec-parser';
 
 const log = createLogger('API:SkySolveExplain');
 
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
     if ('error' in quota) return quota.error;
 
     const body = await req.json();
-    const { problem, problemImage, problemSpec, userAnswer, agentId, useHighPrecision, outputFormat } = body;
+    const { problem, problemImage, problemSpec: rawProblemSpec, userAnswer, agentId, useHighPrecision, outputFormat } = body;
 
     if (!problem) {
       return apiError(
@@ -25,6 +26,15 @@ export async function POST(req: Request) {
         400,
         'Missing required field: problem',
       );
+    }
+
+    let problemSpec = null;
+    if (rawProblemSpec != null) {
+      try {
+        problemSpec = validateProblemSpec(rawProblemSpec);
+      } catch (err) {
+        return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid problemSpec', err instanceof Error ? err.message : String(err));
+      }
     }
 
     log.info(`[Explain] Solving: ${problem.slice(0, 60)}...`);

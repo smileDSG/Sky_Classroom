@@ -62,6 +62,10 @@ export const SolveGraphAnnotation = Annotation.Root({
     value: (_prev, next) => next,
     default: () => null,
   }),
+  parsedAnswer: Annotation<string | null>({
+    value: (_prev, next) => next,
+    default: () => null,
+  }),
   parsedSteps: Annotation<{ label: string; content: string; keyPoints?: string[] }[]>({
     value: (_prev, next) => next,
     default: () => [],

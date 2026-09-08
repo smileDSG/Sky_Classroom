@@ -11,6 +11,9 @@ public/temp/
 .env
 .env.local
 server-providers.yml
+# AutoDL 部署：预填了真实密钥的文件，绝不能提交
+scripts/autodl/*.prefilled
+scripts/autodl/.env.*
 .cache/
 tsconfig.tsbuildinfo
 .kimi/

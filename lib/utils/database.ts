@@ -141,12 +141,13 @@ export interface MediaFileRecord {
   id: string; // Compound key: `${stageId}:${elementId}`
   stageId: string; // FK → stages.id
   type: 'image' | 'video';
-  blob: Blob; // Media binary
+  blob?: Blob; // Media binary; absent for pending/failed placeholder records (Chrome rejects empty Blobs in IDB)
   mimeType: string; // image/png, video/mp4
   size: number;
   poster?: Blob; // Video thumbnail blob
   prompt: string; // Original prompt (for retry)
   params: string; // JSON-serialized generation params
+  status?: 'pending' | 'done' | 'failed'; // Explicit status; undefined = legacy record (derive from error/blob)
   error?: string; // If set, this is a failed task (blob is empty placeholder)
   errorCode?: string; // Structured error code (e.g. 'CONTENT_SENSITIVE')
   ossKey?: string; // Full CDN URL for this media blob

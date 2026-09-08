@@ -11,12 +11,10 @@ import { Toaster } from '@/components/ui/sonner';
 import { ServerProvidersInit } from '@/components/server-providers-init';
 import { AccessCodeGuard } from '@/components/access-code-guard';
 import { SkyClassroomEntry } from '@/components/sky-classroom-entry';
-import { KagamiPanelGuard } from '@/components/ai/kagami-panel-guard';
 import { AuthProvider } from '@/components/auth/auth-provider';
-import { ClassroomJobPoller } from '@/components/classroom-job-poller';
-import { SlidesJobPoller } from '@/components/slides-job-poller';
 import { ServiceWorkerReset } from '@/components/service-worker-reset';
 import { OnboardingGate } from '@/components/auth/onboarding-gate';
+import { DeferredGlobalServices } from '@/components/deferred-global-services';
 
 const inter = localFont({
   src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
@@ -32,8 +30,8 @@ const inter = localFont({
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: '天空课堂',
-  description: '天空课堂 — AI 驱动的互动课堂。上传 PDF，即刻生成沉浸式多-agent学习体验。',
+  title: '智眸无界｜天空课堂',
+  description: '智眸无界的天空课堂 — AI 驱动的互动课堂。上传 PDF，即刻生成沉浸式多智能体学习体验。',
   icons: {
     icon: '/logo-icon.svg',
   },
@@ -56,9 +54,7 @@ export default function RootLayout({
             <ServerProvidersInit />
             <ServiceWorkerReset />
             <SkyClassroomEntry />
-            <KagamiPanelGuard />
-            <ClassroomJobPoller />
-            <SlidesJobPoller />
+            <DeferredGlobalServices />
             <AccessCodeGuard>{children}</AccessCodeGuard>
             <Toaster position="top-center" />
           </AuthProvider>

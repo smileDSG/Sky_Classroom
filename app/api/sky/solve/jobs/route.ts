@@ -13,6 +13,7 @@ import { verifyAccessToken } from '@/lib/server/auth';
 import { resolveLearnerDecisionForUser } from '@/lib/server/teaching-personalization';
 import type { LearnerDecision } from '@/lib/adaptive-learning/decision/learner-decision';
 import { requireAuth } from '@/lib/server/auth/helpers';
+import { validateProblemSpec } from '@/lib/recognition/problem-spec-parser';
 
 const log = createLogger('API:SolveJobs');
 
@@ -49,10 +50,19 @@ export async function POST(req: Request) {
     if ('error' in auth) return auth.error;
 
     const body = await req.json();
-    const { problem, problemImage, problemSpec, userAnswer } = body;
+    const { problem, problemImage, problemSpec: rawProblemSpec, userAnswer } = body;
 
     if (!problem) {
       return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, '缺少必填字段: problem');
+    }
+
+    let problemSpec = null;
+    if (rawProblemSpec != null) {
+      try {
+        problemSpec = validateProblemSpec(rawProblemSpec);
+      } catch (err) {
+        return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid problemSpec', err instanceof Error ? err.message : String(err));
+      }
     }
 
     const jobId = nanoid(10);

@@ -5,10 +5,12 @@ const llmState = vi.hoisted(() => ({
   responseText: '',
   responses: [] as string[],
   callCount: 0,
+  lastMessages: undefined as unknown,
 }));
 
 vi.mock('@/lib/ai/llm', () => ({
-  callLLM: vi.fn().mockImplementation(async () => {
+  callLLM: vi.fn().mockImplementation(async (params: { messages?: unknown }) => {
+    llmState.lastMessages = params.messages;
     if (llmState.shouldFail) throw new Error('LLM挂了');
     const sequencedResponse = llmState.responses[llmState.callCount++];
     return { text: sequencedResponse ?? (llmState.responseText || '解方程 $x^2+2x+1=0$') };
@@ -40,9 +42,11 @@ describe('Recognize API 端点', () => {
     llmState.responseText = '';
     llmState.responses = [];
     llmState.callCount = 0;
+    llmState.lastMessages = undefined;
     vi.stubEnv('GLM_API_KEY', 'test-glm-key');
     vi.stubEnv('QWEN_API_KEY', '');
     vi.stubEnv('ANTHROPIC_API_KEY', '');
+    vi.stubEnv('OPENAI_API_KEY', '');
   });
 
   afterEach(() => {
@@ -270,5 +274,87 @@ describe('Recognize API 端点', () => {
     const body = await res.json();
     expect(res.status).toBe(500);
     expect(body.error).toContain('没有配置');
+  });
+
+  test('仅配置 OpenAI 时使用 GPT-4o mini 视觉回退', async () => {
+    vi.stubEnv('GLM_API_KEY', '');
+    vi.stubEnv('QWEN_API_KEY', '');
+    vi.stubEnv('ANTHROPIC_API_KEY', '');
+    vi.stubEnv('OPENAI_API_KEY', 'test-openai-key');
+    llmState.responseText = '识别到一道题';
+
+    const res = await POST(makeReq(makeFile('image/png', 1024)));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.usedModel).toBe('openai/gpt-4o-mini');
+    expect(body.text).toBe('识别到一道题');
+  });
+
+  test('同时配置千问和 GLM 时优先使用千问视觉模型', async () => {
+    vi.stubEnv('QWEN_API_KEY', 'test-qwen-key');
+    vi.stubEnv('GLM_API_KEY', 'test-glm-key');
+    llmState.responseText = '千问识别结果';
+
+    const res = await POST(makeReq(makeFile('image/png', 1024)));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.usedModel).toBe('qwen/qwen3-vl-plus');
+    expect(body.text).toBe('千问识别结果');
+  });
+
+  test('发送给千问的图片使用 data URL 字段', async () => {
+    vi.stubEnv('QWEN_API_KEY', 'test-qwen-key');
+    llmState.responseText = '千问识别结果';
+
+    const res = await POST(makeReq(makeFile('image/png', 1024)));
+    expect(res.status).toBe(200);
+    const imagePart = (
+      llmState.lastMessages as Array<{ content: Array<Record<string, unknown>> }>
+    )[0].content.find((part) => part.type === 'image');
+
+    expect(imagePart).toMatchObject({ type: 'image' });
+    expect(imagePart?.image).toBeTypeOf('string');
+    expect(imagePart?.image).toMatch(/^data:image\/png;base64,/);
+  });
+
+  test('千问返回 text JSON 包装时按普通 OCR 文本处理', async () => {
+    vi.stubEnv('QWEN_API_KEY', 'test-qwen-key');
+    llmState.responseText = JSON.stringify({ text: '题目内容 $x+1=2$' });
+
+    const res = await POST(makeReq(makeFile('image/png', 1024)));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.usedModel).toBe('qwen/qwen3-vl-plus');
+    expect(body.text).toBe('题目内容');
+    expect(body.latex).toBe('x+1=2');
+  });
+
+  test('千问返回字段不完整的 ProblemSpec 时仍使用可识别题干', async () => {
+    vi.stubEnv('QWEN_API_KEY', 'test-qwen-key');
+    llmState.responseText = JSON.stringify({
+      problems: [
+        {
+          id: '1',
+          stem: '求方程 $x+1=2$ 的解。',
+          options: [{ content: '无效选项' }, { key: 'A', content: '1' }],
+        },
+      ],
+    });
+
+    const res = await POST(makeReq(makeFile('image/png', 1024)));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.usedModel).toBe('qwen/qwen3-vl-plus');
+    expect(body.text).toContain('求方程');
+    expect(body.structuredProblems[0]).toMatchObject({
+      stage: 'unknown',
+      subject: 'unknown',
+      questionType: 'unknown',
+      options: [{ key: 'A', content: '1' }],
+    });
   });
 });

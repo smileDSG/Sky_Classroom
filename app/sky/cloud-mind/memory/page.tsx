@@ -1401,14 +1401,21 @@ function CloudMindMemoryContent() {
               {/* Study tips */}
               {deck.studyTips && (
                 <div
-                className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-400/20 dark:bg-amber-400/[0.06]"
-                style={{
-                  color: 'var(--memory-text)',
+                  className="rounded-lg border p-4"
+                  style={{
+                    backgroundColor: 'var(--memory-tip-surface)',
+                    borderColor: 'var(--memory-tip-border)',
+                    color: 'var(--memory-text)',
                   }}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Lightbulb className="h-4 w-4 text-amber-400" />
-                    <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">学习建议</span>
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: 'var(--memory-tip-title)' }}
+                    >
+                      学习建议
+                    </span>
                   </div>
                   <p
                     className="text-sm whitespace-pre-wrap"
@@ -1417,7 +1424,7 @@ function CloudMindMemoryContent() {
                     <InlineMath text={deck.studyTips} />
                   </p>
                   <div className="mt-3 flex items-center gap-2">
-                    <Layers className="h-3.5 w-3.5 text-amber-400/60" />
+                    <Layers className="h-3.5 w-3.5 text-amber-400/70" />
                     <span className="text-xs" style={{ color: 'var(--memory-muted)' }}>
                       推荐复习间隔：{deck.reviewIntervals?.join('、')} 天后
                     </span>
@@ -1621,7 +1628,11 @@ function MemoryCardFeedbackPanel({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-400/20 dark:bg-sky-400/[0.06]"
+      className="rounded-lg border p-4"
+      style={{
+        backgroundColor: 'var(--memory-surface)',
+        borderColor: 'var(--memory-border-strong)',
+      }}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-2">
@@ -1648,14 +1659,26 @@ function MemoryCardFeedbackPanel({
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <div className="rounded-md border border-sky-100 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
+        <div
+          className="rounded-md border px-3 py-3"
+          style={{
+            backgroundColor: 'var(--memory-surface-elevated)',
+            borderColor: 'var(--memory-border)',
+          }}
+        >
           <div className="text-[10px] text-[var(--memory-muted)]">记忆熟练度</div>
           <div className="mt-1 text-sm font-semibold text-[var(--memory-text)]">
             {feedback.masteryBefore}% <span className="text-sky-600 dark:text-sky-300">→</span>{' '}
             {feedback.masteryAfter}%
           </div>
         </div>
-        <div className="rounded-md border border-sky-100 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
+        <div
+          className="rounded-md border px-3 py-3"
+          style={{
+            backgroundColor: 'var(--memory-surface-elevated)',
+            borderColor: 'var(--memory-border)',
+          }}
+        >
           <div className="text-[10px] text-[var(--memory-muted)]">下次复习</div>
           <div className="mt-1 text-sm font-semibold text-[var(--memory-text)]">
             {new Date(feedback.nextReviewAt).toLocaleDateString('zh-CN', {
@@ -1664,7 +1687,13 @@ function MemoryCardFeedbackPanel({
             })}
           </div>
         </div>
-        <div className="rounded-md border border-sky-100 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950/40">
+        <div
+          className="rounded-md border px-3 py-3"
+          style={{
+            backgroundColor: 'var(--memory-surface-elevated)',
+            borderColor: 'var(--memory-border)',
+          }}
+        >
           <div className="text-[10px] text-[var(--memory-muted)]">全局知识掌握度</div>
           <div className="mt-1 text-sm font-semibold text-[var(--memory-text)]">
             {primaryImpact
@@ -1681,7 +1710,13 @@ function MemoryCardFeedbackPanel({
       </div>
 
       {feedback.decision && (
-        <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-400/20 dark:bg-amber-400/[0.06]">
+        <div
+          className="mt-3 flex items-start gap-2 rounded-md border px-3 py-2.5"
+          style={{
+            backgroundColor: 'var(--memory-tip-surface)',
+            borderColor: 'var(--memory-tip-border)',
+          }}
+        >
           <Route className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-300" />
           <p className="text-xs leading-5 text-[var(--memory-muted)]">
             新判断：{feedback.decision.summary} 下一动作“

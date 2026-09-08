@@ -33,6 +33,8 @@ import { addActiveJobEntry } from '@/lib/classroom/classroom-session';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { storePdfBlob } from '@/lib/utils/image-storage';
+import { resolveChatModelSelection } from '@/lib/utils/model-config';
+import type { ProviderId } from '@/lib/ai/providers';
 import { SpeechButton } from '@/components/audio/speech-button';
 import { STUDENT_OPTIONS, TEACHER_OPTIONS } from '@/components/sky/home/agent-selector';
 import { MobileQuickEntranceNav } from '@/components/mobile/mobile-quick-entrance-nav';
@@ -706,10 +708,11 @@ export default function MobileSkyHomePage() {
     try {
       useSettingsStore.getState().setSelectedAgentIds([selectedTeacherId, ...selectedStudentIds]);
       const settings = useSettingsStore.getState();
-      const modelString =
-        settings.providerId && settings.modelId
-          ? `${settings.providerId}:${settings.modelId}`
-          : settings.modelId || undefined;
+      const selection = resolveChatModelSelection(
+        (settings.providerId || 'openai') as ProviderId,
+        settings.modelId || 'gpt-5.5',
+      );
+      const modelString = `${selection.providerId}:${selection.modelId}`;
       const body: Record<string, unknown> = {
         requirement: trimmedRequirement,
         enableWebSearch: webSearch,

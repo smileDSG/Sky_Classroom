@@ -157,5 +157,10 @@ export function buildSlideStyleContract(outline: Pick<SceneOutline, 'order' | 't
     '- Every visible label must carry real teaching meaning; do not output placeholder headings like Step 1, Core Feature, or 要点一.',
     '- If content is sparse, merge adjacent ideas into one richer page and add a meaningful table, flow, command diagram, formula stage, or structure diagram.',
     '- Make this slide visually different from nearby pages by changing the main anchor type, its side/row, and the text rhythm.',
+    'Proportions contract (canvas is 1000 x 562.5, safe area left 48 / right 952 / top 48 / bottom 514.5):',
+    '- No single data element (table / chart / diagram) may occupy more than 58% of the canvas width (width <= 580 on the 1000px canvas) when it also spans more than 45% of the height; otherwise it must shrink.',
+    '- Whenever a page contains a table/chart/diagram and a teaching explanation, the explanation must be placed in a side or top/bottom lane that is at least 300 wide and at least 110 tall on the 1000px canvas (text element width >= 300, height >= 110).',
+    '- Never put the only explanation text into a narrow column smaller than 220 wide; if space is tight, shrink the data element first and keep the explanation readable.',
+    '- Do not place several large data blocks side by side so that the teaching text is squeezed out; keep at least one clearly readable text/explanation lane per page.',
   ].join('\n');
 }

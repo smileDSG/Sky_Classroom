@@ -114,7 +114,8 @@ describe('solveWithAgentNode', () => {
 
     const result = await solveWithAgentNode(makeState(), {} as any);
     expect(result.solution).toBe('详细的解题过程，包含完整的推理步骤和计算步骤');
-    expect(callLLM).toHaveBeenCalledTimes(1); // primary high validated confidence → no fallback
+    // 1 solve call + 1 similar-question generation (mock returns none)
+    expect(callLLM).toHaveBeenCalledTimes(2);
   });
 
   test('sets error on LLM failure', async () => {
@@ -156,7 +157,8 @@ describe('solveWithAgentNode', () => {
       .mockResolvedValueOnce({ text: JSON.stringify(highConf) });
 
     const result = await solveWithAgentNode(makeState('universal'), {} as any);
-    expect(callLLM).toHaveBeenCalledTimes(2); // primary + secondary
+    // 2 solve calls + 1 similar-question generation
+    expect(callLLM).toHaveBeenCalledTimes(3);
     expect(result.solution).toBe('详细的解题过程和完整的推理步骤');
   });
 
@@ -202,16 +204,20 @@ describe('solveWithAgentNode', () => {
       .mockResolvedValueOnce({ text: JSON.stringify(highConf3) });
 
     const result = await solveWithAgentNode(makeState('universal'), {} as any);
-    expect(callLLM).toHaveBeenCalledTimes(3); // primary + secondary + tertiary
+    // 3 solve calls + 1 similar-question generation
+    expect(callLLM).toHaveBeenCalledTimes(4);
     expect(result.solution).toBe('完整解答');
   });
 
-  test('returns empty solution when all agents fail', async () => {
+  test('returns salvaged prose when all agents fail', async () => {
     (callLLM as any).mockResolvedValue({ text: 'not json' });
 
     const result = await solveWithAgentNode(makeState(), {} as any);
-    // 3 initial + 3 strict re-prompts = 6 calls
-    expect(callLLM).toHaveBeenCalledTimes(6);
-    expect(result.solution).toBe('');
+    // 'not json' is genuine prose (not JSON-shaped), so each agent's response
+    // is salvaged; the validator rejects it, so all three agents run and the
+    // tertiary accepts the salvage as a last resort. Knowledge-point and
+    // similar-question generation fill in the missing report sections.
+    expect(callLLM).toHaveBeenCalledTimes(4);
+    expect(result.solution).not.toBe('');
   });
 });

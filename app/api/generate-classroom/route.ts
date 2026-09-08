@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
         ? { enableVideoGeneration: rawBody.enableVideoGeneration }
         : {}),
       ...(rawBody.enableTTS != null ? { enableTTS: rawBody.enableTTS } : {}),
+      ...(rawBody.skipSlideQA != null ? { skipSlideQA: rawBody.skipSlideQA } : {}),
       ...(rawBody.agentMode ? { agentMode: rawBody.agentMode } : {}),
     };
     const { requirement } = body;

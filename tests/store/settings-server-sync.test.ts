@@ -271,6 +271,21 @@ describe('fetchServerProviders — provider availability sync', () => {
     return useSettingsStore;
   }
 
+  it('selects the first server model when persisted selection is empty', async () => {
+    const store = await getStore();
+    mockServerResponse({
+      providers: {
+        openai: { models: ['gpt-4o'] },
+      },
+    });
+
+    expect(store.getState().modelId).toBe('');
+    await store.getState().fetchServerProviders();
+
+    expect(store.getState().providerId).toBe('openai');
+    expect(store.getState().modelId).toBe('gpt-4o');
+  });
+
   // ---- Server model list filtering ----
 
   it('filters models to only those the server allows', async () => {

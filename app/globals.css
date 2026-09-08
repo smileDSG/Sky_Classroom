@@ -85,8 +85,8 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* Celestial Atelier — Sky Observatory Theme (light) */
-  --celestial-void: #f4f7fb;
-  --celestial-horizon: #edf3f8;
+  --celestial-void: #eaf0f7;
+  --celestial-horizon: #dce7f2;
   --celestial-haze: #a8b7c7;
   --celestial-starlight: #152238;
   --celestial-dawn: #0f766e;
@@ -133,6 +133,9 @@
   --memory-indigo-glow: rgba(37, 99, 235, 0.1);
   --memory-warm: #d97706;
   --memory-warm-glow: rgba(217, 119, 6, 0.12);
+  --memory-tip-surface: rgba(255, 251, 235, 0.92);
+  --memory-tip-border: rgba(245, 158, 11, 0.35);
+  --memory-tip-title: #b45309;
 
   /* Aurora Lecture Hall — Teaching Page Theme (light mode) */
   --teaching-void: #f8fafc;
@@ -255,6 +258,9 @@ html.dark {
   --memory-indigo-glow: rgba(96, 165, 250, 0.2);
   --memory-warm: #fbbf24;
   --memory-warm-glow: rgba(251, 191, 36, 0.3);
+  --memory-tip-surface: rgba(30, 41, 59, 0.88);
+  --memory-tip-border: rgba(251, 191, 36, 0.24);
+  --memory-tip-title: #fcd34d;
 
   /* Aurora Lecture Hall — Teaching Page Dark Overrides */
   --teaching-void: #0f172a;
@@ -1136,160 +1142,336 @@ body::-webkit-scrollbar,
 
 /* Ripple pulse for loader */
 @keyframes ripple-pulse {
-  0%   { transform: scale(0.5); opacity: 0.6; }
-  100% { transform: scale(1.5); opacity: 0; }
+  0% {
+    transform: scale(0.5);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
 }
 
 /* Shimmer flow for progress bars */
 @keyframes shimmer-flow {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* Stroke draw for SVG icons */
 @keyframes stroke-draw {
-  0%   { stroke-dashoffset: 100; }
-  100% { stroke-dashoffset: 0; }
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
 }
 
 /* Node pulse for timeline */
 @keyframes node-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 currentColor; }
-  50%      { box-shadow: 0 0 0 8px transparent; }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    box-shadow: 0 0 0 8px transparent;
+  }
 }
 
 /* Star Map Index — HUD scanline */
 @keyframes scan-sweep {
-  0%   { top: 0%; opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
 }
-.animate-scan-sweep { animation: scan-sweep 6s ease-in-out infinite; }
+.animate-scan-sweep {
+  animation: scan-sweep 6s ease-in-out infinite;
+}
 
 /* Star Map Index — flowing constellation dash */
 @keyframes dash-flow {
-  0%   { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: -252; }
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -252;
+  }
 }
-.animate-dash-flow { animation: dash-flow 2.5s linear infinite; }
+.animate-dash-flow {
+  animation: dash-flow 2.5s linear infinite;
+}
 
 /* Star Map Index — pulsing active line */
 @keyframes pulse-line {
-  0%, 100% { opacity: 0.35; }
-  50%      { opacity: 0.9; }
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.9;
+  }
 }
-.animate-pulse-line { animation: pulse-line 1.8s ease-in-out infinite; }
+.animate-pulse-line {
+  animation: pulse-line 1.8s ease-in-out infinite;
+}
 
 /* Subtle float */
 @keyframes subtle-float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-4px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 /* ── Ambient Mesh Animations ─────────────────────────── */
 @keyframes mesh-drift-1 {
-  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-  25% { transform: translate(2%, -3%) rotate(2deg) scale(1.03); }
-  50% { transform: translate(-1%, 2%) rotate(-1deg) scale(0.97); }
-  75% { transform: translate(3%, 1%) rotate(1deg) scale(1.02); }
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(2%, -3%) rotate(2deg) scale(1.03);
+  }
+  50% {
+    transform: translate(-1%, 2%) rotate(-1deg) scale(0.97);
+  }
+  75% {
+    transform: translate(3%, 1%) rotate(1deg) scale(1.02);
+  }
 }
 @keyframes mesh-drift-2 {
-  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-  25% { transform: translate(-2%, 2%) rotate(-2deg) scale(0.98); }
-  50% { transform: translate(1%, -3%) rotate(1deg) scale(1.04); }
-  75% { transform: translate(-3%, -1%) rotate(-1deg) scale(0.99); }
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(-2%, 2%) rotate(-2deg) scale(0.98);
+  }
+  50% {
+    transform: translate(1%, -3%) rotate(1deg) scale(1.04);
+  }
+  75% {
+    transform: translate(-3%, -1%) rotate(-1deg) scale(0.99);
+  }
 }
 @keyframes mesh-breathe {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-  50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+  }
 }
 
-.animate-mesh-drift-1 { animation: mesh-drift-1 20s ease-in-out infinite; }
-.animate-mesh-drift-2 { animation: mesh-drift-2 25s ease-in-out infinite; }
-.animate-mesh-breathe   { animation: mesh-breathe 8s ease-in-out infinite; }
+.animate-mesh-drift-1 {
+  animation: mesh-drift-1 20s ease-in-out infinite;
+}
+.animate-mesh-drift-2 {
+  animation: mesh-drift-2 25s ease-in-out infinite;
+}
+.animate-mesh-breathe {
+  animation: mesh-breathe 8s ease-in-out infinite;
+}
 
 /* ── Celestial Atelier Animations ──────────────────────── */
 
 @keyframes star-twinkle {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.4); }
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.4);
+  }
 }
 
 @keyframes star-trail {
-  0% { stroke-dashoffset: 100; opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 1; }
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
 }
 
 @keyframes horizon-glow {
-  0%, 100% { opacity: 0.06; transform: scaleX(1); }
-  50% { opacity: 0.12; transform: scaleX(1.05); }
+  0%,
+  100% {
+    opacity: 0.06;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 0.12;
+    transform: scaleX(1.05);
+  }
 }
 
 @keyframes nebula-drift {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
-  50% { transform: translate(1.5%, -2%) scale(1.04); opacity: 0.45; }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(1.5%, -2%) scale(1.04);
+    opacity: 0.45;
+  }
 }
 
 @keyframes orbit-spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes orbit-spin-medium {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(-360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
 }
 
 @keyframes orbit-spin-fast {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes scan-line {
-  0% { transform: translateY(-100%); opacity: 0; }
-  10% { opacity: 0.6; }
-  90% { opacity: 0.6; }
-  100% { transform: translateY(100vh); opacity: 0; }
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
 }
 
 @keyframes warp-sweep {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes constellation-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 230, 200, 0.4); }
-  50% { box-shadow: 0 0 0 12px rgba(245, 230, 200, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 230, 200, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(245, 230, 200, 0);
+  }
 }
 
 @keyframes nebula-breathe {
-  0%, 100% { opacity: 0.25; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(1.04); }
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.04);
+  }
 }
 
 @keyframes cross-flare {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.2); }
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 
 /* Celestial utility classes */
-.animate-star-twinkle { animation: star-twinkle 3s ease-in-out infinite; }
-.animate-star-trail { animation: star-trail 1.5s ease-out forwards; }
-.animate-horizon-glow { animation: horizon-glow 6s ease-in-out infinite; }
-.animate-nebula-drift { animation: nebula-drift 45s ease-in-out infinite; }
-.animate-orbit-slow { animation: orbit-spin-slow 60s linear infinite; }
-.animate-orbit-medium { animation: orbit-spin-medium 40s linear infinite; }
-.animate-orbit-fast { animation: orbit-spin-fast 20s linear infinite; }
-.animate-scan-line { animation: scan-line 4s ease-in-out infinite; }
+.animate-star-twinkle {
+  animation: star-twinkle 3s ease-in-out infinite;
+}
+.animate-star-trail {
+  animation: star-trail 1.5s ease-out forwards;
+}
+.animate-horizon-glow {
+  animation: horizon-glow 6s ease-in-out infinite;
+}
+.animate-nebula-drift {
+  animation: nebula-drift 45s ease-in-out infinite;
+}
+.animate-orbit-slow {
+  animation: orbit-spin-slow 60s linear infinite;
+}
+.animate-orbit-medium {
+  animation: orbit-spin-medium 40s linear infinite;
+}
+.animate-orbit-fast {
+  animation: orbit-spin-fast 20s linear infinite;
+}
+.animate-scan-line {
+  animation: scan-line 4s ease-in-out infinite;
+}
 .animate-warp-sweep {
   background-size: 200% 100%;
   animation: warp-sweep 1.5s ease-in-out infinite;
 }
-.animate-constellation-pulse { animation: constellation-pulse 2s ease-in-out infinite; }
-.animate-nebula-breathe { animation: nebula-breathe 14s ease-in-out infinite; }
-.animate-cross-flare { animation: cross-flare 2s ease-in-out infinite; }
+.animate-constellation-pulse {
+  animation: constellation-pulse 2s ease-in-out infinite;
+}
+.animate-nebula-breathe {
+  animation: nebula-breathe 14s ease-in-out infinite;
+}
+.animate-cross-flare {
+  animation: cross-flare 2s ease-in-out infinite;
+}
 
 /* Glass panel base */
 .glass-panel {
@@ -1684,7 +1866,9 @@ body::-webkit-scrollbar,
 .celestial-panel {
   background: linear-gradient(180deg, rgba(11, 16, 33, 0.95) 0%, rgba(19, 24, 50, 0.98) 100%);
   border: 1px solid rgba(45, 53, 97, 0.5);
-  box-shadow: inset 0 1px 0 0 rgba(245, 230, 200, 0.05), 0 4px 24px -4px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 1px 0 0 rgba(245, 230, 200, 0.05),
+    0 4px 24px -4px rgba(0, 0, 0, 0.5);
 }
 
 /* Starfield grid overlay */
@@ -1697,7 +1881,12 @@ body::-webkit-scrollbar,
 
 /* Text shimmer for titles */
 .text-shimmer {
-  background: linear-gradient(90deg, var(--celestial-starlight) 0%, var(--celestial-dawn) 50%, var(--celestial-starlight) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--celestial-starlight) 0%,
+    var(--celestial-dawn) 50%,
+    var(--celestial-starlight) 100%
+  );
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1728,7 +1917,7 @@ html:not(.dark) .slides-empty-horizon {
 }
 
 html:not(.dark) .slides-empty-state {
-  background: #f4f7fb;
+  background: #eaf0f7;
 }
 
 html:not(.dark) .slides-empty-content {
@@ -1795,8 +1984,8 @@ html:not(.dark) .slides-adaptive-metric-label {
 html:not(.dark) .slides-adaptive-summary,
 html:not(.dark) .slides-adaptive-metric,
 html:not(.dark) .slides-adaptive-step {
-  border-color: #e3eaf1;
-  background: #f8fafc;
+  border-color: #cfdae6;
+  background: #ffffff;
 }
 
 html:not(.dark) .slides-adaptive-brief a {
@@ -1902,4 +2091,277 @@ html:not(.dark) .slides-generate-button > div {
   html:not(.dark) .slides-generate-action {
     margin-top: 1rem;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Learner Profile Dashboard — Light Mode
+   ═══════════════════════════════════════════════════════════ */
+
+/* CSS variables used by the dashboard component */
+:root {
+  --dashboard-bg:
+    radial-gradient(ellipse at 20% 0%, #ede9fe 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, #dbeafe 0%, transparent 50%),
+    linear-gradient(180deg, #f8faff 0%, #f0f5ff 100%);
+  --dashboard-grid: rgba(139, 92, 246, 0.06);
+  --dashboard-card-bg: rgba(255, 255, 255, 0.78);
+  --dashboard-card-border: rgba(148, 163, 184, 0.2);
+  --dashboard-card-shadow: 0 4px 20px rgba(30, 64, 112, 0.08);
+  --dashboard-text-primary: #1e293b;
+  --dashboard-text-secondary: #475569;
+  --dashboard-text-muted: #94a3b8;
+  --dashboard-glow-violet: rgba(139, 92, 246, 0.15);
+  --dashboard-glow-cyan: rgba(6, 182, 212, 0.15);
+  --dashboard-glow-rose: rgba(244, 63, 94, 0.15);
+  --dashboard-glow-emerald: rgba(16, 185, 129, 0.15);
+  --dashboard-glow-indigo: rgba(99, 102, 241, 0.15);
+}
+
+html.dark {
+  --dashboard-bg:
+    radial-gradient(ellipse at 20% 0%, #1e1b4b 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, #0c1b2e 0%, transparent 50%),
+    linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%);
+  --dashboard-grid: rgba(139, 92, 246, 0.04);
+  --dashboard-card-bg: rgba(255, 255, 255, 0.05);
+  --dashboard-card-border: rgba(255, 255, 255, 0.1);
+  --dashboard-card-shadow: none;
+  --dashboard-text-primary: #f1f5f9;
+  --dashboard-text-secondary: #cbd5e1;
+  --dashboard-text-muted: #64748b;
+  --dashboard-glow-violet: rgba(139, 92, 246, 0.15);
+  --dashboard-glow-cyan: rgba(6, 182, 212, 0.15);
+  --dashboard-glow-rose: rgba(244, 63, 94, 0.15);
+  --dashboard-glow-emerald: rgba(16, 185, 129, 0.15);
+  --dashboard-glow-indigo: rgba(99, 102, 241, 0.15);
+}
+
+/* Light mode overrides for the dashboard */
+html:not(.dark) [data-dashboard-theme] {
+  color: var(--dashboard-text-primary);
+}
+
+/* Card backgrounds — override bg-white/5, bg-white/10 etc */
+html:not(.dark) [data-dashboard-theme] [class*='bg-white/'],
+html:not(.dark) [data-dashboard-theme] [class*='bg-white\\['] {
+  background-color: var(--dashboard-card-bg) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] .rounded-2xl.border {
+  background-color: var(--dashboard-card-bg) !important;
+  border-color: var(--dashboard-card-border) !important;
+  box-shadow: var(--dashboard-card-shadow) !important;
+}
+
+/* Card border overrides */
+html:not(.dark) [data-dashboard-theme] [class*='border-white/'],
+html:not(.dark) [data-dashboard-theme] [class*='border-slate-'],
+html:not(.dark) [data-dashboard-theme] [class*='border-violet-'],
+html:not(.dark) [data-dashboard-theme] [class*='border-cyan-'],
+html:not(.dark) [data-dashboard-theme] [class*='border-emerald-'],
+html:not(.dark) [data-dashboard-theme] [class*='border-rose-'],
+html:not(.dark) [data-dashboard-theme] [class*='border-indigo-'],
+html:not(.dark) [data-dashboard-theme] [class*='border-amber-'] {
+  border-color: var(--dashboard-card-border) !important;
+}
+
+/* Text color overrides */
+html:not(.dark)
+  [data-dashboard-theme]
+  :is(.text-white, .text-slate-50, .text-slate-100, .text-slate-200) {
+  color: var(--dashboard-text-primary) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] :is(.text-slate-300, .text-slate-400, .text-slate-500),
+html:not(.dark) [data-dashboard-theme] [class*='text-slate-300'],
+html:not(.dark) [data-dashboard-theme] [class*='text-slate-400'],
+html:not(.dark) [data-dashboard-theme] [class*='text-slate-500'] {
+  color: var(--dashboard-text-muted) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] [class*='text-white/'] {
+  color: var(--dashboard-text-secondary) !important;
+}
+
+/* Specific text colors */
+html:not(.dark) [data-dashboard-theme] :is(.text-violet-100, .text-violet-200, .text-violet-300) {
+  color: #7c3aed !important;
+}
+
+html:not(.dark) [data-dashboard-theme] :is(.text-cyan-100, .text-cyan-200, .text-cyan-300) {
+  color: #0e7490 !important;
+}
+
+html:not(.dark)
+  [data-dashboard-theme]
+  :is(.text-emerald-100, .text-emerald-200, .text-emerald-300) {
+  color: #047857 !important;
+}
+
+html:not(.dark) [data-dashboard-theme] :is(.text-rose-100, .text-rose-200, .text-rose-300) {
+  color: #be123c !important;
+}
+
+html:not(.dark) [data-dashboard-theme] :is(.text-amber-100, .text-amber-200, .text-amber-300) {
+  color: #b45309 !important;
+}
+
+/* StatCard gradient backgrounds */
+html:not(.dark) [data-dashboard-theme] [class*='from-violet-600'],
+html:not(.dark) [data-dashboard-theme] [class*='from-indigo-600'] {
+  background: linear-gradient(135deg, #f0e7ff 0%, #faf5ff 100%) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] [class*='from-orange-600'],
+html:not(.dark) [data-dashboard-theme] [class*='from-amber-600'] {
+  background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] [class*='from-cyan-600'],
+html:not(.dark) [data-dashboard-theme] [class*='from-blue-600'] {
+  background: linear-gradient(135deg, #cffafe 0%, #ecfeff 100%) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] [class*='from-emerald-600'],
+html:not(.dark) [data-dashboard-theme] [class*='from-teal-600'] {
+  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] [class*='from-rose-600'],
+html:not(.dark) [data-dashboard-theme] [class*='from-pink-600'] {
+  background: linear-gradient(135deg, #ffe4e6 0%, #fff1f2 100%) !important;
+}
+
+/* Button overrides */
+html:not(.dark)
+  [data-dashboard-theme]
+  button:is([class*='border-cyan-500'], [class*='border-violet-500']) {
+  border-color: var(--dashboard-card-border) !important;
+  background: var(--dashboard-card-bg) !important;
+  color: var(--dashboard-text-primary) !important;
+}
+
+html:not(.dark)
+  [data-dashboard-theme]
+  button:is([class*='border-cyan-500'], [class*='border-violet-500']):hover {
+  background: rgba(139, 92, 246, 0.08) !important;
+}
+
+/* Theme toggle button specific */
+html:not(.dark) [data-dashboard-theme] .dashboard-theme-btn {
+  border-color: var(--dashboard-card-border) !important;
+  background: var(--dashboard-card-bg) !important;
+  color: var(--dashboard-text-primary) !important;
+}
+
+/* Ring progress light mode */
+html:not(.dark) [data-dashboard-theme] [class*='stroke-white/'] {
+  stroke: rgba(148, 163, 184, 0.2) !important;
+}
+
+/* SVG text */
+html:not(.dark) [data-dashboard-theme] text {
+  fill: var(--dashboard-text-muted) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] svg [fill='rgba(255,255,255,0.6)'] {
+  fill: var(--dashboard-text-muted) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] svg [stroke='rgba(255,255,255,0.06)'],
+html:not(.dark) [data-dashboard-theme] svg [stroke='rgba(255,255,255,0.08)'] {
+  stroke: rgba(148, 163, 184, 0.2) !important;
+}
+
+/* Badge overrides */
+html:not(.dark) [data-dashboard-theme] [class*='bg-emerald-500/10'] {
+  background: rgba(5, 150, 105, 0.1) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] [class*='text-emerald-400'] {
+  color: #059669 !important;
+}
+
+/* Separator lines */
+html:not(.dark) [data-dashboard-theme] [class*='border-t-violet-500/20'],
+html:not(.dark) [data-dashboard-theme] [class*='border-t-white/10'] {
+  border-color: rgba(148, 163, 184, 0.2) !important;
+}
+
+/* Icon backgrounds */
+html:not(.dark) [data-dashboard-theme] [class*='bg-white/10']:not([class*='bg-white/\\[0\\]']) {
+  background-color: rgba(226, 232, 240, 0.7) !important;
+}
+
+/* Preference panel items */
+html:not(.dark) [data-dashboard-theme] [class*='bg-violet-500/15'] {
+  background: rgba(139, 92, 246, 0.1) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] [class*='text-violet-300'] {
+  color: #7c3aed !important;
+}
+
+/* Header gradient text */
+html:not(.dark) [data-dashboard-theme] h1:is([class*='bg-gradient-to-r']) {
+  background: linear-gradient(90deg, #7c3aed 0%, #1e293b 50%, #0e7490 100%) !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Live badge */
+html:not(.dark) [data-dashboard-theme] [class*='bg-emerald-500/10'] {
+  background: rgba(5, 150, 105, 0.1) !important;
+  border-color: rgba(5, 150, 105, 0.3) !important;
+}
+
+/* Footer links */
+html:not(.dark) [data-dashboard-theme] a:is([class*='text-violet-400']) {
+  color: #7c3aed !important;
+}
+
+html:not(.dark) [data-dashboard-theme] a:is([class*='text-rose-400']) {
+  color: #e11d48 !important;
+}
+
+html:not(.dark) [data-dashboard-theme] a:is([class*='text-violet-400']):hover,
+html:not(.dark) [data-dashboard-theme] a:is([class*='text-rose-400']):hover {
+  opacity: 0.8;
+}
+
+/* Path timeline */
+html:not(.dark) [data-dashboard-theme] [class*='text-emerald-400']:not(a):not(button) {
+  color: #059669 !important;
+}
+
+html:not(.dark) [data-dashboard-theme] [class*='bg-emerald-500/20'] {
+  background: rgba(5, 150, 105, 0.12) !important;
+}
+
+html:not(.dark) [data-dashboard-theme] [class*='bg-violet-500/20'] {
+  background: rgba(139, 92, 246, 0.12) !important;
+}
+
+/* Icon container in header */
+html:not(.dark) [data-dashboard-theme] [class*='border-violet-500/30'] {
+  border-color: rgba(139, 92, 246, 0.2) !important;
+}
+
+/* Icon container in stat cards */
+html:not(.dark) [data-dashboard-theme] [class*='ring-1'] {
+  --tw-ring-color: rgba(148, 163, 184, 0.15) !important;
+}
+
+/* TechFrame card background */
+html:not(.dark) [data-dashboard-theme] [class*='from-white/\\['],
+html:not(.dark) [data-dashboard-theme] [class*='from-white/\\[0'] {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(248, 250, 252, 0.8)
+  ) !important;
+}
+
+/* Scrollbar for dashboard in light mode */
+html:not(.dark) [data-dashboard-theme]::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
 }

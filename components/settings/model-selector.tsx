@@ -17,8 +17,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import type { ProviderId } from '@/lib/ai/providers';
-import { MONO_LOGO_PROVIDERS } from '@/lib/ai/providers';
+import type { ProviderId } from '@/lib/ai/providers-registry';
+import { MONO_LOGO_PROVIDERS } from '@/lib/ai/providers-registry';
 import type { ProvidersConfig } from '@/lib/types/settings';
 import { createVerifyModelRequest, formatContextWindow } from './utils';
 
@@ -36,7 +36,8 @@ export function ModelSelector({
   onModelChange,
   providersConfig,
   t = (key: string) => key,
-}: ModelSelectorProps) {const [activeProvider, setActiveProvider] = useState<ProviderId>(providerId);
+}: ModelSelectorProps) {
+  const [activeProvider, setActiveProvider] = useState<ProviderId>(providerId);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');

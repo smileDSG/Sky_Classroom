@@ -893,6 +893,8 @@ function stripMarkdown(text: string): string {
 // This reduces rendering time for well-formed LLM output by ~70%.
 
 function isWellFormedMath(text: string): boolean {
+  // \(...\)／\[...\] 分隔符必须经 wrapBareLatex 归一化为 $...$，不能走快速路径
+  if (/\\\(|\\\)|\\\[|\\\]/.test(text)) return false;
   // Remove all $...$ and $$...$$ blocks
   let remaining = text;
   // Remove $$...$$ first (longer delimiter)

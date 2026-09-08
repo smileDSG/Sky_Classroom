@@ -2,7 +2,7 @@
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
-import { resolveSolverModel } from '../solver-constants';
+import { resolveSolverModel, SOLVE_THINKING_CONFIG } from '../solver-constants';
 import { VERIFY_SYSTEM_PROMPT, buildVerifyPrompt } from './verify-prompts';
 import { matchAnswers } from './answer-matcher';
 import { DEFAULT_VERIFY, type VerifyResult } from './verify-types';
@@ -39,7 +39,7 @@ export async function verifyAnswer(
       },
       'verify-agent',
       { retries: 0 },
-      undefined,
+      SOLVE_THINKING_CONFIG,
       VERIFY_SYSTEM_PROMPT,
     );
 

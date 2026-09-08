@@ -22,9 +22,9 @@ export function MinimalNavbar({
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-3"
         >
-          <img src="/logo-icon.svg" alt="天空课堂" className="w-10 h-10" />
+          <img src="/logo-icon.svg" alt="智眸无界" className="w-10 h-10" />
           <span className="text-lg font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent hidden sm:block">
-            天空课堂
+            智眸无界
           </span>
         </motion.div>
 

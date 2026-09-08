@@ -9,7 +9,7 @@
 import { streamLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { buildSolverPrompt } from './solver-prompts';
-import { resolveSolverModel } from './solver-constants';
+import { resolveSolverModel, SOLVE_THINKING_CONFIG } from './solver-constants';
 import type { ProblemSpec, SolverAgentType } from './types';
 import { createLogger } from '@/lib/logger';
 
@@ -188,6 +188,7 @@ type ParseState =
 class StepStreamParser {
   private state: ParseState = 'init';
   private buffer = '';
+  private rawBuffer = '';
   private braceDepth = 0;
   private stepStart = -1;
 
@@ -202,6 +203,8 @@ class StepStreamParser {
   feed(chunk: string): StreamEvent[] {
     const events: StreamEvent[] = [];
     this.buffer += chunk;
+    this.rawBuffer += chunk;
+    this.captureMetadata();
 
     switch (this.state) {
       case 'init':
@@ -228,6 +231,24 @@ class StepStreamParser {
     }
 
     return events;
+  }
+
+  private captureMetadata(): void {
+    if (!this.questionType) {
+      const match = this.rawBuffer.match(/"questionType"\s*:\s*"(choice|fill|solve|judge)"/);
+      if (match) this.questionType = match[1] as MetadataEvent['questionType'];
+    }
+    if (!this.options) {
+      const match = this.rawBuffer.match(/"options"\s*:\s*\[([^\]]*)\]/);
+      if (match) {
+        try {
+          const parsed = JSON.parse(`[${match[1]}]`);
+          if (Array.isArray(parsed) && parsed.every((item) => typeof item === 'string')) this.options = parsed;
+        } catch {
+          // wait for complete metadata in a later chunk
+        }
+      }
+    }
   }
 
   /** Get all collected results at end of stream */
@@ -516,7 +537,7 @@ export async function* streamSolve(
       maxOutputTokens: maxTokens,
     },
     'solve-streaming',
-    undefined,
+    SOLVE_THINKING_CONFIG,
   );
 
   const parser = new StepStreamParser();
@@ -587,7 +608,7 @@ async function* fallbackSolve(
     },
     'solve-fallback',
     { retries: 0 },
-    undefined,
+    SOLVE_THINKING_CONFIG,
     systemPrompt,
   );
 

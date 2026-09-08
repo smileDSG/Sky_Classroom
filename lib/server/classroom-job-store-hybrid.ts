@@ -237,7 +237,9 @@ export async function updateClassroomGenerationJobHybrid(
 
   const safePatch: Partial<ClassroomGenerationJob> = {
     ...patch,
-    ...(patch.modelConfig !== undefined ? { modelConfig: sanitizeModelConfig(patch.modelConfig) } : {}),
+    ...(patch.modelConfig !== undefined
+      ? { modelConfig: sanitizeModelConfig(patch.modelConfig) }
+      : {}),
     ...(patch.input !== undefined ? { input: sanitizeInputForPersistence(patch.input) } : {}),
   };
 
@@ -373,4 +375,50 @@ export async function savePhaseOneResultHybrid(
 
 export function isValidClassroomJobId(jobId: string): boolean {
   return /^[a-zA-Z0-9_-]+$/.test(jobId);
+}
+
+/**
+ * List a user's classroom generation jobs, newest first. Uses the in-memory
+ * cache as the source of truth for jobs touched by this process (fresher than
+ * the 5s disk flush) and falls back to disk for the rest. Legacy jobs without
+ * a userId are excluded.
+ */
+export async function listClassroomGenerationJobsHybrid(
+  userId: string,
+  opts?: { limit?: number },
+): Promise<ClassroomGenerationJob[]> {
+  const limit = opts?.limit ?? 50;
+  const jobs: ClassroomGenerationJob[] = [];
+
+  let fileNames: string[] = [];
+  try {
+    fileNames = await fs.readdir(CLASSROOM_JOBS_DIR);
+  } catch {
+    return jobs;
+  }
+
+  const candidates = (
+    await Promise.all(
+      fileNames
+        .filter((f) => f.endsWith('.json'))
+        .map(async (f) => {
+          const id = f.slice(0, -'.json'.length);
+          try {
+            return await readJobFromDisk(id);
+          } catch {
+            return null;
+          }
+        }),
+    )
+  ).filter((job): job is ClassroomGenerationJob => job !== null);
+
+  for (const diskJob of candidates) {
+    // In-memory is always at least as fresh as disk within this process.
+    const job = inMemoryJobs.get(diskJob.id) ?? diskJob;
+    if (job.userId !== userId) continue;
+    jobs.push(markStaleIfNeeded(job));
+  }
+
+  jobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return jobs.slice(0, limit);
 }

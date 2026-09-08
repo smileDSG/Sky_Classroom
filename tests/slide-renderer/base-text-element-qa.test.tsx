@@ -75,4 +75,16 @@ describe('BaseTextElement render QA markers', () => {
       expect(qaElement).toHaveAttribute('data-slide-qa-overflow', 'false');
     });
   });
+
+  it('keeps playback text above the readable scale floor', async () => {
+    mockMeasuredTextSize(260, 140);
+
+    const { container } = render(<BaseTextElement elementInfo={makeTextElement()} playback />);
+    const qaElement = container.querySelector('[data-slide-qa-element-id="text_qa"]');
+
+    await waitFor(() => {
+      expect(qaElement).toHaveAttribute('data-slide-qa-status', 'overflow');
+      expect(Number(qaElement?.getAttribute('data-slide-qa-scale'))).toBeGreaterThanOrEqual(0.82);
+    });
+  });
 });

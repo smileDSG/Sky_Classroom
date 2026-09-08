@@ -5,9 +5,9 @@
  * Composed by the barrel store into a single Zustand store.
  */
 
-import type { ProviderId } from '@/lib/ai/providers';
+import type { ProviderId } from '@/lib/ai/providers-registry';
 import type { ProvidersConfig } from '@/lib/types/settings';
-import { PROVIDERS } from '@/lib/ai/providers';
+import { PROVIDERS } from '@/lib/ai/providers-registry';
 import type { ThinkingConfig } from '@/lib/types/provider';
 import { getThinkingConfigKey, supportsConfigurableThinking } from '@/lib/ai/thinking-config';
 
@@ -28,10 +28,7 @@ export interface LLMSettingsSlice {
     modelId: string,
     config: ThinkingConfig | undefined,
   ) => void;
-  setProviderConfig: (
-    providerId: ProviderId,
-    config: Partial<ProvidersConfig[ProviderId]>,
-  ) => void;
+  setProviderConfig: (providerId: ProviderId, config: Partial<ProvidersConfig[ProviderId]>) => void;
   setProvidersConfig: (config: ProvidersConfig) => void;
 }
 
@@ -159,9 +156,7 @@ export function getDefaultLLMSettings(): Omit<
 
 export function createLLMSetters(
   set: (
-    partial:
-      | Partial<LLMSettingsSlice>
-      | ((state: LLMSettingsSlice) => Partial<LLMSettingsSlice>),
+    partial: Partial<LLMSettingsSlice> | ((state: LLMSettingsSlice) => Partial<LLMSettingsSlice>),
   ) => void,
   _get: () => LLMSettingsSlice,
 ): Pick<

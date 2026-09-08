@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智眸无界 - 部署前质量检查报告</title>
+<style>
+  :root {
+    --critical: #dc2626;
+    --warning: #ea580c;
+    --info: #2563eb;
+    --pass: #16a34a;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #1e293b; line-height: 1.6; }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 16px; }
+  header { text-align: center; padding: 48px 0 32px; }
+  header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  header p { color: #64748b; font-size: 15px; }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+  .summary-card .number { font-size: 36px; font-weight: 700; }
+  .summary-card .label { font-size: 13px; color: #64748b; margin-top: 4px; }
+  .critical .number { color: var(--critical); }
+  .warning .number { color: var(--warning); }
+  .info .number { color: var(--info); }
+  .pass .number { color: var(--pass); }
+  .section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+  .section-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; }
+  .section-body { padding: 16px 20px; }
+  .item { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+  .item:last-child { border-bottom: none; }
+  .item-header { display: flex; align-items: flex-start; gap: 10px; }
+  .item-header .badge { flex-shrink: 0; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-top: 3px; }
+  .badge-critical { background: #fef2f2; color: var(--critical); }
+  .badge-warning { background: #fff7ed; color: var(--warning); }
+  .badge-info { background: #eff6ff; color: var(--info); }
+  .badge-pass { background: #f0fdf4; color: var(--pass); }
+  .item-title { font-weight: 600; font-size: 14px; }
+  .item-desc { font-size: 13px; color: #475569; margin-top: 4px; }
+  .item-solution { font-size: 13px; background: #f8fafc; border-left: 3px solid var(--info); padding: 8px 12px; margin-top: 8px; border-radius: 0 6px 6px 0; color: #334155; }
+  .item-solution strong { color: #1e293b; }
+  code { background: #f1f5f9; padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+  .severity-critical { border-left: 3px solid var(--critical); }
+  .severity-warning { border-left: 3px solid var(--warning); }
+  .severity-info { border-left: 3px solid var(--info); }
+  .severity-pass { border-left: 3px solid var(--pass); }
+  .file-path { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #64748b; margin-top: 2px; word-break: break-all; }
+  .toc { margin-bottom: 24px; }
+  .toc a { color: var(--info); text-decoration: none; font-size: 14px; display: block; padding: 4px 0; }
+  .toc a:hover { text-decoration: underline; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 3px; margin-left: 6px; }
+  .tag-dev { background: #f0f0f0; color: #666; }
+  .tag-prod { background: #fef2f2; color: var(--critical); }
+  .tag-both { background: #fef3c7; color: #92400e; }
+  footer { text-align: center; padding: 32px; color: #94a3b8; font-size: 13px; }
+  .detail-list { margin-top: 6px; padding-left: 18px; font-size: 13px; color: #475569; }
+  .detail-list li { margin-bottom: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>智眸无界 — 部署前质量检查报告</h1>
+  <p>检查日期：2026-09-08 | 基于 Next.js 16.1.2 + pnpm 10.28.0</p>
+</header>
+
+<div class="summary">
+  <div class="summary-card critical"><div class="number">7</div><div class="label">严重问题</div></div>
+  <div class="summary-card warning"><div class="number">6</div><div class="label">警告问题</div></div>
+  <div class="summary-card info"><div class="number">5</div><div class="label">建议优化</div></div>
+  <div class="summary-card pass"><div class="number">6</div><div class="label">通过项</div></div>
+</div>
+
+<div class="toc">
+  <a href="#critical">🔴 严重问题（7项）</a>
+  <a href="#warning">🟠 警告问题（6项）</a>
+  <a href="#info">🔵 建议优化（5项）</a>
+  <a href="#pass">🟢 通过项（6项）</a>
+</div>
+
+<!-- ====================================================================== -->
+<!-- CRITICAL -->
+<!-- ====================================================================== -->
+<div class="section" id="critical">
+  <div class="section-header" style="color:var(--critical)">🔴 严重问题 — 部署前必须修复</div>
+  <div class="section-body">
+
+    <div class="item severity-critical">
+      <div class="item-header">
+        <span class="badge badge-critical">CRITICAL</span>
+        <div>
+          <div class="item-title">JWT_SECRET 使用弱密钥，存在安全风险</div>
+          <div class="file-path">.env.local / lib/server/auth/jwt.ts</div>
+          <div class="item-desc">当前 <code>JWT_SECRET=sky-classroom-local-preview-jwt-secret-2026-change-before-deploy</code> 是预览用的弱密钥，已在源文件中硬编码。生产环境若未设置该环境变量，会回退到 <code>'change-me-in-production'</code> 这个更弱的兜底值。</div>
+          <div class="item-solution"><strong>解决方案：</strong> 部署前生成强随机密钥（<code>openssl rand -base64 48</code>），通过安全渠道（环境变量/密钥管理服务）注入，<strong>切勿</strong>写入 .env.local 或提交到仓库。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-critical">
+      <div class="item-header">
+        <span class="badge badge-critical">CRITICAL</span>
+        <div>
+          <div class="item-title">.env.local 包含真实 API 密钥，有泄露风险</div>
+          <div class="file-path">.env.local</div>
+          <div class="item-desc">文件中包含以下真实凭据：<code>OPENAI_API_KEY</code>、<code>DEEPSEEK_API_KEY</code>、<code>QWEN_API_KEY</code>、<code>GLM_API_KEY</code>、<code>MYSQL_PASSWORD=123456</code>。虽然 <code>.gitignore</code> 排除了 <code>.env.local</code>，但 Docker 部署时通过 <code>env_file</code> 直接使用该文件，多人协作时容易误提交。</div>
+          <div class="item-solution"><strong>解决方案：</strong> 使用 <code>.env.production</code>（已加入 <code>.gitignore</code>）或通过 Docker Secrets / 环境变量注入。MySQL 密码 <code>123456</code> 过于简单，应使用强密码。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-critical">
+      <div class="item-header">
+        <span class="badge badge-critical">CRITICAL</span>
+        <div>
+          <div class="item-title">ALLOW_LOCAL_NETWORKS=true 开启，生产环境有 SSRF 风险</div>
+          <div class="file-path">.env.local</div>
+          <div class="item-desc">该配置允许访问内网地址（localhost、192.168.x.x 等），用于本地 Ollama 连接。如果生产环境也设置了这个值，攻击者可能利用 SSRF 漏洞访问内部服务。</div>
+          <div class="item-solution"><strong>解决方案：</strong> 生产环境必须设置为 <code>ALLOW_LOCAL_NETWORKS=false</code> 或删除该配置。Ollama 等本地模型不应在生产环境使用。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-critical">
+      <div class="item-header">
+        <span class="badge badge-critical">CRITICAL</span>
+        <div>
+          <div class="item-title">缺少错误边界（error.tsx），页面崩溃将白屏</div>
+          <div class="file-path">所有页面目录（除 app/sky/ 外）</div>
+          <div class="item-desc">整个项目中 <strong>只有 <code>app/sky/loading.tsx</code> 一个加载状态文件</strong>，没有任何 <code>error.tsx</code> 或 <code>not-found.tsx</code>。这意味着任何页面级别的运行时错误都会导致 React 崩溃白屏，用户无法看到错误提示或尝试恢复。</div>
+          <div class="item-solution"><strong>解决方案：</strong> 在 <code>app/</code> 根目录添加 <code>error.tsx</code>（全局错误边界）和 <code>not-found.tsx</code>（404 页面），并在 <code>app/sky/</code>、<code>app/classroom/</code>、<code>app/learning/</code> 等关键路由组添加局部错误边界。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-critical">
+      <div class="item-header">
+        <span class="badge badge-critical">CRITICAL</span>
+        <div>
+          <div class="item-title">缺少加载状态（loading.tsx），页面导航体验差</div>
+          <div class="file-path">所有页面目录（除 app/sky/ 外）</div>
+          <div class="item-desc">只有 <code>app/sky/loading.tsx</code> 存在。其他 13 个页面路由组（<code>app/classroom/</code>、<code>app/learning/</code>、<code>app/slides/</code> 等）均没有加载状态文件。用户导航到这些页面时，在数据加载完成前会看到空白页面。</div>
+          <div class="item-solution"><strong>解决方案：</strong> 为每个页面路由组添加 <code>loading.tsx</code>，提供骨架屏或加载指示器。至少为 <code>app/classroom/</code>、<code>app/learning/</code>、<code>app/slides/</code> 等核心页面添加。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-critical">
+      <div class="item-header">
+        <span class="badge badge-critical">CRITICAL</span>
+        <div>
+          <div class="item-title">ESLint 配置存在丢失的规则定义，且 .tmp-deeptutor 未排除</div>
+          <div class="file-path">eslint.config.mjs / .tmp-deeptutor/</div>
+          <div class="item-desc">两个问题：<br>
+          1. 规则 <code>i18n/no-literal-ui-text</code> 未安装对应的 eslint 插件，导致 2 个错误<br>
+          2. <code>.tmp-deeptutor</code> 目录（临时项目副本）未在 <code>globalIgnores</code> 中排除，导致 37 个条件性 Hooks 错误（<code>react-hooks/rules-of-hooks</code>）<br>
+          共计 <strong>39 个 ESLint 错误</strong>，1029 个警告。</div>
+          <div class="item-solution"><strong>解决方案：</strong> 在 <code>eslint.config.mjs</code> 的 <code>globalIgnores</code> 中添加 <code>'.tmp-deeptutor/**'</code>。安装或移除缺失的 <code>i18n/no-literal-ui-text</code> 规则插件。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-critical">
+      <div class="item-header">
+        <span class="badge badge-critical">CRITICAL</span>
+        <div>
+          <div class="item-title">Docker 镜像体积过大，LibreOffice 导致约 2GB+</div>
+          <div class="file-path">Dockerfile</div>
+          <div class="item-desc">Dockerfile 安装 <code>libreoffice</code>（约 1.5GB）用于 PPTX→PNG 转换。加上 <code>.next/standalone</code> 输出本身 1.4GB，最终镜像体积可能超过 3GB。这会导致部署、拉取和启动时间显著增加。</div>
+          <div class="item-solution"><strong>解决方案：</strong> 考虑将 LibreOffice 拆分为 sidecar 容器或按需安装。如果使用场景不多，可在外层运行时环境中安装而非打包进镜像。使用 <code>docker-slim</code> 或多阶段构建进一步优化。</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- WARNINGS -->
+<!-- ====================================================================== -->
+<div class="section" id="warning">
+  <div class="section-header" style="color:var(--warning)">🟠 警告 — 建议部署前修复</div>
+  <div class="section-body">
+
+    <div class="item severity-warning">
+      <div class="item-header">
+        <span class="badge badge-warning">WARNING</span>
+        <div>
+          <div class="item-title">JS 打包体积偏大，初始加载可能较慢</div>
+          <div class="item-desc">最大的 JS chunk 为 778KB，另有 5 个 chunk 超过 400KB。在弱网环境下（如 4G），首次加载时间可能超过 3-5 秒。这主要来自较大的依赖：<code>echarts</code>、<code>prosemirror-*</code>、<code>katex</code>、<code>mathjax</code> 等。</div>
+          <div class="item-solution"><strong>建议：</strong> 使用 <code>next/dynamic</code> 对非关键组件进行代码分割，特别是 <code>echarts</code>、<code>prosemirror</code>、<code>katex</code> 等重型库。配置 <code>@next/next/no-page-custom-font</code> 规则检查字体加载。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-warning">
+      <div class="item-header">
+        <span class="badge badge-warning">WARNING</span>
+        <div>
+          <div class="item-title">公共目录静态资源过大，影响冷启动加载</div>
+          <div class="file-path">public/</div>
+          <div class="item-desc">
+            <ul class="detail-list">
+              <li>头像（avatars）: 32.3 MB / 54 个文件，最大单个 5.2 MB（PNG）</li>
+              <li>PPT 模板: 63.2 MB / 67 个文件，最大单个 7.7 MB</li>
+              <li>总计: 约 100 MB 静态资源，所有用户在首次访问时都需要下载</li>
+            </ul>
+          </div>
+          <div class="item-solution"><strong>建议：</strong> 头像压缩到 200KB 以内（使用 TinyPNG/WebP 转换），PPT 模板改用按需加载或云存储。头像作为 <code>/avatars/</code> 路由已配置了 CDN 缓存，但文件本身仍然过大。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-warning">
+      <div class="item-header">
+        <span class="badge badge-warning">WARNING</span>
+        <div>
+          <div class="item-title">Turbopack 构建警告：过宽的文件匹配模式</div>
+          <div class="file-path">lib/server/provider-config.ts / lib/prompts/composability.ts</div>
+          <div class="item-desc">两个文件使用了通配符模式，匹配了 13000+ 个文件，导致构建性能下降。特别是在 <code>provider-config.ts</code> 中通过 <code>path.join(process.cwd(), filename)</code> 动态加载 YAML 配置文件。</div>
+          <div class="item-solution"><strong>建议：</strong> 将文件搜索范围限制在特定目录，避免使用通配符匹配整个项目根目录。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-warning">
+      <div class="item-header">
+        <span class="badge badge-warning">WARNING</span>
+        <div>
+          <div class="item-title">构建产物遗留的临时预览文件导致 standalone 复制失败</div>
+          <div class="file-path">public/temp/preview/</div>
+          <div class="item-desc">构建过程中出现：<code>Failed to copy traced files ... source.pptx - ENOENT</code>。这是因为 <code>public/temp/preview/</code> 目录中的临时预览文件在构建时已被清理，但构建跟踪系统仍尝试复制它们。</div>
+          <div class="item-solution"><strong>建议：</strong> 在构建前清理 <code>public/temp/</code> 目录，或在 <code>next.config.ts</code> 中显式排除该目录的跟踪。添加构建脚本 <code>"prebuild": "rimraf public/temp"</code>。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-warning">
+      <div class="item-header">
+        <span class="badge badge-warning">WARNING</span>
+        <div>
+          <div class="item-title">根目录包含大量 .zip 和 .docx 文件</div>
+          <div class="file-path">项目根目录</div>
+          <div class="item-desc">
+            <ul class="detail-list">
+              <li><code>22016688作品.zip</code> — 327 MB</li>
+              <li><code>22016688智眸无界.zip</code> — 189 MB</li>
+              <li><code>22016688源码.zip</code> — 151 MB</li>
+              <li><code>2201668.zip</code> — 190 MB</li>
+              <li>商业计划书 .docx 文件 — 共 4 个，约 15 MB</li>
+            </ul>
+            这些文件虽然被 <code>.gitignore</code> 排除，但增加了工作目录混乱度，且 Docker 构建上下文中会包含它们。
+          </div>
+          <div class="item-solution"><strong>建议：</strong> 将相关文件移出项目目录，使用 <code>.dockerignore</code> 确保 <code>*.zip</code> 和 <code>*.docx</code> 不被包含在 Docker 构建上下文中。当前 <code>.dockerignore</code> 已排除 <code>*.md</code> 和 <code>*.pdf</code>，但未排除 <code>*.zip</code> 和 <code>*.docx</code>。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-warning">
+      <div class="item-header">
+        <span class="badge badge-warning">WARNING</span>
+        <div>
+          <div class="item-title">缺少 middleware.ts，认证逻辑在 proxy.ts 中但可能不生效</div>
+          <div class="file-path">proxy.ts</div>
+          <div class="item-desc">认证中间件写在 <code>proxy.ts</code> 而非标准的 <code>middleware.ts</code>。Next.js 默认只识别 <code>middleware.ts</code> 作为中间件入口。需要确认 <code>proxy.ts</code> 是否被正确配置为中间件。</div>
+          <div class="item-solution"><strong>建议：</strong> 检查 <code>next.config.ts</code> 中是否有自定义中间件配置，或重命名为 <code>middleware.ts</code> 以确保 Next.js 正确识别。</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- INFO / SUGGESTIONS -->
+<!-- ====================================================================== -->
+<div class="section" id="info">
+  <div class="section-header" style="color:var(--info)">🔵 建议优化 — 提升质量与体验</div>
+  <div class="section-body">
+
+    <div class="item severity-info">
+      <div class="item-header">
+        <span class="badge badge-info">INFO</span>
+        <div>
+          <div class="item-title">TypeScript 类型检查通过，但 ESLint 警告过多（1029 个）</div>
+          <div class="item-desc"><code>tsc --noEmit</code> 通过，类型安全 OK。但 ESLint 警告数量大（1029），包括大量未使用变量、未使用 catch 参数、React 18 严格模式警告等，会淹没真正的问题信号。</div>
+          <div class="item-solution"><strong>建议：</strong> 逐步清理警告，特别是 <code>react-hooks/set-state-in-effect</code>（级联渲染警告）和 <code>react-hooks/purity</code>（渲染期间调用不纯函数），这些可能导致性能问题。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-info">
+      <div class="item-header">
+        <span class="badge badge-info">INFO</span>
+        <div>
+          <div class="item-title">API 路由全部为动态渲染，无缓存策略</div>
+          <div class="item-desc">根布局设置了 <code>dynamic = 'force-dynamic'</code>，所有页面和 API 路由都是动态渲染。虽然这对 AI 课堂场景是必要的，但一些稳定的 API（如 <code>/api/health</code>、<code>/api/server-providers</code>）可以添加缓存。</div>
+          <div class="item-solution"><strong>建议：</strong> 对只读的稳定 API 添加 <code>export const dynamic = 'force-static'</code> 或使用 <code>stale-while-revalidate</code> 缓存策略。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-info">
+      <div class="item-header">
+        <span class="badge badge-info">INFO</span>
+        <div>
+          <div class="item-title">DevTools 残留请求：@vite/client 404</div>
+          <div class="item-desc">浏览器测试发现 <code>GET /@vite/client</code> 返回 404。这是从 Vite 迁移到 Turbopack 后残留的引用，不影响功能但增加无意义的网络请求。</div>
+          <div class="item-solution"><strong>建议：</strong> 检查是否有组件或配置引用了 Vite 的客户端 API，清理相关引用。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-info">
+      <div class="item-header">
+        <span class="badge badge-info">INFO</span>
+        <div>
+          <div class="item-title">数据库连接配置硬编码，生产环境切换不方便</div>
+          <div class="file-path">.env.local</div>
+          <div class="item-desc">MySQL 配置（<code>localhost:3306</code>, <code>root/123456</code>）直接从 .env.example 复制，未区分环境。生产环境应使用不同的数据库实例和凭证。</div>
+          <div class="item-solution"><strong>建议：</strong> 使用 <code>.env.production</code> 管理生产配置，通过 CI/CD 或 Docker Secrets 注入。确保 <code>.env.production</code> 在 <code>.gitignore</code> 中。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-info">
+      <div class="item-header">
+        <span class="badge badge-info">INFO</span>
+        <div>
+          <div class="item-title">Docker Compose 缺少健康检查</div>
+          <div class="file-path">docker-compose.yml</div>
+          <div class="item-desc">docker-compose.yml 没有配置 <code>healthcheck</code>，编排工具无法判断服务是否就绪。LibreOffice 安装较慢，可能导致容器标记为 running 但实际尚未准备好。</div>
+          <div class="item-solution"><strong>建议：</strong> 添加 <code>healthcheck</code> 配置，如 <code>test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]</code>。</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- PASS -->
+<!-- ====================================================================== -->
+<div class="section" id="pass">
+  <div class="section-header" style="color:var(--pass)">🟢 通过项 — 已确认正常</div>
+  <div class="section-body">
+
+    <div class="item severity-pass">
+      <div class="item-header">
+        <span class="badge badge-pass">PASS</span>
+        <div>
+          <div class="item-title">成功构建</div>
+          <div class="item-desc"><code>pnpm build</code> 成功，122 个页面全部生成，构建时间 29.5 秒。Turbopack 编译无错误。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-pass">
+      <div class="item-header">
+        <span class="badge badge-pass">PASS</span>
+        <div>
+          <div class="item-title">TypeScript 严格模式通过</div>
+          <div class="item-desc"><code>npx tsc --noEmit</code> 零错误，项目使用 <code>strict: true</code> 模式。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-pass">
+      <div class="item-header">
+        <span class="badge badge-pass">PASS</span>
+        <div>
+          <div class="item-title">浏览器运行时无控制台错误</div>
+          <div class="item-desc">首页、登录页、学习页的浏览器测试均无 JS 错误、无 404（除 @vite/client 外）、无渲染异常。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-pass">
+      <div class="item-header">
+        <span class="badge badge-pass">PASS</span>
+        <div>
+          <div class="item-title">认证中间件工作正常</div>
+          <div class="item-desc">proxy.ts 正确拦截未认证请求，重定向到登录页，API 路由返回 401。已登录用户正常访问所有页面。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-pass">
+      <div class="item-header">
+        <span class="badge badge-pass">PASS</span>
+        <div>
+          <div class="item-title">安全：.env.local 排除在 Git 跟踪之外</div>
+          <div class="item-desc"><code>git ls-files .env*</code> 只返回 <code>.env.example</code>，敏感文件未被提交。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item severity-pass">
+      <div class="item-header">
+        <span class="badge badge-pass">PASS</span>
+        <div>
+          <div class="item-title">静态资源缓存策略配置正确</div>
+          <div class="item-desc">Next.js 静态资源（<code>/_next/static/*</code>）配置了 1 年不可变缓存。头像和 Logo 配置了 1 天 CDN 缓存 + 7 天 stale-while-revalidate。</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  报告由 TRAE 自动生成 | 基于实际构建、浏览器测试和代码审查
+</footer>
+
+</div>
+</body>
+</html>

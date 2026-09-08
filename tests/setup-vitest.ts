@@ -1,6 +1,9 @@
 /// <reference types="vitest/globals" />
 import '@testing-library/jest-dom/vitest';
 
+// Server-only marker is a build-time boundary; unit tests import server modules directly.
+vi.mock('server-only', () => ({}));
+
 // Mock next/navigation — 组件测试几乎都会碰到
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),

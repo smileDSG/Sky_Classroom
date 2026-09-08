@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { getActiveSlidesJobEntries, removeActiveSlidesJobEntry } from '@/lib/slides/slides-session';
+import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useSkyClassroomStore } from '@/lib/store/use-sky-classroom-store';
 import { toast } from 'sonner';
@@ -73,6 +74,8 @@ export function SlidesJobPoller() {
     if (entries.length === 0) return;
 
     const poll = async () => {
+      // Skip network work while the tab is hidden/backgrounded.
+      if (!isDocumentVisible()) return;
       const currentEntries = getActiveSlidesJobEntries();
       if (currentEntries.length === 0) {
         if (timerRef.current) {

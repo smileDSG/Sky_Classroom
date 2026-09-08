@@ -34,7 +34,7 @@ const DIFFICULTY_GUIDANCE: Record<string, string> = {
     'Target audience: university/college students. Use deeper analysis, advanced terminology, and theoretical frameworks. Provide thorough coverage: formal definitions, derivations, proofs, comparative analysis, research connections, and challenging problems.',
 };
 
-const DIFFICULTY_LABELS: Record<string, string> = {
+export const DIFFICULTY_LABELS: Record<string, string> = {
   junior: 'Junior High (初中)',
   senior: 'Senior High (高中)',
   college: 'College (大学)',
@@ -51,6 +51,51 @@ const DEFAULT_THEME: SlideTheme = {
 
 // ── Public API ───────────────────────────────────────────────────────
 
+/**
+ * Build the shared slide-content system prompt (element schemas, canvas
+ * rules, design token rule). Used by full-deck generation and by the
+ * slide repairer so regenerated pages follow the same schema.
+ *
+ * The persona/style directive is appended explicitly: the system.md
+ * template has no {{teacherContext}} placeholder, so passing it as a
+ * buildPrompt variable alone would silently drop it.
+ */
+export function buildSlideSystemPrompt(options: {
+  topic: string;
+  personaPrompt?: string;
+  language?: string;
+}): string | null {
+  const languageDirective = buildLanguageText(options.language);
+
+  const prompts = buildPrompt(PROMPT_IDS.SLIDE_CONTENT, {
+    title: 'Topic Overview',
+    description: options.topic,
+    keyPoints: 'See user prompt for deck structure requirements.',
+    canvas_width: 1000,
+    canvas_height: 562.5,
+    assignedImages: 'No images available',
+    elements: '(auto-generated from key points)',
+    imageElementEnabled: false,
+    generatedImageEnabled: false,
+    generatedVideoEnabled: false,
+    mediaElementEnabled: false,
+  });
+
+  const base = prompts?.system;
+  if (!base) return null;
+
+  if (!options.personaPrompt) return base;
+
+  return [
+    base,
+    '',
+    '## Teaching Style Directive (CRITICAL)',
+    options.personaPrompt,
+    '',
+    'Every slide title and body text MUST follow this style throughout the entire deck.',
+  ].join('\n');
+}
+
 export async function generateSlides(
   topic: string,
   options: SlideGenerationOptions,
@@ -66,29 +111,9 @@ export async function generateSlides(
 
   // ── Build system prompt from existing template ──
   const languageDirective = buildLanguageText(language);
+  const systemPrompt = buildSlideSystemPrompt({ topic, personaPrompt, language });
 
-  // Inject persona (teaching style) into the teacher context
-  const teacherContext = personaPrompt
-    ? `\n## Teaching Style Directive (CRITICAL)\n${personaPrompt}\n\nEvery slide title and body text MUST follow this style throughout the entire deck.`
-    : '';
-
-  const prompts = buildPrompt(PROMPT_IDS.SLIDE_CONTENT, {
-    title: 'Topic Overview',
-    description: topic,
-    keyPoints: 'See user prompt for deck structure requirements.',
-    canvas_width: 1000,
-    canvas_height: 562.5,
-    teacherContext,
-    languageDirective: languageDirective || '',
-    assignedImages: 'No images available',
-    elements: '(auto-generated from key points)',
-    imageElementEnabled: false,
-    generatedImageEnabled: false,
-    generatedVideoEnabled: false,
-    mediaElementEnabled: false,
-  });
-
-  if (!prompts) {
+  if (!systemPrompt) {
     log.error('Failed to build prompt for topic:', topic);
     return { slides: [], generationTime: Date.now() - startTime };
   }
@@ -98,7 +123,7 @@ export async function generateSlides(
 
   // ── AI call ──
   log.info(`Generating ${count} slides for topic: "${topic}" (${label})`);
-  const rawResponse = await aiCall(prompts.system, userPrompt);
+  const rawResponse = await aiCall(systemPrompt, userPrompt);
 
   // ── Parse ──
   const parsed = parseJsonResponse<{ slides: GeneratedSlideData[] }>(rawResponse);
@@ -116,39 +141,9 @@ export async function generateSlides(
   // ── Assemble Slide objects ─
   const slides: Slide[] = parsed.slides.map((raw, index) => {
     const slideType = inferSlideType(index, parsed.slides.length, raw);
-
-    const fixedElements = fixElementDefaults(raw.elements ?? []);
-    const processedElements = processLatexElements(fixedElements);
-
-    let elements: PPTElement[] = processedElements.map((el) => ({
-      ...el,
-      id: `${el.type}_${nanoid(8)}`,
-      left: el.left ?? 60,
-      top: el.top ?? 60,
-      width: el.width ?? 400,
-      height: el.height ?? 100,
-      rotate: 0,
-    })) as PPTElement[];
-
-    // Clamp all elements to stay within canvas bounds
-    elements = clampElementBounds(elements);
-
+    const slide = assembleGeneratedSlide(raw, slideType);
     // Center the title on cover slides (horizontally and vertically)
-    if (index === 0) {
-      elements = centerCoverTitle(elements);
-    }
-
-    const background = buildSlideBackground(raw.background);
-
-    return {
-      id: nanoid(),
-      viewportSize: 1000,
-      viewportRatio: 0.5625,
-      theme: DEFAULT_THEME,
-      elements,
-      background,
-      type: slideType,
-    };
+    return slideType === 'cover' ? { ...slide, elements: centerCoverTitle(slide.elements) } : slide;
   });
 
   const elapsed = Date.now() - startTime;
@@ -158,6 +153,35 @@ export async function generateSlides(
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Convert a raw AI-generated slide object into a validated Slide:
+ * element defaults, LaTeX processing, id assignment, canvas clamping.
+ */
+export function assembleGeneratedSlide(raw: GeneratedSlideData, slideType: Slide['type']): Slide {
+  const fixedElements = fixElementDefaults(raw.elements ?? []);
+  const processedElements = processLatexElements(fixedElements);
+
+  const elements: PPTElement[] = processedElements.map((el) => ({
+    ...el,
+    id: `${el.type}_${nanoid(8)}`,
+    left: el.left ?? 60,
+    top: el.top ?? 60,
+    width: el.width ?? 400,
+    height: el.height ?? 100,
+    rotate: 0,
+  })) as PPTElement[];
+
+  return {
+    id: nanoid(),
+    viewportSize: 1000,
+    viewportRatio: 0.5625,
+    theme: DEFAULT_THEME,
+    elements: clampElementBounds(elements),
+    background: buildSlideBackground(raw.background),
+    type: slideType,
+  };
+}
 
 function buildUserPrompt(
   topic: string,

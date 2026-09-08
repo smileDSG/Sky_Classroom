@@ -47,7 +47,8 @@ function ClassroomCard({
   onCancelDelete: () => void;
   viewMode: 'grid' | 'list';
 }) {
-  const router = useRouter();const thumbRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const thumbRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -76,7 +77,10 @@ function ClassroomCard({
       >
         <div
           onClick={() => router.push(`/classroom/${classroom.id}`)}
-          onMouseEnter={() => setIsHovered(true)}
+          onMouseEnter={() => {
+            router.prefetch(`/classroom/${classroom.id}`);
+            setIsHovered(true);
+          }}
           onMouseLeave={() => setIsHovered(false)}
           className={cn(
             'flex items-center gap-4 p-4 rounded-2xl cursor-pointer',
@@ -84,7 +88,7 @@ function ClassroomCard({
             'border border-slate-200/50 dark:border-slate-700/50',
             'hover:bg-white/80 dark:hover:bg-slate-800/80',
             'hover:shadow-lg hover:shadow-slate-200/30 dark:hover:shadow-slate-900/30',
-            'transition-all duration-300'
+            'transition-all duration-300',
           )}
         >
           {/* 缩略图 */}
@@ -124,7 +128,9 @@ function ClassroomCard({
               </h3>
             )}
             <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
-              <span>{classroom.sceneCount} {'页'}</span>
+              <span>
+                {classroom.sceneCount} {'页'}
+              </span>
               <span>·</span>
               <span>{formatDate(classroom.updatedAt)}</span>
             </div>
@@ -178,9 +184,7 @@ function ClassroomCard({
                 className="absolute inset-0 flex items-center justify-center gap-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl z-10"
                 onClick={(e) => e.stopPropagation()}
               >
-                <span className="text-sm text-slate-600 dark:text-slate-300">
-                  {'删除课堂'}?
-                </span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{'删除课堂'}?</span>
                 <button
                   onClick={onCancelDelete}
                   className="px-3 py-1.5 rounded-lg text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
@@ -211,14 +215,17 @@ function ClassroomCard({
     >
       <div
         onClick={() => router.push(`/classroom/${classroom.id}`)}
-        onMouseEnter={() => setIsHovered(true)}
+        onMouseEnter={() => {
+          router.prefetch(`/classroom/${classroom.id}`);
+          setIsHovered(true);
+        }}
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
           'relative cursor-pointer rounded-2xl overflow-hidden',
           'bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm',
           'border border-slate-200/50 dark:border-slate-700/50',
           'hover:shadow-xl hover:shadow-sky-500/10 dark:hover:shadow-sky-900/20',
-          'transition-all duration-300'
+          'transition-all duration-300',
         )}
       >
         {/* 缩略图区域 */}
@@ -315,9 +322,7 @@ function ClassroomCard({
                 className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/70 backdrop-blur-sm"
                 onClick={(e) => e.stopPropagation()}
               >
-                <span className="text-sm font-medium text-white">
-                  {'删除课堂'}?
-                </span>
+                <span className="text-sm font-medium text-white">{'删除课堂'}?</span>
                 <div className="flex gap-2">
                   <button
                     onClick={onCancelDelete}
@@ -397,14 +402,13 @@ export function ClassroomGrid({
   formatDate: (ts: number) => string;
   onDelete: (id: string) => Promise<void>;
   onRename: (id: string, newName: string) => Promise<void>;
-}) {const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+}) {
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
   const filteredClassrooms = searchQuery
-    ? classrooms.filter((c) =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? classrooms.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : classrooms;
 
   return (
@@ -420,12 +424,8 @@ export function ClassroomGrid({
             <Clock className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-              {'最近学习'}
-            </h2>
-            <p className="text-sm text-slate-500">
-              共 {classrooms.length} 个课堂
-            </p>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{'最近学习'}</h2>
+            <p className="text-sm text-slate-500">共 {classrooms.length} 个课堂</p>
           </div>
         </div>
 
@@ -450,7 +450,7 @@ export function ClassroomGrid({
                 'p-2 rounded-lg transition-all',
                 viewMode === 'grid'
                   ? 'bg-sky-500 text-white shadow-md'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300',
               )}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -461,7 +461,7 @@ export function ClassroomGrid({
                 'p-2 rounded-lg transition-all',
                 viewMode === 'list'
                   ? 'bg-sky-500 text-white shadow-md'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300',
               )}
             >
               <List className="w-4 h-4" />
@@ -493,7 +493,7 @@ export function ClassroomGrid({
         className={cn(
           viewMode === 'grid'
             ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-            : 'flex flex-col gap-3'
+            : 'flex flex-col gap-3',
         )}
       >
         {filteredClassrooms.map((classroom, index) => (

@@ -13,6 +13,7 @@ import { getLearningStats } from '@/lib/server/learning-stats';
 import { buildStudentProfile, invalidateProfileCache } from '@/lib/student/profile-builder';
 import { createMistakeBookDAO, type ErrorType } from '@/lib/storage/dao/mistakes';
 import { buildReviewSchedule, getMasteryProgress } from '@/lib/schedule/review-scheduler';
+import { buildDailyReviewPath } from '@/lib/sky/daily-review-path';
 import type { MemoryReviewRecord } from '@/lib/cloud-mind/types';
 import type { MistakeCause } from '@/lib/solve/types';
 import { createLogger } from '@/lib/logger';
@@ -105,6 +106,7 @@ export async function GET(req: NextRequest) {
 
     const reviewSchedule = buildReviewSchedule(mistakeEntries);
     const masteryProgress = getMasteryProgress(mistakeEntries);
+    const dailyReviewPath = buildDailyReviewPath(mistakeEntries, profile);
     const memoryProgress = buildMemoryProgress(memoryReviewEntries.map((entry) => entry.data));
     const mistakes = mistakeEntries.map((entry) => ({
       id: entry.id,
@@ -140,11 +142,12 @@ export async function GET(req: NextRequest) {
         total: reviewSchedule.total,
         progress: masteryProgress,
       },
+      dailyReviewPath,
       learningStats,
       profile,
       memoryProgress,
       dataSources: {
-        replaceMistakes: userId === 'admin-default' || userId === 'demo-default',
+        replaceMistakes: userId === 'admin-default',
         mistakes: 'server',
         review: 'server',
         learningStats: learningStats ? 'server' : 'unavailable',

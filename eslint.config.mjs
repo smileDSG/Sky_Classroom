@@ -30,6 +30,8 @@ const eslintConfig = defineConfig([
     'tmp/**',
     // Playwright e2e tests (not React code):
     'e2e/**',
+    // Temporary project copies (e.g. deeptutor, worktrees):
+    '.tmp-deeptutor/**',
   ]),
   {
     rules: {

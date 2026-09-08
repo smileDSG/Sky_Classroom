@@ -399,6 +399,18 @@ function estimateTextHeight(
   return Math.ceil(lines * fontSize * lineHeight + 28);
 }
 
+/**
+ * Estimate the natural single-line width of text at a font size.
+ * CJK glyphs are ~1em, latin/digits ~0.58em, plus small padding.
+ * Used to widen a title box so its content is not clipped/truncated.
+ */
+function estimateTextWidth(content: string, fontSize: number): number {
+  const plain = stripHtml(content);
+  const cjkCount = (plain.match(/[\u2e80-\u9fff]/g) ?? []).length;
+  const latinCount = plain.length - cjkCount;
+  return Math.ceil((cjkCount * 1.02 + latinCount * 0.58) * fontSize) + 16;
+}
+
 function polishTextElement<T extends SlideLikeElement>(element: T): T {
   const text = { ...element } as T & PPTTextElement;
   const plainText = stripHtml(String(text.content ?? ''));
@@ -414,13 +426,25 @@ function polishTextElement<T extends SlideLikeElement>(element: T): T {
   content = setFontSize(content, fontSize);
 
   const lineHeight = Number(text.lineHeight ?? (isTitle ? 1.18 : 1.36));
+  let top = clamp(text.top, MARGIN, CANVAS_HEIGHT - MARGIN - 32);
+  let width = clamp(text.width, 80, CANVAS_WIDTH - MARGIN * 2);
+  let left = clamp(text.left, MARGIN, CANVAS_WIDTH - MARGIN - width);
+
+  // Widen a title box to its natural single-line width so the heading text is never
+  // clipped/truncated (the previous clamp-only logic kept a too-narrow box, which
+  // the renderer could shrink only down to minScale and then cut off).
+  if (isTitle) {
+    const naturalWidth = estimateTextWidth(content, fontSize);
+    const maxAllowed = Math.min(CANVAS_WIDTH - MARGIN - left, 880);
+    if (naturalWidth > width && maxAllowed > width) {
+      width = Math.min(naturalWidth, maxAllowed);
+    }
+  }
+
   let height = Math.max(
     Number(text.height ?? 0),
-    estimateTextHeight(content, text.width, fontSize, lineHeight),
+    estimateTextHeight(content, width, fontSize, lineHeight),
   );
-  let top = clamp(text.top, MARGIN, CANVAS_HEIGHT - MARGIN - 32);
-  const width = clamp(text.width, 80, CANVAS_WIDTH - MARGIN * 2);
-  let left = clamp(text.left, MARGIN, CANVAS_WIDTH - MARGIN - width);
 
   const maxHeight = Math.max(42, CANVAS_HEIGHT - MARGIN - top);
   while (height > maxHeight && fontSize > (isTitle ? 28 : 18)) {

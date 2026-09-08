@@ -45,6 +45,7 @@ describe('classroom approve route', () => {
 
   test('treats duplicate approval for a running continue job as idempotent', async () => {
     mocks.readJob.mockResolvedValue({
+      userId: 'default-user',
       status: 'running',
       step: 'generating_scenes',
       progress: 30,
@@ -67,6 +68,7 @@ describe('classroom approve route', () => {
 
   test('marks the job as resumed before scheduling scene generation', async () => {
     mocks.readJob.mockResolvedValue({
+      userId: 'default-user',
       status: 'awaiting_review',
       step: 'generating_outlines',
       progress: 30,
@@ -87,6 +89,7 @@ describe('classroom approve route', () => {
 
   test('passes request-scoped model config to the continue job', async () => {
     mocks.readJob.mockResolvedValue({
+      userId: 'default-user',
       status: 'awaiting_review',
       step: 'generating_outlines',
       progress: 30,

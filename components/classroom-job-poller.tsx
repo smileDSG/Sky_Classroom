@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 
 const POLL_INTERVAL_MS = 2000;
 
@@ -94,6 +95,8 @@ export function ClassroomJobPoller() {
     if (entries.length === 0) return;
 
     const poll = async () => {
+      // Skip network work while the tab is hidden/backgrounded.
+      if (!isDocumentVisible()) return;
       try {
         // Already on a generation page — don't interrupt
         if (

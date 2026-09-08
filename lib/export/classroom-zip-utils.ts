@@ -15,6 +15,7 @@ export interface CollectedMedia {
   zipPath: string;
   record: MediaFileRecord;
   elementId: string;
+  blob: Blob; // Guaranteed present — pending/failed placeholder records are skipped
 }
 
 export async function collectAudioFiles(scenes: Scene[]): Promise<CollectedAudio[]> {
@@ -41,9 +42,10 @@ export async function collectMediaFiles(stageId: string): Promise<CollectedMedia
   const records = await db.mediaFiles.where('stageId').equals(stageId).toArray();
   const collected: CollectedMedia[] = [];
   for (const record of records) {
+    if (!record.blob) continue; // Skip pending/failed placeholder records
     const elementId = record.id.includes(':') ? record.id.split(':').slice(1).join(':') : record.id;
     const ext = record.mimeType?.split('/')[1] || 'jpg';
-    collected.push({ zipPath: `media/${elementId}.${ext}`, record, elementId });
+    collected.push({ zipPath: `media/${elementId}.${ext}`, record, elementId, blob: record.blob });
   }
   return collected;
 }

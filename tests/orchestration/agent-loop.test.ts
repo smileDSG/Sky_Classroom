@@ -314,6 +314,24 @@ describe('runAgentLoop', () => {
     );
   });
 
+  test('propagates errors raised while handling an SSE event', async () => {
+    const cb = makeCallbacks({
+      fetchChat: vi.fn().mockResolvedValue(
+        new Response(
+          makeSSEStream([{ type: 'error', data: { message: '模型调用失败' } }]),
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      ),
+      onEvent: vi.fn(() => {
+        throw new Error('模型调用失败');
+      }),
+    });
+
+    await expect(runAgentLoop(makeRequest(), cb, new AbortController().signal, 10)).rejects.toThrow(
+      '模型调用失败',
+    );
+  });
+
   test('handles null onIterationEnd result', async () => {
     const cb = makeCallbacks({
       fetchChat: vi.fn().mockResolvedValue(

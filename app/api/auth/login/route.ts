@@ -9,8 +9,7 @@ import { apiError } from '@/lib/server/api-response';
 import { signAccessToken, signRefreshToken, verifyPassword } from '@/lib/server/auth';
 import { ACCESS_COOKIE_MAX_AGE, REFRESH_COOKIE_MAX_AGE } from '@/lib/server/auth/jwt';
 import { createUserDAO } from '@/lib/storage/dao/users';
-import { DEMO_USERNAME } from '@/lib/auth/demo-account';
-import { ensureDemoUser } from '@/lib/server/demo-user';
+import { ensureAdminUser } from '@/lib/server/admin-seed';
 
 const LoginSchema = z.object({
   emailOrUsername: z.string().min(1),
@@ -26,16 +25,12 @@ export async function POST(request: Request) {
     }
 
     const { emailOrUsername, password } = parsed.data;
-    if (emailOrUsername === DEMO_USERNAME) {
-      await ensureDemoUser();
-    }
+    await ensureAdminUser();
 
     const dao = await createUserDAO();
 
     // Lookup by email first, then username
-    let user = emailOrUsername.includes('@')
-      ? await dao.getByEmail(emailOrUsername)
-      : null;
+    let user = emailOrUsername.includes('@') ? await dao.getByEmail(emailOrUsername) : null;
     if (!user) {
       user = await dao.getByUsername(emailOrUsername);
     }
@@ -57,7 +52,11 @@ export async function POST(request: Request) {
     await dao.update(user.id, { lastLoginAt: Date.now() });
 
     // Generate tokens
-    const accessToken = await signAccessToken({ id: user.id, email: user.email ?? undefined, role: user.role });
+    const accessToken = await signAccessToken({
+      id: user.id,
+      email: user.email ?? undefined,
+      role: user.role,
+    });
     const sessionId = crypto.randomUUID();
     const refreshToken = await signRefreshToken(user.id, sessionId);
 

@@ -145,50 +145,41 @@ export default function RegisterPage() {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             >
-              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              <Eye className={`size-4 ${showPassword ? 'hidden' : ''}`} />
+              <EyeOff className={`size-4 ${showPassword ? '' : 'hidden'}`} />
             </button>
           </div>
-          {/* Strength indicator */}
-          {password.length > 0 && (
-            <div className="space-y-1.5 pt-1">
-              <div className="flex gap-1">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                      i <= strength ? strengthColor : 'bg-slate-200 dark:bg-slate-700'
-                    }`}
-                  />
-                ))}
-              </div>
-              <div className="flex gap-3 text-xs text-muted-foreground">
-                <span className={hasLen ? 'text-green-600 dark:text-green-400' : ''}>
-                  {hasLen ? (
-                    <Check className="inline size-3 mr-0.5" />
-                  ) : (
-                    <X className="inline size-3 mr-0.5" />
-                  )}
-                  至少 8 位
-                </span>
-                <span className={hasUpper ? 'text-green-600 dark:text-green-400' : ''}>
-                  {hasUpper ? (
-                    <Check className="inline size-3 mr-0.5" />
-                  ) : (
-                    <X className="inline size-3 mr-0.5" />
-                  )}
-                  包含大写字母
-                </span>
-                <span className={hasNumber ? 'text-green-600 dark:text-green-400' : ''}>
-                  {hasNumber ? (
-                    <Check className="inline size-3 mr-0.5" />
-                  ) : (
-                    <X className="inline size-3 mr-0.5" />
-                  )}
-                  包含数字
-                </span>
-              </div>
+          {/* Strength indicator — kept mounted (CSS-hide) so typing never inserts/removes nodes
+              under the motion-animated layout, which triggers React DOM desync errors. */}
+          <div className={password.length > 0 ? 'space-y-1.5 pt-1' : 'hidden'}>
+            <div className="flex gap-1">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                    i <= strength ? strengthColor : 'bg-slate-200 dark:bg-slate-700'
+                  }`}
+                />
+              ))}
             </div>
-          )}
+            <div className="flex gap-3 text-xs text-muted-foreground">
+              <span className={hasLen ? 'text-green-600 dark:text-green-400' : ''}>
+                <Check className={`inline size-3 mr-0.5 ${hasLen ? '' : 'hidden'}`} />
+                <X className={`inline size-3 mr-0.5 ${!hasLen ? '' : 'hidden'}`} />
+                至少 8 位
+              </span>
+              <span className={hasUpper ? 'text-green-600 dark:text-green-400' : ''}>
+                <Check className={`inline size-3 mr-0.5 ${hasUpper ? '' : 'hidden'}`} />
+                <X className={`inline size-3 mr-0.5 ${!hasUpper ? '' : 'hidden'}`} />
+                包含大写字母
+              </span>
+              <span className={hasNumber ? 'text-green-600 dark:text-green-400' : ''}>
+                <Check className={`inline size-3 mr-0.5 ${hasNumber ? '' : 'hidden'}`} />
+                <X className={`inline size-3 mr-0.5 ${!hasNumber ? '' : 'hidden'}`} />
+                包含数字
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* 确认密码 */}
@@ -214,11 +205,15 @@ export default function RegisterPage() {
                     : ''
               }`}
             />
-            {passwordsMatch && (
-              <Check className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-green-500" />
-            )}
+            <Check
+              className={`absolute right-3 top-1/2 -translate-y-1/2 size-4 text-green-500 ${
+                passwordsMatch ? '' : 'hidden'
+              }`}
+            />
           </div>
-          {passwordsMismatch && <p className="text-xs text-red-500">两次输入的密码不一致</p>}
+          <p className={`text-xs text-red-500 ${passwordsMismatch ? '' : 'hidden'}`}>
+            两次输入的密码不一致
+          </p>
         </div>
 
         {/* Submit */}

@@ -2,7 +2,7 @@
   "profile": {
     "userId": "default-user",
     "masteryBySubject": {
-      "math": 32,
+      "math": 0,
       "physics": 0,
       "chemistry": 0,
       "biology": 0,
@@ -13,18 +13,13 @@
       "politics": 0,
       "unknown": 0
     },
-    "masteryByKnowledge": {
-      "二次函数": 27,
-      "加法": 38
-    },
-    "weakPoints": [
-      "二次函数"
-    ],
+    "masteryByKnowledge": {},
+    "weakPoints": [],
     "strongPoints": [],
     "errorPatterns": [],
-    "totalQuestions": 19,
-    "totalCorrect": 6,
-    "lastUpdated": "2026-08-14T11:32:21.609Z",
+    "totalQuestions": 0,
+    "totalCorrect": 0,
+    "lastUpdated": "2026-09-08T00:37:36.326Z",
     "recentQuizPerformance": {
       "overallAccuracy": 50,
       "accuracyByKnowledge": {},
@@ -32,6 +27,6 @@
       "recommendedDepthShift": "maintain"
     }
   },
-  "cachedAt": 1786707141610,
+  "cachedAt": 1788827856327,
   "cacheVersion": 2
 }

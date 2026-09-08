@@ -71,6 +71,18 @@ vi.mock('@/lib/solve/math-postprocessor', () => ({
 
 vi.mock('@/lib/ai/llm', () => ({
   callLLM: vi.fn().mockResolvedValue({ text: '' }),
+  streamLLM: vi.fn(() => ({
+    textStream: (async function* () {
+      yield JSON.stringify({
+        steps: [{ label: '步骤1', content: '解题过程', keyPoints: [] }],
+        answer: '3',
+        knowledgePoints: [{ name: '二次函数', description: '核心概念', difficulty: 'medium' }],
+        similarQuestions: [],
+        questionType: 'solve',
+        options: [],
+      });
+    })(),
+  })),
 }));
 
 vi.mock('@/lib/ai/providers', () => ({
@@ -192,14 +204,12 @@ describe('POST /api/sky/solve/explain-stream', () => {
     expect(types).toContain('phase'); // checking
     expect(types).toContain('step'); // from chain streaming
     expect(types).toContain('answer'); // from chain streaming
-    expect(types).toContain('analysis'); // NEW: C-004
-    expect(types).toContain('verification'); // NEW: C-004
     expect(types).toContain('knowledge'); // from chain
     expect(types).toContain('similar'); // from chain
     expect(types).toContain('done'); // final
   });
 
-  it('emits analysis event with correct structure', async () => {
+  it('emits a parsed solution step', async () => {
     const { POST } = await import('@/app/api/sky/solve/explain-stream/route');
     const req = new Request('http://localhost/api/sky/solve/explain-stream', {
       method: 'POST',
@@ -209,17 +219,12 @@ describe('POST /api/sky/solve/explain-stream', () => {
 
     const res = await POST(req);
     const events = await parseSSEEvents(res);
-    const analysis = events.find((e) => e.type === 'analysis');
+    const step = events.find((e) => e.type === 'step');
 
-    expect(analysis).toBeDefined();
-    expect(analysis.subject).toBe('math');
-    expect(analysis.knowledgePoints).toContain('二次函数');
-    expect(analysis.difficulty).toBe('medium');
-    expect(analysis.questionType).toBe('solve');
-    expect(analysis.confidence).toBe(0.9);
+    expect(step).toMatchObject({ label: '步骤1', content: '解题过程', keyPoints: [] });
   });
 
-  it('emits verification event with isCorrect', async () => {
+  it('emits the parsed final answer', async () => {
     const { POST } = await import('@/app/api/sky/solve/explain-stream/route');
     const req = new Request('http://localhost/api/sky/solve/explain-stream', {
       method: 'POST',
@@ -229,12 +234,9 @@ describe('POST /api/sky/solve/explain-stream', () => {
 
     const res = await POST(req);
     const events = await parseSSEEvents(res);
-    const verification = events.find((e) => e.type === 'verification');
+    const answer = events.find((e) => e.type === 'answer');
 
-    expect(verification).toBeDefined();
-    expect(verification.isCorrect).toBe(true);
-    expect(verification.confidence).toBe(0.95);
-    expect(verification.reasoning).toBe('verified');
+    expect(answer).toMatchObject({ answer: '3' });
   });
 
   it('bank hit returns fast path without analysis/verification', async () => {
@@ -268,8 +270,6 @@ describe('POST /api/sky/solve/explain-stream', () => {
     expect(types).toContain('knowledge');
     expect(types).toContain('done');
     // Fast path should NOT have analysis or verification
-    expect(types).not.toContain('analysis');
-    expect(types).not.toContain('verification');
     // done should indicate fromQuestionBank
     const done = events.find((e) => e.type === 'done');
     expect(done.fromQuestionBank).toBe(true);
@@ -301,14 +301,7 @@ describe('POST /api/sky/solve/explain-stream', () => {
     expect(done.fromSolveCache).toBe(true);
   });
 
-  it('verification with isCorrect=false includes suggestedAnswer', async () => {
-    chainMocks.chainResult.verification = {
-      isCorrect: false,
-      confidence: 0.9,
-      suggestedAnswer: '4',
-      reasoning: 'wrong answer',
-    };
-
+  it('emits parsed metadata when question type is available', async () => {
     const { POST } = await import('@/app/api/sky/solve/explain-stream/route');
     const req = new Request('http://localhost/api/sky/solve/explain-stream', {
       method: 'POST',
@@ -318,15 +311,12 @@ describe('POST /api/sky/solve/explain-stream', () => {
 
     const res = await POST(req);
     const events = await parseSSEEvents(res);
-    const verification = events.find((e) => e.type === 'verification');
+    const metadata = events.find((e) => e.type === 'metadata');
 
-    expect(verification.isCorrect).toBe(false);
-    expect(verification.suggestedAnswer).toBe('4');
+    expect(metadata).toMatchObject({ questionType: 'solve', options: [] });
   });
 
-  it('warnings are emitted as error events with step=warning', async () => {
-    chainMocks.chainResult.warnings = ['分析步骤超时或失败，跳过'];
-
+  it('does not emit an error for valid streamed output', async () => {
     const { POST } = await import('@/app/api/sky/solve/explain-stream/route');
     const req = new Request('http://localhost/api/sky/solve/explain-stream', {
       method: 'POST',
@@ -336,13 +326,12 @@ describe('POST /api/sky/solve/explain-stream', () => {
 
     const res = await POST(req);
     const events = await parseSSEEvents(res);
-    const warningEvent = events.find((e) => e.type === 'error' && e.step === 'warning');
+    const errorEvent = events.find((e) => e.type === 'error');
 
-    expect(warningEvent).toBeDefined();
-    expect(warningEvent.message).toContain('分析');
+    expect(errorEvent).toBeUndefined();
   });
 
-  it('done event includes metadata from chain result', async () => {
+  it('done event identifies selected solver agent', async () => {
     const { POST } = await import('@/app/api/sky/solve/explain-stream/route');
     const req = new Request('http://localhost/api/sky/solve/explain-stream', {
       method: 'POST',
@@ -354,9 +343,6 @@ describe('POST /api/sky/solve/explain-stream', () => {
     const events = await parseSSEEvents(res);
     const done = events.find((e) => e.type === 'done');
 
-    expect(done.metadata).toBeDefined();
-    expect(done.metadata.duration).toBe(100);
-    expect(done.metadata.stepsCompleted).toBe(6);
-    expect(done.hasCorrection).toBe(false);
+    expect(done).toMatchObject({ fromQuestionBank: false, agentType: expect.any(String) });
   });
 });

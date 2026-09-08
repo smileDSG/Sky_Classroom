@@ -29,8 +29,7 @@ interface MistakeDAO {
 }
 
 const ADMIN_ID = 'admin-default';
-const DEMO_ID = 'demo-default';
-const DEMO_USER_IDS = new Set([ADMIN_ID, DEMO_ID]);
+const DEMO_USER_IDS = new Set([ADMIN_ID]);
 const SEED_VERSION = 'v4';
 const EVIDENCE_SOURCE = 'demo-learning-evidence-v1';
 const DEMO_PLANNING_PROFILE_VERSION = 'demo-cross-stage-v1';
@@ -282,10 +281,7 @@ async function replaceKnowledgeMistakes(
   return { changed: true, seeded: SEEDS.length };
 }
 
-async function seedKnowledgeEvidence(
-  userId: string,
-  storage: StorageProvider,
-): Promise<number> {
+async function seedKnowledgeEvidence(userId: string, storage: StorageProvider): Promise<number> {
   const repository = new LearnerProfileRepository(storage);
   const existingEvents = await repository.listLearningEvents(userId);
   const existingEventIds = new Set(existingEvents.map((event) => event.eventId));

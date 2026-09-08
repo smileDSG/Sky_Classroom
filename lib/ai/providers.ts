@@ -1,12 +1,13 @@
-﻿/**
- * Unified AI Provider Configuration
+/**
+ * Unified AI Provider Configuration — server-side model construction.
  *
- * Supports multiple AI providers through Vercel AI SDK:
- * - OpenAI (native)
- * - Anthropic Claude (native)
- * - Google Gemini (native)
- * - MiniMax (Anthropic-compatible, recommended by official)
- * - OpenAI-compatible providers (DeepSeek, Qwen, Kimi, GLM, SiliconFlow, Doubao, Tencent, Xiaomi, Lemonade, etc.)
+ * This module is server-only: it builds concrete language-model instances
+ * from the AI SDK. It pulls in @ai-sdk/* and key-pool, so it must NOT be
+ * imported by client bundles.
+ *
+ * The static provider catalog (PROVIDERS) and pure lookup helpers live in
+ * `./providers-registry`, which is client-safe. Re-export the catalog here
+ * so existing server callers can keep importing from this path.
  *
  * Sources:
  * - https://platform.openai.com/docs/models
@@ -28,14 +29,15 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import type { LanguageModel } from 'ai';
 import type {
-  ProviderId,
   ProviderConfig,
+  ProviderId,
   ModelInfo,
   ModelConfig,
   ThinkingConfig,
 } from '@/lib/types/provider';
 import { createLogger } from '@/lib/logger';
-import { applyModelMetadata, getCatalogThinkingCapability } from './model-metadata';
+import { getProviderConfig, getModelInfo } from './providers-registry';
+import { getCatalogThinkingCapability } from './model-metadata';
 import { getDefaultThinkingConfig } from './thinking-config';
 import { buildThinkingBodyParams } from './strategies/thinking-strategy';
 import { normalizeMiniMaxBaseUrl } from './adapters/minimax-adapter';
@@ -47,997 +49,21 @@ import { getKeyPool } from './key-pool';
 
 const log = createLogger('AIProviders');
 
-// Re-export types for backward compatibility
+// Re-export the client-safe catalog + types for backward compatibility.
 export type { ProviderId, ProviderConfig, ModelInfo, ModelConfig };
+export {
+  PROVIDERS,
+  getProviderConfig,
+  getModelInfo,
+  isProviderKeyRequired,
+  parseModelString,
+  getAllModels,
+  getProvider,
+  MONO_LOGO_PROVIDERS,
+} from './providers-registry';
 
-/** Provider IDs whose logos are monochrome-dark and need `dark:invert` in dark mode */
-export const MONO_LOGO_PROVIDERS: ReadonlySet<string> = new Set(['openai', 'openrouter', 'ollama']);
-
-/**
- * Provider registry
- */
-export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
-  openai: {
-    id: 'openai',
-    name: 'OpenAI',
-    type: 'openai',
-    defaultBaseUrl: 'https://api.openai.com/v1',
-    requiresApiKey: true,
-    icon: '/logos/openai.svg',
-    models: [
-      {
-        id: 'gpt-5.5',
-        name: 'GPT-5.5',
-        contextWindow: 1050000,
-        outputWindow: 128000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: false,
-            budgetAdjustable: true,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'gpt-5.4-pro',
-        name: 'GPT-5.4 Pro',
-        contextWindow: 1050000,
-        outputWindow: 128000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'gpt-5.4',
-        name: 'GPT-5.4',
-        contextWindow: 1050000,
-        outputWindow: 128000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'gpt-5.4-mini',
-        name: 'GPT-5.4 Mini',
-        contextWindow: 400000,
-        outputWindow: 128000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'gpt-5.4-nano',
-        name: 'GPT-5.4 Nano',
-        contextWindow: 400000,
-        outputWindow: 128000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-    ],
-  },
-
-  anthropic: {
-    id: 'anthropic',
-    name: 'Claude',
-    type: 'anthropic',
-    requiresApiKey: true,
-    defaultBaseUrl: 'https://api.anthropic.com/v1',
-    icon: '/logos/claude.svg',
-    models: [
-      {
-        id: 'claude-opus-4-7',
-        name: 'Claude Opus 4.7',
-        contextWindow: 1000000,
-        outputWindow: 128000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'claude-opus-4-6',
-        name: 'Claude Opus 4.6',
-        contextWindow: 200000,
-        outputWindow: 128000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'claude-sonnet-4-6',
-        name: 'Claude Sonnet 4.6',
-        contextWindow: 200000,
-        outputWindow: 128000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'claude-sonnet-4-5',
-        name: 'Claude Sonnet 4.5',
-        contextWindow: 200000,
-        outputWindow: 64000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'claude-haiku-4-5',
-        name: 'Claude Haiku 4.5',
-        contextWindow: 200000,
-        outputWindow: 64000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-    ],
-  },
-
-  google: {
-    id: 'google',
-    name: 'Gemini',
-    type: 'google',
-    requiresApiKey: true,
-    defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-    icon: '/logos/gemini.svg',
-    models: [
-      {
-        id: 'gemini-3.1-pro-preview',
-        name: 'Gemini 3.1 Pro Preview',
-        contextWindow: 1048576,
-        outputWindow: 65536,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: false,
-            budgetAdjustable: true,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'gemini-3-flash-preview',
-        name: 'Gemini 3 Flash Preview',
-        contextWindow: 1048576,
-        outputWindow: 65536,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: false,
-            budgetAdjustable: true,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'gemini-2.5-flash',
-        name: 'Gemini 2.5 Flash',
-        contextWindow: 1048576,
-        outputWindow: 65536,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'gemini-2.5-flash-lite',
-        name: 'Gemini 2.5 Flash Lite',
-        contextWindow: 1048576,
-        outputWindow: 65536,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'gemini-2.5-pro',
-        name: 'Gemini 2.5 Pro',
-        contextWindow: 1048576,
-        outputWindow: 65536,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: false,
-            budgetAdjustable: true,
-            defaultEnabled: true,
-          },
-        },
-      },
-    ],
-  },
-
-  glm: {
-    id: 'glm',
-    name: 'GLM',
-    type: 'openai',
-    defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    alternateBaseUrls: [
-      { label: '国内', url: 'https://open.bigmodel.cn/api/paas/v4' },
-      { label: '国际', url: 'https://api.z.ai/api/paas/v4' },
-    ],
-    requiresApiKey: true,
-    icon: '/logos/glm.svg',
-    models: [
-      // GLM-5.1 Series - Latest flagship model
-      {
-        id: 'glm-5.1',
-        name: 'GLM-5.1',
-        contextWindow: 200000,
-        outputWindow: 128000,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      {
-        id: 'glm-5v-turbo',
-        name: 'GLM-5V-Turbo',
-        contextWindow: 200000,
-        outputWindow: 128000,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      // GLM-5 Series
-      {
-        id: 'glm-5',
-        name: 'GLM-5',
-        contextWindow: 200000,
-        outputWindow: 128000,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      // GLM-4.7 Series
-      {
-        id: 'glm-4.7',
-        name: 'GLM-4.7',
-        contextWindow: 200000,
-        outputWindow: 128000,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      {
-        id: 'glm-4.7-flashx',
-        name: 'GLM-4.7-FlashX',
-        contextWindow: 200000,
-        outputWindow: 128000,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      {
-        id: 'glm-4.7-flash',
-        name: 'GLM-4.7-Flash',
-        contextWindow: 200000,
-        outputWindow: 128000,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      // GLM-4.6 Series - Advanced coding & reasoning
-      {
-        id: 'glm-4.6',
-        name: 'GLM-4.6',
-        contextWindow: 200000,
-        outputWindow: 128000,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      {
-        id: 'glm-4.6v',
-        name: 'GLM-4.6V',
-        contextWindow: 128000,
-        outputWindow: 32000,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      {
-        id: 'glm-4.6v-flash',
-        name: 'GLM-4.6V-Flash',
-        contextWindow: 128000,
-        outputWindow: 32000,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-    ],
-  },
-
-  qwen: {
-    id: 'qwen',
-    name: 'Qwen',
-    type: 'openai',
-    defaultBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    requiresApiKey: true,
-    icon: '/logos/qwen.svg',
-    models: [
-      {
-        id: 'qwen3.6-max-preview',
-        name: 'Qwen3.6 Max Preview',
-        contextWindow: 256000,
-        outputWindow: 64000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: false,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'qwen3.6-plus',
-        name: 'Qwen3.6 Plus',
-        contextWindow: 1000000,
-        outputWindow: 64000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: false,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'qwen3.6-plus-2026-04-02',
-        name: 'Qwen3.6 Plus (2026-04-02)',
-        contextWindow: 1000000,
-        outputWindow: 64000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: false,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'qwen3.6-flash',
-        name: 'Qwen3.6 Flash',
-        contextWindow: 1000000,
-        outputWindow: 64000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: false,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'qwen3.6-flash-2026-04-16',
-        name: 'Qwen3.6 Flash (2026-04-16)',
-        contextWindow: 1000000,
-        outputWindow: 64000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: false,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'qwen3.6-35b-a3b',
-        name: 'Qwen3.6 35B A3B',
-        contextWindow: 262144,
-        outputWindow: 64000,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: false,
-          },
-        },
-      },
-      {
-        id: 'qwen3.5-flash',
-        name: 'Qwen3.5 Flash',
-        contextWindow: 1000000,
-        outputWindow: 65536,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      {
-        id: 'qwen3.5-plus',
-        name: 'Qwen3.5 Plus',
-        contextWindow: 1000000,
-        outputWindow: 65536,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      {
-        id: 'qwen3-max',
-        name: 'Qwen3 Max',
-        contextWindow: 262144,
-        outputWindow: 65536,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      {
-        id: 'qwen3-vl-plus',
-        name: 'Qwen3 VL Plus',
-        contextWindow: 262144,
-        outputWindow: 32768,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-    ],
-  },
-
-  deepseek: {
-    id: 'deepseek',
-    name: 'DeepSeek',
-    type: 'openai',
-    defaultBaseUrl: 'https://api.deepseek.com/v1',
-    requiresApiKey: true,
-    icon: '/logos/deepseek.svg',
-    models: [
-      {
-        id: 'deepseek-v4-pro',
-        name: 'DeepSeek V4 Pro',
-        contextWindow: 1048576,
-        outputWindow: 393216,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: false,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'deepseek-v4-flash',
-        name: 'DeepSeek V4 Flash',
-        contextWindow: 1048576,
-        outputWindow: 393216,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: false,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: true,
-            defaultEnabled: true,
-          },
-        },
-      },
-    ],
-  },
-
-  kimi: {
-    id: 'kimi',
-    name: 'Kimi',
-    type: 'openai',
-    defaultBaseUrl: 'https://api.moonshot.cn/v1',
-    alternateBaseUrls: [
-      { label: '国内', url: 'https://api.moonshot.cn/v1' },
-      { label: '国际', url: 'https://api.moonshot.ai/v1' },
-    ],
-    requiresApiKey: true,
-    icon: '/logos/kimi.png',
-    models: [
-      {
-        id: 'kimi-k2.6',
-        name: 'Kimi K2.6',
-        contextWindow: 256000,
-        outputWindow: 8192,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: false,
-            defaultEnabled: true,
-          },
-        },
-      },
-      // K2.5 Series (2026) - 1T MoE, 32B active parameters
-      {
-        id: 'kimi-k2.5',
-        name: 'Kimi K2.5',
-        contextWindow: 256000,
-        outputWindow: 8192,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: false,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'kimi-k2-thinking',
-        name: 'Kimi K2 Thinking',
-        contextWindow: 256000,
-        outputWindow: 8192,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: false,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: false,
-            defaultEnabled: true,
-          },
-        },
-      },
-    ],
-  },
-
-  minimax: {
-    id: 'minimax',
-    name: 'MiniMax',
-    type: 'anthropic',
-    defaultBaseUrl: 'https://api.minimaxi.com/anthropic/v1',
-    alternateBaseUrls: [
-      { label: '国内', url: 'https://api.minimaxi.com/anthropic/v1' },
-      { label: '国际', url: 'https://api.minimax.io/anthropic/v1' },
-    ],
-    requiresApiKey: true,
-    icon: '/logos/minimax.svg',
-    models: [
-      {
-        id: 'MiniMax-M2.7',
-        name: 'MiniMax M2.7',
-        contextWindow: 204800,
-        outputWindow: 8192,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-    ],
-  },
-
-  siliconflow: {
-    id: 'siliconflow',
-    name: '硅基流动',
-    type: 'openai',
-    defaultBaseUrl: 'https://api.siliconflow.cn/v1',
-    requiresApiKey: true,
-    icon: '/logos/siliconflow.svg',
-    models: [
-      // DeepSeek Series
-      {
-        id: 'deepseek-ai/DeepSeek-V3.2',
-        name: 'DeepSeek-V3.2',
-        contextWindow: 128000,
-        outputWindow: 8192,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      {
-        id: 'deepseek-ai/DeepSeek-R1',
-        name: 'DeepSeek-R1',
-        contextWindow: 128000,
-        outputWindow: 8192,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      {
-        id: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B',
-        name: 'DeepSeek-R1-Distill-Qwen-7B',
-        contextWindow: 128000,
-        outputWindow: 8192,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      // Qwen Series
-      {
-        id: 'Qwen/Qwen3-VL-32B-Instruct',
-        name: 'Qwen3-VL-32B-Instruct',
-        contextWindow: 256000,
-        outputWindow: 32768,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      // Kimi Series
-      {
-        id: 'Pro/moonshotai/Kimi-K2.5',
-        name: 'Kimi-K2.5',
-        contextWindow: 256000,
-        outputWindow: 96000,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      // GLM Series
-      {
-        id: 'THUDM/GLM-4.1V-9B-Thinking',
-        name: 'GLM-4.1V-9B-Thinking',
-        contextWindow: 64000,
-        outputWindow: 8192,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      {
-        id: 'THUDM/GLM-Z1-Rumination-32B-0414',
-        name: 'GLM-Z1-Rumination-32B',
-        contextWindow: 32000,
-        outputWindow: 16384,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-    ],
-  },
-
-  doubao: {
-    id: 'doubao',
-    name: '豆包',
-    type: 'openai',
-    defaultBaseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
-    requiresApiKey: true,
-    icon: '/logos/doubao.svg',
-    models: [
-      {
-        id: 'doubao-seed-2-0-pro-260215',
-        name: 'Doubao Seed 2.0 Pro',
-        contextWindow: 128000,
-        outputWindow: 32768,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      {
-        id: 'doubao-seed-2-0-lite-260215',
-        name: 'Doubao Seed 2.0 Lite',
-        contextWindow: 128000,
-        outputWindow: 32768,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      {
-        id: 'doubao-seed-2-0-mini-260215',
-        name: 'Doubao Seed 2.0 Mini',
-        contextWindow: 128000,
-        outputWindow: 32768,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      {
-        id: 'doubao-seed-1-8-251228',
-        name: 'Doubao Seed 1.8',
-        contextWindow: 128000,
-        outputWindow: 32768,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-    ],
-  },
-
-  openrouter: {
-    id: 'openrouter',
-    name: 'OpenRouter',
-    type: 'openai',
-    defaultBaseUrl: 'https://openrouter.ai/api/v1',
-    requiresApiKey: true,
-    icon: '/logos/openrouter.svg',
-    models: [
-      {
-        id: 'deepseek/deepseek-v4-pro',
-        name: 'DeepSeek V4 Pro',
-        contextWindow: 1048576,
-        outputWindow: 131072,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      {
-        id: 'deepseek/deepseek-v4-flash',
-        name: 'DeepSeek V4 Flash',
-        contextWindow: 1048576,
-        outputWindow: 131072,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-    ],
-  },
-
-  grok: {
-    id: 'grok',
-    name: 'Grok',
-    type: 'openai',
-    defaultBaseUrl: 'https://api.x.ai/v1',
-    requiresApiKey: true,
-    icon: '/logos/grok.svg',
-    models: [
-      {
-        id: 'grok-4.20-reasoning',
-        name: 'Grok 4.20 Reasoning',
-        contextWindow: 2000000,
-        outputWindow: 131072,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: false,
-            budgetAdjustable: false,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'grok-4.20',
-        name: 'Grok 4.20',
-        contextWindow: 2000000,
-        outputWindow: 131072,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      {
-        id: 'grok-4.20-multi-agent',
-        name: 'Grok 4.20 Multi-Agent',
-        contextWindow: 2000000,
-        outputWindow: 131072,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: false,
-            budgetAdjustable: false,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'grok-4-1-fast-reasoning',
-        name: 'Grok 4.1 Fast Reasoning',
-        contextWindow: 2000000,
-        outputWindow: 131072,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: false,
-            budgetAdjustable: false,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'grok-4-1-fast-non-reasoning',
-        name: 'Grok 4.1 Fast',
-        contextWindow: 2000000,
-        outputWindow: 131072,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      {
-        id: 'grok-code-fast-1',
-        name: 'Grok Code Fast',
-        contextWindow: 256000,
-        outputWindow: 32768,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-    ],
-  },
-
-  'tencent-hunyuan': {
-    id: 'tencent-hunyuan',
-    name: 'Tencent Hunyuan',
-    type: 'openai',
-    defaultBaseUrl: 'https://tokenhub.tencentmaas.com/v1',
-    alternateBaseUrls: [
-      { label: '国内', url: 'https://tokenhub.tencentmaas.com/v1' },
-      {
-        label: '国际',
-        url: 'https://tokenhub-intl.tencentmaas.com/v1',
-      },
-    ],
-    requiresApiKey: true,
-    icon: '/logos/hunyuan.svg',
-    models: [
-      {
-        id: 'hy3-preview',
-        name: 'Tencent Hy3 Preview',
-        contextWindow: 256000,
-        outputWindow: 64000,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-    ],
-  },
-
-  xiaomi: {
-    id: 'xiaomi',
-    name: 'Xiaomi MiMo',
-    type: 'openai',
-    defaultBaseUrl: 'https://api.xiaomimimo.com/v1',
-    requiresApiKey: true,
-    icon: '/logos/xiaomi.svg',
-    models: [
-      {
-        id: 'mimo-v2.5-pro',
-        name: 'MiMo V2.5 Pro',
-        contextWindow: 1048576,
-        outputWindow: 131072,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: false,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: false,
-            defaultEnabled: true,
-          },
-        },
-      },
-      {
-        id: 'mimo-v2.5',
-        name: 'MiMo V2.5',
-        contextWindow: 1048576,
-        outputWindow: 131072,
-        capabilities: {
-          streaming: true,
-          tools: true,
-          vision: true,
-          thinking: {
-            toggleable: true,
-            budgetAdjustable: false,
-            defaultEnabled: true,
-          },
-        },
-      },
-    ],
-  },
-
-  ollama: {
-    id: 'ollama',
-    name: 'Ollama',
-    type: 'openai',
-    defaultBaseUrl: 'http://localhost:11434/v1',
-    requiresApiKey: false,
-    icon: '/logos/ollama.svg',
-    models: [
-      {
-        id: 'llama3.3',
-        name: 'Llama 3.3 70B',
-        contextWindow: 131072,
-        outputWindow: 4096,
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-      {
-        id: 'gemma3',
-        name: 'Gemma 3 12B',
-        contextWindow: 131072,
-        outputWindow: 8192,
-        capabilities: { streaming: true, tools: true, vision: true },
-      },
-      {
-        id: 'deepseek-r1',
-        name: 'DeepSeek R1',
-        contextWindow: 131072,
-        outputWindow: 8192,
-        capabilities: { streaming: true, tools: false, vision: false },
-      },
-    ],
-  },
-
-  lemonade: {
-    id: 'lemonade',
-    name: 'Lemonade',
-    type: 'openai',
-    defaultBaseUrl: 'http://localhost:13305/v1',
-    requiresApiKey: false,
-    icon: '/logos/lemonade.svg',
-    models: [
-      {
-        id: 'Gemma-4-26B-A4B-it-GGUF',
-        name: 'Gemma 4 26B A4B IT GGUF',
-        capabilities: { streaming: true, tools: true, vision: false },
-      },
-    ],
-  },
-};
-
-applyModelMetadata(PROVIDERS);
-
-/**
- * Get provider config (from built-in or unified config in localStorage)
- */
-function getProviderConfig(providerId: ProviderId): ProviderConfig | null {
-  // Check built-in providers first
-  if (PROVIDERS[providerId]) {
-    return PROVIDERS[providerId];
-  }
-
-  // Check unified providersConfig in localStorage (browser only)
-  if (typeof window !== 'undefined') {
-    try {
-      const storedConfig = localStorage.getItem('providersConfig');
-      if (storedConfig) {
-        const config = JSON.parse(storedConfig);
-        const providerSettings = config[providerId];
-        if (providerSettings) {
-          return {
-            id: providerId,
-            name: providerSettings.name,
-            type: providerSettings.type,
-            defaultBaseUrl: providerSettings.defaultBaseUrl,
-            icon: providerSettings.icon,
-            requiresApiKey: providerSettings.requiresApiKey,
-            models: providerSettings.models,
-          };
-        }
-      }
-    } catch (e) {
-      log.error('Failed to load provider config:', e);
-    }
-  }
-
-  return null;
-}
+// Re-export thinking capability helper from model-metadata.
+export { getCatalogThinkingCapability } from './model-metadata';
 
 /**
  * Model instance with its configuration info
@@ -1069,11 +95,6 @@ function shouldUseOpenAIResponsesApi(providerId: ProviderId, modelId: string): b
     /^gpt-5\.5(?:-|$)/.test(modelId) ||
     /^gpt-5\.[3-9]-codex(?:-|$)/.test(modelId)
   );
-}
-
-/** Returns true if the provider requires an API key (defaults to true for unknown providers). */
-export function isProviderKeyRequired(providerId: string): boolean {
-  return getProviderConfig(providerId as ProviderId)?.requiresApiKey ?? true;
 }
 
 /**
@@ -1158,7 +179,10 @@ export function getModel(config: ModelConfig): ModelWithInfo {
             // Otherwise let server-side env/YAML config (including key pool)
             // take precedence over a single fallback key.
             if (config.apiKey?.includes(',')) {
-              apiKeys = config.apiKey.split(',').map((k: string) => k.trim()).filter(Boolean);
+              apiKeys = config.apiKey
+                .split(',')
+                .map((k: string) => k.trim())
+                .filter(Boolean);
             } else {
               apiKeys = resolveApiKeyPool(providerId);
             }
@@ -1216,7 +240,10 @@ export function getModel(config: ModelConfig): ModelWithInfo {
             response = await globalThis.fetch(url, newInit);
           } catch (fetchErr) {
             if (keyPool && selectedKey) {
-              keyPool.markFailed(selectedKey, fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr)));
+              keyPool.markFailed(
+                selectedKey,
+                fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr)),
+              );
             }
             throw fetchErr;
           }
@@ -1253,7 +280,9 @@ export function getModel(config: ModelConfig): ModelWithInfo {
           let transformErrorLogged = false;
           let bodyReadTimer: ReturnType<typeof setTimeout> | null = null;
           try {
-            log.info(`[FetchWrapper] reading response body... status=${response.status} fetch=${fetchDuration}ms`);
+            log.info(
+              `[FetchWrapper] reading response body... status=${response.status} fetch=${fetchDuration}ms`,
+            );
             const textStart = Date.now();
             // Page design outputs up to 24k tokens; DeepSeek can take 3-7 min.
             // Because Node.js fetch cannot cancel response.text() via AbortSignal
@@ -1282,24 +311,35 @@ export function getModel(config: ModelConfig): ModelWithInfo {
                 }, BODY_READ_TIMEOUT_MS);
               }),
             ]);
-            log.info(`[FetchWrapper] response.text() done in ${Date.now() - textStart}ms, length=${text.length}`);
+            log.info(
+              `[FetchWrapper] response.text() done in ${Date.now() - textStart}ms, length=${text.length}`,
+            );
             // Detect encoding corruption: look for Unicode replacement char (U+FFFD) or
             // bare question-mark sequences that often appear when UTF-8 bytes are mis-decoded.
             if (text.includes('\uFFFD') || /\?{4,}/.test(text)) {
-              log.warn(`[FetchWrapper] Possible encoding corruption detected in response body (U+FFFD or ???? found). Provider=${providerId} model=${config.modelId}`);
+              log.warn(
+                `[FetchWrapper] Possible encoding corruption detected in response body (U+FFFD or ???? found). Provider=${providerId} model=${config.modelId}`,
+              );
             }
             const parsed = JSON.parse(text);
 
-            // 1. Detect error-in-200 response (DeepSeek load-balancer behavior)
+            // 1. Detect error-in-200 response (some providers' load-balancers
+            //    return errors with HTTP 200; label with the real provider)
             if (parsed.error) {
-              log.error(`DeepSeek API returned error in HTTP 200 body: ${JSON.stringify(parsed.error)}`);
-              throw new Error(`DeepSeek API error: ${JSON.stringify(parsed.error)}`);
+              log.error(
+                `${providerId} API returned error in HTTP 200 body: ${JSON.stringify(parsed.error)}`,
+              );
+              throw new Error(`${providerId} API error: ${JSON.stringify(parsed.error)}`);
             }
 
             // 2. Guard empty / malformed choices — DO NOT fabricate empty content
             if (!parsed.choices || !Array.isArray(parsed.choices) || parsed.choices.length === 0) {
-              log.error(`DeepSeek response missing choices. Body keys: ${Object.keys(parsed).join(',')}`);
-              throw new Error(`DeepSeek response missing choices: ${Object.keys(parsed).join(',')}`);
+              log.error(
+                `DeepSeek response missing choices. Body keys: ${Object.keys(parsed).join(',')}`,
+              );
+              throw new Error(
+                `DeepSeek response missing choices: ${Object.keys(parsed).join(',')}`,
+              );
             }
 
             // 3. Deep-clean each choice — whitelist approach
@@ -1319,7 +359,11 @@ export function getModel(config: ModelConfig): ModelWithInfo {
               const msg = choice.message as Record<string, unknown>;
 
               // content: null / undefined / non-string → ''
-              if (msg.content === null || msg.content === undefined || typeof msg.content !== 'string') {
+              if (
+                msg.content === null ||
+                msg.content === undefined ||
+                typeof msg.content !== 'string'
+              ) {
                 msg.content = '';
               }
 
@@ -1345,8 +389,12 @@ export function getModel(config: ModelConfig): ModelWithInfo {
             // 5. Strip non-standard usage fields
             if (parsed.usage && typeof parsed.usage === 'object') {
               const usage = parsed.usage as Record<string, unknown>;
-              if (usage.completion_tokens_details && typeof usage.completion_tokens_details === 'object') {
-                delete (usage.completion_tokens_details as Record<string, unknown>).reasoning_tokens;
+              if (
+                usage.completion_tokens_details &&
+                typeof usage.completion_tokens_details === 'object'
+              ) {
+                delete (usage.completion_tokens_details as Record<string, unknown>)
+                  .reasoning_tokens;
               }
               delete usage.prompt_cache_hit_tokens;
               delete usage.prompt_cache_miss_tokens;
@@ -1368,13 +416,13 @@ export function getModel(config: ModelConfig): ModelWithInfo {
             // NOTE: Node.js AbortError message may be 'The operation was aborted' or
             // 'This operation was aborted'; DOMException may have name 'AbortError'.
             // Also guard against 'Response body read timeout' from our own timer.
-            const isAbortOrTimeout = err instanceof Error && (
-              err.name === 'AbortError' ||
-              err.name === 'TimeoutError' ||
-              err.message.toLowerCase().includes('abort') ||
-              err.message.toLowerCase().includes('timeout') ||
-              err.message.toLowerCase().includes('operation was aborted')
-            );
+            const isAbortOrTimeout =
+              err instanceof Error &&
+              (err.name === 'AbortError' ||
+                err.name === 'TimeoutError' ||
+                err.message.toLowerCase().includes('abort') ||
+                err.message.toLowerCase().includes('timeout') ||
+                err.message.toLowerCase().includes('operation was aborted'));
             if (isAbortOrTimeout) {
               throw err;
             }
@@ -1383,7 +431,10 @@ export function getModel(config: ModelConfig): ModelWithInfo {
             // so retries can pick a different key / provider.
             const isTerminated = errMsg.toLowerCase().includes('terminated');
             if (isTerminated && keyPool && selectedKey) {
-              keyPool.markFailed(selectedKey, new Error(`Provider terminated connection after ${fetchDuration}ms`));
+              keyPool.markFailed(
+                selectedKey,
+                new Error(`Provider terminated connection after ${fetchDuration}ms`),
+              );
             }
             if (!transformErrorLogged) {
               transformErrorLogged = true;
@@ -1392,8 +443,12 @@ export function getModel(config: ModelConfig): ModelWithInfo {
               try {
                 // Clone response to re-read body (response.text() may have been consumed)
                 // If body was consumed, we can't re-read; but we log what we can.
-              } catch { /* ignore */ }
-              log.error(`Response transform failed: ${errMsg}. status=${response.status} fetch=${fetchDuration}ms. Raw response preview unavailable (body consumed).`);
+              } catch {
+                /* ignore */
+              }
+              log.error(
+                `Response transform failed: ${errMsg}. status=${response.status} fetch=${fetchDuration}ms. Raw response preview unavailable (body consumed).`,
+              );
             }
             // Body already consumed by response.text(); returning raw response would
             // cause downstream readers to see empty body. Always throw.
@@ -1436,59 +491,7 @@ export function getModel(config: ModelConfig): ModelWithInfo {
   }
 
   // Look up model info from the provider registry
-  const modelInfo = provider?.models.find((m) => m.id === config.modelId) || null;
+  const modelInfo = getModelInfo(config.providerId, config.modelId) ?? null;
 
   return { model, modelInfo };
-}
-
-/**
- * Parse model string in format "providerId:modelId" or just "modelId" (defaults to OpenAI)
- */
-export function parseModelString(modelString: string): {
-  providerId: ProviderId;
-  modelId: string;
-} {
-  // Split only on the first colon to handle model IDs that contain colons
-  const colonIndex = modelString.indexOf(':');
-
-  if (colonIndex > 0) {
-    return {
-      providerId: modelString.slice(0, colonIndex) as ProviderId,
-      modelId: modelString.slice(colonIndex + 1),
-    };
-  }
-
-  // Default to OpenAI for backward compatibility
-  return {
-    providerId: 'openai',
-    modelId: modelString,
-  };
-}
-
-/**
- * Get all available models grouped by provider
- */
-export function getAllModels(): {
-  provider: ProviderConfig;
-  models: ModelInfo[];
-}[] {
-  return Object.values(PROVIDERS).map((provider) => ({
-    provider,
-    models: provider.models,
-  }));
-}
-
-/**
- * Get provider by ID
- */
-export function getProvider(providerId: ProviderId): ProviderConfig | undefined {
-  return PROVIDERS[providerId];
-}
-
-/**
- * Get model info
- */
-export function getModelInfo(providerId: ProviderId, modelId: string): ModelInfo | undefined {
-  const provider = PROVIDERS[providerId];
-  return provider?.models.find((m) => m.id === modelId);
 }

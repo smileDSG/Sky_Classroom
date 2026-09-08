@@ -58,6 +58,7 @@ export function QuickAccessGrid() {
             transition={{ delay: 0.1 + i * 0.06 }}
             whileHover={{ y: -5, scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
+            onMouseEnter={() => router.prefetch(item.href)}
             onClick={() => router.push(item.href)}
             className={`
               group relative flex items-center gap-3 rounded-xl border ${item.border}

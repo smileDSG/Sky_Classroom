@@ -175,6 +175,15 @@ const objectY = groundY - BOTTOM_MARGIN - (altitude / maxHeight) * playableHeigh
 - Use padding or margins to create "safe zones" for game objects
 - Position game objects within the visible canvas area, not under overlays
 
+### Panel Fit & Flatness (CRITICAL)
+The widget is shown full-width inside a landscape panel. The whole game must fit without an internal vertical scrollbar or horizontal overflow.
+
+- `html, body { height:100%; margin:0; overflow-x:hidden; }`; do not give the outer card a fixed pixel width larger than the panel.
+- Fit the play area and instruction/hud text so the page has **no vertical scrollbar**; use `overflow:auto` only on an optional instruction drawer if text is long.
+- Balance content vertically — avoid dense text up top with a large empty lower area, and avoid pushing anything below the fold.
+- Do **not** apply a 3D perspective / tilt transform to the whole page or the outer card; it makes text harder to read under a spotlight. Keep any tilt subtle and local to a single game element only.
+- The canvas/play-area should stay at least `min-height: 240px` and width `100%` so it is never squished into a flat strip.
+
 ## Output Format (CRITICAL)
 
 **Return EXACTLY ONE HTML document.** Do NOT:

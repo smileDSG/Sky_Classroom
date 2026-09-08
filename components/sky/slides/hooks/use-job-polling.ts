@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
+import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 
 export interface JobResult {
   pptxUrl: string;
@@ -32,6 +33,8 @@ export function useJobPolling() {
       const MAX_POLL_ERRORS = 5;
 
       const tick = async () => {
+        // Skip network work while the tab is hidden/backgrounded.
+        if (!isDocumentVisible()) return;
         try {
           const statusRes = await fetch(
             `/api/sky/slides/generate/status?jobId=${jobId}`,

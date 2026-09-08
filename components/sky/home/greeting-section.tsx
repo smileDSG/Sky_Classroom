@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { Zap, Sparkles, Brain } from 'lucide-react';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useAuth } from '@/components/auth/auth-provider';
+import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
 
 interface LearningStats {
   todayStudyMinutes: number;
@@ -59,6 +60,7 @@ export function GreetingSection() {
     if (!user) return;
 
     const fetchStats = () => {
+      if (!isDocumentVisible()) return;
       fetch('/api/sky/learning-stats', { credentials: 'include' })
         .then((r) => r.json())
         .then((data) => {

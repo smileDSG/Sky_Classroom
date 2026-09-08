@@ -30,7 +30,8 @@ export interface LayoutGuardIssue {
     | 'low_content_richness'
     | 'weak_visual_hierarchy'
     | 'excessive_colored_panels'
-    | 'unlabeled_visual_placeholder';
+    | 'unlabeled_visual_placeholder'
+    | 'data_overwhelms_explanation';
   textId?: string;
   backgroundId?: string;
   detail: string;
@@ -59,6 +60,13 @@ const MIN_VISUAL_HIERARCHY_GAP = 6;
 const MIN_LARGE_PANEL_AREA = CANVAS_AREA * 0.018;
 const DEFAULT_DARK_TEXT = '#172033';
 const DEFAULT_LIGHT_TEXT = '#ffffff';
+
+// Proportions guard: a data/table/chart element that is both >58% wide and >45% tall
+// will dominate the page and squeeze the teaching explanation out.
+const MAX_DATA_ELEMENT_WIDTH = 580; // ~58% of the 1000px canvas
+const MAX_DATA_ELEMENT_HEIGHT = 253; // ~45% of the 562.5px canvas
+const MIN_EXPLANATION_LANE_WIDTH = 300;
+const MIN_EXPLANATION_LANE_HEIGHT = 110;
 
 function toBox(left: number, top: number, width: number, height: number): ElementBox {
   return {
@@ -233,6 +241,59 @@ function isReadableText(element: LayoutElement): boolean {
 function isReadableLayoutElement(element: LayoutElement): boolean {
   if (isReadableText(element) || hasShapeText(element)) return true;
   return ['latex', 'table', 'chart', 'code'].includes(element.type);
+}
+
+/** Data-heavy visual elements that can dominate a page and squeeze out explanations. */
+function isDataElement(element: LayoutElement): boolean {
+  return element.type === 'table' || element.type === 'chart';
+}
+
+/** A teaching explanation lane: centered/body text or a shape carrying real text, not the title. */
+function isExplanationLane(element: LayoutElement): boolean {
+  if (element.type === 'text') return true;
+  if (element.type === 'shape') return hasShapeText(element);
+  return false;
+}
+
+/** True when an explanation lane is cramped (too narrow or too short to read comfortably). */
+function isCrampedLane(box: ElementBox): boolean {
+  return box.width < MIN_EXPLANATION_LANE_WIDTH || box.height < MIN_EXPLANATION_LANE_HEIGHT;
+}
+
+function auditDataOverwhelmsExplanation<T extends LayoutElement>(
+  elements: T[],
+): LayoutGuardIssue[] {
+  const issues: LayoutGuardIssue[] = [];
+  const oversized = elements
+    .filter(isDataElement)
+    .map((el) => ({ el, box: getElementBox(el) }))
+    .filter(({ box }) => box.height > MAX_DATA_ELEMENT_HEIGHT)
+    .filter(({ box }) => box.width > MAX_DATA_ELEMENT_WIDTH);
+
+  if (oversized.length === 0) return issues;
+
+  const bodyTexts = elements
+    .filter(isExplanationLane)
+    .map(getElementBox)
+    .filter((box) => box.top >= 100); // below the title zone
+
+  // Only flag when a data block dominates AND a teaching explanation is being starved
+  // (present but cramped into a narrow/short lane). A data-only page (e.g. a lone
+  // comparison table with no explanation lane) is intentional and accepted.
+  const hasStarvedExplanation = bodyTexts.some(
+    (t) => t.width < MIN_EXPLANATION_LANE_WIDTH || t.height < MIN_EXPLANATION_LANE_HEIGHT,
+  );
+  if (!hasStarvedExplanation) return issues;
+
+  for (const { el, box } of oversized) {
+    issues.push({
+      type: 'data_overwhelms_explanation',
+      textId: el.id,
+      detail: `data element ${el.id ?? ''} (${box.width}w x ${box.height}h) leaves no readable explanation lane (>=${MIN_EXPLANATION_LANE_WIDTH}w or >=${MIN_EXPLANATION_LANE_HEIGHT}h)`,
+    });
+  }
+
+  return issues;
 }
 
 function getTextContent(element: LayoutElement): string {
@@ -709,6 +770,7 @@ export function auditSlideLayout<T extends LayoutElement>(
     ...auditLatexSizing(elements),
     ...auditSafeBounds(elements),
     ...auditParallelAlignment(elements),
+    ...auditDataOverwhelmsExplanation(elements),
   ];
 
   elements.forEach((element, index) => {
@@ -769,6 +831,33 @@ export function repairSlideLayout<T extends LayoutElement>(elements: T[]): T[] {
       }
       if (box.bottom > DEFAULT_SAFE_BOUNDS.bottom) {
         element.top = Math.max(DEFAULT_SAFE_BOUNDS.top, DEFAULT_SAFE_BOUNDS.bottom - box.height);
+      }
+    }
+
+    // Auto-repair: shrink an oversized table/chart that dominates the page AND is starving a
+    // teaching explanation lane. Only applies when it is BOTH too wide and too tall, and only
+    // when a cramped explanation lane exists (so a lone data page stays untouched).
+    if (isDataElement(element)) {
+      const box = getElementBox(element);
+      if (box.width > MAX_DATA_ELEMENT_WIDTH && box.height > MAX_DATA_ELEMENT_HEIGHT) {
+        const explanation = adjusted.some(
+          (candidate) =>
+            isExplanationLane(candidate) &&
+            candidate.top >= 100 &&
+            isCrampedLane(getElementBox(candidate)),
+        );
+        if (explanation) {
+          element.width = MAX_DATA_ELEMENT_WIDTH;
+          const nextLeft = Math.max(DEFAULT_SAFE_BOUNDS.left, element.left);
+          if (nextLeft + element.width > DEFAULT_SAFE_BOUNDS.right) {
+            element.left = Math.max(
+              DEFAULT_SAFE_BOUNDS.left,
+              DEFAULT_SAFE_BOUNDS.right - element.width,
+            );
+          } else {
+            element.left = nextLeft;
+          }
+        }
       }
     }
 

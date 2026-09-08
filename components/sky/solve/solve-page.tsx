@@ -100,8 +100,8 @@ async function recognizeImage(file: File): Promise<RecognizedImageResult> {
   formData.append('image', file);
 
   const res = await fetch('/api/sky/solve/recognize', { method: 'POST', body: formData });
-  if (!res.ok) throw new Error('图片识别失败');
   const json = await res.json();
+  if (!res.ok) throw new Error(json.error || json.details || '图片识别失败');
   return {
     text: json.text ?? '',
     latex: json.latex ?? '',
@@ -324,9 +324,9 @@ async function submitSolveJob(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ problem, problemImage, problemSpec }),
   });
-  if (!res.ok) throw new Error('提交解题作业失败');
-  const json = await res.json();
-  return json.data?.jobId ?? json.jobId;
+  const json = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(json?.error || json?.details || '提交解题作业失败');
+  return json?.data?.jobId ?? json?.jobId;
 }
 
 function phaseLabel(phase: StreamPhase): string {

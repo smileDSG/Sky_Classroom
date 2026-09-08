@@ -5,7 +5,7 @@
   1) 启动生产服务器（next start）
   2) 软件杯演示页可匿名访问（HTTP 200）
   3) 零密钥生成接口返回多智能体轨迹（agentTrace 非空）
-  4) 演示账号可登录（ENABLE_DEMO_ACCOUNT 生效）
+  4) 体验账号可登录
 """
 import os
 import sys

@@ -40,7 +40,7 @@ export function AnimatedLogo() {
             animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
             transition={{ duration: 3, repeat: Infinity }}
           />
-          <img src="/logo-icon.svg" alt="天空课堂" className="w-full h-full drop-shadow-lg" />
+          <img src="/logo-icon.svg" alt="智眸无界" className="w-full h-full drop-shadow-lg" />
         </motion.div>
 
         {/* 文字部分 */}
@@ -59,7 +59,7 @@ export function AnimatedLogo() {
             }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
           >
-            天空课堂
+            智眸无界
           </motion.h1>
           <motion.div
             className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"
@@ -116,6 +116,7 @@ export function FeatureHighlights() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 + index * 0.1 }}
           whileHover={{ y: -4, scale: 1.02 }}
+          onMouseEnter={() => feature.href && router.prefetch(feature.href)}
           onClick={() => handleClick(feature.href)}
           className={`
             flex items-center gap-3 px-4 py-3 rounded-2xl

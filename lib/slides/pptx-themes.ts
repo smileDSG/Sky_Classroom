@@ -7,6 +7,7 @@
 
 import type { ThemeToken, PptxThemeId } from './types';
 import { getThemeById } from './themes';
+import type { DesignDNA } from './agent/design-dna';
 
 export type { PptxThemeId } from './types';
 
@@ -35,9 +36,7 @@ function toLegacyTheme(token: ThemeToken): PptxTheme {
     id: token.id,
     name: token.name,
     description: token.description,
-    coverBg: token.coverBgGradient
-      ? token.coverBgGradient.from
-      : token.coverBg,
+    coverBg: token.coverBgGradient ? token.coverBgGradient.from : token.coverBg,
     contentBg: token.contentBg,
     accent: token.accent,
     coverTitleColor: token.coverTitleColor,
@@ -71,6 +70,51 @@ export function getPptxTheme(id: PptxThemeId): PptxTheme {
 /** Get full ThemeToken (recommended for new code) */
 export function getTheme(id: PptxThemeId): ThemeToken {
   return getThemeById(id);
+}
+
+/**
+ * Build a ThemeToken from a user-selected DesignDNA template.
+ *
+ * The base theme (chosen by motif/style heuristics) provides layout
+ * metrics and decorations; all colors, fonts, and font sizes come from
+ * the DesignDNA so the exported deck matches the previewed template.
+ */
+export function buildThemeFromDesignDNA(dna: DesignDNA, baseId: PptxThemeId): ThemeToken {
+  const base = getTheme(baseId);
+  const c = dna.colors;
+  const f = dna.fonts;
+  const hex = (v: string) => `#${v.toUpperCase()}`;
+
+  return {
+    ...base,
+    name: `${dna.styleName}（基于${base.name}）`,
+    description: `设计基因主题：${dna.styleName} / ${dna.mood}`,
+    coverBg: hex(c.coverBg),
+    coverBgGradient: base.coverBgGradient
+      ? { ...base.coverBgGradient, from: hex(c.coverBg), to: hex(c.accentLight) }
+      : undefined,
+    contentBg: hex(c.contentBg),
+    contentBgGradient: base.contentBgGradient
+      ? { ...base.contentBgGradient, from: hex(c.contentBg) }
+      : undefined,
+    accent: hex(c.accent),
+    accentSecondary: hex(c.accentSecondary),
+    accentLight: hex(c.accentLight),
+    coverTitleColor: hex(c.textOnDark),
+    coverSubColor: hex(c.textMuted),
+    bodyColor: hex(c.textPrimary),
+    bodyMutedColor: hex(c.textMuted),
+    pageNumColor: hex(c.textMuted),
+    dividerColor: hex(c.accentLight),
+    fontFamily: f.body,
+    headingFont: f.heading,
+    coverTitleSize: Math.min(56, Math.max(36, f.headingSize)),
+    coverSubSize: Math.min(24, Math.max(14, Math.round(f.pageTitleSize * 0.7))),
+    titleFontSize: Math.min(36, Math.max(22, f.pageTitleSize)),
+    bodyFontSize: Math.min(18, Math.max(12, f.bodySize + 2)),
+    captionFontSize: Math.min(14, Math.max(9, f.captionSize + 2)),
+    shapeOutlineColor: hex(c.accentLight),
+  };
 }
 
 export { getThemeById, getAllThemes, getAllThemeIds } from './themes';

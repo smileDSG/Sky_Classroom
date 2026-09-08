@@ -4,6 +4,11 @@ import type { StorageProvider } from '@/lib/storage/storage-types';
 
 const apiBoundary = vi.hoisted(() => ({
   storage: null as StorageProvider | null,
+  userId: 'user-quiz-1',
+}));
+
+vi.mock('@/lib/server/auth/helpers', () => ({
+  requireAuth: vi.fn(async () => ({ user: { id: apiBoundary.userId } })),
 }));
 
 vi.mock('@/lib/server/server-storage', () => ({

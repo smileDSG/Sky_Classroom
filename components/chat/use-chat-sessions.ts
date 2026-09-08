@@ -17,7 +17,7 @@ import { useCanvasStore } from '@/lib/store/canvas';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useUserProfileStore } from '@/lib/store/user-profile';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
-import { getCurrentModelConfig } from '@/lib/utils/model-config';
+import { getChatModelConfig } from '@/lib/utils/model-config';
 import { USER_AVATAR } from '@/lib/types/roundtable';
 import { StreamBuffer } from '@/lib/buffer/stream-buffer';
 import type { AgentStartItem, ActionItem } from '@/lib/buffer/stream-buffer';
@@ -258,16 +258,8 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
           },
 
           onAgentEnd() {
-            // Remove empty assistant messages (agent started but produced no content)
-            setSessions((prev) =>
-              prev.map((s) => {
-                if (s.id !== sessionId) return s;
-                const msgs = s.messages.filter(
-                  (m) => !(m.role === 'assistant' && m.parts.length === 0),
-                );
-                return msgs.length !== s.messages.length ? { ...s, messages: msgs } : s;
-              }),
-            );
+            // Keep assistant message until `done`: text may still be queued or
+            // waiting for React state commit when agent_end is consumed.
           },
 
           onTextReveal(
@@ -381,6 +373,17 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
             agentHadContent?: boolean;
             directorState?: DirectorState;
           }) {
+            // All queued text/actions have been presented before done fires.
+            // Remove only messages that truly produced no content.
+            setSessions((prev) =>
+              prev.map((s) => {
+                if (s.id !== sessionId) return s;
+                const messages = s.messages.filter(
+                  (m) => !(m.role === 'assistant' && m.parts.length === 0),
+                );
+                return messages.length === s.messages.length ? s : { ...s, messages };
+              }),
+            );
             // Store done data for agent loop consumption
             loopDoneDataRef.current = {
               directorState: data.directorState,
@@ -475,7 +478,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         requestTemplate.config.agentIds.length <= 1
           ? 1
           : sessionType === 'qa'
-            ? Math.min(configuredMaxTurns, 2)
+            ? Math.min(configuredMaxTurns, 3)
             : configuredMaxTurns;
 
       // Per-iteration buffer reference — set in onEvent, used in onIterationEnd
@@ -508,7 +511,13 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
 
           getMessages: () => {
             const currentSession = sessionsRef.current.find((s) => s.id === sessionId);
-            return currentSession?.messages ?? requestTemplate.messages;
+            // The user-message state update is queued immediately before the
+            // loop starts. Prefer the request snapshot until session state has
+            // caught up, otherwise the first request can send `messages: []`.
+            return currentSession &&
+              currentSession.messages.length >= requestTemplate.messages.length
+              ? currentSession.messages
+              : requestTemplate.messages;
           },
 
           fetchChat: async (body, signal) => {
@@ -936,7 +945,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
         log.info(`[ChatArea] Resuming session: ${sessionId}`);
 
         const userProfileState = useUserProfileStore.getState();
-        const mc = getCurrentModelConfig();
+        const mc = getChatModelConfig();
 
         const selectedAgentIds = useSettingsStore.getState().selectedAgentIds;
         const agentIds = getAgentIdsForSession(
@@ -1013,6 +1022,10 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
     async (content: string): Promise<void> => {
       let sessionId = activeSessionId;
 
+      // Sending is an explicit resume action. If the composer paused the
+      // previous live buffer, do not let the next turn inherit that pause.
+      livePausedRef.current = false;
+
       // Interrupt active generation: abort stream and append "..." to the last agent message
       if (isStreaming && abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -1050,7 +1063,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       }
 
       // Validate model configuration before sending
-      const modelConfig = getCurrentModelConfig();
+      const modelConfig = getChatModelConfig();
       if (!modelConfig.modelId) {
         toast.error('请选择一个模型以开始使用');
         return;
@@ -1169,12 +1182,12 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       const currentState = useStageStore.getState();
 
       try {
+        const mc = getChatModelConfig();
         log.info(
-          `[ChatArea] Sending message: "${content.slice(0, 50)}..." agents: ${agentIds.join(', ')}`,
+          `[ChatArea] Sending message: "${content.slice(0, 50)}..." agents: ${agentIds.join(', ')}, model: ${mc.modelString}`,
         );
 
         const userProfileState = useUserProfileStore.getState();
-        const mc = getCurrentModelConfig();
 
         await runAgentLoopFn(
           sessionId!,
@@ -1247,7 +1260,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
       livePausedRef.current = false;
 
       // Validate model configuration before starting discussion
-      const modelConfig = getCurrentModelConfig();
+      const modelConfig = getChatModelConfig();
       if (!modelConfig.modelId) {
         toast.error('请选择一个模型以开始使用');
         return;
@@ -1316,7 +1329,7 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
 
       try {
         const userProfileState = useUserProfileStore.getState();
-        const mc = getCurrentModelConfig();
+        const mc = getChatModelConfig();
 
         await runAgentLoopFn(
           sessionId,

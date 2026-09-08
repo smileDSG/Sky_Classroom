@@ -6,6 +6,7 @@ import { AccessCodeModal } from '@/components/access-code-modal';
 
 function isPublicSkyLearningRoute(pathname?: string | null): boolean {
   return (
+    pathname?.startsWith('/auth') ||
     pathname?.startsWith('/sky/software-cup') ||
     pathname?.startsWith('/sky/cloud-mind/course-studio') ||
     pathname?.startsWith('/sky/study-lab') ||

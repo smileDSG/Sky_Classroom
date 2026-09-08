@@ -11,6 +11,7 @@ import type { GradeResult, MistakeCause } from './types';
 import { classifyErrorCause } from './error-classifier';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
+import { SOLVE_THINKING_CONFIG } from './solver-constants';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
 import { createLogger } from '@/lib/logger';
 
@@ -189,6 +190,7 @@ export async function gradeAnswer(
       },
       'grade-answer',
       { retries: 1 },
+      SOLVE_THINKING_CONFIG,
     );
 
     const parsed = parseLLMGrade(result.text);

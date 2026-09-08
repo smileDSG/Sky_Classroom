@@ -477,7 +477,7 @@ describe('layout guard agent', () => {
     expect(issues).toContainEqual({
       type: 'excessive_colored_panels',
       detail:
-        'Slide uses 3 large colored background boxes; clean OpenMAIC pages should use at most one pale panel plus thin dividers',
+        'Slide uses 3 large colored background boxes; clean 天空课堂 pages should use at most one pale panel plus thin dividers',
     });
   });
 

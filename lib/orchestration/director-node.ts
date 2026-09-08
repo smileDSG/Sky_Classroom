@@ -104,26 +104,43 @@ function handleMultiAgentQA(
   state: OrchestratorStateType,
   write: (chunk: StatelessEvent) => void,
 ): Partial<OrchestratorStateType> {
-  if (state.turnCount > 0) {
-    write({ type: 'cue_user', data: { fromAgentId: state.currentAgentId || undefined } });
-    return { shouldEnd: true };
-  }
-
   const agents = state.availableAgentIds
     .map((id) => resolveAgent(state, id))
     .filter((a): a is NonNullable<typeof a> => a != null);
-  const selected =
-    agents.find((agent) => agent.role === 'assistant') ??
-    agents.find((agent) => agent.role === 'teacher') ??
-    agents[0];
 
-  if (!selected) {
+  if (agents.length === 0) {
     return { shouldEnd: true };
   }
 
-  log.info(`[Director] QA fast-path: dispatching "${selected.id}"`);
-  write({ type: 'thinking', data: { stage: 'agent_loading', agentId: selected.id } });
-  return { currentAgentId: selected.id, shouldEnd: false };
+  // Turn 0: teaching assistant / teacher answers first.
+  if (state.turnCount === 0) {
+    const selected =
+      agents.find((agent) => agent.role === 'assistant') ??
+      agents.find((agent) => agent.role === 'teacher') ??
+      agents[0];
+
+    log.info(`[Director] QA fast-path: dispatching "${selected.id}"`);
+    write({ type: 'thinking', data: { stage: 'agent_loading', agentId: selected.id } });
+    return { currentAgentId: selected.id, shouldEnd: false };
+  }
+
+  // Turn 1: a student agent chimes in with a follow-up question, so the
+  // classroom feels interactive instead of ending right after the teacher.
+  if (state.turnCount === 1) {
+    const student =
+      agents.find((agent) => agent.role === 'student') ??
+      agents.find((agent) => agent.role !== 'assistant' && agent.role !== 'teacher');
+
+    if (student) {
+      log.info(`[Director] QA fast-path: student "${student.id}" following up`);
+      write({ type: 'thinking', data: { stage: 'agent_loading', agentId: student.id } });
+      return { currentAgentId: student.id, shouldEnd: false };
+    }
+  }
+
+  // Turn >= 2 (or no student available): hand control back to the user.
+  write({ type: 'cue_user', data: { fromAgentId: state.currentAgentId || undefined } });
+  return { shouldEnd: true };
 }
 
 async function handleMultiAgent(

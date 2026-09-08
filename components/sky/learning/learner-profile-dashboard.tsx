@@ -15,7 +15,9 @@ import {
   Loader2,
   Maximize2,
   Minimize2,
+  Moon,
   RefreshCw,
+  Sun,
   Target,
   TrendingUp,
   User,
@@ -24,6 +26,8 @@ import {
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useAnimatedNumber } from '@/lib/hooks/use-animated-number';
+import { isDocumentVisible } from '@/lib/hooks/use-document-visibility';
+import { useTheme } from '@/lib/hooks/use-theme';
 import { Button } from '@/components/ui/button';
 import type { LearningStatsResponse, LearningPath } from '@/lib/teaching/learning-path-types';
 import type { CloudMindDashboardData } from '@/lib/cloud-mind/types';
@@ -781,6 +785,7 @@ function PreferencePanel({ preferences }: { preferences: LearnerPreferences | nu
 
 export function LearnerProfileDashboard() {
   const { user, isLoading: authLoading } = useAuth();
+  const { resolvedTheme, setTheme, isMounted } = useTheme();
   const dashboardRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [state, setState] = useState<FetchState>({
@@ -818,7 +823,9 @@ export function LearnerProfileDashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(() => fetchData(true), 15000);
+    const interval = setInterval(() => {
+      if (isDocumentVisible()) fetchData(true);
+    }, 15000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -883,15 +890,18 @@ export function LearnerProfileDashboard() {
   if (authLoading || (state.loading && !state.data)) {
     return (
       <div
+        data-dashboard-theme
         className="flex min-h-[calc(100dvh-4rem)] items-center justify-center"
-        style={{ background: 'linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%)' }}
+        style={{ background: 'var(--dashboard-bg)' }}
       >
         <div className="flex flex-col items-center gap-3">
           <div className="relative">
             <div className="absolute inset-0 animate-ping rounded-full bg-violet-500/20" />
             <Loader2 className="relative h-8 w-8 animate-spin text-violet-400" />
           </div>
-          <p className="text-sm text-slate-400">正在加载学习情况...</p>
+          <p className="text-sm" style={{ color: 'var(--dashboard-text-muted)' }}>
+            正在加载学习情况...
+          </p>
         </div>
       </div>
     );
@@ -900,8 +910,9 @@ export function LearnerProfileDashboard() {
   if (state.error && !state.data) {
     return (
       <div
+        data-dashboard-theme
         className="flex min-h-[calc(100dvh-4rem)] flex-col items-center justify-center gap-4 px-4"
-        style={{ background: 'linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%)' }}
+        style={{ background: 'var(--dashboard-bg)' }}
       >
         <div
           className="rounded-lg border border-red-500/20 bg-red-500/10 p-6 text-center"
@@ -924,10 +935,11 @@ export function LearnerProfileDashboard() {
   return (
     <div
       ref={dashboardRef}
-      className="relative min-h-[calc(100dvh-4rem)] w-full overflow-x-hidden overflow-y-auto px-4 py-6 text-slate-100 md:px-6 lg:px-8"
+      data-dashboard-theme
+      className="relative min-h-[calc(100dvh-4rem)] w-full overflow-x-hidden overflow-y-auto px-4 py-6 md:px-6 lg:px-8"
       style={{
-        background:
-          'radial-gradient(ellipse at 20% 0%, #1e1b4b 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, #0c1b2e 0%, transparent 50%), linear-gradient(180deg, #0a0a1a 0%, #0d1126 100%)',
+        background: 'var(--dashboard-bg)',
+        color: 'var(--dashboard-text-primary)',
       }}
     >
       {/* 网格线背景 */}
@@ -989,6 +1001,23 @@ export function LearnerProfileDashboard() {
                   second: '2-digit',
                 })}
               </span>
+            )}
+            {isMounted && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                className="dashboard-theme-btn border-cyan-500/20 bg-cyan-500/5 text-slate-200 hover:bg-cyan-500/10 hover:text-white"
+                aria-label={resolvedTheme === 'dark' ? '切换浅色模式' : '切换深色模式'}
+                title={resolvedTheme === 'dark' ? '切换浅色模式' : '切换深色模式'}
+              >
+                {resolvedTheme === 'dark' ? (
+                  <Sun className="mr-2 h-4 w-4" />
+                ) : (
+                  <Moon className="mr-2 h-4 w-4" />
+                )}
+                {resolvedTheme === 'dark' ? '浅色' : '深色'}
+              </Button>
             )}
             <Button
               size="sm"

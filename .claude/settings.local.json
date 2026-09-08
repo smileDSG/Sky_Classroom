@@ -286,7 +286,16 @@
       "Bash(git log *)",
       "Skill(code-review)",
       "Bash(git rev-list *)",
-      "Bash(echo \"--- exit: $? ---\")"
+      "Bash(echo \"--- exit: $? ---\")",
+      "Bash(tee /tmp/sky-dev.log)",
+      "Bash(rm -f /tmp/sky-dev.log)",
+      "Bash(./node_modules/.bin/next dev *)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(INJECT=./tmp-inj-a.html OUT=./tmp-shot-a.png node tmp-shot.mjs)",
+      "Bash(INJECT=./tmp-inj-b.html OUT=./tmp-shot-b.png node tmp-shot.mjs)",
+      "Bash(INJECT=./tmp-inj-final.html OUT=./tmp-shot-final.png node tmp-shot.mjs)",
+      "Bash(Select-Object -First 40)"
     ]
   }
 }

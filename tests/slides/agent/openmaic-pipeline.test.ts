@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LanguageModel } from 'ai';
-import type { Slide, SlideTheme } from '@/lib/types/slides';
 
-const mockGenerateSlides = vi.fn();
-const mockExportPptx = vi.fn();
+const mockGenerateContent = vi.fn();
+const mockBuildDeck = vi.fn();
 const mockGeneratePreviewFromPptx = vi.fn();
 const mockMkdir = vi.fn();
 const mockWriteFile = vi.fn();
@@ -17,12 +16,11 @@ vi.mock('fs/promises', () => ({
   },
 }));
 
-vi.mock('@/lib/slides/slide-generator', () => ({
-  generateSlides: (...args: unknown[]) => mockGenerateSlides(...args),
-}));
-
-vi.mock('@/lib/slides/pptx-exporter', () => ({
-  exportPptx: (...args: unknown[]) => mockExportPptx(...args),
+vi.mock('@/lib/slides/template-deck', () => ({
+  generateTemplateDeckContent: (...args: unknown[]) => mockGenerateContent(...args),
+  buildTemplateDeckBuffer: (...args: unknown[]) => mockBuildDeck(...args),
+  summarizeTemplatePages: (pages: { title: string; pageType: string }[]) =>
+    pages.map((p, i) => ({ pageNum: i + 2, title: p.title, type: p.pageType })),
 }));
 
 vi.mock('@/lib/slides/pptx-preview', () => ({
@@ -72,45 +70,28 @@ import { getDefaultDesignDNA } from '@/lib/slides/agent/design-dna';
 
 const mockModel = { modelId: 'test-model' } as unknown as LanguageModel;
 
-const theme: SlideTheme = {
-  backgroundColor: '#ffffff',
-  themeColors: ['#2563eb'],
-  fontColor: '#111827',
-  fontName: 'Microsoft YaHei',
-};
-
-function makeSlide(type: Slide['type'], title: string): Slide {
-  return {
-    id: `${type}-${title}`,
-    viewportSize: 1000,
-    viewportRatio: 0.5625,
-    theme,
-    type,
-    background: { type: 'solid', color: '#ffffff' },
-    elements: [
-      {
-        id: `${type}-title`,
-        type: 'text',
-        left: 80,
-        top: 60,
-        width: 840,
-        height: 76,
-        rotate: 0,
-        content: `<p style="font-size: 32px; text-align: center;"><strong>${title}</strong></p>`,
-        defaultFontName: 'Microsoft YaHei',
-        defaultColor: '#111827',
-      },
+const samplePages = [
+  {
+    pageType: 'toc' as const,
+    title: '目录',
+    items: [
+      { title: '光合作用概述' },
+      { title: '光反应' },
+      { title: '暗反应' },
+      { title: '影响因素' },
     ],
-  };
-}
-
-function makeSlides(): Slide[] {
-  return [
-    makeSlide('cover', 'Topic'),
-    makeSlide('content', 'Core Idea'),
-    makeSlide('end', 'Summary'),
-  ];
-}
+  },
+  {
+    pageType: 'bullets' as const,
+    title: '核心概念',
+    points: [
+      { lead: '场所', detail: '叶绿体类囊体薄膜与基质' },
+      { lead: '原料', detail: 'CO₂ 和 H₂O' },
+      { lead: '产物', detail: '有机物与氧气' },
+    ],
+    keyTakeaway: '光合作用将光能转化为化学能储存于有机物中',
+  },
+];
 
 function makeOptions(jobId: string) {
   return {
@@ -130,12 +111,8 @@ describe('OpenMAIC slides pipeline', () => {
     delete process.env.SKY_SLIDES_LEGACY_PIPELINE;
     mockMkdir.mockResolvedValue(undefined);
     mockWriteFile.mockResolvedValue(undefined);
-    mockGenerateSlides.mockResolvedValue({ slides: makeSlides(), generationTime: 123 });
-    mockExportPptx.mockResolvedValue({
-      buffer: Buffer.from('pptx'),
-      fileName: 'ignored.pptx',
-      size: 4,
-    });
+    mockGenerateContent.mockResolvedValue(samplePages);
+    mockBuildDeck.mockResolvedValue(Buffer.from('pptx'));
     mockGeneratePreviewFromPptx.mockResolvedValue({
       success: true,
       previewId: 'preview123',
@@ -143,28 +120,26 @@ describe('OpenMAIC slides pipeline', () => {
     });
   });
 
-  it('runs the OpenMAIC element-level generator and exports AI layout PPTX', async () => {
+  it('generates structured content and renders it through the fixed template layouts', async () => {
     const jobId = 'job-openmaic-direct';
     createJob(jobId);
 
     const result = await runOpenMaicSlidesPipeline(makeOptions(jobId));
 
-    expect(result.totalPages).toBe(3);
-    expect(mockGenerateSlides).toHaveBeenCalledWith(
+    expect(result.totalPages).toBe(4); // cover + 2 content pages + end
+    expect(mockGenerateContent).toHaveBeenCalledWith(
       'Topic',
-      expect.objectContaining({
-        difficulty: 'senior',
-        slideCount: 20,
-        language: expect.stringContaining('Simplified Chinese'),
-        personaPrompt: expect.stringContaining('do not use the old Sky card-panel template'),
-      }),
+      '高中',
+      18, // slideCount 20 − cover − end
+      expect.stringContaining('do not use the old Sky card-panel template'),
       expect.any(Function),
     );
-    expect(mockExportPptx).toHaveBeenCalledWith(
+    expect(mockBuildDeck).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'Topic',
-        slides: makeSlides(),
-        layoutMode: 'ai',
+        topic: 'Topic',
+        difficultyLabel: '高中',
+        dna: getDefaultDesignDNA(),
+        pages: samplePages,
       }),
     );
     expect(mockGeneratePreviewFromPptx).toHaveBeenCalledWith(
@@ -184,8 +159,8 @@ describe('OpenMAIC slides pipeline', () => {
 
     await runPipeline(makeOptions(jobId));
 
-    expect(mockGenerateSlides).toHaveBeenCalled();
-    expect(mockExportPptx).toHaveBeenCalledWith(expect.objectContaining({ layoutMode: 'ai' }));
+    expect(mockGenerateContent).toHaveBeenCalled();
+    expect(mockBuildDeck).toHaveBeenCalled();
     expect(mockPlanOutline).not.toHaveBeenCalled();
     expect(mockDesignPage).not.toHaveBeenCalled();
   });

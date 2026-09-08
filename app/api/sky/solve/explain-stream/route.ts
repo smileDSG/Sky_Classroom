@@ -23,6 +23,7 @@ import { classifyProblem, resolveSolverModel } from '@/lib/solve/solver-constant
 import { buildKnowledgePointsPrompt } from '@/lib/solve/solver-prompts';
 import { postProcessMathContent } from '@/lib/solve/math-postprocessor';
 import { requireQuota, recordUsage } from '@/lib/server/billing/require-quota';
+import { validateProblemSpec } from '@/lib/recognition/problem-spec-parser';
 
 const log = createLogger('API:ExplainStream');
 
@@ -136,16 +137,28 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { problem, problemImage, problemSpec, userAnswer } = body;
+    const { problem, problemImage, problemSpec: rawProblemSpec, userAnswer } = body;
 
     if (!problem) {
       return new Response(
-        formatSSEEvent('error', { message: 'Missing required field: problem' }),
+        formatSSEEvent('error', { errorCode: 'MISSING_REQUIRED_FIELD', message: 'Missing required field: problem' }),
         {
           status: 400,
           headers: { 'Content-Type': 'text/event-stream' },
         },
       );
+    }
+
+    let problemSpec = null;
+    if (rawProblemSpec != null) {
+      try {
+        problemSpec = validateProblemSpec(rawProblemSpec);
+      } catch (err) {
+        return new Response(
+          formatSSEEvent('error', { errorCode: 'INVALID_REQUEST', message: 'Invalid problemSpec', details: err instanceof Error ? err.message : String(err) }),
+          { status: 400, headers: { 'Content-Type': 'text/event-stream' } },
+        );
+      }
     }
 
     log.info(`[ExplainStream] Solving: ${problem.slice(0, 60)}...`);
@@ -362,6 +375,7 @@ export async function POST(req: Request) {
         log.error('ExplainStream error:', err);
         try {
           await write(formatSSEEvent('error', {
+            errorCode: 'INTERNAL_ERROR',
             message: err instanceof Error ? err.message : '解题失败',
           }));
           await writer.close();
@@ -381,7 +395,7 @@ export async function POST(req: Request) {
   } catch (err) {
     log.error('ExplainStream API error:', err);
     return new Response(
-      formatSSEEvent('error', { message: '解题失败' }),
+      formatSSEEvent('error', { errorCode: 'INTERNAL_ERROR', message: '解题失败' }),
       {
         status: 500,
         headers: { 'Content-Type': 'text/event-stream' },

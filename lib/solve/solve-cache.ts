@@ -25,6 +25,9 @@ export interface SolveCacheEntry {
   answer?: string;
   /** Knowledge points (cached to avoid LLM call on cache hit fast path). */
   knowledgePoints?: { name: string; description: string; difficulty: string }[];
+  /** Structured solve output so cache hits render a full report. */
+  steps?: { label: string; content: string; keyPoints?: string[] }[];
+  similarQuestions?: { problem: string; difficulty: number; knowledgePoint: string }[];
   agentId: string;
   solvedAt: number;
 }

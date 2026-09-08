@@ -17,12 +17,121 @@ export function postProcessInteractiveHtml(html: string): string {
   // Convert LaTeX delimiters while protecting script tags
   let processed = convertLatexDelimiters(html);
 
+  // Inject a layout baseline so widgets fill their panel without horizontal
+  // overflow/truncation (a common cause of the "too flat / chart squeezed" look).
+  processed = injectLayoutBaseline(processed);
+
   // Inject KaTeX resources if not already present
   if (!processed.toLowerCase().includes('katex')) {
     processed = injectKatex(processed);
   }
 
   return processed;
+}
+
+/**
+ * Inject a minimal, safe layout reset + an adaptive proportion fixer into the widget
+ * document. The fixer runs at runtime inside the iframe and, without rewriting the
+ * widget's markup, keeps the visualization dominant:
+ *   - if the control/parameter column is wider than the visualization column, it is
+ *     squeezed to <=42% and the visualization gets the remaining width;
+ *   - any overflowing fixed-size box is constrained;
+ *   - nothing is touched when the layout is already balanced.
+ * Idempotent: guarded by a fixed style/script id so re-processing existing HTML is safe.
+ */
+function injectLayoutBaseline(html: string): string {
+  const hasBaseline = html.includes('id="sky-classroom-widget-baseline"');
+  const hasFixer = html.includes('id="sky-classroom-widget-fixer"');
+  if (hasBaseline && hasFixer) return html;
+
+  const parts: string[] = [];
+  if (!hasBaseline) {
+    parts.push(`
+<style id="sky-classroom-widget-baseline">
+  html, body { height: 100%; margin: 0; padding: 0; box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; }
+  canvas, svg, img, video { max-width: 100%; }
+  .sky-root, [data-sky-root] { width: 100%; height: 100%; min-height: 0; }
+</style>`);
+  }
+  if (!hasFixer) {
+    parts.push(`
+<script id="sky-classroom-widget-fixer">
+(function () {
+  try {
+    function hasControl(n) {
+      return !!(n && n.querySelector && n.querySelector('input, select, button, textarea'));
+    }
+    function hasVisual(n) {
+      return !!(n && n.querySelector && n.querySelector('canvas, svg, [class*="chart"], [id*="canvas"], [class*="plot"], [class*="graph"]'));
+    }
+    function isRowFlex(n) {
+      if (!n || !n.children || n.children.length < 2) return false;
+      var cs = window.getComputedStyle(n);
+      return cs.display === 'flex' && cs.flexDirection === 'row';
+    }
+    function fixPair(container) {
+      var kids = Array.prototype.slice.call(container.children);
+      for (var i = 0; i < kids.length - 1; i++) {
+        var a = kids[i], b = kids[i + 1];
+        var aC = hasControl(a), aV = hasVisual(a);
+        var bC = hasControl(b), bV = hasVisual(b);
+        if (!((aC && bV) || (aV && bC))) continue;
+        var control = aC && !aV ? a : b;
+        var visual = control === a ? b : a;
+        var cRect = control.getBoundingClientRect();
+        var vRect = visual.getBoundingClientRect();
+        var cW = cRect && cRect.width ? cRect.width : 0;
+        var vW = vRect && vRect.width ? vRect.width : 0;
+        var rootW = container.getBoundingClientRect().width || 1;
+        if (!cW || !vW) continue;
+        if (cW <= vW && cW <= rootW * 0.48) continue;
+        control.style.maxWidth = '42%';
+        control.style.flex = '0 1 42%';
+        control.style.minWidth = '0';
+        visual.style.flex = '1 1 auto';
+        visual.style.minWidth = '0';
+      }
+    }
+    function walk(node) {
+      if (!node || !node.children) return;
+      var i;
+      if (isRowFlex(node)) fixPair(node);
+      for (i = 0; i < node.children.length; i++) walk(node.children[i]);
+    }
+    function onReady() {
+      walk(document.body || document.documentElement);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', onReady);
+    } else {
+      onReady();
+    }
+    setTimeout(onReady, 400);
+    setTimeout(onReady, 1200);
+  } catch (e) { /* never break the widget */ }
+})();
+</script>`);
+  }
+  const injection = parts.join('\n');
+
+  const headCloseIdx = html.indexOf('</head>');
+  if (headCloseIdx !== -1) {
+    return (
+      html.substring(0, headCloseIdx) + injection + '\n</head>' + html.substring(headCloseIdx + 7)
+    );
+  }
+
+  const bodyCloseIdx = html.indexOf('</body>');
+  if (bodyCloseIdx !== -1) {
+    return (
+      html.substring(0, bodyCloseIdx) + injection + '\n</body>' + html.substring(bodyCloseIdx + 7)
+    );
+  }
+
+  return html + injection;
 }
 
 /**

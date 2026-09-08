@@ -171,12 +171,18 @@ export async function runAgentLoop(
           const line = part.trim();
           if (!line.startsWith('data: ')) continue;
 
+          let event: StatelessEvent;
           try {
-            const event: StatelessEvent = JSON.parse(line.slice(6));
-            callbacks.onEvent(event);
+            event = JSON.parse(line.slice(6)) as StatelessEvent;
           } catch {
             // Skip malformed events (heartbeats, etc.)
+            continue;
           }
+
+          // Event handlers may throw intentional application errors (for
+          // example, the UI handler surfaces a server-sent error event).
+          // Do not mistake those for malformed JSON.
+          callbacks.onEvent(event);
         }
       }
     } finally {

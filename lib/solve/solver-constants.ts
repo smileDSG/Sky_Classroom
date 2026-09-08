@@ -3,14 +3,21 @@
  * Single source of truth for model mapping, env config, and routing.
  */
 import type { ProblemSpec, SolverAgentType } from './types';
-import type { ProviderId, ModelConfig } from '@/lib/types/provider';
+import type { ProviderId, ModelConfig, ThinkingConfig } from '@/lib/types/provider';
+
+/**
+ * Solve-pipeline LLMs must not think: reasoning burns the whole maxOutputTokens
+ * budget (finish_reason=length) and returns empty content, and adds 30s+ per
+ * call. DeepSeek v4 thinks by default, so every call passes this explicitly.
+ */
+export const SOLVE_THINKING_CONFIG: ThinkingConfig = { mode: 'disabled', enabled: false };
 
 // ── Agent → provider/model mapping ───────────────────────────────
 
 export const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> = {
   universal: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-  science: { providerId: 'glm', modelId: 'glm-5.1' },
-  humanities: { providerId: 'qwen', modelId: 'qwen3.6-plus' },
+  science: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
+  humanities: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
   grading: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
 };
 

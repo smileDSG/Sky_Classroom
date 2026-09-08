@@ -8,7 +8,7 @@
 
 import { create } from 'zustand';
 import type { MediaGenerationRequest } from '@/lib/media/types';
-import { db } from '@/lib/utils/database';
+import { db, mediaFileKey } from '@/lib/utils/database';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('MediaGenerationStore');
@@ -39,7 +39,7 @@ interface MediaGenerationState {
   tasks: Record<string, MediaTask>;
 
   // Batch enqueue
-  enqueueTasks: (stageId: string, requests: MediaGenerationRequest[]) => void;
+  enqueueTasks: (stageId: string, requests: MediaGenerationRequest[]) => Promise<void>;
 
   // Status transitions
   markGenerating: (elementId: string) => void;
@@ -73,7 +73,7 @@ export function isMediaPlaceholder(src: string): boolean {
 export const useMediaGenerationStore = create<MediaGenerationState>()((set, get) => ({
   tasks: {},
 
-  enqueueTasks: (stageId, requests) => {
+  enqueueTasks: async (stageId, requests) => {
     const newTasks: Record<string, MediaTask> = {};
     for (const req of requests) {
       // Skip if already tracked
@@ -91,8 +91,30 @@ export const useMediaGenerationStore = create<MediaGenerationState>()((set, get)
         stageId,
       };
     }
-    if (Object.keys(newTasks).length > 0) {
-      set((s) => ({ tasks: { ...s.tasks, ...newTasks } }));
+    if (Object.keys(newTasks).length === 0) return;
+
+    set((s) => ({ tasks: { ...s.tasks, ...newTasks } }));
+
+    // Persist pending records immediately so an interrupted run (page refresh,
+    // crash) restores as 'pending' instead of disappearing and being silently
+    // regenerated. Completed tasks overwrite these records on finish.
+    try {
+      await db.mediaFiles.bulkPut(
+        Object.values(newTasks).map((t) => ({
+          id: mediaFileKey(stageId, t.elementId),
+          stageId,
+          type: t.type,
+          // No blob — Chrome throws DataError on empty Blobs in IndexedDB
+          mimeType: t.type === 'image' ? 'image/png' : 'video/mp4',
+          size: 0,
+          prompt: t.prompt,
+          params: JSON.stringify(t.params),
+          status: 'pending',
+          createdAt: Date.now(),
+        })),
+      );
+    } catch (err) {
+      log.warn('Failed to persist pending media tasks:', err);
     }
   },
 
@@ -176,6 +198,18 @@ export const useMediaGenerationStore = create<MediaGenerationState>()((set, get)
             params,
             error: rec.error,
             errorCode: rec.errorCode,
+            retryCount: 0,
+            stageId,
+          };
+        } else if (rec.status === 'pending' || !rec.blob || rec.blob.size === 0) {
+          // Interrupted task (page refreshed mid-run): restore as pending so
+          // resume logic regenerates it, instead of losing it entirely.
+          restored[elementId] = {
+            elementId,
+            type: rec.type,
+            status: 'pending',
+            prompt: rec.prompt,
+            params,
             retryCount: 0,
             stageId,
           };

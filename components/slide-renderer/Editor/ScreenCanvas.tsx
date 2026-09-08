@@ -18,7 +18,7 @@ import { AnimatePresence } from 'motion/react';
 import { TemplateCanvas } from '../TemplateCanvas';
 import type { TemplateSlideData } from '@/lib/templates/pptd-types';
 
-export function ScreenCanvas() {
+export function ScreenCanvas({ playback = false }: { readonly playback?: boolean }) {
   const canvasScale = useCanvasStore.use.canvasScale();
   const elements = useSceneSelector<SlideContent, PPTElement[]>(
     (content) => content.canvas.elements,
@@ -38,7 +38,8 @@ export function ScreenCanvas() {
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Viewport size and positioning
-  const { viewportStyles } = useViewportSize(canvasRef);
+  // Playback should use the full available frame; the editor keeps its 90% breathing room.
+  const { viewportStyles } = useViewportSize(canvasRef, playback ? 100 : undefined);
 
   // Get background style
   const background = useSceneSelector<SlideContent, SlideBackground | undefined>(
@@ -126,7 +127,12 @@ export function ScreenCanvas() {
             }}
           >
             {displayElements.map((element, index) => (
-              <ScreenElement key={element.id} elementInfo={element} elementIndex={index + 1} />
+              <ScreenElement
+                key={element.id}
+                elementInfo={element}
+                elementIndex={index + 1}
+                playback={playback}
+              />
             ))}
             {/* Highlight overlay - stacked above elements */}
             <HighlightOverlay />

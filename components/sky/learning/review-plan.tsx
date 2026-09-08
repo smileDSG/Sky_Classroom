@@ -182,6 +182,13 @@ export function ReviewPlan({ autoStart = false, onAutoStartConsumed }: ReviewPla
     loadData();
   }, [loadData]);
 
+  // Auto-scroll to the review session when it's triggered
+  useEffect(() => {
+    if (sessionItems) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [sessionItems]);
+
   // ── States ──────────────────────────────────────────────────────────
 
   if (loading) {

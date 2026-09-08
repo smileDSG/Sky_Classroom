@@ -16,7 +16,8 @@ import type { ProviderId } from '@/lib/ai/providers';
 import { callLLM } from '@/lib/ai/llm';
 import { getModel } from '@/lib/ai/providers';
 import { parseJsonResponse } from '@/lib/generation/json-repair';
-import { buildSolverPrompt } from './solver-prompts';
+import { buildSolverPrompt, buildKnowledgePointsPrompt } from './solver-prompts';
+import { SOLVE_THINKING_CONFIG } from './solver-constants';
 import { validateConfidence, MIN_VALIDATED_CONFIDENCE } from './confidence-validator';
 import { createLogger } from '@/lib/logger';
 
@@ -26,8 +27,8 @@ const log = createLogger('SolveGraph');
 
 const AGENT_MODEL_MAP: Record<SolverAgentType, { providerId: ProviderId; modelId: string }> = {
   universal: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
-  science: { providerId: 'glm', modelId: 'glm-5.1' },
-  humanities: { providerId: 'qwen', modelId: 'qwen3.6-plus' },
+  science: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
+  humanities: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
   grading: { providerId: 'deepseek', modelId: 'deepseek-v4-flash' },
 };
 
@@ -134,9 +135,35 @@ async function solveOnce(
     },
     'solve-agent',
     { retries: 1 },
+    SOLVE_THINKING_CONFIG,
   );
 
-  return parseSolutionResponse(result.text);
+  const parsed = parseSolutionResponse(result.text);
+  if (parsed) return parsed;
+
+  // DeepSeek (thinking off) occasionally answers in prose instead of the
+  // requested JSON — salvage genuine prose so the solve still yields usable
+  // content. JSON-shaped responses that failed validation (e.g. empty
+  // solution fields) are NOT salvaged: returning null lets the hybrid
+  // strategy try another agent instead of accepting a JSON string as the
+  // solution. The confidence validator scores salvaged prose low, so it is
+  // only accepted as a last resort by the tertiary agent. The answer field is
+  // left empty so generateOutput extracts a concise answer from the prose.
+  const text = result.text?.trim() ?? '';
+  if (!text || text.startsWith('{') || text.startsWith('[') || /^```/.test(text)) {
+    return null;
+  }
+  log.warn(
+    `[SolveGraph] agent ${agentType} returned non-JSON answer; salvaging prose (${text.length} chars)`,
+  );
+  return {
+    solution: text,
+    answer: '',
+    confidence: 0.4,
+    steps: [],
+    knowledgePoints: [],
+    similarQuestions: [],
+  };
 }
 
 /**
@@ -158,7 +185,13 @@ export async function solveWithHybrid(
   adaptiveGuidance?: string | null,
 ): Promise<{ solution: ParsedSolution; usedAgents: SolverAgentType[] }> {
   // Primary
-  const primaryResult = await solveOnce(primary, problemText, problemImage, problemSpec, adaptiveGuidance);
+  const primaryResult = await solveOnce(
+    primary,
+    problemText,
+    problemImage,
+    problemSpec,
+    adaptiveGuidance,
+  );
   if (primaryResult) {
     const validated = validateConfidence(primaryResult, primary);
     if (validated >= MIN_VALIDATED_CONFIDENCE) {
@@ -167,11 +200,17 @@ export async function solveWithHybrid(
   }
 
   // Secondary fallback
-  const fallbacks: SolverAgentType[] = (['science', 'humanities', 'universal'] as SolverAgentType[]).filter(
-    (t) => t !== primary,
-  );
+  const fallbacks: SolverAgentType[] = (
+    ['science', 'humanities', 'universal'] as SolverAgentType[]
+  ).filter((t) => t !== primary);
 
-  const secondaryResult = await solveOnce(fallbacks[0], problemText, problemImage, problemSpec, adaptiveGuidance);
+  const secondaryResult = await solveOnce(
+    fallbacks[0],
+    problemText,
+    problemImage,
+    problemSpec,
+    adaptiveGuidance,
+  );
   if (secondaryResult) {
     const validated = validateConfidence(secondaryResult, fallbacks[0]);
     if (validated >= MIN_VALIDATED_CONFIDENCE) {
@@ -181,28 +220,165 @@ export async function solveWithHybrid(
 
   // Tertiary: last resort — accept whatever we get
   if (fallbacks.length > 1) {
-    const tertiaryResult = await solveOnce(fallbacks[1], problemText, problemImage, problemSpec, adaptiveGuidance);
+    const tertiaryResult = await solveOnce(
+      fallbacks[1],
+      problemText,
+      problemImage,
+      problemSpec,
+      adaptiveGuidance,
+    );
     if (tertiaryResult) {
       return { solution: tertiaryResult, usedAgents: [primary, fallbacks[0], fallbacks[1]] };
     }
   }
 
   // All failed — return whatever we have
-  const calledAgents: SolverAgentType[] = fallbacks.length > 1
-    ? [primary, fallbacks[0], fallbacks[1]]
-    : [primary, fallbacks[0]];
+  const calledAgents: SolverAgentType[] =
+    fallbacks.length > 1 ? [primary, fallbacks[0], fallbacks[1]] : [primary, fallbacks[0]];
 
   return {
-    solution: primaryResult ?? secondaryResult ?? {
-      solution: '',
-      answer: '',
-      confidence: 0,
-      steps: [],
-      knowledgePoints: [],
-      similarQuestions: [],
-    },
+    solution: primaryResult ??
+      secondaryResult ?? {
+        solution: '',
+        answer: '',
+        confidence: 0,
+        steps: [],
+        knowledgePoints: [],
+        similarQuestions: [],
+      },
     usedAgents: calledAgents,
   };
+}
+
+/**
+ * Generate 2-4 knowledge points when the solver didn't return any.
+ */
+async function generateKnowledgePoints(
+  problemText: string,
+  solution: ParsedSolution,
+): Promise<ParsedSolution['knowledgePoints']> {
+  try {
+    const modelWithInfo = getModel(resolveSolverModel('universal'));
+    const result = await callLLM(
+      {
+        model: modelWithInfo.model,
+        system: buildKnowledgePointsPrompt(
+          problemText,
+          solution.answer || solution.solution.slice(0, 300),
+        ),
+        messages: [{ role: 'user', content: '请生成知识点 JSON。' }] as any,
+        temperature: 0.2,
+        maxOutputTokens: 1024,
+      },
+      'knowledge-points-gen',
+      { retries: 0 },
+      SOLVE_THINKING_CONFIG,
+    );
+
+    const parsed = parseJsonResponse<
+      | { knowledgePoints?: { name?: unknown; description?: unknown; difficulty?: unknown }[] }
+      | { name?: unknown }[]
+    >(result.text || '');
+    const list = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray((parsed as Record<string, unknown>)?.knowledgePoints)
+        ? ((parsed as Record<string, unknown>).knowledgePoints as {
+            name?: unknown;
+            description?: unknown;
+            difficulty?: unknown;
+          }[])
+        : null;
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter(
+        (
+          item,
+        ): item is {
+          name: string;
+          description: string;
+          difficulty: 'easy' | 'medium' | 'hard';
+        } => {
+          const rec = item as Record<string, unknown>;
+          return typeof rec?.name === 'string' && rec.name.trim().length > 0;
+        },
+      )
+      .map((item) => ({
+        name: item.name,
+        description: typeof item.description === 'string' ? item.description : '',
+        difficulty: ['easy', 'medium', 'hard'].includes(item.difficulty as string)
+          ? (item.difficulty as 'easy' | 'medium' | 'hard')
+          : 'medium',
+      }));
+  } catch (err) {
+    log.warn(
+      `[SolveGraph] knowledge-point generation failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return [];
+  }
+}
+
+/**
+ * Generate 2 similar questions when the solver didn't return any.
+ * The UI's 同类题 tab depends on these, so a missing array gets filled here.
+ */
+async function generateSimilarQuestions(
+  problemText: string,
+  solution: ParsedSolution,
+): Promise<ParsedSolution['similarQuestions']> {
+  try {
+    const modelWithInfo = getModel(resolveSolverModel('universal'));
+    const result = await callLLM(
+      {
+        model: modelWithInfo.model,
+        system:
+          '你是出题专家。基于原题、解答和知识点，出2道同类型的练习题（考查相同知识点、难度相近、不与原题重复）。\n' +
+          '只返回 JSON 数组，不要任何其他文字：[{"problem":"题目内容（含LaTeX用$...$）","difficulty":3,"knowledgePoint":"考查的知识点"}]，difficulty为1-5的整数。',
+        messages: [
+          {
+            role: 'user',
+            content: `原题：${problemText}\n解答要点：${solution.solution.slice(0, 400)}`,
+          },
+        ] as any,
+        temperature: 0.5,
+        maxOutputTokens: 1024,
+      },
+      'similar-questions-gen',
+      { retries: 0 },
+      SOLVE_THINKING_CONFIG,
+    );
+
+    const parsed = parseJsonResponse<
+      | { problem?: unknown; difficulty?: unknown; knowledgePoint?: unknown }[]
+      | Record<string, unknown>
+    >(result.text || '');
+    const list = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray((parsed as Record<string, unknown>)?.questions)
+        ? ((parsed as Record<string, unknown>).questions as {
+            problem?: unknown;
+            difficulty?: unknown;
+            knowledgePoint?: unknown;
+          }[])
+        : null;
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter(
+        (item): item is { problem: string; difficulty: number; knowledgePoint: string } =>
+          !!item &&
+          typeof item === 'object' &&
+          typeof (item as Record<string, unknown>).problem === 'string',
+      )
+      .map((item) => ({
+        problem: item.problem,
+        difficulty: typeof item.difficulty === 'number' ? item.difficulty : 3,
+        knowledgePoint: typeof item.knowledgePoint === 'string' ? item.knowledgePoint : '',
+      }));
+  } catch (err) {
+    log.warn(
+      `[SolveGraph] similar-question generation failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return [];
+  }
 }
 
 /**
@@ -226,7 +402,7 @@ export async function solveWithAgentNode(
   log.info(`[SolveGraph] Solving with agent: ${agentType}`);
 
   try {
-    const { solution, usedAgents } = await solveWithHybrid(
+    const { solution: parsed, usedAgents } = await solveWithHybrid(
       agentType,
       problemText,
       problemImage,
@@ -234,17 +410,33 @@ export async function solveWithAgentNode(
       state.adaptiveGuidance,
     );
 
+    // 同类题/知识点 tab 必须有内容：先过滤模型返回的脏数据，仍为空时就地生成
+    let similarQuestions = (parsed.similarQuestions ?? []).filter(
+      (item) => item && typeof item.problem === 'string' && item.problem.trim().length > 0,
+    );
+    if (similarQuestions.length === 0) {
+      similarQuestions = await generateSimilarQuestions(problemText, parsed);
+    }
+
+    let knowledgePoints = (parsed.knowledgePoints ?? []).filter(
+      (k) => k && typeof k.name === 'string' && k.name.trim().length > 0,
+    );
+    if (knowledgePoints.length === 0) {
+      knowledgePoints = await generateKnowledgePoints(problemText, parsed);
+    }
+
     return {
-      solution: solution.solution,
-      parsedSteps: solution.steps ?? [],
-      parsedKnowledgePoints: (solution.knowledgePoints ?? []).map((k) => ({
+      solution: parsed.solution,
+      parsedAnswer: parsed.answer ?? null,
+      parsedSteps: parsed.steps ?? [],
+      parsedKnowledgePoints: knowledgePoints.map((k) => ({
         name: k.name,
         description: k.description,
         difficulty: k.difficulty,
       })),
-      parsedSimilarQuestions: solution.similarQuestions ?? [],
-      questionType: solution.questionType ?? null,
-      options: solution.options ?? null,
+      parsedSimilarQuestions: similarQuestions,
+      questionType: parsed.questionType ?? null,
+      options: parsed.options ?? null,
       agentId: usedAgents[usedAgents.length - 1] ?? agentType,
       error: null,
     };

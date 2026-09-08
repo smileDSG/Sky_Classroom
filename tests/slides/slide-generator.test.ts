@@ -232,6 +232,22 @@ describe('generateSlides', () => {
     expect(lastSystem()).toContain('Text Height Lookup Table');
   });
 
+  it('personaPrompt (style directive) reaches the system prompt, not just the user prompt', async () => {
+    // Regression guard: the directive used to be passed as a buildPrompt
+    // variable while system.md has no {{teacherContext}} placeholder,
+    // so the palette/typography directive never reached the model.
+    const { aiCall, lastSystem } = makeCapturingAiCall(JSON.stringify(makeFakeDeck(6)));
+
+    await generateSlides(
+      'Topic',
+      { difficulty: 'senior', personaPrompt: 'Preferred palette: cover #2C5F2D, accent #97BC62.' },
+      aiCall,
+    );
+
+    expect(lastSystem()).toContain('Teaching Style Directive (CRITICAL)');
+    expect(lastSystem()).toContain('Preferred palette: cover #2C5F2D');
+  });
+
   it('returns empty slides array on null prompt (unlikely but safe)', async () => {
     // Test that returns early when buildPrompt fails (shouldn't happen in practice)
     const result = await generateSlides('Topic', { difficulty: 'senior' }, async () => '');
