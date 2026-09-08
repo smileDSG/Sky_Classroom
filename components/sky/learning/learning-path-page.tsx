@@ -26,6 +26,7 @@ import type {
   LearningPathNode,
   StrategyAlias,
 } from '@/lib/teaching/learning-path-types';
+import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-strip';
 import { cn } from '@/lib/utils';
 
 const STATUS_LABELS: Record<LearningPathNode['status'], string> = {
@@ -265,7 +266,9 @@ export function LearningPathPage() {
                     {completedCount}/{path.nodes.length}
                   </span>
                 </div>
-                <div className="mt-2 text-3xl font-bold text-emerald-600 dark:text-emerald-300">{progress}%</div>
+                <div className="mt-2 text-3xl font-bold text-emerald-600 dark:text-emerald-300">
+                  {progress}%
+                </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/5">
                   <motion.div
                     initial={{ width: 0 }}
@@ -300,8 +303,12 @@ export function LearningPathPage() {
                       : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/10 dark:bg-black/10 dark:hover:border-white/20',
                   )}
                 >
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{item.label}</div>
-                  <div className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{item.description}</div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {item.label}
+                  </div>
+                  <div className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    {item.description}
+                  </div>
                 </button>
               ))}
             </div>
@@ -337,7 +344,8 @@ export function LearningPathPage() {
 
         {loading ? (
           <div className="mt-10 flex items-center justify-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-            <Loader2 className="h-5 w-5 animate-spin text-cyan-600 dark:text-cyan-300" /> 正在读取个人路线…
+            <Loader2 className="h-5 w-5 animate-spin text-cyan-600 dark:text-cyan-300" />{' '}
+            正在读取个人路线…
           </div>
         ) : path ? (
           <>
@@ -393,11 +401,17 @@ export function LearningPathPage() {
               <div className="flex items-start gap-3">
                 <Brain className="mt-0.5 h-5 w-5 shrink-0 text-cyan-600 dark:text-cyan-300" />
                 <div>
-                  <div className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">为什么这样安排</div>
-                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{profileReason}</p>
+                  <div className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">
+                    为什么这样安排
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                    {profileReason}
+                  </p>
                 </div>
               </div>
             </section>
+
+            <MistakeReviewStrip className="mt-5" />
 
             <section className="mt-6 space-y-4">
               {path.nodes.map((node, index) => {
@@ -447,7 +461,9 @@ export function LearningPathPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusIcon status={node.status} />
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{node.topic}</h2>
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                              {node.topic}
+                            </h2>
                             <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] text-slate-500 dark:border-white/10 dark:text-slate-400">
                               {STATUS_LABELS[node.status]}
                             </span>
@@ -474,7 +490,8 @@ export function LearningPathPage() {
                         <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-black/10">
                           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                             <span className="flex items-center gap-1.5">
-                              <Gauge className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-300" /> 掌握情况变化
+                              <Gauge className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-300" />{' '}
+                              掌握情况变化
                             </span>
                             <span>目标 80%</span>
                           </div>
@@ -531,7 +548,9 @@ export function LearningPathPage() {
         ) : (
           <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/75 p-8 text-center dark:border-white/15 dark:bg-white/[0.03]">
             <Route className="mx-auto h-10 w-10 text-slate-400 dark:text-slate-500" />
-            <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">还没有个人学习路线</h2>
+            <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
+              还没有个人学习路线
+            </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               先完善学习情况，或直接选择上面的方式生成第一条路线。
             </p>

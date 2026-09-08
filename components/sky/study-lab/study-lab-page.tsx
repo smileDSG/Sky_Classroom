@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { BrainCircuit, Sparkles } from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-strip';
 import { Button } from '@/components/ui/button';
 import {
   buildStudyLabViewModel,
@@ -190,6 +191,8 @@ export function StudyLabPage() {
         </section>
 
         {viewModel && <MetricStrip viewModel={viewModel} />}
+
+        <MistakeReviewStrip />
 
         <div
           className={cn(

@@ -15,6 +15,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { SkyAppShell } from '@/components/sky/layout/app-shell';
+import { MistakeReviewStrip } from '@/components/sky/learning/mistake-review-strip';
 import { LearningProfilePrompt } from '@/components/sky/dashboard/learning-profile-prompt';
 import { SkySectionNav } from '@/components/sky/layout/sky-section-nav';
 import {
@@ -54,8 +55,7 @@ function TodayFocusPanel({
 }) {
   const action = recommendation ?? {
     title: '先完成一次入门练习',
-    reason:
-      '先留下第一批学习记录，系统才能为你生成更准确的计划。',
+    reason: '先留下第一批学习记录，系统才能为你生成更准确的计划。',
     href: '/sky/cloud-mind/solve',
   };
 
@@ -129,8 +129,14 @@ function LearningSnapshot({
       </dl>
 
       <div className="mt-4 rounded-xl border border-slate-200 px-3 py-3 text-xs leading-5 text-slate-600 dark:border-white/10 dark:text-slate-300">
-        {weakPointText ? `当前优先补强：${weakPointText}` : '完成更多练习后，系统会标出优先补强的知识点。'}
-        {stats.streakDays > 0 && <span className="block mt-1 text-amber-700 dark:text-amber-100">已连续学习 {stats.streakDays} 天，保持这个节奏。</span>}
+        {weakPointText
+          ? `当前优先补强：${weakPointText}`
+          : '完成更多练习后，系统会标出优先补强的知识点。'}
+        {stats.streakDays > 0 && (
+          <span className="block mt-1 text-amber-700 dark:text-amber-100">
+            已连续学习 {stats.streakDays} 天，保持这个节奏。
+          </span>
+        )}
       </div>
     </section>
   );
@@ -166,10 +172,16 @@ function ContinueLearningLinks({
   ];
 
   return (
-    <section aria-labelledby="continue-learning-title" className="border-t border-slate-200 pt-5 dark:border-white/10">
+    <section
+      aria-labelledby="continue-learning-title"
+      className="border-t border-slate-200 pt-5 dark:border-white/10"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 id="continue-learning-title" className="text-base font-semibold text-slate-950 dark:text-white">
+          <h2
+            id="continue-learning-title"
+            className="text-base font-semibold text-slate-950 dark:text-white"
+          >
             完成后，再深入处理
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -198,7 +210,9 @@ function ContinueLearningLinks({
                 <Icon className="h-4 w-4" />
               </span>
               <span className="min-w-0">
-                <span className="block text-sm font-semibold text-slate-950 dark:text-white">{entry.label}</span>
+                <span className="block text-sm font-semibold text-slate-950 dark:text-white">
+                  {entry.label}
+                </span>
                 <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">
                   {entry.description}
                 </span>
@@ -238,7 +252,9 @@ function DashboardEmptyState() {
             <Star className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="text-base font-semibold text-slate-950 dark:text-white">从第一条记录开始</h2>
+            <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+              从第一条记录开始
+            </h2>
             <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
               不需要一次填完所有信息，先做一个小任务就够了。
             </p>
@@ -257,7 +273,10 @@ function DashboardEmptyState() {
         {starterSteps.map((step, index) => {
           const Icon = step.icon;
           return (
-            <li key={step.label} className="flex gap-3 rounded-xl bg-white/75 p-3 dark:bg-slate-950/20">
+            <li
+              key={step.label}
+              className="flex gap-3 rounded-xl bg-white/75 p-3 dark:bg-slate-950/20"
+            >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-xs font-semibold text-sky-700 dark:text-sky-100">
                 {index + 1}
               </span>
@@ -266,7 +285,9 @@ function DashboardEmptyState() {
                   <Icon className="h-3.5 w-3.5 text-sky-600 dark:text-sky-200" />
                   {step.label}
                 </div>
-                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{step.description}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  {step.description}
+                </p>
               </div>
             </li>
           );
@@ -406,9 +427,9 @@ export default function SkyDashboardPage() {
 
         <LearningProfilePrompt status={user?.onboardingStatus} />
 
-        <TodayFocusPanel
-          recommendation={personalization?.recommendation ?? null}
-        />
+        <TodayFocusPanel recommendation={personalization?.recommendation ?? null} />
+
+        <MistakeReviewStrip />
 
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
           <section id="learning-plan" className="scroll-mt-5">
